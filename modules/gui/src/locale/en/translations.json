@@ -2236,7 +2236,9 @@
                                 "label": "Value band",
                                 "placeholder": "Select band with value to sample...",
                                 "tooltip": "The band to sample and use to train the regression classifier."
-                            }
+                            },
+                            "noIntersection": "The image to sample does not intersect the recipe",
+                            "unableToSampleAllPixels": "Unable to sample {numPixels} from the image. It's either too few pixels or too large areas of the image is masked."
                         }
                     },
                     "type": {

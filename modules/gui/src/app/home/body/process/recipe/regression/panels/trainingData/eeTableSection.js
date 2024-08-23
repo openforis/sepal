@@ -16,7 +16,7 @@ export class EETableSection extends React.Component {
         return (
             <Layout>
                 {this.renderTableSelection()}
-                {this.renderValueColumnInput()}
+                {this.renderValueColumnSelection()}
             </Layout>
         )
     }
@@ -37,7 +37,7 @@ export class EETableSection extends React.Component {
         )
     }
 
-    renderValueColumnInput() {
+    renderValueColumnSelection() {
         const {inputs: {valueColumn}} = this.props
         const {columns} = this.state
         const options = columns
@@ -60,8 +60,21 @@ export class EETableSection extends React.Component {
         )
     }
 
+    componentDidMount() {
+        const {inputs: {eeTable, valueColumn, name, referenceData}} = this.props
+        this.setState({columns: []})
+        name.set(null)
+        referenceData.set(null)
+        this.loadColumns(eeTable.value)
+        this.loadData({eeTable: eeTable.value, column: valueColumn.value})
+    }
+
     loadColumns(eeTable) {
+        const {inputs: {name, referenceData}} = this.props
         this.setState({column: []})
+        name.set(null)
+        referenceData.set(null)
+        this.props.inputs.eeTable.setInvalid() // Reset any eventual error
         this.props.stream('LOAD_EE_TABLE_COLUMNS',
             api.gee.loadEETableColumns$(eeTable),
             columns => this.setState({columns}),
@@ -84,6 +97,7 @@ export class EETableSection extends React.Component {
         this.cancel$.next()
         name.set(null)
         referenceData.set(null)
+        this.props.inputs.eeTable.setInvalid() // Reset any eventual error
         stream('LOAD_EE_TABLE_ROWS',
             api.gee.loadEETableRows$(eeTable, [column]).pipe(
                 takeUntil(this.cancel$)

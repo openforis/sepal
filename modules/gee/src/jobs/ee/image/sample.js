@@ -1,5 +1,6 @@
 const {job} = require('#gee/jobs/job')
 const ee = require('sepal/src/ee')
+const {EEException} = require('#sepal/ee/exception')
 
 const worker$ = ctx => {
     const {recipeToSample, count, scale, classBand, recipe, bands} = ctx
@@ -13,7 +14,22 @@ const worker$ = ctx => {
         geometry: ImageFactory(recipe).getGeometry$()
     }).pipe(
         switchMap(({image, geometry}) => {
-
+            const intersects = image.geometry().intersects(geometry, parseInt(scale))
+            return ee.getInfo$(intersects, 'Checking if sampling intersects recipe AOI').pipe(
+                map(intersects => {
+                    if (!intersects) {
+                        throw new EEException('The image to sample does not intersect the recipe.', {
+                            userMessage: {
+                                message: 'The image to sample does not intersect the recipe',
+                                key: 'process.regression.panel.trainingData.form.sampleImage.noIntersection'
+                            }
+                        })
+                    }
+                    return {image, geometry}
+                })
+            )
+        }),
+        switchMap(({image, geometry}) => {
             const stratifiedSample = () => {
                 const toSample = classBand
                     ? image
@@ -49,11 +65,22 @@ const worker$ = ctx => {
                         ))
                         log.info(`Found ${accRows.features.length}/${numPixels} samples. Fraction of pixels containing data: ${fraction}`)
                         return sample$(chunkNumPixels, accRows.features.length).pipe(
-                            map(newRows => ({
-                                columns: newRows.columns,
-                                features: [...accRows.features, ...newRows.features].slice(0, numPixels),
-                                numPixels: accRows.numPixels + chunkNumPixels
-                            }))
+                            map(newRows => {
+                                if (chunkNumPixels === chunkSize && newRows.features.length === 0) {
+                                    throw new EEException(`Unable to sample ${numPixels} from the image. It's either too few pixels or too large areas of the image is masked.`, {
+                                        userMessage: {
+                                            message: `Unable to sample ${numPixels} from the image. It's either too few pixels or too large areas of the image is masked.`,
+                                            key: 'process.regression.panel.trainingData.form.sampleImage.unableToSampleAllPixels',
+                                            args: {numPixels}
+                                        }
+                                    })
+                                }
+                                return ({
+                                    columns: newRows.columns,
+                                    features: [...accRows.features, ...newRows.features].slice(0, numPixels),
+                                    numPixels: accRows.numPixels + chunkNumPixels
+                                })
+                            })
                         )
                     }),
                     takeWhile(rows => rows.features.length < numPixels, true),

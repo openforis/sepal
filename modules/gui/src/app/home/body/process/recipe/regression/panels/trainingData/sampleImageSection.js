@@ -106,15 +106,24 @@ class _SampleImageSection extends React.Component {
                 input={assetToSample}
                 placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.placeholder')}
                 allowedTypes={['Image', 'ImageCollection']}
-                onLoading={() => this.setState({bands: []})}
+                onLoading={() => {
+                    // this.cancel$.next()
+                    this.setState({bands: []})
+                    this.props.inputs.referenceData.set(null)
+                }}
                 onLoaded={({metadata}) => {
                     const bands = metadata.bands.map(({id}) => id) || []
-                    this.setState({bands}, () => this.sampleData({
-                        asset: this.props.inputs.assetToSample.value,
-                        count: this.props.inputs.sampleCount.value,
-                        scale: this.props.inputs.sampleScale.value,
-                        valueBand: this.props.inputs.valueColumn.value
-                    }))
+                    if (bands.includes(this.props.inputs.valueColumn.value)) {
+                        this.setState({bands}, () => this.sampleData({
+                            asset: this.props.inputs.assetToSample.value,
+                            count: this.props.inputs.sampleCount.value,
+                            scale: this.props.inputs.sampleScale.value,
+                            valueBand: this.props.inputs.valueColumn.value
+                        }))
+                    } else {
+                        this.setState({bands})
+                        this.props.inputs.valueColumn.set(null)
+                    }
                 }}
                 busyMessage={this.props.stream('SAMPLE_IMAGE').active && msg('widget.loading')}
             />
@@ -128,15 +137,23 @@ class _SampleImageSection extends React.Component {
                 input={recipeIdToSample}
                 filter={type => !type.noImageOutput}
                 autoFocus
-                onLoading={() => this.setState({bands: []})}
+                onLoading={() => {
+                    this.cancel$.next()
+                    this.setState({bands: []})
+                    this.props.inputs.referenceData.set(null)
+                }}
                 onLoaded={({bandNames: bands, recipe}) => {
-                    this.setState({bands, recipeToSample: recipe}, () =>
-                        this.setState({bands}, () => this.sampleData({
+                    if (bands.includes(this.props.inputs.valueColumn.value)) {
+                        this.setState({bands, recipeToSample: recipe}, () => this.sampleData({
                             asset: this.props.inputs.assetToSample.value,
                             count: this.props.inputs.sampleCount.value,
                             scale: this.props.inputs.sampleScale.value,
                             valueBand: this.props.inputs.valueColumn.value
-                        })))
+                        }))
+                    } else {
+                        this.setState({bands, recipeToSample: recipe})
+                        this.props.inputs.valueColumn.set(null)
+                    }
                 }}
             />
         )
@@ -162,7 +179,8 @@ class _SampleImageSection extends React.Component {
                         count: this.props.inputs.sampleCount.value,
                         scale: this.props.inputs.sampleScale.value,
                         valueBand
-                    })}
+                    })
+                }
             />
         )
     }
@@ -176,6 +194,13 @@ class _SampleImageSection extends React.Component {
         if (!typeToSample.value) {
             typeToSample.set('ASSET')
         }
+        // this.sampleData({
+        //     asset: this.props.inputs.assetToSample.value,
+        //     count: this.props.inputs.sampleCount.value,
+        //     scale: this.props.inputs.sampleScale.value,
+        //     valueBand
+        // })}
+
     }
 
     sampleData({asset, count, scale, valueBand}) {
@@ -194,6 +219,7 @@ class _SampleImageSection extends React.Component {
         this.cancel$.next()
         name.set(null)
         referenceData.set(null)
+        this.props.inputs.valueColumn.setInvalid() // Reset any eventual error
         stream('SAMPLE_IMAGE',
             api.gee.sampleImage$({
                 recipeToSample: typeToSample.value === 'ASSET'
