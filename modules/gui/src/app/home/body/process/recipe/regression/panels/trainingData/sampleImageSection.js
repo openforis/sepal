@@ -107,7 +107,7 @@ class _SampleImageSection extends React.Component {
                 placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.placeholder')}
                 allowedTypes={['Image', 'ImageCollection']}
                 onLoading={() => {
-                    // this.cancel$.next()
+                    this.cancel$.next()
                     this.setState({bands: []})
                     this.props.inputs.referenceData.set(null)
                 }}
@@ -194,13 +194,6 @@ class _SampleImageSection extends React.Component {
         if (!typeToSample.value) {
             typeToSample.set('ASSET')
         }
-        // this.sampleData({
-        //     asset: this.props.inputs.assetToSample.value,
-        //     count: this.props.inputs.sampleCount.value,
-        //     scale: this.props.inputs.sampleScale.value,
-        //     valueBand
-        // })}
-
     }
 
     sampleData({asset, count, scale, valueBand}) {
@@ -215,7 +208,7 @@ class _SampleImageSection extends React.Component {
         ) {
             return
         }
-        const {stream, inputs: {name, referenceData, valueColumn}, recipe} = this.props
+        const {stream, inputs: {name, referenceData}, recipe} = this.props
         this.cancel$.next()
         name.set(null)
         referenceData.set(null)
@@ -241,9 +234,6 @@ class _SampleImageSection extends React.Component {
                 )
                 const referenceDataValue = this.toReferenceData({featureCollection, valueBand})
                 referenceData.set(referenceDataValue)
-                if (!valueBand) {
-                    valueColumn.set(Object.keys(featureCollection.columns)[0])
-                }
             },
             error => {
                 const response = error.response || {}

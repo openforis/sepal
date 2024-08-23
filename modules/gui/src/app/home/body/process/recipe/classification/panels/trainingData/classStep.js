@@ -23,7 +23,9 @@ class _ClassStep extends React.Component {
         return (
             <Layout>
                 {this.renderFilterExpression()}
-                {this.renderClassColumnFormat()}
+                {type.value === 'SAMPLE_CLASSIFICATION'
+                    ? null // We select the value column up-front
+                    : this.renderClassColumnFormat()}
                 {type.value === 'SAMPLE_CLASSIFICATION'
                     ? null // We select the value column up-front
                     : this.renderValueColumnInput()}

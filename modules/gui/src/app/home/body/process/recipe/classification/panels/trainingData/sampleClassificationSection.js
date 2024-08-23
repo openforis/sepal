@@ -106,15 +106,24 @@ class _SampleClassificationSection extends React.Component {
                 input={assetToSample}
                 placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.placeholder')}
                 allowedTypes={['Image', 'ImageCollection']}
-                onLoading={() => this.setState({bands: []})}
+                onLoading={() => {
+                    this.cancel$.next()
+                    this.setState({bands: []})
+                    this.props.inputs.inputData.set(null)
+                }}
                 onLoaded={({metadata}) => {
                     const bands = metadata.bands.map(({id}) => id) || []
-                    this.setState({bands}, () => this.loadInputData({
-                        asset: this.props.inputs.assetToSample.value,
-                        count: this.props.inputs.samplesPerClass.value,
-                        scale: this.props.inputs.sampleScale.value,
-                        classBand: this.props.inputs.valueColumn.value
-                    }))
+                    if (bands.includes(this.props.inputs.valueColumn.value)) {
+                        this.setState({bands}, () => this.loadInputData({
+                            asset: this.props.inputs.assetToSample.value,
+                            count: this.props.inputs.samplesPerClass.value,
+                            scale: this.props.inputs.sampleScale.value,
+                            classBand: this.props.inputs.valueColumn.value
+                        }))
+                    } else {
+                        this.setState({bands})
+                        this.props.inputs.valueColumn.set(null)
+                    }
                 }}
                 busyMessage={this.props.stream('SAMPLE_IMAGE').active && msg('widget.loading')}
             />
@@ -129,15 +138,25 @@ class _SampleClassificationSection extends React.Component {
                 input={recipeIdToSample}
                 filter={type => !type.noImageOutput}
                 autoFocus
-                onLoading={() => this.setState({bands: []})}
+                onLoading={() => {
+                    this.cancel$.next()
+                    this.setState({bands: []})
+                    this.props.inputs.inputData.set(null)
+                }}
                 onLoaded={({bandNames: bands, recipe}) => {
-                    this.setState({bands, recipeToSample: recipe}, () =>
-                        this.setState({bands}, () => this.loadInputData({
-                            asset: this.props.inputs.assetToSample.value,
-                            count: this.props.inputs.samplesPerClass.value,
-                            scale: this.props.inputs.sampleScale.value,
-                            classBand: this.props.inputs.valueColumn.value
-                        })))
+                    if (bands.includes(this.props.inputs.valueColumn.value)) {
+                        this.setState({bands, recipeToSample: recipe}, () =>
+                            this.loadInputData({
+                                asset: this.props.inputs.assetToSample.value,
+                                count: this.props.inputs.samplesPerClass.value,
+                                scale: this.props.inputs.sampleScale.value,
+                                classBand: this.props.inputs.valueColumn.value
+                            })
+                        )
+                    } else {
+                        this.setState({bands, recipeToSample: recipe})
+                        this.props.inputs.valueColumn.set(null)
+                    }
                 }}
             />
         )
@@ -191,11 +210,12 @@ class _SampleClassificationSection extends React.Component {
         ) {
             return
         }
-        const {stream, inputs: {name, inputData, columns, valueColumn}, recipe} = this.props
+        const {stream, inputs: {name, inputData, columns}, recipe} = this.props
         this.cancel$.next()
         name.set(null)
         inputData.set(null)
         columns.set(null)
+        this.props.inputs.valueColumn.setInvalid() // Reset any eventual error
         stream('SAMPLE_IMAGE',
             api.gee.sampleImage$({
                 recipeToSample: typeToSample.value === 'ASSET'
@@ -216,14 +236,11 @@ class _SampleClassificationSection extends React.Component {
                 )
                 inputData.set(this.toInputData(featureCollection))
                 columns.set(['.geo', ...Object.keys(featureCollection.columns)])
-                if (!classBand) {
-                    valueColumn.set(Object.keys(featureCollection.columns)[0])
-                }
             },
             error => {
                 const response = error.response || {}
                 const {defaultMessage, messageKey, messageArgs} = response
-                this.props.inputs.classBand.setInvalid(
+                this.props.inputs.valueColumn.setInvalid(
                     messageKey
                         ? msg(messageKey, messageArgs, defaultMessage)
                         : msg('asset.failedToLoad')

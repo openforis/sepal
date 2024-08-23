@@ -85,8 +85,7 @@ const fields = {
         .skip((value, {wizardStep}) => wizardStep !== 2)
         .notBlank('process.classification.panel.trainingData.form.class.classColumnFormat.required'),
     valueColumn: new Form.Field()
-        .skip((value, {wizardStep}) => wizardStep !== 2)
-        .skip((value, {classColumnFormat}) => classColumnFormat !== 'SINGLE_COLUMN')
+        .skip((value, {type, wizardStep, classColumnFormat}) => type !== 'SAMPLE_CLASSIFICATION' && (wizardStep !== 2 || classColumnFormat !== 'SINGLE_COLUMN'))
         .notBlank('process.classification.panel.trainingData.form.class.valueColumn.required'),
     valueMapping: new Form.Field(),
     columnMapping: new Form.Field(),
