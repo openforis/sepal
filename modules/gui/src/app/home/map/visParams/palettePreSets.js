@@ -82,7 +82,7 @@ const toOptions = options => options.map(({label, value}) => ({
     key: label, label, value, render: () => renderOption(value, label)
 }))
 
-const colorBrewerOptions = count =>
+export const colorBrewerOptions = count =>
     [{
         label: 'Color Brewer',
         options: toOptions(colorBrewer.map(({label, colors}) =>
