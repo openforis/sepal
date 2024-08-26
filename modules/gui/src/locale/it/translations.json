@@ -2262,6 +2262,205 @@
             },
             "tabPlaceholder": ""
         },
+        "unsupervisedClassification": {
+            "bands": {
+                "class": ""
+            },
+            "create": "",
+            "description": "",
+            "panel": {
+                "sampling": {
+                    "button": "",
+                    "tooltip": "",
+                    "title": "",
+                    "form": {
+                        "numberOfSamples": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": "",
+                            "suffix": ""
+                        },
+                        "sampleScale": {
+                            "label": "",
+                            "placeholder": "",
+                            "suffix": "",
+                            "tooltip": ""
+                        }
+                    }
+                },
+                "clusterer": {
+                    "button": "",
+                    "tooltip": "",
+                    "title": "",
+                    "form": {
+                        "type": {
+                            "label": ""
+                        },
+                        "kmeans": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "cascadeKMeans": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "xmeans": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "lvq": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "config": {
+                            "numberOfClusters": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "minNumberOfClusters": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "maxNumberOfClusters": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "restarts": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "init": {
+                                "label": "",
+                                "options": {
+                                    "random.label": "",
+                                    "kmeans.label": "",
+                                    "canopy.label": "",
+                                    "farthestFirst.label": ""
+                                }
+                            },
+                            "distanceFunction": {
+                                "label": "",
+                                "options": {
+                                    "euclidean.label": "",
+                                    "manhattan.label": "",
+                                    "chebyshev.label": ""
+                                }
+                            },
+                            "maxIterations": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "canopies": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "maxCandidates": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "periodicPruning": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "minDensity": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "t1": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "t2": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "preserveOrder": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "fast": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "seed": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "learningRate": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "epochs": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "normalizeInput": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "maxIterationsOverall": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "maxKMeans": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "maxForChildren": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "useKD": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "cutoffFactor": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        }
+                    }
+                }
+            },
+            "tabPlaceholder": ""
+        },
         "classChange": {
             "create": "",
             "description": "",
