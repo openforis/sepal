@@ -2262,6 +2262,205 @@
             },
             "tabPlaceholder": "Regression"
         },
+        "unsupervisedClassification": {
+            "bands": {
+                "class": "Class"
+            },
+            "create": "Unsupervised Classification",
+            "description": "Create an unsupervised classification from SEPAL or Google Earth Engine imagery.",
+            "panel": {
+                "sampling": {
+                    "button": "SMP",
+                    "tooltip": "Configure the sampling",
+                    "title": "Sampling configuration",
+                    "form": {
+                        "numberOfSamples": {
+                            "label": "Number of samples",
+                            "placeholder": "Count...",
+                            "tooltip": "The number of samples to use to train the clusterer.",
+                            "suffix": "samples"
+                        },
+                        "sampleScale": {
+                            "label": "Scale to sample in",
+                            "placeholder": "Scale...",
+                            "suffix": "meters",
+                            "tooltip": "The scale to sample the asset in"
+                        }
+                    }
+                },
+                "clusterer": {
+                    "button": "CLS",
+                    "tooltip": "Configure the clusterer",
+                    "title": "Clusterer configuration",
+                    "form": {
+                        "type": {
+                            "label": "Type"
+                        },
+                        "kmeans": {
+                            "label": "KMeans",
+                            "tooltip": "Cluster data using the k-means algorithm."
+                        },
+                        "cascadeKMeans": {
+                            "label": "Cascade KMeans",
+                            "tooltip": "Cascade simple k-means selects the best k according to the Calinski-Harabasz criterion."
+                        },
+                        "xmeans": {
+                            "label": "XMeans",
+                            "tooltip": "X-Means is K-Means with an efficient estimation of the number of clusters."
+                        },
+                        "lvq": {
+                            "label": "LVQ",
+                            "tooltip": "A Clusterer that implements the Learning Vector Quantization algorithm."
+                        },
+                        "config": {
+                            "numberOfClusters": {
+                                "label": "Number of clusters",
+                                "placeholder": "Number of clusters...",
+                                "tooltip": "The number of clusters to generate"
+                            },
+                            "minNumberOfClusters": {
+                                "label": "Min number of clusters",
+                                "placeholder": "Min number of clusters...",
+                                "tooltip": "The minimum number of clusters to generate"
+                            },
+                            "maxNumberOfClusters": {
+                                "label": "Max number of clusters",
+                                "placeholder": "Max number of clusters...",
+                                "tooltip": "The maximum number of clusters to generate"
+                            },
+                            "restarts": {
+                                "label": "Restarts",
+                                "placeholder": "Restarts...",
+                                "tooltip": "Number of restarts."
+                            },
+                            "init": {
+                                "label": "Initialization method",
+                                "options": {
+                                    "random.label": "Random",
+                                    "kmeans.label": "K-means++",
+                                    "canopy.label": "Canopy",
+                                    "farthestFirst.label": "farthest first"
+                                }
+                            },
+                            "distanceFunction": {
+                                "label": "Distance function",
+                                "options": {
+                                    "euclidean.label": "Euclidean",
+                                    "manhattan.label": "Manhattan",
+                                    "chebyshev.label": "Chebyshev"
+                                }
+                            },
+                            "maxIterations": {
+                                "label": "Max iterations",
+                                "placeholder": "Max iterations...",
+                                "tooltip": "Maximum number of iterations."
+                            },
+                            "canopies": {
+                                "label": "Canopies",
+                                "tooltip": "Specify whether to use canopies to reduce the number of distance calculations or not.",
+                                "options": {
+                                    "true.label": "Canopies",
+                                    "false.label": "No Canopies"
+                                }
+                            },
+                            "maxCandidates": {
+                                "label": "Max candidates",
+                                "placeholder": "Max candidates...",
+                                "tooltip": "Maximum number of candidate canopies to retain in memory at any one time when using canopy clustering. T2 distance plus, data characteristics, will determine how many candidate canopies are formed before periodic and final pruning are performed, which might result in exceess memory consumption. This setting avoids large numbers of candidate canopies consuming memory."
+                            },
+                            "periodicPruning": {
+                                "label": "Periodic pruning",
+                                "placeholder": "Periodic pruning...",
+                                "tooltip": "How often to prune low density canopies when using canopy clustering."
+                            },
+                            "minDensity": {
+                                "label": "Min density",
+                                "placeholder": "Min density...",
+                                "tooltip": "Minimum canopy density, when using canopy clustering, below which a canopy will be pruned during periodic pruning."
+                            },
+                            "t1": {
+                                "label": "T1",
+                                "placeholder": "T1...",
+                                "tooltip": "The T1 distance to use when using canopy clustering. A value < 0 is taken as a positive multiplier for T2."
+                            },
+                            "t2": {
+                                "label": "T2",
+                                "placeholder": "T2...",
+                                "tooltip": "The T2 distance to use when using canopy clustering. Values < 0 cause a heuristic based on attribute std. deviation to be used."
+                            },
+                            "preserveOrder": {
+                                "label": "Preserve order",
+                                "tooltip": "Specify whether order of instances should be preserved or not.",
+                                "options": {
+                                    "true.label": "Preserve",
+                                    "false.label": "Don't preserve"
+                                }
+                            },
+                            "fast": {
+                                "label": "Fast",
+                                "tooltip": "Enables faster distance calculations, using cut-off values. Disables the calculation/output of squared errors/distances.",
+                                "options": {
+                                    "true.label": "Enable",
+                                    "false.label": "Disable"
+                                }
+                            },
+                            "seed": {
+                                "label": "Seed",
+                                "placeholder": "Seed...",
+                                "tooltip": "The randomization seed."
+                            },
+                            "learningRate": {
+                                "label": "Learning rate",
+                                "placeholder": "Learning rate...",
+                                "tooltip": "The learning rate for the training algorithm. Value should be greater than 0 and less or equal to 1."
+                            },
+                            "epochs": {
+                                "label": "Epochs",
+                                "placeholder": "Epochs...",
+                                "tooltip": "Number of training epochs. Value should be greater than or equal to 1."
+                            },
+                            "normalizeInput": {
+                                "label": "Normalize input",
+                                "tooltip": "Specifies whether attributes should be normalized or not.",
+                                "options": {
+                                    "true.label": "Normalize",
+                                    "false.label": "Don't normalize"
+                                }
+                            },
+                            "maxIterationsOverall": {
+                                "label": "Max iterations",
+                                "placeholder": "Max iterations...",
+                                "tooltip": "Maximum number of overall iterations."
+                            },
+                            "maxKMeans": {
+                                "label": "Max K-means",
+                                "placeholder": "Max K-means...",
+                                "tooltip": "The maximum number of iterations to perform in K-means."
+                            },
+                            "maxForChildren": {
+                                "label": "Max for children",
+                                "placeholder": "Max for children...",
+                                "tooltip": "The maximum number of iterations in KMeans that is performed on the child centers."
+                            },
+                            "useKD": {
+                                "label": "Use K-D tree",
+                                "tooltip": "Specifies whether a K-D tree should be used or not.",
+                                "options": {
+                                    "true.label": "Use",
+                                    "false.label": "Don't use"
+                                }
+                            },
+                            "cutoffFactor": {
+                                "label": "Cut-off factor",
+                                "placeholder": "Cut-off factor...",
+                                "tooltip": "Takes the given percentage of the split centroids if none of the children win."
+                            }
+                        }
+                    }
+                }
+            },
+            "tabPlaceholder": "Unsupervised_classification"
+        },
         "classChange": {
             "create": "Class change",
             "description": "Create a class change map from two categorical images, either SEPAL recipes or EE assets.",

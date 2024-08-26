@@ -15,6 +15,7 @@ import radarMosaic from './recipe/radarMosaic/radarMosaic'
 import regression from './recipe/regression/regression'
 import remapping from './recipe/remapping/remapping'
 import timeSeries from './recipe/timeSeries/timeSeries'
+import unsupervisedClassification from './recipe/unsupervisedClassification/unsupervisedClassification'
 import {addRecipeType} from './recipeTypeRegistry'
 
 export const registerRecipeTypes = () => {
@@ -22,6 +23,7 @@ export const registerRecipeTypes = () => {
     addRecipeType(radarMosaic())
     addRecipeType(planetMosaic())
     addRecipeType(classification())
+    addRecipeType(unsupervisedClassification())
     addRecipeType(regression())
     addRecipeType(timeSeries())
     addRecipeType(ccdc())
