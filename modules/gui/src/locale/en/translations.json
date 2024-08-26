@@ -226,7 +226,9 @@
         "unauthorized": "You don't have access to this EE Table"
     },
     "error": {
-        "internal": "Internal error"
+        "badRequest": "Bad request",
+        "internal": "Internal error",
+        "notFound": "Not found"
     },
     "fieldValidation": {
         "date": "Must be a date",
@@ -4687,9 +4689,17 @@
                 "projectNeeded": "SEPAL has been disconnected from your Google account, as Google Earth Engine users are now required to use a Cloud Project.|Please reconnect and select a Cloud Project.|If you need to create one, please login to the Earth Engine Code Editor, and click on \"Register a new Cloud Project\" from the user settings.",
                 "title": "Your SEPAL account is not connected to your Google account"
             },
+            "missingScopes": {
+                "title": "Google Account reconnection required",
+                "message": "The permissions you have previously authorized on your Google account don't match with the ones currently required by SEPAL. Please, reconnect your Google account."
+            },
             "unavailable": {
                 "title": "Earth Engine is not available",
                 "message": "Please make sure your Google Cloud Project has been registered."
+            },
+            "unspecifiedError": {
+                "title": "Earth Engine is not available",
+                "message": "We are currently unable to connect to Google Earth Engine."
             },
             "label": "Google account",
             "title": "Google account"
