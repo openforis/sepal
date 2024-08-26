@@ -226,7 +226,9 @@
         "unauthorized": "No tienes acceso a esta tabla de EE."
     },
     "error": {
-        "internal": "Error interno"
+        "badRequest": "",
+        "internal": "Error interno",
+        "notFound": ""
     },
     "fieldValidation": {
         "date": "Debe ser una fecha",
@@ -4687,7 +4689,15 @@
                 "projectNeeded": "",
                 "title": "Tu cuenta SEPAL no está vinculada a tu cuenta de Google"
             },
+            "missingScopes": {
+                "title": "",
+                "message": ""
+            },
             "unavailable": {
+                "title": "",
+                "message": ""
+            },
+            "unspecifiedError": {
                 "title": "",
                 "message": ""
             },
