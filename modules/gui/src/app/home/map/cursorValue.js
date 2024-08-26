@@ -1,3 +1,4 @@
+import {sequence} from 'array'
 import Color from 'color'
 import _ from 'lodash'
 import React from 'react'
@@ -138,9 +139,3 @@ const getWeightedMeanFactor = channels => {
     const denominator = _.sum(channels.map(({range}) => Math.abs(range)))
     return numerator / denominator
 }
-    
-const sequence = (start, end, step = 1) =>
-    end >= start
-        ? Array.apply(null, {length: Math.floor((end - start) / step) + 1})
-            .map((_, i) => i * step + start)
-        : []
