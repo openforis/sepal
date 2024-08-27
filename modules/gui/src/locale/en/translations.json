@@ -4131,7 +4131,9 @@
         "project": {
             "title": "Project",
             "form": {
-                "name.label": "Name"
+                "name.label": "Name",
+                "name.required" : "Name is required",
+                "name.unique" : "Project name is already in use"
             },
             "edit": {
                 "tooltip": "Edit project"

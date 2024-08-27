@@ -12,14 +12,17 @@ import styles from './project.module.css'
 
 const fields = {
     name: new Form.Field()
-        .notBlank('project.form.name.required')
+        .notBlank('process.project.form.name.required')
+        .predicate((name, {projectNames}) => !projectNames.includes(name.toLowerCase()), 'process.project.form.name.unique')
 }
+
 const mapStateToProps = (state, ownProps) => {
     const project = ownProps.project
     return {
         values: {
             id: project && project.id,
-            name: (project && project.name) || ''
+            name: (project && project.name) || '',
+            projectNames: ownProps.projectNames
         }
     }
 }
@@ -71,6 +74,7 @@ export const Project = compose(
 
 Project.propTypes = {
     project: PropTypes.object.isRequired,
+    projectNames: PropTypes.array.isRequired,
     onApply: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired
 }

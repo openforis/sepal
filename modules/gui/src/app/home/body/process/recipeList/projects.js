@@ -90,11 +90,22 @@ class _Projects extends React.Component {
 
     renderProjects() {
         const {projects} = this.props
+
+        // Helper function to check for duplicate names
+        const isDuplicate = (project, index, projects) => {
+            return projects.some((p, i) => p.name === project.name && i !== index)
+        }
+
         if (projects.length) {
             return (
                 <Layout type='vertical' spacing='tight'>
-                    {projects.map((project, index) => this.renderProject(project, index))}
+                    {projects.map((project, index) => {
+                        const duplicate = isDuplicate(project, index, projects)
+                        const displayName = duplicate ? `${project.name}_${project.id.slice(0, 3)}` : project.name
+                        return this.renderProject({...project, name: displayName}, index)
+                    })}
                 </Layout>
+
             )
         } else {
             return (
@@ -175,6 +186,7 @@ class _Projects extends React.Component {
         return (
             <Project
                 project={project}
+                projectNames={this.props.projects.map(({name}) => name)}
                 onApply={project => this.updateProject(project)}
                 onCancel={() => this.editProject()}
             />
