@@ -101,7 +101,7 @@ export class TranslationProvider extends React.Component {
         } else {
             try {
                 return languageState(language)
-            } catch (error) {
+            } catch (_error) {
                 return languageState(setLanguage('en'))
             }
         }

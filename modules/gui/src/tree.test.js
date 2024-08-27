@@ -1,7 +1,5 @@
 import {NODE_KEY, Tree} from './tree'
 
-/* eslint-disable no-undef */
-
 it('create root', () => {
     const tree = Tree.createNode()
     expect(tree).toEqual({

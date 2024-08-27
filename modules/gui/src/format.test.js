@@ -2,8 +2,6 @@ import _ from 'lodash'
 
 import format from './format'
 
-/* eslint-disable no-undef */
-
 const test = name => {
     const nameTemplate = _.template(name)
     return ({

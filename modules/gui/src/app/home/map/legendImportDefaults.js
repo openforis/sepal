@@ -12,7 +12,7 @@ export const getValidMappings = (columns, rows) => {
                         : _.isInteger(parseInt(value))
                             ? parseInt(value)
                             : null
-                } catch (_e) {
+                } catch (_error) {
                     return false
                 }
             })
@@ -35,7 +35,7 @@ export const getValidMappings = (columns, rows) => {
             .map(row => {
                 try {
                     return Color(row[column].trim()).hex()
-                } catch (_e) {
+                } catch (_error) {
                     return false
                 }
             })
