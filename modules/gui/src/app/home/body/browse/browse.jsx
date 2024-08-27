@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import moment from 'moment'
 import {orderBy} from 'natural-orderby'
 import Path from 'path'
 import PropTypes from 'prop-types'
@@ -27,8 +28,6 @@ import {Tabs} from '~/widget/tabs/tabs'
 import {ToggleButton} from '~/widget/toggleButton'
 
 import styles from './browse.module.css'
-
-const moment = require('moment')
 
 const ANIMATION_DURATION_MS = 1000
 
@@ -540,7 +539,7 @@ class _FileBrowser extends React.Component {
                 _.compact([dirSorter.order, dateSorter.order]),
                 _.compact([dirSorter.direction, dateSorter.direction])
             )
-            
+
         const sortingMap = {
             name: naturalSortingDirectoriesFirst,
             date: dateSortingDirectoriesFirst

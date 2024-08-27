@@ -1,9 +1,9 @@
-import {composeHoC} from 'compose'
-import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {BehaviorSubject} from 'rxjs'
 
+import {composeHoC} from '~/compose'
+import {withContext} from '~/context'
 import {uuid} from '~/uuid'
 
 import styles from './eventShield.module.css'
@@ -53,7 +53,7 @@ export class EventShield extends React.Component {
     state = {
         enabledIds: []
     }
-    
+
     setEnabled(id, enabled) {
         this.setState(({enabledIds}) => {
             const index = enabledIds.indexOf(id)
@@ -74,7 +74,7 @@ export class EventShield extends React.Component {
         const {enabledIds} = this.state
         return enabledIds.length > 0
     }
-    
+
     render() {
         const {children} = this.props
         const {enabled$, setEnabled} = this

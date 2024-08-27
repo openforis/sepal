@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 import React from 'react'
 
 import {setInitialized} from '~/app/home/body/process/recipe'
@@ -9,15 +8,13 @@ import {msg} from '~/translate'
 import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
+import {AuxiliaryImagery} from '../../classification/panels/auxiliaryImagery/auxiliaryImagery'
+import {InputImagery} from '../../classification/panels/inputImagery/inputImagery'
 import {RetrieveButton} from '../../retrieveButton'
-import {RecipeActions} from '../classificationRecipe'
-import {Legend} from '../legend/legend'
-import {AuxiliaryImagery} from './auxiliaryImagery/auxiliaryImagery'
-import styles from './classificationToolbar.module.css'
 import {Classifier} from './classifier/classifier'
-import {InputImagery} from './inputImagery/inputImagery'
+import styles from './regressionToolbar.module.css'
 import {Retrieve} from './retrieve/retrieve'
-import {TrainingData} from './trainingData/trainingData.js'
+import {TrainingData} from './trainingData/trainingData'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
@@ -25,18 +22,17 @@ const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
 })
 
-class _ClassificationToolbar extends React.Component {
+class _RegressionToolbar extends React.Component {
     render() {
-        const {recipeId, collecting, dataCollectionManager, initialized} = this.props
+        const {recipeId, initialized} = this.props
         return (
             <PanelWizard
-                panels={['inputImagery', 'legend']}
+                panels={['inputImagery', 'trainingData']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
                 <Retrieve/>
                 <InputImagery/>
-                <Legend dataCollectionManager={dataCollectionManager}/>
-                <TrainingData dataCollectionManager={dataCollectionManager}/>
+                <TrainingData/>
                 <AuxiliaryImagery/>
                 <Classifier/>
 
@@ -45,13 +41,6 @@ class _ClassificationToolbar extends React.Component {
                     placement='top-right'
                     panel
                     className={styles.top}>
-                    <Toolbar.ToolbarButton
-                        selected={collecting}
-                        onClick={() => RecipeActions(recipeId).setCollecting(!collecting)}
-                        icon={'map-marker'}
-                        tooltip={msg(collecting
-                            ? 'process.classification.collect.disable.tooltip'
-                            : 'process.classification.collect.enable.tooltip')}/>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
@@ -63,12 +52,6 @@ class _ClassificationToolbar extends React.Component {
                         id='inputImagery'
                         label={msg('process.classification.panel.inputImagery.button')}
                         tooltip={msg('process.classification.panel.inputImagery.tooltip')}
-                        disabled={!initialized}/>
-
-                    <Toolbar.ActivationButton
-                        id='legend'
-                        label={msg('process.classification.panel.legend.button')}
-                        tooltip={msg('process.classification.panel.legend.tooltip')}
                         disabled={!initialized}/>
 
                     <Toolbar.ActivationButton
@@ -91,11 +74,7 @@ class _ClassificationToolbar extends React.Component {
     }
 }
 
-export const ClassificationToolbar = compose(
-    _ClassificationToolbar,
+export const RegressionToolbar = compose(
+    _RegressionToolbar,
     withRecipe(mapRecipeToProps)
 )
-
-ClassificationToolbar.propTypes = {
-    dataCollectionManager: PropTypes.object.isRequired
-}

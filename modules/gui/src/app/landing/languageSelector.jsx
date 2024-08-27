@@ -1,14 +1,8 @@
-import {getLanguage, setLanguage} from '~/translate'
+import {getLanguage, languages, setLanguage} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 
 export const LanguageSelector = () => {
-    const languages = [
-        {code: 'en', name: 'English'},
-        {code: 'es', name: 'Español'},
-        {code: 'fr', name: 'Français'}
-    ]
-
     return (
         <ButtonGroup>
             {languages.map(({code, name}) =>

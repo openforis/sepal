@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
-import {RecipeInput} from 'widget/recipeInput'
 
 import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
@@ -11,10 +10,11 @@ import {Form} from '~/widget/form'
 import {FormCombo} from '~/widget/form/combo'
 import {Layout} from '~/widget/layout'
 import {NumberButtons} from '~/widget/numberButtons'
+import {RecipeInput} from '~/widget/recipeInput'
 
 const mapRecipeToProps = recipe => ({recipe})
 
-class _SampleImageSection extends React.Component {
+class _SampleClassificationSection extends React.Component {
     cancel$ = new Subject()
     state = {bands: []}
 
@@ -22,18 +22,18 @@ class _SampleImageSection extends React.Component {
         const {inputs: {typeToSample}} = this.props
         return (
             <Layout>
-                {this.renderSampleCount()}
+                {this.renderSamplesPerClass()}
                 {this.renderSampleScale()}
                 {this.renderTypeToSample()}
                 {typeToSample.value === 'ASSET' && this.renderAssetToSample()}
                 {typeToSample.value === 'RECIPE' && this.renderRecipeToSample()}
-                {this.renderValueBandInput()}
+                {this.renderValueColumnInput()}
             </Layout>
         )
     }
 
-    renderSampleCount() {
-        const {inputs: {sampleCount}} = this.props
+    renderSamplesPerClass() {
+        const {inputs: {samplesPerClass}} = this.props
         const options = [
             {value: 20, label: '20'},
             {value: 50, label: '50'},
@@ -47,17 +47,17 @@ class _SampleImageSection extends React.Component {
         ]
         return (
             <NumberButtons
-                label={msg('process.regression.panel.trainingData.form.sampleImage.sampleCount.label')}
-                placeholder={msg('process.regression.panel.trainingData.form.sampleImage.sampleCount.placeholder')}
-                tooltip={msg('process.regression.panel.trainingData.form.sampleImage.sampleCount.tooltip')}
-                input={sampleCount}
+                label={msg('process.classification.panel.trainingData.form.sampleClassification.samplesPerClass.label')}
+                placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.samplesPerClass.placeholder')}
+                tooltip={msg('process.classification.panel.trainingData.form.sampleClassification.samplesPerClass.tooltip')}
+                input={samplesPerClass}
                 options={options}
-                suffix={msg('process.regression.panel.trainingData.form.sampleImage.sampleCount.suffix')}
-                onChange={count => this.sampleData({
+                suffix={msg('process.classification.panel.trainingData.form.sampleClassification.samplesPerClass.suffix')}
+                onChange={count => this.loadInputData({
                     asset: this.props.inputs.assetToSample.value,
                     count,
                     scale: this.props.inputs.sampleScale.value,
-                    valueBand: this.props.inputs.valueColumn.value
+                    classBand: this.props.inputs.valueColumn.value
                 })}
             />
         )
@@ -73,11 +73,11 @@ class _SampleImageSection extends React.Component {
                 input={sampleScale}
                 options={[3, 5, 10, 15, 20, 30, 60, 100, 200, 500]}
                 suffix={msg('process.classification.panel.trainingData.form.sampleClassification.sampleScale.suffix')}
-                onChange={scale => this.sampleData({
+                onChange={scale => this.loadInputData({
                     asset: this.props.inputs.assetToSample.value,
-                    count: this.props.inputs.sampleCount.value,
+                    count: this.props.inputs.samplesPerClass.value,
                     scale,
-                    valueBand: this.props.inputs.valueColumn.value
+                    classBand: this.props.inputs.valueColumn.value
                 })}
             />
         )
@@ -109,16 +109,16 @@ class _SampleImageSection extends React.Component {
                 onLoading={() => {
                     this.cancel$.next()
                     this.setState({bands: []})
-                    this.props.inputs.referenceData.set(null)
+                    this.props.inputs.inputData.set(null)
                 }}
                 onLoaded={({metadata}) => {
                     const bands = metadata.bands.map(({id}) => id) || []
                     if (bands.includes(this.props.inputs.valueColumn.value)) {
-                        this.setState({bands}, () => this.sampleData({
+                        this.setState({bands}, () => this.loadInputData({
                             asset: this.props.inputs.assetToSample.value,
-                            count: this.props.inputs.sampleCount.value,
+                            count: this.props.inputs.samplesPerClass.value,
                             scale: this.props.inputs.sampleScale.value,
-                            valueBand: this.props.inputs.valueColumn.value
+                            classBand: this.props.inputs.valueColumn.value
                         }))
                     } else {
                         this.setState({bands})
@@ -134,22 +134,25 @@ class _SampleImageSection extends React.Component {
         const {inputs: {recipeIdToSample}} = this.props
         return (
             <RecipeInput
+                label={msg('process.classification.panel.trainingData.form.sampleClassification.recipeToSample.label')}
                 input={recipeIdToSample}
                 filter={type => !type.noImageOutput}
                 autoFocus
                 onLoading={() => {
                     this.cancel$.next()
                     this.setState({bands: []})
-                    this.props.inputs.referenceData.set(null)
+                    this.props.inputs.inputData.set(null)
                 }}
                 onLoaded={({bandNames: bands, recipe}) => {
                     if (bands.includes(this.props.inputs.valueColumn.value)) {
-                        this.setState({bands, recipeToSample: recipe}, () => this.sampleData({
-                            asset: this.props.inputs.assetToSample.value,
-                            count: this.props.inputs.sampleCount.value,
-                            scale: this.props.inputs.sampleScale.value,
-                            valueBand: this.props.inputs.valueColumn.value
-                        }))
+                        this.setState({bands, recipeToSample: recipe}, () =>
+                            this.loadInputData({
+                                asset: this.props.inputs.assetToSample.value,
+                                count: this.props.inputs.samplesPerClass.value,
+                                scale: this.props.inputs.sampleScale.value,
+                                classBand: this.props.inputs.valueColumn.value
+                            })
+                        )
                     } else {
                         this.setState({bands, recipeToSample: recipe})
                         this.props.inputs.valueColumn.set(null)
@@ -159,7 +162,7 @@ class _SampleImageSection extends React.Component {
         )
     }
 
-    renderValueBandInput() {
+    renderValueColumnInput() {
         const {inputs: {valueColumn}} = this.props
         const {bands = []} = this.state
         const options = bands
@@ -169,49 +172,49 @@ class _SampleImageSection extends React.Component {
                 input={valueColumn}
                 disabled={!bands.length}
                 options={options}
-                label={msg('process.regression.panel.trainingData.form.sampleImage.valueBand.label')}
-                placeholder={msg('process.regression.panel.trainingData.form.sampleImage.valueBand.placeholder')}
-                tooltip={msg('process.regression.panel.trainingData.form.sampleImage.valueBand.tooltip')}
+                label={msg('process.classification.panel.trainingData.form.sampleClassification.valueColumn.label')}
+                placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.valueColumn.placeholder')}
+                tooltip={msg('process.classification.panel.trainingData.form.sampleClassification.valueColumn.tooltip')}
                 busyMessage={this.props.stream('SAMPLE_IMAGE').active && msg('widget.loading')}
-                onChange={({value: valueBand}) =>
-                    this.sampleData({
+                onChange={({value: classBand}) =>
+                    this.loadInputData({
                         asset: this.props.inputs.assetToSample.value,
-                        count: this.props.inputs.sampleCount.value,
+                        count: this.props.inputs.samplesPerClass.value,
                         scale: this.props.inputs.sampleScale.value,
-                        valueBand
-                    })
-                }
+                        classBand
+                    })}
             />
         )
     }
 
     componentDidMount() {
-        const {inputs: {typeToSample, sampleCount, sampleScale}} = this.props
-        const count = sampleCount.value || '1000'
+        const {inputs: {typeToSample, samplesPerClass, sampleScale}} = this.props
+        const count = samplesPerClass.value || '100'
         const scale = sampleScale.value || '30'
-        sampleCount.set(count)
+        samplesPerClass.set(count)
         sampleScale.set(scale)
         if (!typeToSample.value) {
             typeToSample.set('ASSET')
         }
     }
 
-    sampleData({asset, count, scale, valueBand}) {
+    loadInputData({asset, count, scale, classBand}) {
         const {inputs: {typeToSample}} = this.props
         const {recipeToSample} = this.state
         if (
             (typeToSample.value === 'ASSET' && !asset)
             || (typeToSample.value === 'RECIPE' && !recipeToSample)
-            || (!valueBand)
+            || (!classBand)
             || !count
             || !scale
         ) {
             return
         }
-        const {stream, inputs: {name, referenceData}, recipe} = this.props
+        const {stream, inputs: {name, inputData, columns}, recipe} = this.props
         this.cancel$.next()
         name.set(null)
-        referenceData.set(null)
+        inputData.set(null)
+        columns.set(null)
         this.props.inputs.valueColumn.setInvalid() // Reset any eventual error
         stream('SAMPLE_IMAGE',
             api.gee.sampleImage$({
@@ -220,9 +223,8 @@ class _SampleImageSection extends React.Component {
                     : recipeToSample,
                 count,
                 scale,
-                valueBand,
-                recipe,
-                bands: [valueBand]
+                classBand,
+                recipe
             }).pipe(
                 takeUntil(this.cancel$)
             ),
@@ -232,8 +234,8 @@ class _SampleImageSection extends React.Component {
                         ? asset.substring(asset.lastIndexOf('/') + 1)
                         : recipeToSample.title || recipeToSample.placeholder
                 )
-                const referenceDataValue = this.toReferenceData({featureCollection, valueBand})
-                referenceData.set(referenceDataValue)
+                inputData.set(this.toInputData(featureCollection))
+                columns.set(['.geo', ...Object.keys(featureCollection.columns)])
             },
             error => {
                 const response = error.response || {}
@@ -247,20 +249,19 @@ class _SampleImageSection extends React.Component {
         )
     }
 
-    toReferenceData({featureCollection, valueBand}) {
+    toInputData(featureCollection) {
         return featureCollection.features.map(feature => {
-            const [x, y] = feature.geometry.coordinates
-            return {x, y, value: feature.properties[valueBand]}
+            return {'.geo': feature.geometry, ...feature.properties}
         })
     }
 }
 
-export const SampleImageSection = compose(
-    _SampleImageSection,
+export const SampleClassificationSection = compose(
+    _SampleClassificationSection,
     withRecipe(mapRecipeToProps),
 )
 
-SampleImageSection.propTypes = {
+SampleClassificationSection.propTypes = {
     children: PropTypes.any,
     inputs: PropTypes.any
 }

@@ -11,7 +11,7 @@ const importPlugin = require('eslint-plugin-import')
 const simpleImportSort = require('eslint-plugin-simple-import-sort')
 
 const baseConfig = {
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.jsx'],
     languageOptions: {
         ecmaVersion: 'latest',
         globals: {

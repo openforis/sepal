@@ -19,7 +19,7 @@ const mapStateToProps = () => ({
 
 class _UserSessions extends React.Component {
     stopSession(session) {
-        const {stream, onClose} = this.props
+        const {stream} = this.props
         stream('STOP_USER_SESSION',
             stopCurrentUserSession$(session),
             () => {

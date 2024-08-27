@@ -10,6 +10,7 @@ import {selectFrom} from '~/stateUtils'
 import {uuid} from '~/uuid'
 
 import {initializeRecipe} from './recipe'
+import {getRecipeType} from './recipeTypeRegistry'
 
 let componentIdsByRecipeId = {}
 
@@ -79,7 +80,6 @@ export const recipeAccess = () =>
             }
 
             loadSourceRecipe$(recipeId) {
-                const {getRecipeType} = require('./recipeTypeRegistry')
                 return this.loadRecipe$(recipeId).pipe(
                     switchMap(recipe => {
                         const type = getRecipeType(recipe.type)

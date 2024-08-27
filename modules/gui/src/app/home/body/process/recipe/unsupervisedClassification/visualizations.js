@@ -1,8 +1,8 @@
 // import {normalize} from '~/app/home/map/visParams/visParams'
 
-import {colorBrewerOptions, pickColors} from 'app/home/map/visParams/palettePreSets'
-import {normalize} from 'app/home/map/visParams/visParams'
-import {sequence} from 'array'
+import {colorBrewerOptions, pickColors} from '~/app/home/map/visParams/palettePreSets'
+import {normalize} from '~/app/home/map/visParams/visParams'
+import {sequence} from '~/array'
 
 import {getMaxNumberofClusters} from './unsupervisedClassificationRecipe'
 

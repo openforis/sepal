@@ -2,9 +2,9 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {debounceTime, Subject} from 'rxjs'
-import {withSubscriptions} from 'subscription'
 
 import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
 
 import styles from './fastList.module.css'
 import {Keybinding} from './keybinding'
@@ -79,7 +79,7 @@ class _FastListContent extends React.PureComponent {
         this.handleEnter = this.handleEnter.bind(this)
         this.handleEscape = this.handleEscape.bind(this)
     }
-    
+
     render() {
         const {items} = this.props
         return items?.length

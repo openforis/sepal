@@ -1,12 +1,12 @@
-import ee from '@google/earthengine'
 import {combineLatest, filter, map} from 'rxjs'
 
 import {toBandValues} from '../cursorValue'
 import {handleError$} from './earthEngineError'
 import {WMTSTileProvider} from './wmtsTileProvider'
 
+// ee.layers.AbstractOverlay.DEFAULT_TILE_EDGE_LENGTH (@google/earthengine)
+const TILE_SIZE = 256
 const CONCURRENCY = 8
-const TILE_SIZE = ee.layers.AbstractOverlay.DEFAULT_TILE_EDGE_LENGTH
 
 export class EarthEngineTileProvider extends WMTSTileProvider {
     elements = {}

@@ -1,5 +1,4 @@
 import React from 'react'
-import {Layout} from 'widget/layout'
 
 import api from '~/apiRegistry'
 import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
@@ -13,6 +12,7 @@ import {withActivatable} from '~/widget/activation/activatable'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Label} from '~/widget/label'
+import {Layout} from '~/widget/layout'
 import {Padding} from '~/widget/padding'
 import {Panel} from '~/widget/panel/panel'
 import {CenteredProgress} from '~/widget/progress'

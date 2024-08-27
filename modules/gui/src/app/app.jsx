@@ -5,7 +5,6 @@ import '../style/look.module.css'
 
 import PropTypes from 'prop-types'
 import React from 'react'
-import {EventShield} from 'widget/eventShield'
 
 import {Home} from '~/app/home/home'
 import {Landing} from '~/app/landing/landing'
@@ -13,6 +12,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 import {loadUser$} from '~/user'
+import {EventShield} from '~/widget/eventShield'
 import {Notifications} from '~/widget/notifications'
 import {ViewportResizeSensor} from '~/widget/viewportResizeSensor'
 
