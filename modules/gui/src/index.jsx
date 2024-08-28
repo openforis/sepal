@@ -6,6 +6,7 @@ import '@fontsource/source-sans-pro/400.css'
 import '@fontsource/source-sans-pro/600.css'
 import '@fontsource/source-sans-pro/700.css'
 
+import {composeWithDevTools} from '@redux-devtools/extension'
 import {createBrowserHistory} from 'history'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
@@ -48,7 +49,7 @@ const batchActions = () => next => action => {
 
 const devTools = middleware =>
     isDevelopment()
-        ? require('@redux-devtools/extension').composeWithDevTools(middleware)
+        ? composeWithDevTools(middleware)
         : middleware
 
 const store = createStore(

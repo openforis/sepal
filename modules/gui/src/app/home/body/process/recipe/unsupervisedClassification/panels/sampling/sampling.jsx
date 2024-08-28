@@ -1,11 +1,11 @@
 import React from 'react'
-import {NumberButtons} from 'widget/numberButtons'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
+import {NumberButtons} from '~/widget/numberButtons'
 import {Panel} from '~/widget/panel/panel'
 
 import styles from './sampling.module.css'

@@ -179,24 +179,12 @@ class _TabHandle extends React.Component {
     scrollSelectedTabIntoView() {
         const {scrollable} = this.props
         const inputElement = this.titleInput.current
-        const scrollableElement = scrollable && scrollable.getElement()
-        if (!inputElement || !scrollableElement)
+        if (!inputElement)
             return
         const tabElement = inputElement.closest(`.${styles.tab}`)
         if (!tabElement)
             return
-        const tabLeft = tabElement.offsetLeft
-        const tabWidth = tabElement.clientWidth
-        const tabRight = tabLeft + tabWidth
-        const scrollableWidth = scrollableElement.clientWidth
-        const min = Math.max(tabRight + tabWidth / 2 - scrollableWidth, 0)
-        const max = Math.max(tabLeft - tabWidth / 2, 0)
-        const offset = scrollable.scrollLeft
-        if (offset < min) {
-            scrollable.horizontalScrollTo(min)
-        } else if (offset > max) {
-            scrollable.horizontalScrollTo(max)
-        }
+        scrollable.scrollElement(tabElement)
     }
 
     componentDidMount() {

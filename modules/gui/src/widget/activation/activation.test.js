@@ -2,8 +2,6 @@ import {toPathList} from '~/stateUtils'
 
 import {collectActivatables as collect} from './activation'
 
-/* eslint-disable no-undef */
-
 it('Given no activatables, an empty object is returned', () => {
     expect(collectActivatables({
         activation: {

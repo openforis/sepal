@@ -2,8 +2,6 @@ import {getHash} from '~/hash'
 
 import {Mutator} from './stateUtils'
 
-/* eslint-disable no-undef */
-
 it('hash propagates upwards', () => {
     const state = {a: {b: {c: 'foo'}}}
     const nextState = new Mutator(state, 'a.b.c').set('bar')

@@ -1,10 +1,10 @@
 import _ from 'lodash'
-import {selectFrom} from 'stateUtils'
 
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {publishEvent} from '~/eventPublisher'
+import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 export const getDefaultModel = () => ({

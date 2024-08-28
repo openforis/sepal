@@ -1,8 +1,8 @@
-import {sequence} from 'array'
 import Color from 'color'
 import _ from 'lodash'
 import React from 'react'
 
+import {sequence} from '~/array'
 import {withContext} from '~/context'
 
 import {selectFrom} from '../../../stateUtils'
@@ -23,7 +23,7 @@ export const toBandValues = (rgb, visParams, dataTypes) => {
     const max = inverted
         .map((inverted, i) => inverted ? visParams.min[i] : visParams.max[i])
     const {type} = visParams
-    switch(type) {
+    switch (type) {
     case 'continuous': return toContinuous(rgb, {...visParams, min, max}, dataTypes)
     case 'categorical': return toCategorical(rgb, visParams, dataTypes)
     case 'rgb': return toRgb(rgb, {...visParams, min, max}, dataTypes)
@@ -88,7 +88,7 @@ const toContinuous = (rgb, visParams, dataTypes) => {
                 : 0
             return ({value, from, range, factor})
         })
-        
+
         const fromValue = fromRgbValue.value
         const toValue = toRgbValue.value
         const error = getError(channels)

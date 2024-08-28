@@ -1,9 +1,9 @@
-import {sequence} from 'array'
 import _ from 'lodash'
 import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {sequence} from '~/array'
 import format from '~/format'
 import {msg} from '~/translate'
 import {Graph} from '~/widget/graph'
@@ -379,14 +379,14 @@ const segmentsData = ({
     const mask = ({date}) => {
         return [date, observationByTimestamp[date.getTime()] || null, NaN]
     }
-    
+
     const extrapolate = ({date, prevSegmentIndex, nextSegmentIndex, extrapolateSegment, extrapolateMaxDays}) => {
         const t = toT(date, dateFormat)
         const tStart = segments.tEnd[prevSegmentIndex]
         const tEnd = segments.tStart[nextSegmentIndex]
         const days = moment(fromT(tEnd, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
         const day = moment(fromT(t, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
-        
+
         const segmentIndex = extrapolateSegment === 'PREVIOUS'
             ? prevSegmentIndex
             : extrapolateSegment === 'NEXT'

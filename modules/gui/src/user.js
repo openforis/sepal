@@ -1,8 +1,8 @@
-import {userDetailsHint} from 'app/home/user/userDetails'
 import {catchError, map, of, switchMap, tap} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
+import {userDetailsHint} from '~/app/home/user/userDetails'
 import {publishCurrentUserEvent, publishEvent} from '~/eventPublisher'
 import {select} from '~/store'
 import {msg} from '~/translate'

@@ -1,10 +1,10 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {withForwardedRef} from 'ref'
 import {animationFrames, concatWith, delay, distinctUntilChanged, EMPTY, filter, fromEvent, map, merge, of, sample, scan, shareReplay, Subject, switchMap, takeUntil, takeWhile} from 'rxjs'
 
 import {compose} from '~/compose'
+import {withForwardedRef} from '~/ref'
 import {withSubscriptions} from '~/subscription'
 import {Keybinding} from '~/widget/keybinding'
 

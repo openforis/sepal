@@ -1,8 +1,6 @@
 import _ from 'lodash'
 
-import {getDefaults, getValidMappings} from './legendImport'
-
-/* eslint-disable no-undef */
+import {getDefaults, getValidMappings} from './legendImportDefaults'
 
 const test = name => {
     const nameTemplate = _.template(name)
@@ -80,14 +78,10 @@ test('getValidMappings(${columns}, ${rows}) === ${result}')
         }
     )
 
-test('getDefaults(${columns}, ${rows}, ${validMappings}) === ${result}')
-    .assert(({columns, rows, validMappings, result}) => expect(getDefaults(columns, rows, validMappings)).toEqual(result))
+test('getDefaults(${validMappings}) === ${result}')
+    .assert(({validMappings, result}) => expect(getDefaults(validMappings)).toEqual(result))
     .where(
         {
-            columns: ['class', 'label', 'color', 'red', 'green', 'blue', 'alpha'],
-            rows: [
-                {class: 0, label: 'foo', color: 'white', red: 0, green: 0, blue: 0, alpha: 0}
-            ],
             validMappings: {
                 valueColumn: ['class', 'red', 'green', 'blue', 'alpha'],
                 labelColumn: ['class', 'label', 'color', 'red', 'green', 'blue', 'alpha'],
@@ -107,10 +101,6 @@ test('getDefaults(${columns}, ${rows}, ${validMappings}) === ${result}')
             }
         },
         {
-            columns: ['class', 'label', 'color', 'red', 'green', 'blue', 'alpha'],
-            rows: [
-                {class: 0, label: 'foo', color: 'white', red: 0, green: 0, blue: 0, alpha: 0}
-            ],
             validMappings: {
                 valueColumn: ['class', 'red', 'green', 'blue', 'alpha'],
                 labelColumn: ['class', 'label', 'color', 'red', 'green', 'blue', 'alpha'],
@@ -130,10 +120,6 @@ test('getDefaults(${columns}, ${rows}, ${validMappings}) === ${result}')
             }
         },
         {
-            columns: ['class', 'label', 'color', 'red', 'green', 'blue', 'alpha'],
-            rows: [
-                {class: 0, label: 'foo', color: 'white', red: 0, green: 0, blue: 0, alpha: 0}
-            ],
             validMappings: {
                 valueColumn: ['Value', 'Red', 'Green', 'Blue'],
                 labelColumn: ['Value', 'ClassName', 'Red', 'Green', 'Blue'],

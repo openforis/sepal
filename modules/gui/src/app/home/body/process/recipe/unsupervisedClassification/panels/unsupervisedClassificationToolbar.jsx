@@ -8,12 +8,12 @@ import {msg} from '~/translate'
 import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
-import {AuxiliaryImagery} from '../../classification/panels/auxiliaryImagery/auxiliaryImagery.js'
-import {InputImagery} from '../../classification/panels/inputImagery/inputImagery.js'
-import {RetrieveButton} from '../../retrieveButton.js'
-import {Clusterer} from './cluster/clusterer.js'
-import {Retrieve} from './retrieve/retrieve.js'
-import {Sampling} from './sampling/sampling.js'
+import {AuxiliaryImagery} from '../../classification/panels/auxiliaryImagery/auxiliaryImagery'
+import {InputImagery} from '../../classification/panels/inputImagery/inputImagery'
+import {RetrieveButton} from '../../retrieveButton'
+import {Clusterer} from './cluster/clusterer'
+import {Retrieve} from './retrieve/retrieve'
+import {Sampling} from './sampling/sampling'
 import styles from './unsupervisedClassificationToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({

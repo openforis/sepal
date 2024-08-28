@@ -81,7 +81,7 @@ const saveToLocalStorage$ = (() => {
     const saveRevisionToLocalStorage = (recipeId, revision) => {
         try {
             saveRevision(recipeId, revision)
-        } catch (exception) {
+        } catch (_error) {
             if (removeRevisionFromLocalStorage(recipeId)) {
                 saveRevisionToLocalStorage(recipeId, revision)
             }

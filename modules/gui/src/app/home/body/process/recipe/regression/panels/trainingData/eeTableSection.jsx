@@ -1,12 +1,12 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
-import {FormCombo} from 'widget/form/combo'
-import {Layout} from 'widget/layout'
 
 import api from '~/apiRegistry'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
+import {FormCombo} from '~/widget/form/combo'
+import {Layout} from '~/widget/layout'
 
 export class EETableSection extends React.Component {
     cancel$ = new Subject()

@@ -1,3 +1,5 @@
+import 'moment/min/locales.min' // Load all moment locales
+
 import {flatten} from 'flat'
 import _ from 'lodash'
 import moment from 'moment'
@@ -5,7 +7,20 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {injectIntl, IntlProvider} from 'react-intl'
 
+import en from '~/locale/en/translations.json'
+import es from '~/locale/es/translations.json'
+import fr from '~/locale/fr/translations.json'
 import {getLogger} from '~/log'
+
+const translations = {
+    en, es, fr
+}
+
+export const languages = [
+    {code: 'en', name: 'English'},
+    {code: 'es', name: 'Español'},
+    {code: 'fr', name: 'Français'}
+]
 
 const log = getLogger('translate')
 
@@ -70,13 +85,12 @@ export class TranslationProvider extends React.Component {
     static getDerivedStateFromProps(props, state) {
         const languageState = language => {
             const loadTranslations = language => flatten( // react-intl requires a flat object
-                require(`locale/${language}/translations.json`)
+                translations[language]
             )
             const messages = loadTranslations(language)
             const messagesEn = language === 'en'
                 ? messages
                 : loadTranslations('en')
-            require('moment/min/locales.min') // Load all moment locales
 
             moment.locale(language)
             return {...state, messages, messagesEn, language}
@@ -87,7 +101,7 @@ export class TranslationProvider extends React.Component {
         } else {
             try {
                 return languageState(language)
-            } catch (error) {
+            } catch (_error) {
                 return languageState(setLanguage('en'))
             }
         }
