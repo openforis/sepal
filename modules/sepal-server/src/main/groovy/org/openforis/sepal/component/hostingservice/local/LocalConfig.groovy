@@ -9,8 +9,7 @@ class LocalConfig {
     final String host
 
     LocalConfig() {
-        // host = System.getProperty('sepalHost')
-        host = 'docker-api'
+        host = 'host.docker.internal'
     }
 
 }

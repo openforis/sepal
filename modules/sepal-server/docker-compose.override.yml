@@ -11,8 +11,6 @@ services:
       - "${SEPAL_PROJECT_DIR}/modules/sepal-server/build:/usr/local/src/sepal/modules/sepal-server/build"
     environment:
       SEPAL_HOST_PROJECT_DIR: "${SEPAL_PROJECT_DIR}"
-    extra_hosts:
-      - "${SEPAL_HOST}:127.0.0.1"
 
   socat:
     image: alpine/socat
@@ -20,7 +18,7 @@ services:
     command: TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    # ports:
-    #   - "2375:2375"
+    ports:
+      - "127.0.0.1:2375:2375"
     networks:
       - sepal
