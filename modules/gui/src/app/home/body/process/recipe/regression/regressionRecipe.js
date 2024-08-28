@@ -19,24 +19,6 @@ export const getDefaultModel = () => ({
         bagFraction: 0.5,
         maxNodes: null,
         seed: 1,
-
-        shrinkage: 0.005,
-        samplingRate: 0.7,
-        loss: 'LeastAbsoluteDeviation',
-
-        lambda: 0.000001,
-
-        decisionProcedure: 'Voting',
-        svmType: 'C_SVC',
-        kernelType: 'LINEAR',
-        shrinking: true,
-        degree: 3,
-        gamma: null,
-        coef0: 0,
-        cost: 1,
-        nu: 0.5,
-
-        metric: 'euclidean'
     }
 })
 
