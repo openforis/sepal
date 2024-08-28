@@ -2,8 +2,6 @@ import _ from 'lodash'
 
 import {toVisualizations} from './assetVisualizationParser'
 
-/* eslint-disable no-undef */
-
 const test = name => {
     const nameTemplate = _.template(name)
     return ({

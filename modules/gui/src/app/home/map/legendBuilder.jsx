@@ -187,7 +187,7 @@ const entryFields = {
             try {
                 Color(color).hex()
                 return true
-            } catch (e) {
+            } catch (_error) {
                 return false
             }
         }, 'map.legendBuilder.entry.error.invalidColor'),

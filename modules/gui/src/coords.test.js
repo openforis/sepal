@@ -2,8 +2,6 @@ import _ from 'lodash'
 
 import {formatCoordinates, parseCoordinates} from './coords'
 
-/* eslint-disable no-undef */
-
 const test = name => {
     const nameTemplate = _.template(name)
     return ({

@@ -2,8 +2,6 @@ import _ from 'lodash'
 
 import {normalize} from './visParams'
 
-/* eslint-disable no-undef */
-
 const test = name => {
     const nameTemplate = _.template(name)
     return ({

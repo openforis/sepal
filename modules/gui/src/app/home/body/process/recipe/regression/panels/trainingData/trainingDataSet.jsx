@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-key */
 import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'

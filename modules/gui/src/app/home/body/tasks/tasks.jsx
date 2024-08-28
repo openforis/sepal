@@ -176,7 +176,7 @@ class _Tasks extends React.Component {
         let description
         try {
             description = JSON.parse(task.statusDescription)
-        } catch(e) {
+        } catch(_error) {
             description = task.statusDescription
         }
         if (typeof description === 'string') {
