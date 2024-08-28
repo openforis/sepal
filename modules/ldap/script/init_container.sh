@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm -f /data/module_initialized
+rm -f /data/content_added /data/keypair_generated
 
 function template {
     local template=$1
@@ -25,5 +25,4 @@ if [ ! -f /container/service/slapd/assets/certs/ldap-key.pem ]; then
 
   cp -f ./*.pem /container/service/slapd/assets/certs/
 fi
-
 exec /usr/bin/supervisord -c /config/supervisord.conf

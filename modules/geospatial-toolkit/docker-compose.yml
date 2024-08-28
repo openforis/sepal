@@ -5,12 +5,12 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/geospatial-toolkit/Dockerfile
-      network: sepal
     image: "openforis/geospatial-toolkit:latest"
     container_name: geospatial-toolkit
     networks:
       - sepal
     restart: always
+    platform: linux/amd64 # Required for macOS builds
 
 networks:
   sepal:
