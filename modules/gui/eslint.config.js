@@ -6,7 +6,7 @@ const babelPresetEnv = require('@babel/preset-env')
 const babelPresetReact = require('@babel/preset-react')
 
 const reactPlugin = require('eslint-plugin-react')
-const reactHooksPlugin = require('eslint-plugin-react-hooks')
+// const reactHooksPlugin = require('eslint-plugin-react-hooks')
 // const importPlugin = require('eslint-plugin-import')
 const simpleImportSort = require('eslint-plugin-simple-import-sort')
 
@@ -92,14 +92,14 @@ const reactConfig = {
     }
 }
 
-const reactHooksConfig = {
-    plugins: {
-        'react-hooks': reactHooksPlugin,
-    },
-    rules: {
-        ...reactHooksPlugin.configs.recommended.rules
-    }
-}
+// const reactHooksConfig = {
+//     plugins: {
+//         'react-hooks': reactHooksPlugin,
+//     },
+//     rules: {
+//         ...reactHooksPlugin.configs.recommended.rules
+//     }
+// }
 
 const importConfig = {
     plugins: {
@@ -116,5 +116,8 @@ const importConfig = {
 }
 
 module.exports = [
-    baseConfig, reactConfig, reactHooksConfig, importConfig
+    baseConfig,
+    reactConfig,
+    // reactHooksConfig,
+    importConfig
 ]

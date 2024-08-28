@@ -46,7 +46,7 @@ else
   echo "**** Not a soft-link: ${CA_FILE}"
 fi
 
-touch /data/module_initialized
+touch /data/content_added
 echo "LDAP initialized"
 
 exit 0

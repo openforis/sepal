@@ -29,7 +29,7 @@ services:
     networks:
       - sepal
     healthcheck:
-      test: bash -c "test -f /data/module_initialized"
+      test: bash -c "test -f /data/content_added && [ ! -f '/container/environment/99-default/default.startup.yaml' ]"
       timeout: 60s
       interval: 1s
       retries: 60
