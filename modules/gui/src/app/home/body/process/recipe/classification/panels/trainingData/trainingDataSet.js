@@ -42,9 +42,15 @@ const fields = {
         .skip((value, {type}) => type !== 'EE_TABLE')
         .notBlank('process.classification.panel.trainingData.form.eeTable.required'),
 
-    assetToSample: new Form.Field()
+    typeToSample: new Form.Field()
         .skip((value, {type}) => type !== 'SAMPLE_CLASSIFICATION')
+        .notBlank(),
+    assetToSample: new Form.Field()
+        .skip((value, {type, typeToSample}) => type !== 'SAMPLE_CLASSIFICATION' || typeToSample !== 'ASSET')
         .notBlank('process.classification.panel.trainingData.form.sampleClassification.assetToSample.required'),
+    recipeIdToSample: new Form.Field()
+        .skip((value, {type, typeToSample}) => type !== 'SAMPLE_CLASSIFICATION' || typeToSample !== 'RECIPE')
+        .notBlank('process.classification.panel.trainingData.form.sampleClassification.recipeToSample.required'),
     samplesPerClass: new Form.Field()
         .skip((value, {type}) => type !== 'SAMPLE_CLASSIFICATION')
         .notBlank('process.classification.panel.trainingData.form.sampleClassification.numberOfSamples.required'),
@@ -79,8 +85,7 @@ const fields = {
         .skip((value, {wizardStep}) => wizardStep !== 2)
         .notBlank('process.classification.panel.trainingData.form.class.classColumnFormat.required'),
     valueColumn: new Form.Field()
-        .skip((value, {wizardStep}) => wizardStep !== 2)
-        .skip((value, {classColumnFormat}) => classColumnFormat !== 'SINGLE_COLUMN')
+        .skip((value, {type, wizardStep, classColumnFormat}) => type !== 'SAMPLE_CLASSIFICATION' && (wizardStep !== 2 || classColumnFormat !== 'SINGLE_COLUMN'))
         .notBlank('process.classification.panel.trainingData.form.class.valueColumn.required'),
     valueMapping: new Form.Field(),
     columnMapping: new Form.Field(),
@@ -214,7 +219,9 @@ const modelToValues = model => {
         inputData: model.inputData,
         columns: model.columns,
         eeTable: model.eeTable,
+        typeToSample: model.typeToSample || 'ASSET',
         assetToSample: model.assetToSample,
+        recipeIdToSample: model.recipeIdToSample,
         samplesPerClass: model.samplesPerClass,
         sampleScale: model.sampleScale,
         recipe: model.recipe,
@@ -238,21 +245,6 @@ const valuesToModel = values => {
         inputData: values.type === 'CSV_UPLOAD' ? values.inputData : undefined,
         referenceData: values.referenceData.referenceData
     }
-    // const model = {
-    //     imageId: values.imageId,
-    //     type: values.section,
-    //     bands: values.bands,
-    //     bandSetSpecs: values.bandSetSpecs
-    // }
-    // // TODO: Update...
-    // switch (values.section) {
-    //     case 'RECIPE_REF':
-    //         return {...model, id: values.recipe}
-    //     case 'ASSET':
-    //         return {...model, id: values.asset}
-    //     default:
-    //         return null
-    // }
 }
 
 const policy = () => ({_: 'allow'})

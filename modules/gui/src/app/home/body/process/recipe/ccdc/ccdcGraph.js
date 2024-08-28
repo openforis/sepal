@@ -1,3 +1,4 @@
+import {sequence} from 'array'
 import _ from 'lodash'
 import moment from 'moment'
 import PropTypes from 'prop-types'
@@ -492,9 +493,3 @@ const getOmega = dateFormat => {
         throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
     }
 }
-
-const sequence = (start, end, step = 1) =>
-    end >= start
-        ? Array.apply(null, {length: Math.floor((end - start) / step) + 1})
-            .map((_, i) => i * step + start)
-        : []
