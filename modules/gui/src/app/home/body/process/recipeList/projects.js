@@ -91,21 +91,11 @@ class _Projects extends React.Component {
     renderProjects() {
         const {projects} = this.props
 
-        // Helper function to check for duplicate names
-        const isDuplicate = (project, index, projects) => {
-            return projects.some((p, i) => p.name === project.name && i !== index)
-        }
-
         if (projects.length) {
             return (
                 <Layout type='vertical' spacing='tight'>
-                    {projects.map((project, index) => {
-                        const duplicate = isDuplicate(project, index, projects)
-                        const displayName = duplicate ? `${project.name}_${project.id.slice(0, 3)}` : project.name
-                        return this.renderProject({...project, name: displayName}, index)
-                    })}
+                    {projects.map((project, index) => this.renderProject(project, index))}
                 </Layout>
-
             )
         } else {
             return (
@@ -129,6 +119,7 @@ class _Projects extends React.Component {
                 onClick={() => this.selectProject(project.id)}>
                 <CrudItem
                     title={project.name}
+                    description={msg('process.project.description', {count: projectRecipes.length})}
                     editTooltip={msg('process.project.edit.tooltip')}
                     removeTooltip={msg('process.project.remove.tooltip')}
                     removeTitle={msg('process.project.remove.title')}
@@ -183,10 +174,11 @@ class _Projects extends React.Component {
     }
 
     renderProjectPanel(project) {
+        const projectNames = this.props.projects.map(({name}) => name)
         return (
             <Project
                 project={project}
-                projectNames={this.props.projects.map(({name}) => name)}
+                projectNames={projectNames}
                 onApply={project => this.updateProject(project)}
                 onCancel={() => this.editProject()}
             />

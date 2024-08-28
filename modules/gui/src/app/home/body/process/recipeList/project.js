@@ -18,11 +18,12 @@ const fields = {
 
 const mapStateToProps = (state, ownProps) => {
     const project = ownProps.project
+    const projectNames = ownProps.projectNames
     return {
         values: {
             id: project && project.id,
             name: (project && project.name) || '',
-            projectNames: ownProps.projectNames
+            projectNames: projectNames
         }
     }
 }
