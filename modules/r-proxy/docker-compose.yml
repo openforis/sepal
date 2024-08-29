@@ -14,6 +14,10 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/r-proxy/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/r-proxy:${SEPAL_VERSION:-latest}"
     container_name: r-proxy
     init: true

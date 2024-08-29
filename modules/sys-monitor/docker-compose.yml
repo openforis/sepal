@@ -5,6 +5,10 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/sys-monitor/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/sys-monitor:${SEPAL_VERSION:-latest}"
     container_name: sys-monitor
     init: true

@@ -5,6 +5,10 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/app-manager/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/app-manager:${SEPAL_VERSION:-latest}"
     container_name: app-manager
     init: true

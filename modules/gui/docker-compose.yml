@@ -8,6 +8,10 @@ services:
       args:
         BUILD_NUMBER: "${BUILD_NUMBER}"
         GIT_COMMIT: "${GIT_COMMIT}"
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/gui:${SEPAL_VERSION:-latest}"
     container_name: gui
     environment:

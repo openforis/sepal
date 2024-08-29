@@ -5,5 +5,9 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/sandbox-base/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "openforis/sandbox-base:latest"
     platform: linux/amd64 # Required for macOS builds
