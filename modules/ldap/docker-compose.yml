@@ -7,9 +7,6 @@ services:
       dockerfile: ./modules/ldap/Dockerfile
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/ldap:${SEPAL_VERSION:-latest}"
     container_name: ldap
-    ports:
-      - "0.0.0.0:389:389"
-      - "0.0.0.0:636:636"
     volumes:
       - "${SEPAL_DATA_DIR}/ldap:/data"
       # Parent image volumes

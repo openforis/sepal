@@ -2,8 +2,6 @@ version: "3.9"
 
 services:
   sepal:
-    ports:
-      - "127.0.0.1:5005:5005"
     volumes:
       - "${SEPAL_PROJECT_DIR}/common/src:/usr/local/src/sepal/common/src"
       - "${SEPAL_PROJECT_DIR}/common/build:/usr/local/src/sepal/common/build"
@@ -19,6 +17,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - "127.0.0.1:2375:2375"
+      - "${SEPAL_IP:-0.0.0.0}:2375:2375"
     networks:
       - sepal
