@@ -8,7 +8,6 @@
     - set_fact:
         SEPAL_IP: "{{ ec2_private_ip_address }}"
         SEPAL_SSH_IP: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
-        LDAP_HOST: "{{ ec2_private_ip_address }}"
         SYSLOG_ADDRESS: "udp://{{ ec2_private_ip_address }}"
 
     # bash prompt
@@ -209,7 +208,6 @@
           SEPAL_VERSION={{ VERSION }}
           SEPAL_IP={{ SEPAL_IP }}
           SEPAL_SSH_IP={{ SEPAL_SSH_IP }}
-          LDAP_HOST={{ LDAP_HOST }}
           SYSLOG_ADDRESS={{ SYSLOG_ADDRESS }}
 
     - name: Assemble a single env file
