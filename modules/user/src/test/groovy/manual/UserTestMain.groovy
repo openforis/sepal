@@ -3,12 +3,12 @@ package manual
 import fake.FakeExternalUserDataGateway
 import groovymvc.security.UsernamePasswordVerifier
 import org.openforis.sepal.component.user.Main
-import org.openforis.sepal.component.user.ServerConfig
 import org.openforis.sepal.component.user.api.ExternalUserDataGateway
 import org.openforis.sepal.security.Roles
 import org.openforis.sepal.user.User
 
 class UserTestMain extends Main {
+
     private FakeExternalUserDataGateway userDataGateway
 
     private FakeExternalUserDataGateway createFakeExternalUserDataGateway() {
@@ -40,7 +40,7 @@ class UserTestMain extends Main {
         return userDataGateway
     }
 
-    UsernamePasswordVerifier createUsernamePasswordVerifier(ServerConfig serverConfig) {
+    UsernamePasswordVerifier createUsernamePasswordVerifier() {
         userDataGateway ?: createFakeExternalUserDataGateway()
     }
 
@@ -51,4 +51,5 @@ class UserTestMain extends Main {
     static void main(String[] args) {
         new UserTestMain()
     }
+
 }
