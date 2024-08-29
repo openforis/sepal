@@ -19,7 +19,6 @@ services:
     environment:
       SEPAL_HOST: "${SEPAL_HOST}"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
-      LDAP_HOST: "${LDAP_HOST}"
       LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
     networks:
       - sepal

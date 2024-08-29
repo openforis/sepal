@@ -17,7 +17,6 @@ services:
       - "${SEPAL_DATA_DIR}/ldap/config:/etc/ldap/slapd.d"
       - "${SEPAL_DATA_DIR}/ldap/certificates:/container/service/slapd/assets/certs"
     environment:
-      LDAP_HOST: "$LDAP_HOST"
       LDAP_ORGANISATION: "SEPAL"
       LDAP_DOMAIN: "sepal.org"
       LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
