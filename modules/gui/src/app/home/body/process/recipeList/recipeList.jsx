@@ -158,6 +158,7 @@ class _RecipeList extends React.Component {
 
     toggleEdit() {
         this.setState(({edit}) => ({edit: !edit}))
+        this.unselectAll()
     }
 
     renderSelectButton() {
@@ -422,6 +423,10 @@ class _RecipeList extends React.Component {
             ? _.difference(prevSelectedIds, filteredSelectedIds)
             : [...prevSelectedIds, ...filteredIds]
         this.setSelectedIds(selectedIds)
+    }
+
+    unselectAll() {
+        this.setSelectedIds([])
     }
 
     moveSelected(projectId) {
