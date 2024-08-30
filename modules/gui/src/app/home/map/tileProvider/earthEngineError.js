@@ -8,7 +8,7 @@ const parseErrorMessage = text => {
     try {
         const earthEngineError = JSON.parse(text)
         return earthEngineError?.error?.message || FALLBACK_ERROR_MESSAGE
-    } catch (error) {
+    } catch (_error) {
         return FALLBACK_ERROR_MESSAGE
     }
 }

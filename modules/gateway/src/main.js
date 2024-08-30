@@ -25,7 +25,7 @@ const redis = new Redis(redisUri)
 const userStore = UserStore(redis)
 const sessionStore = new RedisSessionStore({client: redis})
 
-const {messageHandler, logout} = SessionManager(sessionStore, userStore)
+const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore, userStore)
 const {authMiddleware} = Auth(userStore)
 const {proxyEndpoints} = Proxy(userStore, authMiddleware)
 
@@ -72,6 +72,7 @@ const main = async () => {
     app.use(userStore.userMiddleware)
 
     app.use('/api/user/logout', logout)
+    app.use('/api/user/invalidateOtherSessions', invalidateOtherSessions)
     app.use('/api/gateway/metrics', authMiddleware, apiMetrics({metricsPath: '/api/gateway/metrics'}))
 
     const proxies = proxyEndpoints(app)

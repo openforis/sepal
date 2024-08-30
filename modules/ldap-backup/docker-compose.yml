@@ -1,10 +1,12 @@
-version: "3.9"
-
 services:
   ldap-backup:
     build:
       context: ../..
       dockerfile: ./modules/ldap-backup/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/ldap-backup:${SEPAL_VERSION:-latest}"
     container_name: ldap-backup
     volumes:

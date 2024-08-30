@@ -20,7 +20,8 @@ ADD modules/${MODULE_NAME}/src ${MODULE}/src
 ADD modules/${MODULE_NAME}/public ${MODULE}/public
 ADD modules/${MODULE_NAME}/.env ${MODULE}/.env
 ADD modules/${MODULE_NAME}/jsconfig.json ${MODULE}/jsconfig.json
-ADD modules/${MODULE_NAME}/craco.config.js ${MODULE}/craco.config.js
+ADD modules/${MODULE_NAME}/index.html ${MODULE}/index.html
+ADD modules/${MODULE_NAME}/vite.config.js ${MODULE}/vite.config.js
 
 RUN npm run build
 

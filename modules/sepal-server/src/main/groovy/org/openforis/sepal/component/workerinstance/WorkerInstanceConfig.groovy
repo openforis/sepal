@@ -5,6 +5,7 @@ import org.openforis.sepal.util.Config
 
 @Canonical
 class WorkerInstanceConfig {
+
     final String sepalVersion
     final String sepalUser
     final String sepalPassword
@@ -12,7 +13,6 @@ class WorkerInstanceConfig {
     final String sepalHttpsPort
     final String sepalHostDataDir
     final String sepalHostProjectDir
-    final String ldapHost
     final String ldapPassword
     final int dockerPort
     final String dockerEntryPoint
@@ -34,7 +34,6 @@ class WorkerInstanceConfig {
         sepalHttpsPort = c.string('sepalHttpsPort')
         sepalHostDataDir = c.string('sepalHostDataDir')
         sepalHostProjectDir = c.getProperty('sepalHostProjectDir')
-        ldapHost = c.string('ldapHost')
         ldapPassword = c.string('ldapPassword')
         dockerPort = c.integer('dockerPort')
         dockerEntryPoint = c.string('dockerEntryPoint')
@@ -51,4 +50,5 @@ class WorkerInstanceConfig {
     static boolean isOlderVersion(String sepalVersion1, String sepalVersion2) {
         Comparator.comparingInt { it.find(/\d*/) as int }.compare(sepalVersion1, sepalVersion2) < 0
     }
+
 }

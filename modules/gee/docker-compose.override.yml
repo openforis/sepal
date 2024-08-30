@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   gee:
     volumes:  # To allow dynamic reloading in dev

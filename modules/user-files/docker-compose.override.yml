@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   user-files:
     volumes:  # To allow dynamic reloading in dev

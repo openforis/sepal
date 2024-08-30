@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <base href="${BASE_URL}" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="/resource/manifest.json">
+
+    <!-- Icon specific -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/resource/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/resource/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/resource/favicon-16x16.png">
+    <link rel="mask-icon" href="/resource/safari-pinned-tab.svg" color="#186691">
+    <meta name="msapplication-TileColor" content="#186691">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- Apple specific -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+
+    <script>
+        window.googleAnalyticsId = '${GOOGLE_ANALYTICS_ID}'
+        window.googleMapsApiKey = '${GOOGLE_MAPS_API_KEY}'
+        window.googleRecaptchaSiteKey = '${GOOGLE_RECAPTCHA_SITE_KEY}'
+        window._sepal_global_ = {
+            gitCommit: '%VITE_GIT_COMMIT%' || '${GIT_COMMIT}',
+            buildNumber: '%VITE_BUILD_NUMBER%' || '${BUILD_NUMBER}',
+            googleAnalyticsId: '%VITE_GOOGLE_ANALYTICS_ID%' || '${GOOGLE_ANALYTICS_ID}',
+            googleMapsApiKey: '%VITE_GOOGLE_MAPS_API_KEY%' || '${GOOGLE_MAPS_API_KEY}',
+            googleRecaptchaSiteKey: '%VITE_GOOGLE_RECAPTCHA_SITE_KEY%' || '${GOOGLE_RECAPTCHA_SITE_KEY}'
+        }
+        var scriptElement = document.createElement("script");
+        scriptElement.async = true
+        scriptElement.src = 'https://www.googletagmanager.com/gtag/js?id=' + window._sepal_global_.googleAnalyticsId
+        document.head.appendChild(scriptElement)
+    </script>
+    <script>
+        window.process = {} // HACK: temporary fix after switching to create-react-app 5
+        window.dataLayer = window.dataLayer || []
+        function gtag() { dataLayer.push(arguments) }
+        gtag('js', new Date())
+        gtag('config', window._sepal_global_.googleAnalyticsId)
+    </script>
+
+    <title>S E P A L</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        @-ms-viewport {
+            width: device-width;
+        }
+
+        html {
+            background-color: rgba(17, 18, 21, 0.9);
+            color: #fff
+        }
+
+        body {
+            background-color: transparent;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            font-size: 1rem;
+            line-height: 2;
+            font-weight: 300;
+            text-align: left;
+            overflow: hidden;
+            text-transform: none;
+            letter-spacing: .5px;
+            -webkit-font-smoothing: antialiased;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            -ms-overflow-style: scrollbar;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body,
+        #app {
+            height: 100%;
+        }
+
+        .app-loader {
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+
+            position: absolute;
+            z-index: 9999999;
+            -webkit-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            -webkit-perspective: 1000;
+            perspective: 1000;
+        }
+
+        .app-loader span {
+            -webkit-border-top-left-radius: 50%;
+            border-top-left-radius: 50%;
+            -webkit-border-top-right-radius: 50%;
+            border-top-right-radius: 50%;
+            -webkit-border-bottom-left-radius: 50%;
+            border-bottom-left-radius: 50%;
+            -webkit-border-bottom-right-radius: 50%;
+            border-bottom-right-radius: 50%;
+            -webkit-animation: app-loader 0.9s linear infinite;
+            -o-animation: app-loader 0.9s linear infinite;
+            animation: app-loader 0.9s linear infinite;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 120px;
+            height: 120px;
+            margin: -60px 0 0 -60px;
+            border: 15px solid rgba(255, 255, 255, 0.05);
+            border-left-color: #B09582;
+        }
+
+        .app-loader p {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 120px;
+            height: 120px;
+            line-height: 120px;
+            margin: -60px 0 0 -60px;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: .75;
+        }
+
+        @keyframes app-loader {
+            0% {
+                -webkit-transform: rotate(0deg);
+                -o-transform: rotate(0deg);
+                transform: rotate(0deg);
+                border-left-color: rgba(197, 179, 151, 0.5);
+            }
+
+            50% {
+                border-left-color: #c5b397;
+            }
+
+            100% {
+                -webkit-transform: rotate(360deg);
+                -o-transform: rotate(360deg);
+                transform: rotate(360deg);
+                border-left-color: rgba(197, 179, 151, 0.5);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <noscript>
+        You need to enable JavaScript to use Sepal.
+    </noscript>
+    <div id="app">
+        <div class="app-loader">
+            <span></span>
+            <p>S E P A L</p>
+        </div>
+    </div>
+    <script type="module" src="/src/index.jsx"></script>
+</body>
+
+</html>

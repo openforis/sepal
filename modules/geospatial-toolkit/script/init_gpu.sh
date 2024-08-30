@@ -9,9 +9,6 @@ echo "***************************"
 # Tensorflow version compatibility: 
 #   https://www.tensorflow.org/install/source#gpu
 
-
-apt-get update
-
 # To get OpenCL to work
 mkdir -p /etc/OpenCL/vendors 
 echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd

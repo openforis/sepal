@@ -1,14 +1,16 @@
-version: "3.9"
-
 services:
   prometheus:
     build:
       context: ../..
       dockerfile: ./modules/prometheus/prometheus.dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/prometheus:${SEPAL_VERSION:-latest}"
     container_name: prometheus
     ports:
-    - 9090:9090
+    - "${SEPAL_IP:-0.0.0.0}:9090:9090"
     environment:
       - TARGET_USERNAME=sepalAdmin
       - TARGET_PASSWORD=${SEPAL_ADMIN_PASSWORD}
@@ -25,7 +27,7 @@ services:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
     ports:
-      - 8080:8080
+      - "${SEPAL_IP:-0.0.0.0}:8080:8080"
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw

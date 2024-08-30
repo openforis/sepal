@@ -1,9 +1,5 @@
-version: "3.9"
-
 services:
   user:
-    ports:
-      - "127.0.0.1:5006:5006"
     volumes:
       - "${SEPAL_PROJECT_DIR}/common/src:/usr/local/src/sepal/common/src"
       - "${SEPAL_PROJECT_DIR}/common/build:/usr/local/src/sepal/common/build"

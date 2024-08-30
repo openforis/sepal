@@ -10,12 +10,8 @@ import javax.naming.directory.InitialDirContext
 import static javax.naming.Context.*
 
 class LdapUsernamePasswordVerifier implements UsernamePasswordVerifier {
-    private static final Logger LOG = LoggerFactory.getLogger(this)
-    private final String ldapHost
 
-    LdapUsernamePasswordVerifier(String ldapHost) {
-        this.ldapHost = ldapHost
-    }
+    private static final Logger LOG = LoggerFactory.getLogger(this)
 
     boolean verify(String username, String password) {
         def env = [
@@ -27,48 +23,51 @@ class LdapUsernamePasswordVerifier implements UsernamePasswordVerifier {
         ]
         try {
             new InitialDirContext(new Hashtable(env)).close()
-            LOG.debug("Successfully authenticated " + username)
+            LOG.debug('Successfully authenticated ' + username)
             return true
         } catch (AuthenticationException e) {
-            LOG.debug("Failed to authenticate " + username + ": " + (env + [(SECURITY_CREDENTIALS): '*****']), e)
+            LOG.debug('Failed to authenticate ' + username + ': ' + (env + [(SECURITY_CREDENTIALS): '*****']), e)
             return false
         }
     }
 
     static String escapeDN(String name) {
         def sb = new StringBuilder()
-        if ((name.length() > 0) && ((name.charAt(0) as String == ' ') || (name.charAt(0) as String == '#')))
+        if ((name.length() > 0) && ((name.charAt(0) as String == ' ') || (name.charAt(0) as String == '#'))) {
             sb.append('\\') // add the leading backslash if needed
+        }
         for (int i = 0; i < name.length(); i++) {
             char curChar = name.charAt(i)
             switch (curChar) {
                 case '\\':
-                    sb.append("\\\\")
+                    sb.append('\\\\')
                     break
                 case ',':
-                    sb.append("\\,")
+                    sb.append('\\,')
                     break
                 case '+':
-                    sb.append("\\+")
+                    sb.append('\\+')
                     break
                 case '"':
-                    sb.append("\\\"")
+                    sb.append('\\\"')
                     break
                 case '<':
-                    sb.append("\\<")
+                    sb.append('\\<')
                     break
                 case '>':
-                    sb.append("\\>")
+                    sb.append('\\>')
                     break
                 case '':
-                    sb.append("\\")
+                    sb.append('\\')
                     break
                 default:
                     sb.append(curChar)
             }
         }
-        if ((name.length() > 1) && (name.charAt(name.length() - 1) as String == ' '))
+        if ((name.length() > 1) && (name.charAt(name.length() - 1) as String == ' ')) {
             sb.insert(sb.length() - 1, '\\') // add the trailing backslash if needed
+        }
         return sb.toString()
     }
+
 }

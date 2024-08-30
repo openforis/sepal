@@ -1,8 +1,8 @@
-import ee from '@google/earthengine'
-
 import {handleError$} from './earthEngineError'
 import {WMTSTileProvider} from './wmtsTileProvider'
 
+// ee.layers.AbstractOverlay.DEFAULT_TILE_EDGE_LENGTH (@google/earthengine)
+const TILE_SIZE = 256
 const CONCURRENCY = 8
 
 export class EarthEngineTableTileProvider extends WMTSTileProvider {
@@ -11,7 +11,7 @@ export class EarthEngineTableTileProvider extends WMTSTileProvider {
             type: 'EarthEngine',
             urlTemplate,
             concurrency: CONCURRENCY,
-            tileSize: ee.layers.AbstractOverlay.DEFAULT_TILE_EDGE_LENGTH
+            tileSize: TILE_SIZE
         })
     }
 

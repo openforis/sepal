@@ -2,6 +2,7 @@ import {catchError, map, of, switchMap, tap} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
+import {userDetailsHint} from '~/app/home/user/userDetails'
 import {publishCurrentUserEvent, publishEvent} from '~/eventPublisher'
 import {select} from '~/store'
 import {msg} from '~/translate'
@@ -14,14 +15,56 @@ export const isGoogleAccount = () => !!(currentUser()?.googleTokens)
 export const isServiceAccount = () => !isGoogleAccount()
 export const googleProjectId = () => currentUser()?.googleTokens?.projectId
 
-export const loadUser$ = () =>
-    api.user.loadCurrentUser$().pipe(
-        catchError(() => {
-            Notifications.error({message: msg('landing.loadCurrentUser.error')})
-            return of(null)
-        }),
-        tap(user => updateUser(user))
+export const loadUser$ = () => api.user.loadCurrentUser$().pipe(
+    catchError(() => {
+        Notifications.error({message: msg('landing.loadCurrentUser.error')})
+        return of(null)
+    }),
+    tap(user => updateUser(user)),
+    switchMap(() => googleProjectId()
+        ? api.gee.healthcheck$()
+        : of(true)
+    ),
+    catchError(error => {
+        const errorCode = error.response?.errorCode
+        switch (errorCode) {
+        case 'EE_NOT_AVAILABLE': return eeNotAvailableError$()
+        case 'MISSING_OAUTH_SCOPES': return missingOAuthScopesError$()
+        default: return unspecifiedError$()
+        }
+    })
+)
+
+const eeNotAvailableError$ = () => {
+    Notifications.error({
+        title: msg('user.googleAccount.unavailable.title'),
+        message: msg('user.googleAccount.unavailable.message'),
+        link: `http://code.earthengine.google.com/register?project=${googleProjectId()}`,
+        timeout: 0
+    })
+    return of(null)
+}
+const missingOAuthScopesError$ = () => {
+    return revokeGoogleAccess$().pipe(
+        tap(() => {
+            userDetailsHint(true)
+            Notifications.error({
+                title: msg('user.googleAccount.missingScopes.title'),
+                message: msg('user.googleAccount.missingScopes.message'),
+                timeout: 0,
+                onDismiss: () => userDetailsHint(false)
+            })
+        })
     )
+}
+const unspecifiedError$ = () => {
+    Notifications.error({
+        title: msg('user.googleAccount.unspecifiedError.title'),
+        message: msg('user.googleAccount.unspecifiedError.message'),
+        timeout: 0
+    })
+    return of(null)
+}
 
 export const login$ = ({username, password}) => {
     resetInvalidCredentials()
@@ -45,6 +88,9 @@ export const resetPassword$ = ({token, username, password, type, recaptchaToken}
         ),
         switchMap(() =>
             login$({username, password})
+        ),
+        switchMap(() =>
+            api.user.invalidateOtherSessions$()
         )
     )
 }
@@ -121,7 +167,9 @@ export const updateCurrentUserDetails$ = ({name, email, organization, intendedUs
     )
 
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
-    api.user.changePassword$({oldPassword, newPassword})
+    api.user.changePassword$({oldPassword, newPassword}).pipe(
+        switchMap(() => api.user.invalidateOtherSessions$())
+    )
 
 export const updateCurrentUserSession$ = session =>
     api.user.updateCurrentUserSession$(session).pipe(

@@ -1,10 +1,12 @@
-version: "3.9"
-
 services:
   ssh-gateway:
     build:
       context: ../..
       dockerfile: ./modules/ssh-gateway/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/ssh-gateway:${SEPAL_VERSION:-latest}"
     container_name: ssh-gateway
     volumes:
@@ -19,7 +21,6 @@ services:
     environment:
       SEPAL_HOST: "${SEPAL_HOST}"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
-      LDAP_HOST: "${LDAP_HOST}"
       LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
     networks:
       - sepal

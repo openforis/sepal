@@ -26,7 +26,7 @@ const baseConfig = {
         'no-multi-spaces': ['error', {ignoreEOLComments: true}],
         'no-multiple-empty-lines': ['error', {max: 1, maxBOF: 0, maxEOF: 1}],
         'no-trailing-spaces': ['error', {skipBlankLines: true, ignoreComments: false}],
-        'no-unused-vars': ['error', {argsIgnorePattern: '^_', varsIgnorePattern: '^_'}],
+        'no-unused-vars': ['error', {argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_'}],
         'object-curly-spacing': ['error', 'never'],
         'quotes': ['error', 'single'],
         'semi': ['error', 'never'],
