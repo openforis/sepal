@@ -7,12 +7,15 @@ services:
         nofile:
           soft: 65536
           hard: 65536
+      network: host
     image: "openforis/geospatial-toolkit:latest"
     container_name: geospatial-toolkit
     networks:
       - sepal
     restart: always
     platform: linux/amd64 # Required for macOS builds
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
 networks:
   sepal:
