@@ -173,7 +173,8 @@ class _Projects extends React.Component {
     }
 
     renderProjectPanel(project) {
-        const projectNames = this.props.projects.map(({name}) => name)
+        const {projects} = this.props
+        const projectNames = projects.map(({name}) => name)
         return (
             <Project
                 project={project}
