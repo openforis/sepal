@@ -118,6 +118,7 @@ class _Projects extends React.Component {
                 onClick={() => this.selectProject(project.id)}>
                 <CrudItem
                     title={project.name}
+                    description={msg('process.project.description', {count: projectRecipes.length})}
                     editTooltip={msg('process.project.edit.tooltip')}
                     removeTooltip={msg('process.project.remove.tooltip')}
                     removeTitle={msg('process.project.remove.title')}
@@ -172,9 +173,12 @@ class _Projects extends React.Component {
     }
 
     renderProjectPanel(project) {
+        const {projects} = this.props
+        const projectNames = projects.map(({name}) => name)
         return (
             <Project
                 project={project}
+                projectNames={projectNames}
                 onApply={project => this.updateProject(project)}
                 onCancel={() => this.editProject()}
             />

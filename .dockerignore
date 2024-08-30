@@ -7,7 +7,7 @@
 
 **/node_modules/
 **/build
-**/dist
+modules/gui/dist
 
 modules/**/binary
 modules/**/build
