@@ -61,6 +61,11 @@ services:
       JENKINS_PORT: "${JENKINS_PORT}"
       DOCKER_REGISTRY_USERNAME: "${DOCKER_REGISTRY_USERNAME}"
       DOCKER_REGISTRY_PASSWORD: "${DOCKER_REGISTRY_PASSWORD}"
+    healthcheck:
+      test: bash -c "exec 6<> /dev/tcp/localhost/443"
+      timeout: 60s
+      interval: 1s
+      retries: 60
 
 volumes:
   jenkins:

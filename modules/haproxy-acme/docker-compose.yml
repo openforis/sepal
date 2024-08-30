@@ -11,8 +11,3 @@ services:
       - "${SEPAL_PROJECT_DIR}/modules/haproxy-acme/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg"
     environment:
       LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"
-    healthcheck:
-      test: bash -c "exec 6<> /dev/tcp/localhost/80"
-      timeout: 60s
-      interval: 1s
-      retries: 60
