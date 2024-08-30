@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   r-proxy-redis:
     image: "redis:6"
