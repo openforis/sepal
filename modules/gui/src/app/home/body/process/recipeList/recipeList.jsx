@@ -158,6 +158,7 @@ class _RecipeList extends React.Component {
 
     toggleEdit() {
         this.setState(({edit}) => ({edit: !edit}))
+        this.unselectAll()
     }
 
     renderSelectButton() {
@@ -296,7 +297,7 @@ class _RecipeList extends React.Component {
                     timestamp={recipe.updateTime}
                     highlight={this.getHighlightMatcher()}
                     highlightTitle={false}
-                    duplicateTooltip={msg('procthis.getHighlightMatcher()ess.menu.duplicateRecipe.tooltip')}
+                    duplicateTooltip={msg('process.menu.duplicateRecipe.tooltip')}
                     removeTooltip={msg('process.menu.removeRecipe.tooltip')}
                     selectTooltip={msg('process.menu.selectRecipe.tooltip')}
                     selected={edit ? this.isSelected(recipe.id) : undefined}
@@ -422,6 +423,10 @@ class _RecipeList extends React.Component {
             ? _.difference(prevSelectedIds, filteredSelectedIds)
             : [...prevSelectedIds, ...filteredIds]
         this.setSelectedIds(selectedIds)
+    }
+
+    unselectAll() {
+        this.setSelectedIds([])
     }
 
     moveSelected(projectId) {

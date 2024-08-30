@@ -4130,8 +4130,11 @@
         },
         "project": {
             "title": "Project",
+            "description": "{count} {count, plural, one {recipe} other {recipes}}",
             "form": {
-                "name.label": "Name"
+                "name.label": "Name",
+                "name.required" : "Name is required",
+                "name.unique" : "Project name is already in use"
             },
             "edit": {
                 "tooltip": "Edit project"
