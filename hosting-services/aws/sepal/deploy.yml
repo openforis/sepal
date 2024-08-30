@@ -190,7 +190,7 @@
 
     - file: path="/usr/local/lib/docker/cli-plugins" state=directory
     - uri:
-        url: https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64
+        url: https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64
         dest: /usr/local/lib/docker/cli-plugins/docker-compose
         mode: +x
         status_code: [200, 304]
