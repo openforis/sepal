@@ -226,7 +226,9 @@
         "unauthorized": "Vous n'avez pas accès à cette Table EE"
     },
     "error": {
-        "internal": "Erreur interne"
+        "badRequest": "",
+        "internal": "Erreur interne",
+        "notFound": ""
     },
     "fieldValidation": {
         "date": "Doit être une date",
@@ -2126,10 +2128,18 @@
                             }
                         },
                         "sampleClassification": {
+                            "typeToSample": {
+                                "label": "",
+                                "ASSET": "Asset EE",
+                                "RECIPE": "Formule"
+                            },
                             "assetToSample": {
                                 "label": "EE asset ID de la classification",
                                 "placeholder": "Entrez un ID d'asset...",
                                 "required": "Vous devez entrer un ID d'asset"
+                            },
+                            "recipeToSample": {
+                                "label": ""
                             },
                             "sampleScale": {
                                 "label": "Échelle de l'échantillonnage (m)",
@@ -2199,6 +2209,259 @@
                 "tilesFailed": "Echec de {failed}"
             },
             "tabPlaceholder": "Classification"
+        },
+        "regression": {
+            "bands": {
+                "regression": "Régression"
+            },
+            "create": "Régression",
+            "description": "",
+            "panel": {
+                "trainingData": {
+                    "form": {
+                        "eeTable": {
+                            "valueColumn": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "sampleImage": {
+                            "sampleCount": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "suffix": "échantillons",
+                                "tooltip": ""
+                            },
+                            "valueBand": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "noIntersection": "",
+                            "unableToSampleAllPixels": ""
+                        }
+                    },
+                    "type": {
+                        "EE_TABLE": {
+                            "label": "Table Earth Engine",
+                            "tooltip": "",
+                            "title": "Table EE"
+                        },
+                        "SAMPLE_IMAGE": {
+                            "label": "",
+                            "tooltip": "",
+                            "title": ""
+                        },
+                        "RECIPE": {
+                            "label": "Sauvegarde de la formule SEPAL",
+                            "tooltip": "",
+                            "title": ""
+                        }
+                    }
+                }
+            },
+            "tabPlaceholder": "Régression"
+        },
+        "unsupervisedClassification": {
+            "bands": {
+                "class": "Classe"
+            },
+            "create": "",
+            "description": "",
+            "panel": {
+                "sampling": {
+                    "button": "",
+                    "tooltip": "",
+                    "title": "",
+                    "form": {
+                        "numberOfSamples": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": "",
+                            "suffix": "échantillons"
+                        },
+                        "sampleScale": {
+                            "label": "Échelle de l'échantillonnage (m)",
+                            "placeholder": "Echelle...",
+                            "suffix": "mètre",
+                            "tooltip": ""
+                        }
+                    }
+                },
+                "clusterer": {
+                    "button": "",
+                    "tooltip": "",
+                    "title": "",
+                    "form": {
+                        "type": {
+                            "label": "Type"
+                        },
+                        "kmeans": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "cascadeKMeans": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "xmeans": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "lvq": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "config": {
+                            "numberOfClusters": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "minNumberOfClusters": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "maxNumberOfClusters": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "restarts": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "init": {
+                                "label": "",
+                                "options": {
+                                    "random.label": "",
+                                    "kmeans.label": "",
+                                    "canopy.label": "",
+                                    "farthestFirst.label": ""
+                                }
+                            },
+                            "distanceFunction": {
+                                "label": "",
+                                "options": {
+                                    "euclidean.label": "Euclidien",
+                                    "manhattan.label": "",
+                                    "chebyshev.label": ""
+                                }
+                            },
+                            "maxIterations": {
+                                "label": "Nombre max d'itérations",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "canopies": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "maxCandidates": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "periodicPruning": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "minDensity": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "t1": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "t2": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "preserveOrder": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "fast": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "seed": {
+                                "label": "Graine",
+                                "placeholder": "Graine...",
+                                "tooltip": ""
+                            },
+                            "learningRate": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "epochs": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "normalizeInput": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "maxIterationsOverall": {
+                                "label": "Nombre max d'itérations",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "maxKMeans": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "maxForChildren": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "useKD": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "cutoffFactor": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        }
+                    }
+                }
+            },
+            "tabPlaceholder": ""
         },
         "classChange": {
             "create": "",
@@ -4425,6 +4688,18 @@
                 "success": "SEPAL est maintenant déconnecté de votre compte Google.",
                 "projectNeeded": "",
                 "title": "Votre compte SEPAL n'est pas connecté à votre compte Google"
+            },
+            "missingScopes": {
+                "title": "",
+                "message": ""
+            },
+            "unavailable": {
+                "title": "",
+                "message": ""
+            },
+            "unspecifiedError": {
+                "title": "",
+                "message": ""
             },
             "label": "Compte Google",
             "title": "Compte Google"

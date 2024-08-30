@@ -73,12 +73,26 @@ const SessionManager = (sessionStore, userStore) => {
                 )
                 .forEach(cookie => res.cookie(cookie, '', {maxAge: 0}))
         }
-        res.status(200)
+        res.status(200).send({status: 'success', message: 'logout'})
+        res.end()
+    }
+
+    const invalidateOtherSessions = async (req, res, _next) => {
+        const username = getSessionUsername(req)
+        const userSessionIds = await getSessionIdsByUsername(username)
+        
+        await Promise.all(
+            userSessionIds
+                .filter(sessionId => sessionId !== req.sessionID)
+                .map(async sessionId => await removeSession(sessionId))
+        )
+
+        res.status(200).send({status: 'success', message: 'other sessions invalidated'})
         res.end()
     }
     
     return {
-        messageHandler, logout
+        messageHandler, logout, invalidateOtherSessions
     }
 }
 

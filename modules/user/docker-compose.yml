@@ -1,10 +1,12 @@
-version: "3.9"
-
 services:
   user:
     build:
       context: ../..
       dockerfile: ./modules/user/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/user:${SEPAL_VERSION:-latest}"
     container_name: user
     volumes:
@@ -16,7 +18,6 @@ services:
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       SEPAL_ADMIN_WEB_PASSWORD: "${SEPAL_ADMIN_WEB_PASSWORD}"
       SEPAL_HOST: "${SEPAL_HOST}"
-      LDAP_HOST: "${LDAP_HOST}"
       LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
       MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"

@@ -12,7 +12,7 @@
     padding-bottom: 0;
 }
 
-.scrollable {
+.container .scrollable {
     pointer-events: none;
 }
 

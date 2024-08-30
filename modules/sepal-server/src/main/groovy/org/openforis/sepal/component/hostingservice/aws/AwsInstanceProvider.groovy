@@ -80,7 +80,7 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     void terminate(String instanceId) {
         LOG.info("Terminating instance " + instanceId)
-        retry(10) {
+        retry(2) {
             def request = new TerminateInstancesRequest()
                     .withInstanceIds(instanceId)
             client.terminateInstances(request)
@@ -262,7 +262,7 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private void tagInstance(String instanceId, Collection<Tag>... tagCollections) {
         try {
-            retry(10, ({
+            retry(4, ({
                 def tags = tagCollections.toList().flatten() as Tag[]
                 LOG.info("Tagging instance $instanceId with $tags")
                 def request = new CreateTagsRequest()

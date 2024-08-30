@@ -29,9 +29,12 @@ export class Layer {
             },
             error: error => {
                 log.warn('Cannot add layer', error)
+                const errorMessage = error?.response?.messageKey
+                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                    : error
                 Notifications.error({
                     message: msg('map.layer.error'),
-                    error,
+                    error: errorMessage,
                     group: true,
                     timeout: 0
                 })

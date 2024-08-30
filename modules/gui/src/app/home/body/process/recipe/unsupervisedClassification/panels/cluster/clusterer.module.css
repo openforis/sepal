@@ -1,0 +1,12 @@
+.panel {
+    max-width: 29rem;
+    min-height: 22rem;
+}
+
+.twoColumns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 2rem;
+    /* [HACK] Make sure input messages fit (they're absolutely positioned) */
+    padding-bottom: 1.5rem;
+}

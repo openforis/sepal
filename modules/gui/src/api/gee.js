@@ -1,6 +1,11 @@
 import {get$, post$, postJson$} from '~/http-client'
 
 export default {
+    healthcheck$: () =>
+        get$('/api/gee/healthcheck', {
+            maxRetries: 0
+        }),
+
     preview$: ({recipe, ...params}) =>
         postJson$('/api/gee/preview', {
             body: {recipe, ...params},
@@ -49,9 +54,9 @@ export default {
             maxRetries: 0
         }),
 
-    sampleImage$: ({asset, count, scale, classBand, recipe}) =>
+    sampleImage$: ({recipeToSample, count, scale, classBand, recipe, bands}) =>
         postJson$('/api/gee/image/sample', {
-            body: {asset, count, scale, classBand, recipe},
+            body: {recipeToSample, count, scale, classBand, recipe, bands},
             maxRetries: 0
         }),
 
@@ -91,9 +96,9 @@ export default {
             maxRetries: 0
         }),
 
-    loadEETableRows$: tableId =>
+    loadEETableRows$: (tableId, columns) =>
         get$('/api/gee/table/rows', {
-            query: {tableId},
+            query: {tableId, columns},
             maxRetries: 0
         }),
 
