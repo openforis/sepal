@@ -7,6 +7,8 @@ services:
       - "${SEPAL_PROJECT_DIR}/modules/sepal-server/build:/usr/local/src/sepal/modules/sepal-server/build"
     environment:
       SEPAL_HOST_PROJECT_DIR: "${SEPAL_PROJECT_DIR}"
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
   socat:
     image: alpine/socat
