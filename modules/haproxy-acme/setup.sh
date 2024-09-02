@@ -20,7 +20,7 @@ cd acme.sh/
    --config-home /var/lib/acme
 chmod -R go=+rX /usr/local/share/acme.sh
 ln -s /usr/local/share/acme.sh/acme.sh /usr/local/bin/
-curl https://raw.githubusercontent.com/haproxy/haproxy/master/admin/acme.sh/haproxy.sh > /usr/local/share/acme.sh/deploy/haproxy.sh
+curl https://raw.githubusercontent.com/haproxy/haproxy/v2.9.0/admin/acme.sh/haproxy.sh > /usr/local/share/acme.sh/deploy/haproxy.sh
 
 mkdir -p /var/lib/acme/certs
 chown haproxy:haproxy /var/lib/acme/certs
