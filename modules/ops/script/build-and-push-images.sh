@@ -20,7 +20,7 @@ function push {
   local MODULE=$1
   echo
   echo "******* Pushing ${MODULE} *******"
-  docker push localhost/openforis/${MODULE}:${SEPAL_VERSION}
+  docker push "${DOCKER_REGISTRY_HOST}/openforis/${MODULE}:${SEPAL_VERSION}"
 }
 
 function start {
