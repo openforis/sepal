@@ -55,7 +55,7 @@ services:
       - "8443:8443"
       - "443:443"
     volumes:
-      - "${SEPAL_PROJECT_DIR}/modules/ops/ops.haproxy.cfg:/usr/local/etc/haproxy/haproxy.d/ops.cfg"
+      - "./ops.haproxy.cfg:/usr/local/etc/haproxy/haproxy.d/ops.cfg"
       - haproxy:/var/lib/acme
     environment:
       HAPROXY_DOMAIN: "${OPS_DOMAIN}"
