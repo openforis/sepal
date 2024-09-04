@@ -8,9 +8,6 @@
     - set_fact:
         workspace: "/opt/sepal/"
 
-    - debug:
-        msg: "{{ lookup('env', 'BASH_PROMPT') }}"
-
     # bash prompt
     - name: Set bash prompt
       blockinfile:
@@ -97,7 +94,7 @@
 
   roles:
     - { role: live-patching }
-    - { role: docker-registry }
-    - { role: build-module, module: jenkins }
+    - { role: build-module, module: haproxy-acme }
+    - { role: build-module, module: ops }
     - { role: docker-login }
-    - { role: run-module, module: jenkins }
+    - { role: run-module, module: ops }
