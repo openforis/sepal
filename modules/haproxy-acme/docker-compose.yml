@@ -7,7 +7,5 @@ services:
     container_name: haproxy
     ports:
       - "80:80"
-    volumes:
-      - "${SEPAL_PROJECT_DIR}/modules/haproxy-acme/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg"
     environment:
       LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"

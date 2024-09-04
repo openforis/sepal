@@ -1,0 +1,4 @@
+services:
+  haproxy:
+    volumes:
+      - "${SEPAL_PROJECT_DIR}/modules/haproxy-acme/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg"

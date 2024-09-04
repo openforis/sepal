@@ -23,6 +23,7 @@ ADD modules/${MODULE_NAME}/issue-cert.sh /usr/local/bin/issue-cert
 RUN chmod 775 /usr/local/bin/issue-cert
 
 ADD modules/${MODULE_NAME}/supervisord.conf /etc/supervisor/supervisord.conf
+ADD modules/${MODULE_NAME}/haproxy.cfg /usr/local/etc/haproxy/haproxy.cfg
 
 ENTRYPOINT ["/bin/sh", "-c"]
 CMD ["/usr/local/bin/start.sh"]
