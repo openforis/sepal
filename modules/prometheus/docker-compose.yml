@@ -10,7 +10,7 @@ services:
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/prometheus:${SEPAL_VERSION:-latest}"
     container_name: prometheus
     ports:
-    - "${SEPAL_IP:-0.0.0.0}:9090:9090"
+    - "${SEPAL_IP}:9090:9090"
     environment:
       - TARGET_USERNAME=sepalAdmin
       - TARGET_PASSWORD=${SEPAL_ADMIN_PASSWORD}
@@ -27,7 +27,7 @@ services:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
     ports:
-      - "${SEPAL_IP:-0.0.0.0}:8080:8080"
+      - "${SEPAL_IP}:8080:8080"
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw

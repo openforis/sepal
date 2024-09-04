@@ -17,6 +17,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - "${SEPAL_IP:-0.0.0.0}:2375:2375"
+      - "${SEPAL_IP}:2375:2375"
     networks:
       - sepal

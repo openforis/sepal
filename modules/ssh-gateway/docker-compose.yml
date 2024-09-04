@@ -14,8 +14,8 @@ services:
       - "${SEPAL_DATA_DIR}/ldap/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
       - "${SEPAL_DATA_DIR}/user/home:/home" # Users home directories with ssh keys
     ports:
-      - "${SEPAL_SSH_IP:-0.0.0.0}:${SEPAL_SSH_PORT_1:-22}:22"
-      - "${SEPAL_SSH_IP:-0.0.0.0}:${SEPAL_SSH_PORT_2:-443}:22"
+      - "${SEPAL_SSH_IP}:${SEPAL_SSH_PORT_1:-22}:22"
+      - "${SEPAL_SSH_IP}:${SEPAL_SSH_PORT_2:-443}:22"
     extra_hosts:
       - "syslog_host: ${SEPAL_IP:-127.0.0.1}"
     environment:
