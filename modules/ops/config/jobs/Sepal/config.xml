@@ -12,7 +12,8 @@
     <configVersion>2</configVersion>
     <userRemoteConfigs>
       <hudson.plugins.git.UserRemoteConfig>
-        <url>github:openforis/sepal.git</url>
+        <url>git@github.com:openforis/sepal.git</url>
+        <!-- <url>github:openforis/sepal.git</url> -->
       </hudson.plugins.git.UserRemoteConfig>
     </userRemoteConfigs>
     <branches>
