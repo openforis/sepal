@@ -1,10 +1,10 @@
 - name: "{{ module }} | Copying module to host"
   copy:
       src: "{{ role_path }}/../../modules/{{ module }}"
-      dest: "/var/lib/sepal/"
+      dest: "/var/lib/sepal/modules/"
 
 - name: "{{ module }} | Build"
   shell: "docker compose \
       --env-file /etc/sepal/env \
-      --file /var/lib/sepal/{{ module }}/docker-compose.yml \
+      --file /var/lib/sepal/modules/{{ module }}/docker-compose.yml \
       build"

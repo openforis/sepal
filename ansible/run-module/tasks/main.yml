@@ -1,15 +1,15 @@
 - name: "{{ module }} | Create runtime dir"
-  file: path="/var/lib/sepal/{{ module }}" state=directory
+  file: path="/var/lib/sepal/modules/{{ module }}" state=directory
 
 - name: "{{ module }} | Copy compose file"
   copy:
       src: "{{ role_path }}/../../modules/{{ module }}/docker-compose.yml"
-      dest: "/var/lib/sepal/{{ module }}/docker-compose.yml"
+      dest: "/var/lib/sepal/modules/{{ module }}/docker-compose.yml"
 
 - name: "{{ module }} | Up"
   shell: "docker compose \
       --env-file /etc/sepal/env \
-      --file /var/lib/sepal/{{ module }}/docker-compose.yml \
+      --file /var/lib/sepal/modules/{{ module }}/docker-compose.yml \
       up \
       -d \
       --no-deps \
@@ -18,7 +18,7 @@
 - name: "{{ module }} | Waiting for module"
   shell: "docker compose \
       --env-file /etc/sepal/env \
-      --file /var/lib/sepal/{{ module }}/docker-compose.yml \
+      --file /var/lib/sepal/modules/{{ module }}/docker-compose.yml \
       ps 2> /dev/null | grep -e unhealthy -e starting |  wc -l"
   register: status
   until: status.stdout == '0'
