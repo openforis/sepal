@@ -37,7 +37,7 @@ python-dateutil
 pytesmo
 Wand
 PyPDF2 # more recent version are avaiable (PyPDF4)
-rasterio
+rasterio<1.3.11 # https://github.com/openforis/sepal/issues/328
 openpyxl
 pre-commit
 
