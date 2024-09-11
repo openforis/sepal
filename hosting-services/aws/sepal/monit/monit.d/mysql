@@ -1,0 +1,5 @@
+check program mysql-sdms with path /usr/local/bin/mysqlcheck-sdms
+    if status != 0 then alert
+
+check program mysql-sepal_user with path /usr/local/bin/mysqlcheck-sepal_user
+    if status != 0 then alert

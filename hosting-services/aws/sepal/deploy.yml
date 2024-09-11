@@ -69,7 +69,7 @@
 
     - name: Configure monit 3/3
       copy:
-        src: "monit/dockercheck/"
+        src: "monit/check/"
         dest: "/usr/local/bin/"
         owner: "root"
         group: "root"

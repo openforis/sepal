@@ -1,0 +1,16 @@
+#!/bin/bash
+
+PENDING=$(
+    docker exec mysql \
+    bash -c 'MYSQL_PWD=$MYSQL_ROOT_PASSWORD mysql -Ee "SELECT 1 pending FROM sepal_user.rmb_message WHERE NOW() - publication_time > 60 LIMIT 1"' \
+    | grep -q pending && echo true || echo false
+)
+
+# report and exit
+if [[ "$PENDING" = "true" ]]; then
+    echo "MySQL check: unexpected pending messages in sepal_user.rmb_message."
+    exit 1
+else
+    echo "MySQL check: no pending messages in sepal_user.rmb_message."
+    exit 0
+fi
