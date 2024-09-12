@@ -51,7 +51,7 @@
         enabled: yes
         masked: no
 
-    - name: Configure monit 1/3
+    - name: Configure monit/1
       copy:
         src: "monit/monit.d/"
         dest: "/etc/monit.d/"
@@ -59,7 +59,7 @@
         group: "root"
         mode: "0644"
 
-    - name: Configure monit 2/3
+    - name: Configure monit/2
       template:
         src: "monit/config.template"
         dest: "/etc/monit.d/config"
@@ -67,10 +67,18 @@
         group: "root"
         mode: "0644"
 
-    - name: Configure monit 3/3
+    - name: Configure monit/3
       copy:
         src: "monit/check/"
         dest: "/usr/local/bin/"
+        owner: "root"
+        group: "root"
+        mode: "0755"
+
+    - name: Configure monit/4
+      template:
+        src: "monit/pushover-notify.template"
+        dest: "/usr/local/bin/pushover-notify"
         owner: "root"
         group: "root"
         mode: "0755"

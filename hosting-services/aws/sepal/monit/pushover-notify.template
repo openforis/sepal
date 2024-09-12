@@ -1,0 +1,10 @@
+#!/bin/bash
+
+PRIORITY=$1
+
+curl -s \
+    -F "token={{ lookup('env', 'PUSHOVER_API_KEY') }}" \
+    -F "user={{ lookup('env', 'PUSHOVER_GROUP_KEY') }}" \
+    -F "priority=${PRIORITY:-0}" \
+    --form-string "message=[$MONIT_HOST] $MONIT_SERVICE - $MONIT_DESCRIPTION" \
+    https://api.pushover.net/1/messages.json

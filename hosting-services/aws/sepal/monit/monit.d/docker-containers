@@ -1,62 +1,62 @@
 check program gateway with path /usr/local/bin/dockercheck-gateway
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program backup with path /usr/local/bin/dockercheck-backup
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 0"
 
 check program app-manager with path /usr/local/bin/dockercheck-app-manager
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program ceo-gateway with path /usr/local/bin/dockercheck-ceo-gateway
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 0"
 
 check program email with path /usr/local/bin/dockercheck-email
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program email-redis with path /usr/local/bin/dockercheck-email-redis
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program user-files with path /usr/local/bin/dockercheck-user-files
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program gee with path /usr/local/bin/dockercheck-gee
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program gui with path /usr/local/bin/dockercheck-gui
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program haproxy with path /usr/local/bin/dockercheck-haproxy
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program ldap with path /usr/local/bin/dockercheck-ldap
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program ldap-backup with path /usr/local/bin/dockercheck-ldap-backup
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 0"
 
 check program letsencrypt with path /usr/local/bin/dockercheck-letsencrypt
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 0"
 
 check program mysql with path /usr/local/bin/dockercheck-mysql
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program mysql-backup with path /usr/local/bin/dockercheck-mysql-backup
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 0"
 
 check program rabbitmq with path /usr/local/bin/dockercheck-rabbitmq
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program sepal with path /usr/local/bin/dockercheck-sepal
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program ssh-gateway with path /usr/local/bin/dockercheck-ssh-gateway
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program sys-monitor with path /usr/local/bin/dockercheck-sys-monitor
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program terminal with path /usr/local/bin/dockercheck-terminal
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program user with path /usr/local/bin/dockercheck-user
-    if status != 0 then alert
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
