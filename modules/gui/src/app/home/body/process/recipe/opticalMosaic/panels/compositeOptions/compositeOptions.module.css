@@ -8,6 +8,6 @@
     justify-content: space-between;
 }
 
-.inline > * + * {
+.inline>*+* {
     margin-left: 1rem;
 }

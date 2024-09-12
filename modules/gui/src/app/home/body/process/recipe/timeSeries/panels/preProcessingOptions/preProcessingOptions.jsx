@@ -16,7 +16,9 @@ const fields = {
     histogramMatching: new Form.Field(),
     cloudDetection: new Form.Field().notEmpty(),
     cloudMasking: new Form.Field(),
-    snowMasking: new Form.Field()
+    snowMasking: new Form.Field(),
+    orbitOverlap: new Form.Field(),
+    tileOverlap: new Form.Field(),
 }
 
 const mapRecipeToProps = recipe => ({
@@ -26,6 +28,8 @@ const mapRecipeToProps = recipe => ({
 
 class _PreProcessingOptions extends React.Component {
     render() {
+        const {sources} = this.props
+        const sentinel2 = Object.keys(sources).includes('SENTINEL_2')
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -37,6 +41,8 @@ class _PreProcessingOptions extends React.Component {
                     <Layout>
                         {this.renderCorrectionsOptions()}
                         {this.renderHistogramMatching()}
+                        {sentinel2 ? this.renderOrbitOverlap() : null}
+                        {sentinel2 ? this.renderTileOverlap() : null}
                         {this.renderCloudDetectionOptions()}
                         {this.renderCloudMaskingOptions()}
                         {this.renderSnowMaskingOptions()}
@@ -160,10 +166,60 @@ class _PreProcessingOptions extends React.Component {
         )
     }
 
+    renderOrbitOverlap() {
+        const {inputs: {orbitOverlap}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.ccdc.panel.preprocess.form.orbitOverlap.label')}
+                input={orbitOverlap}
+                options={[{
+                    value: 'KEEP',
+                    label: msg('process.ccdc.panel.preprocess.form.orbitOverlap.keep.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.orbitOverlap.keep.tooltip')
+                }, {
+                    value: 'REMOVE',
+                    label: msg('process.ccdc.panel.preprocess.form.orbitOverlap.remove.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.orbitOverlap.remove.tooltip')
+                }]}
+                type='horizontal-nowrap'
+            />
+        )
+    }
+
+    renderTileOverlap() {
+        const {inputs: {tileOverlap}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.ccdc.panel.preprocess.form.tileOverlap.label')}
+                input={tileOverlap}
+                options={[{
+                    value: 'KEEP',
+                    label: msg('process.ccdc.panel.preprocess.form.tileOverlap.keep.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.tileOverlap.keep.tooltip')
+                }, {
+                    value: 'QUICK_REMOVE',
+                    label: msg('process.ccdc.panel.preprocess.form.tileOverlap.quickRemove.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.tileOverlap.quickRemove.tooltip')
+                }, {
+                    value: 'REMOVE',
+                    label: msg('process.ccdc.panel.preprocess.form.tileOverlap.remove.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.tileOverlap.remove.tooltip')
+                }]}
+                type='horizontal-nowrap'
+            />
+        )
+    }
+
     componentDidMount() {
-        const {inputs: {histogramMatching}} = this.props
+        const {inputs: {histogramMatching, orbitOverlap, tileOverlap}} = this.props
         if (!histogramMatching.value) {
             histogramMatching.set('DISABLED')
+        }
+        if (!orbitOverlap.value) {
+            orbitOverlap.set('KEEP')
+        }
+        if (!tileOverlap.value) {
+            tileOverlap.set('KEEP')
         }
     }
 }
@@ -173,7 +229,9 @@ const valuesToModel = values => ({
     histogramMatching: values.histogramMatching,
     cloudDetection: values.cloudDetection,
     cloudMasking: values.cloudMasking,
-    snowMasking: values.snowMasking
+    snowMasking: values.snowMasking,
+    orbitOverlap: values.orbitOverlap,
+    tileOverlap: values.tileOverlap,
 })
 
 const modelToValues = model => {
@@ -183,7 +241,9 @@ const modelToValues = model => {
         mask: model.mask,
         cloudDetection: model.cloudDetection,
         cloudMasking: model.cloudMasking,
-        snowMasking: model.snowMasking
+        snowMasking: model.snowMasking,
+        orbitOverlap: model.orbitOverlap,
+        tileOverlap: model.tileOverlap,
     })
 }
 

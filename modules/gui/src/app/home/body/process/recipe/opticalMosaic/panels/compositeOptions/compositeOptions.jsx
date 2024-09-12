@@ -6,6 +6,7 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
@@ -14,6 +15,7 @@ import {Widget} from '~/widget/widget'
 import styles from './compositeOptions.module.css'
 
 const fields = {
+    advanced: new Form.Field(),
     corrections: new Form.Field(),
     shadowPercentile: new Form.Field(),
     hazePercentile: new Form.Field(),
@@ -23,6 +25,8 @@ const fields = {
     cloudMasking: new Form.Field(),
     cloudBuffer: new Form.Field(),
     snowMasking: new Form.Field(),
+    orbitOverlap: new Form.Field(),
+    tileOverlap: new Form.Field(),
     compose: new Form.Field()
 }
 
@@ -32,6 +36,7 @@ const mapRecipeToProps = recipe => ({
 
 class _CompositeOptions extends React.Component {
     render() {
+        const {inputs: {advanced}} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -40,18 +45,40 @@ class _CompositeOptions extends React.Component {
                     icon='layer-group'
                     title={msg('process.mosaic.panel.composite.title')}/>
                 <Panel.Content>
-                    {this.renderContent()}
+                    {advanced.value ? this.renderAdvanced() : this.renderSimple()}
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons>
+                    <Button
+                        label={advanced.value ? msg('button.less') : msg('button.more')}
+                        onClick={() => this.setAdvanced(!advanced.value)}/>
+                </Form.PanelButtons>
             </RecipeFormPanel>
         )
     }
 
-    renderContent() {
+    renderSimple() {
         return (
             <Layout type='vertical'>
                 {this.renderCorrectionOptions()}
                 {this.renderFilterOptions()}
+                {this.renderCloudMaskingOptions()}
+                {this.renderCloudBufferOptions()}
+                <Layout type='horizontal'>
+                    {this.renderSnowMaskingOptions()}
+                    {this.renderComposeOptions()}
+                </Layout>
+            </Layout>
+        )
+    }
+    renderAdvanced() {
+        const {sources} = this.props
+        const sentinel2 = Object.keys(sources.dataSets).includes('SENTINEL_2')
+        return (
+            <Layout type='vertical'>
+                {this.renderCorrectionOptions()}
+                {this.renderFilterOptions()}
+                {sentinel2 ? this.renderOrbitOverlap() : null}
+                {sentinel2 ? this.renderTileOverlap() : null}
                 {this.renderCloudMaskingOptions()}
                 {this.renderCloudBufferOptions()}
                 <Layout type='horizontal'>
@@ -202,6 +229,49 @@ class _CompositeOptions extends React.Component {
         )
     }
 
+    renderOrbitOverlap() {
+        const {inputs: {orbitOverlap}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.ccdc.panel.preprocess.form.orbitOverlap.label')}
+                input={orbitOverlap}
+                options={[{
+                    value: 'KEEP',
+                    label: msg('process.ccdc.panel.preprocess.form.orbitOverlap.keep.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.orbitOverlap.keep.tooltip')
+                }, {
+                    value: 'REMOVE',
+                    label: msg('process.ccdc.panel.preprocess.form.orbitOverlap.remove.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.orbitOverlap.remove.tooltip')
+                }]}
+                type='horizontal-nowrap'
+            />
+        )
+    }
+
+    renderTileOverlap() {
+        const {inputs: {tileOverlap}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.ccdc.panel.preprocess.form.tileOverlap.label')}
+                input={tileOverlap}
+                options={[{
+                    value: 'KEEP',
+                    label: msg('process.ccdc.panel.preprocess.form.tileOverlap.keep.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.tileOverlap.keep.tooltip')
+                }, {
+                    value: 'QUICK_REMOVE',
+                    label: msg('process.ccdc.panel.preprocess.form.tileOverlap.quickRemove.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.tileOverlap.quickRemove.tooltip')
+                }, {
+                    value: 'REMOVE',
+                    label: msg('process.ccdc.panel.preprocess.form.tileOverlap.remove.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.tileOverlap.remove.tooltip')
+                }]}
+                type='horizontal-nowrap'
+            />
+        )
+    }
     renderComposeOptions() {
         const {inputs: {compose}} = this.props
         return (
@@ -223,9 +293,21 @@ class _CompositeOptions extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {cloudBuffer}} = this.props
-        if (cloudBuffer.value === undefined)
+        const {inputs: {orbitOverlap, tileOverlap, cloudBuffer}} = this.props
+        if (cloudBuffer.value === undefined) {
             cloudBuffer.set(0)
+        }
+        if (!orbitOverlap.value) {
+            orbitOverlap.set('KEEP')
+        }
+        if (!tileOverlap.value) {
+            tileOverlap.set('KEEP')
+        }
+    }
+
+    setAdvanced(enabled) {
+        const {inputs: {advanced}} = this.props
+        advanced.set(enabled)
     }
 }
 
@@ -259,6 +341,8 @@ const valuesToModel = values => ({
         {type: 'NDVI', percentile: values.ndviPercentile},
         {type: 'DAY_OF_YEAR', percentile: values.dayOfYearPercentile},
     ].filter(({percentile}) => percentile),
+    orbitOverlap: values.orbitOverlap,
+    tileOverlap: values.tileOverlap,
     cloudDetection: values.cloudDetection,
     cloudMasking: values.cloudMasking,
     cloudBuffer: values.cloudBuffer,
@@ -277,6 +361,8 @@ const modelToValues = model => {
         hazePercentile: getPercentile('HAZE'),
         ndviPercentile: getPercentile('NDVI'),
         dayOfYearPercentile: getPercentile('DAY_OF_YEAR'),
+        orbitOverlap: model.orbitOverlap,
+        tileOverlap: model.tileOverlap,
         cloudDetection: model.cloudDetection,
         cloudMasking: model.cloudMasking,
         cloudBuffer: model.cloudBuffer,

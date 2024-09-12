@@ -36,6 +36,8 @@ export const defaultModel = {
     compositeOptions: {
         corrections: ['SR', 'BRDF'],
         filters: [],
+        orbitOverlap: 'KEEP',
+        tileOverlap: 'QUICK_REMOVE',
         cloudDetection: ['QA', 'CLOUD_SCORE'],
         cloudMasking: 'MODERATE',
         cloudBuffering: 0,

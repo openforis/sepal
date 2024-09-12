@@ -93,7 +93,7 @@ RecipeImageLayerSource.propTypes = {
     source: PropTypes.object.isRequired
 }
 
-export const initializeLayers = ({recipeId, savedLayers, additionalFeatureLayerSources = [], skipThis}) => {
+export const initializeLayers = ({recipeId, savedLayers, additionalFeatureLayerSources = [], skipThis, defaultGoogleSatellite}) => {
     const recipeImageLayerSource = !skipThis && createCurrentRecipeImageLayerSource(recipeId)
     const planetImageLayerSource = createNicfiPlanetImageLayerSource()
     const googleSatelliteImageLayerSource = createGoogleSatelliteImageLayerSource()
@@ -117,7 +117,7 @@ export const initializeLayers = ({recipeId, savedLayers, additionalFeatureLayerS
                 'center': {
                     id: 'default-layer',
                     imageLayer: {
-                        sourceId: skipThis ? googleSatelliteImageLayerSource.id : recipeImageLayerSource.id
+                        sourceId: skipThis || defaultGoogleSatellite ? googleSatelliteImageLayerSource.id : recipeImageLayerSource.id
                     },
                     featureLayers: [
                         {sourceId: aoiLayerSource.id}

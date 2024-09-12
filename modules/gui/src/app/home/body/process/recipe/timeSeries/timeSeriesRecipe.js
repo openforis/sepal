@@ -29,7 +29,9 @@ export const defaultModel = {
         orbits: ['ASCENDING', 'DECENDING'],
         geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',
-        outlierRemoval: 'NONE'
+        outlierRemoval: 'NONE',
+        orbitOverlap: 'KEEP',
+        tileOverlap: 'QUICK_REMOVE',
     }
 }
 

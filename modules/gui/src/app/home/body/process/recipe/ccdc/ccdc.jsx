@@ -10,8 +10,10 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
+import {getAvailableBands} from './bands'
 import {dateRange, defaultModel, RecipeActions} from './ccdcRecipe'
 import {CcdcToolbar} from './panels/ccdcToolbar'
+import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
@@ -26,7 +28,7 @@ class _CCDC extends React.Component {
         super(props)
         const {savedLayers, recipeId} = props
         this.recipeActions = RecipeActions(recipeId)
-        initializeLayers({recipeId, savedLayers, skipThis: true})
+        initializeLayers({recipeId, savedLayers, defaultGoogleSatellite: true})
     }
 
     render() {
@@ -90,5 +92,7 @@ export default () => ({
     },
     noImageOutput: true,
     getDependentRecipeIds,
-    getDateRange: recipe => dateRange(recipe.model.dates)
+    getDateRange: recipe => dateRange(recipe.model.dates),
+    getAvailableBands,
+    getPreSetVisualizations
 })

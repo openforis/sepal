@@ -67,7 +67,9 @@ export const defaultModel = {
         orbits: ['ASCENDING', 'DESCENDING'],
         geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',
-        outlierRemoval: 'NONE'
+        outlierRemoval: 'NONE',
+        orbitOverlap: 'KEEP',
+        tileOverlap: 'QUICK_REMOVE',
     },
     ccdcOptions: breakDetectionOptions.moderate
 }

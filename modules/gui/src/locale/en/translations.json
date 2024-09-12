@@ -803,6 +803,9 @@
             }
         },
         "ccdc": {
+            "bands": {
+                "count": "Count"
+            },
             "chartPixel": {
                 "cancel.tooltip": "Cancel time-series charting",
                 "loadFailed": "Failed to load chart: {error}",
@@ -931,6 +934,32 @@
                             "surfaceReflectance": {
                                 "label": "Surface reflectance",
                                 "tooltip": "Use scenes atmospherically corrected surface reflectance."
+                            }
+                        },
+                        "orbitOverlap": {
+                            "label": "Orbit Overlap",
+                            "keep": {
+                                "label": "Keep",
+                                "tooltip": "Keep overlap between Sentinel 2orbits. This additional data will result in better models in the overlap."
+                            },
+                            "remove": {
+                                "label": "Remove",
+                                "tooltip": "Removes overlap between Sentinel 2 orbits. This adds an extra step in the preprocessing. This tends to make the BRDF effect more noticable, and it might be worth while trying to apply BRDF correction in conjuction with this feature."
+                            }
+                        },
+                        "tileOverlap": {
+                            "label": "Tile Overlap",
+                            "keep": {
+                                "label": "Keep",
+                                "tooltip": "Keep overlap between Sentinel 2 tiles. Areas with overlap will have twice or quadruple number of observations. All of these additional observations are all have the same value. Keeping them uses more memory than necessary and can lead to out of memory errors."
+                            },
+                            "quickRemove": {
+                                "label": "Quick remove",
+                                "tooltip": "Makes an effort to remove most of the overlap between Sentinel 2 tiles. By removing the duplicate data, the memory needed in processing is reduced."
+                            },
+                            "remove": {
+                                "label": "Remove",
+                                "tooltip": "Removes all overlap between Sentinel 2 tiles. This adds an extra step in the preprocessing. By removing the duplicate data, the memory needed in processing is reduced. There is no significant difference in this memory reduction with this option compared to the quick remove option."
                             }
                         },
                         "shadowMasking": {
@@ -4133,8 +4162,8 @@
             "description": "{count} {count, plural, one {recipe} other {recipes}}",
             "form": {
                 "name.label": "Name",
-                "name.required" : "Name is required",
-                "name.unique" : "Project name is already in use"
+                "name.required": "Name is required",
+                "name.unique": "Project name is already in use"
             },
             "edit": {
                 "tooltip": "Edit project"
@@ -4369,6 +4398,9 @@
             "title": "Save recipe"
         },
         "timeSeries": {
+            "bands": {
+                "count": "Count"
+            },
             "chartPixel": {
                 "loadObservations": {
                     "error": "Failed to load observations",

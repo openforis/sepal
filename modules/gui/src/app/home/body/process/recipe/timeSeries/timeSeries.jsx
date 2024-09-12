@@ -11,8 +11,10 @@ import {Map} from '../../../../map/map'
 import {recipeAccess} from '../../recipeAccess'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
+import {getAvailableBands} from './bands'
 import {TimeSeriesToolbar} from './panels/timeSeriesToolbar'
 import {defaultModel, RecipeActions} from './timeSeriesRecipe'
+import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),
@@ -26,7 +28,7 @@ class _TimeSeries extends React.Component {
         super(props)
         const {savedLayers, recipeId} = props
         this.recipeActions = RecipeActions(recipeId)
-        initializeLayers({recipeId, savedLayers, skipThis: true})
+        initializeLayers({recipeId, savedLayers, defaultGoogleSatellite: true})
     }
 
     render() {
@@ -93,5 +95,7 @@ export default () => ({
     getDateRange: recipe => [
         moment.utc(recipe.model.dates.startDate, 'YYYY-MM-DD'),
         moment.utc(recipe.model.dates.endDate, 'YYYY-MM-DD')
-    ]
+    ],
+    getAvailableBands,
+    getPreSetVisualizations
 })
