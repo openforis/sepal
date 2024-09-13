@@ -27,7 +27,7 @@ export ANSIBLE_CONFIG=../ansible.cfg
 source ../export-aws-keys.sh $CONFIG_HOME/secret.yml
 
 ansible-playbook provision.yml \
-   -i "$(../inventory.sh Sepal "${CONFIG_HOME}")" \
+   -i "$(../inventory.sh Operations "${CONFIG_HOME}")" \
    --private-key=$PRIVATE_KEY \
    --extra-vars "region=$REGION secret_vars_file=$CONFIG_HOME/secret.yml config_home=$CONFIG_HOME local_ip_address=$LOCAL_IP_ADDRESS"
 

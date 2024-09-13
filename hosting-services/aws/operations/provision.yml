@@ -54,19 +54,19 @@
         tags:
           Name: "Operations"
           Type: Operations
-          Environment: "{{ lookup('env', 'DEPLOY_ENVIRONENT') }}"
+          Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
         ebs_optimized: true
         volumes:
           - device_name: /dev/xvda
             ebs:
               delete_on_termination: false
               volume_type: gp3
-              volume_size: 100
+              volume_size: 50
           - device_name: /dev/sdb # /var/lib/docker
             ebs:
               delete_on_termination: false
               volume_type: gp3
-              volume_size: 100
+              volume_size: 250
 
     - ec2_instance_info:
         region: "{{ lookup('env', 'AWS_REGION') }}"
