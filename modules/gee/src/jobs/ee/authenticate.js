@@ -51,8 +51,8 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
 
     const authenticateServiceAccount$ = serviceAccountCredentials =>
         ee.$({
-            operation: 'authenticate service account',
-            ee: (resolve, reject) => {
+            description: 'authenticate service account',
+            operation: (resolve, reject) => {
                 ee.sepal.setAuthType('SERVICE_ACCOUNT')
                 ee.data.authenticateViaPrivateKey(serviceAccountCredentials, resolve, reject)
             }
@@ -60,8 +60,8 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
 
     const authenticateUserAccount$ = googleTokens =>
         ee.$({
-            operation: 'authenticate user account',
-            ee: (resolve, reject) => {
+            description: 'authenticate user account',
+            operation: (resolve, reject) => {
                 ee.sepal.setAuthType('USER')
                 ee.data.setAuthToken(
                     null,
@@ -82,8 +82,8 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
             
     return authenticate$({sepalUser, serviceAccountCredentials}).pipe(
         switchMap(() => ee.$({
-            operation: 'initialize',
-            ee: (resolve, reject) => {
+            description: 'initialize',
+            operation: (resolve, reject) => {
                 const projectId = sepalUser?.googleTokens?.projectId || googleProjectId
                 ee.setMaxRetries(DEFAULT_MAX_RETRIES)
                 // [HACK] Force ee to change projectId after first initialization (ee.initialize() doesn't do that).
