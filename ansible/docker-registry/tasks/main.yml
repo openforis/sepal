@@ -1,10 +1,5 @@
 ---
 
-- name: Create docker registry directory
-  file:
-    path: "/data/docker/registry"
-    state: "directory"
-
 - name: Create docker registry ssl directory
   file:
     path: "/data/ssl/registry_certs"
