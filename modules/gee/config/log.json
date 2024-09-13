@@ -1,6 +1,7 @@
 {
     "port": 5101,
     "categories": {
+        "auth": "info",
         "config": "info",
         "default": "info",
         "channel-forward": "info",
