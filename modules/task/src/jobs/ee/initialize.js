@@ -66,9 +66,20 @@ const worker$ = () => {
     getContext$().pipe(
         switchMap(context => authenticate$(context)),
         switchMap(projectId => initialize$(projectId))
-    ).subscribe(
-        () => ready$.complete()
-    )
+    ).subscribe({
+        next: () => {
+            log.info('Initialized EE')
+            ready$.closed || ready$.complete()
+        },
+        error: error => {
+            log.error('Failed to initialize EE', error)
+            ready$.closed || ready$.complete()
+        },
+        complete: () => {
+            log.error('Context monitoring is not suppose to complete!')
+            ready$.closed || ready$.complete()
+        }
+    })
 
     return ready$
 }
