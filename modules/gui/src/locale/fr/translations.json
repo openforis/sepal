@@ -803,6 +803,9 @@
             }
         },
         "ccdc": {
+            "bands": {
+                "count": ""
+            },
             "chartPixel": {
                 "cancel.tooltip": "Annuler la représentation des séries temporelles",
                 "loadFailed": "Impossible de charger le graphique : {error}",
@@ -931,6 +934,32 @@
                             "surfaceReflectance": {
                                 "label": "Reflexion de surface",
                                 "tooltip": "Utiliser les scène à la réflectance de surface corrigée des effets atmosphère"
+                            }
+                        },
+                        "orbitOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "Supprimer",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "quickRemove": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "Supprimer",
+                                "tooltip": ""
                             }
                         },
                         "shadowMasking": {
@@ -4130,8 +4159,11 @@
         },
         "project": {
             "title": "",
+            "description": "",
             "form": {
-                "name.label": "Nom"
+                "name.label": "Nom",
+                "name.required": "Le nom est requis",
+                "name.unique": ""
             },
             "edit": {
                 "tooltip": ""
@@ -4366,6 +4398,9 @@
             "title": "Sauver"
         },
         "timeSeries": {
+            "bands": {
+                "count": ""
+            },
             "chartPixel": {
                 "loadObservations": {
                     "error": "",
