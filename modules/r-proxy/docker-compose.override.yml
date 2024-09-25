@@ -1,12 +1,12 @@
 services:
   r-proxy-redis:
     extends:
-      file: ../docker-compose.logger.yml
+      file: ../docker-compose.logger.override.yml
       service: logger
 
   r-proxy:
     extends:
-      file: ../docker-compose.logger.yml
+      file: ../docker-compose.logger.override.yml
       service: logger
     volumes:  # To allow dynamic reloading in dev
       - ${SEPAL_PROJECT_DIR}/lib/js/shared:/usr/local/src/sepal/lib/js/shared
