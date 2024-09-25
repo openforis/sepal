@@ -9,8 +9,8 @@
         "testWatch": "jest --watchAll"
     },
     "dependencies": {
-        "@google/earthengine": "^0.1.418",
-        "@koa/router": "^13.0.0",
+        "@google/earthengine": "^1.1.1",
+        "@koa/router": "^13.1.0",
         "amqplib": "^0.10.4",
         "base-64": "^1.0.0",
         "koa": "^2.15.3",
