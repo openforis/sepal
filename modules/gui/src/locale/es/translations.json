@@ -803,6 +803,9 @@
             }
         },
         "ccdc": {
+            "bands": {
+                "count": ""
+            },
             "chartPixel": {
                 "cancel.tooltip": "Anulación de los gráficos de series temporales",
                 "loadFailed": "No se ha podido cargar el gráfico: {error}",
@@ -931,6 +934,32 @@
                             "surfaceReflectance": {
                                 "label": "Reflectancia de la superficie",
                                 "tooltip": "Utilizar escenas de reflectancia superficial corregidas atmosféricamente."
+                            }
+                        },
+                        "orbitOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "Eliminar",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "quickRemove": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "Eliminar",
+                                "tooltip": ""
                             }
                         },
                         "shadowMasking": {
@@ -4130,8 +4159,11 @@
         },
         "project": {
             "title": "",
+            "description": "",
             "form": {
-                "name.label": ""
+                "name.label": "",
+                "name.required": "El nombre es obligatorio",
+                "name.unique": ""
             },
             "edit": {
                 "tooltip": ""
@@ -4366,6 +4398,9 @@
             "title": "Guardar flujo de trabajo"
         },
         "timeSeries": {
+            "bands": {
+                "count": ""
+            },
             "chartPixel": {
                 "loadObservations": {
                     "error": "",

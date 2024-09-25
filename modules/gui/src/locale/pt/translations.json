@@ -803,6 +803,9 @@
             }
         },
         "ccdc": {
+            "bands": {
+                "count": ""
+            },
             "chartPixel": {
                 "cancel.tooltip": "",
                 "loadFailed": "",
@@ -929,6 +932,32 @@
                             },
                             "label": "",
                             "surfaceReflectance": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "orbitOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "quickRemove": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
                                 "label": "",
                                 "tooltip": ""
                             }
@@ -4130,8 +4159,11 @@
         },
         "project": {
             "title": "",
+            "description": "",
             "form": {
-                "name.label": ""
+                "name.label": "",
+                "name.required": "",
+                "name.unique": ""
             },
             "edit": {
                 "tooltip": ""
@@ -4366,6 +4398,9 @@
             "title": ""
         },
         "timeSeries": {
+            "bands": {
+                "count": ""
+            },
             "chartPixel": {
                 "loadObservations": {
                     "error": "",
