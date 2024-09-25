@@ -1,30 +1,30 @@
 {
     "CloseTimedOutSessions": {
-        "match": "Submitting scheduled command: org.openforis.sepal.component.workersession.command.CloseTimedOutSessions",
+        "match": "Completed command org.openforis.sepal.component.workersession.command.CloseTimedOutSessions",
         "timeout": 300
     },
     "CloseSessionsWithoutInstance": {
-        "match": "Submitting scheduled command: org.openforis.sepal.component.workersession.command.CloseSessionsWithoutInstance",
+        "match": "Completed command org.openforis.sepal.component.workersession.command.CloseSessionsWithoutInstance",
         "timeout": 300
     },
     "ReleaseUnusedInstances": {
-        "match": "Submitting scheduled command: org.openforis.sepal.component.workersession.command.ReleaseUnusedInstances",
+        "match": "Completed command org.openforis.sepal.component.workersession.command.ReleaseUnusedInstances",
         "timeout": 300
     },
     "SizeIdlePool": {
-        "match": "Submitting scheduled command: org.openforis.sepal.component.workerinstance.command.SizeIdlePool",
+        "match": "Completed command org.openforis.sepal.component.workerinstance.command.SizeIdlePool",
         "timeout": 300
     },
     "CancelTimedOutTasks": {
-        "match": "Submitting scheduled command: org.openforis.sepal.component.task.command.CancelTimedOutTasks",
+        "match": "Completed command org.openforis.sepal.component.task.command.CancelTimedOutTasks",
         "timeout": 300
     },
     "UpdateUserSpendingReport": {
-        "match": "Submitting scheduled command: org.openforis.sepal.component.budget.command.UpdateUserSpendingReport",
+        "match": "Completed command org.openforis.sepal.component.budget.command.UpdateUserSpendingReport",
         "timeout": 86400
     },
     "UpdateUserStorageUsage": {
-        "match": "Submitting scheduled command: org.openforis.sepal.component.budget.command.UpdateUserStorageUsage",
+        "match": "Completed command org.openforis.sepal.component.budget.command.UpdateUserStorageUsage",
         "timeout": 86400
     }
 }
