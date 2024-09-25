@@ -33,12 +33,17 @@
       with_items:
         - "vm.max_map_count=1048576"
 
+    - name: Create filesystem on /var/lib/docker volume
+      filesystem:
+        fstype: xfs
+        dev: /dev/sdb
+
     - name: Mount Docker volume
       mount:
         path: /var/lib/docker
         src: /dev/sdb
         fstype: xfs
-        state: present
+        state: mounted
 
     - name: Create docker-registry certificate dir
       file:
@@ -63,8 +68,6 @@
         name: requests
         executable: pip3
 
-    - docker_network: name=sepal
-    
     - file: path="/usr/local/lib/docker/cli-plugins" state=directory
     - uri:
         url: https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64
@@ -87,14 +90,20 @@
         enabled: yes
         masked: no
 
+    - docker_network: name=sepal
+    
+    - name: Create /etc/sepal
+      file:
+        path: /etc/sepal
+        state: directory
+
     - name: Copy env file to /etc/sepal/env
       copy:
         src: "{{ env_file }}"
         dest: "/etc/sepal/env"
 
   roles:
-    - { role: live-patching }
-    - { role: build-module, module: haproxy-acme }
-    - { role: build-module, module: ops }
-    - { role: docker-login }
+    # - { role: live-patching }
+    # - { role: build-module, module: haproxy-acme }
+    # - { role: build-module, module: ops }
     - { role: run-module, module: ops }

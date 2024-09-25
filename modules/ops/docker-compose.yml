@@ -37,7 +37,7 @@ services:
     ulimits:
       core: 0
     healthcheck:
-      test: netstat -an | grep 5000 > /dev/null; if [ 0 != $? ]; then exit 1; fi;
+      test: netstat -an | grep 5000
       timeout: 60s
       interval: 1s
       retries: 60
@@ -52,8 +52,8 @@ services:
       docker-registry:
         condition: service_healthy
     ports:
-      - "8443:8443"
-      - "443:443"
+      - "${JENKINS_PORT}:${JENKINS_PORT}"
+      - "5000:5000" # Docker registry port
     volumes:
       - "./ops.haproxy.cfg:/usr/local/etc/haproxy/haproxy.d/ops.cfg"
       - haproxy:/var/lib/acme
@@ -63,7 +63,7 @@ services:
       DOCKER_REGISTRY_USERNAME: "${DOCKER_REGISTRY_USERNAME}"
       DOCKER_REGISTRY_PASSWORD: "${DOCKER_REGISTRY_PASSWORD}"
     healthcheck:
-      test: bash -c "exec 6<> /dev/tcp/localhost/443"
+      test: netstat -an | grep ${JENKINS_PORT} && netstat -an | grep 5000
       timeout: 60s
       interval: 1s
       retries: 60
