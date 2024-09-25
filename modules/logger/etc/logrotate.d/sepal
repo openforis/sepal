@@ -1,10 +1,12 @@
 /var/log/sepal/main/*.log
 /var/log/sepal/main/container/*.log
+/var/log/sepal/worker/*.log
+/var/log/sepal/worker/user/*/*.log
 {
     rotate 9
     daily
     compress
-    missingok
     delaycompress
+    missingok
     copytruncate
 }
