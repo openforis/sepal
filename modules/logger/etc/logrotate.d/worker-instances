@@ -1,5 +1,5 @@
-/var/log/worker-instance/*.log
-/var/log/worker-instance/user/*/*.log
+/var/log/sepal/worker/*.log
+/var/log/sepal/worker/user/*/*.log
 {
     rotate 9
     daily

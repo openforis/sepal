@@ -33,6 +33,8 @@ function start {
   docker compose --file ${MODULE_DIR}/docker-compose.yml up -d
 }
 
+build logger    
+
 build sandbox-base
 
 build r-proxy
@@ -67,6 +69,7 @@ build sepal-server
 
 echo "${DOCKER_REGISTRY_PASSWORD}" | docker login "${DOCKER_REGISTRY_HOST}" -u "${DOCKER_REGISTRY_USERNAME}" --password-stdin
 
+push logger
 push sys-monitor
 push email
 push backup

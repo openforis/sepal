@@ -1,0 +1,10 @@
+/var/log/sepal/main/*.log
+/var/log/sepal/main/container/*.log
+{
+    rotate 9
+    daily
+    compress
+    missingok
+    delaycompress
+    copytruncate
+}

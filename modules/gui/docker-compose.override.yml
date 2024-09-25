@@ -1,4 +1,7 @@
 services:
   gui:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
     volumes:
       - ${SEPAL_PROJECT_DIR}/modules/gui:/usr/local/src/sepal/modules/gui # To allow dynamic reloading in dev

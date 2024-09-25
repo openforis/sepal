@@ -100,30 +100,37 @@
         state: restarted
       when: sshd_config.changed
 
-    # rsyslog
+    # # rsyslog
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
 
-    - name: Copy rsyslog.d
-      copy:
-        src: "rsyslog.d/"
-        dest: "/etc/rsyslog.d/"
-        owner: "root"
-        group: "root"
-        mode: "0644"
-
+    # Transitional: remove previously installed configuration
+    - name: Remove /etc/rsyslog.d/docker.conf
+      file:
+        path: "/etc/rsyslog.d/docker.conf"
+        state: absent
+    
+    # Transitional: remove previously installed configuration
+    - name: Remove /etc/rsyslog.d/worker-instance.conf
+      file:
+        path: "/etc/rsyslog.d/worker-instance.conf"
+        state: absent
+    
     - name: Start rsyslog
       service: name=rsyslog state=restarted
 
-    # logrotate
-    - name: Copy worker-instances logrotate configuration
-      copy:
-        src: "logrotate.d/"
-        dest: "/etc/logrotate.d/"
-        owner: "root"
-        group: "root"
-        mode: "0644"
-
+    # Transitional: remove previously installed configuration
+    - name: Remove /etc/logrotate.d/docker
+      file:
+        path: "/etc/logrotate.d/docker"
+        state: absent
+    
+    # Transitional: remove previously installed configuration
+    - name: Remove /etc/logrotate.d/worker-instance
+      file:
+        path: "/etc/logrotate.d/worker-instance"
+        state: absent
+    
     # Install multitail
     - name: Install multitail
       yum:
@@ -194,7 +201,11 @@
         name: requests
         executable: pip3
 
-    - docker_network: name=sepal
+    - docker_network:
+      name: sepal
+      ipam_config:
+        subnet: 172.20.0.0/16
+        ip_range: 172.20.0.0/24
 
     - file: path="/usr/local/lib/docker/cli-plugins" state=directory
     - uri:
@@ -236,6 +247,7 @@
     - { role: aws-mount-efs }
     - { role: docker-login }
 
+    - { role: run-module, module: logger }
     - { role: run-module, module: backup }
     - { role: run-module, module: rabbitmq }
     - { role: run-module, module: email }

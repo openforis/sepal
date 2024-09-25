@@ -1,0 +1,18 @@
+services:
+  logger:
+    build:
+      context: ../..
+      dockerfile: ./modules/logger/Dockerfile
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/logger:${SEPAL_VERSION:-latest}"
+    container_name: logger
+    volumes:
+      - /var/log/sepal:/var/log/sepal
+    networks:
+      sepal:
+        ipv4_address: 172.20.128.2
+    ports:
+      - 514:514/udp
+
+networks:
+  sepal:
+    external: true

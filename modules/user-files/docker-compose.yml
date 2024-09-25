@@ -1,5 +1,8 @@
 services:
   user-files:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/user-files/Dockerfile
@@ -31,4 +34,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

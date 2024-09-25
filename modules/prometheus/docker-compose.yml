@@ -1,5 +1,8 @@
 services:
   prometheus:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/prometheus/prometheus.dockerfile
@@ -24,6 +27,9 @@ services:
       - sepal
 
   cadvisor:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
     ports:
@@ -39,4 +45,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

@@ -1,5 +1,8 @@
 services:
   user:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
     volumes:
       - "${SEPAL_PROJECT_DIR}/common/src:/usr/local/src/sepal/common/src"
       - "${SEPAL_PROJECT_DIR}/common/build:/usr/local/src/sepal/common/build"

@@ -1,0 +1,10 @@
+services:
+  mysql:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
+
+  mysql-admin:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger

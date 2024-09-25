@@ -1,5 +1,8 @@
 services:
   letsencrypt:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/letsencrypt/Dockerfile
@@ -9,7 +12,6 @@ services:
           hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/letsencrypt:${SEPAL_VERSION:-latest}"
     container_name: letsencrypt
-
     volumes:
       - "${SEPAL_DATA_DIR}/letsencrypt:/etc/letsencrypt"
     environment:
@@ -24,4 +26,5 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal
+  # sepal-logger:
+  #   external: true

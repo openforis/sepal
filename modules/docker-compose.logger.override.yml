@@ -1,0 +1,5 @@
+services:
+  logger:
+    logging:
+      options:
+        cache-disabled: "false"

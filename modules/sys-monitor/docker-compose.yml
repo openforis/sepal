@@ -1,5 +1,8 @@
 services:
   sys-monitor:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/sys-monitor/Dockerfile
@@ -11,12 +14,12 @@ services:
     container_name: sys-monitor
     init: true
     volumes:
-      - "/var/log:/log:ro"
+      - "/var/log/sepal:/log:ro"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
-      SEPAL_SERVER_LOG: "/log/messages"
+      SEPAL_SERVER_LOG: "/log/main/container/sepal.log"
       INITIAL_DELAY_MINUTES: "10"
       AUTO_REARM_DELAY_HOURS: "24"
       SEPAL_MONITORING_EMAIL: "${SEPAL_MONITORING_EMAIL}"
@@ -29,4 +32,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

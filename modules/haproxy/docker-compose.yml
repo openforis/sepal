@@ -1,5 +1,8 @@
 services:
   haproxy:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/haproxy/Dockerfile
@@ -37,4 +40,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

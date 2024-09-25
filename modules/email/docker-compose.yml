@@ -1,5 +1,8 @@
 services:
   email-redis:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     image: "redis:6"
     container_name: email-redis
     volumes:
@@ -9,6 +12,9 @@ services:
     restart: always
 
   email:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/email/Dockerfile
@@ -45,4 +51,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

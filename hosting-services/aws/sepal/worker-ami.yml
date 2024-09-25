@@ -162,7 +162,13 @@
         state: started
         enabled: yes
         masked: no
-        
+
+    - docker_network:
+      name: sepal
+      ipam_config:
+        subnet: 172.20.0.0/16
+        ip_range: 172.20.0.0/24
+
     # GPU setup
     - name: Install GPU drivers
       script: "gpu/install-gpu-drivers.sh"

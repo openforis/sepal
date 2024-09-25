@@ -1,5 +1,8 @@
 services:
   gateway-redis:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     image: "redis:6"
     container_name: gateway-redis
     volumes:
@@ -9,6 +12,9 @@ services:
     restart: always
 
   gateway:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/gateway/Dockerfile
@@ -48,4 +54,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

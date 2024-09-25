@@ -1,5 +1,8 @@
 services:
   rabbitmq:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/rabbitmq/Dockerfile
@@ -26,4 +29,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

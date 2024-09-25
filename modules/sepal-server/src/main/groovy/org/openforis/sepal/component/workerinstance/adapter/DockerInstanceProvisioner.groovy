@@ -67,12 +67,12 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         def instanceType = instanceTypeById[instance.type]
         def logConfig = syslogAddress
                 ? [
-                'Type': 'syslog',
-                'Config': [
-                        'syslog-address': syslogAddress,
-                        'tag': 'worker-docker/{{.Name}}',
-                        'labels': 'dev',
-                        'syslog-facility': 'daemon']]
+                    'Type': 'syslog',
+                    'Config': [
+                            'syslog-address': syslogAddress,
+                            'tag': 'worker-docker/{{.Name}}'
+                    ]
+                ]
                 : null
         def body = toJson(
                 Image: "$config.dockerRegistryHost/openforis/$image.name:$config.sepalVersion",
@@ -101,6 +101,11 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                         // KernelMemory: memoryBytes,
                         ShmSize: (long) instanceType.ramBytes / 2,
                 // PidMode: 'host' // Exposes all host pids in container. Makes nvidia-smi pick up GPU processes
+                ],
+                NetworkingConfig: [
+                    EndpointsConfig: [
+                        sepal: [:]
+                    ]
                 ],
                 ExposedPorts: image.exposedPorts.collectEntries {
                     ["$it/tcp", [:]]

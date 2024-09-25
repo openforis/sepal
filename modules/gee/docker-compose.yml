@@ -1,5 +1,8 @@
 services:
   gee:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/gee/Dockerfile
@@ -32,4 +35,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

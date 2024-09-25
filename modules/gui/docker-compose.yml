@@ -1,5 +1,8 @@
 services:
   gui:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/gui/Dockerfile
@@ -25,4 +28,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

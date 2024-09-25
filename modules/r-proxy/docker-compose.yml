@@ -1,5 +1,8 @@
 services:
   r-proxy-redis:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     image: "redis:6"
     container_name: r-proxy-redis
     volumes:
@@ -9,6 +12,9 @@ services:
     restart: always
 
   r-proxy:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/r-proxy/Dockerfile
@@ -41,4 +47,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

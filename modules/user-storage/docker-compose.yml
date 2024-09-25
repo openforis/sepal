@@ -1,5 +1,8 @@
 services:
   user-storage-redis:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     image: "redis:6"
     container_name: user-storage-redis
     volumes:
@@ -9,6 +12,9 @@ services:
     restart: always
 
   user-storage:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/user-storage/Dockerfile
@@ -41,4 +47,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal
