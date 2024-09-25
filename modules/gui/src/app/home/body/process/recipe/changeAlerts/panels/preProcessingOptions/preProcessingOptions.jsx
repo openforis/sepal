@@ -5,6 +5,7 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
@@ -12,6 +13,7 @@ import {Panel} from '~/widget/panel/panel'
 import styles from './preProcessingOptions.module.css'
 
 const fields = {
+    advanced: new Form.Field(),
     corrections: new Form.Field(),
     histogramMatching: new Form.Field(),
     cloudDetection: new Form.Field().notEmpty(),
@@ -27,8 +29,7 @@ const mapRecipeToProps = recipe => ({
 
 class _PreProcessingOptions extends React.Component {
     render() {
-        const {sources} = this.props
-        const sentinel2 = Object.keys(sources).includes('SENTINEL_2')
+        const {inputs: {advanced}} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -37,17 +38,41 @@ class _PreProcessingOptions extends React.Component {
                     icon='cog'
                     title={msg('process.changeAlerts.panel.preprocess.title')}/>
                 <Panel.Content>
-                    <Layout>
-                        {this.renderCorrectionsOptions()}
-                        {this.renderHistogramMatching()}
-                        {sentinel2 ? this.renderTileOverlap() : null}
-                        {this.renderCloudDetectionOptions()}
-                        {this.renderCloudMaskingOptions()}
-                        {this.renderSnowMaskingOptions()}
-                    </Layout>
+                    {advanced.value ? this.renderAdvanced() : this.renderSimple()}
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons>
+                    <Button
+                        label={advanced.value ? msg('button.less') : msg('button.more')}
+                        onClick={() => this.setAdvanced(!advanced.value)}/>
+                </Form.PanelButtons>
             </RecipeFormPanel>
+        )
+    }
+
+    renderSimple() {
+        return (
+            <Layout>
+                {this.renderCorrectionsOptions()}
+                {this.renderHistogramMatching()}
+                {this.renderCloudDetectionOptions()}
+                {this.renderCloudMaskingOptions()}
+                {this.renderSnowMaskingOptions()}
+            </Layout>
+        )
+    }
+
+    renderAdvanced() {
+        const {sources} = this.props
+        const sentinel2 = Object.keys(sources).includes('SENTINEL_2')
+        return (
+            <Layout>
+                {this.renderCorrectionsOptions()}
+                {this.renderHistogramMatching()}
+                {sentinel2 ? this.renderTileOverlap() : null}
+                {this.renderCloudDetectionOptions()}
+                {this.renderCloudMaskingOptions()}
+                {this.renderSnowMaskingOptions()}
+            </Layout>
         )
     }
 
@@ -196,6 +221,11 @@ class _PreProcessingOptions extends React.Component {
         if (!tileOverlap.value) {
             tileOverlap.set('KEEP')
         }
+    }
+
+    setAdvanced(enabled) {
+        const {inputs: {advanced}} = this.props
+        advanced.set(enabled)
     }
 }
 
