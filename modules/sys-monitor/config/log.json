@@ -3,7 +3,6 @@
     "categories": {
         "config": "info",
         "logMonitor": "info",
-        "main": "info",
-        "messageQueue": "info"
+        "main": "info"
     }
 }

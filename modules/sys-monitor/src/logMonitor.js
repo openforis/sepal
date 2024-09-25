@@ -3,15 +3,14 @@ const {sepalServerLog, autoRearmDelayHours} = require('./config')
 const log = require('#sepal/log').getLogger('logMonitor')
 const {Subject, groupBy, debounceTime, mergeMap, map, tap} = require('rxjs')
 const _ = require('lodash')
-const {notify} = require('./email')
+const {notify} = require('./pushover')
 
 const rules = require('#config/logMonitor.json')
 
 const tag$ = new Subject()
 
 const getTimeout = tag => rules[tag].timeout
-
-const getEmail = tag => rules[tag].email || {}
+const getPriority = tag => rules[tag].priority
 
 tag$.pipe(
     groupBy(({tag}) => tag),
@@ -34,15 +33,17 @@ const acknowledgeRule = tag => {
 
 const triggerRule = tag => {
     log.info(`Rule triggered: ${tag}`)
-    notify({subject: `Rule ${tag} triggered on ${new Date().toUTCString()}`, ...getEmail(tag)})
+    notify({message: `Rule ${tag} triggered`, priority: getPriority(tag)})
 }
 
-const processLine = line =>
+const processLine = line => {
+    log.debug('Processing line:', line)
     _.forEach(rules, (rule, tag) => {
         if (line.includes(rule.match)) {
             tag$.next({tag})
         }
     })
+}
 
 const activateRules = () =>
     _.forEach(rules, (_rule, tag) => tag$.next({tag, activate: true}))
@@ -52,10 +53,22 @@ const start = () => {
     tail.on('error', err => {throw(err)})
     tail.on('line', line => processLine(line))
     tail.on('restart', reason => {
-        if(reason == 'PRIMEFOUND') log.debug('Now we can finally start tailing. File has appeared')
-        if(reason == 'NEWPRIME') log.debug('We will switch over to the new file now')
-        if(reason == 'TRUNCATE') log.debug('The file got smaller. I will go up and continue')
-        if(reason == 'CATCHUP') log.debug('We found a start in an earlier file and are now moving to the next one in the list')
+        switch (reason) {
+        case 'PRIMEFOUND':
+            log.debug('Restarting: file appeared')
+            break
+        case 'NEWPRIME':
+            log.debug('Restarting: file changed')
+            break
+        case 'TRUNCATE':
+            log.debug('Restarting: file truncated')
+            break
+        case 'CATCHUP':
+            log.debug('Restarting: file replaced')
+            break
+        default:
+            log.debug('Restarting: ' + reason)
+        }
     })
     
     if (autoRearmDelayHours) {
@@ -67,7 +80,7 @@ const start = () => {
     tail.start()
 
     log.info('Started')
-    notify({subject: 'Log monitoring started'})
+    notify({message: 'Log monitoring started', priority: -1})
 }
 
 module.exports = {start}
