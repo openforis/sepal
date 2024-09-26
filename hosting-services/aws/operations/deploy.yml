@@ -103,7 +103,7 @@
         dest: "/etc/sepal/env"
 
   roles:
-    # - { role: live-patching }
-    # - { role: build-module, module: haproxy-acme }
-    # - { role: build-module, module: ops }
+    - { role: live-patching }
+    - { role: build-module, module: haproxy-acme }
+    - { role: build-module, module: ops }
     - { role: run-module, module: ops }
