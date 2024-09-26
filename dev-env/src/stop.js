@@ -1,5 +1,5 @@
 import {compose} from './compose.js'
-import {getModules, isModule, isRunnable, showModuleStatus, showStatus, MESSAGE} from './utils.js'
+import {getModules, isModule, isRunnable, showModuleStatus, showStatus, MESSAGE, multi} from './utils.js'
 import {getDirectRunDeps} from './deps.js'
 import _ from 'lodash'
 
@@ -36,9 +36,5 @@ const getModulesToStop = (modules, options = {}, parentModules = []) => {
 
 export const stop = async (modules, options) => {
     const modulesToStop = _.uniq(getModulesToStop(getModules(modules), options))
-    await Promise.all(
-        modulesToStop.map(
-            async module => await stopModule(module, _.pick(options, ['verbose', 'quiet']))
-        )
-    )
+    await multi(modulesToStop, async module => await stopModule(module, _.pick(options, ['verbose', 'quiet'])), options.sequential)
 }

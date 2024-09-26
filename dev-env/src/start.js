@@ -1,6 +1,6 @@
 import {compose} from './compose.js'
 import {exec} from './exec.js'
-import {getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning} from './utils.js'
+import {getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning, multi} from './utils.js'
 import {logs} from './logs.js'
 import {getRunDependencyMap} from './deps.js'
 import {SEPAL_SRC} from './config.js'
@@ -86,17 +86,7 @@ const startModules = async (rootModules, options, gradleOptions, dependencyMap =
         .keys()
         .value()
 
-    if (options.sequential) {
-        for (const module of independentModules) {
-            await startModule(module, options, rootModules.includes(module), gradleOptions)
-        }
-    } else {
-        await Promise.all(
-            independentModules.map(
-                async module => await startModule(module, options, rootModules.includes(module), gradleOptions)
-            )
-        )
-    }
+    await multi(independentModules, async module => await startModule(module, options, rootModules.includes(module), gradleOptions), options.sequential)
 
     const updatedDependencyMap = _(dependencyMap)
         .omit(independentModules)
