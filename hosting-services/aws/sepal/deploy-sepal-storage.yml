@@ -84,16 +84,16 @@
         src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
-    - name: Install docker
-      command: "amazon-linux-extras install docker -y"
+    # - name: Install docker
+    #   command: "amazon-linux-extras install docker -y"
 
-    - name: Install Development Tools
-      yum:
-        name: "@Development Tools"
+    # - name: Install Development Tools
+    #   yum:
+    #     name: "@Development Tools"
 
-    - name: Install pip
-      yum:
-        name: python-pip
+    # - name: Install pip
+    #   yum:
+    #     name: python-pip
 
     - name: Create /etc/docker
       file:
@@ -115,10 +115,10 @@
         enabled: yes
         masked: no
 
-    - name: pip install docker
-      pip:
-        name: "docker"
-        executable: pip3
+    # - name: pip install docker
+    #   pip:
+    #     name: "docker"
+    #     executable: pip3
 
     # EFS
     - name: Install amazon-efs-utils
@@ -181,8 +181,13 @@
         src: /etc/sepal/env.d
         dest: /etc/sepal/env
 
+    - name: Copy logger docker compose file
+      copy:
+        src: "{{ lookup('env', 'PROJECT_DIR') }}/modules/docker-compose.logger.yml"
+        dest: "/var/lib/sepal/modules/"
+
   roles:
-    - { role: live-patching }
+    # - { role: live-patching }
     - { role: docker-login }
     # - { role: run-module, module: user-storage-backup }
     - { role: run-module, module: logger }
