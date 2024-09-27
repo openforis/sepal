@@ -63,6 +63,7 @@ const main = async () => {
         .option('-d, --dependencies', 'Stop dependencies')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
+        .option('-s, --sequential', 'Sequential stop')
         .argument('[module...]', 'Modules to stop')
         .action(stop)
     

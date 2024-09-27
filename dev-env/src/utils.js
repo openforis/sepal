@@ -317,3 +317,20 @@ export const exit = reason => {
 
 export const firstLine = text =>
     text.split('\n')[0]
+
+const iterateSequential = async (items, iterator) => {
+    for await (const item of items) {
+        await iterator(item)
+    }
+}
+
+const iterateParallel = async (items, iterator) => {
+    await Promise.all(
+        items.map(async item => await iterator(item))
+    )
+}
+
+export const multi = async (items, iterator, sequential = false) =>
+    sequential
+        ? await iterateSequential(items, iterator)
+        : await iterateParallel(items, iterator)
