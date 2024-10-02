@@ -296,7 +296,7 @@ class _MosaicRetrievePanel extends React.Component {
 
     renderBandOptions() {
         const {bandOptions, single, inputs: {bands}} = this.props
-        if (bandOptions.length <= 1) {
+        if (!bandOptions?.length) {
             return null
         } else {
             const options = bandOptions
