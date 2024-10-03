@@ -778,6 +778,51 @@
         "info": ""
     },
     "process": {
+        "panels": {
+            "inputImagery": {
+                "asset": {
+                    "title": "Asset Earth Engine"
+                },
+                "button": "",
+                "form": {
+                    "asset": {
+                        "label": "ID de asset de Earth Engine",
+                        "placeholder": "Indique el ID de un GEE asset..."
+                    },
+                    "band": {
+                        "label": ""
+                    },
+                    "legend": {
+                        "label": ""
+                    },
+                    "noImagery": "",
+                    "recipe": {
+                        "label": "",
+                        "placeholder": "Selecciona un flujo de trabajo..."
+                    },
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "section": {
+                        "required": "Debes seleccionar una imagen"
+                    },
+                    "type": {
+                        "categorical": "",
+                        "continuous": "",
+                        "ASSET": "Asset Earth Engine",
+                        "RECIPE_REF": "Flujo de trabajo de SEPAL",
+                        "label": ""
+                    }
+                },
+                "recipe": {
+                    "title": "Guardar el flujo de trabajo de SEPAL"
+                },
+                "sections": {
+                    "title": ""
+                },
+                "title": ""
+            }
+        },
         "mapZoom": {
             "fit": {
                 "tooltip": "Acercamiento a la zona de interés"
@@ -2489,6 +2534,20 @@
                             }
                         }
                     }
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "stack": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "bandNames": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "duplicateBand": "",
+                    "invalidFormat": ""
                 }
             },
             "tabPlaceholder": ""
@@ -4237,49 +4296,6 @@
                 }
             },
             "panel": {
-                "inputImagery": {
-                    "asset": {
-                        "title": "Asset Earth Engine"
-                    },
-                    "button": "",
-                    "form": {
-                        "asset": {
-                            "label": "ID de asset de Earth Engine",
-                            "placeholder": "Indique el ID de un GEE asset..."
-                        },
-                        "band": {
-                            "label": ""
-                        },
-                        "legend": {
-                            "label": ""
-                        },
-                        "noImagery": "",
-                        "recipe": {
-                            "label": "",
-                            "placeholder": "Selecciona un flujo de trabajo..."
-                        },
-                        "remove": {
-                            "tooltip": ""
-                        },
-                        "section": {
-                            "required": "Debes seleccionar una imagen"
-                        },
-                        "type": {
-                            "categorical": "",
-                            "continuous": "",
-                            "ASSET": "Asset Earth Engine",
-                            "RECIPE_REF": "Flujo de trabajo de SEPAL",
-                            "label": ""
-                        }
-                    },
-                    "recipe": {
-                        "title": "Guardar el flujo de trabajo de SEPAL"
-                    },
-                    "sections": {
-                        "title": ""
-                    },
-                    "title": ""
-                },
                 "legend": {
                     "button": "",
                     "title": "",
