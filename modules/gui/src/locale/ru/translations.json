@@ -778,6 +778,51 @@
         "info": ""
     },
     "process": {
+        "panels": {
+            "inputImagery": {
+                "asset": {
+                    "title": ""
+                },
+                "button": "",
+                "form": {
+                    "asset": {
+                        "label": "",
+                        "placeholder": ""
+                    },
+                    "band": {
+                        "label": ""
+                    },
+                    "legend": {
+                        "label": ""
+                    },
+                    "noImagery": "",
+                    "recipe": {
+                        "label": "",
+                        "placeholder": ""
+                    },
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "section": {
+                        "required": ""
+                    },
+                    "type": {
+                        "categorical": "",
+                        "continuous": "",
+                        "ASSET": "",
+                        "RECIPE_REF": "",
+                        "label": ""
+                    }
+                },
+                "recipe": {
+                    "title": ""
+                },
+                "sections": {
+                    "title": ""
+                },
+                "title": ""
+            }
+        },
         "mapZoom": {
             "fit": {
                 "tooltip": ""
@@ -2489,6 +2534,20 @@
                             }
                         }
                     }
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "stack": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "bandNames": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "duplicateBand": "",
+                    "invalidFormat": ""
                 }
             },
             "tabPlaceholder": ""
@@ -4237,49 +4296,6 @@
                 }
             },
             "panel": {
-                "inputImagery": {
-                    "asset": {
-                        "title": ""
-                    },
-                    "button": "",
-                    "form": {
-                        "asset": {
-                            "label": "",
-                            "placeholder": ""
-                        },
-                        "band": {
-                            "label": ""
-                        },
-                        "legend": {
-                            "label": ""
-                        },
-                        "noImagery": "",
-                        "recipe": {
-                            "label": "",
-                            "placeholder": ""
-                        },
-                        "remove": {
-                            "tooltip": ""
-                        },
-                        "section": {
-                            "required": ""
-                        },
-                        "type": {
-                            "categorical": "",
-                            "continuous": "",
-                            "ASSET": "",
-                            "RECIPE_REF": "",
-                            "label": ""
-                        }
-                    },
-                    "recipe": {
-                        "title": ""
-                    },
-                    "sections": {
-                        "title": ""
-                    },
-                    "title": ""
-                },
                 "legend": {
                     "button": "",
                     "title": "",
