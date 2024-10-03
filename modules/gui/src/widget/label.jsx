@@ -35,6 +35,7 @@ export class Label extends React.Component {
             <Layout type='horizontal-nowrap' spacing='compact'>
                 {this.renderContents()}
                 {this.renderTooltipIcon()}
+                {this.renderWarning()}
                 {this.renderError()}
             </Layout>
         )
@@ -78,11 +79,23 @@ export class Label extends React.Component {
             : null
     }
 
+    renderWarning() {
+        const {warning} = this.props
+        return warning ? (
+            <Icon
+                name='triangle-exclamation'
+                variant='warning'
+                tooltip={warning}
+                tooltipPlacement='right'
+                tooltipDelay={0}
+            />
+        ) : null
+    }
+
     renderError() {
         const {error} = this.props
         return error ? (
             <Icon
-                className={styles.error}
                 name='triangle-exclamation'
                 variant='error'
                 tooltip={error}
@@ -110,7 +123,8 @@ Label.propTypes = {
     size: PropTypes.oneOf(['small', 'normal', 'large']),
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,
-    tooltipSeverity: PropTypes.oneOf(['info', 'warning'])
+    tooltipSeverity: PropTypes.oneOf(['info', 'warning']),
+    warning: PropTypes.any
 }
 
 Label.defaultProps = {

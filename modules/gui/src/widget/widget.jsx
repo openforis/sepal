@@ -59,7 +59,7 @@ export class _Widget extends React.Component {
     }
 
     renderLabel() {
-        const {label, labelButtons, alignment, tooltip, tooltipPlacement, tooltipSeverity, tooltipTrigger, disabled, errorMessage} = this.props
+        const {label, labelButtons, alignment, tooltip, tooltipPlacement, tooltipSeverity, tooltipTrigger, disabled, warningMessage, errorMessage} = this.props
         return _.isNil(label)
             ? null
             : (
@@ -73,6 +73,7 @@ export class _Widget extends React.Component {
                     tooltipSeverity={tooltipSeverity}
                     tooltipTrigger={tooltipTrigger}
                     tabIndex={-1}
+                    warning={!disabled && warningMessage}
                     error={!disabled && errorMessage}
                 />
             )
@@ -107,6 +108,7 @@ Widget.propTypes = {
     tooltipPlacement: PropTypes.any,
     tooltipSeverity: PropTypes.any,
     tooltipTrigger: PropTypes.any,
+    warningMessage: PropTypes.any,
     onClick: PropTypes.func,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func
