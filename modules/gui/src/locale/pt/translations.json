@@ -58,6 +58,7 @@
     },
     "asset": {
         "failedToLoad": "",
+        "failedToLoadSome": "",
         "notFound": "",
         "unauthorized": "",
         "folder": "",

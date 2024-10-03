@@ -58,6 +58,7 @@
     },
     "asset": {
         "failedToLoad": "Échec du chargement de l'asset EE",
+        "failedToLoadSome": "",
         "notFound": "Asset EE introuvable",
         "unauthorized": "Vous n'avez pas accès à cette Asset EE",
         "folder": "Dossier",
