@@ -58,6 +58,7 @@
     },
     "asset": {
         "failedToLoad": "Fallo en la carga de la tabla de EE",
+        "failedToLoadSome": "",
         "notFound": "Tabla de EE no encontrada",
         "unauthorized": "No tienes acceso a esta tabla de EE.",
         "folder": "",
