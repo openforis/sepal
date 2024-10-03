@@ -267,14 +267,15 @@ class _Assets extends React.Component {
     }
 
     update() {
-        const {projectId} = this.props
+        const {projectId, addSubscription} = this.props
         this.cancel$.next()
         if (projectId) {
-            const {addSubscription} = this.props
             addSubscription(
                 loadAssets$().pipe(
                     takeUntil(this.cancel$)
-                ).subscribe()
+                ).subscribe({
+                    error: error => log.error('Unexpected stream error', error)
+                })
             )
         }
     }
