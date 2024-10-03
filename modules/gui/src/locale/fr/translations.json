@@ -778,6 +778,51 @@
         "info": "{start} - {stop - 1} / {count}"
     },
     "process": {
+        "panels": {
+            "inputImagery": {
+                "asset": {
+                    "title": "Asset Google Earth Engine"
+                },
+                "button": "IMG",
+                "form": {
+                    "asset": {
+                        "label": "Id de l'asset Earth Engine",
+                        "placeholder": "Entrer une ID d'asset..."
+                    },
+                    "band": {
+                        "label": "Bande"
+                    },
+                    "legend": {
+                        "label": "Légende"
+                    },
+                    "noImagery": "",
+                    "recipe": {
+                        "label": "Formule",
+                        "placeholder": "Selectionner une formule..."
+                    },
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "section": {
+                        "required": "Une image doit être sélectionnée"
+                    },
+                    "type": {
+                        "categorical": "Catégorielle",
+                        "continuous": "Continue",
+                        "ASSET": "Asset Google Earth Engine",
+                        "RECIPE_REF": "Formule SEPAL",
+                        "label": "Type"
+                    }
+                },
+                "recipe": {
+                    "title": "Sauvegarde de la formule SEPAL"
+                },
+                "sections": {
+                    "title": ""
+                },
+                "title": ""
+            }
+        },
         "mapZoom": {
             "fit": {
                 "tooltip": "Zoom sur la zone d'intérêt"
@@ -2492,6 +2537,20 @@
                 }
             },
             "tabPlaceholder": ""
+        },
+        "stack": {
+            "create": "Pile",
+            "description": "",
+            "panel": {
+                "bandNames": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "duplicateBand": "",
+                    "invalidFormat": ""
+                }
+            },
+            "tabPlaceholder": "Pile"
         },
         "classChange": {
             "create": "",
@@ -4237,49 +4296,6 @@
                 }
             },
             "panel": {
-                "inputImagery": {
-                    "asset": {
-                        "title": "Asset Google Earth Engine"
-                    },
-                    "button": "IMG",
-                    "form": {
-                        "asset": {
-                            "label": "Id d'Asset Earth Engine",
-                            "placeholder": "Entrez un ID d'Asset..."
-                        },
-                        "band": {
-                            "label": "Bande"
-                        },
-                        "legend": {
-                            "label": "Légende"
-                        },
-                        "noImagery": "",
-                        "recipe": {
-                            "label": "Formule",
-                            "placeholder": "Selectionner une formule..."
-                        },
-                        "remove": {
-                            "tooltip": ""
-                        },
-                        "section": {
-                            "required": "Une image doit être sélectionnée"
-                        },
-                        "type": {
-                            "categorical": "Catégorielle",
-                            "continuous": "Continue",
-                            "ASSET": "Asset Google Earth Engine",
-                            "RECIPE_REF": "Formule SEPAL",
-                            "label": "Type"
-                        }
-                    },
-                    "recipe": {
-                        "title": "Formules SEPAL sauvegardée"
-                    },
-                    "sections": {
-                        "title": ""
-                    },
-                    "title": ""
-                },
                 "legend": {
                     "button": "LEG",
                     "title": "Légende",
