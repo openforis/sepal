@@ -91,7 +91,7 @@ class _Combo extends React.Component {
     }
 
     render() {
-        const {errorMessage, busyMessage, disabled, className, label, labelButtons, tooltip, tooltipPlacement} = this.props
+        const {warningMessage, errorMessage, busyMessage, disabled, className, label, labelButtons, tooltip, tooltipPlacement} = this.props
         const {showOptions} = this.state
         return (
             <Widget
@@ -101,6 +101,7 @@ class _Combo extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
+                warningMessage={warningMessage}
                 errorMessage={errorMessage}
                 busyMessage={busyMessage}>
                 <div
@@ -508,6 +509,7 @@ Combo.propTypes = {
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     value: PropTypes.any,
+    warningMessage: PropTypes.any,
     onBlur: PropTypes.func,
     onCancel: PropTypes.func,
     onChange: PropTypes.func,

@@ -59,7 +59,10 @@ class _AssetCombo extends React.Component {
 
     render() {
         const {
+            assets: {error: assetError},
             busyMessage,
+            warningMessage,
+            errorMessage,
             options: _options, onChange: _onChange, // overridden
             ...otherProps
         } = this.props
@@ -74,6 +77,8 @@ class _AssetCombo extends React.Component {
                 ]}
                 onChange={this.onChange}
                 onFilterChange={this.onFilterChange}
+                warningMessage={warningMessage || assetError ? msg('asset.failedToLoadSome') : null}
+                errorMessage={errorMessage}
                 {...otherProps}
             />
         ) : null
