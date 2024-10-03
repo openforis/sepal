@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 
 import {bandsAvailableToAdd, defaultBand} from '~/app/home/body/process/recipe/remapping/remappingRecipe'
@@ -50,13 +51,13 @@ class _InputImage extends React.Component {
             },
             {
                 value: 'RECIPE_REF',
-                label: msg('process.remapping.panel.inputImagery.recipe.title'),
+                label: msg('process.panels.inputImagery.recipe.title'),
                 title: msg('SEPAL RECIPE'),
                 component: <ImageForm ${...this.props} inputComponent={RecipeSection} input={inputs.recipe}/>
             },
             {
                 value: 'ASSET',
-                label: msg('process.remapping.panel.inputImagery.asset.title'),
+                label: msg('process.panels.inputImagery.asset.title'),
                 title: msg('EARTH ENGINE ASSET'),
                 component: <ImageForm ${...this.props} inputComponent={AssetSection} input={inputs.asset}/>
             }
@@ -72,7 +73,7 @@ class _InputImage extends React.Component {
                     sections={sections}
                     selected={inputs.section}
                     icon='image'
-                    label={msg('process.remapping.panel.inputImagery.sections.title')}
+                    label={msg('process.panels.inputImagery.sections.title')}
                     defaultButtons={
                         <Form.PanelButtons>
                             <Panel.Buttons.Add
@@ -104,7 +105,7 @@ class _InputImage extends React.Component {
     }
 
     updateImageLayerSources({section, asset, recipe: recipeId, visualizations}) {
-        const {recipeActionBuilder} = this.props
+        const {recipeActionBuilder, onChange} = this.props
 
         const toImageLayerSource = () => {
             switch (section) {
@@ -136,6 +137,8 @@ class _InputImage extends React.Component {
         recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {source})
             .set(['layers.additionalImageLayerSources', {id: source.id}], source)
             .dispatch()
+
+        onChange && setTimeout(() => onChange())
     }
 
     addImage() {
@@ -222,4 +225,6 @@ export const InputImage = compose(
     recipeFormPanel(panelOptions)
 )
 
-InputImage.propTypes = {}
+InputImage.propTypes = {
+    onChange: PropTypes.func
+}

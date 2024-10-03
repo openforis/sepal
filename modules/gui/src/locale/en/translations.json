@@ -777,6 +777,51 @@
         "info": "{start} - {stop - 1} / {count}"
     },
     "process": {
+        "panels": {
+            "inputImagery": {
+                "asset": {
+                    "title": "Earth Engine asset"
+                },
+                "button": "IMG",
+                "form": {
+                    "asset": {
+                        "label": "Earth Engine asset ID",
+                        "placeholder": "Enter an asset ID..."
+                    },
+                    "band": {
+                        "label": "Band"
+                    },
+                    "legend": {
+                        "label": "Legend"
+                    },
+                    "noImagery": "Please add at least one image.",
+                    "recipe": {
+                        "label": "Recipe",
+                        "placeholder": "Select a recipe..."
+                    },
+                    "remove": {
+                        "tooltip": "Remove image from selection"
+                    },
+                    "section": {
+                        "required": "An image must be selected"
+                    },
+                    "type": {
+                        "categorical": "Categorical",
+                        "continuous": "Continuous",
+                        "ASSET": "Earth Engine asset",
+                        "RECIPE_REF": "SEPAL recipe",
+                        "label": "Type"
+                    }
+                },
+                "recipe": {
+                    "title": "Saved SEPAL recipe"
+                },
+                "sections": {
+                    "title": "Image to include"
+                },
+                "title": "Input imagery"
+            }
+        },
         "mapZoom": {
             "fit": {
                 "tooltip": "Zoom to area of interest"
@@ -2491,6 +2536,20 @@
                 }
             },
             "tabPlaceholder": "Unsupervised_classification"
+        },
+        "stack": {
+            "create": "Stack",
+            "description": "Create an image stack from SEPAL and/or Google Earth Engine imagery.",
+            "panel": {
+                "bandNames": {
+                    "button": "NAM",
+                    "title": "Band names",
+                    "tooltip": "Set the band names of the stack.",
+                    "duplicateBand": "Duplicate band name",
+                    "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters"
+                }
+            },
+            "tabPlaceholder": "Stack"
         },
         "classChange": {
             "create": "Class change",
@@ -4236,49 +4295,6 @@
                 }
             },
             "panel": {
-                "inputImagery": {
-                    "asset": {
-                        "title": "Earth Engine asset"
-                    },
-                    "button": "IMG",
-                    "form": {
-                        "asset": {
-                            "label": "Earth Engine asset ID",
-                            "placeholder": "Enter an asset ID..."
-                        },
-                        "band": {
-                            "label": "Band"
-                        },
-                        "legend": {
-                            "label": "Legend"
-                        },
-                        "noImagery": "Please add at least one image to remap.",
-                        "recipe": {
-                            "label": "Recipe",
-                            "placeholder": "Select a recipe..."
-                        },
-                        "remove": {
-                            "tooltip": "Remove image from remapping"
-                        },
-                        "section": {
-                            "required": "An image must be selected"
-                        },
-                        "type": {
-                            "categorical": "Categorical",
-                            "continuous": "Continuous",
-                            "ASSET": "Earth Engine asset",
-                            "RECIPE_REF": "SEPAL recipe",
-                            "label": "Type"
-                        }
-                    },
-                    "recipe": {
-                        "title": "Saved SEPAL recipe"
-                    },
-                    "sections": {
-                        "title": "Image to remap"
-                    },
-                    "title": "Input imagery"
-                },
                 "legend": {
                     "button": "LEG",
                     "title": "Legend",

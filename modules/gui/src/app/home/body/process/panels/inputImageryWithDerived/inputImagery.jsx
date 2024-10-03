@@ -14,7 +14,7 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
-import {RecipeActions} from '../../remappingRecipe'
+import {RecipeActions} from '../../recipe/classification/classificationRecipe'
 import {InputImage} from './inputImage'
 import styles from './inputImagery.module.css'
 
@@ -43,7 +43,7 @@ class _InputImagery extends React.Component {
                     placement='bottom-right'>
                     <Panel.Header
                         icon='image'
-                        title={msg('process.remapping.panel.inputImagery.title')}/>
+                        title={msg('process.classification.panel.inputImagery.title')}/>
                     <Panel.Content>
                         {this.renderContent()}
                     </Panel.Content>
@@ -83,8 +83,9 @@ class _InputImagery extends React.Component {
                     key={key}
                     onClick={() => this.editImage(image)}>
                     <CrudItem
-                        title={msg(`process.remapping.panel.inputImagery.form.type.${image.type}`)}
+                        title={msg(`process.classification.panel.inputImagery.type.${image.type}`)}
                         description={name}
+                        removeTooltip={msg('process.classification.panel.inputImagery.remove.tooltip')}
                         onRemove={() => this.removeImage(image)}
                     />
                 </ListItem>
@@ -94,7 +95,7 @@ class _InputImagery extends React.Component {
 
     renderNoImageryMessage() {
         return (
-            <NoData message={msg('process.remapping.panel.inputImagery.form.noImagery')}/>
+            <NoData message={msg('process.classification.panel.inputImagery.noImagery')}/>
         )
     }
 
@@ -114,7 +115,6 @@ class _InputImagery extends React.Component {
         RecipeActions(recipeId).removeInputImage(imageToRemove)
     }
 }
-
 const additionalPolicy = () => ({_: 'allow'})
 // [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected images from
 // being overridden.

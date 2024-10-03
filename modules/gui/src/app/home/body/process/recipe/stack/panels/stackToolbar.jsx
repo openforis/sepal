@@ -1,7 +1,6 @@
 import React from 'react'
 
 import {InputImagery} from '~/app/home/body/process/panels/inputImagery/inputImagery'
-import {Mapping} from '~/app/home/body/process/panels/mapping/mapping'
 import {setInitialized} from '~/app/home/body/process/recipe'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
@@ -11,28 +10,34 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
-import {Legend} from '../legend/legend'
-import styles from './remappingToolbar.module.css'
+import {RecipeActions} from '../stackRecipe'
+import {BandNames} from './bandNames/bandNames'
+import {toBandNames} from './bandNames/bandNamesUpdate'
 import {Retrieve} from './retrieve/retrieve'
+import styles from './stackToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
-    collecting: selectFrom(recipe, 'ui.collect.collecting'),
+    bandNames: selectFrom(recipe, 'model.bandNames'),
     initialized: selectFrom(recipe, 'ui.initialized'),
 })
 
-class _RemappingToolbar extends React.Component {
+class _StackToolbar extends React.Component {
+    constructor(props) {
+        super(props)
+        this.syncBandNames = this.syncBandNames.bind(this)
+    }
+
     render() {
         const {recipeId, initialized} = this.props
         return (
             <PanelWizard
-                panels={['inputImagery', 'legend', 'mapping']}
+                panels={['inputImagery']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
                 <Retrieve/>
-                <InputImagery/>
-                <Legend/>
-                <Mapping/>
+                <InputImagery onChange={this.syncBandNames}/>
+                <BandNames/>
 
                 <Toolbar
                     vertical
@@ -51,26 +56,26 @@ class _RemappingToolbar extends React.Component {
                         label={msg('process.panels.inputImagery.button')}
                         tooltip={msg('process.panels.inputImagery.tooltip')}
                         disabled={!initialized}/>
+                    <Toolbar.ActivationButton
+                        id='bandNames'
+                        label={msg('process.stack.panel.bandNames.button')}
+                        tooltip={msg('process.stack.panel.bandNames.tooltip')}
+                        disabled={!initialized}/>
 
-                    <Toolbar.ActivationButton
-                        id='legend'
-                        label={msg('process.remapping.panel.legend.button')}
-                        tooltip={msg('process.remapping.panel.legend.tooltip')}
-                        disabled={!initialized}/>
-                    <Toolbar.ActivationButton
-                        id='mapping'
-                        label={msg('process.remapping.panel.mapping.button.label')}
-                        tooltip={msg('process.remapping.panel.mapping.button.tooltip')}
-                        disabled={!initialized}/>
                 </Toolbar>
             </PanelWizard>
         )
     }
+
+    syncBandNames(images) {
+        const {recipeId, bandNames: {bandNames: prevBandNames}} = this.props
+        // const bandNames = toBandNames(images, undefined)
+        const bandNames = toBandNames(images, prevBandNames)
+        RecipeActions(recipeId).syncBandNames(bandNames)
+    }
 }
 
-export const RemappingToolbar = compose(
-    _RemappingToolbar,
+export const StackToolbar = compose(
+    _StackToolbar,
     withRecipe(mapRecipeToProps)
 )
-
-RemappingToolbar.propTypes = {}
