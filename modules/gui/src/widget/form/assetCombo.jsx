@@ -18,7 +18,7 @@ class _FormAssetCombo extends React.Component {
         const {
             input, alignment, allowClear, allowedTypes, autoFocus, autoOpen, busyMessage, className, disabled,
             inputClassName, keyboard, label, labelButtons, mode, optionsClassName, optionTooltipPlacement, placeholder, placement,
-            preferredTypes, readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, onCancel, onLoaded, onLoading
+            preferredTypes, readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, warningMessage, onCancel, onLoaded, onLoading
         } = this.props
         return (
             <AssetCombo
@@ -31,6 +31,7 @@ class _FormAssetCombo extends React.Component {
                 busyMessage={busyMessage}
                 className={className}
                 disabled={disabled}
+                warningMessage={warningMessage}
                 errorMessage={this.getErrorMessage()}
                 inputClassName={inputClassName}
                 keyboard={keyboard}
@@ -111,6 +112,7 @@ FormAssetCombo.propTypes = {
     stayOpenOnSelect: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
+    warningMessage: PropTypes.any,
     onCancel: PropTypes.func,
     onChange: PropTypes.func,
     onError: PropTypes.func,

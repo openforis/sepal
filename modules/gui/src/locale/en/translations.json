@@ -58,6 +58,7 @@
     },
     "asset": {
         "failedToLoad": "Failed to load EE asset",
+        "failedToLoadSome": "Failed to load some EE assets",
         "notFound": "Asset not found",
         "unauthorized": "You don't have access to this asset",
         "folder": "Folder",

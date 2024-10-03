@@ -21,11 +21,18 @@ const TASK_CHECK_INTERVAL_MINUTES = 5
 const assetTree = Tree.createNode()
 let previousCompletedTasks = []
 
-const loadNode$ = (path = [], node = {}) =>
-    api.gee.listAssets$(node).pipe(
-        catchError(() => {
-            log.debug('Cannot retrieve user assets')
-            return []
+const loadNode$ = (path = [], node = {}) => {
+    return api.gee.listAssets$(node).pipe(
+        catchError(error => {
+            if (path.length < 2) {
+                log.debug('Failed to retrieve some asset roots', error)
+            } else {
+                log.debug('Failed to retrieve some assets', error)
+                actionBuilder('LOAD_ASSETS')
+                    .set('assets.error', true)
+                    .dispatch()
+            }
+            return of([])
         }),
         switchMap(nodes =>
             of({path, nodes}).pipe(
@@ -33,42 +40,63 @@ const loadNode$ = (path = [], node = {}) =>
             )
         )
     )
+}
 
 const loadNodes$ = (path, nodes) =>
     nodes
         .filter(({type}) => type === 'Folder')
         .map(node => loadNode$([...path, node.id], node))
 
+const listCompletedTasks$ = () =>
+    api.gee.listCompletedTasks$().pipe(
+        catchError(error => {
+            log.debug('Failed to retrieve the list of completed task', error)
+            return EMPTY
+        })
+    )
+
 const startReloadAssets$ = new Subject()
 const cancelReloadAssets$ = new Subject()
 
+const initialLoad$ = () =>
+    of({incremental: true})
+
+const scheduledReload$ = () =>
+    interval(REFRESH_INTERVAL_HOURS * 3600 * 1000).pipe(
+        map(() => ({incremental: false}))
+    )
+
+const taskCompletedReload$ = () =>
+    interval(TASK_CHECK_INTERVAL_MINUTES * 60 * 1000).pipe(
+        switchMap(() => listCompletedTasks$()),
+        switchMap(completedTasks => {
+            if (_.isEqual(completedTasks, previousCompletedTasks)) {
+                return EMPTY
+            }
+            previousCompletedTasks = completedTasks
+            return of({incremental: false})
+        })
+    )
+
+const userReload$ = () =>
+    startReloadAssets$.pipe(
+        map(() => ({incremental: true}))
+    )
+
 const loadAssets$ = () =>
     merge(
-        of({incremental: true}),
-        interval(REFRESH_INTERVAL_HOURS * 3600 * 1000).pipe(
-            map(() => ({incremental: false}))
-        ),
-        interval(TASK_CHECK_INTERVAL_MINUTES * 60 * 1000).pipe(
-            switchMap(() => api.gee.listCompletedTasks$()),
-            switchMap(completedTasks => {
-                if (_.isEqual(completedTasks, previousCompletedTasks)) {
-                    return EMPTY
-                }
-                previousCompletedTasks = completedTasks
-                return of({incremental: false})
-            })
-        ),
-        startReloadAssets$.pipe(
-            map(() => ({incremental: true}))
-        )
+        initialLoad$(),
+        scheduledReload$(),
+        taskCompletedReload$(),
+        userReload$()
     ).pipe(
         exhaustMap(({incremental}) => {
             log.debug(`Loading assets tree in ${incremental ? 'incremental' : 'one-shot'} mode`)
             actionBuilder('LOAD_ASSETS')
                 .set('assets.loading', incremental)
+                .del('assets.error')
                 .dispatch()
             return loadNode$().pipe(
-                // scan((assetTree, {path, nodes}) => Tree.setItems(assetTree, path, nodes), assetTree),
                 scan(
                     (assetTree, {path, nodes}) =>
                         nodes.reduce(
@@ -83,20 +111,16 @@ const loadAssets$ = () =>
                 takeUntil(cancelReloadAssets$),
                 tap({
                     next: assetTree => updateAssetTree(assetTree),
-                    error: error => {
-                        log.debug('Asset tree loading failed', error)
-                        actionBuilder('LOAD_ASSETS')
-                            .set('assets.error', true)
-                            .del('assets.loading')
-                            .dispatch()
-                    },
                     complete: () => {
                         log.debug('Asset tree loaded')
                         actionBuilder('LOAD_ASSETS')
-                            .del('assets.error')
                             .del('assets.loading')
                             .dispatch()
                     }
+                }),
+                catchError(error => {
+                    log.debug('Asset tree loading failed', error)
+                    return EMPTY
                 })
             )
         }),
@@ -114,6 +138,7 @@ const updateAssetTree = assetTree => {
     const assetRoots = assetList
         .filter(({depth}) => depth === 1)
         .map(({id}) => id)
+    log.debug('Updating asset tree')
     actionBuilder('LOAD_ASSETS')
         .setIfChanged('assets.roots', assetRoots)
         .setIfChanged('assets.tree', assetTree)
@@ -217,6 +242,7 @@ export const withAssets = () =>
                     recentAssets: select('assets.recent') || [],
                     loading: select('assets.loading') || false,
                     updating: select('assets.updating') || false,
+                    error: select('assets.error') || false,
                     updateAsset,
                     removeAsset,
                     reloadAssets,
