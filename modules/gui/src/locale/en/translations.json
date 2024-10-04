@@ -2540,7 +2540,7 @@
         },
         "stack": {
             "create": "Stack",
-            "description": "Create an image stack from SEPAL and/or Google Earth Engine imagery.",
+            "description": "Create an image stack from SEPAL and/or Google Earth Engine image assets.",
             "panel": {
                 "bandNames": {
                     "button": "NAM",
@@ -2551,6 +2551,25 @@
                 }
             },
             "tabPlaceholder": "Stack"
+        },
+        "bandMath": {
+            "create": "Band Math",
+            "description": "Perform band math on imagery from SEPAL and/or Google Earth Engine image assets.",
+            "panel": {
+                "bandNames": {
+                    "button": "NAM",
+                    "title": "Band names",
+                    "tooltip": "Set the band names of the stack.",
+                    "duplicateBand": "Duplicate band name",
+                    "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters"
+                },
+                "calculations": {
+                    "button": "CAL",
+                    "title": "Calculations",
+                    "tooltip": "Generate calculated bands."
+                }
+            },
+            "tabPlaceholder": "Band_math"
         },
         "classChange": {
             "create": "Class change",
