@@ -58,7 +58,7 @@ class _BandNames extends React.Component {
                     icon='list'
                     title={msg('process.stack.panel.bandNames.title')}
                 />
-                <Panel.Content scrollable={false}>
+                <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
                 <Form.PanelButtons/>
