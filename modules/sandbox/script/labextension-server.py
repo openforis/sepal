@@ -36,11 +36,9 @@ class DynamicStaticFiles:
         app_name = request["app_name"]
         labextensions_dir = get_labextensions_dir(app_name)
 
-        # Adjust the path in scope to be relative to the labextensions directory
         original_path = scope["path"]
         relative_path = original_path.split(f"/app/{app_name}/labextensions")[-1] or "/"
 
-        # Create a new scope with the updated path
         scope = dict(scope)
         scope["path"] = relative_path
 
@@ -93,13 +91,8 @@ routes = [
     Route("/app/{app_name}/", homepage),
 ]
 
-# Create the Starlette application
-app = Starlette(
-    debug=True,
-    routes=routes,
-)
+app = Starlette(debug=True, routes=routes)
 
-# If you want to run the app using 'python server.py'
 if __name__ == "__main__":
     import uvicorn
 

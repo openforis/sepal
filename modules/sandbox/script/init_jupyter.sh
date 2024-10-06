@@ -25,6 +25,7 @@ apt-get install -y libzmq3-dev
 /usr/bin/python3 -m pip install "geemap<=v0.34.2"
 /usr/bin/python3 -m pip install "ipecharts>=1.0.8"
 /usr/bin/python3 -m pip install sidecar
+/usr/bin/python3 -m pip install starlette
 
 git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 /usr/bin/python3 -m pip install jupyter_latex_envs # Required for jupyter_contrib_nbextensions
