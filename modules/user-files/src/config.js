@@ -13,7 +13,6 @@ program.exitOverride()
 
 try {
     program
-        .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
         .requiredOption('--home-dir <value>', 'Base directory of user homes')
         .option('--port <number>', 'Port', DEFAULT_PORT)
         .option('--poll-interval-milliseconds <number>', 'Poll interval (ms)', DEFAULT_POLL_INTERVAL_MS)
@@ -24,7 +23,6 @@ try {
 }
 
 const {
-    amqpUri,
     homeDir,
     port,
     pollIntervalMilliseconds,
@@ -34,7 +32,6 @@ const {
 log.info('Configuration loaded')
 
 module.exports = {
-    amqpUri,
     homeDir,
     port,
     pollIntervalMilliseconds,
