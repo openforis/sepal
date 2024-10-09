@@ -16,6 +16,13 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _FunctionSection extends React.Component {
+    state = {bandOptions: []}
+
+    constructor(props) {
+        super(props)
+        this.updateUsedBands = this.updateUsedBands.bind(this)
+    }
+
     render() {
         return (
             <Layout type='vertical'>
@@ -28,10 +35,6 @@ class _FunctionSection extends React.Component {
             </Layout>
         )
     }
-
-    // Band selection - sections of buttons
-    // Function - combo
-    // Band name - input text
 
     renderName() {
         const {inputs: {name}} = this.props
@@ -48,33 +51,17 @@ class _FunctionSection extends React.Component {
     }
 
     renderBands() {
-        const {images, calculations, inputs: {calculationId, bands}} = this.props
-        const calculationIndex = calculations.findIndex(calculation => calculation.calculationId === calculationId.value)
-        const availableCalculations = calculationIndex >= 0
-            ? calculations.slice(0, calculationIndex)
-            : calculations
-        const imageOptions = images.map(image => ({
-            label: image.name,
-            options: image.includedBands.map(({id, band}) => ({
-                value: id,
-                label: band
-            }))
-        }))
-        const calculationOptions = availableCalculations.map(calculation => ({
-            label: calculation.name,
-            options: [{
-                value: calculation.calculationId,
-                label: calculation.bandName
-            }]
-        }))
+        const {inputs: {usedBandIds}} = this.props
+        const {bandOptions} = this.state
         return (
             <Form.Buttons
-                label={msg('process.bandMath.panel.calculations.form.bands.label')}
-                tooltip={msg('process.bandMath.panel.calculations.form.bands.label')}
-                input={bands}
+                label={msg('process.bandMath.panel.calculations.form.usedBands.label')}
+                tooltip={msg('process.bandMath.panel.calculations.form.usedBands.label')}
+                input={usedBandIds}
                 multiple
-                options={[...imageOptions, ...calculationOptions]}
+                options={bandOptions}
                 framed
+                onChange={this.updateUsedBands}
             />
         )
     }
@@ -115,6 +102,7 @@ class _FunctionSection extends React.Component {
                 input={reducer}
                 options={options}
                 placeholder={'Select function...'}
+                autoFocus
             />
         )
     }
@@ -130,6 +118,44 @@ class _FunctionSection extends React.Component {
                 autoComplete={false}
             />
         )
+    }
+
+    componentDidMount() {
+        const {images, calculations, inputs: {imageId}} = this.props
+        const calculationIndex = calculations.findIndex(calculation => calculation.imageId === imageId.value)
+        const availableCalculations = calculationIndex >= 0
+            ? calculations.slice(0, calculationIndex)
+            : calculations
+        const imageOptions = images.map(image => ({
+            label: image.name,
+            options: image.includedBands.map(band => ({
+                value: band.id,
+                label: band.name,
+                band: {...band, imageId: image.imageId, imageName: image.name}
+            }))
+        }))
+        const calculationOptions = availableCalculations.map(calculation => ({
+            label: calculation.name,
+            options: calculation.includedBands.map(band => ({
+                value: band.id,
+                label: band.name,
+                band: {...band, imageId: calculation.imageId, imageName: calculation.name}
+            }))
+        }))
+        const bandOptions = [...imageOptions, ...calculationOptions]
+        this.setState({bandOptions})
+    }
+
+    updateUsedBands(bandIds) {
+        const {inputs: {usedBands}} = this.props
+        const {bandOptions} = this.state
+
+        const bands = bandOptions
+            .map(({options}) => options)
+            .flat()
+            .filter(({value}) => bandIds.includes(value))
+            .map(({band}) => band)
+        usedBands.set(bands)
     }
 }
 

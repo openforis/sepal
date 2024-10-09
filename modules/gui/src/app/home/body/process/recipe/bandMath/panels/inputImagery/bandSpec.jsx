@@ -14,7 +14,7 @@ import styles from './bandSpec.module.css'
 
 export class BandSpec extends React.Component {
     render() {
-        const {selected, spec: {id, band, type}, disabled, onClick, onRemove} = this.props
+        const {selected, spec: {id, name, type}, disabled, onClick, onRemove} = this.props
         return (
             <ListItem
                 expansion={this.renderExpansion()}
@@ -23,7 +23,7 @@ export class BandSpec extends React.Component {
                 onClick={() => onClick(id)}>
                 <CrudItem
                     title={msg(['process.panels.inputImagery.form.type', type])}
-                    description={band}
+                    description={name}
                     unsafeRemove
                     onRemove={() => onRemove(id)}
                 />
@@ -32,10 +32,10 @@ export class BandSpec extends React.Component {
     }
 
     renderTitle() {
-        const {spec: {band, type}} = this.props
+        const {spec: {name, type}} = this.props
         return (
             <div>
-                {band} {type}
+                {name} {type}
             </div>
         )
     }
@@ -56,7 +56,7 @@ export class BandSpec extends React.Component {
     }
 
     renderBandSelector() {
-        const {bands, spec: {band}} = this.props
+        const {bands, spec: {name}} = this.props
         const bandOptions = (Object.keys(bands) || [])
             .map(bandName => ({
                 value: bandName,
@@ -65,7 +65,7 @@ export class BandSpec extends React.Component {
         return (
             <Combo
                 label={msg('process.panels.inputImagery.form.band.label')}
-                value={band}
+                value={name}
                 options={bandOptions}
                 className={styles.bandSelector}
                 onChange={({value}) => this.updateBand(value)}
@@ -90,11 +90,11 @@ export class BandSpec extends React.Component {
     }
 
     renderLegend() {
-        const {recipe, spec: {band, legendEntries}} = this.props
+        const {recipe, spec: {name, legendEntries}} = this.props
         return (
             <Legend
                 label={msg('process.panels.inputImagery.form.legend.label')}
-                band={band}
+                band={name}
                 entries={legendEntries || []}
                 recipe={recipe}
                 onUpdate={legendEntries => this.updateSpec({legendEntries})}
@@ -102,10 +102,10 @@ export class BandSpec extends React.Component {
         )
     }
 
-    updateBand(band) {
+    updateBand(name) {
         const {spec, bands} = this.props
-        if (spec.band !== band) {
-            const updatedSpec = {...defaultBand(band, bands), id: spec.id}
+        if (spec.name !== name) {
+            const updatedSpec = {...defaultBand(name, bands), id: spec.id}
             this.updateSpec(updatedSpec)
         }
     }
@@ -114,7 +114,7 @@ export class BandSpec extends React.Component {
         const {spec, bands} = this.props
         if (spec.type !== type) {
             const legendEntries = type === 'categorical'
-                ? defaultLegendEntries(spec.band, bands)
+                ? defaultLegendEntries(spec.name, bands)
                 : []
             this.updateSpec({type, legendEntries})
         }

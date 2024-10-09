@@ -72,9 +72,9 @@ export class ImageForm extends Component {
             <Layout type='vertical' spacing='tight'>
                 {(includedBands.value || []).map(bandSpec =>
                     <BandSpec
-                        key={bandSpec.band}
+                        key={bandSpec.name}
                         bands={_.omit(bands.value, Object.keys(bands.value)
-                            .filter(b => ![bandSpec.band, ...availableBands].includes(b))) || {}}
+                            .filter(name => ![bandSpec.name, ...availableBands].includes(name))) || {}}
                         recipe={loadedRecipe}
                         spec={bandSpec}
                         selected={selected === bandSpec.id}

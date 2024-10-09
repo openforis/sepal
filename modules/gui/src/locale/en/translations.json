@@ -2570,7 +2570,7 @@
                     "tooltip": "Generate calculated bands.",
                     "form": {
                         "noCalculations": "No calculations provided",
-                        "bands": {
+                        "usedBands": {
                             "label": "Bands",
                             "tooltip": "The bands to apply the function to"
                         },

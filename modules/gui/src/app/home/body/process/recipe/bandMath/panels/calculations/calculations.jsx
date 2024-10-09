@@ -21,7 +21,6 @@ import styles from './calculations.module.css'
 
 const mapRecipeToProps = recipe => {
     return ({
-        images: selectFrom(recipe, 'model.inputImagery.images'),
         calculations: selectFrom(recipe, 'model.calculations.calculations'),
     })
 }
@@ -65,29 +64,13 @@ class _Calculations extends React.Component {
     }
 
     renderCalculation(calculation, index) {
-        const {images, calculations} = this.props
-        const bandIds = calculation.bands
-        const bands = bandIds.map(bandId => {
-            const bandFromImage = () => images
-                .map(image => {
-                    const bandName = image.includedBands.find(({id}) => id === bandId)?.band
-                    return bandName && `${image.name}.${bandName}`
-                })
-                .find(band => band)
-            const bandFromCalculation = () => calculations
-                .filter(calculation => calculation.calculationId === bandId)
-                .map(calculation => {
-                    return `${calculation.name}.${calculation.bandName}`
-                })
-                .find(band => band)
-            return bandFromImage() || bandFromCalculation()
-        }
-        ).sort()
+        const usedBandExpressions = calculation.usedBands.map(({imageName, name}) => `${imageName}.${name}`)
         const description = (
             <>
-                <strong>{`${calculation.reducer}`}</strong>{`(${bands.join(', ')})`}
+                <strong>{`${calculation.reducer}`}</strong>{`(${usedBandExpressions.join(', ')})`}
             </>
         )
+
         // const description = (
         //     <>
         //         <strong>{`${calculation.reducer}`}</strong>(
@@ -118,12 +101,12 @@ class _Calculations extends React.Component {
 
     addCalculation() {
         const {activator: {activatables: {calculation}}} = this.props
-        calculation.activate({calculationId: uuid()})
+        calculation.activate({imageId: uuid()})
     }
 
     editCalculation(calculationToEdit) {
         const {activator: {activatables: {calculation}}} = this.props
-        calculation.activate({calculationId: calculationToEdit.calculationId})
+        calculation.activate({imageId: calculationToEdit.imageId})
     }
 
     removeCalculation(calculationToRemove) {

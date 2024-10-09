@@ -4,20 +4,23 @@ import {uuid} from '~/uuid'
 
 export const bandsAvailableToAdd = (bands, includedBands) =>
     (Object.keys(bands || {}))
-        .filter(band => !(includedBands || []).find(({band: b}) => band === b))
+        .filter(name =>
+            !(includedBands || [])
+                .find(({name: n}) => name === n)
+        )
 
-export const defaultBand = (bandName, bands) => {
+export const defaultBand = (name, bands) => {
     const id = uuid()
-    const values = bands[bandName].values
+    const values = bands[name].values
     const type = values && values.length ? 'categorical' : 'continuous'
     const legendEntries = type === 'categorical'
-        ? defaultLegendEntries(bandName, bands)
+        ? defaultLegendEntries(name, bands)
         : []
-    return {id, band: bandName, type, legendEntries}
+    return {id, name, type, legendEntries}
 }
 
-export const defaultLegendEntries = (bandName, bands) => {
-    const visualization = bands[bandName]
+export const defaultLegendEntries = (name, bands) => {
+    const visualization = bands[name]
     return ((visualization && visualization.values) || [])
         .map((value, i) => ({
             id: uuid(),

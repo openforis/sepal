@@ -15,7 +15,7 @@ import {SectionSelection} from './sectionSelection'
 
 const fields = {
     otherNames: new Form.Field(),
-    calculationId: new Form.Field(),
+    imageId: new Form.Field(),
     section: new Form.Field()
         .notBlank(),
     name: new Form.Field()
@@ -25,7 +25,9 @@ const fields = {
         .notBlank(),
     bandName: new Form.Field()
         .notBlank(),
-    bands: new Form.Field()
+    usedBands: new Form.Field()
+        .notEmpty(),
+    usedBandIds: new Form.Field()
         .notEmpty(),
 }
 
@@ -89,60 +91,69 @@ class _Calculation extends React.Component {
     }
 
     setCalculationId() {
-        const {inputs, activatable: {calculationId}} = this.props
-        if (!inputs.calculationId.value) {
-            inputs.calculationId.set(calculationId)
+        const {inputs, activatable: {imageId}} = this.props
+        if (!inputs.imageId.value) {
+            inputs.imageId.set(imageId)
         }
     }
 
     setName() {
-        const {images, inputs: {name}} = this.props
+        const {calculations, inputs: {name}} = this.props
         if (!name.value) {
-            name.set(`c${images.length}`)
+            name.set(`c${calculations.length + 1}`)
         }
     }
 
     setOtherNames() {
-        const {images, calculations, inputs: {otherNames}, activatable: {calculationId}} = this.props
+        const {images, calculations, inputs: {otherNames}, activatable: {imageId}} = this.props
         if (!otherNames.value) {
             const imageNames = images
                 .map(({name}) => name)
             const otherCalculationNames = calculations
-                .filter(calculation => calculation.calculationId !== calculationId)
+                .filter(calculation => calculation.imageId !== imageId)
                 .map(({name}) => name)
             otherNames.set([...imageNames, ...otherCalculationNames])
         }
     }
 }
 
+console.log('TODO: bandName/includedBands - update for FUNCTION ')
+
 const modelToValues = model => {
-    return {
-        calculationId: model.calculationId,
+    const values = {
+        imageId: model.imageId,
         name: model.name,
         section: model.type || 'SELECTION',
-        bands: model.bands,
+        usedBands: model.usedBands,
+        usedBandIds: model.usedBands.map(({id}) => id),
         reducer: model.reducer,
-        bandName: model.bandName
+        bandName: model.includedBands?.length && model.includedBands[0].name
     }
+    return values
 }
 
 const valuesToModel = values => {
-    return {
-        calculationId: values.calculationId,
+    const model = {
+        imageId: values.imageId,
         name: values.name,
         type: values.section,
-        bands: values.bands,
+        usedBands: values.usedBands,
         reducer: values.reducer,
-        bandName: values.bandName
+        includedBands: [{
+            id: values.imageId,
+            name: values.bandName,
+            type: 'continuous'
+        }]
     }
+    return model
 }
 
 const policy = () => ({_: 'allow'})
 const panelOptions = {
     id: 'calculation',
     path: props => {
-        const calculationId = selectFrom(props, 'activatable.calculationId')
-        return calculationId ? ['calculations.calculations', {calculationId}] : null
+        const imageId = selectFrom(props, 'activatable.imageId')
+        return imageId ? ['calculations.calculations', {imageId}] : null
     },
     fields,
     valuesToModel,

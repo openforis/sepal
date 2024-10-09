@@ -118,7 +118,7 @@ class _InputImage extends React.Component {
     setName() {
         const {images, inputs: {name}} = this.props
         if (!name.value) {
-            name.set(`i${images.length}`)
+            name.set(`i${images.length + 1}`)
         }
     }
 
