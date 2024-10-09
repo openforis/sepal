@@ -20,7 +20,11 @@ const fields = {
         .notBlank(),
     name: new Form.Field()
         .notBlank()
-        .match(/^[a-zA-Z_][a-zA-Z0-9_]{0,29}$/, 'process.bandMath.panel.bandNames.invalidFormat'),
+        .match(/^[a-zA-Z_][a-zA-Z0-9_]{0,29}$/, 'process.bandMath.panel.bandNames.invalidFormat')
+        .predicate(
+            (name, {otherNames}) => !otherNames.includes(name),
+            'process.bandMath.duplicateName'
+        ),
     reducer: new Form.Field()
         .notBlank(),
     bandName: new Form.Field()
@@ -68,6 +72,7 @@ class _Calculation extends React.Component {
                 placement='modal'>
                 <PanelSections
                     inputs={inputs}
+                    shared={['imageId', 'name', 'otherNames']}
                     sections={sections}
                     selected={inputs.section}
                     icon='calculator'
@@ -79,12 +84,6 @@ class _Calculation extends React.Component {
     }
 
     componentDidMount() {
-        this.setName()
-        this.setOtherNames()
-        this.setCalculationId()
-    }
-
-    componentDidUpdate() {
         this.setName()
         this.setOtherNames()
         this.setCalculationId()

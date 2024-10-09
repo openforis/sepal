@@ -80,6 +80,7 @@ class _InputImage extends React.Component {
                 onApply={this.updateImageLayerSources}>
                 <PanelSections
                     inputs={inputs}
+                    shared={['imageId', 'name', 'otherNames']}
                     sections={sections}
                     selected={inputs.section}
                     icon='image'
@@ -97,12 +98,6 @@ class _InputImage extends React.Component {
     }
 
     componentDidMount() {
-        this.setName()
-        this.setOtherNames()
-        this.setImageId()
-    }
-
-    componentDidUpdate() {
         this.setName()
         this.setOtherNames()
         this.setImageId()
