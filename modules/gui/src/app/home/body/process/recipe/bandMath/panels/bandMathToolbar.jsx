@@ -1,6 +1,5 @@
 import React from 'react'
 
-import {InputImagery} from '~/app/home/body/process/panels/inputImagery/inputImagery'
 import {setInitialized} from '~/app/home/body/process/recipe'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
@@ -15,6 +14,7 @@ import styles from './bandMathToolbar.module.css'
 import {BandNames} from './bandNames/bandNames'
 import {toBandNames} from './bandNames/bandNamesUpdate'
 import {Calculations} from './calculations/calculations'
+import {InputImagery} from './inputImagery/inputImagery'
 import {Retrieve} from './retrieve/retrieve'
 
 const mapRecipeToProps = recipe => ({

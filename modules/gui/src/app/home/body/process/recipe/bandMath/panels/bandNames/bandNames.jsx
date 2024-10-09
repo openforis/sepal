@@ -7,6 +7,8 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {ButtonPopup} from '~/widget/buttonPopup'
+import {Combo} from '~/widget/combo'
 import {CrudItem} from '~/widget/crudItem'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
@@ -79,7 +81,7 @@ class _BandNames extends React.Component {
         const {bandNames, images, recipeNameById} = this.props
         const {allOutputNames} = this.state
         const names = bandNames[imageIndex].bands
-        const name = image.type === 'RECIPE_REF'
+        const description = image.type === 'RECIPE_REF'
             ? recipeNameById[image.id]
             : image.id
         const key = `${image.type}-${image.id}-${imageIndex}`
@@ -100,6 +102,7 @@ class _BandNames extends React.Component {
                 )}
             </Layout>
         )
+        console.log('render')
         return (
             <ListItem
                 key={key}
@@ -108,9 +111,53 @@ class _BandNames extends React.Component {
                 expansion={foo}>
                 <CrudItem
                     title={msg(`process.panels.inputImagery.form.type.${image.type}`)}
-                    description={name}
+                    description={description}
+                    metadata={image.name}
+                    inlineComponents={this.renderAddButton(image)}
+                    unsafeRemove
+                    onRemove={() => this.removeImage(image)}
                 />
             </ListItem>
+        )
+    }
+
+    removeImage(image) {
+
+    }
+
+    renderAddButton(image) {
+        console.log(image)
+        const {inputs: {bands}} = this.props
+        // const options = BandSetSpec
+        //     .options(bandSetSpec, bands.value)
+        //     .filter(({value}) => !bandSetSpec.included.includes(value))
+        const options = []
+        return (
+            <ButtonPopup
+                shape='circle'
+                chromeless
+                icon='plus'
+                noChevron
+                // showPopupOnMount={!bandSetSpec.included.length && bands.value?.length}
+                vPlacement='below'
+                hPlacement='over-left'
+                tooltip={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.tooltip')}>
+                {onBlur => (
+                    <Combo
+                        alignment='left'
+                        placeholder={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.placeholder')}
+                        options={options}
+                        stayOpenOnSelect
+                        autoOpen
+                        autoFocus
+                        allowClear
+                        onCancel={onBlur}
+                        onChange={({value}) => {
+                            // this.addSelection(bandSetSpec, value)
+                        }}
+                    />
+                )}
+            </ButtonPopup>
         )
     }
 

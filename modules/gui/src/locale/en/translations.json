@@ -2555,6 +2555,7 @@
         "bandMath": {
             "create": "Band Math",
             "description": "Perform band math on imagery from SEPAL and/or Google Earth Engine image assets.",
+            "duplicateName": "Duplicate name. There are other images or calculations with this name.",
             "panel": {
                 "bandNames": {
                     "button": "NAM",
@@ -2566,7 +2567,39 @@
                 "calculations": {
                     "button": "CAL",
                     "title": "Calculations",
-                    "tooltip": "Generate calculated bands."
+                    "tooltip": "Generate calculated bands.",
+                    "form": {
+                        "noCalculations": "No calculations provided",
+                        "bands": {
+                            "label": "Bands",
+                            "tooltip": "The bands to apply the function to"
+                        },
+                        "function": {
+                            "label": "Function",
+                            "tooltip": "Reduce the selected bands to a single band value using the selected function."
+                        },
+                        "bandName": {
+                            "label": "Band name",
+                            "placeholder": "Band name...",
+                            "tooltip": "The name of the resulting band after applying the function."
+                        },
+                        "calculationName": {
+                            "label": "Calculation name",
+                            "placeholder": "Calculation name...",
+                            "tooltip": "The name of this calculation to use when referring to it within expressions."
+                        },
+                        "functionSection": {},
+                        "type": {
+                            "FUNCTION": "Function",
+                            "EXPRESSION": "Expression"
+                        }
+                    },
+                    "expression": {
+                        "title": "Expression"
+                    },
+                    "function": {
+                        "title": "Function"
+                    }
                 }
             },
             "tabPlaceholder": "Band_math"
