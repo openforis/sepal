@@ -2,9 +2,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {RecipeInput} from '~/widget/recipeInput'
-
-import {getRecipeType} from '../../recipeTypeRegistry'
 
 export class RecipeSection extends React.Component {
     render() {

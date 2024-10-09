@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {bandsAvailableToAdd, defaultBand} from '~/app/home/body/process/recipe/remapping/remappingRecipe'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -11,6 +10,7 @@ import {Panel} from '~/widget/panel/panel'
 import {PanelSections} from '~/widget/panelSections'
 
 import {AssetSection} from './assetSection'
+import {bandsAvailableToAdd, defaultBand} from './bands'
 import {ImageForm} from './imageForm'
 import styles from './inputImage.module.css'
 import {RecipeSection} from './recipeSection'

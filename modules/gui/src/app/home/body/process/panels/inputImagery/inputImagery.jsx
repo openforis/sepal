@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -15,7 +16,6 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
-import {RecipeActions} from '../../recipe/remapping/remappingRecipe'
 import {InputImage} from './inputImage'
 import styles from './inputImagery.module.css'
 
@@ -116,8 +116,11 @@ class _InputImagery extends React.Component {
 
     removeImage(imageToRemove) {
         const {recipeId} = this.props
-
-        RecipeActions(recipeId).removeInputImage(imageToRemove)
+        const actionBuilder = recipeActionBuilder(recipeId)
+        actionBuilder('REMOVE_INPUT_IMAGE', {imageToRemove})
+            .del(['model.inputImagery.images', {id: imageToRemove.id}])
+            .del(['ui.inputImagery.images', {id: imageToRemove.id}])
+            .dispatch()
     }
 
     onChange() {
