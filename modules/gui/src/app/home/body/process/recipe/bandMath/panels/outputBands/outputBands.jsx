@@ -21,7 +21,6 @@ import styles from './outputBands.module.css'
 
 const fields = {
     outputImages: new Form.Field()
-    // .predicate((outputImages, {invalidBandNames}) => !invalidBandNames && outputImages.length, 'invalid')
 }
 
 const mapRecipeToProps = recipe => {
@@ -86,12 +85,11 @@ class _OutputBands extends React.Component {
         return (
             <ButtonSelect
                 label={msg('process.bandMath.panel.outputBands.addImage.label')}
-                // tooltip={msg('process.bandMath.panel.outputBands.addImage.tooltip')}
                 look='add'
                 icon='plus'
                 placement='above'
                 tooltipPlacement='bottom'
-                // disabled={} // Disable if all images are added
+                disabled={!options.length}
                 options={options}
                 onSelect={this.addImage}
             />
@@ -147,50 +145,6 @@ class _OutputBands extends React.Component {
         )
     }
 
-    // renderImageBandNames(image, imageIndex) {
-    //     const {bandNames, images, recipeNameById} = this.props
-    //     const {allOutputNames} = this.state
-    //     const names = bandNames[imageIndex].bands
-    //     const description = image.type === 'RECIPE_REF'
-    //         ? recipeNameById[image.id]
-    //         : image.id
-    //     const key = `${image.type}-${image.id}-${imageIndex}`
-    //     const foo = (
-    //         <Layout type='horizontal'>
-    //             {names.map(({originalName, outputName}, bandIndex) =>
-    //                 <BandName
-    //                     key={originalName}
-    //                     images={images}
-    //                     image={image}
-    //                     originalName={originalName}
-    //                     outputName={outputName}
-    //                     allOutputNames={allOutputNames}
-    //                     onInputCreated={this.updateBandName}
-    //                     onChange={outputName => this.updateBandName({imageIndex, bandIndex, outputName})}
-    //                     onValidationStatusChanged={this.onValidationStatusChanged}
-    //                 />
-    //             )}
-    //         </Layout>
-    //     )
-    //     console.log('render')
-    //     return (
-    //         <ListItem
-    //             key={key}
-    //             expansionClickable
-    //             expanded
-    //             expansion={foo}>
-    //             <CrudItem
-    //                 title={msg(`process.panels.inputImagery.form.type.${image.type}`)}
-    //                 description={description}
-    //                 metadata={image.name}
-    //                 inlineComponents={this.renderAddButton(image)}
-    //                 unsafeRemove
-    //                 onRemove={() => this.removeImage({image})}
-    //             />
-    //         </ListItem>
-    //     )
-    // }
-
     renderAddBandButton(image) {
         const outputBandIds = image.outputBands.map(({id}) => id)
         const options = image.includedBands
@@ -229,47 +183,23 @@ class _OutputBands extends React.Component {
         inputs.outputImages.set(outputImages)
     }
 
-    // updateBandName({imageIndex, bandIndex, outputName}) {
-    //     const {inputs: {bandNames}} = this.props
-    //     const prevBandNames = bandNames.value
-
-    //     const beforeImages = prevBandNames.slice(0, imageIndex)
-    //     const image = prevBandNames[imageIndex]
-    //     const beforeBands = image.bands.slice(0, bandIndex)
-    //     const band = image.bands[bandIndex]
-    //     const afterBands = image.bands.slice(bandIndex + 1)
-    //     const afterImages = prevBandNames.slice(imageIndex + 1)
-    //     const updatedBandNames = [
-    //         ...beforeImages,
-    //         {
-    //             ...image,
-    //             bands: [
-    //                 ...beforeBands,
-    //                 {
-    //                     ...band,
-    //                     outputName
-    //                 },
-    //                 ...afterBands
-    //             ]
-    //         },
-    //         ...afterImages
-    //     ]
-    //     bandNames.set(updatedBandNames)
-
-    //     const allOutputNames = updatedBandNames.map(({bands}) =>
-    //         bands.map(({outputName}) => outputName)
-    //     ).flat()
-    //     this.setState({allOutputNames})
-    // }
-
     addImage({image}) {
+        // if (image.includedBands.length === 1) {
+        //     this.addBand({image, band: image.includedBands[0]})
+        // }
+
+        const firstBand = () => {
+            const band = image.includedBands[0]
+            return {...band, outputName: this.createUniqueBandName(band)}
+        }
+
         const {inputs: {outputImages}} = this.props
         const updatedOutputImages = [
             ...(outputImages.value),
             {
                 ...image,
                 outputBands: image.includedBands.length === 1
-                    ? [image.includedBands[0]]
+                    ? [firstBand()]
                     : []
             }
         ]
@@ -282,6 +212,21 @@ class _OutputBands extends React.Component {
     }
 
     addBand({image, band}) {
+        const {inputs: {outputImages}} = this.props
+
+        const outputName = this.createUniqueBandName(band)
+        const updatedOutputImages = outputImages.value.map(outputImage =>
+            outputImage.imageId === image.imageId
+                ? {
+                    ...outputImage,
+                    outputBands: [...outputImage.outputBands, {...band, outputName}]
+                }
+                : outputImage
+        )
+        outputImages.set(updatedOutputImages)
+    }
+
+    createUniqueBandName(band) {
         const {inputs: {outputImages}} = this.props
         const otherOutputNames = outputImages.value
             .map(({outputBands}) =>
@@ -296,17 +241,8 @@ class _OutputBands extends React.Component {
                 ? recurseRename(`${band.name}_${i}`, ++i)
                 : potentialName
 
-        const outputName = recurseRename(band.name, 1)
+        return recurseRename(band.name, 1)
 
-        const updatedOutputImages = outputImages.value.map(outputImage =>
-            outputImage.imageId === image.imageId
-                ? {
-                    ...outputImage,
-                    outputBands: [...outputImage.outputBands, {...band, outputName}]
-                }
-                : outputImage
-        )
-        outputImages.set(updatedOutputImages)
     }
 
     updateBand({image, band}) {
