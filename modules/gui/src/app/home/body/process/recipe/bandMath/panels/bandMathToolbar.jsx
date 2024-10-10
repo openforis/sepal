@@ -9,24 +9,24 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
-import {RecipeActions} from '../bandMathRecipe'
+// import {RecipeActions} from '../bandMathRecipe'
 import styles from './bandMathToolbar.module.css'
-import {BandNames} from './bandNames/bandNames'
-import {toBandNames} from './bandNames/bandNamesUpdate'
 import {Calculations} from './calculations/calculations'
 import {InputImagery} from './inputImagery/inputImagery'
+// import {toBandNames} from './outputBands/bandNamesUpdate'
+import {OutputBands} from './outputBands/outputBands'
 import {Retrieve} from './retrieve/retrieve'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
-    bandNames: selectFrom(recipe, 'model.bandNames'),
+    // bandNames: selectFrom(recipe, 'model.bandNames'),
     initialized: selectFrom(recipe, 'ui.initialized'),
 })
 
 class _BandMathToolbar extends React.Component {
     constructor(props) {
         super(props)
-        this.syncBandNames = this.syncBandNames.bind(this)
+        // this.syncBandNames = this.syncBandNames.bind(this)
     }
 
     render() {
@@ -37,9 +37,13 @@ class _BandMathToolbar extends React.Component {
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
                 <Retrieve/>
-                <InputImagery onChange={this.syncBandNames}/>
-                <Calculations onChange={this.syncBandNames}/>
-                <BandNames/>
+                <InputImagery
+                    // onChange={this.syncBandNames}
+                />
+                <Calculations
+                    // onChange={this.syncBandNames}
+                />
+                <OutputBands/>
 
                 <Toolbar
                     vertical
@@ -64,9 +68,9 @@ class _BandMathToolbar extends React.Component {
                         tooltip={msg('process.bandMath.panel.calculations.tooltip')}
                         disabled={!initialized}/>
                     <Toolbar.ActivationButton
-                        id='bandNames'
-                        label={msg('process.bandMath.panel.bandNames.button')}
-                        tooltip={msg('process.bandMath.panel.bandNames.tooltip')}
+                        id='outputBands'
+                        label={msg('process.bandMath.panel.outputBands.button')}
+                        tooltip={msg('process.bandMath.panel.outputBands.tooltip')}
                         disabled={!initialized}/>
 
                 </Toolbar>
@@ -74,12 +78,12 @@ class _BandMathToolbar extends React.Component {
         )
     }
 
-    syncBandNames(images) {
-        const {recipeId, bandNames: {bandNames: prevBandNames}} = this.props
-        // const bandNames = toBandNames(images, undefined)
-        const bandNames = toBandNames(images, prevBandNames)
-        RecipeActions(recipeId).syncBandNames(bandNames)
-    }
+    // syncBandNames(images) {
+    //     const {recipeId, bandNames: {bandNames: prevBandNames}} = this.props
+    //     // const bandNames = toBandNames(images, undefined)
+    //     const bandNames = toBandNames(images, prevBandNames)
+    //     RecipeActions(recipeId).syncBandNames(bandNames)
+    // }
 }
 
 export const BandMathToolbar = compose(

@@ -8,7 +8,8 @@ import {msg} from '~/translate'
 
 export const getDefaultModel = () => ({
     inputImagery: {images: []},
-    bandNames: {bandNames: []}
+    calculations: {calculations: []},
+    outputBands: {outputImages: []},
 })
 
 export const RecipeActions = id => {

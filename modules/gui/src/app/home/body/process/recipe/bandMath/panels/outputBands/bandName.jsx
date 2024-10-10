@@ -10,14 +10,14 @@ const fields = {
     allOutputNames: new Form.Field(),
     outputName: new Form.Field()
         .notBlank()
-        .match(/^[a-zA-Z_][a-zA-Z0-9_]{0,29}$/, 'process.bandMath.panel.bandNames.invalidFormat'),
+        .match(/^[a-zA-Z_][a-zA-Z0-9_]{0,29}$/, 'process.bandMath.panel.outputBands.invalidFormat'),
 }
 
 const constraints = {
     unique: new Form.Constraint(['outputName', 'allOutputNames'])
         .predicate(
             ({outputName, allOutputNames}) => isUnique(outputName, allOutputNames),
-            'process.bandMath.panel.bandNames.duplicateBand'
+            'process.bandMath.panel.outputBands.duplicateBand'
         )
 }
 

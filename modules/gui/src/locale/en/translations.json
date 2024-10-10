@@ -2557,13 +2557,6 @@
             "description": "Perform band math on imagery from SEPAL and/or Google Earth Engine image assets.",
             "duplicateName": "Duplicate name. There are other images or calculations with this name.",
             "panel": {
-                "bandNames": {
-                    "button": "NAM",
-                    "title": "Band names",
-                    "tooltip": "Set the band names of the stack.",
-                    "duplicateBand": "Duplicate band name",
-                    "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters"
-                },
                 "calculations": {
                     "button": "CAL",
                     "title": "Calculations",
@@ -2599,6 +2592,25 @@
                     },
                     "function": {
                         "title": "Function"
+                    }
+                },
+                "outputBands": {
+                    "button": "OUT",
+                    "title": "Output band names",
+                    "tooltip": "Select bands to output and their corresponding names.",
+                    "duplicateBand": "Duplicate band name",
+                    "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
+                    "addImage": {
+                        "label": "Add",
+                        "tooltip": "Include bands from image or calculation to output",
+                        "calculations": "Calculations",
+                        "images": "Images"
+                    },
+                    "type": {
+                        "ASSET": "Earth Engine asset",
+                        "RECIPE_REF": "SEPAL recipe",
+                        "EXPRESSION": "Expression",
+                        "FUNCTION": "Function"
                     }
                 }
             },
