@@ -5,7 +5,7 @@ export const getPreSetVisualizations = recipe => {
 }
 
 export const visualizationOptions = (recipe, recipeNameById) => {
-    return recipe.model.inputImagery?.images
+    const vis = recipe.model.inputImagery?.images
         .map(image => {
             const label = image.type === 'RECIPE_REF'
                 ? recipeNameById[image.id]
@@ -18,6 +18,7 @@ export const visualizationOptions = (recipe, recipeNameById) => {
                 .map(visParamsToOption)
             return {label, options}
         })
+    return vis
 }
 
 const updateVisualizations = (recipe, image) => {
@@ -25,9 +26,9 @@ const updateVisualizations = (recipe, image) => {
     if (!visualizations) {
         return []
     } else {
-        const bands = recipe.model.bandNames.bandNames
+        const bands = recipe.model.outputBands.outputImages
             .find(({imageId}) => imageId === image.imageId)
-            ?.bands || []
+            ?.outputBands || []
         return visualizations
             .map(visualization => updateVisualization(visualization, bands))
             .filter(visualization => visualization)
@@ -37,7 +38,7 @@ const updateVisualizations = (recipe, image) => {
 const updateVisualization = (visualization, bands) => {
     const outputBands = visualization.bands
         .map(band => bands
-            .find(({originalName}) => originalName === band)?.outputName
+            .find(({name}) => name === band)?.outputName
         )
     const containsAllBands = outputBands.every(band => band)
     if (containsAllBands) {

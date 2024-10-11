@@ -26,12 +26,18 @@ const fields = {
             'process.bandMath.duplicateName'
         ),
     reducer: new Form.Field()
+        .skip((value, {section}) => section !== 'FUNCTION')
+        .notBlank(),
+    expression: new Form.Field()
+        .skip((value, {section}) => section !== 'EXPRESSION')
         .notBlank(),
     bandName: new Form.Field()
         .notBlank(),
     usedBands: new Form.Field()
+        .skip((value, {section}) => section !== 'FUNCTION') // TODO: Actually always needed
         .notEmpty(),
     usedBandIds: new Form.Field()
+        .skip((value, {section}) => section !== 'FUNCTION') // TODO: Actually always needed
         .notEmpty(),
 }
 
@@ -126,6 +132,7 @@ const modelToValues = model => {
         usedBands: model.usedBands,
         usedBandIds: model.usedBands.map(({id}) => id),
         reducer: model.reducer,
+        expression: model.expression,
         bandName: model.includedBands?.length && model.includedBands[0].name
     }
     return values
@@ -138,6 +145,7 @@ const valuesToModel = values => {
         type: values.section,
         usedBands: values.usedBands,
         reducer: values.reducer,
+        expression: values.expression,
         includedBands: [{
             id: values.imageId,
             name: values.bandName,

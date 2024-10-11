@@ -2581,7 +2581,11 @@
                             "placeholder": "Calculation name...",
                             "tooltip": "The name of this calculation to use when referring to it within expressions."
                         },
-                        "functionSection": {},
+                        "expression": {
+                            "label": "Expression",
+                            "placeholder": "Expression...",
+                            "tooltip": "The expression to evaluate."
+                        },
                         "type": {
                             "FUNCTION": "Function",
                             "EXPRESSION": "Expression"
