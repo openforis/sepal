@@ -65,19 +65,13 @@ class _Calculations extends React.Component {
 
     renderCalculation(calculation, index) {
         const usedBandExpressions = calculation.usedBands.map(({imageName, name}) => `${imageName}.${name}`)
-        const description = (
-            <>
-                <strong>{`${calculation.reducer}`}</strong>{`(${usedBandExpressions.join(', ')})`}
-            </>
-        )
-
-        // const description = (
-        //     <>
-        //         <strong>{`${calculation.reducer}`}</strong>(
-        //         {bands.map((band, i) => <div style={{marginLeft: '1rem'}}>{band}{i < bands.length - 1 ? ',' : ''}</div>)}
-        //     )
-        //     </>
-        // )
+        const description = calculation.type === 'FUNCTION'
+            ? (
+                <>
+                    <strong>{`${calculation.reducer}`}</strong>{`(${usedBandExpressions.join(', ')})`}
+                </>
+            )
+            : calculation.expression
         const key = `${calculation.type}-${calculation.id}-${index}`
         return (
             <ListItem
