@@ -29,10 +29,14 @@ export const determineUsedBands = ({expression, images, calculations}) => {
         ({...band, imageId: image.imageId, imageName: image.name})
 
     const bandsFromIdentifier = identifier => {
-        const imageName = identifier.name
-        const image = findImage(imageName)
-        return image.includedBands
-            .map(band => toUsedBand(image, band))
+        if (typeof Math[identifier.name] === 'number') {
+            return []
+        } else {
+            const imageName = identifier.name
+            const image = findImage(imageName)
+            return image.includedBands
+                .map(band => toUsedBand(image, band))
+        }
     }
 
     const bandsFromMemberExpression = memberExpression => {

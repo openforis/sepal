@@ -1,5 +1,17 @@
 import {determineUsedBands, InvalidBandName, InvalidImageName} from './expressionParser'
 
+it('given a literal, no bands are returned', () => {
+    expect(
+        determineUsedBands({
+            expression: '42',
+            images: [],
+            calculations: []
+        })
+    ).toEqual(
+        []
+    )
+})
+
 it('given reference to image, all included image bands are returned', () => {
     const image = {imageId: 'some-image-id', name: 'i1', includedBands: [{name: 'blue'}]}
     expect(
@@ -277,6 +289,18 @@ it('given a function call, bands in arguments are returned', () => {
                 imageName: image.name
             }
         ]
+    )
+})
+
+it('given a math constant, no bands are returned', () => {
+    expect(
+        determineUsedBands({
+            expression: 'PI',
+            images: [],
+            calculations: []
+        })
+    ).toEqual(
+        []
     )
 })
 
