@@ -43,4 +43,6 @@ RUN chmod u+x /script/init_clojure.sh && sync && /script/init_clojure.sh
 
 ENV USER=sepal-user
 
+ADD modules/${MODULE_NAME}/script/voila.py /usr/local/etc/jupyter/
+
 CMD ["/script/init_container.sh"]

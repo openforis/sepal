@@ -1,92 +1,67 @@
-print("Using custom sepal configuration file imported")
-import os
+print("::::Voila labextensions::: Using custom sepal configuration file imported")
 from copy import deepcopy
-
+from typing import List, Tuple
 from jupyter_core.paths import jupyter_path
 from jupyter_server.config_manager import recursive_update
-from jupyter_server.utils import url_path_join
 from jupyterlab_server.config import get_page_config as gpc
 
 from voila._version import __version__
 from voila.configuration import VoilaConfiguration
 from voila.utils import filter_extension
-from voila.app import Voila
 
 
-def get_app_data(app_name):
-    home_dir = os.path.expanduser("~")
-    return os.path.join(
-        home_dir,
-        ".sepal-data",
-        "sepal",
-        "jupyter",
-        "current-kernels",
-        app_name,
-        "venv",
-        "share",
-        "jupyter",
-        "labextensions",
-    )
+def get_app_data(base_url: str, app_name: str) -> Tuple[List[str], str]:
+    """Get the module data"""
 
-    # if something fails, return the default labextensions url
+    # To the logic to get the app data
+    jupyter_url = f"/api/apps/labextensions/{app_name}/"
+    jupyter_paths = [
+        f"/usr/local/share/jupyter/kernels/venv-{app_name}/venv/share/jupyter/labextensions/"
+    ]
 
-    return jupyter_path("labextensions"), url_path_join(base_url, "voila/labextensions")
+    print("::::Voila labextensions::: jupyter_path", jupyter_path)
+    print("::::Voila labextensions::: jupyter_url", jupyter_url)
+
+    return jupyter_paths, jupyter_url
 
 
-def get_app_name(notebook_path):
+def get_app_name(notebook_path: str):
     """Extract the app name from the notebook path"""
 
+    return notebook_path.split("apps/")[1].split("/")[0]
 
-def get_page_config_hook(
-    _, base_url, settings, log, voila_configuration: VoilaConfiguration, notebook_path
+
+def page_config_hook(
+    page_config: dict,
+    base_url,
+    settings,
+    log,
+    voila_configuration: VoilaConfiguration,
+    notebook_path,
 ):
-
-    print("This is the custom get_page_config_hook")
+    print("::::Voila labextensions::: Custom get_page_config_hook")
+    print("::::Voila labextensions::: notebook_path", notebook_path)
 
     app_name = get_app_name(notebook_path)
-    app_extensions_path, app_extensions_url = get_app_data(app_name)
-
-    page_config = {
-        "appVersion": __version__,
-        "appUrl": "voila/",
-        "themesUrl": "/voila/api/themes",
-        "baseUrl": base_url,
-        "terminalsAvailable": False,
-        "fullStaticUrl": url_path_join(base_url, "voila/static"),
-        "fullLabextensionsUrl": app_extensions_url,
-        "extensionConfig": voila_configuration.extension_config,
-    }
-    mathjax_config = settings.get("mathjax_config", "TeX-AMS_CHTML-full,Safe")
-    mathjax_url = settings.get(
-        "mathjax_url", "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"
-    )
-    page_config.setdefault("mathjaxConfig", mathjax_config)
-    page_config.setdefault("fullMathjaxUrl", mathjax_url)
+    app_extensions_paths, app_extensions_url = get_app_data(base_url, app_name)
+    page_config["fullLabextensionsUrl"] = app_extensions_url
 
     recursive_update(
         page_config,
-        gpc(
-            app_extensions_path,
-            logger=log,
-        ),
+        gpc(app_extensions_paths, logger=log),
     )
-    disabled_extensions = [
-        "@voila-dashboards/jupyterlab-preview",
-        "@jupyter/collaboration-extension",
-        "@jupyter-widgets/jupyterlab-manager",
-    ]
-    disabled_extensions.extend(page_config.get("disabledExtensions", []))
-    required_extensions = []
+
     federated_extensions = deepcopy(page_config["federated_extensions"])
 
     page_config["federated_extensions"] = filter_extension(
         federated_extensions=federated_extensions,
-        disabled_extensions=disabled_extensions,
-        required_extensions=required_extensions,
         extension_allowlist=voila_configuration.extension_allowlist,
         extension_denylist=voila_configuration.extension_denylist,
     )
+
+    print("::::Voila labextensions::: page_config", page_config)
+
     return page_config
 
 
-Voila.get_page_config_hook = get_page_config_hook
+c.VoilaConfiguration.page_config_hook = page_config_hook
