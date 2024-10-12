@@ -1,3 +1,5 @@
+"""Voila configuration file for the sandbox environment"""
+
 print("::::Voila labextensions::: Using custom sepal configuration file imported")
 from copy import deepcopy
 from typing import List, Tuple
