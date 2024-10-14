@@ -26,10 +26,8 @@ const staticLabextensionsMiddleware = async (ctx, next) => {
         return
     }
 
-    // Update the request path to the relative path for static serving
     ctx.path = relativePath
 
-    // Serve static files from the dynamic directory
     return koaStatic(labextensionsDir)(ctx, next)
 }
 
