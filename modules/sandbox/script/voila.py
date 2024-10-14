@@ -56,6 +56,7 @@ def page_config_hook(
         "@voila-dashboards/jupyterlab-preview",
         "@jupyter/collaboration-extension",
         "@jupyter-widgets/jupyterlab-manager",
+        "@jupyterhub/jupyter-server-proxy",  # This was causing an error in the console
     ]
     disabled_extensions.extend(page_config.get("disabledExtensions", []))
 
