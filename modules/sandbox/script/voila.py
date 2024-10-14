@@ -52,11 +52,20 @@ def page_config_hook(
         page_config,
         gpc(app_extensions_paths, logger=log),
     )
+    disabled_extensions = [
+        "@voila-dashboards/jupyterlab-preview",
+        "@jupyter/collaboration-extension",
+        "@jupyter-widgets/jupyterlab-manager",
+    ]
+    disabled_extensions.extend(page_config.get("disabledExtensions", []))
 
+    required_extensions = []
     federated_extensions = deepcopy(page_config["federated_extensions"])
 
     page_config["federated_extensions"] = filter_extension(
         federated_extensions=federated_extensions,
+        disabled_extensions=disabled_extensions,
+        required_extensions=required_extensions,
         extension_allowlist=voila_configuration.extension_allowlist,
         extension_denylist=voila_configuration.extension_denylist,
     )
