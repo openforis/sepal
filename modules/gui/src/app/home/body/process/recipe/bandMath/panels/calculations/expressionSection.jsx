@@ -49,9 +49,9 @@ class _ExpressionSection extends React.Component {
     }
     
     renderExpression() {
-        const {images, inputs: {expression}} = this.props
+        const {images, calculations, inputs: {expression}} = this.props
         return (
-            <CodeEditor input={expression} autoComplete={eeAutoComplete(images, msg)}/>
+            <CodeEditor input={expression} autoComplete={eeAutoComplete([...images, ...calculations], msg)}/>
         )
         // return (
         //     <Form.Input
