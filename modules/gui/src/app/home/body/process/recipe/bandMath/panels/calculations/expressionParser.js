@@ -13,6 +13,7 @@ export const determineUsedBands = ({expression, images, calculations}) => {
         case 'ConditionalExpression': return bandsFromConditionalExpression(node)
         case 'CallExpression': return bandsFromCallExpression(node)
         case 'Literal': return bandsFromLiteral(node)
+        default: throw Error('Invalid expression')
         }
     }
 
@@ -79,9 +80,16 @@ export const determineUsedBands = ({expression, images, calculations}) => {
     }
 
     const bandsFromCallExpression = callExpression => {
-        return callExpression.arguments
-            .map(bandsFromNode)
-            .flat()
+        const functionName = callExpression.callee.name
+
+        const mathFunction = typeof Math[functionName] === 'function'
+        if (mathFunction) {
+            return callExpression.arguments
+                .map(bandsFromNode)
+                .flat()
+        } else {
+            throw new InvalidCall(`Invalid function: ${functionName}`)
+        }
     }
 
     const node = jsep.parse(expression)
@@ -101,6 +109,12 @@ export class InvalidBandName extends Error {
 }
 
 export class InvalidLiteral extends Error {
+    constructor(message) {
+        super(message)
+    }
+}
+
+export class InvalidCall extends Error {
     constructor(message) {
         super(message)
     }

@@ -1,4 +1,4 @@
-import {determineUsedBands, InvalidBandName, InvalidImageName} from './expressionParser'
+import {determineUsedBands, InvalidBandName, InvalidCall, InvalidImageName} from './expressionParser'
 
 it('given a literal, no bands are returned', () => {
     expect(
@@ -302,6 +302,16 @@ it('given a math constant, no bands are returned', () => {
     ).toEqual(
         []
     )
+})
+
+it('given a none-Math function call, InvalidFunction is thrown', () => {
+    expect(() =>
+        determineUsedBands({
+            expression: 'nonMathFunction(i1)',
+            images: [],
+            calculations: []
+        })
+    ).toThrowError(InvalidCall)
 })
 
 it('given expression with non-existing image, an InvalidImageName is thrown', () => {

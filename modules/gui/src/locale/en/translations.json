@@ -5103,6 +5103,22 @@
         "assetInput": {
             "loadError": "Unable to load asset"
         },
+        "codeEditor": {
+            "eeAutoComplete": {
+                "bandNames": {
+                    "section": "Band names"
+                },
+                "imagesAndCalculations": {
+                    "section": "Images and calculations"
+                },
+                "mathFunctions": {
+                    "section": "Functions"
+                },
+                "mathConstants": {
+                    "section": "Mathematical constants"
+                }
+            }
+        },
         "comboBox": {
             "loading": "Loading..."
         },

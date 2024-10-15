@@ -2,7 +2,6 @@ import _ from 'lodash'
 
 export const getAvailableBands = recipe => {
     const bands = {}
-    // console.log(recipe.model.outputBands.outputImages)
     recipe.model.outputBands.outputImages
         .map(({outputBands}) => outputBands
             .map(({outputName}) => {

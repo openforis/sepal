@@ -3,6 +3,12 @@
     "version": "0.1.0",
     "private": true,
     "dependencies": {
+        "@codemirror/commands": "^6.7.0",
+        "@codemirror/lang-javascript": "^6.2.2",
+        "@codemirror/language": "^6.10.3",
+        "@codemirror/lint": "^6.8.2",
+        "@codemirror/state": "^6.4.1",
+        "@codemirror/view": "^6.34.1",
         "@fontsource/merriweather": "^5.1.0",
         "@fontsource/source-sans-pro": "^5.1.0",
         "@fontsource/ubuntu": "^5.1.0",
@@ -51,7 +57,8 @@
         "react-textarea-autosize": "^8.5.3",
         "react-transition-group": "4.4.5",
         "redux": "5.0.1",
-        "rxjs": "7.8.1"
+        "rxjs": "7.8.1",
+        "thememirror": "^2.0.1"
     },
     "scripts": {
         "start": "vite",
