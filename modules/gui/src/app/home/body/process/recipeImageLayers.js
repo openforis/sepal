@@ -14,6 +14,7 @@ import {PlanetMosaicImageLayer} from './recipe/planetMosaic/planetMosaicImageLay
 import {RadarMosaicImageLayer} from './recipe/radarMosaic/radarMosaicImageLayer'
 import {RegressionImageLayer} from './recipe/regression/regressionImageLayer'
 import {RemappingImageLayer} from './recipe/remapping/remappingImageLayer'
+import {StackImageLayer} from './recipe/stack/stackImageLayer'
 import {TimeSeriesImageLayer} from './recipe/timeSeries/timeSeriesImageLayer'
 import {UnsupervisedClassificationImageLayer} from './recipe/unsupervisedClassification/unsupervisedClassificationImageLayer'
 import {addRecipeImageLayer} from './recipeImageLayerRegistry'
@@ -25,6 +26,7 @@ export const registerRecipeImageLayers = () => {
     addRecipeImageLayer('CLASSIFICATION', ClassificationImageLayer)
     addRecipeImageLayer('UNSUPERVISED_CLASSIFICATION', UnsupervisedClassificationImageLayer)
     addRecipeImageLayer('REGRESSION', RegressionImageLayer)
+    addRecipeImageLayer('STACK', StackImageLayer)
     addRecipeImageLayer('CLASS_CHANGE', ClassChangeImageLayer)
     addRecipeImageLayer('INDEX_CHANGE', IndexChangeImageLayer)
     addRecipeImageLayer('REMAPPING', RemappingImageLayer)

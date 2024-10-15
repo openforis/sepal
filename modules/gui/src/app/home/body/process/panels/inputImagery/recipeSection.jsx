@@ -4,6 +4,8 @@ import React from 'react'
 import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeInput} from '~/widget/recipeInput'
 
+import {getRecipeType} from '../../recipeTypeRegistry'
+
 export class RecipeSection extends React.Component {
     render() {
         const {input, onLoading} = this.props
@@ -20,9 +22,11 @@ export class RecipeSection extends React.Component {
 
     onRecipeLoaded({recipe, bandNames}) {
         const {onLoaded} = this.props
+        const visualizations = getRecipeType(recipe.type).getPreSetVisualizations(recipe)
         onLoaded({
             id: recipe.id,
             bands: this.extractBands(recipe, bandNames),
+            visualizations,
             recipe: {
                 type: 'RECIPE_REF',
                 id: recipe.id

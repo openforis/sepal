@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {InputImagery} from '~/app/home/body/process/panels/inputImageryWithDerived/inputImagery'
 import {setInitialized} from '~/app/home/body/process/recipe'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
@@ -9,7 +10,6 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {AuxiliaryImagery} from '../../classification/panels/auxiliaryImagery/auxiliaryImagery'
-import {InputImagery} from '../../classification/panels/inputImagery/inputImagery'
 import {RetrieveButton} from '../../retrieveButton'
 import {Classifier} from './classifier/classifier'
 import styles from './regressionToolbar.module.css'

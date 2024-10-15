@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {InputImagery} from '~/app/home/body/process/panels/inputImageryWithDerived/inputImagery'
 import {setInitialized} from '~/app/home/body/process/recipe'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
@@ -15,7 +16,6 @@ import {Legend} from '../legend/legend'
 import {AuxiliaryImagery} from './auxiliaryImagery/auxiliaryImagery'
 import styles from './classificationToolbar.module.css'
 import {Classifier} from './classifier/classifier'
-import {InputImagery} from './inputImagery/inputImagery'
 import {Retrieve} from './retrieve/retrieve'
 import {TrainingData} from './trainingData/trainingData'
 
