@@ -51,9 +51,12 @@ class _ExpressionSection extends React.Component {
     renderExpression() {
         const {images, calculations, inputs: {expression}} = this.props
         return (
-            <CodeEditor input={expression} autoComplete={eeAutoComplete([...images, ...calculations], msg)}/>
+            <CodeEditor
+                input={expression}
+                autoComplete={eeAutoComplete([...images, ...calculations], msg)}
+                onChange={this.updateUsedBands}
+            />
         )
-        // return (
         //     <Form.Input
         //         label={msg('process.bandMath.panel.calculations.form.expression.label')}
         //         tooltip={msg('process.bandMath.panel.calculations.form.expression.tooltip')}
@@ -78,6 +81,7 @@ class _ExpressionSection extends React.Component {
             />
         )
     }
+
     updateUsedBands(expression) {
         const {images, calculations, inputs: {usedBands}} = this.props
         try {
@@ -87,6 +91,7 @@ class _ExpressionSection extends React.Component {
         } catch (error) {
             console.log(error)
         }
+        
     }
 }
 
