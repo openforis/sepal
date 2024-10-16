@@ -7,56 +7,50 @@ export const eeAutoComplete = (images, msg) =>
         const afterNode = tree.resolveInner(context.pos, 1)
 
         const autoCompleteVariable = ({from, to}) => {
-            const prefix = context.state.sliceDoc(from, context.pos).replaceAll('"', '\'')
+            const prefix = context.state.sliceDoc(from, context.pos)
+            const section = {
+                name: msg('widget.codeEditor.eeAutoComplete.imagesAndCalculations.section'),
+                rank: 0,
+            }
             const imageOptions = images
                 .map(image => ({
-                    section: {
-                        name: msg('widget.codeEditor.eeAutoComplete.imagesAndCalculations.section'),
-                        rank: 0,
-                    },
+                    section,
                     label: image.name,
                     type: 'variable'
                 }))
                 .filter(({label}) => label.startsWith(prefix))
-            return {
-                from,
-                to,
-                filter: false,
-                options: [
-                    ...imageOptions,
-                    ...mathOptions(msg).filter(({label}) =>
-                        label.startsWith(prefix) && !imageOptions
-                            .find(imageOption => imageOption.label === label.replaceAll('(', ''))
-                    )
-                ]
-            }
+            const options = [
+                ...imageOptions,
+                ...mathOptions(msg).filter(({label}) =>
+                    label.startsWith(prefix) && !imageOptions
+                        .find(imageOption => imageOption.label === label.replaceAll('(', ''))
+                )
+            ]
+            return {from, to, filter: false, options}
         }
 
         const autoCompleteBands = ({variableNameNode, from, to, string = false}) => {
             if (variableNameNode?.name === 'VariableName') {
-                const prefix = context.state.sliceDoc(from, context.pos).replaceAll('"', '\'')
+                const prefix = context.state
+                    .sliceDoc(from, context.pos)
+                    .replaceAll('"', '\'')
                 const variableName = context.state.sliceDoc(variableNameNode.from, variableNameNode.to)
                 const image = images.find(({name}) => name === variableName)
                 if (!image) {
                     return noSuggestions
                 } else {
-                    const bandOptions = image.includedBands
+                    const options = image.includedBands
                         .map(({name}) => ({
                             section: {
                                 name: msg('widget.codeEditor.eeAutoComplete.bandNames.section'),
                                 rank: 0
                             },
-                            label: string ? `'${name}'` : name,
+                            label: string ? `'${name}']` : name,
                             displayLabel: name,
                             type: 'property'
                         }))
                         .filter(({label}) => label.startsWith(prefix))
-                    return {
-                        from,
-                        to,
-                        filter: false,
-                        options: bandOptions
-                    }
+                    return {from, to, filter: false, options}
                 }
             } else {
                 return noSuggestions
