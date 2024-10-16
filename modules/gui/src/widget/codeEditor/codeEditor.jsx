@@ -1,5 +1,6 @@
 import {autocompletion, completionKeymap, completionStatus} from '@codemirror/autocomplete'
 import {javascript} from '@codemirror/lang-javascript'
+import {linter} from '@codemirror/lint'
 import {EditorState} from '@codemirror/state'
 import {EditorView, keymap} from '@codemirror/view'
 import PropTypes from 'prop-types'
@@ -48,7 +49,7 @@ export class CodeEditor extends React.Component {
     }
 
     setupEditor(editorElement) {
-        const {autoComplete, input} = this.props
+        const {autoComplete, lint, input} = this.props
 
         const updateListener = EditorView.updateListener.of(
             update => {
@@ -78,7 +79,8 @@ export class CodeEditor extends React.Component {
                 autocompletion({
                     override: [autoComplete]
                 }),
-                updateListener
+                linter(lint),
+                updateListener,
             ]
         })
         
@@ -92,5 +94,6 @@ export class CodeEditor extends React.Component {
 CodeEditor.propTypes = {
     autoComplete: PropTypes.func.isRequired,
     input: PropTypes.object.isRequired,
+    lint: PropTypes.func.isRequired,
     onChange: PropTypes.func
 }

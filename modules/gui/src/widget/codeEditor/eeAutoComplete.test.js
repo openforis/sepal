@@ -2,7 +2,8 @@ import {CompletionContext} from '@codemirror/autocomplete'
 import {javascript} from '@codemirror/lang-javascript'
 import {EditorState} from '@codemirror/state'
 
-import {eeAutoComplete, mathOptions} from './eeAutoComplete'
+import {eeAutoComplete} from './eeAutoComplete'
+import {mathOptions} from './mathOptions'
 
 it('an empty expression autoCompletes math functions and constants', () => {
     expect(autoComplete({

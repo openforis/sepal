@@ -5117,6 +5117,10 @@
                 "mathConstants": {
                     "section": "Mathematical constants"
                 }
+            },
+            "eeAutoLint": {
+                "undefinedVariable": "\"{variableName}\" is not defined. \n\nVariables must be the name of images, name of calculations declared before this function, math functions, or math constants.",
+                "invalidArgCount": "Function expect {expectedArgCount} argument, got {argCount}."
             }
         },
         "comboBox": {

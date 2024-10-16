@@ -6,6 +6,7 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {CodeEditor} from '~/widget/codeEditor/codeEditor'
 import {eeAutoComplete} from '~/widget/codeEditor/eeAutoComplete'
+import {eeLint} from '~/widget/codeEditor/eeLint'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 
@@ -50,22 +51,15 @@ class _ExpressionSection extends React.Component {
     
     renderExpression() {
         const {images, calculations, inputs: {expression}} = this.props
+        const allImages = [...images, ...calculations]
         return (
             <CodeEditor
                 input={expression}
-                autoComplete={eeAutoComplete([...images, ...calculations], msg)}
+                autoComplete={eeAutoComplete(allImages, msg)}
+                lint={eeLint(allImages, msg)}
                 onChange={this.updateUsedBands}
             />
         )
-        //     <Form.Input
-        //         label={msg('process.bandMath.panel.calculations.form.expression.label')}
-        //         tooltip={msg('process.bandMath.panel.calculations.form.expression.tooltip')}
-        //         input={expression}
-        //         placeholder={msg('process.bandMath.panel.calculations.form.expression.placeholder')}
-        //         autoComplete={false}
-        //         onChange={this.updateUsedBands}
-        //     />
-        // )
     }
     
     // TODO: We might have more than one band if whole image is used in expression
@@ -86,10 +80,9 @@ class _ExpressionSection extends React.Component {
         const {images, calculations, inputs: {usedBands}} = this.props
         try {
             const bands = determineUsedBands({expression, images, calculations})
-            console.log(bands)
             usedBands.set(bands)
         } catch (error) {
-            console.log(error)
+            // console.log(error)
         }
         
     }
