@@ -192,9 +192,9 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         def retries = 60
         for (int i = 0; i < retries; i++)
             try {
-            LOG.warn("Trying to connect to Docker on instance $instance")
+            LOG.debug("Trying to connect to Docker on instance $instance")
             deployedContainers(instance)
-            LOG.warn("Successfully connected to Docker on instance $instance")
+            LOG.info("Successfully connected to Docker on instance $instance")
             return
             } catch (Exception ignore) {
             LOG.warn("Failed to connect to Docker on instance $instance")
