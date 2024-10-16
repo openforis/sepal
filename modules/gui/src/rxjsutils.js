@@ -57,9 +57,13 @@ export const autoRetry = ({
             }
             // retry
             const retryDelay = Math.min(maxRetryDelay, minRetryDelay * Math.pow(retryDelayFactor, retryCount - 1))
-            const retryMessage = `Retry ${retryCount}${maxRetries ? `/${maxRetries}` : ''} in ${retryDelay}ms.`
-            onRetry && onRetry(error, retryMessage)
+            const retryInfo = maxRetries
+                ? ` (${retryCount}/${maxRetries}))`
+                : ''
+            const retryMessage = `Retrying in ${retryDelay}ms${retryInfo}.`
+            onRetry && onRetry(error, retryMessage, retryDelay, retryCount)
             return timer(retryDelay)
-        }
+        },
+        resetOnSuccess: true
     })
 )

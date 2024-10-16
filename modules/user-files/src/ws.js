@@ -1,6 +1,3 @@
-// const Job = require('#sepal/worker/job')
-// const {messageService, sendMessage$} = require('./messageService')
-
 const getSepalUser = request => {
     const sepalUser = request.headers['sepal-user']
     return sepalUser
@@ -229,13 +226,3 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
 
 module.exports = ctx =>
     worker$(getSepalUser(ctx.request).username, {args$: ctx.args$, initArgs: getInitArgs()})
-
-// module.exports = Job({
-//     jobName: 'Files',
-//     jobPath: __filename,
-//     before: [],
-//     initArgs: () => getInitArgs(),
-//     services: [messageService],
-//     args: request => [getSepalUser(request).username],
-//     worker$
-// })
