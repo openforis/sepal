@@ -76,7 +76,7 @@ const Title = () => {
                     <Button
                         chromeless
                         shape='pill'
-                        linkUrl={`http://ops.sepal.io:8080/job/Sepal/${buildNumber}/`}
+                        linkUrl={`http://ops.sepal.io:8443/job/Sepal/${buildNumber}/`}
                         linkTarget='jenkins'
                         disabled={!buildNumber}
                         label={buildNumber || '?'}

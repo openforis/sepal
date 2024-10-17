@@ -10,7 +10,6 @@ then
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9238 \
     src/main.js \
-    --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
     --home-dir /sepalUsers \
     --poll-interval-milliseconds ${POLL_INTERVAL_MS} \
     --instances "$INSTANCES"
@@ -18,7 +17,6 @@ else
   echo "Starting node"
   exec node \
     src/main.js \
-    --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
     --home-dir /sepalUsers \
     --poll-interval-milliseconds ${POLL_INTERVAL_MS} \
     --instances "$INSTANCES"
