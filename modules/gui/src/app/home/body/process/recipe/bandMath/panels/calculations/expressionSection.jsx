@@ -83,8 +83,13 @@ class _ExpressionSection extends React.Component {
     }
     
     renderExpression() {
-        const {images, calculations, inputs: {expression}} = this.props
-        const allImages = [...images, ...calculations]
+        const {images, calculations, inputs: {imageId, expression}} = this.props
+        const calculationIndex = calculations.findIndex(calculation => calculation.imageId === imageId.value)
+        const availableCalculations = calculationIndex >= 0
+            ? calculations.slice(0, calculationIndex)
+            : calculations
+
+        const allImages = [...images, ...availableCalculations]
         return (
             <CodeEditor
                 input={expression}
