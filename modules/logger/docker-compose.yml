@@ -12,6 +12,8 @@ services:
         ipv4_address: 172.20.128.2
     ports:
       - 514:514/udp
+    restart: always
+
 
 networks:
   sepal:
