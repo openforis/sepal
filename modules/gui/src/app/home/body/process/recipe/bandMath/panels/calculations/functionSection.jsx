@@ -101,7 +101,7 @@ class _FunctionSection extends React.Component {
                 tooltip={msg('process.bandMath.panel.calculations.form.function.tooltip')}
                 input={reducer}
                 options={options}
-                placeholder={'Select function...'}
+                placeholder={msg('process.bandMath.panel.calculations.form.function.label')}
                 autoFocus
             />
         )
@@ -144,6 +144,13 @@ class _FunctionSection extends React.Component {
         }))
         const bandOptions = [...imageOptions, ...calculationOptions]
         this.setState({bandOptions})
+    }
+
+    componentDidUpdate() {
+        const {inputs: {reducer, bandName}} = this.props
+        if (reducer.value && !bandName.value) {
+            bandName.set(reducer.value)
+        }
     }
 
     updateUsedBands(bandIds) {

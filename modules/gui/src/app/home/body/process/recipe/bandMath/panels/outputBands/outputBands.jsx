@@ -67,13 +67,22 @@ class _OutputBands extends React.Component {
         const {calculations, images, inputs: {outputImages}} = this.props
         const usedImageIds = (outputImages.value || []).map(({imageId}) => imageId)
 
+        const renderImageLabel = image => (
+            <ListItem key={image.imageId}>
+                <CrudItem
+                    title={msg(`process.bandMath.panel.outputBands.type.${image.type}`)}
+                    description={<ImageDescription image={image}/>}
+                    metadata={image.name}/>
+            </ListItem>
+        )
+
         const toOptions = (array, groupLabel) => ({
             label: groupLabel,
             options: array
                 .filter(({imageId}) => !usedImageIds.includes(imageId))
                 .map(image => ({
                     value: image.name,
-                    label: <ImageDescription image={image}/>,
+                    label: renderImageLabel(image),
                     image
                 }))
         })
@@ -129,7 +138,7 @@ class _OutputBands extends React.Component {
     renderOutputBands(image) {
         const {allOutputBandNames} = this.state
         return (
-            <Layout type='horizontal'>
+            <Layout type='horizontal' alignment='fill'>
                 {image.outputBands.map(band =>
                     <OutputBand
                         key={band.name}

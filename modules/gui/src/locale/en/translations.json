@@ -2569,6 +2569,7 @@
                         },
                         "function": {
                             "label": "Function",
+                            "placeholder": "Select Function...",
                             "tooltip": "Reduce the selected bands to a single band value using the selected function."
                         },
                         "bandName": {
@@ -2589,7 +2590,45 @@
                         "type": {
                             "FUNCTION": "Function",
                             "EXPRESSION": "Expression"
+                        },
+                        "bandRenameStrategy": {
+                            "label": "Band rename strategy",
+                            "PREFIX": {
+                                "label": "Prefix"
+                            },
+                            "SUFFIX": {
+                                "label": "Suffix"
+                            },
+                            "REGEX": {
+                                "label": "Regular expression",
+                                "tooltip": "Renames the bands outputted by the calculation by applying a regular expression replacement."
+                            }
+                        },
+                        "regex": {
+                            "label": "Regular expression",
+                            "placeholder": "Regular expression...",
+                            "tooltip": "The regular expression used to match bands to rename. Any bands not matched by the regex will included without renaming."
+                        },
+                        "bandRename": {
+                            "PREFIX": {
+                                "label": "Prefix",
+                                "placeholder": "Prefix...",
+                                "tooltip": "Apply this prefix to all bands outputted by expression"
+                            },
+                            "SUFFIX": {
+                                "label": "Suffix",
+                                "placeholder": "Suffix...",
+                                "tooltip": "Apply this suffix to all bands outputted by expression"
+                            },
+                            "REGEX": {
+                                "label": "Replacement",
+                                "placeholder": "Replacement...",
+                                "tooltip": "The text with which to replace each match. Supports $n syntax for captured values."
+                            }
                         }
+                    },
+                    "sections": {
+                        "title": "Calculation"
                     },
                     "expression": {
                         "title": "Expression"
@@ -5118,9 +5157,11 @@
                     "section": "Mathematical constants"
                 }
             },
-            "eeAutoLint": {
+            "eeLint": {
                 "undefinedVariable": "\"{variableName}\" is not defined. \n\nVariables must be the name of images, name of calculations declared before this function, math functions, or math constants.",
-                "invalidArgCount": "Function expect {expectedArgCount} argument, got {argCount}."
+                "invalidBand": "\"{imageName}\" doesn't contain band \"{bandName}\".",
+                "invalidArgCount": "Function expect {expectedArgCount} argument, got {argCount}.",
+                "syntaxError": "Syntax error."
             }
         },
         "comboBox": {

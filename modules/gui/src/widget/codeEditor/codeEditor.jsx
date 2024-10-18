@@ -1,6 +1,6 @@
 import {autocompletion, completionKeymap, completionStatus} from '@codemirror/autocomplete'
 import {javascript} from '@codemirror/lang-javascript'
-import {linter} from '@codemirror/lint'
+import {forEachDiagnostic, linter} from '@codemirror/lint'
 import {EditorState} from '@codemirror/state'
 import {EditorView, keymap} from '@codemirror/view'
 import PropTypes from 'prop-types'
@@ -53,7 +53,7 @@ export class CodeEditor extends React.Component {
 
         const updateListener = EditorView.updateListener.of(
             update => {
-                const {onChange} = this.props
+                const {onExpressionChange} = this.props
                 // [HACK] Give time for key handlers to react on previous completing state
                 // before updating it
                 setImmediate(() =>
@@ -65,8 +65,11 @@ export class CodeEditor extends React.Component {
                 const value = update.state.doc.text.join('\n')
                 if (input.value !== value) {
                     input.set(value)
-                    onChange && onChange(value)
+                    onExpressionChange && onExpressionChange(value)
                 }
+                let messages = []
+                forEachDiagnostic(this.view.state, diagnostic => messages.push(diagnostic.message))
+                input.setInvalid(messages.length ? messages[0] : '')
             }
         )
 
@@ -77,9 +80,9 @@ export class CodeEditor extends React.Component {
                 theme,
                 javascript(),
                 autocompletion({
-                    override: [autoComplete]
+                    override: [autoComplete],
                 }),
-                linter(lint),
+                linter(lint, {delay: 0}),
                 updateListener,
             ]
         })
@@ -95,5 +98,5 @@ CodeEditor.propTypes = {
     autoComplete: PropTypes.func.isRequired,
     input: PropTypes.object.isRequired,
     lint: PropTypes.func.isRequired,
-    onChange: PropTypes.func
+    onExpressionChange: PropTypes.func
 }

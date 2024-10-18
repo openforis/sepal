@@ -5,6 +5,7 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {uuid} from '~/uuid'
 import {Form} from '~/widget/form'
 import {PanelSections} from '~/widget/panelSections'
 
@@ -31,13 +32,21 @@ const fields = {
     expression: new Form.Field()
         .skip((value, {section}) => section !== 'EXPRESSION')
         .notBlank(),
+    bandRenameStrategy: new Form.Field()
+        .skip((value, {section, usedBands}) => section !== 'FUNCTION' || usedBands.length < 1)
+        .notBlank(),
+    regex: new Form.Field()
+        .skip((value, {section, usedBands, bandRenameStrategy}) => section !== 'FUNCTION' || usedBands.length < 1 || bandRenameStrategy !== 'REGEX')
+        .notBlank(),
+    bandRename: new Form.Field()
+        .skip((value, {section, usedBands}) => section !== 'FUNCTION' || usedBands.length < 1)
+        .notBlank(),
     bandName: new Form.Field()
         .notBlank(),
     usedBands: new Form.Field()
-        .skip((value, {section}) => section !== 'FUNCTION') // TODO: Actually always needed
         .notEmpty(),
     usedBandIds: new Form.Field()
-        .skip((value, {section}) => section !== 'FUNCTION') // TODO: Actually always needed
+        .skip((value, {section}) => section !== 'FUNCTION')
         .notEmpty(),
 }
 
@@ -122,8 +131,6 @@ class _Calculation extends React.Component {
     }
 }
 
-console.log('TODO: bandName/includedBands - update for FUNCTION ')
-
 const modelToValues = model => {
     const values = {
         imageId: model.imageId,
@@ -133,12 +140,19 @@ const modelToValues = model => {
         usedBandIds: model.usedBands.map(({id}) => id),
         reducer: model.reducer,
         expression: model.expression,
-        bandName: model.includedBands?.length && model.includedBands[0].name
+        bandName: model.includedBands?.length && model.includedBands[0].name,
+        bandRenameStrategy: model.bandRenameStrategy,
+        regex: model.regex,
+        bandRename: model.bandRename,
     }
     return values
 }
 
 const valuesToModel = values => {
+    const includedBands = evaluateBandNames(values).map(name => ({
+        id: uuid(),
+        name,
+        type: 'continuous'}))
     const model = {
         imageId: values.imageId,
         name: values.name,
@@ -146,13 +160,24 @@ const valuesToModel = values => {
         usedBands: values.usedBands,
         reducer: values.reducer,
         expression: values.expression,
-        includedBands: [{
-            id: values.imageId,
-            name: values.bandName,
-            type: 'continuous'
-        }]
+        includedBands,
+        bandRenameStrategy: values.bandRenameStrategy,
+        regex: values.regex,
+        bandRename: values.bandRename,
     }
     return model
+}
+
+const evaluateBandNames = ({usedBands, bandName, bandRenameStrategy, regex, bandRename}) => {
+    if (usedBands.length === 1) {
+        return [bandName]
+    } else if (bandRenameStrategy === 'PREFIX') {
+        return usedBands.map(band => bandRename + band)
+    } else if (bandRenameStrategy === 'SUFFIX') {
+        return usedBands.map(band => band + bandRename)
+    } else if (bandRenameStrategy === 'REGEX') {
+        return usedBands.map(band => band.replace(new RegExp(regex), bandRename))
+    }
 }
 
 const policy = () => ({_: 'allow'})

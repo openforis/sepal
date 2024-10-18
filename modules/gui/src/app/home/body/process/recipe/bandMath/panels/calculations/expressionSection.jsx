@@ -12,7 +12,6 @@ import {Layout} from '~/widget/layout'
 
 import {withRecipe} from '../../../../recipeContext'
 import styles from './calculation.module.css'
-import {determineUsedBands} from './expressionParser'
 
 const mapRecipeToProps = recipe => ({
     images: selectFrom(recipe, 'model.inputImagery.images') || [],
@@ -26,11 +25,13 @@ class _ExpressionSection extends React.Component {
     }
 
     render() {
+        const {inputs: {usedBands}} = this.props
         return (
             <Layout type='vertical'>
                 {this.renderName()}
                 {this.renderExpression()}
-                {this.renderBandName()}
+                {usedBands.value.length === 1 && this.renderBandName()}
+                {usedBands.value.length > 1 && this.renderBandNames()}
             </Layout>
         )
     }
@@ -56,13 +57,13 @@ class _ExpressionSection extends React.Component {
             <CodeEditor
                 input={expression}
                 autoComplete={eeAutoComplete(allImages, msg)}
-                lint={eeLint(allImages, msg)}
-                onChange={this.updateUsedBands}
+                lint={eeLint(allImages, msg, this.updateUsedBands)}
             />
         )
     }
     
-    // TODO: We might have more than one band if whole image is used in expression
+    // TODO: Allow data-type to be specified. Also for FUNCTION calculations
+    
     renderBandName() {
         const {inputs: {bandName}} = this.props
         return (
@@ -76,15 +77,61 @@ class _ExpressionSection extends React.Component {
         )
     }
 
-    updateUsedBands(expression) {
-        const {images, calculations, inputs: {usedBands}} = this.props
-        try {
-            const bands = determineUsedBands({expression, images, calculations})
-            usedBands.set(bands)
-        } catch (error) {
-            // console.log(error)
+    renderBandNames() {
+        const {inputs: {bandRenameStrategy, regex, bandRename}} = this.props
+        const options = [
+            {value: 'PREFIX', label: msg('process.bandMath.panel.calculations.form.bandRenameStrategy.PREFIX.label')},
+            {value: 'SUFFIX', label: msg('process.bandMath.panel.calculations.form.bandRenameStrategy.SUFFIX.label')},
+            {value: 'REGEX', label: msg('process.bandMath.panel.calculations.form.bandRenameStrategy.REGEX.label')},
+        ]
+        return (
+            (<Layout type='horizontal' alignment='distribute'>
+                <Form.Combo
+                    label={msg('process.bandMath.panel.calculations.form.bandRenameStrategy.label')}
+                    tooltip={msg('process.bandMath.panel.calculations.form.bandRenameStrategy.tooltip')}
+                    input={bandRenameStrategy}
+                    options={options}
+                    placeholder={'Select a strategy...'}
+                />
+                {bandRenameStrategy.value === 'REGEX'
+                    ? (
+                        <Form.Input
+                            label={msg('process.bandMath.panel.calculations.form.regex.label')}
+                            tooltip={msg('process.bandMath.panel.calculations.form.bandRename.tooltip')}
+                            input={regex}
+                            placeholder={msg('process.bandMath.panel.calculations.form.regex.placeholder')}
+                            autoComplete={false}
+                        />
+                    ) : null}
+
+                <Form.Input
+                    label={msg(`process.bandMath.panel.calculations.form.bandRename.${bandRenameStrategy.value}.label`)}
+                    tooltip={msg(`process.bandMath.panel.calculations.form.bandRename.${bandRenameStrategy.value}.tooltip`)}
+                    input={bandRename}
+                    placeholder={msg(`process.bandMath.panel.calculations.form.bandRename.${bandRenameStrategy.value}.placeholder`)}
+                    autoComplete={false}
+                />
+            </Layout>)
+        )
+    }
+
+    updateUsedBands(bands) {
+        const {inputs: {usedBands, bandName}} = this.props
+        usedBands.set(bands)
+        if (bands.length === 1) {
+            bandName.set(bands[0])
         }
-        
+    }
+
+    componentDidMount() {
+        this.setBandRenameStrategy()
+    }
+
+    setBandRenameStrategy() {
+        const {inputs: {bandRenameStrategy}} = this.props
+        if (!bandRenameStrategy.value) {
+            bandRenameStrategy.set('SUFFIX')
+        }
     }
 }
 

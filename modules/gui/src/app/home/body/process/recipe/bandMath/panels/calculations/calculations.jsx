@@ -107,8 +107,8 @@ class _Calculations extends React.Component {
         const {recipeId} = this.props
         const actionBuilder = recipeActionBuilder(recipeId)
         actionBuilder('REMOVE_CALCULATION', {calculationToRemove})
-            .del(['model.calculations.calculations', {id: calculationToRemove.id}])
-            .del(['ui.calculations.calculations', {id: calculationToRemove.id}])
+            .del(['model.calculations.calculations', {imageId: calculationToRemove.imageId}])
+            .del(['ui.calculations.calculations', {imageId: calculationToRemove.imageId}])
             .dispatch()
     }
 }
