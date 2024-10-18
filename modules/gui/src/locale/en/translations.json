@@ -2582,6 +2582,25 @@
                             "placeholder": "Calculation name...",
                             "tooltip": "The name of this calculation to use when referring to it within expressions."
                         },
+                        "dataType": {
+                            "label": "Data type",
+                            "placeholder": "Data type...",
+                            "tooltip": "The data type to cast the output band(s) to.",
+                            "auto": "[auto]",
+                            "int8": "int8",
+                            "int16": "int16",
+                            "int32": "int32",
+                            "int64": "int64",
+                            "uint8": "uint8",
+                            "uint16": "uint16",
+                            "uint32": "uint32",
+                            "byte": "byte",
+                            "short": "short",
+                            "int": "int",
+                            "long": "long",
+                            "float": "float",
+                            "double": "double"
+                        },
                         "expression": {
                             "label": "Expression",
                             "placeholder": "Expression...",

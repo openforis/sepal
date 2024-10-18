@@ -26,6 +26,10 @@ class _FunctionSection extends React.Component {
     render() {
         return (
             <Layout type='vertical'>
+                <Layout type='horizontal' alignment='distribute'>
+                    {this.renderName()}
+                    {this.renderDataType()}
+                </Layout>
                 {this.renderName()}
                 <Layout type='horizontal' alignment='distribute'>
                     {this.renderReducer()}
@@ -46,6 +50,35 @@ class _FunctionSection extends React.Component {
                 tooltip={msg('process.bandMath.panel.calculations.form.calculationName.tooltip')}
                 input={name}
                 autoComplete={false}
+            />
+        )
+    }
+
+    renderDataType() {
+        const {inputs: {dataType}} = this.props
+        const options = [
+            {value: 'auto', label: msg('process.bandMath.panel.calculations.form.dataType.auto')},
+            {value: 'int8', label: msg('process.bandMath.panel.calculations.form.dataType.int8')},
+            {value: 'int16', label: msg('process.bandMath.panel.calculations.form.dataType.int16')},
+            {value: 'int32', label: msg('process.bandMath.panel.calculations.form.dataType.int32')},
+            {value: 'int64', label: msg('process.bandMath.panel.calculations.form.dataType.int64')},
+            {value: 'uint8', label: msg('process.bandMath.panel.calculations.form.dataType.uint8')},
+            {value: 'uint16', label: msg('process.bandMath.panel.calculations.form.dataType.uint16')},
+            {value: 'uint32', label: msg('process.bandMath.panel.calculations.form.dataType.uint32')},
+            {value: 'byte', label: msg('process.bandMath.panel.calculations.form.dataType.byte')},
+            {value: 'short', label: msg('process.bandMath.panel.calculations.form.dataType.short')},
+            {value: 'int', label: msg('process.bandMath.panel.calculations.form.dataType.int')},
+            {value: 'long', label: msg('process.bandMath.panel.calculations.form.dataType.long')},
+            {value: 'float', label: msg('process.bandMath.panel.calculations.form.dataType.float')},
+            {value: 'double', label: msg('process.bandMath.panel.calculations.form.dataType.double')},
+        ]
+        return (
+            <Form.Combo
+                label={msg('process.bandMath.panel.calculations.form.dataType.label')}
+                tooltip={msg('process.bandMath.panel.calculations.form.dataType.tooltip')}
+                input={dataType}
+                options={options}
+                placeholder={msg('process.bandMath.panel.calculations.form.dataType.label')}
             />
         )
     }

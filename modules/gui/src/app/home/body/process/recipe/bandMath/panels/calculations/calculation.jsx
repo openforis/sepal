@@ -48,6 +48,8 @@ const fields = {
     usedBandIds: new Form.Field()
         .skip((value, {section}) => section !== 'FUNCTION')
         .notEmpty(),
+    dataType: new Form.Field()
+        .notEmpty(),
 }
 
 const mapRecipeToProps = recipe => ({
@@ -102,6 +104,7 @@ class _Calculation extends React.Component {
         this.setName()
         this.setOtherNames()
         this.setCalculationId()
+        this.setDataType()
     }
 
     setCalculationId() {
@@ -129,6 +132,13 @@ class _Calculation extends React.Component {
             otherNames.set([...imageNames, ...otherCalculationNames])
         }
     }
+
+    setDataType() {
+        const {inputs: {dataType}} = this.props
+        if (!dataType.value) {
+            dataType.set('auto')
+        }
+    }
 }
 
 const modelToValues = model => {
@@ -136,6 +146,7 @@ const modelToValues = model => {
         imageId: model.imageId,
         name: model.name,
         section: model.type || 'SELECTION',
+        dataType: model.dataType,
         usedBands: model.usedBands,
         usedBandIds: model.usedBands.map(({id}) => id),
         reducer: model.reducer,
@@ -157,6 +168,7 @@ const valuesToModel = values => {
         imageId: values.imageId,
         name: values.name,
         type: values.section,
+        dataType: values.dataType,
         usedBands: values.usedBands,
         reducer: values.reducer,
         expression: values.expression,
