@@ -54,6 +54,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
             LOG.warn("$instance not provisioned: $e.message")
             return false
         }
+        LOG.debug("$instance is provisioned: $e.message")
         return true
     }
 
@@ -145,6 +146,9 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     private void waitUntilInitialized(WorkerInstance instance, Image image) {
         LOG.debug("Waiting until container initialized: Image $image on instance $instance")
         withClient(instance) {
+            client.params.setParameter('http.connection.timeout', new Integer(5 * 1000))
+            client.params.setParameter('http.socket.timeout', new Integer(5 * 1000))
+            LOG.debug("POST to 'containers/${image.containerName(instance)}/exec' for image $image on instance $instance")
             def response = post(
                     path: "containers/${image.containerName(instance)}/exec",
                     body: new JsonOutput().toJson([
@@ -157,6 +161,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                     requestContentType: JSON
             )
             def execId = response.data.Id
+            LOG.debug("POST to 'exec/$execId/start' for image $image on instance $instance")
             def startResponse = post(
                     path: "exec/$execId/start",
                     body: new JsonOutput().toJson([Detach: false, Tty: true]),
@@ -227,8 +232,8 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
             }
 
     private <T> T withClient(String host, @DelegatesTo(RESTClient) Closure<T> callback) {
-        def client = new RESTClient("http://$host:$config.dockerPort/$config.dockerEntryPoint/")
-        LOG.warn("Connecting client: http://$host:$config.dockerPort/$config.dockerEntryPoint/")
+        def client = new ff("http://$host:$config.dockerPort/$config.dockerEntryPoint/")
+        LOG.debug("Connecting client: http://$host:$config.dockerPort/$config.dockerEntryPoint/")
         client.parser.'application/vnd.docker.raw-stream' = client.parser.'text/plain'
         try {
             callback.delegate = client
