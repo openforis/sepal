@@ -232,7 +232,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
             }
 
     private <T> T withClient(String host, @DelegatesTo(RESTClient) Closure<T> callback) {
-        def client = new ff("http://$host:$config.dockerPort/$config.dockerEntryPoint/")
+        def client = new RESTClient("http://$host:$config.dockerPort/$config.dockerEntryPoint/")
         LOG.debug("Connecting client: http://$host:$config.dockerPort/$config.dockerEntryPoint/")
         client.parser.'application/vnd.docker.raw-stream' = client.parser.'text/plain'
         try {
