@@ -89,7 +89,7 @@ class _Calculation extends React.Component {
                 placement='modal'>
                 <PanelSections
                     inputs={inputs}
-                    shared={['imageId', 'name', 'otherNames']}
+                    shared={['imageId', 'dataType', 'name', 'otherNames']}
                     sections={sections}
                     selected={inputs.section}
                     icon='calculator'

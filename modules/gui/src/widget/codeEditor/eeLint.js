@@ -6,6 +6,8 @@ import {argCountByFunction, mathOptions} from './mathOptions'
 
 jsep.addBinaryOp('**')
 jsep.removeBinaryOp('>>>')
+jsep.removeBinaryOp('===')
+jsep.removeBinaryOp('!==')
 jsep.removeUnaryOp('~')
 
 export const eeLint = (images, msg, onBandNamesChanged) => {
@@ -20,7 +22,9 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
         let bandNames = []
 
         syntaxTree(view.state).cursor().iterate(node => {
-            if (node.name === 'VariableName') {
+            if (node.type.isError) {
+                handleSyntaxError(node)
+            } else if (node.name === 'VariableName') {
                 handleVariableName(node)
             } else if (node.name === '.') {
                 handleDotSyntax(node)
@@ -49,7 +53,7 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
                 } else {
                     const isMathFunction = Object.keys(argCountByFunction).includes(variableName)
                     if (isMathFunction) { // Math function without arguments
-                        diagnostics.push(undefinedVariable(node, {variableName}))
+                        report(undefinedVariable(node, {variableName}))
                     }
                 }
 
@@ -62,7 +66,7 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
                     }
                 }
             } else {
-                diagnostics.push(undefinedVariable(node, {variableName}))
+                report(undefinedVariable(node, {variableName}))
             }
         }
 
@@ -70,7 +74,7 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
             const prevNodeType = node.node.prevSibling?.name
             const nextNodeType = node.node.nextSibling?.name
             if (prevNodeType !== 'VariableName' || nextNodeType !== 'PropertyName') {
-                diagnostics.push({
+                report({
                     from: node.from,
                     to: node.to,
                     severity: 'error',
@@ -83,7 +87,7 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
             const prevNodeType = node.node.prevSibling?.name
             const nextNodeType = node.node.nextSibling?.name
             if (prevNodeType !== 'VariableName' || nextNodeType !== 'String') {
-                diagnostics.push({
+                report({
                     from: node.from,
                     to: node.to,
                     severity: 'error',
@@ -93,12 +97,21 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
 
         }
 
+        function handleSyntaxError(node) {
+            report({
+                from: node.from,
+                to: node.to,
+                severity: 'error',
+                message: msg('widget.codeEditor.eeLint.syntaxError')
+            })
+        }
+
         function validateFunctionArgCount({node, variableName}) {
             const argListNode = node.node.nextSibling
-            const argCount = (countChildren(argListNode) - 1) / 2
+            const argCount = Math.floor((countChildren(argListNode) - 1) / 2)
             const expectedArgCount = argCountByFunction[variableName]
             if (argCount !== expectedArgCount) {
-                diagnostics.push(invalidArgCount(argListNode, {argCount, expectedArgCount}))
+                report(invalidArgCount(argListNode, {argCount, expectedArgCount}))
             }
         }
 
@@ -134,7 +147,7 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
                     bandNames = [bandName]
                 }
             } else {
-                diagnostics.push(invalidBand(bandNameNode, {imageName: variableName, bandName}))
+                report(invalidBand(bandNameNode, {imageName: variableName, bandName}))
             }
         }
 
@@ -143,9 +156,7 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
             try {
                 jsep.parse(expression)
             } catch (error) {
-                const alreadyReported = diagnostics
-                    .find(({from, to}) => error.index >= from && error.index <= to)
-                alreadyReported || diagnostics.push({
+                report({
                     from: error.index,
                     to: Math.min(error.index + 1, expression.length),
                     severity: 'error',
@@ -160,6 +171,12 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
             }
             onBandNamesChanged && !_.isEqual(lastBandNames, bandNames) && onBandNamesChanged(bandNames)
             lastBandNames = bandNames
+        }
+
+        function report(error) {
+            const alreadyReported = diagnostics
+                .find(({from, to}) => error.to >= from && error.from <= to)
+            alreadyReported || diagnostics.push(error)
         }
     }
 

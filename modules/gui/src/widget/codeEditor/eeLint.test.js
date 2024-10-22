@@ -11,7 +11,7 @@ it('missing variable gives error', () => {
         from: 0,
         to: 1,
         severity: 'error',
-        message: 'widget.codeEditor.eeLint.undefinedVariable'
+        message: msg('widget.codeEditor.eeLint.undefinedVariable', {variableName: 'a'})
     }])
 })
 
@@ -32,7 +32,7 @@ it('invalid band name using . gives error', () => {
         from: 3,
         to: 5,
         severity: 'error',
-        message: 'widget.codeEditor.eeLint.invalidBand'
+        message: msg('widget.codeEditor.eeLint.invalidBand', {imageName: 'i1', bandName: 'b2'})
     }])
 })
 
@@ -53,7 +53,7 @@ it('invalid band name using [] gives error', () => {
         from: 3,
         to: 7,
         severity: 'error',
-        message: 'widget.codeEditor.eeLint.invalidBand'
+        message: msg('widget.codeEditor.eeLint.invalidBand', {imageName: 'i1', bandName: 'b2'})
     }])
 })
 
@@ -106,7 +106,7 @@ it('when both syntax error and a logical error in same range, only the logical e
         expression: '(i1).'
     })).toMatchObject([{
         severity: 'error',
-        message: 'widget.codeEditor.eeLint.syntaxError'
+        message: msg('widget.codeEditor.eeLint.syntaxError')
     }])
 })
 
@@ -140,7 +140,7 @@ it('math function taking one argument is provided with two argument gives error'
         from: 3,
         to: 9,
         severity: 'error',
-        message: 'widget.codeEditor.eeLint.invalidArgCount'
+        message: msg('widget.codeEditor.eeLint.invalidArgCount', {argCount: 2, expectedArgCount: 1})
     }])
 })
 
@@ -152,7 +152,7 @@ it('math function taking one argument is provided without arguments gives error'
         from: 3,
         to: 5,
         severity: 'error',
-        message: 'widget.codeEditor.eeLint.invalidArgCount'
+        message: msg('widget.codeEditor.eeLint.invalidArgCount', {argCount: 0, expectedArgCount: 1})
     }])
 })
 
@@ -164,7 +164,7 @@ it('math function as variable gives error', () => {
         from: 0,
         to: 3,
         severity: 'error',
-        message: 'widget.codeEditor.eeLint.undefinedVariable'
+        message: msg('widget.codeEditor.eeLint.undefinedVariable', {variableName: 'abs'})
     }])
 })
 
@@ -176,7 +176,7 @@ it('malformed expression gives error', () => {
         from: 1,
         to: 1,
         severity: 'error',
-        message: 'widget.codeEditor.eeLint.syntaxError'
+        message: msg('widget.codeEditor.eeLint.syntaxError')
     }])
 })
 
@@ -186,7 +186,7 @@ it('The >>> operator gives error', () => {
         expression: '5 >>> 1'
     })).toMatchObject([{
         severity: 'error',
-        message: 'widget.codeEditor.eeLint.syntaxError'
+        message: msg('widget.codeEditor.eeLint.syntaxError')
     }])
 })
 
@@ -196,7 +196,42 @@ it('The ~ operator gives error', () => {
         expression: '~ 5'
     })).toMatchObject([{
         severity: 'error',
-        message: 'widget.codeEditor.eeLint.syntaxError'
+        message: msg('widget.codeEditor.eeLint.syntaxError')
+    }])
+})
+
+it('The = operator gives error', () => {
+    expect(lint({
+        images: [],
+        expression: 'b = 1'
+    })).toMatchObject([
+        {
+            severity: 'error',
+            message: msg('widget.codeEditor.eeLint.undefinedVariable', {variableName: 'b'})
+        },
+        {
+            severity: 'error',
+            message: msg('widget.codeEditor.eeLint.syntaxError')
+        }])
+})
+
+it('The === operator gives error', () => {
+    expect(lint({
+        images: [],
+        expression: '1 !== 5'
+    })).toMatchObject([{
+        severity: 'error',
+        message: msg('widget.codeEditor.eeLint.syntaxError')
+    }])
+})
+
+it('Malformed argument using nested parenthesis gives error', () => {
+    expect(lint({
+        images: [],
+        expression: '((1)foo)'
+    })).toMatchObject([{
+        severity: 'error',
+        message: msg('widget.codeEditor.eeLint.syntaxError')
     }])
 })
 
@@ -204,6 +239,27 @@ it('The ** operator gives no problem', () => {
     expect(lint({
         images: [],
         expression: '2**3'
+    })).toMatchObject([])
+})
+
+it('The && operator gives no problem', () => {
+    expect(lint({
+        images: [],
+        expression: '2 && 3'
+    })).toMatchObject([])
+})
+
+it('The || operator gives no problem', () => {
+    expect(lint({
+        images: [],
+        expression: '2 || 3'
+    })).toMatchObject([])
+})
+
+it('The | operator gives no problem', () => {
+    expect(lint({
+        images: [],
+        expression: '2 | 3'
     })).toMatchObject([])
 })
 
@@ -293,4 +349,4 @@ const lint = ({images, expression, onBandNamesChanged}) => {
     return eeLint(images, msg, onBandNamesChanged)({state})
 }
 
-const msg = key => key
+const msg = (key, args) => ({key, args})

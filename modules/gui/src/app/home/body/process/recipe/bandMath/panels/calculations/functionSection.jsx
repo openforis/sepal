@@ -30,7 +30,6 @@ class _FunctionSection extends React.Component {
                     {this.renderName()}
                     {this.renderDataType()}
                 </Layout>
-                {this.renderName()}
                 <Layout type='horizontal' alignment='distribute'>
                     {this.renderReducer()}
                     {this.renderBandName()}

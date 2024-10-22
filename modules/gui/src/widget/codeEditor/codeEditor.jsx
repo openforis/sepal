@@ -5,9 +5,11 @@ import {EditorState} from '@codemirror/state'
 import {EditorView, keymap} from '@codemirror/view'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {boysAndGirls as theme} from 'thememirror'
 
 import {Keybinding} from '../keybinding'
+import _styles from './codeEditor.module.css'
+// import {boysAndGirls as theme} from 'thememirror'
+import {theme} from './theme'
 
 export class CodeEditor extends React.Component {
     state = {show: false, completing: false}
@@ -49,7 +51,7 @@ export class CodeEditor extends React.Component {
     }
 
     setupEditor(editorElement) {
-        const {autoComplete, lint, input} = this.props
+        const {autoComplete, lint, input, autoFocus} = this.props
 
         const updateListener = EditorView.updateListener.of(
             update => {
@@ -77,7 +79,7 @@ export class CodeEditor extends React.Component {
             doc: input.value,
             extensions: [
                 keymap.of(completionKeymap),
-                theme,
+                theme(),
                 javascript(),
                 autocompletion({
                     override: [autoComplete],
@@ -91,6 +93,11 @@ export class CodeEditor extends React.Component {
             parent: editorElement,
             state: state
         })
+
+        if (autoFocus) {
+            this.view.focus()
+        }
+          
     }
 }
 
@@ -98,5 +105,6 @@ CodeEditor.propTypes = {
     autoComplete: PropTypes.func.isRequired,
     input: PropTypes.object.isRequired,
     lint: PropTypes.func.isRequired,
+    autoFocus: PropTypes.any,
     onExpressionChange: PropTypes.func
 }

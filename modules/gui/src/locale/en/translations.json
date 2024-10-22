@@ -2612,6 +2612,7 @@
                         },
                         "bandRenameStrategy": {
                             "label": "Band rename strategy",
+                            "tooltip": "The expression generates an image with multiple bands. Select which strategy to use for naming them.",
                             "PREFIX": {
                                 "label": "Prefix"
                             },

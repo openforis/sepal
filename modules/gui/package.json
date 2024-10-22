@@ -21,6 +21,7 @@
         "@fortawesome/react-fontawesome": "0.2.2",
         "@googlemaps/js-api-loader": "^1.16.8",
         "@googlemaps/markerclusterer": "^2.5.3",
+        "@lezer/highlight": "^1.2.1",
         "@turf/turf": "7.1.0",
         "@xterm/addon-fit": "^0.10.0",
         "@xterm/xterm": "^5.5.0",

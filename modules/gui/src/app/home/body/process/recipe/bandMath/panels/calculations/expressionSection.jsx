@@ -95,6 +95,7 @@ class _ExpressionSection extends React.Component {
                 input={expression}
                 autoComplete={eeAutoComplete(allImages, msg)}
                 lint={eeLint(allImages, msg, this.updateUsedBands)}
+                autoFocus
             />
         )
     }
@@ -134,7 +135,7 @@ class _ExpressionSection extends React.Component {
                     ? (
                         <Form.Input
                             label={msg('process.bandMath.panel.calculations.form.regex.label')}
-                            tooltip={msg('process.bandMath.panel.calculations.form.bandRename.tooltip')}
+                            tooltip={msg('process.bandMath.panel.calculations.form.regex.tooltip')}
                             input={regex}
                             placeholder={msg('process.bandMath.panel.calculations.form.regex.placeholder')}
                             autoComplete={false}
@@ -155,13 +156,21 @@ class _ExpressionSection extends React.Component {
     updateUsedBands(bands) {
         const {inputs: {usedBands, bandName}} = this.props
         usedBands.set(bands)
-        if (bands.length === 1) {
+        if (bands.length === 1 && !bandName.value) {
             bandName.set(bands[0])
         }
     }
 
     componentDidMount() {
         this.setBandRenameStrategy()
+        this.setRegex()
+    }
+
+    setRegex() {
+        const {inputs: {regex}} = this.props
+        if (!regex.value) {
+            regex.set('(.*)')
+        }
     }
 
     setBandRenameStrategy() {
