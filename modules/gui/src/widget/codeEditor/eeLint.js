@@ -57,13 +57,10 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
                         report(undefinedVariable(node, {variableName}))
                     } else { // Variable
                         const bandCount = bandNamesByVariableName[variableName].length
-                        console.log(variableName, {bandCount, maxUsedImageBandCount})
                         if (maxUsedImageBandCount && bandCount > 1 && bandCount != maxUsedImageBandCount) {
-                            console.log(variableName, 'problem')
                             report(invalidBandCount(node, {imageName: variableName, bandCount, maxUsedImageBandCount}))
                         } else if (bandCount > 1) {
                             maxUsedImageBandCount = bandCount
-                            console.log(variableName, 'set maxUsedBandCount', bandCount)
                         }
                     }
                 }

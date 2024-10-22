@@ -160,7 +160,7 @@ const modelToValues = model => {
 }
 
 const valuesToModel = values => {
-    const includedBands = evaluateBandNames(values).map(name => ({
+    const includedBands = makeUnique(evaluateBandNames(values)).map(name => ({
         id: uuid(),
         name,
         type: 'continuous'}))
@@ -204,6 +204,30 @@ const panelOptions = {
     modelToValues,
     mapRecipeToProps,
     policy
+}
+
+const makeUnique = strings => {
+    return strings.reduce(
+        (acc, s, i) => {
+            const others = acc.slice(0, i)
+            const toUnique = () => {
+                const max = Math.max(...acc.map(o => {
+                    const match = new RegExp(`${s}_(\\d+)`).exec(o)
+                    return match ? parseInt(match[1]) : 0
+                }))
+                return `${s}_${max + 1}`
+            }
+            const uniqueString = others.includes(s)
+                ? toUnique(s)
+                : s
+            return [
+                ...others,
+                uniqueString,
+                ...acc.slice(i + 1),
+            ]
+        },
+        strings
+    )
 }
 
 export const Calculation = compose(

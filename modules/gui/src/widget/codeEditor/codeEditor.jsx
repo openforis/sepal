@@ -74,7 +74,7 @@ export class CodeEditor extends React.Component {
                 input.setInvalid(messages.length ? messages[0] : '')
             }
         )
-
+        
         const state = EditorState.create({
             doc: input.value,
             extensions: [
@@ -86,6 +86,9 @@ export class CodeEditor extends React.Component {
                 autocompletion({
                     override: [autoComplete],
                 }),
+                // tooltips({
+                //     parent: document.body,
+                // }),
                 linter(lint, {delay: 0}),
                 updateListener,
             ]

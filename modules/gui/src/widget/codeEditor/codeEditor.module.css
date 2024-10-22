@@ -5,11 +5,10 @@
 :global .cm-tooltip-autocomplete {
     border: rgb(51, 51, 51) 1px solid !important;
     background-color: hsla(0, 0%, 0%, .9) !important;
+    min-height: fit-content !important;
 }
 
-:global .cm-tooltip-autocomplete>ul {
-    min-height: 20rem;
-}
+:global .cm-tooltip-autocomplete>ul {}
 
 :global .cm-tooltip-autocomplete>ul>li {
     background-color: hsla(0, 0%, 0%, .9) !important;
