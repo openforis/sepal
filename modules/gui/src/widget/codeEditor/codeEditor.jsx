@@ -1,6 +1,8 @@
 import {autocompletion, completionKeymap, completionStatus} from '@codemirror/autocomplete'
+import {defaultKeymap, history, historyKeymap} from '@codemirror/commands'
+// import {history, historyKeymap} from '@codemirror/history'
 import {javascript} from '@codemirror/lang-javascript'
-import {forEachDiagnostic, linter} from '@codemirror/lint'
+import {forEachDiagnostic, linter, lintKeymap} from '@codemirror/lint'
 import {EditorState} from '@codemirror/state'
 import {EditorView, keymap} from '@codemirror/view'
 import PropTypes from 'prop-types'
@@ -78,7 +80,8 @@ export class CodeEditor extends React.Component {
         const state = EditorState.create({
             doc: input.value,
             extensions: [
-                keymap.of(completionKeymap),
+                keymap.of([...defaultKeymap, ...historyKeymap, ...completionKeymap, ...lintKeymap]),
+                history({minDepth: 100, newGroupDelay: 500}),
                 theme(),
                 javascript(),
                 autocompletion({
