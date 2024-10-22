@@ -160,6 +160,9 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
         }
 
         function validateSyntax() {
+            if (diagnostics.length) {
+                return
+            }
             const expression = view.state.doc.text.join('\n')
             try {
                 jsep.parse(expression)

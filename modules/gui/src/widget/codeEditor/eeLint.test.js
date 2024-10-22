@@ -201,18 +201,14 @@ it('The ~ operator gives error', () => {
 })
 
 it('The = operator gives error', () => {
+    const image = {name: 'i1', includedBands: [{name: 'b1'}]}
     expect(lint({
-        images: [],
-        expression: 'b = 1'
-    })).toMatchObject([
-        {
-            severity: 'error',
-            message: msg('widget.codeEditor.eeLint.undefinedVariable', {variableName: 'b'})
-        },
-        {
-            severity: 'error',
-            message: msg('widget.codeEditor.eeLint.syntaxError')
-        }])
+        images: [image],
+        expression: 'i1 = 1'
+    })).toMatchObject([{
+        severity: 'error',
+        message: msg('widget.codeEditor.eeLint.syntaxError')
+    }])
 })
 
 it('The === operator gives error', () => {
