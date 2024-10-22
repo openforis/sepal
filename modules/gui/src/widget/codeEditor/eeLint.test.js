@@ -263,6 +263,52 @@ it('The | operator gives no problem', () => {
     })).toMatchObject([])
 })
 
+it('Images with 3 and 2 bands, gives error', () => {
+    const image1 = {name: 'i1', includedBands: [{name: 'b1'}, {name: 'b2'}, {name: 'b3'}]}
+    const image2 = {name: 'i2', includedBands: [{name: 'b1'}, {name: 'b2'}]}
+    expect(lint({
+        images: [image1, image2],
+        expression: 'i1 + i2'
+    })).toMatchObject([{
+        from: 5,
+        to: 7,
+        severity: 'error',
+        message: msg('widget.codeEditor.eeLint.invalidBandCount', {expectedBandCount: 3, bandCount: 2})
+    }])
+})
+
+it('Images with 2 and 3 bands, gives error', () => {
+    const image1 = {name: 'i1', includedBands: [{name: 'b1'}, {name: 'b2'}]}
+    const image2 = {name: 'i2', includedBands: [{name: 'b1'}, {name: 'b2'}, {name: 'b3'}]}
+    expect(lint({
+        images: [image1, image2],
+        expression: 'i1 + i2'
+    })).toMatchObject([{
+        from: 5,
+        to: 7,
+        severity: 'error',
+        message: msg('widget.codeEditor.eeLint.invalidBandCount', {expectedBandCount: 2, bandCount: 3})
+    }])
+})
+
+it('Images with 2 and 1 bands, gives no problem', () => {
+    const image1 = {name: 'i1', includedBands: [{name: 'b1'}, {name: 'b2'}]}
+    const image2 = {name: 'i2', includedBands: [{name: 'b1'}]}
+    expect(lint({
+        images: [image1, image2],
+        expression: 'i1 + i2'
+    })).toMatchObject([])
+})
+
+it('Images with 1 and 2 bands, gives no problem', () => {
+    const image1 = {name: 'i1', includedBands: [{name: 'b1'}]}
+    const image2 = {name: 'i2', includedBands: [{name: 'b1'}, {name: 'b2'}]}
+    expect(lint({
+        images: [image1, image2],
+        expression: 'i1 + i2'
+    })).toMatchObject([])
+})
+
 it('When only constants used returns constant band name', () => {
     let bandNames
     lint({

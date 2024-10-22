@@ -47,7 +47,7 @@ export const eeAutoComplete = (images, msg) =>
                                 name: msg('widget.codeEditor.eeAutoComplete.bandNames.section'),
                                 rank: 0
                             },
-                            label: string ? `'${name}']` : name,
+                            label: string ? `'${name}'` : name,
                             displayLabel: name,
                             type: 'property'
                         }))

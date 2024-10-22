@@ -5180,6 +5180,7 @@
             "eeLint": {
                 "undefinedVariable": "\"{variableName}\" is not defined. \n\nVariables must be the name of images, name of calculations declared before this function, math functions, or math constants.",
                 "invalidBand": "\"{imageName}\" doesn't contain band \"{bandName}\".",
+                "invalidBandCount": "Images must contain the same number of bands or only 1 band. Got 2 and 3. \"{imageName}\" contains {bandCount} bands while another image contains {expectedBandCount}.",
                 "invalidArgCount": "Function expect {expectedArgCount} argument, got {argCount}.",
                 "syntaxError": "Syntax error."
             }

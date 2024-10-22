@@ -1,6 +1,5 @@
-import {autocompletion, completionKeymap, completionStatus} from '@codemirror/autocomplete'
+import {autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, completionStatus} from '@codemirror/autocomplete'
 import {defaultKeymap, history, historyKeymap} from '@codemirror/commands'
-// import {history, historyKeymap} from '@codemirror/history'
 import {javascript} from '@codemirror/lang-javascript'
 import {forEachDiagnostic, linter, lintKeymap} from '@codemirror/lint'
 import {EditorState} from '@codemirror/state'
@@ -10,7 +9,6 @@ import React from 'react'
 
 import {Keybinding} from '../keybinding'
 import _styles from './codeEditor.module.css'
-// import {boysAndGirls as theme} from 'thememirror'
 import {theme} from './theme'
 
 export class CodeEditor extends React.Component {
@@ -80,8 +78,9 @@ export class CodeEditor extends React.Component {
         const state = EditorState.create({
             doc: input.value,
             extensions: [
-                keymap.of([...defaultKeymap, ...historyKeymap, ...completionKeymap, ...lintKeymap]),
-                history({minDepth: 100, newGroupDelay: 500}),
+                keymap.of([...defaultKeymap, ...historyKeymap, ...closeBracketsKeymap, ...completionKeymap, ...lintKeymap]),
+                history(),
+                closeBrackets(),
                 theme(),
                 javascript(),
                 autocompletion({

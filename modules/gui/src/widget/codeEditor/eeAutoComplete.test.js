@@ -342,7 +342,7 @@ const bandNameOption = bandName => ({
 })
 
 const bandNameStringOption = bandName => ({
-    label: `'${bandName}']`,
+    label: `'${bandName}'`,
     displayLabel: bandName,
     type: 'property'
 })

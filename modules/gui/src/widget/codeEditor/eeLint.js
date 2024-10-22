@@ -20,6 +20,7 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
         const state = view.state
         const diagnostics = []
         let bandNames = []
+        let maxUsedImageBandCount = 0
 
         syntaxTree(view.state).cursor().iterate(node => {
             if (node.type.isError) {
@@ -54,6 +55,16 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
                     const isMathFunction = Object.keys(argCountByFunction).includes(variableName)
                     if (isMathFunction) { // Math function without arguments
                         report(undefinedVariable(node, {variableName}))
+                    } else { // Variable
+                        const bandCount = bandNamesByVariableName[variableName].length
+                        console.log(variableName, {bandCount, maxUsedImageBandCount})
+                        if (maxUsedImageBandCount && bandCount > 1 && bandCount != maxUsedImageBandCount) {
+                            console.log(variableName, 'problem')
+                            report(invalidBandCount(node, {imageName: variableName, bandCount, maxUsedImageBandCount}))
+                        } else if (bandCount > 1) {
+                            maxUsedImageBandCount = bandCount
+                            console.log(variableName, 'set maxUsedBandCount', bandCount)
+                        }
                     }
                 }
 
@@ -204,6 +215,19 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
             to: node.to,
             severity: 'error',
             message: msg('widget.codeEditor.eeLint.invalidBand', {imageName, bandName})
+        })
+    }
+
+    function invalidBandCount(node, {imageName, bandCount, maxUsedImageBandCount}) {
+        return ({
+            from: node.from,
+            to: node.to,
+            severity: 'error',
+            message: msg('widget.codeEditor.eeLint.invalidBandCount', {
+                imageName,
+                expectedBandCount: maxUsedImageBandCount,
+                bandCount
+            })
         })
     }
 
