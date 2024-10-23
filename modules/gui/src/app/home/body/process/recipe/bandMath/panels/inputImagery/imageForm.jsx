@@ -2,6 +2,7 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 
+import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 
@@ -27,20 +28,12 @@ export class ImageForm extends Component {
 
     renderName() {
         const {inputs: {name}} = this.props
-        // TODO: Use msg()
-        // TODO: default
-        // TODO: placeholder
-        // TODO: tooltip
-        // TODO: uniqueness
-        // TODO: make input short, to hint that it's a good idea to keep the name short
-        console.log('TODO: Fix label and tooltip')
         return (
             <Form.Input
                 className={styles.name}
-                label={'Image name'}
-                tooltip={'The name of this image to use when referring to it within expressions.'}
+                label={msg('process.bandMath.panel.inputImagery.name.label')}
+                tooltip={msg('process.bandMath.panel.inputImagery.name.tooltip')}
                 input={name}
-                // placeholder={`${originalName}...`}
                 autoComplete={false}
             />
         )
