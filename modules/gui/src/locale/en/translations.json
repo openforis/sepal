@@ -2557,6 +2557,12 @@
             "description": "Perform band math on imagery from SEPAL and/or Google Earth Engine image assets.",
             "duplicateName": "Duplicate name. There are other images or calculations with this name.",
             "panel": {
+                "inputImagery": {
+                    "name": {
+                        "label": "Image name",
+                        "tooltip": "The name of this image to use when referring to it within expressions."
+                    }
+                },
                 "calculations": {
                     "button": "CAL",
                     "title": "Calculations",
