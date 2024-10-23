@@ -1,6 +1,6 @@
 """Voila configuration file for the sandbox environment"""
 
-print("::::Voila labextensions::: Using custom sepal configuration file imported")
+import logging
 from copy import deepcopy
 from typing import List, Tuple
 from jupyter_core.paths import jupyter_path
@@ -9,22 +9,22 @@ from jupyterlab_server.config import get_page_config as gpc
 
 from voila._version import __version__
 from voila.configuration import VoilaConfiguration
-from voila.utils import filter_extension
+from voila.utils import filter_extension, maybe_inject_widgets_manager_extension
 
 
 def get_app_data(base_url: str, app_name: str) -> Tuple[List[str], str]:
     """Get the module data"""
 
-    # To the logic to get the app data
-    jupyter_url = f"/api/apps/labextensions/{app_name}/"
-    jupyter_paths = [
+    labextensions_url = f"/api/apps/labextensions/{app_name}/"
+    app_labextensions_path = [
         f"/usr/local/share/jupyter/kernels/venv-{app_name}/venv/share/jupyter/labextensions/"
     ]
+    # After voila>0.5.8 we need to add the voila labextensions path
+    voila_labextensions_path = ["/usr/local/share/jupyter/voila/labextensions"]
 
-    print("::::Voila labextensions::: jupyter_path", jupyter_path)
-    print("::::Voila labextensions::: jupyter_url", jupyter_url)
+    labextensions_path = app_labextensions_path + voila_labextensions_path
 
-    return jupyter_paths, jupyter_url
+    return labextensions_path, labextensions_url
 
 
 def get_app_name(notebook_path: str):
@@ -41,9 +41,6 @@ def page_config_hook(
     voila_configuration: VoilaConfiguration,
     notebook_path,
 ):
-    print("::::Voila labextensions::: Custom get_page_config_hook")
-    print("::::Voila labextensions::: notebook_path", notebook_path)
-
     app_name = get_app_name(notebook_path)
     app_extensions_paths, app_extensions_url = get_app_data(base_url, app_name)
     page_config["fullLabextensionsUrl"] = app_extensions_url
@@ -55,15 +52,17 @@ def page_config_hook(
     disabled_extensions = [
         "@voila-dashboards/jupyterlab-preview",
         "@jupyter/collaboration-extension",
-        "@jupyter-widgets/jupyterlab-manager",
-        "@jupyterhub/jupyter-server-proxy",  # This was causing an error in the console
     ]
     disabled_extensions.extend(page_config.get("disabledExtensions", []))
 
     required_extensions = []
     federated_extensions = deepcopy(page_config["federated_extensions"])
 
-    page_config["federated_extensions"] = filter_extension(
+    logging.debug(
+        ("::::Voila labextensions::: federated_extensions", federated_extensions)
+    )
+
+    filtered_extensions = filter_extension(
         federated_extensions=federated_extensions,
         disabled_extensions=disabled_extensions,
         required_extensions=required_extensions,
@@ -71,7 +70,11 @@ def page_config_hook(
         extension_denylist=voila_configuration.extension_denylist,
     )
 
-    print("::::Voila labextensions::: page_config", page_config)
+    extensions = maybe_inject_widgets_manager_extension(
+        filtered_extensions, app_extensions_paths
+    )
+
+    page_config["federated_extensions"] = extensions
 
     return page_config
 

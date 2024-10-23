@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y \
     sudo
 
 RUN pip3 install --upgrade pip
+RUN pip3 install "voila==0.5.8"
 
 RUN adduser node && adduser node sudo && echo 'node      ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
 
