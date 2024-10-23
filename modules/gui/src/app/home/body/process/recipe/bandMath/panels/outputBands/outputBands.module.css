@@ -2,3 +2,8 @@
     min-height: 12rem;
     max-width: 30rem;
 }
+
+.outputName {
+    width: 12rem;
+    flex-grow: 0 !important;
+}

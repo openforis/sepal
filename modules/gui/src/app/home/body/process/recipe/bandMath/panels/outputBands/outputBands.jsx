@@ -68,12 +68,11 @@ class _OutputBands extends React.Component {
         const usedImageIds = (outputImages.value || []).map(({imageId}) => imageId)
 
         const renderImageLabel = image => (
-            <ListItem key={image.imageId}>
-                <CrudItem
-                    title={msg(`process.bandMath.panel.outputBands.type.${image.type}`)}
-                    description={<ImageDescription image={image}/>}
-                    metadata={image.name}/>
-            </ListItem>
+            <CrudItem
+                key={image.imageId}
+                title={msg(`process.bandMath.panel.outputBands.type.${image.type}`)}
+                description={<ImageDescription image={image}/>}
+                metadata={image.name}/>
         )
 
         const toOptions = (array, groupLabel) => ({

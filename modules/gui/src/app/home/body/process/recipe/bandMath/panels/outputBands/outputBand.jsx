@@ -6,6 +6,8 @@ import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {RemoveButton} from '~/widget/removeButton'
 
+import styles from './outputBands.module.css'
+
 const fields = {
     allOutputBandNames: new Form.Field(),
     outputName: new Form.Field()
@@ -32,6 +34,7 @@ class _OutputBand extends React.Component {
         const {band, inputs: {outputName}} = this.props
         return (
             <Form.Input
+                className={styles.outputName}
                 label={band.name}
                 input={outputName}
                 placeholder={`${band.name}...`}
