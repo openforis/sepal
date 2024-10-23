@@ -11,6 +11,7 @@ import {initializeLayers} from '../recipeImageLayerSource'
 import {getDefaultModel, RecipeActions} from './bandMathRecipe'
 import {getAvailableBands} from './bands'
 import {BandMathToolbar} from './panels/bandMathToolbar'
+import {Sync} from './sync/sync'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -20,7 +21,6 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _BandMath extends React.Component {
-
     constructor(props) {
         super(props)
         const {savedLayers, recipeId} = props
@@ -35,6 +35,7 @@ class _BandMath extends React.Component {
         const {images} = this.props
         return (
             <Map>
+                <Sync/>
                 <BandMathToolbar/>
                 <Aoi value={images && images.length && images[0]}/>
             </Map>
