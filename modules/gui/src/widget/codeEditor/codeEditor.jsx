@@ -2,7 +2,7 @@ import {autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, co
 import {defaultKeymap, history, historyKeymap} from '@codemirror/commands'
 import {javascript} from '@codemirror/lang-javascript'
 import {forEachDiagnostic, linter, lintKeymap} from '@codemirror/lint'
-import {EditorState} from '@codemirror/state'
+import {EditorState, Prec} from '@codemirror/state'
 import {EditorView, keymap} from '@codemirror/view'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -75,10 +75,18 @@ export class CodeEditor extends React.Component {
             }
         )
         
+        const enterDisabled = keymap.of([{key: 'Enter', run: () => true}])
         const state = EditorState.create({
             doc: input.value,
             extensions: [
-                keymap.of([...defaultKeymap, ...historyKeymap, ...closeBracketsKeymap, ...completionKeymap, ...lintKeymap]),
+                enterDisabled,
+                keymap.of([
+                    ...defaultKeymap,
+                    ...historyKeymap,
+                    ...closeBracketsKeymap,
+                    ...completionKeymap,
+                    ...lintKeymap,
+                ]),
                 history(),
                 closeBrackets(),
                 theme(),
@@ -86,9 +94,6 @@ export class CodeEditor extends React.Component {
                 autocompletion({
                     override: [autoComplete],
                 }),
-                // tooltips({
-                //     parent: document.body,
-                // }),
                 linter(lint, {delay: 0}),
                 updateListener,
             ]
