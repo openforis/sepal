@@ -103,13 +103,13 @@ class _ExpressionSection extends React.Component {
     // TODO: Allow data-type to be specified. Also for FUNCTION calculations
     
     renderBandName() {
-        const {inputs: {bandName}} = this.props
+        const {inputs: {bandName, defaultBandName}} = this.props
         return (
             <Form.Input
                 label={msg('process.bandMath.panel.calculations.form.bandName.label')}
                 tooltip={msg('process.bandMath.panel.calculations.form.bandName.tooltip')}
                 input={bandName}
-                placeholder={msg('process.bandMath.panel.calculations.form.bandName.placeholder')}
+                placeholder={defaultBandName.value || msg('process.bandMath.panel.calculations.form.bandName.placeholder')}
                 autoComplete={false}
             />
         )
@@ -154,10 +154,10 @@ class _ExpressionSection extends React.Component {
     }
 
     updateUsedBands(bands) {
-        const {inputs: {usedBands, bandName}} = this.props
+        const {inputs: {usedBands, defaultBandName}} = this.props
         usedBands.set(bands)
-        if (bands.length === 1 && !bandName.value) {
-            bandName.set(bands[0])
+        if (bands.length === 1) {
+            defaultBandName.set(bands[0].name)
         }
     }
 

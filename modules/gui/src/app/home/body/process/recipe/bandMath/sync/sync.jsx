@@ -22,7 +22,7 @@ class _Sync extends React.Component {
         const {images, calculations, outputBands} = this.props
 
         const changes = findChanges({prevImages, images, prevCalculations, calculations})
-        console.log(changes)
+        // console.log(changes)
     }
 }
 

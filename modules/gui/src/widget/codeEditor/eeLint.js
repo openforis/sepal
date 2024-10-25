@@ -11,15 +11,15 @@ jsep.removeBinaryOp('!==')
 jsep.removeUnaryOp('~')
 
 export const eeLint = (images, msg, onBandNamesChanged) => {
-    let lastBandNames = []
-    const bandNamesByVariableName = {}
-    images.forEach(({name, includedBands}) => bandNamesByVariableName[name] = includedBands.map(({name}) => name))
-    mathOptions(msg).forEach(({name}) => bandNamesByVariableName[name] = [])
+    let lastBands = []
+    const bandsByVariableName = {}
+    images.forEach(({name, includedBands}) => bandsByVariableName[name] = includedBands)
+    mathOptions(msg).forEach(({name}) => bandsByVariableName[name] = [])
 
     return view => {
         const state = view.state
         const diagnostics = []
-        let bandNames = []
+        let bands = []
         let maxUsedImageBandCount = 0
 
         syntaxTree(view.state).cursor().iterate(node => {
@@ -45,8 +45,8 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
         function handleVariableName(node) {
             const variableName = sliceDoc(node)
             const hasArgList = node.node.nextSibling?.name === 'ArgList'
-            const variableBandNames = bandNamesByVariableName[variableName]
-            const isValidVariableName = !!variableBandNames
+            const variableBands = bandsByVariableName[variableName]
+            const isValidVariableName = !!variableBands
 
             if (isValidVariableName) {
                 if (hasArgList) {
@@ -56,7 +56,7 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
                     if (isMathFunction) { // Math function without arguments
                         report(undefinedVariable(node, {variableName}))
                     } else { // Variable
-                        const bandCount = bandNamesByVariableName[variableName].length
+                        const bandCount = bandsByVariableName[variableName].length
                         if (maxUsedImageBandCount && bandCount > 1 && bandCount != maxUsedImageBandCount) {
                             report(invalidBandCount(node, {imageName: variableName, bandCount, maxUsedImageBandCount}))
                         } else if (bandCount > 1) {
@@ -69,8 +69,8 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
                 if (bandName) {
                     handleBandName({variableName, bandName, bandNameNode})
                 } else {
-                    if (variableBandNames?.length > bandNames.length) {
-                        bandNames = variableBandNames
+                    if (variableBands?.length > bands.length) {
+                        bands = variableBands
                     }
                 }
             } else {
@@ -149,10 +149,11 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
         }
 
         function handleBandName({variableName, bandName, bandNameNode}) {
-            const validBandName = bandNamesByVariableName[variableName]?.includes(bandName)
+            const validBandName = bandsByVariableName[variableName]?.map(({name}) => name)?.includes(bandName)
             if (validBandName) {
-                if (!bandNames.length) {
-                    bandNames = [bandName]
+                if (!bands.length) {
+                    const band = bandsByVariableName[variableName].find(({name}) => name === bandName)
+                    bands = [band]
                 }
             } else {
                 report(invalidBand(bandNameNode, {imageName: variableName, bandName}))
@@ -177,11 +178,11 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
         }
 
         function notifyBandNameChanges() {
-            if (!bandNames.length) {
-                bandNames = ['constant']
+            if (!bands.length) {
+                bands = [{id: 'constant', name: 'constant'}]
             }
-            onBandNamesChanged && !_.isEqual(lastBandNames, bandNames) && onBandNamesChanged(bandNames)
-            lastBandNames = bandNames
+            onBandNamesChanged && !_.isEqual(lastBands, bands) && onBandNamesChanged(bands)
+            lastBands = bands
         }
 
         function report(error) {

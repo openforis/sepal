@@ -10,15 +10,15 @@ import styles from './outputBands.module.css'
 
 const fields = {
     allOutputBandNames: new Form.Field(),
+    defaultOutputName: new Form.Field(),
     outputName: new Form.Field()
-        .notBlank()
         .match(/^[a-zA-Z_][a-zA-Z0-9_]{0,29}$/, 'process.bandMath.panel.outputBands.invalidFormat')
 }
 
 const constraints = {
-    unique: new Form.Constraint(['outputName', 'allOutputBandNames'])
+    unique: new Form.Constraint(['defaultOutputName', 'outputName', 'allOutputBandNames'])
         .predicate(
-            ({outputName, allOutputBandNames}) => isUnique(outputName, allOutputBandNames),
+            ({defaultOutputName, outputName, allOutputBandNames}) => isUnique(outputName || defaultOutputName, allOutputBandNames),
             'process.bandMath.panel.outputBands.duplicateBand'
         )
 }
@@ -37,7 +37,7 @@ class _OutputBand extends React.Component {
                 className={styles.outputName}
                 label={band.name}
                 input={outputName}
-                placeholder={`${band.name}...`}
+                placeholder={band.defaultOutputName}
                 errorMessage={[outputName, 'unique']}
                 autoComplete={false}
                 labelButtons={[this.renderRemoveButton()]}
@@ -60,9 +60,10 @@ class _OutputBand extends React.Component {
     }
     
     componentDidMount() {
-        const {band, inputs: {outputName}} = this.props
+        const {band, inputs: {defaultOutputName, outputName}} = this.props
         outputName.set(band.outputName)
-        this.setOtherOutputNames()
+        defaultOutputName.set(band.defaultOutputName)
+        this.setAllOutputNames()
     }
 
     componentDidUpdate(prevProps) {
@@ -72,10 +73,10 @@ class _OutputBand extends React.Component {
             onValidationStatusChanged(componentId, !failed)
         }
 
-        this.setOtherOutputNames()
+        this.setAllOutputNames()
     }
 
-    setOtherOutputNames() {
+    setAllOutputNames() {
         const {inputs: {allOutputBandNames}} = this.props
         allOutputBandNames.set(this.props.allOutputBandNames)
     }

@@ -310,7 +310,7 @@ it('When only constants used returns constant band name', () => {
     lint({
         images: [],
         expression: '42',
-        onBandNamesChanged: changedBandNames => bandNames = changedBandNames
+        onBandNamesChanged: changedBandNames => bandNames = changedBandNames.map(({name}) => name)
     })
     expect(bandNames).toMatchObject([
         'constant'
@@ -323,7 +323,7 @@ it('When a single band image is used, the band name is returned', () => {
     lint({
         images: [image],
         expression: 'i1',
-        onBandNamesChanged: changedBandNames => bandNames = changedBandNames
+        onBandNamesChanged: changedBandNames => bandNames = changedBandNames.map(({name}) => name)
     })
     expect(bandNames).toMatchObject([
         'b1'
@@ -337,7 +337,7 @@ it('When two different single band images are used, the first image band name is
     lint({
         images: [image1, image2],
         expression: 'i1 + i2',
-        onBandNamesChanged: changedBandNames => bandNames = changedBandNames
+        onBandNamesChanged: changedBandNames => bandNames = changedBandNames.map(({name}) => name)
     })
     expect(bandNames).toMatchObject([
         'b1'
@@ -350,7 +350,7 @@ it('When a two band image is used, both band names are returned', () => {
     lint({
         images: [image],
         expression: 'i1',
-        onBandNamesChanged: changedBandNames => bandNames = changedBandNames
+        onBandNamesChanged: changedBandNames => bandNames = changedBandNames.map(({name}) => name)
     })
     expect(bandNames).toMatchObject([
         'b1', 'b2'
@@ -363,7 +363,7 @@ it('When single band from a multi-band image is used using . syntax, the single 
     lint({
         images: [image],
         expression: 'i1.b1',
-        onBandNamesChanged: changedBandNames => bandNames = changedBandNames
+        onBandNamesChanged: changedBandNames => bandNames = changedBandNames.map(({name}) => name)
     })
     expect(bandNames).toMatchObject([
         'b1'
@@ -376,7 +376,7 @@ it('When single band from a multi-band image is used using [] syntax, the single
     lint({
         images: [image],
         expression: 'i1["b1"]',
-        onBandNamesChanged: changedBandNames => bandNames = changedBandNames
+        onBandNamesChanged: changedBandNames => bandNames = changedBandNames.map(({name}) => name)
     })
     expect(bandNames).toMatchObject([
         'b1'

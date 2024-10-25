@@ -5,7 +5,6 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
-import {uuid} from '~/uuid'
 import {Form} from '~/widget/form'
 import {PanelSections} from '~/widget/panelSections'
 
@@ -27,26 +26,28 @@ const fields = {
             'process.bandMath.duplicateName'
         ),
     reducer: new Form.Field()
-        .skip((value, {section}) => section !== 'FUNCTION')
+        .skip((_value, {section}) => section !== 'FUNCTION')
         .notBlank(),
     expression: new Form.Field()
-        .skip((value, {section}) => section !== 'EXPRESSION')
+        .skip((_value, {section}) => section !== 'EXPRESSION')
         .notBlank(),
     bandRenameStrategy: new Form.Field()
-        .skip((value, {section, usedBands}) => section !== 'FUNCTION' || usedBands.length < 1)
+        .skip((_value, {section, usedBands}) => section !== 'FUNCTION' || usedBands.length < 1)
         .notBlank(),
     regex: new Form.Field()
-        .skip((value, {section, usedBands, bandRenameStrategy}) => section !== 'FUNCTION' || usedBands.length < 1 || bandRenameStrategy !== 'REGEX')
+        .skip((_value, {section, usedBands, bandRenameStrategy}) => section !== 'FUNCTION' || usedBands.length < 1 || bandRenameStrategy !== 'REGEX')
         .notBlank(),
     bandRename: new Form.Field()
-        .skip((value, {section, usedBands}) => section !== 'FUNCTION' || usedBands.length < 1)
+        .skip((_value, {section, usedBands}) => section !== 'FUNCTION' || usedBands.length < 1)
         .notBlank(),
+    defaultBandName: new Form.Field(),
     bandName: new Form.Field()
+        .skip((_value, {section}) => section !== 'FUNCTION')
         .notBlank(),
     usedBands: new Form.Field()
         .notEmpty(),
     usedBandIds: new Form.Field()
-        .skip((value, {section}) => section !== 'FUNCTION')
+        .skip((_value, {section}) => section !== 'FUNCTION')
         .notEmpty(),
     dataType: new Form.Field()
         .notEmpty(),
@@ -151,7 +152,7 @@ const modelToValues = model => {
         usedBandIds: model.usedBands.map(({id}) => id),
         reducer: model.reducer,
         expression: model.expression,
-        bandName: model.includedBands?.length && model.includedBands[0].name,
+        bandName: model.includedBands?.length === 1 ? model.includedBands[0].userBandName : null,
         bandRenameStrategy: model.bandRenameStrategy,
         regex: model.regex,
         bandRename: model.bandRename,
@@ -160,10 +161,7 @@ const modelToValues = model => {
 }
 
 const valuesToModel = values => {
-    const includedBands = makeUnique(evaluateBandNames(values)).map(name => ({
-        id: uuid(),
-        name,
-        type: 'continuous'}))
+    const includedBands = makeUnique(renameBands(values))
     const model = {
         imageId: values.imageId,
         name: values.name,
@@ -180,16 +178,40 @@ const valuesToModel = values => {
     return model
 }
 
-const evaluateBandNames = ({usedBands, bandName, bandRenameStrategy, regex, bandRename}) => {
+const renameBands = ({usedBands, defaultBandName, bandName, bandRenameStrategy, regex, bandRename}) => {
     if (usedBands.length === 1) {
-        return [bandName]
+        return [{...usedBands[0], userBandName: bandName, name: bandName || defaultBandName || usedBands[0].name}]
     } else if (bandRenameStrategy === 'PREFIX') {
-        return usedBands.map(band => bandRename + band)
+        return usedBands.map(band => ({...band, name: bandRename + band.name}))
     } else if (bandRenameStrategy === 'SUFFIX') {
-        return usedBands.map(band => band + bandRename)
+        return usedBands.map(band => ({...band, name: band.name + bandRename}))
     } else if (bandRenameStrategy === 'REGEX') {
-        return usedBands.map(band => band.replace(new RegExp(regex), bandRename))
+        return usedBands.map(band => ({...band, name: band.name.replace(new RegExp(regex), bandRename)}))
     }
+}
+
+const makeUnique = bands => {
+    return bands.reduce(
+        (acc, band, i) => {
+            const others = acc.slice(0, i)
+            const toUnique = () => {
+                const max = Math.max(...acc.map(o => {
+                    const match = new RegExp(`${band.name}_(\\d+)`).exec(o)
+                    return match ? parseInt(match[1]) : 0
+                }))
+                return `${band.name}_${max + 1}`
+            }
+            const uniqueString = others.find(({name}) => name === band.name)?.name
+                ? toUnique()
+                : band.name
+            return [
+                ...others,
+                {...band, name: uniqueString},
+                ...acc.slice(i + 1),
+            ]
+        },
+        bands
+    )
 }
 
 const policy = () => ({_: 'allow'})
@@ -204,30 +226,6 @@ const panelOptions = {
     modelToValues,
     mapRecipeToProps,
     policy
-}
-
-const makeUnique = strings => {
-    return strings.reduce(
-        (acc, s, i) => {
-            const others = acc.slice(0, i)
-            const toUnique = () => {
-                const max = Math.max(...acc.map(o => {
-                    const match = new RegExp(`${s}_(\\d+)`).exec(o)
-                    return match ? parseInt(match[1]) : 0
-                }))
-                return `${s}_${max + 1}`
-            }
-            const uniqueString = others.includes(s)
-                ? toUnique(s)
-                : s
-            return [
-                ...others,
-                uniqueString,
-                ...acc.slice(i + 1),
-            ]
-        },
-        strings
-    )
 }
 
 export const Calculation = compose(

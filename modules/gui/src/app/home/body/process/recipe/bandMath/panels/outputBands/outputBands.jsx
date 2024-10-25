@@ -138,16 +138,16 @@ class _OutputBands extends React.Component {
         const {allOutputBandNames} = this.state
         return (
             <Layout type='horizontal' alignment='fill'>
-                {image.outputBands.map(band =>
-                    <OutputBand
+                {image.outputBands.map(band => {
+                    return <OutputBand
                         key={band.name}
                         image={image}
                         band={band}
                         allOutputBandNames={allOutputBandNames}
                         onChange={this.updateBand}
                         onRemove={this.removeBand}
-                        onValidationStatusChanged={this.onValidationStatusChanged}
-                    />
+                        onValidationStatusChanged={this.onValidationStatusChanged}/>
+                }
                 )}
             </Layout>
         )
@@ -192,13 +192,9 @@ class _OutputBands extends React.Component {
     }
 
     addImage({image}) {
-        // if (image.includedBands.length === 1) {
-        //     this.addBand({image, band: image.includedBands[0]})
-        // }
-
         const firstBand = () => {
             const band = image.includedBands[0]
-            return {...band, outputName: this.createUniqueBandName(band)}
+            return {...band, defaultOutputName: this.createUniqueBandName(image, band, outputImages.value)}
         }
 
         const {inputs: {outputImages}} = this.props
@@ -212,49 +208,46 @@ class _OutputBands extends React.Component {
             }
         ]
         outputImages.set(updatedOutputImages)
+        this.updateAllOutputBandNames(updatedOutputImages)
     }
 
     removeImage({image}) {
         const {inputs: {outputImages}} = this.props
-        outputImages.set(outputImages.value.filter(({imageId}) => imageId !== image.imageId))
+        const updatedOutputImages = outputImages.value.filter(({imageId}) => imageId !== image.imageId)
+        outputImages.set(updatedOutputImages)
+        this.updateAllOutputBandNames(updatedOutputImages)
     }
 
     addBand({image, band}) {
         const {inputs: {outputImages}} = this.props
 
-        const outputName = this.createUniqueBandName(band)
+        const defaultOutputName = this.createUniqueBandName(image, band, outputImages.value)
         const updatedOutputImages = outputImages.value.map(outputImage =>
             outputImage.imageId === image.imageId
                 ? {
                     ...outputImage,
-                    outputBands: [...outputImage.outputBands, {...band, outputName}]
+                    outputBands: [...outputImage.outputBands, {...band, defaultOutputName}]
                 }
                 : outputImage
         )
         outputImages.set(updatedOutputImages)
-    }
-
-    createUniqueBandName(band) {
-        const {inputs: {outputImages}} = this.props
-        const otherOutputNames = outputImages.value
-            .map(({outputBands}) =>
-                outputBands
-                    .filter(({id}) => id !== band.id)
-                    .map(({outputName}) => outputName)
-            )
-            .flat()
-
-        const recurseRename = (potentialName, i) =>
-            otherOutputNames.includes(potentialName)
-                ? recurseRename(`${band.name}_${i}`, ++i)
-                : potentialName
-
-        return recurseRename(band.name, 1)
-
+        this.updateAllOutputBandNames(updatedOutputImages)
     }
 
     updateBand({image, band}) {
         const {inputs: {outputImages}} = this.props
+        // When generating unique defaultBandNames, we need to include the updated band
+        // This temporary array does that
+        const tempOutputImages = [
+            ...outputImages.value.filter(({imageId}) => imageId !== image.imageId),
+            {
+                ...image,
+                outputBands: [
+                    ...image.outputBands.filter(({id}) => id !== band.id),
+                    band
+                ]
+            }
+        ]
         const updatedOutputImages = outputImages.value.map(outputImage =>
             outputImage.imageId === image.imageId
                 ? {
@@ -265,16 +258,19 @@ class _OutputBands extends React.Component {
                             : b
                     )
                 }
-                : outputImage
+                : {
+                    ...outputImage,
+                    outputBands: outputImage.outputBands.map(b =>
+                        ({
+                            ...b,
+                            defaultOutputName: this.createUniqueBandName(outputImage, b, tempOutputImages)
+                        })
+                    )
+                }
         )
         outputImages.set(updatedOutputImages)
 
-        const allOutputBandNames = updatedOutputImages
-            .map(({outputBands}) =>
-                outputBands.map(({outputName}) => outputName)
-            )
-            .flat()
-        this.setState({allOutputBandNames})
+        this.updateAllOutputBandNames(updatedOutputImages)
     }
 
     removeBand({image, band}) {
@@ -288,6 +284,33 @@ class _OutputBands extends React.Component {
                 : outputImage
         )
         outputImages.set(updatedOutputImages)
+        this.updateAllOutputBandNames(updatedOutputImages)
+    }
+
+    updateAllOutputBandNames(updatedOutputImages) {
+        const allOutputBandNames = updatedOutputImages
+            .map(({outputBands}) =>
+                outputBands.map(({defaultOutputName, outputName}) => outputName || defaultOutputName)
+            )
+            .flat()
+        this.setState({allOutputBandNames})
+    }
+
+    createUniqueBandName(image, band, outputImages) {
+        const otherOutputNames = outputImages
+            .map(({imageId, outputBands}) =>
+                outputBands
+                    .filter(({id}) => imageId !== image.imageId || id !== band.id)
+                    .map(({defaultOutputName, outputName}) => outputName || defaultOutputName)
+            )
+            .flat()
+
+        const recurseRename = (potentialName, i) =>
+            otherOutputNames.includes(potentialName)
+                ? recurseRename(`${band.name}_${i}`, ++i)
+                : potentialName
+
+        return recurseRename(band.name, 1)
     }
 
     onValidationStatusChanged(componentId, valid) {
