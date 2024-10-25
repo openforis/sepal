@@ -5,11 +5,12 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 
 import {findChanges} from './findChanges'
+import {updateOutputBands} from './updateOutputBands'
 
 const mapRecipeToProps = recipe => ({
     images: selectFrom(recipe, 'model.inputImagery.images'),
     calculations: selectFrom(recipe, 'model.calculations.calculations'),
-    outputBands: selectFrom(recipe, 'model.outputBands.outputImages'),
+    outputImages: selectFrom(recipe, 'model.outputBands.outputImages'),
 })
 
 class _Sync extends React.Component {
@@ -18,11 +19,18 @@ class _Sync extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {images: prevImages, calculations: prevCalculations} = prevProps
-        const {images, calculations, outputBands} = this.props
+        const {images: prevImages, calculations: prevCalculations, recipeActionBuilder} = prevProps
+        const {images, calculations, outputImages} = this.props
 
         const changes = findChanges({prevImages, images, prevCalculations, calculations})
-        // console.log(changes)
+        if (Object.values(changes).find(change => change.length)) {
+            const updatedOutputImages = updateOutputBands({changes, outputImages})
+            if (updatedOutputImages) {
+                recipeActionBuilder('UPDATE_BAND_MATH_OUTPUT_BANDS')
+                    .set('model.outputBands.outputImages', updatedOutputImages)
+                    .dispatch()
+            }
+        }
     }
 }
 

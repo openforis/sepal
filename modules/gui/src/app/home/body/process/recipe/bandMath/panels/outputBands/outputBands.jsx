@@ -18,6 +18,7 @@ import {Panel} from '~/widget/panel/panel'
 import {ImageDescription} from '../../imageDescription'
 import {OutputBand} from './outputBand'
 import styles from './outputBands.module.css'
+import {addOutputBand, addOutputImage, createUniqueBandName} from './outputImages'
 
 const fields = {
     outputImages: new Form.Field()
@@ -37,6 +38,7 @@ class _OutputBands extends React.Component {
     constructor(props) {
         super(props)
         this.addImage = this.addImage.bind(this)
+        this.removeImage = this.removeImage.bind(this)
         this.addBand = this.addBand.bind(this)
         this.updateBand = this.updateBand.bind(this)
         this.removeBand = this.removeBand.bind(this)
@@ -155,9 +157,15 @@ class _OutputBands extends React.Component {
 
     renderAddBandButton(image) {
         const outputBandIds = image.outputBands.map(({id}) => id)
-        const options = image.includedBands
+        const bandOptions = image.includedBands
             .filter(({id}) => !outputBandIds.includes(id))
             .map(band => ({value: band.name, label: band.name, band, image}))
+        const options = bandOptions.length > 1
+            ? [
+                {value: 'all', label: msg('process.bandMath.panel.outputBands.addBands.all.label'), bandOptions},
+                ...bandOptions
+            ]
+            : bandOptions
         return (
             <ButtonPopup
                 shape='circle'
@@ -167,12 +175,12 @@ class _OutputBands extends React.Component {
                 showPopupOnMount={options.length && !outputBandIds.length}
                 vPlacement='below'
                 hPlacement='over-left'
-                tooltip={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.tooltip')}
+                tooltip={msg('process.bandMath.panel.outputBands.addBands.tooltip')}
                 disabled={!options.length}>
                 {onBlur => (
                     <Combo
                         alignment='left'
-                        placeholder={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.placeholder')}
+                        placeholder={msg('process.bandMath.panel.outputBands.addBands.placeholder')}
                         options={options}
                         stayOpenOnSelect
                         autoOpen
@@ -192,21 +200,8 @@ class _OutputBands extends React.Component {
     }
 
     addImage({image}) {
-        const firstBand = () => {
-            const band = image.includedBands[0]
-            return {...band, defaultOutputName: this.createUniqueBandName(image, band, outputImages.value)}
-        }
-
         const {inputs: {outputImages}} = this.props
-        const updatedOutputImages = [
-            ...(outputImages.value),
-            {
-                ...image,
-                outputBands: image.includedBands.length === 1
-                    ? [firstBand()]
-                    : []
-            }
-        ]
+        const updatedOutputImages = addOutputImage(image, outputImages.value)
         outputImages.set(updatedOutputImages)
         this.updateAllOutputBandNames(updatedOutputImages)
     }
@@ -218,18 +213,15 @@ class _OutputBands extends React.Component {
         this.updateAllOutputBandNames(updatedOutputImages)
     }
 
-    addBand({image, band}) {
+    addBand({value, image, band, bandOptions}) {
         const {inputs: {outputImages}} = this.props
+        const updatedOutputImages = value === 'all'
+            ? bandOptions.reduce(
+                (outputImages, {image, band}) => addOutputBand(image, band, outputImages),
+                outputImages.value
+            )
+            : addOutputBand(image, band, outputImages.value)
 
-        const defaultOutputName = this.createUniqueBandName(image, band, outputImages.value)
-        const updatedOutputImages = outputImages.value.map(outputImage =>
-            outputImage.imageId === image.imageId
-                ? {
-                    ...outputImage,
-                    outputBands: [...outputImage.outputBands, {...band, defaultOutputName}]
-                }
-                : outputImage
-        )
         outputImages.set(updatedOutputImages)
         this.updateAllOutputBandNames(updatedOutputImages)
     }
@@ -263,7 +255,7 @@ class _OutputBands extends React.Component {
                     outputBands: outputImage.outputBands.map(b =>
                         ({
                             ...b,
-                            defaultOutputName: this.createUniqueBandName(outputImage, b, tempOutputImages)
+                            defaultOutputName: createUniqueBandName(outputImage, b, tempOutputImages)
                         })
                     )
                 }
@@ -294,23 +286,6 @@ class _OutputBands extends React.Component {
             )
             .flat()
         this.setState({allOutputBandNames})
-    }
-
-    createUniqueBandName(image, band, outputImages) {
-        const otherOutputNames = outputImages
-            .map(({imageId, outputBands}) =>
-                outputBands
-                    .filter(({id}) => imageId !== image.imageId || id !== band.id)
-                    .map(({defaultOutputName, outputName}) => outputName || defaultOutputName)
-            )
-            .flat()
-
-        const recurseRename = (potentialName, i) =>
-            otherOutputNames.includes(potentialName)
-                ? recurseRename(`${band.name}_${i}`, ++i)
-                : potentialName
-
-        return recurseRename(band.name, 1)
     }
 
     onValidationStatusChanged(componentId, valid) {

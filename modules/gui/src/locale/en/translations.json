@@ -2675,6 +2675,13 @@
                         "calculations": "Calculations",
                         "images": "Images"
                     },
+                    "addBands": {
+                        "placeholder": "Add band...",
+                        "tooltip": "Add band to include in recipe output.",
+                        "all": {
+                            "label": "[All bands]"
+                        }
+                    },
                     "type": {
                         "ASSET": "Earth Engine asset",
                         "RECIPE_REF": "SEPAL recipe",

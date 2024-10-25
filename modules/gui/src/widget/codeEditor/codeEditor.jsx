@@ -2,7 +2,7 @@ import {autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, co
 import {defaultKeymap, history, historyKeymap} from '@codemirror/commands'
 import {javascript} from '@codemirror/lang-javascript'
 import {forEachDiagnostic, linter, lintKeymap} from '@codemirror/lint'
-import {EditorState, Prec} from '@codemirror/state'
+import {EditorState} from '@codemirror/state'
 import {EditorView, keymap} from '@codemirror/view'
 import PropTypes from 'prop-types'
 import React from 'react'
