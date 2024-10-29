@@ -103,6 +103,19 @@ it('rename calculation band renames it in output', () => {
     ]}])
 })
 
+it('adding calculation when one already exists results in two images with unique output names', () => {
+    const calculation2 = {...calculation, imageId: 'another-calculation-id'}
+    const outputBands = [{id: 'id1', defaultOutputName: 'b1', name: 'b1'}]
+    const outputBands2 = [{id: 'id1', defaultOutputName: 'b1_1', name: 'b1'}]
+    expect(updateOutputBands({
+        changes: changes({addedCalculations: [calculation2]}),
+        outputImages: [{...calculation, outputBands}]
+    })).toMatchObject([
+        {...calculation, outputBands},
+        {...calculation2, outputBands: outputBands2},
+    ])
+})
+
 const image = {imageId: 'some-image-id', includedBands: [{id: 'id1', name: 'b1'}]}
 const calculation = {imageId: 'some-calculation-id', includedBands: [{id: 'id1', name: 'b1'}]}
 const noOutputImages = []

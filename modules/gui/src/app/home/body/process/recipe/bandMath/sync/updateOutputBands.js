@@ -11,20 +11,18 @@ export const updateOutputBands = ({changes, outputImages}) =>
         updateBands(changes.calculationsWithChangedBands)
     )
 
-const addImages = addedIMages => {
-    return outputImages => addedIMages.length
+const addImages = addedImages =>
+    outputImages => addedImages.length
         ? [
-            ...outputImages,
-            ...addedIMages.reduce(
+            ...addedImages.reduce(
                 (outputImages, addedImage) => addOutputImage(addedImage, outputImages, true),
                 outputImages
             )
         ]
         : outputImages
-}
 
-const removeImages = removedImages => {
-    return outputImages => {
+const removeImages = removedImages =>
+    outputImages => {
         if (removedImages.length) {
             const removedIds = removedImages.map(({imageId}) => imageId)
             return outputImages
@@ -33,10 +31,9 @@ const removeImages = removedImages => {
             return outputImages
         }
     }
-}
 
-const updateBands = updatedImages => {
-    return outputImages => {
+const updateBands = updatedImages =>
+    outputImages => {
         if (updatedImages.length) {
             return outputImages.map(outputImage => {
                 const updatedImage = updatedImages.find(({imageId}) => imageId === outputImage.imageId)
@@ -45,7 +42,7 @@ const updateBands = updatedImages => {
                         outputImage,
                         addBand(updatedImage),
                         removeBand(updatedImage),
-                        renameBand(updatedImage),
+                        renameBand(updatedImage)
                     )
                 } else {
                     return outputImage
@@ -56,7 +53,6 @@ const updateBands = updatedImages => {
             return outputImages
         }
     }
-}
 
 const addBand = updatedImage =>
     outputImage =>

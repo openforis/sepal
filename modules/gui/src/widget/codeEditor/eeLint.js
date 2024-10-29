@@ -13,7 +13,10 @@ jsep.removeUnaryOp('~')
 export const eeLint = (images, msg, onBandNamesChanged) => {
     let lastBands = []
     const bandsByVariableName = {}
-    images.forEach(({name, includedBands}) => bandsByVariableName[name] = includedBands)
+    images.forEach(({name, imageId, includedBands}) =>
+        bandsByVariableName[name] = includedBands
+            .map((band => ({...band, imageId, imageName: name})))
+    )
     mathOptions(msg).forEach(({name}) => bandsByVariableName[name] = [])
 
     return view => {

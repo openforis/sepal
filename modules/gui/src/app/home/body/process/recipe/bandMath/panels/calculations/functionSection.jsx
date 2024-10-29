@@ -4,6 +4,7 @@ import React from 'react'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {Buttons} from '~/widget/buttons'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 
@@ -16,7 +17,7 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _FunctionSection extends React.Component {
-    state = {bandOptions: []}
+    state = {bandOptions: [], bandIds: []}
 
     constructor(props) {
         super(props)
@@ -83,13 +84,16 @@ class _FunctionSection extends React.Component {
     }
 
     renderBands() {
-        const {inputs: {usedBandIds}} = this.props
+        const {inputs: {usedBands}} = this.props
         const {bandOptions} = this.state
+        const selected = (usedBands.value || []).map(({imageId, id}) =>
+            this.toUniqueBandId(imageId, id)
+        )
         return (
-            <Form.Buttons
+            <Buttons
                 label={msg('process.bandMath.panel.calculations.form.usedBands.label')}
                 tooltip={msg('process.bandMath.panel.calculations.form.usedBands.label')}
-                input={usedBandIds}
+                selected={selected}
                 multiple
                 options={bandOptions}
                 framed
@@ -135,18 +139,19 @@ class _FunctionSection extends React.Component {
                 options={options}
                 placeholder={msg('process.bandMath.panel.calculations.form.function.label')}
                 autoFocus
+                onChange={this.updateDefaultName}
             />
         )
     }
 
     renderBandName() {
-        const {inputs: {bandName}} = this.props
+        const {inputs: {bandName, defaultBandName}} = this.props
         return (
             <Form.Input
                 label={msg('process.bandMath.panel.calculations.form.bandName.label')}
                 tooltip={msg('process.bandMath.panel.calculations.form.bandName.tooltip')}
                 input={bandName}
-                placeholder={msg('process.bandMath.panel.calculations.form.bandName.placeholder')}
+                placeholder={defaultBandName.value || msg('process.bandMath.panel.calculations.form.bandName.placeholder')}
                 autoComplete={false}
             />
         )
@@ -161,17 +166,18 @@ class _FunctionSection extends React.Component {
         const imageOptions = images.map(image => ({
             label: image.name,
             options: image.includedBands.map(band => ({
-                value: band.id,
+                value: this.toUniqueBandId(image.imageId, band.id),
                 label: band.name,
                 band: {...band, imageId: image.imageId, imageName: image.name}
             }))
         }))
+
         const calculationOptions = availableCalculations.map(calculation => ({
             label: calculation.name,
             options: calculation.includedBands.map(band => ({
-                value: band.id,
+                value: this.toUniqueBandId(calculation.imageId, band.id),
                 label: band.name,
-                band: {...band, imageId: calculation.imageId, imageName: calculation.name}
+                band: {...band, imageId: calculation.imageId, imageName: calculation.name},
             }))
         }))
         const bandOptions = [...imageOptions, ...calculationOptions]
@@ -179,9 +185,9 @@ class _FunctionSection extends React.Component {
     }
 
     componentDidUpdate() {
-        const {inputs: {reducer, bandName}} = this.props
-        if (reducer.value && !bandName.value) {
-            bandName.set(reducer.value)
+        const {inputs: {reducer, defaultBandName}} = this.props
+        if (defaultBandName.value !== reducer.value) {
+            defaultBandName.set(reducer.value)
         }
     }
 
@@ -196,6 +202,11 @@ class _FunctionSection extends React.Component {
             .map(({band}) => band)
         usedBands.set(bands)
     }
+
+    toUniqueBandId(imageId, bandId) {
+        return `${imageId}|${bandId}`
+    }
+
 }
 
 export const FunctionSection = compose(

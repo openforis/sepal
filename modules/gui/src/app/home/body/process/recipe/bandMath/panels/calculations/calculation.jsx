@@ -5,6 +5,7 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {uuid} from '~/uuid'
 import {Form} from '~/widget/form'
 import {PanelSections} from '~/widget/panelSections'
 
@@ -32,22 +33,17 @@ const fields = {
         .skip((_value, {section}) => section !== 'EXPRESSION')
         .notBlank(),
     bandRenameStrategy: new Form.Field()
-        .skip((_value, {section, usedBands}) => section !== 'FUNCTION' || usedBands.length < 1)
+        .skip((_value, {section, usedBands}) => section !== 'EXPRESSION' || usedBands.length < 1)
         .notBlank(),
     regex: new Form.Field()
-        .skip((_value, {section, usedBands, bandRenameStrategy}) => section !== 'FUNCTION' || usedBands.length < 1 || bandRenameStrategy !== 'REGEX')
+        .skip((_value, {section, usedBands, bandRenameStrategy}) => section !== 'EXPRESSION' || usedBands.length < 1 || bandRenameStrategy !== 'REGEX')
         .notBlank(),
     bandRename: new Form.Field()
-        .skip((_value, {section, usedBands}) => section !== 'FUNCTION' || usedBands.length < 1)
+        .skip((_value, {section, usedBands, bandRenameStrategy}) => section !== 'EXPRESSION' || usedBands.length < 1 || bandRenameStrategy !== 'REGEX')
         .notBlank(),
     defaultBandName: new Form.Field(),
-    bandName: new Form.Field()
-        .skip((_value, {section}) => section !== 'FUNCTION')
-        .notBlank(),
+    bandName: new Form.Field(),
     usedBands: new Form.Field()
-        .notEmpty(),
-    usedBandIds: new Form.Field()
-        .skip((_value, {section}) => section !== 'FUNCTION')
         .notEmpty(),
     dataType: new Form.Field()
         .notEmpty(),
@@ -149,7 +145,6 @@ const modelToValues = model => {
         section: model.type || 'SELECTION',
         dataType: model.dataType,
         usedBands: model.usedBands,
-        usedBandIds: model.usedBands.map(({id}) => id),
         reducer: model.reducer,
         expression: model.expression,
         bandName: model.includedBands?.length === 1 ? model.includedBands[0].userBandName : null,
@@ -178,7 +173,7 @@ const valuesToModel = values => {
     return model
 }
 
-const renameBands = ({usedBands, defaultBandName, bandName, bandRenameStrategy, regex, bandRename}) => {
+const renameBands = ({imageId, name, usedBands, defaultBandName, bandName, bandRenameStrategy, regex, bandRename}) => {
     if (usedBands.length === 1) {
         return [{...usedBands[0], userBandName: bandName, name: bandName || defaultBandName || usedBands[0].name}]
     } else if (bandRenameStrategy === 'PREFIX') {
@@ -187,6 +182,15 @@ const renameBands = ({usedBands, defaultBandName, bandName, bandRenameStrategy, 
         return usedBands.map(band => ({...band, name: band.name + bandRename}))
     } else if (bandRenameStrategy === 'REGEX') {
         return usedBands.map(band => ({...band, name: band.name.replace(new RegExp(regex), bandRename)}))
+    } else {
+        return [{
+            id: uuid(),
+            imageId: imageId,
+            imageName: name,
+            name: bandName || defaultBandName,
+            type: 'continuous',
+            legendEntries: []
+        }]
     }
 }
 

@@ -310,13 +310,9 @@ class _OutputBands extends React.Component {
     }
 }
 
-const additionalPolicy = () => ({
-    _: 'disallow'
-})
-
 export const OutputBands = compose(
     _OutputBands,
-    recipeFormPanel({id: 'outputBands', fields, mapRecipeToProps, additionalPolicy})
+    recipeFormPanel({id: 'outputBands', fields, mapRecipeToProps})
 )
 
 OutputBands.propTypes = {
