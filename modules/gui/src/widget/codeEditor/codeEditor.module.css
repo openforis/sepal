@@ -1,7 +1,5 @@
 :global .cm-editor {
-    /* display: flex; */
     height: 5rem;
-    /* max-width: 100%; */
 }
 
 :global .cm-tooltip-autocomplete {
