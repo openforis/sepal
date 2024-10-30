@@ -1,8 +1,8 @@
 import React from 'react'
 
-import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
-import {getGroupedBandOptions} from '~/app/home/body/process/recipe/bandMath/bands'
 import {RecipeActions} from '~/app/home/body/process/recipe/bandMath/bandMathRecipe'
+import {getGroupedBandOptions} from '~/app/home/body/process/recipe/bandMath/bands'
+import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 

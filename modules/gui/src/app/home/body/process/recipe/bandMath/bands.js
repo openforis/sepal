@@ -4,9 +4,8 @@ export const getAvailableBands = recipe => {
     const bands = {}
     recipe.model.outputBands.outputImages
         .map(({outputBands}) => outputBands
-            .map(({outputName}) => {
-                return outputName
-            })
+            .map(({outputName, defaultOutputName}) =>
+                outputName || defaultOutputName)
         )
         .flat()
         .forEach(band => bands[band] = {label: band})
