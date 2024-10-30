@@ -2552,6 +2552,147 @@
             },
             "tabPlaceholder": ""
         },
+        "bandMath": {
+            "create": "",
+            "description": "",
+            "duplicateName": "",
+            "invalidName": "",
+            "panel": {
+                "inputImagery": {
+                    "name": {
+                        "label": "",
+                        "tooltip": ""
+                    }
+                },
+                "calculations": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "form": {
+                        "noCalculations": "",
+                        "usedBands": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "function": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "bandName": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "calculationName": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "dataType": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": "",
+                            "auto": "",
+                            "int8": "",
+                            "int16": "",
+                            "int32": "",
+                            "int64": "",
+                            "uint8": "",
+                            "uint16": "",
+                            "uint32": "",
+                            "byte": "",
+                            "short": "",
+                            "int": "",
+                            "long": "",
+                            "float": "",
+                            "double": ""
+                        },
+                        "expression": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "type": {
+                            "FUNCTION": "",
+                            "EXPRESSION": ""
+                        },
+                        "bandRenameStrategy": {
+                            "label": "",
+                            "tooltip": "",
+                            "PREFIX": {
+                                "label": ""
+                            },
+                            "SUFFIX": {
+                                "label": ""
+                            },
+                            "REGEX": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "regex": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "bandRename": {
+                            "PREFIX": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "SUFFIX": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "REGEX": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "sections": {
+                        "title": ""
+                    },
+                    "expression": {
+                        "title": ""
+                    },
+                    "function": {
+                        "title": ""
+                    }
+                },
+                "outputBands": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "duplicateBand": "",
+                    "invalidFormat": "",
+                    "addImage": {
+                        "label": "Añadir",
+                        "tooltip": "",
+                        "calculations": "",
+                        "images": ""
+                    },
+                    "addBands": {
+                        "placeholder": "",
+                        "tooltip": "",
+                        "all": {
+                            "label": ""
+                        }
+                    },
+                    "type": {
+                        "ASSET": "Asset Earth Engine",
+                        "RECIPE_REF": "Flujo de trabajo de SEPAL",
+                        "EXPRESSION": "",
+                        "FUNCTION": ""
+                    }
+                }
+            },
+            "tabPlaceholder": ""
+        },
         "classChange": {
             "create": "",
             "description": "",
@@ -5034,6 +5175,29 @@
         },
         "assetInput": {
             "loadError": ""
+        },
+        "codeEditor": {
+            "eeAutoComplete": {
+                "bandNames": {
+                    "section": ""
+                },
+                "imagesAndCalculations": {
+                    "section": ""
+                },
+                "mathFunctions": {
+                    "section": ""
+                },
+                "mathConstants": {
+                    "section": ""
+                }
+            },
+            "eeLint": {
+                "undefinedVariable": "",
+                "invalidBand": "",
+                "invalidBandCount": "",
+                "invalidArgCount": "",
+                "syntaxError": ""
+            }
         },
         "comboBox": {
             "loading": "Cargando..."
