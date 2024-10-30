@@ -29,7 +29,6 @@ export class CodeEditor extends React.Component {
                     Enter: this.onKeyPress,
                     Escape: this.onKeyPress
                 }}>
-                    {/* <div style={{height: '10rem', backgroundColor: 'red'}}> </div> */}
                     <div ref={this.setupEditor}/>
                 </Keybinding>
             )
