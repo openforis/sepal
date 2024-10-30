@@ -1,4 +1,5 @@
 import {AssetImageLayer} from './recipe/asset/assetImageLayer'
+import {BandMathImageLayer} from './recipe/bandMath/bandMathImageLayer'
 import {BaytsAlertsImageLayer} from './recipe/baytsAlerts/baytsAlertsImageLayer'
 import {BaytsHistoricalImageLayer} from './recipe/baytsHistorical/baytsHistoricalImageLayer'
 import {CCDCImageLayer} from './recipe/ccdc/ccdcImageLayer'
@@ -27,6 +28,7 @@ export const registerRecipeImageLayers = () => {
     addRecipeImageLayer('UNSUPERVISED_CLASSIFICATION', UnsupervisedClassificationImageLayer)
     addRecipeImageLayer('REGRESSION', RegressionImageLayer)
     addRecipeImageLayer('STACK', StackImageLayer)
+    addRecipeImageLayer('BAND_MATH', BandMathImageLayer)
     addRecipeImageLayer('CLASS_CHANGE', ClassChangeImageLayer)
     addRecipeImageLayer('INDEX_CHANGE', IndexChangeImageLayer)
     addRecipeImageLayer('REMAPPING', RemappingImageLayer)

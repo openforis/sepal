@@ -24,7 +24,7 @@
     pointer-events: none;
 }
 
-.item > :not(:first-child) {
+.item> :not(:first-child) {
     margin-left: var(--item-spacing);
 }
 
@@ -37,7 +37,7 @@
     flex-shrink: 1;
 }
 
-.info > * {
+.info>* {
     white-space: normal;
     word-break: break-word;
     overflow: hidden;
@@ -64,8 +64,9 @@
     text-align: left;
 }
 
-.timestamp {
-    pointer-events: none; /* avoid interfering with click target */
+.metadata {
+    pointer-events: none;
+    /* avoid interfering with click target */
     font-size: small;
     /* margin-right: 2rem; */
     color: gray;
@@ -73,7 +74,7 @@
 }
 
 @media screen and (max-width: 600px) {
-    .timestamp {
+    .metadata {
         font-size: small;
         margin-right: .5rem;
         color: gray;
@@ -82,10 +83,11 @@
 
 .highlight {
     font-weight: bolder;
-    color:#eebb00;
+    color: #eebb00;
     background-color: transparent;
 }
 
 .icon {
-    margin-left: calc(var(--item-spacing) - .5rem); /* make left-right spacing the same */
+    margin-left: calc(var(--item-spacing) - .5rem);
+    /* make left-right spacing the same */
 }

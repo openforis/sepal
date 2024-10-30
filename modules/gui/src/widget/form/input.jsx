@@ -19,7 +19,7 @@ class _FormInput extends React.Component {
     }
 
     renderInput() {
-        const {forwardedRef, className, input, busyMessage, type, tabIndex, buttons, ...props} = this.props
+        const {forwardedRef, className, input, busyMessage, type, tabIndex, buttons, labelButtons, ...props} = this.props
         return (
             <Input
                 {...props}
@@ -32,6 +32,7 @@ class _FormInput extends React.Component {
                 busyMessage={busyMessage}
                 tabIndex={tabIndex}
                 buttons={buttons}
+                labelButtons={labelButtons}
                 onChange={this.onChange}
                 onBlur={this.onBlur}
             />
@@ -51,7 +52,7 @@ class _FormInput extends React.Component {
     }
 
     renderTextArea() {
-        const {form, forwardedRef, className, input, errorMessage, busyMessage, minRows, maxRows, tabIndex, ...props} = this.props
+        const {form, forwardedRef, className, input, errorMessage, busyMessage, minRows, maxRows, tabIndex, labelButtons, ...props} = this.props
         return (
             <Textarea
                 {...props}
@@ -62,6 +63,7 @@ class _FormInput extends React.Component {
                 errorMessage={form.getErrorMessage(errorMessage === true ? input : errorMessage)}
                 busyMessage={busyMessage}
                 tabIndex={tabIndex}
+                labelButtons={labelButtons}
                 minRows={minRows}
                 maxRows={maxRows}
                 onChange={this.onChange}
@@ -103,6 +105,7 @@ FormInput.propTypes = {
     inputTooltip: PropTypes.any,
     inputTooltipPlacement: PropTypes.string,
     label: PropTypes.string,
+    labelButtons: PropTypes.arrayOf(PropTypes.node),
     maxRows: PropTypes.number,
     minRows: PropTypes.number,
     placeholder: PropTypes.any,

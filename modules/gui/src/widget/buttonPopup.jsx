@@ -145,7 +145,10 @@ class _ButtonPopup extends React.Component {
     }
 
     renderPopup() {
-        const {vPlacement, hPlacement} = this.props
+        const {disabled, vPlacement, hPlacement} = this.props
+        if (disabled) {
+            return null
+        }
         return this.buttonRef.current && (
             <FloatingBox
                 ref={this.popupRef}

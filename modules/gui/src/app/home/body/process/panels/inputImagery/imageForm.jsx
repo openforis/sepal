@@ -2,9 +2,9 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 
-import {bandsAvailableToAdd, defaultBand} from '~/app/home/body/process/recipe/remapping/remappingRecipe'
 import {Layout} from '~/widget/layout'
 
+import {bandsAvailableToAdd, defaultBand} from './bands'
 import {BandSpec} from './bandSpec'
 
 export class ImageForm extends Component {

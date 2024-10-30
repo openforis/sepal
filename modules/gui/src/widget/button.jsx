@@ -165,9 +165,16 @@ class _Button extends React.Component {
     }
 
     getKeymap(keybinding) {
+        const active = this.isActive()
         return _.isArray(keybinding)
-            ? _.reduce(keybinding, (keymap, key) => ({...keymap, [key]: this.handleClick}), {})
-            : {[keybinding]: this.handleClick}
+            ? keybinding.reduce(
+                (keymap, key) => ({
+                    ...keymap,
+                    [key]: active ? this.handleClick : null
+                }),
+                {}
+            )
+            : {[keybinding]: active ? this.handleClick : null}
     }
 
     renderKeybinding(contents) {
@@ -176,7 +183,7 @@ class _Button extends React.Component {
             ? (
                 <Keybinding
                     keymap={this.getKeymap(keybinding)}
-                    disabled={hidden || !this.isActive()}>
+                    disabled={hidden}>
                     {contents}
                 </Keybinding>
             )

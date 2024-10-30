@@ -39,6 +39,7 @@ export class CrudItem extends React.Component {
                 {this.renderIcon()}
                 {this.renderImage()}
                 {this.renderInfo()}
+                {this.renderMetadata()}
                 {this.renderTimestamp()}
                 {this.renderInline()}
             </div>
@@ -109,11 +110,22 @@ export class CrudItem extends React.Component {
             : null
     }
 
+    renderMetadata() {
+        const {metadata} = this.props
+        return metadata
+            ? (
+                <div className={styles.metadata}>
+                    {metadata}
+                </div>
+            )
+            : null
+    }
+
     renderTimestamp() {
         const {timestamp} = this.props
         return timestamp
             ? (
-                <div className={styles.timestamp}>
+                <div className={styles.metadata}>
                     {moment(timestamp).fromNow()}
                 </div>
             )
@@ -259,9 +271,9 @@ CrudItem.propTypes = {
     content: PropTypes.any,
     description: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     duplicateDisabled: PropTypes.any,
-    duplicatetooltip: PropTypes.any,
+    duplicateTooltip: PropTypes.any,
     editDisabled: PropTypes.any,
-    edittooltip: PropTypes.any,
+    editTooltip: PropTypes.any,
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
     highlightDescription: PropTypes.any,
@@ -276,14 +288,16 @@ CrudItem.propTypes = {
     infoDisabled: PropTypes.any,
     infoTooltip: PropTypes.any,
     inlineComponents: PropTypes.any,
+    metadata: PropTypes.any,
     removeContent: PropTypes.any,
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
     removeTitle: PropTypes.string,
-    removetooltip: PropTypes.any,
+    removeTooltip: PropTypes.any,
     selectDisabled: PropTypes.any,
     selected: PropTypes.any,
     selectTooltip: PropTypes.any,
+    timestamp: PropTypes.any,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     tooltipPlacement: PropTypes.string,
     unsafeRemove: PropTypes.any,

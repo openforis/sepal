@@ -1,0 +1,12 @@
+.panel {
+    height: 40rem;
+    width: 40rem;
+}
+
+.loadingProgress {
+    margin-top: 5rem;
+}
+
+.name {
+    width: 5rem;
+}
