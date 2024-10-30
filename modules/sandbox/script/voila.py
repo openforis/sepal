@@ -9,7 +9,18 @@ from jupyterlab_server.config import get_page_config as gpc
 
 from voila._version import __version__
 from voila.configuration import VoilaConfiguration
-from voila.utils import filter_extension, maybe_inject_widgets_manager_extension
+from voila.utils import (
+    filter_extension,
+    maybe_inject_widgets_manager_extension,
+    get_page_config,
+)
+
+# Configure logging
+logging.basicConfig(
+    # filename="/home/sepal-user/voila.log", # Uncomment to log to a file and make sure there's write permission
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 
 def get_app_data(base_url: str, app_name: str) -> Tuple[List[str], str]:
@@ -27,6 +38,18 @@ def get_app_data(base_url: str, app_name: str) -> Tuple[List[str], str]:
     return labextensions_path, labextensions_url
 
 
+def is_sepal_ui_app(notebook_path: str) -> bool:
+    """Check if the notebook is a sepal_ui app"""
+
+    is_sepal_ui = notebook_path.startswith("shared/apps/")
+
+    logging.debug(
+        (f"::::Voila custom config ::: {notebook_path} is_sepal_ui_app", is_sepal_ui)
+    )
+
+    return is_sepal_ui
+
+
 def get_app_name(notebook_path: str):
     """Extract the app name from the notebook path"""
 
@@ -41,6 +64,15 @@ def page_config_hook(
     voila_configuration: VoilaConfiguration,
     notebook_path,
 ):
+
+    if not is_sepal_ui_app(notebook_path):
+        return get_page_config(
+            base_url=base_url,
+            settings=settings,
+            log=log,
+            voila_configuration=voila_configuration,
+        )
+
     app_name = get_app_name(notebook_path)
     app_extensions_paths, app_extensions_url = get_app_data(base_url, app_name)
     page_config["fullLabextensionsUrl"] = app_extensions_url
@@ -58,10 +90,6 @@ def page_config_hook(
     required_extensions = []
     federated_extensions = deepcopy(page_config["federated_extensions"])
 
-    logging.debug(
-        ("::::Voila labextensions::: federated_extensions", federated_extensions)
-    )
-
     filtered_extensions = filter_extension(
         federated_extensions=federated_extensions,
         disabled_extensions=disabled_extensions,
@@ -75,6 +103,10 @@ def page_config_hook(
     )
 
     page_config["federated_extensions"] = extensions
+
+    logging.debug(
+        ("::::Voila custom config ::: federated_extensions", federated_extensions)
+    )
 
     return page_config
 
