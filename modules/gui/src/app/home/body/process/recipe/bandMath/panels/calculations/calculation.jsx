@@ -6,6 +6,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
+import {mathOptions} from '~/widget/codeEditor/mathOptions'
 import {Form} from '~/widget/form'
 import {PanelSections} from '~/widget/panelSections'
 
@@ -25,6 +26,10 @@ const fields = {
         .predicate(
             (name, {otherNames}) => !otherNames.includes(name),
             'process.bandMath.duplicateName'
+        )
+        .predicate(
+            name => !mathOptions(msg).map(({name}) => name).includes(name),
+            'process.bandMath.invalidName'
         ),
     reducer: new Form.Field()
         .skip((_value, {section}) => section !== 'FUNCTION')

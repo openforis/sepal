@@ -2556,6 +2556,7 @@
             "create": "Band Math",
             "description": "Perform band math on imagery from SEPAL and/or Google Earth Engine image assets.",
             "duplicateName": "Duplicate name. There are other images or calculations with this name.",
+            "invalidName": "Cannot use names that are math functions or constants.",
             "panel": {
                 "inputImagery": {
                     "name": {

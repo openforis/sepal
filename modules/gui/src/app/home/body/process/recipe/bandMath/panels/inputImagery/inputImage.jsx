@@ -5,6 +5,7 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {mathOptions} from '~/widget/codeEditor/mathOptions'
 import {Form} from '~/widget/form'
 import {Panel} from '~/widget/panel/panel'
 import {PanelSections} from '~/widget/panelSections'
@@ -25,6 +26,10 @@ const fields = {
         .predicate(
             (name, {otherNames}) => !otherNames.includes(name),
             'process.bandMath.duplicateName'
+        )
+        .predicate(
+            name => !mathOptions(msg).map(({name}) => name).includes(name),
+            'process.bandMath.invalidName'
         ),
     section: new Form.Field()
         .notBlank(),
