@@ -22,7 +22,6 @@ export class ToolbarButton extends React.Component {
 
     renderContext({horizontal, panel}) {
         const {className, icon, iconVariant, label, tooltip, tooltipAllowedWhenDisabled, tooltipDelay, tooltipOnVisible, tooltipPlacement, disabled, selected, onClick} = this.props
-        console.log({className})
         return (
             <Button
                 className={[

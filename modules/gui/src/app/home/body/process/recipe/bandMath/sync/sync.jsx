@@ -1,5 +1,6 @@
 import {javascript} from '@codemirror/lang-javascript'
 import {EditorState} from '@codemirror/state'
+import _ from 'lodash'
 import React from 'react'
 
 import {withRecipe} from '~/app/home/body/process/recipeContext'
@@ -17,6 +18,7 @@ const mapRecipeToProps = recipe => ({
     images: selectFrom(recipe, 'model.inputImagery.images'),
     calculations: selectFrom(recipe, 'model.calculations.calculations'),
     outputImages: selectFrom(recipe, 'model.outputBands.outputImages'),
+    userDefinedVisualizations: selectFrom(recipe, 'layers.userDefinedVisualizations.this-recipe') || []
 })
 
 class _Sync extends React.Component {
@@ -27,8 +29,8 @@ class _Sync extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {images: prevImages, calculations: prevCalculations} = prevProps
-        const {images, calculations, outputImages, recipeActionBuilder} = this.props
+        const {images: prevImages, calculations: prevCalculations, outputImages: prevOutputImages} = prevProps
+        const {images, calculations, outputImages, userDefinedVisualizations, recipeActionBuilder} = this.props
 
         const changes = findChanges({prevImages, images, prevCalculations, calculations})
         if (Object.values(changes).find(change => change.length)) {
@@ -43,13 +45,43 @@ class _Sync extends React.Component {
                 .set('model.calculations.calculations', updatedCalculations)
                 .dispatch()
 
-            // TODO: Update visualizations
-
             this.setState({lint: true})
         } else if (this.state.lint) {
             this.setState({lint: false}, () =>
                 this.lint({images, calculations})
             )
+        }
+
+        if (!_.isEqual(prevOutputImages, outputImages)) {
+            const toOutputBands = images => images
+                .map(({outputBands}) => outputBands)
+                .flat()
+            
+            const prevOutputBands = toOutputBands(prevOutputImages)
+            const outputBands = toOutputBands(outputImages)
+            const renamedBands = outputBands
+                .map(band => {
+                    const prevBand = prevOutputBands.find(prevBand => prevBand.imageId === band.imageId && prevBand.id === band.id)
+                    return {
+                        prevBandName: prevBand ? prevBand.outputName || prevBand.defaultOutputName : null,
+                        bandName: band.outputName || band.defaultOutputName
+                    }
+                })
+                .filter(({prevBandName, bandName}) => prevBandName && prevBandName !== bandName)
+            if (renamedBands.length) {
+                const updatedVisualizations = userDefinedVisualizations.map(visualization => ({
+                    ...visualization,
+                    bands: visualization.bands.map(band => {
+                        const renamedBand = renamedBands.find(({prevBandName}) => prevBandName === band)
+                        return renamedBand
+                            ? renamedBand.bandName
+                            : band
+                    })
+                }))
+                recipeActionBuilder('UPDATE_BAND_MATH_VISUALIZATIONS')
+                    .set('layers.userDefinedVisualizations.this-recipe', updatedVisualizations)
+                    .dispatch()
+            }
         }
     }
 
