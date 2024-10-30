@@ -21,11 +21,11 @@ const mapRecipeToProps = recipe => ({
 class _ExpressionSection extends React.Component {
     constructor(props) {
         super(props)
-        this.updateUsedBands = this.updateUsedBands.bind(this)
+        this.updateBands = this.updateBands.bind(this)
     }
 
     render() {
-        const {inputs: {usedBands}} = this.props
+        const {inputs: {includedBands}} = this.props
         return (
             <Layout type='vertical'>
                 <Layout type='horizontal' alignment='distribute'>
@@ -33,8 +33,8 @@ class _ExpressionSection extends React.Component {
                     {this.renderDataType()}
                 </Layout>
                 {this.renderExpression()}
-                {usedBands.value.length === 1 && this.renderBandName()}
-                {usedBands.value.length > 1 && this.renderBandNames()}
+                {includedBands.value.length === 1 && this.renderBandName()}
+                {includedBands.value.length > 1 && this.renderBandNames()}
             </Layout>
         )
     }
@@ -94,13 +94,11 @@ class _ExpressionSection extends React.Component {
             <CodeEditor
                 input={expression}
                 autoComplete={eeAutoComplete(allImages, msg)}
-                lint={eeLint(allImages, msg, this.updateUsedBands)}
+                lint={eeLint(allImages, msg, this.updateBands)}
                 autoFocus
             />
         )
     }
-    
-    // TODO: Allow data-type to be specified. Also for FUNCTION calculations
     
     renderBandName() {
         const {inputs: {bandName, defaultBandName}} = this.props
@@ -153,11 +151,12 @@ class _ExpressionSection extends React.Component {
         )
     }
 
-    updateUsedBands(bands) {
-        const {inputs: {usedBands, defaultBandName}} = this.props
-        usedBands.set(bands)
-        if (bands.length === 1) {
-            defaultBandName.set(bands[0].name)
+    updateBands({usedBands, includedBands}) {
+        const {inputs: {usedBands: usedBandsInput, includedBands: includedBandsInput, defaultBandName: defaultBandNameInput}} = this.props
+        usedBandsInput.set(usedBands)
+        includedBandsInput.set(includedBands)
+        if (includedBands.length === 1) {
+            defaultBandNameInput.set(includedBands[0].name)
         }
     }
 

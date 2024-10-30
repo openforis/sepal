@@ -45,6 +45,9 @@ const fields = {
     bandName: new Form.Field(),
     usedBands: new Form.Field()
         .notEmpty(),
+    includedBands: new Form.Field()
+        .skip((_value, {section}) => section !== 'EXPRESSION')
+        .notEmpty(),
     dataType: new Form.Field()
         .notEmpty(),
 }
@@ -147,7 +150,7 @@ const modelToValues = model => {
         usedBands: model.usedBands,
         reducer: model.reducer,
         expression: model.expression,
-        bandName: model.includedBands?.length === 1 ? model.includedBands[0].userBandName : null,
+        bandName: model.bandName,
         bandRenameStrategy: model.bandRenameStrategy,
         regex: model.regex,
         bandRename: model.bandRename,
@@ -156,7 +159,7 @@ const modelToValues = model => {
 }
 
 const valuesToModel = values => {
-    const includedBands = makeUnique(renameBands(values))
+    const includedBands = updateIncludedBands(values)
     const model = {
         imageId: values.imageId,
         name: values.name,
@@ -166,6 +169,7 @@ const valuesToModel = values => {
         reducer: values.reducer,
         expression: values.expression,
         includedBands,
+        bandName: values.bandName,
         bandRenameStrategy: values.bandRenameStrategy,
         regex: values.regex,
         bandRename: values.bandRename,
@@ -173,15 +177,18 @@ const valuesToModel = values => {
     return model
 }
 
-const renameBands = ({imageId, name, usedBands, defaultBandName, bandName, bandRenameStrategy, regex, bandRename}) => {
-    if (usedBands.length === 1) {
-        return [{...usedBands[0], userBandName: bandName, name: bandName || defaultBandName || usedBands[0].name}]
+export const updateIncludedBands = values =>
+    makeUnique(renameBands(values))
+
+const renameBands = ({imageId, name, includedBands, defaultBandName, bandName, bandRenameStrategy, regex, bandRename}) => {
+    if (includedBands.length === 1) {
+        return [{...includedBands[0], userBandName: bandName, name: bandName || defaultBandName || includedBands[0].name}]
     } else if (bandRenameStrategy === 'PREFIX') {
-        return usedBands.map(band => ({...band, name: bandRename + band.name}))
+        return includedBands.map(band => ({...band, name: bandRename + band.name}))
     } else if (bandRenameStrategy === 'SUFFIX') {
-        return usedBands.map(band => ({...band, name: band.name + bandRename}))
+        return includedBands.map(band => ({...band, name: band.name + bandRename}))
     } else if (bandRenameStrategy === 'REGEX') {
-        return usedBands.map(band => ({...band, name: band.name.replace(new RegExp(regex), bandRename)}))
+        return includedBands.map(band => ({...band, name: band.name.replace(new RegExp(regex), bandRename)}))
     } else {
         return [{
             id: uuid(),

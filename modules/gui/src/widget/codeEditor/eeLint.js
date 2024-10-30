@@ -10,8 +10,9 @@ jsep.removeBinaryOp('===')
 jsep.removeBinaryOp('!==')
 jsep.removeUnaryOp('~')
 
-export const eeLint = (images, msg, onBandNamesChanged) => {
-    let lastBands = []
+export const eeLint = (images, msg, onBandChanged) => {
+    let lastIncludedBands = []
+    let lastUsedBands = []
     const bandsByVariableName = {}
     images.forEach(({name, imageId, includedBands}) =>
         bandsByVariableName[name] = includedBands
@@ -22,7 +23,8 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
     return view => {
         const state = view.state
         const diagnostics = []
-        let bands = []
+        let includedBands = []
+        let usedBands = []
         let maxUsedImageBandCount = 0
 
         syntaxTree(view.state).cursor().iterate(node => {
@@ -38,7 +40,7 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
         })
 
         validateSyntax()
-        notifyBandNameChanges()
+        notifyBandChanges()
         return diagnostics
 
         function sliceDoc(node) {
@@ -59,21 +61,22 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
                     if (isMathFunction) { // Math function without arguments
                         report(undefinedVariable(node, {variableName}))
                     } else { // Variable
-                        const bandCount = bandsByVariableName[variableName].length
-                        if (maxUsedImageBandCount && bandCount > 1 && bandCount != maxUsedImageBandCount) {
-                            report(invalidBandCount(node, {imageName: variableName, bandCount, maxUsedImageBandCount}))
-                        } else if (bandCount > 1) {
-                            maxUsedImageBandCount = bandCount
+                        const {bandName, bandNameNode} = extractBandName(node)
+                        if (bandName) {
+                            handleBandName({variableName, bandName, bandNameNode})
+                        } else {
+                            const bandCount = bandsByVariableName[variableName].length
+                            if (maxUsedImageBandCount && bandCount > 1 && bandCount != maxUsedImageBandCount) {
+                                report(invalidBandCount(node, {imageName: variableName, bandCount, maxUsedImageBandCount}))
+                            } else if (bandCount > 1) {
+                                maxUsedImageBandCount = bandCount
+                            }
+                            if (variableBands?.length > includedBands.length) {
+                                includedBands = variableBands
+                            }
+                            usedBands = _.uniqBy([...usedBands, ...variableBands], ({imageId, id}) => `${imageId}|${id}`)
                         }
-                    }
-                }
 
-                const {bandName, bandNameNode} = extractBandName(node)
-                if (bandName) {
-                    handleBandName({variableName, bandName, bandNameNode})
-                } else {
-                    if (variableBands?.length > bands.length) {
-                        bands = variableBands
                     }
                 }
             } else {
@@ -154,10 +157,11 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
         function handleBandName({variableName, bandName, bandNameNode}) {
             const validBandName = bandsByVariableName[variableName]?.map(({name}) => name)?.includes(bandName)
             if (validBandName) {
-                if (!bands.length) {
-                    const band = bandsByVariableName[variableName].find(({name}) => name === bandName)
-                    bands = [band]
+                const band = bandsByVariableName[variableName].find(({name}) => name === bandName)
+                if (!includedBands.length) {
+                    includedBands = [band]
                 }
+                usedBands = _.uniqBy([...usedBands, band], ({imageId, id}) => `${imageId}|${id}`)
             } else {
                 report(invalidBand(bandNameNode, {imageName: variableName, bandName}))
             }
@@ -180,12 +184,15 @@ export const eeLint = (images, msg, onBandNamesChanged) => {
             }
         }
 
-        function notifyBandNameChanges() {
-            if (!bands.length) {
-                bands = [{id: 'constant', name: 'constant'}]
+        function notifyBandChanges() {
+            if (!includedBands.length) {
+                includedBands = [{id: 'constant', name: 'constant'}]
             }
-            onBandNamesChanged && !_.isEqual(lastBands, bands) && onBandNamesChanged(bands)
-            lastBands = bands
+            onBandChanged
+                && (!_.isEqual(lastIncludedBands, includedBands) || !_.isEqual(lastUsedBands, usedBands))
+                && onBandChanged({usedBands, includedBands})
+            lastIncludedBands = includedBands
+            lastUsedBands = usedBands
         }
 
         function report(error) {

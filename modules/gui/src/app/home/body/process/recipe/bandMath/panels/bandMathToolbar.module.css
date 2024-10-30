@@ -1,4 +1,5 @@
-.top, .bottom {
+.top,
+.bottom {
     --look-default-h: 37;
     --look-default-s: 27%;
     --look-default-l: 25%;
@@ -13,4 +14,8 @@
     --look-disabled-s: 10%;
     --look-disabled-l: 20%;
     --look-disabled-a: .9;
+}
+
+.error {
+    border-color: var(--error-color) !important;
 }

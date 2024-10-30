@@ -76,6 +76,7 @@ class _Calculations extends React.Component {
         return (
             <ListItem
                 key={key}
+                className={calculation.invalid ? styles.error : null}
                 onClick={() => this.editCalculation(calculation)}>
                 <CrudItem
                     title={msg(`process.bandMath.panel.calculations.form.type.${calculation.type}`)}

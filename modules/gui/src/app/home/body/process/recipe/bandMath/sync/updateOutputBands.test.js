@@ -127,5 +127,6 @@ const changes = toMerge => ({
     renamedCalculations: [],
     removedCalculations: [],
     calculationsWithChangedBands: [],
+    imagesWithChangedBands: [],
     ...toMerge
 })

@@ -9,7 +9,7 @@ import {ToolbarButton} from './toolbarButton'
 
 class _ActivationButton extends React.Component {
     render() {
-        const {icon, iconVariant, label, tooltip, tooltipAllowedWhenDisabled, tooltipOnVisible, disabled, onClick, activator: {activatables: {button: {active, canActivate, toggle}}}} = this.props
+        const {className, icon, iconVariant, label, tooltip, tooltipAllowedWhenDisabled, tooltipOnVisible, disabled, onClick, activator: {activatables: {button: {active, canActivate, toggle}}}} = this.props
         return (
             <ToolbarButton
                 disabled={disabled || (!active && !canActivate)}
@@ -20,7 +20,7 @@ class _ActivationButton extends React.Component {
                 tooltip={active ? null : tooltip}
                 tooltipAllowedWhenDisabled={tooltipAllowedWhenDisabled}
                 tooltipOnVisible={tooltipOnVisible}
-                className={[styles.activationButton, styles.panelButton, active ? styles.selected : null].join(' ')}
+                className={[className || '', styles.activationButton, styles.panelButton, active ? styles.selected : null].join(' ')}
                 onClick={e => {
                     toggle()
                     onClick && onClick(e)
@@ -38,6 +38,7 @@ export const ActivationButton = compose(
 
 ActivationButton.propTypes = {
     id: PropTypes.string.isRequired,
+    className: PropTypes.string,
     disabled: PropTypes.any,
     icon: PropTypes.string,
     iconVariant: PropTypes.any,

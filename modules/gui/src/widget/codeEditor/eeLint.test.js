@@ -287,6 +287,15 @@ it('Images with 2 and 3 bands, gives error', () => {
     }])
 })
 
+it('Images with 3 and 2 bands but using one of the bands, gives no problem', () => {
+    const image1 = {name: 'i1', includedBands: [{name: 'b1'}, {name: 'b2'}, {name: 'b3'}]}
+    const image2 = {name: 'i2', includedBands: [{name: 'b1'}, {name: 'b2'}]}
+    expect(lint({
+        images: [image1, image2],
+        expression: 'i1 + i2.b1'
+    })).toMatchObject([])
+})
+
 it('Images with 2 and 1 bands, gives no problem', () => {
     const image1 = {name: 'i1', includedBands: [{name: 'b1'}, {name: 'b2'}]}
     const image2 = {name: 'i2', includedBands: [{name: 'b1'}]}
@@ -306,89 +315,131 @@ it('Images with 1 and 2 bands, gives no problem', () => {
 })
 
 it('When only constants used returns constant band name', () => {
-    let bandNames
+    let usedBandNames
+    let includedBandNames
     lint({
         images: [],
         expression: '42',
-        onBandNamesChanged: changedBandNames => bandNames = changedBandNames.map(({name}) => name)
+        onBandChanged: ({usedBands, includedBands}) => {
+            usedBandNames = usedBands.map(({name}) => name)
+            includedBandNames = includedBands.map(({name}) => name)
+        }
     })
-    expect(bandNames).toMatchObject([
+    expect(includedBandNames).toEqual([
         'constant'
     ])
+    expect(usedBandNames).toEqual([])
 })
 
 it('When a single band image is used, the band name is returned', () => {
-    let bandNames
+    let usedBandNames
+    let includedBandNames
     const image = {name: 'i1', includedBands: [{name: 'b1'}]}
     lint({
         images: [image],
         expression: 'i1',
-        onBandNamesChanged: changedBandNames => bandNames = changedBandNames.map(({name}) => name)
+        onBandChanged: ({usedBands, includedBands}) => {
+            usedBandNames = usedBands.map(({name}) => name)
+            includedBandNames = includedBands.map(({name}) => name)
+        }
     })
-    expect(bandNames).toMatchObject([
+    expect(includedBandNames).toEqual([
+        'b1'
+    ])
+    expect(usedBandNames).toEqual([
         'b1'
     ])
 })
 
 it('When two different single band images are used, the first image band name is returned', () => {
-    let bandNames
-    const image1 = {name: 'i1', includedBands: [{name: 'b1'}]}
-    const image2 = {name: 'i2', includedBands: [{name: 'b2'}]}
+    let usedBandNames
+    let includedBandNames
+    const image1 = {name: 'i1', includedBands: [{imageId: 'imageId1', id: 'id1', name: 'b1'}]}
+    const image2 = {name: 'i2', includedBands: [{imageId: 'imageId2', id: 'id2', name: 'b2'}]}
     lint({
         images: [image1, image2],
         expression: 'i1 + i2',
-        onBandNamesChanged: changedBandNames => bandNames = changedBandNames.map(({name}) => name)
+        onBandChanged: ({usedBands, includedBands}) => {
+            usedBandNames = usedBands.map(({name}) => name)
+            includedBandNames = includedBands.map(({name}) => name)
+        }
     })
-    expect(bandNames).toMatchObject([
+    expect(includedBandNames).toEqual([
         'b1'
+    ])
+    expect(usedBandNames).toEqual([
+        'b1', 'b2'
     ])
 })
 
 it('When a two band image is used, both band names are returned', () => {
-    let bandNames
-    const image = {name: 'i1', includedBands: [{name: 'b1'}, {name: 'b2'}]}
+    let usedBandNames
+    let includedBandNames
+    const image = {name: 'i1', includedBands: [
+        {imageId: 'image-id1', id: 'id1', name: 'b1'},
+        {imageId: 'image-id1', id: 'id2', name: 'b2'}]}
     lint({
         images: [image],
         expression: 'i1',
-        onBandNamesChanged: changedBandNames => bandNames = changedBandNames.map(({name}) => name)
+        onBandChanged: ({usedBands, includedBands}) => {
+            usedBandNames = usedBands.map(({name}) => name)
+            includedBandNames = includedBands.map(({name}) => name)
+        }
     })
-    expect(bandNames).toMatchObject([
+    expect(includedBandNames).toEqual([
+        'b1', 'b2'
+    ])
+    expect(usedBandNames).toEqual([
         'b1', 'b2'
     ])
 })
 
 it('When single band from a multi-band image is used using . syntax, the single band is returned', () => {
-    let bandNames
+    let usedBandNames
+    let includedBandNames
     const image = {name: 'i1', includedBands: [{name: 'b1'}, {name: 'b2'}]}
     lint({
         images: [image],
         expression: 'i1.b1',
-        onBandNamesChanged: changedBandNames => bandNames = changedBandNames.map(({name}) => name)
+        onBandChanged: ({usedBands, includedBands}) => {
+            usedBandNames = usedBands.map(({name}) => name)
+            includedBandNames = includedBands.map(({name}) => name)
+        }
     })
-    expect(bandNames).toMatchObject([
+    expect(includedBandNames).toEqual([
+        'b1'
+    ])
+    expect(usedBandNames).toEqual([
         'b1'
     ])
 })
 
 it('When single band from a multi-band image is used using [] syntax, the single band is returned', () => {
-    let bandNames
+    let usedBandNames
+    let includedBandNames
     const image = {name: 'i1', includedBands: [{name: 'b1'}, {name: 'b2'}]}
     lint({
         images: [image],
         expression: 'i1["b1"]',
-        onBandNamesChanged: changedBandNames => bandNames = changedBandNames.map(({name}) => name)
+        onBandChanged: ({usedBands, includedBands}) => {
+            usedBandNames = usedBands.map(({name}) => name)
+            includedBandNames = includedBands.map(({name}) => name)
+        }
     })
-    expect(bandNames).toMatchObject([
+    expect(includedBandNames).toEqual([
+        'b1'
+    ])
+    expect(usedBandNames).toEqual([
         'b1'
     ])
 })
 
-const lint = ({images, expression, onBandNamesChanged}) => {
+const lint = ({images, expression, onBandChanged}) => {
     const state = EditorState.create({
         doc: expression,
         extensions: javascript()
     })
-    return eeLint(images, msg, onBandNamesChanged)({state})
+    return eeLint(images, msg, onBandChanged)({state})
 }
 
 const msg = (key, args) => ({key, args})

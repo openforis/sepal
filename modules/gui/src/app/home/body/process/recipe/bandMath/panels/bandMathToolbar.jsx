@@ -19,30 +19,25 @@ import {Retrieve} from './retrieve/retrieve'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
-    // bandNames: selectFrom(recipe, 'model.bandNames'),
     initialized: selectFrom(recipe, 'ui.initialized'),
+    calculations: selectFrom(recipe, 'model.calculations.calculations'),
 })
 
 class _BandMathToolbar extends React.Component {
     constructor(props) {
         super(props)
-        // this.syncBandNames = this.syncBandNames.bind(this)
     }
 
     render() {
-        const {recipeId, initialized} = this.props
+        const {recipeId, initialized, calculations} = this.props
         return (
             <PanelWizard
                 panels={['inputImagery']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
                 <Retrieve/>
-                <InputImagery
-                    // onChange={this.syncBandNames}
-                />
-                <Calculations
-                    // onChange={this.syncBandNames}
-                />
+                <InputImagery/>
+                <Calculations/>
                 <OutputBands/>
 
                 <Toolbar
@@ -64,6 +59,7 @@ class _BandMathToolbar extends React.Component {
                         disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='calculations'
+                        className={calculations.find(({invalid}) => invalid) ? styles.error : null}
                         label={msg('process.bandMath.panel.calculations.button')}
                         tooltip={msg('process.bandMath.panel.calculations.tooltip')}
                         disabled={!initialized}/>
@@ -77,13 +73,6 @@ class _BandMathToolbar extends React.Component {
             </PanelWizard>
         )
     }
-
-    // syncBandNames(images) {
-    //     const {recipeId, bandNames: {bandNames: prevBandNames}} = this.props
-    //     // const bandNames = toBandNames(images, undefined)
-    //     const bandNames = toBandNames(images, prevBandNames)
-    //     RecipeActions(recipeId).syncBandNames(bandNames)
-    // }
 }
 
 export const BandMathToolbar = compose(
