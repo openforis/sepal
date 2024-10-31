@@ -28,6 +28,13 @@ class _Sync extends React.Component {
         return null
     }
 
+    shouldComponentUpdate(nextProps, nextState) {
+        const {images, calculations} = this.props
+        const {images: nextImages, calculations: nextCalculations} = nextProps
+        const changed = !_.isEqual(images, nextImages) || !_.isEqual(calculations, nextCalculations)
+        return changed || nextState.lint
+    }
+
     componentDidUpdate(prevProps) {
         const {images: prevImages, calculations: prevCalculations, outputImages: prevOutputImages} = prevProps
         const {images, calculations, outputImages, userDefinedVisualizations, recipeActionBuilder} = this.props
