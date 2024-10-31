@@ -2670,6 +2670,8 @@
                     "tooltip": "",
                     "duplicateBand": "",
                     "invalidFormat": "",
+                    "noImages": "",
+                    "noBands": "",
                     "addImage": {
                         "label": "Ajouter",
                         "tooltip": "",
@@ -5177,6 +5179,10 @@
             "loadError": "Impossible de charger l'Asset"
         },
         "codeEditor": {
+            "info": "",
+            "help1": "",
+            "help2": "",
+            "example": "",
             "eeAutoComplete": {
                 "bandNames": {
                     "section": ""
