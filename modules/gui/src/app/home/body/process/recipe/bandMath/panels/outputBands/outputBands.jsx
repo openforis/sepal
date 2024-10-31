@@ -69,13 +69,12 @@ class _OutputBands extends React.Component {
         const {calculations, images, inputs: {outputImages}} = this.props
         const usedImageIds = (outputImages.value || []).map(({imageId}) => imageId)
 
-        const renderImageLabel = image => (
+        const renderImageLabel = image =>
             <CrudItem
                 key={image.imageId}
                 title={msg(`process.bandMath.panel.outputBands.type.${image.type}`)}
                 description={<ImageDescription image={image}/>}
                 metadata={image.name}/>
-        )
 
         const toOptions = (array, groupLabel) => ({
             label: groupLabel,
@@ -115,19 +114,21 @@ class _OutputBands extends React.Component {
         )
     }
 
-    renderOutputImage(image) {
+    renderOutputImage(outputImage) {
+        const {images, calculations} = this.props
+        const image = [...images, ...calculations].find(({imageId}) => imageId === outputImage.imageId)
         return (
             <ListItem
                 key={image.imageId}
                 expansionClickable
                 expanded
-                expansion={this.renderOutputBands(image)}
+                expansion={this.renderOutputBands(outputImage)}
             >
                 <CrudItem
                     title={msg(`process.bandMath.panel.outputBands.type.${image.type}`)}
                     description={<ImageDescription image={image}/>}
                     metadata={image.name}
-                    inlineComponents={this.renderAddBandButton(image)}
+                    inlineComponents={this.renderAddBandButton(outputImage)}
                     unsafeRemove
                     onRemove={() => this.removeImage({image})}
                 />
@@ -136,14 +137,14 @@ class _OutputBands extends React.Component {
         )
     }
 
-    renderOutputBands(image) {
+    renderOutputBands(outputImage) {
         const {allOutputBandNames} = this.state
         return (
             <Layout type='horizontal' alignment='fill'>
-                {image.outputBands.map(band => {
+                {outputImage.outputBands.map(band => {
                     return <OutputBand
                         key={band.name}
-                        image={image}
+                        image={outputImage}
                         band={band}
                         allOutputBandNames={allOutputBandNames}
                         onChange={this.updateBand}
@@ -155,11 +156,11 @@ class _OutputBands extends React.Component {
         )
     }
 
-    renderAddBandButton(image) {
-        const outputBandIds = image.outputBands.map(({id}) => id)
-        const bandOptions = image.includedBands
+    renderAddBandButton(outputImage) {
+        const outputBandIds = outputImage.outputBands.map(({id}) => id)
+        const bandOptions = outputImage.includedBands
             .filter(({id}) => !outputBandIds.includes(id))
-            .map(band => ({value: band.name, label: band.name, band, image}))
+            .map(band => ({value: band.name, label: band.name, band, image: outputImage}))
         const options = bandOptions.length > 1
             ? [
                 {value: 'all', label: msg('process.bandMath.panel.outputBands.addBands.all.label'), bandOptions},
