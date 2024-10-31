@@ -5179,7 +5179,7 @@
         "codeEditor": {
             "info": "Press Ctrl+Space to autocomplete",
             "help1": "Enter an arithmetic expression, using input imagery and earlier calculation steps as input.",
-            "help2": "A subset of the EE expressions are supported. Notably, you cannot assign variables to name bands, used indexes to refer to band names, or use the `b()` syntax to refer to bands.",
+            "help2": "A subset of the EE expressions are supported. Notably, you cannot assign variables to name bands, use indexes to refer to band, or use the `b()` syntax.",
             "example": "Example: {example}",
             "eeAutoComplete": {
                 "bandNames": {
