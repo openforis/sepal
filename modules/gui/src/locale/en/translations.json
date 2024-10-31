@@ -2670,6 +2670,8 @@
                     "tooltip": "Select bands to output and their corresponding names.",
                     "duplicateBand": "Duplicate band name",
                     "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
+                    "noImages": "No images/calculations added to output",
+                    "noBands": "No bands added to output",
                     "addImage": {
                         "label": "Add",
                         "tooltip": "Include bands from image or calculation to output",

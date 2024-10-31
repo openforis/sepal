@@ -15,7 +15,6 @@ import {Sync} from './sync/sync'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
-    initialized: selectFrom(recipe, 'ui.initialized'),
     images: selectFrom(recipe, 'model.inputImagery.images'),
     savedLayers: selectFrom(recipe, 'layers')
 })

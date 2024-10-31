@@ -21,14 +21,17 @@ const mapStateToProps = state => {
 
 class _BandMathImageLayer extends React.Component {
     render() {
-        const {layer, map} = this.props
-        return (
-            <MapAreaLayout
-                layer={this.canRender() ? layer : null}
-                form={this.renderImageLayerForm()}
-                map={map}
-            />
-        )
+        const {layer, map, recipe} = this.props
+        const hasOutputBands = !!recipe?.model?.outputBands?.outputImages?.length
+        return hasOutputBands
+            ? (
+                <MapAreaLayout
+                    layer={this.canRender() ? layer : null}
+                    form={this.renderImageLayerForm()}
+                    map={map}
+                />
+            )
+            : null
     }
 
     renderImageLayerForm() {

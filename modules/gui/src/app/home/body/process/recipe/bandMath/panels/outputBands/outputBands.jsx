@@ -13,6 +13,7 @@ import {CrudItem} from '~/widget/crudItem'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
+import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
 import {ImageDescription} from '../../imageDescription'
@@ -22,6 +23,10 @@ import {addOutputBand, addOutputImage, createUniqueBandName} from './outputImage
 
 const fields = {
     outputImages: new Form.Field()
+        .notEmpty()
+        .predicate(value => !value.find(({outputBands}) => !outputBands.length),
+            'process.bandMath.panel.outputBands.missingBands'
+        )
 }
 
 const mapRecipeToProps = recipe => {
@@ -109,7 +114,9 @@ class _OutputBands extends React.Component {
         const {inputs: {outputImages}} = this.props
         return (
             <Layout>
-                {(outputImages.value || []).map(this.renderOutputImage)}
+                {outputImages.value?.length
+                    ? outputImages.value.map(this.renderOutputImage)
+                    : <NoData message={msg('process.bandMath.panel.outputBands.noImages')}/>}
             </Layout>
         )
     }
@@ -141,17 +148,19 @@ class _OutputBands extends React.Component {
         const {allOutputBandNames} = this.state
         return (
             <Layout type='horizontal' alignment='fill'>
-                {outputImage.outputBands.map(band => {
-                    return <OutputBand
-                        key={band.name}
-                        image={outputImage}
-                        band={band}
-                        allOutputBandNames={allOutputBandNames}
-                        onChange={this.updateBand}
-                        onRemove={this.removeBand}
-                        onValidationStatusChanged={this.onValidationStatusChanged}/>
-                }
-                )}
+                {outputImage.outputBands.length
+                    ? outputImage.outputBands.map(band => {
+                        return <OutputBand
+                            key={band.name}
+                            image={outputImage}
+                            band={band}
+                            allOutputBandNames={allOutputBandNames}
+                            onChange={this.updateBand}
+                            onRemove={this.removeBand}
+                            onValidationStatusChanged={this.onValidationStatusChanged}/>
+                    }
+                    )
+                    : <NoData message={msg('process.bandMath.panel.outputBands.noBands')}/>}
             </Layout>
         )
     }
