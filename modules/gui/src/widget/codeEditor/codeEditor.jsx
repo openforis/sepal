@@ -7,8 +7,12 @@ import {EditorView, keymap} from '@codemirror/view'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {msg} from '~/translate'
+
+import {Icon} from '../icon'
 import {Keybinding} from '../keybinding'
-import _styles from './codeEditor.module.css'
+import {Layout} from '../layout'
+import styles from './codeEditor.module.css'
 import {theme} from './theme'
 
 export class CodeEditor extends React.Component {
@@ -21,7 +25,15 @@ export class CodeEditor extends React.Component {
     }
 
     render() {
+        const {example} = this.props
         const {show} = this.state
+        const tooltip = (
+            <Layout spacing='compact'>
+                <div>{msg('widget.codeEditor.help1')}</div>
+                <div>{msg('widget.codeEditor.help2')}</div>
+                {example ? <div>{msg('widget.codeEditor.example', {example})}</div> : ''}
+            </Layout>
+        )
         // [HACK] Defer rendering one cycle, to ensure keybindings have priority
         return show
             ? (
@@ -29,7 +41,21 @@ export class CodeEditor extends React.Component {
                     Enter: this.onKeyPress,
                     Escape: this.onKeyPress
                 }}>
-                    <div ref={this.setupEditor}/>
+                    <div>
+                        <div ref={this.setupEditor}/>
+                        <Layout
+                            type='horizontal'
+                            alignment='right'
+                            spacing='compact'
+                            className={styles.info}>
+                            <div>{msg('widget.codeEditor.info')}</div>
+                            <Icon
+                                name='circle-question'
+                                tooltip={tooltip}
+                                tooltipDelay={0}
+                            />
+                        </Layout>
+                    </div>
                 </Keybinding>
             )
             : null
@@ -117,5 +143,6 @@ CodeEditor.propTypes = {
     input: PropTypes.object.isRequired,
     lint: PropTypes.func.isRequired,
     autoFocus: PropTypes.any,
+    example: PropTypes.string,
     onExpressionChange: PropTypes.func
 }

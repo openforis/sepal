@@ -95,6 +95,7 @@ class _ExpressionSection extends React.Component {
                 input={expression}
                 autoComplete={eeAutoComplete(allImages, msg)}
                 lint={eeLint(allImages, msg, this.updateBands)}
+                example={`abs(${images[0].name}.${images[0].includedBands[0].name}) / 10000`}
                 autoFocus
             />
         )
