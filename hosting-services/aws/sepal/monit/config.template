@@ -8,4 +8,4 @@ set mailserver {{ lookup('env', 'SMTP_HOST') }} port {{ lookup('env', 'SMTP_PORT
 
 set mail-format { from: monit@{{ lookup('env', 'SEPAL_HOST') }} }
 
-set alert {{ lookup('env', 'SEPAL_MONITORING_EMAIL') }}
+set alert {{ lookup('env', 'SEPAL_MONITORING_EMAIL') }} but not on { resource }
