@@ -78,11 +78,11 @@ export class PanelSections extends React.Component {
     }
 
     componentDidMount() {
-        const {step, inputs, selected, onChange} = this.props
+        const {step, inputs, selected, shared = [], onChange} = this.props
         step && step.set(0)
         if (this.isSelectionSection())
             Object.keys(inputs)
-                .filter(name => name !== selected.name)
+                .filter(name => name !== selected.name && !shared.includes(name))
                 .forEach(name => inputs[name] && inputs[name].set(''))
 
         onChange && selected.onChange(onChange)
@@ -116,6 +116,7 @@ PanelSections.propTypes = {
     defaultButtons: PropTypes.any,
     icon: PropTypes.string,
     label: PropTypes.string,
+    shared: PropTypes.array,
     step: PropTypes.any, // input field
     onChange: PropTypes.func
 }

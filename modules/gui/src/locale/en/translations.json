@@ -2540,7 +2540,7 @@
         },
         "stack": {
             "create": "Stack",
-            "description": "Create an image stack from SEPAL and/or Google Earth Engine imagery.",
+            "description": "Create an image stack from SEPAL and/or Google Earth Engine image assets.",
             "panel": {
                 "bandNames": {
                     "button": "NAM",
@@ -2551,6 +2551,149 @@
                 }
             },
             "tabPlaceholder": "Stack"
+        },
+        "bandMath": {
+            "create": "Band Math",
+            "description": "Perform band math on imagery from SEPAL and/or Google Earth Engine image assets.",
+            "duplicateName": "Duplicate name. There are other images or calculations with this name.",
+            "invalidName": "Cannot use names that are math functions or constants.",
+            "panel": {
+                "inputImagery": {
+                    "name": {
+                        "label": "Image name",
+                        "tooltip": "The name of this image to use when referring to it within expressions."
+                    }
+                },
+                "calculations": {
+                    "button": "CAL",
+                    "title": "Calculations",
+                    "tooltip": "Generate calculated bands.",
+                    "form": {
+                        "noCalculations": "No calculations provided",
+                        "usedBands": {
+                            "label": "Bands",
+                            "tooltip": "The bands to apply the function to"
+                        },
+                        "function": {
+                            "label": "Function",
+                            "placeholder": "Select Function...",
+                            "tooltip": "Reduce the selected bands to a single band value using the selected function."
+                        },
+                        "bandName": {
+                            "label": "Band name",
+                            "placeholder": "Band name...",
+                            "tooltip": "The name of the resulting band after applying the function."
+                        },
+                        "calculationName": {
+                            "label": "Calculation name",
+                            "placeholder": "Calculation name...",
+                            "tooltip": "The name of this calculation to use when referring to it within expressions."
+                        },
+                        "dataType": {
+                            "label": "Data type",
+                            "placeholder": "Data type...",
+                            "tooltip": "The data type to cast the output band(s) to.",
+                            "auto": "[auto]",
+                            "int8": "int8",
+                            "int16": "int16",
+                            "int32": "int32",
+                            "int64": "int64",
+                            "uint8": "uint8",
+                            "uint16": "uint16",
+                            "uint32": "uint32",
+                            "byte": "byte",
+                            "short": "short",
+                            "int": "int",
+                            "long": "long",
+                            "float": "float",
+                            "double": "double"
+                        },
+                        "expression": {
+                            "label": "Expression",
+                            "placeholder": "Expression...",
+                            "tooltip": "The expression to evaluate."
+                        },
+                        "type": {
+                            "FUNCTION": "Function",
+                            "EXPRESSION": "Expression"
+                        },
+                        "bandRenameStrategy": {
+                            "label": "Band rename strategy",
+                            "tooltip": "The expression generates an image with multiple bands. Select which strategy to use for naming them.",
+                            "PREFIX": {
+                                "label": "Prefix"
+                            },
+                            "SUFFIX": {
+                                "label": "Suffix"
+                            },
+                            "REGEX": {
+                                "label": "Regular expression",
+                                "tooltip": "Renames the bands outputted by the calculation by applying a regular expression replacement."
+                            }
+                        },
+                        "regex": {
+                            "label": "Regular expression",
+                            "placeholder": "Regular expression...",
+                            "tooltip": "The regular expression used to match bands to rename. Any bands not matched by the regex will included without renaming."
+                        },
+                        "bandRename": {
+                            "PREFIX": {
+                                "label": "Prefix",
+                                "placeholder": "Prefix...",
+                                "tooltip": "Apply this prefix to all bands outputted by expression"
+                            },
+                            "SUFFIX": {
+                                "label": "Suffix",
+                                "placeholder": "Suffix...",
+                                "tooltip": "Apply this suffix to all bands outputted by expression"
+                            },
+                            "REGEX": {
+                                "label": "Replacement",
+                                "placeholder": "Replacement...",
+                                "tooltip": "The text with which to replace each match. Supports $n syntax for captured values."
+                            }
+                        }
+                    },
+                    "sections": {
+                        "title": "Calculation"
+                    },
+                    "expression": {
+                        "title": "Expression"
+                    },
+                    "function": {
+                        "title": "Function"
+                    }
+                },
+                "outputBands": {
+                    "button": "OUT",
+                    "title": "Output band names",
+                    "tooltip": "Select bands to output and their corresponding names.",
+                    "duplicateBand": "Duplicate band name",
+                    "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
+                    "noImages": "No images/calculations added to output",
+                    "noBands": "No bands added to output",
+                    "addImage": {
+                        "label": "Add",
+                        "tooltip": "Include bands from image or calculation to output",
+                        "calculations": "Calculations",
+                        "images": "Images"
+                    },
+                    "addBands": {
+                        "placeholder": "Add band...",
+                        "tooltip": "Add band to include in recipe output.",
+                        "all": {
+                            "label": "[All bands]"
+                        }
+                    },
+                    "type": {
+                        "ASSET": "Earth Engine asset",
+                        "RECIPE_REF": "SEPAL recipe",
+                        "EXPRESSION": "Expression",
+                        "FUNCTION": "Function"
+                    }
+                }
+            },
+            "tabPlaceholder": "Band_math"
         },
         "classChange": {
             "create": "Class change",
@@ -5034,6 +5177,33 @@
         },
         "assetInput": {
             "loadError": "Unable to load asset"
+        },
+        "codeEditor": {
+            "info": "Press Ctrl+Space to autocomplete",
+            "help1": "Enter an arithmetic expression, using input imagery and earlier calculation steps as input.",
+            "help2": "A subset of the EE expressions are supported. Notably, you cannot assign variables to name bands, use indexes to refer to band, or use the `b()` syntax.",
+            "example": "Example: {example}",
+            "eeAutoComplete": {
+                "bandNames": {
+                    "section": "Band names"
+                },
+                "imagesAndCalculations": {
+                    "section": "Images and calculations"
+                },
+                "mathFunctions": {
+                    "section": "Functions"
+                },
+                "mathConstants": {
+                    "section": "Mathematical constants"
+                }
+            },
+            "eeLint": {
+                "undefinedVariable": "\"{variableName}\" is not defined. \n\nVariables must be the name of images, name of calculations declared before this function, math functions, or math constants.",
+                "invalidBand": "\"{imageName}\" doesn't contain band \"{bandName}\".",
+                "invalidBandCount": "Images must contain the same number of bands or only 1 band. Got 2 and 3. \"{imageName}\" contains {bandCount} bands while another image contains {expectedBandCount}.",
+                "invalidArgCount": "Function expect {expectedArgCount} argument, got {argCount}.",
+                "syntaxError": "Syntax error."
+            }
         },
         "comboBox": {
             "loading": "Loading..."

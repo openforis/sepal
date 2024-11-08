@@ -1,4 +1,5 @@
 import asset from './recipe/asset/asset'
+import bandMath from './recipe/bandMath/bandMath'
 import baytsAlerts from './recipe/baytsAlerts/baytsAlerts'
 import baytsHistorical from './recipe/baytsHistorical/baytsHistorical'
 import ccdc from './recipe/ccdc/ccdc'
@@ -27,6 +28,7 @@ export const registerRecipeTypes = () => {
     addRecipeType(unsupervisedClassification())
     addRecipeType(regression())
     addRecipeType(stack())
+    addRecipeType(bandMath())
     addRecipeType(timeSeries())
     addRecipeType(ccdc())
     addRecipeType(ccdcSlice())

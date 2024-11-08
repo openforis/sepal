@@ -13,6 +13,7 @@ import {toSources} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 import {msg} from '~/translate'
+import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Notifications} from '~/widget/notifications'
@@ -21,6 +22,7 @@ import {Panel} from '~/widget/panel/panel'
 import styles from './sources.module.css'
 
 const fields = {
+    advanced: new Form.Field(),
     dataSetType: new Form.Field()
         .notEmpty(),
     dataSets: new Form.Field()
@@ -53,6 +55,7 @@ class _Sources extends React.Component {
     }
 
     render() {
+        const {inputs: {advanced}} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -61,15 +64,35 @@ class _Sources extends React.Component {
                     icon='cog'
                     title={msg('process.timeSeries.panel.sources.title')}/>
                 <Panel.Content>
-                    <Layout>
-                        {this.renderDataSetTypes()}
-                        {this.renderDataSets()}
-                        {this.renderAssetId()}
-                        {this.renderClassification()}
-                    </Layout>
+                    {advanced.value ? this.renderAdvanced() : this.renderSimple()}
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons>
+                    <Button
+                        label={advanced.value ? msg('button.less') : msg('button.more')}
+                        onClick={() => this.setAdvanced(!advanced.value)}/>
+                </Form.PanelButtons>
             </RecipeFormPanel>
+        )
+    }
+
+    renderAdvanced() {
+        return (
+            <Layout>
+                {this.renderDataSetTypes()}
+                {this.renderDataSets()}
+                {this.renderAssetId()}
+                {this.renderClassification()}
+            </Layout>
+        )
+    }
+
+    renderSimple() {
+        return (
+            <Layout>
+                {this.renderDataSetTypes()}
+                {this.renderDataSets()}
+                {this.renderAssetId()}
+            </Layout>
         )
     }
 
@@ -207,6 +230,11 @@ class _Sources extends React.Component {
             classificationLegend: null,
             classifierType: null
         })
+    }
+
+    setAdvanced(enabled) {
+        const {inputs: {advanced}} = this.props
+        advanced.set(enabled)
     }
 }
 

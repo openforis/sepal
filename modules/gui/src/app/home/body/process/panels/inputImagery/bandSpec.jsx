@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {defaultBand, defaultLegendEntries} from '~/app/home/body/process/recipe/remapping/remappingRecipe'
 import {msg} from '~/translate'
 import {Buttons} from '~/widget/buttons'
 import {Combo} from '~/widget/combo'
@@ -10,6 +9,7 @@ import {Layout} from '~/widget/layout'
 import {Legend} from '~/widget/legend/legend'
 import {ListItem} from '~/widget/listItem'
 
+import {defaultBand, defaultLegendEntries} from './bands'
 import styles from './bandSpec.module.css'
 
 export class BandSpec extends React.Component {

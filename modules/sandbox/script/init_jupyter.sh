@@ -22,7 +22,7 @@ apt-get install -y libzmq3-dev
 /usr/bin/python3 -m pip install jupyter-resource-usage
 
 /usr/bin/python3 -m pip install ipyvuetify
-/usr/bin/python3 -m pip install "geemap<=v0.34.2"
+/usr/bin/python3 -m pip install "geemap"
 /usr/bin/python3 -m pip install "ipecharts>=1.0.8"
 /usr/bin/python3 -m pip install sidecar
 
@@ -34,4 +34,4 @@ git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 /usr/bin/python3 /usr/local/bin/jupyter nbextensions_configurator enable
 /usr/bin/python3 /usr/local/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension
 
-/usr/bin/python3 -m pip install "git+https://github.com/dfguerrerom/voila.git@custom-labextension"
+/usr/bin/python3 -m pip install "voila==0.5.8"
