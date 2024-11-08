@@ -137,6 +137,18 @@ export const withEnableDetector = () =>
                     })
                 }
 
+                componentDidMount() {
+                    const {enabled} = this.props
+                    if (enabled) {
+                        if (this.onEnable) {
+                            this.onEnable()
+                        }
+                        if (this.onChange) {
+                            this.onChange(true)
+                        }
+                    }
+                }
+
                 componentDidUpdate({enabled: wasEnabled}) {
                     const {enabled} = this.props
                     const nowEnabled = enabled === true && wasEnabled !== true

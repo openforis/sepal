@@ -11,6 +11,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {withEnableDetector} from '~/enabled'
 import format from '~/format'
+import {getLogger} from '~/log'
 import {dotSafe} from '~/stateUtils'
 import {select} from '~/store'
 import lookStyles from '~/style/look.module.css'
@@ -27,6 +28,8 @@ import {SortButtons} from '~/widget/sortButtons'
 import {Tabs} from '~/widget/tabs/tabs'
 import {ToggleButton} from '~/widget/toggleButton'
 
+const log = getLogger('browse')
+
 import styles from './browse.module.css'
 
 const ANIMATION_DURATION_MS = 1000
@@ -41,7 +44,6 @@ const mapStateToProps = (state, ownProps) => ({
     tree: select([basePath(ownProps.id), TREE]) || {},
     showDotFiles: select([basePath(ownProps.id), SHOW_DOT_FILES]),
     splitDirs: select([basePath(ownProps.id), SPLIT_DIRS]),
-
     sorting: select([basePath(ownProps.id), SORTING]) || {sortingOrder: 'name', sortingDirection: 1}
 })
 
@@ -58,6 +60,10 @@ class _FileBrowser extends React.Component {
 
     userFiles = api.userFiles.userFiles()
 
+    state = {
+        enabled: true
+    }
+
     constructor() {
         super()
         this.processUpdates = this.processUpdates.bind(this)
@@ -73,10 +79,30 @@ class _FileBrowser extends React.Component {
         const {addSubscription, enableDetector: {onChange}} = this.props
         onChange(enabled => this.enabled(enabled))
         addSubscription(
-            this.userFiles.downstream$.subscribe(
-                updates => this.processUpdates(updates)
-            )
+            this.userFiles.downstream$.subscribe({
+                next: ({ready, data: updates}) => {
+                    if (ready === false) {
+                        this.setState({enabled: false})
+                    }
+                    if (ready === true) {
+                        this.userFiles.upstream$.next({monitor: ['/', ...this.getOpenDirs()]})
+                        this.setState({enabled: true})
+                    }
+                    if (updates) {
+                        this.processUpdates(updates)
+                    }
+                },
+                error: error => log.error('downstream$ error', error),
+                complete: () => log.error('downstream$ complete')
+            })
         )
+    }
+
+    reset() {
+        const {id} = this.props
+        actionBuilder('RESET_TREE')
+            .set([basePath(id), TREE], {})
+            .dispatch()
     }
 
     processUpdates(updates) {
@@ -158,6 +184,17 @@ class _FileBrowser extends React.Component {
         return !!this.getNode(path).opened
     }
 
+    getOpenDirs(path = '/') {
+        const node = this.getNode(path)
+        return node.items
+            ? Object.entries(node.items)
+                .map(([name, {dir, opened}]) => (dir && opened) ? name : null)
+                .filter(Boolean)
+                .map(name => Path.resolve(path, name))
+                .flatMap(path => [path, ...this.getOpenDirs(path)])
+            : []
+    }
+
     scanOpenDirs(path) {
         const node = this.getNode(path)
         if (node.items) {
@@ -166,7 +203,6 @@ class _FileBrowser extends React.Component {
                 .filter(_.identity)
                 .forEach(name => this.userFiles.upstream$.next({monitor: Path.resolve(path, name)}))
         }
-
     }
 
     expandDirectory(path) {
