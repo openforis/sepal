@@ -5,11 +5,11 @@ const {exec$} = require('./terminal')
 const {basename} = require('path')
 
 const monitorApps = () =>
-    interval(5000).pipe(
+    interval(10000).pipe(
         exhaustMap(() => apps$().pipe(
             concatMap(app => updateApp$(app).pipe(
-                delay(5000)
-            ))
+                delay(10000),
+            )),
         ))
     ).subscribe({
         error: error => log.fatal('Monitor exited:', error),
@@ -19,16 +19,15 @@ const monitorApps = () =>
 const apps$ = () =>
     fileToJson$('/var/lib/sepal/app-manager/apps.json').pipe(
         switchMap(({apps}) => from(apps)),
-        filter(({repository, id}) => repository && id !== 'se.plan'),
-        map(({endpoint = 'shiny', label, repository, branch}) => {
+        filter(({repository}) => repository),
+        filter(({endpoint}) => endpoint === 'solara'),
+        map(({endpoint, label, repository, branch}) => {
             const name = basename(repository)
             return {
                 endpoint,
                 name,
                 label,
-                path: endpoint === 'jupyter'
-                    ? `/var/lib/sepal/app-manager/apps/${name}`
-                    : `/shiny/${name}`,
+                path: `/var/lib/sepal/app-manager/apps/${name}`,
                 repository,
                 branch
             }
@@ -40,11 +39,18 @@ const apps$ = () =>
     )
 
 const updateApp$ = app => {
-    log.info('Updating app', app.path)
+    // Explicitly pass EE_CREDENTIALS_PATH to the child process
+    const env = {
+        EE_CREDENTIALS_PATH: process.env.EE_CREDENTIALS_PATH,
+        PATH: process.env.PATH,
+        HOME: process.env.HOME,
+
+    }
     return exec$(
         '/',
         'sudo',
-        ['update-app', app.path, app.label, app.repository, app.branch || 'HEAD']
+        ['-E', 'update-app', app.path, app.label, app.repository, 'solara'],
+        env
     ).pipe(
         catchError(error => {
             log.error('Failed to update app:', error)

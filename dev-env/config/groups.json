@@ -15,7 +15,8 @@
         "terminal",
         "user",
         "user-files",
-        "user-storage"
+        "user-storage",
+        "app-launcher"
     ],
     "process": [
         "gateway",
@@ -26,7 +27,8 @@
         "mysql",
         "rabbitmq",
         "sepal-server",
-        "user"
+        "user",
+        "app-launcher"
     ],
     "apps": [
         "app-manager",
@@ -39,7 +41,8 @@
         "sepal-server",
         "ssh-gateway",
         "terminal",
-        "user"
+        "user",
+        "app-launcher"
     ],
     "node": [
         "app-manager",
@@ -53,6 +56,7 @@
         "task",
         "terminal",
         "user-files",
-        "user-storage"
+        "user-storage",
+        "app-launcher"
     ]
 }
