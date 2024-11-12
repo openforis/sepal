@@ -1,0 +1,46 @@
+services:
+  app-launcher:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
+    build:
+      context: ../..
+      dockerfile: ./modules/app-launcher/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/app-launcher:${SEPAL_VERSION:-latest}"
+    container_name: app-launcher
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
+      - "${SEPAL_DATA_DIR}/app-manager/apps.json:/var/lib/sepal/app-manager/apps.json"
+      - "${SEPAL_DATA_DIR}/sepal/shared/apps:/var/lib/sepal/app-manager/apps"
+      - "${SEPAL_DATA_DIR}/app-launcher:/var/lib/sepal/app-launcher"
+    init: true
+    environment:
+      USERS_HOME_PATH: "${SEPAL_DATA_DIR}/sepal/home"
+      EE_CREDENTIALS_PATH: "${SEPAL_DATA_DIR}/app-launcher/service-account-credentials.json"
+      DOCKER_REGISTRY_HOST: "${DOCKER_REGISTRY_HOST}"
+      SEPAL_DATA_DIR: "${SEPAL_DATA_DIR}"
+      DEPLOY_ENVIRONMENT : "${DEPLOY_ENVIRONMENT}"
+      EE_ACCOUNT: "${EE_ACCOUNT}"
+      EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
+      GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
+      GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
+      NICFI_PLANET_API_KEY: "${NICFI_PLANET_API_KEY}"
+    # healthcheck:
+    #   test: bash -c "exec 6<> /dev/tcp/localhost/5011"
+    #   timeout: 60s
+    #   interval: 1s
+    #   retries: 60
+    networks:
+      - sepal
+    restart: always
+    ulimits:
+      core: 0
+
+networks:
+  sepal:
+    external: true

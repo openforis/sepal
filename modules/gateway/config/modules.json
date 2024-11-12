@@ -1,4 +1,5 @@
 {
+  "appLauncher" : "app-launcher:5011",
   "appManager": "app-manager:5011",
   "ceoGateway": "ceo-gateway:8001",
   "userFiles": "user-files:5999",

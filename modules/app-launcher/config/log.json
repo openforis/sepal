@@ -1,0 +1,7 @@
+{
+    "port": 5104,
+    "categories": {
+        "main": "info",
+        "terminal": "debug"
+    }
+}
