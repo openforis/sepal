@@ -29,9 +29,11 @@ class _Sync extends React.Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        const {images, calculations} = this.props
-        const {images: nextImages, calculations: nextCalculations} = nextProps
-        const changed = !_.isEqual(images, nextImages) || !_.isEqual(calculations, nextCalculations)
+        const {images, calculations, outputImages} = this.props
+        const {images: nextImages, calculations: nextCalculations, outputImages: nextOutputImages} = nextProps
+        const changed = !_.isEqual(images, nextImages)
+            || !_.isEqual(calculations, nextCalculations)
+            || !_.isEqual(outputImages, nextOutputImages)
         return changed || nextState.lint
     }
 
