@@ -37,8 +37,8 @@ class _Sources extends React.Component {
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'
-                onApply={(values, model) => {
-                    if (Object.keys(model).length > 1) {
+                onApply={(_values, model) => {
+                    if (Object.keys(model.dataSets).length > 1) {
                         this.recipeActions.enableBandCalibration().dispatch()
                         this.recipeActions.useAllScenes().dispatch()
                     }
