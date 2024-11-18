@@ -58,7 +58,7 @@ class _ButtonSelect extends React.Component {
     }
 
     renderSingleButton() {
-        const {disabled, chromeless, shape, look, icon, labelStyle, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
+        const {noChevron, disabled, chromeless, shape, look, icon, labelStyle, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
         return (
             <Button
                 ref={this.input}
@@ -73,7 +73,7 @@ class _ButtonSelect extends React.Component {
                 width={width}
                 disabled={disabled}
                 tail={
-                    <Icon name={this.getChevronIcon()}/>
+                    noChevron ? null : <Icon name={this.getChevronIcon()}/>
                 }
                 onClick={this.toggleOptions}
                 onMouseOver={onMouseOver}
@@ -123,26 +123,30 @@ class _ButtonSelect extends React.Component {
         const {onClick} = this.props
         onClick && onClick(e)
     }
-
+    
     getLabel() {
         const {label} = this.props
         const {selectedOption} = this.state
         return (selectedOption && (selectedOption.buttonLabel || selectedOption.label)) || label
     }
+    getChevron() {
+    }
 
     getChevronIcon() {
-        const {placement} = this.props
-        return placement === 'above' ? 'chevron-up' : 'chevron-down'
+        const {noChevron, placement} = this.props
+        return noChevron
+            ? null
+            : placement === 'above' ? 'chevron-up' : 'chevron-down'
     }
 
     renderOptions() {
-        const {placement, optionsClassName, optionTooltipPlacement} = this.props
+        const {placement, hPlacement = 'over-right', optionsClassName, optionTooltipPlacement} = this.props
         const {flattenedOptions, selectedOption, selected} = this.state
         return (
             <FloatingBox
                 element={this.input.current}
                 vPlacement={placement}
-                hPlacement='over-right'
+                hPlacement={hPlacement}
                 onBlur={this.handleBlur}>
                 <ScrollableList
                     ref={this.list}
@@ -263,11 +267,13 @@ ButtonSelect.propTypes = {
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
+    hPlacement: PropTypes.oneOf(['center', 'left', 'over-left', 'over', 'over-right', 'right']),
     icon: PropTypes.string,
     input: PropTypes.any,
     label: PropTypes.any,
     labelStyle: PropTypes.any,
     look: PropTypes.string,
+    noChevron: PropTypes.any,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
