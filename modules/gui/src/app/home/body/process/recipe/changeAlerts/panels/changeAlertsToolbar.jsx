@@ -3,6 +3,7 @@ import React from 'react'
 
 import {setInitialized} from '~/app/home/body/process/recipe'
 import {Options as RadarPreprocess} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
+import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -17,7 +18,6 @@ import styles from './changeAlertsToolbar.module.css'
 import {ChartPixel} from './chartPixel'
 import {Date} from './date/date'
 import {Options} from './options/options'
-import {PreProcessingOptions as OpticalPreprocess} from './preProcessingOptions/preProcessingOptions'
 import {Reference} from './reference/reference'
 import {Retrieve} from './retrieve/retrieve'
 import {Sources} from './sources/sources'
@@ -48,7 +48,10 @@ class _ChangeAlertsToolbar extends React.Component {
                 <Date/>
                 <Sources/>
                 {_.isEmpty(sources.dataSets['SENTINEL_1'])
-                    ? <OpticalPreprocess/>
+                    ? <OpticalPreprocess
+                        title={msg('process.changeAlerts.panel.preprocess.title')}
+                        forCollection
+                    />
                     : <RadarPreprocess/>
                 }
                 <Options/>
@@ -96,6 +99,10 @@ class _ChangeAlertsToolbar extends React.Component {
         )
     }
 }
+
+const OpticalPreprocess = createCompositeOptions({
+    id: 'options'
+})
 
 export const ChangeAlertsToolbar = compose(
     _ChangeAlertsToolbar,

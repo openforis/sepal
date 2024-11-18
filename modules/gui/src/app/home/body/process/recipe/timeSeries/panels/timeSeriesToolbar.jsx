@@ -4,8 +4,8 @@ import React from 'react'
 import {setInitialized} from '~/app/home/body/process/recipe'
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import {Options as RadarOptions} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
+import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
 import {Dates} from '~/app/home/body/process/recipe/timeSeries/panels/dates/dates'
-import {PreProcessingOptions as OpticalOptions} from '~/app/home/body/process/recipe/timeSeries/panels/preProcessingOptions/preProcessingOptions'
 import {Retrieve} from '~/app/home/body/process/recipe/timeSeries/panels/retrieve/retrieve'
 import {Sources} from '~/app/home/body/process/recipe/timeSeries/panels/sources/sources'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
@@ -46,7 +46,10 @@ class _TimeSeriesToolbar extends React.Component {
                 <Dates/>
                 <Sources/>
                 {_.isEmpty(sources.dataSets['SENTINEL_1'])
-                    ? <OpticalOptions/>
+                    ? <OpticalOptions
+                        title={msg('process.timeSeries.panel.preprocess.title')}
+                        forCollection
+                    />
                     : <RadarOptions/>
                 }
 
@@ -89,6 +92,10 @@ class _TimeSeriesToolbar extends React.Component {
         )
     }
 }
+
+const OpticalOptions = createCompositeOptions({
+    id: 'options'
+})
 
 export const TimeSeriesToolbar = compose(
     _TimeSeriesToolbar,

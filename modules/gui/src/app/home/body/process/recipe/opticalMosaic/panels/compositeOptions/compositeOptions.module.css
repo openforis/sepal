@@ -2,12 +2,10 @@
     max-width: 26rem;
 }
 
-.inline {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+.grow {
+    flex-grow: 1 !important;
 }
 
-.inline>*+* {
-    margin-left: 1rem;
+.brdfMultiplier {
+    width: 4rem;
 }

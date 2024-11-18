@@ -5,7 +5,7 @@ import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import {SceneSelectionType} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {AutoSelectScenes} from '~/app/home/body/process/recipe/opticalMosaic/panels/autoSelectScenes/autoSelectScenes'
 import {ClearSelectedScenes} from '~/app/home/body/process/recipe/opticalMosaic/panels/clearSelectedScenes/clearSelectedScenes'
-import {CompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
+import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
 import {Dates} from '~/app/home/body/process/recipe/opticalMosaic/panels/dates/dates'
 import {Retrieve} from '~/app/home/body/process/recipe/opticalMosaic/panels/retrieve/retrieve'
 import {SceneSelectionOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/sceneSelectionOptions/sceneSelectionOptions'
@@ -51,7 +51,8 @@ class _MosaicToolbar extends React.Component {
                 <Dates/>
                 <Sources/>
                 <SceneSelectionOptions/>
-                <CompositeOptions/>
+                <CompositeOptions
+                    title={msg('process.mosaic.panel.composite.title')}/>
 
                 <Toolbar
                     vertical
@@ -104,6 +105,11 @@ class _MosaicToolbar extends React.Component {
         )
     }
 }
+
+const CompositeOptions = createCompositeOptions({
+    id: 'compositeOptions',
+    additionalPolicy: () => ({sceneSelection: 'allow'})
+})
 
 export const MosaicToolbar = compose(
     _MosaicToolbar,

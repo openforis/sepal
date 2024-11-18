@@ -7,6 +7,7 @@ import {Retrieve} from '~/app/home/body/process/recipe/ccdc/panels/retrieve/retr
 import {Sources} from '~/app/home/body/process/recipe/ccdc/panels/sources/sources'
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import {Options as RadarPreprocess} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
+import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -19,7 +20,6 @@ import {RecipeActions} from '../ccdcRecipe'
 import styles from './ccdcToolbar.module.css'
 import {ChartPixel} from './chartPixel'
 import {ChartPixelButton} from './chartPixelButton'
-import {OpticalPreprocess} from './opticalPreprocess/opticalPreprocess'
 import {Options} from './options/options'
 
 const mapRecipeToProps = recipe => ({
@@ -48,7 +48,10 @@ class _CcdcToolbar extends React.Component {
                 <Dates/>
                 <Sources/>
                 {_.isEmpty(sources.dataSets['SENTINEL_1'])
-                    ? <OpticalPreprocess/>
+                    ? <OpticalPreprocess
+                        title={msg('process.ccdc.panel.preprocess.title')}
+                        forCollection
+                    />
                     : <RadarPreprocess/>
                 }
                 <Options/>
@@ -96,6 +99,10 @@ class _CcdcToolbar extends React.Component {
         )
     }
 }
+
+const OpticalPreprocess = createCompositeOptions({
+    id: 'options'
+})
 
 export const CcdcToolbar = compose(
     _CcdcToolbar,

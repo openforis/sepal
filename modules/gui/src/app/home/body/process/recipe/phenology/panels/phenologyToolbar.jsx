@@ -3,6 +3,7 @@ import React from 'react'
 
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import {Options as RadarPreprocess} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
+import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -14,7 +15,6 @@ import {setInitialized} from '../../../recipe'
 import {RetrieveButton} from '../../retrieveButton'
 import {Dates} from './dates/dates'
 import styles from './phenologyToolbar.module.css'
-import {PreProcessingOptions as OpticalPreprocess} from './preProcessingOptions/preProcessingOptions'
 import {Retrieve} from './retrieve/retrieve'
 import {Sources} from './sources/sources'
 
@@ -39,7 +39,10 @@ class _PhenologyToolbar extends React.Component {
                 <Dates/>
                 <Sources/>
                 {_.isEmpty(sources.dataSets['SENTINEL_1'])
-                    ? <OpticalPreprocess/>
+                    ? <OpticalPreprocess
+                        title={msg('process.phenology.panel.preprocess.title')}
+                        forCollection
+                    />
                     : <RadarPreprocess/>
                 }
 
@@ -79,6 +82,10 @@ class _PhenologyToolbar extends React.Component {
         )
     }
 }
+
+const OpticalPreprocess = createCompositeOptions({
+    id: 'options'
+})
 
 export const PhenologyToolbar = compose(
     _PhenologyToolbar,
