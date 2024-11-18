@@ -758,10 +758,10 @@ const valuesToModel = values => ({
 
 const modelToValues = model => {
     const getPercentile = type => {
-        const filter = model.filters.find(filter => filter.type === type)
+        const filter = (model.filters || []).find(filter => filter.type === type)
         return filter ? filter.percentile : 0
     }
-    const includedFilters = model.filters.map(({type}) => type)
+    const includedFilters = (model.filters || []).map(({type}) => type)
     return ({
         corrections: model.corrections,
         brdfMultiplier: model.brdfMultiplier,
