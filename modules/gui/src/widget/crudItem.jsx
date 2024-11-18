@@ -88,10 +88,10 @@ export class CrudItem extends React.Component {
     }
 
     renderDescription() {
-        const {description, highlightDescription} = this.props
+        const {description, highlightDescription, descriptionClassName} = this.props
         return description
             ? (
-                <div className={styles.description}>
+                <div className={[styles.description, descriptionClassName].join(' ')}>
                     {this.renderHighlight(description, highlightDescription)}
                 </div>
             )
@@ -270,6 +270,7 @@ CrudItem.propTypes = {
     className: PropTypes.string,
     content: PropTypes.any,
     description: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    descriptionClassName: PropTypes.string,
     duplicateDisabled: PropTypes.any,
     duplicateTooltip: PropTypes.any,
     editDisabled: PropTypes.any,
