@@ -5,13 +5,15 @@ const {minDuration$} = require('#sepal/rxjs')
 const _ = require('lodash')
 const {homeDir, pollIntervalMilliseconds} = require('./config')
 const {resolvePath} = require('./filesystem')
+const {clientTag, subscriptionTag} = require('./tag')
 const log = require('#sepal/log').getLogger('watcher')
 
 const REMOVE_COMFORT_DELAY_MS = 1000
 
-const watchers = {}
+const watchersBySubscriptionId = {}
+const subscriptionIdsByClientId = {}
 
-const createWatcher = async ({username, out$, stop$}) => {
+const createWatcher = async ({username, clientId, subscriptionId, out$, stop$}) => {
     const monitoredPaths = []
     const trigger$ = new Subject()
     const state = {
@@ -27,7 +29,7 @@ const createWatcher = async ({username, out$, stop$}) => {
             }
             if (!_.isNil(trigger.remove)) {
                 const removePaths$ = from(
-                    removePaths(trigger.remove, {ignoreMissing: true})
+                    removePaths(trigger.remove)
                 )
                 return minDuration$(removePaths$, REMOVE_COMFORT_DELAY_MS)
             }
@@ -51,7 +53,7 @@ const createWatcher = async ({username, out$, stop$}) => {
             log.error(error)
         })
     ).subscribe(
-        data => out$.next({username, data})
+        data => out$.next({clientId, subscriptionId, data})
     )
 
     const scanDirs = () =>
@@ -109,14 +111,14 @@ const createWatcher = async ({username, out$, stop$}) => {
             .transform((tree, {name, ...file}) => tree[name] = {...file}, {})
             .value()
 
-    const removePaths = (paths, options) =>
+    const removePaths = paths =>
         Promise.all(
-            paths.map(path => removePath(path, options))
+            paths.map(path => removePath(path))
         )
 
-    const removePath = (path, options) => {
-        unmonitor(path, options)
-        log.debug(() => `Removing path: ${path}`)
+    const removePath = path => {
+        unmonitor(path)
+        log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} removing path: ${path}`)
         try {
             const {absolutePath} = resolvePath(userHomeDir, path)
             return rm(absolutePath, {recursive: true})
@@ -143,10 +145,10 @@ const createWatcher = async ({username, out$, stop$}) => {
                 const {absolutePath} = resolvePath(userHomeDir, path)
                 if (!isMonitored(path)) {
                     monitoredPaths.push({path, absolutePath})
-                    log.debug(() => `Monitoring path: ${path}`)
+                    log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} monitoring path: ${path}`)
                     trigger$.next()
                 } else {
-                    log.warn(`Cannot monitor already-monitored path: ${path}`)
+                    log.debug(() => `Ignored monitoring already-monitored path: ${path}`)
                 }
             } catch (error) {
                 if (error.code === 'ENOENT') {
@@ -158,7 +160,7 @@ const createWatcher = async ({username, out$, stop$}) => {
         }
     }
 
-    const unmonitor = (path, {ignoreMissing} = {}) => {
+    const unmonitor = path => {
         if (_.isArray(path)) {
             path.forEach(path => unmonitor(path))
         } else {
@@ -167,13 +169,11 @@ const createWatcher = async ({username, out$, stop$}) => {
                 const unmonitoredPaths = _.remove(monitoredPaths,
                     ({path: monitoredPath}) => monitoredPath.startsWith(pathDir) || monitoredPath === path
                 )
-                unmonitoredPaths.forEach(({path}) => log.debug(() => `Unmonitoring path: ${path}`))
+                unmonitoredPaths.forEach(
+                    ({path}) => log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} unmonitoring path: ${path}`)
+                )
             } else {
-                if (ignoreMissing) {
-                    log.debug(() => `Ignored non-monitored path: ${path}`)
-                } else {
-                    log.warn(`Cannot unmonitor non-monitored path: ${path}`)
-                }
+                log.debug(() => `Ignored non-monitored path: ${path}`)
             }
         }
     }
@@ -184,31 +184,47 @@ const createWatcher = async ({username, out$, stop$}) => {
 
     const enabled = enabled => {
         trigger$.next({enabled})
-        if (!isMonitored('/')) {
-            monitor('/')
-        }
     }
 
     const watcher = {monitor, unmonitor, remove, enabled}
-    watchers[username] = watcher
+
+    watchersBySubscriptionId[subscriptionId] = watcher
+    subscriptionIdsByClientId[clientId] = [
+        ...(subscriptionIdsByClientId[clientId] || []),
+        subscriptionId
+    ]
 }
 
-const getWatcher = async ({username, out$, stop$, create}) => {
-    if (!watchers[username] && create) {
-        await createWatcher({username, out$, stop$})
+const getWatcher = async ({username, clientId, subscriptionId, out$, stop$, create}) => {
+    if (!watchersBySubscriptionId[subscriptionId] && create) {
+        await createWatcher({username, clientId, subscriptionId, out$, stop$})
     }
-    return watchers[username]
+    return watchersBySubscriptionId[subscriptionId]
 }
 
-const removeWatcher = username => {
-    const watcher = watchers[username]
-    watcher.unmonitor('/')
-    delete watchers[username]
+const removeWatcher = (clientId, subscriptionId) => {
+    log.debug(() => `Removing ${subscriptionTag({clientId, subscriptionId})} watcher`)
+    const watcher = watchersBySubscriptionId[subscriptionId]
+    if (watcher) {
+        watcher.unmonitor('/')
+        _.pull(subscriptionIdsByClientId[clientId], subscriptionId)
+        delete watchersBySubscriptionId[subscriptionId]
+    }
 }
 
-const removeAllWatchers = () =>
-    Object.keys(watchers).forEach(
-        username => removeWatcher(username)
+const removeClientWatchers = clientId => {
+    (subscriptionIdsByClientId[clientId] || []).forEach(
+        subscriptionId => removeWatcher(clientId, subscriptionId)
     )
+    delete subscriptionIdsByClientId[clientId]
+    log.debug(() => `Removing ${clientTag({clientId})} watchers`)
+}
 
-module.exports = {getWatcher, removeWatcher, removeAllWatchers}
+const removeAllWatchers = () => {
+    log.debug('Removing all watchers')
+    Object.keys(subscriptionIdsByClientId).forEach(
+        clientId => removeClientWatchers(clientId)
+    )
+}
+
+module.exports = {getWatcher, removeWatcher, removeClientWatchers, removeAllWatchers}

@@ -1,27 +1,29 @@
 const {WebSocket} = require('ws')
-const {finalize} = require('rxjs')
+const {finalize, map, interval, merge} = require('rxjs')
 const {webSocket} = require('rxjs/webSocket')
+
 const {webSocketEndpoints} = require('../config/endpoints')
 const {autoRetry} = require('sepal/src/rxjs')
-const {moduleTag, userTag} = require('./tag')
+const {moduleTag, clientTag} = require('./tag')
+
 const log = require('#sepal/log').getLogger('websocket/uplink')
 
-// const HEARTBEAT_INTERVAL_MS = 60 * 1000
+const HEARTBEAT_INTERVAL_MS = 1 * 1000
 
-const initializeUplink = (wss, servers, clients) => {
+const initializeUplink = (servers, clients) => {
     
     const moduleReady = (module, ready) => {
         clients.broadcast({modules: {update: {[module]: ready}}})
-        clients.forEach(user => servers.send(module, {user, online: true}))
+        clients.forEach(({user, clientId}) => servers.send(module, {user, clientId, online: true}))
     }
 
-    // const onHeartbeat = (hb, module, upstream$) => {
-    //     log.trace(`Sending heartbeat to ${moduleTag(module)}:`, hb)
-    //     upstream$.next({hb})
-    // }
+    const onHeartbeat = (hb, module, upstream$) => {
+        log.trace(`Sending heartbeat to ${moduleTag(module)}:`, hb)
+        upstream$.next({hb})
+    }
     
     const onServerMessage = (rx, module) => {
-        const {username, data, ready, hb} = rx
+        const {clientId, subscriptionId, data, ready, hb} = rx
         if (hb) {
             log.trace(`Received heartbeat from ${moduleTag(module)}:`, hb)
         } else if (ready) {
@@ -29,11 +31,11 @@ const initializeUplink = (wss, servers, clients) => {
             moduleReady(module, true)
         } else {
             if (log.isTrace()) {
-                log.trace(`Forwarding message to ${userTag(username)}:`, data)
+                log.trace(`Forwarding message to ${clientTag(clientId)}:`, data)
             } else {
-                log.debug(`Forwarding message to ${userTag(username)}`)
+                log.debug(`Forwarding message to ${clientTag(clientId)}`)
             }
-            clients.send(username, {module, data})
+            clients.send(clientId, {subscriptionId, data})
         }
     }
     
@@ -57,9 +59,9 @@ const initializeUplink = (wss, servers, clients) => {
             WebSocketCtor: WebSocket
         })
     
-        // const heartbeat$ = interval(HEARTBEAT_INTERVAL_MS).pipe(
-        //     map(() => Date.now())
-        // )
+        const heartbeat$ = interval(HEARTBEAT_INTERVAL_MS).pipe(
+            map(() => Date.now())
+        )
     
         const downstream$ = upstream$.pipe(
             autoRetry({
@@ -77,20 +79,14 @@ const initializeUplink = (wss, servers, clients) => {
             })
         )
 
-        // const subscription = merge(
-        //     heartbeat$.pipe(map(hb => ({hb}))),
-        //     downstream$.pipe(map(rx => ({rx})))
-        // ).subscribe({
-        //     next: ({hb, rx}) => {
-        //         hb && onHeartbeat(hb, module, upstream$)
-        //         rx && onServerMessage(rx, module, upstream$)
-        //     },
-        //     error: error => onDownstreamError(error, module),
-        //     complete: () => onDownstreamComplete(module),
-        // })
-    
-        const subscription = downstream$.subscribe({
-            next: msg => onServerMessage(msg, module, upstream$),
+        const subscription = merge(
+            heartbeat$.pipe(map(hb => ({hb}))),
+            downstream$.pipe(map(rx => ({rx})))
+        ).subscribe({
+            next: ({hb, rx}) => {
+                hb && onHeartbeat(hb, module, upstream$)
+                rx && onServerMessage(rx, module, upstream$)
+            },
             error: error => onDownstreamError(error, module),
             complete: () => onDownstreamComplete(module),
         })

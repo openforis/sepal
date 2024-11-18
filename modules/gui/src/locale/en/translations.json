@@ -221,6 +221,11 @@
             "failure": "Could not copy to clipboard"
         }
     },
+    "connectionStatus": {
+        "disconnected": "Disconnected",
+        "connected": "Connected",
+        "partiallyConnected": "Connected, some services unavailable"
+    },
     "eeTable": {
         "failedToLoad": "Failed to load EE Table",
         "notFound": "EE Table not found",

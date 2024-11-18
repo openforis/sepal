@@ -1,8 +1,18 @@
 const {moduleTag} = require('./tag')
+
 const log = require('#sepal/log').getLogger('websocket/server')
 
 const Servers = () => {
     const servers = {}
+
+    const get = module => {
+        const server = servers[module]
+        if (server) {
+            return server
+        } else {
+            throw new Error(`Unknown ${moduleTag(module)}`)
+        }
+    }
 
     const add = (module, upstream$, subscriptions) => {
         if (!servers[module]) {
@@ -14,13 +24,13 @@ const Servers = () => {
     }
 
     const remove = module => {
-        const server = servers[module]
-        if (server) {
-            server.subscriptions.forEach(subscription => subscription.unsubscribe())
+        try {
+            const {subscriptions} = get(module)
+            subscriptions.forEach(subscription => subscription.unsubscribe())
             delete servers[module]
             log.debug(`${moduleTag(module)} removed from servers, now ${Object.keys(servers).length}`)
-        } else {
-            log.error(`${moduleTag(module)} cannot be removed from servers`)
+        } catch (error) {
+            log.error(`Cannot remove server - ${error.message}`)
         }
     }
 
@@ -28,12 +38,12 @@ const Servers = () => {
         Object.keys(servers)
 
     const send = (module, message) => {
-        const server = servers[module]
-        if (server) {
+        try {
+            const {upstream$} = get(module)
             log.debug(`Sending message to ${moduleTag(module)}`)
-            server.upstream$.next(message)
-        } else {
-            log.error(`Cannot send message to non-existing ${moduleTag(module)}`)
+            upstream$.next(message)
+        } catch (error) {
+            log.error(`Cannot send message - ${error.message}`)
         }
     }
 

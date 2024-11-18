@@ -1,13 +1,12 @@
 import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {select} from '~/store'
 import {msg} from '~/translate'
 import {logout$} from '~/user'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
-import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
+import {WebSocketConnectionIndicator} from '~/widget/webSocketIndicator'
 
 import {UsageButton} from '../user/usage'
 import {UserDetailsButton} from '../user/userDetails'
@@ -24,7 +23,7 @@ export const Footer = ({className}) => {
                 </ButtonGroup>
                 <div>
                     <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
-                        <ConnectionIndicator/>
+                        <WebSocketConnectionIndicator/>
                         <UserMessagesButton/>
                         <UsageButton/>
                         <UserDetailsButton/>
@@ -37,24 +36,6 @@ export const Footer = ({className}) => {
 }
 
 Footer.propTypes = {}
-
-const _ConnectionIndicator = ({connected}) => (
-    <Button
-        chromeless
-        look='transparent'
-        size='large'
-        air='less'
-        icon='wifi'
-        iconVariant={connected ? 'success' : 'error'}
-    />
-)
-
-const ConnectionIndicator = compose(
-    _ConnectionIndicator,
-    connect(() => ({
-        connected: select('connected')
-    }))
-)
 
 const _Logout = ({stream}) => {
     const logout = () => stream('LOGOUT', logout$())

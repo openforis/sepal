@@ -60,13 +60,9 @@ class _FileBrowser extends React.Component {
 
     userFiles = api.userFiles.userFiles()
 
-    state = {
-        enabled: true
-    }
-
     constructor() {
         super()
-        this.processUpdates = this.processUpdates.bind(this)
+        this.processUpdates = this.onUpdates.bind(this)
         this.processUpdate = this.processUpdate.bind(this)
         this.removeSelected = this.removeSelected.bind(this)
         this.clearSelection = this.clearSelection.bind(this)
@@ -80,18 +76,7 @@ class _FileBrowser extends React.Component {
         onChange(enabled => this.enabled(enabled))
         addSubscription(
             this.userFiles.downstream$.subscribe({
-                next: ({ready, data: updates}) => {
-                    if (ready === false) {
-                        this.setState({enabled: false})
-                    }
-                    if (ready === true) {
-                        this.userFiles.upstream$.next({monitor: ['/', ...this.getOpenDirs()]})
-                        this.setState({enabled: true})
-                    }
-                    if (updates) {
-                        this.processUpdates(updates)
-                    }
-                },
+                next: msg => this.onMessage(msg),
                 error: error => log.error('downstream$ error', error),
                 complete: () => log.error('downstream$ complete')
             })
@@ -105,7 +90,21 @@ class _FileBrowser extends React.Component {
             .dispatch()
     }
 
-    processUpdates(updates) {
+    onMessage({ready, data}) {
+        if (ready === true) {
+            this.onReady()
+        } else if (data) {
+            this.onUpdates(data)
+        }
+    }
+
+    onReady() {
+        this.userFiles.upstream$.next({
+            monitor: ['/', ...this.getOpenDirs()]
+        })
+    }
+
+    onUpdates(updates) {
         _.transform(updates, this.processUpdate, actionBuilder('UPDATE_TREE')).dispatch()
     }
 
