@@ -25,7 +25,6 @@ class V7Migration {
                 cloudThreshold: cloudMasking == 'AGGRESSIVE' ? 0.25 : 1,
                 shadowThreshold: 0.4,
             ]
-            println(r.model.options)
         }
         return r
     }
