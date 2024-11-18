@@ -2,11 +2,10 @@ package org.openforis.sepal.component.processingrecipe.migration.v7
 
 class V7Migration {
     static Map migrate(Map r) {
-        def compositeOptions = r?.model?.compositeOptions
-        def optionsKey = r?.model?.compositeOptions ? 'compositeOptions' : 'options'
+        def optionsKey = r.model.compositeOptions ? 'compositeOptions' : 'options'
         def options = r.model[optionsKey]
         if (options) {
-            def cloudMasking = options.cllutMasking
+            def cloudMasking = options.cloudMasking
             def cloudDetection = options.cloudDetection
             r.model[optionsKey] = options + [
                 brdfMultiplier: 4,
