@@ -18,12 +18,13 @@ import {Sources} from './sources/sources'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
-    initialized: selectFrom(recipe, 'ui.initialized')
+    initialized: selectFrom(recipe, 'ui.initialized'),
+    source: selectFrom(recipe, 'model.sources.source')
 })
 
 class _PlanetMosaicToolbar extends React.Component {
     render() {
-        const {recipeId, initialized} = this.props
+        const {recipeId, initialized, source} = this.props
         return (
             <PanelWizard
                 panels={['aoi', 'dates', 'sources']}
@@ -35,7 +36,7 @@ class _PlanetMosaicToolbar extends React.Component {
                 <Aoi/>
                 <Dates/>
                 <Sources/>
-                <Options/>
+                <Options source={source}/>
 
                 <Toolbar
                     vertical

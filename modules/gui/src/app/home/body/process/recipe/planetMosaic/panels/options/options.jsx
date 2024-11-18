@@ -1,8 +1,8 @@
+import _ from 'lodash'
 import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
@@ -17,23 +17,17 @@ const fields = {
     histogramMatching: new Form.Field()
 }
 
-const mapRecipeToProps = recipe => ({
-    source: selectFrom(recipe, 'model.sources.source')
-})
-
 class _Options extends React.Component {
-    constructor(props) {
-        super(props)
-    }
-
     render() {
+        const {title} = this.props
+        
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'>
                 <Panel.Header
                     icon='layer-group'
-                    title={msg('process.planetMosaic.panel.options.title')}/>
+                    title={title || msg('process.planetMosaic.panel.options.title')}/>
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
@@ -43,11 +37,12 @@ class _Options extends React.Component {
     }
 
     renderContent() {
+        const {forCollection} = this.props
         return (
             <Layout>
                 {this.renderHistogramMatching()}
                 {this.renderCloudThreshold()}
-                {this.renderShadowThreshold()}
+                {!forCollection ? this.renderShadowThreshold() : null}
                 {this.renderCloudBufferOptions()}
             </Layout>
         )
@@ -127,9 +122,18 @@ class _Options extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {histogramMatching}} = this.props
+        const {inputs: {histogramMatching, cloudThreshold, shadowThreshold, cloudBuffer}} = this.props
         if (!histogramMatching.value) {
             histogramMatching.set('DISABLED')
+        }
+        if (!cloudThreshold.value && cloudThreshold.value !== 0) {
+            cloudThreshold.set(85)
+        }
+        if (!shadowThreshold.value && shadowThreshold.value !== 0) {
+            shadowThreshold.set(60)
+        }
+        if (!_.isNumber(cloudBuffer.value)) {
+            cloudBuffer.set(0)
         }
     }
 }
@@ -150,5 +154,5 @@ const modelToValues = model => ({
 
 export const Options = compose(
     _Options,
-    recipeFormPanel({id: 'options', fields, mapRecipeToProps, modelToValues, valuesToModel})
+    recipeFormPanel({id: 'options', fields, modelToValues, valuesToModel})
 )

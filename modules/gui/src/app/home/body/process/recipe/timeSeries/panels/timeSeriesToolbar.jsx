@@ -5,6 +5,7 @@ import {setInitialized} from '~/app/home/body/process/recipe'
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import {Options as RadarOptions} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
 import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
+import {Options as PlanetOptions} from '~/app/home/body/process/recipe/planetMosaic/panels/options/options'
 import {Dates} from '~/app/home/body/process/recipe/timeSeries/panels/dates/dates'
 import {Retrieve} from '~/app/home/body/process/recipe/timeSeries/panels/retrieve/retrieve'
 import {Sources} from '~/app/home/body/process/recipe/timeSeries/panels/sources/sources'
@@ -35,6 +36,7 @@ class _TimeSeriesToolbar extends React.Component {
 
     render() {
         const {recipeId, initialized, sources} = this.props
+        const dataSets = Object.keys(sources.dataSets)
         return (
             <PanelWizard
                 panels={['aoi', 'dates', 'sources']}
@@ -45,12 +47,19 @@ class _TimeSeriesToolbar extends React.Component {
                 <Aoi/>
                 <Dates/>
                 <Sources/>
-                {_.isEmpty(sources.dataSets['SENTINEL_1'])
-                    ? <OpticalOptions
-                        title={msg('process.timeSeries.panel.preprocess.title')}
-                        forCollection
-                    />
-                    : <RadarOptions/>
+                {dataSets.includes('SENTINEL_1')
+                    ? <RadarOptions/>
+                    : dataSets.includes('PLANET')
+                        ? <PlanetOptions
+                            title={msg('process.timeSeries.panel.preprocess.title')}
+                            source={sources.dataSets['PLANET'][0]}
+                            forCollection
+                        />
+                        : <OpticalOptions
+                            title={msg('process.timeSeries.panel.preprocess.title')}
+                            forCollection
+                        />
+                    
                 }
 
                 <Toolbar
