@@ -14,6 +14,7 @@
     --cursor-preview-color: hsla(var(--look-highlight-h), var(--look-highlight-s), var(--look-highlight-l), .5);
     --range-color: var(--look-highlight-background-color);
     position: relative;
+    flex-grow: 1 !important;
 }
 
 .container {

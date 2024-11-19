@@ -945,97 +945,6 @@
                 },
                 "preprocess": {
                     "button": "PRC",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "Cloud detection",
-                            "cloudScore": {
-                                "label": "Cloud score",
-                                "tooltip": "Use cloud scoring algorithm"
-                            },
-                            "pino26": {
-                                "label": "PINO 26",
-                                "tooltip": "Use Pan-Tropical S2 cloud detection algorithm developed by Dario Simonetti"
-                            },
-                            "qa": {
-                                "label": "QA bands",
-                                "tooltip": "Use pre-created QA bands"
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Aggressive",
-                                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
-                            },
-                            "label": "Cloud masking",
-                            "moderate": {
-                                "label": "Moderate",
-                                "tooltip": "Rely only on image source QA bands for cloud masking"
-                            },
-                            "none": {
-                                "label": "Off",
-                                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "BRDF correction",
-                                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
-                            },
-                            "label": "Corrections",
-                            "surfaceReflectance": {
-                                "label": "Surface reflectance",
-                                "tooltip": "Use scenes atmospherically corrected surface reflectance."
-                            }
-                        },
-                        "orbitOverlap": {
-                            "label": "Orbit Overlap",
-                            "keep": {
-                                "label": "Keep",
-                                "tooltip": "Keep overlap between Sentinel 2orbits. This additional data will result in better models in the overlap."
-                            },
-                            "remove": {
-                                "label": "Remove",
-                                "tooltip": "Removes overlap between Sentinel 2 orbits. This adds an extra step in the preprocessing. This tends to make the BRDF effect more noticable, and it might be worth while trying to apply BRDF correction in conjuction with this feature."
-                            }
-                        },
-                        "tileOverlap": {
-                            "label": "Tile Overlap",
-                            "keep": {
-                                "label": "Keep",
-                                "tooltip": "Keep overlap between Sentinel 2 tiles. Areas with overlap will have twice or quadruple number of observations. All of these additional observations are all have the same value. Keeping them uses more memory than necessary and can lead to out of memory errors."
-                            },
-                            "quickRemove": {
-                                "label": "Quick remove",
-                                "tooltip": "Makes an effort to remove most of the overlap between Sentinel 2 tiles. By removing the duplicate data, the memory needed in processing is reduced."
-                            },
-                            "remove": {
-                                "label": "Remove",
-                                "tooltip": "Removes all overlap between Sentinel 2 tiles. This adds an extra step in the preprocessing. By removing the duplicate data, the memory needed in processing is reduced. There is no significant difference in this memory reduction with this option compared to the quick remove option."
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "Shadow masking",
-                            "off": {
-                                "label": "Off",
-                                "tooltip": "Don't apply aggressive shadow masking."
-                            },
-                            "on": {
-                                "label": "On",
-                                "tooltip": "Apply aggressive shadow masking. This can inadvertently remove some dynamics and lead to missing changes"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Snow masking",
-                            "off": {
-                                "label": "Off",
-                                "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
-                            },
-                            "on": {
-                                "label": "On",
-                                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
-                            }
-                        }
-                    },
                     "title": "Pre-process",
                     "tooltip": "Configure imagery pre-processing"
                 },
@@ -1465,71 +1374,6 @@
                 },
                 "preprocess": {
                     "button": "PRC",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "Cloud detection",
-                            "cloudScore": {
-                                "label": "Cloud score",
-                                "tooltip": "Use cloud scoring algorithm"
-                            },
-                            "pino26": {
-                                "label": "PINO 26",
-                                "tooltip": "Use Pan-Tropical S2 cloud detection algorithm developed by Dario Simonetti"
-                            },
-                            "qa": {
-                                "label": "QA bands",
-                                "tooltip": "Use pre-created QA bands"
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Aggressive",
-                                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
-                            },
-                            "label": "Cloud masking",
-                            "moderate": {
-                                "label": "Moderate",
-                                "tooltip": "Rely only on image source QA bands for cloud masking"
-                            },
-                            "none": {
-                                "label": "Off",
-                                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "BRDF correction",
-                                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
-                            },
-                            "label": "Corrections",
-                            "surfaceReflectance": {
-                                "label": "Surface reflectance",
-                                "tooltip": "Use scenes atmospherically corrected surface reflectance."
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "Shadow masking",
-                            "off": {
-                                "label": "Off",
-                                "tooltip": "Don't apply aggressive shadow masking."
-                            },
-                            "on": {
-                                "label": "On",
-                                "tooltip": "Apply aggressive shadow masking. This can inadvertently remove some dynamics and lead to missing changes"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Snow masking",
-                            "off": {
-                                "label": "Off",
-                                "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
-                            },
-                            "on": {
-                                "label": "On",
-                                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
-                            }
-                        }
-                    },
                     "title": "Pre-process",
                     "tooltip": "Configure imagery pre-processing"
                 },
@@ -3233,9 +3077,70 @@
                                 "label": "Moderate",
                                 "tooltip": "Rely only on image source QA bands for cloud masking"
                             },
+                            "custom": {
+                                "label": "Custom"
+                            },
+                            "noData": "No cloud masking applied",
                             "none": {
                                 "label": "Off",
                                 "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
+                            },
+                            "sentinel2CloudProbability": {
+                                "label": "S2 Cloud Probability",
+                                "maxCloudProbability": {
+                                    "label": "Max cloud probability",
+                                    "info": "Max {percent}% cloud probability"
+                                }
+                            },
+                            "sentinel2CloudScorePlus": {
+                                "label": "S2 Cloud Score+",
+                                "band": {
+                                    "label": "Band",
+                                    "cs": {
+                                        "tooltip": "The cs band scores QA based on a spectral distance between the observed pixel and a (theoretical) clear reference observation. It can be thought of as a more instantaneous atmospheric similarity score (i.e., how similar is this pixel to what we'd expect to see in a perfectly a clear reference)."
+                                    },
+                                    "cs_cdf": {
+                                        "tooltip": "The cs_cdf band represents the likelihood an observed pixel is clear based on an estimated cumulative distribution of scores for a given location through time. It captures an expectation of the estimated score through time (i.e., if we had all the scores for this pixel through time, how would this score rank?)."
+                                    }
+                                },
+                                "maxCloudProbability": {
+                                    "label": "Max cloud probability",
+                                    "tooltip": "Cloud Score+ provides likelihood of clear pixels. To harmonize the input with other cloud scoring algorithms, in SEPAL, we have inverted it to represent likelihood of cloudy pixels.",
+                                    "info": "Max {percent}% cloud probability"
+                                }
+                            },
+                            "landsatCFMask": {
+                                "label": "Landsat CFMask",
+                                "level": {
+                                    "off": "Off",
+                                    "moderate": "Moderate",
+                                    "aggressive": "Aggressive"
+                                },
+                                "cloudMasking": {
+                                    "label": "Cloud Masking"
+                                },
+                                "cloudShadowMasking": {
+                                    "label": "Cloud Shadow Masking"
+                                },
+                                "cirrusMasking": {
+                                    "label": "Cirrus Masking"
+                                },
+                                "dilatedCloud": {
+                                    "label": "Dilated clouds",
+                                    "tooltip": "Cloud dilation fills any “clear” pixels that are surrounded by clouds, reducing uncertainty concerning thin cloud or adjacent-to-cloud pixels. Dilation reduces ambiguity of a cloud-contaminated pixel at the cost of potentially high commission error; this is ideal for land use/land cover change assessments analyzing large spatiotemporal stacks of data, where cloud cover can adversely alter trending analysis.",
+                                    "keep": "Keep",
+                                    "remove": "Remove"
+                                }
+                            },
+                            "sepalCloudScore": {
+                                "label": "SEPAL Cloud Score",
+                                "maxCloudProbability": {
+                                    "label": "Max cloud probability",
+                                    "info": "Max {percent}% cloud probability"
+                                }
+                            },
+                            "pino26": {
+                                "label": "Pino 26"
                             }
                         },
                         "composingMethod": {
@@ -3264,32 +3169,80 @@
                                 "tooltip": "Use scenes atmospherically corrected surface reflectance."
                             }
                         },
+                        "brdfMultiplier": {
+                            "label": "BRDF Multiplier",
+                            "placeholder": "Multiplier...",
+                            "tooltip": "Multiplier to increase the amount of BRDF correction to apply. Normally, values between 3-4 works well. If the correction is overcompensating the BRDF effect, lower the multiplier, and increase it when the effect is not compensated for enough."
+                        },
                         "filters": {
                             "dayOfYearPercentile": {
+                                "label": "Date",
                                 "max": "Select pixels closest to target day",
                                 "off": "Don't filter based on day of year",
                                 "percentile": "Exclude {percentile}% pixels (far from target)"
                             },
                             "hazePercentile": {
+                                "label": "Haze",
                                 "max": "Select pixels with least haze",
                                 "off": "Don't filter based on haze",
                                 "percentile": "Exclude {percentile}% pixels (with haze)"
                             },
-                            "label": "Pixel filters",
+                            "label": "Filters",
+                            "noData": "No filters applied",
                             "ndviPercentile": {
+                                "label": "NDVI",
                                 "max": "Select pixels with highest NDVI",
                                 "off": "Don't filter based on NDVI",
                                 "percentile": "Exclude {percentile}% pixels (low NDVI)"
                             },
                             "shadowPercentile": {
+                                "label": "Shadow",
                                 "max": "Select pixels with least shadow",
                                 "off": "Don't filter based on shadow",
                                 "percentile": "Exclude {percentile}% pixels (with shadow)"
                             },
-                            "tooltip": "Filter out pixels in selected scenes based on the below properties"
+                            "tooltip": "Filter out pixels based on on percentile of selected properties"
+                        },
+                        "holes": {
+                            "label": "Masked out pixels",
+                            "tooltips": "Control if some pixels can be completely masked out due to cloud and/or snow masking or not.",
+                            "prevent": {
+                                "label": "Prevent",
+                                "tooltip": "Prevent pixels from being completely masked out due to cloud and/or snow masking. Pixels that would be completely masked out will retrain cloudy and/or snowy pixels."
+                            },
+                            "allow": {
+                                "label": "ALLOW",
+                                "tooltip": "Allow pixels to be completely masked out if every acquisition are cloudy and/or snowy."
+                            }
+                        },
+                        "orbitOverlap": {
+                            "label": "Orbit Overlap",
+                            "keep": {
+                                "label": "Keep",
+                                "tooltip": "Keep overlap between Sentinel 2orbits. This additional data will result in better models in the overlap."
+                            },
+                            "remove": {
+                                "label": "Remove",
+                                "tooltip": "Removes overlap between Sentinel 2 orbits. This adds an extra step in the preprocessing. This tends to make the BRDF effect more noticable, and it might be worth while trying to apply BRDF correction in conjuction with this feature."
+                            }
+                        },
+                        "tileOverlap": {
+                            "label": "Tile Overlap",
+                            "keep": {
+                                "label": "Keep",
+                                "tooltip": "Keep overlap between Sentinel 2 tiles. Areas with overlap will have twice or quadruple number of observations. All of these additional observations are all have the same value. Keeping them uses more memory than necessary and can lead to out of memory errors."
+                            },
+                            "quickRemove": {
+                                "label": "Quick remove",
+                                "tooltip": "Makes an effort to remove most of the overlap between Sentinel 2 tiles. By removing the duplicate data, the memory needed in processing is reduced."
+                            },
+                            "remove": {
+                                "label": "Remove",
+                                "tooltip": "Removes all overlap between Sentinel 2 tiles. This adds an extra step in the preprocessing. By removing the duplicate data, the memory needed in processing is reduced. There is no significant difference in this memory reduction with this option compared to the quick remove option."
+                            }
                         },
                         "snowMasking": {
-                            "label": "Snow masking",
+                            "label": "Snow/ice masking",
                             "off": {
                                 "label": "Off",
                                 "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
@@ -4201,71 +4154,6 @@
                 },
                 "preprocess": {
                     "button": "PRC",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "Cloud detection",
-                            "cloudScore": {
-                                "label": "Cloud score",
-                                "tooltip": "Use cloud scoring algorithm"
-                            },
-                            "pino26": {
-                                "label": "PINO 26",
-                                "tooltip": "Use Pan-Tropical S2 cloud detection algorithm developed by Dario Simonetti"
-                            },
-                            "qa": {
-                                "label": "QA bands",
-                                "tooltip": "Use pre-created QA bands"
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Aggressive",
-                                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
-                            },
-                            "label": "Cloud masking",
-                            "moderate": {
-                                "label": "Moderate",
-                                "tooltip": "Rely only on image source QA bands for cloud masking"
-                            },
-                            "none": {
-                                "label": "Off",
-                                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "BRDF correction",
-                                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
-                            },
-                            "label": "Corrections",
-                            "surfaceReflectance": {
-                                "label": "Surface reflectance",
-                                "tooltip": "Use scenes atmospherically corrected surface reflectance."
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "Shadow masking",
-                            "off": {
-                                "label": "Off",
-                                "tooltip": "Don't apply aggressive shadow masking."
-                            },
-                            "on": {
-                                "label": "On",
-                                "tooltip": "Apply aggressive shadow masking. This can inadvertently remove some dynamics and lead to missing changes"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Snow masking",
-                            "off": {
-                                "label": "Off",
-                                "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
-                            },
-                            "on": {
-                                "label": "On",
-                                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
-                            }
-                        }
-                    },
                     "title": "Pre-process",
                     "tooltip": "Configure imagery pre-processing"
                 },
@@ -4597,60 +4485,6 @@
                 },
                 "preprocess": {
                     "button": "PRC",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "Cloud detection",
-                            "cloudScore": {
-                                "label": "Cloud score",
-                                "tooltip": "Use cloud scoring algorithm"
-                            },
-                            "pino26": {
-                                "label": "PINO 26",
-                                "tooltip": "Use Pan-Tropical S2 cloud detection algorithm developed by Dario Simonetti"
-                            },
-                            "qa": {
-                                "label": "QA bands",
-                                "tooltip": "Use pre-created QA bands"
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Aggressive",
-                                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
-                            },
-                            "label": "Cloud masking",
-                            "moderate": {
-                                "label": "Moderate",
-                                "tooltip": "Rely only on image source QA bands for cloud masking"
-                            },
-                            "none": {
-                                "label": "Off",
-                                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "BRDF correction",
-                                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
-                            },
-                            "label": "Corrections",
-                            "surfaceReflectance": {
-                                "label": "Surface reflectance",
-                                "tooltip": "Use scenes atmospherically corrected surface reflectance."
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Snow masking",
-                            "off": {
-                                "label": "Off",
-                                "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
-                            },
-                            "on": {
-                                "label": "On",
-                                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
-                            }
-                        }
-                    },
                     "title": "Pre-process",
                     "tooltip": "Configure imagery pre-processing"
                 },

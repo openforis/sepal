@@ -6,7 +6,9 @@ import {Dates} from '~/app/home/body/process/recipe/ccdc/panels/dates/dates'
 import {Retrieve} from '~/app/home/body/process/recipe/ccdc/panels/retrieve/retrieve'
 import {Sources} from '~/app/home/body/process/recipe/ccdc/panels/sources/sources'
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
-import {Options as RadarPreprocess} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
+import {Options as RadarOptions} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
+import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
+import {Options as PlanetOptions} from '~/app/home/body/process/recipe/planetMosaic/panels/options/options'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -19,7 +21,6 @@ import {RecipeActions} from '../ccdcRecipe'
 import styles from './ccdcToolbar.module.css'
 import {ChartPixel} from './chartPixel'
 import {ChartPixelButton} from './chartPixelButton'
-import {OpticalPreprocess} from './opticalPreprocess/opticalPreprocess'
 import {Options} from './options/options'
 
 const mapRecipeToProps = recipe => ({
@@ -36,20 +37,29 @@ class _CcdcToolbar extends React.Component {
 
     render() {
         const {recipeId, initialized, sources} = this.props
+        const dataSets = Object.keys(sources.dataSets)
         return (
             <PanelWizard
                 panels={['aoi', 'dates', 'sources']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
-
                 {initialized ? <ChartPixel/> : null}
                 <Retrieve/>
                 <Aoi layerIndex={2}/>
                 <Dates/>
                 <Sources/>
-                {_.isEmpty(sources.dataSets['SENTINEL_1'])
-                    ? <OpticalPreprocess/>
-                    : <RadarPreprocess/>
+                {dataSets.includes('SENTINEL_1')
+                    ? <RadarOptions/>
+                    : dataSets.includes('PLANET')
+                        ? <PlanetOptions
+                            title={msg('process.timeSeries.panel.preprocess.title')}
+                            source={sources.dataSets['PLANET'][0]}
+                            forCollection
+                        />
+                        : <OpticalOptions
+                            title={msg('process.timeSeries.panel.preprocess.title')}
+                            forCollection
+                        />
                 }
                 <Options/>
 
@@ -96,6 +106,10 @@ class _CcdcToolbar extends React.Component {
         )
     }
 }
+
+const OpticalOptions = createCompositeOptions({
+    id: 'options'
+})
 
 export const CcdcToolbar = compose(
     _CcdcToolbar,

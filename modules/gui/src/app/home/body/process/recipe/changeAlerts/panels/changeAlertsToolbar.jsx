@@ -2,7 +2,9 @@ import _ from 'lodash'
 import React from 'react'
 
 import {setInitialized} from '~/app/home/body/process/recipe'
-import {Options as RadarPreprocess} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
+import {Options as RadarOptions} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
+import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
+import {Options as PlanetOptions} from '~/app/home/body/process/recipe/planetMosaic/panels/options/options'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -17,7 +19,6 @@ import styles from './changeAlertsToolbar.module.css'
 import {ChartPixel} from './chartPixel'
 import {Date} from './date/date'
 import {Options} from './options/options'
-import {PreProcessingOptions as OpticalPreprocess} from './preProcessingOptions/preProcessingOptions'
 import {Reference} from './reference/reference'
 import {Retrieve} from './retrieve/retrieve'
 import {Sources} from './sources/sources'
@@ -36,7 +37,7 @@ class _ChangeAlertsToolbar extends React.Component {
 
     render() {
         const {recipeId, initialized, baseBands, sources} = this.props
-
+        const dataSets = Object.keys(sources.dataSets)
         return (
             <PanelWizard
                 panels={['reference', 'date', 'sources']}
@@ -47,9 +48,18 @@ class _ChangeAlertsToolbar extends React.Component {
                 <Reference/>
                 <Date/>
                 <Sources/>
-                {_.isEmpty(sources.dataSets['SENTINEL_1'])
-                    ? <OpticalPreprocess/>
-                    : <RadarPreprocess/>
+                {dataSets.includes('SENTINEL_1')
+                    ? <RadarOptions/>
+                    : dataSets.includes('PLANET')
+                        ? <PlanetOptions
+                            title={msg('process.timeSeries.panel.preprocess.title')}
+                            source={sources.dataSets['PLANET'][0]}
+                            forCollection
+                        />
+                        : <OpticalOptions
+                            title={msg('process.timeSeries.panel.preprocess.title')}
+                            forCollection
+                        />
                 }
                 <Options/>
 
@@ -96,6 +106,10 @@ class _ChangeAlertsToolbar extends React.Component {
         )
     }
 }
+
+const OpticalOptions = createCompositeOptions({
+    id: 'options'
+})
 
 export const ChangeAlertsToolbar = compose(
     _ChangeAlertsToolbar,
