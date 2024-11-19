@@ -940,97 +940,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "moderate": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "surfaceReflectance": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "orbitOverlap": {
-                            "label": "",
-                            "keep": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "remove": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "tileOverlap": {
-                            "label": "",
-                            "keep": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "quickRemove": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "remove": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        }
-                    },
                     "title": "",
                     "tooltip": ""
                 },
@@ -1460,71 +1369,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "moderate": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "surfaceReflectance": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        }
-                    },
                     "title": "",
                     "tooltip": ""
                 },
@@ -3228,9 +3072,70 @@
                                 "label": "",
                                 "tooltip": ""
                             },
+                            "custom": {
+                                "label": ""
+                            },
+                            "noData": "",
                             "none": {
                                 "label": "",
                                 "tooltip": ""
+                            },
+                            "sentinel2CloudProbability": {
+                                "label": "",
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "info": ""
+                                }
+                            },
+                            "sentinel2CloudScorePlus": {
+                                "label": "",
+                                "band": {
+                                    "label": "",
+                                    "cs": {
+                                        "tooltip": ""
+                                    },
+                                    "cs_cdf": {
+                                        "tooltip": ""
+                                    }
+                                },
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "tooltip": "",
+                                    "info": ""
+                                }
+                            },
+                            "landsatCFMask": {
+                                "label": "",
+                                "level": {
+                                    "off": "",
+                                    "moderate": "",
+                                    "aggressive": ""
+                                },
+                                "cloudMasking": {
+                                    "label": ""
+                                },
+                                "cloudShadowMasking": {
+                                    "label": ""
+                                },
+                                "cirrusMasking": {
+                                    "label": ""
+                                },
+                                "dilatedCloud": {
+                                    "label": "",
+                                    "tooltip": "",
+                                    "keep": "",
+                                    "remove": ""
+                                }
+                            },
+                            "sepalCloudScore": {
+                                "label": "",
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "info": ""
+                                }
+                            },
+                            "pino26": {
+                                "label": ""
                             }
                         },
                         "composingMethod": {
@@ -3259,29 +3164,77 @@
                                 "tooltip": ""
                             }
                         },
+                        "brdfMultiplier": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
                         "filters": {
                             "dayOfYearPercentile": {
+                                "label": "",
                                 "max": "",
                                 "off": "",
                                 "percentile": ""
                             },
                             "hazePercentile": {
+                                "label": "",
                                 "max": "",
                                 "off": "",
                                 "percentile": ""
                             },
                             "label": "",
+                            "noData": "",
                             "ndviPercentile": {
+                                "label": "",
                                 "max": "",
                                 "off": "",
                                 "percentile": ""
                             },
                             "shadowPercentile": {
+                                "label": "",
                                 "max": "",
                                 "off": "",
                                 "percentile": ""
                             },
                             "tooltip": ""
+                        },
+                        "holes": {
+                            "label": "",
+                            "tooltips": "",
+                            "prevent": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "allow": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "orbitOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "quickRemove": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "",
+                                "tooltip": ""
+                            }
                         },
                         "snowMasking": {
                             "label": "",
@@ -4196,71 +4149,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "moderate": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "surfaceReflectance": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        }
-                    },
                     "title": "",
                     "tooltip": ""
                 },
@@ -4592,60 +4480,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "moderate": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "surfaceReflectance": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        }
-                    },
                     "title": "",
                     "tooltip": ""
                 },
