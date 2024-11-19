@@ -221,6 +221,11 @@
             "failure": ""
         }
     },
+    "connectionStatus": {
+        "disconnected": "Desconectado",
+        "connected": "Conectado",
+        "partiallyConnected": ""
+    },
     "eeTable": {
         "failedToLoad": "Fallo en la carga de la tabla de EE",
         "notFound": "Tabla de EE no encontrada",
