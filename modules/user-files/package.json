@@ -17,7 +17,7 @@
         "moment": "^2.30.1",
         "rxjs": "^7.8.1",
         "sepal": "../../lib/js/shared",
-        "uuid": "^10.0.0",
+        "uuid": "^11.0.3",
         "ws": "^8.18.0"
     },
     "devDependencies": {
