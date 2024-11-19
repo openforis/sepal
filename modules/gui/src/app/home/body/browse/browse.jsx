@@ -52,7 +52,7 @@ const pathSections = path =>
 
 const treePath = (path = '/') =>
     path !== '/'
-        ? _.reduce(pathSections(path),
+        ? pathSections(path).reduce(
             (treePath, pathElement) => treePath.concat(['items', pathElement]), []
         ) : []
 
@@ -62,7 +62,7 @@ class _FileBrowser extends React.Component {
 
     constructor() {
         super()
-        this.processUpdates = this.onUpdates.bind(this)
+        this.onUpdates = this.onUpdates.bind(this)
         this.processUpdate = this.processUpdate.bind(this)
         this.removeSelected = this.removeSelected.bind(this)
         this.clearSelection = this.clearSelection.bind(this)
@@ -100,7 +100,7 @@ class _FileBrowser extends React.Component {
 
     onReady() {
         this.userFiles.upstream$.next({
-            monitor: ['/', ...this.getOpenDirs()]
+            monitor: this.getOpenDirs()
         })
     }
 
@@ -109,13 +109,16 @@ class _FileBrowser extends React.Component {
     }
 
     processUpdate(actionBuilder, {path, items}) {
-        const {id} = this.props
-        const selected = this.getNode(path).selected || {}
-        actionBuilder.assign([basePath(id), TREE, dotSafe(treePath(path))], {
-            items,
-            opened: true,
-            selected: _.pick(selected, _.keys(items))
-        })
+        if (this.isDirectoryExpanded(path) || path === '/') {
+            const {id} = this.props
+            const selected = this.getNode(path).selected || {}
+            actionBuilder
+                .assign([basePath(id), TREE, dotSafe(treePath(path))], {
+                    items,
+                    opened: true,
+                    selected: _.pick(selected, Object.keys(items))
+                })
+        }
     }
 
     enabled(enabled) {
@@ -183,25 +186,18 @@ class _FileBrowser extends React.Component {
         return !!this.getNode(path).opened
     }
 
-    getOpenDirs(path = '/') {
+    getOpenSubDirs(path) {
         const node = this.getNode(path)
         return node.items
             ? Object.entries(node.items)
-                .map(([name, {dir, opened}]) => (dir && opened) ? name : null)
-                .filter(Boolean)
-                .map(name => Path.resolve(path, name))
-                .flatMap(path => [path, ...this.getOpenDirs(path)])
+                .filter(([_name, {dir, opened}]) => dir && opened)
+                .map(([name]) => Path.resolve(path, name))
+                .flatMap(path => [path, ...this.getOpenSubDirs(path)])
             : []
     }
 
-    scanOpenDirs(path) {
-        const node = this.getNode(path)
-        if (node.items) {
-            _(node.items)
-                .map(({dir, opened}, name) => (dir && opened) ? name : null)
-                .filter(_.identity)
-                .forEach(name => this.userFiles.upstream$.next({monitor: Path.resolve(path, name)}))
-        }
+    getOpenDirs(path = '/') {
+        return [path, ...this.getOpenSubDirs(path)]
     }
 
     expandDirectory(path) {
@@ -209,8 +205,7 @@ class _FileBrowser extends React.Component {
         actionBuilder('EXPAND_DIRECTORY')
             .set([basePath(id), TREE, dotSafe(treePath(path)), 'opened'], true)
             .dispatch()
-        this.userFiles.upstream$.next({monitor: path})
-        this.scanOpenDirs(path)
+        this.userFiles.upstream$.next({monitor: this.getOpenDirs(path)})
     }
 
     collapseDirectory(path) {
@@ -218,7 +213,7 @@ class _FileBrowser extends React.Component {
         const ab = actionBuilder('COLLAPSE_DIRECTORY', {path})
         this.deselectDescendants(ab, path)
         ab
-            .set([basePath(id), TREE, dotSafe(treePath(path)), 'opened'], false)
+            .del([basePath(id), TREE, dotSafe(treePath(path)), 'opened'])
             .dispatch()
         this.userFiles.upstream$.next({unmonitor: path})
     }

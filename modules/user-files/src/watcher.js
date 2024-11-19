@@ -1,6 +1,6 @@
 const Path = require('path')
 const {realpath, readdir, stat, rm} = require('fs/promises')
-const {EMPTY, catchError, concat, timer, Subject, from, exhaustMap, distinctUntilChanged, takeUntil, takeWhile, switchMap} = require('rxjs')
+const {EMPTY, catchError, concat, timer, Subject, from, exhaustMap, distinctUntilChanged, takeUntil, takeWhile, switchMap, map, filter} = require('rxjs')
 const {minDuration$} = require('#sepal/rxjs')
 const _ = require('lodash')
 const {homeDir, pollIntervalMilliseconds} = require('./config')
@@ -48,6 +48,8 @@ const createWatcher = async ({username, clientId, subscriptionId, out$, stop$}) 
         ),
         exhaustMap(() => from(scanDirs())),
         distinctUntilChanged(_.isEqual),
+        map(updates => updates.filter(({path}) => isMonitored(path))),
+        filter(updates => updates.length > 0),
         takeUntil(stop$),
         catchError(error => {
             log.error(error)
@@ -56,12 +58,12 @@ const createWatcher = async ({username, clientId, subscriptionId, out$, stop$}) 
         data => out$.next({clientId, subscriptionId, data})
     )
 
-    const scanDirs = () =>
+    const scanDirs = async () =>
         Promise.all(
             monitoredPaths.map(item => scanDir(item))
         )
 
-    const scanDir = ({path, absolutePath}) =>
+    const scanDir = async ({path, absolutePath}) =>
         readdir(absolutePath)
             .then(files =>
                 scanFiles({absolutePath, files})
@@ -73,12 +75,12 @@ const createWatcher = async ({username, clientId, subscriptionId, out$, stop$}) 
                 return ({path, error: error.code})
             })
 
-    const scanFiles = ({absolutePath, files}) =>
+    const scanFiles = async ({absolutePath, files}) =>
         Promise.all(
             files.map(filename => scanFile(absolutePath, filename))
         )
 
-    const scanFile = (path, filename) => {
+    const scanFile = async (path, filename) => {
         try {
             const {absolutePath, isSubPath} = resolvePath(path, filename)
             if (isSubPath) {
@@ -111,12 +113,12 @@ const createWatcher = async ({username, clientId, subscriptionId, out$, stop$}) 
             .transform((tree, {name, ...file}) => tree[name] = {...file}, {})
             .value()
 
-    const removePaths = paths =>
+    const removePaths = async paths =>
         Promise.all(
             paths.map(path => removePath(path))
         )
 
-    const removePath = path => {
+    const removePath = async path => {
         unmonitor(path)
         log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} removing path: ${path}`)
         try {
