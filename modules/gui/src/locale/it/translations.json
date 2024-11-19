@@ -221,6 +221,11 @@
             "failure": ""
         }
     },
+    "connectionStatus": {
+        "disconnected": "",
+        "connected": "",
+        "partiallyConnected": ""
+    },
     "eeTable": {
         "failedToLoad": "",
         "notFound": "",
