@@ -940,97 +940,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "Détection des nuages",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "PINO 26",
-                                "tooltip": "Utiliser l'algorithme de détection des nuages Pan-Tropical S2 développé par Dario Simonetti"
-                            },
-                            "qa": {
-                                "label": "Bandes QA",
-                                "tooltip": "Utiliser des bandes QA préexistantes"
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Aggressif",
-                                "tooltip": "S'appuyer sur les bandes QA des images sources et sur un algorithme de score de nuages pour le masquage des nuages. Cela permettra probablement de masquer certaines zones bâties et d'autres éléments lumineux."
-                            },
-                            "label": "Masquage des nuages",
-                            "moderate": {
-                                "label": "Modéré",
-                                "tooltip": "Ne compter que sur les bandes QA des images sources pour le masquage des nuages"
-                            },
-                            "none": {
-                                "label": "Inactif",
-                                "tooltip": "Utiliser des pixels sans nuages si possible, si aucun n'existe le pixel ne sera pas masquer"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "Correction BRDF",
-                                "tooltip": "Corriger les effets de la fonction de distribution bidirectionnelle de la réflectance ( BRDF )."
-                            },
-                            "label": "Corrections",
-                            "surfaceReflectance": {
-                                "label": "Reflexion de surface",
-                                "tooltip": "Utiliser les scène à la réflectance de surface corrigée des effets atmosphère"
-                            }
-                        },
-                        "orbitOverlap": {
-                            "label": "",
-                            "keep": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "remove": {
-                                "label": "Supprimer",
-                                "tooltip": ""
-                            }
-                        },
-                        "tileOverlap": {
-                            "label": "",
-                            "keep": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "quickRemove": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "remove": {
-                                "label": "Supprimer",
-                                "tooltip": ""
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "Masquage des ombres",
-                            "off": {
-                                "label": "Inactif",
-                                "tooltip": "Ne pas appliquer de masquage d'ombre agressif."
-                            },
-                            "on": {
-                                "label": "Actif",
-                                "tooltip": "Appliquer un masquage d'ombre agressif. Cela peut supprimer certaines dynamiques et conduire à des oublis de changements"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Masquage de la neige",
-                            "off": {
-                                "label": "Inactif",
-                                "tooltip": "Ne masquez pas la neige. Notez que certains nuages peuvent être mal classés comme neige, et de ce fait, désactiver le masquage de la neige peut entraîner des artefacts de nuages."
-                            },
-                            "on": {
-                                "label": "Actif",
-                                "tooltip": "Masquer la neige. Cela a tendance à laisser certains pixels avec de la neige ombragée"
-                            }
-                        }
-                    },
                     "title": "Prétraitement",
                     "tooltip": "Configurer le prétraitement des images"
                 },
@@ -1460,71 +1369,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "Détection des nuages",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "PINO 26",
-                                "tooltip": "Utiliser l'algorithme de détection des nuages Pan-Tropical S2 développé par Dario Simonetti"
-                            },
-                            "qa": {
-                                "label": "Bandes QA",
-                                "tooltip": "Utiliser des bandes QA préexistantes"
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Aggressif",
-                                "tooltip": "S'appuyer sur les bandes QA des images sources et sur un algorithme de score de nuages pour le masquage des nuages. Cela permettra probablement de masquer certaines zones bâties et d'autres éléments lumineux."
-                            },
-                            "label": "Masquage des nuages",
-                            "moderate": {
-                                "label": "Modéré",
-                                "tooltip": "Ne compter que sur les bandes QA des images sources pour le masquage des nuages"
-                            },
-                            "none": {
-                                "label": "Inactif",
-                                "tooltip": "Utiliser des pixels sans nuages si possible, si aucun n'existe le pixel ne sera pas masquer"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "Correction BRDF",
-                                "tooltip": "Corriger les effets de la fonction de distribution bidirectionnelle de la réflectance ( BRDF )."
-                            },
-                            "label": "Corrections",
-                            "surfaceReflectance": {
-                                "label": "Reflexion de surface",
-                                "tooltip": "Utiliser les scène à la réflectance de surface corrigée des effets atmosphère"
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "Masquage des ombres",
-                            "off": {
-                                "label": "Inactif",
-                                "tooltip": "Ne pas appliquer de masquage d'ombre agressif."
-                            },
-                            "on": {
-                                "label": "Actif",
-                                "tooltip": "Appliquer un masquage d'ombre agressif. Cela peut supprimer certaines dynamiques et conduire à des oublis de changements"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Masquage de la neige",
-                            "off": {
-                                "label": "Inactif",
-                                "tooltip": "Ne masquez pas la neige. Notez que certains nuages peuvent être mal classés comme neige, et de ce fait, désactiver le masquage de la neige peut entraîner des artefacts de nuages."
-                            },
-                            "on": {
-                                "label": "Actif",
-                                "tooltip": "Masquer la neige. Cela a tendance à laisser certains pixels avec de la neige ombragée"
-                            }
-                        }
-                    },
                     "title": "Prétraitement",
                     "tooltip": "Configurer le prétraitement des images"
                 },
@@ -3228,9 +3072,70 @@
                                 "label": "Modéré",
                                 "tooltip": "Ne comptez que sur les bandes QA des images sources pour le masquage des nuages"
                             },
+                            "custom": {
+                                "label": ""
+                            },
+                            "noData": "",
                             "none": {
                                 "label": "Inactif",
                                 "tooltip": "Utiliser des pixels sans nuages si possible, si aucun n'existe le pixel ne sera pas masquer"
+                            },
+                            "sentinel2CloudProbability": {
+                                "label": "",
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "info": ""
+                                }
+                            },
+                            "sentinel2CloudScorePlus": {
+                                "label": "",
+                                "band": {
+                                    "label": "Bande",
+                                    "cs": {
+                                        "tooltip": ""
+                                    },
+                                    "cs_cdf": {
+                                        "tooltip": ""
+                                    }
+                                },
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "tooltip": "",
+                                    "info": ""
+                                }
+                            },
+                            "landsatCFMask": {
+                                "label": "",
+                                "level": {
+                                    "off": "",
+                                    "moderate": "Modéré",
+                                    "aggressive": "Agressif"
+                                },
+                                "cloudMasking": {
+                                    "label": ""
+                                },
+                                "cloudShadowMasking": {
+                                    "label": ""
+                                },
+                                "cirrusMasking": {
+                                    "label": ""
+                                },
+                                "dilatedCloud": {
+                                    "label": "",
+                                    "tooltip": "",
+                                    "keep": "",
+                                    "remove": "Supprimer"
+                                }
+                            },
+                            "sepalCloudScore": {
+                                "label": "",
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "info": ""
+                                }
+                            },
+                            "pino26": {
+                                "label": ""
                             }
                         },
                         "composingMethod": {
@@ -3259,32 +3164,80 @@
                                 "tooltip": "Utiliser la réflectance de surface corrigée des effets atmosphère"
                             }
                         },
+                        "brdfMultiplier": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
                         "filters": {
                             "dayOfYearPercentile": {
+                                "label": "Date",
                                 "max": "Pixels les plus proches de la date cible",
                                 "off": "Ne pas filtrer sur le jour julien",
                                 "percentile": "Exclure {percentile}% des pixels (loin de la cible)"
                             },
                             "hazePercentile": {
+                                "label": "",
                                 "max": "Pixels avec la brume minimale",
                                 "off": "Ne pas filtrer sur la brume",
                                 "percentile": "Exclure {percentile}% des pixels (avec brume)"
                             },
-                            "label": "Filtres des pixels",
+                            "label": "",
+                            "noData": "",
                             "ndviPercentile": {
+                                "label": "",
                                 "max": "Pixels avec le NDVI le plus haut",
                                 "off": "Ne pas filtrer sur le NDVI",
                                 "percentile": "Exclure {percentile}% des pixels (NDVI bas)"
                             },
                             "shadowPercentile": {
+                                "label": "",
                                 "max": "Pixels avec le moins d'ombre",
                                 "off": "Ne pas filtrer sur l'ombre",
                                 "percentile": "Exclure {percentile}% des pixels (avec ombre)"
                             },
-                            "tooltip": "Filtrer les pixels des scènes sélectionnées à partir des propriétés suivantes"
+                            "tooltip": ""
+                        },
+                        "holes": {
+                            "label": "",
+                            "tooltips": "",
+                            "prevent": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "allow": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "orbitOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "Supprimer",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "quickRemove": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "Supprimer",
+                                "tooltip": ""
+                            }
                         },
                         "snowMasking": {
-                            "label": "Masque neige",
+                            "label": "",
                             "off": {
                                 "label": "Inactif",
                                 "tooltip": "Ne masquez pas la neige. Notez que certains nuages peuvent être mal classés comme neige, et de ce fait, désactiver le masquage de la neige peut entraîner des artefacts de nuages."
@@ -4196,71 +4149,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "Détection des nuages",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "PINO 26",
-                                "tooltip": "Utiliser l'algorithme de détection des nuages Pan-Tropical S2 développé par Dario Simonetti"
-                            },
-                            "qa": {
-                                "label": "Bandes QA",
-                                "tooltip": "Utiliser des bandes QA préexistantes"
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Agressif",
-                                "tooltip": "S'appuyer sur les bandes QA des images sources et sur un algorithme de score de nuages pour le masquage des nuages. Cela permettra probablement de masquer certaines zones bâties et d'autres éléments lumineux."
-                            },
-                            "label": "Masquage des nuages",
-                            "moderate": {
-                                "label": "Modéré",
-                                "tooltip": "Ne compter que sur les bandes QA des images sources pour le masquage des nuages"
-                            },
-                            "none": {
-                                "label": "Inactif",
-                                "tooltip": "Utiliser des pixels sans nuages si possible, si aucun n'existe le pixel ne sera pas masquer"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "Correction BRDF",
-                                "tooltip": "Corriger les effets de la fonction de distribution bidirectionnelle de la réflectance ( BRDF )."
-                            },
-                            "label": "Corrections",
-                            "surfaceReflectance": {
-                                "label": "Reflexion de surface",
-                                "tooltip": "Utiliser les scène à la réflectance de surface corrigée des effets atmosphère"
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "Masquage des ombres",
-                            "off": {
-                                "label": "Inactif",
-                                "tooltip": "Ne pas appliquer de masquage d'ombre agressif."
-                            },
-                            "on": {
-                                "label": "Actif",
-                                "tooltip": "Appliquer un masquage d'ombre agressif. Cela peut supprimer certaines dynamiques et conduire à des oublis de changements"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Masquage de la neige",
-                            "off": {
-                                "label": "Inactif",
-                                "tooltip": "Ne masquez pas la neige. Notez que certains nuages peuvent être mal classés comme neige, et de ce fait, désactiver le masquage de la neige peut entraîner des artefacts de nuages."
-                            },
-                            "on": {
-                                "label": "Actif",
-                                "tooltip": "Masquer la neige. Cela a tendance à laisser certains pixels avec de la neige ombragée"
-                            }
-                        }
-                    },
                     "title": "Prétraitement",
                     "tooltip": "Configurer le prétraitement des images"
                 },
@@ -4592,60 +4480,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "Détection des nuages",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "PINO 26",
-                                "tooltip": "Utiliser l'algorithme de détection des nuages Pan-Tropical S2 développé par Dario Simonetti"
-                            },
-                            "qa": {
-                                "label": "Bandes QA",
-                                "tooltip": "Utiliser des bandes QA préexistantes"
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Agressif",
-                                "tooltip": "S'appuyer sur les bandes QA des images sources et sur un algorithme de score de nuages pour le masquage des nuages. Cela risque de masquer certaines zones bâties et d'autres éléments lumineux."
-                            },
-                            "label": "Masquage des nuages",
-                            "moderate": {
-                                "label": "Modéré",
-                                "tooltip": "Ne comptez que sur les bandes QA des images sources pour le masquage des nuages"
-                            },
-                            "none": {
-                                "label": "Inactif",
-                                "tooltip": "Utiliser des pixels sans nuages si possible, si aucun n'existe le pixel ne sera pas masquer"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "Correction BRDF",
-                                "tooltip": "Corriger les effets de réflectance bidirectionnelle dans la distribution (BRDF)"
-                            },
-                            "label": "Corrections",
-                            "surfaceReflectance": {
-                                "label": "Réflectance de surface",
-                                "tooltip": "Utiliser les scène à la réflectance de surface corrigée des effets atmosphère"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Masque neige",
-                            "off": {
-                                "label": "Inactif",
-                                "tooltip": "Ne masquez pas la neige. Notez que certains nuages peuvent être mal classés comme neige, et de ce fait, désactiver le masquage de la neige peut entraîner des artefacts de nuages."
-                            },
-                            "on": {
-                                "label": "Actif",
-                                "tooltip": "Masquer la neige. Cela a tendance à laisser certains pixels avec de la neige ombragée"
-                            }
-                        }
-                    },
                     "title": "Pré-traitement",
                     "tooltip": "Configurer le prétraitement des scènes"
                 },
