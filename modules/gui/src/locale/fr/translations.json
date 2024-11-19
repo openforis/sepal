@@ -221,6 +221,11 @@
             "failure": "Impossible de copier dans le presse-papiers"
         }
     },
+    "connectionStatus": {
+        "disconnected": "Déconnecté",
+        "connected": "Connecté",
+        "partiallyConnected": ""
+    },
     "eeTable": {
         "failedToLoad": "Echec du chargement de la table EE",
         "notFound": "Table EE introuvable",
