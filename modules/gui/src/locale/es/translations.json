@@ -940,97 +940,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Agresivo",
-                                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
-                            },
-                            "label": "Enmascaramiento de nubes",
-                            "moderate": {
-                                "label": "Moderado",
-                                "tooltip": "Basarse sólo en las bandas de calidad de la imagen para el enmascaramiento de las nubes"
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": "Usar píxeles libres de nubes si es posible, pero no enmascarar áreas sin píxeles libres"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "Corrección BRDF",
-                                "tooltip": "Corregir los efectos de la función de distribución de la reflectancia bidireccional (BRDF)."
-                            },
-                            "label": "Correcciones",
-                            "surfaceReflectance": {
-                                "label": "Reflectancia de la superficie",
-                                "tooltip": "Utilizar escenas de reflectancia superficial corregidas atmosféricamente."
-                            }
-                        },
-                        "orbitOverlap": {
-                            "label": "",
-                            "keep": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "remove": {
-                                "label": "Eliminar",
-                                "tooltip": ""
-                            }
-                        },
-                        "tileOverlap": {
-                            "label": "",
-                            "keep": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "quickRemove": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "remove": {
-                                "label": "Eliminar",
-                                "tooltip": ""
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "Enmascaramiento de sombras",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No aplicar enmascaramiento agresivo de sombras."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Aplicar enmascaramiento de sombras agresivo. Esto puede eliminar inadvertidamente algunas dinámicas y hacer que se pierdan cambios"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Enmascaramiento de nieve",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Enmascarar nieve. Esto tiende a dejar algunos píxeles con sombra de nieve."
-                            }
-                        }
-                    },
                     "title": "Pre-proceso",
                     "tooltip": "Configurar el preprocesamiento de imágenes"
                 },
@@ -1460,71 +1369,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Agresivo",
-                                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
-                            },
-                            "label": "Enmascaramiento de nubes",
-                            "moderate": {
-                                "label": "Moderado",
-                                "tooltip": "Basarse sólo en las bandas de calidad de la imagen para el enmascaramiento de las nubes"
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": "Usar píxeles libres de nubes si es posible, pero no enmascarar áreas sin píxeles libres"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "Corrección BRDF",
-                                "tooltip": "Corregir los efectos de la función de distribución de la reflectancia bidireccional (BRDF)."
-                            },
-                            "label": "Correcciones",
-                            "surfaceReflectance": {
-                                "label": "Reflectancia de la superficie",
-                                "tooltip": "Utilizar escenas de reflectancia superficial corregidas atmosféricamente."
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "Enmascaramiento de sombras",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No aplicar enmascaramiento agresivo de sombras."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Aplicar enmascaramiento de sombras agresivo. Esto puede eliminar inadvertidamente algunas dinámicas y hacer que se pierdan cambios"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Enmascaramiento de nieve",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Enmascarar nieve. Esto tiende a dejar algunos píxeles con sombra de nieve."
-                            }
-                        }
-                    },
                     "title": "Pre-proceso",
                     "tooltip": "Configurar el preprocesamiento de imágenes"
                 },
@@ -3228,9 +3072,70 @@
                                 "label": "Moderado",
                                 "tooltip": "Confiar sólo en las bandas de calidad de la imagen para el enmascaramiento de nubes"
                             },
+                            "custom": {
+                                "label": ""
+                            },
+                            "noData": "",
                             "none": {
                                 "label": "",
                                 "tooltip": "Utilizar píxeles sin nubes si es posible, pero no enmascarar áreas sin nubes"
+                            },
+                            "sentinel2CloudProbability": {
+                                "label": "",
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "info": ""
+                                }
+                            },
+                            "sentinel2CloudScorePlus": {
+                                "label": "",
+                                "band": {
+                                    "label": "",
+                                    "cs": {
+                                        "tooltip": ""
+                                    },
+                                    "cs_cdf": {
+                                        "tooltip": ""
+                                    }
+                                },
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "tooltip": "",
+                                    "info": ""
+                                }
+                            },
+                            "landsatCFMask": {
+                                "label": "",
+                                "level": {
+                                    "off": "",
+                                    "moderate": "Moderado",
+                                    "aggressive": "Agresivo"
+                                },
+                                "cloudMasking": {
+                                    "label": ""
+                                },
+                                "cloudShadowMasking": {
+                                    "label": ""
+                                },
+                                "cirrusMasking": {
+                                    "label": ""
+                                },
+                                "dilatedCloud": {
+                                    "label": "",
+                                    "tooltip": "",
+                                    "keep": "",
+                                    "remove": "Eliminar"
+                                }
+                            },
+                            "sepalCloudScore": {
+                                "label": "",
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "info": ""
+                                }
+                            },
+                            "pino26": {
+                                "label": ""
                             }
                         },
                         "composingMethod": {
@@ -3259,32 +3164,80 @@
                                 "tooltip": "Utiliza escenas de reflectancia superficial corregida atmosféricamente."
                             }
                         },
+                        "brdfMultiplier": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
                         "filters": {
                             "dayOfYearPercentile": {
+                                "label": "Fecha",
                                 "max": "Selecciona los píxeles más cercanos al día objetivo",
                                 "off": "No filtrar por día del año",
                                 "percentile": "Excluir {percentile}% de píxeles (lejos del objetivo)"
                             },
                             "hazePercentile": {
+                                "label": "",
                                 "max": "Seleccionar los píxeles con menos bruma",
                                 "off": "No filtrar en función de la bruma",
                                 "percentile": "Excluir el {percentile}% de píxeles (con bruma)"
                             },
-                            "label": "Filtros de píxeles",
+                            "label": "",
+                            "noData": "",
                             "ndviPercentile": {
+                                "label": "",
                                 "max": "Seleccionar los píxeles con mayor NDVI",
                                 "off": "No filtrar en función del NDVI",
                                 "percentile": "Excluir {percentile}% de píxeles (NDVI bajo)"
                             },
                             "shadowPercentile": {
+                                "label": "",
                                 "max": "Seleccionar los píxeles con menos sombra",
                                 "off": "No filtrar en función de la sombra",
                                 "percentile": "Excluir {percentile}% de píxeles (con sombra)"
                             },
-                            "tooltip": "Filtrar los píxeles de las escenas seleccionadas en función de las siguientes propiedades"
+                            "tooltip": ""
+                        },
+                        "holes": {
+                            "label": "",
+                            "tooltips": "",
+                            "prevent": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "allow": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "orbitOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "Eliminar",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "quickRemove": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "Eliminar",
+                                "tooltip": ""
+                            }
                         },
                         "snowMasking": {
-                            "label": "Enmascaramiento de nieve",
+                            "label": "",
                             "off": {
                                 "label": "",
                                 "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
@@ -4196,71 +4149,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Agresivo",
-                                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
-                            },
-                            "label": "Enmascaramiento de nubes",
-                            "moderate": {
-                                "label": "Moderado",
-                                "tooltip": "Basarse sólo en las bandas de calidad de la imagen para el enmascaramiento de las nubes"
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": "Usar píxeles libres de nubes si es posible, pero no enmascarar áreas sin píxeles libres"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "Corrección BRDF",
-                                "tooltip": "Corregir los efectos de la función de distribución de la reflectancia bidireccional (BRDF)."
-                            },
-                            "label": "Correcciones",
-                            "surfaceReflectance": {
-                                "label": "Reflectancia de la superficie",
-                                "tooltip": "Utilizar escenas de reflectancia superficial corregidas atmosféricamente."
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "Enmascaramiento de sombras",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No aplicar enmascaramiento agresivo de sombras."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Aplicar enmascaramiento de sombras agresivo. Esto puede eliminar inadvertidamente algunas dinámicas y hacer que se pierdan cambios"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Enmascaramiento de nieve",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Enmascarar nieve. Esto tiende a dejar algunos píxeles con sombra de nieve."
-                            }
-                        }
-                    },
                     "title": "Pre-proceso",
                     "tooltip": "Configurar el preprocesamiento de imágenes"
                 },
@@ -4592,60 +4480,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Agresivo",
-                                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
-                            },
-                            "label": "Enmascaramiento de nubes",
-                            "moderate": {
-                                "label": "Moderado",
-                                "tooltip": "Basarse en las bandas de calidad de la imagen para el enmascaramiento de las nubes"
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": "Utilizar píxeles sin nubes si es posible, pero no enmascarar áreas sin nubes"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "Corrección BRDF",
-                                "tooltip": "Corregir los efectos de la función de distribución de la reflectancia bidireccional (BRDF)."
-                            },
-                            "label": "Correcciones",
-                            "surfaceReflectance": {
-                                "label": "Reflectancia de la superficie",
-                                "tooltip": "Utiliza escenas de reflectancia superficial corregidas atmosféricamente."
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Enmascaramiento de nieve",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Máscara de nieve. Esto tiende a dejar algunos píxeles con sombra de nieve"
-                            }
-                        }
-                    },
                     "title": "Pre-proceso",
                     "tooltip": "Configurar el preprocesamiento de imágenes"
                 },
