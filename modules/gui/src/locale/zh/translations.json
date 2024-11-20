@@ -58,6 +58,7 @@
     },
     "asset": {
         "failedToLoad": "",
+        "failedToLoadSome": "",
         "notFound": "",
         "unauthorized": "",
         "folder": "",
@@ -219,6 +220,11 @@
             "success": "",
             "failure": ""
         }
+    },
+    "connectionStatus": {
+        "disconnected": "",
+        "connected": "",
+        "partiallyConnected": ""
     },
     "eeTable": {
         "failedToLoad": "",
@@ -777,6 +783,51 @@
         "info": ""
     },
     "process": {
+        "panels": {
+            "inputImagery": {
+                "asset": {
+                    "title": ""
+                },
+                "button": "",
+                "form": {
+                    "asset": {
+                        "label": "",
+                        "placeholder": ""
+                    },
+                    "band": {
+                        "label": ""
+                    },
+                    "legend": {
+                        "label": ""
+                    },
+                    "noImagery": "",
+                    "recipe": {
+                        "label": "",
+                        "placeholder": ""
+                    },
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "section": {
+                        "required": ""
+                    },
+                    "type": {
+                        "categorical": "",
+                        "continuous": "",
+                        "ASSET": "",
+                        "RECIPE_REF": "",
+                        "label": ""
+                    }
+                },
+                "recipe": {
+                    "title": ""
+                },
+                "sections": {
+                    "title": ""
+                },
+                "title": ""
+            }
+        },
         "mapZoom": {
             "fit": {
                 "tooltip": ""
@@ -894,97 +945,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "moderate": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "surfaceReflectance": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "orbitOverlap": {
-                            "label": "",
-                            "keep": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "remove": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "tileOverlap": {
-                            "label": "",
-                            "keep": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "quickRemove": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "remove": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        }
-                    },
                     "title": "",
                     "tooltip": ""
                 },
@@ -1414,71 +1374,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "moderate": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "surfaceReflectance": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        }
-                    },
                     "title": "",
                     "tooltip": ""
                 },
@@ -2492,6 +2387,163 @@
             },
             "tabPlaceholder": ""
         },
+        "stack": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "bandNames": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "duplicateBand": "",
+                    "invalidFormat": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "bandMath": {
+            "create": "",
+            "description": "",
+            "duplicateName": "",
+            "invalidName": "",
+            "panel": {
+                "inputImagery": {
+                    "name": {
+                        "label": "",
+                        "tooltip": ""
+                    }
+                },
+                "calculations": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "form": {
+                        "noCalculations": "",
+                        "usedBands": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "function": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "bandName": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "calculationName": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "dataType": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": "",
+                            "auto": "",
+                            "int8": "",
+                            "int16": "",
+                            "int32": "",
+                            "int64": "",
+                            "uint8": "",
+                            "uint16": "",
+                            "uint32": "",
+                            "byte": "",
+                            "short": "",
+                            "int": "",
+                            "long": "",
+                            "float": "",
+                            "double": ""
+                        },
+                        "expression": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "type": {
+                            "FUNCTION": "",
+                            "EXPRESSION": ""
+                        },
+                        "bandRenameStrategy": {
+                            "label": "",
+                            "tooltip": "",
+                            "PREFIX": {
+                                "label": ""
+                            },
+                            "SUFFIX": {
+                                "label": ""
+                            },
+                            "REGEX": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "regex": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "bandRename": {
+                            "PREFIX": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "SUFFIX": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "REGEX": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "sections": {
+                        "title": ""
+                    },
+                    "expression": {
+                        "title": ""
+                    },
+                    "function": {
+                        "title": ""
+                    }
+                },
+                "outputBands": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "duplicateBand": "",
+                    "invalidFormat": "",
+                    "noImages": "",
+                    "noBands": "",
+                    "addImage": {
+                        "label": "",
+                        "tooltip": "",
+                        "calculations": "",
+                        "images": ""
+                    },
+                    "addBands": {
+                        "placeholder": "",
+                        "tooltip": "",
+                        "all": {
+                            "label": ""
+                        }
+                    },
+                    "type": {
+                        "ASSET": "",
+                        "RECIPE_REF": "",
+                        "EXPRESSION": "",
+                        "FUNCTION": ""
+                    }
+                }
+            },
+            "tabPlaceholder": ""
+        },
         "classChange": {
             "create": "",
             "description": "",
@@ -3025,9 +3077,70 @@
                                 "label": "",
                                 "tooltip": ""
                             },
+                            "custom": {
+                                "label": ""
+                            },
+                            "noData": "",
                             "none": {
                                 "label": "",
                                 "tooltip": ""
+                            },
+                            "sentinel2CloudProbability": {
+                                "label": "",
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "info": ""
+                                }
+                            },
+                            "sentinel2CloudScorePlus": {
+                                "label": "",
+                                "band": {
+                                    "label": "",
+                                    "cs": {
+                                        "tooltip": ""
+                                    },
+                                    "cs_cdf": {
+                                        "tooltip": ""
+                                    }
+                                },
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "tooltip": "",
+                                    "info": ""
+                                }
+                            },
+                            "landsatCFMask": {
+                                "label": "",
+                                "level": {
+                                    "off": "",
+                                    "moderate": "",
+                                    "aggressive": ""
+                                },
+                                "cloudMasking": {
+                                    "label": ""
+                                },
+                                "cloudShadowMasking": {
+                                    "label": ""
+                                },
+                                "cirrusMasking": {
+                                    "label": ""
+                                },
+                                "dilatedCloud": {
+                                    "label": "",
+                                    "tooltip": "",
+                                    "keep": "",
+                                    "remove": ""
+                                }
+                            },
+                            "sepalCloudScore": {
+                                "label": "",
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "info": ""
+                                }
+                            },
+                            "pino26": {
+                                "label": ""
                             }
                         },
                         "composingMethod": {
@@ -3056,29 +3169,77 @@
                                 "tooltip": ""
                             }
                         },
+                        "brdfMultiplier": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
                         "filters": {
                             "dayOfYearPercentile": {
+                                "label": "",
                                 "max": "",
                                 "off": "",
                                 "percentile": ""
                             },
                             "hazePercentile": {
+                                "label": "",
                                 "max": "",
                                 "off": "",
                                 "percentile": ""
                             },
                             "label": "",
+                            "noData": "",
                             "ndviPercentile": {
+                                "label": "",
                                 "max": "",
                                 "off": "",
                                 "percentile": ""
                             },
                             "shadowPercentile": {
+                                "label": "",
                                 "max": "",
                                 "off": "",
                                 "percentile": ""
                             },
                             "tooltip": ""
+                        },
+                        "holes": {
+                            "label": "",
+                            "tooltips": "",
+                            "prevent": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "allow": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "orbitOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "quickRemove": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "",
+                                "tooltip": ""
+                            }
                         },
                         "snowMasking": {
                             "label": "",
@@ -3993,71 +4154,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "moderate": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "surfaceReflectance": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        }
-                    },
                     "title": "",
                     "tooltip": ""
                 },
@@ -4236,49 +4332,6 @@
                 }
             },
             "panel": {
-                "inputImagery": {
-                    "asset": {
-                        "title": ""
-                    },
-                    "button": "",
-                    "form": {
-                        "asset": {
-                            "label": "",
-                            "placeholder": ""
-                        },
-                        "band": {
-                            "label": ""
-                        },
-                        "legend": {
-                            "label": ""
-                        },
-                        "noImagery": "",
-                        "recipe": {
-                            "label": "",
-                            "placeholder": ""
-                        },
-                        "remove": {
-                            "tooltip": ""
-                        },
-                        "section": {
-                            "required": ""
-                        },
-                        "type": {
-                            "categorical": "",
-                            "continuous": "",
-                            "ASSET": "",
-                            "RECIPE_REF": "",
-                            "label": ""
-                        }
-                    },
-                    "recipe": {
-                        "title": ""
-                    },
-                    "sections": {
-                        "title": ""
-                    },
-                    "title": ""
-                },
                 "legend": {
                     "button": "",
                     "title": "",
@@ -4432,60 +4485,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "moderate": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "label": "",
-                            "surfaceReflectance": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "",
-                            "off": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        }
-                    },
                     "title": "",
                     "tooltip": ""
                 },
@@ -5017,6 +5016,33 @@
         },
         "assetInput": {
             "loadError": ""
+        },
+        "codeEditor": {
+            "info": "",
+            "help1": "",
+            "help2": "",
+            "example": "",
+            "eeAutoComplete": {
+                "bandNames": {
+                    "section": ""
+                },
+                "imagesAndCalculations": {
+                    "section": ""
+                },
+                "mathFunctions": {
+                    "section": ""
+                },
+                "mathConstants": {
+                    "section": ""
+                }
+            },
+            "eeLint": {
+                "undefinedVariable": "",
+                "invalidBand": "",
+                "invalidBandCount": "",
+                "invalidArgCount": "",
+                "syntaxError": ""
+            }
         },
         "comboBox": {
             "loading": ""
