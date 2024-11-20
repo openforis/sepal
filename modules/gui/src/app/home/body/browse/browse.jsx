@@ -111,12 +111,19 @@ class _FileBrowser extends React.Component {
     processUpdate(actionBuilder, {path, items}) {
         if (this.isDirectoryExpanded(path) || path === '/') {
             const {id} = this.props
-            const selected = this.getNode(path).selected || {}
+            const node = this.getNode(path)
+
+            if (node.items) {
+                Object.entries(items).forEach(([name, item]) =>
+                    item.items = node.items[name]?.items
+                )
+            }
+
             actionBuilder
                 .assign([basePath(id), TREE, dotSafe(treePath(path))], {
                     items,
                     opened: true,
-                    selected: _.pick(selected, Object.keys(items))
+                    selected: _.pick(node.selected || {}, Object.keys(items))
                 })
         }
     }
