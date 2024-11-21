@@ -62,8 +62,7 @@ class _FileBrowser extends React.Component {
 
     constructor() {
         super()
-        this.onUpdates = this.onUpdates.bind(this)
-        this.processUpdate = this.processUpdate.bind(this)
+        this.onUpdate = this.onUpdate.bind(this)
         this.removeSelected = this.removeSelected.bind(this)
         this.clearSelection = this.clearSelection.bind(this)
         this.toggleDotFiles = this.toggleDotFiles.bind(this)
@@ -91,45 +90,46 @@ class _FileBrowser extends React.Component {
     }
 
     onMessage({ready, data}) {
-        if (ready === true) {
-            this.onReady()
-        } else if (data) {
-            this.onUpdates(data)
-        }
+        ready !== undefined && this.onReady(ready)
+        data !== undefined && this.onUpdate(data)
     }
 
-    onReady() {
-        this.userFiles.upstream$.next({
-            monitor: this.getOpenDirs()
-        })
+    onReady(ready) {
+        // console.log({ready})
     }
 
-    onUpdates(updates) {
-        _.transform(updates, this.processUpdate, actionBuilder('UPDATE_TREE')).dispatch()
-    }
-
-    processUpdate(actionBuilder, {path, items}) {
+    onUpdate({path, items}) {
         if (this.isDirectoryExpanded(path) || path === '/') {
             const {id} = this.props
             const node = this.getNode(path)
 
             if (node.items) {
-                Object.entries(items).forEach(([name, item]) =>
+                Object.entries(items).forEach(([name, item]) => {
                     item.items = node.items[name]?.items
-                )
+                    item.opened = node.items[name]?.opened
+                })
             }
 
-            actionBuilder
+            actionBuilder('UPDATE_TREE')
                 .assign([basePath(id), TREE, dotSafe(treePath(path))], {
                     items,
                     opened: true,
                     selected: _.pick(node.selected || {}, Object.keys(items))
                 })
+                .dispatch()
         }
     }
 
     enabled(enabled) {
-        this.userFiles.upstream$.next({enabled})
+        if (enabled) {
+            this.userFiles.upstream$.next({
+                monitor: this.getOpenDirs()
+            })
+        } else {
+            this.userFiles.upstream$.next({
+                unmonitor: '/'
+            })
+        }
     }
 
     childPath(path = '/', name = '/') {
@@ -476,13 +476,6 @@ class _FileBrowser extends React.Component {
                 />
             </span>
         )
-        // return busy
-        //     ? this.renderSpinner()
-        //     : (
-        //         <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}>
-        //             <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
-        //         </span>
-        //     )
     }
 
     renderFileIcon(fileName) {

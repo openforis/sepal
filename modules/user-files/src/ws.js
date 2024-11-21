@@ -1,6 +1,6 @@
-const {concat, Subject, finalize, of} = require('rxjs')
+const {Subject, finalize, from, switchMap, startWith} = require('rxjs')
 const _ = require('lodash')
-const {getWatcher, removeWatcher, removeAllWatchers, removeClientWatchers} = require('./watcher')
+const {createWatcher} = require('./watcher')
 const {clientTag, subscriptionTag} = require('./tag')
 const log = require('#sepal/log').getLogger('ws')
 
@@ -9,49 +9,42 @@ const ws$ = in$ => {
     const stop$ = new Subject()
 
     const init = async () => {
-        const onClientUp = async (username, clientId) => {
+        const watcher = await createWatcher({out$, stop$})
+
+        const onClientUp = ({username, clientId}) => {
             log.info(`${clientTag({username, clientId})} up`)
         }
 
-        const onClientDown = async (username, clientId) => {
+        const onClientDown = ({username, clientId}) => {
             log.info(`${clientTag({username, clientId})} down`)
-            removeClientWatchers(clientId)
+            watcher.offline({username, clientId})
         }
 
-        const onSubscriptionUp = async (username, clientId, subscriptionId) => {
-            log.info(`${subscriptionTag({username, clientId, subscriptionId})} up`)
+        const onSubscriptionUp = ({username, clientId, subscriptionId}) => {
+            log.debug(`${subscriptionTag({username, clientId, subscriptionId})} up`)
         }
 
-        const onSubscriptionDown = async (username, clientId, subscriptionId) => {
-            log.info(`${subscriptionTag({username, clientId, subscriptionId})} down`)
-            removeWatcher(clientId, subscriptionId)
+        const onSubscriptionDown = ({username, clientId, subscriptionId}) => {
+            log.debug(`${subscriptionTag({username, clientId, subscriptionId})} down`)
+            watcher.unsubscribe({username, clientId, subscriptionId})
         }
 
-        const onMonitor = async ({username, clientId, subscriptionId, monitor}) => {
+        const onMonitor = ({username, clientId, subscriptionId, monitor}) => {
             log.debug(`${subscriptionTag({username, clientId, subscriptionId})} monitoring path(s):`, monitor)
-            const watcher = await getWatcher({username, clientId, subscriptionId, out$, stop$, create: true})
-            watcher.monitor(monitor)
+            watcher.monitor({username, clientId, subscriptionId, path: monitor})
         }
 
-        const onUnmonitor = async ({username, clientId, subscriptionId, unmonitor}) => {
+        const onUnmonitor = ({username, clientId, subscriptionId, unmonitor}) => {
             log.debug(`${subscriptionTag({username, clientId, subscriptionId})} unmonitoring path(s):`, unmonitor)
-            const watcher = await getWatcher({username, clientId, subscriptionId, out$, stop$, create: true})
-            watcher.unmonitor(unmonitor)
+            watcher.unmonitor({username, clientId, subscriptionId, path: unmonitor})
         }
 
-        const onRemove = async ({username, clientId, subscriptionId, remove}) => {
+        const onRemove = ({username, clientId, subscriptionId, remove}) => {
             log.debug(`${subscriptionTag({username, clientId, subscriptionId})} removing path:`, remove)
-            const watcher = await getWatcher({username, clientId, subscriptionId, out$, stop$, create: true})
-            watcher.remove(remove)
+            watcher.remove({username, clientId, subscriptionId, path: remove})
         }
 
-        const onEnabled = async ({username, clientId, subscriptionId, enabled}) => {
-            log.debug(`${subscriptionTag({username, clientId, subscriptionId})} enabled:`, enabled)
-            const watcher = await getWatcher({username, clientId, out$, subscriptionId, stop$, create: true})
-            watcher.enabled(enabled)
-        }
-
-        const processMessage = async message => {
+        const processMessage = message => {
             const {user, clientId, subscriptionId, online, subscribed, update, data, hb} = message
             if (hb) {
                 out$.next({hb})
@@ -59,27 +52,23 @@ const ws$ = in$ => {
                 if (user) {
                     const {username} = user
                     if (online === true) {
-                        await onClientUp(username, clientId)
+                        onClientUp({username, clientId})
                     } else if (online === false) {
-                        await onClientDown(username, clientId)
+                        onClientDown({username, clientId})
                     } else if (subscribed === true) {
-                        await onSubscriptionUp(username, clientId, subscriptionId)
+                        onSubscriptionUp({username, clientId, subscriptionId})
                     } else if (subscribed === false) {
-                        await onSubscriptionDown(username, clientId, subscriptionId)
+                        onSubscriptionDown({username, clientId, subscriptionId})
                     } else if (update) {
                         log.info('*** To be implemented ***')
                     } else if (data) {
-                        const {monitor, unmonitor, remove, enabled} = data
+                        const {monitor, unmonitor, remove} = data
                         if (monitor) {
-                            await onMonitor({username, clientId, subscriptionId, monitor})
+                            onMonitor({username, clientId, subscriptionId, monitor})
                         } else if (unmonitor) {
-                            await onUnmonitor({username, clientId, subscriptionId, unmonitor})
+                            onUnmonitor({username, clientId, subscriptionId, unmonitor})
                         } else if (remove) {
-                            await onRemove({username, clientId, subscriptionId, remove})
-                        } else if (enabled === true) {
-                            await onEnabled({username, clientId, subscriptionId, enabled: true})
-                        } else if (enabled === false) {
-                            await onEnabled({username, clientId, subscriptionId, enabled: false})
+                            onRemove({username, clientId, subscriptionId, remove})
                         } else {
                             log.warn('Unsupported message data:', data)
                         }
@@ -90,21 +79,16 @@ const ws$ = in$ => {
             }
         }
     
-        in$.pipe(
-            finalize(() => removeAllWatchers())
-        ).subscribe({
-            next: async msg => await processMessage(msg),
+        in$.subscribe({
+            next: msg => processMessage(msg),
             error: error => log.error('Connection error (unexpected)', error),
             complete: () => log.info('Disconnected')
         })
     }
 
-    init()
-
-    return concat(of({ready: true}), out$).pipe(
-        finalize(
-            () => stop$.next()
-        )
+    return from(init()).pipe(
+        switchMap(() => out$.pipe(startWith({ready: true}))),
+        finalize(() => stop$.next())
     )
 }
 
