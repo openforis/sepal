@@ -8,10 +8,12 @@ const resolvePath = (baseDir, path) => {
     const absolutePath = realpathSync(Path.join(realBaseDir, path))
     const relativePath = Path.relative(realBaseDir, absolutePath)
     const isSubPath = !!relativePath && !relativePath.startsWith('..')
+    const isExternalPath = !!relativePath && relativePath.startsWith('..')
     return {
         absolutePath,
         relativePath,
-        isSubPath
+        isSubPath,
+        isExternalPath
     }
 }
 

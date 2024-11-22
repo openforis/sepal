@@ -1,6 +1,6 @@
 const Path = require('path')
 const {realpath, readdir, stat, rm} = require('fs/promises')
-const {catchError, timer, Subject, exhaustMap, distinctUntilChanged, takeUntil, switchMap, map, filter, mergeMap, groupBy, finalize, mergeWith} = require('rxjs')
+const {catchError, timer, Subject, exhaustMap, distinctUntilChanged, takeUntil, switchMap, map, filter, mergeMap, groupBy, finalize, mergeWith, EMPTY} = require('rxjs')
 const {minDuration$} = require('#sepal/rxjs')
 const _ = require('lodash')
 const {homeDir, pollIntervalMilliseconds} = require('./config')
@@ -93,17 +93,23 @@ const createWatcher = async ({out$, stop$}) => {
     })
 
     const scanDir = async ({username, clientId, subscriptionId, path}) => {
-        const {absolutePath} = resolvePath(await userHomeDir(username), path)
-        return readdir(absolutePath)
-            .then(files =>
-                scanFiles({absolutePath, files})
-                    .then(files => ({username, clientId, subscriptionId, path, items: toTree(files)}))
-            )
-            .catch(error => {
-                log.warn(error)
-                unmonitor({username, clientId, subscriptionId, path})
-                return ({path, error: error.code})
-            })
+        const home = await userHomeDir(username)
+        const {absolutePath, isExternalPath} = resolvePath(home, path)
+        if (isExternalPath) {
+            log.warn(`${subscriptionTag({username, clientId, subscriptionId})} requested invalid path: ${path}`)
+            return EMPTY
+        } else {
+            return readdir(absolutePath)
+                .then(files =>
+                    scanFiles({absolutePath, files})
+                        .then(files => ({username, clientId, subscriptionId, path, items: toTree(files)}))
+                )
+                .catch(error => {
+                    log.warn(error)
+                    unmonitor({username, clientId, subscriptionId, path})
+                    return ({path, error: error.code})
+                })
+        }
     }
 
     const scanFiles = async ({absolutePath, files}) =>
