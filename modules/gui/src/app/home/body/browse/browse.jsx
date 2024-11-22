@@ -604,23 +604,33 @@ class _FileBrowser extends React.Component {
     }
 
     render() {
-        const {tree} = this.props
         return (
             <SectionLayout>
                 <Content className={styles.browse} menuPadding horizontalPadding verticalPadding>
-                    <Scrollable direction='xy'>
-                        <Layout type='horizontal'>
-                            {this.renderInfo()}
-                            <Layout type='horizontal' spacing='none'>
-                                {this.renderToolbar()}
-                            </Layout>
-                        </Layout>
-                        <div className={styles.fileList}>
-                            {this.renderList('/', tree)}
-                        </div>
-                    </Scrollable>
+                    {this.renderHeader()}
+                    {this.renderTree()}
                 </Content>
             </SectionLayout>
+        )
+    }
+
+    renderHeader() {
+        return (
+            <Layout type='horizontal'>
+                {this.renderInfo()}
+                <Layout type='horizontal' spacing='none'>
+                    {this.renderToolbar()}
+                </Layout>
+            </Layout>
+        )
+    }
+
+    renderTree() {
+        const {tree} = this.props
+        return (
+            <Scrollable direction='xy' className={styles.fileList}>
+                {this.renderList('/', tree)}
+            </Scrollable>
         )
     }
 }
