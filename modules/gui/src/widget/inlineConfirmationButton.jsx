@@ -18,6 +18,7 @@ export class InlineConfirmationButton extends React.Component {
 
     constructor() {
         super()
+        this.renderContents = this.renderContents.bind(this)
         this.onClick = this.onClick.bind(this)
         this.onClickHold = this.onClickHold.bind(this)
         this.showConfirmation = this.showConfirmation.bind(this)
@@ -25,61 +26,11 @@ export class InlineConfirmationButton extends React.Component {
         this.toggleConfirmation = this.toggleConfirmation.bind(this)
     }
 
-    renderConfirmationButton() {
-        const {icon, size, air, confirmationLabel, onConfirm} = this.props
-        const {showConfirmation} = this.state
-        return showConfirmation ? (
-            <FloatingBox
-                element={this.ref.current}
-                vPlacement='center'
-                hPlacement='over-left'
-                onBlur={this.toggleConfirmation}>
-                <div className={styles.wrapper}>
-                    <Keybinding keymap={{'Escape': this.hideConfirmation}}>
-                        <ButtonGroup layout='horizontal-nowrap'>
-                            <Button
-                                shape='pill'
-                                look='cancel'
-                                size={size}
-                                air={air}
-                                icon={icon}
-                                label={confirmationLabel || msg('button.confirm')}
-                                onClick={onConfirm}/>
-                            {this.renderExitButton()}
-                        </ButtonGroup>
-                    </Keybinding>
-                </div>
-            </FloatingBox>
-        ) : null
-    }
-
-    showConfirmation() {
-        this.setState({showConfirmation: true})
-    }
-
-    hideConfirmation() {
-        this.setState({showConfirmation: false})
-    }
-
-    toggleConfirmation() {
-        this.setState(({showConfirmation}) => ({showConfirmation: !showConfirmation}))
-    }
-
-    onClick() {
-        const {skipConfirmation, onConfirm} = this.props
-        skipConfirmation ? onConfirm() : this.toggleConfirmation()
-    }
-
-    onClickHold() {
-        const {onConfirm} = this.props
-        onConfirm()
-    }
-
     render() {
         return (
             <React.Fragment>
                 {this.renderButton()}
-                {this.renderConfirmationButton()}
+                {this.renderPopup()}
             </React.Fragment>
         )
     }
@@ -109,6 +60,47 @@ export class InlineConfirmationButton extends React.Component {
         )
     }
 
+    renderPopup() {
+        const {showConfirmation} = this.state
+        return showConfirmation ? (
+            <FloatingBox
+                element={this.ref.current}
+                vPlacement='center'
+                hPlacement='over-left-or-over-right'
+                onBlur={this.toggleConfirmation}>
+                {this.renderContents}
+            </FloatingBox>
+        ) : null
+    }
+
+    renderContents({flipped}) {
+        return (
+            <div className={styles.wrapper}>
+                <Keybinding keymap={{'Escape': this.hideConfirmation}}>
+                    <ButtonGroup layout='horizontal-nowrap'>
+                        {flipped ? this.renderExitButton() : null}
+                        {this.renderConfirmationButton()}
+                        {!flipped ? this.renderExitButton() : null}
+                    </ButtonGroup>
+                </Keybinding>
+            </div>
+        )
+    }
+
+    renderConfirmationButton() {
+        const {icon, size, air, confirmationLabel, onConfirm} = this.props
+        return (
+            <Button
+                shape='pill'
+                look='cancel'
+                size={size}
+                air={air}
+                icon={icon}
+                label={confirmationLabel || msg('button.confirm')}
+                onClick={onConfirm}/>
+        )
+    }
+
     renderExitButton() {
         const {chromeless, shape, size, air, width} = this.props
         return (
@@ -122,6 +114,28 @@ export class InlineConfirmationButton extends React.Component {
                 onClick={this.hideConfirmation}
             />
         )
+    }
+
+    showConfirmation() {
+        this.setState({showConfirmation: true})
+    }
+
+    hideConfirmation() {
+        this.setState({showConfirmation: false})
+    }
+
+    toggleConfirmation() {
+        this.setState(({showConfirmation}) => ({showConfirmation: !showConfirmation}))
+    }
+
+    onClick() {
+        const {skipConfirmation, onConfirm} = this.props
+        skipConfirmation ? onConfirm() : this.toggleConfirmation()
+    }
+
+    onClickHold() {
+        const {onConfirm} = this.props
+        onConfirm()
     }
 
     componentDidUpdate({disabled: wasDisabled}) {
