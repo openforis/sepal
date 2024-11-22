@@ -36,7 +36,7 @@ export class InlineConfirmationButton extends React.Component {
                 onBlur={this.toggleConfirmation}>
                 <div className={styles.wrapper}>
                     <Keybinding keymap={{'Escape': this.hideConfirmation}}>
-                        <ButtonGroup>
+                        <ButtonGroup layout='horizontal-nowrap'>
                             <Button
                                 shape='pill'
                                 look='cancel'
