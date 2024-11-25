@@ -1,8 +1,8 @@
 .browse {
-    /* --look-highlight-a: .5; */
     --fx-saturation: 70%;
     --add-color: hsla(var(--look-add-h), var(--fx-saturation), var(--look-add-l), 1);
     --remove-color: hsla(var(--look-cancel-h), var(--fx-saturation), var(--look-cancel-l), 1);
+    --icon-width: 2.5rem;
 }
 
 .info {
@@ -28,7 +28,7 @@
     min-width: max-content;
 }
 
-.fileList li div {
+.fileList li > div {
     --look-highlight-a: .5;
     display: flex;
     align-items: center;
@@ -41,16 +41,16 @@
     --animation-duration: calc(var(--animation-duration-ms) * 1ms);
 }
 
-.fileList li div.selected {
+.fileList li > div.selected {
     transition: 100ms ease-in-out;
 }
 
 /* recursively propagate selection to children */
-.fileList li div.selected + ul li div {
+.fileList li > div.selected + ul li > div {
     transition: 100ms ease-in-out;
 }
 
-.fileList li div.added {
+.fileList li > div.added {
     animation: added var(--animation-duration) ease-in-out forwards;
 }
 
@@ -60,15 +60,15 @@
     }
 }
 
-.fileList li div.removing,
-.fileList li div.removing:hover,
-.fileList li div.removing + ul li div {
+.fileList li > div.removing,
+.fileList li > div.removing:hover,
+.fileList li > div.removing + ul li > div {
     background-color: var(--remove-color);
 }
 
-.fileList li div.removed,
-.fileList li div.removed:hover,
-.fileList li div.removed + ul li div {
+.fileList li > div.removed,
+.fileList li > div.removed:hover,
+.fileList li > div.removed + ul li > div {
     background-color: var(--remove-color);
     animation: removed var(--animation-duration) ease-in-out forwards;
 }
@@ -81,7 +81,7 @@
 
 .fileName {
     display: inline-block;
-    padding-left: 2rem;
+    padding-left: var(--icon-width);
 }
 
 .fileInfo {
@@ -93,7 +93,7 @@
 
 .icon {
     position: absolute;
-    width: 2rem;
+    width: var(--icon-width);
     padding: 0 .5rem;
     text-align: center;
     color: #b0b0b0;

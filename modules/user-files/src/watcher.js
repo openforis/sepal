@@ -122,13 +122,20 @@ const createWatcher = async ({out$, stop$}) => {
             const {absolutePath, isSubPath} = resolvePath(path, filename)
             if (isSubPath) {
                 return stat(absolutePath)
-                    .then(stat => ({
-                        name: filename,
-                        dir: stat.isDirectory(),
-                        file: stat.isFile(),
-                        size: stat.size,
-                        mtime: stat.mtime
-                    }))
+                    .then(stat => {
+                        const info = {
+                            name: filename,
+                            mtime: stat.mtimeMs
+                        }
+                        if (stat.isDirectory()) {
+                            info.dir = true
+                        }
+                        if (stat.isFile()) {
+                            info.file = true
+                            info.size = stat.size
+                        }
+                        return info
+                    })
                     .catch(error => {
                         log.warn(() => [`Ignoring unresolvable path: ${path}`, error])
                     })
