@@ -79,7 +79,12 @@
 }
 
 @media only screen and (max-width: 500px) {
-    .content.edgePadding {
-        --edgePadding-top: 1.5rem;
+    .content.horizontalPadding {
+        --edgePadding-left: .75rem;
+        --edgePadding-right: .75rem;
+    }
+    .content.verticalPadding {
+        --edgePadding-top: 1rem;
+        --edgePadding-bottom: 1.5rem;
     }
 }
