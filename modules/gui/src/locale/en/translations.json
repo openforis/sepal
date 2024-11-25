@@ -190,7 +190,7 @@
         "removing": {
             "error": "Could not remove files."
         },
-        "selected": "{directories} {directories, plural, one {directory} other {directories}} and {files} {files, plural, one {file} other {files}} selected"
+        "selected": "{directories} {directories, plural, one {dir} other {dirs}} and {files} {files, plural, one {file} other {files}} selected"
     },
     "button": {
         "add": "Add",

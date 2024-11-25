@@ -345,73 +345,37 @@ class _FileBrowser extends React.Component {
         })
     }
 
-    renderToolbar() {
+    renderOptionsToolbar() {
         const {showDotFiles, splitDirs, sorting: {sortingOrder, sortingDirection}} = this.props
-        const selected = this.countSelectedItems()
-        const nothingSelected = selected.files === 0 && selected.directories === 0
-        const oneFileSelected = selected.files === 1 && selected.directories === 0
-        const selectedFiles = this.selectedItems().files
-        const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
-        const downloadUrl = selectedFile && api.userFiles.downloadUrl(selectedFile)
-        const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
         return (
-            <ButtonGroup layout='horizontal-nowrap'>
-                <Button
+            <ButtonGroup layout='horizontal' spacing='tight'>
+                <ToggleButton
                     chromeless
-                    shape='circle'
-                    icon='download'
-                    tooltip={msg('browse.controls.download.tooltip')}
+                    shape='pill'
+                    label={msg('browse.controls.dotFiles.label')}
+                    tooltip={msg(`browse.controls.dotFiles.${showDotFiles ? 'hide' : 'show'}.tooltip`)}
                     tooltipPlacement='bottom'
-                    disabled={!oneFileSelected}
-                    downloadUrl={downloadUrl}
-                    downloadFilename={downloadFilename}
+                    selected={showDotFiles}
+                    onChange={this.toggleDotFiles}
                 />
-                <RemoveButton
+                <ToggleButton
                     chromeless
-                    shape='circle'
-                    tooltip={msg('browse.controls.remove.tooltip')}
+                    shape='pill'
+                    label={msg('browse.controls.splitDirs.label')}
+                    tooltip={msg(`browse.controls.splitDirs.${splitDirs ? 'mix' : 'split'}.tooltip`)}
                     tooltipPlacement='bottom'
-                    disabled={nothingSelected}
-                    onRemove={this.removeSelected}
+                    selected={splitDirs}
+                    onChange={this.toggleSplitDirs}
                 />
-                <Button
-                    chromeless
-                    shape='circle'
-                    icon='rotate-left'
-                    tooltip={msg('browse.controls.clearSelection.tooltip')}
-                    tooltipPlacement='bottom'
-                    disabled={nothingSelected}
-                    onClick={this.clearSelection}
+                <SortButtons
+                    labels={{
+                        name: msg('browse.controls.sorting.name.label'),
+                        date: msg('browse.controls.sorting.date.label'),
+                    }}
+                    sortingOrder={sortingOrder}
+                    sortingDirection={sortingDirection}
+                    onChange={this.setSorting}
                 />
-                <ButtonGroup spacing='tight'>
-                    <ToggleButton
-                        chromeless
-                        shape='pill'
-                        label={msg('browse.controls.dotFiles.label')}
-                        tooltip={msg(`browse.controls.dotFiles.${showDotFiles ? 'hide' : 'show'}.tooltip`)}
-                        tooltipPlacement='bottom'
-                        selected={showDotFiles}
-                        onChange={this.toggleDotFiles}
-                    />
-                    <ToggleButton
-                        chromeless
-                        shape='pill'
-                        label={msg('browse.controls.splitDirs.label')}
-                        tooltip={msg(`browse.controls.splitDirs.${splitDirs ? 'mix' : 'split'}.tooltip`)}
-                        tooltipPlacement='bottom'
-                        selected={splitDirs}
-                        onChange={this.toggleSplitDirs}
-                    />
-                    <SortButtons
-                        labels={{
-                            name: msg('browse.controls.sorting.name.label'),
-                            date: msg('browse.controls.sorting.date.label'),
-                        }}
-                        sortingOrder={sortingOrder}
-                        sortingDirection={sortingDirection}
-                        onChange={this.setSorting}
-                    />
-                </ButtonGroup>
             </ButtonGroup>
         )
     }
@@ -591,15 +555,59 @@ class _FileBrowser extends React.Component {
             : null
     }
 
-    renderInfo() {
+    renderActionButtons() {
+        const selected = this.countSelectedItems()
+        const nothingSelected = selected.files === 0 && selected.directories === 0
+        const oneFileSelected = selected.files === 1 && selected.directories === 0
+        const selectedFiles = this.selectedItems().files
+        const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
+        const downloadUrl = selectedFile && api.userFiles.downloadUrl(selectedFile)
+        const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
+        return (
+            <ButtonGroup layout='horizontal'>
+                <Button
+                    chromeless
+                    shape='circle'
+                    icon='download'
+                    tooltip={msg('browse.controls.download.tooltip')}
+                    tooltipPlacement='bottom'
+                    disabled={!oneFileSelected}
+                    downloadUrl={downloadUrl}
+                    downloadFilename={downloadFilename}
+                />
+                <RemoveButton
+                    chromeless
+                    shape='circle'
+                    tooltip={msg('browse.controls.remove.tooltip')}
+                    tooltipPlacement='bottom'
+                    disabled={nothingSelected}
+                    onRemove={this.removeSelected}
+                />
+                <Button
+                    chromeless
+                    shape='circle'
+                    icon='rotate-left'
+                    tooltip={msg('browse.controls.clearSelection.tooltip')}
+                    tooltipPlacement='bottom'
+                    disabled={nothingSelected}
+                    onClick={this.clearSelection}
+                />
+            </ButtonGroup>
+        )
+    }
+
+    renderActionsToolbar() {
         const selected = this.countSelectedItems()
         return (
-            <div className={styles.info}>
-                {msg('browse.selected', {
-                    files: selected.files,
-                    directories: selected.directories
-                })}
-            </div>
+            <Layout type='horizontal'>
+                {this.renderActionButtons()}
+                <div className={styles.info}>
+                    {msg('browse.selected', {
+                        files: selected.files,
+                        directories: selected.directories
+                    })}
+                </div>
+            </Layout>
         )
     }
 
@@ -616,11 +624,9 @@ class _FileBrowser extends React.Component {
 
     renderHeader() {
         return (
-            <Layout type='horizontal'>
-                {this.renderInfo()}
-                <Layout type='horizontal' spacing='none'>
-                    {this.renderToolbar()}
-                </Layout>
+            <Layout type='horizontal' spacing='compact'>
+                {this.renderActionsToolbar()}
+                {this.renderOptionsToolbar()}
             </Layout>
         )
     }
