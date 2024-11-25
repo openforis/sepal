@@ -26,6 +26,9 @@ const _WebSocketConnectionIndicator = ({connectionStatus = CONNECTION_STATUS.NON
         air='less'
         icon='wifi'
         iconVariant={ICON_VARIANT[connectionStatus]}
+        iconAttributes={{
+            flip: connectionStatus !== CONNECTION_STATUS.FULL
+        }}
         tooltip={msg(TOOLTIP_KEY[connectionStatus])}
     />
 )
