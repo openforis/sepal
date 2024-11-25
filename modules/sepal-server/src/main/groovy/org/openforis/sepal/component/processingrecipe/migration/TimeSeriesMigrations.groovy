@@ -1,6 +1,7 @@
 package org.openforis.sepal.component.processingrecipe.migration
 
 import org.openforis.sepal.component.processingrecipe.migration.radarmosaic.SpeckleFilter
+import org.openforis.sepal.component.processingrecipe.migration.v7.V7Migration
 
 class TimeSeriesMigrations extends AbstractMigrations {
     TimeSeriesMigrations() {
@@ -20,5 +21,6 @@ class TimeSeriesMigrations extends AbstractMigrations {
                 ? SpeckleFilter.migrate(r)
                 : r
         })
+        addMigration(7, { return V7Migration.migrate(it) })
     }
 }

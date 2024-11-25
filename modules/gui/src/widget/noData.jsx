@@ -2,9 +2,10 @@ import PropTypes from 'prop-types'
 
 import styles from './noData.module.css'
 
-export const NoData = ({message, className, children}) =>
+export const NoData = ({alignment = 'center', message, className, children}) =>
     <div className={[
         styles.noData,
+        styles[alignment],
         className
     ].join(' ')}>
         {message || children}
@@ -12,5 +13,6 @@ export const NoData = ({message, className, children}) =>
 
 NoData.propTypes = {
     message: PropTypes.string.isRequired,
-    className: PropTypes.string
+    alignment: PropTypes.oneOf(['left', 'center', 'right']),
+    className: PropTypes.string,
 }

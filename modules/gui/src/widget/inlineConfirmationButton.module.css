@@ -1,6 +1,7 @@
 .wrapper {
     --padding: .5rem;
     position: relative;
+    /* overflow: hidden; */
 }
 
 .wrapper::before {

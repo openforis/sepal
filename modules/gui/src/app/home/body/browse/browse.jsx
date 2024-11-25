@@ -11,6 +11,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {withEnableDetector} from '~/enabled'
 import format from '~/format'
+import {getLogger} from '~/log'
 import {dotSafe} from '~/stateUtils'
 import {select} from '~/store'
 import lookStyles from '~/style/look.module.css'
@@ -27,6 +28,8 @@ import {SortButtons} from '~/widget/sortButtons'
 import {Tabs} from '~/widget/tabs/tabs'
 import {ToggleButton} from '~/widget/toggleButton'
 
+const log = getLogger('browse')
+
 import styles from './browse.module.css'
 
 const ANIMATION_DURATION_MS = 1000
@@ -41,7 +44,6 @@ const mapStateToProps = (state, ownProps) => ({
     tree: select([basePath(ownProps.id), TREE]) || {},
     showDotFiles: select([basePath(ownProps.id), SHOW_DOT_FILES]),
     splitDirs: select([basePath(ownProps.id), SPLIT_DIRS]),
-
     sorting: select([basePath(ownProps.id), SORTING]) || {sortingOrder: 'name', sortingDirection: 1}
 })
 
@@ -50,7 +52,7 @@ const pathSections = path =>
 
 const treePath = (path = '/') =>
     path !== '/'
-        ? _.reduce(pathSections(path),
+        ? pathSections(path).reduce(
             (treePath, pathElement) => treePath.concat(['items', pathElement]), []
         ) : []
 
@@ -60,8 +62,7 @@ class _FileBrowser extends React.Component {
 
     constructor() {
         super()
-        this.processUpdates = this.processUpdates.bind(this)
-        this.processUpdate = this.processUpdate.bind(this)
+        this.onUpdate = this.onUpdate.bind(this)
         this.removeSelected = this.removeSelected.bind(this)
         this.clearSelection = this.clearSelection.bind(this)
         this.toggleDotFiles = this.toggleDotFiles.bind(this)
@@ -73,28 +74,62 @@ class _FileBrowser extends React.Component {
         const {addSubscription, enableDetector: {onChange}} = this.props
         onChange(enabled => this.enabled(enabled))
         addSubscription(
-            this.userFiles.downstream$.subscribe(
-                updates => this.processUpdates(updates)
-            )
+            this.userFiles.downstream$.subscribe({
+                next: msg => this.onMessage(msg),
+                error: error => log.error('downstream$ error', error),
+                complete: () => log.error('downstream$ complete')
+            })
         )
     }
 
-    processUpdates(updates) {
-        _.transform(updates, this.processUpdate, actionBuilder('UPDATE_TREE')).dispatch()
+    reset() {
+        const {id} = this.props
+        actionBuilder('RESET_TREE')
+            .set([basePath(id), TREE], {})
+            .dispatch()
     }
 
-    processUpdate(actionBuilder, {path, items}) {
-        const {id} = this.props
-        const selected = this.getNode(path).selected || {}
-        actionBuilder.assign([basePath(id), TREE, dotSafe(treePath(path))], {
-            items,
-            opened: true,
-            selected: _.pick(selected, _.keys(items))
-        })
+    onMessage({ready, data}) {
+        ready !== undefined && this.onReady(ready)
+        data !== undefined && this.onUpdate(data)
+    }
+
+    onReady(ready) {
+        // console.log({ready})
+    }
+
+    onUpdate({path, items}) {
+        if (this.isDirectoryExpanded(path) || path === '/') {
+            const {id} = this.props
+            const node = this.getNode(path)
+
+            if (node.items) {
+                Object.entries(items).forEach(([name, item]) => {
+                    item.items = node.items[name]?.items
+                    item.opened = node.items[name]?.opened
+                })
+            }
+
+            actionBuilder('UPDATE_TREE')
+                .assign([basePath(id), TREE, dotSafe(treePath(path))], {
+                    items,
+                    opened: true,
+                    selected: _.pick(node.selected || {}, Object.keys(items))
+                })
+                .dispatch()
+        }
     }
 
     enabled(enabled) {
-        this.userFiles.upstream$.next({enabled})
+        if (enabled) {
+            this.userFiles.upstream$.next({
+                monitor: this.getOpenDirs()
+            })
+        } else {
+            this.userFiles.upstream$.next({
+                unmonitor: '/'
+            })
+        }
     }
 
     childPath(path = '/', name = '/') {
@@ -158,15 +193,18 @@ class _FileBrowser extends React.Component {
         return !!this.getNode(path).opened
     }
 
-    scanOpenDirs(path) {
+    getOpenSubDirs(path) {
         const node = this.getNode(path)
-        if (node.items) {
-            _(node.items)
-                .map(({dir, opened}, name) => (dir && opened) ? name : null)
-                .filter(_.identity)
-                .forEach(name => this.userFiles.upstream$.next({monitor: Path.resolve(path, name)}))
-        }
+        return node.items
+            ? Object.entries(node.items)
+                .filter(([_name, {dir, opened}]) => dir && opened)
+                .map(([name]) => Path.resolve(path, name))
+                .flatMap(path => [path, ...this.getOpenSubDirs(path)])
+            : []
+    }
 
+    getOpenDirs(path = '/') {
+        return [path, ...this.getOpenSubDirs(path)]
     }
 
     expandDirectory(path) {
@@ -174,8 +212,7 @@ class _FileBrowser extends React.Component {
         actionBuilder('EXPAND_DIRECTORY')
             .set([basePath(id), TREE, dotSafe(treePath(path)), 'opened'], true)
             .dispatch()
-        this.userFiles.upstream$.next({monitor: path})
-        this.scanOpenDirs(path)
+        this.userFiles.upstream$.next({monitor: this.getOpenDirs(path)})
     }
 
     collapseDirectory(path) {
@@ -183,7 +220,7 @@ class _FileBrowser extends React.Component {
         const ab = actionBuilder('COLLAPSE_DIRECTORY', {path})
         this.deselectDescendants(ab, path)
         ab
-            .set([basePath(id), TREE, dotSafe(treePath(path)), 'opened'], false)
+            .del([basePath(id), TREE, dotSafe(treePath(path)), 'opened'])
             .dispatch()
         this.userFiles.upstream$.next({unmonitor: path})
     }
@@ -439,13 +476,6 @@ class _FileBrowser extends React.Component {
                 />
             </span>
         )
-        // return busy
-        //     ? this.renderSpinner()
-        //     : (
-        //         <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}>
-        //             <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
-        //         </span>
-        //     )
     }
 
     renderFileIcon(fileName) {
@@ -574,23 +604,33 @@ class _FileBrowser extends React.Component {
     }
 
     render() {
-        const {tree} = this.props
         return (
             <SectionLayout>
                 <Content className={styles.browse} menuPadding horizontalPadding verticalPadding>
-                    <Scrollable direction='xy'>
-                        <Layout type='horizontal'>
-                            {this.renderInfo()}
-                            <Layout type='horizontal' spacing='none'>
-                                {this.renderToolbar()}
-                            </Layout>
-                        </Layout>
-                        <div className={styles.fileList}>
-                            {this.renderList('/', tree)}
-                        </div>
-                    </Scrollable>
+                    {this.renderHeader()}
+                    {this.renderTree()}
                 </Content>
             </SectionLayout>
+        )
+    }
+
+    renderHeader() {
+        return (
+            <Layout type='horizontal'>
+                {this.renderInfo()}
+                <Layout type='horizontal' spacing='none'>
+                    {this.renderToolbar()}
+                </Layout>
+            </Layout>
+        )
+    }
+
+    renderTree() {
+        const {tree} = this.props
+        return (
+            <Scrollable direction='xy' className={styles.fileList}>
+                {this.renderList('/', tree)}
+            </Scrollable>
         )
     }
 }

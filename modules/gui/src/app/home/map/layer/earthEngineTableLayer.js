@@ -1,6 +1,6 @@
+import _ from 'lodash'
 import {finalize, tap} from 'rxjs'
 
-import {isEqual} from '~/hash'
 import {uuid} from '~/uuid'
 
 import {BalancingTileProvider} from '../tileProvider/balancingTileProvider'
@@ -54,8 +54,9 @@ export class EarthEngineTableLayer extends TileLayer {
         )
     }
 
-    equals = other =>
-        other === this
-            || other instanceof EarthEngineTableLayer
-                && isEqual(other.watchedProps, this.watchedProps)
+    equals = other => {
+        return other === this
+                || other instanceof EarthEngineTableLayer
+                && _.isEqual(other.watchedProps, this.watchedProps)
+    }
 }

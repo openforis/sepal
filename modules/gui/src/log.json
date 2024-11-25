@@ -1,6 +1,7 @@
 {
     "apps": "info",
     "assets": "info",
+    "browse": "info",
     "default": "info",
     "eventPublisher": "info",
     "http": "debug",
@@ -13,5 +14,6 @@
     "tileManager": "info",
     "tileManager/executor": "info",
     "tileManager/queue": "info",
-    "translate": "info"
+    "translate": "info",
+    "ws": "info"
 }

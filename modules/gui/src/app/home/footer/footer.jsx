@@ -6,6 +6,7 @@ import {logout$} from '~/user'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {Layout} from '~/widget/layout'
+import {WebSocketConnectionIndicator} from '~/widget/webSocketIndicator'
 
 import {UsageButton} from '../user/usage'
 import {UserDetailsButton} from '../user/userDetails'
@@ -22,6 +23,7 @@ export const Footer = ({className}) => {
                 </ButtonGroup>
                 <div>
                     <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
+                        <WebSocketConnectionIndicator/>
                         <UserMessagesButton/>
                         <UsageButton/>
                         <UserDetailsButton/>

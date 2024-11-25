@@ -1,6 +1,6 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
+const worker$ = ({id}, {sepalUser: {username, googleTokens}}) => {
     const {map, merge, toArray, of, switchMap, mergeMap, catchError} = require('rxjs')
     const http = require('#sepal/httpClient')
     const ee = require('#sepal/ee')
@@ -32,7 +32,7 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
             mergeMap(root => getRootInfo$(root)),
             map(({id, name, quota}) => ({id, type: 'Folder', name, quota})),
             toArray(),
-            map(array =>  _.orderBy(array, ['id']))
+            map(array => _.orderBy(array, ['id']))
         )
 
     const getRootInfo$ = ({id, name}) =>
@@ -46,19 +46,31 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
 
     const legacyRoots$ = () =>
         ee.listBuckets$('projects/earthengine-legacy').pipe(
-            map(({assets}) => assets)
+            map(({assets}) =>
+                _.isArray(assets)
+                    ? assets
+                    : []
+            ),
+            catchError(e => {
+                log.info(`Failed to load legacy roots ${username}: ${id}`, e)
+                return of([])
+            })
         )
     
     const cloudProjectRoots$ = () =>
         http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {headers: {Authorization: `Bearer ${googleTokens.accessToken}`}}).pipe(
             map(({body}) => JSON.parse(body)),
-            map(mapCloudProjectRoots)
+            map(mapCloudProjectRoots),
+            catchError(e => {
+                log.warn(`Failed to load cloud project roots for ${username}: ${id}`, e)
+                return of([])
+            })
         )
 
     const mapCloudProjectRoots = results =>
-        results?.projects?.map(({ projectId }) => ({
-        id: `projects/${projectId}/assets`
-    })) || []
+        results?.projects?.map(({projectId}) => ({
+            id: `projects/${projectId}/assets`
+        })) || []
 
     return id
         ? assets$(id)

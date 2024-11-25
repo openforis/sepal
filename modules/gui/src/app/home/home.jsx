@@ -13,6 +13,7 @@ import {ActivationContext} from '~/widget/activation/activationContext'
 import {Assets} from '~/widget/assets'
 import {Notifications} from '~/widget/notifications'
 import {PortalContainer} from '~/widget/portal'
+import {WebSocketConnection} from '~/widget/webSocketConnection'
 
 import {Body} from './body/body'
 import {Footer} from './footer/footer'
@@ -128,6 +129,7 @@ class _Home extends React.Component {
                         <Footer className={styles.footer}/>
                     </div>
                     <PortalContainer/>
+                    <WebSocketConnection/>
                     <Assets/>
                 </div>
             </ActivationContext>

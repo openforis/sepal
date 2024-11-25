@@ -1,11 +1,16 @@
 {
     "port": 5100,
     "categories": {
-        "auth": "debug",
-        "gateway": "debug",
-        "proxy": "debug",
-        "session": "debug",
-        "user": "debug",
-        "userstore": "debug"
+        "auth": "info",
+        "gateway": "info",
+        "proxy": "error",
+        "session": "info",
+        "user": "info",
+        "userstore": "info",
+        "websocket": "info",
+        "websocket/client": "info",
+        "websocket/server": "info",
+        "websocket/uplink": "info",
+        "websocket/downlink": "info"
     }
 }

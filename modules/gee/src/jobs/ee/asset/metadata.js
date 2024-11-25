@@ -47,10 +47,10 @@ const worker$ = ({asset, allowedTypes}) => {
         throwError(
             () => error instanceof ClientException
                 ? error
-                : new NotFoundException('Asset not found.', {
+                : new NotFoundException(`Asset not found: ${asset}`, {
                     cause: error,
                     userMessage: {
-                        message: 'Asset not found',
+                        message: `Asset not found: ${asset}`,
                         key: 'gee.asset.error.notFound',
                         args: {asset}
                     }

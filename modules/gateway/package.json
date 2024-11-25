@@ -12,9 +12,9 @@
     "dependencies": {
         "commander": "^12.1.0",
         "connect-redis": "^7.1.1",
-        "express": "^4.21.0",
-        "express-session": "^1.18.0",
-        "http-proxy-middleware": "^3.0.2",
+        "express": "^4.21.1",
+        "express-session": "^1.18.1",
+        "http-proxy-middleware": "^3.0.3",
         "ioredis": "^5.4.1",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
@@ -24,7 +24,8 @@
         "prometheus-api-metrics": "^3.2.2",
         "rxjs": "^7.8.1",
         "sepal": "../../lib/js/shared",
-        "uuid": "^10.0.0"
+        "uuid": "^11.0.3",
+        "ws": "^8.18.0"
     },
     "devDependencies": {
     },

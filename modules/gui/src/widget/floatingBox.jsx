@@ -63,8 +63,8 @@ class _FloatingBox extends React.Component {
     }
 
     render() {
-        const {className, children, onBlur} = this.props
-        const {left, right, maxWidth, hPlacement} = this.getCorrectedHorizontalPosition()
+        const {className, onBlur} = this.props
+        const {left, right, maxWidth, hPlacement, flipped} = this.getCorrectedHorizontalPosition()
         const {top, bottom, maxHeight, vPlacement} = this.getCorrectedVerticalPosition()
 
         const style = {
@@ -94,11 +94,18 @@ class _FloatingBox extends React.Component {
                             className
                         ].join(' ')}
                         style={style}>
-                        {children}
+                        {this.renderChildren(flipped)}
                     </BlurDetector>
                 </Context.Provider>
             </Portal>
         )
+    }
+
+    renderChildren(flipped = false) {
+        const {children} = this.props
+        return _.isFunction(children)
+            ? children({flipped})
+            : children
     }
 
     onClick(e) {
@@ -230,29 +237,31 @@ class _FloatingBox extends React.Component {
         return this.fixLeftOverflow(this.fixRightOverflow(horizontal))
     }
 
-    fixLeftOverflow({left, right, maxWidth, hPlacement}) {
+    fixLeftOverflow({left, right, maxWidth, hPlacement, flipped}) {
         if (left < MARGIN) {
             return {
                 left: MARGIN,
                 right: Math.max(right + left - MARGIN, MARGIN),
                 maxWidth,
-                hPlacement
+                hPlacement,
+                flipped
             }
         } else {
-            return {left, right, maxWidth, hPlacement}
+            return {left, right, maxWidth, hPlacement, flipped}
         }
     }
 
-    fixRightOverflow({left, right, maxWidth, hPlacement}) {
+    fixRightOverflow({left, right, maxWidth, hPlacement, flipped}) {
         if (right < MARGIN) {
             return {
                 left: Math.max(left + right - MARGIN, MARGIN),
                 right: MARGIN,
                 maxWidth,
-                hPlacement
+                hPlacement,
+                flipped
             }
         } else {
-            return {left, right, maxWidth, hPlacement}
+            return {left, right, maxWidth, hPlacement, flipped}
         }
     }
 
@@ -310,9 +319,37 @@ class _FloatingBox extends React.Component {
                     maxWidth: viewportWidth - elementRight,
                     hPlacement
                 }
+            case 'left-or-right':
+                return this.getLeftOrRightVerticalPosition(contentWidth, false)
+            case 'right-or-left':
+                return this.getRightOrLeftVerticalPosition(contentWidth, false)
+            case 'over-left-or-over-right':
+                return this.getLeftOrRightVerticalPosition(contentWidth, true)
+            case 'over-right-or-over-left':
+                return this.getRightOrLeftVerticalPosition(contentWidth, true)
             }
         }
         return {}
+    }
+
+    getLeftOrRightVerticalPosition(contentWidth, over) {
+        const left = this.getHorizontalPosition(over ? 'over-left' : 'left')
+        const right = this.getHorizontalPosition(over ? 'over-right' : 'right')
+        const fitsLeft = contentWidth && left.maxWidth >= contentWidth
+        const notEnoughSpaceRight = left.maxWidth >= right.maxWidth
+        return fitsLeft || notEnoughSpaceRight
+            ? left
+            : {...right, flipped: true}
+    }
+
+    getRightOrLeftVerticalPosition(contentWidth, over) {
+        const right = this.getHorizontalPosition(over ? 'over-right' : 'right')
+        const left = this.getHorizontalPosition(over ? 'over-left' : 'left')
+        const fitsRight = contentWidth && right.maxWidth >= contentWidth
+        const notEnoughSpaceLeft = right.maxWidth >= left.maxWidth
+        return fitsRight || notEnoughSpaceLeft
+            ? right
+            : {...left, flipped: true}
     }
 
     onResize(contentDimensions) {
@@ -396,7 +433,7 @@ FloatingBox.propTypes = {
     className: PropTypes.string,
     element: PropTypes.object,
     elementBlur: PropTypes.any,
-    hPlacement: PropTypes.oneOf(['center', 'left', 'over-left', 'over', 'over-right', 'right']),
+    hPlacement: PropTypes.oneOf(['center', 'left', 'over-left', 'over', 'over-right', 'right', 'left-or-right', 'right-or-left', 'over-left-or-over-right', 'over-right-or-over-left']),
     vPlacement: PropTypes.oneOf(['center', 'above', 'over-above', 'over', 'over-below', 'below', 'above-or-below', 'below-or-above', 'fit-above-or-below', 'fit-below-or-above']),
     onBlur: PropTypes.func
 }

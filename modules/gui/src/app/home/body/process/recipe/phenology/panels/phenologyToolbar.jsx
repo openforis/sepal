@@ -2,7 +2,9 @@ import _ from 'lodash'
 import React from 'react'
 
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
-import {Options as RadarPreprocess} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
+import {Options as RadarOptions} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
+import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
+import {Options as PlanetOptions} from '~/app/home/body/process/recipe/planetMosaic/panels/options/options'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -14,7 +16,6 @@ import {setInitialized} from '../../../recipe'
 import {RetrieveButton} from '../../retrieveButton'
 import {Dates} from './dates/dates'
 import styles from './phenologyToolbar.module.css'
-import {PreProcessingOptions as OpticalPreprocess} from './preProcessingOptions/preProcessingOptions'
 import {Retrieve} from './retrieve/retrieve'
 import {Sources} from './sources/sources'
 
@@ -27,6 +28,7 @@ const mapRecipeToProps = recipe => ({
 class _PhenologyToolbar extends React.Component {
     render() {
         const {recipeId, initialized, sources} = this.props
+        const dataSets = Object.keys(sources.dataSets)
         return (
             <PanelWizard
                 panels={['aoi', 'dates', 'sources']}
@@ -38,9 +40,18 @@ class _PhenologyToolbar extends React.Component {
                 <Aoi/>
                 <Dates/>
                 <Sources/>
-                {_.isEmpty(sources.dataSets['SENTINEL_1'])
-                    ? <OpticalPreprocess/>
-                    : <RadarPreprocess/>
+                {dataSets.includes('SENTINEL_1')
+                    ? <RadarOptions/>
+                    : dataSets.includes('PLANET')
+                        ? <PlanetOptions
+                            title={msg('process.timeSeries.panel.preprocess.title')}
+                            source={sources.dataSets['PLANET'][0]}
+                            forCollection
+                        />
+                        : <OpticalOptions
+                            title={msg('process.timeSeries.panel.preprocess.title')}
+                            forCollection
+                        />
                 }
 
                 <Toolbar
@@ -79,6 +90,10 @@ class _PhenologyToolbar extends React.Component {
         )
     }
 }
+
+const OpticalOptions = createCompositeOptions({
+    id: 'options'
+})
 
 export const PhenologyToolbar = compose(
     _PhenologyToolbar,

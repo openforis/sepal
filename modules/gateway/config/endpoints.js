@@ -174,4 +174,13 @@ const endpoints = [
 
 ]
 
-module.exports = {endpoints}
+const webSocketEndpoints = [
+    {
+        module: 'user-files',
+        target: `ws://${modules.userFiles}/ws`
+    }
+]
+
+const webSocketPath = '/api/ws'
+
+module.exports = {endpoints, webSocketEndpoints, webSocketPath}

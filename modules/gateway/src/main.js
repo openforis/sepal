@@ -1,12 +1,15 @@
 require('#sepal/log').configureServer(require('#config/log.json'))
 
 const {amqpUri, redisUri, port, secure} = require('./config')
+const {initializeWebSocketServer} = require('./websocket')
 const {isMatch} = require('micromatch')
 const express = require('express')
 const Redis = require('ioredis')
 const Session = require('express-session')
 const {v4: uuid} = require('uuid')
 const url = require('url')
+const {WebSocketServer} = require('ws')
+
 const apiMetrics = require('prometheus-api-metrics')
 const RedisSessionStore = require('connect-redis').default
 
@@ -20,6 +23,7 @@ const {SessionManager} = require('./session')
 const {setRequestUser, getSessionUsername} = require('./user')
 const {UserStore} = require('./userStore')
 const {usernameTag, urlTag} = require('./tag')
+const {webSocketPath} = require('../config/endpoints')
 
 const redis = new Redis(redisUri)
 const userStore = UserStore(redis)
@@ -78,29 +82,62 @@ const main = async () => {
     const proxies = proxyEndpoints(app)
     const server = app.listen(port)
 
+    const wss = new WebSocketServer({
+        noServer: true,
+        perMessageDeflate: false
+    })
+
     // avoid MaxListenersExceededWarning
     server.setMaxListeners(30)
-    
+
+    const webSocketAccessDenied = socket => {
+        log.warn('WebSocket access denied without a username')
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+        socket.destroy()
+    }
+
+    const handleGlobalWebSocket = (requestPath, req, socket, head, user) => {
+        log.debug(`Requesting WebSocket upgrade for ${requestPath}`)
+        wss.handleUpgrade(req, socket, head, ws =>
+            wss.emit('connection', ws, req, user)
+        )
+    }
+
+    const handleProxiedWebSocket = (requestPath, req, socket, head, {username}) => {
+        const {proxy, target} = proxies.find(({path}) => !path || requestPath === path || isMatch(requestPath, `${path}/**`)) || {}
+        if (proxy) {
+            log.debug(`${usernameTag(username)} Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
+            proxy.upgrade(req, socket, head)
+        } else {
+            log.warn(`${usernameTag(username)} No handler found for WebSocket upgrade "${requestPath}"`)
+            webSocketAccessDenied(socket)
+        }
+    }
+
+    initializeWebSocketServer(wss)
+
     // HACK: User has to be injected here as the session is not available in proxyRes and proxyResWsz
     server.on('upgrade', (req, socket, head) => {
         sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
             const username = getSessionUsername(req)
-            userStore.getUser(username).then(user => {
-                const requestPath = url.parse(req.url).pathname
-                if (user) {
-                    log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
-                    setRequestUser(req, user)
-                } else {
-                    log.warn(`${usernameTag(username)} Websocket upgrade without a user`)
-                }
-                const {proxy, target} = proxies.find(({path}) => !path || requestPath === path || isMatch(requestPath, `${path}/**`)) || {}
-                if (proxy) {
-                    log.debug(`${usernameTag(username)} Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
-                    proxy.upgrade(req, socket, head)
-                } else {
-                    log.warn(`${usernameTag(username)} No proxy found for WebSocket upgrade "${requestPath}"`)
-                }
-            })
+            if (username) {
+                userStore.getUser(username).then(user => {
+                    const requestPath = url.parse(req.url).pathname
+                    if (user) {
+                        log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
+                        setRequestUser(req, user)
+                    } else {
+                        log.warn(`${usernameTag(username)} Websocket upgrade without a user`)
+                    }
+                    if (requestPath === webSocketPath) {
+                        handleGlobalWebSocket(requestPath, req, socket, head, user)
+                    } else {
+                        handleProxiedWebSocket(requestPath, req, socket, head, user)
+                    }
+                })
+            } else {
+                webSocketAccessDenied(socket)
+            }
         })
     })
     
