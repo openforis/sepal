@@ -190,7 +190,7 @@
         "removing": {
             "error": "No es posible retirar los documentos."
         },
-        "selected": "{directories} {directories, plural, one {directorio} other {directorios}} y {files} {files, plural, one {archivo} other {archivos}} seleccionados"
+        "selected": ""
     },
     "button": {
         "add": "Añadir",
