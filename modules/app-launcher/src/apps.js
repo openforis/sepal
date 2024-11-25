@@ -49,7 +49,7 @@ const updateApp$ = app => {
     return exec$(
         '/',
         'sudo',
-        ['-E', 'update-app', app.path, app.label, app.repository, 'solara'],
+        ['-E', 'update-app', app.path, app.label, app.repository, app.branch || 'HEAD'],
         env
     ).pipe(
         catchError(error => {
