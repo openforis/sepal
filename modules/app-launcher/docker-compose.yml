@@ -14,7 +14,6 @@ services:
     container_name: app-launcher
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
       - "${SEPAL_DATA_DIR}/app-manager/apps.json:/var/lib/sepal/app-manager/apps.json"
       - "${SEPAL_DATA_DIR}/sepal/shared/apps:/var/lib/sepal/app-manager/apps"
       - "${SEPAL_DATA_DIR}/app-launcher:/var/lib/sepal/app-launcher"

@@ -1,7 +1,9 @@
 {
     "port": 5104,
     "categories": {
-        "main": "info",
+        "main": "debug",
+        "proxy": "debug",
+        "user": "debug",
         "terminal": "debug"
     }
 }
