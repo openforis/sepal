@@ -190,7 +190,7 @@
         "removing": {
             "error": "Impossible de supprimer les fichiers."
         },
-        "selected": "{directories} {directories, plural, one {dossier sélectionné} other {dossiers sélectionnés}} et {files} {files, plural, one {fichier sélectionné} other {fichiers sélectionnés}}"
+        "selected": ""
     },
     "button": {
         "add": "Ajouter",
