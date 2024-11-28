@@ -1,6 +1,6 @@
 const Path = require('path')
 const {realpath, readdir, stat, rm} = require('fs/promises')
-const {catchError, timer, Subject, exhaustMap, distinctUntilChanged, takeUntil, switchMap, map, filter, mergeMap, groupBy, finalize, mergeWith, EMPTY} = require('rxjs')
+const {catchError, timer, Subject, exhaustMap, distinctUntilChanged, takeUntil, switchMap, map, filter, mergeMap, groupBy, finalize, mergeWith, EMPTY, scan, throttleTime, pairwise, mergeScan, of, takeLast, last, first, repeat} = require('rxjs')
 const {minDuration$} = require('#sepal/rxjs')
 const _ = require('lodash')
 const {homeDir, pollIntervalMilliseconds} = require('./config')
@@ -9,6 +9,7 @@ const {subscriptionTag, clientTag} = require('./tag')
 const log = require('#sepal/log').getLogger('watcher')
 
 const REMOVE_COMFORT_DELAY_MS = 1000
+const STATS_INTERVAL_MS = 60000
 
 const userHomeDir = async username =>
     await realpath(Path.join(homeDir, username))
@@ -20,6 +21,7 @@ const createWatcher = async ({out$, stop$}) => {
     const unsubscribe$ = new Subject()
     const offline$ = new Subject()
     const trigger$ = new Subject()
+    const stats$ = new Subject()
 
     const subscriptionTrigger$ = (clientId, subscriptionId) =>
         trigger$.pipe(
@@ -101,7 +103,24 @@ const createWatcher = async ({out$, stop$}) => {
             )
         )
     ).subscribe({
-        next: ({username, clientId, subscriptionId}) => trigger$.next({username, clientId, subscriptionId})
+        next: ({username, clientId, subscriptionId}) => trigger$.next({username, clientId, subscriptionId}),
+        error: error => log.error('Unexpected stream error', error),
+        complete: () => log.error('Unexpected stream complete')
+    })
+
+    stats$.pipe(
+        scan((acc, clientId) => ({...acc, [clientId]: (acc[clientId] || 0) + 1}), {}),
+        throttleTime(STATS_INTERVAL_MS, null, {leading: false, trailing: true}),
+        map(stats => ({
+            clients: Object.keys(stats).length,
+            scans: Object.values(stats).reduce((total, count) => total + count, 0)
+        })),
+        first(),
+        repeat()
+    ).subscribe({
+        next: ({clients, scans}) => log.info(`Stats: ${scans} scans by ${clients} clients in the last ${STATS_INTERVAL_MS}ms`),
+        error: error => log.error('Unexpected stream error', error),
+        complete: () => log.error('Unexpected stream complete')
     })
 
     const scanDir = async ({username, clientId, subscriptionId, path}) => {
@@ -112,6 +131,7 @@ const createWatcher = async ({out$, stop$}) => {
             return EMPTY
         } else {
             log.debug(`${subscriptionTag({username, clientId, subscriptionId})} scanning path: ${path}`)
+            stats$.next(clientId)
             return readdir(absolutePath)
                 .then(files =>
                     scanFiles({absolutePath, files})
