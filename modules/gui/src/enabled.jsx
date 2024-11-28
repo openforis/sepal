@@ -112,6 +112,7 @@ export const withEnableDetector = () =>
                     this.setOnEnable = this.setOnEnable.bind(this)
                     this.setOnDisable = this.setOnDisable.bind(this)
                     this.setOnChange = this.setOnChange.bind(this)
+                    this.isEnabled = this.isEnabled.bind(this)
                 }
 
                 setOnEnable(onEnable) {
@@ -126,13 +127,19 @@ export const withEnableDetector = () =>
                     this.onChange = onChange
                 }
 
+                isEnabled() {
+                    const {enabled} = this.props
+                    return enabled
+                }
+
                 render() {
                     return React.createElement(WrappedComponent, {
                         ...this.props,
                         enableDetector: {
                             onEnable: this.setOnEnable,
                             onDisable: this.setOnDisable,
-                            onChange: this.setOnChange
+                            onChange: this.setOnChange,
+                            isEnabled: this.isEnabled
                         }
                     })
                 }
