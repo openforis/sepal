@@ -1,7 +1,7 @@
 const {v4: uuid} = require('uuid')
 
 const {moduleTag, userTag} = require('./tag')
-const {interval, map, Subject, groupBy, mergeMap, debounceTime} = require('rxjs')
+const {filter, interval, map, Subject, groupBy, mergeMap, debounceTime, takeUntil} = require('rxjs')
 
 const log = require('#sepal/log').getLogger('websocket/downlink')
 
@@ -15,7 +15,10 @@ const initializeDownlink = (servers, clients, wss) => {
         groupBy(({clientId}) => clientId),
         mergeMap(groupId$ =>
             groupId$.pipe(
-                debounceTime(HEARTBEAT_INTERVAL_MS * 2)
+                debounceTime(HEARTBEAT_INTERVAL_MS * 2),
+                takeUntil(clients.remove$.pipe(
+                    filter(removedClientId$ => removedClientId$ === groupId$.key)
+                ))
             )
         )
     ).subscribe({
