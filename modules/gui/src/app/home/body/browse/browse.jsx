@@ -95,7 +95,13 @@ class _FileBrowser extends React.Component {
     }
 
     onReady(ready) {
-        // console.log({ready})
+        const {enableDetector: {isEnabled}} = this.props
+        if (ready && isEnabled()) {
+            this.userFiles.upstream$.next({
+                monitor: this.getOpenDirs(),
+                reset: true
+            })
+        }
     }
 
     onUpdate({path, items}) {
@@ -123,7 +129,8 @@ class _FileBrowser extends React.Component {
     enabled(enabled) {
         if (enabled) {
             this.userFiles.upstream$.next({
-                monitor: this.getOpenDirs()
+                monitor: this.getOpenDirs(),
+                reset: true
             })
         } else {
             this.userFiles.upstream$.next({

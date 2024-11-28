@@ -29,8 +29,11 @@ const ws$ = in$ => {
             watcher.unsubscribe({username, clientId, subscriptionId})
         }
 
-        const onMonitor = ({username, clientId, subscriptionId, monitor}) => {
+        const onMonitor = ({username, clientId, subscriptionId, monitor, reset}) => {
             log.debug(`${subscriptionTag({username, clientId, subscriptionId})} monitoring path(s):`, monitor)
+            if (reset) {
+                watcher.unmonitor({username, clientId, subscriptionId})
+            }
             watcher.monitor({username, clientId, subscriptionId, path: monitor})
         }
 
@@ -62,9 +65,9 @@ const ws$ = in$ => {
                     } else if (update) {
                         log.info('*** To be implemented ***')
                     } else if (data) {
-                        const {monitor, unmonitor, remove} = data
+                        const {monitor, unmonitor, remove, reset} = data
                         if (monitor) {
-                            onMonitor({username, clientId, subscriptionId, monitor})
+                            onMonitor({username, clientId, subscriptionId, monitor, reset})
                         } else if (unmonitor) {
                             onUnmonitor({username, clientId, subscriptionId, unmonitor})
                         } else if (remove) {

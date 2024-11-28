@@ -38,21 +38,33 @@ const createWatcher = async ({out$, stop$}) => {
             )
         )
 
-    const subscriptionUnsubscribe$ = (clientId, subscriptionId) =>
+    const subscriptionUnsubscribe$ = ({username, clientId}, subscriptionId) =>
         unsubscribe$.pipe(
             filter(current =>
-                current.clientId === clientId
+                current.username === username
+                && current.clientId === clientId
                 && current.subscriptionId === subscriptionId
             )
         )
 
-    const clientOffline$ = clientId =>
+    const clientOffline$ = ({username, clientId}) =>
         offline$.pipe(
-            filter(current => current.clientId === clientId)
+            filter(current =>
+                current.username === username
+                && current.clientId === clientId
+            )
         )
 
+    const buildClientKey = (username, clientId) =>
+        `${username}:${clientId}`
+
+    const parseClientKey = key => {
+        const [username, clientId] = key.split(':')
+        return ({username, clientId})
+    }
+ 
     monitor$.pipe(
-        groupBy(({clientId}) => clientId),
+        groupBy(({username, clientId}) => buildClientKey(username, clientId)),
         mergeMap(clientGroup$ => clientGroup$.pipe(
             groupBy(({subscriptionId}) => subscriptionId),
             mergeMap(subscriptionGroup$ => subscriptionGroup$.pipe(
@@ -65,11 +77,11 @@ const createWatcher = async ({out$, stop$}) => {
                         finalize(() => log.debug(`${subscriptionTag({username, clientId, subscriptionId})} unmonitored path: ${path}`))
                     )
                 ),
-                takeUntil(subscriptionUnsubscribe$(clientGroup$.key, subscriptionGroup$.key)),
-                finalize(() => log.debug(`${subscriptionTag({clientId: clientGroup$.key, subscriptionId: subscriptionGroup$.key})} unsubscribed`))
+                takeUntil(subscriptionUnsubscribe$(parseClientKey(clientGroup$.key), subscriptionGroup$.key)),
+                finalize(() => log.debug(`${subscriptionTag({...parseClientKey(clientGroup$.key), subscriptionId: subscriptionGroup$.key})} unsubscribed`))
             )),
-            takeUntil(clientOffline$(clientGroup$.key)),
-            finalize(() => log.debug(`${clientTag({clientId: clientGroup$.key})} offline`))
+            takeUntil(clientOffline$(parseClientKey(clientGroup$.key))),
+            finalize(() => log.debug(`${clientTag(parseClientKey(clientGroup$.key))} offline`))
         )),
         takeUntil(stop$),
         catchError(error => log.error(error))
@@ -96,9 +108,10 @@ const createWatcher = async ({out$, stop$}) => {
         const home = await userHomeDir(username)
         const {absolutePath, isExternalPath} = resolvePath(home, path)
         if (isExternalPath) {
-            log.warn(`${subscriptionTag({username, clientId, subscriptionId})} requested invalid path: ${path}`)
+            log.warn(`${subscriptionTag({username, clientId, subscriptionId})} refused scanning path: ${path}`)
             return EMPTY
         } else {
+            log.debug(`${subscriptionTag({username, clientId, subscriptionId})} scanning path: ${path}`)
             return readdir(absolutePath)
                 .then(files =>
                     scanFiles({absolutePath, files})
@@ -164,15 +177,15 @@ const createWatcher = async ({out$, stop$}) => {
             )
         } else {
             unmonitor({username, clientId, subscriptionId, path})
-            log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} removing path: ${path}`)
             try {
                 const {absolutePath} = resolvePath(await userHomeDir(username), path)
-                return await rm(absolutePath, {recursive: true})
+                await rm(absolutePath, {recursive: true})
+                log.debug(`${subscriptionTag({username, clientId, subscriptionId})} removed path: ${path}`)
             } catch (error) {
                 if (error.code === 'ENOENT') {
-                    log.debug(() => `Ignored non-existing path: ${path}`)
+                    log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} ignored non-existing path: ${path}`)
                 } else {
-                    log.error(error)
+                    log.error(`${subscriptionTag({username, clientId, subscriptionId})} error while removing path: ${path}`, error)
                 }
             }
         }
@@ -181,18 +194,23 @@ const createWatcher = async ({out$, stop$}) => {
     const toDir = path =>
         path.substr(-1) === '/' ? path : Path.join(path, '/')
 
-    const monitor = ({username, clientId, subscriptionId, path}) => {
+    const monitor = ({username, clientId, subscriptionId, path, reset}) => {
         if (_.isArray(path)) {
+            if (reset) {
+                unmonitor({username, clientId, subscriptionId})
+            }
             path.forEach(path => monitor({username, clientId, subscriptionId, path}))
         } else {
+            log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} monitor path: ${path}`)
             monitor$.next({username, clientId, subscriptionId, path})
         }
     }
 
-    const unmonitor = ({username, clientId, subscriptionId, path}) => {
+    const unmonitor = ({username, clientId, subscriptionId, path = '/'}) => {
         if (_.isArray(path)) {
             path.forEach(path => unmonitor({username, clientId, subscriptionId, path}))
         } else {
+            log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} unmonitor path: ${path}`)
             unmonitor$.next({username, clientId, subscriptionId, path})
         }
     }
@@ -201,15 +219,20 @@ const createWatcher = async ({out$, stop$}) => {
         if (_.isArray(path)) {
             path.forEach(path => remove({username, clientId, subscriptionId, path}))
         } else {
+            log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} remove path: ${path}`)
             remove$.next({username, clientId, subscriptionId, remove: path})
         }
     }
 
-    const unsubscribe = ({username, clientId, subscriptionId}) =>
+    const unsubscribe = ({username, clientId, subscriptionId}) => {
+        log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} unsubscribe`)
         unsubscribe$.next({username, clientId, subscriptionId})
+    }
 
-    const offline = ({username, clientId}) =>
+    const offline = ({username, clientId}) => {
+        log.debug(() => `${clientTag({username, clientId})} offline`)
         offline$.next({username, clientId})
+    }
 
     return {monitor, unmonitor, remove, unsubscribe, offline}
 }
