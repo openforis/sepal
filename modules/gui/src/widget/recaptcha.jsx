@@ -42,7 +42,7 @@ export class Recaptcha extends React.Component {
         const {siteKey} = this.props
         log.debug(`Requesting reCAPTCHA assessment: ${action}`)
         try {
-            return from(window.grecaptcha.execute(siteKey, {action}))
+            return from(window.grecaptcha.enterprise.execute(siteKey, {action})) // Enterprise
         } catch (error) {
             log.error('Cannot request reCAPTCHA assessment', error)
             return throwError(() => error)
@@ -68,7 +68,7 @@ export class Recaptcha extends React.Component {
         if (!window.grecaptcha) {
             const script = document.createElement('script')
             script.setAttribute('type', 'text/javascript')
-            script.setAttribute('src', `https://www.google.com/recaptcha/api.js?render=${siteKey}`)
+            script.setAttribute('src', `https://www.google.com/recaptcha/enterprise.js?render=${siteKey}`)
             script.addEventListener('load', this.handleLoaded)
             document.body.appendChild(script)
         } else {
@@ -77,8 +77,8 @@ export class Recaptcha extends React.Component {
     }
     
     handleLoaded() {
-        window.grecaptcha.ready(() => {
-            log.debug('Google reCAPTCHA loaded')
+        window.grecaptcha.enterprise.ready(() => {
+            log.debug('Google reCAPTCHA enterprise loaded')
             this.setState({loaded: true})
         })
     }

@@ -61,7 +61,9 @@ class ServerConfig {
     final String googleOAuthClientId
     final String googleOAuthClientSecret
     final String googleEarthEngineEndpoint
-    final String googleRecaptchaSecretKey
+    final String googleProjectId
+    final String googleRecaptchaApiKey
+    final String googleRecaptchaSiteKey
     final String homeDirectory
     final String rabbitMQHost
     final int rabbitMQPort
@@ -74,7 +76,9 @@ class ServerConfig {
         googleOAuthClientId = c.googleOAuthClientId
         googleOAuthClientSecret = c.googleOAuthClientSecret
         googleEarthEngineEndpoint = c.googleEarthEngineEndpoint
-        googleRecaptchaSecretKey = c.googleRecaptchaSecretKey
+        googleProjectId = c.googleProjectId
+        googleRecaptchaApiKey = c.googleRecaptchaApiKey
+        googleRecaptchaSiteKey = c.googleRecaptchaSiteKey
         homeDirectory = c.homeDirectory
         rabbitMQHost = c.rabbitMQHost
         rabbitMQPort = c.integer('rabbitMQPort')

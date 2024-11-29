@@ -10,27 +10,40 @@ import static groovyx.net.http.ContentType.URLENC
 
 class RestGoogleRecaptcha implements GoogleRecaptcha {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private final String googleRecaptchaSecretKey
+    private final String googleProjectId
+    private final String googleRecaptchaApiKey
+    private final String googleRecaptchaSiteKey
 
-    RestGoogleRecaptcha(String googleRecaptchaSecretKey) {
-        this.googleRecaptchaSecretKey = googleRecaptchaSecretKey
+    RestGoogleRecaptcha(String googleProjectId, String googleRecaptchaApiKey, String googleRecaptchaSiteKey) {
+        this.googleProjectId = googleProjectId
+        this.googleRecaptchaApiKey = googleRecaptchaApiKey
+        this.googleRecaptchaSiteKey = googleRecaptchaSiteKey
     }
 
     private RESTClient getHttp() {
-        new RESTClient('https://www.google.com/recaptcha/api/siteverify')
+        new RESTClient('https://recaptchaenterprise.googleapis.com/v1/projects/' + googleProjectId + '/assessments')
     }
 
     boolean isValid(String recaptchaToken, String action) {
         try {
             def response = http.post(
                 contentType: JSON,
-                requestContentType: URLENC,
+                requestContentType: JSON,
+                query: [
+                    key: googleRecaptchaApiKey,
+                ],
                 body: [
-                    secret: googleRecaptchaSecretKey,
-                    response: recaptchaToken
+                    event: [
+                        token: recaptchaToken,
+                        expectedAction: action,
+                        siteKey: googleRecaptchaSiteKey,
+                    ]
                 ]
             )
-            response?.data?.success && (!action || response?.data?.action == action)
+            response.data &&            
+                response.data.tokenProperties?.valid &&
+                response.data.tokenProperties?.action == response.data?.event?.expectedAction &&
+                response.data.riskAnalysis?.score > 0.7
         } catch (Exception exception) {
             LOG.info('Could not validate reCAPTCHA', exception)
         }

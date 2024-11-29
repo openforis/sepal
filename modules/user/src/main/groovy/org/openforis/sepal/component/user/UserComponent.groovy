@@ -55,7 +55,9 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
                 ),
                 new SystemClock(),
                 new RestGoogleRecaptcha(
-                        serverConfig.googleRecaptchaSecretKey
+                        serverConfig.googleProjectId,
+                        serverConfig.googleRecaptchaApiKey,
+                        serverConfig.googleRecaptchaSiteKey
                 )
             )
     }
