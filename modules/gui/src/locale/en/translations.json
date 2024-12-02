@@ -2120,6 +2120,11 @@
                             "label": "Sample classification",
                             "title": "SAMPLE CLASSIFICATION",
                             "tooltip": "Sample a pre-existing classification."
+                        },
+                        "CEO" : {
+                            "label": "Collect Earth Online",
+                            "title": "Collect Earth Online",
+                            "tooltip": "Use training data from CEO"
                         }
                     }
                 }
