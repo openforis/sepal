@@ -1,6 +1,6 @@
 const Path = require('path')
 const {realpath, readdir, stat, rm} = require('fs/promises')
-const {catchError, timer, Subject, exhaustMap, distinctUntilChanged, takeUntil, switchMap, map, filter, mergeMap, groupBy, finalize, mergeWith, EMPTY, scan, throttleTime, of, first, repeat} = require('rxjs')
+const {catchError, timer, Subject, exhaustMap, distinctUntilChanged, takeUntil, switchMap, map, filter, mergeMap, groupBy, finalize, mergeWith, EMPTY, scan, throttleTime, of, first, repeat, from, reduce} = require('rxjs')
 const {minDuration$} = require('#sepal/rxjs')
 const _ = require('lodash')
 const {homeDir, pollIntervalMilliseconds} = require('./config')
@@ -73,7 +73,7 @@ const createWatcher = async ({out$, stop$}) => {
                 mergeMap(({username, clientId, subscriptionId, path}) =>
                     timer(0, pollIntervalMilliseconds).pipe(
                         mergeWith(subscriptionTrigger$(clientId, subscriptionId)),
-                        exhaustMap(() => scanDir({username, clientId, subscriptionId, path})),
+                        exhaustMap(() => scanDir$({username, clientId, subscriptionId, path})),
                         distinctUntilChanged(_.isEqual),
                         takeUntil(subscriptionUnmonitor$(clientId, subscriptionId, path)),
                         finalize(() => log.debug(`${subscriptionTag({username, clientId, subscriptionId})} unmonitored path: ${path}`))
@@ -96,7 +96,7 @@ const createWatcher = async ({out$, stop$}) => {
     remove$.pipe(
         switchMap(({username, clientId, subscriptionId, remove}) =>
             minDuration$(
-                removePath({username, clientId, subscriptionId, path: remove}),
+                from(removePath({username, clientId, subscriptionId, path: remove})),
                 REMOVE_COMFORT_DELAY_MS
             ).pipe(
                 map(() => ({username, clientId, subscriptionId}))
@@ -119,60 +119,60 @@ const createWatcher = async ({out$, stop$}) => {
         first(),
         repeat()
     ).subscribe({
-        next: ({clients, scans}) => log.info(`Stats: ${scans} scans by ${clients} clients in the last ${STATS_INTERVAL_MS}ms`),
+        next: ({clients, scans}) => log.info(`Stats: ${scans} scans by ${clients} clients`),
         error: error => log.error('Unexpected stream error', error),
         complete: () => log.error('Unexpected stream complete')
     })
 
-    const scanDir = async ({username, clientId, subscriptionId, path}) => {
-        const home = await userHomeDir(username)
-        const {absolutePath, isExternalPath} = resolvePath(home, path)
-        if (isExternalPath) {
-            log.warn(`${subscriptionTag({username, clientId, subscriptionId})} refused scanning path: ${path}`)
-            return EMPTY
-        } else {
-            log.debug(`${subscriptionTag({username, clientId, subscriptionId})} scanning path: ${path}`)
-            stats$.next(clientId)
-            return readdir(absolutePath)
-                .then(files =>
-                    scanFiles({absolutePath, files})
-                        .then(files => ({username, clientId, subscriptionId, path, items: toTree(files)}))
-                )
-                .catch(error => {
-                    log.warn(error)
-                    unmonitor({username, clientId, subscriptionId, path})
-                    return ({path, error: error.code})
-                })
-        }
-    }
+    const scanDir$ = ({username, clientId, subscriptionId, path}) =>
+        from(userHomeDir(username)).pipe(
+            map(home => resolvePath(home, path)),
+            switchMap(({absolutePath, isExternalPath}) => {
+                if (isExternalPath) {
+                    log.warn(`${subscriptionTag({username, clientId, subscriptionId})} refused scanning path: ${path}`)
+                    return EMPTY
+                } else {
+                    log.debug(`${subscriptionTag({username, clientId, subscriptionId})} scanning path: ${path}`)
+                    stats$.next(clientId)
+                    return scanValidDir$({username, clientId, subscriptionId, path, absolutePath})
+                }
+            })
+        )
 
-    const scanFiles = async ({absolutePath, files}) =>
-        Promise.all(
-            files.map(filename => scanFile(absolutePath, filename))
+    const scanValidDir$ = ({username, clientId, subscriptionId, path, absolutePath}) =>
+        from(readdir(absolutePath)).pipe(
+            switchMap(dir => of(...dir)),
+            mergeMap(filename => from(scanFile(absolutePath, filename))),
+            reduce((acc, {name, ...fileInfo}) => ({...acc, [name]: fileInfo}), {}),
+            map(items => ({username, clientId, subscriptionId, path, items})),
+            catchError(error => {
+                log.warn(error)
+                unmonitor({username, clientId, subscriptionId, path})
+                return of({path, error: error.code})
+            })
         )
 
     const scanFile = async (path, filename) => {
         try {
             const {absolutePath, isSubPath} = resolvePath(path, filename)
             if (isSubPath) {
-                return stat(absolutePath)
-                    .then(stat => {
-                        const info = {
-                            name: filename,
-                            mtime: stat.mtimeMs
-                        }
-                        if (stat.isDirectory()) {
-                            info.dir = true
-                        }
-                        if (stat.isFile()) {
-                            info.file = true
-                            info.size = stat.size
-                        }
-                        return info
-                    })
-                    .catch(error => {
-                        log.warn(() => [`Ignoring unresolvable path: ${path}`, error])
-                    })
+                try {
+                    const node = await stat(absolutePath)
+                    const info = {
+                        name: filename,
+                        mtime: node.mtimeMs
+                    }
+                    if (node.isDirectory()) {
+                        info.dir = true
+                    }
+                    if (node.isFile()) {
+                        info.file = true
+                        info.size = node.size
+                    }
+                    return info
+                } catch (error) {
+                    log.warn(() => [`Ignoring unresolvable path: ${path}`, error])
+                }
             } else {
                 log.debug(() => `Ignoring non-subdir path: ${path}`)
             }
@@ -184,12 +184,6 @@ const createWatcher = async ({out$, stop$}) => {
             }
         }
     }
-        
-    const toTree = files =>
-        _(files)
-            .compact()
-            .transform((tree, {name, ...file}) => tree[name] = {...file}, {})
-            .value()
 
     const removePath = async ({username, clientId, subscriptionId, path}) => {
         if (_.isArray(path)) {
