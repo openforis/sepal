@@ -2084,6 +2084,64 @@
                                 "placeholder": "Select band containing class...",
                                 "tooltip": "Select band containing class"
                             }
+                        },
+                        "ceo" : {
+                            "login" : {
+                                "title": "Collect Earth Online Authentication",
+                                "tooltip": "Use training data from CEO",
+                                "email" : {
+                                    "label" : "CEO email",
+                                    "placeholder" : "Enter your CEO email",
+                                    "required" : "You must enter your CEO email"
+                                },
+                                "password" : {
+                                    "label" : "Password",
+                                    "placeholder" : "Enter your CEO password",
+                                    "required" : "You must enter your CEO password"
+                                },
+                                "connect.label" : "Connect",
+                                "disconnect.label" : "Disconnect",
+                                "connected" : {
+                                    "title" : "You are connected to CEO",
+                                    "tooltip" : "You are connected to CEO"
+                                },
+                                "disconnected" : {
+                                    "title" : "Disconnected from CEO",
+                                    "tooltip" : "You are disconnected from CEO"
+                                },
+                                "invalid" : "Invalid CEO email or password"
+                            },
+                            "dataType": {
+                                "title" : "CSV Data type",
+                                "tooltip" : "Select the type of data you want to retrieve from CEO",
+                                "sample" : {
+                                    "label":  "Sample",
+                                    "tooltip": "Use the sample data from CEO"
+                                },
+                                "plot" :{
+                                    "label": "Plot",
+                                    "tooltip": "Use the plot data from CEO"
+                                }
+                            },
+                            "institution" : {
+                                "label" : "Institution",
+                                "placeholder" : "Select an institution",
+                                "required" : "You must select an institution"
+                            },
+                            "project" : {
+                                "label" : "Project",
+                                "placeholder" : "Select a project",
+                                "required" : "You must select a project"
+                            },
+                            "loadCsv" : {
+                                "failed" : "Failed to get the training data from CEO"
+                            },
+                            "loadProjects" : {
+                                "failed" : "Failed to get the projects for the selected institution"
+                            },
+                            "loadInstitutions" : {
+                                "failed" : "Failed to get the institutions"
+                            }
                         }
                     },
                     "noDataSet": "No training data set added",
@@ -2120,6 +2178,11 @@
                             "label": "Sample classification",
                             "title": "SAMPLE CLASSIFICATION",
                             "tooltip": "Sample a pre-existing classification."
+                        },
+                        "CEO" : {
+                            "label": "Collect Earth Online",
+                            "title": "Collect Earth Online",
+                            "tooltip": "Use training data from CEO"
                         }
                     }
                 }
