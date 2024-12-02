@@ -1,0 +1,10 @@
+services:
+  logger:
+    networks:
+      - sepal
+    logging:
+      driver: syslog
+      options:
+        cache-disabled: "true"
+        syslog-address: udp://172.20.128.2:514
+        tag: docker/{{.Name}}

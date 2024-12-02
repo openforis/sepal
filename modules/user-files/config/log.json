@@ -3,7 +3,9 @@
     "categories": {
         "config": "info",
         "filesystem": "debug",
+        "http": "info",
         "main": "info",
-        "ws": "debug"
+        "watcher": "info",
+        "ws": "info"
     }
 }

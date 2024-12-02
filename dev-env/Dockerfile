@@ -3,7 +3,6 @@ FROM debian:bookworm
 SHELL ["/bin/bash", "-c"]
 
 ARG DEBIAN_FRONTEND=noninteractive
-ENV DOCKER_BUILDKIT=0
 ENV PROJECT_DIR /usr/local/src/sepal
 ENV NODE_MAJOR=20
 
@@ -47,7 +46,7 @@ RUN apt-get update && apt-get install -y docker-ce-cli
 # Install docker compose
 
 RUN mkdir -p /usr/local/lib/docker/cli-plugins
-RUN curl -SL https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
+RUN curl -SL https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
 RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Install node.js

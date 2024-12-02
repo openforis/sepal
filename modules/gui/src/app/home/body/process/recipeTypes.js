@@ -1,4 +1,5 @@
 import asset from './recipe/asset/asset'
+import bandMath from './recipe/bandMath/bandMath'
 import baytsAlerts from './recipe/baytsAlerts/baytsAlerts'
 import baytsHistorical from './recipe/baytsHistorical/baytsHistorical'
 import ccdc from './recipe/ccdc/ccdc'
@@ -12,8 +13,11 @@ import opticalMosaic from './recipe/opticalMosaic/opticalMosaic'
 import phenology from './recipe/phenology/phenology'
 import planetMosaic from './recipe/planetMosaic/planetMosaic'
 import radarMosaic from './recipe/radarMosaic/radarMosaic'
+import regression from './recipe/regression/regression'
 import remapping from './recipe/remapping/remapping'
+import stack from './recipe/stack/stack'
 import timeSeries from './recipe/timeSeries/timeSeries'
+import unsupervisedClassification from './recipe/unsupervisedClassification/unsupervisedClassification'
 import {addRecipeType} from './recipeTypeRegistry'
 
 export const registerRecipeTypes = () => {
@@ -21,6 +25,10 @@ export const registerRecipeTypes = () => {
     addRecipeType(radarMosaic())
     addRecipeType(planetMosaic())
     addRecipeType(classification())
+    addRecipeType(unsupervisedClassification())
+    addRecipeType(regression())
+    addRecipeType(stack())
+    addRecipeType(bandMath())
     addRecipeType(timeSeries())
     addRecipeType(ccdc())
     addRecipeType(ccdcSlice())

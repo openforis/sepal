@@ -3,6 +3,7 @@
     --element-clearance: .25rem;
     --edge-clearance: .25rem;
     position: absolute;
+    display: flex;
     z-index: 2;
 }
 

@@ -1,0 +1,74 @@
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: jenkins.dockerfile
+    image: jenkins
+    container_name: jenkins
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - jenkins:/var/jenkins_home
+    environment:
+      CASC_JENKINS_CONFIG: /var/lib/jenkins/casc
+      JENKINS_DOMAIN: "${OPS_DOMAIN}"
+      JENKINS_PORT: "${JENKINS_PORT}"
+      JENKINS_PASSWORD: "${JENKINS_PASSWORD}"
+      DOCKER_REGISTRY_HOST: "${DOCKER_REGISTRY_HOST}"
+      DOCKER_REGISTRY_USERNAME: "${DOCKER_REGISTRY_USERNAME}"
+      DOCKER_REGISTRY_PASSWORD: "${DOCKER_REGISTRY_PASSWORD}"
+    restart: always
+    ulimits:
+      core: 0
+    healthcheck:
+      test: bash -c "exec 6<> /dev/tcp/localhost/8080"
+      timeout: 60s
+      interval: 1s
+      retries: 60
+
+  docker-registry:
+    build:
+      context: .
+      dockerfile: registry.dockerfile
+    image: docker-registry
+    container_name: docker-registry
+    volumes:
+      - registry:/var/lib/registry
+    restart: always
+    ulimits:
+      core: 0
+    healthcheck:
+      test: netstat -an | grep 5000
+      timeout: 60s
+      interval: 1s
+      retries: 60
+
+  haproxy:
+    extends:
+      file: ../haproxy-acme/docker-compose.yml
+      service: haproxy
+    depends_on:
+      jenkins:
+        condition: service_healthy
+      docker-registry:
+        condition: service_healthy
+    ports:
+      - "${JENKINS_PORT}:${JENKINS_PORT}"
+      - "443:5000" # Docker registry port
+    volumes:
+      - "./ops.haproxy.cfg:/usr/local/etc/haproxy/haproxy.d/ops.cfg"
+      - haproxy:/var/lib/acme
+    environment:
+      HAPROXY_DOMAIN: "${OPS_DOMAIN}"
+      JENKINS_PORT: "${JENKINS_PORT}"
+      DOCKER_REGISTRY_USERNAME: "${DOCKER_REGISTRY_USERNAME}"
+      DOCKER_REGISTRY_PASSWORD: "${DOCKER_REGISTRY_PASSWORD}"
+    healthcheck:
+      test: netstat -an | grep ${JENKINS_PORT} && netstat -an | grep 5000
+      timeout: 60s
+      interval: 1s
+      retries: 60
+
+volumes:
+  jenkins:
+  haproxy:
+  registry:

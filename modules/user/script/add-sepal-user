@@ -9,7 +9,7 @@ USER_DATA_HOME=/sepal/home/$USERNAME
 function user_id () {
     uid=${1}
     ldapsearch -x -LLL \
-      -h "${LDAP_HOST}" \
+      -h "ldap" \
       -b "uid=${uid},ou=People,dc=sepal,dc=org" \
       -w "${LDAP_ADMIN_PASSWORD}" \
       -D "cn=admin,dc=sepal,dc=org" uidNumber \
@@ -20,7 +20,7 @@ function user_id () {
 function group_id () {
     cn=${1}
     ldapsearch -x -LLL \
-      -h "${LDAP_HOST}" \
+      -h "ldap" \
       -b "cn=${cn},ou=Groups,dc=sepal,dc=org" \
       -w "${LDAP_ADMIN_PASSWORD}" \
       -D "cn=admin,dc=sepal,dc=org" gidNumber \
@@ -31,7 +31,7 @@ function group_id () {
 function user_exists () {
     uid=${1}
     ldapsearch -x -LLL \
-      -h "${LDAP_HOST}" \
+      -h "ldap" \
       -b "uid=${uid},ou=People,dc=sepal,dc=org" \
       -w "${LDAP_ADMIN_PASSWORD}" \
       -D "cn=admin,dc=sepal,dc=org" sub '(objectClass=*)' \
@@ -49,9 +49,7 @@ if ! user_exists "$USERNAME"; then
 
     if [ -n "$PASSWORD" ]; then
         echo "add-sepal-user | Setting password"
-        passwordFile=$(mktemp /tmp/$USERNAME.XXXXXX)
         echo $PASSWORD > $passwordFile
-        rm $passwordFile
         ldappasswd -p 389 -h ldap -x -D cn=admin,dc=sepal,dc=org -w "$(cat /etc/ldap.secret)" \
             -s "$PASSWORD" uid=$USERNAME,ou=People,dc=sepal,dc=org -ZZ
     fi

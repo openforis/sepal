@@ -1,0 +1,4 @@
+services:
+  logger:
+    # avoid publishing ports on dev-env
+    ports: !override []

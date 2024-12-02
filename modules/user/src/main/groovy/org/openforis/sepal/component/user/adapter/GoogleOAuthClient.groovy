@@ -92,6 +92,12 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
                         grant_type   : 'refresh_token'
                 ]
         )
+        if (!response.data?.access_token) {
+            def data = response.data
+            def message = data instanceof Map ? toJson(data) : data?.toString()
+            throw new GoogleOAuthException("Failed to refresh access token. No token received: ${message}")
+        }
+
         return new GoogleTokens(
                 refreshToken: tokens.refreshToken,
                 accessToken: response.data.access_token,

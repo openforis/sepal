@@ -1,10 +1,15 @@
-version: "3.9"
-
 services:
   mysql:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/mysql/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/mysql:${SEPAL_VERSION:-latest}"
     container_name: mysql
     volumes:
@@ -22,8 +27,12 @@ services:
       interval: 1s
       retries: 60
     restart: always
+    platform: linux/amd64 # Required for macOS builds
 
   mysql-admin:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     image: phpmyadmin/phpmyadmin:latest
     container_name: mysql-admin
     environment:
@@ -39,4 +48,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

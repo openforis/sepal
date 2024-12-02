@@ -6,7 +6,9 @@
         "build": {
             "sandbox-base": "build"
         },
-        "run": []
+        "run": [
+            "logger"
+        ]
     },
     "backup": {
         "build": {},
@@ -14,7 +16,9 @@
     },
     "ceo-gateway": {
         "build": {},
-        "run": []
+        "run": [
+            "logger"
+        ]
     },
     "email": {
         "lib": [
@@ -22,6 +26,7 @@
         ],
         "build": {},
         "run": [
+            "logger",
             "rabbitmq"
         ]
     },
@@ -31,6 +36,7 @@
         ],
         "build": {},
         "run": [
+            "logger",
             "rabbitmq"
         ]
     },
@@ -40,6 +46,7 @@
         ],
         "build": {},
         "run": [
+            "logger",
             "sepal-server"
         ]
     },
@@ -52,15 +59,14 @@
     },
     "gui": {
         "build": {},
-        "run": []
-    },
-    "gui2": {
-        "build": {},
-        "run": []
+        "run": [
+            "logger"
+        ]
     },
     "haproxy": {
         "build": {},
         "run": [
+            "logger",
             "letsencrypt",
             "gateway"
         ]
@@ -71,27 +77,43 @@
     },
     "ldap": {
         "build": {},
-        "run": []
+        "run": [
+            "logger"
+        ]
     },
     "ldap-backup": {
         "build": {},
-        "run": []
+        "run": [
+            "logger"
+        ]
     },
     "letsencrypt": {
+        "build": {},
+        "run": [
+            "logger"
+        ]
+    },
+    "logger": {
         "build": {},
         "run": []
     },
     "mysql": {
         "build": {},
-        "run": []
+        "run": [
+            "logger"
+        ]
     },
     "mysql-backup": {
         "build": {},
-        "run": []
+        "run": [
+            "logger"
+        ]
     },
     "prometheus": {
         "build": {},
-        "run": []
+        "run": [
+            "logger"
+        ]
     },
     "r-proxy": {
         "lib": [
@@ -100,11 +122,15 @@
         "build": {
             "sandbox-base": "build"
         },
-        "run": []
+        "run": [
+            "logger"
+        ]
     },
     "rabbitmq": {
         "build": {},
-        "run": []
+        "run": [
+            "logger"
+        ]
     },
     "sandbox": {
         "build": {
@@ -123,6 +149,7 @@
             "task": "build"
         },
         "run": [
+            "logger",
             "mysql",
             "user",
             "rabbitmq"
@@ -135,6 +162,7 @@
         ],
         "build": {},
         "run": [
+            "logger",
             "ldap"
         ]
     },
@@ -144,8 +172,7 @@
         ],
         "build": {},
         "run": [
-            "email",
-            "rabbitmq"
+            "logger"
         ]
     },
     "task": {
@@ -162,13 +189,16 @@
             "shared"
         ],
         "build": {},
-        "run": []
+        "run": [
+            "logger"
+        ]
     },
     "user": {
         "build": {
             "java": "build"
         },
         "run": [
+            "logger",
             "mysql",
             "ldap",
             "rabbitmq"
@@ -181,6 +211,7 @@
         ],
         "build": {},
         "run": [
+            "logger",
             "rabbitmq"
         ]
     },
@@ -190,11 +221,16 @@
         ],
         "build": {},
         "run": [
+            "logger",
             "email",
             "rabbitmq"
         ]
     },
     "user-storage-backup": {
+        "build": {},
+        "run": []
+    },
+    "ops": {
         "build": {},
         "run": []
     }

@@ -1,10 +1,15 @@
-version: "3.9"
-
 services:
   mysql-backup:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/mysql-backup/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/mysql-backup:${SEPAL_VERSION:-latest}"
     container_name: mysql-backup
     volumes:
@@ -21,4 +26,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

@@ -1,7 +1,10 @@
-version: "3.9"
-
 services:
   ssh-gateway:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
     volumes:  # To allow dynamic reloading in dev
       - ${SEPAL_PROJECT_DIR}/lib/js/shared:/usr/local/src/sepal/lib/js/shared
       - ${SEPAL_PROJECT_DIR}/modules/ssh-gateway:/usr/local/src/sepal/modules/ssh-gateway
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'

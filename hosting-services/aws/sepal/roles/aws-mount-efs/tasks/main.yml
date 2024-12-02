@@ -11,7 +11,7 @@
 
 - name: Mount EFS Worker Instance Logs
   mount:
-    name: "/var/log/worker-instance"
+    name: "/var/log/sepal/worker"
     fstype: "efs"
     state: "mounted"
     src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/worker-instance-log"

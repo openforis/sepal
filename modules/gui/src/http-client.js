@@ -120,7 +120,8 @@ export const WebSocket = (url, {
     maxRetries,
     minRetryDelay,
     maxRetryDelay,
-    retryDelayFactor
+    retryDelayFactor,
+    onRetry
 } = {}) => {
     const upstream$ = webSocket(webSocketUrl(url))
 
@@ -130,22 +131,14 @@ export const WebSocket = (url, {
                 maxRetries,
                 minRetryDelay,
                 maxRetryDelay,
-                retryDelayFactor
+                retryDelayFactor,
+                onRetry
             })
         )
-        // retry({
-        //     delay: (error, retryCount) => {
-        //         if (error.status < 500 || retryCount > maxRetries) {
-        //             return throwError(() => error)
-        //         }
-        //         log.debug(() => `Retrying websocket connection to ${url}: ${retryCount}${maxRetries ? `/${maxRetries}` : ''}`)
-        //         return timer(Math.min(maxRetryDelay, minRetryDelay * Math.pow(retryDelayFactor, retryCount - 1)))
-        //     }
-        // })
     )
     return {upstream$, downstream$}
 }
-    
+
 const webSocketUrl = url => {
     const {protocol, host} = window.location
     if (url.startsWith('wss:') || url.startsWith('ws:')) {

@@ -1,15 +1,17 @@
-version: "3.9"
-
 services:
   ldap:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/ldap/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/ldap:${SEPAL_VERSION:-latest}"
     container_name: ldap
-    ports:
-      - "0.0.0.0:389:389"
-      - "0.0.0.0:636:636"
     volumes:
       - "${SEPAL_DATA_DIR}/ldap:/data"
       # Parent image volumes
@@ -17,7 +19,6 @@ services:
       - "${SEPAL_DATA_DIR}/ldap/config:/etc/ldap/slapd.d"
       - "${SEPAL_DATA_DIR}/ldap/certificates:/container/service/slapd/assets/certs"
     environment:
-      LDAP_HOST: "$LDAP_HOST"
       LDAP_ORGANISATION: "SEPAL"
       LDAP_DOMAIN: "sepal.org"
       LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
@@ -29,7 +30,7 @@ services:
     networks:
       - sepal
     healthcheck:
-      test: bash -c "test -f /data/module_initialized"
+      test: bash -c "test -f /data/content_added && [ ! -f '/container/environment/99-default/default.startup.yaml' ]"
       timeout: 60s
       interval: 1s
       retries: 60
@@ -38,4 +39,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

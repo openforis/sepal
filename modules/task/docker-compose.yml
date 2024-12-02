@@ -1,10 +1,12 @@
-version: "3.9"
-
 services:
   task:
     build:
       context: ../..
       dockerfile: ./modules/task/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/task:${SEPAL_VERSION:-latest}"
     container_name: task
     init: true
@@ -19,8 +21,8 @@ services:
       - sepal
     ulimits:
       core: 0
+    platform: linux/amd64 # Required for macOS builds
 
 networks:
   sepal:
     external: true
-    name: sepal

@@ -7,8 +7,8 @@ FORCE_REBUILD=0
 exec 6>/dev/null
 
 function start() {
-  # Create sepal network if it doesn't exist
-  docker network inspect sepal > /dev/null 2>&1 || docker network create sepal > /dev/null
+  # Create networks if they doen't exist
+  docker network inspect sepal > /dev/null 2>&1 || docker network create --subnet=172.20.0.0/16 --ip-range=172.20.0.0/24 sepal -- > /dev/null
 
   cd "$WORKING_DIR/../dev-env" || exit
   local RUNNING="$(docker compose ls | grep -e '^dev-env[ ]*running'| wc -l)"

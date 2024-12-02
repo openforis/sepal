@@ -226,7 +226,9 @@
         "unauthorized": ""
     },
     "error": {
-        "internal": ""
+        "badRequest": "",
+        "internal": "",
+        "notFound": ""
     },
     "fieldValidation": {
         "date": "",
@@ -801,6 +803,9 @@
             }
         },
         "ccdc": {
+            "bands": {
+                "count": ""
+            },
             "chartPixel": {
                 "cancel.tooltip": "",
                 "loadFailed": "",
@@ -927,6 +932,32 @@
                             },
                             "label": "",
                             "surfaceReflectance": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "orbitOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "quickRemove": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
                                 "label": "",
                                 "tooltip": ""
                             }
@@ -2126,10 +2157,18 @@
                             }
                         },
                         "sampleClassification": {
+                            "typeToSample": {
+                                "label": "",
+                                "ASSET": "",
+                                "RECIPE": ""
+                            },
                             "assetToSample": {
                                 "label": "",
                                 "placeholder": "",
                                 "required": ""
+                            },
+                            "recipeToSample": {
+                                "label": ""
                             },
                             "sampleScale": {
                                 "label": "",
@@ -2197,6 +2236,259 @@
                 "label": "",
                 "loading": "",
                 "tilesFailed": ""
+            },
+            "tabPlaceholder": ""
+        },
+        "regression": {
+            "bands": {
+                "regression": ""
+            },
+            "create": "",
+            "description": "",
+            "panel": {
+                "trainingData": {
+                    "form": {
+                        "eeTable": {
+                            "valueColumn": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "sampleImage": {
+                            "sampleCount": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "suffix": "",
+                                "tooltip": ""
+                            },
+                            "valueBand": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "noIntersection": "",
+                            "unableToSampleAllPixels": ""
+                        }
+                    },
+                    "type": {
+                        "EE_TABLE": {
+                            "label": "",
+                            "tooltip": "",
+                            "title": ""
+                        },
+                        "SAMPLE_IMAGE": {
+                            "label": "",
+                            "tooltip": "",
+                            "title": ""
+                        },
+                        "RECIPE": {
+                            "label": "",
+                            "tooltip": "",
+                            "title": ""
+                        }
+                    }
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "unsupervisedClassification": {
+            "bands": {
+                "class": ""
+            },
+            "create": "",
+            "description": "",
+            "panel": {
+                "sampling": {
+                    "button": "",
+                    "tooltip": "",
+                    "title": "",
+                    "form": {
+                        "numberOfSamples": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": "",
+                            "suffix": ""
+                        },
+                        "sampleScale": {
+                            "label": "",
+                            "placeholder": "",
+                            "suffix": "",
+                            "tooltip": ""
+                        }
+                    }
+                },
+                "clusterer": {
+                    "button": "",
+                    "tooltip": "",
+                    "title": "",
+                    "form": {
+                        "type": {
+                            "label": ""
+                        },
+                        "kmeans": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "cascadeKMeans": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "xmeans": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "lvq": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "config": {
+                            "numberOfClusters": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "minNumberOfClusters": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "maxNumberOfClusters": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "restarts": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "init": {
+                                "label": "",
+                                "options": {
+                                    "random.label": "",
+                                    "kmeans.label": "",
+                                    "canopy.label": "",
+                                    "farthestFirst.label": ""
+                                }
+                            },
+                            "distanceFunction": {
+                                "label": "",
+                                "options": {
+                                    "euclidean.label": "",
+                                    "manhattan.label": "",
+                                    "chebyshev.label": ""
+                                }
+                            },
+                            "maxIterations": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "canopies": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "maxCandidates": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "periodicPruning": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "minDensity": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "t1": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "t2": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "preserveOrder": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "fast": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "seed": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "learningRate": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "epochs": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "normalizeInput": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "maxIterationsOverall": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "maxKMeans": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "maxForChildren": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "useKD": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "cutoffFactor": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        }
+                    }
+                }
             },
             "tabPlaceholder": ""
         },
@@ -3867,8 +4159,11 @@
         },
         "project": {
             "title": "",
+            "description": "",
             "form": {
-                "name.label": ""
+                "name.label": "",
+                "name.required": "",
+                "name.unique": ""
             },
             "edit": {
                 "tooltip": ""
@@ -4103,6 +4398,9 @@
             "title": ""
         },
         "timeSeries": {
+            "bands": {
+                "count": ""
+            },
             "chartPixel": {
                 "loadObservations": {
                     "error": "",
@@ -4425,6 +4723,18 @@
                 "success": "",
                 "projectNeeded": "",
                 "title": ""
+            },
+            "missingScopes": {
+                "title": "",
+                "message": ""
+            },
+            "unavailable": {
+                "title": "",
+                "message": ""
+            },
+            "unspecifiedError": {
+                "title": "",
+                "message": ""
             },
             "label": "",
             "title": ""

@@ -1,0 +1,10 @@
+services:
+  prometheus:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
+  
+  cadvisor:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger

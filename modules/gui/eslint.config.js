@@ -6,12 +6,12 @@ const babelPresetEnv = require('@babel/preset-env')
 const babelPresetReact = require('@babel/preset-react')
 
 const reactPlugin = require('eslint-plugin-react')
-const reactHooksPlugin = require('eslint-plugin-react-hooks')
-const importPlugin = require('eslint-plugin-import')
+// const reactHooksPlugin = require('eslint-plugin-react-hooks')
+// const importPlugin = require('eslint-plugin-import')
 const simpleImportSort = require('eslint-plugin-simple-import-sort')
 
 const baseConfig = {
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.jsx'],
     languageOptions: {
         ecmaVersion: 'latest',
         globals: {
@@ -48,7 +48,7 @@ const baseConfig = {
         'no-multi-spaces': ['error', {ignoreEOLComments: true}],
         'no-multiple-empty-lines': ['error', {max: 1, maxBOF: 0, maxEOF: 1}],
         'no-trailing-spaces': ['error', {skipBlankLines: true, ignoreComments: false}],
-        'no-unused-vars': ['error', {argsIgnorePattern: '^_', varsIgnorePattern: '^_'}],
+        'no-unused-vars': ['error', {argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_'}],
         'object-curly-spacing': ['error', 'never'],
         'quotes': ['error', 'single'],
         'semi': ['error', 'never'],
@@ -92,29 +92,32 @@ const reactConfig = {
     }
 }
 
-const reactHooksConfig = {
-    plugins: {
-        'react-hooks': reactHooksPlugin,
-    },
-    rules: {
-        ...reactHooksPlugin.configs.recommended.rules
-    }
-}
+// const reactHooksConfig = {
+//     plugins: {
+//         'react-hooks': reactHooksPlugin,
+//     },
+//     rules: {
+//         ...reactHooksPlugin.configs.recommended.rules
+//     }
+// }
 
 const importConfig = {
     plugins: {
         'simple-import-sort': simpleImportSort,
-        import: importPlugin
+        // import: importPlugin
     },
     rules: {
         'simple-import-sort/imports': 'error',
         'simple-import-sort/exports': 'error',
-        'import/first': 'error',
-        'import/newline-after-import': 'error',
-        'import/no-duplicates': 'error'
+        // 'import/first': 'error',
+        // 'import/newline-after-import': 'error',
+        // 'import/no-duplicates': 'error'
     }
 }
 
 module.exports = [
-    baseConfig, reactConfig, reactHooksConfig, importConfig
+    baseConfig,
+    reactConfig,
+    // reactHooksConfig,
+    importConfig
 ]

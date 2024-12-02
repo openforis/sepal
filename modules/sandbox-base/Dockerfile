@@ -147,7 +147,8 @@ RUN pip3 install --upgrade pip
 RUN pip3 install \
     pandas \
     pyshp \
-    rasterio \
+    # https://github.com/openforis/sepal/issues/328
+    rasterio==1.3.10 \ 
     scikit-learn \
     statsmodels
 

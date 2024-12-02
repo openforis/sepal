@@ -1,6 +1,6 @@
-import {WebSocket} from '~/http-client'
+import {moduleWebSocket$} from './ws.js'
 
 export default {
-    userFiles: () => WebSocket('/api/user-files/ws'),
+    userFiles: () => moduleWebSocket$('user-files'),
     downloadUrl: path => `/api/user-files/download?path=${encodeURIComponent(path)}`
 }

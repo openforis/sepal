@@ -69,6 +69,7 @@ class Local implements HostingServiceAdapter {
     }
 
     InstanceProvisioner getInstanceProvisioner() {
-        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, null)
+        // Provide logger container static IP address
+        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, 'udp://172.20.128.2')
     }
 }

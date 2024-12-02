@@ -2,8 +2,6 @@ import _ from 'lodash'
 
 import {resolve} from './stateUtils'
 
-/* eslint-disable no-undef */
-
 const test = name => {
     const nameTemplate = _.template(name)
     return ({

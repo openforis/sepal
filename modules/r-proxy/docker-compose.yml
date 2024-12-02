@@ -1,7 +1,8 @@
-version: "3.9"
-
 services:
   r-proxy-redis:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     image: "redis:6"
     container_name: r-proxy-redis
     volumes:
@@ -11,9 +12,16 @@ services:
     restart: always
 
   r-proxy:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/r-proxy/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/r-proxy:${SEPAL_VERSION:-latest}"
     container_name: r-proxy
     init: true
@@ -22,7 +30,7 @@ services:
     networks:
       - sepal
     ports:
-      - "8180:8180"
+      - "${SEPAL_IP}:8180:8180"
     volumes:
       - ${SEPAL_DATA_DIR}/r-proxy/site-library:/usr/local/lib/R/site-library
       - ${SEPAL_DATA_DIR}/r-proxy/repo:/R
@@ -34,8 +42,8 @@ services:
     restart: always
     ulimits:
       core: 0
+    platform: linux/amd64 # Required for macOS builds
 
 networks:
   sepal:
     external: true
-    name: sepal

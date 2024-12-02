@@ -1,15 +1,20 @@
-version: "3.9"
-
 services:
   haproxy:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/haproxy/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/haproxy:${SEPAL_VERSION:-latest}"
     container_name: haproxy
     ports:
-      - "${SEPAL_IP:-0.0.0.0}:${SEPAL_HTTP_PORT:-80}:80"
-      - "${SEPAL_IP:-0.0.0.0}:${SEPAL_HTTPS_PORT:-443}:443"
+      - "${SEPAL_IP}:${SEPAL_HTTP_PORT:-80}:80"
+      - "${SEPAL_IP}:${SEPAL_HTTPS_PORT:-443}:443"
     volumes:
       - "${SEPAL_DATA_DIR}/letsencrypt:/etc/letsencrypt"
     environment:
@@ -35,4 +40,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

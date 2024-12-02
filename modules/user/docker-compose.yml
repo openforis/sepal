@@ -1,10 +1,15 @@
-version: "3.9"
-
 services:
   user:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/user/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/user:${SEPAL_VERSION:-latest}"
     container_name: user
     volumes:
@@ -16,7 +21,6 @@ services:
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       SEPAL_ADMIN_WEB_PASSWORD: "${SEPAL_ADMIN_WEB_PASSWORD}"
       SEPAL_HOST: "${SEPAL_HOST}"
-      LDAP_HOST: "${LDAP_HOST}"
       LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
       MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
@@ -28,7 +32,9 @@ services:
       GOOGLE_OAUTH_CALLBACK_BASE_URL: "${GOOGLE_OAUTH_CALLBACK_BASE_URL}"
       GOOGLE_OAUTH_CLIENT_ID: "${GOOGLE_OAUTH_CLIENT_ID}"
       GOOGLE_OAUTH_CLIENT_SECRET: "${GOOGLE_OAUTH_CLIENT_SECRET}"
-      GOOGLE_RECAPTCHA_SECRET_KEY: "${GOOGLE_RECAPTCHA_SECRET_KEY}"
+      GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
+      GOOGLE_RECAPTCHA_API_KEY: "${GOOGLE_RECAPTCHA_API_KEY}"
+      GOOGLE_RECAPTCHA_SITE_KEY: "${GOOGLE_RECAPTCHA_SITE_KEY}"
     networks:
       - sepal
     healthcheck:
@@ -41,4 +47,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

@@ -1,5 +1,10 @@
-- name: "{{ module }} | Start"
-  community.docker.docker_compose:
-    project_src: "{{ role_path }}/../../modules/{{ module }}"
-    build: true
-    env_file: "{{ env_file }}"
+- name: "{{ module }} | Copying module to host"
+  copy:
+      src: "{{ role_path }}/../../modules/{{ module }}"
+      dest: "/var/lib/sepal/modules/"
+
+- name: "{{ module }} | Build"
+  shell: "docker compose \
+      --env-file /etc/sepal/env \
+      --file /var/lib/sepal/modules/{{ module }}/docker-compose.yml \
+      build"

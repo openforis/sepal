@@ -1,0 +1,16 @@
+.panel {
+    min-height: 17rem;
+    max-width: 34rem;
+}
+
+.panel p {
+    text-align: right;
+}
+
+.panel a {
+    color: hsl(var(--selected-hue), var(--selected-sat), 45%);
+}
+
+.panel a:hover {
+    color: hsl(var(--selected-hue), var(--selected-sat), 50%);
+}

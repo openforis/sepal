@@ -15,13 +15,14 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class Main extends AbstractMain {
+
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     Main() {
         try {
             def serverConfig = new ServerConfig()
             def userComponent = start UserComponent.create(
-                createUsernamePasswordVerifier(serverConfig),
+                createUsernamePasswordVerifier(),
                 createExternalUserDataGateway(),
                 serverConfig
             )
@@ -37,8 +38,8 @@ class Main extends AbstractMain {
         }
     }
 
-    UsernamePasswordVerifier createUsernamePasswordVerifier(ServerConfig serverConfig) {
-        new LdapUsernamePasswordVerifier(serverConfig.ldapHost)
+    UsernamePasswordVerifier createUsernamePasswordVerifier() {
+        new LdapUsernamePasswordVerifier()
     }
 
     ExternalUserDataGateway createExternalUserDataGateway() {
@@ -49,19 +50,20 @@ class Main extends AbstractMain {
         new Main()
     }
 
-
 }
 
 @Canonical
 class ServerConfig {
+
     final int port
     final String host
-    final String ldapHost
     final String googleOAuthCallbackBaseUrl
     final String googleOAuthClientId
     final String googleOAuthClientSecret
     final String googleEarthEngineEndpoint
-    final String googleRecaptchaSecretKey
+    final String googleProjectId
+    final String googleRecaptchaApiKey
+    final String googleRecaptchaSiteKey
     final String homeDirectory
     final String rabbitMQHost
     final int rabbitMQPort
@@ -70,20 +72,22 @@ class ServerConfig {
         def c = new Config('user-server.properties')
         port = c.integer('port')
         host = c.host
-        ldapHost = c.ldapHost
         googleOAuthCallbackBaseUrl = c.googleOAuthCallbackBaseUrl
         googleOAuthClientId = c.googleOAuthClientId
         googleOAuthClientSecret = c.googleOAuthClientSecret
         googleEarthEngineEndpoint = c.googleEarthEngineEndpoint
-        googleRecaptchaSecretKey = c.googleRecaptchaSecretKey
+        googleProjectId = c.googleProjectId
+        googleRecaptchaApiKey = c.googleRecaptchaApiKey
+        googleRecaptchaSiteKey = c.googleRecaptchaSiteKey
         homeDirectory = c.homeDirectory
         rabbitMQHost = c.rabbitMQHost
         rabbitMQPort = c.integer('rabbitMQPort')
     }
+
 }
 
-
 abstract class AbstractMain {
+
     private final List<Stoppable> toStop = []
 
     protected final <T extends Lifecycle> T start(T lifecycle) {
@@ -100,4 +104,5 @@ abstract class AbstractMain {
     protected final void stop() {
         toStop.reverse()*.stop()
     }
+
 }

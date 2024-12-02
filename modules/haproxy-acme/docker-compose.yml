@@ -1,0 +1,11 @@
+services:
+  haproxy:
+    build:
+      context: ../..
+      dockerfile: ./modules/haproxy-acme/Dockerfile
+    image: "openforis/haproxy-acme:latest"
+    container_name: haproxy
+    ports:
+      - "80:80"
+    environment:
+      LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"

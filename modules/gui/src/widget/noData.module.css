@@ -1,8 +1,21 @@
 .noData {
     flex-grow: 1;
     display: flex;
-    justify-content: center;
-    align-items: center;
     color: gray;
     font-size: .9rem;
+}
+
+.center {
+    justify-content: center;
+    align-items: center;
+}
+
+.left {
+    justify-content: start;
+    align-items: start;
+}
+
+.right {
+    justify-content: end;
+    align-items: end;
 }

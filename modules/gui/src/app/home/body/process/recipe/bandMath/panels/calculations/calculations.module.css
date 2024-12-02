@@ -1,0 +1,8 @@
+.panel {
+    min-height: 15rem;
+    max-width: 29rem;
+}
+
+.error {
+    border: 1px solid var(--error-color)
+}

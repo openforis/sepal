@@ -5,6 +5,7 @@ import org.openforis.sepal.component.processingrecipe.migration.v3.V3Migration
 import org.openforis.sepal.component.processingrecipe.migration.v4.V4Migration
 import org.openforis.sepal.component.processingrecipe.migration.v5.V5Migration
 import org.openforis.sepal.component.processingrecipe.migration.v6.V6Migration
+import org.openforis.sepal.component.processingrecipe.migration.v7.V7Migration
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -65,6 +66,7 @@ class MosaicMigrations extends AbstractMigrations {
         addMigration(4, { return V4Migration.migrate(it) })
         addMigration(5, { return V5Migration.migrate(it) })
         addMigration(6, { return V6Migration.migrate(it) })
+        addMigration(7, { return V7Migration.migrate(it) })
     }
 
     private static sources(sensorGroup, sensors) {

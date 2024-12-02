@@ -1,10 +1,12 @@
-version: "3.9"
-
 services:
   backup:
     build:
       context: ../..
       dockerfile: ./modules/backup/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/backup:${SEPAL_VERSION:-latest}"
     container_name: backup
     volumes:
@@ -23,4 +25,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

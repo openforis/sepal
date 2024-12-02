@@ -1,10 +1,15 @@
-version: "3.9"
-
 services:
   ssh-gateway:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/ssh-gateway/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/ssh-gateway:${SEPAL_VERSION:-latest}"
     container_name: ssh-gateway
     volumes:
@@ -12,14 +17,13 @@ services:
       - "${SEPAL_DATA_DIR}/ldap/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
       - "${SEPAL_DATA_DIR}/user/home:/home" # Users home directories with ssh keys
     ports:
-      - "${SEPAL_SSH_IP:-0.0.0.0}:${SEPAL_SSH_PORT_1:-22}:22"
-      - "${SEPAL_SSH_IP:-0.0.0.0}:${SEPAL_SSH_PORT_2:-443}:22"
+      - "${SEPAL_SSH_IP}:${SEPAL_SSH_PORT_1:-22}:22"
+      - "${SEPAL_SSH_IP}:${SEPAL_SSH_PORT_2:-443}:22"
     extra_hosts:
       - "syslog_host: ${SEPAL_IP:-127.0.0.1}"
     environment:
       SEPAL_HOST: "${SEPAL_HOST}"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
-      LDAP_HOST: "${LDAP_HOST}"
       LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
     networks:
       - sepal
@@ -30,4 +34,3 @@ services:
 networks:
   sepal:
     external: true
-    name: sepal

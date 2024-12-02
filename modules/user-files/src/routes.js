@@ -1,9 +1,13 @@
-const {stream} = require('#sepal/httpServer')
+const {wsStream} = require('#sepal/httpServer')
 const ws$ = require('./ws')
 const {download} = require('./filesystem')
 const {homeDir} = require('./config')
 
-module.exports = router =>
-    router
-        .get('/ws', stream(ctx => ws$(ctx)))
-        .get('/download', ctx => download(homeDir, ctx))
+const routes = router => router
+    .get('/download', ctx => download(homeDir, ctx))
+
+const wsRoutes = {
+    '/ws': wsStream(ctx => ws$(ctx))
+}
+
+module.exports = {routes, wsRoutes}

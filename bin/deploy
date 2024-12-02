@@ -57,6 +57,7 @@ function run_docker_image() {
     -it \
     -v $PROJECT_DIR:/usr/local/lib/sepal \
     -v $CONFIG_DIR:/etc/sepal/conf.d \
+    -e PROJECT_DIR=/usr/local/lib/sepal \
     sepal-deploy \
     bash -c "/usr/local/lib/sepal/hosting-services/$SCRIPT_PATH $BUILD_NUMBER /etc/sepal/conf.d"
 }

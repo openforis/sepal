@@ -8,8 +8,8 @@ const log = require('#sepal/log').getLogger('ee')
 const task$ = (taskId, task, description) => {
     const start$ = task =>
         ee.$({
-            operation: `start task (${description})`,
-            ee: (resolve, reject) =>
+            description: `start task (${description})`,
+            operation: (resolve, reject) =>
                 ee.data.startProcessing(null, task.config_, (result, error) =>
                     error
                         ? reject(error)
@@ -19,8 +19,8 @@ const task$ = (taskId, task, description) => {
 
     const status$ = (eeTaskId, maxRetries) =>
         ee.$({
-            operation: `get task status (${description}, ${eeTaskId})`,
-            ee: (resolve, reject) =>
+            description: `get task status (${description}, ${eeTaskId})`,
+            operation: (resolve, reject) =>
                 ee.data.getTaskStatus(eeTaskId,
                     (status, error) => error
                         ? reject(error)
@@ -33,8 +33,8 @@ const task$ = (taskId, task, description) => {
 
     const cancel$ = (eeTaskId, maxRetries) =>
         ee.$({
-            operation: `cancel task (${description}, ${eeTaskId})`,
-            ee: (resolve, reject) =>
+            description: `cancel task (${description}, ${eeTaskId})`,
+            operation: (resolve, reject) =>
                 ee.data.cancelTask(eeTaskId,
                     (_canceled, error) => error
                         ? reject(error)

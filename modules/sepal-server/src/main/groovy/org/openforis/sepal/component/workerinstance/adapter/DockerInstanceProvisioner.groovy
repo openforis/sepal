@@ -18,6 +18,7 @@ import static groovyx.net.http.ContentType.JSON
 
 @ToString
 class DockerInstanceProvisioner implements InstanceProvisioner {
+
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private static final double MIN_HOST_RAM_GiB = 0.3
     private final WorkerInstanceConfig config
@@ -53,6 +54,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
             LOG.warn("$instance not provisioned: $e.message")
             return false
         }
+        LOG.debug("$instance is provisioned: $e.message")
         return true
     }
 
@@ -66,12 +68,12 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         def instanceType = instanceTypeById[instance.type]
         def logConfig = syslogAddress
                 ? [
-                "Type": "syslog",
-                "Config": [
-                        "syslog-address": syslogAddress,
-                        "tag": "worker-docker/{{.Name}}",
-                        "labels": "dev",
-                        "syslog-facility": "daemon"]]
+                    'Type': 'syslog',
+                    'Config': [
+                            'syslog-address': syslogAddress,
+                            'tag': 'worker-docker/{{.Name}}'
+                    ]
+                ]
                 : null
         def body = toJson(
                 Image: "$config.dockerRegistryHost/openforis/$image.name:$config.sepalVersion",
@@ -79,8 +81,9 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                 Cmd: image.runCommand,
                 HostConfig: [
                         Binds: image.volumes.collect { hostDir, mountedDirs ->
-                            if (!(mountedDirs instanceof List))
+                            if (!(mountedDirs instanceof List)) {
                                 mountedDirs = [mountedDirs]
+                            }
                             return mountedDirs.collect {
                                 "$hostDir:$it"
                             }
@@ -89,16 +92,21 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                             ["$exposedPort/tcp", [[HostPort: "$publishedPort"]]]
                         },
                         Links: image.links.collect { "$it.key:$it.value" },
-                        Tmpfs: ["/ram": "rw,exec,nosuid,size=${(long) instanceType.ramBytes / 2}"],
+                        Tmpfs: ['/ram': "rw,exec,nosuid,size=${(long) instanceType.ramBytes / 2}"],
                         LogConfig: logConfig,
                         Devices: (instanceType.devices ?: []).collect {
-                            [PathOnHost: it, PathInContainer: it, CgroupPermissions: "mrw"]
+                            [PathOnHost: it, PathInContainer: it, CgroupPermissions: 'mrw']
                         },
                         // Memory: memoryBytes,
                         // MemorySwap: memoryBytes,
                         // KernelMemory: memoryBytes,
                         ShmSize: (long) instanceType.ramBytes / 2,
-                        // PidMode: 'host' // Exposes all host pids in container. Makes nvidia-smi pick up GPU processes
+                // PidMode: 'host' // Exposes all host pids in container. Makes nvidia-smi pick up GPU processes
+                ],
+                NetworkingConfig: [
+                    EndpointsConfig: [
+                        sepal: [:]
+                    ]
                 ],
                 ExposedPorts: image.exposedPorts.collectEntries {
                     ["$it/tcp", [:]]
@@ -108,7 +116,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                 }
         )
         def request = [
-                path: "containers/create",
+                path: 'containers/create',
                 query: [name: image.containerName(instance)],
                 body: body,
                 requestContentType: JSON
@@ -116,8 +124,9 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         LOG.debug("Creating container from image $image on instance $instance with request $request")
         withClient(instance) {
             def response = post(request)
-            if (response.data.Warnings)
+            if (response.data.Warnings) {
                 LOG.warn("Warning when creating docker container on $instance: $response.data.Warnings")
+            }
         }
         LOG.debug("Created container from image $image on instance $instance")
     }
@@ -137,6 +146,9 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     private void waitUntilInitialized(WorkerInstance instance, Image image) {
         LOG.debug("Waiting until container initialized: Image $image on instance $instance")
         withClient(instance) {
+            client.params.setParameter('http.connection.timeout', new Integer(5 * 1000))
+            client.params.setParameter('http.socket.timeout', new Integer(5 * 1000))
+            LOG.debug("POST to 'containers/${image.containerName(instance)}/exec' for image $image on instance $instance")
             def response = post(
                     path: "containers/${image.containerName(instance)}/exec",
                     body: new JsonOutput().toJson([
@@ -149,6 +161,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                     requestContentType: JSON
             )
             def execId = response.data.Id
+            LOG.debug("POST to 'exec/$execId/start' for image $image on instance $instance")
             def startResponse = post(
                     path: "exec/$execId/start",
                     body: new JsonOutput().toJson([Detach: false, Tty: true]),
@@ -184,18 +197,18 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         def retries = 60
         for (int i = 0; i < retries; i++)
             try {
-                LOG.debug("Trying to connect to Docker on instance $instance")
-                deployedContainers(instance)
-                LOG.debug("Successfully connected to Docker on instance $instance")
-                return
+            LOG.debug("Trying to connect to Docker on instance $instance")
+            deployedContainers(instance)
+            LOG.info("Successfully connected to Docker on instance $instance")
+            return
             } catch (Exception ignore) {
-                LOG.debug("Failed to connect to Docker on instance $instance")
-                Thread.sleep(1000)
+            LOG.warn("Failed to connect to Docker on instance $instance")
+            Thread.sleep(1000)
             }
         throw new Failed(instance, "Unable to connect to docker on instance: $instance")
     }
 
-    @SuppressWarnings("GrDeprecatedAPIUsage")
+    @SuppressWarnings('GrDeprecatedAPIUsage')
     private List deployedContainers(WorkerInstance instance) {
         withClient(instance) {
             client.params.setParameter('http.connection.timeout', new Integer(5 * 1000))
@@ -216,10 +229,11 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
             WorkerInstance instance,
             @DelegatesTo(RESTClient) Closure<T> callback) {
         withClient(instance.host, callback)
-    }
+            }
 
     private <T> T withClient(String host, @DelegatesTo(RESTClient) Closure<T> callback) {
         def client = new RESTClient("http://$host:$config.dockerPort/$config.dockerEntryPoint/")
+        LOG.debug("Connecting client: http://$host:$config.dockerPort/$config.dockerEntryPoint/")
         client.parser.'application/vnd.docker.raw-stream' = client.parser.'text/plain'
         try {
             callback.delegate = client
@@ -228,4 +242,5 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
             client.shutdown()
         }
     }
+
 }

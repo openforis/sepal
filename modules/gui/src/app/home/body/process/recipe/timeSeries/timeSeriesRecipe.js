@@ -3,6 +3,7 @@ import moment from 'moment'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
@@ -22,14 +23,14 @@ export const defaultModel = {
     options: {
         ...defaultOpticalModel.compositeOptions,
         ...defaultRadarModel.options,
+        ...defaultPlanetModel.options,
         corrections: [],
-        cloudDetection: ['QA', 'CLOUD_SCORE'],
-        cloudMasking: 'MODERATE',
-        snowMasking: 'ON',
         orbits: ['ASCENDING', 'DECENDING'],
         geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',
-        outlierRemoval: 'NONE'
+        outlierRemoval: 'NONE',
+        orbitOverlap: 'KEEP',
+        tileOverlap: 'QUICK_REMOVE',
     }
 }
 

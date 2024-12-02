@@ -1,0 +1,5 @@
+services:
+  mysql-backup:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger

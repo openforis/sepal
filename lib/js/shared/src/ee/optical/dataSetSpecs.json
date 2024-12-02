@@ -3,11 +3,25 @@
         "LANDSAT_4": {
             "reflectance": "TOA",
             "dataSetName": "LANDSAT_4",
-            "collectionName": "LANDSAT/LT04/C01/T1_TOA",
+            "collectionName": "LANDSAT/LT04/C02/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
-                "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
-                "intercepts": [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
+                "slopes": [
+                    1.10601,
+                    0.99091,
+                    1.05681,
+                    1.0045,
+                    1.03611,
+                    1.04011
+                ],
+                "intercepts": [
+                    -0.0139,
+                    0.00411,
+                    -0.0024,
+                    -0.0076,
+                    0.00411,
+                    0.00861
+                ]
             },
             "bands": {
                 "blue": {
@@ -33,18 +47,32 @@
                     "name": "B7"
                 },
                 "qa": {
-                    "name": "BQA"
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_4_T2": {
             "reflectance": "TOA",
             "dataSetName": "LANDSAT_4_T2",
-            "collectionName": "LANDSAT/LT04/C01/T2_TOA",
+            "collectionName": "LANDSAT/LT04/C02/T2_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
-                "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
-                "intercepts": [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
+                "slopes": [
+                    1.10601,
+                    0.99091,
+                    1.05681,
+                    1.0045,
+                    1.03611,
+                    1.04011
+                ],
+                "intercepts": [
+                    -0.0139,
+                    0.00411,
+                    -0.0024,
+                    -0.0076,
+                    0.00411,
+                    0.00861
+                ]
             },
             "bands": {
                 "blue": {
@@ -70,7 +98,7 @@
                     "name": "B7"
                 },
                 "qa": {
-                    "name": "BQA"
+                    "name": "QA_PIXEL"
                 }
             }
         },
@@ -80,8 +108,22 @@
             "collectionName": "LANDSAT/LT05/C02/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
-                "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
-                "intercepts": [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
+                "slopes": [
+                    1.10601,
+                    0.99091,
+                    1.05681,
+                    1.0045,
+                    1.03611,
+                    1.04011
+                ],
+                "intercepts": [
+                    -0.0139,
+                    0.00411,
+                    -0.0024,
+                    -0.0076,
+                    0.00411,
+                    0.00861
+                ]
             },
             "bands": {
                 "blue": {
@@ -117,8 +159,22 @@
             "collectionName": "LANDSAT/LT05/C02/T2_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
-                "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
-                "intercepts": [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
+                "slopes": [
+                    1.10601,
+                    0.99091,
+                    1.05681,
+                    1.0045,
+                    1.03611,
+                    1.04011
+                ],
+                "intercepts": [
+                    -0.0139,
+                    0.00411,
+                    -0.0024,
+                    -0.0076,
+                    0.00411,
+                    0.00861
+                ]
             },
             "bands": {
                 "blue": {
@@ -154,8 +210,22 @@
             "collectionName": "LANDSAT/LE07/C02/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
-                "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
-                "intercepts": [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
+                "slopes": [
+                    1.10601,
+                    0.99091,
+                    1.05681,
+                    1.0045,
+                    1.03611,
+                    1.04011
+                ],
+                "intercepts": [
+                    -0.0139,
+                    0.00411,
+                    -0.0024,
+                    -0.0076,
+                    0.00411,
+                    0.00861
+                ]
             },
             "bands": {
                 "blue": {
@@ -198,8 +268,22 @@
             "collectionName": "LANDSAT/LE07/C02/T2_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
-                "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
-                "intercepts": [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
+                "slopes": [
+                    1.10601,
+                    0.99091,
+                    1.05681,
+                    1.0045,
+                    1.03611,
+                    1.04011
+                ],
+                "intercepts": [
+                    -0.0139,
+                    0.00411,
+                    -0.0024,
+                    -0.0076,
+                    0.00411,
+                    0.00861
+                ]
             },
             "bands": {
                 "blue": {
@@ -242,8 +326,22 @@
             "collectionName": "LANDSAT/LC08/C02/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
-                "slopes": [1.0946, 1.0043, 1.0524, 0.8954, 1.0049, 1.0002],
-                "intercepts": [-0.0107, 0.0026, -0.0015, 0.0033, 0.0065, 0.0046]
+                "slopes": [
+                    1.0946,
+                    1.0043,
+                    1.0524,
+                    0.8954,
+                    1.0049,
+                    1.0002
+                ],
+                "intercepts": [
+                    -0.0107,
+                    0.0026,
+                    -0.0015,
+                    0.0033,
+                    0.0065,
+                    0.0046
+                ]
             },
             "bands": {
                 "aerosol": {
@@ -292,8 +390,22 @@
             "collectionName": "LANDSAT/LC08/C02/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
-                "slopes": [1.0946, 1.0043, 1.0524, 0.8954, 1.0049, 1.0002],
-                "intercepts": [-0.0107, 0.0026, -0.0015, 0.0033, 0.0065, 0.0046]
+                "slopes": [
+                    1.0946,
+                    1.0043,
+                    1.0524,
+                    0.8954,
+                    1.0049,
+                    1.0002
+                ],
+                "intercepts": [
+                    -0.0107,
+                    0.0026,
+                    -0.0015,
+                    0.0033,
+                    0.0065,
+                    0.0046
+                ]
             },
             "bands": {
                 "aerosol": {
@@ -342,8 +454,22 @@
             "collectionName": "LANDSAT/LC09/C02/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
-                "slopes": [1.0946, 1.0043, 1.0524, 0.8954, 1.0049, 1.0002],
-                "intercepts": [-0.0107, 0.0026, -0.0015, 0.0033, 0.0065, 0.0046]
+                "slopes": [
+                    1.0946,
+                    1.0043,
+                    1.0524,
+                    0.8954,
+                    1.0049,
+                    1.0002
+                ],
+                "intercepts": [
+                    -0.0107,
+                    0.0026,
+                    -0.0015,
+                    0.0033,
+                    0.0065,
+                    0.0046
+                ]
             },
             "bands": {
                 "aerosol": {
@@ -392,8 +518,22 @@
             "collectionName": "LANDSAT/LC09/C02/T2_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
-                "slopes": [1.0946, 1.0043, 1.0524, 0.8954, 1.0049, 1.0002],
-                "intercepts": [-0.0107, 0.0026, -0.0015, 0.0033, 0.0065, 0.0046]
+                "slopes": [
+                    1.0946,
+                    1.0043,
+                    1.0524,
+                    0.8954,
+                    1.0049,
+                    1.0002
+                ],
+                "intercepts": [
+                    -0.0107,
+                    0.0026,
+                    -0.0015,
+                    0.0033,
+                    0.0065,
+                    0.0046
+                ]
             },
             "bands": {
                 "aerosol": {
@@ -441,7 +581,14 @@
             "dataSetName": "SENTINEL_2",
             "collectionName": "COPERNICUS/S2_HARMONIZED",
             "maxZenith": 10.3,
-            "calibrationCoefs": {"slopes": [1], "intercepts": [0]},
+            "calibrationCoefs": {
+                "slopes": [
+                    1
+                ],
+                "intercepts": [
+                    0
+                ]
+            },
             "bands": {
                 "aerosol": {
                     "name": "B1",

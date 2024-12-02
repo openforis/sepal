@@ -2,28 +2,17 @@ require('#sepal/log').configureServer(require('#config/log.json'))
 
 const log = require('#sepal/log').getLogger('main')
 
-// const {amqpUri, port} = require('./config')
 const {port} = require('./config')
-const routes = require('./routes')
-// const {initMessageQueue} = require('#sepal/messageQueue')
-// const {message$} = require('./messageService')
+const {routes, wsRoutes} = require('./routes')
 const server = require('#sepal/httpServer')
-// const {initScheduler} = require('#sepal/worker/scheduler')
 
 const main = async () => {
-    // await initMessageQueue(amqpUri, {
-    //     publishers: [
-    //         {key: 'files.update', publish$: message$}
-    //     ]
-    // })
-
     await server.start({
         port,
-        routes
+        routes,
+        wsRoutes
     })
 
-    // initScheduler({instances})
-    
     log.info('Initialized')
 }
 

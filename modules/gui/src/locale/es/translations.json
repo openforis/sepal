@@ -226,7 +226,9 @@
         "unauthorized": "No tienes acceso a esta tabla de EE."
     },
     "error": {
-        "internal": "Error interno"
+        "badRequest": "",
+        "internal": "Error interno",
+        "notFound": ""
     },
     "fieldValidation": {
         "date": "Debe ser una fecha",
@@ -801,6 +803,9 @@
             }
         },
         "ccdc": {
+            "bands": {
+                "count": ""
+            },
             "chartPixel": {
                 "cancel.tooltip": "Anulación de los gráficos de series temporales",
                 "loadFailed": "No se ha podido cargar el gráfico: {error}",
@@ -929,6 +934,32 @@
                             "surfaceReflectance": {
                                 "label": "Reflectancia de la superficie",
                                 "tooltip": "Utilizar escenas de reflectancia superficial corregidas atmosféricamente."
+                            }
+                        },
+                        "orbitOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "Eliminar",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "quickRemove": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "Eliminar",
+                                "tooltip": ""
                             }
                         },
                         "shadowMasking": {
@@ -2126,10 +2157,18 @@
                             }
                         },
                         "sampleClassification": {
+                            "typeToSample": {
+                                "label": "",
+                                "ASSET": "",
+                                "RECIPE": ""
+                            },
                             "assetToSample": {
                                 "label": "EE asset ID de clasificación",
                                 "placeholder": "Introducir un ID de asset...",
                                 "required": "Debe introducir un ID de asset"
+                            },
+                            "recipeToSample": {
+                                "label": ""
                             },
                             "sampleScale": {
                                 "label": "Scale to sample in (m)",
@@ -2199,6 +2238,259 @@
                 "tilesFailed": "{failed} falló"
             },
             "tabPlaceholder": "Clasificación"
+        },
+        "regression": {
+            "bands": {
+                "regression": "Regresión"
+            },
+            "create": "Regresión",
+            "description": "",
+            "panel": {
+                "trainingData": {
+                    "form": {
+                        "eeTable": {
+                            "valueColumn": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "sampleImage": {
+                            "sampleCount": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "suffix": "",
+                                "tooltip": ""
+                            },
+                            "valueBand": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "noIntersection": "",
+                            "unableToSampleAllPixels": ""
+                        }
+                    },
+                    "type": {
+                        "EE_TABLE": {
+                            "label": "Tabla Earth Engine",
+                            "tooltip": "",
+                            "title": "Tabla EE"
+                        },
+                        "SAMPLE_IMAGE": {
+                            "label": "",
+                            "tooltip": "",
+                            "title": ""
+                        },
+                        "RECIPE": {
+                            "label": "Guardar el flujo de trabajo de SEPAL",
+                            "tooltip": "",
+                            "title": ""
+                        }
+                    }
+                }
+            },
+            "tabPlaceholder": "Regresión"
+        },
+        "unsupervisedClassification": {
+            "bands": {
+                "class": "Clase"
+            },
+            "create": "",
+            "description": "",
+            "panel": {
+                "sampling": {
+                    "button": "",
+                    "tooltip": "",
+                    "title": "",
+                    "form": {
+                        "numberOfSamples": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": "",
+                            "suffix": ""
+                        },
+                        "sampleScale": {
+                            "label": "Scale to sample in (m)",
+                            "placeholder": "",
+                            "suffix": "",
+                            "tooltip": ""
+                        }
+                    }
+                },
+                "clusterer": {
+                    "button": "",
+                    "tooltip": "",
+                    "title": "",
+                    "form": {
+                        "type": {
+                            "label": ""
+                        },
+                        "kmeans": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "cascadeKMeans": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "xmeans": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "lvq": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "config": {
+                            "numberOfClusters": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "minNumberOfClusters": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "maxNumberOfClusters": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "restarts": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "init": {
+                                "label": "",
+                                "options": {
+                                    "random.label": "",
+                                    "kmeans.label": "",
+                                    "canopy.label": "",
+                                    "farthestFirst.label": ""
+                                }
+                            },
+                            "distanceFunction": {
+                                "label": "",
+                                "options": {
+                                    "euclidean.label": "Euclidiana",
+                                    "manhattan.label": "",
+                                    "chebyshev.label": ""
+                                }
+                            },
+                            "maxIterations": {
+                                "label": "Máximo número de iteraciones",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "canopies": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "maxCandidates": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "periodicPruning": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "minDensity": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "t1": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "t2": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "preserveOrder": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "fast": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "seed": {
+                                "label": "Semilla",
+                                "placeholder": "Semilla...",
+                                "tooltip": ""
+                            },
+                            "learningRate": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "epochs": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "normalizeInput": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "maxIterationsOverall": {
+                                "label": "Máximo número de iteraciones",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "maxKMeans": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "maxForChildren": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "useKD": {
+                                "label": "",
+                                "tooltip": "",
+                                "options": {
+                                    "true.label": "",
+                                    "false.label": ""
+                                }
+                            },
+                            "cutoffFactor": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        }
+                    }
+                }
+            },
+            "tabPlaceholder": ""
         },
         "classChange": {
             "create": "",
@@ -3867,8 +4159,11 @@
         },
         "project": {
             "title": "",
+            "description": "",
             "form": {
-                "name.label": ""
+                "name.label": "",
+                "name.required": "El nombre es obligatorio",
+                "name.unique": ""
             },
             "edit": {
                 "tooltip": ""
@@ -4103,6 +4398,9 @@
             "title": "Guardar flujo de trabajo"
         },
         "timeSeries": {
+            "bands": {
+                "count": ""
+            },
             "chartPixel": {
                 "loadObservations": {
                     "error": "",
@@ -4425,6 +4723,18 @@
                 "success": "SEPAL está ahora desconectado de tu cuenta de Google.",
                 "projectNeeded": "",
                 "title": "Tu cuenta SEPAL no está vinculada a tu cuenta de Google"
+            },
+            "missingScopes": {
+                "title": "",
+                "message": ""
+            },
+            "unavailable": {
+                "title": "",
+                "message": ""
+            },
+            "unspecifiedError": {
+                "title": "",
+                "message": ""
             },
             "label": "Cuenta de Google",
             "title": "Cuenta de Google"
