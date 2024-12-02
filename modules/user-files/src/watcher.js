@@ -1,6 +1,6 @@
 const Path = require('path')
 const {realpath, readdir, stat, rm} = require('fs/promises')
-const {catchError, timer, Subject, exhaustMap, distinctUntilChanged, takeUntil, switchMap, map, filter, mergeMap, groupBy, finalize, mergeWith, EMPTY, scan, throttleTime, pairwise, mergeScan, of, takeLast, last, first, repeat} = require('rxjs')
+const {catchError, timer, Subject, exhaustMap, distinctUntilChanged, takeUntil, switchMap, map, filter, mergeMap, groupBy, finalize, mergeWith, EMPTY, scan, throttleTime, of, first, repeat} = require('rxjs')
 const {minDuration$} = require('#sepal/rxjs')
 const _ = require('lodash')
 const {homeDir, pollIntervalMilliseconds} = require('./config')
@@ -109,7 +109,8 @@ const createWatcher = async ({out$, stop$}) => {
     })
 
     stats$.pipe(
-        scan((acc, clientId) => ({...acc, [clientId]: (acc[clientId] || 0) + 1}), {}),
+        mergeWith(of(null)),
+        scan((acc, clientId) => (clientId ? {...acc, [clientId]: (acc[clientId] || 0) + 1} : acc), {}),
         throttleTime(STATS_INTERVAL_MS, null, {leading: false, trailing: true}),
         map(stats => ({
             clients: Object.keys(stats).length,
