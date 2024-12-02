@@ -58,10 +58,14 @@ const proxy = expressApp =>
                 },
                 error: (err, req, res) => {
                     log.warn(`${urlTag(req.originalUrl)} Proxy error:`, err)
-                    res.writeHead(500, {
-                        'Content-Type': 'text/plain'
-                    })
-                    res.end('Something went wrong.')
+                    log.error(Object.keys(res))
+
+                    if (Object.keys(res).includes('writeHead')) {
+                        res.writeHead(500, {
+                            'Content-Type': 'text/plain'
+                        })
+                        res.end('Something went wrong.')
+                    }
                 },
                 open: () => {
                     log.trace('WebSocket opened')
