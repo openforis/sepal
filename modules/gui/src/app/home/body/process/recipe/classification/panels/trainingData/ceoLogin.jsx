@@ -1,71 +1,76 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 
+import {actionBuilder} from '~/action-builder'
+// import {withForm} from '~/widget/form/form'
+// import {Panel} from '~/widget/panel/panel'
+// import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
+// import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
+import {Layout} from '~/widget/layout'
 
 const fields = {
     email: new Form.Field()
-        .notBlank('user.userDetails.form.name.required'),
+        .notBlank('user.userDetails.form.name.required')
+        .match(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, 'user.userDetails.form.email.invalid'),
     password: new Form.Field()
         .notBlank('user.userDetails.form.email.required'),
 }
 
-const mapStateToProps = state => {
-    return {
-        values: {
-            name: state.ceo.name,
-            email: state.ceo.email,
-        }
-    }
-}
-const CeoCredentials = compose(
-    CeoLogin,
-    withForm({fields, mapStateToProps}),
-)
+// const mapStateToProps = state => ({
+//     email: state.ceo.email,
+//     password: state.ceo.password,
+// })
 
-CeoCredentials.propTypes = {}
-
-export class CeoLogin extends React.Component {
+export class _CeoLogin extends React.Component {
     render() {
-        const {email, password} = this.props
+
+        const {inputs} = this.props
+        const {email, password} = inputs
+
+        // const {email, password} = this.props
         return (
 
-            <Panel.Content>
-                <Layout>
-                    <Form.Input
-                        label={msg('user.userDetails.form.name.label')}
-                        autoFocus
-                        input={email}
-                        spellCheck={false}
-                    />
-                    <Form.Input
-                        label={msg('user.userDetails.form.email.label')}
-                        input={password}
-                        type='password'
-                        spellCheck={false}
-                    />
-                    <Form.Buttons
-                        label={msg('user.userDetails.form.manualMapRendering.label')}
-                        tooltip={msg('user.userDetails.form.manualMapRendering.tooltip')}
-                        // input={manualMapRenderingEnabled}
-                        multiple={false}
-                        options={[{
-                            value: true,
-                            label: msg('user.userDetails.form.manualMapRendering.enabled.label'),
-                            tooltip: msg('user.userDetails.form.manualMapRendering.enabled.tooltip')
-                        }, {
-                            value: false,
-                            label: msg('user.userDetails.form.manualMapRendering.disabled.label'),
-                            tooltip: msg('user.userDetails.form.manualMapRendering.disabled.tooltip')
-                        }]}
-                        type='horizontal-nowrap'
-                    />
-                </Layout>
-            
-            </Panel.Content>
+            <Layout>
+                <Form.Input
+                    label={msg('process.classification.panel.trainingData.form.ceo.email.label')}
+                    autoFocus
+                    input={email}
+                    spellCheck={false}
+                />
+                <Form.Input
+                    label={msg('process.classification.panel.trainingData.form.ceo.password.label')}
+                    input={password}
+                    type='password'
+                    spellCheck={false}
+                />
+            </Layout>
 
         )
     }
+
+    handleLogin() {
+        const {inputs} = this.props
+        const email = inputs.email.value()
+        const password = inputs.password.value()
+      
+        // Dispatch an action using actionBuilder
+        actionBuilder('USER_CEO_LOGIN')
+            .set('ceo.login.email', email)
+            .set('ceo.login.password', password)
+            .dispatch()
+    }
+
+}
+
+export const CeoLogin = compose(
+    _CeoLogin,
+    withForm({fields}),
+)
+
+CeoLogin.propTypes = {
+    inputs: PropTypes.object.isRequired,
 }

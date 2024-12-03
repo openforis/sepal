@@ -8,6 +8,7 @@ import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {PanelSections} from '~/widget/panelSections'
 
+import {CeoLogin} from './ceoLogin'
 import {ClassMappingStep} from './classMappingStep'
 import {ClassStep} from './classStep'
 import {CsvUploadSection} from './csvUploadSection'
@@ -176,10 +177,7 @@ class _TrainingDataSet extends React.Component {
                 tooltip: msg('process.classification.panel.trainingData.type.CEO.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.CEO.title'),
                 steps: [
-                    <CsvUploadSection ${...this.props}/>,
-                    <LocationStep ${...this.props}/>,
-                    <ClassStep ${...this.props}/>,
-                    <ClassMappingStep ${...this.props}/>
+                    <CeoLogin ${...this.props}/>,
                 ]
             }
         ]

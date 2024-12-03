@@ -2084,6 +2084,24 @@
                                 "placeholder": "Select band containing class...",
                                 "tooltip": "Select band containing class"
                             }
+                        },
+                        "ceo" : {
+                            "label": "Collect Earth Online",
+                            "tooltip": "Use training data from CEO",
+                            "email" : {
+                                "label" : "Email",
+                                "placeholder" : "Enter your CEO email",
+                                "required" : "You must enter your CEO email"
+                            },
+                            "password" : {
+                                "label" : "Password",
+                                "placeholder" : "Enter your CEO password",
+                                "required" : "You must enter your CEO password"
+                            },
+                            "submitButton" : {
+                                "label" : "Submit",
+                                "tooltip" : "Submit your CEO credentials"
+                            }
                         }
                     },
                     "noDataSet": "No training data set added",
