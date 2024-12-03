@@ -47,6 +47,13 @@ export class _CeoLogin extends React.Component {
                     type='password'
                     spellCheck={false}
                 />
+                <button
+                    className="your-button-class"
+                    onClick={() => this.handleLogin()}
+                >
+                    {msg('process.classification.panel.trainingData.form.ceo.submitButton')}
+                </button>
+
             </Layout>
 
         )
