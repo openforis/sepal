@@ -2086,7 +2086,7 @@
                             }
                         },
                         "ceo" : {
-                            "label": "Collect Earth Online",
+                            "title": "Collect Earth Online Authentication",
                             "tooltip": "Use training data from CEO",
                             "email" : {
                                 "label" : "Email",
@@ -2097,10 +2097,6 @@
                                 "label" : "Password",
                                 "placeholder" : "Enter your CEO password",
                                 "required" : "You must enter your CEO password"
-                            },
-                            "submitButton" : {
-                                "label" : "Submit",
-                                "tooltip" : "Submit your CEO credentials"
                             }
                         }
                     },
