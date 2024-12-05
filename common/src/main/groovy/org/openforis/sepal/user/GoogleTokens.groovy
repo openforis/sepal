@@ -4,7 +4,7 @@ import groovy.transform.Immutable
 
 @Immutable
 class GoogleTokens {
-    static final int REFRESH_IF_EXPIRES_IN_MINUTES = 10
+    private static final int REFRESH_IF_EXPIRES_IN_MINUTES = 10
 
     String refreshToken
     String accessToken
