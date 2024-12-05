@@ -2,12 +2,13 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-// import {actionBuilder} from '~/action-builder'
+import {actionBuilder} from '~/action-builder'
 // import {withForm} from '~/widget/form/form'
 // import {Panel} from '~/widget/panel/panel'
 // import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
+// import {validateCeoLogin$} from '~/ceo'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
@@ -21,8 +22,8 @@ import styles from './ceoLogin.module.css'
 
 const fields = {
     email: new Form.Field()
-        .notBlank('user.userDetails.form.name.required')
-        .match(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, 'user.userDetails.form.email.invalid'),
+        .notBlank('user.userDetails.form.name.required'),
+    // .match(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, 'user.userDetails.form.email.invalid'),
     password: new Form.Field()
         .notBlank('user.userDetails.form.email.required'),
 }
@@ -35,15 +36,14 @@ const fields = {
 
 export class _CeoLogin extends React.Component {
     close() {
-        const {activator: {activatables: {ceoProjects, ceoLogin}}} = this.props
+        
+        // const {activator: {activatables: {ceoProjects, ceoLogin}}} = this.props
         const {activatable} = this.props
-
-        console.log('####################### this props:', this.props.activatables)  // Add this line
-        console.log('####################### this props activator:', this.props.activator)  // Add this line
 
         // const activator = this.props.activator
         // const activatables = activator.activatables
         // const ceoProjects = activatables.ceoProjects
+        // const ceoLogin = activatables.ceoLogin
 
         activatable.deactivate()
 
@@ -59,7 +59,8 @@ export class _CeoLogin extends React.Component {
                 form={form}
                 isActionForm={true}
                 modal
-                onApply={userPasswords => this.changePassword$(userPasswords)}
+                // onApply={() => this.handleLogin()}
+                onApply={values => this.handleLogin(values)}
                 onClose={() => this.close()}>
                 <Panel.Header
                     icon='key'
@@ -98,18 +99,19 @@ export class _CeoLogin extends React.Component {
         )
     }
 
-    // handleLogin() {
-    //     const {inputs} = this.props
-    //     const email = inputs.email.value()
-    //     const password = inputs.password.value()
-    //     // console.log(email, password)
+    handleLogin(values) {
+        console.log('Parameters received in handleLogin:', values)
+
+        const {inputs} = this.props
+        const email = inputs.email.value
+        const password = inputs.password.value
       
-    //     // Dispatch an action using actionBuilder
-    //     actionBuilder('USER_CEO_LOGIN')
-    //         .set('ceo.login.email', email)
-    //         .set('ceo.login.password', password)
-    //         .dispatch()
-    // }
+        // Dispatch an action using actionBuilder
+        actionBuilder('USER_CEO_LOGIN')
+            .set('ceo.login.email', email)
+            .set('ceo.login.password', password)
+            .dispatch()
+    }
 
 }
 
