@@ -7,7 +7,7 @@ const log = require('#sepal/log').getLogger('websocket/downlink')
 
 const HEARTBEAT_INTERVAL_MS = 10 * 1000
 
-const initializeDownlink = (servers, clients, wss) => {
+const initializeDownlink = (servers, clients, wss, googleAccessTokenRefresher) => {
 
     const heartbeatResponse$ = new Subject()
 
@@ -44,6 +44,8 @@ const initializeDownlink = (servers, clients, wss) => {
         ws.on('message', message => onClientMessage(ws, message, user, clientId))
         ws.on('error', error => onClientError(ws, user, clientId, error))
         ws.on('close', () => onClientDisconnected(ws, user, clientId))
+
+        googleAccessTokenRefresher.userConnected(user)
         clients.send(clientId, {modules: {state: servers.list()}})
         servers.broadcast({user, clientId, online: true})
     }
@@ -76,6 +78,7 @@ const initializeDownlink = (servers, clients, wss) => {
     
     const onClientDisconnected = (ws, user, clientId) => {
         log.info(`${userTag(user.username, clientId)} disconnected`)
+        googleAccessTokenRefresher.userDisconnected(user)
         disconnect(ws, user, clientId)
     }
 

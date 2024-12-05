@@ -9,8 +9,10 @@ const urlTag = url =>
 const moduleTag = module =>
     `Module<${module}>`
 
-const userTag = (username = '?', clientId = '?') =>
-    `User<${username}:${clientId.slice(-4)}>`
+const userTag = (username = '?', clientId) =>
+    clientId
+        ? `User<${username}:${clientId.slice(-4)}>`
+        : `User<${username}>`
 
 const clientTag = (clientId = '?') =>
     `Client<${clientId.slice(-4)}>`

@@ -22,12 +22,14 @@ const {Proxy} = require('./proxy')
 const {SessionManager} = require('./session')
 const {setRequestUser, getSessionUsername} = require('./user')
 const {UserStore} = require('./userStore')
+const {GoogleAccessTokenRefresher} = require('./googleAccessToken')
 const {usernameTag, urlTag} = require('./tag')
 const {webSocketPath} = require('../config/endpoints')
 
 const redis = new Redis(redisUri)
 const userStore = UserStore(redis)
 const sessionStore = new RedisSessionStore({client: redis})
+const googleAccessTokenRefresher = GoogleAccessTokenRefresher(userStore)
 
 const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore, userStore)
 const {authMiddleware} = Auth(userStore)
@@ -114,7 +116,7 @@ const main = async () => {
         }
     }
 
-    initializeWebSocketServer(wss)
+    initializeWebSocketServer(wss, googleAccessTokenRefresher)
 
     // HACK: User has to be injected here as the session is not available in proxyRes and proxyResWsz
     server.on('upgrade', (req, socket, head) => {
