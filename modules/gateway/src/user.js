@@ -41,6 +41,9 @@ const setRequestUser = (req, user) => {
     req.headers[SEPAL_USER_HEADER] = serialize(userInfo)
 }
 
+const removeRequestUser = req =>
+    delete req.headers[SEPAL_USER_HEADER]
+
 module.exports = {
     SEPAL_USER_HEADER,
     serialize,
@@ -48,5 +51,6 @@ module.exports = {
     getSessionUsername,
     setSessionUsername,
     getRequestUser,
-    setRequestUser
+    setRequestUser,
+    removeRequestUser
 }

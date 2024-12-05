@@ -4,7 +4,7 @@ const {usernameTag, urlTag} = require('./tag')
 const {EMPTY, from, map, switchMap, firstValueFrom, catchError} = require('rxjs')
 const {get$} = require('#sepal/httpClient')
 const modules = require('../config/modules')
-const {deserialize, serialize} = require('./user')
+const {deserialize, serialize, removeRequestUser} = require('./user')
 const {getRequestUser, getSessionUsername, setRequestUser} = require('./user')
 
 const SEPAL_USER_HEADER = 'sepal-user'
@@ -78,6 +78,7 @@ const UserStore = redis => {
 
     const userMiddleware = (req, res, next) => {
         const username = getSessionUsername(req)
+        removeRequestUser(req)
         if (username) {
             getUser(username)
                 .then(user => {
