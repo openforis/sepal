@@ -88,7 +88,7 @@ const createWatcher = async ({out$, stop$}) => {
         takeUntil(stop$),
         catchError(error => log.error(error))
     ).subscribe({
-        next: ({clientId, subscriptionId, path, items}) => out$.next({clientId, subscriptionId, data: {path, items}}),
+        next: ({clientId, subscriptionId, data}) => out$.next({clientId, subscriptionId, data}),
         error: error => log.error('Unexpected stream error', error),
         complete: () => log.error('Unexpected stream complete')
     })
@@ -107,7 +107,7 @@ const createWatcher = async ({out$, stop$}) => {
         error: error => log.error('Unexpected stream error', error),
         complete: () => log.error('Unexpected stream complete')
     })
-
+    
     stats$.pipe(
         mergeWith(of(null)),
         scan((acc, clientId) => (clientId ? {...acc, [clientId]: (acc[clientId] || 0) + 1} : acc), {}),
@@ -144,7 +144,7 @@ const createWatcher = async ({out$, stop$}) => {
             switchMap(dir => of(...dir)),
             mergeMap(filename => from(scanFile(absolutePath, filename))),
             reduce((acc, {name, ...fileInfo}) => ({...acc, [name]: fileInfo}), {}),
-            map(items => ({username, clientId, subscriptionId, path, items})),
+            map(items => ({username, clientId, subscriptionId, data: {path, items}})),
             catchError(error => {
                 log.warn(error)
                 unmonitor({username, clientId, subscriptionId, path})
