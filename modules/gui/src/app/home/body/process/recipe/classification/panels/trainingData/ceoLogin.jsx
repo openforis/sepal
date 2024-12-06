@@ -103,8 +103,41 @@ export class _CeoLogin extends React.Component {
         console.log('Parameters received in handleLogin:', values)
 
         const {inputs} = this.props
-        const email = inputs.email.value
-        const password = inputs.password.value
+        // const email = inputs.email.value
+        // const password = inputs.password.value
+        // Example login logic
+        fetch('https://app.collect.earth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({email, password}),
+        })
+            .then(response => {
+                const setCookieHeader = response.xhr.getResponseHeader('set-cookie')
+                const cookieParts = setCookieHeader.split(';')
+                const ringSessionCookie = cookieParts.find(part => part.startsWith('ring-session='))
+                if (ringSessionCookie) {
+                    const token = ringSessionCookie.split('=')[1]
+                    document.cookie = setCookieHeader
+                    console.log('Token:', token)
+                    return token
+                } else {
+                    console.warn('No \'ring-session\' cookie found in the \'set-cookie\' header')
+                    throw new Error('No \'ring-session\' cookie found')
+                }
+            })
+            .then(data => {
+                if (data.success) {
+                // Handle successful login
+                } else {
+                // Handle login error
+                    inputs.password.setError('Invalid email or password.')
+                }
+            })
+            .catch(error => {
+                console.error('Error during login:', error)
+            })
       
         // Dispatch an action using actionBuilder
         actionBuilder('USER_CEO_LOGIN')
