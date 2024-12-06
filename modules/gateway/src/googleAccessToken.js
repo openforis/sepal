@@ -1,5 +1,4 @@
-const {Subject, groupBy, mergeMap, tap, takeUntil, filter, timer, switchMap, of, from, map, scan, mergeWith, share} = require('rxjs')
-const _ = require('lodash')
+const {Subject, groupBy, mergeMap, tap, takeUntil, filter, timer, switchMap, of, from, map, mergeWith} = require('rxjs')
 const {userTag} = require('./tag')
 const modules = require('../config/modules')
 const {postJson$} = require('sepal/src/httpClient')
@@ -10,37 +9,11 @@ const GOOGLE_ACCESS_TOKEN_REFRESH_URL = `http://${modules.user}/google/refresh-a
 const REFRESH_IF_EXPIRES_IN_MINUTES = 10
 
 const GoogleAccessTokenRefresher = userStore => {
-    const user$ = new Subject()
+    const userConnected$ = new Subject()
+    const userDisconnected$ = new Subject()
     const userRefreshed$ = new Subject()
 
-    const userStatus$ = user$.pipe(
-        groupBy(({user: {username}}) => username),
-        mergeMap(user$ => user$.pipe(
-            scan(({count}, {user, delta}) => ({
-                user,
-                count: count + delta,
-                connected: count === 0 && delta === 1,
-                disconnected: count === 1 && delta === -1,
-            }), {
-                count: 0,
-                connected: false,
-                disconnected: false
-            })
-        )),
-        share()
-    )
-
-    const userConnected$ = userStatus$.pipe(
-        filter(({connected}) => connected === true),
-        map(({user}) => user)
-    )
-
-    const userDisconnected$ = userStatus$.pipe(
-        filter(({disconnected}) => disconnected === true),
-        map(({user}) => user)
-    )
-
-    userConnected$.pipe(
+    const userRefresh$ = userConnected$.pipe(
         mergeWith(userRefreshed$),
         filter(({googleTokens}) => !!googleTokens),
         groupBy(({username}) => username),
@@ -59,10 +32,12 @@ const GoogleAccessTokenRefresher = userStore => {
                 )
             )
         ))
-    ).subscribe({
+    )
+
+    userRefresh$.subscribe({
         next: user => userRefreshed$.next(user),
-        error: error => log.error('Unexpected userAuthenticated$ stream error', error),
-        complete: () => log.error('Unexpected userAuthenticated$ stream closed')
+        error: error => log.error('Unexpected userRefresh$ stream error', error),
+        complete: () => log.error('Unexpected userRefresh$ stream closed')
     })
 
     const getRefreshDelay = ({googleTokens}) =>
@@ -96,10 +71,10 @@ const GoogleAccessTokenRefresher = userStore => {
     }
     
     const userConnected = user =>
-        user$.next({user, delta: 1})
+        userConnected$.next(user)
     
     const userDisconnected = user =>
-        user$.next({user, delta: -1})
+        userDisconnected$.next(user)
 
     return {userConnected, userDisconnected}
 }

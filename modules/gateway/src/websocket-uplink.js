@@ -10,7 +10,7 @@ const log = require('#sepal/log').getLogger('websocket/uplink')
 
 const HEARTBEAT_INTERVAL_MS = 1 * 1000
 
-const initializeUplink = (servers, clients) => {
+const initializeUplink = ({servers, clients}) => {
     
     const moduleReady = (module, ready) => {
         clients.broadcast({modules: {update: {[module]: ready}}})
@@ -31,9 +31,9 @@ const initializeUplink = (servers, clients) => {
             moduleReady(module, true)
         } else {
             if (log.isTrace()) {
-                log.trace(`Forwarding message to ${clientTag(clientId)}:`, data)
+                log.trace(`Forwarding message to ${clientTag('', clientId)}:`, data)
             } else {
-                log.debug(`Forwarding message to ${clientTag(clientId)}`)
+                log.debug(`Forwarding message to ${clientTag('', clientId)}`)
             }
             clients.send(clientId, {subscriptionId, data})
         }

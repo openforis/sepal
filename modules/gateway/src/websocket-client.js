@@ -1,7 +1,7 @@
 const {WebSocket} = require('ws')
 const {Subject} = require('rxjs')
 
-const {userTag, clientTag} = require('./tag')
+const {clientTag} = require('./tag')
 
 const log = require('#sepal/log').getLogger('websocket/client')
 
@@ -14,14 +14,14 @@ const Clients = () => {
         if (clientId && client) {
             return client
         } else {
-            throw new Error(`Unknown ${clientTag(clientId)}`)
+            throw new Error(`Unknown ${clientTag('', clientId)}`)
         }
     }
 
     const add = (user, clientId, ws, subscriptions) => {
         const username = user.username
         clients[clientId] = {user, ws, subscriptions}
-        log.debug(`${userTag(username, clientId)} added to clients, now ${Object.keys(clients).length}`)
+        log.debug(`${clientTag(username, clientId)} added to clients, now ${Object.keys(clients).length}`)
     }
 
     const remove = clientId => {
@@ -30,7 +30,7 @@ const Clients = () => {
             subscriptions.forEach(subscription => subscription.unsubscribe())
             delete clients[clientId]
             remove$.next(clientId)
-            log.debug(`${userTag(user?.username, clientId)} removed from clients, now ${Object.keys(clients).length}`)
+            log.debug(`${clientTag(user?.username, clientId)} removed from clients, now ${Object.keys(clients).length}`)
         } catch (error) {
             log.debug(`Cannot remove client - ${error.message}`)
         }

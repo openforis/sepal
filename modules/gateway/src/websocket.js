@@ -3,12 +3,12 @@ const {initializeUplink} = require('./websocket-uplink')
 const {Servers} = require('./websocket-server')
 const {Clients} = require('./websocket-client')
 
-const initializeWebSocketServer = (wss, googleAccessTokenRefresher) => {
+const initializeWebSocketServer = ({wss, onUserConnected, onUserDisconnected}) => {
     const servers = Servers()
     const clients = Clients()
     
-    initializeUplink(servers, clients)
-    initializeDownlink(servers, clients, wss, googleAccessTokenRefresher)
+    initializeUplink({servers, clients})
+    initializeDownlink({servers, clients, wss, onUserConnected, onUserDisconnected})
 }
 
 module.exports = {initializeWebSocketServer}
