@@ -19,6 +19,11 @@ export class PanelSections extends React.Component {
                 <Panel.Header icon={icon} title={this.renderSelect()}/>
                 {component
                     ? <Panel.Content>
+                        {/* write some text here */}
+                        <div>
+                            this is some textss %%%%%%%%%%
+                        </div>
+
                         {component}
                     </Panel.Content>
                     : null

@@ -28,6 +28,11 @@ export class SectionSelection extends React.Component {
                 value: 'RECIPE',
                 label: msg('process.classification.panel.trainingData.type.RECIPE.label'),
                 tooltip: msg('process.classification.panel.trainingData.type.RECIPE.tooltip'),
+            },
+            {
+                value: 'CEO',
+                label: msg('process.classification.panel.trainingData.type.CEO.label'),
+                tooltip: msg('process.classification.panel.trainingData.type.CEO.tooltip'),
             }
         ]
         return (
