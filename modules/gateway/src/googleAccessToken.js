@@ -14,7 +14,7 @@ const GoogleAccessTokenRefresher = userStore => {
     const userRefreshed$ = new Subject()
 
     const userStatus$ = user$.pipe(
-        groupBy(({username}) => username),
+        groupBy(({user: {username}}) => username),
         mergeMap(user$ => user$.pipe(
             scan(({count}, {user, delta}) => ({
                 user,
