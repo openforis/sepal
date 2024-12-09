@@ -1,11 +1,10 @@
 /* eslint-disable no-console */
 import PropTypes from 'prop-types'
 import React from 'react'
+import {throwError} from 'rxjs'
+import {catchError, tap} from 'rxjs/operators'
 
-import {actionBuilder} from '~/action-builder'
-// import {withForm} from '~/widget/form/form'
-// import {Panel} from '~/widget/panel/panel'
-// import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {ceoLogin$, credentialsPosted,} from '~/ceo'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 // import {validateCeoLogin$} from '~/ceo'
@@ -15,6 +14,7 @@ import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
+// import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 // import {compose} from '~/compose'
@@ -22,17 +22,19 @@ import styles from './ceoLogin.module.css'
 
 const fields = {
     email: new Form.Field()
-        .notBlank('user.userDetails.form.name.required'),
+        .notBlank('process.classification.panel.trainingData.form.ceo.login.email.required'),
     // .match(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, 'user.userDetails.form.email.invalid'),
     password: new Form.Field()
-        .notBlank('user.userDetails.form.email.required'),
+        .notBlank('process.classification.panel.trainingData.form.ceo.login.password.required'),
 }
 
 // const mapStateToProps = state => ({
 //     email: state.ceo.email,
 //     password: state.ceo.password,
 // })
-// const mapStateToProps = () => ({values: {}})
+// const mapStateToProps = () => ({
+//     errors: invalidCredentials() ? {password: msg('landing.login.password.invalid')} : {}
+// })
 
 export class _CeoLogin extends React.Component {
     close() {
@@ -40,15 +42,7 @@ export class _CeoLogin extends React.Component {
         // const {activator: {activatables: {ceoProjects, ceoLogin}}} = this.props
         const {activatable} = this.props
 
-        // const activator = this.props.activator
-        // const activatables = activator.activatables
-        // const ceoProjects = activatables.ceoProjects
-        // const ceoLogin = activatables.ceoLogin
-
         activatable.deactivate()
-
-        // ceoProjects.activate()
-        
     }
 
     render() {
@@ -56,15 +50,15 @@ export class _CeoLogin extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                applyLabel={'CEO Login'}
                 form={form}
                 isActionForm={true}
                 modal
-                // onApply={() => this.handleLogin()}
-                onApply={values => this.handleLogin(values)}
+                onApply={values => this.login$(values)}
                 onClose={() => this.close()}>
                 <Panel.Header
                     icon='key'
-                    title={msg('process.classification.panel.trainingData.form.ceo.title')}/>
+                    title={msg('process.classification.panel.trainingData.form.ceo.login.title')}/>
                 <Panel.Content>
                     {this.renderForm()}
                 </Panel.Content>
@@ -84,13 +78,13 @@ export class _CeoLogin extends React.Component {
     
             <Layout>
                 <Form.Input
-                    label={msg('process.classification.panel.trainingData.form.ceo.email.label')}
+                    label={msg('process.classification.panel.trainingData.form.ceo.login.email.label')}
                     autoFocus
                     input={email}
                     spellCheck={false}
                 />
                 <Form.Input
-                    label={msg('process.classification.panel.trainingData.form.ceo.password.label')}
+                    label={msg('process.classification.panel.trainingData.form.ceo.login.password.label')}
                     input={password}
                     type='password'
                     spellCheck={false}
@@ -99,53 +93,22 @@ export class _CeoLogin extends React.Component {
         )
     }
 
-    handleLogin(values) {
-        console.log('Parameters received in handleLogin:', values)
+    login$(credentials) {
 
-        const {inputs} = this.props
-        // const email = inputs.email.value
-        // const password = inputs.password.value
-        // Example login logic
-        fetch('https://app.collect.earth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({email, password}),
-        })
-            .then(response => {
-                const setCookieHeader = response.xhr.getResponseHeader('set-cookie')
-                const cookieParts = setCookieHeader.split(';')
-                const ringSessionCookie = cookieParts.find(part => part.startsWith('ring-session='))
-                if (ringSessionCookie) {
-                    const token = ringSessionCookie.split('=')[1]
-                    document.cookie = setCookieHeader
-                    console.log('Token:', token)
-                    return token
-                } else {
-                    console.warn('No \'ring-session\' cookie found in the \'set-cookie\' header')
-                    throw new Error('No \'ring-session\' cookie found')
-                }
+        const {inputs: {password, email}} = this.props
+
+        return ceoLogin$(credentials).pipe(
+            tap(ceoSessionToken => {
+                credentialsPosted(ceoSessionToken)
+            }),
+            catchError(() => {
+                console.log('$$$$$$$$$Invalid credentials---')
+                password.setInvalid(msg('user.changePassword.success'))
+                email.setInvalid(msg('user.changePassword.success'))
+                return throwError(() => new Error('Invalid credentials'))
             })
-            .then(data => {
-                if (data.success) {
-                // Handle successful login
-                } else {
-                // Handle login error
-                    inputs.password.setError('Invalid email or password.')
-                }
-            })
-            .catch(error => {
-                console.error('Error during login:', error)
-            })
-      
-        // Dispatch an action using actionBuilder
-        actionBuilder('USER_CEO_LOGIN')
-            .set('ceo.login.email', email)
-            .set('ceo.login.password', password)
-            .dispatch()
+        )
     }
-
 }
 
 const policy = () => ({
@@ -161,21 +124,13 @@ export const CeoLogin = compose(
 
 class _CeoLoginButton extends React.Component {
     render() {
-        console.log('####################### CeoLoginButton props:', this.props)  // Add this line
-
-        // const disabled = this.props.disabled
         const activate = this.props.activator.activatables.ceoLogin.activate
-        // const canActivate = this.props.activator.activatables.ceoCredentials.canActivate
-
-        // const {disabled, activator: {activatables: {ceoCredentials: {activate, canActivate}}}} = this.props
-
         return (
             <Button
                 icon={'key'}
-                label={msg('user.changePassword.label')}
+                label={msg('process.classification.panel.trainingData.form.ceo.login.button.label')}
                 disabled={false}
                 onClick={activate}/>
-        // onClick={() => console.log('Button clicked')}/>
         )
     }
 }
@@ -183,12 +138,8 @@ class _CeoLoginButton extends React.Component {
 export const CeoLoginButton = compose(
     _CeoLoginButton,
     withActivators('ceoLogin'),
-    // withActivatable({id: 'ceoProjects'})
+    withForm({fields}),
 )
-
-// CeoLogin.propTypes = {
-//     inputs: PropTypes.object.isRequired,
-// }
 
 CeoLogin.propTypes = {
     disabled: PropTypes.any

@@ -2086,17 +2086,40 @@
                             }
                         },
                         "ceo" : {
-                            "title": "Collect Earth Online Authentication",
-                            "tooltip": "Use training data from CEO",
-                            "email" : {
-                                "label" : "Email",
-                                "placeholder" : "Enter your CEO email",
-                                "required" : "You must enter your CEO email"
+                            "login" : {
+                                "title": "Collect Earth Online Authentication",
+                                "tooltip": "Use training data from CEO",
+                                "email" : {
+                                    "label" : "CEO email",
+                                    "placeholder" : "Enter your CEO email",
+                                    "required" : "You must enter your CEO email"
+                                },
+                                "password" : {
+                                    "label" : "Password",
+                                    "placeholder" : "Enter your CEO password",
+                                    "required" : "You must enter your CEO password"
+                                },
+                                "button" : {
+                                    "label" : "Login"
+                                },
+                                "connected" : {
+                                    "title" : "You are connected to CEO",
+                                    "tooltip" : "You are connected to CEO"
+                                },
+                                "disconnected" : {
+                                    "title" : "Disconnected from CEO",
+                                    "tooltip" : "You are disconnected from CEO"
+                                }
                             },
-                            "password" : {
-                                "label" : "Password",
-                                "placeholder" : "Enter your CEO password",
-                                "required" : "You must enter your CEO password"
+                            "institution" : {
+                                "label" : "Institution",
+                                "placeholder" : "Select an institution",
+                                "required" : "You must select an institution"
+                            },
+                            "project" : {
+                                "label" : "Project",
+                                "placeholder" : "Select a project",
+                                "required" : "You must select a project"
                             }
                         }
                     },
