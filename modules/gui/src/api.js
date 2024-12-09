@@ -1,6 +1,7 @@
 import {setApi} from '~/apiRegistry'
 
 import apps from './api/apps'
+import ceoGateway from './api/ceo'
 import gee from './api/gee'
 import google from './api/google'
 import map from './api/map'
@@ -24,5 +25,6 @@ export const initApi = () =>
         tasks,
         user,
         userFiles,
-        wmts
+        wmts,
+        ceoGateway
     })
