@@ -24,8 +24,18 @@ app.use(session({
 
 app.use(express.json())
 
-app.use(['/login', '/create-project', '/get-collected-data', '/delete-project', '/get-project-stats'], (req, res, next) => {
-    const {ceo: {url, username, password}} = config
+app.use([
+    '/login',
+    '/create-project',
+    '/get-collected-data',
+    '/delete-project',
+    '/get-project-stats',
+    '/get-all-institutions',
+    '/get-institution-projects/:institutionId',
+    '/dump-project-raw-data/:projectId'
+], (req, res, next) => {
+    const { ceo: { url, username, password } } = config;
+
     request.post({
         url: urljoin(url, 'login'),
         form: {
@@ -317,6 +327,92 @@ app.get('/get-project-stats/:id', (req, res, next) => {
     })
 })
 
+app.get('/get-institution-projects/:institutionId', (req, res, next) => {
+    if (!req.isLogged) {
+        return res.status(500).send({ error: 'Login failed!' });
+    }
+
+    const { ceo: { url } } = config;
+    const cookie = req.session?.cookie?.['0'];
+
+    if (!cookie) {
+        return res.status(500).send({ error: 'Session cookie is missing!' });
+    }
+
+    const { institutionId } = req.params;
+
+    if (!institutionId || isNaN(institutionId)) {
+        return res.status(400).send({ error: 'Invalid or missing institutionId!' });
+    }
+
+    // Make the request to fetch institution projects
+    request.get({
+        url: urljoin(url, 'get-institution-projects'),
+        qs: { institutionId }, // Include institutionId as a query string
+        headers: { Cookie: cookie },
+    }, (error, response, body) => {
+        if (error) {
+            return next(error); // Handle request errors
+        }
+
+        if (response.statusCode !== 200) {
+            console.error('API Error:', response.statusCode, body);
+            return res.status(response.statusCode).send({ error: 'Failed to fetch institution projects.' });
+        }
+
+        try {
+            // const cleanBody = body.replace(/^\uFEFF/, ''); // Remove BOM if present
+            const jsonResponse = JSON.parse(body); // Parse JSON response
+            res.send(jsonResponse); // Send the JSON response to the client
+        } catch (err) {
+            console.error('Failed to parse JSON:', err);
+            res.status(500).send({ error: 'Invalid JSON response from the API.' });
+        }
+    });
+});
+
+app.get('/dump-project-raw-data/:projectId', (req, res, next) => {
+    const { isLogged, session } = req;
+
+    if (!isLogged) {
+        return res.status(500).send({ error: 'Login failed!' });
+    }
+
+    const { projectId } = req.params;
+
+    if (!projectId || isNaN(projectId)) {
+        return res.status(400).send({ error: 'Invalid or missing projectId!' });
+    }
+
+    const { ceo: { url } } = config; // Assuming 'url' is the base URL for Collect Earth API
+    const cookie = session?.cookie?.['0']; // Retrieve the session cookie
+
+    if (!cookie) {
+        return res.status(500).send({ error: 'Session cookie is missing!' });
+    }
+
+    // Proxy the request to the backend service
+    request.get({
+        url: urljoin(url, 'dump-project-raw-data'),
+        qs: { projectId }, // Include the projectId as a query string
+        headers: {
+            'Cookie': cookie, // Pass the session cookie for authentication
+        },
+        encoding: null // Keep the response as binary (for file content)
+    }).on('response', response => {
+        // Pass headers from backend to the client
+        res.set({
+            'Content-Type': response.headers['content-type'],
+            'Content-Disposition': response.headers['content-disposition'],
+        });
+
+        // Pipe the backend response directly to the client
+        response.pipe(res);
+    }).on('error', err => {
+        next(err); // Handle request errors
+    });
+});
+
 app.use((err, req, res, next) => {
     console.info(err.stack)
     res.status(500).send('Something went wrong!')
@@ -327,3 +423,4 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, function() {
     console.info(`App listening on port ${PORT}!`)
 })
+
