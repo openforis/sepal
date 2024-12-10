@@ -9,11 +9,11 @@ const urlTag = url =>
 const moduleTag = module =>
     `Module<${module}>`
 
-const userTag = (username = '?', clientId = '?') =>
-    `User<${username}:${clientId.slice(-4)}>`
+const userTag = username =>
+    `User<${username}>`
 
-const clientTag = (clientId = '?') =>
-    `Client<${clientId.slice(-4)}>`
+const clientTag = (username, clientId) =>
+    `Client<${username || '?'}:${clientId.slice(-4)}>`
 
 module.exports = {
     usernameTag,

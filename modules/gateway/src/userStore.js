@@ -4,7 +4,7 @@ const {usernameTag, urlTag} = require('./tag')
 const {EMPTY, from, map, switchMap, firstValueFrom, catchError} = require('rxjs')
 const {get$} = require('#sepal/httpClient')
 const modules = require('../config/modules')
-const {deserialize, serialize} = require('./user')
+const {deserialize, serialize, removeRequestUser} = require('./user')
 const {getRequestUser, getSessionUsername, setRequestUser} = require('./user')
 
 const SEPAL_USER_HEADER = 'sepal-user'
@@ -52,11 +52,11 @@ const UserStore = redis => {
                 return removed
             })
     
-    const updateUser = req => {
+    const updateUser = async req => {
         const user = getRequestUser(req)
         if (user) {
             log.isTrace() && log.trace(`${usernameTag(user.username)} ${urlTag(req.url)} Updating user in user store`)
-            firstValueFrom(
+            await firstValueFrom(
                 get$(currentUserUrl, {
                     headers: {[SEPAL_USER_HEADER]: JSON.stringify(user)}
                 }).pipe(
@@ -73,12 +73,12 @@ const UserStore = redis => {
             )
         } else {
             log.warn('[not-authenticated] Updated user, but no user in user store')
-            return EMPTY
         }
     }
 
     const userMiddleware = (req, res, next) => {
         const username = getSessionUsername(req)
+        removeRequestUser(req)
         if (username) {
             getUser(username)
                 .then(user => {

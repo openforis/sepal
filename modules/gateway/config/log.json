@@ -3,6 +3,7 @@
     "categories": {
         "auth": "info",
         "gateway": "info",
+        "googleAccessToken": "info",
         "proxy": "error",
         "session": "info",
         "user": "info",

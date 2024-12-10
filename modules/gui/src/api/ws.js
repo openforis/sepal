@@ -1,4 +1,4 @@
-import {concat, filter, finalize, of, Subject} from 'rxjs'
+import {concat, finalize, of, Subject, tap} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import {WebSocket} from '~/http-client'
@@ -152,12 +152,6 @@ export const moduleWebSocket$ = (module, notifyBackend = false) => {
         next: data => upstream$.next({module, subscriptionId, data})
     })
 
-    moduleDownstream$.pipe(
-        filter(({ready}) => ready === true)
-    ).subscribe({
-        next: () => upstream$.next({module, subscriptionId, subscribed: true})
-    })
-
     const close = () => {
         moduleUpstream$.complete()
         moduleDownstream$.complete()
@@ -167,13 +161,15 @@ export const moduleWebSocket$ = (module, notifyBackend = false) => {
 
     const ready = readyModules.has(module)
 
-    upstream$.next({module, subscriptionId, subscribed: true})
+    const subscribe = ready =>
+        ready === true && upstream$.next({module, subscriptionId, subscribed: true})
 
     return {
         upstream$: moduleUpstream$.pipe(
             finalize(() => close())
         ),
         downstream$: concat(of({ready}), moduleDownstream$).pipe(
+            tap(({ready}) => subscribe(ready)),
             finalize(() => close())
         )
     }

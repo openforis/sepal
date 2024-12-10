@@ -3,12 +3,12 @@ const {initializeUplink} = require('./websocket-uplink')
 const {Servers} = require('./websocket-server')
 const {Clients} = require('./websocket-client')
 
-const initializeWebSocketServer = wss => {
+const initializeWebSocketServer = ({wss, onUserConnected, onUserDisconnected}) => {
     const servers = Servers()
     const clients = Clients()
     
-    initializeUplink(servers, clients)
-    initializeDownlink(servers, clients, wss)
+    initializeUplink({servers, clients})
+    initializeDownlink({servers, clients, wss, onUserConnected, onUserDisconnected})
 }
 
 module.exports = {initializeWebSocketServer}
@@ -18,16 +18,17 @@ module.exports = {initializeWebSocketServer}
 const SERVER_CONTRACT = () => ({
     onConnect: () => ({ready: true}),
     onHeartBeat: ({hb}) => ({hb}),
-    messageFromClient: {user, clientId, online},
-    messageFromClient: {user, clientId, subscriptionId, data},
-    messageToClient: {clientId, subscriptionId, data}
+    in: {user, update},
+    in: {user, clientId, online},
+    in: {user, clientId, subscriptionId, data},
+    out: {clientId, subscriptionId, data}
 })
 
 const CLIENT_CONTRACT = () => ({
     onHeartBeat: ({hb}) => ({hb}),
-    messageFromServer: {modules: {state: ['foo', 'bar']}},
-    messageFromServer: {modules: {update: {foo: false, baz: true}}},
-    messageFromServer: {subscriptionId, data},
-    messageToServer: {module, subscriptionId, online},
-    messageToServer: {module, subscriptionId, data}
+    in: {modules: {state: ['foo', 'bar']}},
+    in: {modules: {update: {foo: false, baz: true}}},
+    in: {subscriptionId, data},
+    out: {module, subscriptionId, online},
+    out: {module, subscriptionId, data}
 })
