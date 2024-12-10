@@ -8,7 +8,6 @@
 
 .connected {
     color: var(--success-color);
-    width: 31rem;
 }
 
 .disconnected {

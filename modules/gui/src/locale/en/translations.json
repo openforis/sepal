@@ -2099,9 +2099,8 @@
                                     "placeholder" : "Enter your CEO password",
                                     "required" : "You must enter your CEO password"
                                 },
-                                "button" : {
-                                    "label" : "Login"
-                                },
+                                "connect.label" : "Connect",
+                                "disconnect.label" : "Disconnect",
                                 "connected" : {
                                     "title" : "You are connected to CEO",
                                     "tooltip" : "You are connected to CEO"

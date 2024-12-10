@@ -128,7 +128,7 @@ class _CeoLoginButton extends React.Component {
         return (
             <Button
                 icon={'key'}
-                label={msg('process.classification.panel.trainingData.form.ceo.login.button.label')}
+                label={msg('process.classification.panel.trainingData.form.ceo.login.connect.label')}
                 disabled={false}
                 onClick={activate}/>
         )
