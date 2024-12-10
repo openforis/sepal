@@ -18,8 +18,12 @@ module.exports = {initializeWebSocketServer}
 const SERVER_CONTRACT = () => ({
     onConnect: () => ({ready: true}),
     onHeartBeat: ({hb}) => ({hb}),
-    in: {user, update},
-    in: {user, clientId, online},
+    in: {event: 'userUp', user},
+    in: {event: 'userDown', user},
+    in: {event: 'clientUp', user, clientId},
+    in: {event: 'clientDown', user, clientId},
+    in: {event: 'subscriptionUp', user, clientId, subscriptionId},
+    in: {event: 'subscriptionDown', user, clientId, subscriptionId},
     in: {user, clientId, subscriptionId, data},
     out: {clientId, subscriptionId, data}
 })
