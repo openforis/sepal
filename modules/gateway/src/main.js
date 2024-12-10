@@ -122,7 +122,7 @@ const main = async () => {
     const onUserDisconnected = user =>
         googleAccessTokenRefresher.userDisconnected(user)
 
-    initializeWebSocketServer({wss, onUserConnected, onUserDisconnected})
+    initializeWebSocketServer({wss, userStore, onUserConnected, onUserDisconnected})
 
     // HACK: User has to be injected here as the session is not available in proxyRes and proxyResWsz
     server.on('upgrade', (req, socket, head) => {

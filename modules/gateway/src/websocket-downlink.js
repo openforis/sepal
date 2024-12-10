@@ -90,7 +90,7 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
             complete: () => log.error('Unexpected heartbeatRequest$ stream closed')
         })
 
-        clients.add(user, clientId, ws, [heartbeatSubscription])
+        clients.add(user.username, clientId, ws, [heartbeatSubscription])
         client$.next({user, clientId, connected: true})
 
         ws.on('message', message => onClientMessage(ws, message, user, clientId))

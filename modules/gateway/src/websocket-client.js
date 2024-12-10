@@ -18,19 +18,18 @@ const Clients = () => {
         }
     }
 
-    const add = (user, clientId, ws, subscriptions) => {
-        const username = user.username
-        clients[clientId] = {user, ws, subscriptions}
+    const add = (username, clientId, ws, subscriptions) => {
+        clients[clientId] = {username, ws, subscriptions}
         log.debug(`${clientTag(username, clientId)} added to clients, now ${Object.keys(clients).length}`)
     }
 
     const remove = clientId => {
         try {
-            const {user, subscriptions} = get(clientId)
+            const {username, subscriptions} = get(clientId)
             subscriptions.forEach(subscription => subscription.unsubscribe())
             delete clients[clientId]
             remove$.next(clientId)
-            log.debug(`${clientTag(user?.username, clientId)} removed from clients, now ${Object.keys(clients).length}`)
+            log.debug(`${clientTag(username, clientId)} removed from clients, now ${Object.keys(clients).length}`)
         } catch (error) {
             log.debug(`Cannot remove client - ${error.message}`)
         }
@@ -59,7 +58,7 @@ const Clients = () => {
     const forEach = callback => {
         log.debug('Iterating clients')
         Object.entries(clients).forEach(
-            ([clientId, {user, ws}]) => callback({user, clientId, ws})
+            ([clientId, {username, ws}]) => callback({username, clientId, ws})
         )
     }
 

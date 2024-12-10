@@ -11,14 +11,18 @@ const log = require('#sepal/log').getLogger('websocket/uplink')
 
 const HEARTBEAT_INTERVAL_MS = 1 * 1000
 
-const initializeUplink = ({servers, clients}) => {
+const initializeUplink = ({servers, clients, userStore}) => {
     
     const moduleReady = (module, ready) => {
         clients.broadcast({modules: {update: {[module]: ready}}})
-        clients.forEach(({user, clientId}) => {
-            servers.send(module, {user, event: USER_UP})
-            servers.send(module, {user, clientId, event: CLIENT_UP})
-        })
+        clients.forEach(({username, clientId}) =>
+            userStore.getUser(username).then(
+                user => {
+                    servers.send(module, {user, event: USER_UP})
+                    servers.send(module, {user, clientId, event: CLIENT_UP})
+                }
+            )
+        )
     }
 
     const onHeartbeat = (hb, module, upstream$) => {
