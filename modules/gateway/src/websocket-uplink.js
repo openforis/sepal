@@ -15,7 +15,6 @@ const initializeUplink = ({servers, clients}) => {
     
     const moduleReady = (module, ready) => {
         clients.broadcast({modules: {update: {[module]: ready}}})
-        // clients.forEach(({user, clientId}) => servers.send(module, {user, clientId, online: true}))
         clients.forEach(({user, clientId}) => {
             servers.send(module, {user, event: USER_UP})
             servers.send(module, {user, clientId, event: CLIENT_UP})

@@ -57,7 +57,6 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
         next: user => {
             log.info(`${userTag(user.username)} connected`)
             onUserConnected && onUserConnected(user)
-            // servers.broadcast({user, online: true})
             servers.broadcast({user, event: USER_UP})
         },
         error: error => log.error('Unexpected userConnected$ stream error', error),
@@ -68,7 +67,6 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
         next: user => {
             log.info(`${userTag(user.username)} disconnected`)
             onUserDisconnected && onUserDisconnected(user)
-            // servers.broadcast({user, online: false})
             servers.broadcast({user, event: USER_DOWN})
         },
         error: error => log.error('Unexpected userDisconnected$ stream error', error),
@@ -100,8 +98,6 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
         ws.on('close', () => onClientDisconnected(ws, user, clientId))
 
         clients.send(clientId, {modules: {state: servers.list()}})
-
-        // servers.broadcast({user, clientId, online: true})
         servers.broadcast({user, clientId, event: CLIENT_UP})
     }
     
@@ -146,8 +142,6 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
         ws.terminate()
         client$.next({user, clientId, disconnected: true})
         clients.remove(clientId)
-
-        // servers.broadcast({user, clientId, online: false})
         servers.broadcast({user, clientId, event: CLIENT_DOWN})
     }
     
