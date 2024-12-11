@@ -18,21 +18,22 @@ module.exports = {initializeWebSocketServer}
 const SERVER_CONTRACT = () => ({
     onConnect: () => ({ready: true}),
     onHeartBeat: ({hb}) => ({hb}),
-    in: {event: 'userUp', user},
-    in: {event: 'userDown', user},
-    in: {event: 'clientUp', user, clientId},
-    in: {event: 'clientDown', user, clientId},
-    in: {event: 'subscriptionUp', user, clientId, subscriptionId},
-    in: {event: 'subscriptionDown', user, clientId, subscriptionId},
-    in: {user, clientId, subscriptionId, data},
+    onUserUp: {event: 'userUp', user},
+    onUserDown: {event: 'userDown', user},
+    onUserUpdate: {event: 'userUpdate', user},
+    onClientUp: {event: 'clientUp', user, clientId},
+    onClientDown: {event: 'clientDown', user, clientId},
+    onSubscriptionUp: {event: 'subscriptionUp', user, clientId, subscriptionId},
+    onSubscriptionDown: {event: 'subscriptionDown', user, clientId, subscriptionId},
+    onClientMessage: {user, clientId, subscriptionId, data},
     out: {clientId, subscriptionId, data}
 })
 
 const CLIENT_CONTRACT = () => ({
     onHeartBeat: ({hb}) => ({hb}),
-    in: {modules: {state: ['foo', 'bar']}},
-    in: {modules: {update: {foo: false, baz: true}}},
-    in: {subscriptionId, data},
+    onModuleState: {modules: {state: ['foo', 'bar']}},
+    onModuleStateUpdate: {modules: {update: {foo: false, baz: true}}},
+    onServerData: {subscriptionId, data},
     out: {module, subscriptionId, online},
     out: {module, subscriptionId, data}
 })

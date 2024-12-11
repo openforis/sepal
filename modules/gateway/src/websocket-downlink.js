@@ -57,7 +57,7 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
         next: user => {
             log.info(`${userTag(user.username)} connected`)
             onUserConnected && onUserConnected(user)
-            servers.broadcast({user, event: USER_UP})
+            servers.broadcast({event: USER_UP, user})
         },
         error: error => log.error('Unexpected userConnected$ stream error', error),
         complete: () => log.error('Unexpected userConnected$ stream closed')
@@ -67,7 +67,7 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
         next: user => {
             log.info(`${userTag(user.username)} disconnected`)
             onUserDisconnected && onUserDisconnected(user)
-            servers.broadcast({user, event: USER_DOWN})
+            servers.broadcast({event: USER_DOWN, user})
         },
         error: error => log.error('Unexpected userDisconnected$ stream error', error),
         complete: () => log.error('Unexpected userDisconnected$ stream closed')
@@ -98,7 +98,7 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
         ws.on('close', () => onClientDisconnected(ws, user, clientId))
 
         clients.send(clientId, {modules: {state: servers.list()}})
-        servers.broadcast({user, clientId, event: CLIENT_UP})
+        servers.broadcast({event: CLIENT_UP, user, clientId})
     }
     
     const onClientMessage = (ws, message, user, clientId) => {
@@ -109,9 +109,9 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
                     log.trace('Heartbeat reply received', hb)
                     heartbeatResponse$.next({ws, user, clientId})
                 } else if (subscribed) {
-                    servers.send(module, {user, clientId, subscriptionId, event: SUBSCRIPTION_UP})
+                    servers.send(module, {event: SUBSCRIPTION_UP, user, clientId, subscriptionId})
                 } else if (unsubscribed) {
-                    servers.send(module, {user, clientId, subscriptionId, event: SUBSCRIPTION_DOWN})
+                    servers.send(module, {event: SUBSCRIPTION_DOWN, user, clientId, subscriptionId})
                 } else if (data) {
                     if (log.isTrace()) {
                         log.trace(`Forwarding message to ${moduleTag(module)}:`, data)
@@ -142,7 +142,7 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
         ws.terminate()
         client$.next({user, clientId, disconnected: true})
         clients.remove(clientId)
-        servers.broadcast({user, clientId, event: CLIENT_DOWN})
+        servers.broadcast({event: CLIENT_DOWN, user, clientId})
     }
     
     const initializeWebSocketServer = () => {
