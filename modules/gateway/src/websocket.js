@@ -25,6 +25,7 @@ const SERVER_CONTRACT = () => ({
     onClientDown: {event: 'clientDown', user, clientId},
     onSubscriptionUp: {event: 'subscriptionUp', user, clientId, subscriptionId},
     onSubscriptionDown: {event: 'subscriptionDown', user, clientId, subscriptionId},
+    onUserUpdate: {user},
     onClientMessage: {user, clientId, subscriptionId, data},
     out: {clientId, subscriptionId, data}
 })

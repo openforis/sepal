@@ -1,7 +1,6 @@
 const log = require('#sepal/log').getLogger('userstore')
-const _ = require('lodash')
 const {usernameTag, urlTag} = require('./tag')
-const {EMPTY, from, map, switchMap, firstValueFrom, catchError} = require('rxjs')
+const {EMPTY, from, map, switchMap, firstValueFrom, catchError, Subject} = require('rxjs')
 const {get$} = require('#sepal/httpClient')
 const modules = require('../config/modules')
 const {deserialize, serialize, removeRequestUser} = require('./user')
@@ -16,6 +15,8 @@ const UserStore = redis => {
     if (!redis) {
         throw new Error('Cannot initialize UserStore due to missing argument: redis')
     }
+
+    const userUpdate$ = new Subject()
 
     const userKey = username =>
         `${USER_PREFIX}:${username.toLowerCase()}`
@@ -39,6 +40,7 @@ const UserStore = redis => {
                 }
                 return saved
             })
+            .then(() => userUpdate$.next(user))
     
     const removeUser = async username =>
         await redis.del(userKey(username))
@@ -99,7 +101,7 @@ const UserStore = redis => {
     }
 
     return {
-        getUser, setUser, removeUser, updateUser, userMiddleware
+        getUser, setUser, removeUser, updateUser, userMiddleware, userUpdate$
     }
 }
 
