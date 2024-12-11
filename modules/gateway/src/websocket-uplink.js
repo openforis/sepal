@@ -15,14 +15,16 @@ const initializeUplink = ({servers, clients, userStore}) => {
     
     const moduleReady = (module, ready) => {
         clients.broadcast({modules: {update: {[module]: ready}}})
-        clients.forEach(({username, clientId}) =>
-            userStore.getUser(username).then(
-                user => {
-                    servers.send(module, {user, event: USER_UP})
-                    servers.send(module, {user, clientId, event: CLIENT_UP})
-                }
+        if (ready) {
+            clients.forEach(({username, clientId}) =>
+                getUser(username).then(
+                    user => {
+                        servers.send(module, {event: USER_UP, user})
+                        servers.send(module, {event: CLIENT_UP, user, clientId})
+                    }
+                )
             )
-        )
+        }
     }
 
     const onHeartbeat = (hb, module, upstream$) => {
