@@ -2108,6 +2108,19 @@
                                 "disconnected" : {
                                     "title" : "Disconnected from CEO",
                                     "tooltip" : "You are disconnected from CEO"
+                                },
+                                "invalid" : "Invalid CEO email or password"
+                            },
+                            "dataType": {
+                                "title" : "CSV Data type",
+                                "tooltip" : "Select the type of data you want to retrieve from CEO",
+                                "sample" : {
+                                    "label":  "Sample",
+                                    "tooltip": "Use the sample data from CEO"
+                                },
+                                "plot" :{
+                                    "label": "Plot",
+                                    "tooltip": "Use the plot data from CEO"
                                 }
                             },
                             "institution" : {
@@ -2119,6 +2132,15 @@
                                 "label" : "Project",
                                 "placeholder" : "Select a project",
                                 "required" : "You must select a project"
+                            },
+                            "loadCsv" : {
+                                "failed" : "Failed to get the training data from CEO"
+                            },
+                            "loadProjects" : {
+                                "failed" : "Failed to get the projects for the selected institution"
+                            },
+                            "loadInstitutions" : {
+                                "failed" : "Failed to get the institutions"
                             }
                         }
                     },

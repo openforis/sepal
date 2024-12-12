@@ -1,5 +1,5 @@
-import {of, throwError} from 'rxjs'
-import {delay} from 'rxjs/operators'
+import {of, tap, throwError} from 'rxjs'
+import {delay, finalize} from 'rxjs/operators'
 
 const dummyUsers = [
     {email: 'd', password: 'd', token: 'tokenUser1', role: 'admin'},
@@ -31,7 +31,12 @@ const dummyInstitutions = [
         id: 1,
         name: 'African Forest Observatory',
         isMember: true
-    }
+    },
+    {
+        id: 99,
+        name: 'FAO --',
+        isMember: true
+    },
 ]
 
 /**
@@ -74,7 +79,11 @@ const dummyProjectsByInstitution = {
             percentComplete: 10.0,
             learningMaterial: 'http://example.com/usfs-wildfire'
         }
+    ],
+    99: [
+        
     ]
+
 }
 
 // Default projects if institutionId not found in dummyProjectsByInstitution
@@ -115,6 +124,24 @@ const dummyProjectData = [
     },
 ]
 
+// Helper function to convert an array of objects to CSV
+function arrayToCsv(arr) {
+    if (!Array.isArray(arr) || arr.length === 0) {
+        return ''
+    }
+    const headers = Object.keys(arr[0])
+    const lines = arr.map(obj =>
+        headers.map(h => {
+            const value = obj[h] != null ? String(obj[h]) : ''
+            // Enclose values with commas or quotes in double quotes and escape internal quotes
+            return value.includes(',') || value.includes('"') || value.includes('\n')
+                ? `"${value.replace(/"/g, '""')}"`
+                : value
+        }).join(',')
+    )
+    return [headers.join(','), ...lines].join('\n')
+}
+
 export default {
     login$: ({email, password}) => {
         const user = dummyUsers.find(u => u.email === email && u.password === password)
@@ -143,9 +170,15 @@ export default {
         return of(projects).pipe(delay(500))
     },
     
-    // eslint-disable-next-line no-unused-vars
-    getProjectData$: ({projectId}) =>
-        of(dummyProjectData).pipe(delay(500))
+    // Now returning CSV for project data
+    getProjectData$: ({projectId}) => {
+    // Ensure data is processed correctly
+        const projectDataCsv = arrayToCsv(dummyProjectData)
+        return of(projectDataCsv).pipe(
+            delay(5000),
+            finalize(() => console.log('Project data CSV generated'))
+        )
+    }
 
     // login$: ({email, password}) =>
     //     post$('/api/ceo-gateway/login', {

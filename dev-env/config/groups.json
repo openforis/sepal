@@ -15,7 +15,8 @@
         "terminal",
         "user",
         "user-files",
-        "user-storage"
+        "user-storage",
+        "ceo-gateway"
     ],
     "process": [
         "gateway",
@@ -26,7 +27,8 @@
         "mysql",
         "rabbitmq",
         "sepal-server",
-        "user"
+        "user",
+        "ceo-gateway"
     ],
     "apps": [
         "app-manager",
@@ -39,7 +41,7 @@
         "sepal-server",
         "ssh-gateway",
         "terminal",
-        "user"
+        "user",
     ],
     "node": [
         "app-manager",
@@ -53,6 +55,7 @@
         "task",
         "terminal",
         "user-files",
-        "user-storage"
+        "user-storage",
+        "ceo-gateway"
     ]
 }

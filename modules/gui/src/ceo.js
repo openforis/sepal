@@ -1,4 +1,6 @@
-import {map} from 'rxjs'
+import Papa from 'papaparse'
+import {map, Subject, tap, zip} from 'rxjs'
+import {switchMap, toArray} from 'rxjs/operators'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -48,3 +50,45 @@ export const loadProjectsForInstitutions$ = institutionId => {
     )
 }
 
+function parseCsvText(csvText) {
+    const row$ = new Subject()
+    const columns$ = new Subject()
+    let isFirstRow = true
+
+    Papa.parse(csvText, {
+        worker: true,
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: 'greedy',
+        step: ({data, meta: {fields}}) => {
+            row$.next(data)
+            if (isFirstRow) {
+                columns$.next(fields)
+                columns$.complete()
+                isFirstRow = false
+            }
+        },
+        complete: () => {
+            row$.complete()
+        }
+    })
+
+    return {row$, columns$}
+}
+
+export const loadAndParseCeoCsv$ = projectId => {
+    return api.ceoGateway.getProjectData$({
+        token: 'this is my token',
+        projectId: projectId
+    }).pipe(
+        map(csvText => {
+            return parseCsvText(csvText)
+        }),
+        switchMap(({row$, columns$}) => {
+            return zip(
+                row$.pipe(toArray()),
+                columns$
+            )
+        })
+    )
+}

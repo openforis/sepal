@@ -8,7 +8,7 @@ import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {PanelSections} from '~/widget/panelSections'
 
-import {CeoSection} from './ceoSection'
+import {CeoSection} from './ceo/ceoSection'
 import {ClassMappingStep} from './classMappingStep'
 import {ClassStep} from './classStep'
 import {CsvUploadSection} from './csvUploadSection'
@@ -91,10 +91,17 @@ const fields = {
     columnMapping: new Form.Field(),
     customMapping: new Form.Field(),
     defaultValue: new Form.Field(),
-
     referenceData: new Form.Field()
         .skip((value, {wizardStep}) => wizardStep !== 3)
-        .notEmpty('process.classification.panel.trainingData.form.referenceData.required')
+        .notEmpty('process.classification.panel.trainingData.form.referenceData.required'),
+    institution: new Form.Field()
+        .skip((value, {type}) => type !== 'CEO')
+        .notBlank('process.classification.panel.trainingData.form.ceo.institution.required'),
+    project: new Form.Field()
+        .skip((value, {type}) => type !== 'CEO')
+        .notBlank('process.classification.panel.trainingData.form.ceo.institution.required'),
+    csvType: new Form.Field()
+        .skip((value, {type}) => type !== 'CEO')
 }
 
 const mapRecipeToProps = recipe => ({
@@ -134,10 +141,10 @@ class _TrainingDataSet extends React.Component {
                 tooltip: msg('process.classification.panel.trainingData.type.CSV_UPLOAD.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.CSV_UPLOAD.title'),
                 steps: [
-                    <CsvUploadSection ${...this.props}/>,
-                    <LocationStep ${...this.props}/>,
-                    <ClassStep ${...this.props}/>,
-                    <ClassMappingStep ${...this.props}/>
+                    <CsvUploadSection {...this.props}/>,
+                    <LocationStep {...this.props}/>,
+                    <ClassStep {...this.props}/>,
+                    <ClassMappingStep {...this.props}/>
                 ]
             },
             {
@@ -146,10 +153,10 @@ class _TrainingDataSet extends React.Component {
                 tooltip: msg('process.classification.panel.trainingData.type.EE_TABLE.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.EE_TABLE.title'),
                 steps: [
-                    <EETableSection ${...this.props}/>,
-                    <LocationStep ${...this.props}/>,
-                    <ClassStep ${...this.props}/>,
-                    <ClassMappingStep ${...this.props}/>
+                    <EETableSection {...this.props}/>,
+                    <LocationStep {...this.props}/>,
+                    <ClassStep {...this.props}/>,
+                    <ClassMappingStep {...this.props}/>
                 ]
             },
             {
@@ -158,10 +165,10 @@ class _TrainingDataSet extends React.Component {
                 tooltip: msg('process.classification.panel.trainingData.type.SAMPLE_CLASSIFICATION.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.SAMPLE_CLASSIFICATION.title'),
                 steps: [
-                    <SampleClassificationSection ${...this.props}/>,
-                    <LocationStep ${...this.props}/>,
-                    <ClassStep ${...this.props}/>,
-                    <ClassMappingStep ${...this.props}/>
+                    <SampleClassificationSection {...this.props}/>,
+                    <LocationStep {...this.props}/>,
+                    <ClassStep {...this.props}/>,
+                    <ClassMappingStep {...this.props}/>
                 ]
             },
             {
@@ -169,7 +176,7 @@ class _TrainingDataSet extends React.Component {
                 label: msg('process.classification.panel.trainingData.type.RECIPE.label'),
                 tooltip: msg('process.classification.panel.trainingData.type.RECIPE.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.RECIPE.title'),
-                component: <RecipeSection ${...this.props}/>
+                component: <RecipeSection {...this.props}/>
             },
             {
                 value: 'CEO',
@@ -177,8 +184,11 @@ class _TrainingDataSet extends React.Component {
                 tooltip: msg('process.classification.panel.trainingData.type.CEO.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.CEO.title'),
                 steps: [
-                    <CeoSection ${...this.props}/>,
-                    <LocationStep ${...this.props}/>
+                    <CeoSection {...this.props}/>,
+                    <LocationStep {...this.props}/>,
+                    <ClassStep {...this.props}/>,
+                    <ClassMappingStep {...this.props}/>
+
                 ]
             }
         ]

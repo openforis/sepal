@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import PropTypes from 'prop-types'
 import React from 'react'
 import {throwError} from 'rxjs'
@@ -10,7 +9,6 @@ import {msg} from '~/translate'
 // import {validateCeoLogin$} from '~/ceo'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
-import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
@@ -22,19 +20,11 @@ import styles from './ceoLogin.module.css'
 
 const fields = {
     email: new Form.Field()
-        .notBlank('process.classification.panel.trainingData.form.ceo.login.email.required'),
-    // .match(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, 'user.userDetails.form.email.invalid'),
+        .notBlank('process.classification.panel.trainingData.form.ceo.login.email.required')
+        .match(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, 'user.userDetails.form.email.invalid'),
     password: new Form.Field()
         .notBlank('process.classification.panel.trainingData.form.ceo.login.password.required'),
 }
-
-// const mapStateToProps = state => ({
-//     email: state.ceo.email,
-//     password: state.ceo.password,
-// })
-// const mapStateToProps = () => ({
-//     errors: invalidCredentials() ? {password: msg('landing.login.password.invalid')} : {}
-// })
 
 export class _CeoLogin extends React.Component {
     close() {
@@ -102,9 +92,8 @@ export class _CeoLogin extends React.Component {
                 credentialsPosted(ceoSessionToken)
             }),
             catchError(() => {
-                console.log('$$$$$$$$$Invalid credentials---')
-                password.setInvalid(msg('user.changePassword.success'))
-                email.setInvalid(msg('user.changePassword.success'))
+                password.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.invalid'))
+                email.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.invalid'))
                 return throwError(() => new Error('Invalid credentials'))
             })
         )
@@ -121,26 +110,6 @@ export const CeoLogin = compose(
     withActivators('ceoProjects'),
     withActivatable({id: 'ceoLogin', policy, alwaysAllow: true})
 )
-
-class _CeoLoginButton extends React.Component {
-    render() {
-        const activate = this.props.activator.activatables.ceoLogin.activate
-        return (
-            <Button
-                icon={'key'}
-                label={msg('process.classification.panel.trainingData.form.ceo.login.connect.label')}
-                disabled={false}
-                onClick={activate}/>
-        )
-    }
-}
-
-export const CeoLoginButton = compose(
-    _CeoLoginButton,
-    withActivators('ceoLogin'),
-    withForm({fields}),
-)
-
 CeoLogin.propTypes = {
     disabled: PropTypes.any
 }
