@@ -19,4 +19,4 @@ RUN apt-get update && \
 ADD modules/${MODULE_NAME}/src ${ROOT}/src
 
 USER node
-CMD ["npm", "run", "start_unsecure"]
+CMD ["npm", "run", "start"]

@@ -361,7 +361,10 @@ app.post('/get-all-institutions', (req, res, next) => {
     const {token} = req.body
 
     if (!token) {
-        return res.status(400).send({error: 'Token is required!'})
+        return res.status(400).send({
+            statusCode: 400,
+            error: 'Token is required!'
+        })
     }
 
     const {ceo: {url}} = config
@@ -485,10 +488,13 @@ app.post('/dump-project-aggregate-data', (req, res, next) => {
 })
 
 app.post('/login-token', (req, res, next) => {
-    const {username, password} = req.body
+    const {email, password} = req.body
 
-    if (!username || !password) {
-        return res.status(400).send({error: 'Username and password are required!'})
+    if (!email || !password) {
+        return res.status(400).send({
+            statusCode: 400,
+            error: 'email and password are required!'
+        })
     }
 
     const {ceo: {url}} = config
@@ -496,21 +502,35 @@ app.post('/login-token', (req, res, next) => {
     request.post({
         url: urljoin(url, 'login'),
         form: {
-            email: username,
+            email: email,
             password,
         },
     }).on('response', response => {
         if (response.statusCode !== 200) {
-            return res.status(response.statusCode).send({error: 'Login failed!'})
+            return res.status(response.statusCode).send({
+                statusCode: response.statusCode,
+                error: 'Login failed!'})
+        }
+
+        // Check if the response contains the session cookie (CEO always returns 200 even if login fails)
+        if (!response.headers['set-cookie']) {
+            return res.status(401).send({
+                statusCode: 401,
+                error: 'Username or password is incorrect!'})
         }
 
         const cookie = response.headers['set-cookie']['0']
 
         if (!cookie) {
-            return res.status(500).send({error: 'Failed to retrieve session cookie!'})
+            return res.status(500).send({
+                statusCode: 500,
+                error: 'Failed to retrieve session cookie!'})
         }
 
-        res.status(200).send({sessionCookie: cookie})
+        res.status(200).send({
+            statusCode: 200,
+            sessionCookie: cookie
+        })
     }).on('error', err => {
         next(err)
     })
