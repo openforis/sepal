@@ -455,6 +455,36 @@ app.post('/dump-project-raw-data', (req, res, next) => {
     });
 });
 
+app.post('/dump-project-aggregate-data', (req, res, next) => {
+    const { projectId, token } = req.body;
+
+    if (!token) {
+        return res.status(400).send({ error: 'Token is required!' });
+    }
+
+    if (!projectId || isNaN(projectId)) {
+        return res.status(400).send({ error: 'Invalid or missing projectId!' });
+    }
+
+    const { ceo: { url } } = config;
+
+    request.get({
+        url: urljoin(url, 'dump-project-aggregate-data'),
+        qs: { projectId },
+        headers: { Cookie: token },
+        encoding: null,
+    }).on('response', response => {
+        res.set({
+            'Content-Type': response.headers['content-type'],
+            'Content-Disposition': response.headers['content-disposition'],
+        });
+
+        response.pipe(res);
+    }).on('error', err => {
+        next(err);
+    });
+});
+
 app.post('/login-token', (req, res, next) => {
     const { username, password } = req.body;
 
