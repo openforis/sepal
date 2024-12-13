@@ -11,8 +11,8 @@ const swaggerDocument = require('./swagger.json')
 
 const app = express()
 
-app.use(bodyParser.json({ limit: '50mb' }))
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }))
+app.use(bodyParser.json({limit: '50mb'}))
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true, parameterLimit: 50000}))
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
@@ -34,7 +34,7 @@ app.use([
     '/get-institution-projects/:institutionId',
     '/dump-project-raw-data/:projectId'
 ], (req, res, next) => {
-    const { ceo: { url, username, password } } = config;
+    const {ceo: {url, username, password}} = config
 
     request.post({
         url: urljoin(url, 'login'),
@@ -106,8 +106,8 @@ app.post('/create-project', (req, res, next) => {
             question: 'CLASS',
             answers: classes.reduce((accumulator, currentValue, index) => {
                 accumulator[index] = {
-                    answer: currentValue, 
-                    color: colors[index], 
+                    answer: currentValue,
+                    color: colors[index],
                     hide: false
                 }
                 return accumulator
@@ -234,9 +234,9 @@ app.get('/get-collected-data/:id', (req, res, next) => {
             const {question, answers} = project.surveyQuestions[0] // surveyQuestions is now an object
             if (!question || !answers) return res.sendStatus(500)
             const answersById = Object.values(answers).reduce((acc, cur) => {
-                acc[cur.answer] = cur.id;
-                return acc;
-              }, {});
+                acc[cur.answer] = cur.id
+                return acc
+            }, {})
             request.get({
                 headers: {
                     Cookie: cookie['0'],
@@ -328,43 +328,43 @@ app.get('/get-project-stats/:id', (req, res, next) => {
 })
 
 app.post('/get-all-institutions', (req, res, next) => {
-    const { token } = req.body;
+    const {token} = req.body
 
     if (!token) {
-        return res.status(400).send({ error: 'Token is required!' });
+        return res.status(400).send({error: 'Token is required!'})
     }
 
-    const { ceo: { url } } = config;
+    const {ceo: {url}} = config
 
     request.get({
         url: urljoin(url, 'get-all-institutions'),
-        headers: { Cookie: token },
+        headers: {Cookie: token},
     }).on('response', response => {
-        let body = '';
+        let body = ''
 
         response.on('data', chunk => {
-            body += chunk;
+            body += chunk
         }).on('end', () => {
             try {
-                const institutions = JSON.parse(body);
-                res.send(institutions);
+                const institutions = JSON.parse(body)
+                res.send(institutions)
             } catch (err) {
-                next(err);
+                next(err)
             }
-        });
+        })
     }).on('error', err => {
-        next(err);
-    });
-});
+        next(err)
+    })
+})
 
 app.post('/get-all-institutions', (req, res, next) => {
-    const { token } = req.body;
+    const {token} = req.body
 
     if (!token) {
-        return res.status(400).send({ error: 'Token is required!' });
+        return res.status(400).send({error: 'Token is required!'})
     }
 
-    const { ceo: { url } } = config;
+    const {ceo: {url}} = config
 
     request.get({
         url: urljoin(url, 'get-all-institutions'),
@@ -372,127 +372,126 @@ app.post('/get-all-institutions', (req, res, next) => {
             'Cookie': token,
         },
     }).on('response', response => {
-        let body = '';
+        let body = ''
 
         response.on('data', chunk => {
-            body += chunk;
+            body += chunk
         }).on('end', () => {
             try {
-                const institutions = JSON.parse(body); // Parse the JSON response
-                res.send(institutions);
+                const institutions = JSON.parse(body) // Parse the JSON response
+                res.send(institutions)
             } catch (err) {
-                next(err); // Handle parsing errors
+                next(err) // Handle parsing errors
             }
-        });
+        })
     }).on('error', err => {
-        next(err); // Handle request errors
-    });
-});
+        next(err) // Handle request errors
+    })
+})
 
 app.post('/get-institution-projects', (req, res, next) => {
-    const { institutionId, token } = req.body;
+    const {institutionId, token} = req.body
 
     if (!token) {
-        return res.status(400).send({ error: 'Token is required!' });
+        return res.status(400).send({error: 'Token is required!'})
     }
 
     if (!institutionId || isNaN(institutionId)) {
-        return res.status(400).send({ error: 'Invalid or missing institutionId!' });
+        return res.status(400).send({error: 'Invalid or missing institutionId!'})
     }
 
-    const { ceo: { url } } = config;
+    const {ceo: {url}} = config
 
     request.get({
         url: urljoin(url, 'get-institution-projects'),
-        qs: { institutionId },
-        headers: { Cookie: token },
+        qs: {institutionId},
+        headers: {Cookie: token},
     }, (error, response, body) => {
         if (error) {
-            return next(error);
+            return next(error)
         }
         if (response.statusCode !== 200) {
-            return res.status(response.statusCode).send({ error: 'Failed to fetch institution projects.' });
+            return res.status(response.statusCode).send({error: 'Failed to fetch institution projects.'})
         }
 
         try {
-            const jsonResponse = JSON.parse(body);
-                res.send(jsonResponse);
+            const jsonResponse = JSON.parse(body)
+            res.send(jsonResponse)
                 
         } catch (err) {
-            res.status(500).send({ error: 'Invalid JSON response from the API.' });
+            res.status(500).send({error: 'Invalid JSON response from the API.'})
         }
-    });
-});
-
+    })
+})
 
 app.post('/dump-project-raw-data', (req, res, next) => {
-    const { projectId, token } = req.body;
+    const {projectId, token} = req.body
 
     if (!token) {
-        return res.status(400).send({ error: 'Token is required!' });
+        return res.status(400).send({error: 'Token is required!'})
     }
 
     if (!projectId || isNaN(projectId)) {
-        return res.status(400).send({ error: 'Invalid or missing projectId!' });
+        return res.status(400).send({error: 'Invalid or missing projectId!'})
     }
 
-    const { ceo: { url } } = config;
+    const {ceo: {url}} = config
 
     request.get({
         url: urljoin(url, 'dump-project-raw-data'),
-        qs: { projectId },
-        headers: { Cookie: token },
+        qs: {projectId},
+        headers: {Cookie: token},
         encoding: null,
     }).on('response', response => {
         res.set({
             'Content-Type': response.headers['content-type'],
             'Content-Disposition': response.headers['content-disposition'],
-        });
+        })
 
-        response.pipe(res);
+        response.pipe(res)
     }).on('error', err => {
-        next(err);
-    });
-});
+        next(err)
+    })
+})
 
 app.post('/dump-project-aggregate-data', (req, res, next) => {
-    const { projectId, token } = req.body;
+    const {projectId, token} = req.body
 
     if (!token) {
-        return res.status(400).send({ error: 'Token is required!' });
+        return res.status(400).send({error: 'Token is required!'})
     }
 
     if (!projectId || isNaN(projectId)) {
-        return res.status(400).send({ error: 'Invalid or missing projectId!' });
+        return res.status(400).send({error: 'Invalid or missing projectId!'})
     }
 
-    const { ceo: { url } } = config;
+    const {ceo: {url}} = config
 
     request.get({
         url: urljoin(url, 'dump-project-aggregate-data'),
-        qs: { projectId },
-        headers: { Cookie: token },
+        qs: {projectId},
+        headers: {Cookie: token},
         encoding: null,
     }).on('response', response => {
         res.set({
             'Content-Type': response.headers['content-type'],
             'Content-Disposition': response.headers['content-disposition'],
-        });
+        })
 
-        response.pipe(res);
+        response.pipe(res)
     }).on('error', err => {
-        next(err);
-    });
-});
+        next(err)
+    })
+})
 
 app.post('/login-token', (req, res, next) => {
-    const { username, password } = req.body;
+    const {username, password} = req.body
 
     if (!username || !password) {
-        return res.status(400).send({ error: 'Username and password are required!' });
+        return res.status(400).send({error: 'Username and password are required!'})
     }
 
-    const { ceo: { url } } = config;
+    const {ceo: {url}} = config
 
     request.post({
         url: urljoin(url, 'login'),
@@ -500,22 +499,22 @@ app.post('/login-token', (req, res, next) => {
             email: username,
             password,
         },
-    }).on('response', (response) => {
+    }).on('response', response => {
         if (response.statusCode !== 200) {
-            return res.status(response.statusCode).send({ error: 'Login failed!' });
+            return res.status(response.statusCode).send({error: 'Login failed!'})
         }
 
-        const cookie = response.headers['set-cookie']['0'];
+        const cookie = response.headers['set-cookie']['0']
 
         if (!cookie) {
-            return res.status(500).send({ error: 'Failed to retrieve session cookie!' });
+            return res.status(500).send({error: 'Failed to retrieve session cookie!'})
         }
 
-        res.status(200).send({ sessionCookie: cookie });
-    }).on('error', (err) => {
-        next(err);
-    });
-});
+        res.status(200).send({sessionCookie: cookie})
+    }).on('error', err => {
+        next(err)
+    })
+})
 
 app.use((err, req, res, next) => {
     console.info(err.stack)
