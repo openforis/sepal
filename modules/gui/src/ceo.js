@@ -1,6 +1,6 @@
 import Papa from 'papaparse'
 import {map, Subject, tap, zip} from 'rxjs'
-import {switchMap, toArray} from 'rxjs/operators'
+import {first, switchMap, toArray} from 'rxjs/operators'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -11,21 +11,25 @@ export const ceoLogout = () =>
         .dispatch()
         
 export const ceoLogin$ = ({email, password}) => {
-    return api.ceoGateway.login$({email, password})
+    return api.ceoGateway.login$({email, password}).pipe(
+        tap(response => console.info('Login responsdedddddddddddddde:', response)),
+        tap(({sessionCookie}) =>
+            actionBuilder('SET_CEO_TOKEN')
+                .set('ceo.session.token', sessionCookie)
+                .dispatch()
+        )
+    )
 }
 
-export const credentialsPosted = ceoSessionToken =>
-    actionBuilder('SET_CEO_TOKEN')
-        .set('ceo.session.token', ceoSessionToken)
-        .dispatch()
-
-export const loadInstitutions$ = () => {
+export const loadInstitutions$ = token => {
     return api.ceoGateway.getAllInstitutions$({
-        token: 'this is my token',
+        token: token,
     }).pipe(
+        tap(console.info('$$$$$$$$$$$$44 token', token)),
+        tap(institutions => console.info('institutions', institutions)),
         map(institutions => institutions.filter(inst => inst.isMember === true)),
         map(institutions => institutions.map(({id, name}) => ({value: id, label: name}))),
-        map(institutions =>
+        tap(institutions =>
             actionBuilder('SET_INSTITUTIONS', {institutions})
                 .set('ceo.data.institutions', institutions)
                 .dispatch()
@@ -33,17 +37,14 @@ export const loadInstitutions$ = () => {
     )
 }
 
-export const loadProjectsForInstitutions$ = institutionId => {
+export const loadInstitutionProjects$ = (token, institutionId) => {
     return api.ceoGateway.getInstitutionProjects$({
-        token: 'this is my token',
+        token: token,
         institutionId: institutionId
     }).pipe(
-        map(projects => projects.map(({id, name}) => ({
-            value: id,
-            label: name
-        }))),
-        map(projects =>
-            actionBuilder('SET_PROJECTS_FOR_INSTITUTION', {projects})
+        map(projects => projects.map(({id, name}) => ({value: id, label: name}))),
+        tap(projects =>
+            actionBuilder('SET_PROJECTS', {projects})
                 .set('ceo.data.projects', projects)
                 .dispatch()
         )
@@ -51,6 +52,7 @@ export const loadProjectsForInstitutions$ = institutionId => {
 }
 
 function parseCsvText(csvText) {
+
     const row$ = new Subject()
     const columns$ = new Subject()
     let isFirstRow = true
@@ -76,19 +78,17 @@ function parseCsvText(csvText) {
     return {row$, columns$}
 }
 
-export const loadAndParseCeoCsv$ = projectId => {
-    return api.ceoGateway.getProjectData$({
-        token: 'this is my token',
-        projectId: projectId
+export const loadProjectData$ = (token, projectId, csvType) =>
+    api.ceoGateway.getProjectData$({
+        token: token,
+        projectId: projectId,
+        csvType: csvType
     }).pipe(
-        map(csvText => {
-            return parseCsvText(csvText)
-        }),
-        switchMap(({row$, columns$}) => {
-            return zip(
+        map(csvText => parseCsvText(csvText)),
+        switchMap(({row$, columns$}) =>
+            zip(
                 row$.pipe(toArray()),
                 columns$
             )
-        })
+        )
     )
-}

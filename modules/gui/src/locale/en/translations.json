@@ -2092,7 +2092,8 @@
                                 "email" : {
                                     "label" : "CEO email",
                                     "placeholder" : "Enter your CEO email",
-                                    "required" : "You must enter your CEO email"
+                                    "required" : "You must enter your CEO email",
+                                    "invalid" : "Invalid email format"
                                 },
                                 "password" : {
                                     "label" : "Password",
@@ -2109,11 +2110,18 @@
                                     "title" : "Disconnected from CEO",
                                     "tooltip" : "You are disconnected from CEO"
                                 },
-                                "invalid" : "Invalid CEO email or password"
+                                "invalid" : {
+                                    "credentials" : "Invalid CEO email or password",
+                                    "server" : "Failed to connect to CEO",
+                                    "unknown" : "There was an unknown error"
+                                }
+                            },
+                            "disconnected" : {
+                                "description": "Connect your Collect Earth Online (CEO) account to SEPAL to seamlessly access your projects and extract data for training your classification models. Rest assured, your credentials are never stored on SEPAL servers. Once you end your SEPAL session, your CEO connection is automatically terminated."
                             },
                             "dataType": {
                                 "title" : "CSV Data type",
-                                "tooltip" : "Select the type of data you want to retrieve from CEO",
+                                "tooltip" : "Either to use the sample data or the plot centroid data from CEO",
                                 "sample" : {
                                     "label":  "Sample",
                                     "tooltip": "Use the sample data from CEO"

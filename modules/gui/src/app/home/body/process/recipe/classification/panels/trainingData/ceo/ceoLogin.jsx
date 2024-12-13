@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import {throwError} from 'rxjs'
-import {catchError, tap} from 'rxjs/operators'
+import {catchError} from 'rxjs/operators'
 
-import {ceoLogin$, credentialsPosted,} from '~/ceo'
+import {ceoLogin$} from '~/ceo'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 // import {validateCeoLogin$} from '~/ceo'
@@ -21,17 +21,20 @@ import styles from './ceoLogin.module.css'
 const fields = {
     email: new Form.Field()
         .notBlank('process.classification.panel.trainingData.form.ceo.login.email.required')
-        .match(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, 'user.userDetails.form.email.invalid'),
+        .email('process.classification.panel.trainingData.form.ceo.login.email.invalid'),
     password: new Form.Field()
         .notBlank('process.classification.panel.trainingData.form.ceo.login.password.required'),
 }
-
 export class _CeoLogin extends React.Component {
-    close() {
-        
-        // const {activator: {activatables: {ceoProjects, ceoLogin}}} = this.props
-        const {activatable} = this.props
 
+    constructor() {
+        super()
+        this.login$ = this.login$.bind(this)
+        this.close = this.close.bind(this)
+    }
+
+    close() {
+        const {activatable} = this.props
         activatable.deactivate()
     }
 
@@ -42,28 +45,32 @@ export class _CeoLogin extends React.Component {
                 className={styles.panel}
                 applyLabel={'CEO Login'}
                 form={form}
-                isActionForm={true}
+                isActionForm
                 modal
-                onApply={values => this.login$(values)}
-                onClose={() => this.close()}>
+                onApply={this.login$}
+                onClose={this.close}>
                 <Panel.Header
                     icon='key'
                     title={msg('process.classification.panel.trainingData.form.ceo.login.title')}/>
                 <Panel.Content>
                     {this.renderForm()}
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons
+                    applyLabel={msg('process.classification.panel.trainingData.form.ceo.login.connect.label')}
+                />
             </Form.Panel>
         )
+    }
 
+    onEmailChange() {
+        const {inputs: {password}} = this.props
+        password.setInvalid()
     }
     
     renderForm() {
-
         const {inputs} = this.props
         const {email, password} = inputs
     
-        // const {email, password} = this.props
         return (
     
             <Layout>
@@ -72,6 +79,7 @@ export class _CeoLogin extends React.Component {
                     autoFocus
                     input={email}
                     spellCheck={false}
+                    onChange={() => this.onEmailChange()}
                 />
                 <Form.Input
                     label={msg('process.classification.panel.trainingData.form.ceo.login.password.label')}
@@ -84,20 +92,23 @@ export class _CeoLogin extends React.Component {
     }
 
     login$(credentials) {
-
-        const {inputs: {password, email}} = this.props
-
+        const {inputs: {password}} = this.props
         return ceoLogin$(credentials).pipe(
-            tap(ceoSessionToken => {
-                credentialsPosted(ceoSessionToken)
-            }),
-            catchError(() => {
-                password.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.invalid'))
-                email.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.invalid'))
-                return throwError(() => new Error('Invalid credentials'))
+            catchError(error => {
+                const {status} = error
+
+                if (status === 400) {
+                    password.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.invalid.credentials'))
+                } else if (status === 500) {
+                    password.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.invalid.server'))
+                } else {
+                    password.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.invalid.unknown'))
+                }
+                return throwError(() => error)
             })
         )
     }
+        
 }
 
 const policy = () => ({

@@ -1,8 +1,8 @@
 // import PropTypes from 'prop-types'
 import React from 'react'
-import {Subject, takeUntil} from 'rxjs'
+import {Subject, takeUntil, tap} from 'rxjs'
 
-import {loadAndParseCeoCsv$, loadInstitutions$, loadProjectsForInstitutions$} from '~/ceo'
+import {loadInstitutionProjects$, loadInstitutions$, loadProjectData$} from '~/ceo'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
@@ -13,6 +13,8 @@ import {Notifications} from '~/widget/notifications'
 
 import {CeoConnection} from './ceoConnection'
 import {CeoLogin} from './ceoLogin'
+
+const LOAD_CSV_DATA = 'LOAD_CSV_DATA'
 
 const mapStateToProps = () => {
     return {
@@ -57,10 +59,10 @@ export class _CeoSection extends React.Component {
     }
     
     loadInstitutions() {
-        const {institutions, stream} = this.props
+        const {institutions, token, stream} = this.props
         if (!institutions && !stream('LOAD_INSTITUTIONS').active && !stream('LOAD_INSTITUTIONS').failed) {
             this.props.stream('LOAD_INSTITUTIONS',
-                loadInstitutions$(),
+                loadInstitutions$(token),
                 null,
                 () => Notifications.error({
                     message: msg('process.classification.panel.trainingData.form.ceo.loadInstitutions.failed'),
@@ -71,10 +73,10 @@ export class _CeoSection extends React.Component {
     }
 
     loadInstitutionProjects(institutionId) {
-        const {stream, inputs: {csvType}} = this.props
+        const {stream, token} = this.props
         if (!stream('LOAD_PROJECTS').active && !stream('LOAD_PROJECTS').failed) {
             stream('LOAD_PROJECTS',
-                loadProjectsForInstitutions$(institutionId, csvType.value),
+                loadInstitutionProjects$(token, institutionId),
                 null,
                 () => Notifications.error({
                     message: msg('process.classification.panel.trainingData.form.ceo.loadProjects.failed'),
@@ -106,17 +108,17 @@ export class _CeoSection extends React.Component {
     }
 
     loadData() {
-        const {stream, inputs: {name, inputData, columns, project: {value: projectId}, csvType: {value: csvType}}} = this.props
+        const {stream, token, inputs: {name, inputData, columns, project: {value: projectId}, csvType: {value: csvType}}} = this.props
         name.set(projectId)
         inputData.set(null)
         columns.set(null)
 
-        if (stream('LOAD_CEO_CSV').active) {
+        if (stream(LOAD_CSV_DATA).active) {
             this.cancel$.next()
         }
         
-        stream('LOAD_CEO_CSV',
-            loadAndParseCeoCsv$(projectId, csvType).pipe(
+        stream(LOAD_CSV_DATA,
+            loadProjectData$(token, projectId, csvType).pipe(
                 takeUntil(this.cancel$)
             ),
             ([data, csvColumns]) => {
@@ -135,7 +137,7 @@ export class _CeoSection extends React.Component {
         const {stream, institutions, projects, inputs: {institution, project, csvType}} = this.props
         const loadInstitutions = stream('LOAD_INSTITUTIONS')
         const loadProjects = stream('LOAD_PROJECTS')
-        const loadCeoCsv = stream('LOAD_CEO_CSV')
+        const loadCeoCsv = stream(LOAD_CSV_DATA)
         
         return (
             <Layout>

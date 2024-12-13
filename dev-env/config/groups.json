@@ -41,7 +41,7 @@
         "sepal-server",
         "ssh-gateway",
         "terminal",
-        "user",
+        "user"
     ],
     "node": [
         "app-manager",
