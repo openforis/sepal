@@ -2109,7 +2109,10 @@
                                     "title" : "Disconnected from CEO",
                                     "tooltip" : "You are disconnected from CEO"
                                 },
-                                "invalid" : "Invalid CEO email or password"
+                                "invalid" : {
+                                    "title" : "Invalid credentials",
+                                    "message" : "Invalid CEO email or password"
+                                }
                             },
                             "dataType": {
                                 "title" : "CSV Data type",

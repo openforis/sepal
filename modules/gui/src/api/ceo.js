@@ -1,6 +1,8 @@
 import {of, tap, throwError} from 'rxjs'
 import {delay, finalize} from 'rxjs/operators'
 
+import {get$, post$, postJson$} from '~/http-client'
+
 const dummyUsers = [
     {email: 'd', password: 'd', token: 'tokenUser1', role: 'admin'},
     {email: 'f', password: 'f', token: 'tokenUser2', role: 'user'},
@@ -143,26 +145,27 @@ function arrayToCsv(arr) {
 }
 
 export default {
-    login$: ({email, password}) => {
-        const user = dummyUsers.find(u => u.email === email && u.password === password)
+    // login$: ({email, password}) => {
+    //     const user = dummyUsers.find(u => u.email === email && u.password === password)
     
-        if (user) {
-            return of({
-                token: user.token,
-                email: user.email,
-                role: user.role,
-            }).pipe(delay(500))
-        } else {
-            return throwError(() => ({
-                status: 401,
-                message: 'Invalid credentials',
-            })).pipe(delay(500))
-        }
-    },
-
-    // eslint-disable-next-line no-unused-vars
+    //     if (user) {
+    //         return of({
+    //             token: user.token,
+    //             email: user.email,
+    //             role: user.role,
+    //         }).pipe(delay(500))
+    //     } else {
+    //         return throwError(() => ({
+    //             status: 401,
+    //             message: 'Invalid credentials',
+    //         })).pipe(delay(500))
+    //     }
+    // },
+     
     getAllInstitutions$: ({token}) =>
-        of(dummyInstitutions).pipe(delay(500)),
+        post$('/api/ceo-gateway/get-all-institutions', {
+            body: {token},
+        }),
     
     // eslint-disable-next-line no-unused-vars
     getInstitutionProjects$: ({token, institutionId}) => {
@@ -178,14 +181,12 @@ export default {
             delay(5000),
             finalize(() => console.log('Project data CSV generated'))
         )
-    }
+    },
 
-    // login$: ({email, password}) =>
-    //     post$('/api/ceo-gateway/login', {
-    //         email,
-    //         password,
-    //         validStatuses: [200, 401],
-    //     }),
+    login$: ({email, password}) =>
+        post$('/api/ceo-gateway/login-token', {
+            body: {email, password},
+        }),
 
     // getProjects$: ({institutionId}) =>
     //     get$('/api/ceo-gateway/get-institution-projects', {

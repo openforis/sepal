@@ -12,6 +12,7 @@ import {withActivators} from '~/widget/activation/activator'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
+import {Notifications} from '~/widget/notifications'
 // import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
@@ -20,13 +21,19 @@ import styles from './ceoLogin.module.css'
 
 const fields = {
     email: new Form.Field()
-        .notBlank('process.classification.panel.trainingData.form.ceo.login.email.required')
-        .match(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, 'user.userDetails.form.email.invalid'),
+        .notBlank('process.classification.panel.trainingData.form.ceo.login.email.required'),
+    // .match(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, 'user.userDetails.form.email.invalid'),
     password: new Form.Field()
         .notBlank('process.classification.panel.trainingData.form.ceo.login.password.required'),
 }
 
 export class _CeoLogin extends React.Component {
+
+    constructor() {
+        super()
+        this.onLogin$ = this.onLogin$.bind(this)
+    }
+
     close() {
         
         // const {activator: {activatables: {ceoProjects, ceoLogin}}} = this.props
@@ -42,9 +49,9 @@ export class _CeoLogin extends React.Component {
                 className={styles.panel}
                 applyLabel={'CEO Login'}
                 form={form}
-                isActionForm={true}
+                isActionForm
                 modal
-                onApply={values => this.login$(values)}
+                onApply={this.onLogin$}
                 onClose={() => this.close()}>
                 <Panel.Header
                     icon='key'
@@ -52,7 +59,7 @@ export class _CeoLogin extends React.Component {
                 <Panel.Content>
                     {this.renderForm()}
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons applyLabel='Connect'/>
             </Form.Panel>
         )
 
@@ -63,7 +70,6 @@ export class _CeoLogin extends React.Component {
         const {inputs} = this.props
         const {email, password} = inputs
     
-        // const {email, password} = this.props
         return (
     
             <Layout>
@@ -83,18 +89,25 @@ export class _CeoLogin extends React.Component {
         )
     }
 
-    login$(credentials) {
+    onLogin$(credentials) {
 
-        const {inputs: {password, email}} = this.props
+        const {email, password} = credentials
 
         return ceoLogin$(credentials).pipe(
-            tap(ceoSessionToken => {
-                credentialsPosted(ceoSessionToken)
+            tap(response => {
+                console.info('response', response)
+                const statusCode = response.statusCode
+                if (statusCode === 401) {
+                    password.setInvalid(msg('Email or password is incorrect'))
+                } else if (statusCode === 500) {
+                    password.setInvalid(msg('there was a server error'))
+                } else if (statusCode === 200) {
+                    credentialsPosted(response)
+                }
             }),
-            catchError(() => {
-                password.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.invalid'))
-                email.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.invalid'))
-                return throwError(() => new Error('Invalid credentials'))
+            catchError(error => {
+                Notifications.error({message: msg('process.classification.panel.trainingData.form.ceo.login.invalid')})
+                return throwError(() => error)
             })
         )
     }
