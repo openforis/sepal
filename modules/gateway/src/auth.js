@@ -1,4 +1,4 @@
-const {defer, firstValueFrom, from, of, catchError, switchMap} = require('rxjs')
+const {defer, firstValueFrom, from, of, switchMap} = require('rxjs')
 const {post$} = require('#sepal/httpClient')
 const modules = require('../config/modules')
 const {usernameTag, urlTag} = require('./tag')
@@ -7,12 +7,16 @@ const log = require('#sepal/log').getLogger('auth')
 
 const authenticationUrl = `http://${modules.user}/authenticate`
 
+const AUTHENTICATION_SUCCEEDED = 200
+const AUTHENTICATION_FAILED = 401
+const AUTHENTICATION_ERROR = 500
+
 const Auth = userStore => {
     const authMiddleware = async (req, res, next) => {
         try {
             const isAuthenticated = () => !!(getRequestUser(req))
     
-            const hasAuthHeaders = () => {
+            const hasBasicAuthHeaders = () => {
                 const header = req.get('Authorization')
                 return header && header.toLowerCase().startsWith('basic ')
             }
@@ -21,9 +25,13 @@ const Auth = userStore => {
                 const {body} = response
                 log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticated user`)
                 const user = JSON.parse(body)
-                setSessionUsername(req, username)
-                setRequestUser(req, user)
-                return from(userStore.setUser(user))
+                return from(userStore.setUser(user)).pipe(
+                    switchMap(() => {
+                        setSessionUsername(req, username)
+                        setRequestUser(req, user)
+                        return of(AUTHENTICATION_SUCCEEDED)
+                    })
+                )
             }
 
             const invalidCredentials$ = username => {
@@ -32,17 +40,13 @@ const Auth = userStore => {
                     log.trace(`${urlTag(req.originalUrl)} Sending auth challenge`)
                     res.set('WWW-Authenticate', 'Basic realm="Sepal"')
                 }
-                res.status(401)
-                res.end()
-                return of(false)
+                return of(AUTHENTICATION_FAILED)
             }
 
             const failure$ = (username, response) => {
                 const {body, statusCode} = response
                 log.error(`${usernameTag(username)} ${urlTag(req.originalUrl)} Error authenticating user`, statusCode, body)
-                res.status(500)
-                res.end()
-                return of(false)
+                return of(AUTHENTICATION_ERROR)
             }
 
             const authenticate$ = defer(() => {
@@ -72,30 +76,23 @@ const Auth = userStore => {
                 } else {
                     log.trace(`${urlTag(req.originalUrl)} Responding with 401`)
                 }
-                res.status(401)
-                res.end()
-                return of(false)
+                return of(AUTHENTICATION_FAILED)
             })
     
-            const result$ = isAuthenticated()
-                ? of(true)
-                : hasAuthHeaders()
+            const statusCode$ = isAuthenticated()
+                ? of(AUTHENTICATION_SUCCEEDED)
+                : hasBasicAuthHeaders()
                     ? authenticate$
                     : send401$
     
-            const shouldContinue = await firstValueFrom(
-                result$.pipe(
-                    catchError(error => {
-                        log.error(`${urlTag(req.originalUrl)} Got an unexpected error when trying to authenticate`, error)
-                        res.status(500)
-                        res.end()
-                        return of(false)
-                    })
-                )
-            )
-            shouldContinue && next()
+            const statusCode = await firstValueFrom(statusCode$)
+
+            statusCode === AUTHENTICATION_SUCCEEDED
+                ? next()
+                : res.status(statusCode) && res.end()
+
         } catch(error) {
-            log.error(error)
+            log.fatal(error)
             res.status(500)
             res.end()
         }

@@ -1,6 +1,6 @@
 const log = require('#sepal/log').getLogger('userstore')
 const {usernameTag, urlTag} = require('./tag')
-const {EMPTY, from, map, switchMap, firstValueFrom, catchError, Subject} = require('rxjs')
+const {from, map, switchMap, firstValueFrom, Subject} = require('rxjs')
 const {get$} = require('#sepal/httpClient')
 const modules = require('../config/modules')
 const {deserialize, serialize, removeRequestUser} = require('./user')
@@ -31,23 +31,21 @@ const UserStore = redis => {
 
     const setUser = async user =>
         await redis.set(userKey(user.username), serialize(user))
-            .then(result => result === 'OK')
-            .then(saved => {
-                if (saved) {
-                    log.isTrace() && log.trace(`${usernameTag(user.username)} User saved into store:`, user)
-                } else {
-                    log.isTrace() && log.trace(`${usernameTag(user.username)} Could not save user into store`)
+            .then(result => {
+                if (result !== 'OK') {
+                    throw new Error(`${usernameTag(user.username)} Could not save user into store`, result)
                 }
-                return saved
+                userUpdate$.next(user)
+                log.isTrace() && log.trace(`${usernameTag(user.username)} User saved into store:`, user)
+                return true
             })
-            .then(() => userUpdate$.next(user))
     
     const removeUser = async username =>
         await redis.del(userKey(username))
             .then(result => result !== 0)
             .then(removed => {
                 if (removed) {
-                    log.isTrace() && log.trace(`${usernameTag(username)} User removed from store:`)
+                    log.isTrace() && log.trace(`${usernameTag(username)} User removed from store`)
                 } else {
                     log.isTrace() && log.trace(`${usernameTag(username)} Could not remove user from store`)
                 }
@@ -66,10 +64,6 @@ const UserStore = redis => {
                     switchMap(user => {
                         log.isDebug() && log.debug(`${usernameTag(user.username)} ${urlTag(req.url)} Updated user in user store, connected to Google: ${!!user.googleTokens}`)
                         return from(setUser(user))
-                    }),
-                    catchError(error => {
-                        log.error(`${usernameTag(user.username)} ${urlTag(req.url)} Failed to load current user`, error)
-                        return EMPTY
                     })
                 )
             )

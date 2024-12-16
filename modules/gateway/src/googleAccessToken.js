@@ -61,8 +61,13 @@ const GoogleAccessTokenRefresher = userStore => {
     const getUpdatedUser = async (user, googleTokens) => {
         if (googleTokens) {
             const updatedUser = {...user, googleTokens: JSON.parse(googleTokens)}
-            await userStore.setUser(updatedUser)
-            log.info(`${userTag(user.username)} Google access token refreshed`)
+            try {
+                await userStore.setUser(updatedUser)
+                log.info(`${userTag(user.username)} Google access token refreshed`)
+            } catch (error) {
+                log.error(error)
+                // ignoring error
+            }
             return updatedUser
         } else {
             log.info(`${userTag(user.username)} Google access token missing`)
