@@ -58,7 +58,7 @@ const treePath = (path = '/') =>
 
 class _FileBrowser extends React.Component {
 
-    userFiles = api.userFiles.userFiles()
+    userFiles = api.userFiles.ws()
 
     constructor() {
         super()
