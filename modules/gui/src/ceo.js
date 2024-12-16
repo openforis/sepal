@@ -23,6 +23,7 @@ export const loadInstitutions$ = token => {
     return api.ceoGateway.getAllInstitutions$({
         token: token,
     }).pipe(
+        tap(console.info('$$$$$$$$$$$$44 token', token)),
         tap(institutions => console.info('institutions', institutions)),
         map(institutions => institutions.filter(inst => inst.isMember === true)),
         map(institutions => institutions.map(({id, name}) => ({value: id, label: name}))),
@@ -39,12 +40,9 @@ export const loadInstitutionProjects$ = (token, institutionId) => {
         token: token,
         institutionId: institutionId
     }).pipe(
-        map(projects => projects.map(({id, name, numPlots}) => ({
-            value: id,
-            label: name + (numPlots ? `(${numPlots})` : '')
-        }))),
+        map(projects => projects.map(({id, name}) => ({value: id, label: name}))),
         map(projects =>
-            actionBuilder('SET_PROJECTS_FOR_INSTITUTION', {projects})
+            actionBuilder('SET_PROJECTS', {projects})
                 .set('ceo.data.projects', projects)
                 .dispatch()
         )

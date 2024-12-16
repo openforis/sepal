@@ -2110,8 +2110,9 @@
                                     "tooltip" : "You are disconnected from CEO"
                                 },
                                 "invalid" : {
-                                    "title" : "Invalid credentials",
-                                    "message" : "Invalid CEO email or password"
+                                    "credentials" : "Invalid CEO email or password",
+                                    "server" : "Failed to connect to CEO",
+                                    "unknown" : "There was an unknown error"
                                 }
                             },
                             "disconnected" : {

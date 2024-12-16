@@ -2,7 +2,7 @@
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
-import {loadInstitutions$, loadProjectData$, loadProjectsForInstitutions$ as loadInstitutionProjects$} from '~/ceo'
+import {loadInstitutionProjects$, loadInstitutions$, loadProjectData$} from '~/ceo'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
@@ -100,9 +100,9 @@ export class _CeoSection extends React.Component {
     }
 
     onInstitutionChange(option) {
-        const {inputs: {project}} = this.props
+        const {token, inputs: {project}} = this.props
         project.set('')
-        this.loadInstitutionProjects(option.value)
+        this.loadInstitutionProjects(token, option.value)
     }
 
     loadData() {

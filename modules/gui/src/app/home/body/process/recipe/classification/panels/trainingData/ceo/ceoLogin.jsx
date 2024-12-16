@@ -91,22 +91,23 @@ export class _CeoLogin extends React.Component {
 
     onLogin$(credentials) {
 
-        const {email, password} = credentials
+        const {inputs: {password}} = this.props
 
         return ceoLogin$(credentials).pipe(
             tap(response => {
-                console.info('response', response)
-                const statusCode = response.statusCode
-                if (statusCode === 401) {
-                    password.setInvalid(msg('Email or password is incorrect'))
-                } else if (statusCode === 500) {
-                    password.setInvalid(msg('there was a server error'))
-                } else if (statusCode === 200) {
-                    credentialsPosted(response)
-                }
+                const {sessionCookie} = response
+                credentialsPosted(sessionCookie)
             }),
             catchError(error => {
-                Notifications.error({message: msg('process.classification.panel.trainingData.form.ceo.login.invalid')})
+                const {status} = error
+
+                if (status === 400) {
+                    password.setInvalid('process.classification.panel.trainingData.form.ceo.login.credentials')
+                } else if (status === 500) {
+                    password.setInvalid('process.classification.panel.trainingData.form.ceo.login.server')
+                } else {
+                    password.setInvalid('process.classification.panel.trainingData.form.ceo.login.unknown')
+                }
                 return throwError(() => error)
             })
         )

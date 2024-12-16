@@ -388,6 +388,7 @@ app.post('/get-institution-projects', (req, res, next) => {
 })
 
 app.post('/dump-project-data', (req, res, next) => {
+    console.info('dump-project-data')
     const {token, projectId, csvType} = req.body
     const cookie = `ring-session=${token}`
 
@@ -411,14 +412,19 @@ app.post('/dump-project-data', (req, res, next) => {
             'Content-Type': response.headers['content-type'],
             'Content-Disposition': response.headers['content-disposition'],
         })
-
         response.pipe(res)
     }).on('error', err => {
         next(err)
     })
 })
 
+function getCookieValue(cookieString) {
+    // Assuming the format
+    return cookieString.split(';')[0].split('=')[1]
+}
+
 app.post('/login-token', (req, res, next) => {
+    console.info('login-token')
     const {email, password} = req.body
 
     if (!email || !password) {
@@ -445,12 +451,12 @@ app.post('/login-token', (req, res, next) => {
 
         // Check if the response contains the session cookie (CEO always returns 200 even if login fails)
         if (!response.headers['set-cookie']) {
-            return res.status(401).send({
-                statusCode: 401,
+            return res.status(400).send({
+                statusCode: 400,
                 error: 'Username or password is incorrect!'})
         }
 
-        const cookie = response.headers['set-cookie']['0']
+        const cookie = getCookieValue(response.headers['set-cookie']['0'])
 
         if (!cookie) {
             return res.status(500).send({
@@ -458,7 +464,7 @@ app.post('/login-token', (req, res, next) => {
                 error: 'Failed to retrieve session cookie!'})
         }
 
-        res.status(200).send({
+        return res.status(200).send({
             statusCode: 200,
             sessionCookie: cookie
         })
