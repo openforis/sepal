@@ -2114,6 +2114,9 @@
                                     "message" : "Invalid CEO email or password"
                                 }
                             },
+                            "disconnected" : {
+                                "description": "Connect your Collect Earth Online (CEO) account to SEPAL to seamlessly access your projects and extract data for training your classification models. Rest assured, your credentials are never stored on SEPAL servers. Once you end your SEPAL session, your CEO connection is automatically terminated."
+                            },
                             "dataType": {
                                 "title" : "CSV Data type",
                                 "tooltip" : "Select the type of data you want to retrieve from CEO",

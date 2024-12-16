@@ -145,48 +145,46 @@ function arrayToCsv(arr) {
 }
 
 export default {
-    // login$: ({email, password}) => {
-    //     const user = dummyUsers.find(u => u.email === email && u.password === password)
-    
-    //     if (user) {
-    //         return of({
-    //             token: user.token,
-    //             email: user.email,
-    //             role: user.role,
-    //         }).pipe(delay(500))
-    //     } else {
-    //         return throwError(() => ({
-    //             status: 401,
-    //             message: 'Invalid credentials',
-    //         })).pipe(delay(500))
-    //     }
-    // },
-     
-    getAllInstitutions$: ({token}) =>
-        post$('/api/ceo-gateway/get-all-institutions', {
-            body: {token},
-        }),
-    
-    // eslint-disable-next-line no-unused-vars
-    getInstitutionProjects$: ({token, institutionId}) => {
-        const projects = dummyProjectsByInstitution[institutionId] || []
-        return of(projects).pipe(delay(500))
-    },
-    
-    // Now returning CSV for project data
-    getProjectData$: ({projectId}) => {
-    // Ensure data is processed correctly
-        const projectDataCsv = arrayToCsv(dummyProjectData)
-        return of(projectDataCsv).pipe(
-            delay(5000),
-            finalize(() => console.log('Project data CSV generated'))
-        )
-    },
 
     login$: ({email, password}) =>
         post$('/api/ceo-gateway/login-token', {
             body: {email, password},
         }),
+     
+    getAllInstitutions$: ({token}) =>
+        post$('/api/ceo-gateway/get-all-institutions', {
+            body: {token},
+        }),
+        
+    getInstitutionProjects$: ({token, institutionId}) => {
+        post$('/api/ceo-gateway/get-institution-projects', {
+            body: {token, institutionId},
+        })
+        
+    },
+    
+    getProjectData$: ({token, projectId, csvType}) => {
+        post$('/api/ceo-gateway/get-project-data', {
+            body: {token, projectId, csvType},
+        })
+    },
+    // // eslint-disable-next-line no-unused-vars
+    // getInstitutionProjects$: ({token, institutionId}) => {
+    //     const projects = dummyProjectsByInstitution[institutionId] || []
+    //     return of(projects).pipe(delay(500))
+    // },
+     
+    // Now returning CSV for project data
+    
+    // // Now returning CSV for project data
+    // getProjectData$: ({token, projectId, csvType}) => {
+    // // Ensure data is processed correctly
+    //     const projectDataCsv = arrayToCsv(dummyProjectData)
+    //     return of(projectDataCsv).pipe(
+    //         delay(5000),
+    //         finalize(() => console.log('Project data CSV generated'))
+    //     )
+    // },
 
     // getProjects$: ({institutionId}) =>
     //     get$('/api/ceo-gateway/get-institution-projects', {
@@ -201,3 +199,19 @@ export default {
     //         body: {projectId}
     //     }),
 }
+// login$: ({email, password}) => {
+//     const user = dummyUsers.find(u => u.email === email && u.password === password)
+    
+//     if (user) {
+//         return of({
+//             token: user.token,
+//             email: user.email,
+//             role: user.role,
+//         }).pipe(delay(500))
+//     } else {
+//         return throwError(() => ({
+//             status: 401,
+//             message: 'Invalid credentials',
+//         })).pipe(delay(500))
+//     }
+// },

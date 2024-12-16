@@ -30,9 +30,6 @@ app.use([
     '/get-collected-data',
     '/delete-project',
     '/get-project-stats',
-    '/get-all-institutions',
-    '/get-institution-projects/:institutionId',
-    '/dump-project-raw-data/:projectId'
 ], (req, res, next) => {
     const {ceo: {url, username, password}} = config
 
@@ -328,7 +325,9 @@ app.get('/get-project-stats/:id', (req, res, next) => {
 })
 
 app.post('/get-all-institutions', (req, res, next) => {
+    
     const {token} = req.body
+    const cookie = `ring-session=${token}`
 
     if (!token) {
         return res.status(400).send({error: 'Token is required!'})
@@ -338,7 +337,7 @@ app.post('/get-all-institutions', (req, res, next) => {
 
     request.get({
         url: urljoin(url, 'get-all-institutions'),
-        headers: {Cookie: token},
+        headers: {Cookie: cookie},
     }).on('response', response => {
         let body = ''
 
@@ -357,50 +356,16 @@ app.post('/get-all-institutions', (req, res, next) => {
     })
 })
 
-app.post('/get-all-institutions', (req, res, next) => {
-    const {token} = req.body
-
-    if (!token) {
-        return res.status(400).send({
-            statusCode: 400,
-            error: 'Token is required!'
-        })
-    }
-
-    const {ceo: {url}} = config
-
-    request.get({
-        url: urljoin(url, 'get-all-institutions'),
-        headers: {
-            'Cookie': token,
-        },
-    }).on('response', response => {
-        let body = ''
-
-        response.on('data', chunk => {
-            body += chunk
-        }).on('end', () => {
-            try {
-                const institutions = JSON.parse(body) // Parse the JSON response
-                res.send(institutions)
-            } catch (err) {
-                next(err) // Handle parsing errors
-            }
-        })
-    }).on('error', err => {
-        next(err) // Handle request errors
-    })
-})
-
 app.post('/get-institution-projects', (req, res, next) => {
-    const {institutionId, token} = req.body
-
+    const {token, institutionId} = req.body
+    const cookie = `ring-session=${token}`
+    
     if (!token) {
-        return res.status(400).send({error: 'Token is required!'})
+        return res.status(400).send({statusCode: 400, error: 'Token is required!'})
     }
 
     if (!institutionId || isNaN(institutionId)) {
-        return res.status(400).send({error: 'Invalid or missing institutionId!'})
+        return res.status(400).send({statusCode: 400, error: 'Invalid or missing institutionId!'})
     }
 
     const {ceo: {url}} = config
@@ -408,72 +373,38 @@ app.post('/get-institution-projects', (req, res, next) => {
     request.get({
         url: urljoin(url, 'get-institution-projects'),
         qs: {institutionId},
-        headers: {Cookie: token},
+        headers: {Cookie: cookie},
     }, (error, response, body) => {
         if (error) {
             return next(error)
         }
-        if (response.statusCode !== 200) {
-            return res.status(response.statusCode).send({error: 'Failed to fetch institution projects.'})
-        }
-
         try {
-            const jsonResponse = JSON.parse(body)
-            res.send(jsonResponse)
-                
+            const projects = JSON.parse(body)
+            res.send(projects)
         } catch (err) {
-            res.status(500).send({error: 'Invalid JSON response from the API.'})
+            next(err)
         }
     })
 })
 
-app.post('/dump-project-raw-data', (req, res, next) => {
-    const {projectId, token} = req.body
+app.post('/dump-project-data', (req, res, next) => {
+    const {token, projectId, csvType} = req.body
+    const cookie = `ring-session=${token}`
+
+    const url = urljoin(config.ceo.url, csvType === 'plot'? 'dump-project-raw-data': 'dump-project-aggregate-data')
 
     if (!token) {
-        return res.status(400).send({error: 'Token is required!'})
+        return res.status(400).send({statusCode: 500, error: 'Token is required!'})
     }
 
     if (!projectId || isNaN(projectId)) {
-        return res.status(400).send({error: 'Invalid or missing projectId!'})
+        return res.status(400).send({statusCode: 400, error: 'Invalid or missing projectId!'})
     }
-
-    const {ceo: {url}} = config
 
     request.get({
-        url: urljoin(url, 'dump-project-raw-data'),
+        url: url,
         qs: {projectId},
-        headers: {Cookie: token},
-        encoding: null,
-    }).on('response', response => {
-        res.set({
-            'Content-Type': response.headers['content-type'],
-            'Content-Disposition': response.headers['content-disposition'],
-        })
-
-        response.pipe(res)
-    }).on('error', err => {
-        next(err)
-    })
-})
-
-app.post('/dump-project-aggregate-data', (req, res, next) => {
-    const {projectId, token} = req.body
-
-    if (!token) {
-        return res.status(400).send({error: 'Token is required!'})
-    }
-
-    if (!projectId || isNaN(projectId)) {
-        return res.status(400).send({error: 'Invalid or missing projectId!'})
-    }
-
-    const {ceo: {url}} = config
-
-    request.get({
-        url: urljoin(url, 'dump-project-aggregate-data'),
-        qs: {projectId},
-        headers: {Cookie: token},
+        headers: {Cookie: cookie},
         encoding: null,
     }).on('response', response => {
         res.set({

@@ -19,10 +19,11 @@ export const credentialsPosted = ceoSessionToken =>
         .set('ceo.session.token', ceoSessionToken)
         .dispatch()
 
-export const loadInstitutions$ = () => {
+export const loadInstitutions$ = token => {
     return api.ceoGateway.getAllInstitutions$({
-        token: 'this is my token',
+        token: token,
     }).pipe(
+        tap(institutions => console.info('institutions', institutions)),
         map(institutions => institutions.filter(inst => inst.isMember === true)),
         map(institutions => institutions.map(({id, name}) => ({value: id, label: name}))),
         map(institutions =>
@@ -33,14 +34,14 @@ export const loadInstitutions$ = () => {
     )
 }
 
-export const loadProjectsForInstitutions$ = institutionId => {
+export const loadInstitutionProjects$ = (token, institutionId) => {
     return api.ceoGateway.getInstitutionProjects$({
-        token: 'this is my token',
+        token: token,
         institutionId: institutionId
     }).pipe(
-        map(projects => projects.map(({id, name}) => ({
+        map(projects => projects.map(({id, name, numPlots}) => ({
             value: id,
-            label: name
+            label: name + (numPlots ? `(${numPlots})` : '')
         }))),
         map(projects =>
             actionBuilder('SET_PROJECTS_FOR_INSTITUTION', {projects})
@@ -76,10 +77,11 @@ function parseCsvText(csvText) {
     return {row$, columns$}
 }
 
-export const loadAndParseCeoCsv$ = projectId => {
+export const loadProjectData$ = (token, projectId, csvType) => {
     return api.ceoGateway.getProjectData$({
-        token: 'this is my token',
-        projectId: projectId
+        token: token,
+        projectId: projectId,
+        csvType: csvType
     }).pipe(
         map(csvText => {
             return parseCsvText(csvText)

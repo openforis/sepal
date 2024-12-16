@@ -47,15 +47,23 @@ export class _CeoConnection extends React.Component {
     
     renderDisconnected() {
         return (
-            <Layout type='horizontal-nowrap' >
-                <Layout type='horizontal' className={styles.disconnected}>
-                    <Icon name={'meh'} size='2x'/>
-                    <div>
-                        {msg('process.classification.panel.trainingData.form.ceo.login.disconnected.title')}
-                    </div>
+            <>
+                <div type='horizontal'>
+                    {msg('process.classification.panel.trainingData.form.ceo.disconnected.description')}
+                </div>
+                <Layout type='horizontal-nowrap' >
+                    {/* <Layout type='horizontal' className={styles.disconnected}> */}
+                    <Layout type='horizontal'>
+                        <Icon name={'meh'} size='2x'/>
+                        <div>
+                            {msg('process.classification.panel.trainingData.form.ceo.login.disconnected.title')}
+                        </div>
+                        <div>
+                        </div>
+                    </Layout>
+                    {this.renderConnectButton()}
                 </Layout>
-                {this.renderConnectButton()}
-            </Layout>
+            </>
         )
     }
 

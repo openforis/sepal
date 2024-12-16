@@ -2,7 +2,7 @@
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
-import {loadAndParseCeoCsv$, loadInstitutions$, loadProjectsForInstitutions$} from '~/ceo'
+import {loadInstitutions$, loadProjectData$, loadProjectsForInstitutions$ as loadInstitutionProjects$} from '~/ceo'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
@@ -57,10 +57,10 @@ export class _CeoSection extends React.Component {
     }
     
     loadInstitutions() {
-        const {institutions, stream} = this.props
+        const {institutions, token, stream} = this.props
         if (!institutions && !stream('LOAD_INSTITUTIONS').active && !stream('LOAD_INSTITUTIONS').failed) {
             this.props.stream('LOAD_INSTITUTIONS',
-                loadInstitutions$(),
+                loadInstitutions$(token),
                 null,
                 () => Notifications.error({
                     message: msg('process.classification.panel.trainingData.form.ceo.loadInstitutions.failed'),
@@ -71,10 +71,10 @@ export class _CeoSection extends React.Component {
     }
 
     loadInstitutionProjects(institutionId) {
-        const {stream, inputs: {csvType}} = this.props
+        const {stream, token} = this.props
         if (!stream('LOAD_PROJECTS').active && !stream('LOAD_PROJECTS').failed) {
             stream('LOAD_PROJECTS',
-                loadProjectsForInstitutions$(institutionId, csvType.value),
+                loadInstitutionProjects$(token, institutionId),
                 null,
                 () => Notifications.error({
                     message: msg('process.classification.panel.trainingData.form.ceo.loadProjects.failed'),
@@ -106,7 +106,7 @@ export class _CeoSection extends React.Component {
     }
 
     loadData() {
-        const {stream, inputs: {name, inputData, columns, project: {value: projectId}, csvType: {value: csvType}}} = this.props
+        const {stream, token, inputs: {name, inputData, columns, project: {value: projectId}, csvType: {value: csvType}}} = this.props
         name.set(projectId)
         inputData.set(null)
         columns.set(null)
@@ -116,7 +116,7 @@ export class _CeoSection extends React.Component {
         }
         
         stream('LOAD_CEO_CSV',
-            loadAndParseCeoCsv$(projectId, csvType).pipe(
+            loadProjectData$(token, projectId, csvType).pipe(
                 takeUntil(this.cancel$)
             ),
             ([data, csvColumns]) => {
