@@ -93,13 +93,10 @@ class _FormPanel extends React.Component {
         this.setState({confirm: false})
     }
 
-    renderSpinner() {
-        return this.props.stream('FORM_PANEL_APPLY').active
-            ? (
-                <div className={styles.spinner}>
-                    <Icon name='spinner'/>
-                </div>
-            )
+    renderOverlay() {
+        const {stream} = this.props
+        return stream('FORM_PANEL_APPLY').active
+            ? <div className={styles.overlay}/>
             : null
     }
 
@@ -137,7 +134,7 @@ class _FormPanel extends React.Component {
     }
 
     renderPanel() {
-        const {id, form = false, isActionForm, type = 'modal', panelWizard: {wizard, back, next} = {}, className, children, placement} = this.props
+        const {id, form = false, isActionForm, type = 'modal', panelWizard: {wizard, back, next} = {}, className, children, placement, stream} = this.props
         return (
             <PanelButtonContext.Consumer>
                 {placementFromContext => (
@@ -147,6 +144,7 @@ class _FormPanel extends React.Component {
                         first: !back,
                         last: !next,
                         isActionForm: form && isActionForm,
+                        busy: stream('FORM_PANEL_APPLY').active,
                         dirty: form && form.isDirty(),
                         invalid: form && form.isInvalid(),
                         onOk: this.ok,
@@ -162,7 +160,7 @@ class _FormPanel extends React.Component {
                             <FormContainer onSubmit={this.onSubmit}>
                                 {children}
                             </FormContainer>
-                            {this.renderSpinner()}
+                            {/* {this.renderOverlay()} */}
                         </Panel>
                     </FormPanelContext.Provider>
                 )}
