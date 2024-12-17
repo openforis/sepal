@@ -16,7 +16,7 @@ class _FormCombo extends React.Component {
     onChange(option) {
         const {input, onChange} = this.props
         input.set(option ? option.value : null)
-        onChange && onChange(option)
+        setImmediate(() => onChange && onChange(option))
     }
 
     onBlur() {
