@@ -15,13 +15,14 @@ import {CeoConnection} from './ceoConnection'
 import {CeoLogin} from './ceoLogin'
 
 const LOAD_CSV_DATA = 'LOAD_CSV_DATA'
+const LOAD_PROJECTS = 'LOAD_PROJECTS'
+const LOAD_INSTITUTIONS = 'LOAD_INSTITUTIONS'
 
 const mapStateToProps = () => {
     return {
         token: select('ceo.session.token'),
         institutions: select('ceo.data.institutions'),
         projects: select('ceo.data.projects'),
-        // sampleType: select('ceo.data.sampleType'),
     }
 }
 
@@ -60,8 +61,8 @@ export class _CeoSection extends React.Component {
     
     loadInstitutions() {
         const {institutions, token, stream} = this.props
-        if (!institutions && !stream('LOAD_INSTITUTIONS').active && !stream('LOAD_INSTITUTIONS').failed) {
-            this.props.stream('LOAD_INSTITUTIONS',
+        if (!institutions && !stream(LOAD_INSTITUTIONS).active && !stream(LOAD_INSTITUTIONS).failed) {
+            this.props.stream(LOAD_INSTITUTIONS,
                 loadInstitutions$(token),
                 null,
                 () => Notifications.error({
@@ -74,8 +75,8 @@ export class _CeoSection extends React.Component {
 
     loadInstitutionProjects(institutionId) {
         const {stream, token} = this.props
-        if (!stream('LOAD_PROJECTS').active && !stream('LOAD_PROJECTS').failed) {
-            stream('LOAD_PROJECTS',
+        if (!stream(LOAD_PROJECTS).active && !stream(LOAD_PROJECTS).failed) {
+            stream(LOAD_PROJECTS,
                 loadInstitutionProjects$(token, institutionId),
                 null,
                 () => Notifications.error({
@@ -88,7 +89,7 @@ export class _CeoSection extends React.Component {
 
     isInstitutionInputDisabled() {
         const {stream, institutions} = this.props
-        const loadInstitutions = stream('LOAD_INSTITUTIONS')
+        const loadInstitutions = stream(LOAD_INSTITUTIONS)
 
         return loadInstitutions.active || loadInstitutions.failed || !institutions
     }
@@ -96,7 +97,7 @@ export class _CeoSection extends React.Component {
     isProjectInputDisabled() {
 
         const {inputs: {institution}, stream, projects} = this.props
-        const loadProjects = stream('LOAD_PROJECTS')
+        const loadProjects = stream(LOAD_PROJECTS)
 
         return this.isInstitutionInputDisabled() || !projects || loadProjects.active || loadProjects.failed || !institution.value
     }
@@ -135,14 +136,15 @@ export class _CeoSection extends React.Component {
     renderForm() {
 
         const {stream, institutions, projects, inputs: {institution, project, csvType}} = this.props
-        const loadInstitutions = stream('LOAD_INSTITUTIONS')
-        const loadProjects = stream('LOAD_PROJECTS')
+        const loadInstitutions = stream(LOAD_INSTITUTIONS)
+        const loadProjects = stream(LOAD_PROJECTS)
         const loadCeoCsv = stream(LOAD_CSV_DATA)
         
         return (
             <Layout>
                 <Form.Combo
                     label={msg('process.classification.panel.trainingData.form.ceo.institution.label')}
+                    tooltip={msg('process.classification.panel.trainingData.form.ceo.institution.tooltip')}
                     input={institution}
                     options={institutions || []}
                     placeholder={msg('process.classification.panel.trainingData.form.ceo.institution.placeholder')}
@@ -170,6 +172,7 @@ export class _CeoSection extends React.Component {
                 />
                 <Form.Combo
                     label={msg('process.classification.panel.trainingData.form.ceo.project.label')}
+                    tooltip={msg('process.classification.panel.trainingData.form.ceo.project.tooltip')}
                     input={project}
                     options={(projects || [])}
                     placeholder={msg('process.classification.panel.trainingData.form.ceo.project.placeholder')}

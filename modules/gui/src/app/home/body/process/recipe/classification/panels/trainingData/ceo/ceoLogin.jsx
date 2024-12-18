@@ -33,17 +33,11 @@ export class _CeoLogin extends React.Component {
         this.close = this.close.bind(this)
     }
 
-    close() {
-        const {activatable} = this.props
-        activatable.deactivate()
-    }
-
     render() {
         const {form} = this.props
         return (
             <Form.Panel
                 className={styles.panel}
-                applyLabel={'CEO Login'}
                 form={form}
                 isActionForm
                 modal
@@ -60,6 +54,11 @@ export class _CeoLogin extends React.Component {
                 />
             </Form.Panel>
         )
+    }
+    
+    close() {
+        const {activatable} = this.props
+        activatable.deactivate()
     }
 
     onEmailChange() {

@@ -2120,8 +2120,8 @@
                                 "description": "Connect your Collect Earth Online (CEO) account to SEPAL to seamlessly access your projects and extract data for training your classification models. Rest assured, your credentials are never stored on SEPAL servers. Once you end your SEPAL session, your CEO connection is automatically terminated."
                             },
                             "dataType": {
-                                "title" : "CSV Data type",
-                                "tooltip" : "Either to use the sample data or the plot centroid data from CEO",
+                                "title" : "Data type",
+                                "tooltip" : "Use the sample or aggregated plot data",
                                 "sample" : {
                                     "label":  "Sample",
                                     "tooltip": "Use the sample data from CEO"
@@ -2134,12 +2134,14 @@
                             "institution" : {
                                 "label" : "Institution",
                                 "placeholder" : "Select an institution",
-                                "required" : "You must select an institution"
+                                "required" : "You must select an institution",
+                                "tooltip" : "You can only see institutions that you are member of"
                             },
                             "project" : {
                                 "label" : "Project",
                                 "placeholder" : "Select a project",
-                                "required" : "You must select a project"
+                                "required" : "You must select a project",
+                                "tooltip" : "Select the project that you want to use the training data from"
                             },
                             "loadCsv" : {
                                 "failed" : "Failed to get the training data from CEO"

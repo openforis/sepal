@@ -1,6 +1,6 @@
 import Papa from 'papaparse'
 import {map, Subject, tap, zip} from 'rxjs'
-import {first, switchMap, toArray} from 'rxjs/operators'
+import {switchMap, toArray} from 'rxjs/operators'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -12,7 +12,6 @@ export const ceoLogout = () =>
         
 export const ceoLogin$ = ({email, password}) => {
     return api.ceoGateway.login$({email, password}).pipe(
-        tap(response => console.info('Login responsdedddddddddddddde:', response)),
         tap(({sessionCookie}) =>
             actionBuilder('SET_CEO_TOKEN')
                 .set('ceo.session.token', sessionCookie)
@@ -25,8 +24,6 @@ export const loadInstitutions$ = token => {
     return api.ceoGateway.getAllInstitutions$({
         token: token,
     }).pipe(
-        tap(console.info('$$$$$$$$$$$$44 token', token)),
-        tap(institutions => console.info('institutions', institutions)),
         map(institutions => institutions.filter(inst => inst.isMember === true)),
         map(institutions => institutions.map(({id, name}) => ({value: id, label: name}))),
         tap(institutions =>

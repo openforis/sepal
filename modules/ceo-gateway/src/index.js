@@ -418,7 +418,6 @@ app.post('/get-project-data', (req, res, next) => {
 })
 
 function getCookieValue(cookieString) {
-    // Assuming the format
     return cookieString.split(';')[0].split('=')[1]
 }
 
