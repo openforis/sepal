@@ -17,7 +17,6 @@ export class PanelButtons extends React.Component {
             },
             apply: {
                 look: 'apply',
-                icon: 'check',
                 label: msg('button.apply')
             },
             confirm: {
@@ -96,8 +95,8 @@ export class PanelButtons extends React.Component {
         return PanelButtons.renderButton({template: 'cancel', ...props})
     }
 
-    static Apply(props) {
-        return PanelButtons.renderButton({template: 'apply', ...props})
+    static Apply({busy, ...props}) {
+        return PanelButtons.renderButton({template: 'apply', icon: busy ? 'spinner' : 'check', ...props})
     }
 
     static Save(props) {
