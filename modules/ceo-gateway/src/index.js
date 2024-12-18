@@ -387,8 +387,7 @@ app.post('/get-institution-projects', (req, res, next) => {
     })
 })
 
-app.post('/dump-project-data', (req, res, next) => {
-    console.info('dump-project-data')
+app.post('/get-project-data', (req, res, next) => {
     const {token, projectId, csvType} = req.body
     const cookie = `ring-session=${token}`
 
@@ -424,7 +423,6 @@ function getCookieValue(cookieString) {
 }
 
 app.post('/login-token', (req, res, next) => {
-    console.info('login-token')
     const {email, password} = req.body
 
     if (!email || !password) {
@@ -463,7 +461,6 @@ app.post('/login-token', (req, res, next) => {
                 statusCode: 500,
                 error: 'Failed to retrieve session cookie!'})
         }
-
         return res.status(200).send({
             statusCode: 200,
             sessionCookie: cookie
@@ -474,7 +471,6 @@ app.post('/login-token', (req, res, next) => {
 })
 
 app.use((err, req, res, next) => {
-    console.info(err.stack)
     res.status(500).send('Something went wrong!')
 })
 

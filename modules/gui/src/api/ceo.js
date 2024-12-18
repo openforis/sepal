@@ -149,7 +149,7 @@ export default {
     login$: ({email, password}) =>
         post$('/api/ceo-gateway/login-token', {
             body: {email, password},
-            maxRetries: 0,
+            maxRetries: 1,
         }),
      
     getAllInstitutions$: ({token}) =>
@@ -157,16 +157,14 @@ export default {
             body: {token},
         }),
         
-    getInstitutionProjects$: ({token, institutionId}) => {
+    getInstitutionProjects$: ({token, institutionId}) =>
         post$('/api/ceo-gateway/get-institution-projects', {
             body: {token, institutionId},
-        })
-        
-    },
+        }),
     
-    getProjectData$: ({token, projectId, csvType}) => {
+    getProjectData$: ({token, projectId, csvType}) =>
         post$('/api/ceo-gateway/get-project-data', {
             body: {token, projectId, csvType},
+            responseType: 'text',
         })
-    }
 }

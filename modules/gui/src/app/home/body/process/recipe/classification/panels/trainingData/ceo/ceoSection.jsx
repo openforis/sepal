@@ -1,6 +1,6 @@
 // import PropTypes from 'prop-types'
 import React from 'react'
-import {Subject, takeUntil} from 'rxjs'
+import {Subject, takeUntil, tap} from 'rxjs'
 
 import {loadInstitutionProjects$, loadInstitutions$, loadProjectData$} from '~/ceo'
 import {compose} from '~/compose'
@@ -13,6 +13,8 @@ import {Notifications} from '~/widget/notifications'
 
 import {CeoConnection} from './ceoConnection'
 import {CeoLogin} from './ceoLogin'
+
+const LOAD_CSV_DATA = 'LOAD_CSV_DATA'
 
 const mapStateToProps = () => {
     return {
@@ -100,9 +102,9 @@ export class _CeoSection extends React.Component {
     }
 
     onInstitutionChange(option) {
-        const {token, inputs: {project}} = this.props
+        const {inputs: {project}} = this.props
         project.set('')
-        this.loadInstitutionProjects(token, option.value)
+        this.loadInstitutionProjects(option.value)
     }
 
     loadData() {
@@ -111,11 +113,11 @@ export class _CeoSection extends React.Component {
         inputData.set(null)
         columns.set(null)
 
-        if (stream('LOAD_CEO_CSV').active) {
+        if (stream(LOAD_CSV_DATA).active) {
             this.cancel$.next()
         }
         
-        stream('LOAD_CEO_CSV',
+        stream(LOAD_CSV_DATA,
             loadProjectData$(token, projectId, csvType).pipe(
                 takeUntil(this.cancel$)
             ),
@@ -135,7 +137,7 @@ export class _CeoSection extends React.Component {
         const {stream, institutions, projects, inputs: {institution, project, csvType}} = this.props
         const loadInstitutions = stream('LOAD_INSTITUTIONS')
         const loadProjects = stream('LOAD_PROJECTS')
-        const loadCeoCsv = stream('LOAD_CEO_CSV')
+        const loadCeoCsv = stream(LOAD_CSV_DATA)
         
         return (
             <Layout>
