@@ -2084,6 +2084,74 @@
                                 "placeholder": "",
                                 "tooltip": ""
                             }
+                        },
+                        "ceo": {
+                            "login": {
+                                "title": "",
+                                "tooltip": "",
+                                "email": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "required": "",
+                                    "invalid": ""
+                                },
+                                "password": {
+                                    "label": "Contraseña",
+                                    "placeholder": "",
+                                    "required": ""
+                                },
+                                "connect.label": "",
+                                "disconnect.label": "",
+                                "connected": {
+                                    "title": "",
+                                    "tooltip": ""
+                                },
+                                "disconnected": {
+                                    "title": "",
+                                    "tooltip": ""
+                                },
+                                "invalid": {
+                                    "credentials": "",
+                                    "server": "",
+                                    "unknown": ""
+                                }
+                            },
+                            "disconnected": {
+                                "description": ""
+                            },
+                            "dataType": {
+                                "title": "",
+                                "tooltip": "",
+                                "sample": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "plot": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "institution": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "tooltip": ""
+                            },
+                            "project": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "tooltip": ""
+                            },
+                            "loadCsv": {
+                                "failed": ""
+                            },
+                            "loadProjects": {
+                                "failed": ""
+                            },
+                            "loadInstitutions": {
+                                "failed": ""
+                            }
                         }
                     },
                     "noDataSet": "",
@@ -2117,6 +2185,11 @@
                             "tooltip": "Utilizar los datos de entrenamiento de un flujo SEPAL guardada."
                         },
                         "SAMPLE_CLASSIFICATION": {
+                            "label": "",
+                            "title": "",
+                            "tooltip": ""
+                        },
+                        "CEO": {
                             "label": "",
                             "title": "",
                             "tooltip": ""
