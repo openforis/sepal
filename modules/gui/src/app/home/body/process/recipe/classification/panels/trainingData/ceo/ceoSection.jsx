@@ -159,15 +159,18 @@ export class _CeoSection extends React.Component {
                     input={csvType}
                     multiple={false}
                     disabled={this.isProjectInputDisabled()}
-                    options={[{
-                        value: 'sample',
-                        label: msg('process.classification.panel.trainingData.form.ceo.dataType.sample.label'),
-                        tooltip: msg('process.classification.panel.trainingData.form.ceo.dataType.sample.tooltip')
-                    }, {
-                        value: 'plot',
-                        label: msg('process.classification.panel.trainingData.form.ceo.dataType.plot.label'),
-                        tooltip: msg('process.classification.panel.trainingData.form.ceo.dataType.plot.tooltip')
-                    }]}
+                    options={[
+                        {
+                            value: 'plot',
+                            label: msg('process.classification.panel.trainingData.form.ceo.dataType.plot.label'),
+                            tooltip: msg('process.classification.panel.trainingData.form.ceo.dataType.plot.tooltip')
+                        },
+                        {
+                            value: 'sample',
+                            label: msg('process.classification.panel.trainingData.form.ceo.dataType.sample.label'),
+                            tooltip: msg('process.classification.panel.trainingData.form.ceo.dataType.sample.tooltip')
+                        }
+                    ]}
                     type='horizontal-nowrap'
                 />
                 <Form.Combo

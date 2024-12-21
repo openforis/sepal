@@ -391,7 +391,7 @@ app.post('/get-project-data', (req, res, next) => {
     const {token, projectId, csvType} = req.body
     const cookie = `ring-session=${token}`
 
-    const url = urljoin(config.ceo.url, csvType === 'plot'? 'dump-project-raw-data': 'dump-project-aggregate-data')
+    const url = urljoin(config.ceo.url, csvType === 'plot'? 'dump-project-aggregate-data': 'dump-project-raw-data')
 
     if (!token) {
         return res.status(400).send({statusCode: 500, error: 'Token is required!'})
