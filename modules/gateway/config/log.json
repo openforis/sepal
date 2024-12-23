@@ -7,7 +7,7 @@
         "proxy": "error",
         "session": "info",
         "user": "info",
-        "userstore": "info",
+        "userStore": "info",
         "websocket": "info",
         "websocket/client": "info",
         "websocket/server": "info",
