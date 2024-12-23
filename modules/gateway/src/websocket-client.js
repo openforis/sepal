@@ -1,5 +1,4 @@
 const {WebSocket} = require('ws')
-const {Subject} = require('rxjs')
 
 const {clientTag} = require('./tag')
 
@@ -7,7 +6,6 @@ const log = require('#sepal/log').getLogger('websocket/client')
 
 const Clients = () => {
     const clients = {}
-    const remove$ = new Subject()
 
     const get = clientId => {
         const client = clients[clientId]
@@ -18,21 +16,46 @@ const Clients = () => {
         }
     }
 
-    const add = (username, clientId, ws, subscriptions) => {
-        clients[clientId] = {username, ws, subscriptions}
+    const add = (username, clientId, ws) => {
+        clients[clientId] = {username, ws, subscriptions: {}}
         log.debug(`${clientTag(username, clientId)} added to clients, now ${Object.keys(clients).length}`)
     }
 
     const remove = clientId => {
         try {
-            const {username, subscriptions} = get(clientId)
-            subscriptions.forEach(subscription => subscription.unsubscribe())
+            const {username, ws} = get(clientId)
+            ws.terminate()
             delete clients[clientId]
-            remove$.next(clientId)
             log.debug(`${clientTag(username, clientId)} removed from clients, now ${Object.keys(clients).length}`)
         } catch (error) {
             log.debug(`Cannot remove client - ${error.message}`)
         }
+    }
+
+    const addSubscription = (clientId, subscriptionId, module) => {
+        try {
+            const {username, subscriptions} = get(clientId)
+            subscriptions[subscriptionId] = module
+            log.debug(`${clientTag(username, clientId)} subscribed to ${module}, now ${Object.keys(subscriptions).length}`)
+        } catch (error) {
+            log.debug(`Cannot add subscription - ${error.message}`)
+        }
+    }
+
+    const removeSubscription = (clientId, subscriptionId) => {
+        try {
+            const {username, subscriptions} = get(clientId)
+            const module = subscriptions[subscriptionId]
+            delete subscriptions[subscriptionId]
+            log.debug(`${clientTag(username, clientId)} unsubscribed from ${module}, now ${Object.keys(subscriptions).length}`)
+        } catch (error) {
+            log.debug(`Cannot remove subscription - ${error.message}`)
+        }
+    }
+
+    const getSubscriptions = clientId => {
+        const {subscriptions} = get(clientId)
+        return subscriptions
     }
 
     const send = (clientId, message) => {
@@ -62,7 +85,7 @@ const Clients = () => {
         )
     }
 
-    return {add, remove, remove$, send, broadcast, forEach}
+    return {add, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach}
 }
 
 module.exports = {Clients}
