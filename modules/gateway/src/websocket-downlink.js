@@ -8,11 +8,25 @@ const log = require('#sepal/log').getLogger('websocket/downlink')
 
 const HEARTBEAT_INTERVAL_MS = 10 * 1000
 
-const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisconnected}) => {
+const initializeDownlink = ({servers, clients, wss, userStatus$, toUser$}) => {
 
     const heartbeatResponse$ = new Subject()
     const client$ = new Subject()
 
+    heartbeatResponse$.pipe(
+        groupBy(({clientId}) => clientId),
+        mergeMap(clientId$ =>
+            clientId$.pipe(
+                debounceTime(HEARTBEAT_INTERVAL_MS * 2),
+                takeUntil(clientDisconnected$(clientId$.key))
+            )
+        )
+    ).subscribe({
+        next: ({user, clientId}) => onClientDisconnected(user, clientId),
+        error: error => log.error('Unexpected heartbeatResponse$ stream error', error),
+        complete: () => log.error('Unexpected heartbeatResponse$ stream closed')
+    })
+    
     const user$ = client$.pipe(
         groupBy(({user: {username}}) => username),
         mergeMap(user$ => user$.pipe(
@@ -37,24 +51,10 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
         map(({user}) => user)
     )
 
-    heartbeatResponse$.pipe(
-        groupBy(({clientId}) => clientId),
-        mergeMap(clientId$ =>
-            clientId$.pipe(
-                debounceTime(HEARTBEAT_INTERVAL_MS * 2),
-                takeUntil(clientDisconnected$(clientId$.key))
-            )
-        )
-    ).subscribe({
-        next: ({user, clientId}) => onClientDisconnected(user, clientId),
-        error: error => log.error('Unexpected heartbeatResponse$ stream error', error),
-        complete: () => log.error('Unexpected heartbeatResponse$ stream closed')
-    })
-    
     userConnected$.subscribe({
         next: user => {
             log.info(`${userTag(user.username)} connected`)
-            onUserConnected && onUserConnected(user)
+            userStatus$?.next({event: USER_UP, user})
             servers.broadcast({event: USER_UP, user})
         },
         error: error => log.error('Unexpected userConnected$ stream error', error),
@@ -64,11 +64,17 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
     userDisconnected$.subscribe({
         next: user => {
             log.info(`${userTag(user.username)} disconnected`)
-            onUserDisconnected && onUserDisconnected(user)
+            userStatus$?.next({event: USER_DOWN, user})
             servers.broadcast({event: USER_DOWN, user})
         },
         error: error => log.error('Unexpected userDisconnected$ stream error', error),
         complete: () => log.error('Unexpected userDisconnected$ stream closed')
+    })
+
+    toUser$?.subscribe({
+        next: ({username, event}) => clients.sendByUsername(username, {event}),
+        error: error => log.error('Unexpected toUser$ stream error', error),
+        complete: () => log.error('Unexpected toUser$ stream closed')
     })
 
     const clientDisconnected$ = clientId =>
@@ -155,13 +161,9 @@ const initializeDownlink = ({servers, clients, wss, onUserConnected, onUserDisco
         clients.remove(clientId)
     }
     
-    const initializeWebSocketServer = () => {
-        wss.on('connection', (ws, _req, user) =>
-            onClientConnected(ws, user)
-        )
-    }
-
-    initializeWebSocketServer()
+    wss.on('connection', (ws, _req, user) =>
+        onClientConnected(ws, user)
+    )
 }
 
 module.exports = {initializeDownlink}

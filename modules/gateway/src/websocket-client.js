@@ -1,6 +1,6 @@
 const {WebSocket} = require('ws')
 
-const {clientTag} = require('./tag')
+const {clientTag, userTag} = require('./tag')
 
 const log = require('#sepal/log').getLogger('websocket/client')
 
@@ -78,6 +78,15 @@ const Clients = () => {
         )
     }
 
+    const sendByUsername = (username, message) => {
+        log.debug(`Sending message to ${userTag(username)}`, message)
+        forEach(client => {
+            if (client.username === username) {
+                send(client.clientId, message)
+            }
+        })
+    }
+
     const forEach = callback => {
         log.debug('Iterating clients')
         Object.entries(clients).forEach(
@@ -85,7 +94,7 @@ const Clients = () => {
         )
     }
 
-    return {add, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach}
+    return {add, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, sendByUsername}
 }
 
 module.exports = {Clients}
