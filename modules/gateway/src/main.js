@@ -9,6 +9,7 @@ const Session = require('express-session')
 const {v4: uuid} = require('uuid')
 const url = require('url')
 const {WebSocketServer} = require('ws')
+const {Subject} = require('rxjs')
 
 const apiMetrics = require('prometheus-api-metrics')
 const RedisSessionStore = require('connect-redis').default
@@ -22,14 +23,16 @@ const {Proxy} = require('./proxy')
 const {SessionManager} = require('./session')
 const {setRequestUser, getSessionUsername} = require('./user')
 const {UserStore} = require('./userStore')
-const {GoogleAccessTokenRefresher} = require('./googleAccessToken')
+const {initializeGoogleAccessTokenRefresher} = require('./googleAccessToken')
 const {usernameTag, urlTag} = require('./tag')
 const {webSocketPath} = require('../config/endpoints')
+
+const toUser$ = new Subject()
+const userStatus$ = new Subject()
 
 const redis = new Redis(redisUri)
 const userStore = UserStore(redis)
 const sessionStore = new RedisSessionStore({client: redis})
-const googleAccessTokenRefresher = GoogleAccessTokenRefresher(userStore)
 
 const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore, userStore)
 const {authMiddleware} = Auth(userStore)
@@ -116,13 +119,9 @@ const main = async () => {
         }
     }
 
-    const onUserConnected = user =>
-        googleAccessTokenRefresher.userConnected(user)
+    initializeGoogleAccessTokenRefresher({userStore, userStatus$, toUser$})
 
-    const onUserDisconnected = user =>
-        googleAccessTokenRefresher.userDisconnected(user)
-
-    initializeWebSocketServer({wss, userStore, onUserConnected, onUserDisconnected})
+    initializeWebSocketServer({wss, userStore, userStatus$, toUser$})
 
     // HACK: User has to be injected here as the session is not available in proxyRes and proxyResWsz
     server.on('upgrade', (req, socket, head) => {
