@@ -19,6 +19,7 @@ services:
       - "${SEPAL_DATA_DIR}/app-launcher:/var/lib/sepal/app-launcher"
     init: true
     environment:
+      SEPAL_HOST: "${SEPAL_HOST}"
       USERS_HOME_PATH: "${SEPAL_DATA_DIR}/sepal/home"
       EE_CREDENTIALS_PATH: "${SEPAL_DATA_DIR}/app-launcher/service-account-credentials.json"
       DOCKER_REGISTRY_HOST: "${DOCKER_REGISTRY_HOST}"
@@ -29,6 +30,7 @@ services:
       GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
       GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
       NICFI_PLANET_API_KEY: "${NICFI_PLANET_API_KEY}"
+
     # healthcheck:
     #   test: bash -c "exec 6<> /dev/tcp/localhost/5011"
     #   timeout: 60s

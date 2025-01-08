@@ -44,7 +44,7 @@ const updateApp$ = app => {
         EE_CREDENTIALS_PATH: process.env.EE_CREDENTIALS_PATH,
         PATH: process.env.PATH,
         HOME: process.env.HOME,
-
+        SEPAL_HOST: process.env.SEPAL_HOST
     }
     return exec$(
         '/',
