@@ -2938,6 +2938,9 @@
                 "placeholder": ""
             },
             "create": "",
+            "error": {
+                "noImages": ""
+            },
             "description": "",
             "mapToolbar": {
                 "mapRendering": {
