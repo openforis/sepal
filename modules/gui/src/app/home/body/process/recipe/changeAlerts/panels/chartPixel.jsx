@@ -168,8 +168,12 @@ class _ChartPixel extends React.Component {
                 segments => this.setState({segments}),
                 error => {
                     this.close()
+                    const errorMessage = error?.response?.messageKey
+                        ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                        : error
                     Notifications.error({
-                        message: msg('process.ccdc.chartPixel.loadFailed', {error})
+                        message: msg('process.ccdc.chartPixel.loadFailed'),
+                        error: errorMessage
                     })
                 }
             )
@@ -180,7 +184,13 @@ class _ChartPixel extends React.Component {
                 observations => this.setState({observations}),
                 error => {
                     this.close()
-                    Notifications.error(msg('process.ccdc.chartPixel.loadObservations.error', {error}))
+                    const errorMessage = error?.response?.messageKey
+                        ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                        : error
+                    Notifications.error({
+                        message: msg('process.ccdc.chartPixel.loadObservations.error'),
+                        error: errorMessage
+                    })
                 }
             )
         }

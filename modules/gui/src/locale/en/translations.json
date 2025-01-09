@@ -859,9 +859,9 @@
             },
             "chartPixel": {
                 "cancel.tooltip": "Cancel time-series charting",
-                "loadFailed": "Failed to load chart: {error}",
-                "loadObservations.error": "Failed to load observations: {error}",
-                "loadSegments.error": "Failed to load segments: {error}",
+                "loadFailed": "Failed to load chart.",
+                "loadObservations.error": "Failed to load observations.",
+                "loadSegments.error": "Failed to load segments.",
                 "start.tooltip": "Chart time-series for pixel"
             },
             "create": "CCDC",
@@ -2085,72 +2085,72 @@
                                 "tooltip": "Select band containing class"
                             }
                         },
-                        "ceo" : {
-                            "login" : {
+                        "ceo": {
+                            "login": {
                                 "title": "Collect Earth Online Authentication",
                                 "tooltip": "Use training data from CEO",
-                                "email" : {
-                                    "label" : "CEO email",
-                                    "placeholder" : "Enter your CEO email",
-                                    "required" : "You must enter your CEO email",
-                                    "invalid" : "Invalid email format"
+                                "email": {
+                                    "label": "CEO email",
+                                    "placeholder": "Enter your CEO email",
+                                    "required": "You must enter your CEO email",
+                                    "invalid": "Invalid email format"
                                 },
-                                "password" : {
-                                    "label" : "Password",
-                                    "placeholder" : "Enter your CEO password",
-                                    "required" : "You must enter your CEO password"
+                                "password": {
+                                    "label": "Password",
+                                    "placeholder": "Enter your CEO password",
+                                    "required": "You must enter your CEO password"
                                 },
-                                "connect.label" : "Connect",
-                                "disconnect.label" : "Disconnect",
-                                "connected" : {
-                                    "title" : "You are connected to CEO",
-                                    "tooltip" : "You are connected to CEO"
+                                "connect.label": "Connect",
+                                "disconnect.label": "Disconnect",
+                                "connected": {
+                                    "title": "You are connected to CEO",
+                                    "tooltip": "You are connected to CEO"
                                 },
-                                "disconnected" : {
-                                    "title" : "Disconnected from CEO",
-                                    "tooltip" : "You are disconnected from CEO"
+                                "disconnected": {
+                                    "title": "Disconnected from CEO",
+                                    "tooltip": "You are disconnected from CEO"
                                 },
-                                "invalid" : {
-                                    "credentials" : "Invalid CEO email or password",
-                                    "server" : "Failed to connect to CEO",
-                                    "unknown" : "There was an unknown error"
+                                "invalid": {
+                                    "credentials": "Invalid CEO email or password",
+                                    "server": "Failed to connect to CEO",
+                                    "unknown": "There was an unknown error"
                                 }
                             },
-                            "disconnected" : {
+                            "disconnected": {
                                 "description": "Connect your Collect Earth Online (CEO) account to SEPAL to seamlessly access your projects and extract data for training your classification models. Rest assured, your credentials are never stored on SEPAL servers. Once you end your SEPAL session, your CEO connection is automatically terminated."
                             },
                             "dataType": {
-                                "title" : "Data type",
-                                "tooltip" : "Use the sample or aggregated plot data",
-                                "sample" : {
-                                    "label":  "Sample",
+                                "title": "Data type",
+                                "tooltip": "Use the sample or aggregated plot data",
+                                "sample": {
+                                    "label": "Sample",
                                     "tooltip": "Use the sample data from CEO"
                                 },
-                                "plot" :{
+                                "plot": {
                                     "label": "Plot",
                                     "tooltip": "Use the plot data from CEO"
                                 }
                             },
-                            "institution" : {
-                                "label" : "Institution",
-                                "placeholder" : "Select an institution",
-                                "required" : "You must select an institution",
-                                "tooltip" : "You can only see institutions that you are member of"
+                            "institution": {
+                                "label": "Institution",
+                                "placeholder": "Select an institution",
+                                "required": "You must select an institution",
+                                "tooltip": "You can only see institutions that you are member of"
                             },
-                            "project" : {
-                                "label" : "Project",
-                                "placeholder" : "Select a project",
-                                "required" : "You must select a project",
-                                "tooltip" : "Select the project that you want to use the training data from"
+                            "project": {
+                                "label": "Project",
+                                "placeholder": "Select a project",
+                                "required": "You must select a project",
+                                "tooltip": "Select the project that you want to use the training data from"
                             },
-                            "loadCsv" : {
-                                "failed" : "Failed to get the training data from CEO"
+                            "loadCsv": {
+                                "failed": "Failed to get the training data from CEO"
                             },
-                            "loadProjects" : {
-                                "failed" : "Failed to get the projects for the selected institution"
+                            "loadProjects": {
+                                "failed": "Failed to get the projects for the selected institution"
                             },
-                            "loadInstitutions" : {
-                                "failed" : "Failed to get the institutions"
+                            "loadInstitutions": {
+                                "failed": "Failed to get the institutions"
                             }
                         }
                     },
@@ -2189,7 +2189,7 @@
                             "title": "SAMPLE CLASSIFICATION",
                             "tooltip": "Sample a pre-existing classification."
                         },
-                        "CEO" : {
+                        "CEO": {
                             "label": "Collect Earth Online",
                             "title": "Collect Earth Online",
                             "tooltip": "Use training data from CEO"
@@ -2938,6 +2938,9 @@
                 "placeholder": "Select preview bands"
             },
             "create": "Optical mosaic",
+            "error": {
+                "noImages": "All images have been filtered out. Update the recipe to ensure at least one image is included."
+            },
             "description": "Create a mosaic using Landsat or Sentinel 2.",
             "mapToolbar": {
                 "mapRendering": {
