@@ -859,9 +859,9 @@
             },
             "chartPixel": {
                 "cancel.tooltip": "Anulación de los gráficos de series temporales",
-                "loadFailed": "No se ha podido cargar el gráfico: {error}",
-                "loadObservations.error": "No se ha podido cargar las observaciones: {error}",
-                "loadSegments.error": "No se ha podido cargar los segmentos: {error}",
+                "loadFailed": "",
+                "loadObservations.error": "",
+                "loadSegments.error": "",
                 "start.tooltip": "Gráfico de series temporales para el pixel"
             },
             "create": "",
@@ -2938,6 +2938,9 @@
                 "placeholder": "Selecciona las bandas preliminares"
             },
             "create": "Mosaico óptico",
+            "error": {
+                "noImages": ""
+            },
             "description": "Crear mosaico de Landsat o Sentinel 2.",
             "mapToolbar": {
                 "mapRendering": {
