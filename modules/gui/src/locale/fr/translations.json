@@ -859,9 +859,9 @@
             },
             "chartPixel": {
                 "cancel.tooltip": "Annuler la représentation des séries temporelles",
-                "loadFailed": "Impossible de charger le graphique : {error}",
-                "loadObservations.error": "Impossible de charger les observations : {error}",
-                "loadSegments.error": "Impossible de charger les segments : {error}",
+                "loadFailed": "",
+                "loadObservations.error": "",
+                "loadSegments.error": "",
                 "start.tooltip": "Graphique des séries temporelles pour le pixel"
             },
             "create": "CCDC",
@@ -2938,6 +2938,9 @@
                 "placeholder": "Sélectionner les bandes à visualiser"
             },
             "create": "Mosaique",
+            "error": {
+                "noImages": ""
+            },
             "description": "Créer une mosaique avec Landsat ou Sentinel 2",
             "mapToolbar": {
                 "mapRendering": {
