@@ -2091,12 +2091,13 @@
                                 "tooltip": "",
                                 "email": {
                                     "label": "",
-                                    "placeholder": "",
+                                    "placeholder": "Entrez votre adresse email",
                                     "required": "",
-                                    "invalid": ""
+                                    "invalid": "",
+                                    "tooltip": ""
                                 },
                                 "password": {
-                                    "label": "Mot de passe",
+                                    "label": "",
                                     "placeholder": "",
                                     "required": ""
                                 },
@@ -2110,11 +2111,15 @@
                                     "title": "",
                                     "tooltip": ""
                                 },
-                                "invalid": {
-                                    "credentials": "",
-                                    "server": "",
-                                    "unknown": ""
+                                "error": {
+                                    "invalidCredentials": "",
+                                    "serverTitle": "",
+                                    "serverMessage": ""
                                 }
+                            },
+                            "token": {
+                                "invalid": "",
+                                "timedOut": ""
                             },
                             "disconnected": {
                                 "description": ""
