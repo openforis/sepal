@@ -163,7 +163,15 @@ const endpoints = [
         target: `http://${modules.gui}/resource/privacy-policy.html`,
         authenticate: false,
         noCache: true
-    }
+    },
+    {
+        prefix: true,
+        path: '/api/app-launcher',
+        target: `http://${modules.appLauncher}`,
+        authenticate: true,
+        rewrite: false
+    },
+
 ]
 
 const webSocketEndpoints = [

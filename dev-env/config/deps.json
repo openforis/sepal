@@ -20,6 +20,15 @@
             "logger"
         ]
     },
+    "app-launcher" : {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger"
+        ]
+    },
     "email": {
         "lib": [
             "shared"
