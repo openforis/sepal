@@ -2093,10 +2093,11 @@
                                     "label": "",
                                     "placeholder": "",
                                     "required": "",
-                                    "invalid": ""
+                                    "invalid": "",
+                                    "tooltip": ""
                                 },
                                 "password": {
-                                    "label": "Contraseña",
+                                    "label": "",
                                     "placeholder": "",
                                     "required": ""
                                 },
@@ -2110,11 +2111,15 @@
                                     "title": "",
                                     "tooltip": ""
                                 },
-                                "invalid": {
-                                    "credentials": "",
-                                    "server": "",
-                                    "unknown": ""
+                                "error": {
+                                    "invalidCredentials": "",
+                                    "serverTitle": "",
+                                    "serverMessage": ""
                                 }
+                            },
+                            "token": {
+                                "invalid": "",
+                                "timedOut": ""
                             },
                             "disconnected": {
                                 "description": ""
