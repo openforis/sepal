@@ -24,7 +24,8 @@
     letter-spacing: 0;
     min-height: calc(var(--size) * var(--min-size-factor));
     min-width: calc(var(--size) * var(--min-size-factor));
-    padding: 0; /* Needed for alignment of button contents */
+    padding: 0;
+    /* Needed for alignment of button contents */
 }
 
 .button span {
@@ -140,8 +141,8 @@
     flex-grow: 1;
 }
 
-.button.width-max > *,
-.button.width-fill > * {
+.button.width-max>*,
+.button.width-fill>* {
     display: flex;
     flex-grow: 1;
 }
@@ -168,7 +169,7 @@
 
 /* contents */
 
-.button > * {
+.button>* {
     white-space: nowrap;
     position: relative;
     overflow: hidden;
@@ -182,17 +183,17 @@
 
 /* spacing between icon and label */
 
-.button > .contents > * + * {
+.button>.contents>*+* {
     margin-left: .5rem;
 }
 
-.button > .contents > span {
+.button>.contents>span {
     flex-grow: 1;
 }
 
 /* labelStyle: smallcaps */
 
-.button.labelStyle-smallcaps > .contents {
+.button.labelStyle-smallcaps>.contents {
     font-size: calc(var(--font-size) * .9);
     line-height: calc(var(--font-size) * .9);
     font-weight: 800;
@@ -202,7 +203,7 @@
 
 /* labelStyle: smallcaps-highlight */
 
-.button.labelStyle-smallcaps-highlight > .contents {
+.button.labelStyle-smallcaps-highlight>.contents {
     font-size: calc(var(--font-size) * .9);
     line-height: calc(var(--font-size) * .9);
     font-weight: 800;
@@ -237,11 +238,13 @@
     0% {
         top: 80%;
         background-color: hsla(0, 0%, 100%, .1);
-        }
+    }
+
     99% {
         top: 0;
         background-color: hsla(0, 0%, 100%, .1);
     }
+
     100% {
         top: 0;
         background-color: hsla(var(--look-cancel-h), 70%, var(--look-cancel-l), 1);
@@ -260,7 +263,49 @@
     0% {
         background-color: lime;
     }
+
     100% {
         background-color: inherit;
+    }
+}
+
+.button.busy::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    z-index: 2;
+    /* make sure busy spinner is above the overlay */
+    background-color: #c0c0c0;
+    mix-blend-mode: screen;
+    animation: busy 600ms linear infinite alternate;
+}
+
+@keyframes busy {
+    0% {
+        left: 0;
+        right: 100%;
+    }
+
+    10% {
+        left: 0;
+        right: 100%;
+    }
+
+    50% {
+        left: 30%;
+        right: 30%;
+    }
+
+    90% {
+        left: 100%;
+        right: 0%;
+    }
+
+    100% {
+        left: 100%;
+        right: 0%;
     }
 }
