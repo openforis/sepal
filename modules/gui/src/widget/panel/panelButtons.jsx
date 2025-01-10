@@ -8,7 +8,7 @@ import {ButtonGroup} from '~/widget/buttonGroup'
 import styles from './panelButtons.module.css'
 
 export class PanelButtons extends React.Component {
-    static renderButton({template, type, look, icon, label, dots, hidden, disabled, keybinding, onClick}, key) {
+    static renderButton({template, type, look, icon, label, dots, hidden, busy, disabled, keybinding, onClick}, key) {
         const defaultByTemplate = {
             cancel: {
                 look: 'cancel',
@@ -17,6 +17,7 @@ export class PanelButtons extends React.Component {
             },
             apply: {
                 look: 'apply',
+                icon: 'check',
                 label: msg('button.apply')
             },
             confirm: {
@@ -80,6 +81,7 @@ export class PanelButtons extends React.Component {
                 icon={icon || defaultByTemplate[template].icon}
                 label={[label || defaultByTemplate[template].label, dots ? '...' : null].join('')}
                 hidden={hidden}
+                busy={busy}
                 disabled={disabled}
                 keybinding={keybinding}
                 onClick={e => {
@@ -95,8 +97,8 @@ export class PanelButtons extends React.Component {
         return PanelButtons.renderButton({template: 'cancel', ...props})
     }
 
-    static Apply({busy, ...props}) {
-        return PanelButtons.renderButton({template: 'apply', icon: busy ? 'spinner' : 'check', ...props})
+    static Apply(props) {
+        return PanelButtons.renderButton({template: 'apply', ...props})
     }
 
     static Save(props) {
