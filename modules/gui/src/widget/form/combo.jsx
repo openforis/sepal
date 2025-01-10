@@ -32,7 +32,7 @@ class _FormCombo extends React.Component {
     render() {
         const {
             input, options, buttons, alignment, allowClear, autoFocus, autoOpen, border, busyMessage, className, disabled,
-            inputClassName, keyboard, label, labelButtons, optionsClassName, optionTooltipPlacement, placeholder, placement,
+            inputClassName, keyboard, label, labelButtons, optionsClassName, optionTooltipPlacement, placeholder, hPlacement, vPlacement,
             readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, warningMessage, onCancel, onFilterChange
         } = this.props
         return (
@@ -57,7 +57,8 @@ class _FormCombo extends React.Component {
                 optionsClassName={optionsClassName}
                 optionTooltipPlacement={optionTooltipPlacement}
                 placeholder={placeholder}
-                placement={placement}
+                hPlacement={hPlacement}
+                vPlacement={vPlacement}
                 readOnly={readOnly}
                 stayOpenOnSelect={stayOpenOnSelect}
                 tooltip={tooltip}
