@@ -1,10 +1,32 @@
-var config = {}
+const {program} = require('commander')
+const log = require('#sepal/log').getLogger('config')
 
-config.ceo = {}
+const DEFAULT_PORT = 8001
 
-config.ceo.url = process.env.CEO_URL
-config.ceo.username = process.env.CEO_USERNAME
-config.ceo.password = process.env.CEO_PASSWORD
-config.ceo.institutionId = process.env.CEO_INSTITUTION_ID
+const fatalError = error => {
+    log.fatal(error)
+    process.exit(1)
+}
 
-module.exports = config
+program.exitOverride()
+
+try {
+    program
+        .requiredOption('--ceo-url <value>', 'URL of CEO')
+        .option('--port <number>', 'Port', DEFAULT_PORT)
+        .parse(process.argv)
+} catch (error) {
+    fatalError(error)
+}
+
+const {
+    port,
+    ceoUrl
+} = program.opts()
+
+log.info('Configuration loaded')
+
+module.exports = {
+    port,
+    ceoUrl
+}

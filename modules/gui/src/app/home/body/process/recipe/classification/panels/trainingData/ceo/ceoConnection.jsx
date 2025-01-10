@@ -22,12 +22,6 @@ export class _CeoConnection extends React.Component {
     }
 
     disconnect() {
-        const {inputs: {project, institution, csvType}} = this.props
-        
-        institution.setInitialValue('')
-        project.setInitialValue('')
-        csvType.setInitialValue(null)
-
         ceoLogout()
     }
     
@@ -59,7 +53,7 @@ export class _CeoConnection extends React.Component {
                     </Layout>
                     {this.renderConnectButton()}
                 </Layout>
-                <div type='horizontal'>
+                <div type='horizontal' className={styles.info}>
                     {msg('process.classification.panel.trainingData.form.ceo.disconnected.description')}
                 </div>
             </>

@@ -6,16 +6,14 @@ import {catchError} from 'rxjs/operators'
 import {ceoLogin$} from '~/ceo'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
-// import {validateCeoLogin$} from '~/ceo'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
-// import {Notifications} from '~/widget/notifications'
+import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
-// import {compose} from '~/compose'
 import styles from './ceoLogin.module.css'
 
 const fields = {
@@ -75,6 +73,8 @@ export class _CeoLogin extends React.Component {
             <Layout>
                 <Form.Input
                     label={msg('process.classification.panel.trainingData.form.ceo.login.email.label')}
+                    placeholder={msg('process.classification.panel.trainingData.form.ceo.login.email.placeholder')}
+                    tooltip={msg('process.classification.panel.trainingData.form.ceo.login.email.placeholder')}
                     autoFocus
                     input={email}
                     spellCheck={false}
@@ -82,6 +82,7 @@ export class _CeoLogin extends React.Component {
                 />
                 <Form.Input
                     label={msg('process.classification.panel.trainingData.form.ceo.login.password.label')}
+                    placeholder={msg('process.classification.panel.trainingData.form.ceo.login.password.placeholder')}
                     input={password}
                     type='password'
                     spellCheck={false}
@@ -95,13 +96,15 @@ export class _CeoLogin extends React.Component {
         return ceoLogin$(credentials).pipe(
             catchError(error => {
                 const {status} = error
-
                 if (status === 400) {
-                    password.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.invalid.credentials'))
-                } else if (status === 500) {
-                    password.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.invalid.server'))
+                    password.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.error.invalidCredentials'))
                 } else {
-                    password.setInvalid(msg('process.classification.panel.trainingData.form.ceo.login.invalid.unknown'))
+                    Notifications.error({
+                        title: msg('process.classification.panel.trainingData.form.ceo.login.error.serverTitle'),
+                        message: msg('process.classification.panel.trainingData.form.ceo.login.error.serverMessage'),
+                        timeout: 0,
+                        group: true
+                    })
                 }
                 return throwError(() => error)
             })

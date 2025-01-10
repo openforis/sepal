@@ -1,4 +1,4 @@
-import {post$} from '~/http-client'
+import {get$, post$} from '~/http-client'
 
 export default {
 
@@ -9,18 +9,20 @@ export default {
         }),
      
     getAllInstitutions$: ({token}) =>
-        post$('/api/ceo-gateway/get-all-institutions', {
-            body: {token},
+        get$('/api/ceo-gateway/get-all-institutions', {
+            headers: {'x-ceo-token': token},
         }),
         
     getInstitutionProjects$: ({token, institutionId}) =>
-        post$('/api/ceo-gateway/get-institution-projects', {
-            body: {token, institutionId},
+        get$('/api/ceo-gateway/get-institution-projects', {
+            headers: {'x-ceo-token': token},
+            query: {institutionId},
         }),
     
     getProjectData$: ({token, projectId, csvType}) =>
-        post$('/api/ceo-gateway/get-project-data', {
-            body: {token, projectId, csvType},
+        get$('/api/ceo-gateway/get-project-data', {
+            headers: {'x-ceo-token': token},
+            query: {projectId, csvType},
             responseType: 'text',
         })
 }

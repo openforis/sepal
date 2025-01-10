@@ -58,6 +58,15 @@ const fields = {
         .skip((value, {type}) => type !== 'SAMPLE_CLASSIFICATION')
         .notBlank('process.classification.panel.trainingData.form.sampleClassification.sampleScale.required'),
 
+    institution: new Form.Field()
+        .skip((value, {type}) => type !== 'CEO')
+        .notBlank('process.classification.panel.trainingData.form.ceo.institution.required'),
+    project: new Form.Field()
+        .skip((value, {type}) => type !== 'CEO')
+        .notBlank('process.classification.panel.trainingData.form.ceo.project.required'),
+    csvType: new Form.Field()
+        .skip((value, {type}) => type !== 'CEO'),
+
     locationType: new Form.Field()
         .skip((value, {type}) => type === 'RECIPE')
         .skip((value, {wizardStep}) => wizardStep !== 1)
@@ -74,9 +83,6 @@ const fields = {
         .skip((value, {wizardStep}) => wizardStep !== 1)
         .skip((value, {locationType}) => locationType === 'GEO_JSON')
         .notBlank('process.classification.panel.trainingData.form.location.yColumn.required'),
-
-    // TODO: CRS
-
     filterExpression: new Form.Field(),
     invalidFilterExpression: new Form.Field()
         .skip((value, {wizardStep}) => wizardStep !== 2)
@@ -94,14 +100,6 @@ const fields = {
     referenceData: new Form.Field()
         .skip((value, {wizardStep}) => wizardStep !== 3)
         .notEmpty('process.classification.panel.trainingData.form.referenceData.required'),
-    institution: new Form.Field()
-        .skip((value, {type}) => type !== 'CEO')
-        .notBlank('process.classification.panel.trainingData.form.ceo.institution.required'),
-    project: new Form.Field()
-        .skip((value, {type}) => type !== 'CEO')
-        .notBlank('process.classification.panel.trainingData.form.ceo.institution.required'),
-    csvType: new Form.Field()
-        .skip((value, {type}) => type !== 'CEO')
 }
 
 const mapRecipeToProps = recipe => ({
@@ -255,7 +253,11 @@ const modelToValues = model => {
         valueMapping: model.valueMapping || {},
         columnMapping: model.columnMapping,
         customMapping: model.customMapping,
-        defaultValue: model.defaultValue
+        defaultValue: model.defaultValue,
+
+        institution: model.institution,
+        project: model.project,
+        csvType: model.csvType,
     }
 }
 
@@ -263,7 +265,11 @@ const valuesToModel = values => {
     return {
         ...values,
         inputData: values.type === 'CSV_UPLOAD' ? values.inputData : undefined,
-        referenceData: values.referenceData.referenceData
+        referenceData: values.referenceData.referenceData,
+
+        institution: values.institution,
+        project: values.project,
+        csvType: values.csvType,
     }
 }
 
