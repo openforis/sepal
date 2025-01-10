@@ -2093,7 +2093,8 @@
                                     "label": "",
                                     "placeholder": "",
                                     "required": "",
-                                    "invalid": ""
+                                    "invalid": "",
+                                    "tooltip": ""
                                 },
                                 "password": {
                                     "label": "",
@@ -2110,11 +2111,15 @@
                                     "title": "",
                                     "tooltip": ""
                                 },
-                                "invalid": {
-                                    "credentials": "",
-                                    "server": "",
-                                    "unknown": ""
+                                "error": {
+                                    "invalidCredentials": "",
+                                    "serverTitle": "",
+                                    "serverMessage": ""
                                 }
+                            },
+                            "token": {
+                                "invalid": "",
+                                "timedOut": ""
                             },
                             "disconnected": {
                                 "description": ""
