@@ -127,6 +127,15 @@ const createWatcher = async ({out$, stop$}) => {
     const scanDir$ = ({username, clientId, subscriptionId, path}) =>
         from(userHomeDir(username)).pipe(
             map(home => resolvePath(home, path)),
+            catchError(error => {
+                if (error.code === 'ENOENT') {
+                    log.warn(() => `${subscriptionTag({username, clientId, subscriptionId})} cannot scan non-existing path: ${path}`)
+                    unmonitor({username, clientId, subscriptionId, path})
+                } else {
+                    log.error(`${subscriptionTag({username, clientId, subscriptionId})} error while resolving path: ${path}`, error)
+                }
+                return EMPTY
+            }),
             switchMap(({absolutePath, isExternalPath}) => {
                 if (isExternalPath) {
                     log.warn(`${subscriptionTag({username, clientId, subscriptionId})} refused scanning path: ${path}`)
