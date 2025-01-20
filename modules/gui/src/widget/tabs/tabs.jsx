@@ -14,6 +14,7 @@ import {Scrollable} from '~/widget/scrollable'
 import {Content, SectionLayout, TopBar} from '~/widget/sectionLayout'
 import {isMobile} from '~/widget/userAgent'
 
+import {ButtonSelect} from '../buttonSelect'
 import {addTab, closeTab, selectTab} from './tabActions'
 import {TabContent} from './tabContent'
 import {TabHandle} from './tabHandle'
@@ -57,9 +58,9 @@ class _Tabs extends React.Component {
         this.selectPreviousTab = this.selectPreviousTab.bind(this)
         this.selectNextTab = this.selectNextTab.bind(this)
         
-        const {tabs, statePath} = props
+        const {tabs, statePath, defaultType} = props
         if (tabs.length === 0) {
-            addTab(statePath)
+            addTab(statePath, defaultType)
         }
 
         this.busyIn$ = new Subject()
@@ -124,7 +125,7 @@ class _Tabs extends React.Component {
         )
     }
 
-    renderTabs() {
+    renderTabHandles() {
         const {tabs, maxTabs} = this.props
         return (
             <React.Fragment>
@@ -160,7 +161,7 @@ class _Tabs extends React.Component {
     }
 
     renderTabButtons() {
-        const {maxTabs} = this.props
+        const {maxTabs, addTabOptions} = this.props
         return maxTabs > 1 ? (
             <Keybinding keymap={{
                 'Ctrl+Shift+W': this.closeSelectedTab,
@@ -169,7 +170,7 @@ class _Tabs extends React.Component {
                 'Ctrl+Shift+ArrowRight': this.selectNextTab
             }}>
                 {isMobile() || this.renderNavigationButtons()}
-                {this.renderAddButton()}
+                {addTabOptions ? this.renderAddButtonSelect() : this.renderAddButton()}
             </Keybinding>
         ) : null
     }
@@ -239,13 +240,33 @@ class _Tabs extends React.Component {
                 shape='circle'
                 icon='plus'
                 tooltip={msg('widget.tabs.addTab.tooltip')}
-                tooltipPlacement='bottom'
+                tooltipPlacement='left'
                 disabled={this.isAddDisabled() && !onAdd}
                 onClick={this.addTab}/>
         )
     }
 
-    addTab() {
+    renderAddButtonSelect() {
+        const {addTabOptions, onAdd} = this.props
+        return (
+            <ButtonSelect
+                chromeless
+                look='transparent'
+                size='large'
+                shape='circle'
+                icon='plus'
+                tooltip={msg('widget.tabs.addTab.tooltip')}
+                tooltipPlacement='left'
+                noChevron
+                hPlacement='over-left'
+                disabled={this.isAddDisabled() && !onAdd}
+                options={addTabOptions}
+                onSelect={this.addTab}
+            />
+        )
+    }
+
+    addTab(option) {
         const {onAdd} = this.props
         const {statePath, tabs, isLandingTab} = this.props
         if (!this.isAddDisabled()) {
@@ -255,7 +276,7 @@ class _Tabs extends React.Component {
                     return selectTab(tab.id, statePath)
                 }
             }
-            addTab(statePath)
+            addTab(statePath, option?.value)
         } else {
             onAdd && onAdd()
         }
@@ -272,23 +293,23 @@ class _Tabs extends React.Component {
     }
 
     render() {
-        const {label} = this.props
+        const {label, tabs} = this.props
         return (
             <SectionLayout className={styles.container}>
                 <TopBar label={label}>
-                    {this.renderTabs()}
+                    {this.renderTabHandles()}
                 </TopBar>
                 <Content className={styles.tabContents}>
-                    {this.props.tabs.map(tab => this.renderTabContent(tab))}
+                    {tabs.map(tab => this.renderTabContent(tab))}
                 </Content>
             </SectionLayout>
         )
     }
 
     componentDidUpdate() {
-        const {tabs, statePath} = this.props
+        const {tabs, defaultType, statePath} = this.props
         if (tabs.length === 0) {
-            addTab(statePath)
+            addTab(statePath, defaultType)
         }
     }
 }
@@ -302,7 +323,14 @@ export const Tabs = compose(
 Tabs.propTypes = {
     label: PropTypes.string.isRequired,
     statePath: PropTypes.string.isRequired,
+    addTabOptions: PropTypes.arrayOf(
+        PropTypes.shape({
+            label: PropTypes.string,
+            value: PropTypes.string
+        })
+    ),
     children: PropTypes.any,
+    defaultType: PropTypes.any,
     isDirty: PropTypes.func,
     isLandingTab: PropTypes.func,
     maxTabs: PropTypes.number,
