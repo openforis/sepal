@@ -25,6 +25,7 @@ const tableQuery$ = require('#gee/jobs/ee/table/query')
 const tableMap$ = require('#gee/jobs/ee/table/map')
 const datasets$ = require('#gee/jobs/datasets/datasets')
 const check$ = require('#gee/jobs/ee/check')
+const batchTable$ = require('#gee/jobs/ee/batch/table')
 
 module.exports = router =>
     router
@@ -51,5 +52,6 @@ module.exports = router =>
         .get('/table/columnValues', stream(ctx => tableColumnValues$(ctx)))
         .post('/table/query', stream(ctx => tableQuery$(ctx)))
         .get('/table/map', stream(ctx => tableMap$(ctx)))
+        .get('/batch/table', stream(ctx => batchTable$(ctx)))
         .get('/datasets', stream(ctx => datasets$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))
