@@ -2,10 +2,9 @@ const {job} = require('#gee/jobs/job')
 
 const worker$ = ({aoi, source}) => {
     const ee = require('#sepal/ee')
-    const {toGeometry} = require('#sepal/ee/aoi')
-    const {map} = require('rxjs')
+    const {toGeometry$} = require('#sepal/ee/aoi')
+    const {map, switchMap} = require('rxjs')
 
-    const geometry = toGeometry(aoi)
     const table = {
         LANDSAT: {
             id: 'users/wiell/SepalResources/landsatSceneAreas',
@@ -16,13 +15,14 @@ const worker$ = ({aoi, source}) => {
             idColumn: 'name'
         }
     }[source]
-    return ee.getInfo$(
-        ee.FeatureCollection(table.id)
-            .filterBounds(geometry)
-            .reduceColumns(ee.Reducer.toList(2), ['.geo', table.idColumn])
-            .get('list'),
-        'scene areas'
-    ).pipe(
+    return toGeometry$(aoi).pipe(
+        switchMap(geometry => ee.getInfo$(
+            ee.FeatureCollection(table.id)
+                .filterBounds(geometry)
+                .reduceColumns(ee.Reducer.toList(2), ['.geo', table.idColumn])
+                .get('list'),
+            'scene areas'
+        )),
         map(sceneAreas =>
             sceneAreas.map(sceneArea => ({
                 id: sceneArea[1],

@@ -3051,6 +3051,22 @@
                             },
                             "title": "Select from EE Table"
                         },
+                        "asset": {
+                            "asset": {
+                                "label": "EE Asset",
+                                "placeholder": "Enter an EE Asset",
+                                "required": "EE Asset must be specified"
+                            },
+                            "title": "Select EE Asset"
+                        },
+                        "recipe": {
+                            "recipe": {
+                                "label": "SEPAL Recipe",
+                                "placeholder": "Select a recipe...",
+                                "required": "Recipe must be selected"
+                            },
+                            "title": "Select SEPAL Recipe"
+                        },
                         "fusionTable": {
                             "column": {
                                 "label": "Column",

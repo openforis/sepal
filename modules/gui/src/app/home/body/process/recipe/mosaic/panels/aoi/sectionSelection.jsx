@@ -21,9 +21,17 @@ export class SectionSelection extends React.Component {
                 label: msg('process.mosaic.panel.areaOfInterest.form.eeTable.title')
             },
             {
+                value: 'ASSET',
+                label: msg('process.mosaic.panel.areaOfInterest.form.asset.title')
+            },
+            {
+                value: 'RECIPE',
+                label: msg('process.mosaic.panel.areaOfInterest.form.recipe.title')
+            },
+            {
                 value: 'POLYGON',
                 label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title')
-            }
+            },
         ].filter(option => option)
         return (
             <Form.Buttons
@@ -35,11 +43,6 @@ export class SectionSelection extends React.Component {
                 input={section}
                 options={options}/>
         )
-    }
-
-    componentDidUpdate() {
-        // const {map} = this.props
-        // removeAoiLayer(map)
     }
 }
 

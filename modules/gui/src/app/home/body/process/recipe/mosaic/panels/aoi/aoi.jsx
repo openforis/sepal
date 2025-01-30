@@ -9,9 +9,11 @@ import {PanelSections} from '~/widget/panelSections'
 
 import styles from './aoi.module.css'
 import {AssetBoundsSection} from './assetBoundsSection'
+import {AssetSection} from './assetSection'
 import {CountrySection} from './countrySection'
 import {EETableSection} from './eeTableSection'
 import {PolygonSection} from './polygonSection'
+import {RecipeSection} from './recipeSection'
 import {SectionSelection} from './sectionSelection'
 
 const fields = {
@@ -41,7 +43,13 @@ const fields = {
         .int(),
     polygon: new Form.Field()
         .skip((value, {section}) => section !== 'POLYGON')
-        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required')
+        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
+    assetId: new Form.Field()
+        .skip((value, {section}) => section !== 'ASSET')
+        .notBlank('process.mosaic.panel.areaOfInterest.form.asset.required'),
+    recipeId: new Form.Field()
+        .skip((value, {section}) => section !== 'RECIPE')
+        .notBlank('process.mosaic.panel.areaOfInterest.form.recipe.required')
 }
 
 class _Aoi extends React.Component {
@@ -78,11 +86,23 @@ class _Aoi extends React.Component {
                     layerIndex={layerIndex}/>
             },
             {
+                value: 'ASSET',
+                label: msg('process.mosaic.panel.areaOfInterest.form.asset.title'),
+                title: 'ASSET',
+                component: <AssetSection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
+            },
+            {
+                value: 'RECIPE',
+                label: msg('process.mosaic.panel.areaOfInterest.form.recipe.title'),
+                title: 'RECIPE',
+                component: <RecipeSection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
+            },
+            {
                 value: 'POLYGON',
                 label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title'),
                 title: 'POLYGON',
                 component: <PolygonSection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
-            }
+            },
         ].filter(option => option)
         return (
             <RecipeFormPanel
@@ -129,22 +149,32 @@ const valuesToModel = values => {
             type: 'POLYGON',
             path: values.polygon
         }
+    case 'ASSET':
+        return {
+            type: 'ASSET',
+            id: values.assetId
+        }
+    case 'RECIPE':
+        return {
+            type: 'RECIPE',
+            id: values.recipeId
+        }
     default:
         throw Error(`Invalid aoi section: ${values.section}`)
     }
 }
 
 const modelToValues = (model = {}) => {
-    if (model.type === 'ASSET_BOUNDS')
+    if (model.type === 'ASSET_BOUNDS') {
         return {section: 'ASSET_BOUNDS'}
-    else if (model.type === 'EE_TABLE')
-        if (model.id === countryEETable)
+    } else if (model.type === 'EE_TABLE') {
+        if (model.id === countryEETable) {
             return {
                 section: 'COUNTRY',
                 [model.level ? model.level.toLowerCase() : 'country']: model.key,
                 buffer: model.buffer
             }
-        else
+        } else {
             return {
                 section: 'EE_TABLE',
                 eeTable: model.id,
@@ -153,13 +183,25 @@ const modelToValues = (model = {}) => {
                 eeTableRowSelection: model.keyColumn ? 'FILTER' : 'INCLUDE_ALL',
                 buffer: model.buffer
             }
-    else if (model.type === 'POLYGON')
+        }
+    } else if (model.type === 'POLYGON') {
         return {
             section: 'POLYGON',
             polygon: model.path
         }
-    else
+    } else if (model.type === 'ASSET') {
+        return {
+            section: 'ASSET',
+            assetId: model.id
+        }
+    } else if (model.type === 'RECIPE') {
+        return {
+            section: 'RECIPE',
+            assetId: model.id
+        }
+    } else {
         return {}
+    }
 }
 
 export const Aoi = compose(

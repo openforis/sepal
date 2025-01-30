@@ -7,37 +7,41 @@ const worker$ = ({recipe, band, aoi, mapBounds}) => {
     const ImageFactory = require('#sepal/ee/imageFactory')
     const ee = require('#sepal/ee')
     const {switchMap} = require('rxjs')
-    const {toGeometry} = require('#sepal/ee/aoi')
+    const {toGeometry$} = require('#sepal/ee/aoi')
 
     const {getImage$, histogramMaxPixels} = ImageFactory(recipe, {selection: [band]})
-    const histogram = image => {
-        const imageGeometry = image.select(band).geometry()
-        const mapGeometry = ee.Geometry.Rectangle(mapBounds)
-        const geometry = ee.Algorithms.If(
-            image.select(band).geometry().isUnbounded(),
-            aoi
-                ? ee.Algorithms.If(
-                    aoi.type === 'ASSET_BOUNDS' ? false : toGeometry(aoi).intersects(imageGeometry),
-                    toGeometry(aoi),
-                    mapGeometry
+    return toGeometry$(aoi).pipe(
+        switchMap(aoiGeometry => {
+            const histogram = image => {
+                const imageGeometry = image.select(band).geometry()
+                const mapGeometry = ee.Geometry.Rectangle(mapBounds)
+                const geometry = ee.Algorithms.If(
+                    image.select(band).geometry().isUnbounded(),
+                    aoi
+                        ? ee.Algorithms.If(
+                            aoi.type === 'ASSET_BOUNDS' ? false : aoiGeometry.intersects(imageGeometry),
+                            aoiGeometry,
+                            mapGeometry
+                        )
+                        : mapGeometry,
+                    imageGeometry
                 )
-                : mapGeometry,
-            imageGeometry
-        )
-        return image.select(band).reduceRegion({
-            reducer: ee.Reducer.autoHistogram(MAX_BUCKETS),
-            geometry,
-            scale: 1,
-            bestEffort: true,
-            maxPixels: histogramMaxPixels || MAX_PIXELS,
-            tileScale: 16
-        }).get(band)
-    }
+                return image.select(band).reduceRegion({
+                    reducer: ee.Reducer.autoHistogram(MAX_BUCKETS),
+                    geometry,
+                    scale: 1,
+                    bestEffort: true,
+                    maxPixels: histogramMaxPixels || MAX_PIXELS,
+                    tileScale: 16
+                }).get(band)
+            }
 
-    return getImage$().pipe(
-        switchMap(image =>
-            ee.getInfo$(histogram(image), 'recipe histogram')
-        )
+            return getImage$().pipe(
+                switchMap(image =>
+                    ee.getInfo$(histogram(image), 'recipe histogram')
+                )
+            )
+        })
     )
 }
 
