@@ -4537,6 +4537,152 @@
             "revert": "Revert to revision",
             "title": "Revisions"
         },
+        "samplingDesign": {
+            "bands": {},
+            "create": "Sampling design",
+            "description": "Create a sampling design.",
+            "panel": {
+                "stratification": {
+                    "button": "STR",
+                    "form": {
+                        "unstratified": {
+                            "label": "Unstratified",
+                            "tooltip": "Determine if the sampling determine should be stratified or unstratified.",
+                            "message": "Using an unstratified sampling design."
+                        },
+                        "type": {
+                            "label": "Type",
+                            "ASSET": {
+                                "label": "Asset",
+                                "tooltip": "Use EE Asset as stratification"
+                            },
+                            "RECIPE": {
+                                "label": "Recipe",
+                                "tooltip": "Use SEPAL Recipe as stratification"
+                            },
+                            "required": "You must select a type of stratification"
+                        },
+                        "stratification": {
+                            "label": "Stratification",
+                            "placeholder": "Select a stratification...",
+                            "required": "You must select a stratification"
+                        },
+                        "asset": {
+                            "label": "EE Asset",
+                            "placeholder": "Select EE Asset...",
+                            "required": "You must select an EE asset"
+                        },
+                        "recipe": {
+                            "label": "Recipe",
+                            "placeholder": "Select a recipe...",
+                            "required": "You must select a SEPAL recipe"
+                        },
+                        "band": {
+                            "label": "Band",
+                            "placeholder": "Select a band...",
+                            "tooltip": "Select the band containing the strata",
+                            "required": "You must select a band"
+                        },
+                        "scale": {
+                            "label": "Scale",
+                            "placeholder": "Scale...",
+                            "required": "You must specify the scale",
+                            "suffix": "meters",
+                            "tooltip": "The scale to use when calculating stratum areas and allocating the samples"
+                        },
+                        "strata": {
+                            "label": "Strata"
+                        }
+                    },
+                    "title": "Stratification",
+                    "tooltip": "Select if and/or how how to stratification the sampling"
+                },
+                "proportions": {
+                    "button": "ANT",
+                    "form": {
+                        "anticipationStrategy": {
+                            "label": "Anticipation strategy",
+                            "MANUAL": {
+                                "label": "Manual",
+                                "tooltip": "Manually enter the anticipated proportion of the reporting category you want to base your sampling design on"
+                            },
+                            "PROBABILITY": {
+                                "label": "Probability image",
+                                "tooltip": "Anticipate proportion based on a probability image. This could for instance be one of the probability bands of a SEPAL classification."
+                            },
+                            "CATEGORICAL": {
+                                "label": "Categorical image",
+                                "tooltip": "Anticipate proportion based on the areas of a class in a categorical image. Do not use this option when you have a stratification containing the reporting category as a stratum."
+                            }
+                        },
+                        "image": {
+                            "label": "Image",
+                            "placeholder": "Select an image...",
+                            "tooltip": "Select image to use for anticipating reporting category proportion"
+                        },
+                        "type": {
+                            "label": "Type",
+                            "ASSET": {
+                                "label": "Asset",
+                                "tooltip": "Use EE Asset for anticipating reporting category proportion"
+                            },
+                            "RECIPE": {
+                                "label": "Recipe",
+                                "tooltip": "Use SEPAL Recipe for anticipating reporting category proportion"
+                            },
+                            "required": "You must select an image type"
+                        },
+                        "asset": {
+                            "label": "EE Asset",
+                            "placeholder": "Select EE Asset...",
+                            "required": "You must select an EE asset"
+                        },
+                        "recipe": {
+                            "label": "Recipe",
+                            "placeholder": "Select a recipe...",
+                            "required": "You must select a SEPAL recipe"
+                        },
+                        "band": {
+                            "label": "Band",
+                            "placeholder": "Select a band...",
+                            "tooltip": "Select the band containing the strata",
+                            "required": "You must select a band"
+                        },
+                        "scale": {
+                            "label": "Scale",
+                            "placeholder": "Scale...",
+                            "required": "You must specify the scale",
+                            "suffix": "meters",
+                            "tooltip": "The scale to use when calculating stratum areas and allocating the samples"
+                        },
+                        "overallProportion": {
+                            "label": "Anticipated overall proportion",
+                            "placeholder": "Using value calculated from image",
+                            "tooltip": "...",
+                            "suffix": "%"
+                        },
+                        "strataProportion": {
+                            "label": "Anticipated proportion per stratum"
+                        }
+                    },
+                    "title": "Anticipate proportion",
+                    "tooltip": "Anticipate proportion of target reporting category. This is used in sample size calculations and when performing optimal sample allocation."
+                },
+                "sampleAllocation": {
+                    "button": "SMP",
+                    "form": {},
+                    "title": "Sample Allocation",
+                    "tooltip": "Decide sample size and how the samples should be allocated."
+                },
+                "sampleArrangement": {
+                    "button": "ARR",
+                    "form": {},
+                    "title": "Sample Arrangement",
+                    "tooltip": "Specify how the samples should be arranged with in each stratum."
+                }
+            },
+            "tabPlaceholder": "Sampling_design"
+        },
         "saveRecipe": {
             "error": "Sorry, but something went wrong when trying to save your recipe. If you close the window/tab, you will lose any changes you've made since last successful save. To make sure you have some record the data within this recipe, you might want to export it. Go to the top right recipe menu and select \"Export recipe\".",
             "form": {

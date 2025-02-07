@@ -19,7 +19,10 @@
         "sepal": "../../lib/js/shared",
         "uuid": "^11.0.3"
     },
-    "devDependencies": {},
+    "devDependencies": {
+        "jest": "^29.7.0",
+        "jest-expect-message": "^1.1.3"
+    },
     "imports": {
         "#sepal/*": "sepal/src/*.js",
         "#sepal/*.json": "sepal/src/*.json",

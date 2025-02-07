@@ -1,0 +1,52 @@
+.proportions {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    row-gap: .5rem;
+    font-size: small;
+}
+
+
+.row {
+    display: contents;
+}
+
+.headerGroups,
+.header,
+.footer {
+    display: contents;
+}
+
+.header>*,
+.headerGroups,
+.footer>* {
+    font-weight: bold;
+    background-color: var(--look-default-active-background-color) !important;
+    color: #808080;
+}
+
+.headerGroups>*,
+.header>*,
+.row>*,
+.footer>* {
+    --border-radius: var(--button-border-radius);
+    border-radius: var(--border-radius);
+    padding: .25rem .5rem;
+    background-color: hsla(0, 0%, 0%, .3);
+    opacity: .5;
+}
+
+.number {
+    text-align: right;
+}
+
+.stratum {
+    grid-column: 1 / span 2;
+}
+
+.reportingCategory {
+    grid-column: 3 / span 2;
+}
+
+.overall {
+    grid-column: 1 / span 2;
+}

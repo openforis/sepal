@@ -40,7 +40,7 @@ class _RecipeInput extends React.Component {
     }
 
     render() {
-        const {stream, input, label, placeholder, autoFocus} = this.props
+        const {stream, input, label, labelButtons, placeholder, autoFocus} = this.props
         const {all} = this.state
         const options = this.getOptions()
 
@@ -67,6 +67,7 @@ class _RecipeInput extends React.Component {
             <Form.Combo
                 input={input}
                 label={label || msg('widget.recipeInput.label')}
+                labelButtons={labelButtons}
                 placeholder={placeholder || msg('widget.recipeInput.placeholder')}
                 options={options}
                 autoFocus={autoFocus}
@@ -156,6 +157,7 @@ RecipeInput.propTypes = {
     input: PropTypes.object.isRequired,
     filter: PropTypes.func,
     label: PropTypes.any,
+    labelButtons: PropTypes.any,
     placeholder: PropTypes.string,
     onError: PropTypes.func,
     onLoaded: PropTypes.func,

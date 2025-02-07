@@ -15,6 +15,7 @@ import planetMosaic from './recipe/planetMosaic/planetMosaic'
 import radarMosaic from './recipe/radarMosaic/radarMosaic'
 import regression from './recipe/regression/regression'
 import remapping from './recipe/remapping/remapping'
+import samplingDesign from './recipe/samplingDesign/samplingDesign'
 import stack from './recipe/stack/stack'
 import timeSeries from './recipe/timeSeries/timeSeries'
 import unsupervisedClassification from './recipe/unsupervisedClassification/unsupervisedClassification'
@@ -41,4 +42,5 @@ export const registerRecipeTypes = () => {
     addRecipeType(phenology())
     addRecipeType(masking())
     addRecipeType(asset())
+    addRecipeType(samplingDesign())
 }

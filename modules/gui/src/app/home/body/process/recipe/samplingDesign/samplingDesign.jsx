@@ -6,14 +6,13 @@ import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
-import {Notifications} from '~/widget/notifications'
 
 import {recipeAccess} from '../../recipeAccess'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {getAvailableBands} from './bands'
-import {TimeSeriesToolbar} from './panels/timeSeriesToolbar'
-import {defaultModel, RecipeActions} from './timeSeriesRecipe'
+import {SamplingDesignToolbar} from './panels/samplingDesignToolbar'
+import {defaultModel, RecipeActions} from './samplingDesignRecipe'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -23,7 +22,7 @@ const mapRecipeToProps = recipe => ({
     savedLayers: selectFrom(recipe, 'layers')
 })
 
-class _TimeSeries extends React.Component {
+class _SamplingDesign extends React.Component {
     constructor(props) {
         super(props)
         const {savedLayers, recipeId} = props
@@ -35,41 +34,15 @@ class _TimeSeries extends React.Component {
         const {aoi} = this.props
         return (
             <Map>
-                <TimeSeriesToolbar/>
+                <SamplingDesignToolbar/>
                 <Aoi value={aoi}/>
             </Map>
         )
     }
-
-    componentDidMount() {
-        this.initClassification()
-    }
-
-    componentDidUpdate() {
-        this.initClassification()
-    }
-
-    initClassification() {
-        const {stream, classificationLegend, classificationRecipeId, loadRecipe$} = this.props
-        if (classificationRecipeId && !classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
-            stream('LOAD_CLASSIFICATION_RECIPE',
-                loadRecipe$(classificationRecipeId),
-                classification => {
-                    this.recipeActions.setClassification({
-                        classificationLegend: classification.model.legend,
-                        classifierType: classification.model.classifier.type
-                    })
-                },
-                error => Notifications.error({message: msg('process.timeSeries.panel.sources.classificationLoadError', {error}), error})
-            )
-        } else if (!classificationRecipeId && classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
-            this.recipeActions.setClassification({classificationLegend: null, classifierType: null})
-        }
-    }
 }
 
-const TimeSeries = compose(
-    _TimeSeries,
+const SamplingDesign = compose(
+    _SamplingDesign,
     recipe({defaultModel, mapRecipeToProps}),
     recipeAccess()
 )
@@ -80,15 +53,15 @@ const getDependentRecipeIds = recipe => {
 }
 
 export default () => ({
-    id: 'TIME_SERIES',
+    id: 'SAMPLING_DESIGN',
     labels: {
-        name: msg('process.timeSeries.create'),
-        creationDescription: msg('process.timeSeries.description'),
-        tabPlaceholder: msg('process.timeSeries.tabPlaceholder')
+        name: msg('process.samplingDesign.create'),
+        creationDescription: msg('process.samplingDesign.description'),
+        tabPlaceholder: msg('process.samplingDesign.tabPlaceholder')
     },
-    tags: ['TIME_SERIES'],
+    tags: [],
     components: {
-        recipe: TimeSeries
+        recipe: SamplingDesign
     },
     noImageOutput: true,
     getDependentRecipeIds,

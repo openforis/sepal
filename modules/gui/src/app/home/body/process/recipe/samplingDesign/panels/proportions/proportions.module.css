@@ -1,0 +1,17 @@
+.panel {
+    max-width: 34rem;
+}
+
+.band {
+    flex-grow: 1;
+    flex-shrink: 0;
+}
+
+.scale {
+    flex-grow: 0;
+    flex-shrink: 1;
+}
+
+.overallProportion {
+    width: 10rem;
+}
