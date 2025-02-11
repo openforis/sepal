@@ -106,7 +106,6 @@ class _RecipeList extends React.Component {
         return (
             <Layout type='horizontal' spacing='compact'>
                 {this.renderSearch()}
-                <Layout.Spacer/>
                 {this.renderEditButtons()}
             </Layout>
         )
@@ -117,10 +116,14 @@ class _RecipeList extends React.Component {
         return (
             <Layout type='horizontal' spacing='compact'>
                 <CreateRecipe recipeId={recipeId} recipeTypes={listRecipeTypes()}/>
-                <ProjectsButton/>
-                <SelectProject/>
+                <Layout type='horizontal' spacing='compact'>
+                    <ProjectsButton/>
+                    <SelectProject/>
+                </Layout>
                 <Layout.Spacer/>
-                {this.renderSortButtons()}
+                <Layout type='horizontal' spacing='compact' alignment='right'>
+                    {this.renderSortButtons()}
+                </Layout>
             </Layout>
         )
     }
