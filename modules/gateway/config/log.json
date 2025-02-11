@@ -3,10 +3,11 @@
     "categories": {
         "auth": "info",
         "gateway": "info",
-        "googleAccessToken": "info",
+        "googleAccessToken": "debug",
         "proxy": "error",
         "session": "info",
         "user": "info",
+        "userApi": "info",
         "userStore": "info",
         "websocket": "info",
         "websocket/client": "info",

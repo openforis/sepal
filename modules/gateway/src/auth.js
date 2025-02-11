@@ -1,8 +1,9 @@
-const {defer, firstValueFrom, from, of, switchMap} = require('rxjs')
+const {map, defer, firstValueFrom, from, of, switchMap} = require('rxjs')
 const {post$} = require('#sepal/httpClient')
 const modules = require('../config/modules')
 const {usernameTag, urlTag} = require('./tag')
-const {getRequestUser, setRequestUser, setSessionUsername} = require('./user')
+const {getRequestUser, setRequestUser, setSessionUsername, SEPAL_USER_HEADER} = require('./user')
+const {updateGoogleAccessToken$} = require('./userApi')
 const log = require('#sepal/log').getLogger('auth')
 
 const authenticationUrl = `http://${modules.user}/authenticate`
@@ -10,6 +11,7 @@ const authenticationUrl = `http://${modules.user}/authenticate`
 const AUTHENTICATION_SUCCEEDED = 200
 const AUTHENTICATION_FAILED = 401
 const AUTHENTICATION_ERROR = 500
+const REFRESH_IF_EXPIRES_IN_MINUTES = 10
 
 const Auth = userStore => {
     const authMiddleware = async (req, res, next) => {
@@ -20,7 +22,44 @@ const Auth = userStore => {
                 const header = req.get('Authorization')
                 return header && header.toLowerCase().startsWith('basic ')
             }
+
+            const userWithGoogleAccessToken$ = user => {
+                res.set(SEPAL_USER_HEADER, JSON.stringify(user))
+                return from(userStore.setUser(user))
+            }
+
+            const refreshGoogleTokens$ = () => {
+                const user = getRequestUser(req)
+                log.debug(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} Refreshing Google tokens for user`)
+                return updateGoogleAccessToken$(user).pipe(
+                    switchMap(user => user
+                        ? userWithGoogleAccessToken$(user)
+                        : of(true)
+                    )
+                )
+            }
     
+            const shouldRefreshGoogleTokens = user => {
+                const expiresInMinutes = (user.googleTokens.accessTokenExpiryDate - new Date().getTime()) / 60 / 1000
+                log.trace(() => `${usernameTag(user.username)} ${urlTag(req.originalUrl)} Google tokens expires in ${expiresInMinutes} minutes`)
+                return expiresInMinutes < REFRESH_IF_EXPIRES_IN_MINUTES
+            }
+
+            const verifyGoogleTokens$ = () => {
+                const user = getRequestUser(req)
+                if (user?.googleTokens?.accessTokenExpiryDate) {
+                    if (shouldRefreshGoogleTokens(user)) {
+                        return refreshGoogleTokens$()
+                    } else {
+                        log.isTrace() && log.trace(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} No need to refresh Google tokens for user - more than ${REFRESH_IF_EXPIRES_IN_MINUTES} minutes left until expiry`)
+                        return of(true)
+                    }
+                } else {
+                    log.isTrace() && log.trace(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} No Google tokens to verify for user`)
+                    return of(true)
+                }
+            }
+
             const authenticated$ = (username, response) => {
                 const {body} = response
                 log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticated user`)
@@ -80,7 +119,9 @@ const Auth = userStore => {
             })
     
             const statusCode$ = isAuthenticated()
-                ? of(AUTHENTICATION_SUCCEEDED)
+                ? verifyGoogleTokens$().pipe(
+                    map(success => success ? AUTHENTICATION_SUCCEEDED : AUTHENTICATION_FAILED)
+                )
                 : hasBasicAuthHeaders()
                     ? authenticate$
                     : send401$

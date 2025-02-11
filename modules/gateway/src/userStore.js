@@ -26,13 +26,13 @@ const UserStore = redis => {
         return await redis.get(userKey(username))
             .then(serializedUser => {
                 const user = deserialize(serializedUser)
-                log.debug(`${userTag(username)} not found`)
+                log.trace(`${userTag(username)} retrieved`)
                 return user
             })
     }
 
     const setUser = async user => {
-        log.trace(`${userTag(user.username)} save`)
+        log.trace(`${userTag(user.username)} saving`, user.googleTokens)
         return await redis.set(userKey(user.username), serialize(user))
             .then(result => {
                 if (result === 'OK') {
@@ -64,7 +64,7 @@ const UserStore = redis => {
     const updateUser = async req => {
         const user = getRequestUser(req)
         if (user) {
-            log.trace(`${userTag(user.username)} update`)
+            log.debug(`${userTag(user.username)} updating`, user.googleTokens)
             await firstValueFrom(
                 get$(currentUserUrl, {
                     headers: {[SEPAL_USER_HEADER]: JSON.stringify(user)}
