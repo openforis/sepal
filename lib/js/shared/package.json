@@ -30,10 +30,11 @@
         "xmlhttprequest": "npm:@lpaolini/xmlhttprequest@^1.8.1"
     },
     "devDependencies": {
+        "jest-expect-message": "@alex_neo/jest-expect-message"
     },
     "jest": {
         "setupFilesAfterEnv": [
-            "@alex_neo/jest-expect-message"
+            "jest-expect-message"
         ]
     },
     "imports": {
