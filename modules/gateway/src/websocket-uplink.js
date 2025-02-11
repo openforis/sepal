@@ -27,10 +27,14 @@ const initializeUplink = ({servers, clients, userStore: {getUser, userUpdate$}})
     const moduleReady = (module, ready) => {
         clients.broadcast({modules: {update: {[module]: ready}}})
         if (ready) {
+            clients.forEachUser(username =>
+                getUser(username).then(
+                    user => servers.send(module, {event: USER_UP, user})
+                )
+            )
             clients.forEach(({username, clientId}) =>
                 getUser(username).then(
                     user => {
-                        servers.send(module, {event: USER_UP, user})
                         servers.send(module, {event: CLIENT_UP, user, clientId})
                     }
                 )
@@ -51,13 +55,17 @@ const initializeUplink = ({servers, clients, userStore: {getUser, userUpdate$}})
             log.info(`${moduleTag(module)} connected`)
             moduleReady(module, true)
         } else if (data) {
-            const {clientId, subscriptionId} = other
-            if (log.isTrace()) {
-                log.trace(`Forwarding message to ${clientTag('', clientId)}:`, data)
+            const {username, clientId, subscriptionId} = other
+            if (clientId) {
+                if (log.isTrace()) {
+                    log.trace(`Forwarding message to ${clientTag(username, clientId)}:`, data)
+                } else {
+                    log.debug(`Forwarding message to ${clientTag(username, clientId)}`)
+                }
+                clients.send(clientId, {subscriptionId, data})
             } else {
-                log.debug(`Forwarding message to ${clientTag('', clientId)}`)
+                clients.sendByUsername({module, username}, {data})
             }
-            clients.send(clientId, {subscriptionId, data})
         } else {
             log.warn(`Received unexpected message from ${moduleTag(module)}:`, msg)
         }

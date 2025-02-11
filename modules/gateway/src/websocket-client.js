@@ -1,6 +1,6 @@
 const {WebSocket} = require('ws')
 
-const {clientTag, userTag} = require('./tag')
+const {clientTag} = require('./tag')
 
 const log = require('#sepal/log').getLogger('websocket/client')
 
@@ -54,8 +54,13 @@ const Clients = () => {
     }
 
     const getSubscriptions = clientId => {
-        const {subscriptions} = get(clientId)
-        return subscriptions
+        try {
+            const {subscriptions} = get(clientId)
+            return subscriptions
+        } catch (error) {
+            log.debug(`Cannot get subscriptions - ${error.message}`)
+            return {}
+        }
     }
 
     const send = (clientId, message) => {
@@ -78,13 +83,18 @@ const Clients = () => {
         )
     }
 
-    const sendByUsername = (username, message) => {
-        log.debug(`Sending message to ${userTag(username)}`, message)
-        forEach(client => {
-            if (client.username === username) {
-                send(client.clientId, message)
-            }
-        })
+    const sendByClientId = ({module, clientId}, message) => {
+        Object.entries(getSubscriptions(clientId))
+            .filter(([, currentModule]) => !module || currentModule === module)
+            .map(([subscriptionId]) => subscriptionId)
+            .forEach(subscriptionId => send(clientId, {subscriptionId, ...message}))
+    }
+
+    const sendByUsername = ({module, username}, message) => {
+        Object.entries(clients)
+            .filter(([_, {username: currentUsername}]) => !username || currentUsername === username)
+            .map(([clientId]) => clientId)
+            .forEach(clientId => sendByClientId({module, clientId}, message))
     }
 
     const forEach = callback => {
@@ -94,7 +104,13 @@ const Clients = () => {
         )
     }
 
-    return {add, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, sendByUsername}
+    const forEachUser = callback => {
+        log.debug('Iterating users')
+        const usernames = [...new Set(Object.values(clients).map(({username}) => username))]
+        return usernames.forEach(username => callback(username))
+    }
+
+    return {add, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendByClientId}
 }
 
 module.exports = {Clients}
