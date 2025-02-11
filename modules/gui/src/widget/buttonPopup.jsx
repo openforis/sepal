@@ -49,11 +49,12 @@ class _ButtonPopup extends React.Component {
     }
 
     renderSingleButton() {
-        const {disabled, chromeless, shape, look, icon, size, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
+        const {disabled, chromeless, shape, look, icon, size, tooltip, tooltipPlacement, width, keybinding, onMouseOver, onMouseOut} = this.props
+        const {showPopup} = this.state
         return (
             <Button
                 ref={this.buttonRef}
-                chromeless={chromeless}
+                chromeless={chromeless && !showPopup}
                 shape={shape}
                 look={look}
                 icon={icon}
@@ -67,12 +68,13 @@ class _ButtonPopup extends React.Component {
                 disabled={disabled}
                 label={this.getLabel()}
                 tail={this.getChevron()}
+                keybinding={keybinding}
             />
         )
     }
 
     renderMultiButton() {
-        const {disabled, chromeless, shape, look, icon, size, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
+        const {disabled, chromeless, shape, look, icon, size, tooltip, tooltipPlacement, width, keybinding, onMouseOver, onMouseOut} = this.props
         return (
             <ButtonGroup
                 ref={this.buttonRef}
@@ -104,6 +106,7 @@ class _ButtonPopup extends React.Component {
                     width={width}
                     onClick={this.togglePopup}
                     disabled={disabled}
+                    keybinding={keybinding}
                 />
             </ButtonGroup>
         )
@@ -208,6 +211,7 @@ ButtonPopup.propTypes = {
     disabled: PropTypes.any,
     hPlacement: PropTypes.any,
     icon: PropTypes.string,
+    keybinding: PropTypes.any,
     label: PropTypes.any,
     look: PropTypes.string,
     noChevron: PropTypes.any,
