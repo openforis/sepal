@@ -1,0 +1,46 @@
+services:
+  user-assets-redis:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
+    image: "redis:6"
+    container_name: user-assets-redis
+    volumes:
+      - "${SEPAL_DATA_DIR}/user-assets-redis:/data"
+    networks:
+      - sepal
+    restart: always
+
+  user-assets:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
+    build:
+      context: ../..
+      dockerfile: ./modules/user-assets/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/user-assets:${SEPAL_VERSION:-latest}"
+    container_name: user-assets
+    init: true
+    volumes:
+      - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      POLL_INTERVAL_MS: "3600000"
+    networks:
+      - sepal
+    healthcheck:
+      test: bash -c "exec 6<> /dev/tcp/localhost/5999"
+      timeout: 60s
+      interval: 1s
+      retries: 60
+    restart: always
+    ulimits:
+      core: 0
+
+networks:
+  sepal:
+    external: true

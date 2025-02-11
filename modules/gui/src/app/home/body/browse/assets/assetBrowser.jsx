@@ -1,13 +1,11 @@
 import _ from 'lodash'
 import moment from 'moment'
 import {orderBy} from 'natural-orderby'
-import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
 
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
-import {withEnableDetector} from '~/enabled'
 import format from '~/format'
 import {getLogger} from '~/log'
 import lookStyles from '~/style/look.module.css'
@@ -23,45 +21,46 @@ import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {SortButtons} from '~/widget/sortButtons'
 import {ToggleButton} from '~/widget/toggleButton'
 
-import {FileTree} from './fileTree'
+import {AssetTree} from './assetTree'
 
 const log = getLogger('browse')
 
-import styles from './fileBrowser.module.css'
+import {ButtonPopup} from '~/widget/buttonPopup'
+import {Input} from '~/widget/input'
+
+import styles from './assetBrowser.module.css'
 
 const ANIMATION_DURATION_MS = 1000
 
-class _FileBrowser extends React.Component {
+class _AssetBrowser extends React.Component {
 
-    userFiles = api.userFiles.ws()
+    userAssets = api.userAssets.ws()
 
     state = {
-        tree: FileTree.createRoot(),
-        showDotFiles: false,
+        tree: AssetTree.create(),
         splitDirs: false,
-        sorting: {sortingOrder: 'name', sortingDirection: 1}
+        sorting: {sortingOrder: 'name', sortingDirection: 1},
+        busy: false
     }
     
     constructor() {
         super()
-        this.onUpdate = this.onUpdate.bind(this)
+        this.reload = this.reload.bind(this)
         this.removeSelected = this.removeSelected.bind(this)
         this.clearSelection = this.clearSelection.bind(this)
-        this.toggleDotFiles = this.toggleDotFiles.bind(this)
         this.toggleSplitDirs = this.toggleSplitDirs.bind(this)
         this.setSorting = this.setSorting.bind(this)
+        this.renderFolderInput = this.renderFolderInput.bind(this)
     }
 
     componentDidMount() {
-        const {enableDetector: {onChange}} = this.props
-        onChange(enabled => this.enabled(enabled))
         this.subscribeToUpdates()
     }
     
     subscribeToUpdates() {
         const {addSubscription} = this.props
         addSubscription(
-            this.userFiles.downstream$.subscribe({
+            this.userAssets.downstream$.subscribe({
                 next: msg => this.onMessage(msg),
                 error: error => log.error('downstream$ error', error),
                 complete: () => log.error('downstream$ complete')
@@ -69,120 +68,112 @@ class _FileBrowser extends React.Component {
         )
     }
 
-    monitor(paths, options = {}) {
-        this.userFiles.upstream$.next({
-            monitor: paths.map(FileTree.toStringPath),
-            ...options
-        })
+    reload() {
+        this.userAssets.upstream$.next({reload: true})
+        // this.setState({busy: true})
     }
 
-    unmonitor(paths = [[]]) {
-        this.userFiles.upstream$.next({
-            unmonitor: paths.map(FileTree.toStringPath)
-        })
+    create(path) {
+        this.userAssets.upstream$.next({createFolder: path})
     }
 
     remove(paths) {
-        this.userFiles.upstream$.next({
-            remove: paths.map(FileTree.toStringPath)
-        })
+        this.userAssets.upstream$.next({remove: paths})
     }
 
-    reset() {
-        this.setState({tree: FileTree.createRoot()})
+    onMessage({_ready, data}) {
+        data !== undefined && this.onData(data)
     }
 
-    onMessage({ready, data}) {
-        ready !== undefined && this.onReady(ready)
-        data !== undefined && this.onUpdate(data)
+    onData({tree, node, busy}) {
+        tree !== undefined && this.onTree(tree)
+        node !== undefined && this.onNode(node)
+        busy !== undefined && this.onBusy(busy)
     }
 
-    onReady(ready) {
-        const {enableDetector: {isEnabled}} = this.props
-        if (ready && isEnabled()) {
-            this.monitor([[]], {reset: true})
-        }
-    }
-
-    onUpdate({path, items}) {
+    onTree(treeUpdate) {
         const {tree} = this.state
-        this.setState({tree: FileTree.updateItem(tree, FileTree.fromStringPath(path), items)})
+        this.setState({tree: AssetTree.updateTree(tree, treeUpdate)})
     }
 
-    enabled(enabled) {
-        if (enabled) {
-            this.monitor(this.getOpenDirectories(), {reset: true})
-        } else {
-            this.unmonitor()
-        }
+    onNode(nodeUpdate) {
+        const {tree} = this.state
+        this.setState({tree: AssetTree.updateTree(tree, nodeUpdate)})
+    }
+
+    onBusy(busy) {
+        this.setState({busy})
     }
 
     getOpenDirectories(path = []) {
         const {tree} = this.state
-        return FileTree.getOpenDirectories(tree, path)
+        return AssetTree.getOpenDirectories(tree, path)
     }
 
     expandDirectory(node) {
         const {tree} = this.state
-        const path = FileTree.getPath(node)
-        this.setState({tree: FileTree.expandDirectory(tree, path)}, () => {
-            this.monitor(this.getOpenDirectories(path))
-        })
+        const path = AssetTree.getPath(node)
+        this.setState({tree: AssetTree.expandDirectory(tree, path)})
     }
 
     collapseDirectory(node) {
         const {tree} = this.state
-        const path = FileTree.getPath(node)
-        this.setState({tree: FileTree.collapseDirectory(tree, path)})
-        this.unmonitor([path])
+        const path = AssetTree.getPath(node)
+        this.setState({tree: AssetTree.collapseDirectory(tree, path)})
     }
 
     toggleSelected(node) {
-        FileTree.isSelected(node)
-            ? this.deselectItem(node)
-            : this.selectItem(node)
+        if (!AssetTree.isUnconfirmed(node)) {
+            AssetTree.isSelected(node)
+                ? this.deselectItem(node)
+                : this.selectItem(node)
+        }
     }
 
     selectItem(node) {
         const {tree} = this.state
-        const path = FileTree.getPath(node)
-        this.setState({tree: FileTree.selectItem(tree, path)})
+        const path = AssetTree.getPath(node)
+        this.setState({tree: AssetTree.selectItem(tree, path)})
     }
 
     deselectItem(node) {
         const {tree} = this.state
-        const path = FileTree.getPath(node)
-        this.setState({tree: FileTree.deselectItem(tree, path)})
+        const path = AssetTree.getPath(node)
+        this.setState({tree: AssetTree.deselectItem(tree, path)})
     }
 
     clearSelection() {
         const {tree} = this.state
-        this.setState({tree: FileTree.deselectDescendants(tree, [])})
+        this.setState({tree: AssetTree.deselectDescendants(tree, [])})
+    }
+
+    createFolder(folder) {
+        const {tree} = this.state
+        const {directories} = AssetTree.getSelectedItems(tree)
+        const path = [...directories[0], folder]
+        this.setState({tree: AssetTree.createFolder(tree, path)})
+        this.create(path)
     }
 
     removePaths(paths) {
         const {tree} = this.state
-        this.setState({tree: FileTree.setRemoving(tree, paths)})
+        this.setState({tree: AssetTree.setRemoving(tree, paths)})
         this.remove(paths)
     }
 
     removeSelected() {
         const {tree} = this.state
-        const {files, directories} = FileTree.getSelectedItems(tree)
+        const {files, directories} = AssetTree.getSelectedItems(tree)
         this.removePaths([...directories, ...files])
     }
 
     countSelectedItems() {
         const {tree} = this.state
-        const {files, directories} = FileTree.getSelectedItems(tree)
+        const {files, directories} = AssetTree.getSelectedItems(tree)
         return {
             files: files.length,
             directories: directories.length
         }
-    }
-
-    toggleDotFiles() {
-        this.setState(({showDotFiles}) => ({showDotFiles: !showDotFiles}))
     }
 
     toggleSplitDirs() {
@@ -195,18 +186,9 @@ class _FileBrowser extends React.Component {
     }
 
     renderOptionsToolbar() {
-        const {showDotFiles, splitDirs, sorting: {sortingOrder, sortingDirection}} = this.state
+        const {splitDirs, sorting: {sortingOrder, sortingDirection}} = this.state
         return (
             <ButtonGroup layout='horizontal' spacing='tight'>
-                <ToggleButton
-                    chromeless
-                    shape='pill'
-                    label={msg('browse.controls.dotFiles.label')}
-                    tooltip={msg(`browse.controls.dotFiles.${showDotFiles ? 'hide' : 'show'}.tooltip`)}
-                    tooltipPlacement='bottom'
-                    selected={showDotFiles}
-                    onChange={this.toggleDotFiles}
-                />
                 <ToggleButton
                     chromeless
                     shape='pill'
@@ -234,16 +216,16 @@ class _FileBrowser extends React.Component {
     }
 
     renderNodeInfo(node) {
-        return FileTree.isDirectory(node)
+        return AssetTree.isDirectory(node)
             ? this.renderDirectoryInfo(node)
             : this.renderFileInfo(node)
     }
 
     renderFileInfo(node) {
-        const mtime = FileTree.getMTime(node)
+        const updateTime = AssetTree.getUpdateTime(node)
         const info = [
             format.fileSize(node.size, {unit: 'bytes'}),
-            moment(mtime).fromNow()
+            moment(updateTime).fromNow()
         ].join(', ')
         return (
             <span className={styles.fileInfo}>
@@ -253,32 +235,33 @@ class _FileBrowser extends React.Component {
     }
     
     renderDirectoryInfo(node) {
-        const mtime = FileTree.getMTime(node)
+        const updateTime = AssetTree.getUpdateTime(node)
         return (
             <span className={styles.fileInfo}>
-                {moment(mtime).fromNow()}
+                {moment(updateTime).fromNow()}
             </span>
         )
     }
 
-    renderIcon(key, node) {
-        return FileTree.isDirectory(node)
-            ? this.renderDirectoryIcon(node)
-            : this.renderFileIcon(key)
+    renderIcon(node) {
+        return AssetTree.isRemoving(node) || AssetTree.isUnconfirmed(node)
+            ? this.renderSpinner()
+            : AssetTree.isDirectory(node)
+                ? this.renderDirectoryIcon(node)
+                : this.renderFileIcon(node)
     }
 
     toggleDirectory(e, node) {
         e.stopPropagation()
-        if (FileTree.isOpened(node)) {
+        if (AssetTree.isOpened(node)) {
             this.collapseDirectory(node)
-        } else {
+        } else if (!AssetTree.isUnconfirmed(node)) {
             this.expandDirectory(node)
         }
     }
 
     renderDirectoryIcon(node) {
-        const opened = FileTree.isOpened(node)
-        const busy = FileTree.isLoading(node)
+        const opened = AssetTree.isOpened(node)
         return (
             <span
                 className={[styles.icon, styles.directory].join(' ')}
@@ -286,19 +269,21 @@ class _FileBrowser extends React.Component {
                 <Icon
                     name={'chevron-right'}
                     className={opened ? styles.expanded : styles.collapsed}
-                    attributes={{
-                        fade: busy
-                    }}
                 />
             </span>
         )
     }
 
-    renderFileIcon(key) {
-        const isImage = ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(key))
+    renderFileIcon(node) {
+        const type = AssetTree.getType(node)
+        const TYPE = {
+            Image: 'image',
+            ImageCollection: 'images',
+            Table: 'table'
+        }
         return (
             <span className={styles.icon}>
-                <Icon name={isImage ? 'file-image' : 'file'}/>
+                <Icon name={TYPE[type] || 'file'}/>
             </span>
         )
     }
@@ -312,8 +297,8 @@ class _FileBrowser extends React.Component {
     }
 
     renderList(node) {
-        const items = FileTree.getChildNodes(node)
-        return items && FileTree.isOpened(node) ? (
+        const items = AssetTree.getChildNodes(node)
+        return items && AssetTree.isOpened(node) ? (
             <ul>
                 {this.renderListItems(items)}
             </ul>
@@ -321,23 +306,22 @@ class _FileBrowser extends React.Component {
     }
 
     renderListItems(items) {
-        const {showDotFiles} = this.state
         const sorter = this.getSorter()
         return items
             ? _.chain(items)
                 .pickBy(file => file)
                 .toPairs()
                 .thru(sorter)
-                .filter(([fileName]) => showDotFiles || !fileName.startsWith('.'))
                 .map(([key, node]) => this.renderListItem(key, node))
                 .value()
             : null
     }
 
     renderListItem(key, node) {
-        const selected = FileTree.isSelected(node)
-        const adding = FileTree.isAdding(node)
-        const removing = FileTree.isRemoving(node)
+        const selected = AssetTree.isSelected(node)
+        const adding = AssetTree.isUnconfirmed(node)
+        const removing = AssetTree.isRemoving(node)
+        const busy = adding || removing
         return (
             <li key={key}>
                 <div
@@ -349,12 +333,12 @@ class _FileBrowser extends React.Component {
                         removing ? styles.removing : null
                     ].join(' ')}
                     style={{
-                        '--depth': FileTree.getDepth(node),
+                        '--depth': AssetTree.getDepth(node),
                         '--animation-duration-ms': ANIMATION_DURATION_MS
                     }}
-                    onClick={() => this.toggleSelected(node)}
+                    onClick={busy ? null : () => this.toggleSelected(node)}
                 >
-                    {this.renderIcon(key, node)}
+                    {this.renderIcon(node)}
                     <span className={styles.fileName}>{key}</span>
                     {this.renderNodeInfo(node)}
                 </div>
@@ -371,7 +355,7 @@ class _FileBrowser extends React.Component {
         }
 
         const dirSorter = {
-            order: splitDirs ? ([_, node]) => FileTree.isDirectory(node) : null,
+            order: splitDirs ? ([_, node]) => AssetTree.isDirectory(node) : null,
             direction: splitDirs ? 'desc' : null
         }
 
@@ -381,7 +365,7 @@ class _FileBrowser extends React.Component {
         }
 
         const dateSorter = {
-            order: ([_, node]) => FileTree.getMTime(node),
+            order: ([_, node]) => AssetTree.getUpdateTime(node),
             direction: orderMap[-sortingDirection]
         }
 
@@ -408,31 +392,42 @@ class _FileBrowser extends React.Component {
     }
 
     renderActionButtons() {
-        const {tree} = this.state
+        const {busy} = this.state
         const {files, directories} = this.countSelectedItems()
         const nothingSelected = files === 0 && directories === 0
-        const oneFileSelected = files === 1 && directories === 0
-        const {files: selectedFiles} = FileTree.getSelectedItems(tree)
-        const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
-        const downloadUrl = selectedFile && api.userFiles.downloadUrl(selectedFile)
-        const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
+        const oneDirectorySelected = files === 0 && directories === 1
         return (
             <ButtonGroup layout='horizontal'>
                 <Button
                     chromeless
                     shape='circle'
-                    icon='download'
-                    tooltip={msg('browse.controls.download.tooltip')}
-                    tooltipPlacement='bottom'
-                    disabled={!oneFileSelected}
-                    downloadUrl={downloadUrl}
-                    downloadFilename={downloadFilename}
+                    icon='rotate'
+                    iconAttributes={{spin: busy}}
+                    tooltip={msg('browse.controls.reload.tooltip')}
+                    tooltipPlacement='top'
+                    disabled={busy}
+                    keybinding='Shift+R'
+                    onClick={this.reload}
                 />
+                <ButtonPopup
+                    chromeless
+                    shape='circle'
+                    icon='plus'
+                    noChevron
+                    tooltip={msg('browse.controls.createFolder.tooltip')}
+                    tooltipPlacement='top'
+                    vPlacement='below'
+                    hPlacement='over-right'
+                    disabled={!oneDirectorySelected}
+                    keybinding='Shift+A'
+                >
+                    {this.renderFolderInput}
+                </ButtonPopup>
                 <RemoveButton
                     chromeless
                     shape='circle'
                     tooltip={msg('browse.controls.remove.tooltip')}
-                    tooltipPlacement='bottom'
+                    tooltipPlacement='top'
                     disabled={nothingSelected}
                     onRemove={this.removeSelected}
                 />
@@ -441,11 +436,28 @@ class _FileBrowser extends React.Component {
                     shape='circle'
                     icon='rotate-left'
                     tooltip={msg('browse.controls.clearSelection.tooltip')}
-                    tooltipPlacement='bottom'
+                    tooltipPlacement='top'
                     disabled={nothingSelected}
+                    keybinding='Shift+C'
                     onClick={this.clearSelection}
                 />
             </ButtonGroup>
+        )
+    }
+
+    renderFolderInput(close) {
+        return (
+            <Input
+                autoFocus
+                placeholder={msg('Enter folder name')}
+                onAccept={folder => {
+                    if (folder.length) {
+                        this.createFolder(folder)
+                        close()
+                    }
+                }}
+                onCancel={close}
+            />
         )
     }
 
@@ -491,12 +503,11 @@ class _FileBrowser extends React.Component {
     }
 }
 
-export const FileBrowser = compose(
-    _FileBrowser,
-    withEnableDetector(),
+export const AssetBrowser = compose(
+    _AssetBrowser,
     withSubscriptions()
 )
 
-FileBrowser.propTypes = {
+AssetBrowser.propTypes = {
     id: PropTypes.string
 }

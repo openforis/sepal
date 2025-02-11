@@ -155,11 +155,17 @@
     },
     "browse": {
         "controls": {
+            "reload": {
+                "tooltip": "Reload"
+            },
             "clearSelection": {
                 "tooltip": "Clear selection"
             },
             "download": {
                 "tooltip": "Download selected item"
+            },
+            "createFolder": {
+                "tooltip": "Create folder"
             },
             "remove": {
                 "tooltip": "Remove selected items"
@@ -4726,6 +4732,10 @@
             "missingScopes": {
                 "title": "Google Account reconnection required",
                 "message": "The permissions you have previously authorized on your Google account don't match with the ones currently required by SEPAL. Please, reconnect your Google account."
+            },
+            "revoked": {
+                "title": "Google Account reconnection required",
+                "message": "SEPAL is unable to use your Google account. Please, reconnect your Google account."
             },
             "unavailable": {
                 "title": "Earth Engine is not available",

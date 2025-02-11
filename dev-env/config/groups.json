@@ -14,6 +14,7 @@
         "ssh-gateway",
         "terminal",
         "user",
+        "user-assets",
         "user-files",
         "user-storage"
     ],
@@ -52,6 +53,7 @@
         "sys-monitor",
         "task",
         "terminal",
+        "user-assets",
         "user-files",
         "user-storage"
     ]
