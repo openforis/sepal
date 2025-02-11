@@ -44,8 +44,9 @@ const eeNotAvailableError$ = () => {
     })
     return of(null)
 }
-const missingOAuthScopesError$ = () => {
-    return revokeGoogleAccess$().pipe(
+
+const missingOAuthScopesError$ = () =>
+    revokeGoogleAccess$().pipe(
         tap(() => {
             userDetailsHint(true)
             Notifications.error({
@@ -56,7 +57,7 @@ const missingOAuthScopesError$ = () => {
             })
         })
     )
-}
+
 const unspecifiedError$ = () => {
     Notifications.error({
         title: msg('user.googleAccount.unspecifiedError.title'),
@@ -81,8 +82,8 @@ export const logout$ = () =>
         tap(() => document.location = '/' /* force full state reset*/)
     )
 
-export const resetPassword$ = ({token, username, password, type, recaptchaToken}) => {
-    return api.user.resetPassword$({token, password, recaptchaToken}).pipe(
+export const resetPassword$ = ({token, username, password, type, recaptchaToken}) =>
+    api.user.resetPassword$({token, password, recaptchaToken}).pipe(
         tap(() =>
             publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')
         ),
@@ -93,7 +94,6 @@ export const resetPassword$ = ({token, username, password, type, recaptchaToken}
             api.user.invalidateOtherSessions$()
         )
     )
-}
 
 export const updateUser = user => {
     publishCurrentUserEvent(user)
@@ -116,7 +116,7 @@ export const revokeGoogleAccess$ = () =>
         tap(() => publishEvent('revoked_google_access')),
         switchMap(() => loadUser$())
     )
-
+    
 export const requestUserAccess$ = () =>
     api.user.getGoogleAccessRequestUrl$(window.location).pipe(
         tap(() => publishEvent('requested_google_access')),
