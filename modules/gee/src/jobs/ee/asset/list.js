@@ -16,10 +16,7 @@ const worker$ = ({id}, {sepalUser: {username, googleTokens}}) => {
     const assets$ = parentId =>
         ee.listAssets$(parentId).pipe(
             map(assets =>
-                assets.map(({id, type}) => ({
-                    id,
-                    type
-                }))
+                assets.map(({id, type, updateTime}) => ({id, type, updateTime}))
             )
         )
 
