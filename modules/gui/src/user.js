@@ -67,9 +67,9 @@ const unspecifiedError$ = () => {
     return of(null)
 }
 
-export const login$ = ({username, password}) => {
+export const login$ = ({username, password}, recaptchaToken) => {
     resetInvalidCredentials()
-    return api.user.login$({username, password}).pipe(
+    return api.user.login$({username, password, recaptchaToken}).pipe(
         tap(user => {
             publishEvent(user ? 'login' : 'login_failed')
             publishCurrentUserEvent(user)
