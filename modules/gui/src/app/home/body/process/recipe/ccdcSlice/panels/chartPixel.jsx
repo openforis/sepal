@@ -158,8 +158,12 @@ class _ChartPixel extends React.Component {
                 segments => this.setState({segments}),
                 error => {
                     this.close()
+                    const errorMessage = error?.response?.messageKey
+                        ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                        : error
                     Notifications.error({
-                        message: msg('process.ccdc.chartPixel.loadFailed', {error})
+                        message: msg('process.ccdc.chartPixel.loadFailed'),
+                        error: errorMessage
                     })
                 }
             )

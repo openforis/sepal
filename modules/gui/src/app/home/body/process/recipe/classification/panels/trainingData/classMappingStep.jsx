@@ -113,13 +113,14 @@ class _ClassMappingStep extends Component {
                 size='x-small'
                 noChevron
                 vPlacement='below'
-                hPlacement='over-left'
+                hPlacement='over-left-or-over-right'
                 tooltip={msg('process.classification.panel.trainingData.classMapping.addColumns.tooltip')}>
                 {onBlur => (
                     <Combo
                         alignment='left'
                         placeholder={msg('process.classification.panel.trainingData.classMapping.addColumns.placeholder')}
                         options={valueOptions}
+                        hPlacement='over-left-or-over-right'
                         disabled={!valueOptions.length}
                         stayOpenOnSelect
                         autoOpen

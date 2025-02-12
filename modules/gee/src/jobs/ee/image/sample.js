@@ -1,12 +1,12 @@
 const {job} = require('#gee/jobs/job')
-const ee = require('sepal/src/ee')
-const {EEException} = require('#sepal/ee/exception')
 
 const worker$ = ctx => {
     const {recipeToSample, count, scale, classBand, recipe, bands} = ctx
     const ImageFactory = require('#sepal/ee/imageFactory')
     const {expand, forkJoin, last, map, switchMap, takeWhile} = require('rxjs')
     const {getRows$} = require('#sepal/ee/table')
+    const ee = require('sepal/src/ee')
+    const {EEException} = require('#sepal/ee/exception')
     const log = require('#sepal/log').getLogger('ee')
 
     return forkJoin({

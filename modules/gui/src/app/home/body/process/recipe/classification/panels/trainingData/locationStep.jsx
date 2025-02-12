@@ -87,6 +87,14 @@ class _LocationStep extends Component {
         if (this.containsColumns('.geo')) { // Earth Engine
             locationType.set('GEO_JSON')
             geoJsonColumn.set('.geo')
+        } else if (this.containsColumns('lon', 'lat')) { // generic CSV and CEO sample
+            locationType.set('XY_COLUMNS')
+            xColumn.set('lon')
+            yColumn.set('lat')
+        } else if (this.containsColumns('center_lon', 'center_lat')) { // Collect Earth Online
+            locationType.set('XY_COLUMNS')
+            xColumn.set('center_lon')
+            yColumn.set('center_lat')
         } else if (this.containsColumns('CENTER_LON', 'CENTER_LAT')) { // Collect Earth Online
             locationType.set('XY_COLUMNS')
             xColumn.set('CENTER_LON')

@@ -78,7 +78,7 @@ class _Button extends React.Component {
     }
 
     classNames() {
-        const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle, hint, dimmed,
+        const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle, hint, busy, dimmed,
             alignment, width, onClickHold, disableTransitions, buttonGroup: {joinLeft, joinRight} = {}} = this.props
         return className ? className : [
             styles.button,
@@ -101,6 +101,7 @@ class _Button extends React.Component {
             disableTransitions ? lookStyles.noTransitions : null,
             onClickHold ? styles.hold : null,
             hint ? styles.hint : null,
+            busy ? styles.busy : null,
             additionalClassName
         ].join(' ')
     }
@@ -297,12 +298,12 @@ class _Button extends React.Component {
     }
 
     renderIcon() {
-        const {busy, icon, iconType, iconVariant, iconDimmed, iconClassName, iconAttributes, buttonGroup: {dimmed: buttonGroupDimmed} = {}} = this.props
+        const {icon, iconType, iconVariant, iconDimmed, iconClassName, iconAttributes, buttonGroup: {dimmed: buttonGroupDimmed} = {}} = this.props
         return React.isValidElement(icon)
             ? icon
             : (
                 <Icon
-                    name={busy ? 'spinner' : icon}
+                    name={icon}
                     type={iconType}
                     variant={iconVariant}
                     dimmed={iconDimmed || buttonGroupDimmed}
