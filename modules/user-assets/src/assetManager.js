@@ -223,7 +223,7 @@ const createAssetManager = ({out$, stop$}) => {
                     switchMap(user =>
                         deleteAsset$(user, path.join('/')).pipe(
                             tap({
-                                complete: () => log.info(`${userTag(username)} assets removed`)
+                                complete: () => log.info(`${userTag(username)} removed:`, path.join('/'))
                             }),
                             catchError(error => {
                                 log.warn(`${userTag(username)} assets failed`, error)
@@ -249,7 +249,7 @@ const createAssetManager = ({out$, stop$}) => {
                 switchMap(user =>
                     createFolder$(user, path.join('/')).pipe(
                         tap({
-                            complete: () => log.info(`${userTag(username)} folder created`)
+                            complete: () => log.info(`${userTag(username)} created:`, path.join('/'))
                         }),
                         catchError(error => {
                             log.warn(`${userTag(username)} assets failed`, error)

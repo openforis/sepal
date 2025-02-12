@@ -10,16 +10,16 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bull": "^4.16.4",
-        "commander": "^12.1.0",
+        "bull": "^4.16.5",
+        "commander": "^13.1.0",
         "date-fns": "^4.1.0",
-        "ioredis": "^5.4.1",
+        "ioredis": "^5.5.0",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
         "moment": "^2.30.1",
         "rxjs": "^7.8.1",
         "sepal": "../../lib/js/shared",
-        "uuid": "^11.0.3",
+        "uuid": "^11.0.5",
         "ws": "^8.18.0"
     },
     "devDependencies": {

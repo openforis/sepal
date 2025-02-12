@@ -12,7 +12,7 @@ const {WebSocketServer} = require('ws')
 const {Subject} = require('rxjs')
 
 const apiMetrics = require('prometheus-api-metrics')
-const RedisSessionStore = require('connect-redis').default
+const {RedisStore: RedisSessionStore} = require('connect-redis')
 
 const log = require('#sepal/log').getLogger('gateway')
 
