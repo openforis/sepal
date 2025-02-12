@@ -156,7 +156,7 @@ const filter = (tree, filter) =>
     STree.clone(tree, filter)
 
 export const AssetTree = {
-    create, expandDirectory, collapseDirectory, selectItem, deselectItem, deselectDescendants, setRemoving,
-    updateTree, createFolder, getSelectedItems, getOpenDirectories, toStringPath, fromStringPath,
-    getPath, getDepth, getChildNodes, getType, getUpdateTime, getQuota, isDirectory, isUnconfirmed, isSelected, isOpened, isAdding, isRemoving, toList, filter
+    create, expandDirectory, collapseDirectory, selectItem, deselectItem, deselectDescendants, setRemoving, updateTree,
+    createFolder, getSelectedItems, getOpenDirectories, toStringPath, fromStringPath, getPath, getDepth, getChildNodes,
+    getType, getUpdateTime, getQuota, isDirectory, isUnconfirmed, isSelected, isOpened, isAdding, isRemoving, toList, filter
 }

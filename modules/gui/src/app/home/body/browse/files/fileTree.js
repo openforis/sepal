@@ -1,6 +1,6 @@
 import {STree} from '~/tree/sTree'
 
-const createRoot = () =>
+const create = () =>
     STree.createRoot({dir: true, opened: true})
 
 const expandDirectory = (tree, path) =>
@@ -129,6 +129,7 @@ const isRemoving = node =>
     STree.getValue(node)?.removing
     
 export const FileTree = {
-    createRoot, expandDirectory, collapseDirectory, selectItem, deselectItem, deselectDescendants, setRemoving, updateItem, getSelectedItems, getOpenDirectories,
-    toStringPath, fromStringPath, getPath, getDepth, getChildNodes, getMTime, isDirectory, isSelected, isOpened, isLoading, isAdding, isRemoving
+    create, expandDirectory, collapseDirectory, selectItem, deselectItem, deselectDescendants, setRemoving,
+    updateItem, getSelectedItems, getOpenDirectories, toStringPath, fromStringPath, getPath, getDepth,
+    getChildNodes, getMTime, isDirectory, isSelected, isOpened, isLoading, isAdding, isRemoving
 }

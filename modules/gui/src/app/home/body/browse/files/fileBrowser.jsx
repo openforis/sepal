@@ -36,7 +36,7 @@ class _FileBrowser extends React.Component {
     userFiles = api.userFiles.ws()
 
     state = {
-        tree: FileTree.createRoot(),
+        tree: FileTree.create(),
         showDotFiles: false,
         splitDirs: false,
         sorting: {sortingOrder: 'name', sortingDirection: 1}
@@ -89,7 +89,7 @@ class _FileBrowser extends React.Component {
     }
 
     reset() {
-        this.setState({tree: FileTree.createRoot()})
+        this.setState({tree: FileTree.create()})
     }
 
     onMessage({ready, data}) {
