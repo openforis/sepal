@@ -117,8 +117,6 @@ class _Input extends React.Component {
         )
         return (
             <Keybinding keymap={keymap} disabled={!focused}>
-                {/* [HACK] input is wrapped in a div for fixing Firefox input width in flex */}
-                {/* <div className={styles.inputWrapper}> */}
                 <Tooltip
                     msg={inputTooltip}
                     placement={inputTooltipPlacement}
@@ -145,7 +143,6 @@ class _Input extends React.Component {
                         onKeyDown={this.captureEvents}
                     />
                 </Tooltip>
-                {/* </div> */}
             </Keybinding>
         )
     }
@@ -262,7 +259,7 @@ class _Input extends React.Component {
                 chromeless
                 shape='none'
                 air='none'
-                icon='undo'
+                icon='times'
                 onClick={this.onCancel}
             />
         ) : null
