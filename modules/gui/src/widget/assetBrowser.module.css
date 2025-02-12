@@ -7,3 +7,7 @@
     overflow: auto;
     max-height: 40vh;
 }
+
+.createFolder {
+    min-width: 15rem;
+}

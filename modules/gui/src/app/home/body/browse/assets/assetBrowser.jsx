@@ -13,8 +13,11 @@ import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
+import {ButtonPopup} from '~/widget/buttonPopup'
 import {Icon} from '~/widget/icon'
+import {Input} from '~/widget/input'
 import {Layout} from '~/widget/layout'
+import {Notifications} from '~/widget/notifications'
 import {RemoveButton} from '~/widget/removeButton'
 import {Scrollable} from '~/widget/scrollable'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
@@ -24,9 +27,6 @@ import {ToggleButton} from '~/widget/toggleButton'
 import {AssetTree} from './assetTree'
 
 const log = getLogger('browse')
-
-import {ButtonPopup} from '~/widget/buttonPopup'
-import {Input} from '~/widget/input'
 
 import styles from './assetBrowser.module.css'
 
@@ -70,7 +70,6 @@ class _AssetBrowser extends React.Component {
 
     reload() {
         this.userAssets.upstream$.next({reload: true})
-        // this.setState({busy: true})
     }
 
     create(path) {
@@ -150,9 +149,21 @@ class _AssetBrowser extends React.Component {
     createFolder(folder) {
         const {tree} = this.state
         const {directories} = AssetTree.getSelectedItems(tree)
-        const path = [...directories[0], folder]
-        this.setState({tree: AssetTree.createFolder(tree, path)})
-        this.create(path)
+        const selectedFolder = directories.length === 1 ? directories[0] : null
+        if (selectedFolder) {
+            const path = [...selectedFolder, folder]
+            if (AssetTree.isExistingPath(tree, path)) {
+                Notifications.error({
+                    message: msg('browse.createFolder.existing.error'),
+                    timeout: 5
+                })
+            } else {
+                this.setState({tree: AssetTree.createFolder(tree, path)})
+                this.create(path)
+                return true
+            }
+        }
+        return false
     }
 
     removePaths(paths) {
@@ -448,11 +459,11 @@ class _AssetBrowser extends React.Component {
     renderFolderInput(close) {
         return (
             <Input
+                className={styles.createFolder}
                 autoFocus
                 placeholder={msg('Enter folder name')}
                 onAccept={folder => {
-                    if (folder.length) {
-                        this.createFolder(folder)
+                    if (folder.length && this.createFolder(folder)) {
                         close()
                     }
                 }}

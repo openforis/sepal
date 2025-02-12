@@ -10,6 +10,7 @@ import {msg} from '~/translate'
 import {isServiceAccount} from '~/user'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
+import {Notifications} from '~/widget/notifications'
 
 import {withActivatable} from './activation/activatable'
 import styles from './assetBrowser.module.css'
@@ -18,7 +19,6 @@ import {Button} from './button'
 import {ButtonPopup} from './buttonPopup'
 import {CrudItem} from './crudItem'
 import {Input} from './input'
-import {Layout} from './layout'
 import {ScrollableList} from './list'
 import {Panel} from './panel/panel'
 import {SearchBox} from './searchBox'
@@ -112,15 +112,14 @@ class _AssetBrowser extends React.Component {
                 label={msg('Create folder')}
                 vPlacement='below'
                 hPlacement='over-right'
-                disabled={!selectedFolder}
-            >
+                disabled={!selectedFolder}>
                 {close => (
                     <Input
+                        className={styles.createFolder}
                         autoFocus
                         placeholder={msg('Enter folder name')}
                         onAccept={folder => {
-                            if (folder.length) {
-                                this.createFolder(folder)
+                            if (folder.length && this.createFolder(folder)) {
                                 close()
                             }
                         }}
@@ -132,9 +131,20 @@ class _AssetBrowser extends React.Component {
     }
 
     createFolder(folder) {
-        const {assets: {createFolder}} = this.props
+        const {assets: {createFolder, isExistingPath}} = this.props
         const {selectedFolder} = this.state
-        createFolder([...selectedFolder, folder])
+        const path = [...selectedFolder, folder]
+        if (isExistingPath(path)) {
+            Notifications.error({
+                message: msg('browse.createFolder.existing.error'),
+                timeout: 5
+            })
+            
+        } else {
+            createFolder(path)
+            return true
+        }
+        return false
     }
 
     renderInput() {

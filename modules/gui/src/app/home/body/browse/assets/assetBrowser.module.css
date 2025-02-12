@@ -121,5 +121,5 @@
 }
 
 .createFolder {
-    padding: .25rem .25rem .25rem .25rem;
+    min-width: 15rem;
 }

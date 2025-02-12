@@ -192,6 +192,9 @@
         "loading": {
             "error": "Could not retrieve file information."
         },
+        "createFolder": {
+            "existing.error": "Cannot create a folder with the same name as an existing asset or folder"
+        },
         "removeConfirmation": "Remove {directories} {directories, plural, one {directory} other {directories}} and {files} {files, plural, one {file} other {files}}?",
         "removing": {
             "error": "Could not remove files."

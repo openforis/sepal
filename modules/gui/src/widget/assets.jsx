@@ -26,22 +26,26 @@ export const withAssets = () =>
                     return React.createElement(WrappedComponent, {...this.props})
                 }
             },
-            connect(({assets}) => ({
-                assets: {
-                    tree: assets?.tree || AssetTree.create(),
-                    userAssets: assets?.user || [],
-                    otherAssets: assets?.other || [],
-                    recentAssets: assets?.recent || [],
-                    loading: assets?.loading || false,
-                    updating: assets?.updating || false,
-                    error: assets?.error || false,
-                    // busy: assets?.busy || false,
-                    updateAsset: asset => command$.next({updateAsset: {asset}}),
-                    removeAsset: id => command$.next({removeAsset: {id}}),
-                    reloadAssets: () => command$.next({reload: true}),
-                    createFolder: path => command$.next({createFolder: {path}})
-                }
-            }))
+            connect(({assets}) => {
+                const tree = assets?.tree || AssetTree.create()
+                return ({
+                    assets: {
+                        tree,
+                        userAssets: assets?.user || [],
+                        otherAssets: assets?.other || [],
+                        recentAssets: assets?.recent || [],
+                        loading: assets?.loading || false,
+                        updating: assets?.updating || false,
+                        error: assets?.error || false,
+                        // busy: assets?.busy || false,
+                        updateAsset: asset => command$.next({updateAsset: {asset}}),
+                        removeAsset: id => command$.next({removeAsset: {id}}),
+                        reloadAssets: () => command$.next({reload: true}),
+                        createFolder: path => command$.next({createFolder: {path}}),
+                        isExistingPath: path => AssetTree.isExistingPath(tree, path)
+                    }
+                })
+            })
         )
 
 const mapStateToProps = () => ({

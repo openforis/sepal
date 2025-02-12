@@ -109,6 +109,9 @@ const getOpenDirectories = (tree, basePath) =>
             : directories
     }, [])
 
+const isExistingPath = (tree, path) =>
+    !!STree.traverse(tree, path)
+
 const toStringPath = STree.toStringPath
 
 const fromStringPath = STree.fromStringPath
@@ -156,7 +159,7 @@ const filter = (tree, filter) =>
     STree.clone(tree, filter)
 
 export const AssetTree = {
-    create, expandDirectory, collapseDirectory, selectItem, deselectItem, deselectDescendants, setRemoving, updateTree,
-    createFolder, getSelectedItems, getOpenDirectories, toStringPath, fromStringPath, getPath, getDepth, getChildNodes,
-    getType, getUpdateTime, getQuota, isDirectory, isUnconfirmed, isSelected, isOpened, isAdding, isRemoving, toList, filter
+    create, expandDirectory, collapseDirectory, selectItem, deselectItem, deselectDescendants, setRemoving, updateTree, createFolder,
+    getSelectedItems, getOpenDirectories, isExistingPath, toStringPath, fromStringPath, getPath, getDepth, getChildNodes, getType,
+    getUpdateTime, getQuota, isDirectory, isUnconfirmed, isSelected, isOpened, isAdding, isRemoving, toList, filter
 }
