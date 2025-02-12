@@ -10,8 +10,8 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@google-cloud/storage": "^7.14.0",
-        "commander": "^12.1.0",
+        "@google-cloud/storage": "^7.15.1",
+        "commander": "^13.1.0",
         "fast-crc32c": "^2.0.0",
         "googleapis": "^144.0.0",
         "lodash": "^4.17.21",
