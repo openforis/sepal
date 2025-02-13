@@ -154,6 +154,10 @@
         "starting-sepal-failed": "Something has gone wrong. Please reload the page and try again."
     },
     "browse": {
+        "addBrowser": {
+            "files": "SEPAL workspace browser",
+            "assets": "Earth Engine asset browser"
+        },
         "controls": {
             "reload": {
                 "tooltip": "Reload"

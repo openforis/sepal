@@ -17,10 +17,10 @@ export class Browse extends React.Component {
 
     render() {
         const options = [{
-            label: 'SEPAL storage file browser',
+            label: msg('browse.addBrowser.files'),
             value: FILE_BROWSER,
         }, {
-            label: 'Earth Engine asset browser',
+            label: msg('browse.addBrowser.assets'),
             value: ASSET_BROWSER,
         }]
             

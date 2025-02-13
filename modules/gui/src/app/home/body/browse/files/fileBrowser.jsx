@@ -465,6 +465,7 @@ class _FileBrowser extends React.Component {
         return (
             <SectionLayout>
                 <Content className={styles.browse} menuPadding horizontalPadding verticalPadding>
+                    {this.renderToolbar()}
                     {this.renderHeader()}
                     {this.renderTree()}
                 </Content>
@@ -472,12 +473,18 @@ class _FileBrowser extends React.Component {
         )
     }
 
-    renderHeader() {
+    renderToolbar() {
         return (
             <Layout type='horizontal' spacing='compact'>
                 {this.renderActionsToolbar()}
                 {this.renderOptionsToolbar()}
             </Layout>
+        )
+    }
+
+    renderHeader() {
+        return (
+            <div className={styles.header}>SEPAL workspace</div>
         )
     }
 

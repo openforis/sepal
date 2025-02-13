@@ -514,6 +514,7 @@ class _AssetBrowser extends React.Component {
         return (
             <SectionLayout>
                 <Content className={styles.browse} menuPadding horizontalPadding verticalPadding>
+                    {this.renderTooolbar()}
                     {this.renderHeader()}
                     {this.renderTree()}
                 </Content>
@@ -521,12 +522,18 @@ class _AssetBrowser extends React.Component {
         )
     }
 
-    renderHeader() {
+    renderTooolbar() {
         return (
             <Layout type='horizontal' spacing='compact'>
                 {this.renderActionsToolbar()}
                 {this.renderOptionsToolbar()}
             </Layout>
+        )
+    }
+
+    renderHeader() {
+        return (
+            <div className={styles.header}>Earth Engine assets</div>
         )
     }
 

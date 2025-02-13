@@ -5,6 +5,11 @@
     --icon-width: 2.5rem;
 }
 
+.header {
+    margin-top: 1rem;
+    color: var(--success-color);
+}
+
 .info {
     display: flex;
     flex-direction: column;
@@ -16,7 +21,7 @@
 
 .fileList {
     line-height: 2rem;
-    margin-top: .5rem;
+    margin-top: 1rem;
 }
 
 .fileList ul {
