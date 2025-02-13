@@ -13,7 +13,7 @@ import {withForm} from '~/widget/form/form'
 import {Notifications} from '~/widget/notifications'
 
 import {withActivatable} from './activation/activatable'
-import styles from './assetBrowser.module.css'
+import styles from './assetDestinationBrowser.module.css'
 import {withAssets} from './assets'
 import {Button} from './button'
 import {ButtonPopup} from './buttonPopup'
@@ -35,7 +35,7 @@ const mapStateToProps = (_state, ownProps) => ({
     }
 })
 
-class _AssetBrowser extends React.Component {
+class _AssetDestinationBrowser extends React.Component {
     constructor(props) {
         super(props)
         this.reloadAssets = this.reloadAssets.bind(this)
@@ -410,14 +410,14 @@ const policy = () => ({
     _: 'allow'
 })
 
-export const AssetBrowser = compose(
-    _AssetBrowser,
+export const AssetDestinationBrowser = compose(
+    _AssetDestinationBrowser,
     withForm({fields, mapStateToProps}),
     withAssets(),
     withActivatable({id: 'assetBrowser', policy, alwaysAllow: true})
 )
 
-AssetBrowser.propTypes = {
+AssetDestinationBrowser.propTypes = {
     onChange: PropTypes.func.isRequired,
     assetId: PropTypes.string
 }
