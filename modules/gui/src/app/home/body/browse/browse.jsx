@@ -19,9 +19,11 @@ export class Browse extends React.Component {
         const options = [{
             label: msg('browse.addBrowser.files'),
             value: FILE_BROWSER,
+            placeholder: msg('browse.title.files')
         }, {
             label: msg('browse.addBrowser.assets'),
             value: ASSET_BROWSER,
+            placeholder: msg('browse.title.assets')
         }]
             
         return (

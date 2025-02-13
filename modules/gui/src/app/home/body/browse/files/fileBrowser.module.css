@@ -7,7 +7,7 @@
 
 .header {
     margin-top: 1rem;
-    color: var(--success-color);
+    color: var(--warning-color);
 }
 
 .info {

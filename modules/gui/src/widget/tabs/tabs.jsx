@@ -58,11 +58,6 @@ class _Tabs extends React.Component {
         this.selectPreviousTab = this.selectPreviousTab.bind(this)
         this.selectNextTab = this.selectNextTab.bind(this)
         
-        const {tabs, statePath, defaultType} = props
-        if (tabs.length === 0) {
-            addTab(statePath, defaultType)
-        }
-
         this.busyIn$ = new Subject()
 
         this.busyOut$ = this.busyIn$.pipe(
@@ -89,6 +84,8 @@ class _Tabs extends React.Component {
             map(({tabId, count}) => ({tabId, count, busy: count > 0})),
             shareReplay({bufferSize: 1, refCount: true})
         )
+
+        this.createDefaultTab()
     }
 
     renderTabHandle(tab) {
@@ -276,7 +273,7 @@ class _Tabs extends React.Component {
                     return selectTab(tab.id, statePath)
                 }
             }
-            addTab(statePath, option?.value)
+            addTab(statePath, option?.value, option.placeholder)
         } else {
             onAdd && onAdd()
         }
@@ -306,11 +303,16 @@ class _Tabs extends React.Component {
         )
     }
 
-    componentDidUpdate() {
-        const {tabs, defaultType, statePath} = this.props
+    createDefaultTab() {
+        const {tabs, addTabOptions, defaultType, statePath} = this.props
         if (tabs.length === 0) {
-            addTab(statePath, defaultType)
+            const placeholder = addTabOptions && defaultType && addTabOptions.find(({value}) => value === defaultType)?.placeholder
+            addTab(statePath, defaultType, placeholder)
         }
+    }
+
+    componentDidUpdate() {
+        this.createDefaultTab()
     }
 }
 

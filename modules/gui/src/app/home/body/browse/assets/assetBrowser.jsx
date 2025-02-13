@@ -533,7 +533,7 @@ class _AssetBrowser extends React.Component {
 
     renderHeader() {
         return (
-            <div className={styles.header}>Earth Engine assets</div>
+            <div className={styles.header}>{msg('browse.title.assets')}</div>
         )
     }
 

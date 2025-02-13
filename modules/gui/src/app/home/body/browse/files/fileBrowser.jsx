@@ -484,7 +484,7 @@ class _FileBrowser extends React.Component {
 
     renderHeader() {
         return (
-            <div className={styles.header}>SEPAL workspace</div>
+            <div className={styles.header}>{msg('browse.title.files')}</div>
         )
     }
 
