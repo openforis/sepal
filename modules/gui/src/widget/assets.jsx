@@ -37,7 +37,6 @@ export const withAssets = () =>
                         loading: assets?.loading || false,
                         updating: assets?.updating || false,
                         error: assets?.error || false,
-                        // busy: assets?.busy || false,
                         updateAsset: asset => command$.next({updateAsset: {asset}}),
                         removeAsset: id => command$.next({removeAsset: {id}}),
                         reloadAssets: () => command$.next({reload: true}),
@@ -124,12 +123,6 @@ class _Assets extends React.Component {
         this.setAssetTree(AssetTree.updateTree(tree, nodeUpdate))
     }
 
-    // onBusy(busy) {
-    //     actionBuilder('SET_ASSETS_BUSY_STATE')
-    //         .set('assets.busy', busy)
-    //         .dispatch()
-    // }
-
     setLoading(loading) {
         actionBuilder('LOADING_ASSETS')
             .set('assets.loading', loading)
@@ -144,12 +137,9 @@ class _Assets extends React.Component {
             .filter(({depth}) => depth === 1)
             .map(({id}) => id)
         actionBuilder('LOAD_ASSETS')
-            // .setIfChanged('assets.roots', assetRoots)
-            // .setIfChanged('assets.tree', assetTree)
-            // .setIfChanged('assets.user', assetList)
-            .set('assets.roots', assetRoots)
-            .set('assets.tree', assetTree)
-            .set('assets.user', assetList)
+            .setIfChanged('assets.roots', assetRoots)
+            .setIfChanged('assets.tree', assetTree)
+            .setIfChanged('assets.user', assetList)
             .del('assets.loading')
             .dispatch()
     }
