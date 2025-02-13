@@ -27,7 +27,7 @@ export class Browse extends React.Component {
         return (
             <Tabs
                 label={msg('home.sections.browse')}
-                statePath='terminal'
+                statePath='browse'
                 defaultType={FILE_BROWSER}
                 addTabOptions={options}>
                 {this.renderTab}
