@@ -107,10 +107,9 @@ class _Assets extends React.Component {
         data !== undefined && this.onData(data)
     }
 
-    onData({tree, node, busy}) {
+    onData({tree, node, _busy}) {
         tree !== undefined && this.onTree(tree)
         node !== undefined && this.onNode(node)
-        // busy !== undefined && this.onBusy(busy)
     }
 
     onTree(treeUpdate) {
@@ -131,7 +130,7 @@ class _Assets extends React.Component {
     }
         
     setAssetTree(assetTree) {
-        log.info('Updating asset tree', assetTree)
+        log.debug('Updating asset tree', assetTree)
         const assetList = AssetTree.toList(assetTree)
         const assetRoots = assetList
             .filter(({depth}) => depth === 1)
