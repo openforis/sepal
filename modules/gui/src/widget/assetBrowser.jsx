@@ -261,13 +261,14 @@ class _AssetBrowser extends React.Component {
     renderFolderAssetsButton(tooltip) {
         return tooltip ? (
             <Button
-                key='link'
+                key='assets'
                 chromeless
                 air='none'
                 icon='bars'
                 dimmed
                 tooltip={tooltip}
                 tooltipPlacement={isMobile() ? 'bottomRight' : 'bottomLeft'}
+                tooltipClickTrigger={true}
             />
         ) : null
     }
@@ -291,7 +292,7 @@ class _AssetBrowser extends React.Component {
         return _(nodes)
             .filter(node => AssetTree.isDirectory(node))
             .map(node => ([
-                this.getItemOption(node),
+                this.getItemOption(node, true),
                 ...this.getFolderTreeOptions(AssetTree.getChildNodes(node))
             ]))
             .flatten()
@@ -301,18 +302,18 @@ class _AssetBrowser extends React.Component {
     getFolderAssetsOptions(nodes) {
         return _(nodes)
             .filter(node => !AssetTree.isDirectory(node))
-            .map(node => this.getItemOption(node))
+            .map(node => this.getItemOption(node, false))
             .value()
     }
 
-    getItemOption(node) {
+    getItemOption(node, indent) {
         const render = () => this.renderItem(node)
         const path = AssetTree.getPath(node)
         return {
             label: path.at(-1),
             value: AssetTree.toStringPath(path),
             path,
-            indent: AssetTree.getDepth(node),
+            indent: indent && AssetTree.getDepth(node),
             render
         }
     }
