@@ -16,6 +16,9 @@ check program email with path /usr/local/bin/dockercheck-email
 check program email-redis with path /usr/local/bin/dockercheck-email-redis
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
+check program user-assets with path /usr/local/bin/dockercheck-user-assets
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
+
 check program user-files with path /usr/local/bin/dockercheck-user-files
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
