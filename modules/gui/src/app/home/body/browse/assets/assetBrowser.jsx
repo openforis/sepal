@@ -39,6 +39,7 @@ class _AssetBrowser extends React.Component {
     state = {
         tree: AssetTree.create(),
         splitDirs: false,
+        expandDirs: false,
         sorting: {sortingOrder: 'name', sortingDirection: 1},
         busy: false
     }
@@ -49,6 +50,7 @@ class _AssetBrowser extends React.Component {
         this.removeSelected = this.removeSelected.bind(this)
         this.clearSelection = this.clearSelection.bind(this)
         this.toggleSplitDirs = this.toggleSplitDirs.bind(this)
+        this.toggleExpandDirs = this.toggleExpandDirs.bind(this)
         this.setSorting = this.setSorting.bind(this)
         this.renderFolderInput = this.renderFolderInput.bind(this)
     }
@@ -191,15 +193,34 @@ class _AssetBrowser extends React.Component {
         this.setState(({splitDirs}) => ({splitDirs: !splitDirs}))
     }
 
+    toggleExpandDirs() {
+        const {expandDirs} = this.state
+        if (expandDirs) {
+            this.clearSelection()
+            this.setState({expandDirs: false})
+        } else {
+            this.setState({expandDirs: true})
+        }
+    }
+
     removeInfo() {
         const {files, directories} = this.countSelectedItems()
         return msg('browse.removeConfirmation', {files, directories})
     }
 
     renderOptionsToolbar() {
-        const {splitDirs, sorting: {sortingOrder, sortingDirection}} = this.state
+        const {splitDirs, expandDirs, sorting: {sortingOrder, sortingDirection}} = this.state
         return (
             <ButtonGroup layout='horizontal' spacing='tight'>
+                <ToggleButton
+                    chromeless
+                    shape='pill'
+                    label={msg('browse.controls.expandDirs.label')}
+                    tooltip={msg(`browse.controls.expandDirs.${expandDirs ? 'hide' : 'show'}.tooltip`)}
+                    tooltipPlacement='bottom'
+                    selected={expandDirs}
+                    onChange={this.toggleExpandDirs}
+                />
                 <ToggleButton
                     chromeless
                     shape='pill'
@@ -263,16 +284,20 @@ class _AssetBrowser extends React.Component {
     }
 
     toggleDirectory(e, node) {
+        const {expandDirs} = this.state
         e.stopPropagation()
-        if (AssetTree.isOpened(node)) {
-            this.collapseDirectory(node)
-        } else if (!AssetTree.isUnconfirmed(node)) {
-            this.expandDirectory(node)
+        if (!expandDirs) {
+            if (AssetTree.isOpened(node)) {
+                this.collapseDirectory(node)
+            } else if (!AssetTree.isUnconfirmed(node)) {
+                this.expandDirectory(node)
+            }
         }
     }
 
     renderDirectoryIcon(node) {
-        const opened = AssetTree.isOpened(node)
+        const {expandDirs} = this.state
+        const opened = AssetTree.isOpened(node) || expandDirs
         return (
             <span
                 className={[styles.icon, styles.directory].join(' ')}
@@ -308,8 +333,9 @@ class _AssetBrowser extends React.Component {
     }
 
     renderList(node) {
+        const {expandDirs} = this.state
         const items = AssetTree.getChildNodes(node)
-        return items && AssetTree.isOpened(node) ? (
+        return items && (AssetTree.isOpened(node) || expandDirs) ? (
             <ul>
                 {this.renderListItems(items)}
             </ul>
@@ -445,7 +471,7 @@ class _AssetBrowser extends React.Component {
                 <Button
                     chromeless
                     shape='circle'
-                    icon='rotate-left'
+                    icon='times'
                     tooltip={msg('browse.controls.clearSelection.tooltip')}
                     tooltipPlacement='top'
                     disabled={nothingSelected}

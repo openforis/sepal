@@ -175,6 +175,11 @@
                 "hide.tooltip": "Hide files beginning with a dot",
                 "show.tooltip": "Show files beginning with a dot"
             },
+            "expandDirs": {
+                "label": "expand",
+                "hide.tooltip": "Disable fully expanded asset tree",
+                "show.tooltip": "Enable fully expanded asset tree"
+            },
             "splitDirs": {
                 "label": "split",
                 "split.tooltip": "Split directories and files",
