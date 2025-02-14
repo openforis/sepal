@@ -10,7 +10,17 @@ const expandDirectory = (tree, path) =>
             (value = {}) => ({...value, opened: true})
         )
     )
-        
+
+const expandAllDirectories = tree =>
+    STree.alter(tree, tree =>
+        STree.scan(tree, node =>
+            STree.updateValue(
+                node,
+                (value = {}) => ({...value, opened: true})
+            ), true
+        )
+    )
+
 const collapseDirectory = (tree, path) =>
     STree.alter(tree, tree => {
         deselectDescendants(tree, path)
@@ -19,6 +29,16 @@ const collapseDirectory = (tree, path) =>
             ({opened: _opened, ...value} = {}) => value
         )
     })
+
+const collapseAllDirectories = tree =>
+    STree.alter(tree, tree =>
+        STree.scan(tree, node =>
+            STree.updateValue(
+                node,
+                ({opened: _opened, selected: _selected, ...value} = {}) => value
+            ), true
+        )
+    )
 
 const selectItem = (tree, path) =>
     STree.alter(tree, tree => {
@@ -29,7 +49,7 @@ const selectItem = (tree, path) =>
             ({removing, ...value} = {}) => (removing ? {...value, removing: true} : {...value, selected: true})
         )
     })
-                
+                                
 const deselectItem = (tree, path) =>
     STree.alter(tree, tree =>
         STree.updateValue(
@@ -158,7 +178,7 @@ const filter = (tree, filter) =>
     STree.clone(tree, filter)
 
 export const AssetTree = {
-    create, expandDirectory, collapseDirectory, selectItem, deselectItem, deselectDescendants, setRemoving, updateTree, createFolder,
-    getSelectedItems, getOpenDirectories, isExistingPath, toStringPath, fromStringPath, isLeaf, getPath, getDepth, getChildNodes, getType,
-    getUpdateTime, getQuota, isDirectory, isSelected, isOpened, isAdding, isRemoving, toList, filter
+    create, expandDirectory, expandAllDirectories, collapseDirectory, collapseAllDirectories, selectItem, deselectItem, deselectDescendants,
+    setRemoving, updateTree, createFolder, getSelectedItems, getOpenDirectories, isExistingPath, toStringPath, fromStringPath, isLeaf, getPath,
+    getDepth, getChildNodes, getType, getUpdateTime, getQuota, isDirectory, isSelected, isOpened, isAdding, isRemoving, toList, filter
 }

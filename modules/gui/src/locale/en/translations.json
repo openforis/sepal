@@ -183,10 +183,13 @@
                 "hide.tooltip": "Hide files beginning with a dot",
                 "show.tooltip": "Show files beginning with a dot"
             },
+            "collapseDirs": {
+                "label": "collapse",
+                "tooltip": "Collapse all folders"
+            },
             "expandDirs": {
                 "label": "expand",
-                "hide.tooltip": "Disable fully expanded asset tree",
-                "show.tooltip": "Enable fully expanded asset tree"
+                "tooltip": "Expand all folders"
             },
             "splitDirs": {
                 "label": "split",

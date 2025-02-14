@@ -39,7 +39,6 @@ class _AssetBrowser extends React.Component {
     state = {
         tree: AssetTree.create(),
         splitDirs: false,
-        expandDirs: false,
         sorting: {sortingOrder: 'name', sortingDirection: 1},
         busy: false
     }
@@ -50,9 +49,10 @@ class _AssetBrowser extends React.Component {
         this.removeSelected = this.removeSelected.bind(this)
         this.clearSelection = this.clearSelection.bind(this)
         this.toggleSplitDirs = this.toggleSplitDirs.bind(this)
-        this.toggleExpandDirs = this.toggleExpandDirs.bind(this)
         this.setSorting = this.setSorting.bind(this)
         this.renderFolderInput = this.renderFolderInput.bind(this)
+        this.collapseAllDirectories = this.collapseAllDirectories.bind(this)
+        this.expandAllDirectories = this.expandAllDirectories.bind(this)
     }
 
     componentDidMount() {
@@ -117,10 +117,20 @@ class _AssetBrowser extends React.Component {
         this.setState({tree: AssetTree.expandDirectory(tree, path)})
     }
 
+    expandAllDirectories() {
+        const {tree} = this.state
+        this.setState({tree: AssetTree.expandAllDirectories(tree)})
+    }
+
     collapseDirectory(node) {
         const {tree} = this.state
         const path = AssetTree.getPath(node)
         this.setState({tree: AssetTree.collapseDirectory(tree, path)})
+    }
+
+    collapseAllDirectories() {
+        const {tree} = this.state
+        this.setState({tree: AssetTree.collapseAllDirectories(tree)})
     }
 
     toggleSelected(node) {
@@ -193,33 +203,32 @@ class _AssetBrowser extends React.Component {
         this.setState(({splitDirs}) => ({splitDirs: !splitDirs}))
     }
 
-    toggleExpandDirs() {
-        const {expandDirs} = this.state
-        if (expandDirs) {
-            this.clearSelection()
-            this.setState({expandDirs: false})
-        } else {
-            this.setState({expandDirs: true})
-        }
-    }
-
     removeInfo() {
         const {files, directories} = this.countSelectedItems()
         return msg('browse.removeConfirmation', {files, directories})
     }
 
     renderOptionsToolbar() {
-        const {splitDirs, expandDirs, sorting: {sortingOrder, sortingDirection}} = this.state
+        const {splitDirs, sorting: {sortingOrder, sortingDirection}} = this.state
         return (
             <ButtonGroup layout='horizontal' spacing='tight'>
-                <ToggleButton
+                <Button
+                    chromeless
+                    shape='pill'
+                    label={msg('browse.controls.collapseDirs.label')}
+                    labelStyle='smallcaps'
+                    tooltip={msg('browse.controls.collapseDirs.tooltip')}
+                    tooltipPlacement='bottom'
+                    onClick={this.collapseAllDirectories}
+                />
+                <Button
                     chromeless
                     shape='pill'
                     label={msg('browse.controls.expandDirs.label')}
-                    tooltip={msg(`browse.controls.expandDirs.${expandDirs ? 'hide' : 'show'}.tooltip`)}
+                    labelStyle='smallcaps'
+                    tooltip={msg('browse.controls.expandDirs.tooltip')}
                     tooltipPlacement='bottom'
-                    selected={expandDirs}
-                    onChange={this.toggleExpandDirs}
+                    onClick={this.expandAllDirectories}
                 />
                 <ToggleButton
                     chromeless
@@ -284,20 +293,16 @@ class _AssetBrowser extends React.Component {
     }
 
     toggleDirectory(e, node) {
-        const {expandDirs} = this.state
         e.stopPropagation()
-        if (!expandDirs) {
-            if (AssetTree.isOpened(node)) {
-                this.collapseDirectory(node)
-            } else if (!AssetTree.isAdding(node)) {
-                this.expandDirectory(node)
-            }
+        if (AssetTree.isOpened(node)) {
+            this.collapseDirectory(node)
+        } else if (!AssetTree.isAdding(node)) {
+            this.expandDirectory(node)
         }
     }
 
     renderDirectoryIcon(node) {
-        const {expandDirs} = this.state
-        const opened = AssetTree.isOpened(node) || expandDirs
+        const opened = AssetTree.isOpened(node)
         return (
             <span
                 className={[styles.icon, styles.directory].join(' ')}
@@ -334,9 +339,8 @@ class _AssetBrowser extends React.Component {
     }
 
     renderList(node) {
-        const {expandDirs} = this.state
         const items = AssetTree.getChildNodes(node)
-        return items && (AssetTree.isOpened(node) || expandDirs) ? (
+        return items && AssetTree.isOpened(node) ? (
             <ul>
                 {this.renderListItems(items)}
             </ul>
