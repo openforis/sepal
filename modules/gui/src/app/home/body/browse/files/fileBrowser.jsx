@@ -50,6 +50,7 @@ class _FileBrowser extends React.Component {
         this.toggleDotFiles = this.toggleDotFiles.bind(this)
         this.toggleSplitDirs = this.toggleSplitDirs.bind(this)
         this.setSorting = this.setSorting.bind(this)
+        this.collapseAllDirectories = this.collapseAllDirectories.bind(this)
     }
 
     componentDidMount() {
@@ -137,6 +138,11 @@ class _FileBrowser extends React.Component {
         this.unmonitor([path])
     }
 
+    collapseAllDirectories() {
+        const {tree} = this.state
+        this.setState({tree: FileTree.collapseAllDirectories(tree)})
+    }
+
     toggleSelected(node) {
         FileTree.isSelected(node)
             ? this.deselectItem(node)
@@ -198,6 +204,15 @@ class _FileBrowser extends React.Component {
         const {showDotFiles, splitDirs, sorting: {sortingOrder, sortingDirection}} = this.state
         return (
             <ButtonGroup layout='horizontal' spacing='tight'>
+                <Button
+                    chromeless
+                    shape='pill'
+                    label={msg('browse.controls.collapseDirs.label')}
+                    labelStyle='smallcaps'
+                    tooltip={msg('browse.controls.collapseDirs.tooltip')}
+                    tooltipPlacement='bottom'
+                    onClick={this.collapseAllDirectories}
+                />
                 <ToggleButton
                     chromeless
                     shape='pill'

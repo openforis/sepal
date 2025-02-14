@@ -20,6 +20,16 @@ const collapseDirectory = (tree, path) =>
         )
     })
 
+const collapseAllDirectories = tree =>
+    STree.alter(tree, tree =>
+        STree.scan(tree, node =>
+            STree.updateValue(
+                node,
+                ({opened: _opened, loading: _loading, selected: _selected, ...value} = {}) => value
+            ), true
+        )
+    )
+    
 const selectItem = (tree, path) =>
     STree.alter(tree, tree => {
         deselectDescendants(tree, path)
@@ -129,7 +139,7 @@ const isRemoving = node =>
     STree.getValue(node)?.removing
     
 export const FileTree = {
-    create, expandDirectory, collapseDirectory, selectItem, deselectItem, deselectDescendants, setRemoving,
-    updateItem, getSelectedItems, getOpenDirectories, toStringPath, fromStringPath, getPath, getDepth,
+    create, expandDirectory, collapseDirectory, collapseAllDirectories, selectItem, deselectItem, deselectDescendants,
+    setRemoving, updateItem, getSelectedItems, getOpenDirectories, toStringPath, fromStringPath, getPath, getDepth,
     getChildNodes, getMTime, isDirectory, isSelected, isOpened, isLoading, isAdding, isRemoving
 }
