@@ -203,7 +203,7 @@ class _AssetDestinationBrowser extends React.Component {
         const id = AssetTree.toStringPath(AssetTree.getPath(node))
         const path = AssetTree.getPath(node)
         const type = AssetTree.getType(node)
-        const unconfirmed = AssetTree.isUnconfirmed(node)
+        const adding = AssetTree.isAdding(node)
         return (
             <CrudItem
                 key={id}
@@ -211,7 +211,7 @@ class _AssetDestinationBrowser extends React.Component {
                 icon={this.getItemTypeIcon(type)}
                 iconTooltip={this.getItemTooltip(type)}
                 iconVariant='info'
-                iconDimmed={unconfirmed}
+                iconDimmed={adding}
                 inlineComponents={[
                     this.renderFolderInfoButton(quotaTooltip),
                     this.renderFolderAssetsButton(assetsTooltip)

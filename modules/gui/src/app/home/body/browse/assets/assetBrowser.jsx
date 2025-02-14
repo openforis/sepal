@@ -124,7 +124,7 @@ class _AssetBrowser extends React.Component {
     }
 
     toggleSelected(node) {
-        if (!AssetTree.isUnconfirmed(node)) {
+        if (!AssetTree.isAdding(node)) {
             AssetTree.isSelected(node)
                 ? this.deselectItem(node)
                 : this.selectItem(node)
@@ -276,7 +276,7 @@ class _AssetBrowser extends React.Component {
     }
 
     renderIcon(node) {
-        return AssetTree.isRemoving(node) || AssetTree.isUnconfirmed(node)
+        return AssetTree.isAdding(node) || AssetTree.isRemoving(node)
             ? this.renderSpinner()
             : AssetTree.isDirectory(node)
                 ? this.renderDirectoryIcon(node)
@@ -289,7 +289,7 @@ class _AssetBrowser extends React.Component {
         if (!expandDirs) {
             if (AssetTree.isOpened(node)) {
                 this.collapseDirectory(node)
-            } else if (!AssetTree.isUnconfirmed(node)) {
+            } else if (!AssetTree.isAdding(node)) {
                 this.expandDirectory(node)
             }
         }
@@ -305,6 +305,7 @@ class _AssetBrowser extends React.Component {
                 <Icon
                     name={'chevron-right'}
                     className={opened ? styles.expanded : styles.collapsed}
+                    dimmed={AssetTree.isLeaf(node)}
                 />
             </span>
         )
@@ -356,7 +357,7 @@ class _AssetBrowser extends React.Component {
 
     renderListItem(key, node) {
         const selected = AssetTree.isSelected(node)
-        const adding = AssetTree.isUnconfirmed(node)
+        const adding = AssetTree.isAdding(node)
         const removing = AssetTree.isRemoving(node)
         const busy = adding || removing
         return (

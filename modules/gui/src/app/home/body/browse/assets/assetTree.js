@@ -74,13 +74,13 @@ const updateTree = (prevTree, updateTree) =>
     
             STree.updateValue(
                 node,
-                ({unconfirmed: _unconfirmed, removing: _removing, ...prevValue} = {}) => ({...prevValue, ...updateValue})
+                ({adding: _adding, removing: _removing, ...prevValue} = {}) => ({...prevValue, ...updateValue})
             )
 
             if (STree.isRoot(updateTree) || updateNode === updateTree || !STree.isLeaf(updateNode)) {
                 const updateChildNodesKeys = Object.keys(STree.getChildNodes(updateNode))
                 Object.entries(STree.getChildNodes(node))
-                    .filter(([key, childNode]) => !updateChildNodesKeys.includes(key) && !isUnconfirmed(childNode))
+                    .filter(([key, childNode]) => !updateChildNodesKeys.includes(key) && !isAdding(childNode))
                     .forEach(([key]) => STree.removeChildNode(node, key))
             }
         })
@@ -90,7 +90,7 @@ const createFolder = (tree, path) =>
     STree.alter(tree, tree => {
         const node = STree.traverse(tree, path.slice(0, -1))
         STree.updateValue(node, prevValue => ({...prevValue, opened: true}))
-        STree.addChildNode(node, path.at(-1), {type: 'Folder', unconfirmed: true})
+        STree.addChildNode(node, path.at(-1), {type: 'Folder', adding: true})
     })
 
 const getSelectedItems = tree =>
@@ -116,6 +116,8 @@ const toStringPath = STree.toStringPath
 
 const fromStringPath = STree.fromStringPath
     
+const isLeaf = STree.isLeaf
+
 const getPath = STree.getPath
     
 const getDepth = STree.getDepth
@@ -133,9 +135,6 @@ const getQuota = node =>
 
 const isDirectory = node =>
     STree.getValue(node)?.type === 'Folder'
-    
-const isUnconfirmed = node =>
-    STree.getValue(node)?.unconfirmed
     
 const isSelected = node =>
     STree.getValue(node)?.selected
@@ -160,6 +159,6 @@ const filter = (tree, filter) =>
 
 export const AssetTree = {
     create, expandDirectory, collapseDirectory, selectItem, deselectItem, deselectDescendants, setRemoving, updateTree, createFolder,
-    getSelectedItems, getOpenDirectories, isExistingPath, toStringPath, fromStringPath, getPath, getDepth, getChildNodes, getType,
-    getUpdateTime, getQuota, isDirectory, isUnconfirmed, isSelected, isOpened, isAdding, isRemoving, toList, filter
+    getSelectedItems, getOpenDirectories, isExistingPath, toStringPath, fromStringPath, isLeaf, getPath, getDepth, getChildNodes, getType,
+    getUpdateTime, getQuota, isDirectory, isSelected, isOpened, isAdding, isRemoving, toList, filter
 }
