@@ -4598,7 +4598,7 @@
                     "tooltip": "Select if and/or how how to stratification the sampling"
                 },
                 "proportions": {
-                    "button": "ANT",
+                    "button": "PRO",
                     "form": {
                         "anticipationStrategy": {
                             "label": "Anticipation strategy",
@@ -4670,15 +4670,112 @@
                 },
                 "sampleAllocation": {
                     "button": "SMP",
-                    "form": {},
+                    "form": {
+                        "estimateSampleSize": {
+                            "label": "Specify",
+                            "false": {
+                                "label": "Sample size"
+                            },
+                            "true": {
+                                "label": "Margin of error"
+                            }
+                        },
+                        "confidenceLevel": {
+                            "label": "Confidence level",
+                            "placeholder": "Confidence level...",
+                            "required": "You must specify the confidence level",
+                            "suffix": "%",
+                            "tooltip": "The confidence level of the margin of error. This will typically be around 95%"
+                        },
+                        "sampleSize": {
+                            "label": "Total sample size",
+                            "placeholder": "Sample size",
+                            "required": "You must specify the sample size",
+                            "tooltip": "The number of samples to allocate",
+                            "notEnough": "Not enough samples to reach the min samples/stratum"
+                        },
+                        "marginOfError": {
+                            "label": "Target margin of error",
+                            "placeholder": "Margin of error...",
+                            "tooltip": "Specify target margin of error to use when calculating sample size."
+                        },
+                        "minSamplesPerStratum": {
+                            "label": "Min samples/stratum",
+                            "placeholder": "Min samples...",
+                            "tooltip": "Specify the minimum number of samples per stratum."
+                        },
+                        "relativeMarginOfError": {
+                            "label": "Margin of error",
+                            "tooltip": "Specify if the margin of error is relative (to area of reporting category) or an absolute area",
+                            "false": {
+                                "label": "Absolute"
+                            },
+                            "true": {
+                                "label": "Relative"
+                            }
+                        },
+                        "allocationStrategy": {
+                            "label": "Allocation strategy",
+                            "tooltip": "Specify how the samples should be distributed among the strata",
+                            "MANUAL": {
+                                "label": "Manual",
+                                "tooltip": "Manually allocate the samples among the strata"
+                            },
+                            "PROPORTIONAL": {
+                                "label": "Proportional",
+                                "tooltip": "Allocate the samples proportionally based on stratum area"
+                            },
+                            "EQUAL": {
+                                "label": "Equal",
+                                "tooltip": "Allocate the same number of samples in each stratum"
+                            },
+                            "OPTIMAL": {
+                                "label": "Optimal",
+                                "tooltip": "Use an optimal, or Neyman allocation, placing more samples in strata with higher variance"
+                            },
+                            "POWER": {
+                                "label": "Power",
+                                "tooltip": "Use an allocation scheme balancing between equal and optimal allocation based on a tuning constant"
+                            },
+                            "BALANCED": {
+                                "label": "Balanced",
+                                "tooltip": "Use an allocation scheme balancing between equal and proportional allocation"
+                            }
+                        },
+                        "powerTuningConstant": {
+                            "label": "Power tuning constant",
+                            "placeholder": "Constant...",
+                            "tooltip": "0 - equal allocation is used, 1 - optimal allocation is used. Anything in between balances between equal and optimal allocation"
+                        },
+                        "allocation": {
+                            "label": "Allocation",
+                            "tooBig": "Too many samples are being allocated. Increase the margin of error."
+                        }
+                    },
                     "title": "Sample Allocation",
-                    "tooltip": "Decide sample size and how the samples should be allocated."
+                    "tooltip": "Decide on the sample size and if stratified sampling, how the samples should be allocated."
                 },
                 "sampleArrangement": {
                     "button": "ARR",
-                    "form": {},
+                    "form": {
+                        "strategy": {
+                            "label": "Arrangement strategy",
+                            "tooltip": "Specify how samples should be arrange in each stratum",
+                            "RANDOM": {
+                                "label": "Random"
+                            },
+                            "SYSTEMATIC": {
+                                "label": "Systematic"
+                            }
+                        },
+                        "seed": {
+                            "label": "Seed",
+                            "placeholder": "Seed...",
+                            "tooltip": "The randomization seed"
+                        }
+                    },
                     "title": "Sample Arrangement",
-                    "tooltip": "Specify how the samples should be arranged with in each stratum."
+                    "tooltip": "Specify how the samples should be arranged (within each stratum if stratified sampling)."
                 }
             },
             "tabPlaceholder": "Sampling_design"

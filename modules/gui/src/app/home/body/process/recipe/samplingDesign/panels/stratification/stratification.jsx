@@ -26,6 +26,7 @@ const mapRecipeToProps = recipe => ({
 })
 
 const fields = {
+    requiresUpdate: new Form.Field(),
     unstratified: new Form.Field(),
     type: new Form.Field(),
     assetId: new Form.Field()
@@ -289,7 +290,8 @@ class _Stratification extends React.Component {
     // TODO: Make sure stratification image is added to the recipe layers
 
     componentDidMount() {
-        const {inputs: {unstratified, scale, type, eeStrategy}} = this.props
+        const {inputs: {requiresUpdate, unstratified, scale, type, eeStrategy}} = this.props
+        requiresUpdate.set(false)
         unstratified.value || unstratified.set([])
         scale.value || scale.set('30')
         type.value || type.set('ASSET')

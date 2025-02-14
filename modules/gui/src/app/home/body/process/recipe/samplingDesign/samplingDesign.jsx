@@ -13,6 +13,7 @@ import {initializeLayers} from '../recipeImageLayerSource'
 import {getAvailableBands} from './bands'
 import {SamplingDesignToolbar} from './panels/samplingDesignToolbar'
 import {defaultModel, RecipeActions} from './samplingDesignRecipe'
+import {Sync} from './sync'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -34,6 +35,7 @@ class _SamplingDesign extends React.Component {
         const {aoi} = this.props
         return (
             <Map>
+                <Sync/>
                 <SamplingDesignToolbar/>
                 <Aoi value={aoi}/>
             </Map>

@@ -15,6 +15,7 @@ import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
+import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
 import styles from './proportions.module.css'
@@ -32,6 +33,7 @@ const mapRecipeToProps = recipe => ({
 })
 
 const fields = {
+    requiresUpdate: new Form.Field(),
     anticipationStrategy: new Form.Field(),
     type: new Form.Field(),
     assetId: new Form.Field()
@@ -46,6 +48,7 @@ const fields = {
                 || (type === 'ASSET' && !assetId)
                 || (type === 'RECIPE' && !recipeId))
         .notBlank('process.samplingDesign.panel.proportions.form.band.required'),
+    percentage: new Form.Field(),
     scale: new Form.Field()
         .skip((_value, {anticipationStrategy}) => ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy))
         .notBlank('process.samplingDesign.panel.proportions.form.scale.required'),
@@ -58,19 +61,18 @@ const fields = {
 class _Proportions extends React.Component {
     cancel$ = new Subject()
     state = {
-        bands: undefined,
+        bands: undefined
     }
 
     constructor(props) {
         super(props)
-        this.onAnticipationStrategyChange = this.onAnticipationStrategyChange.bind(this)
         this.onTypeChanged = this.onTypeChanged.bind(this)
         this.onImageChanged = this.onImageChanged.bind(this)
         this.onImageLoading = this.onImageLoading.bind(this)
         this.onAssetLoaded = this.onAssetLoaded.bind(this)
         this.onRecipeLoaded = this.onRecipeLoaded.bind(this)
         this.onBandChanged = this.onBandChanged.bind(this)
-        this.onScaleChanged = this.onScaleChanged.bind(this)
+        this.onPercentageChanged = this.onPercentageChanged.bind(this)
         this.onOverallProportionChanged = this.onOverallProportionChanged.bind(this)
         this.onProbabilitiyPerStratumCalculated = this.onProbabilitiyPerStratumCalculated.bind(this)
     }
@@ -94,15 +96,13 @@ class _Proportions extends React.Component {
     }
 
     renderContent() {
-        const {inputs: {anticipationStrategy}} = this.props
+        const {inputs: {anticipationStrategy, anticipatedProportions}} = this.props
         return (
             <Layout>
                 {this.renderAnticipationStrategy()}
                 {['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy.value) ? this.renderImageSelection() : null}
                 {this.renderStrataProportion()}
-                <Layout alignment='right'>
-                    {this.renderOverallProportion()}
-                </Layout>
+                {anticipatedProportions.value ? this.renderOverallProportion() : null}
                 
             </Layout>
         )
@@ -211,10 +211,30 @@ class _Proportions extends React.Component {
     }
     
     renderBand() {
-        const {inputs: {band}} = this.props
+        const {inputs: {band, percentage, probabilityPerStratum}} = this.props
         const {bands = []} = this.state
         const options = bands
             .map(band => ({value: band, label: band}))
+
+        const forcePercentage = _.maxBy(probabilityPerStratum.value, 'probability')?.probability > 1
+
+        const percentageButton = (
+            <Form.Buttons
+                key={'percentage'}
+                input={percentage}
+                look='transparent'
+                shape={'pill'}
+                air={'less'}
+                size={'x-small'}
+                options={[
+                    {value: true, label: '%'}
+                ]}
+                multiple
+                tabIndex={-1}
+                disabled={forcePercentage}
+                onChange={this.onPercentageChanged}
+            />
+        )
         return (
             <FormCombo
                 className={styles.band}
@@ -224,6 +244,7 @@ class _Proportions extends React.Component {
                 label={msg('process.samplingDesign.panel.proportions.form.band.label')}
                 placeholder={msg('process.samplingDesign.panel.proportions.form.band.placeholder')}
                 tooltip={msg('process.samplingDesign.panel.proportions.form.band.tooltip')}
+                buttons={[percentageButton]}
                 onChange={this.onBandChanged}
             />
         )
@@ -317,15 +338,18 @@ class _Proportions extends React.Component {
     }
 
     componentDidMount() {
-        const {stratificationScale, inputs: {anticipationStrategy, scale, type, eeStrategy}} = this.props
+        const {stratificationScale, inputs: {requiresUpdate, anticipationStrategy, scale, type, eeStrategy}} = this.props
+        requiresUpdate.set(false)
         anticipationStrategy.value || anticipationStrategy.set('MANUAL')
         scale.value || scale.set(stratificationScale || '30')
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
     }
 
-    onAnticipationStrategyChange() {
-        console.log('onAnticipationStrategyChange')
+    componentDidUpdate(prevProps) {
+        if (!_.isEqual(proportionsDeps(prevProps), proportionsDeps(this.props))) {
+            this.calculateAnticipatedProportions()
+        }
     }
 
     onTypeChanged() {
@@ -338,9 +362,7 @@ class _Proportions extends React.Component {
 
     onImageChanged() {
         const {inputs: {band}} = this.props
-        console.log('onImageChanged')
         band.set(null)
-        this.calculateAnticipatedProportions()
     }
 
     onImageLoading() {
@@ -358,28 +380,43 @@ class _Proportions extends React.Component {
 
     onImageLoaded(bands, visualizations) {
         const {inputs: {band}} = this.props
-        console.log('onImageLoaded')
-        this.setState({bands})
-        const categoricalVisualizations = visualizations
-            .filter(({type}) => type === 'categorical')
+        this.setState({bands, visualizations})
         const defaultBand = bands.lenght === 1
             ? bands[0]
-            : categoricalVisualizations.length === 1
-                ? categoricalVisualizations[0].bands[0]
-                : null
+            : null
         const updateBand = defaultBand && defaultBand !== band.value
         updateBand && band.set(defaultBand)
         updateBand && this.onBandChanged({value: defaultBand})
     }
 
     onBandChanged() {
-        console.log('onBandChanged')
-        this.calculateAnticipatedProportions()
+        const {inputs: {band}} = this.props
+        const {visualizations = []} = this.state
+        const minMax = visualizations.map(({bands, min, max}) => {
+            const index = bands.indexOf(band.value)
+            if (index >= 0) {
+                return {min: min[index], max: max[index]}
+            } else {
+                return undefined
+            }
+        })
+        const min = _.minBy(minMax, 'min')?.min
+        const max = _.maxBy(minMax, 'max')?.max
+        if (min >= 0) {
+            this.setPercentage(max > 1)
+        }
     }
 
-    onScaleChanged() {
-        console.log('onScaleChanged')
-        this.calculateAnticipatedProportions()
+    onPercentageChanged(percentageValue) {
+        const percentage = !!percentageValue.length
+        const {strata, inputs: {probabilityPerStratum, anticipatedProportions, anticipatedOverallProportion}} = this.props
+        const proportions = this.probabilitiesToProportions({
+            targetOverallProportion: parseFloat(anticipatedOverallProportion.value),
+            probabilityPerStratum: probabilityPerStratum.value,
+            strata,
+            percentage
+        })
+        anticipatedProportions.set(proportions)
     }
 
     onOverallProportionChanged(changedOverallProportion) {
@@ -390,11 +427,10 @@ class _Proportions extends React.Component {
             anticipatedOverallProportion.set(changedOverallProportion)
         }
         const proportions = this.probabilitiesToProportions({
-            targetOverallProportion: changedOverallProportion.length
-                ? parseFloat(changedOverallProportion)
-                : null,
+            targetOverallProportion: parseFloat(changedOverallProportion),
             probabilityPerStratum: probabilityPerStratum.value,
-            strata
+            strata,
+            percentage: this.isPercentage()
         })
         anticipatedProportions.set(proportions)
     }
@@ -415,11 +451,6 @@ class _Proportions extends React.Component {
             )
             return _.ceil(100 * overallProportion / maxStratumProportion, 2)
         }
-    }
-
-    onEEStrategyChanged() {
-        console.log('onBandChanged')
-        this.calculateAnticipatedProportions()
     }
 
     calculateAnticipatedProportions() {
@@ -460,43 +491,70 @@ class _Proportions extends React.Component {
                 takeUntil(this.cancel$)
             ),
             this.onProbabilitiyPerStratumCalculated,
-            error => console.error('Something went wrong', error) // TODO:
+            error => console.error('Something went wrong', error) // TODO: Implement
         )
     }
 
     onProbabilitiyPerStratumCalculated(loadedProbabilityPerStratum) {
-        const {strata, inputs: {anticipatedOverallProportion, probabilityPerStratum, anticipatedProportions}} = this.props
+        const {strata, inputs: {probabilityPerStratum, anticipatedOverallProportion, anticipatedProportions}} = this.props
+        const adjustedPercentage = this.isPercentage()
+            || _.maxBy(loadedProbabilityPerStratum, 'probability').probability > 1
+        if (adjustedPercentage && !this.isPercentage()) {
+            this.setPercentage(true)
+        }
         const proportions = this.probabilitiesToProportions({
-            targetOverallProportion: anticipatedOverallProportion.value,
+            targetOverallProportion: parseFloat(anticipatedOverallProportion.value),
             probabilityPerStratum: loadedProbabilityPerStratum,
-            strata
+            strata,
+            percentage: adjustedPercentage
         })
         probabilityPerStratum.set(loadedProbabilityPerStratum)
         anticipatedProportions.set(proportions)
     }
 
-    // TODO: Pull this into separate file, so it can be tested
-    probabilitiesToProportions({targetOverallProportion, strata, probabilityPerStratum}) {
+    probabilitiesToProportions({percentage, targetOverallProportion, strata, probabilityPerStratum}) {
+        const adjustedPercentage = percentage
+            || _.maxBy(probabilityPerStratum, 'probability').probability > 1
+        if (adjustedPercentage && !percentage) {
+            setImmediate(() => this.setPercentage(true))
+        }
         const weightedProbabilities = probabilityPerStratum.map(({stratum, probability}) => {
             const weight = strata.find(({value}) => value === stratum).weight
             return weight * probability
         })
         const overallProbability = _.sum(weightedProbabilities)
-        const probabilityFactor = typeof targetOverallProportion === 'number'
+        const probabilityFactor = targetOverallProportion >= 0
             ? targetOverallProportion / 100 / overallProbability
-            : 1
+            : adjustedPercentage ? 1 / 100 : 1
         return probabilityPerStratum.map(({stratum, probability}) => {
-            const {label, color, area} = strata.find(({value}) => value === stratum)
+            const {label, color, area, weight} = strata.find(({value}) => value === stratum)
             const proportion = probability * probabilityFactor
             return ({
                 stratum,
                 label,
                 color,
+                weight,
                 proportion,
-                area: area * proportion
+                area: area * proportion,
             })
         })
     }
+
+    isPercentage() {
+        const {inputs: {percentage}} = this.props
+        return !!percentage.value.length
+    }
+
+    setPercentage(isPercentage) {
+        const {inputs: {percentage}} = this.props
+        percentage.set(isPercentage ? [true] : [])
+    }
+}
+
+const proportionsDeps = props => {
+    const {inputs: {anticipationStrategy, type, assetId, recipeId, band, scale, eeStrategy}} = props
+    return [anticipationStrategy, type, assetId, recipeId, band, scale, eeStrategy]
+        .map(input => input?.value)
 }
 
 const valuesToModel = values => {

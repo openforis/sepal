@@ -1,4 +1,4 @@
-.proportions {
+.allocation {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto auto;
     row-gap: .5rem;
@@ -10,21 +10,18 @@
     display: contents;
 }
 
-.headerGroups,
 .header,
 .footer {
     display: contents;
 }
 
 .header>*,
-.headerGroups,
 .footer>* {
     font-weight: bold;
     background-color: var(--look-default-active-background-color) !important;
     color: #808080;
 }
 
-.headerGroups>*,
 .header>*,
 .row>*,
 .footer>* {
@@ -43,14 +40,15 @@
     grid-column: 1 / span 2;
 }
 
-.stratumHeader {
-    grid-column: 1 / span 2;
-}
-
 .reportingCategory {
     grid-column: 3 / span 2;
 }
 
 .overall {
     grid-column: 1 / span 2;
+}
+
+.nan {
+    font-style: italic;
+    color: #808080;
 }

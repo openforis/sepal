@@ -2,7 +2,7 @@
     max-width: 34rem;
 }
 
-.band {
+.band .scale {
     flex-grow: 1;
     flex-shrink: 0;
 }

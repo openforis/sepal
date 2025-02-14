@@ -20,15 +20,14 @@ export const ProportionTable = ({proportions, overallProportion}) => (
 // TODO: Use msg for header
 const HeaderGroups = () => (
     <div className={styles.headerGroups}>
-        <div className={styles.stratum}>Stratum</div>
+        <div className={styles.stratum}></div>
         <div className={styles.reportingCategory}>Reporting category</div>
     </div>
 )
 
 const Header = () => (
     <div className={styles.header}>
-        <div/>
-        <div className={styles.label}>Name</div>
+        <div className={styles.stratumHeader}>Stratum</div>
         <div className={styles.area}>Area (ha)</div>
         <div className={styles.weight}>Proportion (%)</div>
     </div>

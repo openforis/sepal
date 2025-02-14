@@ -21,7 +21,11 @@ import {Stratification} from './stratification/stratification'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
-    initialized: selectFrom(recipe, 'ui.initialized')
+    initialized: selectFrom(recipe, 'ui.initialized'),
+    stratificationRequiresUpdate: selectFrom(recipe, 'model.stratification.requiresUpdate'),
+    proportionsRequiresUpdate: selectFrom(recipe, 'model.proportions.requiresUpdate'),
+    sampleAllocationRequiresUpdate: selectFrom(recipe, 'model.sampleAllocation.requiresUpdate'),
+    sampleArrangementRequiresUpdate: selectFrom(recipe, 'model.sampleArrangement.requiresUpdate'),
 })
 
 class _SamplingDesignToolbar extends React.Component {
@@ -31,7 +35,7 @@ class _SamplingDesignToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized} = this.props
+        const {recipeId, initialized, stratificationRequiresUpdate, proportionsRequiresUpdate, sampleAllocationRequiresUpdate, sampleArrangementRequiresUpdate} = this.props
         return (
             <PanelWizard
                 panels={['aoi', 'stratification']}
@@ -62,21 +66,25 @@ class _SamplingDesignToolbar extends React.Component {
                         disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='stratification'
+                        className={stratificationRequiresUpdate ? styles.error : null}
                         label={msg('process.samplingDesign.panel.stratification.button')}
                         tooltip={msg('process.samplingDesign.panel.stratification.tooltip')}
                         disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='proportions'
+                        className={proportionsRequiresUpdate ? styles.error : null}
                         label={msg('process.samplingDesign.panel.proportions.button')}
                         tooltip={msg('process.samplingDesign.panel.proportions.tooltip')}
                         disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='sampleAllocation'
+                        className={sampleAllocationRequiresUpdate ? styles.error : null}
                         label={msg('process.samplingDesign.panel.sampleAllocation.button')}
                         tooltip={msg('process.samplingDesign.panel.sampleAllocation.tooltip')}
                         disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='sampleArrangement'
+                        className={sampleArrangementRequiresUpdate ? styles.error : null}
                         label={msg('process.samplingDesign.panel.sampleArrangement.button')}
                         tooltip={msg('process.samplingDesign.panel.sampleArrangement.tooltip')}
                         disabled={!initialized}/>
