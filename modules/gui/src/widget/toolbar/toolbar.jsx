@@ -4,22 +4,21 @@ import React from 'react'
 import lookStyles from '~/style/look.module.css'
 import {Portal} from '~/widget/portal'
 
-import {ActivationButton} from './activationButton'
 import {Context} from './context'
 import styles from './toolbar.module.css'
+import {ToolbarActivationButton} from './toolbarActivationButton'
 import {ToolbarButton} from './toolbarButton'
 
 export class Toolbar extends React.Component {
     panelContainer = React.createRef()
 
     render() {
-        const {horizontal, vertical, panel, placement, className} = this.props
+        const {horizontal, vertical, placement, className} = this.props
         const classNames = [
             styles.toolbar,
             lookStyles.look,
             horizontal && styles.horizontal,
             vertical && styles.vertical,
-            panel && styles.panelButton,
             styles[placement],
             className
         ]
@@ -28,7 +27,7 @@ export class Toolbar extends React.Component {
                 <div className={classNames.join(' ')} ref={this.panelContainer}>
                     <Context.Provider value={{
                         horizontal: !!horizontal,
-                        panel: !!panel,
+                        vertical: !!vertical,
                         panelContainer: this.panelContainer.current,
                         placement
                     }}>
@@ -52,5 +51,5 @@ Toolbar.propTypes = {
     vertical: PropTypes.any
 }
 
-Toolbar.ActivationButton = ActivationButton
-Toolbar.ToolbarButton = ToolbarButton
+Toolbar.ActivationButton = ToolbarActivationButton
+Toolbar.Button = ToolbarButton

@@ -45,45 +45,49 @@ class _AssetToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='top-right'
-                    panel
                     className={styles.top}>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='assetDetails'
                         label={msg('process.asset.panel.assetDetails.button')}
                         tooltip={msg('process.asset.panel.assetDetails.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='dates'
                         label={msg('process.asset.panel.dates.button')}
                         tooltip={msg('process.asset.panel.dates.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='filter'
                         label={msg('process.asset.panel.filter.button')}
                         tooltip={msg('process.asset.panel.filter.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='mask'
                         label={msg('process.asset.panel.mask.button')}
                         tooltip={msg('process.asset.panel.mask.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='composite'
                         label={msg('process.asset.panel.composite.button')}
                         tooltip={msg('process.asset.panel.composite.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

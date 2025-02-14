@@ -6,7 +6,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 import {msg} from '~/translate'
-import {ActivationButton} from '~/widget/toolbar/activationButton'
+import {ToolbarActivationButton} from '~/widget/toolbar/toolbarActivationButton'
 
 import {withRecipe} from '../recipeContext'
 
@@ -24,9 +24,10 @@ class _RetrieveButton extends React.Component {
     render() {
         const {initialized, disabled} = this.props
         return (
-            <ActivationButton
+            <ToolbarActivationButton
                 id='retrieve'
                 icon='cloud-download-alt'
+                panel
                 disabled={!initialized || disabled || this.isBudgetExceeded()}
                 tooltip={this.getTooltip()}
                 tooltipOnVisible={this.hint}

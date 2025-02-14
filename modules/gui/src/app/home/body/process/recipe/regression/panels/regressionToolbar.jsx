@@ -39,35 +39,34 @@ class _RegressionToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='top-right'
-                    panel
                     className={styles.top}>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='inputImagery'
                         label={msg('process.classification.panel.inputImagery.button')}
                         tooltip={msg('process.classification.panel.inputImagery.tooltip')}
-                        disabled={!initialized}/>
-
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='trainingData'
                         label={msg('process.classification.panel.trainingData.button')}
-                        tooltip={msg('process.classification.panel.trainingData.tooltip')}/>
-
+                        tooltip={msg('process.classification.panel.trainingData.tooltip')}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='auxiliaryImagery'
                         label={msg('process.classification.panel.auxiliaryImagery.button')}
-                        tooltip={msg('process.classification.panel.auxiliaryImagery.tooltip')}/>
-
+                        tooltip={msg('process.classification.panel.auxiliaryImagery.tooltip')}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='classifier'
                         label={msg('process.classification.panel.classifier.button')}
-                        tooltip={msg('process.classification.panel.classifier.tooltip')}/>
+                        tooltip={msg('process.classification.panel.classifier.tooltip')}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

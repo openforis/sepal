@@ -43,32 +43,32 @@ class _BandMathToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='top-right'
-                    panel
                     className={styles.top}>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='inputImagery'
                         label={msg('process.panels.inputImagery.button')}
                         tooltip={msg('process.panels.inputImagery.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='calculations'
-                        className={calculations.find(({invalid}) => invalid) ? styles.error : null}
+                        error={calculations.find(({invalid}) => invalid)}
                         label={msg('process.bandMath.panel.calculations.button')}
                         tooltip={msg('process.bandMath.panel.calculations.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='outputBands'
                         label={msg('process.bandMath.panel.outputBands.button')}
                         tooltip={msg('process.bandMath.panel.outputBands.tooltip')}
-                        disabled={!initialized}/>
-
+                        disabled={!initialized}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

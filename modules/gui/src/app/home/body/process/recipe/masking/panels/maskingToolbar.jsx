@@ -36,25 +36,25 @@ class _MaskingToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement="top-right"
-                    panel
                     className={styles.top}>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
                     placement="bottom-right"
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id="imageToMask"
                         label={msg('process.masking.panel.inputImage.imageToMask.button.label')}
                         tooltip={msg('process.masking.panel.inputImage.imageToMask.button.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id="imageMask"
                         label={msg('process.masking.panel.inputImage.imageMask.button.label')}
                         tooltip={msg('process.masking.panel.inputImage.imageMask.button.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

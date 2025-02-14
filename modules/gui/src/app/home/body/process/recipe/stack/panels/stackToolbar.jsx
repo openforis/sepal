@@ -42,26 +42,25 @@ class _StackToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='top-right'
-                    panel
                     className={styles.top}>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='inputImagery'
                         label={msg('process.panels.inputImagery.button')}
                         tooltip={msg('process.panels.inputImagery.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='bandNames'
                         label={msg('process.stack.panel.bandNames.button')}
                         tooltip={msg('process.stack.panel.bandNames.tooltip')}
-                        disabled={!initialized}/>
-
+                        disabled={!initialized}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

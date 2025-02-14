@@ -55,22 +55,24 @@ class _CcdcSliceToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='source'
                         label={msg('process.ccdcSlice.panel.source.button')}
                         tooltip={msg('process.ccdcSlice.panel.source.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='date'
                         label={msg('process.ccdcSlice.panel.date.button')}
                         tooltip={msg('process.ccdcSlice.panel.date.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='options'
                         label={msg('process.ccdcSlice.panel.options.button')}
-                        tooltip={msg('process.ccdcSlice.panel.options.tooltip')}/>
+                        tooltip={msg('process.ccdcSlice.panel.options.tooltip')}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )
