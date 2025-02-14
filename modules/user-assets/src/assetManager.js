@@ -7,7 +7,7 @@ const log = require('#sepal/log').getLogger('assetManager')
 
 const {Subject, groupBy, mergeMap, map, tap, defer, repeat, retry, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, race, of, EMPTY, concat} = require('rxjs')
 const {setUser, removeUser, updateUser, getUser, isConnectedWithGoogle} = require('./userStore')
-const {scanTree$, scanNode$, userBusy$} = require('./assetScanner')
+const {scanTree$, scanNode$, busy$, isBusy} = require('./assetScanner')
 const {pollIntervalMilliseconds} = require('./config')
 const {minDuration$} = require('#sepal/rxjs')
 const {deleteAsset$, createFolder$} = require('./asset')
@@ -204,7 +204,7 @@ const createAssetManager = ({out$, stop$}) => {
         mergeMap(subscription$ => subscription$.pipe(
             switchMap(({username, clientId, subscriptionId}) =>
                 concat(storedUserAssets$(username), userAssetsUpdated$(username)).pipe(
-                    map(({tree, node}) => ({clientId, subscriptionId, data: {tree, node}})),
+                    map(({tree, node}) => ({clientId, subscriptionId, data: {tree, node, busy: isBusy(username)}})),
                     takeUntil(currentSubscriptionDown$(subscriptionId)),
                     takeUntil(currentUserDown$(username)),
                     finalize(() => log.debug(`${subscriptionTag({username, clientId, subscriptionId})} down`))
@@ -268,7 +268,7 @@ const createAssetManager = ({out$, stop$}) => {
         complete: () => log.error('Unexpected stream complete')
     })
 
-    userBusy$.pipe(
+    busy$.pipe(
         map(({username, busy}) => ({username, data: {busy}}))
     ).subscribe({
         next: ({username, data}) => out$.next({username, data}),

@@ -2,28 +2,36 @@ const _ = require('lodash')
 const {userTag} = require('./tag')
 const log = require('#sepal/log').getLogger('assetScanner')
 
-const {tap, map, mergeWith, of, switchMap, catchError, scan, takeLast, EMPTY, from, throttleTime, Subject, groupBy, mergeMap, filter, finalize} = require('rxjs')
+const {tap, map, mergeWith, of, switchMap, catchError, scan, takeLast, EMPTY, from, throttleTime, Subject, finalize} = require('rxjs')
 const {getUser} = require('./userStore')
 const {STree} = require('#sepal/tree/sTree')
 const {getAsset$} = require('./asset')
 
+const busy = {}
 const busy$ = new Subject()
 
-const userBusy$ = busy$.pipe(
-    groupBy(({username}) => username),
-    mergeMap(username$ => username$.pipe(
-        scan(({count}, {username, busy, free}) => ({
-            username,
-            count: count + (busy ? 1 : 0) - (free ? 1 : 0),
-            busy: !!(count === 0 && busy),
-            free: !!(count === 1 && free),
-        }), {
-            count: 0
-        })
-    )),
-    filter(({busy, free}) => busy || free),
-    map(({username, busy}) => ({username, busy}))
-)
+const increaseBusy = username => {
+    if (busy[username]) {
+        busy[username]++
+    } else {
+        busy[username] = 1
+        busy$.next({username, busy: true})
+    }
+}
+
+const decreaseBusy = username => {
+    if (busy[username]) {
+        if (busy[username] > 1) {
+            busy[username]--
+        } else {
+            delete busy[username]
+            busy$.next({username, busy: false})
+        }
+    }
+}
+
+const isBusy = username =>
+    !!busy[username]
 
 const createRoot = () =>
     STree.createRoot()
@@ -50,7 +58,7 @@ const getKey = ({id}, path) => {
 
 const scanTree$ = (username, {incremental = false, throttle = 1000} = {}) => {
     log.debug(`${userTag(username)} loading tree`)
-    busy$.next({username, busy: true})
+    increaseBusy(username)
     return from(getUser(username)).pipe(
         switchMap(user =>
             loadNode$(user, [], true).pipe(
@@ -67,7 +75,7 @@ const scanTree$ = (username, {incremental = false, throttle = 1000} = {}) => {
                 })
             )
         ),
-        finalize(() => busy$.next({username, free: true}))
+        finalize(() => decreaseBusy(username))
     )
 }
 
@@ -91,7 +99,7 @@ const loadNodes$ = (user, path, recursive, nodes) =>
 
 const scanNode$ = (username, path) => {
     log.debug(`${userTag(username)} loading node:`, path)
-    busy$.next({username, busy: true})
+    increaseBusy(username)
     return from(getUser(username)).pipe(
         switchMap(user => getAsset$(user, STree.toStringPath(path))),
         map(childNodes => {
@@ -105,8 +113,8 @@ const scanNode$ = (username, path) => {
             )
             return node
         }),
-        finalize(() => busy$.next({username, free: true}))
+        finalize(() => decreaseBusy(username))
     )
 }
 
-module.exports = {scanTree$, scanNode$, userBusy$}
+module.exports = {scanTree$, scanNode$, busy$, isBusy}
