@@ -16,7 +16,7 @@ class _ChartPixelButton extends React.Component {
         const {disabled} = this.props
         const {isSelecting} = this.state
         return (
-            <Toolbar.ToolbarButton
+            <Toolbar.Button
                 selected={isSelecting}
                 onClick={() => isSelecting ? this.cancelSelecting() : this.startSelecting()}
                 icon={'chart-area'}

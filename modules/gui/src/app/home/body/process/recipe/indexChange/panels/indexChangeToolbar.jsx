@@ -42,37 +42,40 @@ class _IndexChangeToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement="top-right"
-                    panel
                     className={styles.top}>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
                     placement="bottom-right"
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id="fromImage"
                         label={msg('process.indexChange.panel.inputImage.from.button.label')}
                         tooltip={msg('process.indexChange.panel.inputImage.from.button.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id="toImage"
                         label={msg('process.indexChange.panel.inputImage.to.button.label')}
                         tooltip={msg('process.indexChange.panel.inputImage.to.button.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id="legend"
                         label={msg('process.indexChange.panel.legend.button.label')}
-                        tooltip={msg('process.indexChange.panel.legend.button.tooltip')}/>
+                        tooltip={msg('process.indexChange.panel.legend.button.tooltip')}
+                        panel/>
                     <Toolbar.ActivationButton
                         id="mapping"
                         label={msg('process.indexChange.panel.mapping.button.label')}
-                        tooltip={msg('process.indexChange.panel.mapping.button.tooltip')}/>
+                        tooltip={msg('process.indexChange.panel.mapping.button.tooltip')}
+                        panel/>
                     <Toolbar.ActivationButton
                         id="options"
                         label={msg('process.indexChange.panel.options.button.label')}
-                        tooltip={msg('process.indexChange.panel.options.button.tooltip')}/>
+                        tooltip={msg('process.indexChange.panel.options.button.tooltip')}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

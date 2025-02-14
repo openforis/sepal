@@ -41,34 +41,36 @@ class _PlanetMosaicToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='top-right'
-                    panel
                     className={styles.top}>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='dates'
                         label={msg('process.planetMosaic.panel.dates.button')}
                         tooltip={msg('process.planetMosaic.panel.dates.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='sources'
                         label={msg('process.planetMosaic.panel.sources.button')}
                         tooltip={msg('process.planetMosaic.panel.sources.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='options'
                         label={msg('process.planetMosaic.panel.options.button')}
-                        tooltip={msg('process.planetMosaic.panel.options.tooltip')}/>
+                        tooltip={msg('process.planetMosaic.panel.options.tooltip')}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

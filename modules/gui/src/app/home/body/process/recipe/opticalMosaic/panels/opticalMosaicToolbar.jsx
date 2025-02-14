@@ -57,49 +57,54 @@ class _MosaicToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='top-right'
-                    panel
                     className={styles.top}>
 
                     <Toolbar.ActivationButton
                         id='autoSelectScenes'
                         icon='wand-sparkles'
                         tooltip={msg('process.mosaic.panel.autoSelectScenes.tooltip')}
-                        disabled={!sceneAreasLoaded || !selectScenes}/>
+                        disabled={!sceneAreasLoaded || !selectScenes}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='clearSelectedScenes'
                         icon='trash'
                         tooltip={msg('process.mosaic.panel.clearSelectedScenes.tooltip')}
-                        disabled={!scenesSelected}/>
+                        disabled={!scenesSelected}
+                        panel/>
                     <RetrieveButton disabled={selectScenes && !scenesSelected}/>
                 </Toolbar>
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='dates'
                         label={msg('process.mosaic.panel.dates.button')}
                         tooltip={msg('process.mosaic.panel.dates.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='sources'
                         label={msg('process.mosaic.panel.sources.button')}
                         tooltip={msg('process.mosaic.panel.sources.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='sceneSelectionOptions'
                         label={msg('process.mosaic.panel.scenes.button')}
-                        tooltip={msg('process.mosaic.panel.scenes.tooltip')}/>
+                        tooltip={msg('process.mosaic.panel.scenes.tooltip')}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='compositeOptions'
                         label={msg('process.mosaic.panel.composite.button')}
-                        tooltip={msg('process.mosaic.panel.composite.tooltip')}/>
+                        tooltip={msg('process.mosaic.panel.composite.tooltip')}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

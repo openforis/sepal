@@ -57,34 +57,36 @@ class _PhenologyToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='top-right'
-                    panel
                     className={styles.top}>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='dates'
                         label={msg('process.phenology.panel.dates.button')}
                         tooltip={msg('process.phenology.panel.dates.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='sources'
                         label={msg('process.changeAlerts.panel.sources.button')}
                         tooltip={msg('process.changeAlerts.panel.sources.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='options'
                         label={msg('process.timeSeries.panel.preprocess.button')}
-                        tooltip={msg('process.timeSeries.panel.preprocess.tooltip')}/>
+                        tooltip={msg('process.timeSeries.panel.preprocess.tooltip')}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

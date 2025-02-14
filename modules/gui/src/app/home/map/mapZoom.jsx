@@ -353,7 +353,9 @@ class _MapZoomButton extends React.Component {
                 <Toolbar.ActivationButton
                     id='mapZoom'
                     icon='search'
-                    tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
+                    tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}
+                    panel
+                />
             </Keybinding>
         )
     }

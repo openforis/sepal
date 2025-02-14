@@ -39,35 +39,34 @@ class _UnsupervisedClassificationToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='top-right'
-                    panel
                     className={styles.top}>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='inputImagery'
                         label={msg('process.classification.panel.inputImagery.button')}
                         tooltip={msg('process.classification.panel.inputImagery.tooltip')}
-                        disabled={!initialized}/>
-
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='sampling'
                         label={msg('process.unsupervisedClassification.panel.sampling.button')}
-                        tooltip={msg('process.unsupervisedClassification.panel.sampling.tooltip')}/>
-
+                        tooltip={msg('process.unsupervisedClassification.panel.sampling.tooltip')}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='auxiliaryImagery'
                         label={msg('process.classification.panel.auxiliaryImagery.button')}
-                        tooltip={msg('process.classification.panel.auxiliaryImagery.tooltip')}/>
-
+                        tooltip={msg('process.classification.panel.auxiliaryImagery.tooltip')}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='clusterer'
                         label={msg('process.unsupervisedClassification.panel.clusterer.button')}
-                        tooltip={msg('process.unsupervisedClassification.panel.clusterer.tooltip')}/>
+                        tooltip={msg('process.unsupervisedClassification.panel.clusterer.tooltip')}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )
