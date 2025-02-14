@@ -5,7 +5,7 @@ const {userTag, subscriptionTag} = require('./tag')
 const {setAssets, getAssets, removeAssets, expireAssets} = require('./assetStore')
 const log = require('#sepal/log').getLogger('assetManager')
 
-const {Subject, first, groupBy, mergeMap, map, tap, defer, repeat, retry, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, concatWith, from, race, of, EMPTY} = require('rxjs')
+const {Subject, groupBy, mergeMap, map, tap, defer, repeat, retry, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, race, of, EMPTY, concat} = require('rxjs')
 const {setUser, removeUser, updateUser, getUser, isConnectedWithGoogle} = require('./userStore')
 const {scanTree$, scanNode$, userBusy$} = require('./assetScanner')
 const {pollIntervalMilliseconds} = require('./config')
@@ -188,6 +188,11 @@ const createAssetManager = ({out$, stop$}) => {
         reload$.next(username)
     }
 
+    const storedUserAssets$ = username =>
+        from(getAssets(username, {allowMissing: true})).pipe(
+            map(({assets} = {}) => ({tree: assets || STree.createRoot()}))
+        )
+
     const userAssetsUpdated$ = username =>
         assetsUpdated$.pipe(
             filter(({username: assetsUsername}) => assetsUsername === username)
@@ -198,11 +203,7 @@ const createAssetManager = ({out$, stop$}) => {
         groupBy(({subscriptionId}) => subscriptionId),
         mergeMap(subscription$ => subscription$.pipe(
             switchMap(({username, clientId, subscriptionId}) =>
-                from(getAssets(username, {allowMissing: true})).pipe(
-                    filter(({assets}) => assets),
-                    map(({assets}) => ({tree: assets})),
-                    first(),
-                    concatWith(userAssetsUpdated$(username)),
+                concat(storedUserAssets$(username), userAssetsUpdated$(username)).pipe(
                     map(({tree, node}) => ({clientId, subscriptionId, data: {tree, node}})),
                     takeUntil(currentSubscriptionDown$(subscriptionId)),
                     takeUntil(currentUserDown$(username)),
@@ -294,8 +295,7 @@ const createAssetManager = ({out$, stop$}) => {
         triggerReload(username)
     
     const cancelReload = ({username, clientId, subscriptionId}) =>
-        log.warn('implement cancel reload')
-        // _cancelReload(username)
+        log.debug('implement cancel reload')
     
     const remove = ({username, clientId, subscriptionId, paths}) => {
         paths.forEach(path => {
