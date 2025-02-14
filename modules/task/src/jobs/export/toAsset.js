@@ -63,7 +63,7 @@ const imageToAssetCollection$ = (taskId, {
 
     const replaceAsset$ = asset => {
         const delete$ = () => asset.type === 'ImageCollection'
-            ? ee.deleteAssetRecursive$(assetId, ['ImageCollection', 'Image'], 0)
+            ? ee.deleteAssetRecursive$(assetId, {include: ['ImageCollection', 'Image']})
             : asset.type === 'Image'
                 ? deleteAsset$(assetId)
                 : throwError(() => 'Asset ID already exists, but isn\'t an image or image collection')
@@ -206,7 +206,7 @@ const imageToAsset$ = (taskId, {
         return exportLimiter$(
             concat(
                 strategy === 'replace'
-                    ? ee.deleteAssetRecursive$(assetId, ['ImageCollection', 'Image'], 0).pipe(swallow())
+                    ? ee.deleteAssetRecursive$(assetId, {include: ['ImageCollection', 'Image']}).pipe(swallow())
                     : of(),
                 task$(taskId, task, description)
             )

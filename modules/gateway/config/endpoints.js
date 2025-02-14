@@ -170,6 +170,11 @@ const webSocketEndpoints = [
     {
         module: 'user-files',
         target: `ws://${modules.userFiles}/ws`
+    },
+    {
+        module: 'user-assets',
+        target: `ws://${modules.userAssets}/ws`,
+        sendGoogleAccessToken: true
     }
 ]
 

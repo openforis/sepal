@@ -1,0 +1,119 @@
+.browse {
+    --fx-saturation: 70%;
+    --add-color: hsla(var(--look-add-h), var(--fx-saturation), var(--look-add-l), 1);
+    --remove-color: hsla(var(--look-cancel-h), var(--fx-saturation), var(--look-cancel-l), 1);
+    --icon-width: 2.5rem;
+}
+
+.header {
+    margin-top: 1rem;
+    color: var(--warning-color);
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    color: gray;
+    font-size: small;
+    margin-right: 1rem;
+}
+
+.fileList {
+    line-height: 2rem;
+    margin-top: 1rem;
+}
+
+.fileList ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    user-select: none;
+    min-width: max-content;
+}
+
+.fileList li > div {
+    --look-highlight-a: .5;
+    display: flex;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+    border: none !important;
+    padding-left: calc(var(--depth) * 1.5rem);
+    padding-right: 1rem;
+    white-space: nowrap;
+    --animation-duration: calc(var(--animation-duration-ms) * 1ms);
+}
+
+.fileList li > div.selected {
+    transition: 100ms ease-in-out;
+}
+
+/* recursively propagate selection to children */
+.fileList li > div.selected + ul li > div {
+    transition: 100ms ease-in-out;
+}
+
+.fileList li > div.adding {
+    animation: adding var(--animation-duration) ease-in-out forwards;
+}
+
+@keyframes adding {
+    0% {
+        background-color: var(--add-color);
+    }
+}
+
+.fileList li > div.removing,
+.fileList li > div.removing:hover,
+.fileList li > div.removing + ul li > div {
+    background-color: var(--remove-color);
+}
+
+.fileList li > div.removed,
+.fileList li > div.removed:hover,
+.fileList li > div.removed + ul li > div {
+    background-color: var(--remove-color);
+    animation: removed var(--animation-duration) ease-in-out forwards;
+}
+
+@keyframes removed {
+    100% {
+        opacity: 0;
+    }
+}
+
+.fileName {
+    display: inline-block;
+    padding-left: var(--icon-width);
+}
+
+.fileInfo {
+    display: inline-block;
+    color: #707070;
+    padding-left: .5rem;
+    font-size: smaller;
+}
+
+.icon {
+    position: absolute;
+    width: var(--icon-width);
+    padding: 0 .5rem;
+    text-align: center;
+    color: #b0b0b0;
+}
+
+.directory:hover {
+    color: white;
+}
+
+.expanded svg {
+    transform: rotateZ(45deg);
+    transition: 100ms ease-in-out;
+}
+
+.collapsed svg {
+    transform: none;
+    transition: 100ms ease-in-out;
+}

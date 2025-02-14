@@ -1,15 +1,15 @@
 check filesystem root_fs with path /
-    if space usage > 80% for 5 times within 15 cycles then exec "/usr/local/bin/pushover-notify -1"
+    if space usage > 70% for 5 times within 15 cycles then exec "/usr/local/bin/pushover-notify -1"
     if space usage > 90% then exec "/usr/local/bin/pushover-notify 2"
 
 check filesystem data_fs with path /data
-    if space usage > 80% for 5 times within 15 cycles then exec "/usr/local/bin/pushover-notify -1"
+    if space usage > 70% for 5 times within 15 cycles then exec "/usr/local/bin/pushover-notify -1"
     if space usage > 90% then exec "/usr/local/bin/pushover-notify 2"
 
 check filesystem docker_fs with path /var/lib/docker
-    if space usage > 80% for 5 times within 15 cycles then exec "/usr/local/bin/pushover-notify -1"
+    if space usage > 85% for 5 times within 15 cycles then exec "/usr/local/bin/pushover-notify -1"
     if space usage > 90% then exec "/usr/local/bin/pushover-notify 2"
 
 check filesystem log_fs with path /var/log
-    if space usage > 80% for 5 times within 15 cycles then exec "/usr/local/bin/pushover-notify -1"
+    if space usage > 70% for 5 times within 15 cycles then exec "/usr/local/bin/pushover-notify -1"
     if space usage > 90% then exec "/usr/local/bin/pushover-notify 2"

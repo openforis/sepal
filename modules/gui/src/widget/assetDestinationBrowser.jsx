@@ -2,21 +2,22 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {AssetTree} from '~/app/home/body/browse/assets/assetTree'
 import {compose} from '~/compose'
 import format from '~/format'
 import {isEqual} from '~/hash'
 import {msg} from '~/translate'
-import {Tree} from '~/tree'
 import {isServiceAccount} from '~/user'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
+import {Notifications} from '~/widget/notifications'
 
 import {withActivatable} from './activation/activatable'
-import styles from './assetBrowser.module.css'
-import {AssetItem} from './assetItem'
+import styles from './assetDestinationBrowser.module.css'
 import {withAssets} from './assets'
 import {Button} from './button'
 import {ButtonPopup} from './buttonPopup'
+import {CrudItem} from './crudItem'
 import {Input} from './input'
 import {ScrollableList} from './list'
 import {Panel} from './panel/panel'
@@ -28,15 +29,13 @@ const fields = {
     asset: new Form.Field().notBlank()
 }
 
-const isFolder = type => type === 'Folder' || type === 'NewFolder'
-
 const mapStateToProps = (_state, ownProps) => ({
     values: {
         asset: ownProps?.assetId || ownProps?.activatable?.activatables?.assetBrowser?.activationProps?.assetId
     }
 })
 
-class _AssetBrowser extends React.Component {
+class _AssetDestinationBrowser extends React.Component {
     constructor(props) {
         super(props)
         this.reloadAssets = this.reloadAssets.bind(this)
@@ -51,9 +50,8 @@ class _AssetBrowser extends React.Component {
 
     state = {
         filter: '',
-        filteredTree: Tree.createNode(),
-        selectedFolderId: null,
-        selectedParentPath: null
+        filteredTree: AssetTree.create(),
+        selectedFolder: null
     }
 
     render() {
@@ -106,7 +104,7 @@ class _AssetBrowser extends React.Component {
     }
 
     renderCreateFolderButton() {
-        const {selectedParentPath} = this.state
+        const {selectedFolder} = this.state
         return (
             <ButtonPopup
                 look='add'
@@ -114,15 +112,16 @@ class _AssetBrowser extends React.Component {
                 label={msg('Create folder')}
                 vPlacement='below'
                 hPlacement='over-right'
-                disabled={!selectedParentPath}
-            >
+                disabled={!selectedFolder}>
                 {close => (
                     <Input
+                        className={styles.createFolder}
                         autoFocus
                         placeholder={msg('Enter folder name')}
                         onAccept={folder => {
-                            this.onCreateFolder(folder)
-                            close()
+                            if (folder.length && this.createFolder(folder)) {
+                                close()
+                            }
                         }}
                         onCancel={close}
                     />
@@ -131,10 +130,21 @@ class _AssetBrowser extends React.Component {
         )
     }
 
-    onCreateFolder(folder) {
-        const {assets: {createFolder}} = this.props
-        const {selectedParentPath} = this.state
-        createFolder(selectedParentPath, folder)
+    createFolder(folder) {
+        const {assets: {createFolder, isExistingPath}} = this.props
+        const {selectedFolder} = this.state
+        const path = [...selectedFolder, folder]
+        if (isExistingPath(path)) {
+            Notifications.error({
+                message: msg('browse.createFolder.existing.error'),
+                timeout: 5
+            })
+            
+        } else {
+            createFolder(path)
+            return true
+        }
+        return false
     }
 
     renderInput() {
@@ -151,12 +161,12 @@ class _AssetBrowser extends React.Component {
     }
 
     renderFolderTree() {
-        const {filteredTree, selectedFolderId} = this.state
-        const options = this.getFolderTreeOptions(Tree.getChildNodes(filteredTree))
+        const {filteredTree, selectedFolder} = this.state
+        const options = this.getFolderTreeOptions(AssetTree.getChildNodes(filteredTree))
         return (
             <ScrollableList
                 options={options}
-                selectedValue={selectedFolderId}
+                selectedValue={selectedFolder ? AssetTree.toStringPath(selectedFolder) : null}
                 onSelect={this.onFolderSelect}
                 keyboard={false}
             />
@@ -187,22 +197,51 @@ class _AssetBrowser extends React.Component {
         ) : null
     }
 
-    renderItem({id, type, depth, nodes, quota}) {
-        const showTailOnly = depth > 0 || !isFolder(type)
-        const quotaTooltip = this.renderQuota(quota)
-        const assetsTooltip = this.renderFolderAssets(nodes)
+    renderItem(node) {
+        const quotaTooltip = this.renderQuota(AssetTree.getQuota(node))
+        const assetsTooltip = this.renderFolderAssets(AssetTree.getChildNodes(node))
+        const id = AssetTree.toStringPath(AssetTree.getPath(node))
+        const path = AssetTree.getPath(node)
+        const type = AssetTree.getType(node)
+        const adding = AssetTree.isAdding(node)
         return (
-            <AssetItem
+            <CrudItem
                 key={id}
-                id={id}
-                type={type}
-                tail={showTailOnly}
+                description={this.getDescription(path)}
+                icon={this.getItemTypeIcon(type)}
+                iconTooltip={this.getItemTooltip(type)}
+                iconVariant='info'
+                iconDimmed={adding}
                 inlineComponents={[
                     this.renderFolderInfoButton(quotaTooltip),
                     this.renderFolderAssetsButton(assetsTooltip)
                 ]}
             />
         )
+    }
+
+    getDescription(path) {
+        return path.at(-1)
+    }
+
+    getItemTypeIcon(type) {
+        const ASSET_ICON = {
+            Folder: 'folder-open',
+            Image: 'image',
+            ImageCollection: 'images',
+            Table: 'table'
+        }
+        return ASSET_ICON[type] || 'asterisk'
+    }
+    
+    getItemTooltip(type) {
+        const ASSET_TOOLTIP = {
+            Folder: msg('asset.folder'),
+            Image: msg('asset.image'),
+            ImageCollection: msg('asset.imageCollection'),
+            Table: msg('asset.table')
+        }
+        return ASSET_TOOLTIP[type] || msg('asset.new')
     }
 
     renderFolderInfoButton(tooltip) {
@@ -222,13 +261,14 @@ class _AssetBrowser extends React.Component {
     renderFolderAssetsButton(tooltip) {
         return tooltip ? (
             <Button
-                key='link'
+                key='assets'
                 chromeless
                 air='none'
                 icon='bars'
                 dimmed
                 tooltip={tooltip}
                 tooltipPlacement={isMobile() ? 'bottomRight' : 'bottomLeft'}
+                tooltipClickTrigger={true}
             />
         ) : null
     }
@@ -248,13 +288,12 @@ class _AssetBrowser extends React.Component {
         reloadAssets()
     }
 
-    getFolderTreeOptions(nodes, depth = 0) {
+    getFolderTreeOptions(nodes) {
         return _(nodes)
-            .filter(node => isFolder(Tree.getValue(node)?.type))
-            .map(node => Tree.unwrap(node))
-            .map(({props: {path, value}, nodes}) => ([
-                this.getItemOption({path, type: value?.type, quota: value?.quota, depth, nodes}),
-                ...this.getFolderTreeOptions(nodes, depth + 1)
+            .filter(node => AssetTree.isDirectory(node))
+            .map(node => ([
+                this.getItemOption(node, true),
+                ...this.getFolderTreeOptions(AssetTree.getChildNodes(node))
             ]))
             .flatten()
             .value()
@@ -262,47 +301,31 @@ class _AssetBrowser extends React.Component {
 
     getFolderAssetsOptions(nodes) {
         return _(nodes)
-            .filter(node => !isFolder(Tree.getValue(node)?.type))
-            .map(node => Tree.unwrap(node))
-            .map(({props: {path, value: {type} = {}}}) => this.getItemOption({path, type}))
+            .filter(node => !AssetTree.isDirectory(node))
+            .map(node => this.getItemOption(node, false))
             .value()
     }
 
-    getItemOption({path, type, quota, depth, nodes}) {
-        const id = _.last(path)
-        const render = () => this.renderItem({id, type, depth, nodes, quota})
+    getItemOption(node, indent) {
+        const render = () => this.renderItem(node)
+        const path = AssetTree.getPath(node)
         return {
-            label: id,
-            value: id,
+            label: path.at(-1),
+            value: AssetTree.toStringPath(path),
             path,
-            indent: depth,
+            indent: indent && AssetTree.getDepth(node),
             render
         }
     }
 
     getFilter() {
         const {filter} = this.state
-        return ({path}) => path.length ? _.last(path).toLowerCase().includes(filter.toLowerCase()) : true
-    }
-    
-    getClosestFolderId(assetId) {
-        const {assets: {userAssets}} = this.props
-        const folder = userAssets.find(({id, type}) => isFolder(type) && assetId === id)
-        if (folder) {
-            return folder.id
-        } else {
-            const parentId = this.getParentFolderId(assetId)
-            return parentId.length
-                ? this.getClosestFolderId(parentId)
-                : ''
+        return node => {
+            const path = AssetTree.getPath(node)
+            return path.length ? _.last(path).toLowerCase().includes(filter.toLowerCase()) : true
         }
     }
-
-    getParentFolderId(assetId) {
-        const index = assetId.lastIndexOf('/')
-        return assetId.substr(0, index)
-    }
-
+    
     getCurrentAssetName() {
         const {inputs: {asset: {value: assetId}}} = this.props
         const index = assetId.lastIndexOf('/')
@@ -313,13 +336,13 @@ class _AssetBrowser extends React.Component {
         this.updateAsset(assetId)
     }
 
-    onFolderSelect({value: folderAssetId, path}) {
-        this.updateAsset(`${folderAssetId}/${this.getCurrentAssetName()}`, path)
+    onFolderSelect({path}) {
+        this.updateAsset(AssetTree.toStringPath([...path, this.getCurrentAssetName()]))
         this.focusInput()
     }
     
-    onAssetSelect({value: assetId, path}) {
-        this.updateAsset(assetId, path)
+    onAssetSelect({path}) {
+        this.updateAsset(AssetTree.toStringPath(path))
         this.focusInput()
     }
 
@@ -338,16 +361,34 @@ class _AssetBrowser extends React.Component {
     }
 
     updateTree(tree) {
-        this.setState({filteredTree: Tree.filter(tree, this.getFilter())})
+        this.setState({filteredTree: AssetTree.filter(tree, this.getFilter())})
     }
 
-    updateAsset(assetId, parent) {
+    updateAsset(assetId) {
         const {inputs: {asset}} = this.props
         asset.set(assetId)
-        this.setState({
-            selectedFolderId: this.getClosestFolderId(assetId),
-            selectedParentPath: parent
-        })
+        if (assetId) {
+            const assetPath = AssetTree.fromStringPath(assetId)
+            this.setState({selectedFolder: this.getClosestFolder(assetPath)})
+        }
+    }
+
+    getClosestFolder(assetPath) {
+        const {assets: {userAssets}} = this.props
+        const folder = userAssets.find(({path, type}) => type === 'Folder' && path.join('/') === assetPath.join('/'))
+        if (folder) {
+            return folder.path
+        } else {
+            const parentPath = assetPath.slice(0, -1)
+            return parentPath.length
+                ? this.getClosestFolder(parentPath)
+                : ''
+        }
+    }
+
+    getParentFolderId(assetId) {
+        const index = assetId.lastIndexOf('/')
+        return assetId.substr(0, index)
     }
 
     componentDidMount() {
@@ -369,14 +410,14 @@ const policy = () => ({
     _: 'allow'
 })
 
-export const AssetBrowser = compose(
-    _AssetBrowser,
+export const AssetDestinationBrowser = compose(
+    _AssetDestinationBrowser,
     withForm({fields, mapStateToProps}),
     withAssets(),
     withActivatable({id: 'assetBrowser', policy, alwaysAllow: true})
 )
 
-AssetBrowser.propTypes = {
+AssetDestinationBrowser.propTypes = {
     onChange: PropTypes.func.isRequired,
     assetId: PropTypes.string
 }

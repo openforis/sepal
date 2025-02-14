@@ -1,29 +1,76 @@
-const {defer, firstValueFrom, from, of, catchError, switchMap} = require('rxjs')
+const {map, defer, firstValueFrom, from, of, switchMap} = require('rxjs')
 const {post$} = require('#sepal/httpClient')
 const modules = require('../config/modules')
 const {usernameTag, urlTag} = require('./tag')
-const {getRequestUser, setRequestUser, setSessionUsername} = require('./user')
+const {getRequestUser, setRequestUser, setSessionUsername, SEPAL_USER_HEADER} = require('./user')
+const {updateGoogleAccessToken$} = require('./userApi')
 const log = require('#sepal/log').getLogger('auth')
 
 const authenticationUrl = `http://${modules.user}/authenticate`
+
+const AUTHENTICATION_SUCCEEDED = 200
+const AUTHENTICATION_FAILED = 401
+const AUTHENTICATION_ERROR = 500
+const REFRESH_IF_EXPIRES_IN_MINUTES = 10
 
 const Auth = userStore => {
     const authMiddleware = async (req, res, next) => {
         try {
             const isAuthenticated = () => !!(getRequestUser(req))
     
-            const hasAuthHeaders = () => {
+            const hasBasicAuthHeaders = () => {
                 const header = req.get('Authorization')
                 return header && header.toLowerCase().startsWith('basic ')
             }
+
+            const userWithGoogleAccessToken$ = user => {
+                res.set(SEPAL_USER_HEADER, JSON.stringify(user))
+                return from(userStore.setUser(user))
+            }
+
+            const refreshGoogleTokens$ = () => {
+                const user = getRequestUser(req)
+                log.debug(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} Refreshing Google tokens for user`)
+                return updateGoogleAccessToken$(user).pipe(
+                    switchMap(user => user
+                        ? userWithGoogleAccessToken$(user)
+                        : of(true)
+                    )
+                )
+            }
     
+            const shouldRefreshGoogleTokens = user => {
+                const expiresInMinutes = (user.googleTokens.accessTokenExpiryDate - new Date().getTime()) / 60 / 1000
+                log.trace(() => `${usernameTag(user.username)} ${urlTag(req.originalUrl)} Google tokens expires in ${expiresInMinutes} minutes`)
+                return expiresInMinutes < REFRESH_IF_EXPIRES_IN_MINUTES
+            }
+
+            const verifyGoogleTokens$ = () => {
+                const user = getRequestUser(req)
+                if (user?.googleTokens?.accessTokenExpiryDate) {
+                    if (shouldRefreshGoogleTokens(user)) {
+                        return refreshGoogleTokens$()
+                    } else {
+                        log.isTrace() && log.trace(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} No need to refresh Google tokens for user - more than ${REFRESH_IF_EXPIRES_IN_MINUTES} minutes left until expiry`)
+                        return of(true)
+                    }
+                } else {
+                    log.isTrace() && log.trace(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} No Google tokens to verify for user`)
+                    return of(true)
+                }
+            }
+
             const authenticated$ = (username, response) => {
                 const {body} = response
                 log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticated user`)
                 const user = JSON.parse(body)
-                setSessionUsername(req, username)
-                setRequestUser(req, user)
-                return from(userStore.setUser(user))
+                return from(userStore.setUser(user)).pipe(
+                    switchMap(() => {
+                        setSessionUsername(req, username)
+                        setRequestUser(req, user)
+                        return of(AUTHENTICATION_SUCCEEDED)
+                    })
+                )
             }
 
             const invalidCredentials$ = username => {
@@ -32,17 +79,13 @@ const Auth = userStore => {
                     log.trace(`${urlTag(req.originalUrl)} Sending auth challenge`)
                     res.set('WWW-Authenticate', 'Basic realm="Sepal"')
                 }
-                res.status(401)
-                res.end()
-                return of(false)
+                return of(AUTHENTICATION_FAILED)
             }
 
             const failure$ = (username, response) => {
                 const {body, statusCode} = response
                 log.error(`${usernameTag(username)} ${urlTag(req.originalUrl)} Error authenticating user`, statusCode, body)
-                res.status(500)
-                res.end()
-                return of(false)
+                return of(AUTHENTICATION_ERROR)
             }
 
             const authenticate$ = defer(() => {
@@ -72,30 +115,25 @@ const Auth = userStore => {
                 } else {
                     log.trace(`${urlTag(req.originalUrl)} Responding with 401`)
                 }
-                res.status(401)
-                res.end()
-                return of(false)
+                return of(AUTHENTICATION_FAILED)
             })
     
-            const result$ = isAuthenticated()
-                ? of(true)
-                : hasAuthHeaders()
+            const statusCode$ = isAuthenticated()
+                ? verifyGoogleTokens$().pipe(
+                    map(success => success ? AUTHENTICATION_SUCCEEDED : AUTHENTICATION_FAILED)
+                )
+                : hasBasicAuthHeaders()
                     ? authenticate$
                     : send401$
     
-            const shouldContinue = await firstValueFrom(
-                result$.pipe(
-                    catchError(error => {
-                        log.error(`${urlTag(req.originalUrl)} Got an unexpected error when trying to authenticate`, error)
-                        res.status(500)
-                        res.end()
-                        return of(false)
-                    })
-                )
-            )
-            shouldContinue && next()
+            const statusCode = await firstValueFrom(statusCode$)
+
+            statusCode === AUTHENTICATION_SUCCEEDED
+                ? next()
+                : res.status(statusCode) && res.end()
+
         } catch(error) {
-            log.error(error)
+            log.fatal(error)
             res.status(500)
             res.end()
         }

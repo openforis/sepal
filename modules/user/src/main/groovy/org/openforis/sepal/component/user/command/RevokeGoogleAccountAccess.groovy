@@ -11,17 +11,18 @@ import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.component.user.internal.UserChangeListener
 import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.messagebroker.MessageQueue
+import org.openforis.sepal.user.User
 import org.openforis.sepal.user.GoogleTokens
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 @EqualsAndHashCode(callSuper = true)
 @Canonical
-class RevokeGoogleAccountAccess extends AbstractCommand<Void> {
+class RevokeGoogleAccountAccess extends AbstractCommand<User> {
     GoogleTokens tokens
 }
 
-class RevokeGoogleAccountAccessHandler implements CommandHandler<Void, RevokeGoogleAccountAccess> {
+class RevokeGoogleAccountAccessHandler implements CommandHandler<User, RevokeGoogleAccountAccess> {
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final GoogleOAuthClient oAuthClient
@@ -52,10 +53,10 @@ class RevokeGoogleAccountAccessHandler implements CommandHandler<Void, RevokeGoo
         }
     }
 
-    Void execute(RevokeGoogleAccountAccess command) {
+    User execute(RevokeGoogleAccountAccess command) {
         userRepository.updateGoogleTokens(command.username, null)
         def user = userRepository.lookupUser(command.username)
         messageQueue.publish(user: user, tokens: command.tokens)
-        return null
+        return user
     }
 }

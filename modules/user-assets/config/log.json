@@ -1,0 +1,13 @@
+{
+    "port": 5108,
+    "categories": {
+        "assetManager": "info",
+        "assetScanner": "info",
+        "assetStore": "info",
+        "config": "info",
+        "main": "info",
+        "redis": "debug",
+        "userStore": "info",
+        "ws": "info"
+    }
+}

@@ -1,6 +1,7 @@
 {
   "appManager": "app-manager:5011",
   "ceoGateway": "ceo-gateway:8001",
+  "userAssets": "user-assets:5999",
   "userFiles": "user-files:5999",
   "gee": "gee:5001",
   "gui": "gui:3000",

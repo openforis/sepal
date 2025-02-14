@@ -1,0 +1,27 @@
+{
+    "name": "user-assets",
+    "version": "1.0.0",
+    "description": "",
+    "main": "main.js",
+    "scripts": {
+        "test": "jest",
+        "testWatch": "jest --watchAll"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "commander": "^13.1.0",
+        "date-fns": "^4.1.0",
+        "ioredis": "^5.5.0",
+        "lodash": "^4.17.21",
+        "log4js": "^6.9.1",
+        "rxjs": "^7.8.1",
+        "sepal": "../../lib/js/shared",
+        "ws": "^8.18.0"
+    },
+    "imports": {
+        "#sepal/*": "sepal/src/*.js",
+        "#sepal/*.json": "sepal/src/*.json",
+        "#config/*.json": "./config/*.json"
+    }
+}

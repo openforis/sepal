@@ -154,12 +154,26 @@
         "starting-sepal-failed": "Something has gone wrong. Please reload the page and try again."
     },
     "browse": {
+        "addBrowser": {
+            "files": "SEPAL workspace browser",
+            "assets": "Earth Engine asset browser"
+        },
+        "title": {
+            "files": "SEPAL workspace",
+            "assets": "Earth Engine assets"
+        },
         "controls": {
+            "reload": {
+                "tooltip": "Reload"
+            },
             "clearSelection": {
                 "tooltip": "Clear selection"
             },
             "download": {
                 "tooltip": "Download selected item"
+            },
+            "createFolder": {
+                "tooltip": "Create folder"
             },
             "remove": {
                 "tooltip": "Remove selected items"
@@ -168,6 +182,14 @@
                 "label": "dotfiles",
                 "hide.tooltip": "Hide files beginning with a dot",
                 "show.tooltip": "Show files beginning with a dot"
+            },
+            "collapseDirs": {
+                "label": "collapse",
+                "tooltip": "Collapse all folders"
+            },
+            "expandDirs": {
+                "label": "expand",
+                "tooltip": "Expand all folders"
             },
             "splitDirs": {
                 "label": "split",
@@ -185,6 +207,9 @@
         },
         "loading": {
             "error": "Could not retrieve file information."
+        },
+        "createFolder": {
+            "existing.error": "Cannot create a folder with the same name as an existing asset or folder"
         },
         "removeConfirmation": "Remove {directories} {directories, plural, one {directory} other {directories}} and {files} {files, plural, one {file} other {files}}?",
         "removing": {
@@ -5066,6 +5091,10 @@
             "missingScopes": {
                 "title": "Google Account reconnection required",
                 "message": "The permissions you have previously authorized on your Google account don't match with the ones currently required by SEPAL. Please, reconnect your Google account."
+            },
+            "revoked": {
+                "title": "Google Account reconnection required",
+                "message": "SEPAL is unable to use your Google account. Please, reconnect your Google account."
             },
             "unavailable": {
                 "title": "Earth Engine is not available",

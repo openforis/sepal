@@ -5,6 +5,11 @@
     --icon-width: 2.5rem;
 }
 
+.header {
+    margin-top: 1rem;
+    color: var(--warning-color);
+}
+
 .info {
     display: flex;
     flex-direction: column;
@@ -16,7 +21,7 @@
 
 .fileList {
     line-height: 2rem;
-    margin-top: .5rem;
+    margin-top: 1rem;
 }
 
 .fileList ul {
@@ -50,11 +55,11 @@
     transition: 100ms ease-in-out;
 }
 
-.fileList li > div.added {
-    animation: added var(--animation-duration) ease-in-out forwards;
+.fileList li > div.adding {
+    animation: adding var(--animation-duration) ease-in-out forwards;
 }
 
-@keyframes added {
+@keyframes adding {
     0% {
         background-color: var(--add-color);
     }
@@ -63,10 +68,17 @@
 .fileList li > div.removing,
 .fileList li > div.removing:hover,
 .fileList li > div.removing + ul li > div {
-    background-color: var(--remove-color);
+    /* background-color: var(--remove-color); */
+    animation: removing var(--animation-duration) ease-in-out forwards;
 }
 
-.fileList li > div.removed,
+@keyframes removing {
+    0% {
+        background-color: var(--remove-color);
+    }
+}
+
+/* .fileList li > div.removed,
 .fileList li > div.removed:hover,
 .fileList li > div.removed + ul li > div {
     background-color: var(--remove-color);
@@ -77,7 +89,7 @@
     100% {
         opacity: 0;
     }
-}
+} */
 
 .fileName {
     display: inline-block;
@@ -111,4 +123,8 @@
 .collapsed svg {
     transform: none;
     transition: 100ms ease-in-out;
+}
+
+.createFolder {
+    min-width: 15rem;
 }

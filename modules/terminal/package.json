@@ -10,8 +10,8 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "commander": "^12.1.0",
-        "express": "^4.21.1",
+        "commander": "^13.1.0",
+        "express": "^4.21.2",
         "express-ws": "^5.0.2",
         "node-pty": "^1.0.0",
         "rxjs": "^7.8.1",
