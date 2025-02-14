@@ -1,4 +1,4 @@
-const {defer, groupBy, mergeMap, tap, takeUntil, filter, timer, switchMap, of, from, map, repeat, takeWhile, retry, catchError} = require('rxjs')
+const {defer, groupBy, mergeMap, tap, takeUntil, filter, timer, switchMap, of, from, map, repeat, takeWhile, retry} = require('rxjs')
 const {userTag} = require('./tag')
 const {USER_UP, USER_DOWN} = require('./websocket-events')
 const {updateGoogleAccessToken$, revokeGoogleAccess$} = require('./userApi')
