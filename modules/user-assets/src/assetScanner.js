@@ -40,21 +40,26 @@ const createNode = path =>
     STree.createNode(path)
 
 const addNode = (tree, path, item) =>
-    STree.setValue(
-        STree.traverse(tree, [...path, getKey(item, path)], true),
-        {type: item.type, updateTime: item.updateTime, quota: item.quota}
+    STree.alter(tree, tree =>
+        STree.setValue(
+            STree.traverse(tree, [...path, getKey(item, path)], true),
+            {type: item.type, updateTime: item.updateTime, quota: item.quota}
+        )
     )
 
-const addNodes = (tree, path, items) => {
-    items.forEach(node => addNode(tree, path, node))
-    return tree
-
-}
+const addNodes = (tree, path, nodes) =>
+    nodes.reduce((tree, node) => addNode(tree, path, node), tree)
 
 const getKey = ({id}, path) => {
     const len = path.join('/').length
     return id.substr(len ? len + 1 : 0)
 }
+
+const getStats = assets =>
+    STree.reduce(assets, (acc, {value: {type} = {}}) => (type ? {
+        ...acc,
+        [type]: (acc[type] || 0) + 1
+    } : acc), {})
 
 const scanTree$ = (username, {incremental = false, throttle = 1000} = {}) => {
     log.debug(`${userTag(username)} loading tree`)
@@ -67,6 +72,7 @@ const scanTree$ = (username, {incremental = false, throttle = 1000} = {}) => {
                     ? throttleTime(throttle, null, {leading: true, trailing: true})
                     : takeLast(1),
                 tap({
+                    next: assets => log.info(`${userTag(username)} loading assets:`, getStats(assets)),
                     complete: () => log.info(`${userTag(username)} assets loaded`)
                 }),
                 catchError(error => {

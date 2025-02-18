@@ -98,7 +98,6 @@ const createAssetManager = ({out$, stop$}) => {
             })
             await setAssets(username, assets)
         }
-        // assetsUpdated$.next({username, tree: assets})
     }
 
     userUp$.pipe(
@@ -111,10 +110,9 @@ const createAssetManager = ({out$, stop$}) => {
                     switchMap(({username}) =>
                         of(username).pipe(
                             switchMap(() => reloadTrigger$(username)),
-                            exhaustMap(() => scanTree$(username).pipe(
+                            exhaustMap(() => scanTree$(username, {incremental: true, throttle: 30000}).pipe(
                                 map(tree => ({username, tree}))
                             )),
-                            // repeat({delay: MIN_REFRESH_DELAY_MS}),
                             repeat({delay: 0}),
                             retry({delay: MIN_REFRESH_DELAY_MS}),
                             takeUntil(currentUserDown$(username)),
