@@ -321,7 +321,8 @@ class _AssetBrowser extends React.Component {
         const TYPE = {
             Image: 'image',
             ImageCollection: 'images',
-            Table: 'table'
+            Table: 'table',
+            Classifier: 'diagram-project',
         }
         return (
             <span className={styles.icon}>
