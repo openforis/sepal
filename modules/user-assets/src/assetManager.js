@@ -110,7 +110,7 @@ const createAssetManager = ({out$, stop$}) => {
                     switchMap(({username}) =>
                         of(username).pipe(
                             switchMap(() => reloadTrigger$(username)),
-                            exhaustMap(() => scanTree$(username, {incremental: true, throttle: 30000}).pipe(
+                            exhaustMap(() => scanTree$(username).pipe(
                                 map(tree => ({username, tree}))
                             )),
                             repeat({delay: 0}),
