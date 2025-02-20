@@ -9,13 +9,11 @@ const {Subject, groupBy, mergeMap, map, tap, defer, repeat, retry, exhaustMap, t
 const {setUser, removeUser, updateUser, getUser, isConnectedWithGoogle} = require('./userStore')
 const {scanTree$, scanNode$, busy$, isBusy} = require('./assetScanner')
 const {pollIntervalMilliseconds} = require('./config')
-const {minDuration$} = require('#sepal/rxjs')
 const {deleteAsset$, createFolder$} = require('./asset')
 const {STree} = require('#sepal/tree/sTree')
 
 const USER_RETENTION_TIMEOUT_MS = 60 * 1000
 const MIN_REFRESH_DELAY_MS = 60 * 1000
-const REMOVE_COMFORT_DELAY_MS = 1000
 
 const createAssetManager = ({out$, stop$}) => {
 
@@ -78,25 +76,36 @@ const createAssetManager = ({out$, stop$}) => {
         assetsUpdated$.next({username, node})
         const {assets} = await getAssets(username)
         if (assets) {
-            const targetNode = STree.traverse(assets, STree.getPath(node), true)
-            const updateValue = STree.getValue(node)
-            STree.updateValue(
-                targetNode,
-                prevValue => ({...prevValue, ...updateValue})
-            )
-
-            Object.keys(STree.getChildNodes(node)).forEach(key => {
-                if (!Object.keys(STree.getChildNodes(targetNode)).includes(key)) {
-                    STree.addChildNode(targetNode, key, STree.getValue(STree.getChildNode(node, key)))
-                }
+            const updatedAssets = STree.alter(assets, assets => {
+                const targetNode = STree.traverse(
+                    assets,
+                    STree.getPath(node),
+                    true,
+                    node => STree.updateValue(node,
+                        ({adding: _adding, removing: _removing, type = 'Folder', ...prevValue} = {}) => ({type, ...prevValue})
+                    )
+                )
+    
+                const updateValue = STree.getValue(node)
+                STree.updateValue(
+                    targetNode,
+                    prevValue => ({...prevValue, ...updateValue})
+                )
+    
+                Object.keys(STree.getChildNodes(node)).forEach(key => {
+                    if (!Object.keys(STree.getChildNodes(targetNode)).includes(key)) {
+                        STree.addChildNode(targetNode, key, STree.getValue(STree.getChildNode(node, key)))
+                    }
+                })
+    
+                Object.keys(STree.getChildNodes(targetNode)).forEach(key => {
+                    if (!Object.keys(STree.getChildNodes(node)).includes(key)) {
+                        STree.removeChildNode(targetNode, key)
+                    }
+                })
             })
-
-            Object.keys(STree.getChildNodes(targetNode)).forEach(key => {
-                if (!Object.keys(STree.getChildNodes(node)).includes(key)) {
-                    STree.removeChildNode(targetNode, key)
-                }
-            })
-            await setAssets(username, assets)
+            
+            await setAssets(username, updatedAssets)
         }
     }
 
@@ -217,23 +226,20 @@ const createAssetManager = ({out$, stop$}) => {
 
     remove$.pipe(
         mergeMap(({username, path}) =>
-            minDuration$(
-                from(getUser(username)).pipe(
-                    switchMap(user =>
-                        deleteAsset$(user, path.join('/')).pipe(
-                            tap({
-                                complete: () => log.info(`${userTag(username)} removed:`, path.join('/'))
-                            }),
-                            catchError(error => {
-                                log.warn(`${userTag(username)} assets failed`, error)
-                                return EMPTY
-                            }),
-                            switchMap(() => scanNode$(username, path.slice(0, -1)))
-                        )
-                    ),
-                    map(node => ({username, node}))
+            from(getUser(username)).pipe(
+                switchMap(user =>
+                    deleteAsset$(user, path.join('/')).pipe(
+                        tap({
+                            complete: () => log.info(`${userTag(username)} removed:`, path.join('/'))
+                        }),
+                        catchError(error => {
+                            log.warn(`${userTag(username)} assets failed`, error)
+                            return EMPTY
+                        }),
+                        switchMap(() => scanNode$(username, path.slice(0, -1)))
+                    )
                 ),
-                REMOVE_COMFORT_DELAY_MS
+                map(node => ({username, node}))
             )
         )
     ).subscribe({

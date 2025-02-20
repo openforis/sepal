@@ -161,8 +161,13 @@ class _AssetBrowser extends React.Component {
         const {directories} = AssetTree.getSelectedItems(tree)
         const selectedFolder = directories.length === 1 ? directories[0] : null
         if (selectedFolder) {
-            const path = [...selectedFolder, folder]
-            if (AssetTree.isExistingPath(tree, path)) {
+            const path = [...selectedFolder, ...folder.split('/')]
+            if (path.length > 10) {
+                Notifications.error({
+                    message: msg('browse.createFolder.tooDeep.error'),
+                    timeout: 5
+                })
+            } else if (AssetTree.isExistingPath(tree, path)) {
                 Notifications.error({
                     message: msg('browse.createFolder.existing.error'),
                     timeout: 5
@@ -428,7 +433,7 @@ class _AssetBrowser extends React.Component {
         const {files, directories} = AssetTree.getSelectedItems(tree)
         const nothingSelected = files.length === 0 && directories.length === 0
         const oneDirectorySelected = files.length === 0 && directories.length === 1
-        const deletable = !directories.find(file => file.length === 1)
+        const deletable = files.length > 0 || directories.length > 0 && !directories.find(file => file.length === 1)
         return (
             <ButtonGroup layout='horizontal'>
                 <Button

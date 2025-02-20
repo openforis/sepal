@@ -103,13 +103,15 @@ const setRemoving = (tree, paths) =>
 const updateTree = (prevTree, updateTree) =>
     STree.alter(prevTree, tree => {
         STree.scan(updateTree, updateNode => {
-            const node = STree.traverse(tree, STree.getPath(updateNode), true)
+            const node = STree.traverse(
+                tree,
+                STree.getPath(updateNode),
+                true,
+                node => STree.updateValue(node, ({adding: _adding, removing: _removing, ...prevValue} = {}) => ({...prevValue}))
+            )
             const updateValue = STree.getValue(updateNode)
     
-            STree.updateValue(
-                node,
-                ({adding: _adding, removing: _removing, ...prevValue} = {}) => ({...prevValue, ...updateValue})
-            )
+            STree.updateValue(node, prevValue => ({...prevValue, ...updateValue}))
 
             if (STree.isRoot(updateTree) || updateNode === updateTree || !STree.isLeaf(updateNode)) {
                 const updateChildNodesKeys = Object.keys(STree.getChildNodes(updateNode))
@@ -122,9 +124,11 @@ const updateTree = (prevTree, updateTree) =>
 
 const createFolder = (tree, path) =>
     STree.alter(tree, tree => {
-        const node = STree.traverse(tree, path.slice(0, -1))
-        STree.updateValue(node, prevValue => ({...prevValue, opened: true}))
-        STree.addChildNode(node, path.at(-1), {type: 'Folder', adding: true})
+        STree.traverse(tree, path, true, node =>
+            STree.updateValue(node,
+                ({type, ...prevValue} = {}) => type ? {type, ...prevValue} : {...prevValue, type: 'Folder', opened: true, adding: true}
+            )
+        )
     })
 
 const getSelectedItems = tree =>
