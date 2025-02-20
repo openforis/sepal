@@ -259,10 +259,7 @@ class _AssetBrowser extends React.Component {
 
     renderFileInfo(node) {
         const updateTime = AssetTree.getUpdateTime(node)
-        const info = [
-            format.fileSize(node.size, {unit: 'bytes'}),
-            moment(updateTime).fromNow()
-        ].join(', ')
+        const info = moment(updateTime).fromNow()
         return (
             <span className={styles.fileInfo}>
                 {info}
