@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import moment from 'moment'
 import {orderBy} from 'natural-orderby'
 import PropTypes from 'prop-types'
@@ -6,7 +5,6 @@ import React from 'react'
 
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
-import format from '~/format'
 import {getLogger} from '~/log'
 import lookStyles from '~/style/look.module.css'
 import {withSubscriptions} from '~/subscription'
@@ -342,14 +340,8 @@ class _AssetBrowser extends React.Component {
 
     renderListItems(items) {
         const sorter = this.getSorter()
-        return items
-            ? _.chain(items)
-                .pickBy(file => file)
-                .toPairs()
-                .thru(sorter)
-                .map(([key, node]) => this.renderListItem(key, node))
-                .value()
-            : null
+        return sorter(Object.entries(items))
+            .map(([key, node]) => this.renderListItem(key, node))
     }
 
     renderListItem(key, node) {
@@ -412,15 +404,15 @@ class _AssetBrowser extends React.Component {
         const naturalSortingDirectoriesFirst = items =>
             orderBy(
                 items,
-                _.compact([dirSorter.order, nameSorter.order]),
-                _.compact([dirSorter.direction, nameSorter.direction])
+                [dirSorter.order, nameSorter.order].filter(Boolean),
+                [dirSorter.direction, nameSorter.direction].filter(Boolean)
             )
 
         const dateSortingDirectoriesFirst = items =>
             orderBy(
                 items,
-                _.compact([dirSorter.order, dateSorter.order]),
-                _.compact([dirSorter.direction, dateSorter.direction])
+                [dirSorter.order, dateSorter.order].filter(Boolean),
+                [dirSorter.direction, dateSorter.direction].filter(Boolean)
             )
 
         const sortingMap = {
