@@ -1,4 +1,6 @@
-FROM node:20-bookworm
+FROM node:22-alpine
+
+RUN apk add net-tools
 
 EXPOSE 8001
 
@@ -7,16 +9,6 @@ ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
 RUN npm install -g nodemon
-
-RUN apt-get update && \
-    apt-get install -y \
-        sudo
-
-RUN adduser node sudo
-
-# Set bash prompt
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
 
 ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
