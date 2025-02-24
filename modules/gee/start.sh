@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # TODO: Look at this
 #AUTH_CONFIG=$SEPAL_CONFIG/google-earth-engine/gee-oauth.json
