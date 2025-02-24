@@ -69,7 +69,7 @@ const createAssetManager = ({out$, stop$}) => {
 
     const updateTree = async (username, tree) => {
         assetsUpdated$.next({username, tree})
-        await setAssets(username, tree)
+        await saveAssets(username, tree)
     }
 
     const updateNode = async (username, node) => {
@@ -105,7 +105,15 @@ const createAssetManager = ({out$, stop$}) => {
                 })
             })
             
-            await setAssets(username, updatedAssets)
+            await saveAssets(username, updatedAssets)
+        }
+    }
+
+    const saveAssets = async (username, assets) => {
+        if (!STree.isLeaf(assets)) {
+            return await setAssets(username, assets)
+        } else {
+            log.info(`${userTag(username)} assets not saved (empty)`)
         }
     }
 
