@@ -1,20 +1,16 @@
-FROM node:20-bookworm
+FROM node:22-alpine
+
+RUN apk add net-tools sudo python3 g++ make openssh
+
 EXPOSE 8000
 
 ENV MODULE_NAME terminal
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
-RUN apt-get update && \
-    apt-get install -y sudo && \
-    adduser node sudo && \
-    echo 'node    ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
+RUN echo "node ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/node && chmod 0440 /etc/sudoers.d/node
 
 RUN npm install -g nodemon
-
-# Set bash prompt
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
 
 ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
@@ -41,4 +37,3 @@ ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
 CMD start.sh
-
