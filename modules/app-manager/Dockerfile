@@ -49,9 +49,6 @@ RUN apt-get install nodejs -y
 RUN npm install -g nodemon
 
 USER node
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
-RUN bash -c "source /home/node/.nvm/nvm.sh && nvm install 20"
-
 ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
 USER root
