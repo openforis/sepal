@@ -1,6 +1,6 @@
 FROM node:22-alpine
 
-RUN apk add net-tools nginx gettext
+RUN apk add net-tools nginx gettext envsubst
 
 EXPOSE 3000
 
