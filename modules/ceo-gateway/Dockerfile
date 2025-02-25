@@ -1,6 +1,6 @@
 FROM node:22-alpine
 
-RUN apk add net-tools sudo
+RUN apk update && apk add net-tools sudo
 
 EXPOSE 8001
 

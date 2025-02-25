@@ -1,6 +1,6 @@
 FROM node:22-alpine
 
-RUN apk add net-tools
+RUN apk update && apk add net-tools
 
 ENV MODULE_NAME sys-monitor
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}

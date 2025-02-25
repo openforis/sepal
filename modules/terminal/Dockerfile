@@ -1,6 +1,6 @@
 FROM node:22-alpine
 
-RUN apk add net-tools sudo python3 g++ make openssh
+RUN apk update && apk add net-tools sudo python3 g++ make openssh
 
 EXPOSE 8000
 
