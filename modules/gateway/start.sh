@@ -8,7 +8,7 @@ then
     --watch "${MODULE}"/src \
     --watch "${MODULE}"/config \
     --watch "${SHARED}" \
-    --inspect=0.0.0.0:9237 \
+    --inspect=0.0.0.0:9229 \
     src/main.js \
     --amqp-uri "amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT}" \
     --redis-uri "redis://gateway-redis" \

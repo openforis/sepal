@@ -23,7 +23,7 @@ then
     --watch "${MODULE}"/src \
     --watch "${MODULE}/config" \
     --watch "${SHARED}" \
-    --inspect=0.0.0.0:9239 \
+    --inspect=0.0.0.0:9229 \
     src/main.js \
     --os-release "${NAME}-${VERSION_ID}" \
     --cran-repo https://cran.r-project.org \

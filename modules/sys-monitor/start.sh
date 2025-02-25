@@ -8,7 +8,7 @@ then
     --watch "${MODULE}"/src \
     --watch "${MODULE}/config" \
     --watch "${SHARED}" \
-    --inspect=0.0.0.0:9233 \
+    --inspect=0.0.0.0:9229 \
     src/main.js \
     --pushover-api-key ${PUSHOVER_API_KEY} \
     --pushover-group-key ${PUSHOVER_GROUP_KEY} \
