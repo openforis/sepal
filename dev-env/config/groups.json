@@ -16,7 +16,8 @@
         "user",
         "user-assets",
         "user-files",
-        "user-storage"
+        "user-storage",
+        "ceo-gateway"
     ],
     "process": [
         "gateway",
@@ -27,7 +28,8 @@
         "mysql",
         "rabbitmq",
         "sepal-server",
-        "user"
+        "user",
+        "ceo-gateway"
     ],
     "apps": [
         "app-manager",
@@ -55,6 +57,7 @@
         "terminal",
         "user-assets",
         "user-files",
-        "user-storage"
+        "user-storage",
+        "ceo-gateway"
     ]
 }

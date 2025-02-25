@@ -269,7 +269,7 @@ CrudItem.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     content: PropTypes.any,
-    description: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    description: PropTypes.any,
     descriptionClassName: PropTypes.string,
     duplicateDisabled: PropTypes.any,
     duplicateTooltip: PropTypes.any,

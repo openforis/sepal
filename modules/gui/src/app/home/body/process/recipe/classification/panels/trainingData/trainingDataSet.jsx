@@ -8,6 +8,7 @@ import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {PanelSections} from '~/widget/panelSections'
 
+import {CeoSection} from './ceo/ceoSection'
 import {ClassMappingStep} from './classMappingStep'
 import {ClassStep} from './classStep'
 import {CsvUploadSection} from './csvUploadSection'
@@ -57,6 +58,15 @@ const fields = {
         .skip((value, {type}) => type !== 'SAMPLE_CLASSIFICATION')
         .notBlank('process.classification.panel.trainingData.form.sampleClassification.sampleScale.required'),
 
+    institution: new Form.Field()
+        .skip((value, {type}) => type !== 'CEO')
+        .notBlank('process.classification.panel.trainingData.form.ceo.institution.required'),
+    project: new Form.Field()
+        .skip((value, {type}) => type !== 'CEO')
+        .notBlank('process.classification.panel.trainingData.form.ceo.project.required'),
+    csvType: new Form.Field()
+        .skip((value, {type}) => type !== 'CEO'),
+
     locationType: new Form.Field()
         .skip((value, {type}) => type === 'RECIPE')
         .skip((value, {wizardStep}) => wizardStep !== 1)
@@ -73,9 +83,6 @@ const fields = {
         .skip((value, {wizardStep}) => wizardStep !== 1)
         .skip((value, {locationType}) => locationType === 'GEO_JSON')
         .notBlank('process.classification.panel.trainingData.form.location.yColumn.required'),
-
-    // TODO: CRS
-
     filterExpression: new Form.Field(),
     invalidFilterExpression: new Form.Field()
         .skip((value, {wizardStep}) => wizardStep !== 2)
@@ -90,10 +97,9 @@ const fields = {
     columnMapping: new Form.Field(),
     customMapping: new Form.Field(),
     defaultValue: new Form.Field(),
-
     referenceData: new Form.Field()
         .skip((value, {wizardStep}) => wizardStep !== 3)
-        .notEmpty('process.classification.panel.trainingData.form.referenceData.required')
+        .notEmpty('process.classification.panel.trainingData.form.referenceData.required'),
 }
 
 const mapRecipeToProps = recipe => ({
@@ -133,10 +139,10 @@ class _TrainingDataSet extends React.Component {
                 tooltip: msg('process.classification.panel.trainingData.type.CSV_UPLOAD.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.CSV_UPLOAD.title'),
                 steps: [
-                    <CsvUploadSection ${...this.props}/>,
-                    <LocationStep ${...this.props}/>,
-                    <ClassStep ${...this.props}/>,
-                    <ClassMappingStep ${...this.props}/>
+                    <CsvUploadSection {...this.props}/>,
+                    <LocationStep {...this.props}/>,
+                    <ClassStep {...this.props}/>,
+                    <ClassMappingStep {...this.props}/>
                 ]
             },
             {
@@ -145,10 +151,10 @@ class _TrainingDataSet extends React.Component {
                 tooltip: msg('process.classification.panel.trainingData.type.EE_TABLE.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.EE_TABLE.title'),
                 steps: [
-                    <EETableSection ${...this.props}/>,
-                    <LocationStep ${...this.props}/>,
-                    <ClassStep ${...this.props}/>,
-                    <ClassMappingStep ${...this.props}/>
+                    <EETableSection {...this.props}/>,
+                    <LocationStep {...this.props}/>,
+                    <ClassStep {...this.props}/>,
+                    <ClassMappingStep {...this.props}/>
                 ]
             },
             {
@@ -157,10 +163,10 @@ class _TrainingDataSet extends React.Component {
                 tooltip: msg('process.classification.panel.trainingData.type.SAMPLE_CLASSIFICATION.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.SAMPLE_CLASSIFICATION.title'),
                 steps: [
-                    <SampleClassificationSection ${...this.props}/>,
-                    <LocationStep ${...this.props}/>,
-                    <ClassStep ${...this.props}/>,
-                    <ClassMappingStep ${...this.props}/>
+                    <SampleClassificationSection {...this.props}/>,
+                    <LocationStep {...this.props}/>,
+                    <ClassStep {...this.props}/>,
+                    <ClassMappingStep {...this.props}/>
                 ]
             },
             {
@@ -168,7 +174,20 @@ class _TrainingDataSet extends React.Component {
                 label: msg('process.classification.panel.trainingData.type.RECIPE.label'),
                 tooltip: msg('process.classification.panel.trainingData.type.RECIPE.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.RECIPE.title'),
-                component: <RecipeSection ${...this.props}/>
+                component: <RecipeSection {...this.props}/>
+            },
+            {
+                value: 'CEO',
+                label: msg('process.classification.panel.trainingData.type.CEO.label'),
+                tooltip: msg('process.classification.panel.trainingData.type.CEO.tooltip'),
+                title: msg('process.classification.panel.trainingData.type.CEO.title'),
+                steps: [
+                    <CeoSection {...this.props}/>,
+                    <LocationStep {...this.props}/>,
+                    <ClassStep {...this.props}/>,
+                    <ClassMappingStep {...this.props}/>
+
+                ]
             }
         ]
     }
@@ -234,7 +253,11 @@ const modelToValues = model => {
         valueMapping: model.valueMapping || {},
         columnMapping: model.columnMapping,
         customMapping: model.customMapping,
-        defaultValue: model.defaultValue
+        defaultValue: model.defaultValue,
+
+        institution: model.institution,
+        project: model.project,
+        csvType: model.csvType,
     }
 }
 
@@ -242,7 +265,11 @@ const valuesToModel = values => {
     return {
         ...values,
         inputData: values.type === 'CSV_UPLOAD' ? values.inputData : undefined,
-        referenceData: values.referenceData.referenceData
+        referenceData: values.referenceData.referenceData,
+
+        institution: values.institution,
+        project: values.project,
+        csvType: values.csvType,
     }
 }
 

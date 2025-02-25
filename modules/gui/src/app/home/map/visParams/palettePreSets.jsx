@@ -46,7 +46,7 @@ export const PalettePreSets = ({onSelect, count, className, autoFocus, disabled}
             className={className}
             autoFocus={autoFocus}
             placeholder={msg('map.visParams.form.palette.preset.placeholder')}
-            placement='above'
+            vPlacement='above'
             options={allOptions}
             buttons={[
                 <Button

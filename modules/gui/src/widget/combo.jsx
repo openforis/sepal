@@ -231,7 +231,7 @@ class _Combo extends React.Component {
     }
 
     renderToggleOptionsButton() {
-        const {placement} = this.props
+        const {vPlacement} = this.props
         const {showOptions} = this.state
         const ICON = {
             'below': 'chevron-down',
@@ -245,7 +245,7 @@ class _Combo extends React.Component {
                 chromeless
                 shape='none'
                 air='none'
-                icon={ICON[placement]}
+                icon={ICON[vPlacement]}
                 iconAttributes={{
                     fixedWidth: true,
                     flip: showOptions ? 'vertical' : null
@@ -263,13 +263,13 @@ class _Combo extends React.Component {
     }
 
     renderOptions() {
-        const {placement, optionsClassName, optionTooltipPlacement, alignment} = this.props
+        const {hPlacement, vPlacement, optionsClassName, optionTooltipPlacement, alignment} = this.props
         const {flattenedOptions, selectedOption, selected} = this.state
         return (
             <FloatingBox
                 element={this.inputContainer.current}
-                vPlacement={placement}
-                hPlacement='over'
+                hPlacement={hPlacement}
+                vPlacement={vPlacement}
                 onBlur={this.onOptionsBlur}>
                 <ScrollableList
                     ref={this.list}
@@ -496,6 +496,7 @@ Combo.propTypes = {
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
+    hPlacement: PropTypes.oneOf(['over-left', 'over', 'over-right', 'over-left-or-over-right', 'over-right-or-over-left']),
     inputClassName: PropTypes.string,
     keyboard: PropTypes.any,
     label: PropTypes.any,
@@ -509,6 +510,7 @@ Combo.propTypes = {
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     value: PropTypes.any,
+    vPlacement: PropTypes.oneOf(['above', 'below', 'above-or-below', 'below-or-above']),
     warningMessage: PropTypes.any,
     onBlur: PropTypes.func,
     onCancel: PropTypes.func,
@@ -519,6 +521,7 @@ Combo.propTypes = {
 Combo.defaultProps = {
     alignment: 'left',
     border: 'true',
-    placement: 'below-or-above',
+    hPlacement: 'over',
+    vPlacement: 'below-or-above',
     tooltipPlacement: 'top'
 }
