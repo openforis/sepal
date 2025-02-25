@@ -1,6 +1,6 @@
 FROM openforis/sandbox-base
 
-EXPOSE 1026
+EXPOSE 80
 
 ENV DEBIAN_FRONTEND=noninteractive
 

@@ -38,7 +38,7 @@ services:
       SMTP_PASSWORD: "${SMTP_PASSWORD}"
       SMTP_FROM_DOMAIN: "${SMTP_FROM_DOMAIN}"
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "6001"]
+      test: ["CMD", "nc", "-z", "localhost", "80"]
       timeout: 60s
       interval: 1s
       retries: 60

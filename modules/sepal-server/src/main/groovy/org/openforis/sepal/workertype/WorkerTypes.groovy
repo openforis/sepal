@@ -23,7 +23,7 @@ final class WorkerTypes {
 
     private static class TaskExecutorFactory implements Factory {
         WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
-            def taskExecutorPublishedPorts = [(1026): 1026]
+            def taskExecutorPublishedPorts = [(80): 80]
             def sepalEndpoint = "https://${config.sepalHost}:${config.sepalHttpsPort ?: 443}"
             def username = instance.reservation.username
             def userHome = "${config.sepalHostDataDir}/sepal/home/${username}" as String
@@ -40,7 +40,7 @@ final class WorkerTypes {
             }
             def task = new Image(
                     name: 'task',
-                    exposedPorts: [1026],
+                    exposedPorts: [80],
                     publishedPorts: taskExecutorPublishedPorts,
                     volumes: volumes,
                     environment: [

@@ -1,6 +1,6 @@
 FROM node:22-alpine
 
-EXPOSE 5999
+EXPOSE 80
 
 ENV MODULE_NAME user-assets
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}

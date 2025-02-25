@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-endpoint="http://localhost:1026/healthcheck"
+endpoint="http://localhost/healthcheck"
 for i in {30..0}; do
     responseCode=$(curl -s -o /dev/null -w "%{http_code}" "$endpoint")
     if [ $responseCode -eq 200 ]; then

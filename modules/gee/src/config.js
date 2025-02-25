@@ -3,7 +3,7 @@ const fs = require('fs')
 const log = require('#sepal/log').getLogger('config')
 const _ = require('lodash')
 
-const DEFAULT_PORT = 5001
+const DEFAULT_PORT = 80
 
 program
     .option('--gee-email <value>')

@@ -1,6 +1,6 @@
 FROM node:22-alpine
 
-EXPOSE 3000
+EXPOSE 80
 
 ENV MODULE_NAME gui
 ENV MODULE /usr/local/src/sepal/modules/gui

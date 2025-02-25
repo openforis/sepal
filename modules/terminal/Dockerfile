@@ -1,6 +1,6 @@
 FROM node:22-alpine
 
-EXPOSE 8000
+EXPOSE 80
 
 ENV MODULE_NAME terminal
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}

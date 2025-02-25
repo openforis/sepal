@@ -1,6 +1,6 @@
 FROM node:22-alpine
 
-EXPOSE 8001
+EXPOSE 80
 
 ENV MODULE_NAME gateway
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}

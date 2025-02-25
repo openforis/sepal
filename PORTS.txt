@@ -1,23 +1,25 @@
 Modules
 
-    5011: app-manager
-    8001: gateway
-    5001: gee
-    6001: email
+    80, 5005: sepal-server    
+    80: app-manager
+    80: gateway
+    80: gee
+    80: email
     80, 443: haproxy
     389, 636: ldap
     80: letsencrypt
     3306: mysql
     8180: r-proxy
-    1025, 5005: sepal-server
     22: ssh-gateway
-    1026: task
-    8000: terminal
+    80: task
+    80: terminal
     80, 5006: user
-    5999: user-files
+    80: user-assets
+    80: user-files
     8980: mysql-admin
-    7001: sys-monitor
-    8001: user-storage
+    80: sys-monitor
+    80: user-storage
+    80: ceo-gateway
     9293: docker metrics
     9090: prometheus
 

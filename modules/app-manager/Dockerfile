@@ -1,6 +1,6 @@
 FROM openforis/sandbox-base
 
-EXPOSE 5011
+EXPOSE 80
 
 ARG DEBIAN_FRONTEND noninteractive
 ENV MODULE_NAME app-manager
