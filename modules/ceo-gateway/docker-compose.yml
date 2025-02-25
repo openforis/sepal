@@ -22,6 +22,11 @@ services:
       CEO_USER_ID: "${CEO_USER_ID}"
     networks:
       - sepal
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8001"]
+      timeout: 60s
+      interval: 1s
+      retries: 60
     restart: always
 
 networks:
