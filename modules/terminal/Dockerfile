@@ -1,12 +1,12 @@
 FROM node:22-alpine
 
-RUN apk update && apk add net-tools sudo python3 g++ make openssh
-
 EXPOSE 8000
 
 ENV MODULE_NAME terminal
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
+
+RUN apk update && apk add net-tools sudo python3 g++ make openssh
 
 RUN echo "node ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/node && chmod 0440 /etc/sudoers.d/node
 

@@ -1,11 +1,12 @@
 FROM node:22-alpine
 
-RUN apk update && apk add net-tools nginx gettext envsubst
-
 EXPOSE 3000
 
 ENV MODULE_NAME gui
 ENV MODULE /usr/local/src/sepal/modules/gui
+
+RUN apk update && apk add net-tools nginx gettext envsubst
+
 USER root
 
 ADD modules/${MODULE_NAME}/package.json ${MODULE}/

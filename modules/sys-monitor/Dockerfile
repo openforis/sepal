@@ -1,10 +1,10 @@
 FROM node:22-alpine
 
-RUN apk update && apk add net-tools
-
 ENV MODULE_NAME sys-monitor
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
+
+RUN apk update && apk add net-tools
 
 RUN npm install -g nodemon
 
