@@ -16,10 +16,6 @@ services:
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       CEO_URL: "${CEO_URL}"
-      CEO_USERNAME: "${CEO_USERNAME}"
-      CEO_PASSWORD: "${CEO_PASSWORD}"
-      CEO_INSTITUTION_ID: "${CEO_INSTITUTION_ID}"
-      CEO_USER_ID: "${CEO_USER_ID}"
     networks:
       - sepal
     healthcheck:
