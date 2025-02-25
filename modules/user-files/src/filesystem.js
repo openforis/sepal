@@ -1,6 +1,6 @@
 const Path = require('path')
-const {createReadStream, realpathSync, writeFileSync, mkdirSync} = require('fs')
-const {stat, readdir} = require('fs/promises')
+const {createReadStream, realpathSync} = require('fs')
+const {stat, readdir, realpath, writeFile, mkdir} = require('fs/promises')
 const log = require('#sepal/log').getLogger('filesystem')
 
 const resolvePath = (baseDir, path) => {
@@ -17,8 +17,8 @@ const resolvePath = (baseDir, path) => {
     }
 }
 
-const resolvePathForWrite = (baseDir, relPath) => {
-    const realBaseDir = realpathSync(baseDir)
+const resolvePathForWrite = async (baseDir, relPath) => {
+    const realBaseDir = await realpath(baseDir)
     const joinedPath = Path.join(realBaseDir, relPath)
     const relativePath = Path.relative(realBaseDir, joinedPath)
     const isSubPath = !!relativePath && !relativePath.startsWith('..') && !Path.isAbsolute(relativePath)
@@ -81,7 +81,7 @@ const setFile = async (homeDir, ctx) => {
         }
 
         try {
-            const {absolutePath} = resolvePathForWrite(userHomeDir, path)
+            const {absolutePath} = await resolvePathForWrite(userHomeDir, path)
             const dirPath = Path.dirname(absolutePath)
             
             // Check if parent directory exists
@@ -103,7 +103,7 @@ const setFile = async (homeDir, ctx) => {
             // Get content from the request
             const file = ctx.request.body?.file
             if (file) {
-                writeFileSync(absolutePath, file)
+                await writeFile(absolutePath, file)
             } else {
                 log.warn(() => 'No file content provided')
                 ctx.response.status = 400
@@ -144,7 +144,7 @@ const createFolder = async (homeDir, ctx) => {
 
         try {
             // use resolvePathForWrite to check if a path that doesn't exist can be created
-            const {absolutePath} = resolvePathForWrite(userHomeDir, path)
+            const {absolutePath} = await resolvePathForWrite(userHomeDir, path)
             
             try {
                 const stats = await stat(absolutePath)
@@ -162,7 +162,7 @@ const createFolder = async (homeDir, ctx) => {
                     return
                 }
             } catch (error) {
-                mkdirSync(absolutePath, {recursive})
+                await mkdir(absolutePath, {recursive})
                 log.debug(() => `Created directory: ${absolutePath}`)
                 ctx.response.status = 201
                 ctx.body = {
