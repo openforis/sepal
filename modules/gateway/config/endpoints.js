@@ -141,6 +141,13 @@ const endpoints = [
     },
     {
         prefix: true,
+        path: '/api/app-launcher',
+        target: `http://${modules.appLauncher}`,
+        authenticate: true,
+        rewrite: false
+    },
+    {
+        prefix: true,
         path: '/api/email',
         target: `http://${modules.email}`,
         authenticate: true
