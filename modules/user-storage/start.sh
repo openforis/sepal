@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 sudo /usr/local/bin/fix_sepal_users_permissions
 
 if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]

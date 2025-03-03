@@ -1,31 +1,29 @@
-FROM node:22-bookworm
+FROM node:22-alpine
 
 ENV MODULE_NAME user-storage
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
-# Install diskus
-RUN wget -q https://github.com/sharkdp/diskus/releases/download/v0.6.0/diskus_0.6.0_amd64.deb
-RUN dpkg -i diskus_0.6.0_amd64.deb && rm diskus_0.6.0_amd64.deb
+RUN apk update && apk add curl sudo
 
-RUN printf '#!/bin/bash \n\
+# Install diskus
+RUN curl -Lo /tmp/diskus.tar.gz https://github.com/sharkdp/diskus/releases/download/v0.8.0/diskus-v0.8.0-x86_64-unknown-linux-musl.tar.gz
+RUN tar xf /tmp/diskus.tar.gz -C /usr/local/lib
+RUN ln -s /usr/local/lib/diskus-v0.8.0-x86_64-unknown-linux-musl/diskus /usr/local/bin/
+RUN rm /tmp/diskus.tar.gz
+
+# Create fix_sepal_users_permissions
+RUN printf '#!/bin/sh \n\
 chmod +rx /sepalUsers \n\
 ' > /usr/local/bin/fix_sepal_users_permissions
-
 RUN chmod +x /usr/local/bin/fix_sepal_users_permissions
 
-# RUN groupadd --gid 9999 sepal && adduser node sepal
-RUN apt-get update && \
-    apt-get install -y sudo && \
-    adduser node sudo && \
-    echo 'node ALL=(root) NOPASSWD: /usr/bin/diskus' >> /etc/sudoers && \
-    echo 'node ALL=(root) NOPASSWD: /usr/local/bin/fix_sepal_users_permissions' >> /etc/sudoers
+# Allow sudo to node
+RUN echo "node ALL=(root) NOPASSWD: /usr/local/bin/diskus" > /etc/sudoers.d/node
+RUN echo "node ALL=(root) NOPASSWD: /usr/local/bin/fix_sepal_users_permissions" >> /etc/sudoers.d/node 
+RUN chmod 0440 /etc/sudoers.d/node
 
 RUN npm install -g nodemon
-
-# Set bash prompt
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
 
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
