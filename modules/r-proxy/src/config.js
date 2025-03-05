@@ -5,7 +5,7 @@ const _ = require('lodash')
 const os = require('os')
 const {mkdirSync} = require('fs')
 
-const DEFAULT_HTTP_PORT = 8180
+const DEFAULT_HTTP_PORT = 80
 const DEFAULT_AUTO_UPDATE_INTERVAL_HOURS = 24
 
 const fatalError = error => {

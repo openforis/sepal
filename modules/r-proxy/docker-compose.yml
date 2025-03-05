@@ -30,12 +30,12 @@ services:
     networks:
       - sepal
     ports:
-      - "${SEPAL_IP}:8180:8180"
+      - "${SEPAL_IP}:8180:80"
     volumes:
       - ${SEPAL_DATA_DIR}/r-proxy/site-library:/usr/local/lib/R/site-library
       - ${SEPAL_DATA_DIR}/r-proxy/repo:/R
     healthcheck:
-      test: bash -c "exec 6<> /dev/tcp/localhost/8180"
+      test: bash -c "exec 6<> /dev/tcp/localhost/80"
       timeout: 60s
       interval: 1s
       retries: 60

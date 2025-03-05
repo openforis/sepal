@@ -1,6 +1,6 @@
 FROM openforis/sandbox-base
 
-EXPOSE 8180
+EXPOSE 80
 
 ENV MODULE_NAME r-proxy
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
