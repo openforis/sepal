@@ -22,6 +22,8 @@ Modules
     user-files      80
     user-storage    80
 
+    sandbox proxy   9191
+
     docker metrics  9293
     JVM debug port  5005
     Node debug port 9229
