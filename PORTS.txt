@@ -12,14 +12,16 @@ Modules
     mysql-admin     8980
     prometheus      9090
     r-proxy         8180
-    sepal-server    80, 5005
+    sepal-server    80
     ssh-gateway     22
     sys-monitor     80
     task            80
     terminal        80
-    user            80, 5005
+    user            80
     user-assets     80
     user-files      80
     user-storage    80
 
     docker metrics  9293
+    JVM debug port  5005
+    Node debug port 9229
