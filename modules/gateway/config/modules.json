@@ -1,14 +1,14 @@
 {
-  "appManager": "app-manager:80",
-  "ceoGateway": "ceo-gateway:80",
-  "email": "email:80",
-  "gee": "gee:80",
-  "gui": "gui:80",
+  "appManager": "app-manager",
+  "ceoGateway": "ceo-gateway",
+  "email": "email",
+  "gee": "gee",
+  "gui": "gui",
   "sandbox": "sepal:9191",
-  "sepal": "sepal:80",
-  "sysMonitor": "sys-monitor:80",
-  "terminal": "terminal:80",
+  "sepal": "sepal",
+  "sysMonitor": "sys-monitor",
+  "terminal": "terminal",
   "user": "user",
-  "userAssets": "user-assets:80",
-  "userFiles": "user-files:80"
+  "userAssets": "user-assets",
+  "userFiles": "user-files"
 }
