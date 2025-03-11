@@ -81,6 +81,11 @@ ADD INDEX `idx_user_budget_1` (`username`) USING BTREE;
 
 -- budget_update_request
 
+CALL sdms.DropIndexIfExists('sdms', 'budget_update_request', 'idx_budget_update_request_1');
+ALTER TABLE `sdms`.`budget_update_request`
+ADD INDEX `idx_budget_update_request_1` (`username`, `state`) USING BTREE;
+
+
 CALL sdms.DropIndexIfExists('sdms', 'budget_update_request', 'idx_budget_update_request_2');
 ALTER TABLE `sdms`.`budget_update_request`
 ADD INDEX `idx_budget_update_request_2` (`state`) USING BTREE;
