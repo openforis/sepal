@@ -38,9 +38,9 @@ services:
       - sepal
     healthcheck:
       test: bash -c "exec 6<> /dev/tcp/localhost/80"
-      timeout: 60s
+      timeout: 3600s
       interval: 1s
-      retries: 60
+      retries: 3600
     restart: always
 
 networks:
