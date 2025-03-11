@@ -31,23 +31,23 @@ DELIMITER ;
 
 -- unneeded indexes
 
-CALL processing_recipe.DropIndexIfExists('sepal_user', 'sepal_user', 'username');
-CALL processing_recipe.DropIndexIfExists('sepal_user', 'sepal_user', 'email');
+CALL sepal_user.DropIndexIfExists('sepal_user', 'sepal_user', 'username');
+CALL sepal_user.DropIndexIfExists('sepal_user', 'sepal_user', 'email');
 
 -- create new indexes
 
-CALL processing_recipe.DropIndexIfExists('sepal_user', 'sepal_user', 'idx_sepal_user_1');
+CALL sepal_user.DropIndexIfExists('sepal_user', 'sepal_user', 'idx_sepal_user_1');
 ALTER TABLE `sepal_user`.`sepal_user`
 ADD INDEX `idx_sepal_user_1` (`creation_time`) USING BTREE;
 
-CALL processing_recipe.DropIndexIfExists('sepal_user', 'sepal_user', 'idx_sepal_user_2');
+CALL sepal_user.DropIndexIfExists('sepal_user', 'sepal_user', 'idx_sepal_user_2');
 ALTER TABLE `sepal_user`.`sepal_user`
 ADD UNIQUE `idx_sepal_user_2` (`username`) USING BTREE;
 
-CALL processing_recipe.DropIndexIfExists('sepal_user', 'sepal_user', 'idx_sepal_user_3');
+CALL sepal_user.DropIndexIfExists('sepal_user', 'sepal_user', 'idx_sepal_user_3');
 ALTER TABLE `sepal_user`.`sepal_user`
 ADD INDEX `idx_sepal_user_3` (`email`) USING BTREE;
 
-CALL processing_recipe.DropIndexIfExists('sepal_user', 'sepal_user', 'idx_sepal_user_4');
+CALL sepal_user.DropIndexIfExists('sepal_user', 'sepal_user', 'idx_sepal_user_4');
 ALTER TABLE `sepal_user`.`sepal_user`
 ADD UNIQUE `idx_sepal_user_4` (`token`) USING BTREE;

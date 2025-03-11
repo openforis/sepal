@@ -1,8 +1,8 @@
-DROP PROCEDURE IF EXISTS sdms.DropIndexIfExists;
+DROP PROCEDURE IF EXISTS worker_instance.DropIndexIfExists;
 
 DELIMITER $$
 
-CREATE PROCEDURE sdms.DropIndexIfExists(
+CREATE PROCEDURE worker_instance.DropIndexIfExists(
     IN dbName VARCHAR(255), 
     IN tableName VARCHAR(255), 
     IN indexName VARCHAR(255)
@@ -31,6 +31,6 @@ DELIMITER ;
 
 -- instance
 
-CALL processing_recipe.DropIndexIfExists('worker_instance', 'instance', 'idx_instance_1');
+CALL worker_instance.DropIndexIfExists('worker_instance', 'instance', 'idx_instance_1');
 ALTER TABLE `worker_instance`.`instance`
 ADD INDEX `idx_instance_1` (`type`, `worker_type`) USING BTREE;
