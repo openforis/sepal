@@ -65,6 +65,7 @@
         "image": "Image",
         "imageCollection": "Collection d'image",
         "table": "Table",
+        "classifier": "",
         "new": "Nouvel asset",
         "recentAssets": "Asset récent",
         "userAssets": "Assets utilisateur",
@@ -154,12 +155,26 @@
         "starting-sepal-failed": "Une erreur est survenue. Veuillez recharger la page et réessayer."
     },
     "browse": {
+        "addBrowser": {
+            "files": "",
+            "assets": ""
+        },
+        "title": {
+            "files": "Espace de travail SEPAL",
+            "assets": ""
+        },
         "controls": {
+            "reload": {
+                "tooltip": ""
+            },
             "clearSelection": {
                 "tooltip": "Vider la sélection"
             },
             "download": {
                 "tooltip": "Télécharger les éléments sélectionnés"
+            },
+            "createFolder": {
+                "tooltip": ""
             },
             "remove": {
                 "tooltip": "Supprimer les éléments sélectionnés"
@@ -168,6 +183,14 @@
                 "label": "",
                 "hide.tooltip": "",
                 "show.tooltip": ""
+            },
+            "collapseDirs": {
+                "label": "",
+                "tooltip": ""
+            },
+            "expandDirs": {
+                "label": "",
+                "tooltip": ""
             },
             "splitDirs": {
                 "label": "",
@@ -185,6 +208,10 @@
         },
         "loading": {
             "error": "Impossible de récupérer des informations du fichier."
+        },
+        "createFolder": {
+            "existing.error": "",
+            "tooDeep.error": ""
         },
         "removeConfirmation": "Retirer {directories} {directories, plural, one {dossier} other {dossiers}} et {files} {files, plural, one {fichier} other {fichiers}}?",
         "removing": {
@@ -4805,6 +4832,10 @@
                 "title": "Votre compte SEPAL n'est pas connecté à votre compte Google"
             },
             "missingScopes": {
+                "title": "",
+                "message": ""
+            },
+            "revoked": {
                 "title": "",
                 "message": ""
             },
