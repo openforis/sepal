@@ -65,6 +65,7 @@
         "image": "",
         "imageCollection": "",
         "table": "",
+        "classifier": "",
         "new": "",
         "recentAssets": "",
         "userAssets": "",
@@ -154,12 +155,26 @@
         "starting-sepal-failed": ""
     },
     "browse": {
+        "addBrowser": {
+            "files": "",
+            "assets": ""
+        },
+        "title": {
+            "files": "Espacio de trabajo SEPAL",
+            "assets": ""
+        },
         "controls": {
+            "reload": {
+                "tooltip": ""
+            },
             "clearSelection": {
                 "tooltip": "Borrar selección"
             },
             "download": {
                 "tooltip": "Descargar el elemento seleccionado"
+            },
+            "createFolder": {
+                "tooltip": ""
             },
             "remove": {
                 "tooltip": "Eliminar los elementos seleccionados"
@@ -168,6 +183,14 @@
                 "label": "",
                 "hide.tooltip": "",
                 "show.tooltip": ""
+            },
+            "collapseDirs": {
+                "label": "",
+                "tooltip": ""
+            },
+            "expandDirs": {
+                "label": "",
+                "tooltip": ""
             },
             "splitDirs": {
                 "label": "",
@@ -185,6 +208,10 @@
         },
         "loading": {
             "error": "No se puede recuperar la información del documento."
+        },
+        "createFolder": {
+            "existing.error": "",
+            "tooDeep.error": ""
         },
         "removeConfirmation": "¿Eliminar {directories} {directories, plural, one {directorio} other {directorios}} y {files} {files, plural, one {documento} other {documentos}}?",
         "removing": {
@@ -4805,6 +4832,10 @@
                 "title": "Tu cuenta SEPAL no está vinculada a tu cuenta de Google"
             },
             "missingScopes": {
+                "title": "",
+                "message": ""
+            },
+            "revoked": {
                 "title": "",
                 "message": ""
             },
