@@ -39,6 +39,11 @@ services:
       PMA_HOST: mysql
     ports:
       - "127.0.0.1:8980:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      timeout: 60s
+      interval: 1s
+      retries: 60
     networks:
       - sepal
     depends_on:
