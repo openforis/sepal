@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import {switchMap} from 'rxjs'
 
 import {compose} from '~/compose'
 import {msg} from '~/translate'
@@ -12,6 +13,7 @@ import {withForm} from '~/widget/form/form'
 import {Keybinding} from '~/widget/keybinding'
 import {Layout} from '~/widget/layout'
 import {Notifications} from '~/widget/notifications'
+import {withRecaptcha} from '~/widget/recaptcha'
 
 import styles from './login.module.css'
 
@@ -121,9 +123,13 @@ class _Login extends React.Component {
     }
 
     login(credentials) {
-        const {stream} = this.props
+        const {stream, recaptcha: {recaptcha$}} = this.props
         stream('LOGIN',
-            login$(credentials),
+            recaptcha$('LOGIN').pipe(
+                switchMap(recaptchaToken =>
+                    login$(credentials, recaptchaToken),
+                )
+            ),
             user => {
                 credentialsPosted(user)
             },
@@ -136,7 +142,8 @@ class _Login extends React.Component {
 
 export const Login = compose(
     _Login,
-    withForm({fields, mapStateToProps})
+    withForm({fields, mapStateToProps}),
+    withRecaptcha()
 )
 
 Login.propTypes = {

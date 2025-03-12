@@ -310,13 +310,13 @@ class UserEndpoint {
 
             post('/google/revoke-access') {
                 response.contentType = 'application/json'
-                component.submit(
+                def user = component.submit(
                         new RevokeGoogleAccountAccess(
                                 username: sepalUser.username,
                                 tokens: sepalUser.googleTokens
                         ))
                 response.addHeader('sepal-user-updated', 'true')
-                send toJson([status: 'success', message: 'Access to Google account revoked'])
+                send toJson(userToMap(user))
             }
 
             post('/google/refresh-access-token') {

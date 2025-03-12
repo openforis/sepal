@@ -1,0 +1,106 @@
+
+.toolbarButton {
+    position: relative;
+    width: var(--toolbar-button-size);
+    height: var(--toolbar-button-size);
+    padding: 0;
+    border: var(--selected-panel-border-width) solid var(--look-default-border-color);
+    border-radius: var(--button-border-radius);
+    color: var(--look-default-color);
+    background-color: var(--look-default-background-color);
+    font-size: .8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.toolbarButton:hover:not(:disabled) {
+    color: var(--look-default-hover-color);
+    background-color: var(--look-default-hover-background-color);
+    border-color: var(--look-default-hover-border-color);
+    cursor: pointer;
+}
+
+.toolbarButton.selected,
+.toolbarButton.selected:disabled {
+    color: var(--look-highlight-color);
+    background-color: var(--look-highlight-background-color);
+    border-color: var(--look-highlight-border-color);
+}
+
+.toolbarButton.selected:hover:not(:disabled) {
+    color: var(--look-highlight-hover-color);
+    background-color: var(--look-highlight-background-color);
+    border-color: var(--look-highlight-hover-border-color);
+}
+
+.toolbarButton:active:not(:disabled) {
+    color: var(--look-default-active-color);
+    background-color: var(--look-default-active-background-color);
+    border-color: var(--look-default-active-border-color);
+}
+
+.toolbarButton.selected:active:not(:disabled) {
+    color: var(--look-highlight-active-color);
+    background-color: var(--look-highlight-active-background-color);
+    border-color: var(--look-highlight-active-border-color);
+}
+
+.toolbarButton:disabled {
+    opacity: var(--look-disabled-opacity);
+}
+
+.toolbarButton svg {
+    width: var(--icon-size);
+    height: var(--icon-size);
+    vertical-align: middle;
+    font-size: var(--icon-size);
+}
+
+/* activation buttons */
+
+.toolbarButton.activationButton.selected,
+.toolbarButton.activationButton.selected:hover {
+    background-color: var(--panel-default-background-color);
+}
+
+.toolbarButton.activationButton.panel.vertical.selected {
+    width: calc(var(--toolbar-button-size) + var(--button-panel-margin));
+    margin-left: calc(-1 * var(--button-panel-margin));
+    padding-left: calc(var(--button-panel-margin) + var(--selected-panel-border-width));
+    border: 1px solid var(--wireframe-color);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
+    z-index: 2;
+}
+
+.toolbarButton.activationButton.panel.horizontal.selected {
+    height: calc(var(--toolbar-button-size) + var(--button-panel-margin));
+    margin-bottom: calc(-1 * var(--button-panel-margin));
+    padding-bottom: calc(var(--button-panel-margin) + var(--selected-panel-border-width));
+    border: 1px solid var(--wireframe-color);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: none;
+    z-index: 2;
+}
+
+/* error state */
+
+.toolbarButton.activationButton.error::after {
+    content: '';
+    position: absolute;
+    bottom: .2rem;
+    left: .2rem;
+    right: .2rem;
+    height: .2rem;
+    background-color: var(--error-color);
+}
+
+.toolbarButton.activationButton.panel.horizontal.selected.error::after {
+    bottom: calc(var(--button-panel-margin) + .2rem);
+}
+
+.toolbarButton.activationButton.panel.vertical.selected.error::after {
+    left: calc(var(--button-panel-margin) + .2rem);
+}

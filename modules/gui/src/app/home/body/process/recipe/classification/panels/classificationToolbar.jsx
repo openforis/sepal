@@ -43,48 +43,48 @@ class _ClassificationToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='top-right'
-                    panel
                     className={styles.top}>
-                    <Toolbar.ToolbarButton
+                    <Toolbar.Button
                         selected={collecting}
                         onClick={() => RecipeActions(recipeId).setCollecting(!collecting)}
                         icon={'map-marker'}
                         tooltip={msg(collecting
                             ? 'process.classification.collect.disable.tooltip'
-                            : 'process.classification.collect.enable.tooltip')}/>
+                            : 'process.classification.collect.enable.tooltip')}
+                        panel/>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='inputImagery'
                         label={msg('process.classification.panel.inputImagery.button')}
                         tooltip={msg('process.classification.panel.inputImagery.tooltip')}
-                        disabled={!initialized}/>
-
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='legend'
                         label={msg('process.classification.panel.legend.button')}
                         tooltip={msg('process.classification.panel.legend.tooltip')}
-                        disabled={!initialized}/>
-
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='trainingData'
                         label={msg('process.classification.panel.trainingData.button')}
-                        tooltip={msg('process.classification.panel.trainingData.tooltip')}/>
-
+                        tooltip={msg('process.classification.panel.trainingData.tooltip')}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='auxiliaryImagery'
                         label={msg('process.classification.panel.auxiliaryImagery.button')}
-                        tooltip={msg('process.classification.panel.auxiliaryImagery.tooltip')}/>
-
+                        tooltip={msg('process.classification.panel.auxiliaryImagery.tooltip')}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='classifier'
                         label={msg('process.classification.panel.classifier.button')}
-                        tooltip={msg('process.classification.panel.classifier.tooltip')}/>
+                        tooltip={msg('process.classification.panel.classifier.tooltip')}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

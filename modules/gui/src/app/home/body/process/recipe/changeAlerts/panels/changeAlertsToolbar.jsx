@@ -76,31 +76,35 @@ class _ChangeAlertsToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='reference'
                         label={msg('process.changeAlerts.panel.reference.button')}
                         tooltip={msg('process.changeAlerts.panel.reference.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='date'
                         label={msg('process.changeAlerts.panel.date.button')}
                         tooltip={msg('process.changeAlerts.panel.date.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='sources'
                         label={msg('process.changeAlerts.panel.sources.button')}
                         tooltip={msg('process.changeAlerts.panel.sources.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='options'
                         label={msg('process.timeSeries.panel.preprocess.button')}
-                        tooltip={msg('process.timeSeries.panel.preprocess.tooltip')}/>
+                        tooltip={msg('process.timeSeries.panel.preprocess.tooltip')}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='changeAlertsOptions'
                         label={msg('process.changeAlerts.panel.options.button')}
-                        tooltip={msg('process.changeAlerts.panel.options.tooltip')}/>
+                        tooltip={msg('process.changeAlerts.panel.options.tooltip')}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]
 then
@@ -8,10 +8,9 @@ then
     --watch "${MODULE}"/src \
     --watch "${MODULE}/config" \
     --watch "${SHARED}" \
-    --inspect=0.0.0.0:9235 \
+    --inspect=0.0.0.0:9229 \
     src/main.js \
     --ip '0.0.0.0' \
-    --port 8000 \
     --home-dir '/sepalUsers' \
     --ssh-script-path '/usr/local/bin/ssh_gateway.sh'
 else
@@ -19,7 +18,6 @@ else
   exec node \
     src/main.js \
     --ip '0.0.0.0' \
-    --port 8000 \
     --home-dir '/sepalUsers' \
     --ssh-script-path '/usr/local/bin/ssh_gateway.sh'
 fi

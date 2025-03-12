@@ -106,7 +106,6 @@ class _RecipeList extends React.Component {
         return (
             <Layout type='horizontal' spacing='compact'>
                 {this.renderSearch()}
-                <Layout.Spacer/>
                 {this.renderEditButtons()}
             </Layout>
         )
@@ -117,10 +116,14 @@ class _RecipeList extends React.Component {
         return (
             <Layout type='horizontal' spacing='compact'>
                 <CreateRecipe recipeId={recipeId} recipeTypes={listRecipeTypes()}/>
-                <ProjectsButton/>
-                <SelectProject/>
+                <Layout type='horizontal' spacing='compact'>
+                    <ProjectsButton/>
+                    <SelectProject/>
+                </Layout>
                 <Layout.Spacer/>
-                {this.renderSortButtons()}
+                <Layout type='horizontal' spacing='compact' alignment='right'>
+                    {this.renderSortButtons()}
+                </Layout>
             </Layout>
         )
     }
@@ -290,7 +293,7 @@ class _RecipeList extends React.Component {
             <ListItem
                 key={recipe.id}
                 hovered={hovered}
-                onClick={() => this.handleClick(recipe)}>
+                onClick={() => edit ? this.toggleOne(recipe.id) : this.handleClick(recipe)}>
                 <CrudItem
                     title={this.getRecipeTypeName(recipe.type)}
                     description={this.getRecipePath(recipe)}
@@ -301,8 +304,8 @@ class _RecipeList extends React.Component {
                     removeTooltip={msg('process.menu.removeRecipe.tooltip')}
                     selectTooltip={msg('process.menu.selectRecipe.tooltip')}
                     selected={edit ? this.isSelected(recipe.id) : undefined}
-                    onDuplicate={onDuplicate ? () => onDuplicate(recipe.id) : undefined}
-                    onRemove={onRemove ? () => onRemove(recipe.id) : undefined}
+                    onDuplicate={!edit && onDuplicate ? () => onDuplicate(recipe.id) : undefined}
+                    onRemove={!edit && onRemove ? () => onRemove(recipe.id) : undefined}
                     onSelect={edit ? () => this.toggleOne(recipe.id) : undefined}
                 />
             </ListItem>

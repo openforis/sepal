@@ -52,6 +52,8 @@ run gee
 build task
 build terminal
 run terminal
+build user-assets
+run user-assets
 build user-files
 run user-files
 build user-storage

@@ -4,17 +4,42 @@ const {webSocket} = require('rxjs/webSocket')
 
 const {webSocketEndpoints} = require('../config/endpoints')
 const {autoRetry} = require('sepal/src/rxjs')
-const {moduleTag, clientTag} = require('./tag')
+const {moduleTag, clientTag, userTag} = require('./tag')
+const {CLIENT_UP, USER_UP, USER_UPDATE} = require('./websocket-events')
 
 const log = require('#sepal/log').getLogger('websocket/uplink')
 
 const HEARTBEAT_INTERVAL_MS = 1 * 1000
 
-const initializeUplink = ({servers, clients}) => {
+const initializeUplink = ({servers, clients, userStore: {getUser, userUpdate$}}) => {
+    
+    const onUserUpdate = user => {
+        log.debug(`${userTag(user.username)} updated`)
+        servers.broadcast({event: USER_UPDATE, user})
+    }
+
+    userUpdate$.subscribe({
+        next: user => onUserUpdate(user),
+        error: error => log.error('Unexpected userUpdate$ error', error),
+        complete: () => log.error('Unexpected userUpdate$ complete')
+    })
     
     const moduleReady = (module, ready) => {
         clients.broadcast({modules: {update: {[module]: ready}}})
-        clients.forEach(({user, clientId}) => servers.send(module, {user, clientId, online: true}))
+        if (ready) {
+            clients.forEachUser(username =>
+                getUser(username).then(
+                    user => servers.send(module, {event: USER_UP, user})
+                )
+            )
+            clients.forEach(({username, clientId}) =>
+                getUser(username).then(
+                    user => {
+                        servers.send(module, {event: CLIENT_UP, user, clientId})
+                    }
+                )
+            )
+        }
     }
 
     const onHeartbeat = (hb, module, upstream$) => {
@@ -22,20 +47,27 @@ const initializeUplink = ({servers, clients}) => {
         upstream$.next({hb})
     }
     
-    const onServerMessage = (rx, module) => {
-        const {clientId, subscriptionId, data, ready, hb} = rx
+    const onServerMessage = (msg, module, _upstream$) => {
+        const {hb, ready, data, ...other} = msg
         if (hb) {
             log.trace(`Received heartbeat from ${moduleTag(module)}:`, hb)
         } else if (ready) {
             log.info(`${moduleTag(module)} connected`)
             moduleReady(module, true)
-        } else {
-            if (log.isTrace()) {
-                log.trace(`Forwarding message to ${clientTag('', clientId)}:`, data)
+        } else if (data) {
+            const {username, clientId, subscriptionId} = other
+            if (clientId) {
+                if (log.isTrace()) {
+                    log.trace(`Forwarding message to ${clientTag(username, clientId)}:`, data)
+                } else {
+                    log.debug(`Forwarding message to ${clientTag(username, clientId)}`)
+                }
+                clients.send(clientId, {subscriptionId, data})
             } else {
-                log.debug(`Forwarding message to ${clientTag('', clientId)}`)
+                clients.sendByUsername({module, username}, {data})
             }
-            clients.send(clientId, {subscriptionId, data})
+        } else {
+            log.warn(`Received unexpected message from ${moduleTag(module)}:`, msg)
         }
     }
     

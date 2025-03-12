@@ -57,8 +57,7 @@ const startModule = async (module, options = {}, rootModule, gradleOptions) => {
 const waitModuleRunning = async module =>
     new Promise((resolve, reject) => {
         const wait = async (count = 0) => {
-            const foo = await getStatus([module], true)
-            const [{status, services}] = foo
+            const [{status, services}] = await getStatus([module], true)
             if (status) {
                 if (services) {
                     if (_.some(services, ({state, health}) => state === 'RUNNING' && health === 'UNHEALTHY')) {

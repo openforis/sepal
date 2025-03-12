@@ -76,31 +76,35 @@ class _CcdcToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='dates'
                         label={msg('process.ccdc.panel.dates.button')}
                         tooltip={msg('process.ccdc.panel.dates.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='sources'
                         label={msg('process.ccdc.panel.sources.button')}
                         tooltip={msg('process.ccdc.panel.sources.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='options'
                         label={msg('process.ccdc.panel.preprocess.button')}
-                        tooltip={msg('process.ccdc.panel.preprocess.tooltip')}/>
+                        tooltip={msg('process.ccdc.panel.preprocess.tooltip')}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='ccdcOptions'
                         label={msg('process.ccdc.panel.options.button')}
-                        tooltip={msg('process.ccdc.panel.options.tooltip')}/>
+                        tooltip={msg('process.ccdc.panel.options.tooltip')}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

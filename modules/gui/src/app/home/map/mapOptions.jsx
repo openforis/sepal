@@ -165,7 +165,9 @@ const _MapOptionsButton = ({retile}) =>
         id='mapOptions'
         icon='gear'
         iconVariant={retile === FULL_TILE_SIZE ? 'normal' : 'warning'}
-        tooltip={msg('process.mosaic.mapToolbar.options.tooltip')}/>
+        tooltip={msg('process.mosaic.mapToolbar.options.tooltip')}
+        panel
+    />
 
 export const MapOptionsButton = compose(
     _MapOptionsButton,

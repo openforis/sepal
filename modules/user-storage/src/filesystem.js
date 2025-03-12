@@ -34,7 +34,7 @@ const calculateUserStorage = async username => {
     const t0 = Date.now()
     const size = await diskUsage(userHomePath(username))
     const t1 = Date.now()
-    log.debug(`Calculated storage for user ${username}: ${size} bytes [${t1 - t0} ms]`)
+    log.info(`Calculated storage for user ${username}: ${size} bytes [${t1 - t0} ms]`)
     return size
 }
 

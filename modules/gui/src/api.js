@@ -10,6 +10,7 @@ import project from './api/project'
 import recipe from './api/recipe'
 import tasks from './api/tasks'
 import user from './api/user'
+import userAssets from './api/userAssets'
 import userFiles from './api/userFiles'
 import wmts from './api/wmts'
 
@@ -24,6 +25,7 @@ export const initApi = () =>
         recipe,
         tasks,
         user,
+        userAssets,
         userFiles,
         wmts,
         ceoGateway

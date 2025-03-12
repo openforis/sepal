@@ -61,6 +61,7 @@ build gee
 build user
 build user-storage
 build user-storage-backup
+build user-assets
 build user-files
 build gui
 build ceo-gateway
@@ -81,6 +82,7 @@ push user-storage
 push user-storage-backup
 push app-manager
 push sepal
+push user-assets
 push user-files
 push gui
 push ceo-gateway

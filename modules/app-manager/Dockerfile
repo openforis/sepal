@@ -1,12 +1,12 @@
 FROM openforis/sandbox-base
 
-EXPOSE 5011
+EXPOSE 80
 
 ARG DEBIAN_FRONTEND noninteractive
 ENV MODULE_NAME app-manager
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
-ENV NODE_MAJOR=20
+ENV NODE_MAJOR=22
 
 ADD modules/${MODULE_NAME}/install-requirements.sh /usr/local/bin/install-requirements
 RUN chmod +x /usr/local/bin/install-requirements
@@ -49,9 +49,6 @@ RUN apt-get install nodejs -y
 RUN npm install -g nodemon
 
 USER node
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
-RUN bash -c "source /home/node/.nvm/nvm.sh && nvm install 20"
-
 ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
 USER root

@@ -11,6 +11,7 @@ import {autoRetry} from '~/rxjsutils'
 import {msg} from '~/translate'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import {Assets} from '~/widget/assets'
+import {GoogleAccountConnection} from '~/widget/googleAccountConnection'
 import {Notifications} from '~/widget/notifications'
 import {PortalContainer} from '~/widget/portal'
 import {WebSocketConnection} from '~/widget/webSocketConnection'
@@ -131,6 +132,7 @@ class _Home extends React.Component {
                     <PortalContainer/>
                     <WebSocketConnection/>
                     <Assets/>
+                    <GoogleAccountConnection/>
                 </div>
             </ActivationContext>
         )

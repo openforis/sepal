@@ -5,6 +5,11 @@
     --icon-width: 2.5rem;
 }
 
+.header {
+    margin-top: 1rem;
+    color: var(--warning-color);
+}
+
 .info {
     display: flex;
     flex-direction: column;
@@ -16,7 +21,7 @@
 
 .fileList {
     line-height: 2rem;
-    margin-top: .5rem;
+    margin-top: 1rem;
 }
 
 .fileList ul {
@@ -50,11 +55,11 @@
     transition: 100ms ease-in-out;
 }
 
-.fileList li > div.added {
-    animation: added var(--animation-duration) ease-in-out forwards;
+.fileList li > div.adding {
+    animation: adding var(--animation-duration) ease-in-out forwards;
 }
 
-@keyframes added {
+@keyframes adding {
     0% {
         background-color: var(--add-color);
     }

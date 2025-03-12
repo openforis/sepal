@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # TODO: Look at this
 #AUTH_CONFIG=$SEPAL_CONFIG/google-earth-engine/gee-oauth.json
@@ -12,7 +12,7 @@ then
     --watch "${MODULE}/src" \
     --watch "${MODULE}/config" \
     --watch "${SHARED}" \
-    --inspect=0.0.0.0:9232 \
+    --inspect=0.0.0.0:9229 \
     src/main.js \
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \

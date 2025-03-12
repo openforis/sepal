@@ -38,29 +38,30 @@ class _BaytsHistoricalToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='top-right'
-                    panel
                     className={styles.top}>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='dates'
                         label={msg('process.baytsHistorical.panel.dates.button')}
                         tooltip={msg('process.baytsHistorical.panel.dates.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='options'
                         label={msg('process.baytsHistorical.panel.options.button')}
-                        tooltip={msg('process.baytsHistorical.panel.options.tooltip')}/>
+                        tooltip={msg('process.baytsHistorical.panel.options.tooltip')}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

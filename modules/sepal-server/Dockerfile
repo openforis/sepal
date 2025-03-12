@@ -1,6 +1,6 @@
 FROM openforis/java
 
-EXPOSE 1025
+EXPOSE 80
 EXPOSE 5005
 
 ENV MODULE_NAME sepal-server

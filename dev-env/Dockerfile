@@ -4,7 +4,7 @@ SHELL ["/bin/bash", "-c"]
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PROJECT_DIR /usr/local/src/sepal
-ENV NODE_MAJOR=20
+ENV NODE_MAJOR=22
 
 # Update and install base packages
 

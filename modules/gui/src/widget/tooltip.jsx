@@ -8,6 +8,7 @@ import React from 'react'
 
 import {isMobile} from '~/widget/userAgent'
 
+import {DEFAULT_PORTAL_CONTAINER_ID} from './portal'
 import styles from './tooltip.module.css'
 
 const CLOSE_DELAY_MS = 250
@@ -43,6 +44,8 @@ export class Tooltip extends React.Component {
                     destroyTooltipOnHide={destroyTooltipOnHide}
                     onVisibleChange={onVisibleChange}
                     afterVisibleChange={afterVisibleChange}
+                    getTooltipContainer={() => document.getElementById(DEFAULT_PORTAL_CONTAINER_ID)}
+                    zIndex={2}
                     {...otherProps}>
                     {children}
                 </RcTooltip>

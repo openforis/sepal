@@ -12,7 +12,7 @@ import {currentUser} from '~/user'
 import {Form} from '~/widget/form'
 
 import {withActivators} from './activation/activator'
-import {AssetBrowser} from './assetBrowser'
+import {AssetDestinationBrowser} from './assetDestinationBrowser'
 import {Button} from './button'
 
 const mapStateToProps = state => ({
@@ -74,7 +74,7 @@ class _AssetDestination extends React.Component {
 
     renderAssetBrowser() {
         return (
-            <AssetBrowser
+            <AssetDestinationBrowser
                 onChange={this.onChange}
             />
         )

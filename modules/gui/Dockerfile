@@ -1,15 +1,13 @@
-FROM node:20-bookworm
-EXPOSE 3000
+FROM node:22-alpine
+
+EXPOSE 80
+
 ENV MODULE_NAME gui
 ENV MODULE /usr/local/src/sepal/modules/gui
-USER root
-RUN apt-get update && apt-get install -y \
-  nginx \
-  gettext
 
-# Set bash prompt
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
+RUN apk update && apk add net-tools nginx gettext envsubst
+
+USER root
 
 ADD modules/${MODULE_NAME}/package.json ${MODULE}/
 ADD modules/${MODULE_NAME}/package-lock.json ${MODULE}/

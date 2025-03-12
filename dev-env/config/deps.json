@@ -214,6 +214,16 @@
         ],
         "gradle": true
     },
+    "user-assets": {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger",
+            "rabbitmq"
+        ]
+    },
     "user-files": {
         "lib": [
             "shared"

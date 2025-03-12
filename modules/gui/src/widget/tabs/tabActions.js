@@ -17,9 +17,9 @@ const nextSelectedTabId = (id, statePath) => {
     return null
 }
 
-export const addTab = statePath => {
+export const addTab = (statePath, type, placeholder = msg('widget.tabs.newTab')) => {
     const id = uuid()
-    const tab = {id, placeholder: msg('widget.tabs.newTab'), title: ''}
+    const tab = {id, type, placeholder, title: ''}
     actionBuilder('ADD_TAB')
         .push([statePath, 'tabs'], tab)
         .set([statePath, 'selectedTabId'], id)

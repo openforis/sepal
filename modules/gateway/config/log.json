@@ -1,5 +1,5 @@
 {
-    "port": 5100,
+    "port": 5000,
     "categories": {
         "auth": "info",
         "gateway": "info",
@@ -7,7 +7,8 @@
         "proxy": "error",
         "session": "info",
         "user": "info",
-        "userstore": "info",
+        "userApi": "info",
+        "userStore": "info",
         "websocket": "info",
         "websocket/client": "info",
         "websocket/server": "info",

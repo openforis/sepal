@@ -16,7 +16,7 @@ then
     --watch "${MODULE}/src" \
     --watch "${MODULE}/config" \
     --watch "${SHARED}" \
-    --inspect=0.0.0.0:9230 \
+    --inspect=0.0.0.0:9229 \
     src/main.js
 else
   echo "Starting node"

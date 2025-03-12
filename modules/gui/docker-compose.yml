@@ -23,6 +23,11 @@ services:
       GOOGLE_RECAPTCHA_SITE_KEY: "${GOOGLE_RECAPTCHA_ENTERPRISE_SITE_KEY}"
     networks:
       - sepal
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      timeout: 60s
+      interval: 1s
+      retries: 60
     restart: always
 
 networks:

@@ -10,7 +10,7 @@ node src/main.js \
     --${interactive} \
     --username="${USER}" \
     --user-key-file="/home/${USER}/.ssh/id_rsa" \
-    --endpoint="http://sepal:1025/api/" \
+    --endpoint="http://sepal/api/" \
     --endpoint-password="$(cat /etc/sepalAdmin.passwd)" \
     --ssh-command-path="${sshScriptFile}"
 

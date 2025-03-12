@@ -76,6 +76,7 @@ RemoveButton.propTypes = {
 }
 
 RemoveButton.defaultProps = {
-    unsafe: false,
-    icon: 'trash'
+    shape: 'circle',
+    icon: 'trash',
+    unsafe: false
 }

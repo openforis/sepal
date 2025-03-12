@@ -11,6 +11,8 @@ const subscriptionsById = {}
 const subscriptionIdsByModule = {}
 const readyModules = new Set()
 
+export const event$ = new Subject()
+
 const ENDPOINT = '/api/ws'
 
 export const CONNECTION_STATUS = {
@@ -59,6 +61,11 @@ const handleHeartbeat = hb => {
     upstream$.next({hb})
 }
 
+const handleEvent = event => {
+    log.debug('Event received:', event)
+    event$.next(event)
+}
+
 const handleState = status => {
     readyModules.clear()
     status.forEach(module => {
@@ -94,9 +101,11 @@ const handleUpdate = update => {
     )
 }
 
-const handleMessage = ({modules: {state, update} = {}, subscriptionId, data, hb}) => {
+const handleMessage = ({modules: {state, update} = {}, subscriptionId, data, hb, event}) => {
     if (hb) {
         handleHeartbeat(hb)
+    } else if (event) {
+        handleEvent(event)
     } else if (state) {
         handleState(state)
     } else if (update) {
@@ -156,7 +165,7 @@ export const moduleWebSocket$ = (module, notifyBackend = false) => {
         moduleUpstream$.complete()
         moduleDownstream$.complete()
         removeSubscription(subscriptionId)
-        upstream$.next({module, subscriptionId, subscribed: false})
+        upstream$.next({module, subscriptionId, unsubscribed: true})
     }
 
     const ready = readyModules.has(module)

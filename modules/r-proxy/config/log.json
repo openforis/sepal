@@ -1,5 +1,5 @@
 {
-    "port": 5109,
+    "port": 5000,
     "categories": {
         "config": "info",
         "cran": "info",

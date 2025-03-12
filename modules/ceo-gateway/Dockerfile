@@ -1,15 +1,22 @@
-FROM node:20-bookworm
-EXPOSE 8001
+FROM node:22-alpine
+
+EXPOSE 80
 
 ENV MODULE_NAME ceo-gateway
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
+RUN apk update && apk add net-tools sudo
+
 RUN npm install -g nodemon
 
-# Set bash prompt
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
+ADD modules/${MODULE_NAME}/package.json ${ROOT}/package.json
+
+RUN echo "node ALL=(root) NOPASSWD: /usr/bin/ssh" > /etc/sudoers.d/node && chmod 0440 /etc/sudoers.d/node
+
+RUN npm install
+
+ADD modules/${MODULE_NAME}/src ${ROOT}/src
 
 ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared

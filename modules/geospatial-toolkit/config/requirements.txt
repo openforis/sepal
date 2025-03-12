@@ -34,7 +34,7 @@ git+https://github.com/12rambau/bfast.git
 Unidecode
 pyperclip
 python-dateutil
-pytesmo
+pytesmo==0.16.1
 Wand
 PyPDF2 # more recent version are avaiable (PyPDF4)
 rasterio==1.3.10 # https://github.com/openforis/sepal/issues/328

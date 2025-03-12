@@ -8,7 +8,7 @@ import {withSubscriptions} from '~/subscription'
 
 import styles from './portal.module.css'
 
-const DEFAULT_PORTAL_CONTAINER_ID = 'defaultPortalContainer'
+export const DEFAULT_PORTAL_CONTAINER_ID = 'defaultPortalContainer'
 
 const Context = React.createContext()
 
