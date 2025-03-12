@@ -65,6 +65,7 @@
         "image": "",
         "imageCollection": "",
         "table": "",
+        "classifier": "",
         "new": "",
         "recentAssets": "",
         "userAssets": "",
@@ -154,11 +155,25 @@
         "starting-sepal-failed": ""
     },
     "browse": {
+        "addBrowser": {
+            "files": "",
+            "assets": ""
+        },
+        "title": {
+            "files": "",
+            "assets": ""
+        },
         "controls": {
+            "reload": {
+                "tooltip": ""
+            },
             "clearSelection": {
                 "tooltip": ""
             },
             "download": {
+                "tooltip": ""
+            },
+            "createFolder": {
                 "tooltip": ""
             },
             "remove": {
@@ -168,6 +183,14 @@
                 "label": "",
                 "hide.tooltip": "",
                 "show.tooltip": ""
+            },
+            "collapseDirs": {
+                "label": "",
+                "tooltip": ""
+            },
+            "expandDirs": {
+                "label": "",
+                "tooltip": ""
             },
             "splitDirs": {
                 "label": "",
@@ -185,6 +208,10 @@
         },
         "loading": {
             "error": ""
+        },
+        "createFolder": {
+            "existing.error": "",
+            "tooDeep.error": ""
         },
         "removeConfirmation": "",
         "removing": {
@@ -4805,6 +4832,10 @@
                 "title": ""
             },
             "missingScopes": {
+                "title": "",
+                "message": ""
+            },
+            "revoked": {
                 "title": "",
                 "message": ""
             },
