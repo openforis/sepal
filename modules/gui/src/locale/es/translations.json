@@ -58,12 +58,14 @@
     },
     "asset": {
         "failedToLoad": "Fallo en la carga de la tabla de EE",
+        "failedToLoadSome": "",
         "notFound": "Tabla de EE no encontrada",
         "unauthorized": "No tienes acceso a esta tabla de EE.",
         "folder": "",
         "image": "",
         "imageCollection": "",
         "table": "",
+        "classifier": "",
         "new": "",
         "recentAssets": "",
         "userAssets": "",
@@ -153,12 +155,26 @@
         "starting-sepal-failed": ""
     },
     "browse": {
+        "addBrowser": {
+            "files": "",
+            "assets": ""
+        },
+        "title": {
+            "files": "Espacio de trabajo SEPAL",
+            "assets": ""
+        },
         "controls": {
+            "reload": {
+                "tooltip": ""
+            },
             "clearSelection": {
                 "tooltip": "Borrar selección"
             },
             "download": {
                 "tooltip": "Descargar el elemento seleccionado"
+            },
+            "createFolder": {
+                "tooltip": ""
             },
             "remove": {
                 "tooltip": "Eliminar los elementos seleccionados"
@@ -167,6 +183,14 @@
                 "label": "",
                 "hide.tooltip": "",
                 "show.tooltip": ""
+            },
+            "collapseDirs": {
+                "label": "",
+                "tooltip": ""
+            },
+            "expandDirs": {
+                "label": "",
+                "tooltip": ""
             },
             "splitDirs": {
                 "label": "",
@@ -185,11 +209,15 @@
         "loading": {
             "error": "No se puede recuperar la información del documento."
         },
+        "createFolder": {
+            "existing.error": "",
+            "tooDeep.error": ""
+        },
         "removeConfirmation": "¿Eliminar {directories} {directories, plural, one {directorio} other {directorios}} y {files} {files, plural, one {documento} other {documentos}}?",
         "removing": {
             "error": "No es posible retirar los documentos."
         },
-        "selected": "{directories} {directories, plural, one {directorio} other {directorios}} y {files} {files, plural, one {archivo} other {archivos}} seleccionados"
+        "selected": ""
     },
     "button": {
         "add": "Añadir",
@@ -219,6 +247,11 @@
             "success": "",
             "failure": ""
         }
+    },
+    "connectionStatus": {
+        "disconnected": "Desconectado",
+        "connected": "Conectado",
+        "partiallyConnected": ""
     },
     "eeTable": {
         "failedToLoad": "Fallo en la carga de la tabla de EE",
@@ -777,6 +810,51 @@
         "info": ""
     },
     "process": {
+        "panels": {
+            "inputImagery": {
+                "asset": {
+                    "title": "Asset Earth Engine"
+                },
+                "button": "",
+                "form": {
+                    "asset": {
+                        "label": "ID de asset de Earth Engine",
+                        "placeholder": "Indique el ID de un GEE asset..."
+                    },
+                    "band": {
+                        "label": ""
+                    },
+                    "legend": {
+                        "label": ""
+                    },
+                    "noImagery": "",
+                    "recipe": {
+                        "label": "",
+                        "placeholder": "Selecciona un flujo de trabajo..."
+                    },
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "section": {
+                        "required": "Debes seleccionar una imagen"
+                    },
+                    "type": {
+                        "categorical": "",
+                        "continuous": "",
+                        "ASSET": "Asset Earth Engine",
+                        "RECIPE_REF": "Flujo de trabajo de SEPAL",
+                        "label": ""
+                    }
+                },
+                "recipe": {
+                    "title": "Guardar el flujo de trabajo de SEPAL"
+                },
+                "sections": {
+                    "title": ""
+                },
+                "title": ""
+            }
+        },
         "mapZoom": {
             "fit": {
                 "tooltip": "Acercamiento a la zona de interés"
@@ -808,9 +886,9 @@
             },
             "chartPixel": {
                 "cancel.tooltip": "Anulación de los gráficos de series temporales",
-                "loadFailed": "No se ha podido cargar el gráfico: {error}",
-                "loadObservations.error": "No se ha podido cargar las observaciones: {error}",
-                "loadSegments.error": "No se ha podido cargar los segmentos: {error}",
+                "loadFailed": "",
+                "loadObservations.error": "",
+                "loadSegments.error": "",
                 "start.tooltip": "Gráfico de series temporales para el pixel"
             },
             "create": "",
@@ -894,97 +972,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Agresivo",
-                                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
-                            },
-                            "label": "Enmascaramiento de nubes",
-                            "moderate": {
-                                "label": "Moderado",
-                                "tooltip": "Basarse sólo en las bandas de calidad de la imagen para el enmascaramiento de las nubes"
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": "Usar píxeles libres de nubes si es posible, pero no enmascarar áreas sin píxeles libres"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "Corrección BRDF",
-                                "tooltip": "Corregir los efectos de la función de distribución de la reflectancia bidireccional (BRDF)."
-                            },
-                            "label": "Correcciones",
-                            "surfaceReflectance": {
-                                "label": "Reflectancia de la superficie",
-                                "tooltip": "Utilizar escenas de reflectancia superficial corregidas atmosféricamente."
-                            }
-                        },
-                        "orbitOverlap": {
-                            "label": "",
-                            "keep": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "remove": {
-                                "label": "Eliminar",
-                                "tooltip": ""
-                            }
-                        },
-                        "tileOverlap": {
-                            "label": "",
-                            "keep": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "quickRemove": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "remove": {
-                                "label": "Eliminar",
-                                "tooltip": ""
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "Enmascaramiento de sombras",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No aplicar enmascaramiento agresivo de sombras."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Aplicar enmascaramiento de sombras agresivo. Esto puede eliminar inadvertidamente algunas dinámicas y hacer que se pierdan cambios"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Enmascaramiento de nieve",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Enmascarar nieve. Esto tiende a dejar algunos píxeles con sombra de nieve."
-                            }
-                        }
-                    },
                     "title": "Pre-proceso",
                     "tooltip": "Configurar el preprocesamiento de imágenes"
                 },
@@ -1414,71 +1401,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Agresivo",
-                                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
-                            },
-                            "label": "Enmascaramiento de nubes",
-                            "moderate": {
-                                "label": "Moderado",
-                                "tooltip": "Basarse sólo en las bandas de calidad de la imagen para el enmascaramiento de las nubes"
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": "Usar píxeles libres de nubes si es posible, pero no enmascarar áreas sin píxeles libres"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "Corrección BRDF",
-                                "tooltip": "Corregir los efectos de la función de distribución de la reflectancia bidireccional (BRDF)."
-                            },
-                            "label": "Correcciones",
-                            "surfaceReflectance": {
-                                "label": "Reflectancia de la superficie",
-                                "tooltip": "Utilizar escenas de reflectancia superficial corregidas atmosféricamente."
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "Enmascaramiento de sombras",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No aplicar enmascaramiento agresivo de sombras."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Aplicar enmascaramiento de sombras agresivo. Esto puede eliminar inadvertidamente algunas dinámicas y hacer que se pierdan cambios"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Enmascaramiento de nieve",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Enmascarar nieve. Esto tiende a dejar algunos píxeles con sombra de nieve."
-                            }
-                        }
-                    },
                     "title": "Pre-proceso",
                     "tooltip": "Configurar el preprocesamiento de imágenes"
                 },
@@ -2189,6 +2111,79 @@
                                 "placeholder": "",
                                 "tooltip": ""
                             }
+                        },
+                        "ceo": {
+                            "login": {
+                                "title": "",
+                                "tooltip": "",
+                                "email": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "required": "",
+                                    "invalid": "",
+                                    "tooltip": ""
+                                },
+                                "password": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "required": ""
+                                },
+                                "connect.label": "",
+                                "disconnect.label": "",
+                                "connected": {
+                                    "title": "",
+                                    "tooltip": ""
+                                },
+                                "disconnected": {
+                                    "title": "",
+                                    "tooltip": ""
+                                },
+                                "error": {
+                                    "invalidCredentials": "",
+                                    "serverTitle": "",
+                                    "serverMessage": ""
+                                }
+                            },
+                            "token": {
+                                "invalid": "",
+                                "timedOut": ""
+                            },
+                            "disconnected": {
+                                "description": ""
+                            },
+                            "dataType": {
+                                "title": "",
+                                "tooltip": "",
+                                "sample": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "plot": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "institution": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "tooltip": ""
+                            },
+                            "project": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "tooltip": ""
+                            },
+                            "loadCsv": {
+                                "failed": ""
+                            },
+                            "loadProjects": {
+                                "failed": ""
+                            },
+                            "loadInstitutions": {
+                                "failed": ""
+                            }
                         }
                     },
                     "noDataSet": "",
@@ -2222,6 +2217,11 @@
                             "tooltip": "Utilizar los datos de entrenamiento de un flujo SEPAL guardada."
                         },
                         "SAMPLE_CLASSIFICATION": {
+                            "label": "",
+                            "title": "",
+                            "tooltip": ""
+                        },
+                        "CEO": {
                             "label": "",
                             "title": "",
                             "tooltip": ""
@@ -2487,6 +2487,163 @@
                                 "tooltip": ""
                             }
                         }
+                    }
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "stack": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "bandNames": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "duplicateBand": "",
+                    "invalidFormat": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "bandMath": {
+            "create": "",
+            "description": "",
+            "duplicateName": "",
+            "invalidName": "",
+            "panel": {
+                "inputImagery": {
+                    "name": {
+                        "label": "",
+                        "tooltip": ""
+                    }
+                },
+                "calculations": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "form": {
+                        "noCalculations": "",
+                        "usedBands": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "function": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "bandName": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "calculationName": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "dataType": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": "",
+                            "auto": "",
+                            "int8": "",
+                            "int16": "",
+                            "int32": "",
+                            "int64": "",
+                            "uint8": "",
+                            "uint16": "",
+                            "uint32": "",
+                            "byte": "",
+                            "short": "",
+                            "int": "",
+                            "long": "",
+                            "float": "",
+                            "double": ""
+                        },
+                        "expression": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "type": {
+                            "FUNCTION": "",
+                            "EXPRESSION": ""
+                        },
+                        "bandRenameStrategy": {
+                            "label": "",
+                            "tooltip": "",
+                            "PREFIX": {
+                                "label": ""
+                            },
+                            "SUFFIX": {
+                                "label": ""
+                            },
+                            "REGEX": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "regex": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "bandRename": {
+                            "PREFIX": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "SUFFIX": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            },
+                            "REGEX": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "sections": {
+                        "title": ""
+                    },
+                    "expression": {
+                        "title": ""
+                    },
+                    "function": {
+                        "title": ""
+                    }
+                },
+                "outputBands": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "duplicateBand": "",
+                    "invalidFormat": "",
+                    "noImages": "",
+                    "noBands": "",
+                    "addImage": {
+                        "label": "Añadir",
+                        "tooltip": "",
+                        "calculations": "",
+                        "images": ""
+                    },
+                    "addBands": {
+                        "placeholder": "",
+                        "tooltip": "",
+                        "all": {
+                            "label": ""
+                        }
+                    },
+                    "type": {
+                        "ASSET": "Asset Earth Engine",
+                        "RECIPE_REF": "Flujo de trabajo de SEPAL",
+                        "EXPRESSION": "",
+                        "FUNCTION": ""
                     }
                 }
             },
@@ -2813,6 +2970,9 @@
                 "placeholder": "Selecciona las bandas preliminares"
             },
             "create": "Mosaico óptico",
+            "error": {
+                "noImages": ""
+            },
             "description": "Crear mosaico de Landsat o Sentinel 2.",
             "mapToolbar": {
                 "mapRendering": {
@@ -3025,9 +3185,70 @@
                                 "label": "Moderado",
                                 "tooltip": "Confiar sólo en las bandas de calidad de la imagen para el enmascaramiento de nubes"
                             },
+                            "custom": {
+                                "label": ""
+                            },
+                            "noData": "",
                             "none": {
                                 "label": "",
                                 "tooltip": "Utilizar píxeles sin nubes si es posible, pero no enmascarar áreas sin nubes"
+                            },
+                            "sentinel2CloudProbability": {
+                                "label": "",
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "info": ""
+                                }
+                            },
+                            "sentinel2CloudScorePlus": {
+                                "label": "",
+                                "band": {
+                                    "label": "",
+                                    "cs": {
+                                        "tooltip": ""
+                                    },
+                                    "cs_cdf": {
+                                        "tooltip": ""
+                                    }
+                                },
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "tooltip": "",
+                                    "info": ""
+                                }
+                            },
+                            "landsatCFMask": {
+                                "label": "",
+                                "level": {
+                                    "off": "",
+                                    "moderate": "Moderado",
+                                    "aggressive": "Agresivo"
+                                },
+                                "cloudMasking": {
+                                    "label": ""
+                                },
+                                "cloudShadowMasking": {
+                                    "label": ""
+                                },
+                                "cirrusMasking": {
+                                    "label": ""
+                                },
+                                "dilatedCloud": {
+                                    "label": "",
+                                    "tooltip": "",
+                                    "keep": "",
+                                    "remove": "Eliminar"
+                                }
+                            },
+                            "sepalCloudScore": {
+                                "label": "",
+                                "maxCloudProbability": {
+                                    "label": "",
+                                    "info": ""
+                                }
+                            },
+                            "pino26": {
+                                "label": ""
                             }
                         },
                         "composingMethod": {
@@ -3056,32 +3277,80 @@
                                 "tooltip": "Utiliza escenas de reflectancia superficial corregida atmosféricamente."
                             }
                         },
+                        "brdfMultiplier": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
                         "filters": {
                             "dayOfYearPercentile": {
+                                "label": "Fecha",
                                 "max": "Selecciona los píxeles más cercanos al día objetivo",
                                 "off": "No filtrar por día del año",
                                 "percentile": "Excluir {percentile}% de píxeles (lejos del objetivo)"
                             },
                             "hazePercentile": {
+                                "label": "",
                                 "max": "Seleccionar los píxeles con menos bruma",
                                 "off": "No filtrar en función de la bruma",
                                 "percentile": "Excluir el {percentile}% de píxeles (con bruma)"
                             },
-                            "label": "Filtros de píxeles",
+                            "label": "",
+                            "noData": "",
                             "ndviPercentile": {
+                                "label": "",
                                 "max": "Seleccionar los píxeles con mayor NDVI",
                                 "off": "No filtrar en función del NDVI",
                                 "percentile": "Excluir {percentile}% de píxeles (NDVI bajo)"
                             },
                             "shadowPercentile": {
+                                "label": "",
                                 "max": "Seleccionar los píxeles con menos sombra",
                                 "off": "No filtrar en función de la sombra",
                                 "percentile": "Excluir {percentile}% de píxeles (con sombra)"
                             },
-                            "tooltip": "Filtrar los píxeles de las escenas seleccionadas en función de las siguientes propiedades"
+                            "tooltip": ""
+                        },
+                        "holes": {
+                            "label": "",
+                            "tooltips": "",
+                            "prevent": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "allow": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "orbitOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "Eliminar",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileOverlap": {
+                            "label": "",
+                            "keep": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "quickRemove": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "remove": {
+                                "label": "Eliminar",
+                                "tooltip": ""
+                            }
                         },
                         "snowMasking": {
-                            "label": "Enmascaramiento de nieve",
+                            "label": "",
                             "off": {
                                 "label": "",
                                 "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
@@ -3993,71 +4262,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Agresivo",
-                                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
-                            },
-                            "label": "Enmascaramiento de nubes",
-                            "moderate": {
-                                "label": "Moderado",
-                                "tooltip": "Basarse sólo en las bandas de calidad de la imagen para el enmascaramiento de las nubes"
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": "Usar píxeles libres de nubes si es posible, pero no enmascarar áreas sin píxeles libres"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "Corrección BRDF",
-                                "tooltip": "Corregir los efectos de la función de distribución de la reflectancia bidireccional (BRDF)."
-                            },
-                            "label": "Correcciones",
-                            "surfaceReflectance": {
-                                "label": "Reflectancia de la superficie",
-                                "tooltip": "Utilizar escenas de reflectancia superficial corregidas atmosféricamente."
-                            }
-                        },
-                        "shadowMasking": {
-                            "label": "Enmascaramiento de sombras",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No aplicar enmascaramiento agresivo de sombras."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Aplicar enmascaramiento de sombras agresivo. Esto puede eliminar inadvertidamente algunas dinámicas y hacer que se pierdan cambios"
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Enmascaramiento de nieve",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Enmascarar nieve. Esto tiende a dejar algunos píxeles con sombra de nieve."
-                            }
-                        }
-                    },
                     "title": "Pre-proceso",
                     "tooltip": "Configurar el preprocesamiento de imágenes"
                 },
@@ -4236,49 +4440,6 @@
                 }
             },
             "panel": {
-                "inputImagery": {
-                    "asset": {
-                        "title": "Asset Earth Engine"
-                    },
-                    "button": "",
-                    "form": {
-                        "asset": {
-                            "label": "ID de asset de Earth Engine",
-                            "placeholder": "Indique el ID de un GEE asset..."
-                        },
-                        "band": {
-                            "label": ""
-                        },
-                        "legend": {
-                            "label": ""
-                        },
-                        "noImagery": "",
-                        "recipe": {
-                            "label": "",
-                            "placeholder": "Selecciona un flujo de trabajo..."
-                        },
-                        "remove": {
-                            "tooltip": ""
-                        },
-                        "section": {
-                            "required": "Debes seleccionar una imagen"
-                        },
-                        "type": {
-                            "categorical": "",
-                            "continuous": "",
-                            "ASSET": "Asset Earth Engine",
-                            "RECIPE_REF": "Flujo de trabajo de SEPAL",
-                            "label": ""
-                        }
-                    },
-                    "recipe": {
-                        "title": "Guardar el flujo de trabajo de SEPAL"
-                    },
-                    "sections": {
-                        "title": ""
-                    },
-                    "title": ""
-                },
                 "legend": {
                     "button": "",
                     "title": "",
@@ -4432,60 +4593,6 @@
                 },
                 "preprocess": {
                     "button": "",
-                    "form": {
-                        "cloudDetection": {
-                            "label": "",
-                            "cloudScore": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "pino26": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "qa": {
-                                "label": "",
-                                "tooltip": ""
-                            }
-                        },
-                        "cloudMasking": {
-                            "aggressive": {
-                                "label": "Agresivo",
-                                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
-                            },
-                            "label": "Enmascaramiento de nubes",
-                            "moderate": {
-                                "label": "Moderado",
-                                "tooltip": "Basarse en las bandas de calidad de la imagen para el enmascaramiento de las nubes"
-                            },
-                            "none": {
-                                "label": "",
-                                "tooltip": "Utilizar píxeles sin nubes si es posible, pero no enmascarar áreas sin nubes"
-                            }
-                        },
-                        "corrections": {
-                            "brdf": {
-                                "label": "Corrección BRDF",
-                                "tooltip": "Corregir los efectos de la función de distribución de la reflectancia bidireccional (BRDF)."
-                            },
-                            "label": "Correcciones",
-                            "surfaceReflectance": {
-                                "label": "Reflectancia de la superficie",
-                                "tooltip": "Utiliza escenas de reflectancia superficial corregidas atmosféricamente."
-                            }
-                        },
-                        "snowMasking": {
-                            "label": "Enmascaramiento de nieve",
-                            "off": {
-                                "label": "",
-                                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
-                            },
-                            "on": {
-                                "label": "",
-                                "tooltip": "Máscara de nieve. Esto tiende a dejar algunos píxeles con sombra de nieve"
-                            }
-                        }
-                    },
                     "title": "Pre-proceso",
                     "tooltip": "Configurar el preprocesamiento de imágenes"
                 },
@@ -4725,6 +4832,10 @@
                 "title": "Tu cuenta SEPAL no está vinculada a tu cuenta de Google"
             },
             "missingScopes": {
+                "title": "",
+                "message": ""
+            },
+            "revoked": {
                 "title": "",
                 "message": ""
             },
@@ -5017,6 +5128,33 @@
         },
         "assetInput": {
             "loadError": ""
+        },
+        "codeEditor": {
+            "info": "",
+            "help1": "",
+            "help2": "",
+            "example": "",
+            "eeAutoComplete": {
+                "bandNames": {
+                    "section": ""
+                },
+                "imagesAndCalculations": {
+                    "section": ""
+                },
+                "mathFunctions": {
+                    "section": ""
+                },
+                "mathConstants": {
+                    "section": ""
+                }
+            },
+            "eeLint": {
+                "undefinedVariable": "",
+                "invalidBand": "",
+                "invalidBandCount": "",
+                "invalidArgCount": "",
+                "syntaxError": ""
+            }
         },
         "comboBox": {
             "loading": "Cargando..."
