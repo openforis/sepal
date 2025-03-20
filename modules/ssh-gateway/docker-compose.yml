@@ -25,6 +25,11 @@ services:
       SEPAL_HOST: "${SEPAL_HOST}"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
+    healthcheck:
+      test: bash -c "exec 6<> /dev/tcp/localhost/22"
+      timeout: 60s
+      interval: 1s
+      retries: 60
     networks:
       - sepal
     restart: always

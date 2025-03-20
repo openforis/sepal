@@ -1,6 +1,6 @@
 FROM openforis/sandbox-base
 
-EXPOSE 1026
+EXPOSE 80
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -8,7 +8,7 @@ ENV MODULE_NAME task
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV JS_SHARED /usr/local/src/sepal/lib/js/shared
 ENV PYTHON_SHARED /usr/local/src/sepal/lib/python/shared
-ENV NODE_MAJOR=20
+ENV NODE_MAJOR=22
 
 # Install node.js
 

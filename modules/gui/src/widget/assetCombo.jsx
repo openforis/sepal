@@ -165,7 +165,8 @@ class _AssetCombo extends React.Component {
             Folder: 'folder-open',
             Image: 'image',
             ImageCollection: 'images',
-            Table: 'table'
+            Table: 'table',
+            Classifier: 'diagram-project'
         }
         return ASSET_ICON[type] || 'asterisk'
     }
@@ -175,7 +176,8 @@ class _AssetCombo extends React.Component {
             Folder: msg('asset.folder'),
             Image: msg('asset.image'),
             ImageCollection: msg('asset.imageCollection'),
-            Table: msg('asset.table')
+            Table: msg('asset.table'),
+            Classifier: msg('asset.classifier')
         }
         return ASSET_TOOLTIP[type] || msg('asset.new')
     }

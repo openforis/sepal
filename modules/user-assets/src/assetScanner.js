@@ -2,13 +2,15 @@ const _ = require('lodash')
 const {userTag} = require('./tag')
 const log = require('#sepal/log').getLogger('assetScanner')
 
-const {tap, map, mergeWith, of, switchMap, catchError, scan, takeLast, EMPTY, from, throttleTime, Subject, finalize} = require('rxjs')
+const {tap, map, mergeWith, of, switchMap, catchError, scan, EMPTY, from, Subject, finalize, timer, throttle, raceWith} = require('rxjs')
 const {getUser} = require('./userStore')
 const {STree} = require('#sepal/tree/sTree')
 const {getAsset$} = require('./asset')
 
 const busy = {}
 const busy$ = new Subject()
+
+const PARTIAL_UPDATES_DELAY_MS = 10000
 
 const increaseBusy = username => {
     if (busy[username]) {
@@ -40,35 +42,41 @@ const createNode = path =>
     STree.createNode(path)
 
 const addNode = (tree, path, item) =>
-    STree.setValue(
-        STree.traverse(tree, [...path, getKey(item, path)], true),
-        {type: item.type, updateTime: item.updateTime, quota: item.quota}
+    STree.alter(tree, tree =>
+        STree.setValue(
+            STree.traverse(tree, [...path, getKey(item, path)], true),
+            {type: item.type, updateTime: item.updateTime, quota: item.quota}
+        )
     )
 
-const addNodes = (tree, path, items) => {
-    items.forEach(node => addNode(tree, path, node))
-    return tree
-
-}
+const addNodes = (tree, path, nodes) =>
+    nodes.reduce((tree, node) => addNode(tree, path, node), tree)
 
 const getKey = ({id}, path) => {
     const len = path.join('/').length
     return id.substr(len ? len + 1 : 0)
 }
 
-const scanTree$ = (username, {incremental = false, throttle = 1000} = {}) => {
-    log.debug(`${userTag(username)} loading tree`)
+const getStats = assets =>
+    STree.reduce(assets, (acc, {value: {type} = {}}) => (type ? {
+        ...acc,
+        [type]: (acc[type] || 0) + 1
+    } : acc), {})
+
+const scanTree$ = username => {
+    log.debug(`${userTag(username)} loading assets`)
     increaseBusy(username)
+    const cancel$ = new Subject()
     return from(getUser(username)).pipe(
         switchMap(user =>
             loadNode$(user, [], true).pipe(
+                finalize(() => cancel$.next()),
                 scan((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
-                incremental
-                    ? throttleTime(throttle, null, {leading: true, trailing: true})
-                    : takeLast(1),
                 tap({
+                    next: assets => log.info(`${userTag(username)} loading assets:`, getStats(assets)),
                     complete: () => log.info(`${userTag(username)} assets loaded`)
                 }),
+                throttle(() => timer(PARTIAL_UPDATES_DELAY_MS).pipe(raceWith(cancel$)), {leading: true, trailing: true}),
                 catchError(error => {
                     log.warn(`${userTag(username)} assets failed`, error)
                     return EMPTY

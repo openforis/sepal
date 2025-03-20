@@ -16,12 +16,13 @@ services:
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       CEO_URL: "${CEO_URL}"
-      CEO_USERNAME: "${CEO_USERNAME}"
-      CEO_PASSWORD: "${CEO_PASSWORD}"
-      CEO_INSTITUTION_ID: "${CEO_INSTITUTION_ID}"
-      CEO_USER_ID: "${CEO_USER_ID}"
     networks:
       - sepal
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      timeout: 60s
+      interval: 1s
+      retries: 60
     restart: always
 
 networks:

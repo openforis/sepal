@@ -1,15 +1,14 @@
-FROM node:20-bookworm
-EXPOSE 5999
+FROM node:22-alpine
+
+EXPOSE 80
 
 ENV MODULE_NAME user-assets
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
-RUN npm install -g nodemon
+RUN apk update && apk add net-tools
 
-# Set bash prompt
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
+RUN npm install -g nodemon
 
 ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared

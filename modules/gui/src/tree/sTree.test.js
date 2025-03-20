@@ -548,46 +548,6 @@ it('scan tree', () => {
     })
 })
 
-it('scan tree - skip root', () => {
-    const root = STree.createRoot(1)
-    const foo = STree.addChildNode(root, 'foo', 2)
-    STree.addChildNode(root, 'qux', 3)
-    const bar = STree.addChildNode(foo, 'bar', 4)
-    STree.addChildNode(bar, 'baz', 5)
-    STree.scan(root, node => STree.updateValue(node, value => value * 10), true)
-    expect(root).toEqual({
-        ...NODE,
-        path: [],
-        value: 1,
-        items: {
-            foo: {
-                ...NODE,
-                path: ['foo'],
-                value: 20,
-                items: {
-                    bar: {
-                        ...NODE,
-                        path: ['foo', 'bar'],
-                        value: 40,
-                        items: {
-                            baz: {
-                                ...NODE,
-                                path: ['foo', 'bar', 'baz'],
-                                value: 50
-                            }
-                        }
-                    }
-                }
-            },
-            qux: {
-                ...NODE,
-                path: ['qux'],
-                value: 30
-            }
-        }
-    })
-})
-
 it('scan subtree', () => {
     const root = STree.createRoot(1)
     const foo = STree.addChildNode(root, 'foo', 2)
@@ -628,17 +588,97 @@ it('scan subtree', () => {
     })
 })
 
-it('scan with exit condition', () => {
+it('scan tree with min depth', () => {
     const root = STree.createRoot(1)
     const foo = STree.addChildNode(root, 'foo', 2)
     STree.addChildNode(root, 'qux', 3)
     const bar = STree.addChildNode(foo, 'bar', 4)
     STree.addChildNode(bar, 'baz', 5)
-    STree.scan(root, node => STree.getValue(node) < 5 ? STree.updateValue(node, value => value * 10) : null)
+    STree.scan(root, node => STree.updateValue(node, value => value * 10), {minDepth: 2})
+    expect(root).toEqual({
+        ...NODE,
+        path: [],
+        value: 1,
+        items: {
+            foo: {
+                ...NODE,
+                path: ['foo'],
+                value: 2,
+                items: {
+                    bar: {
+                        ...NODE,
+                        path: ['foo', 'bar'],
+                        value: 40,
+                        items: {
+                            baz: {
+                                ...NODE,
+                                path: ['foo', 'bar', 'baz'],
+                                value: 50
+                            }
+                        }
+                    }
+                }
+            },
+            qux: {
+                ...NODE,
+                path: ['qux'],
+                value: 3
+            }
+        }
+    })
+})
+
+it('scan with max depth', () => {
+    const root = STree.createRoot(1)
+    const foo = STree.addChildNode(root, 'foo', 2)
+    STree.addChildNode(root, 'qux', 3)
+    const bar = STree.addChildNode(foo, 'bar', 4)
+    STree.addChildNode(bar, 'baz', 5)
+    STree.scan(root, node => STree.updateValue(node, value => value * 10), {maxDepth: 1})
     expect(root).toEqual({
         ...NODE,
         path: [],
         value: 10,
+        items: {
+            foo: {
+                ...NODE,
+                path: ['foo'],
+                value: 20,
+                items: {
+                    bar: {
+                        ...NODE,
+                        path: ['foo', 'bar'],
+                        value: 4,
+                        items: {
+                            baz: {
+                                ...NODE,
+                                path: ['foo', 'bar', 'baz'],
+                                value: 5
+                            }
+                        }
+                    }
+                }
+            },
+            qux: {
+                ...NODE,
+                path: ['qux'],
+                value: 30
+            }
+        }
+    })
+})
+
+it('scan tree with min and max depth', () => {
+    const root = STree.createRoot(1)
+    const foo = STree.addChildNode(root, 'foo', 2)
+    STree.addChildNode(root, 'qux', 3)
+    const bar = STree.addChildNode(foo, 'bar', 4)
+    STree.addChildNode(bar, 'baz', 5)
+    STree.scan(root, node => STree.updateValue(node, value => value * 10), {minDepth: 1, maxDepth: 2})
+    expect(root).toEqual({
+        ...NODE,
+        path: [],
+        value: 1,
         items: {
             foo: {
                 ...NODE,

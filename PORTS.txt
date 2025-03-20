@@ -1,63 +1,29 @@
 Modules
 
-    5011: app-manager
-    8001: gateway
-    5001: gee
-    6001: email
-    80, 443: haproxy
-    389, 636: ldap
-    80: letsencrypt
-    3306: mysql
-    8180: r-proxy
-    1025, 5005: sepal-server
-    22: ssh-gateway
-    1026: task
-    8000: terminal
-    80, 5006: user
-    5999: user-files
-    8980: mysql-admin
-    7001: sys-monitor
-    8001: user-storage
-    9293: docker metrics
-    9090: prometheus
+    app-manager     80
+    ceo-gateway     80
+    email           80
+    gateway         80
+    gee             80
+    haproxy         80, 443
+    ldap            389, 636
+    letsencrypt     80
+    mysql           3306
+    mysql-admin     8980
+    prometheus      9090
+    r-proxy         8180
+    sepal-server    80
+    ssh-gateway     22
+    sys-monitor     80
+    task            80
+    terminal        80
+    user            80
+    user-assets     80
+    user-files      80
+    user-storage    80
 
-Node debug
+    sandbox proxy   9191
 
-Ports exposed in dev-env/docker-compose.yml: 9230-9249
-
-    9230: app-manager
-    9231: email
-    9232: gee
-    9233: sys-monitor
-    9234: task
-    9235: terminal
-    9236: user-storage
-    9237: gateway
-    9238: user-files
-    9239: r-proxy
-    9240: <free>
-    9241: <free>
-    9242: <free>
-    9243: <free>
-    9244: <free>
-    9245: <free>
-    9246: <free>
-    9247: <free>
-    9248: <free>
-    9249: <free>
-
-Log ports:
-
-    5100: gateway
-    5101: gee
-    5102: task
-    5103: user-storage
-    5104: email
-    5105: sys-monitor
-    5106: app-manager
-    5107: terminal
-    5108: user-files
-    5109: r-proxy
-    5110: user (temporarily user-node)
-    
-    
+    docker metrics  9293
+    JVM debug port  5005
+    Node debug port 9229

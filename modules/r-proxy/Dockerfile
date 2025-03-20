@@ -1,11 +1,11 @@
 FROM openforis/sandbox-base
 
-EXPOSE 8180
+EXPOSE 80
 
 ENV MODULE_NAME r-proxy
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
-ENV NODE_MAJOR=20
+ENV NODE_MAJOR=22
 
 # Install R packages
 RUN apt-get install -y \

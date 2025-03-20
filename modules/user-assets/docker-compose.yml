@@ -7,6 +7,11 @@ services:
     container_name: user-assets-redis
     volumes:
       - "${SEPAL_DATA_DIR}/user-assets-redis:/data"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      timeout: 60s
+      interval: 1s
+      retries: 60
     networks:
       - sepal
     restart: always
@@ -33,7 +38,7 @@ services:
     networks:
       - sepal
     healthcheck:
-      test: bash -c "exec 6<> /dev/tcp/localhost/5999"
+      test: ["CMD", "nc", "-z", "localhost", "80"]
       timeout: 60s
       interval: 1s
       retries: 60

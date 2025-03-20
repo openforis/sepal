@@ -1,4 +1,4 @@
-FROM node:20-bookworm
+FROM node:22-bookworm
 
 EXPOSE 22
 ARG DEBIAN_FRONTEND noninteractive

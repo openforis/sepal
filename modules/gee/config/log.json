@@ -1,5 +1,5 @@
 {
-    "port": 5101,
+    "port": 5000,
     "categories": {
         "auth": "info",
         "config": "info",

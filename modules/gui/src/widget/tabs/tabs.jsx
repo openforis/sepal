@@ -85,7 +85,7 @@ class _Tabs extends React.Component {
             shareReplay({bufferSize: 1, refCount: true})
         )
 
-        this.createDefaultTab()
+        this.initialize()
     }
 
     renderTabHandle(tab) {
@@ -303,16 +303,24 @@ class _Tabs extends React.Component {
         )
     }
 
-    createDefaultTab() {
-        const {tabs, addTabOptions, defaultType, statePath} = this.props
-        if (tabs.length === 0) {
-            const placeholder = addTabOptions && defaultType && addTabOptions.find(({value}) => value === defaultType)?.placeholder
-            addTab(statePath, defaultType, placeholder)
+    initialize() {
+        const {tabs, addTabOptions, initializeTypes, statePath} = this.props
+        if (initializeTypes) {
+            initializeTypes.forEach(initializeType => {
+                if (!tabs.find(({type}) => type === initializeType)) {
+                    const placeholder = addTabOptions && addTabOptions.find(({value}) => value === initializeType)?.placeholder
+                    addTab(statePath, initializeType, placeholder)
+                }
+            })
+        } else {
+            if (tabs.length === 0) {
+                addTab(statePath)
+            }
         }
     }
 
     componentDidUpdate() {
-        this.createDefaultTab()
+        this.initialize()
     }
 }
 
@@ -332,7 +340,7 @@ Tabs.propTypes = {
         })
     ),
     children: PropTypes.any,
-    defaultType: PropTypes.any,
+    initializeTypes: PropTypes.array,
     isDirty: PropTypes.func,
     isLandingTab: PropTypes.func,
     maxTabs: PropTypes.number,

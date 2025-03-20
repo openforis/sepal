@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import moment from 'moment'
 import {orderBy} from 'natural-orderby'
 import PropTypes from 'prop-types'
@@ -6,7 +5,6 @@ import React from 'react'
 
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
-import format from '~/format'
 import {getLogger} from '~/log'
 import lookStyles from '~/style/look.module.css'
 import {withSubscriptions} from '~/subscription'
@@ -163,8 +161,13 @@ class _AssetBrowser extends React.Component {
         const {directories} = AssetTree.getSelectedItems(tree)
         const selectedFolder = directories.length === 1 ? directories[0] : null
         if (selectedFolder) {
-            const path = [...selectedFolder, folder]
-            if (AssetTree.isExistingPath(tree, path)) {
+            const path = [...selectedFolder, ...folder.split('/')]
+            if (path.length > 10) {
+                Notifications.error({
+                    message: msg('browse.createFolder.tooDeep.error'),
+                    timeout: 5
+                })
+            } else if (AssetTree.isExistingPath(tree, path)) {
                 Notifications.error({
                     message: msg('browse.createFolder.existing.error'),
                     timeout: 5
@@ -201,11 +204,6 @@ class _AssetBrowser extends React.Component {
 
     toggleSplitDirs() {
         this.setState(({splitDirs}) => ({splitDirs: !splitDirs}))
-    }
-
-    removeInfo() {
-        const {files, directories} = this.countSelectedItems()
-        return msg('browse.removeConfirmation', {files, directories})
     }
 
     renderOptionsToolbar() {
@@ -264,10 +262,7 @@ class _AssetBrowser extends React.Component {
 
     renderFileInfo(node) {
         const updateTime = AssetTree.getUpdateTime(node)
-        const info = [
-            format.fileSize(node.size, {unit: 'bytes'}),
-            moment(updateTime).fromNow()
-        ].join(', ')
+        const info = moment(updateTime).fromNow()
         return (
             <span className={styles.fileInfo}>
                 {info}
@@ -321,7 +316,8 @@ class _AssetBrowser extends React.Component {
         const TYPE = {
             Image: 'image',
             ImageCollection: 'images',
-            Table: 'table'
+            Table: 'table',
+            Classifier: 'diagram-project',
         }
         return (
             <span className={styles.icon}>
@@ -349,14 +345,8 @@ class _AssetBrowser extends React.Component {
 
     renderListItems(items) {
         const sorter = this.getSorter()
-        return items
-            ? _.chain(items)
-                .pickBy(file => file)
-                .toPairs()
-                .thru(sorter)
-                .map(([key, node]) => this.renderListItem(key, node))
-                .value()
-            : null
+        return sorter(Object.entries(items))
+            .map(([key, node]) => this.renderListItem(key, node))
     }
 
     renderListItem(key, node) {
@@ -381,7 +371,12 @@ class _AssetBrowser extends React.Component {
                     onClick={busy ? null : () => this.toggleSelected(node)}
                 >
                     {this.renderIcon(node)}
-                    <span className={styles.fileName}>{key}</span>
+                    <span className={[
+                        styles.fileName,
+                        AssetTree.isRoot(node) ? styles.root : null
+                    ].join(' ')}>
+                        {key}
+                    </span>
                     {this.renderNodeInfo(node)}
                 </div>
                 {this.renderList(node)}
@@ -414,15 +409,15 @@ class _AssetBrowser extends React.Component {
         const naturalSortingDirectoriesFirst = items =>
             orderBy(
                 items,
-                _.compact([dirSorter.order, nameSorter.order]),
-                _.compact([dirSorter.direction, nameSorter.direction])
+                [dirSorter.order, nameSorter.order].filter(Boolean),
+                [dirSorter.direction, nameSorter.direction].filter(Boolean)
             )
 
         const dateSortingDirectoriesFirst = items =>
             orderBy(
                 items,
-                _.compact([dirSorter.order, dateSorter.order]),
-                _.compact([dirSorter.direction, dateSorter.direction])
+                [dirSorter.order, dateSorter.order].filter(Boolean),
+                [dirSorter.direction, dateSorter.direction].filter(Boolean)
             )
 
         const sortingMap = {
@@ -434,10 +429,11 @@ class _AssetBrowser extends React.Component {
     }
 
     renderActionButtons() {
-        const {busy} = this.state
-        const {files, directories} = this.countSelectedItems()
-        const nothingSelected = files === 0 && directories === 0
-        const oneDirectorySelected = files === 0 && directories === 1
+        const {tree, busy} = this.state
+        const {files, directories} = AssetTree.getSelectedItems(tree)
+        const nothingSelected = files.length === 0 && directories.length === 0
+        const oneDirectorySelected = files.length === 0 && directories.length === 1
+        const deletable = files.length > 0 || directories.length > 0 && !directories.find(file => file.length === 1)
         return (
             <ButtonGroup layout='horizontal'>
                 <Button
@@ -470,7 +466,7 @@ class _AssetBrowser extends React.Component {
                     shape='circle'
                     tooltip={msg('browse.controls.remove.tooltip')}
                     tooltipPlacement='top'
-                    disabled={nothingSelected}
+                    disabled={!deletable}
                     onRemove={this.removeSelected}
                 />
                 <Button

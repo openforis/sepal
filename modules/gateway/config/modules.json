@@ -1,14 +1,14 @@
 {
-  "appManager": "app-manager:5011",
-  "ceoGateway": "ceo-gateway:8001",
-  "userAssets": "user-assets:5999",
-  "userFiles": "user-files:5999",
-  "gee": "gee:5001",
-  "gui": "gui:3000",
+  "appManager": "app-manager",
+  "ceoGateway": "ceo-gateway",
+  "email": "email",
+  "gee": "gee",
+  "gui": "gui",
   "sandbox": "sepal:9191",
-  "sepal": "sepal:1025",
-  "terminal": "terminal:8000",
+  "sepal": "sepal",
+  "sysMonitor": "sys-monitor",
+  "terminal": "terminal",
   "user": "user",
-  "email": "email:6001",
-  "sysMonitor": "sys-monitor:7001"
+  "userAssets": "user-assets",
+  "userFiles": "user-files"
 }

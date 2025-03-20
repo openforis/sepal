@@ -1,5 +1,5 @@
 {
-    "port": 5102,
+    "port": 5000,
     "categories": {
         "channel-forward": "info",
         "channel-reverse": "info",

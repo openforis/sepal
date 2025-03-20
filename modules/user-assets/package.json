@@ -15,9 +15,9 @@
         "ioredis": "^5.5.0",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
-        "rxjs": "^7.8.1",
+        "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
-        "ws": "^8.18.0"
+        "ws": "^8.18.1"
     },
     "imports": {
         "#sepal/*": "sepal/src/*.js",

@@ -96,6 +96,11 @@
     padding-left: var(--icon-width);
 }
 
+.root {
+    color: var(--warning-color);
+    font-weight: 500;
+}
+
 .fileInfo {
     display: inline-block;
     color: #707070;

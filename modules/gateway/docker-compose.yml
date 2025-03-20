@@ -7,6 +7,11 @@ services:
     container_name: gateway-redis
     volumes:
       - "${SEPAL_DATA_DIR}/gateway-redis:/data"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      timeout: 60s
+      interval: 1s
+      retries: 60
     networks:
       - sepal
     restart: always
@@ -45,7 +50,7 @@ services:
       net.ipv4.tcp_keepalive_intvl: 60
       net.ipv4.tcp_keepalive_probes: 6
     healthcheck:
-      test: bash -c "exec 6<> /dev/tcp/localhost/8001"
+      test: ["CMD", "nc", "-z", "localhost", "80"]
       timeout: 60s
       interval: 1s
       retries: 60

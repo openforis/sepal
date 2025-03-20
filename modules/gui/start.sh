@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 function template {
     local template=$1
@@ -17,7 +17,7 @@ if [ "${DEPLOY_ENVIRONMENT}" == "DEV" ]; then
   fi
   exec npm start
 else
-  ln -sf ${MODULE}/nginx.conf /etc/nginx/sites-enabled/default
+  ln -sf ${MODULE}/nginx.conf /etc/nginx/http.d/default.conf
 
   if [ ! -f "${MODULE}/dist/index-template.html" ]; then
       mv "${MODULE}/dist/index.html" "${MODULE}/dist/index-template.html"
@@ -29,7 +29,5 @@ else
   template "${MODULE}/dist/index-template.html" "${MODULE}/dist/index.html"
   template "${MODULE}/dist/404-template.html" "${MODULE}/dist/404.html"
 
-  service nginx start
-  pid=$(ps aux | grep '[/]usr/sbin/nginx' | awk '{ print $2 }')
-  exec tail --pid="${pid}" -f /dev/null
+  exec nginx -g 'daemon off;'
 fi

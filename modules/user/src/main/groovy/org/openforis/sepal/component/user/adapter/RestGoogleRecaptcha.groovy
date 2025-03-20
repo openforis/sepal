@@ -13,11 +13,13 @@ class RestGoogleRecaptcha implements GoogleRecaptcha {
     private final String googleProjectId
     private final String googleRecaptchaApiKey
     private final String googleRecaptchaSiteKey
+    private final String host
 
-    RestGoogleRecaptcha(String googleProjectId, String googleRecaptchaApiKey, String googleRecaptchaSiteKey) {
+    RestGoogleRecaptcha(String googleProjectId, String googleRecaptchaApiKey, String googleRecaptchaSiteKey, String host) {
         this.googleProjectId = googleProjectId
         this.googleRecaptchaApiKey = googleRecaptchaApiKey
         this.googleRecaptchaSiteKey = googleRecaptchaSiteKey
+        this.host = host
     }
 
     private RESTClient getHttp() {
@@ -29,6 +31,7 @@ class RestGoogleRecaptcha implements GoogleRecaptcha {
             def response = http.post(
                 contentType: JSON,
                 requestContentType: JSON,
+                headers: ['Referer': host],
                 query: [
                     key: googleRecaptchaApiKey,
                 ],
@@ -40,12 +43,16 @@ class RestGoogleRecaptcha implements GoogleRecaptcha {
                     ]
                 ]
             )
-            response.data &&            
+            def validAction = response.data &&            
                 response.data.tokenProperties?.valid &&
-                response.data.tokenProperties?.action == response.data?.event?.expectedAction &&
-                response.data.riskAnalysis?.score > 0.7
+                response.data.tokenProperties?.action == response.data?.event?.expectedAction
+            def validScore = response.data?.riskAnalysis?.score > 0.7
+            if (validAction && !validScore) {
+                LOG.warn('reCAPTCHA, too low score: ' + response.data.riskAnalysis)
+            }
+            return validAction && validScore
         } catch (Exception exception) {
-            LOG.info('Could not validate reCAPTCHA', exception)
+            LOG.error('Could not validate reCAPTCHA', exception)
         }
     }
 }

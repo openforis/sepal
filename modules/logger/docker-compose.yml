@@ -12,8 +12,12 @@ services:
         ipv4_address: 172.20.128.2
     ports:
       - 514:514/udp
+    healthcheck:
+      test: ["CMD", "nc", "-z", "-u", "localhost", "514"]
+      timeout: 60s
+      interval: 1s
+      retries: 60
     restart: always
-
 
 networks:
   sepal:

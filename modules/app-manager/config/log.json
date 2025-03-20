@@ -1,5 +1,5 @@
 {
-    "port": 5106,
+    "port": 5000,
     "categories": {
         "apps": "info",
         "terminal": "info"

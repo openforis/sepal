@@ -1,9 +1,9 @@
 {
-    "port": 5100,
+    "port": 5000,
     "categories": {
         "auth": "info",
         "gateway": "info",
-        "googleAccessToken": "debug",
+        "googleAccessToken": "info",
         "proxy": "error",
         "session": "info",
         "user": "info",

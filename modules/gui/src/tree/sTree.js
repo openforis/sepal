@@ -99,11 +99,8 @@ const traverse = (node, path, create, callback) => {
     callback && callback(node)
     const [pathHead, ...pathTail] = path
     if (pathHead) {
-        const childNode = getChildNode(node, pathHead)
-            || create && addChildNode(node, pathHead)
-        return childNode && pathTail.length
-            ? traverse(childNode, pathTail, create, callback)
-            : childNode
+        const childNode = getChildNode(node, pathHead) || create && addChildNode(node, pathHead)
+        return childNode && traverse(childNode, pathTail, create, callback)
     } else {
         return node
     }
@@ -150,11 +147,16 @@ const cloneNode = node => {
     return clonedNode
 }
 
-const scan = (node, callback, skipRoot) => {
+const scan = (node, callback, {minDepth = 0, maxDepth = Number.MAX_SAFE_INTEGER} = {}) => {
     assertNode(node)
-    return (skipRoot || callback(node) !== null) && Object.values(getChildNodes(node)).forEach(
-        childNode => scan(childNode, callback, false)
-    )
+    if (minDepth <= 0) {
+        callback(node)
+    }
+    if (maxDepth > 0) {
+        Object.values(getChildNodes(node)).forEach(
+            childNode => scan(childNode, callback, {minDepth: minDepth - 1, maxDepth: maxDepth - 1})
+        )
+    }
 }
 
 const reduce = (node, callback, acc) => {

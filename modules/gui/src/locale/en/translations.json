@@ -65,6 +65,7 @@
         "image": "Image",
         "imageCollection": "Image collection",
         "table": "Table",
+        "classifier": "Classifier",
         "new": "New asset",
         "recentAssets": "Recent assets",
         "userAssets": "User assets",
@@ -209,7 +210,8 @@
             "error": "Could not retrieve file information."
         },
         "createFolder": {
-            "existing.error": "Cannot create a folder with the same name as an existing asset or folder"
+            "existing.error": "Cannot create a folder with the same name as an existing asset or folder",
+            "tooDeep.error": "Cannot create a folder more than 10 levels deep"
         },
         "removeConfirmation": "Remove {directories} {directories, plural, one {directory} other {directories}} and {files} {files, plural, one {file} other {files}}?",
         "removing": {

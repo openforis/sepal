@@ -26,7 +26,7 @@ const collapseAllDirectories = tree =>
             STree.updateValue(
                 node,
                 ({opened: _opened, loading: _loading, selected: _selected, ...value} = {}) => value
-            ), true
+            ), {minDepth: 1}
         )
     )
     
@@ -53,7 +53,7 @@ const deselectDescendants = (tree, path) =>
         STree.scan(
             STree.traverse(tree, path),
             node => STree.updateValue(node, ({selected: _selected, ...value} = {}) => value),
-            true
+            {minDepth: 1}
         )
     )
         

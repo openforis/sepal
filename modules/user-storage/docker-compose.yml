@@ -7,6 +7,11 @@ services:
     container_name: user-storage-redis
     volumes:
       - "${SEPAL_DATA_DIR}/user-storage-redis:/data"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      timeout: 60s
+      interval: 1s
+      retries: 60
     networks:
       - sepal
     restart: always
@@ -37,6 +42,11 @@ services:
       CONCURRENCY: "5"
       MAX_RETRIES: "10"
       INITIAL_RETRY_DELAY_SECONDS: "30"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      timeout: 60s
+      interval: 1s
+      retries: 60
     networks:
       - sepal
     restart: always
