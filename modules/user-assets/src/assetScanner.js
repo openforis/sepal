@@ -2,7 +2,7 @@ const _ = require('lodash')
 const {userTag} = require('./tag')
 const log = require('#sepal/log').getLogger('assetScanner')
 
-const {tap, map, mergeWith, of, switchMap, catchError, scan, EMPTY, from, Subject, finalize, timer, throttle, raceWith} = require('rxjs')
+const {tap, map, mergeWith, of, switchMap, catchError, scan, from, Subject, finalize, timer, throttle, raceWith} = require('rxjs')
 const {getUser} = require('./userStore')
 const {STree} = require('#sepal/tree/sTree')
 const {getAsset$} = require('./asset')
@@ -64,7 +64,6 @@ const getStats = assets =>
     } : acc), {})
 
 const scanTree$ = username => {
-    log.debug(`${userTag(username)} loading assets`)
     increaseBusy(username)
     const cancel$ = new Subject()
     return from(getUser(username)).pipe(
@@ -73,37 +72,35 @@ const scanTree$ = username => {
                 finalize(() => cancel$.next()),
                 scan((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
                 tap({
-                    next: assets => log.info(`${userTag(username)} loading assets:`, getStats(assets)),
+                    next: assets => log.info(`${userTag(username)} assets loading:`, getStats(assets)),
+                    error: error => log.warn(`${userTag(username)} assets failed`, error),
                     complete: () => log.info(`${userTag(username)} assets loaded`)
                 }),
                 throttle(() => timer(PARTIAL_UPDATES_DELAY_MS).pipe(raceWith(cancel$)), {leading: true, trailing: true}),
-                catchError(error => {
-                    log.warn(`${userTag(username)} assets failed`, error)
-                    return EMPTY
-                })
             )
         ),
         finalize(() => decreaseBusy(username))
     )
 }
 
-const loadNode$ = (user, path = [], recursive, node = {}) =>
+const loadNode$ = (user, path = [], node = {}) =>
     getAsset$(user, node.id).pipe(
         tap(() => log.trace(`${userTag(user.username)} loading assets ${path.length ? path.slice(-1) : 'roots'}`)),
-        catchError(error => {
-            log.warn(`${userTag(user.username)} failed to load assets ${path.length ? path.slice(-1) : 'roots'}`, error)
-            return of([])
-        }),
         switchMap(nodes => of({path, nodes}).pipe(
             tap(() => log.debug(`${userTag(user.username)} loaded assets ${path.length ? path.slice(-1) : 'roots'}`)),
-            mergeWith(...(recursive ? loadNodes$(user, path, recursive, nodes) : []))
+            mergeWith(...loadNodes$(user, path, nodes))
         ))
     )
 
-const loadNodes$ = (user, path, recursive, nodes) =>
+const loadNodes$ = (user, path, nodes) =>
     nodes
         .filter(({type}) => type === 'Folder')
-        .map(node => loadNode$(user, [...path, getKey(node, path)], recursive, node))
+        .map(node => loadNode$(user, [...path, getKey(node, path)], node).pipe(
+            catchError(error => {
+                log.warn(`${userTag(user.username)} failed to load assets ${path.length ? path.slice(-1) : 'roots'}`, error)
+                return of([])
+            })
+        ))
 
 const scanNode$ = (username, path) => {
     log.debug(`${userTag(username)} loading node:`, path)
