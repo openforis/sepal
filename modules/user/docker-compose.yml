@@ -33,15 +33,15 @@ services:
       GOOGLE_OAUTH_CLIENT_ID: "${GOOGLE_OAUTH_CLIENT_ID}"
       GOOGLE_OAUTH_CLIENT_SECRET: "${GOOGLE_OAUTH_CLIENT_SECRET}"
       GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
-      GOOGLE_RECAPTCHA_API_KEY: "${GOOGLE_RECAPTCHA_ENTERPRISE_API_KEY}"
-      GOOGLE_RECAPTCHA_SITE_KEY: "${GOOGLE_RECAPTCHA_ENTERPRISE_SITE_KEY}"
+      GOOGLE_RECAPTCHA_ENTERPRISE_API_KEY: "${GOOGLE_RECAPTCHA_ENTERPRISE_API_KEY}"
+      GOOGLE_RECAPTCHA_ENTERPRISE_SITE_KEY: "${GOOGLE_RECAPTCHA_ENTERPRISE_SITE_KEY}"
     networks:
       - sepal
     healthcheck:
       test: bash -c "exec 6<> /dev/tcp/localhost/80"
-      timeout: 3600s
+      timeout: 60s
       interval: 1s
-      retries: 3600
+      retries: 60
     restart: always
 
 networks:
