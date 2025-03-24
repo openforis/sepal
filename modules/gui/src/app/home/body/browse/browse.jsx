@@ -30,7 +30,8 @@ export class Browse extends React.Component {
             <Tabs
                 label={msg('home.sections.browse')}
                 statePath='browse'
-                initializeTypes={[ASSET_BROWSER, FILE_BROWSER]}
+                // initializeTypes={[ASSET_BROWSER, FILE_BROWSER]}
+                initializeTypes={[ASSET_BROWSER]}
                 addTabOptions={options}>
                 {this.renderTab}
             </Tabs>

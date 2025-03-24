@@ -50,6 +50,8 @@ RUN npm install -g nodemon
 
 USER node
 ADD lib/js/shared ${SHARED}
+ADD modules/${MODULE_NAME}/lib/shared/package-*.json ${SHARED}
+
 WORKDIR ${SHARED}/js/shared
 USER root
 RUN chown -R node: ${SHARED}

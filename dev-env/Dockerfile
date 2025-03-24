@@ -59,7 +59,7 @@ RUN apt-get install nodejs -y
 
 # Install global npm packages
 
-RUN npm install -g madge npm-check-updates wscat
+RUN npm install -g madge npm-check-updates wscat touch
 
 # Set bash prompt
 

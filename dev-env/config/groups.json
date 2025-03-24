@@ -1,6 +1,7 @@
 {
     "default": [
         "app-manager",
+        "ceo-gateway",
         "email",
         "gateway",
         "gee",
@@ -16,10 +17,10 @@
         "user",
         "user-assets",
         "user-files",
-        "user-storage",
-        "ceo-gateway"
+        "user-storage"
     ],
     "process": [
+        "ceo-gateway",
         "gateway",
         "gee",
         "gui",
@@ -28,8 +29,7 @@
         "mysql",
         "rabbitmq",
         "sepal-server",
-        "user",
-        "ceo-gateway"
+        "user"
     ],
     "apps": [
         "app-manager",
@@ -46,6 +46,7 @@
     ],
     "node": [
         "app-manager",
+        "ceo-gateway",
         "email",
         "gateway",
         "gee",
@@ -57,7 +58,6 @@
         "terminal",
         "user-assets",
         "user-files",
-        "user-storage",
-        "ceo-gateway"
+        "user-storage"
     ]
 }

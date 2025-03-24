@@ -8,13 +8,16 @@ RUN apk update && apk add net-tools
 
 RUN npm install -g nodemon
 
+USER node
 ADD lib/js/shared ${SHARED}
+ADD modules/${MODULE_NAME}/lib/shared/package-lock.json ${SHARED}
 WORKDIR ${SHARED}/js/shared
 USER root
 RUN chown -R node: ${SHARED}
 USER node
 RUN npm install
 
+USER node
 ADD modules/${MODULE_NAME}/package.json ${MODULE}/
 ADD modules/${MODULE_NAME}/package-lock.json ${MODULE}/
 WORKDIR ${MODULE}
