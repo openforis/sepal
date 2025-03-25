@@ -4,30 +4,30 @@ ENV MODULE_NAME email
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
+# install global packages
 RUN apk update && apk add net-tools
-
 RUN npm install -g nodemon
 
-USER node
-ADD lib/js/shared ${SHARED}
-ADD modules/${MODULE_NAME}/lib/shared/package-lock.json ${SHARED}
-WORKDIR ${SHARED}/js/shared
-USER root
-RUN chown -R node: ${SHARED}
-USER node
+# install lib packages
+WORKDIR ${SHARED}
+ADD lib/js/shared .
+ADD modules/${MODULE_NAME}/lib/shared/package-lock.json .
 RUN npm install
 
-USER node
-ADD modules/${MODULE_NAME}/package.json ${MODULE}/
-ADD modules/${MODULE_NAME}/package-lock.json ${MODULE}/
+# install module packages
 WORKDIR ${MODULE}
-USER root
-RUN mkdir src && chown -R node: ${MODULE}
-USER node
+ADD modules/${MODULE_NAME}/package.json .
+ADD modules/${MODULE_NAME}/package-lock.json .
 RUN npm install
 
-ADD modules/${MODULE_NAME}/src ${MODULE}/src
-ADD modules/${MODULE_NAME}/config ${MODULE}/config
-ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
+# add module source
+WORKDIR ${MODULE}
+ADD modules/${MODULE_NAME}/src ./src
+ADD modules/${MODULE_NAME}/config ./config
 
+# add shell scripts
+ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin
+
+# run
+USER root
 CMD start.sh

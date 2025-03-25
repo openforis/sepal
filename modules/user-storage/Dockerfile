@@ -4,45 +4,49 @@ ENV MODULE_NAME user-storage
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
+# install global packages
 RUN apk update && apk add curl sudo
+RUN npm install -g nodemon
 
-# Install diskus
+# install diskus
 RUN curl -Lo /tmp/diskus.tar.gz https://github.com/sharkdp/diskus/releases/download/v0.8.0/diskus-v0.8.0-x86_64-unknown-linux-musl.tar.gz
 RUN tar xf /tmp/diskus.tar.gz -C /usr/local/lib
 RUN ln -s /usr/local/lib/diskus-v0.8.0-x86_64-unknown-linux-musl/diskus /usr/local/bin/
 RUN rm /tmp/diskus.tar.gz
 
-# Create fix_sepal_users_permissions
-RUN printf '#!/bin/sh \n\
-chmod +rx /sepalUsers \n\
-' > /usr/local/bin/fix_sepal_users_permissions
-RUN chmod +x /usr/local/bin/fix_sepal_users_permissions
+# create fix_sepal_users_permissions
+RUN cat <<EOF > /usr/local/bin/fix_sepal_users_permissions
+#!/bin/sh
+chmod +rx /sepalUsers
+EOF
+RUN chmod 0755 /usr/local/bin/fix_sepal_users_permissions
 
-# Allow sudo to node
-RUN echo "node ALL=(root) NOPASSWD: /usr/local/bin/diskus" > /etc/sudoers.d/node
-RUN echo "node ALL=(root) NOPASSWD: /usr/local/bin/fix_sepal_users_permissions" >> /etc/sudoers.d/node 
+# add sudoers
+RUN cat <<EOF > /etc/sudoers.d/node
+node ALL=(root) NOPASSWD: /usr/local/bin/diskus
+node ALL=(root) NOPASSWD: /usr/local/bin/fix_sepal_users_permissions
+EOF
 RUN chmod 0440 /etc/sudoers.d/node
 
-RUN npm install -g nodemon
-
-ADD modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
-
-ADD lib/js/shared ${SHARED}
-WORKDIR ${SHARED}/js/shared
-USER root
-RUN chown -R node: ${SHARED}
-USER node
+# install lib packages
+WORKDIR ${SHARED}
+ADD lib/js/shared .
+ADD modules/${MODULE_NAME}/lib/shared/package-lock.json .
 RUN npm install
 
-ADD modules/${MODULE_NAME}/package.json ${MODULE}/
-ADD modules/${MODULE_NAME}/package-lock.json ${MODULE}/
+# install module packages
 WORKDIR ${MODULE}
-USER root
-RUN mkdir src && chown -R node: ${MODULE}
-USER node
+ADD modules/${MODULE_NAME}/package.json .
+ADD modules/${MODULE_NAME}/package-lock.json .
 RUN npm install
 
+# add module source
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
 ADD modules/${MODULE_NAME}/config ${MODULE}/config
+
+# add shell scripts
+ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
+
+# run
+USER node
 CMD /usr/local/bin/start.sh

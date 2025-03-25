@@ -6,35 +6,36 @@ ENV MODULE_NAME ceo-gateway
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
+# install global packages
 RUN apk update && apk add net-tools sudo
-
 RUN npm install -g nodemon
 
-ADD modules/${MODULE_NAME}/package.json ${ROOT}/package.json
+# add sudoers
+RUN cat <<EOF > /etc/sudoers.d/node
+node ALL=(root) NOPASSWD: /usr/bin/ssh
+EOF
+RUN chmod 0440 /etc/sudoers.d/node
 
-RUN echo "node ALL=(root) NOPASSWD: /usr/bin/ssh" > /etc/sudoers.d/node && chmod 0440 /etc/sudoers.d/node
-
+# install lib packages
+WORKDIR ${SHARED}
+ADD lib/js/shared .
+ADD modules/${MODULE_NAME}/lib/shared/package-lock.json .
 RUN npm install
 
-ADD modules/${MODULE_NAME}/src ${ROOT}/src
-
-ADD lib/js/shared ${SHARED}
-WORKDIR ${SHARED}/js/shared
-USER root
-RUN chown -R node: ${SHARED}
-USER node
-RUN npm install
-
-ADD modules/${MODULE_NAME}/package.json ${MODULE}/
-ADD modules/${MODULE_NAME}/package-lock.json ${MODULE}/
+# install module packages
 WORKDIR ${MODULE}
-USER root
-RUN mkdir src && chown -R node: ${MODULE}
-USER node
+ADD modules/${MODULE_NAME}/package.json .
+ADD modules/${MODULE_NAME}/package-lock.json .
 RUN npm install
 
-ADD modules/${MODULE_NAME}/src ${MODULE}/src
-ADD modules/${MODULE_NAME}/config ${MODULE}/config
-ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
+# add module source
+WORKDIR ${MODULE}
+ADD modules/${MODULE_NAME}/src ./src
+ADD modules/${MODULE_NAME}/config ./config
 
+# add shell scripts
+ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin
+
+# run
+USER node
 CMD start.sh
