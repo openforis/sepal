@@ -4803,6 +4803,24 @@
                     },
                     "title": "Sample Arrangement",
                     "tooltip": "Specify how the samples should be arranged (within each stratum if stratified sampling)."
+                },
+                "retrieve": {
+                    "form": {
+                        "fileFormat": {
+                            "label": "File format",
+                            "CSV": "CSV",
+                            "GeoJSON": "GeoJSON",
+                            "KML": "KML",
+                            "KMZ": "KMZ",
+                            "SHP": "Shapefile"
+                        },
+                        "crs": {
+                            "tooltip": "CRS to use for the exported samples"
+                        },
+                        "crsTransform": {
+                            "tooltip": "Optionally specity affine transform to use for the exported samples"
+                        }
+                    }
                 }
             },
             "tabPlaceholder": "Sampling_design"
@@ -5369,7 +5387,7 @@
     "widget": {
         "assetDestination": {
             "exists": {
-                "notReplaceable": "This asset already exists, but isn't an image or image collection, so you cannot overwrite it",
+                "notReplaceable": "This asset already exists, but isn't an image, image collection or table, so you cannot overwrite it",
                 "replaceable": "This asset already exists, you have to confirm if you want to overwrite it or not"
             },
             "loadError": "Unable to load asset",

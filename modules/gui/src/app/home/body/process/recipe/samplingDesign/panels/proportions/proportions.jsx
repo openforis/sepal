@@ -344,6 +344,10 @@ class _Proportions extends React.Component {
         scale.value || scale.set(stratificationScale || '30')
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
+        
+        if (requiresUpdate.value) {
+            this.calculateAnticipatedProportions()
+        }
     }
 
     componentDidUpdate(prevProps) {

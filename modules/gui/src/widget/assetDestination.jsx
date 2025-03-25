@@ -137,7 +137,7 @@ class _AssetDestination extends React.Component {
                 tooltip: msg('widget.assetDestination.replace.tooltip')
             }
         ].filter(({value}) => value !== 'resume' || (type === 'ImageCollection' && currentType === 'ImageCollection'))
-        const show = ['Image', 'ImageCollection'].includes(currentType)
+        const show = ['Image', 'ImageCollection', 'Table'].includes(currentType)
         return show ? (
             <Form.Buttons
                 key='strategy'
@@ -212,7 +212,7 @@ class _AssetDestination extends React.Component {
         this.setState({currentType})
         if (currentType) {
             assetInput.setInvalid(msg(
-                ['Image', 'ImageCollection'].includes(currentType)
+                ['Image', 'ImageCollection', 'Table'].includes(currentType)
                     ? 'widget.assetDestination.exists.replaceable'
                     : 'widget.assetDestination.exists.notReplaceable'
             ))

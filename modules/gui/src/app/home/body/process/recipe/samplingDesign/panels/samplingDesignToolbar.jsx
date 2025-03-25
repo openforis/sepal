@@ -57,37 +57,41 @@ class _SamplingDesignToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='bottom-right'
-                    panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='stratification'
-                        className={stratificationRequiresUpdate ? styles.error : null}
+                        error={stratificationRequiresUpdate}
                         label={msg('process.samplingDesign.panel.stratification.button')}
                         tooltip={msg('process.samplingDesign.panel.stratification.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='proportions'
-                        className={proportionsRequiresUpdate ? styles.error : null}
+                        error={proportionsRequiresUpdate}
                         label={msg('process.samplingDesign.panel.proportions.button')}
                         tooltip={msg('process.samplingDesign.panel.proportions.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='sampleAllocation'
-                        className={sampleAllocationRequiresUpdate ? styles.error : null}
+                        error={sampleAllocationRequiresUpdate}
                         label={msg('process.samplingDesign.panel.sampleAllocation.button')}
                         tooltip={msg('process.samplingDesign.panel.sampleAllocation.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                     <Toolbar.ActivationButton
                         id='sampleArrangement'
-                        className={sampleArrangementRequiresUpdate ? styles.error : null}
+                        error={sampleArrangementRequiresUpdate}
                         label={msg('process.samplingDesign.panel.sampleArrangement.button')}
                         tooltip={msg('process.samplingDesign.panel.sampleArrangement.tooltip')}
-                        disabled={!initialized}/>
+                        disabled={!initialized}
+                        panel/>
                 </Toolbar>
             </PanelWizard>
         )

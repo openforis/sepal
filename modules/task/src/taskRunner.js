@@ -14,7 +14,9 @@ const tasks = {
     'image.asset_export': () => require('./tasks/imageAssetExport'),
     'image.sepal_export': () => require('./tasks/imageSepalExport'),
     'timeseries.download': () => require('./tasks/timeSeriesSepalExport'),
-    'ccdc.asset_export': () => require('./tasks/ccdcAssetExport')
+    'ccdc.asset_export': () => require('./tasks/ccdcAssetExport'),
+    'samplingDesign.asset_export': () => require('./tasks/samplingDesign/samplesAssetExport'),
+    'samplingDesign.sepal_export': () => require('./tasks/samplingDesign/samplesSepalExport'),
 }
 
 const {tag} = require('#sepal/tag')

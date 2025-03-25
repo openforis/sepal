@@ -1,4 +1,5 @@
 const ee = require('#sepal/ee')
+const {toId, toColor} = require('./featureProperties')
 
 module.exports = {stratifiedSystematicSample, filterSamples}
     
@@ -102,8 +103,6 @@ function stratifiedSystematicSample(args) {
         ).reduce(ee.Reducer.max()).rename('level')
         return sample
             .addBands(level)
-        // .addBands(i)
-        // .addBands(j)
             .updateMask(sample)
     }
       
@@ -124,6 +123,12 @@ function filterSamples(args) {
     var samples = args.samples
     var allocation = args.allocation
     var strategy = args.strategy || 'OVER'
+
+    var allocationCollection = ee.FeatureCollection(allocation
+        .map(function (stratum) {
+            return ee.Feature(null, stratum)
+        })
+    )
     
     var counts = toFeatureCollection(
         samples
@@ -166,15 +171,14 @@ function filterSamples(args) {
                 .filter(ee.Filter.eq('stratum', stratum.stratum))
                 .filter(ee.Filter.gte('level', level))
         })
-    ).flatten().map(addId)
+    ).flatten().map(setProperties)
     
-    function addId(sample) {
-        var geometry = sample.geometry()
-        var scaleFactor = geometry.projection().nominalScale()
-        var x = geometry.coordinates().getNumber(0).multiply(scaleFactor).round()
-        var y = geometry.coordinates().getNumber(1).multiply(scaleFactor).round()
-        var id = x.long().leftShift(32).add(y)
-        return sample.set('id', id)
+    function setProperties(sample) {
+        return sample
+            .set('id', toId({sample}))
+            .set('color', toColor({sample, allocationCollection}))
+            .set('level', null)
+            .set('sample', null)
     }
 }
 
