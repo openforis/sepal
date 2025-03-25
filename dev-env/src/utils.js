@@ -33,8 +33,8 @@ export const STATUS = {
 
 export const MESSAGE = {
     UNDEFINED: chalk.grey('UNDEFINED'),
-    NON_RUNNABLE: chalk.grey('NON-RUNNABLE'),
     BUILDING: chalk.green('BUILDING...'),
+    NON_RUNNABLE: chalk.grey('NON-RUNNABLE'),
     BUILT: chalk.greenBright('BUILT'),
     STARTING: chalk.green('STARTING...'),
     STOPPING: chalk.red('STOPPING...'),
@@ -338,3 +338,28 @@ export const multi = async (items, iterator, sequential = false) =>
     sequential
         ? await iterateSequential(items, iterator)
         : await iterateParallel(items, iterator)
+
+export const progress = async (promise, callback) => {
+    const result = {}
+        
+    const complete = async () =>
+        new Promise((resolve, reject) => {
+            const check = (count = 0) => {
+                if (result.done) {
+                    resolve()
+                } else if (result.error) {
+                    reject(result.error)
+                } else {
+                    callback && callback(count)
+                    setTimeout(() => check(count + 1), 1000)
+                }
+            }
+            check()
+        })
+        
+    promise
+        .then(() => result.done = true)
+        .catch(error => result.error = error)
+        
+    await complete()
+}
