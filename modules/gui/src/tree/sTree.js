@@ -59,7 +59,7 @@ const isRoot = node => {
 
 const isLeaf = node => {
     assertNode(node)
-    return !isRoot(node) && node.items === undefined
+    return node.items === undefined
 }
 
 const getChildNodes = node => {
@@ -135,7 +135,7 @@ const clone = (node, filterPredicate, parentClonedNode) => {
     Object.values(getChildNodes(node)).forEach(
         childNode => clone(childNode, filterPredicate, clonedNode)
     )
-    if (filterPredicate && isLeaf(clonedNode) && !filterPredicate(clonedNode)) {
+    if (filterPredicate && !isRoot(clonedNode) && isLeaf(clonedNode) && !filterPredicate(clonedNode)) {
         removeChildNode(parentClonedNode, getKey(clonedNode))
     }
     return clonedNode

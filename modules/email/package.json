@@ -13,7 +13,7 @@
         "bull": "^4.16.5",
         "commander": "^13.1.0",
         "handlebars": "^4.7.8",
-        "ioredis": "^5.5.0",
+        "ioredis": "^5.6.0",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
         "marked": "^15.0.7",
