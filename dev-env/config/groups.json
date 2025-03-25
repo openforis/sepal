@@ -17,7 +17,8 @@
         "user-assets",
         "user-files",
         "user-storage",
-        "ceo-gateway"
+        "ceo-gateway",
+        "app-launcher"
     ],
     "process": [
         "gateway",
@@ -29,7 +30,8 @@
         "rabbitmq",
         "sepal-server",
         "user",
-        "ceo-gateway"
+        "ceo-gateway",
+        "app-launcher"
     ],
     "apps": [
         "app-manager",
@@ -42,7 +44,8 @@
         "sepal-server",
         "ssh-gateway",
         "terminal",
-        "user"
+        "user",
+        "app-launcher"
     ],
     "node": [
         "app-manager",
@@ -58,6 +61,7 @@
         "user-assets",
         "user-files",
         "user-storage",
-        "ceo-gateway"
+        "ceo-gateway",
+        "app-launcher"
     ]
 }
