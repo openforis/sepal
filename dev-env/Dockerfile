@@ -5,6 +5,9 @@ SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PROJECT_DIR /usr/local/src/sepal
 ENV NODE_MAJOR=22
+ARG DOCKER_COMPOSE_VERSION=v2.34.0
+ARG JAVA_VERSION=11.0.11.hs-adpt
+ARG GRADLE_VERSION=6.9.1
 
 # Update and install base packages
 
@@ -46,14 +49,14 @@ RUN apt-get update && apt-get install -y docker-ce-cli
 # Install docker compose
 
 RUN mkdir -p /usr/local/lib/docker/cli-plugins
-RUN curl -SL https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
+RUN curl -SL https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
 RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Install node.js
 
 RUN mkdir -p /etc/apt/keyrings
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update
 RUN apt-get install nodejs -y
 
@@ -72,10 +75,10 @@ RUN chmod +x /usr/local/bin/sepal
 
 # Add source code
 
-ADD ./package.json $PROJECT_DIR/dev-env/
-ADD ./package-lock.json $PROJECT_DIR/dev-env/
-ADD ./src $PROJECT_DIR/dev-env/src/
-ADD ./config $PROJECT_DIR/dev-env/config/
+ADD ./package.json ${PROJECT_DIR}/dev-env/
+ADD ./package-lock.json ${PROJECT_DIR}/dev-env/
+ADD ./src ${PROJECT_DIR}/dev-env/src/
+ADD ./config ${PROJECT_DIR}/dev-env/config/
 
 WORKDIR $PROJECT_DIR/dev-env/
 RUN npm install
@@ -84,10 +87,10 @@ RUN npm install
 
 ENV SDKMAN_DIR=/usr/local/lib/sdkman
 RUN curl -s https://get.sdkman.io | bash && \
-    source "$SDKMAN_DIR/bin/sdkman-init.sh" && \
-    yes | sdk install java 11.0.11.hs-adpt && \
-    sdk install gradle 6.9.1
-RUN source "$SDKMAN_DIR/bin/sdkman-init.sh" && \    
+    source "${SDKMAN_DIR}/bin/sdkman-init.sh" && \
+    yes | sdk install java ${JAVA_VERSION} && \
+    sdk install gradle ${GRADLE_VERSION}
+RUN source "${SDKMAN_DIR}/bin/sdkman-init.sh" && \    
     ln -s "$(which java)" /usr/local/bin/java && \
     ln -s "$(which gradle)" /usr/local/bin/gradle && \
     JAVA_HOME=$(sdk home java current) && \
