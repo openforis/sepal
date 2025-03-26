@@ -37,5 +37,5 @@ ARG GIT_COMMIT
 ENV GIT_COMMIT=$GIT_COMMIT
 
 # run
-USER node
+USER root
 CMD start.sh
