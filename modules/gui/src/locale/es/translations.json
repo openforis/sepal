@@ -33,7 +33,7 @@
         }
     },
     "apps": {
-        "count": "",
+        "count": "{count} {count, plural, one {usuario} other {usuarios}}",
         "developedBy": "Desarrollado por {author}",
         "filter": {
             "search": {
@@ -58,30 +58,30 @@
     },
     "asset": {
         "failedToLoad": "Fallo en la carga de la tabla de EE",
-        "failedToLoadSome": "",
+        "failedToLoadSome": "Error al cargar algunos assets de EE",
         "notFound": "Tabla de EE no encontrada",
         "unauthorized": "No tienes acceso a esta tabla de EE.",
-        "folder": "",
-        "image": "",
-        "imageCollection": "",
-        "table": "",
-        "classifier": "",
-        "new": "",
-        "recentAssets": "",
+        "folder": "Carpeta",
+        "image": "Imagen",
+        "imageCollection": "Colección de imágenes",
+        "table": "Tabla",
+        "classifier": "Clasificador",
+        "new": "Nuevo asset",
+        "recentAssets": "Asset recientes",
         "userAssets": "",
         "otherAssets": "",
         "reload": "",
         "settings": "",
         "datasets": {
             "community": {
-                "label": "",
-                "tooltip": ""
+                "label": "Conjuntos de datos de la comunidad de Awesome GEE ( coincidencias {matchingResults})",
+                "tooltip": "El conjunto de datos awesome-gee-community-datasets es un conjunto de datos geo-espaciales de origen comunitario puestos a disposición para su uso por la comunidad más grande de usuarios de Google Earth Engine y compartidos públicamente como recursos de Earth Engine."
             },
             "gee": {
-                "label": "",
-                "tooltip": ""
+                "label": "Catálogo de GEE ( {matchingResults} coincidencias)",
+                "tooltip": "El archivo de datos públicos de Earth Engine incluye más de cuarenta años de imágenes históricas y conjuntos de datos científicos, actualizados y ampliados diariamente."
             },
-            "failedToLoad": ""
+            "failedToLoad": "Error al cargar conjunto de datos de la comunidad de Awesome GEE"
         },
         "copyId": {
             "tooltip": "",
@@ -89,24 +89,24 @@
         },
         "browser": {
             "tooltip": "",
-            "title": "",
-            "assetName": "",
-            "asset": "",
-            "filter.placeholder": "",
-            "quota": ""
+            "title": "Explorador de assets",
+            "assetName": "Nombre",
+            "asset": "Asset",
+            "filter.placeholder": "Filtrar por id",
+            "quota": "Cuota: {quota}"
         }
     },
     "bands": {
-        "aerosol": "",
+        "aerosol": "Aerosol",
         "blue": "Azul",
         "brightness": "Brillo",
-        "cirrus": "",
+        "cirrus": "Cirro",
         "dayOfYear": "Día del año",
         "daysFromTarget": "Días del objetivo",
-        "fifth": "",
-        "fourth": "",
+        "fifth": "Quinta",
+        "fourth": "Cuarta",
         "green": "Verde",
-        "greenness": "",
+        "greenness": "Verdosa",
         "nir": "",
         "pan": "PAN",
         "red": "Rojo",
@@ -152,7 +152,7 @@
         "loading-apps": "Cargando aplicaciones...",
         "loading-initializing-google-maps": "Inicializando el mapa...",
         "starting-sepal": "Iniciando SEPAL...",
-        "starting-sepal-failed": ""
+        "starting-sepal-failed": "Algo salió mal. Vuelve a cargar la página e intentalo de nuevo."
     },
     "browse": {
         "addBrowser": {
@@ -181,7 +181,7 @@
             },
             "dotFiles": {
                 "label": "",
-                "hide.tooltip": "",
+                "hide.tooltip": "Ocultar archivos ocultos",
                 "show.tooltip": ""
             },
             "collapseDirs": {
@@ -251,7 +251,7 @@
     "connectionStatus": {
         "disconnected": "Desconectado",
         "connected": "Conectado",
-        "partiallyConnected": ""
+        "partiallyConnected": "Conectado, algunos servicios no se encuentran disponibles"
     },
     "eeTable": {
         "failedToLoad": "Fallo en la carga de la tabla de EE",
@@ -372,10 +372,10 @@
             "instructions": "Indíquenos la dirección de correo electrónico de su cuenta SEPAL y le enviaremos un mensaje con instrucciones para restablecer su contraseña.",
             "invalid": "Correo electrónico inválido",
             "label": "¿Olvidaste tu contraseña?",
-            "email.placeholder": "",
+            "email.placeholder": "Ingresa tu correo electrónico",
             "required": "El correo electrónico es obligatorio",
             "success": "Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña a {email}.",
-            "error": ""
+            "error": "No se puede restablecer la contraseña."
         },
         "intro": {
             "about": {
@@ -419,51 +419,51 @@
             }
         },
         "launch": "Iniciar",
-        "documentation": "",
+        "documentation": "Documentación",
         "loadCurrentUser": {
-            "error": ""
+            "error": "No se pudo conectar a SEPAL"
         },
         "signup": {
             "button": "Regístrate",
             "username": {
                 "label": "Nombre de usuario",
-                "placeholder": "",
+                "placeholder": "Elige tu nombre de usuario",
                 "required": "El nombre de usuario es obligatorio",
-                "format": "",
-                "duplicate": "",
-                "cannotValidate": ""
+                "format": "El nombre de usuario debe comenzar con una letra y solo puede contener letras y dígitos",
+                "duplicate": "Este nombre de usuario no está disponible, por favor elige otro",
+                "cannotValidate": "No puede validar el nombre de usuario"
             },
             "name": {
-                "label": "",
-                "placeholder": "",
+                "label": "Nombre",
+                "placeholder": "Introduce tu nombre completo",
                 "required": "El nombre es obligatorio",
                 "invalid": ""
             },
             "email": {
-                "label": "",
-                "placeholder": "",
+                "label": "Correo electrónico",
+                "placeholder": "Introduce tu dirección de correo electrónico",
                 "required": "El correo electrónico es obligatorio",
-                "format": "",
-                "duplicate": "",
-                "cannotValidate": ""
+                "format": "Por favor introduce una dirección de correo válida",
+                "duplicate": "Este correo electrónico no está disponible, por favor elige otro",
+                "cannotValidate": "No se puede validar el correo electrónico"
             },
             "organization": {
                 "label": "Organización",
-                "placeholder": "",
+                "placeholder": "Introduce tu organización",
                 "required": "La organización es necesaria",
                 "invalid": ""
             },
             "intendedUse": {
-                "label": "",
-                "placeholder": "",
-                "required": "",
+                "label": "Finalidad de uso",
+                "placeholder": "¿Qué tiene previsto hacer con SEPAL?",
+                "required": "Se requiere el uso previsto",
                 "invalid": ""
             },
-            "success": ""
+            "success": "Te has registrado con éxito en SEPAL. Un correo electrónico de activación ha sido enviado a la dirección: {email}."
         },
         "login": {
             "button": "Iniciar sesión",
-            "error": "",
+            "error": "Se ha producido un error durante la autenticación.",
             "forgot-password-link": "¿Olvidaste tu contraseña?",
             "password": {
                 "invalid": "Nombre de usuario/contraseña no válidos",
@@ -494,7 +494,7 @@
                 "required": "La contraseña debe ser confirmada"
             },
             "success": "La contraseña se ha restablecido",
-            "error": "",
+            "error": "No se pudo restablecer la contraseña",
             "username": {
                 "label": "Nombre de usuario"
             },
@@ -508,95 +508,95 @@
     },
     "map": {
         "info": {
-            "tooltip": "",
-            "center": "",
-            "bounds": "",
+            "tooltip": "Mostrar coordenadas",
+            "center": "Centrar",
+            "bounds": "Límites",
             "copy": "Copiar al portapapeles",
-            "coordinatesCopied": ""
+            "coordinatesCopied": "Coordenadas copiadas al portapapeles"
         },
         "legendBuilder": {
             "addEntry": {
-                "tooltip": ""
+                "tooltip": "Añadir entrada a leyenda"
             },
             "colors": {
                 "edit": {
-                    "tooltip": ""
+                    "tooltip": "Cambiar color"
                 },
                 "swap": {
-                    "tooltip": ""
+                    "tooltip": "Cambiar este color por otro en la leyenda"
                 }
             },
             "entry": {
                 "error": {
-                    "duplicateColor": "",
-                    "duplicateLabel": "",
-                    "duplicateValue": "",
-                    "invalidColor": ""
+                    "duplicateColor": "Hay más de una entrada con este color",
+                    "duplicateLabel": "Hay más de una entrada con esta etiqueta",
+                    "duplicateValue": "Hay más de una entrada con este valor",
+                    "invalidColor": "Otra entrada tiene el mismo color"
                 },
                 "remove": {
-                    "tooltip": ""
+                    "tooltip": "Quitar esta entrada de la leyenda"
                 },
                 "classLabel": {
-                    "placeholder": ""
+                    "placeholder": "Etiqueta..."
                 }
             },
             "import": {
-                "title": "",
+                "title": "Importar",
                 "file": {
-                    "label": ""
+                    "label": "Archivo CSV"
                 },
                 "clipboard": {
-                    "tooltip": "",
-                    "disabledTooltip": ""
+                    "tooltip": "Leer leyenda desde el portapapeles",
+                    "disabledTooltip": "Este navegador no permite leer desde el portapapeles"
                 },
                 "colorColumnType": {
-                    "label": "",
-                    "tooltip": "",
-                    "single": "",
-                    "multiple": ""
+                    "label": "Formato de columna de color",
+                    "tooltip": "Especifique si el color está en una sola columna, o si el rojo, el verde, el azul está en una columna separada.",
+                    "single": "Columna única",
+                    "multiple": "Múltiples columnas"
                 },
                 "column": {
                     "valueColumn": {
-                        "label": "",
-                        "placeholder": "",
-                        "tooltip": ""
+                        "label": "Valor",
+                        "placeholder": "Seleccionar...",
+                        "tooltip": "Columna con valores de clase"
                     },
                     "labelColumn": {
-                        "label": "",
-                        "placeholder": "",
-                        "tooltip": ""
+                        "label": "Etiqueta",
+                        "placeholder": "Seleccionar...",
+                        "tooltip": "Columna con etiquetas de clase"
                     },
                     "colorColumn": {
-                        "label": "",
-                        "placeholder": "",
-                        "tooltip": ""
+                        "label": "Color",
+                        "placeholder": "Seleccionar...",
+                        "tooltip": "Columna con colores de clase"
                     },
                     "redColumn": {
                         "label": "Rojo",
-                        "placeholder": "",
-                        "tooltip": ""
+                        "placeholder": "Seleccionar...",
+                        "tooltip": "Columna con valores del canal rojo"
                     },
                     "greenColumn": {
                         "label": "Verde",
-                        "placeholder": "",
-                        "tooltip": ""
+                        "placeholder": "Seleccionar...",
+                        "tooltip": "Columna con valores del canal verde"
                     },
                     "blueColumn": {
                         "label": "Azul",
-                        "placeholder": "",
-                        "tooltip": ""
+                        "placeholder": "Seleccionar...",
+                        "tooltip": "Columna con valores del canal azul"
                     }
                 }
             },
-            "label": "",
+            "label": "Leyenda",
             "load": {
-                "label": "",
+                "label": "Cargar...",
                 "options": {
                     "exportToCsv": {
-                        "label": ""
+                        "label": "Exportar a CSV"
                     },
                     "importFromCsv": {
-                        "label": ""
+                        "label": "Importar desde CSV..."
                     },
                     "imageValues": {
                         "label": "",
@@ -604,28 +604,28 @@
                     }
                 }
             },
-            "noEntries": ""
+            "noEntries": "No hay entradas en la leyenda. Agregue al menos una."
         },
         "layer": {
             "error": "Error al cargar la capa"
         },
         "layout": {
             "addImageLayerSource": {
-                "title": "",
+                "title": "Añadir capa",
                 "types": {
                     "Asset": {
-                        "description": "",
+                        "description": "Añadir un asset Google Earth Engine",
                         "form": {
-                            "asset.label": "",
-                            "loadError": ""
+                            "asset.label": "Asset de Earth Engine",
+                            "loadError": "No se pudo leer el asset"
                         },
                         "presets": ""
                     },
                     "Planet": {
-                        "description": "",
+                        "description": "Añadir una cuenta de Planet",
                         "form": {
-                            "description.label": "",
-                            "apiKey.label": "",
+                            "description.label": "Descripción",
+                            "apiKey.label": "Llave de la API de Planet",
                             "invalidApiKey": ""
                         }
                     },
@@ -672,7 +672,7 @@
                     "reverse.tooltip": "",
                     "saturation.label": "",
                     "select.placeholder": "",
-                    "value.label": ""
+                    "value.label": "Valor"
                 },
                 "gamma": {
                     "label": "",
@@ -747,30 +747,30 @@
     "featureLayerSources": {
         "Aoi": {
             "type": "",
-            "description": ""
+            "description": "Área de interés"
         },
         "Labels": {
-            "type": "",
-            "description": ""
+            "type": "Etiquetas",
+            "description": "Etiquetas, carreteras y puntos de interés"
         },
         "Legend": {
-            "type": "",
-            "description": ""
+            "type": "Leyenda",
+            "description": "Leyenda del mapa"
         },
         "Classification": {
-            "type": "",
-            "description": ""
+            "type": "Clasificación",
+            "description": "Leyenda del mapa. Resalta la clase del píxel bajo el cursor."
         },
         "Palette": {
-            "type": "",
-            "description": ""
+            "type": "Paleta de colores",
+            "description": "Paleta aplicada a la imagen. Muestra un valor aproximado para el píxel bajo el cursor."
         },
         "ReferenceData": {
-            "type": "",
-            "description": ""
+            "type": "Datos de referencia",
+            "description": "Mostrar marcadores de datos de referencia"
         },
         "Values": {
-            "type": "",
+            "type": "Valores",
             "description": ""
         },
         "SceneAreas": {
@@ -781,7 +781,7 @@
     "imageLayerSources": {
         "Asset": {
             "label": "",
-            "description": ""
+            "description": "Asset de Earth Engine"
         },
         "Recipe": {
             "label": "",
@@ -825,7 +825,7 @@
                         "label": ""
                     },
                     "legend": {
-                        "label": ""
+                        "label": "Leyenda"
                     },
                     "noImagery": "",
                     "recipe": {
@@ -1477,7 +1477,7 @@
                                 "tooltip": "La pendiente del componente lineal del modelo"
                             },
                             "value": {
-                                "label": "",
+                                "label": "Valor",
                                 "tooltip": "El valor evaluado de los modelos armónicos para la fecha especificada"
                             }
                         },
@@ -2118,7 +2118,7 @@
                                 "tooltip": "",
                                 "email": {
                                     "label": "",
-                                    "placeholder": "",
+                                    "placeholder": "Introduce tu dirección de correo electrónico",
                                     "required": "",
                                     "invalid": "",
                                     "tooltip": ""
@@ -2662,7 +2662,7 @@
                     "asset": {
                         "label": "ID de asset de Earth Engine",
                         "placeholder": "Indique el ID de un GEE asset...",
-                        "title": ""
+                        "title": "Asset de Earth Engine"
                     },
                     "changeBand": {
                         "label": ""
@@ -2675,7 +2675,7 @@
                         "title": ""
                     },
                     "legend": {
-                        "label": "",
+                        "label": "Leyenda",
                         "tooLong": ""
                     },
                     "recipe": {
@@ -2727,7 +2727,7 @@
                     "asset": {
                         "label": "ID de asset de Earth Engine",
                         "placeholder": "Indique el ID de un GEE asset...",
-                        "title": ""
+                        "title": "Asset de Earth Engine"
                     },
                     "changeBand": {
                         "label": ""
@@ -2761,7 +2761,7 @@
                         "tooltip": ""
                     },
                     "import": "",
-                    "title": ""
+                    "title": "Leyenda"
                 },
                 "mapping": {
                     "button": {
@@ -2923,7 +2923,7 @@
                     "asset": {
                         "label": "ID de asset de Earth Engine",
                         "placeholder": "Indique el ID de un GEE asset...",
-                        "title": ""
+                        "title": "Asset de Earth Engine"
                     },
                     "imageMask": {
                         "button": {
@@ -4013,8 +4013,8 @@
                 },
                 "reference": {
                     "asset": {
-                        "label": "",
-                        "title": "",
+                        "label": "Asset de Earth Engine",
+                        "title": "Asset de Earth Engine",
                         "notBayTSHistorical": ""
                     },
                     "button": "",
@@ -4270,7 +4270,7 @@
                     "classificationLoadError": "Fallo en la carga de la clasificación: {error}",
                     "form": {
                         "classification": {
-                            "label": "",
+                            "label": "Clasificación",
                             "placeholder": "Selecciona una clasificación...",
                             "tooltip": "(Opcional) Selecciona un flujo de clasificación y aplique el clasificador a cada adquisición de la serie temporal."
                         },
@@ -4442,7 +4442,7 @@
             "panel": {
                 "legend": {
                     "button": "",
-                    "title": "",
+                    "title": "Leyenda",
                     "tooltip": "",
                     "import": ""
                 },
@@ -4959,11 +4959,11 @@
                     "required": "La organización es necesaria"
                 },
                 "intendedUse": {
-                    "label": "",
-                    "required": ""
+                    "label": "Finalidad de uso",
+                    "required": "Se requiere el uso previsto"
                 },
                 "username": {
-                    "format": "",
+                    "format": "El nombre de usuario debe comenzar con una letra y solo puede contener letras y dígitos",
                     "label": "Nombre de usuario",
                     "required": "El nombre de usuario es obligatorio",
                     "unique": ""
@@ -5237,7 +5237,7 @@
                 }
             },
             "value": {
-                "label": ""
+                "label": "Valor"
             },
             "inclusive": {
                 "label": "",

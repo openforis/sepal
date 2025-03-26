@@ -35,11 +35,14 @@ RUN chmod u+x /script/init_ost.sh && sync && /script/init_ost.sh
 
 RUN apt-get update && apt-get install -y htop ncdu
 
-ADD modules/${MODULE_NAME}/script/init_sepal_ui.sh /script/
-RUN chmod u+x /script/init_sepal_ui.sh && sync && /script/init_sepal_ui.sh
-
 ADD modules/${MODULE_NAME}/script/init_clojure.sh /script/
 RUN chmod u+x /script/init_clojure.sh && sync && /script/init_clojure.sh
+
+ADD modules/${MODULE_NAME}/script/init_quarto.sh /script/
+RUN chmod u+x /script/init_quarto.sh && sync && /script/init_quarto.sh
+
+ADD modules/${MODULE_NAME}/script/init_sepal_ui.sh /script/
+RUN chmod u+x /script/init_sepal_ui.sh && sync && /script/init_sepal_ui.sh
 
 ENV USER=sepal-user
 
