@@ -53,7 +53,7 @@ USER node
 ADD lib/js/shared ${SHARED}
 ADD modules/${MODULE_NAME}/lib/shared/package-*.json ${SHARED}
 
-WORKDIR ${SHARED}/js/shared
+WORKDIR ${SHARED}
 USER root
 RUN chown -R node: ${SHARED}
 USER node

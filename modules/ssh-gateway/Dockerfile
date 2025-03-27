@@ -15,7 +15,7 @@ ADD --chmod=755 modules/${MODULE_NAME}/script /script
 RUN sync && /script/init_image.sh
 
 # install lib packages
-WORKDIR ${SHARED}/js/shared
+WORKDIR ${SHARED}
 ADD lib/js/shared .
 ADD modules/${MODULE_NAME}/package-lock.json .
 RUN npm install
