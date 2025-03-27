@@ -10,9 +10,13 @@ ENV SHARED /usr/local/src/sepal/lib/js/shared
 # install global packages
 RUN npm install -g nodemon
 
+# add scripts and configuration
+ADD --chmod=755 modules/${MODULE_NAME}/script/* /usr/local/bin
 ADD --chmod=755 modules/${MODULE_NAME}/config /config
-ADD --chmod=755 modules/${MODULE_NAME}/script /script
-RUN sync && /script/init_image.sh
+RUN chmod 400 /config/*
+
+# init image
+RUN /usr/local/bin/init_image.sh
 
 # install lib packages
 WORKDIR ${SHARED}
@@ -32,4 +36,4 @@ ADD modules/${MODULE_NAME}/src ./src
 
 # run
 USER root
-CMD /script/init_container.sh
+CMD /usr/local/bin/init_container.sh
