@@ -9,7 +9,8 @@ echo "SEPAL_ENV_FILE=${SEPAL_ENV_FILE}"
 echo
 
 function build {
-  local DOCKER_BUILDKIT=$2
+#   local DOCKER_BUILDKIT=$2
+  local DOCKER_BUILDKIT=1
   local MODULE=$1
   echo
   echo "*** Building ${MODULE} ***"
