@@ -120,6 +120,9 @@ const getChildNodes = STree.getChildNodes
 const getMTime = node =>
     STree.getValue(node)?.mtime
 
+const getSize = node =>
+    STree.getValue(node)?.size
+
 const isDirectory = node =>
     STree.getValue(node)?.dir
     
@@ -141,5 +144,5 @@ const isRemoving = node =>
 export const FileTree = {
     create, expandDirectory, collapseDirectory, collapseAllDirectories, selectItem, deselectItem, deselectDescendants,
     setRemoving, updateItem, getSelectedItems, getOpenDirectories, toStringPath, fromStringPath, getPath, getDepth,
-    getChildNodes, getMTime, isDirectory, isSelected, isOpened, isLoading, isAdding, isRemoving
+    getChildNodes, getMTime, getSize, isDirectory, isSelected, isOpened, isLoading, isAdding, isRemoving
 }

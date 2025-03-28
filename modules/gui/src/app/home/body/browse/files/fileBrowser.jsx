@@ -255,8 +255,9 @@ class _FileBrowser extends React.Component {
 
     renderFileInfo(node) {
         const mtime = FileTree.getMTime(node)
+        const size = FileTree.getSize(node)
         const info = [
-            format.fileSize(node.size, {unit: 'bytes'}),
+            format.fileSize(size, {unit: 'bytes'}),
             moment(mtime).fromNow()
         ].join(', ')
         return (
