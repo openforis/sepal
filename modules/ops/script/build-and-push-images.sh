@@ -5,6 +5,7 @@ export SEPAL_VERSION=$1
 export SEPAL_DATA_DIR=/data
 export SEPAL_BACKUP_DIR=/tmp/sepal-backup
 export DEPLOY_ENVIRONMENT=OPS
+export DOCKER_BUILDKIT=1 
 
 function build {
   local MODULE=$1

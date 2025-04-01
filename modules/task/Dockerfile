@@ -24,10 +24,6 @@ RUN groupadd --gid 1000 node && \
 
 RUN npm install -g nodemon
 
-# Set bash prompt
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
-
 ADD lib/js/shared ${JS_SHARED}
 WORKDIR ${JS_SHARED}
 USER root

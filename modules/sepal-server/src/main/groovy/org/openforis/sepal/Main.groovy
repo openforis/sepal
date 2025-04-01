@@ -40,7 +40,7 @@ class Main {
         )
         def taskComponent = start new TaskComponent(
                 workerSessionComponent,
-                new HttpWorkerGateway(config.sepalUsername, config.sepalPassword, 80),
+                new HttpWorkerGateway(config.sepalUsername, config.sepalPassword, 8080),
                 connectionManager
         )
         def dataSearchComponent = start DataSearchComponent.create(processingRecipeComponent, taskComponent, connectionManager)

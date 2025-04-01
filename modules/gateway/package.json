@@ -11,11 +11,11 @@
     "license": "ISC",
     "dependencies": {
         "commander": "^13.1.0",
-        "connect-redis": "^8.0.1",
+        "connect-redis": "^8.0.2",
         "express": "^4.21.2",
         "express-session": "^1.18.1",
         "http-proxy-middleware": "^3.0.3",
-        "ioredis": "^5.5.0",
+        "ioredis": "^5.6.0",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
         "micromatch": "^4.0.8",

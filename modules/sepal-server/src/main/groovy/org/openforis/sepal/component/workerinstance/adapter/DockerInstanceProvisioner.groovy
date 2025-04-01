@@ -54,7 +54,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
             LOG.warn("$instance not provisioned: $e.message")
             return false
         }
-        LOG.debug("$instance is provisioned: $e.message")
+        LOG.debug("$instance is provisioned: $instance")
         return true
     }
 

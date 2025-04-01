@@ -44,13 +44,6 @@ const setUser = async user => {
         })
 }
 
-const updateUser = async user => {
-    if (await getUser(user.username, {allowMissing: true})) {
-        log.trace(`${userTag(user.username)} update`)
-        return await setUser(user)
-    }
-}
-
 const removeUser = async (username, {allowMissing} = {}) => {
     log.trace(`${userTag(username)} remove`)
     await redis.del(userKey(username))
@@ -72,4 +65,4 @@ const removeUser = async (username, {allowMissing} = {}) => {
 const isConnectedWithGoogle = user =>
     !!user.googleTokens
 
-module.exports = {getUser, setUser, updateUser, removeUser, isConnectedWithGoogle}
+module.exports = {getUser, setUser, removeUser, isConnectedWithGoogle}

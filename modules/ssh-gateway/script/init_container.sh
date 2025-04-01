@@ -12,12 +12,6 @@ function template {
 
 mkdir -p /var/run/sshd
 
-cp /script/ssh-bootstrap /usr/local/bin/ssh-bootstrap
-chmod 555 /usr/local/bin/ssh-bootstrap
-
-cp /script/alive.sh /usr/local/bin/alive.sh
-chmod 555 /usr/local/bin/alive.sh
-
 template /config/ldap.conf /etc/ldap.conf root: 0600
 template /config/ldap.conf /etc/ldap/ldap.conf root: 0600
 template /config/ldap.secret /etc/ldap.secret root: 0600

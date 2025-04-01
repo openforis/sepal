@@ -24,6 +24,8 @@ export const STATUS = {
     UPDATED_PACKAGES: 'UPDATED_PACKAGES',
     CLEANING_PACKAGES: 'CLEANING_PACKAGES',
     INSTALLING_PACKAGES: 'INSTALLING_PACKAGES',
+    INSTALLING_SHARED_PACKAGES: 'INSTALLING_SHARED_PACKAGES',
+    INSTALLING_MODULE_PACKAGES: 'INSTALLING_MODULE_PACKAGES',
     INSTALLED_PACKAGES: 'INSTALLED_PACKAGES',
     REBUILDING_PACKAGES: 'REBUILDING_PACKAGES',
     SKIPPED: 'SKIPPED'
@@ -31,8 +33,8 @@ export const STATUS = {
 
 export const MESSAGE = {
     UNDEFINED: chalk.grey('UNDEFINED'),
-    NON_RUNNABLE: chalk.grey('NON-RUNNABLE'),
     BUILDING: chalk.green('BUILDING...'),
+    NON_RUNNABLE: chalk.grey('NON-RUNNABLE'),
     BUILT: chalk.greenBright('BUILT'),
     STARTING: chalk.green('STARTING...'),
     STOPPING: chalk.red('STOPPING...'),
@@ -42,6 +44,8 @@ export const MESSAGE = {
     UPDATED_PACKAGES: chalk.magentaBright('UPDATED PACKAGES'),
     CLEANING_PACKAGES: chalk.magenta('CLEANING PACKAGES...'),
     INSTALLING_PACKAGES: chalk.magenta('INSTALLING PACKAGES...'),
+    INSTALLING_SHARED_PACKAGES: chalk.magenta('INSTALLING SHARED PACKAGES...'),
+    INSTALLING_MODULE_PACKAGES: chalk.magenta('INSTALLING MODULE PACKAGES...'),
     INSTALLED_PACKAGES: chalk.magentaBright('INSTALLED PACKAGES'),
     TESTING_PACKAGES: chalk.magenta('TESTING PACKAGES...'),
     TESTED_PACKAGES: chalk.magentaBright('TESTED PACKAGES'),
@@ -334,3 +338,28 @@ export const multi = async (items, iterator, sequential = false) =>
     sequential
         ? await iterateSequential(items, iterator)
         : await iterateParallel(items, iterator)
+
+export const progress = async (promise, callback) => {
+    const result = {}
+        
+    const complete = async () =>
+        new Promise((resolve, reject) => {
+            const check = (count = 0) => {
+                if (result.done) {
+                    resolve()
+                } else if (result.error) {
+                    reject(result.error)
+                } else {
+                    callback && callback(count)
+                    setTimeout(() => check(count + 1), 1000)
+                }
+            }
+            check()
+        })
+        
+    promise
+        .then(() => result.done = true)
+        .catch(error => result.error = error)
+        
+    await complete()
+}
