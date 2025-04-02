@@ -1,4 +1,3 @@
-import moment from 'moment'
 import React from 'react'
 
 import {recipe} from '~/app/home/body/process/recipeContext'
@@ -67,10 +66,7 @@ export default () => ({
     },
     noImageOutput: true,
     getDependentRecipeIds,
-    getDateRange: recipe => [
-        moment.utc(recipe.model.dates.startDate, 'YYYY-MM-DD'),
-        moment.utc(recipe.model.dates.endDate, 'YYYY-MM-DD')
-    ],
+    getDateRange: () => undefined,
     getAvailableBands,
     getPreSetVisualizations
 })

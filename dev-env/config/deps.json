@@ -15,6 +15,9 @@
         "run": []
     },
     "ceo-gateway": {
+        "lib": [
+            "shared"
+        ],
         "build": {},
         "run": [
             "logger"

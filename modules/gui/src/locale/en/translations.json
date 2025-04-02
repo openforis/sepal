@@ -4785,15 +4785,38 @@
                 "sampleArrangement": {
                     "button": "ARR",
                     "form": {
-                        "strategy": {
+                        "arrangementStrategy": {
                             "label": "Arrangement strategy",
                             "tooltip": "Specify how samples should be arrange in each stratum",
                             "RANDOM": {
-                                "label": "Random"
+                                "label": "Random",
+                                "tooltip": "Randomly select samples within each stratun"
                             },
                             "SYSTEMATIC": {
-                                "label": "Systematic"
+                                "label": "Systematic",
+                                "tooltip": "Select samples from a discrete grid within each stratum"
                             }
+                        },
+                        "sampleSizeStrategy": {
+                            "label": "Sample size strategy",
+                            "tooltip": "It's impossible to find a discrete systematic grid that gives the exact number of samples as requested in the allocation. These strategies provides options on how to handle this.",
+                            "OVER": {
+                                "label": "Oversample",
+                                "tooltip": "Pick a grid level that gives you more than the requested sample allocation. Note that there still no guarantee that sample size reached, but an effort is made to reach it."
+                            },
+                            "CLOSEST": {
+                                "label": "Closest",
+                                "tooltip": "Pick a grid level that get you as close as possible to the requested sample allocation, even if it's smaller."
+                            },
+                            "EXACT": {
+                                "label": "Exact",
+                                "tooltip": "(Not a purely systematic arrangement) Randomly removes samples to reach the requested sample allocation. Note that there still no guarantee that sample size reached, but an effort is made to reach it."
+                            }
+                        },
+                        "minDistance": {
+                            "label": "Min distance",
+                            "placeholder": "Min distance...",
+                            "tooltip": "The minimum distance between samples. For random arrangement, it only guarantees minimum distance within each stratum"
                         },
                         "seed": {
                             "label": "Seed",

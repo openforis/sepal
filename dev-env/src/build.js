@@ -1,10 +1,47 @@
 import {compose} from './compose.js'
 import {start} from './start.js'
 import {exec} from './exec.js'
-import {getModules, isModule, showModuleStatus, MESSAGE, firstLine} from './utils.js'
-import {getBuildDeps, getBuildRunDeps} from './deps.js'
+import {getModules, isModule, showModuleStatus, MESSAGE, firstLine, isNodeModule} from './utils.js'
+import {getBuildDeps, getBuildRunDeps, getLibDeps} from './deps.js'
 import {log} from './log.js'
 import _ from 'lodash'
+import {SEPAL_SRC} from './config.js'
+
+const ensurePackageLockExists = async (modulePath, lib) => {
+    const path = lib ? `${modulePath}/lib/${lib}` : modulePath
+    await exec({
+        command: 'mkdir',
+        args: [
+            '-p',
+            `${path}/node_modules`
+        ]
+    })
+    await exec({
+        command: 'touch',
+        args: [
+            `${path}/package-lock.json`
+        ]
+    })
+    await exec({
+        command: 'chown',
+        args: [
+            '-R',
+            '1000:1000',
+            `${path}`
+        ]
+    })
+}
+
+const updateModule = async module => {
+    const modulePath = `${SEPAL_SRC}/modules/${module}`
+    if (await isNodeModule(modulePath)) {
+        const libs = getLibDeps(module)
+        await ensurePackageLockExists(modulePath)
+        for (const lib of libs) {
+            await ensurePackageLockExists(modulePath, lib)
+        }
+    }
+}
 
 const buildModule = async (module, options = {}, pull) => {
     if (isModule(module)) {
@@ -19,6 +56,8 @@ const buildModule = async (module, options = {}, pull) => {
                 showStdOut: !options.quiet
             })
         )
+
+        await updateModule(module)
 
         await compose({
             module,

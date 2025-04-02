@@ -1,6 +1,6 @@
 import {compose} from './compose.js'
 import {exec} from './exec.js'
-import {getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning, multi} from './utils.js'
+import {getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning, multi, progress} from './utils.js'
 import {logs} from './logs.js'
 import {getRunDependencyMap} from './deps.js'
 import {SEPAL_SRC} from './config.js'
@@ -10,18 +10,19 @@ const startModule = async (module, options = {}, rootModule, gradleOptions) => {
     if (isModule(module)) {
         if (isRunnable(module)) {
             if (gradleOptions.build && isGradleModule(module) && !await isRunning(module)) {
-                showModuleStatus('gradle', MESSAGE.BUILDING, {sameLine: true})
-
-                await exec({
-                    command: 'gradle',
-                    args: [
-                        '-x',
-                        'test',
-                        'build'
-                    ],
-                    cwd: SEPAL_SRC,
-                    showStdOut: options.verbose
-                })
+                await progress(
+                    exec({
+                        command: 'gradle',
+                        args: [
+                            '-x',
+                            'test',
+                            'build'
+                        ],
+                        cwd: SEPAL_SRC,
+                        showStdOut: options.verbose
+                    }),
+                    count => showModuleStatus('gradle', [MESSAGE.BUILDING, '.'.repeat(count)].join(' '), {sameLine: true})
+                )
 
                 showModuleStatus('gradle', MESSAGE.BUILT)
                 gradleOptions.build = false

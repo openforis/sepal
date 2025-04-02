@@ -107,7 +107,8 @@ const updateTree = (prevTree, updateTree) =>
                 tree,
                 STree.getPath(updateNode),
                 true,
-                node => STree.updateValue(node, ({adding: _adding, removing: _removing, ...prevValue} = {}) => ({...prevValue}))
+                // node => STree.updateValue(node, ({adding: _adding, removing: _removing, ...prevValue} = {}) => ({...prevValue, type: 'Folder', opened: true}))
+                node => STree.updateValue(node, ({adding: _adding, removing: _removing, ...prevValue} = {}) => ({...prevValue, type: 'Folder'}))
             )
             const updateValue = STree.getValue(updateNode)
     

@@ -32,11 +32,12 @@ RUN mkdir -p /usr/local/share/voila /usr/local/share/jupyter && \
 ln -sf /usr/local/share/voila /usr/local/share/jupyter/voila && \
     pip3 install "voila==0.5.8"
 
-RUN adduser node && adduser node sudo && echo 'node      ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
-
-# Set bash prompt
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
+# Create "node" user with unrestricted sudo capabilities
+RUN adduser node
+RUN cat <<EOF > /etc/sudoers.d/node
+node ALL=(ALL) NOPASSWD:ALL
+EOF
+RUN chmod 0440 /etc/sudoers.d/node
 
 # Install node.js
 
@@ -50,7 +51,9 @@ RUN npm install -g nodemon
 
 USER node
 ADD lib/js/shared ${SHARED}
-WORKDIR ${SHARED}/js/shared
+ADD modules/${MODULE_NAME}/lib/shared/package-*.json ${SHARED}
+
+WORKDIR ${SHARED}
 USER root
 RUN chown -R node: ${SHARED}
 USER node

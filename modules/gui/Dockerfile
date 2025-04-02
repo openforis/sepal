@@ -5,30 +5,37 @@ EXPOSE 80
 ENV MODULE_NAME gui
 ENV MODULE /usr/local/src/sepal/modules/gui
 
+# install global packages
 RUN apk update && apk add net-tools nginx gettext envsubst
 
-USER root
-
-ADD modules/${MODULE_NAME}/package.json ${MODULE}/
-ADD modules/${MODULE_NAME}/package-lock.json ${MODULE}/
+# install module packages
 WORKDIR ${MODULE}
+ADD modules/${MODULE_NAME}/package.json .
+ADD modules/${MODULE_NAME}/package-lock.json .
 RUN npm install
 
-ADD modules/${MODULE_NAME}/src ${MODULE}/src
-ADD modules/${MODULE_NAME}/public ${MODULE}/public
-ADD modules/${MODULE_NAME}/.env ${MODULE}/.env
-ADD modules/${MODULE_NAME}/jsconfig.json ${MODULE}/jsconfig.json
-ADD modules/${MODULE_NAME}/index.html ${MODULE}/index.html
-ADD modules/${MODULE_NAME}/vite.config.js ${MODULE}/vite.config.js
+# add module resources
+WORKDIR ${MODULE}
+ADD modules/${MODULE_NAME}/src ./src
+ADD modules/${MODULE_NAME}/public ./public
+ADD modules/${MODULE_NAME}/.env ./.env
+ADD modules/${MODULE_NAME}/jsconfig.json ./jsconfig.json
+ADD modules/${MODULE_NAME}/index.html ./index.html
+ADD modules/${MODULE_NAME}/vite.config.js ./vite.config.js
+ADD modules/${MODULE_NAME}/nginx.conf ./nginx.conf
 
+# build
 RUN npm run build
 
-ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
-RUN chmod 700 /usr/local/bin/start.sh
-ADD modules/${MODULE_NAME}/nginx.conf ${MODULE}/nginx.conf
+# add shell scripts
+ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin
 
+# expose environment variables
 ARG BUILD_NUMBER
 ENV BUILD_NUMBER=$BUILD_NUMBER
 ARG GIT_COMMIT
 ENV GIT_COMMIT=$GIT_COMMIT
+
+# run
+USER root
 CMD start.sh

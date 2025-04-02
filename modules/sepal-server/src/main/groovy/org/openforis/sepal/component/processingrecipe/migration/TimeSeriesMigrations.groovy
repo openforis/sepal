@@ -16,7 +16,6 @@ class TimeSeriesMigrations extends AbstractMigrations {
             return r
         })
         addMigration(6, { Map r ->
-            println('SOURCES', r.model.sources)
             'SENTINEL_1' in r.model.sources.keySet()
                 ? SpeckleFilter.migrate(r)
                 : r

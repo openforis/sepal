@@ -26,10 +26,6 @@ RUN apt-get install nodejs -y
 # Install node global packages
 RUN npm install -g nodemon
 
-# Set bash prompt
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
-RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
-
 # Install shared node.js lib
 ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}

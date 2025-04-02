@@ -255,8 +255,9 @@ class _FileBrowser extends React.Component {
 
     renderFileInfo(node) {
         const mtime = FileTree.getMTime(node)
+        const size = FileTree.getSize(node)
         const info = [
-            format.fileSize(node.size, {unit: 'bytes'}),
+            format.fileSize(size, {unit: 'bytes'}),
             moment(mtime).fromNow()
         ].join(', ')
         return (
@@ -422,7 +423,7 @@ class _FileBrowser extends React.Component {
         const oneFileSelected = files === 1 && directories === 0
         const {files: selectedFiles} = FileTree.getSelectedItems(tree)
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
-        const downloadUrl = selectedFile && api.userFiles.downloadUrl(selectedFile)
+        const downloadUrl = selectedFile && api.userFiles.downloadUrl(FileTree.toStringPath(selectedFile))
         const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
         return (
             <ButtonGroup layout='horizontal'>

@@ -1,11 +1,9 @@
-import moment from 'moment'
+import _ from 'lodash'
 
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
-
-const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const defaultModel = {
     stratification: {
@@ -35,12 +33,23 @@ const submitRetrieveRecipeTask = recipe => {
     const operation = `samplingDesign.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
     const name = recipe.title || recipe.placeholder
     const title = msg(['process.retrieve.form.task.SEPAL'], {name})
+    const properties = {
+        recipe_id: recipe.id,
+        recipe_projectId: recipe.projectId,
+        recipe_type: recipe.type,
+        recipe_title: recipe.title || recipe.placeholder,
+        ..._(recipe.model)
+            .mapValues(value => JSON.stringify(value))
+            .mapKeys((_value, key) => `recipe_${key}`)
+            .value()
+    }
     const task = {
         operation,
         params: {
             title,
             description: name,
             recipe,
+            properties,
             ...recipe.ui.retrieveOptions
         }
     }
@@ -57,4 +66,3 @@ export const loadObservations$ = ({recipe, latLng, bands}) =>
         recipe, latLng, bands
     })
 
-export const dateRange = dates => ([moment(dates.startDate, DATE_FORMAT), moment(dates.endDate, DATE_FORMAT)])

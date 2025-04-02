@@ -6,34 +6,37 @@ ENV MODULE_NAME terminal
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
+# install global packages
 RUN apk update && apk add net-tools sudo python3 g++ make openssh
-
-RUN echo "node ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/node && chmod 0440 /etc/sudoers.d/node
-
 RUN npm install -g nodemon
 
-ADD lib/js/shared ${SHARED}
-WORKDIR ${SHARED}/js/shared
-USER root
-RUN chown -R node: ${SHARED}
-USER node
+# configure sudoers
+RUN cat <<EOF > /etc/sudoers.d/node
+node ALL=(ALL) NOPASSWD:ALL
+EOF
+RUN chmod 0440 /etc/sudoers.d/node
+
+# install lib packages
+WORKDIR ${SHARED}
+ADD lib/js/shared .
+ADD modules/${MODULE_NAME}/lib/shared/package-lock.json .
 RUN npm install
 
-ADD modules/${MODULE_NAME}/package.json ${MODULE}/
-ADD modules/${MODULE_NAME}/package-lock.json ${MODULE}/
+# install module packages
 WORKDIR ${MODULE}
-USER root
-RUN mkdir src && chown -R node: ${MODULE}
-USER node
+ADD modules/${MODULE_NAME}/package.json .
+ADD modules/${MODULE_NAME}/package-lock.json .
 RUN npm install
 
-USER root
-ADD modules/${MODULE_NAME}/script/ssh_gateway.sh /usr/local/bin/ssh_gateway.sh
-RUN chmod +x /usr/local/bin/ssh_gateway.sh
+# add module source
+WORKDIR ${MODULE}
+ADD modules/${MODULE_NAME}/src ./src
+ADD modules/${MODULE_NAME}/config ./config
 
+# add scripts
+ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin
+ADD --chmod=0755 modules/${MODULE_NAME}/script/ssh_gateway.sh /usr/local/bin
+
+# run
 USER node
-ADD modules/${MODULE_NAME}/src ${MODULE}/src
-ADD modules/${MODULE_NAME}/config ${MODULE}/config
-ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
-
 CMD start.sh
