@@ -133,7 +133,7 @@ class _AssetDestinationBrowser extends React.Component {
     createFolder(folder) {
         const {assets: {createFolder, isExistingPath}} = this.props
         const {selectedFolder} = this.state
-        const path = [...selectedFolder, folder]
+        const path = [...selectedFolder, ...folder.split('/')]
         if (isExistingPath(path)) {
             Notifications.error({
                 message: msg('browse.createFolder.existing.error'),
