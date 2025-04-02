@@ -62,7 +62,6 @@ const createAssetManager = ({out$, stop$}) => {
             scheduledReload$(username),
             immediateReload$(username)
         ).pipe(
-            tap(() => log.debug(`${userTag(username)} reloading now`)),
             map(() => username)
         )
 
@@ -184,9 +183,10 @@ const createAssetManager = ({out$, stop$}) => {
                     switchMap(({username}) =>
                         of(username).pipe(
                             tap(() => log.debug(`${userTag(username)} monitoring assets`)),
-                            switchMap(() => reloadTrigger$(username)),
-                            exhaustMap(() => scanTree$(username).pipe(
-                                map(tree => ({username, tree}))
+                            switchMap(() => reloadTrigger$(username).pipe(
+                                exhaustMap(() => scanTree$(username).pipe(
+                                    map(tree => ({username, tree}))
+                                ))
                             )),
                             repeat({delay: 0}),
                             retry({delay: MIN_REFRESH_DELAY_MS}),
@@ -217,6 +217,9 @@ const createAssetManager = ({out$, stop$}) => {
 
     const storedUserAssets$ = username =>
         from(getAssets(username, {allowMissing: true})).pipe(
+            tap(({assets}) => {
+                if (!assets) reload$.next(username)
+            }),
             map(({assets} = {}) => ({tree: assets || emptyTree()}))
         )
 
@@ -233,7 +236,6 @@ const createAssetManager = ({out$, stop$}) => {
                 concat(storedUserAssets$(username), userAssetsUpdated$(username)).pipe(
                     map(({tree, node}) => ({clientId, subscriptionId, data: {tree, node, busy: isBusy(username)}})),
                     takeUntil(currentSubscriptionDown$(subscriptionId)),
-                    // takeUntil(currentUserDown$(username)),
                     finalize(() => log.debug(`${subscriptionTag({username, clientId, subscriptionId})} down`))
                 )
             )

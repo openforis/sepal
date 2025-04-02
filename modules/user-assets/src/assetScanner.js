@@ -62,6 +62,7 @@ const getStats = assets =>
     } : acc), {})
 
 const scanTree$ = username => {
+    log.info(`${userTag(username)} assets loading`)
     increaseBusy(username)
     const cancel$ = new Subject()
     return from(getUser(username)).pipe(
