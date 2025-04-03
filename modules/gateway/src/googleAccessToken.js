@@ -1,4 +1,4 @@
-const {defer, groupBy, mergeMap, tap, takeUntil, filter, timer, switchMap, of, from, map, repeat, takeWhile, retry} = require('rxjs')
+const {groupBy, mergeMap, tap, takeUntil, filter, timer, switchMap, of, from, map, repeat, takeWhile, retry} = require('rxjs')
 const {userTag} = require('./tag')
 const {USER_UP, USER_DOWN} = require('./websocket-events')
 const {updateGoogleAccessToken$, revokeGoogleAccess$} = require('./userApi')
@@ -23,10 +23,10 @@ const initializeGoogleAccessTokenRefresher = ({userStore, userStatus$, toUser$})
         Math.max(0, googleTokens.accessTokenExpiryDate - Date.now() - REFRESH_IF_EXPIRES_IN_MINUTES * 60000)
 
     const getUser$ = username =>
-        defer(() => from(userStore.getUser(username)))
+        from(userStore.getUser(username))
 
     const setUser$ = user =>
-        defer(() => from(userStore.setUser(user))).pipe(
+        from(userStore.setUser(user)).pipe(
             map(() => user)
         )
 
