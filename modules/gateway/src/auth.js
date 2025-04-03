@@ -1,4 +1,4 @@
-const {map, defer, firstValueFrom, from, of, switchMap} = require('rxjs')
+const {map, defer, firstValueFrom, from, of, switchMap, tap} = require('rxjs')
 const {post$} = require('#sepal/httpClient')
 const modules = require('../config/modules')
 const {usernameTag, urlTag} = require('./tag')
@@ -60,17 +60,34 @@ const Auth = userStore => {
                 }
             }
 
-            const authenticated$ = (username, response) => {
-                const {body} = response
-                log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticated user`)
-                const user = JSON.parse(body)
-                return from(userStore.setUser(user)).pipe(
-                    switchMap(() => {
-                        setSessionUsername(req, username)
+            const isGuiRequest = () =>
+                req.header('No-auth-challenge')
+
+            const authenticatedGuiRequest$ = (username, user) =>
+                from(userStore.setUser(user)).pipe(
+                    switchMap(() => of(AUTHENTICATION_SUCCEEDED).pipe(
+                        tap(() => {
+                            setSessionUsername(req, username)
+                            setRequestUser(req, user)
+                            log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticated gui request`)
+                        })
+                    ))
+                )
+
+            const authenticatedNonGuiRequest$ = (username, user) =>
+                of(AUTHENTICATION_SUCCEEDED).pipe(
+                    tap(() => {
                         setRequestUser(req, user)
-                        return of(AUTHENTICATION_SUCCEEDED)
+                        log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticated non-gui request`)
                     })
                 )
+                
+            const authenticated$ = (username, response) => {
+                const {body} = response
+                const user = JSON.parse(body)
+                return isGuiRequest()
+                    ? authenticatedGuiRequest$(username, user)
+                    : authenticatedNonGuiRequest$(username, user)
             }
 
             const invalidCredentials$ = username => {

@@ -42,7 +42,7 @@ const updateGoogleAccessToken$ = user => {
                     return null
                 }
             } else {
-                log.debug(`${userTag(user.username)} Google access token invalidated`)
+                log.info(`${userTag(user.username)} Google access token invalidated`)
                 return null
             }
         }),
