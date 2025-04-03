@@ -121,8 +121,8 @@ const createAssetManager = ({out$, stop$}) => {
         takeUntil(stop$)
     ).subscribe({
         next: user => monitor$.next(user),
-        error: error => log.error('Unexpected user stream error', error),
-        complete: () => log.error('Unexpected user stream complete')
+        error: error => log.error('Unexpected userUp$ stream error', error),
+        complete: () => log.error('Unexpected userUp$ stream complete')
     })
 
     userUpdate$.pipe(
@@ -144,8 +144,8 @@ const createAssetManager = ({out$, stop$}) => {
                 monitor$.next(user)
             }
         },
-        error: error => log.error('Unexpected user stream error', error),
-        complete: () => log.error('Unexpected user stream complete')
+        error: error => log.error('Unexpected userUpdate$ stream error', error),
+        complete: () => log.error('Unexpected userUpdate$ stream complete')
     })
 
     userDown$.pipe(
@@ -156,8 +156,8 @@ const createAssetManager = ({out$, stop$}) => {
             unmonitor$.next(user)
             await removeUser(user.username, {allowMissing: true})
         },
-        error: error => log.error('Unexpected user stream error', error),
-        complete: () => log.error('Unexpected user stream complete')
+        error: error => log.error('Unexpected userDown$ stream error', error),
+        complete: () => log.error('Unexpected userDown$ stream complete')
     })
 
     userUpdate$.pipe(
@@ -171,8 +171,8 @@ const createAssetManager = ({out$, stop$}) => {
             await removeUser(user.username, {allowMissing: true})
             await removeAssets(user.username, {allowMissing: true})
         },
-        error: error => log.error('Unexpected user stream error', error),
-        complete: () => log.error('Unexpected user stream complete')
+        error: error => log.error('Unexpected userUpdate$ stream error', error),
+        complete: () => log.error('Unexpected userUpdate$ stream complete')
     })
 
     monitor$.pipe(
@@ -201,8 +201,8 @@ const createAssetManager = ({out$, stop$}) => {
         catchError(error => log.error(error))
     ).subscribe({
         next: async ({username, tree}) => updateTree(username, tree),
-        error: error => log.error('Unexpected user stream error', error),
-        complete: () => log.error('Unexpected user stream complete')
+        error: error => log.error('Unexpected monitor$ stream error', error),
+        complete: () => log.error('Unexpected monitor$ stream complete')
     })
 
     const getAssetsReloadDelay = async username => {

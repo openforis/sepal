@@ -1,4 +1,4 @@
-const {map, defer, firstValueFrom, from, of, switchMap} = require('rxjs')
+const {map, defer, firstValueFrom, from, of, switchMap, tap} = require('rxjs')
 const {post$} = require('#sepal/httpClient')
 const modules = require('../config/modules')
 const {usernameTag, urlTag} = require('./tag')
@@ -60,17 +60,33 @@ const Auth = userStore => {
                 }
             }
 
-            const authenticated$ = (username, response) => {
-                const {body} = response
-                log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticated user`)
-                const user = JSON.parse(body)
-                return from(userStore.setUser(user)).pipe(
+            const isGuiRequest = () =>
+                req.header('No-auth-challenge')
+
+            const authenticatedGuiRequest$ = (user, username) =>
+                from(userStore.setUser(user)).pipe(
                     switchMap(() => {
                         setSessionUsername(req, username)
                         setRequestUser(req, user)
                         return of(AUTHENTICATION_SUCCEEDED)
+                    }))
+
+            const authenticatedNonGuiRequest$ = user =>
+                of(true).pipe(
+                    switchMap(() => {
+                        setRequestUser(req, user)
+                        return of(AUTHENTICATION_SUCCEEDED)
                     })
+
                 )
+                
+            const authenticated$ = (username, response) => {
+                const {body} = response
+                log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticated user`)
+                const user = JSON.parse(body)
+                return isGuiRequest()
+                    ? authenticatedGuiRequest$(user, username)
+                    : authenticatedNonGuiRequest$(user)
             }
 
             const invalidCredentials$ = username => {
