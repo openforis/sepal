@@ -2,15 +2,13 @@ const _ = require('lodash')
 const {userTag} = require('./tag')
 const log = require('#sepal/log').getLogger('assetScanner')
 
-const {tap, map, mergeWith, of, switchMap, catchError, scan, from, Subject, finalize, timer, throttle, raceWith} = require('rxjs')
+const {tap, map, mergeWith, of, switchMap, catchError, from, Subject, finalize, reduce} = require('rxjs')
 const {getUser} = require('./userStore')
 const {STree} = require('#sepal/tree/sTree')
 const {getAsset$} = require('./asset')
 
 const busy = {}
 const busy$ = new Subject()
-
-const PARTIAL_UPDATES_DELAY_MS = 10000
 
 const increaseBusy = username => {
     if (busy[username]) {
@@ -64,19 +62,19 @@ const getStats = assets =>
     } : acc), {})
 
 const scanTree$ = username => {
+    log.info(`${userTag(username)} assets loading`)
     increaseBusy(username)
     const cancel$ = new Subject()
     return from(getUser(username)).pipe(
         switchMap(user =>
             loadNode$(user, [], true).pipe(
                 finalize(() => cancel$.next()),
-                scan((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
+                reduce((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
                 tap({
                     next: assets => log.info(`${userTag(username)} assets loading:`, getStats(assets)),
                     error: error => log.warn(`${userTag(username)} assets failed`, error),
                     complete: () => log.info(`${userTag(username)} assets loaded`)
-                }),
-                throttle(() => timer(PARTIAL_UPDATES_DELAY_MS).pipe(raceWith(cancel$)), {leading: true, trailing: true}),
+                })
             )
         ),
         finalize(() => decreaseBusy(username))
