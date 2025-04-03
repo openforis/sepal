@@ -39,7 +39,9 @@ const UserStore = redis => {
                     log.isTrace()
                         ? log.trace(`${userTag(user.username)} saved:`, user)
                         : log.debug(`${userTag(user.username)} saved`)
-                    userUpdate$.next(user)
+                    if (!user.systemUser) {
+                        userUpdate$.next(user)
+                    }
                     return true
                 } else {
                     throw new Error(`${usernameTag(user.username)} Could not save user into store`, result)
