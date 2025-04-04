@@ -34,8 +34,7 @@ export const withAssets = () =>
                         userAssets: assets?.user || [],
                         otherAssets: assets?.other || [],
                         recentAssets: assets?.recent || [],
-                        loading: assets?.loading || false,
-                        updating: assets?.updating || false,
+                        busy: assets?.busy || false,
                         error: assets?.error || false,
                         updateAsset: asset => command$.next({updateAsset: {asset}}),
                         removeAsset: id => command$.next({removeAsset: {id}}),
@@ -107,9 +106,10 @@ class _Assets extends React.Component {
         data !== undefined && this.onData(data)
     }
 
-    onData({tree, node, _busy}) {
+    onData({tree, node, busy}) {
         tree !== undefined && this.onTree(tree)
         node !== undefined && this.onNode(node)
+        busy !== undefined && this.onBusy(busy)
     }
 
     onTree(treeUpdate) {
@@ -122,13 +122,12 @@ class _Assets extends React.Component {
         this.setAssetTree(AssetTree.updateTree(tree, nodeUpdate))
     }
 
-    setLoading(loading) {
-        actionBuilder('LOADING_ASSETS')
-            .set('assets.loading', loading)
-            .del('assets.error')
+    onBusy(busy) {
+        actionBuilder('ASSETS_BUSY', {busy})
+            .set('assets.busy', busy)
             .dispatch()
     }
-        
+
     setAssetTree(assetTree) {
         log.debug('Updating asset tree', assetTree)
         const assetList = AssetTree.toList(assetTree)
@@ -139,7 +138,6 @@ class _Assets extends React.Component {
             .setIfChanged('assets.roots', assetRoots)
             .setIfChanged('assets.tree', assetTree)
             .setIfChanged('assets.user', assetList)
-            .del('assets.loading')
             .dispatch()
     }
 
