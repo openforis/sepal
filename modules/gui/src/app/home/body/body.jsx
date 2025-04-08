@@ -28,8 +28,8 @@ const mapStateToProps = () => ({
 class _Body extends React.Component {
     componentDidUpdate() {
         const {budgetExceeded, location} = this.props
-        if (this.props.location.pathname === '/' || budgetExceeded && !['/-/process', '/-/browse', '/-/users'].includes(location.pathname)) {
-            history().replace('/-/process')
+        if (this.props.location.pathname === '/-/process' || budgetExceeded && !['/-/browse', '/-/users'].includes(location.pathname)) {
+            history().replace('/')
         }
     }
 
@@ -39,7 +39,7 @@ class _Body extends React.Component {
             <div className={className}>
                 <div className={styles.sections}>
                     <StaticMap/>
-                    <Section path='/-/process'>
+                    <Section path='/'>
                         <Process/>
                     </Section>
                     <Section path='/-/browse'>
