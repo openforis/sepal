@@ -325,6 +325,11 @@
     },
     "home": {
         "connectivityError": "You are currently unable to connect to the SEPAL server.",
+        "versionMismatch": {
+            "title": "SEPAL has been updated!",
+            "message": "Please reload your browser as soon as possible to make sure everything works as expected.",
+            "reloadNow": "Reload now"
+        },
         "sections": {
             "account": "Account settings",
             "app-launch-pad": "Apps",

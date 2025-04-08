@@ -7,6 +7,7 @@ const {USER_UP, USER_DOWN, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION
 const log = require('#sepal/log').getLogger('websocket/downlink')
 
 const HEARTBEAT_INTERVAL_MS = 10 * 1000
+const BUILD_NUMBER = process.env.BUILD_NUMBER
 
 const initializeDownlink = ({servers, clients, wss, userStatus$, toUser$}) => {
 
@@ -115,8 +116,10 @@ const initializeDownlink = ({servers, clients, wss, userStatus$, toUser$}) => {
     const onClientMessage = (user, clientId, message) => {
         if (message) {
             try {
-                const {hb, module, subscriptionId, subscribed, unsubscribed, data} = JSON.parse(message)
-                if (hb) {
+                const {version, hb, module, subscriptionId, subscribed, unsubscribed, data} = JSON.parse(message)
+                if (version) {
+                    onClientVersion(user, clientId, version)
+                } else if (hb) {
                     log.trace('Heartbeat reply received', hb)
                     heartbeatResponse$.next({user, clientId})
                 } else if (subscribed) {
@@ -133,14 +136,21 @@ const initializeDownlink = ({servers, clients, wss, userStatus$, toUser$}) => {
                     }
                     servers.send(module, {user, clientId, subscriptionId, data})
                 } else {
-                    log.warn('Unsupported client message:', message)
+                    log.warn('Unsupported client message:', message.toString())
                 }
             } catch (error) {
                 log.error('Could not parse client message:', error)
             }
         }
     }
-    
+
+    const onClientVersion = (user, clientId, {buildNumber}) => {
+        if (buildNumber !== BUILD_NUMBER) {
+            log.info(`${clientTag(user.username, clientId)} running outdated version:`, buildNumber)
+            clients.send(clientId, {event: {versionMismatch: true}})
+        }
+    }
+
     const onClientError = (user, clientId, error) => {
         log.error(`${clientTag(user.username, clientId)} error:`, error)
         disconnect(user, clientId)
