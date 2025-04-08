@@ -252,7 +252,7 @@ const createAssetManager = ({out$, stop$}) => {
                 switchMap(user =>
                     deleteAsset$(user, path.join('/')).pipe(
                         tap({
-                            complete: () => log.info(`${userTag(username)} removed:`, path.join('/'))
+                            complete: () => log.info(`${userTag(username)} removed path:`, path.join('/'))
                         }),
                         catchError(error => {
                             log.warn(`${userTag(username)} assets failed`, error)
@@ -276,7 +276,7 @@ const createAssetManager = ({out$, stop$}) => {
                 switchMap(user =>
                     createFolder$(user, path.join('/')).pipe(
                         tap({
-                            complete: () => log.info(`${userTag(username)} created:`, path.join('/'))
+                            complete: () => log.info(`${userTag(username)} created path:`, path.join('/'))
                         }),
                         catchError(error => {
                             log.warn(`${userTag(username)} assets failed`, error)
@@ -320,18 +320,18 @@ const createAssetManager = ({out$, stop$}) => {
     const reload = ({username}) =>
         reload$.next(username)
     
-    const cancelReload = ({username, clientId, subscriptionId}) =>
+    const cancelReload = ({_username, _clientId, _subscriptionId}) =>
         log.debug('implement cancel reload')
     
     const remove = ({username, clientId, subscriptionId, paths}) => {
         paths.forEach(path => {
-            log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} remove path:`, path)
+            log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} remove path:`, path.join('/'))
             remove$.next({username, clientId, subscriptionId, path})
         })
     }
 
     const createFolder = ({username, clientId, subscriptionId, path}) => {
-        log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} create folder path:`, path)
+        log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} create path:`, path.join('/'))
         create$.next({username, clientId, subscriptionId, path})
     }
 
