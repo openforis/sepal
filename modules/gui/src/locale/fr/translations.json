@@ -325,6 +325,11 @@
     },
     "home": {
         "connectivityError": "Vous ne pouvez actuellement pas vous connecter au serveur SEPAL.",
+        "versionMismatch": {
+            "title": "",
+            "message": "",
+            "reloadNow": ""
+        },
         "sections": {
             "account": "Paramètres du compte",
             "app-launch-pad": "Applications",
