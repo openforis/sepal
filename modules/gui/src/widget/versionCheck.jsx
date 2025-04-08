@@ -52,7 +52,7 @@ class _VersionCheck extends React.Component {
     }
 
     reload() {
-        window.location.reload()
+        window.location.replace('/')
     }
 }
 
