@@ -118,23 +118,15 @@ const initializeDownlink = ({servers, clients, wss, userStatus$, toUser$}) => {
             try {
                 const {version, hb, module, subscriptionId, subscribed, unsubscribed, data} = JSON.parse(message)
                 if (version) {
-                    onClientVersion(user, clientId, version)
+                    onVersion(user, clientId, version)
                 } else if (hb) {
-                    log.trace('Heartbeat reply received', hb)
-                    heartbeatResponse$.next({user, clientId})
+                    onHeartbeat(user, clientId, hb)
                 } else if (subscribed) {
-                    clients.addSubscription(clientId, subscriptionId, module)
-                    servers.send(module, {event: SUBSCRIPTION_UP, user, clientId, subscriptionId})
+                    onSubscribed(user, clientId, subscriptionId, module)
                 } else if (unsubscribed) {
-                    clients.removeSubscription(clientId, subscriptionId)
-                    servers.send(module, {event: SUBSCRIPTION_DOWN, user, clientId, subscriptionId})
+                    onUnsubscribed(user, clientId, subscriptionId, module)
                 } else if (data) {
-                    if (log.isTrace()) {
-                        log.trace(`Forwarding message to ${moduleTag(module)}:`, data)
-                    } else {
-                        log.debug(`Forwarding message to ${moduleTag(module)}`)
-                    }
-                    servers.send(module, {user, clientId, subscriptionId, data})
+                    onData(user, clientId, subscriptionId, module, data)
                 } else {
                     log.warn('Unsupported client message:', message.toString())
                 }
@@ -144,11 +136,35 @@ const initializeDownlink = ({servers, clients, wss, userStatus$, toUser$}) => {
         }
     }
 
-    const onClientVersion = (user, clientId, {buildNumber}) => {
+    const onVersion = (user, clientId, {buildNumber}) => {
         if (buildNumber !== BUILD_NUMBER) {
             log.info(`${clientTag(user.username, clientId)} running outdated version:`, buildNumber)
             clients.send(clientId, {event: {versionMismatch: true}})
         }
+    }
+
+    const onHeartbeat = (user, clientId, hb) => {
+        log.trace('Heartbeat reply received', hb)
+        heartbeatResponse$.next({user, clientId})
+    }
+
+    const onSubscribed = (user, clientId, subscriptionId, module) => {
+        clients.addSubscription(clientId, subscriptionId, module)
+        servers.send(module, {event: SUBSCRIPTION_UP, user, clientId, subscriptionId})
+    }
+
+    const onUnsubscribed = (user, clientId, subscriptionId, module) => {
+        clients.removeSubscription(clientId, subscriptionId)
+        servers.send(module, {event: SUBSCRIPTION_DOWN, user, clientId, subscriptionId})
+    }
+
+    const onData = (user, clientId, subscriptionId, module, data) => {
+        if (log.isTrace()) {
+            log.trace(`Forwarding message to ${moduleTag(module)}:`, data)
+        } else {
+            log.debug(`Forwarding message to ${moduleTag(module)}`)
+        }
+        servers.send(module, {user, clientId, subscriptionId, data})
     }
 
     const onClientError = (user, clientId, error) => {
