@@ -47,7 +47,7 @@ const addNode = (tree, path, item) =>
         )
     )
 
-const addNodes = (tree, path, nodes) =>
+const addNodes = (tree, path, nodes = []) =>
     nodes.reduce((tree, node) => addNode(tree, path, node), tree)
 
 const getKey = ({id}, path) => {
