@@ -239,8 +239,8 @@ const createAssetManager = ({out$, stop$}) => {
     const getAssetsReloadDelay = async username => {
         const {timestamp} = await getAssets(username, {allowMissing: true})
         if (timestamp) {
-            const age = Date.now() - timestamp
-            return Math.max(0, pollIntervalMilliseconds - age)
+            const ageMilliseconds = Date.now() - timestamp
+            return Math.max(0, pollIntervalMilliseconds - ageMilliseconds)
         } else {
             return 0
         }
