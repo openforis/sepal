@@ -1,19 +1,16 @@
 const {setWorkloadTag} = require('../workloadTag')
+const {exportSystematicToAssets} = require('./systematicExport')
+const {exportRandomToAssets} = require('./randomExport')
 
 module.exports = {
     submit$: (taskId, {workspacePath, description, ...retrieveOptions}) => {
-        console.log('samplesSepalExport', {taskId, workspacePath, description, retrieveOptions})
-        // setWorkloadTag(retrieveOptions.recipe)
-        // return getCurrentContext$().pipe(
-        //     switchMap(({config}) => {
-        //         const preferredDownloadDir = workspacePath
-        //             ? `${config.homeDir}/${workspacePath}/`
-        //             : `${config.homeDir}/downloads/${description}/`
-        //         return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
-        //             switchMap(downloadDir => export$(taskId, {description, downloadDir, ...retrieveOptions})
-        //             )
-        //         )
-        //     })
-        // )
+        // TODO: Figure out the parameters for sepal export. We need format for instance
+        setWorkloadTag(recipe)
+        const {model: {sampleArrangement}} = recipe
+        
+        switch (sampleArrangement.strategy) {
+        case 'SYSTEMATIC': return exportSystematicToAssets({taskId, description, recipe, assetId, strategy})
+        case 'RANDOM': return exportRandomToAssets({taskId, description, recipe, assetId, strategy})
+        }
     }
 }

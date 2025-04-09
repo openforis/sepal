@@ -4696,7 +4696,7 @@
                     "tooltip": "Anticipate proportion of target reporting category. This is used in sample size calculations and when performing optimal sample allocation."
                 },
                 "sampleAllocation": {
-                    "button": "SMP",
+                    "button": "ALL",
                     "form": {
                         "estimateSampleSize": {
                             "label": "Specify",

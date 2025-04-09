@@ -23,9 +23,11 @@ const fields = {
     sampleSizeStrategy: new Form.Field()
         .skip((_seed, {arrangementStrategy}) => arrangementStrategy !== 'SYSTEMATIC'),
     minDistance: new Form.Field()
-        .number(),
+        .number()
+        .min(0),
     scale: new Form.Field()
-        .number(),
+        .number()
+        .greaterThan(0),
     crs: new Form.Field()
         .notBlank(),
     crsTransform: new Form.Field(),
@@ -226,7 +228,16 @@ const includeSeed = ({arrangementStrategy, sampleSizeStrategy}) =>
     arrangementStrategy === 'RANDOM' || sampleSizeStrategy === 'EXACT'
 
 const valuesToModel = values => {
-    return values
+    return {
+        requiresUpdate: values.requiresUpdate,
+        arrangementStrategy: values.arrangementStrategy,
+        sampleSizeStrategy: values.sampleSizeStrategy,
+        minDistance: parseFloat(values.minDistance),
+        scale: parseFloat(values.scale),
+        crs: values.crs,
+        crsTransform: values.crsTransform,
+        seed: parseInt(values.seed),
+    }
 }
 
 const modelToValues = model => {

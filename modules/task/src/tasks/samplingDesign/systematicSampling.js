@@ -5,8 +5,8 @@ module.exports = {stratifiedSystematicSample, filterSamples}
     
 function stratifiedSystematicSample(args) {
     var allocation = args.allocation
-    var stratification = args.stratification
     var region = args.region
+    var stratification = args.stratification.clip(region)
     var scale = ee.Number(args.scale)
     var minDistance = ee.Number(args.minDistance || scale.multiply(2))
         .max(scale.multiply(2)) // At least 2xscale as min distance
@@ -32,10 +32,9 @@ function stratifiedSystematicSample(args) {
                 var targetDiameter = ee.Number(
                     // To reduce chance of not finding enough samples in stratum,
                     // only 75% of the expected diameter is used in calclation
-                    0.75 *
-            Math.sqrt(
-                8 * stratum.area / (3 * Math.sqrt(3) * stratum.sampleSize)
-            )
+                    0.75 * Math.sqrt(
+                        8 * stratum.area / (3 * Math.sqrt(3) * stratum.sampleSize)
+                    )
                 )
                 var minExponent = minDistance.log().divide(ee.Number(2).log()).ceil()
                 var exponent = targetDiameter.log().divide(ee.Number(2).log()).floor()
@@ -120,9 +119,11 @@ function stratifiedSystematicSample(args) {
 }
 
 function filterSamples(args) {
-    var samples = args.samples
+    var region = args.region
+    var samples = args.samples.filterBounds(region)
     var allocation = args.allocation
     var strategy = args.strategy || 'OVER'
+    var seed = args.seed
 
     var allocationCollection = ee.FeatureCollection(allocation
         .map(function (stratum) {
@@ -155,9 +156,9 @@ function filterSamples(args) {
                         .filter(ee.Filter.gte('level', feature.getNumber('level')))
                         .reduceColumns(ee.Reducer.sum(), ['count'])
                         .values().getNumber(0)
-                    var diff = strategy === 'OVER'
-                        ? count.subtract(stratum.sampleSize)
-                        : count.subtract(stratum.sampleSize).abs()
+                    var diff = strategy === 'CLOSEST'
+                        ? count.subtract(stratum.sampleSize).abs()
+                        : count.subtract(stratum.sampleSize)
                     return feature.set('diff', diff)
                 })
             var level = diffs
@@ -167,9 +168,16 @@ function filterSamples(args) {
                     ['diff', 'level']
                 )
                 .getNumber('level')
-            return samples
+            var filtered = samples
                 .filter(ee.Filter.eq('stratum', stratum.stratum))
                 .filter(ee.Filter.gte('level', level))
+
+            return (strategy === 'EXACT'
+                ? filtered
+                    .randomColumn('random', seed)
+                    .limit(stratum.sampleSize)
+                : filtered
+            ).select(['id', 'stratum', 'color'])
         })
     ).flatten().map(setProperties)
     
