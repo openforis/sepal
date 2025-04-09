@@ -125,52 +125,82 @@ const createAssetManager = ({out$, stop$}) => {
         complete: () => log.error('Unexpected userUp$ stream complete')
     })
 
-    userUpdate$.pipe(
-        filter(user => isConnectedWithGoogle(user)),
-        tap(({username}) => log.debug(`${userTag(username)} updated, connected to Google`)),
-        takeUntil(stop$)
-    ).subscribe({
-        next: async user => {
-            const prevUser = await getUser(user.username, {allowMissing: true})
-            if (prevUser) {
-                const accessTokenChanged = prevUser.googleTokens.accessToken !== user.googleTokens.accessToken
-                const projectIdChanged = prevUser.googleTokens.projectId !== user.googleTokens.projectId
-                if (accessTokenChanged || projectIdChanged) {
-                    await expireAssets(user.username)
-                    monitor$.next(user)
-                }
-            } else {
+    const userUpdateCallback1 = async user => {
+        const prevUser = await getUser(user.username, {allowMissing: true})
+        if (prevUser) {
+            const accessTokenChanged = prevUser.googleTokens.accessToken !== user.googleTokens.accessToken
+            const projectIdChanged = prevUser.googleTokens.projectId !== user.googleTokens.projectId
+            if (accessTokenChanged || projectIdChanged) {
                 await expireAssets(user.username)
                 monitor$.next(user)
             }
-        },
+        } else {
+            await expireAssets(user.username)
+            monitor$.next(user)
+        }
+    }
+
+    userUpdate$.pipe(
+        filter(user => isConnectedWithGoogle(user)),
+        tap(({username}) => log.debug(`${userTag(username)} updated, connected to Google`)),
+        mergeMap(user => from(userUpdateCallback1(user))),
+        takeUntil(stop$)
+    ).subscribe({
+        // next: async user => {
+        //     const prevUser = await getUser(user.username, {allowMissing: true})
+        //     if (prevUser) {
+        //         const accessTokenChanged = prevUser.googleTokens.accessToken !== user.googleTokens.accessToken
+        //         const projectIdChanged = prevUser.googleTokens.projectId !== user.googleTokens.projectId
+        //         if (accessTokenChanged || projectIdChanged) {
+        //             await expireAssets(user.username)
+        //             monitor$.next(user)
+        //         }
+        //     } else {
+        //         await expireAssets(user.username)
+        //         monitor$.next(user)
+        //     }
+        // },
         error: error => log.error('Unexpected userUpdate$ stream error', error),
         complete: () => log.error('Unexpected userUpdate$ stream complete')
     })
 
+    const userDownCallback = async user => {
+        unmonitor$.next(user)
+        await removeUser(user.username, {allowMissing: true})
+    }
+
     userDown$.pipe(
         tap(({username}) => log.debug(`${userTag(username)} down`)),
+        mergeMap(user => from((userDownCallback(user)))),
         takeUntil(stop$)
     ).subscribe({
-        next: async user => {
-            unmonitor$.next(user)
-            await removeUser(user.username, {allowMissing: true})
-        },
+        // next: async user => {
+        //     unmonitor$.next(user)
+        //     await removeUser(user.username, {allowMissing: true})
+        // },
         error: error => log.error('Unexpected userDown$ stream error', error),
         complete: () => log.error('Unexpected userDown$ stream complete')
     })
 
+    const userUpdateCallback2 = async user => {
+        unmonitor$.next(user)
+        update$.next({username: user.username, tree: emptyTree()})
+        await removeUser(user.username, {allowMissing: true})
+        await removeAssets(user.username, {allowMissing: true})
+    }
+
     userUpdate$.pipe(
         filter(user => !isConnectedWithGoogle(user)),
         tap(({username}) => log.debug(`${userTag(username)} updated, disconnected from Google`)),
+        mergeMap(user => from(userUpdateCallback2(user))),
         takeUntil(stop$)
     ).subscribe({
-        next: async user => {
-            unmonitor$.next(user)
-            update$.next({username: user.username, tree: emptyTree()})
-            await removeUser(user.username, {allowMissing: true})
-            await removeAssets(user.username, {allowMissing: true})
-        },
+        // next: async user => {
+        //     unmonitor$.next(user)
+        //     update$.next({username: user.username, tree: emptyTree()})
+        //     await removeUser(user.username, {allowMissing: true})
+        //     await removeAssets(user.username, {allowMissing: true})
+        // },
         error: error => log.error('Unexpected userUpdate$ stream error', error),
         complete: () => log.error('Unexpected userUpdate$ stream complete')
     })
@@ -198,9 +228,10 @@ const createAssetManager = ({out$, stop$}) => {
             )
         )),
         takeUntil(stop$),
+        mergeMap(({username, tree}) => from(updateTree(username, tree))),
         catchError(error => log.error(error))
     ).subscribe({
-        next: async ({username, tree}) => updateTree(username, tree),
+        // next: async ({username, tree}) => await updateTree(username, tree),
         error: error => log.error('Unexpected monitor$ stream error', error),
         complete: () => log.error('Unexpected monitor$ stream complete')
     })
@@ -263,9 +294,10 @@ const createAssetManager = ({out$, stop$}) => {
                 ),
                 map(node => ({username, node}))
             )
-        )
+        ),
+        mergeMap(({username, node}) => from(updateNode(username, node)))
     ).subscribe({
-        next: async ({username, node}) => await updateNode(username, node),
+        // next: async ({username, node}) => await updateNode(username, node),
         error: error => log.error('Unexpected stream error', error),
         complete: () => log.error('Unexpected stream complete')
     })
@@ -287,9 +319,10 @@ const createAssetManager = ({out$, stop$}) => {
                 ),
                 map(node => ({username, node}))
             )
-        )
+        ),
+        mergeMap(({username, node}) => from(updateNode(username, node)))
     ).subscribe({
-        next: async ({username, node}) => await updateNode(username, node),
+        // next: async ({username, node}) => await updateNode(username, node),
         error: error => log.error('Unexpected stream error', error),
         complete: () => log.error('Unexpected stream complete')
     })

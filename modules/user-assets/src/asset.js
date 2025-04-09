@@ -2,23 +2,27 @@ const _ = require('lodash')
 const log = require('#sepal/log').getLogger('assetScanner')
 const {get$, delete$, postJson$} = require('#sepal/httpClient')
 
-const {map} = require('rxjs')
+const {map, tap} = require('rxjs')
+const {userTag} = require('./tag')
 
 const GEE_ENDPOINT = 'http://gee'
 const LIST_ASSETS_URL = `${GEE_ENDPOINT}/asset/descendants`
 const DELETE_ASSET_URL = `${GEE_ENDPOINT}/asset/delete`
 const CREATE_FOLDER_URL = `${GEE_ENDPOINT}/asset/createFolder`
 
-const getAsset$ = (user, id = '') =>
-    get$(LIST_ASSETS_URL, {
+const getAsset$ = (user, id = '') => {
+    log.trace(`${userTag(user.username)} loading:`, id || 'roots')
+    return get$(LIST_ASSETS_URL, {
         query: {id},
         headers: {
             'sepal-user': getSepalUserHeader(user)
         },
         maxRetries: 0
     }).pipe(
+        tap(() => log.debug(`${userTag(user.username)} loaded:`, id || 'roots')),
         map(({body}) => JSON.parse(body))
     )
+}
 
 const deleteAsset$ = (user, id) =>
     delete$(DELETE_ASSET_URL, {

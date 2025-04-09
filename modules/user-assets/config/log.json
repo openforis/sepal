@@ -5,8 +5,9 @@
         "assetScanner": "info",
         "assetStore": "info",
         "config": "info",
+        "limiter": "info",
         "main": "info",
-        "redis": "debug",
+        "redis": "info",
         "userStore": "info",
         "ws": "info"
     }

@@ -6,6 +6,21 @@ const {tap, map, mergeWith, of, switchMap, catchError, from, Subject, finalize, 
 const {getUser} = require('./userStore')
 const {STree} = require('#sepal/tree/sTree')
 const {getAsset$} = require('./asset')
+const {Limiter} = require('./limiter')
+
+const GLOBAL_CONCURRENCY = 10
+const USER_CONCURRENCY = 2
+
+const userLimiter$ = Limiter({
+    name: 'user',
+    concurrency: USER_CONCURRENCY,
+    group: ({username}) => username
+})
+
+const globalLimiter = Limiter({
+    name: 'global',
+    concurrency: GLOBAL_CONCURRENCY
+})
 
 const busy = {}
 const busy$ = new Subject()
@@ -82,10 +97,8 @@ const scanTree$ = username => {
 }
 
 const loadNode$ = (user, path = [], node = {}) =>
-    getAsset$(user, node.id).pipe(
-        tap(() => log.trace(`${userTag(user.username)} loading assets ${path.length ? path.slice(-1) : 'roots'}`)),
+    userLimiter$(() => globalLimiter(() => getAsset$(user, node.id))).pipe(
         switchMap(nodes => of({path, nodes}).pipe(
-            tap(() => log.debug(`${userTag(user.username)} loaded assets ${path.length ? path.slice(-1) : 'roots'}`)),
             mergeWith(...loadNodes$(user, path, nodes))
         ))
     )
