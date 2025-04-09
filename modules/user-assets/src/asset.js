@@ -5,7 +5,7 @@ const {get$, delete$, postJson$} = require('#sepal/httpClient')
 const {map} = require('rxjs')
 
 const GEE_ENDPOINT = 'http://gee'
-const LIST_ASSETS_URL = `${GEE_ENDPOINT}/asset/list`
+const LIST_ASSETS_URL = `${GEE_ENDPOINT}/asset/descendants`
 const DELETE_ASSET_URL = `${GEE_ENDPOINT}/asset/delete`
 const CREATE_FOLDER_URL = `${GEE_ENDPOINT}/asset/createFolder`
 
