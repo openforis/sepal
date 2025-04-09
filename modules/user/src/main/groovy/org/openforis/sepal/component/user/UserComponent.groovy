@@ -58,6 +58,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
                         serverConfig.googleProjectId,
                         serverConfig.googleRecaptchaApiKey,
                         serverConfig.googleRecaptchaSiteKey,
+                        serverConfig.googleRecaptchaMinScore,
                         serverConfig.host
                 )
             )

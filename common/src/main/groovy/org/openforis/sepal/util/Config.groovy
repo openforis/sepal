@@ -43,6 +43,15 @@ final class Config {
         }
     }
 
+    final float floatingPoint(String key) {
+        def value = string(key)
+        try {
+            return value as float
+        } catch (Exception ignore) {
+            throw new InvalidConfig("Expected $key to be a float: $value")
+        }
+    }
+
     final URI uri(String key) {
         def value = string(key)
         try {

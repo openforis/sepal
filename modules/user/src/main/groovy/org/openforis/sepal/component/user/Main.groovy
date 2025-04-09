@@ -64,6 +64,7 @@ class ServerConfig {
     final String googleProjectId
     final String googleRecaptchaApiKey
     final String googleRecaptchaSiteKey
+    final float googleRecaptchaMinScore
     final String homeDirectory
     final String rabbitMQHost
     final int rabbitMQPort
@@ -79,6 +80,7 @@ class ServerConfig {
         googleProjectId = c.googleProjectId
         googleRecaptchaApiKey = c.googleRecaptchaApiKey
         googleRecaptchaSiteKey = c.googleRecaptchaSiteKey
+        googleRecaptchaMinScore = c.floatingPoint('googleRecaptchaMinScore')
         homeDirectory = c.homeDirectory
         rabbitMQHost = c.rabbitMQHost
         rabbitMQPort = c.integer('rabbitMQPort')
