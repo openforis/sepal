@@ -28,7 +28,9 @@ const mapStateToProps = () => ({
 class _Body extends React.Component {
     componentDidUpdate() {
         const {budgetExceeded, location} = this.props
-        if (this.props.location.pathname === '/-/process' || budgetExceeded && !['/-/browse', '/-/users'].includes(location.pathname)) {
+        const oldProcessPath = this.props.location.pathname === '/-/process'
+        const allowedWhenBudgetExceeded = ['/', '/-/browse', '/-/users'].includes(location.pathname)
+        if (oldProcessPath || (budgetExceeded && !allowedWhenBudgetExceeded)) {
             history().replace('/')
         }
     }
