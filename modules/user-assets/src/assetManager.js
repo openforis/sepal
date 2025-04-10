@@ -5,7 +5,7 @@ const {userTag, subscriptionTag} = require('./tag')
 const {setAssets, getAssets, removeAssets, expireAssets} = require('./assetStore')
 const log = require('#sepal/log').getLogger('assetManager')
 
-const {Subject, groupBy, mergeMap, map, tap, defer, repeat, retry, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race} = require('rxjs')
+const {Subject, groupBy, mergeMap, map, tap, repeat, retry, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race} = require('rxjs')
 const {setUser, getUser, isConnectedWithGoogle, removeUser} = require('./userStore')
 const {scanTree$, scanNode$, busy$, isBusy} = require('./assetScanner')
 const {pollIntervalMilliseconds} = require('./config')
@@ -31,11 +31,6 @@ const createAssetManager = ({out$, stop$}) => {
     const emptyTree = () =>
         STree.createRoot()
 
-    const setUser$ = user =>
-        defer(() => from(setUser(user)).pipe(
-            map(() => user)
-        ))
-
     const unmonitorCurrentUser$ = username =>
         unmonitor$.pipe(
             filter(user => user.username === username),
@@ -48,7 +43,7 @@ const createAssetManager = ({out$, stop$}) => {
 
     const scheduledReload$ = username =>
         from(getAssetsReloadDelay(username)).pipe(
-            tap(delay => delay && log.debug(`${userTag(username)} next reload in ${formatDistanceStrict(0, delay)}`)),
+            tap(delay => log.debug(`${userTag(username)} next reload in ${formatDistanceStrict(0, delay)}`)),
             switchMap(delay => timer(delay))
         )
 
@@ -115,25 +110,30 @@ const createAssetManager = ({out$, stop$}) => {
         }
     }
 
+    const userUpCallback = async user => {
+        await setUser(user)
+        monitor$.next(user)
+    }
+
     userUp$.pipe(
         filter(user => isConnectedWithGoogle(user)),
         tap(({username}) => log.debug(`${userTag(username)} up`)),
+        mergeMap(user => from(userUpCallback(user))),
         takeUntil(stop$)
     ).subscribe({
-        next: user => monitor$.next(user),
         error: error => log.error('Unexpected userUp$ stream error', error),
         complete: () => log.error('Unexpected userUp$ stream complete')
     })
 
     const userUpdateCallback1 = async user => {
         const prevUser = await getUser(user.username, {allowMissing: true})
+        await setUser(user)
         if (prevUser) {
-            const accessTokenChanged = prevUser.googleTokens.accessToken !== user.googleTokens.accessToken
-            const projectIdChanged = prevUser.googleTokens.projectId !== user.googleTokens.projectId
-            if (accessTokenChanged || projectIdChanged) {
-                await expireAssets(user.username)
-                monitor$.next(user)
-            }
+            // const projectIdChanged = prevUser.googleTokens.projectId !== user.googleTokens.projectId
+            // if (projectIdChanged) {
+            //     await expireAssets(user.username)
+            //     reload$.next(user.username)
+            // }
         } else {
             await expireAssets(user.username)
             monitor$.next(user)
@@ -146,20 +146,6 @@ const createAssetManager = ({out$, stop$}) => {
         mergeMap(user => from(userUpdateCallback1(user))),
         takeUntil(stop$)
     ).subscribe({
-        // next: async user => {
-        //     const prevUser = await getUser(user.username, {allowMissing: true})
-        //     if (prevUser) {
-        //         const accessTokenChanged = prevUser.googleTokens.accessToken !== user.googleTokens.accessToken
-        //         const projectIdChanged = prevUser.googleTokens.projectId !== user.googleTokens.projectId
-        //         if (accessTokenChanged || projectIdChanged) {
-        //             await expireAssets(user.username)
-        //             monitor$.next(user)
-        //         }
-        //     } else {
-        //         await expireAssets(user.username)
-        //         monitor$.next(user)
-        //     }
-        // },
         error: error => log.error('Unexpected userUpdate$ stream error', error),
         complete: () => log.error('Unexpected userUpdate$ stream complete')
     })
@@ -174,10 +160,6 @@ const createAssetManager = ({out$, stop$}) => {
         mergeMap(user => from((userDownCallback(user)))),
         takeUntil(stop$)
     ).subscribe({
-        // next: async user => {
-        //     unmonitor$.next(user)
-        //     await removeUser(user.username, {allowMissing: true})
-        // },
         error: error => log.error('Unexpected userDown$ stream error', error),
         complete: () => log.error('Unexpected userDown$ stream complete')
     })
@@ -195,12 +177,6 @@ const createAssetManager = ({out$, stop$}) => {
         mergeMap(user => from(userUpdateCallback2(user))),
         takeUntil(stop$)
     ).subscribe({
-        // next: async user => {
-        //     unmonitor$.next(user)
-        //     update$.next({username: user.username, tree: emptyTree()})
-        //     await removeUser(user.username, {allowMissing: true})
-        //     await removeAssets(user.username, {allowMissing: true})
-        // },
         error: error => log.error('Unexpected userUpdate$ stream error', error),
         complete: () => log.error('Unexpected userUpdate$ stream complete')
     })
@@ -208,30 +184,30 @@ const createAssetManager = ({out$, stop$}) => {
     monitor$.pipe(
         groupBy(({username}) => username),
         mergeMap(userGroup$ => userGroup$.pipe(
-            switchMap(user =>
-                setUser$(user).pipe(
-                    switchMap(({username}) =>
-                        of(username).pipe(
-                            tap(() => log.debug(`${userTag(username)} monitoring assets`)),
-                            switchMap(() => reloadTrigger$(username).pipe(
-                                exhaustMap(() => scanTree$(username).pipe(
-                                    map(tree => ({username, tree}))
-                                ))
-                            )),
-                            repeat({delay: 0}),
-                            retry({delay: MIN_REFRESH_DELAY_MS}),
-                            takeUntil(unmonitorCurrentUser$(username)),
-                            finalize(() => log.debug(`${userTag(username)} unmonitoring assets`))
-                        )
-                    )
+            tap(() => log.debug(`${userTag(userGroup$.key)} monitoring assets`)),
+            exhaustMap(({username}) =>
+                of(username).pipe(
+                    switchMap(() => reloadTrigger$(username).pipe(
+                        tap(() => log.debug(`${userTag(username)} reloading now`)),
+                        exhaustMap(() => scanTree$(username).pipe(
+                            map(tree => ({username, tree}))
+                        )),
+                        tap(() => log.debug(`${userTag(username)} reloading complete`)),
+                    )),
+                    repeat({delay: 0}),
+                    retry({delay: MIN_REFRESH_DELAY_MS}),
+                    takeUntil(unmonitorCurrentUser$(username)),
+                    finalize(() => log.debug(`${userTag(username)} unmonitoring assets`))
                 )
             )
         )),
         takeUntil(stop$),
         mergeMap(({username, tree}) => from(updateTree(username, tree))),
-        catchError(error => log.error(error))
+        catchError(error => {
+            log.error('Unexpected monitor$ error', error)
+            return EMPTY
+        })
     ).subscribe({
-        // next: async ({username, tree}) => await updateTree(username, tree),
         error: error => log.error('Unexpected monitor$ stream error', error),
         complete: () => log.error('Unexpected monitor$ stream complete')
     })
@@ -240,9 +216,9 @@ const createAssetManager = ({out$, stop$}) => {
         const {timestamp} = await getAssets(username, {allowMissing: true})
         if (timestamp) {
             const ageMilliseconds = Date.now() - timestamp
-            return Math.max(0, pollIntervalMilliseconds - ageMilliseconds)
+            return Math.max(MIN_REFRESH_DELAY_MS, pollIntervalMilliseconds - ageMilliseconds)
         } else {
-            return 0
+            return MIN_REFRESH_DELAY_MS
         }
     }
 
@@ -297,7 +273,6 @@ const createAssetManager = ({out$, stop$}) => {
         ),
         mergeMap(({username, node}) => from(updateNode(username, node)))
     ).subscribe({
-        // next: async ({username, node}) => await updateNode(username, node),
         error: error => log.error('Unexpected stream error', error),
         complete: () => log.error('Unexpected stream complete')
     })
@@ -322,7 +297,6 @@ const createAssetManager = ({out$, stop$}) => {
         ),
         mergeMap(({username, node}) => from(updateNode(username, node)))
     ).subscribe({
-        // next: async ({username, node}) => await updateNode(username, node),
         error: error => log.error('Unexpected stream error', error),
         complete: () => log.error('Unexpected stream complete')
     })

@@ -2,7 +2,7 @@
     "port": 5000,
     "categories": {
         "assetManager": "debug",
-        "assetScanner": "info",
+        "assetScanner": "debug",
         "assetStore": "info",
         "config": "info",
         "limiter": "info",

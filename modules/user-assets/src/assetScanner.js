@@ -7,6 +7,7 @@ const {getUser} = require('./userStore')
 const {STree} = require('#sepal/tree/sTree')
 const {getAsset$} = require('./asset')
 const {Limiter} = require('./limiter')
+const {formatDistanceToNowStrict} = require('date-fns/formatDistanceToNowStrict')
 
 const GLOBAL_CONCURRENCY = 10
 const USER_CONCURRENCY = 2
@@ -17,7 +18,7 @@ const userLimiter$ = Limiter({
     group: ({username}) => username
 })
 
-const globalLimiter = Limiter({
+const globalLimiter$ = Limiter({
     name: 'global',
     concurrency: GLOBAL_CONCURRENCY
 })
@@ -78,37 +79,42 @@ const getStats = assets =>
 
 const scanTree$ = username => {
     log.info(`${userTag(username)} assets loading`)
+    const t0 = Date.now()
     increaseBusy(username)
     const cancel$ = new Subject()
-    return from(getUser(username)).pipe(
-        switchMap(user =>
-            loadNode$(user, [], true).pipe(
-                finalize(() => cancel$.next()),
-                reduce((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
-                tap({
-                    next: assets => log.info(`${userTag(username)} assets loading:`, getStats(assets)),
-                    error: error => log.warn(`${userTag(username)} assets failed`, error),
-                    complete: () => log.info(`${userTag(username)} assets loaded`)
-                })
-            )
-        ),
+    return loadNode$(username, [], true).pipe(
+        finalize(() => cancel$.next()),
+        reduce((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
+        tap({
+            next: assets => log.info(`${userTag(username)} assets loaded in ${formatDistanceToNowStrict(t0)}:`, getStats(assets)),
+            error: error => log.warn(`${userTag(username)} assets failed`, error)
+        }),
         finalize(() => decreaseBusy(username))
     )
 }
 
-const loadNode$ = (user, path = [], node = {}) =>
-    userLimiter$(() => globalLimiter(() => getAsset$(user, node.id))).pipe(
+const limiter$ = fn$ =>
+    userLimiter$(() =>
+        globalLimiter$(fn$)
+    )
+
+const loadNode$ = (username, path = [], node = {}) =>
+    limiter$(() =>
+        from(getUser(username)).pipe(
+            switchMap(user => getAsset$(user, node.id))
+        )
+    ).pipe(
         switchMap(nodes => of({path, nodes}).pipe(
-            mergeWith(...loadNodes$(user, path, nodes))
+            mergeWith(...loadNodes$(username, path, nodes))
         ))
     )
 
-const loadNodes$ = (user, path, nodes) =>
+const loadNodes$ = (username, path, nodes) =>
     nodes
         .filter(({type}) => type === 'Folder')
-        .map(node => loadNode$(user, [...path, getKey(node, path)], node).pipe(
+        .map(node => loadNode$(username, [...path, getKey(node, path)], node).pipe(
             catchError(error => {
-                log.warn(`${userTag(user.username)} failed to load assets ${path.length ? path.slice(-1) : 'roots'}`, error)
+                log.warn(`${userTag(username)} failed to load assets ${path.length ? path.slice(-1) : 'roots'}`, error)
                 return of([])
             })
         ))

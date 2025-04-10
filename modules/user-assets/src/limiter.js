@@ -1,4 +1,4 @@
-const {Subject, ReplaySubject, groupBy, mergeMap, map, catchError, take} = require('rxjs')
+const {Subject, ReplaySubject, groupBy, mergeMap, map, catchError, take, finalize, EMPTY} = require('rxjs')
 const log = require('#sepal/log').getLogger('limiter')
 
 const Limiter = ({name, concurrency, group = () => true}) => {
@@ -10,11 +10,16 @@ const Limiter = ({name, concurrency, group = () => true}) => {
             mergeMap(
                 ({task$, response$}) => task$().pipe(
                     map(response => ({response$, response})),
-                    catchError(error => response$.error(error))
+                    catchError(error => {
+                        response$.error(error)
+                        return EMPTY
+                    }),
+                    finalize(() => response$.complete())
                 ),
                 concurrency
             )
-        ))
+        )),
+        catchError(error => log.error(`Unexpected ${name} limiter error:`, error))
     ).subscribe({
         next: ({response$, response}) => response$.next(response),
         error: error => log.error(`Unexpected ${name} limiter stream error`, error),
