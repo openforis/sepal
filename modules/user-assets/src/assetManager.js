@@ -115,9 +115,26 @@ const createAssetManager = ({out$, stop$}) => {
         monitor$.next(user)
     }
 
+    const validateGoogleTokens = (username, googleTokens) => {
+        if (googleTokens) {
+            const millisecondsLeft = googleTokens.accessTokenExpiryDate - Date.now()
+            const secondsLeft = millisecondsLeft / 1000
+            if (millisecondsLeft <= 0) {
+                log.warn(userTag(username), `Google token expired ${secondsLeft} seconds ago`)
+            } else {
+                log.trace(userTag(username), `User has valid google tokens expiring in ${secondsLeft} seconds`)
+            }
+        } else {
+            log.warn(userTag(username), 'User has no google tokens')
+        }
+    }
+
     userUp$.pipe(
         filter(user => isConnectedWithGoogle(user)),
-        tap(({username}) => log.debug(`${userTag(username)} up`)),
+        tap(({username, googleTokens}) => {
+            validateGoogleTokens(username, googleTokens)
+            log.debug(`${userTag(username)} up`)
+        }),
         mergeMap(user => from(userUpCallback(user))),
         takeUntil(stop$)
     ).subscribe({
@@ -142,7 +159,10 @@ const createAssetManager = ({out$, stop$}) => {
 
     userUpdate$.pipe(
         filter(user => isConnectedWithGoogle(user)),
-        tap(({username}) => log.debug(`${userTag(username)} updated, connected to Google`)),
+        tap(({username, googleTokens}) => {
+            validateGoogleTokens(username, googleTokens)
+            log.debug(`${userTag(username)} updated, connected to Google`)
+        }),
         mergeMap(user => from(userUpdateCallback1(user))),
         takeUntil(stop$)
     ).subscribe({
