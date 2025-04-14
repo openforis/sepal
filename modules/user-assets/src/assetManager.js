@@ -5,14 +5,17 @@ const {userTag, subscriptionTag} = require('./tag')
 const {setAssets, getAssets, removeAssets, expireAssets} = require('./assetStore')
 const log = require('#sepal/log').getLogger('assetManager')
 
-const {Subject, groupBy, mergeMap, map, tap, repeat, retry, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race} = require('rxjs')
+const {Subject, groupBy, mergeMap, map, tap, repeat, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race, defer, take, ReplaySubject} = require('rxjs')
 const {setUser, getUser, isConnectedWithGoogle, removeUser} = require('./userStore')
 const {scanTree$, scanNode$, busy$, isBusy} = require('./assetScanner')
 const {pollIntervalMilliseconds} = require('./config')
 const {deleteAsset$, createFolder$} = require('./asset')
 const {STree} = require('#sepal/tree/sTree')
+const {autoRetry} = require('#sepal/rxjs')
 
-const MIN_REFRESH_DELAY_MS = 60 * 1000
+const MIN_RELOAD_DELAY_MS = 60 * 1000
+const MIN_RETRY_DELAY_MS = 2 * 1000
+const MAX_RETRY_DELAY_MS = 3660 * 1000
 
 const createAssetManager = ({out$, stop$}) => {
 
@@ -110,7 +113,7 @@ const createAssetManager = ({out$, stop$}) => {
         }
     }
 
-    const userUpCallback = async user => {
+    const onUserUp = async user => {
         await setUser(user)
         monitor$.next(user)
     }
@@ -118,84 +121,100 @@ const createAssetManager = ({out$, stop$}) => {
     userUp$.pipe(
         filter(user => isConnectedWithGoogle(user)),
         tap(({username}) => log.debug(`${userTag(username)} up`)),
-        mergeMap(user => from(userUpCallback(user))),
+        mergeMap(user => from(onUserUp(user))),
         takeUntil(stop$)
     ).subscribe({
         error: error => log.error('Unexpected userUp$ stream error', error),
         complete: () => log.error('Unexpected userUp$ stream complete')
     })
 
-    const userUpdateCallback1 = async user => {
-        const prevUser = await getUser(user.username, {allowMissing: true})
-        await setUser(user)
-        if (prevUser) {
-            // const projectIdChanged = prevUser.googleTokens.projectId !== user.googleTokens.projectId
-            // if (projectIdChanged) {
-            //     await expireAssets(user.username)
-            //     reload$.next(user.username)
-            // }
-        } else {
-            await expireAssets(user.username)
-            monitor$.next(user)
-        }
-    }
-
-    userUpdate$.pipe(
-        filter(user => isConnectedWithGoogle(user)),
-        tap(({username}) => log.debug(`${userTag(username)} updated, connected to Google`)),
-        mergeMap(user => from(userUpdateCallback1(user))),
-        takeUntil(stop$)
-    ).subscribe({
-        error: error => log.error('Unexpected userUpdate$ stream error', error),
-        complete: () => log.error('Unexpected userUpdate$ stream complete')
-    })
-
-    const userDownCallback = async user => {
+    const onUserDown = async user => {
         unmonitor$.next(user)
         await removeUser(user.username, {allowMissing: true})
     }
 
     userDown$.pipe(
         tap(({username}) => log.debug(`${userTag(username)} down`)),
-        mergeMap(user => from((userDownCallback(user)))),
+        mergeMap(user => from((onUserDown(user)))),
         takeUntil(stop$)
     ).subscribe({
         error: error => log.error('Unexpected userDown$ stream error', error),
         complete: () => log.error('Unexpected userDown$ stream complete')
     })
 
-    const userUpdateCallback2 = async user => {
+    const connectedUserUpdate = async user => {
+        if (user.googleTokens.projectId) {
+            const prevUser = await getUser(user.username, {allowMissing: true})
+            await setUser(user)
+            if (prevUser) {
+                const projectIdChanged = prevUser.googleTokens.projectId !== user.googleTokens.projectId
+                if (projectIdChanged) {
+                    log.debug(`${userTag(user.username)} changed Google project:`, user.googleTokens.projectId)
+                    await expireAssets(user.username)
+                    reload$.next(user.username)
+                }
+            } else {
+                log.debug(`${userTag(user.username)} connected to Google project:`, user.googleTokens.projectId)
+                await expireAssets(user.username)
+                monitor$.next(user)
+            }
+        }
+    }
+
+    const disconnectedUserUpdate = async user => {
+        log.debug(`${userTag(user.username)} disconnected from Google`)
         unmonitor$.next(user)
         update$.next({username: user.username, tree: emptyTree()})
         await removeUser(user.username, {allowMissing: true})
         await removeAssets(user.username, {allowMissing: true})
     }
 
+    const onUserUpdate = async user =>
+        isConnectedWithGoogle(user)
+            ? await connectedUserUpdate(user)
+            : await disconnectedUserUpdate(user)
+
     userUpdate$.pipe(
-        filter(user => !isConnectedWithGoogle(user)),
-        tap(({username}) => log.debug(`${userTag(username)} updated, disconnected from Google`)),
-        mergeMap(user => from(userUpdateCallback2(user))),
+        mergeMap(user => from(onUserUpdate(user))),
         takeUntil(stop$)
     ).subscribe({
         error: error => log.error('Unexpected userUpdate$ stream error', error),
         complete: () => log.error('Unexpected userUpdate$ stream complete')
     })
 
+    const loadAssets$ = username => {
+        const abort$ = new ReplaySubject(1)
+        return of(username).pipe(
+            tap(() => log.debug(`${userTag(username)} reloading now`)),
+            exhaustMap(() => scanTree$(username, abort$).pipe(
+                tap(() => log.debug(`${userTag(username)} reloading complete`)),
+                map(tree => ({username, tree})),
+                takeUntil(unmonitorCurrentUser$(username))
+            )),
+            autoRetry({
+                maxRetries: 3,
+                minRetryDelay: MIN_RETRY_DELAY_MS,
+                maxRetryDelay: MAX_RETRY_DELAY_MS,
+                retryDelayFactor: 2,
+                onRetry: (error, retryMessage) => log.debug(`${userTag(username)} reload error - ${retryMessage}`, error)
+            }),
+            catchError(error => {
+                log.warn(`${userTag(username)} reload error`, error)
+                return EMPTY
+            }),
+            finalize(() => abort$.next())
+        )
+    }
+
     monitor$.pipe(
         groupBy(({username}) => username),
         mergeMap(userGroup$ => userGroup$.pipe(
             tap(() => log.debug(`${userTag(userGroup$.key)} monitoring assets`)),
             exhaustMap(({username}) =>
-                of(username).pipe(
-                    switchMap(() => reloadTrigger$(username).pipe(
-                        tap(() => log.debug(`${userTag(username)} reloading now`)),
-                        exhaustMap(() => scanTree$(username).pipe(
-                            map(tree => ({username, tree}))
-                        )),
-                        tap(() => log.debug(`${userTag(username)} reloading complete`)),
-                    )),
+                defer(() => reloadTrigger$(username)).pipe(
+                    switchMap(username => loadAssets$(username)),
+                    take(1),
                     repeat({delay: 0}),
-                    retry({delay: MIN_REFRESH_DELAY_MS}),
                     takeUntil(unmonitorCurrentUser$(username)),
                     finalize(() => log.debug(`${userTag(username)} unmonitoring assets`))
                 )
@@ -203,10 +222,6 @@ const createAssetManager = ({out$, stop$}) => {
         )),
         takeUntil(stop$),
         mergeMap(({username, tree}) => from(updateTree(username, tree))),
-        catchError(error => {
-            log.error('Unexpected monitor$ error', error)
-            return EMPTY
-        })
     ).subscribe({
         error: error => log.error('Unexpected monitor$ stream error', error),
         complete: () => log.error('Unexpected monitor$ stream complete')
@@ -216,9 +231,9 @@ const createAssetManager = ({out$, stop$}) => {
         const {timestamp} = await getAssets(username, {allowMissing: true})
         if (timestamp) {
             const ageMilliseconds = Date.now() - timestamp
-            return Math.max(MIN_REFRESH_DELAY_MS, pollIntervalMilliseconds - ageMilliseconds)
+            return Math.max(MIN_RELOAD_DELAY_MS, pollIntervalMilliseconds - ageMilliseconds)
         } else {
-            return MIN_REFRESH_DELAY_MS
+            return 0
         }
     }
 

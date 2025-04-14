@@ -1,6 +1,7 @@
 {
     "port": 5000,
     "categories": {
+        "asset": "info",
         "assetManager": "debug",
         "assetScanner": "debug",
         "assetStore": "info",

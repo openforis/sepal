@@ -1,4 +1,4 @@
-const {Subject, ReplaySubject, groupBy, mergeMap, map, catchError, take, finalize, EMPTY} = require('rxjs')
+const {Subject, ReplaySubject, groupBy, mergeMap, map, catchError, take, finalize, EMPTY, takeUntil} = require('rxjs')
 const log = require('#sepal/log').getLogger('limiter')
 
 const Limiter = ({name, concurrency, group = () => true}) => {
@@ -8,13 +8,14 @@ const Limiter = ({name, concurrency, group = () => true}) => {
         groupBy(group),
         mergeMap(group$ => group$.pipe(
             mergeMap(
-                ({task$, response$}) => task$().pipe(
+                ({task$, response$, abort$}) => task$().pipe(
                     map(response => ({response$, response})),
                     catchError(error => {
                         response$.error(error)
                         return EMPTY
                     }),
-                    finalize(() => response$.complete())
+                    finalize(() => response$.complete()),
+                    takeUntil(abort$)
                 ),
                 concurrency
             )
@@ -28,8 +29,12 @@ const Limiter = ({name, concurrency, group = () => true}) => {
     
     return task$ => {
         const response$ = new ReplaySubject(1)
-        request$.next({task$, response$})
-        return response$.pipe(take(1))
+        const abort$ = new Subject()
+        request$.next({task$, response$, abort$})
+        return response$.pipe(
+            take(1),
+            finalize(() => abort$.next(true))
+        )
     }
 }
 

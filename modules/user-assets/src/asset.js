@@ -1,8 +1,8 @@
 const _ = require('lodash')
-const log = require('#sepal/log').getLogger('assetScanner')
+const log = require('#sepal/log').getLogger('asset')
 const {get$, delete$, postJson$} = require('#sepal/httpClient')
 
-const {map, tap} = require('rxjs')
+const {map} = require('rxjs')
 const {userTag} = require('./tag')
 
 const GEE_ENDPOINT = 'http://gee'
@@ -19,7 +19,6 @@ const getAsset$ = (user, id = '') => {
         },
         maxRetries: 0
     }).pipe(
-        tap(() => log.debug(`${userTag(user.username)} loaded:`, id || 'roots')),
         map(({body}) => JSON.parse(body))
     )
 }
