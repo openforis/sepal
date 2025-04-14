@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const {formatDistanceStrict, formatDistanceToNowStrict} = require('date-fns')
+const {formatDistanceStrict} = require('date-fns')
 
 const {userTag, subscriptionTag} = require('./tag')
 const {setAssets, getAssets, removeAssets, expireAssets} = require('./assetStore')
@@ -125,9 +125,9 @@ const createAssetManager = ({out$, stop$}) => {
             const now = Date.now()
             const expiration = formatDistanceStrict(googleTokens.accessTokenExpiryDate, now, {addSuffix: true})
             if (googleTokens.accessTokenExpiryDate <= now) {
-                log.warn(`${userTag(username)} ${status} - Google tokens expired ${expiration}`)
+                log.warn(`${userTag(username)} ${status} - Google access token expired ${expiration}`)
             } else {
-                log.debug(`${userTag(username)} ${status} - Google tokens expiring ${expiration}`)
+                log.debug(`${userTag(username)} ${status} - Google access token expiring ${expiration}`)
             }
         } else {
             log.debug(`${userTag(username)} ${status}`)
@@ -161,14 +161,19 @@ const createAssetManager = ({out$, stop$}) => {
 
     const connectedUserUpdate = async user => {
         if (user.googleTokens?.projectId) {
+            log.fatal(user.googleTokens)
             const prevUser = await getUser(user.username, {allowMissing: true})
             await setUser(user)
             if (prevUser) {
                 const projectIdChanged = prevUser.googleTokens.projectId !== user.googleTokens.projectId
+                const accessTokenChanged = prevUser.googleTokens.accessToken !== user.googleTokens.accessToken
                 if (projectIdChanged) {
-                    log.debug(`${userTag(user.username)} changed Google project:`, user.googleTokens.projectId)
+                    log.debug(`${userTag(user.username)} connected to Google project:`, user.googleTokens.projectId)
                     await expireAssets(user.username)
                     reload$.next(user.username)
+                }
+                if (accessTokenChanged) {
+                    log.debug(`${userTag(user.username)} Google access token updated`)
                 }
             } else {
                 log.debug(`${userTag(user.username)} connected to Google project:`, user.googleTokens.projectId)
@@ -192,7 +197,6 @@ const createAssetManager = ({out$, stop$}) => {
             : await disconnectedUserUpdate(user)
 
     userUpdate$.pipe(
-        tap(user => userStatus(user, 'updated')),
         mergeMap(user => from(onUserUpdate(user))),
         takeUntil(stop$)
     ).subscribe({
