@@ -325,6 +325,11 @@
     },
     "home": {
         "connectivityError": "",
+        "versionMismatch": {
+            "title": "¡SEPAL ha sido actualizado!",
+            "message": "Por favor, vuelve a cargar tu navegador lo antes posible para asegurar que todo funciona correctamente.",
+            "reloadNow": "Recargar ahora"
+        },
         "sections": {
             "account": "Configuración de la cuenta",
             "app-launch-pad": "Aplicaciones",
