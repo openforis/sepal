@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const {formatDistanceStrict} = require('date-fns')
+const {formatDistanceStrict, formatDistanceToNowStrict} = require('date-fns')
 
 const {userTag, subscriptionTag} = require('./tag')
 const {setAssets, getAssets, removeAssets, expireAssets} = require('./assetStore')
@@ -114,13 +114,28 @@ const createAssetManager = ({out$, stop$}) => {
     }
 
     const onUserUp = async user => {
-        await setUser(user)
-        monitor$.next(user)
+        if (user.googleTokens?.projectId) {
+            await setUser(user)
+            monitor$.next(user)
+        }
+    }
+
+    const userStatus = ({username, googleTokens}, status) => {
+        if (googleTokens) {
+            const now = Date.now()
+            const expiration = formatDistanceStrict(googleTokens.accessTokenExpiryDate, now, {addSuffix: true})
+            if (googleTokens.accessTokenExpiryDate <= now) {
+                log.warn(`${userTag(username)} ${status} - Google tokens expired ${expiration}`)
+            } else {
+                log.debug(`${userTag(username)} ${status} - Google tokens expiring ${expiration}`)
+            }
+        } else {
+            log.debug(`${userTag(username)} ${status}`)
+        }
     }
 
     userUp$.pipe(
-        filter(user => isConnectedWithGoogle(user)),
-        tap(({username}) => log.debug(`${userTag(username)} up`)),
+        tap(user => userStatus(user, 'up')),
         mergeMap(user => from(onUserUp(user))),
         takeUntil(stop$)
     ).subscribe({
@@ -129,12 +144,14 @@ const createAssetManager = ({out$, stop$}) => {
     })
 
     const onUserDown = async user => {
-        unmonitor$.next(user)
-        await removeUser(user.username, {allowMissing: true})
+        if (user.googleTokens?.projectId) {
+            unmonitor$.next(user)
+            await removeUser(user.username, {allowMissing: true})
+        }
     }
 
     userDown$.pipe(
-        tap(({username}) => log.debug(`${userTag(username)} down`)),
+        tap(user => userStatus(user, 'down')),
         mergeMap(user => from((onUserDown(user)))),
         takeUntil(stop$)
     ).subscribe({
@@ -143,7 +160,7 @@ const createAssetManager = ({out$, stop$}) => {
     })
 
     const connectedUserUpdate = async user => {
-        if (user.googleTokens.projectId) {
+        if (user.googleTokens?.projectId) {
             const prevUser = await getUser(user.username, {allowMissing: true})
             await setUser(user)
             if (prevUser) {
@@ -175,6 +192,7 @@ const createAssetManager = ({out$, stop$}) => {
             : await disconnectedUserUpdate(user)
 
     userUpdate$.pipe(
+        tap(user => userStatus(user, 'updated')),
         mergeMap(user => from(onUserUpdate(user))),
         takeUntil(stop$)
     ).subscribe({
