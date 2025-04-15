@@ -161,7 +161,6 @@ const createAssetManager = ({out$, stop$}) => {
 
     const connectedUserUpdate = async user => {
         if (user.googleTokens?.projectId) {
-            log.fatal(user.googleTokens)
             const prevUser = await getUser(user.username, {allowMissing: true})
             await setUser(user)
             if (prevUser) {
