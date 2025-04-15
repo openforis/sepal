@@ -1,0 +1,28 @@
+{
+  "name": "app-launcher",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "jest",
+    "testWatch": "jest --watchAll"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^12.1.0",
+    "express": "^4.21.1",
+    "http-proxy-middleware": "^3.0.3",
+    "koa": "^2.15.3",
+    "lodash": "^4.17.15",
+    "micromatch": "^4.0.8",
+    "path": "^0.12.7",
+    "rxjs": "^7.8.1",
+    "sepal": "../../lib/js/shared"
+  },
+  "imports": {
+    "#sepal/*": "sepal/src/*.js",
+    "#sepal/*.json": "sepal/src/*.json",
+    "#config/*.json": "./config/*.json"
+  }
+}
