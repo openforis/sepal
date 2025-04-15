@@ -12,6 +12,7 @@
     "dependencies": {
         "commander": "^13.1.0",
         "connect-redis": "^8.0.2",
+        "date-fns": "^4.1.0",
         "express": "^4.21.2",
         "express-session": "^1.18.1",
         "http-proxy-middleware": "^3.0.3",
