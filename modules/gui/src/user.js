@@ -53,6 +53,7 @@ const missingOAuthScopesError$ = () =>
                 title: msg('user.googleAccount.missingScopes.title'),
                 message: msg('user.googleAccount.missingScopes.message'),
                 timeout: 0,
+                group: true,
                 onDismiss: () => userDetailsHint(false)
             })
         })

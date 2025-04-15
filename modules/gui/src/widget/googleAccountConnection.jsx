@@ -33,6 +33,7 @@ class _GoogleAccountConnection extends React.Component {
             title: msg('user.googleAccount.revoked.title'),
             message: msg('user.googleAccount.revoked.message'),
             timeout: 0,
+            group: true,
             onDismiss: () => userDetailsHint(false)
         })
     }
