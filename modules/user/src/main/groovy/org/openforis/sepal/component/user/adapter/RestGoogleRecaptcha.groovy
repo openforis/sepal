@@ -13,12 +13,14 @@ class RestGoogleRecaptcha implements GoogleRecaptcha {
     private final String googleProjectId
     private final String googleRecaptchaApiKey
     private final String googleRecaptchaSiteKey
+    private final float googleRecaptchaMinScore
     private final String host
 
-    RestGoogleRecaptcha(String googleProjectId, String googleRecaptchaApiKey, String googleRecaptchaSiteKey, String host) {
+    RestGoogleRecaptcha(String googleProjectId, String googleRecaptchaApiKey, String googleRecaptchaSiteKey, float googleRecaptchaMinScore, String host) {
         this.googleProjectId = googleProjectId
         this.googleRecaptchaApiKey = googleRecaptchaApiKey
         this.googleRecaptchaSiteKey = googleRecaptchaSiteKey
+        this.googleRecaptchaMinScore = googleRecaptchaMinScore
         this.host = host
     }
 
@@ -46,7 +48,7 @@ class RestGoogleRecaptcha implements GoogleRecaptcha {
             def validAction = response.data &&            
                 response.data.tokenProperties?.valid &&
                 response.data.tokenProperties?.action == response.data?.event?.expectedAction
-            def validScore = response.data?.riskAnalysis?.score > 0.7
+            def validScore = response.data?.riskAnalysis?.score >= googleRecaptchaMinScore
             if (validAction && !validScore) {
                 LOG.warn('reCAPTCHA, too low score: ' + response.data.riskAnalysis)
             }

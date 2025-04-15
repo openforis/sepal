@@ -1,6 +1,6 @@
 const {ceoUrl} = require('../config')
 const {ClientException} = require('sepal/src/exception')
-const urljoin = require('url-join')
+const urljoin = require('url-join').default
 const {map} = require('rxjs')
 const {post$} = require('#sepal/httpClient')
 

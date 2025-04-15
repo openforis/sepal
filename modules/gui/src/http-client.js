@@ -123,7 +123,13 @@ export const WebSocket = (url, {
     retryDelayFactor,
     onRetry
 } = {}) => {
-    const upstream$ = webSocket(webSocketUrl(url))
+    const buildNumber = window._sepal_global_.buildNumber
+    const upstream$ = webSocket({
+        url: webSocketUrl(url),
+        openObserver: {
+            next: () => upstream$.next({version: {buildNumber}})
+        }
+    })
 
     const downstream$ = upstream$.pipe(
         autoRetry(
@@ -186,8 +192,12 @@ const execute$ = (url, method, {
 }) => {
     const queryString = toQueryString(query)
     let urlWithQuery = queryString ? `${url}?${queryString}` : url
-    if (!url.startsWith('http://') && !url.startsWith('https://'))
-        headers = {'No-auth-challenge': true, ...headers}
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        headers = {
+            'No-auth-challenge': true,
+            ...headers
+        }
+    }
     if (username || password) {
         headers = {
             'Authorization': `Basic ${base64.encode(`${username}:${password}`)}`,

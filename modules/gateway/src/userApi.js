@@ -25,7 +25,8 @@ const revokeGoogleAccess$ = user => {
             [SEPAL_USER_HEADER]: JSON.stringify(user)
         }
     }).pipe(
-        map(({body}) => JSON.parse(body))
+        map(({body}) => JSON.parse(body)),
+        map(({googleTokens: _googleTokens, ...user}) => user)
     )
 }
 

@@ -2,10 +2,26 @@ const _ = require('lodash')
 const {userTag} = require('./tag')
 const log = require('#sepal/log').getLogger('assetScanner')
 
-const {tap, map, mergeWith, of, switchMap, catchError, from, Subject, finalize, reduce} = require('rxjs')
+const {tap, map, mergeWith, of, switchMap, catchError, from, Subject, finalize, reduce, throwError, takeUntil} = require('rxjs')
 const {getUser} = require('./userStore')
 const {STree} = require('#sepal/tree/sTree')
 const {getAsset$} = require('./asset')
+const {Limiter} = require('./limiter')
+const {formatDistanceToNowStrict} = require('date-fns/formatDistanceToNowStrict')
+
+const GLOBAL_CONCURRENCY = 10
+const USER_CONCURRENCY = 2
+
+const userLimiter$ = Limiter({
+    name: 'user',
+    concurrency: USER_CONCURRENCY,
+    group: ({username}) => username
+})
+
+const globalLimiter$ = Limiter({
+    name: 'global',
+    concurrency: GLOBAL_CONCURRENCY
+})
 
 const busy = {}
 const busy$ = new Subject()
@@ -47,7 +63,7 @@ const addNode = (tree, path, item) =>
         )
     )
 
-const addNodes = (tree, path, nodes) =>
+const addNodes = (tree, path, nodes = []) =>
     nodes.reduce((tree, node) => addNode(tree, path, node), tree)
 
 const getKey = ({id}, path) => {
@@ -61,44 +77,44 @@ const getStats = assets =>
         [type]: (acc[type] || 0) + 1
     } : acc), {})
 
-const scanTree$ = username => {
-    log.info(`${userTag(username)} assets loading`)
+const scanTree$ = (username, abort$) => {
+    log.info(`${userTag(username)} assets loading...`)
+    const t0 = Date.now()
     increaseBusy(username)
-    const cancel$ = new Subject()
-    return from(getUser(username)).pipe(
-        switchMap(user =>
-            loadNode$(user, [], true).pipe(
-                finalize(() => cancel$.next()),
-                reduce((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
-                tap({
-                    next: assets => log.info(`${userTag(username)} assets loading:`, getStats(assets)),
-                    error: error => log.warn(`${userTag(username)} assets failed`, error),
-                    complete: () => log.info(`${userTag(username)} assets loaded`)
-                })
-            )
-        ),
+    return loadNode$(username, [], true, abort$).pipe(
+        reduce((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
+        tap(assets => log.info(`${userTag(username)} assets loaded in ${formatDistanceToNowStrict(t0)}:`, getStats(assets))),
         finalize(() => decreaseBusy(username))
     )
 }
 
-const loadNode$ = (user, path = [], node = {}) =>
-    getAsset$(user, node.id).pipe(
-        tap(() => log.trace(`${userTag(user.username)} loading assets ${path.length ? path.slice(-1) : 'roots'}`)),
-        switchMap(nodes => of({path, nodes}).pipe(
-            tap(() => log.debug(`${userTag(user.username)} loaded assets ${path.length ? path.slice(-1) : 'roots'}`)),
-            mergeWith(...loadNodes$(user, path, nodes))
-        ))
+const limiter$ = fn$ =>
+    userLimiter$(() =>
+        globalLimiter$(fn$)
     )
 
-const loadNodes$ = (user, path, nodes) =>
+const loadNode$ = (username, path = [], node = {}, abort$) => {
+    return limiter$(() => from(getUser(username)).pipe(
+        switchMap(user => getAsset$(user, node.id)),
+        tap(() => log.debug(`${userTag(username)} loaded:`, STree.toStringPath(path) || 'roots')),
+        catchError(error => {
+            log.warn(`${userTag(username)} failed: ${STree.toStringPath(path) || 'roots'} -`, error)
+            return path.length
+                ? of([])
+                : throwError(() => error)
+        }),
+        takeUntil(abort$)
+    )).pipe(
+        switchMap(nodes => of({path, nodes}).pipe(
+            mergeWith(...loadNodes$(username, path, nodes, abort$))
+        ))
+    )
+}
+
+const loadNodes$ = (username, path, nodes, abort$) =>
     nodes
         .filter(({type}) => type === 'Folder')
-        .map(node => loadNode$(user, [...path, getKey(node, path)], node).pipe(
-            catchError(error => {
-                log.warn(`${userTag(user.username)} failed to load assets ${path.length ? path.slice(-1) : 'roots'}`, error)
-                return of([])
-            })
-        ))
+        .map(node => loadNode$(username, [...path, getKey(node, path)], node, abort$))
 
 const scanNode$ = (username, path) => {
     log.debug(`${userTag(username)} loading node:`, path)

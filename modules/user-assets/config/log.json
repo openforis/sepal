@@ -1,12 +1,14 @@
 {
     "port": 5000,
     "categories": {
+        "asset": "info",
         "assetManager": "debug",
-        "assetScanner": "info",
+        "assetScanner": "debug",
         "assetStore": "info",
         "config": "info",
+        "limiter": "info",
         "main": "info",
-        "redis": "debug",
+        "redis": "info",
         "userStore": "info",
         "ws": "info"
     }

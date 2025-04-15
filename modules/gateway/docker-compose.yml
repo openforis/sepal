@@ -23,6 +23,8 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/gateway/Dockerfile
+      args:
+        BUILD_NUMBER: "${BUILD_NUMBER}"
       ulimits:
         nofile:
           soft: 65536

@@ -61,7 +61,7 @@ const updateModule = async (module, options) => {
 }
 
 export const npmInstall = async (modules, options) => {
-    const rootModules = getModules(modules)
+    const rootModules = getModules(modules, [':node'])
     for (const module of rootModules) {
         await updateModule(module, options)
     }

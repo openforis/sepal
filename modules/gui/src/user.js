@@ -30,6 +30,7 @@ export const loadUser$ = () => api.user.loadCurrentUser$().pipe(
         switch (errorCode) {
         case 'EE_NOT_AVAILABLE': return eeNotAvailableError$()
         case 'MISSING_OAUTH_SCOPES': return missingOAuthScopesError$()
+        case 'MISSING_GOOGLE_TOKENS': return missingGoogleTokensError$()
         default: return unspecifiedError$()
         }
     })
@@ -53,10 +54,22 @@ const missingOAuthScopesError$ = () =>
                 title: msg('user.googleAccount.missingScopes.title'),
                 message: msg('user.googleAccount.missingScopes.message'),
                 timeout: 0,
+                group: true,
                 onDismiss: () => userDetailsHint(false)
             })
         })
     )
+
+const missingGoogleTokensError$ = () => {
+    Notifications.error({
+        title: msg('user.googleAccount.revoked.title'),
+        message: msg('user.googleAccount.revoked.message'),
+        timeout: 0,
+        group: true,
+        onDismiss: () => userDetailsHint(false)
+    })
+    return revokeGoogleAccess$()
+}
 
 const unspecifiedError$ = () => {
     Notifications.error({
