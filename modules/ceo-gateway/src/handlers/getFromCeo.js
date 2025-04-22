@@ -19,7 +19,7 @@ const getFromCeo$ = (ctx, {path, query}) => {
 
 const validateToken$ = token =>
     get$(urljoin(ceoUrl, 'account'), {
-        followRedirect: false,
+        redirect: 'manual',
         headers: {Cookie: token}
     }).pipe(
         switchMap(({statusCode}) => {
