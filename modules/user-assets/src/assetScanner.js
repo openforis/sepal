@@ -2,7 +2,7 @@ const _ = require('lodash')
 const {userTag} = require('./tag')
 const log = require('#sepal/log').getLogger('assetScanner')
 
-const {tap, map, mergeWith, of, switchMap, catchError, from, Subject, finalize, reduce, throwError, takeUntil} = require('rxjs')
+const {tap, map, mergeWith, of, switchMap, catchError, from, Subject, finalize, reduce, throwError} = require('rxjs')
 const {getUser} = require('./userStore')
 const {STree} = require('#sepal/tree/sTree')
 const {getAsset$} = require('./asset')
@@ -77,13 +77,13 @@ const getStats = assets =>
         [type]: (acc[type] || 0) + 1
     } : acc), {})
 
-const scanTree$ = (username, abort$) => {
+const scanTree$ = username => {
     log.info(`${userTag(username)} assets loading...`)
     const t0 = Date.now()
     increaseBusy(username)
-    return loadNode$(username, [], true, abort$).pipe(
+    return loadNode$(username, [], true).pipe(
         reduce((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
-        tap(assets => log.info(`${userTag(username)} assets loaded in ${formatDistanceToNowStrict(t0)}:`, getStats(assets))),
+        tap(assets => log.info(`${userTag(username)} assets loaded ${formatDistanceToNowStrict(t0)}:`, getStats(assets))),
         finalize(() => decreaseBusy(username))
     )
 }
@@ -93,28 +93,41 @@ const limiter$ = fn$ =>
         globalLimiter$(fn$)
     )
 
-const loadNode$ = (username, path = [], node = {}, abort$) => {
-    return limiter$(() => from(getUser(username)).pipe(
-        switchMap(user => getAsset$(user, node.id)),
-        tap(() => log.debug(`${userTag(username)} loaded:`, STree.toStringPath(path) || 'roots')),
-        catchError(error => {
-            log.warn(`${userTag(username)} failed: ${STree.toStringPath(path) || 'roots'} -`, error)
-            return path.length
+const loadNodeValidUser$ = (user, path, id) => {
+    const t0 = Date.now()
+    return getAsset$(user, id).pipe(
+        tap(() => log.debug(`${userTag(user.username)} loaded: ${STree.toStringPath(path) || 'roots'} (${Date.now() - t0}ms)`)),
+        catchError(error =>
+            path.length
                 ? of([])
-                : throwError(() => error)
-        }),
-        takeUntil(abort$)
-    )).pipe(
-        switchMap(nodes => of({path, nodes}).pipe(
-            mergeWith(...loadNodes$(username, path, nodes, abort$))
-        ))
+                : throwError(() =>
+                    new Error(`${userTag(user.username)} failed: ${STree.toStringPath(path) || 'roots'} (${Date.now() - t0}ms)`, {cause: error})
+                )
+        )
     )
 }
 
-const loadNodes$ = (username, path, nodes, abort$) =>
+const loadNodeMissingUser$ = (username, path) =>
+    of([]).pipe(
+        log.warn(`${userTag(username)} skipped: ${STree.toStringPath(path) || 'roots'} - user unavailable`)
+    )
+
+const loadNode$ = (username, path = [], node = {}) =>
+    limiter$(() => from(getUser(username, {allowMissing: true})).pipe(
+        switchMap(user => user
+            ? loadNodeValidUser$(user, path, node.id)
+            : loadNodeMissingUser$(username, path)
+        )
+    )).pipe(
+        switchMap(nodes => of({path, nodes}).pipe(
+            mergeWith(...loadNodes$(username, path, nodes))
+        ))
+    )
+
+const loadNodes$ = (username, path, nodes) =>
     nodes
         .filter(({type}) => type === 'Folder')
-        .map(node => loadNode$(username, [...path, getKey(node, path)], node, abort$))
+        .map(node => loadNode$(username, [...path, getKey(node, path)], node))
 
 const scanNode$ = (username, path) => {
     log.debug(`${userTag(username)} loading node:`, path)
