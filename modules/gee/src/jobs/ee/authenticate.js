@@ -65,11 +65,11 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
 
     const validateGoogleTokens = (googleTokens, username) => {
         if (!googleTokens.accessToken) {
-            throw Error(userTag(username), 'Access token is missing')
+            throw Error(`${userTag(username)} Access token is missing`)
         }
         const secondsToExpiration = calculateSecondsToExpiration(googleTokens.accessTokenExpiryDate)
         if (secondsToExpiration <= 0) {
-            throw Error(userTag(username), `Token expired ${secondsToExpiration} seconds ago`)
+            throw Error(`${userTag(username)} Token expired ${secondsToExpiration} seconds ago`)
         }
     }
 
