@@ -98,7 +98,7 @@ const initializeGoogleAccessTokenRefresher = ({userStore, userStatus$, toUser$})
                 defer(() => refreshTrigger$(username)).pipe(
                     switchMap(() => refresh$(username)),
                     take(1),
-                    repeat({delay: 0}),
+                    repeat({delay: 1000}),
                     takeWhile(({googleTokens}) => !!googleTokens),
                     takeUntil(currentUserDisconnected$(username)),
                     finalize(() => log.debug(`${userTag(username)} unmonitoring Google access token`))
