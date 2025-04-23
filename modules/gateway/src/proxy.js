@@ -3,7 +3,7 @@ const {Subject, from, mergeMap} = require('rxjs')
 const {rewriteLocation} = require('./rewrite')
 const {endpoints} = require('../config/endpoints')
 const {sepalHost} = require('./config')
-const {getRequestUser, SEPAL_USER_HEADER} = require('./user')
+const {getRequestUser, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} = require('./user')
 const {usernameTag, urlTag} = require('./tag')
 const log = require('#sepal/log').getLogger('proxy')
 
@@ -14,8 +14,8 @@ const Proxy = (userStore, authMiddleware) => {
     userUpdate$.pipe(
         mergeMap(user => from(userStore.updateUser(user)))
     ).subscribe({
-        error: error => log.error('Unexpected foo$ stream error', error),
-        complete: () => log.error('Unexpected foo$ stream closed')
+        error: error => log.error('Unexpected userUpdate$ stream error', error),
+        complete: () => log.error('Unexpected userUpdate$ stream closed')
     })
 
     const proxy = app =>
@@ -73,7 +73,7 @@ const Proxy = (userStore, authMiddleware) => {
                         proxyRes.headers['X-Content-Type-Options'] = 'nosniff'
                         proxyRes.headers['Strict-Transport-Security'] = 'max-age=16000000; includeSubDomains; preload'
                         proxyRes.headers['Referrer-Policy'] = 'no-referrer'
-                        if (proxyRes.headers['sepal-user-updated']) {
+                        if (proxyRes.headers[SEPAL_USER_UPDATED_HEADER]) {
                             userUpdate$.next(getRequestUser(req))
                         }
                     },
