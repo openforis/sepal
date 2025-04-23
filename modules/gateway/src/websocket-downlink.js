@@ -44,29 +44,45 @@ const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUs
 
     const userConnected$ = user$.pipe(
         filter(({connected}) => connected),
-        switchMap(({username}) => from(userStore.getUser(username)))
+        switchMap(({username}) =>
+            from(userStore.getUser(username)).pipe(
+                map(user => ({username, user}))
+            )
+        )
     )
 
     const userDisconnected$ = user$.pipe(
         filter(({disconnected}) => disconnected),
-        switchMap(({username}) => from(userStore.getUser(username)))
+        switchMap(({username}) =>
+            from(userStore.getUser(username)).pipe(
+                map(user => ({username, user}))
+            )
+        )
     )
 
     userConnected$.subscribe({
-        next: user => {
-            log.info(`${userTag(user.username)} connected`)
-            userStatus$?.next({event: USER_UP, user})
-            servers.broadcast({event: USER_UP, user})
+        next: ({username, user}) => {
+            if (user) {
+                log.info(`${userTag(username)} connected`)
+                userStatus$?.next({event: USER_UP, user})
+                servers.broadcast({event: USER_UP, user})
+            } else {
+                log.warn(`${userTag(username)} connected, but not found in user store`)
+            }
         },
         error: error => log.error('Unexpected userConnected$ stream error', error),
         complete: () => log.error('Unexpected userConnected$ stream closed')
     })
 
     userDisconnected$.subscribe({
-        next: user => {
-            log.info(`${userTag(user.username)} disconnected`)
-            userStatus$?.next({event: USER_DOWN, user})
-            servers.broadcast({event: USER_DOWN, user})
+        next: ({username, user}) => {
+            if (user) {
+                log.info(`${userTag(username)} disconnected`)
+                userStatus$?.next({event: USER_DOWN, user})
+                servers.broadcast({event: USER_DOWN, user})
+            } else {
+                log.warn(`${userTag(username)} disconnected, but not found in user store`)
+            }
         },
         error: error => log.error('Unexpected userDisconnected$ stream error', error),
         complete: () => log.error('Unexpected userDisconnected$ stream closed')
