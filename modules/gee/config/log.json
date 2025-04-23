@@ -1,7 +1,7 @@
 {
     "port": 5000,
     "categories": {
-        "auth": "debug",
+        "auth": "info",
         "config": "info",
         "default": "info",
         "channel-forward": "info",
