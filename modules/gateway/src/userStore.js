@@ -8,8 +8,7 @@ const {getSessionUsername, setRequestUser} = require('./user')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 const USER_PREFIX = 'user'
-
-const currentUserUrl = `http://${modules.user}/current`
+const CURRENT_USER_URL = `http://${modules.user}/current`
 
 const UserStore = redis => {
     if (!redis) {
@@ -65,7 +64,7 @@ const UserStore = redis => {
         if (user) {
             log.debug(`${userTag(user.username)} updating`, user.googleTokens)
             await firstValueFrom(
-                get$(currentUserUrl, {
+                get$(CURRENT_USER_URL, {
                     headers: {[SEPAL_USER_HEADER]: JSON.stringify(user)}
                 }).pipe(
                     map((({body}) => JSON.parse(body))),

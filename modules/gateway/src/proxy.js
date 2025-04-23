@@ -9,13 +9,13 @@ const log = require('#sepal/log').getLogger('proxy')
 
 const Proxy = (userStore, authMiddleware) => {
 
-    const userUpdate$ = new Subject()
+    const refreshUser$ = new Subject()
     
-    userUpdate$.pipe(
+    refreshUser$.pipe(
         mergeMap(user => from(userStore.updateUser(user)))
     ).subscribe({
-        error: error => log.error('Unexpected userUpdate$ stream error', error),
-        complete: () => log.error('Unexpected userUpdate$ stream closed')
+        error: error => log.error('Unexpected refreshUser$ stream error', error),
+        complete: () => log.error('Unexpected refreshUser$ stream closed')
     })
 
     const proxy = app =>
@@ -74,7 +74,7 @@ const Proxy = (userStore, authMiddleware) => {
                         proxyRes.headers['Strict-Transport-Security'] = 'max-age=16000000; includeSubDomains; preload'
                         proxyRes.headers['Referrer-Policy'] = 'no-referrer'
                         if (proxyRes.headers[SEPAL_USER_UPDATED_HEADER]) {
-                            userUpdate$.next(getRequestUser(req))
+                            refreshUser$.next(getRequestUser(req))
                         }
                     },
                     error: (error, req, res) => {
