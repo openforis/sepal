@@ -25,7 +25,8 @@ const revokeGoogleAccess$ = user => {
             [SEPAL_USER_HEADER]: JSON.stringify(user)
         }
     }).pipe(
-        map(({body}) => JSON.parse(body))
+        map(({body}) => JSON.parse(body)),
+        map(({googleTokens: _googleTokens, ...user}) => user)
     )
 }
 
@@ -42,7 +43,7 @@ const updateGoogleAccessToken$ = user => {
                     return null
                 }
             } else {
-                log.debug(`${userTag(user.username)} Google access token invalidated`)
+                log.info(`${userTag(user.username)} Google access token invalidated`)
                 return null
             }
         }),

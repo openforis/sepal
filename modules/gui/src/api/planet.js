@@ -14,14 +14,4 @@ export default {
             crossDomain: true,
             query: {_page_size: 250}
         }),
-    
-    // loadAll$: () => get$('/api/apps/list'),
-
-    // requestSession$: endpoint => post$('/api/sandbox/start', {
-    //     query: {endpoint: endpoint ? endpoint : 'shiny'}
-    // }),
-
-    // waitForSession$: endpoint => get$('/api/sandbox/start', {
-    //     query: {endpoint: endpoint ? endpoint : 'shiny'}
-    // })
 }

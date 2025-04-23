@@ -121,9 +121,9 @@ const expandGroups = modules =>
         .uniq()
         .value()
 
-export const getModules = modules => {
+export const getModules = (modules, defaultModules = [':default']) => {
     if (_.isEmpty(modules)) {
-        const modules = expandGroups([':default'])
+        const modules = expandGroups(defaultModules)
         return modules.length
             ? modules
             : getAllModules()

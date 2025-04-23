@@ -85,8 +85,7 @@ class _AssetDestinationBrowser extends React.Component {
     }
 
     renderReloadButton() {
-        const {assets: {loading, updating}} = this.props
-        const busy = loading || updating
+        const {assets: {busy}} = this.props
         return (
             <Button
                 key='reload'

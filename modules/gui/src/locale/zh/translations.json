@@ -325,6 +325,11 @@
     },
     "home": {
         "connectivityError": "",
+        "versionMismatch": {
+            "title": "",
+            "message": "",
+            "reloadNow": ""
+        },
         "sections": {
             "account": "",
             "app-launch-pad": "",

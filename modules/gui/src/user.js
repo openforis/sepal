@@ -30,6 +30,7 @@ export const loadUser$ = () => api.user.loadCurrentUser$().pipe(
         switch (errorCode) {
         case 'EE_NOT_AVAILABLE': return eeNotAvailableError$()
         case 'MISSING_OAUTH_SCOPES': return missingOAuthScopesError$()
+        case 'MISSING_GOOGLE_TOKENS': return missingGoogleTokensError$()
         default: return unspecifiedError$()
         }
     })
@@ -40,29 +41,42 @@ const eeNotAvailableError$ = () => {
         title: msg('user.googleAccount.unavailable.title'),
         message: msg('user.googleAccount.unavailable.message'),
         link: `http://code.earthengine.google.com/register?project=${googleProjectId()}`,
-        timeout: 0
+        timeout: 0,
+        group: true
     })
     return of(null)
 }
 
-const missingOAuthScopesError$ = () =>
-    revokeGoogleAccess$().pipe(
-        tap(() => {
-            userDetailsHint(true)
-            Notifications.error({
-                title: msg('user.googleAccount.missingScopes.title'),
-                message: msg('user.googleAccount.missingScopes.message'),
-                timeout: 0,
-                onDismiss: () => userDetailsHint(false)
-            })
-        })
-    )
+const missingOAuthScopesError$ = () => {
+    userDetailsHint(true)
+    Notifications.error({
+        title: msg('user.googleAccount.missingScopes.title'),
+        message: msg('user.googleAccount.missingScopes.message'),
+        timeout: 0,
+        group: true,
+        onDismiss: () => userDetailsHint(false)
+    })
+    return revokeGoogleAccess$()
+}
+
+const missingGoogleTokensError$ = () => {
+    userDetailsHint(true)
+    Notifications.error({
+        title: msg('user.googleAccount.revoked.title'),
+        message: msg('user.googleAccount.revoked.message'),
+        timeout: 0,
+        group: true,
+        onDismiss: () => userDetailsHint(false)
+    })
+    return revokeGoogleAccess$()
+}
 
 const unspecifiedError$ = () => {
     Notifications.error({
         title: msg('user.googleAccount.unspecifiedError.title'),
         message: msg('user.googleAccount.unspecifiedError.message'),
-        timeout: 0
+        timeout: 0,
+        group: true
     })
     return of(null)
 }

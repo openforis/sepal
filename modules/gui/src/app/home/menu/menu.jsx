@@ -27,14 +27,14 @@ class _Menu extends React.Component {
             <div className={className}>
                 <div className={[styles.menu, floating && styles.floating].join(' ')}>
                     <div className={styles.section}>
-                        <SectionLink name='process' icon='globe'/>
-                        <SectionLink name='browse' icon='folder-open'/>
-                        <SectionLink name='terminal' icon='terminal' disabled={budgetExceeded}/>
-                        <SectionLink name='app-launch-pad' icon='wrench' disabled={budgetExceeded}/>
+                        <SectionLink name='process' path='/' icon='globe'/>
+                        <SectionLink name='browse' path='/-/browse' icon='folder-open'/>
+                        <SectionLink name='terminal' path='/-/terminal' icon='terminal' disabled={budgetExceeded}/>
+                        <SectionLink name='app-launch-pad' path='/-/app-launch-pad' icon='wrench' disabled={budgetExceeded}/>
                     </div>
                     <div className={styles.section}>
-                        <SectionLink name='tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'} disabled={budgetExceeded}/>
-                        {user.admin ? <SectionLink name='users' icon='users'/> : null}
+                        <SectionLink name='tasks' path='/-/tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'} disabled={budgetExceeded}/>
+                        {user.admin ? <SectionLink name='users' path='/-/users' icon='users'/> : null}
                         <Link name='help' icon='question-circle' href='https://docs.sepal.io/'/>
                         <MenuMode className={styles.mode}/>
                     </div>
@@ -86,8 +86,8 @@ const _SectionLink = ({active, name, icon, disabled}) => {
 const SectionLink = compose(
     _SectionLink,
     connect(
-        (state, {name}) => ({
-            active: isPathInLocation(`/-/${name}`)
+        (state, {path}) => ({
+            active: isPathInLocation(path)
         })
     )
 )

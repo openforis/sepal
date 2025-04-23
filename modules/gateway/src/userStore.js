@@ -1,10 +1,10 @@
 const log = require('#sepal/log').getLogger('userStore')
 const {usernameTag, userTag} = require('./tag')
-const {from, map, switchMap, firstValueFrom, Subject} = require('rxjs')
+const {catchError, from, map, switchMap, firstValueFrom, Subject, EMPTY} = require('rxjs')
 const {get$} = require('#sepal/httpClient')
 const modules = require('../config/modules')
 const {deserialize, serialize, removeRequestUser} = require('./user')
-const {getRequestUser, getSessionUsername, setRequestUser} = require('./user')
+const {getSessionUsername, setRequestUser} = require('./user')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 const USER_PREFIX = 'user'
@@ -61,8 +61,7 @@ const UserStore = redis => {
             })
     }
     
-    const updateUser = async req => {
-        const user = getRequestUser(req)
+    const updateUser = async user => {
         if (user) {
             log.debug(`${userTag(user.username)} updating`, user.googleTokens)
             await firstValueFrom(
@@ -73,6 +72,10 @@ const UserStore = redis => {
                     switchMap(user => {
                         log.debug(`${userTag(user.username)} updated, ${user.googleTokens ? 'connected to Google' : 'disconnected from Google'}`)
                         return from(setUser(user))
+                    }),
+                    catchError(error => {
+                        log.warn(`${userTag(user.username)} could not be updated, ${user.googleTokens ? 'connected to Google' : 'disconnected from Google'}`, error)
+                        return EMPTY
                     })
                 )
             )

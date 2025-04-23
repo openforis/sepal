@@ -24,12 +24,6 @@ export default {
             maxRetries: 0
         }),
 
-    listAssets$: ({id}) =>
-        get$('/api/gee/asset/list', {
-            query: {id},
-            maxRetries: 0
-        }),
-
     createFolder$: ({id}) =>
         postJson$('/api/gee/asset/createFolder', {
             body: {id},

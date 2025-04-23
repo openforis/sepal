@@ -3,8 +3,8 @@
     "categories": {
         "auth": "info",
         "gateway": "info",
-        "googleAccessToken": "info",
-        "proxy": "error",
+        "googleAccessToken": "debug",
+        "proxy": "debug",
         "session": "info",
         "user": "info",
         "userApi": "info",

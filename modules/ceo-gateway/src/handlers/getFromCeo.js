@@ -1,5 +1,5 @@
 const {ceoUrl} = require('../config')
-const urljoin = require('url-join')
+const urljoin = require('url-join').default
 const {map, of, throwError, switchMap} = require('rxjs')
 const {get$} = require('#sepal/httpClient')
 const {ClientException} = require('#sepal/exception')
@@ -19,7 +19,7 @@ const getFromCeo$ = (ctx, {path, query}) => {
 
 const validateToken$ = token =>
     get$(urljoin(ceoUrl, 'account'), {
-        followRedirect: false,
+        redirect: 'manual',
         headers: {Cookie: token}
     }).pipe(
         switchMap(({statusCode}) => {

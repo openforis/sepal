@@ -66,7 +66,7 @@ class _SetPassword extends React.Component {
                     message: msg('landing.validate-token.error'),
                     timeout: 10
                 })
-                history().push('/-/process') // [TODO] fix this
+                history().push('/') // [TODO] fix this
             }
         )
     }
@@ -92,7 +92,7 @@ class _SetPassword extends React.Component {
             ),
             user => {
                 credentialsPosted(user)
-                history().push('/-/process')
+                history().push('/')
                 Notifications.success({message: msg('landing.reset-password.success')})
             },
             () => {

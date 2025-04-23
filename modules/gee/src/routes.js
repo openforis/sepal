@@ -42,7 +42,7 @@ module.exports = router =>
         .post('/image/sample', stream(ctx => sampleImage$(ctx)))
         .post('/assetMetadata', stream(ctx => assetMetadata$(ctx)))
         .get('/projects', stream(ctx => projects$(ctx)))
-        .get('/asset/list', stream(ctx => listAssets$(ctx)))
+        .get('/asset/descendants', stream(ctx => listAssets$(ctx)))
         .post('/asset/createFolder', stream(ctx => createFolder$(ctx)))
         .post('/asset/rename', stream(ctx => renameAsset$(ctx)))
         .delete('/asset/delete', stream(ctx => deleteAsset$(ctx)))
