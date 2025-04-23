@@ -322,7 +322,7 @@ const createAssetManager = ({out$, stop$}) => {
     })
 
     busy$.pipe(
-        map(({username, busy}) => ({username, data: {busy}}))
+        map(({username, status}) => ({username, data: {status}}))
     ).subscribe({
         next: ({username, data}) => out$.next({username, data}),
         error: error => log.error('Unexpected stream error', error),

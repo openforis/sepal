@@ -23,15 +23,32 @@ const globalLimiter$ = Limiter({
     concurrency: GLOBAL_CONCURRENCY
 })
 
+const progress = {}
 const busy = {}
 const busy$ = new Subject()
+
+const getProgress = username =>
+    progress[username] || 0
+
+const increaseProgress = username => {
+    if (getProgress(username)) {
+        progress[username]++
+    } else {
+        progress[username] = 1
+    }
+    busy$.next({username, status: {busy: true, progress: getProgress(username)}})
+}
+
+const resetProgress = username => {
+    delete progress[username]
+}
 
 const increaseBusy = username => {
     if (busy[username]) {
         busy[username]++
     } else {
         busy[username] = 1
-        busy$.next({username, busy: true})
+        busy$.next({username, status: {busy: true, progress: getProgress(username)}})
     }
 }
 
@@ -41,7 +58,7 @@ const decreaseBusy = username => {
             busy[username]--
         } else {
             delete busy[username]
-            busy$.next({username, busy: false})
+            busy$.next({username, status: {busy: false}})
         }
     }
 }
@@ -84,7 +101,10 @@ const scanTree$ = username => {
     return loadNode$(username, [], true).pipe(
         reduce((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
         tap(assets => log.info(`${userTag(username)} assets loaded ${formatDistanceToNowStrict(t0)}:`, getStats(assets))),
-        finalize(() => decreaseBusy(username))
+        finalize(() => {
+            resetProgress(username)
+            decreaseBusy(username)
+        })
     )
 }
 
@@ -117,7 +137,8 @@ const loadNode$ = (username, path = [], node = {}) =>
         switchMap(user => user
             ? loadNodeValidUser$(user, path, node.id)
             : loadNodeMissingUser$(username, path)
-        )
+        ),
+        finalize(() => increaseProgress(username))
     )).pipe(
         switchMap(nodes => of({path, nodes}).pipe(
             mergeWith(...loadNodes$(username, path, nodes))

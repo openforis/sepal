@@ -165,7 +165,8 @@
         },
         "controls": {
             "reload": {
-                "tooltip": "Reload"
+                "tooltip": "Reload",
+                "progress": "Reloading... {count}"
             },
             "clearSelection": {
                 "tooltip": "Clear selection"
