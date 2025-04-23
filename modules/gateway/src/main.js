@@ -101,14 +101,14 @@ const main = async () => {
         socket.destroy()
     }
 
-    const handleGlobalWebSocket = (requestPath, req, socket, head, user) => {
+    const handleGlobalWebSocket = (requestPath, req, socket, head, username) => {
         log.debug(`Requesting WebSocket upgrade for ${requestPath}`)
         wss.handleUpgrade(req, socket, head, ws =>
-            wss.emit('connection', ws, req, user)
+            wss.emit('connection', ws, req, username)
         )
     }
 
-    const handleProxiedWebSocket = (requestPath, req, socket, head, {username}) => {
+    const handleProxiedWebSocket = (requestPath, req, socket, head, username) => {
         const {proxy, target} = proxies.find(({path}) => !path || requestPath === path || isMatch(requestPath, `${path}/**`)) || {}
         if (proxy) {
             log.debug(`${usernameTag(username)} Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
@@ -128,20 +128,20 @@ const main = async () => {
         sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
             const username = getSessionUsername(req)
             if (username) {
-                userStore.getUser(username).then(user => {
-                    const requestPath = url.parse(req.url).pathname
-                    if (user) {
-                        log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
-                        setRequestUser(req, user)
-                    } else {
-                        log.warn(`${usernameTag(username)} Websocket upgrade without a user`)
-                    }
-                    if (requestPath === webSocketPath) {
-                        handleGlobalWebSocket(requestPath, req, socket, head, user)
-                    } else {
-                        handleProxiedWebSocket(requestPath, req, socket, head, user)
-                    }
-                })
+                const requestPath = url.parse(req.url).pathname
+                if (requestPath === webSocketPath) {
+                    handleGlobalWebSocket(requestPath, req, socket, head, username)
+                } else {
+                    userStore.getUser(username).then(user => {
+                        if (user) {
+                            log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
+                            setRequestUser(req, user)
+                        } else {
+                            log.warn(`${usernameTag(username)} Websocket upgrade without a user`)
+                        }
+                        handleProxiedWebSocket(requestPath, req, socket, head, username)
+                    })
+                }
             } else {
                 webSocketAccessDenied(socket)
             }
