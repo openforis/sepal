@@ -72,13 +72,13 @@ const createRoot = () =>
 const createNode = path =>
     STree.createNode(path)
 
-const addNode = (tree, path, item) =>
-    STree.alter(tree, tree =>
-        STree.setValue(
-            STree.traverse(tree, [...path, getKey(item, path)], true),
-            {type: item.type, updateTime: item.updateTime, quota: item.quota}
-        )
+const addNode = (tree, path, item) => {
+    STree.setValue(
+        STree.traverse(tree, [...path, getKey(item, path)], true),
+        {type: item.type, updateTime: item.updateTime, quota: item.quota}
     )
+    return tree
+}
 
 const addNodes = (tree, path, nodes = []) =>
     nodes.reduce((tree, node) => addNode(tree, path, node), tree)
@@ -151,10 +151,11 @@ const loadNodes$ = (username, path, nodes) =>
         .map(node => loadNode$(username, [...path, getKey(node, path)], node))
 
 const scanNode$ = (username, path) => {
-    log.debug(`${userTag(username)} loading node:`, path)
+    log.debug(`${userTag(username)} loading:`, STree.toStringPath(path))
     increaseBusy(username)
     return from(getUser(username)).pipe(
         switchMap(user => getAsset$(user, STree.toStringPath(path))),
+        tap(() => log.info(`${userTag(username)} loaded:`, STree.toStringPath(path))),
         map(childNodes => {
             const node = createNode(path)
             childNodes.forEach(
