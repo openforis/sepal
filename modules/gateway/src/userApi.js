@@ -1,13 +1,23 @@
 const {map, catchError, of} = require('rxjs')
 const modules = require('../config/modules')
-const {postJson$} = require('#sepal/httpClient')
+const {postJson$, get$} = require('#sepal/httpClient')
 const {SEPAL_USER_HEADER} = require('./user')
 const {userTag} = require('./tag')
 
 const log = require('#sepal/log').getLogger('userApi')
 
+const CURRENT_USER_URL = `http://${modules.user}/current`
 const REFRESH_GOOGLE_ACCESS_TOKEN_URL = `http://${modules.user}/google/refresh-access-token`
 const REVOKE_GOOGLE_ACCESS_URL = `http://${modules.user}/google/revoke-access`
+
+const getUser$ = username => {
+    log.debug(`${userTag(username)} Reloading user`)
+    return get$(CURRENT_USER_URL, {
+        headers: {[SEPAL_USER_HEADER]: JSON.stringify({username})}
+    }).pipe(
+        map((({body}) => JSON.parse(body)))
+    )
+}
 
 const refreshGoogleAccessToken$ = user => {
     log.debug(`${userTag(user.username)} Refreshing Google access token`)
@@ -54,4 +64,4 @@ const updateGoogleAccessToken$ = user => {
     )
 }
 
-module.exports = {revokeGoogleAccess$, updateGoogleAccessToken$}
+module.exports = {getUser$, revokeGoogleAccess$, updateGoogleAccessToken$}

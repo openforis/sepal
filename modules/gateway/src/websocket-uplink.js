@@ -4,36 +4,25 @@ const {webSocket} = require('rxjs/webSocket')
 
 const {webSocketEndpoints} = require('../config/endpoints')
 const {autoRetry} = require('sepal/src/rxjs')
-const {moduleTag, clientTag, userTag} = require('./tag')
-const {CLIENT_UP, USER_UP, USER_UPDATE} = require('./websocket-events')
+const {moduleTag, clientTag} = require('./tag')
+const {CLIENT_UP, USER_UP} = require('./websocket-events')
 
 const log = require('#sepal/log').getLogger('websocket/uplink')
 
 const HEARTBEAT_INTERVAL_MS = 1 * 1000
 
-const initializeUplink = ({servers, clients, userStore: {getUser, userUpdate$}}) => {
-    
-    const onUserUpdate = user => {
-        log.debug(`${userTag(user.username)} updated`)
-        servers.broadcast({event: USER_UPDATE, user})
-    }
-
-    userUpdate$.subscribe({
-        next: user => onUserUpdate(user),
-        error: error => log.error('Unexpected userUpdate$ error', error),
-        complete: () => log.error('Unexpected userUpdate$ complete')
-    })
+const initializeUplink = ({servers, clients, userStore}) => {
     
     const moduleReady = (module, ready) => {
         clients.broadcast({modules: {update: {[module]: ready}}})
         if (ready) {
             clients.forEachUser(username =>
-                getUser(username).then(
+                userStore.getUser(username).then(
                     user => servers.send(module, {event: USER_UP, user})
                 )
             )
             clients.forEach(({username, clientId}) =>
-                getUser(username).then(
+                userStore.getUser(username).then(
                     user => {
                         servers.send(module, {event: CLIENT_UP, user, clientId})
                     }

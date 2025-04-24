@@ -89,7 +89,7 @@ const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUs
     })
 
     toUser$?.subscribe({
-        next: ({username, event}) => clients.sendByUsername(username, {event}),
+        next: ({username, event}) => clients.sendByUsername({username}, {event}),
         error: error => log.error('Unexpected toUser$ stream error', error),
         complete: () => log.error('Unexpected toUser$ stream closed')
     })

@@ -223,7 +223,7 @@ class UserEndpoint {
                 command.usernameToUpdate = sepalUser.username
                 command.admin = sepalUser.admin
                 def user = component.submit(command)
-                response.addHeader('sepal-user-updated', 'true')
+                response.addHeader('sepal-user-updated', sepalUser.username)
                 send toJson(userToMap(user))
             }
 
@@ -235,6 +235,7 @@ class UserEndpoint {
                     throw new InvalidRequest(errors)
                 command.username = sepalUser.username
                 def user = component.submit(command)
+                response.addHeader('sepal-user-updated', params.username)
                 send toJson(userToMap(user))
             }
 
@@ -271,6 +272,7 @@ class UserEndpoint {
                 if (errors)
                     throw new InvalidRequest(errors)
                 def user = component.submit(command)
+                response.addHeader('sepal-user-updated', params.username)
                 send toJson(userToMap(user))
             }
 
@@ -281,6 +283,7 @@ class UserEndpoint {
                 if (errors)
                     throw new InvalidRequest(errors)
                 def user = component.submit(command)
+                response.addHeader('sepal-user-updated', params.username)
                 send toJson(userToMap(user))
             }
 
@@ -304,7 +307,7 @@ class UserEndpoint {
                                 username: sepalUser.username,
                                 authorizationCode: params.required('code', String)
                         ))
-                response.addHeader('sepal-user-updated', 'true')
+                response.addHeader('sepal-user-updated', sepalUser.username)
                 response.sendRedirect(params.required('state', String))
             }
 
@@ -315,7 +318,7 @@ class UserEndpoint {
                                 username: sepalUser.username,
                                 tokens: sepalUser.googleTokens
                         ))
-                response.addHeader('sepal-user-updated', 'true')
+                response.addHeader('sepal-user-updated', sepalUser.username)
                 send toJson(userToMap(user))
             }
 
@@ -326,7 +329,7 @@ class UserEndpoint {
                                 username: sepalUser.username,
                                 tokens: sepalUser.googleTokens
                         ))
-                response.addHeader('sepal-user-updated', 'true')
+                response.addHeader('sepal-user-updated', sepalUser.username)
                 if (tokens) 
                     send toJson(tokens)
                 else
@@ -341,7 +344,7 @@ class UserEndpoint {
                             projectId: legacyProject ? null : params.projectId,
                             legacyProject: legacyProject,
                     ))
-                response.addHeader('sepal-user-updated', 'true')
+                response.addHeader('sepal-user-updated', sepalUser.username)
                 response.status = 204
             }
         }

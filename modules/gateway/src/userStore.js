@@ -1,14 +1,12 @@
 const log = require('#sepal/log').getLogger('userStore')
 const {usernameTag, userTag} = require('./tag')
-const {catchError, from, map, switchMap, firstValueFrom, Subject, EMPTY} = require('rxjs')
-const {get$} = require('#sepal/httpClient')
-const modules = require('../config/modules')
+const {catchError, from, switchMap, Subject, EMPTY} = require('rxjs')
 const {deserialize, serialize, removeRequestUser} = require('./user')
 const {getSessionUsername, setRequestUser} = require('./user')
+const {getUser$} = require('./userApi')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 const USER_PREFIX = 'user'
-const CURRENT_USER_URL = `http://${modules.user}/current`
 
 const UserStore = redis => {
     if (!redis) {
@@ -60,26 +58,22 @@ const UserStore = redis => {
             })
     }
     
-    const updateUser = async user => {
-        if (user) {
-            log.debug(`${userTag(user.username)} updating`, user.googleTokens)
-            await firstValueFrom(
-                get$(CURRENT_USER_URL, {
-                    headers: {[SEPAL_USER_HEADER]: JSON.stringify(user)}
-                }).pipe(
-                    map((({body}) => JSON.parse(body))),
-                    switchMap(user => {
-                        log.debug(`${userTag(user.username)} updated, ${user.googleTokens ? 'connected to Google' : 'disconnected from Google'}`)
-                        return from(setUser(user))
-                    }),
-                    catchError(error => {
-                        log.warn(`${userTag(user.username)} could not be updated, ${user.googleTokens ? 'connected to Google' : 'disconnected from Google'}`, error)
-                        return EMPTY
-                    })
-                )
+    const updateUser$ = username => {
+        if (username) {
+            log.debug(`${userTag(username)} updating`)
+            return getUser$(username).pipe(
+                switchMap(user => {
+                    log.debug(`${userTag(user.username)} updated, ${user.googleTokens ? 'connected to Google' : 'disconnected from Google'}`)
+                    return from(setUser(user))
+                }),
+                catchError(error => {
+                    log.warn(`${userTag(username)} could not be updated`, error)
+                    return EMPTY
+                })
             )
         } else {
             log.warn('No user to update')
+            return EMPTY
         }
     }
 
@@ -106,7 +100,7 @@ const UserStore = redis => {
     }
 
     return {
-        getUser, setUser, removeUser, updateUser, userMiddleware, userUpdate$
+        getUser, setUser, removeUser, updateUser$, userMiddleware, userUpdate$
     }
 }
 
