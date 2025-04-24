@@ -25,7 +25,7 @@ const Auth = userStore => {
 
             const userWithGoogleAccessToken$ = user => {
                 const serializedUser = JSON.stringify(user)
-                req.set(SEPAL_USER_HEADER, serializedUser)
+                setRequestUser(req, user)
                 res.set(SEPAL_USER_HEADER, serializedUser)
                 return from(userStore.setUser(user))
             }
