@@ -134,11 +134,11 @@ const loadNodeMissingUser$ = (username, path) =>
 
 const loadNode$ = (username, path = [], node = {}) =>
     limiter$(() => from(getUser(username, {allowMissing: true})).pipe(
+        tap(() => increaseProgress(username)),
         switchMap(user => user
             ? loadNodeValidUser$(user, path, node.id)
             : loadNodeMissingUser$(username, path)
-        ),
-        finalize(() => increaseProgress(username))
+        )
     )).pipe(
         switchMap(nodes => of({path, nodes}).pipe(
             mergeWith(...loadNodes$(username, path, nodes))
