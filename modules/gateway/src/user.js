@@ -3,6 +3,8 @@ const _ = require('lodash')
 const {usernameTag} = require('./tag')
 
 const SEPAL_USER_HEADER = 'sepal-user'
+const SEPAL_USER_UPDATED_HEADER = 'sepal-user-updated'
+const SEPAL_BUDGET_UPDATED_HEADER = 'sepal-budget-updated'
 
 const serialize = value => {
     try {
@@ -46,6 +48,8 @@ const removeRequestUser = req =>
 
 module.exports = {
     SEPAL_USER_HEADER,
+    SEPAL_USER_UPDATED_HEADER,
+    SEPAL_BUDGET_UPDATED_HEADER,
     serialize,
     deserialize,
     getSessionUsername,

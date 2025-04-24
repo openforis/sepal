@@ -11,20 +11,20 @@ const ws$ = in$ => {
     const init = async () => {
         const watcher = await createWatcher({out$, stop$})
 
-        const onClientUp = ({user: {username}, clientId}) => {
+        const onClientUp = ({username, clientId}) => {
             log.info(`${clientTag({username, clientId})} up`)
         }
 
-        const onClientDown = ({user: {username}, clientId}) => {
+        const onClientDown = ({username, clientId}) => {
             log.info(`${clientTag({username, clientId})} down`)
             watcher.offline({username, clientId})
         }
 
-        const onSubscriptionUp = ({user: {username}, clientId, subscriptionId}) => {
+        const onSubscriptionUp = ({username, clientId, subscriptionId}) => {
             log.debug(`${subscriptionTag({username, clientId, subscriptionId})} up`)
         }
 
-        const onSubscriptionDown = ({user: {username}, clientId, subscriptionId}) => {
+        const onSubscriptionDown = ({username, clientId, subscriptionId}) => {
             log.debug(`${subscriptionTag({username, clientId, subscriptionId})} down`)
             watcher.unsubscribe({username, clientId, subscriptionId})
         }
@@ -55,17 +55,16 @@ const ws$ = in$ => {
         }
 
         const processMessage = message => {
-            const {event, data, hb, user, clientId, subscriptionId} = message
+            const {event, data, hb, username, clientId, subscriptionId} = message
             if (hb) {
                 out$.next({hb})
             } else if (event) {
                 const handler = EVENT_HANDLERS[event]
                 if (handler) {
-                    handler({user, clientId, subscriptionId})
+                    handler({username, clientId, subscriptionId})
                 }
             } else if (data) {
                 const {monitor, unmonitor, remove, reset} = data
-                const {username} = user
                 if (monitor) {
                     onMonitor({username, clientId, subscriptionId, monitor, reset})
                 } else if (unmonitor) {

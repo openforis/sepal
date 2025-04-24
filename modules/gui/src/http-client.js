@@ -1,19 +1,15 @@
 import base64 from 'base-64'
 import _ from 'lodash'
-import {catchError, map, of, tap, throwError} from 'rxjs'
+import {catchError, map, of, throwError} from 'rxjs'
 import {ajax} from 'rxjs/ajax'
 import {webSocket} from 'rxjs/webSocket'
 
-import {getLogger} from '~/log'
 import {autoRetry} from '~/rxjsutils'
 import {msg} from '~/translate'
-import {currentUser, logout$, updateUser} from '~/user'
+import {logout$} from '~/user'
 import {applyDefaults} from '~/utils'
 import {Notifications} from '~/widget/notifications'
-
-// eslint-disable-next-line no-unused-vars
-const log = getLogger('http')
-
+ 
 const DEFAULT_RETRY_CONFIG = {
     maxRetries: 5,
     minRetryDelay: 500,
@@ -205,14 +201,6 @@ const execute$ = (url, method, {
         }
     }
     return ajax({url: urlWithQuery, method, headers, ...args}).pipe(
-        tap(({responseHeaders}) => {
-            if (responseHeaders['sepal-user']) { // Make sure the user is up-to-date. Google Tokens might have changed
-                const previousUser = _.omit(currentUser(), ['googleTokens']) // make sure googleTokens are always updated
-                const updatedUser = JSON.parse(responseHeaders['sepal-user'])
-                const user = {...previousUser, ...updatedUser}
-                updateUser(user)
-            }
-        }),
         map(response => validateResponse(response, validStatuses)),
         catchError(e => {
             if (validStatuses && validStatuses.includes(e.status)) {

@@ -57,8 +57,6 @@ class BudgetEndpoint {
                 if (errors)
                     throw new InvalidRequest(errors)
                 component.submit(command)
-                if (currentUser.username == command.username) // Current user updated
-                    response.addHeader('sepal-user-updated', 'true')
                 send toJson(budget)
             }
 

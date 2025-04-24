@@ -53,45 +53,49 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
         return millisecondsLeft / 1000
     }
 
-    const authenticateServiceAccount$ = (serviceAccountCredentials, username) =>
-        ee.$({
+    const authenticateServiceAccount$ = (serviceAccountCredentials, username) => {
+        log.debug(userTag(username), 'Authenticating service account')
+        ee.sepal.setAuthType('SERVICE_ACCOUNT')
+        return ee.$({
             description: 'authenticate service account',
             operation: (resolve, reject) => {
-                ee.sepal.setAuthType('SERVICE_ACCOUNT')
-                log.debug(userTag(username), 'Authenticating service account')
                 ee.data.authenticateViaPrivateKey(serviceAccountCredentials, resolve, reject)
             }
         })
+    }
 
     const validateGoogleTokens = (googleTokens, username) => {
         if (!googleTokens.accessToken) {
-            throw Error(userTag(username), 'Access token is missing')
+            throw Error(`${userTag(username)} Access token is missing`)
         }
         const secondsToExpiration = calculateSecondsToExpiration(googleTokens.accessTokenExpiryDate)
         if (secondsToExpiration <= 0) {
-            throw Error(userTag(username), `Token expired ${secondsToExpiration} seconds ago`)
+            throw Error(`${userTag(username)} Token expired ${secondsToExpiration} seconds ago`)
         }
     }
 
-    const authenticateUserAccount$ = (googleTokens, username) =>
-        ee.$({
+    const authenticateUserAccount$ = (googleTokens, username) => {
+        validateGoogleTokens(googleTokens, username)
+        ee.sepal.setAuthType('USER')
+        const secondsToExpiration = calculateSecondsToExpiration(googleTokens.accessTokenExpiryDate)
+        log.debug(userTag(username), `Authenticating user account (expiring in ${secondsToExpiration} s)`)
+        return ee.$({
             description: 'authenticate user account',
             operation: (resolve, reject) => {
-                validateGoogleTokens(googleTokens, username)
-                ee.sepal.setAuthType('USER')
-                const secondsToExpiration = calculateSecondsToExpiration(googleTokens.accessTokenExpiryDate)
-                log.debug(userTag(username), `Authenticating user account (expiring in ${secondsToExpiration} s)`)
                 ee.data.setAuthToken(
                     null, // clientId - no need to specify as EE API doesn't refresh the token
                     'Bearer', // tokenType
                     googleTokens.accessToken,
                     null, // expiresIn - by setting this to null, we prevent a setTimeout() call in EE API
                     null, // extraScopes - we have no extra scopes
+                    // extraScopes - we have no extra scopes
                     error => error ? reject(error) : resolve(), // error callback
                     false // updateAuthLibrary - we don't want EE API to refresh the token
                 )
-            }
+            },
+            skipAuthTokenCheck: true
         })
+    }
 
     const authenticate$ = ({sepalUser: {googleTokens, username}, serviceAccountCredentials}) =>
         googleTokens
@@ -107,7 +111,8 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
                 // [HACK] Force ee to change projectId after first initialization (ee.initialize() doesn't do that).
                 ee.data.initialize(eeEndpoint, null, null, projectId)
                 ee.initialize(eeEndpoint, null, resolve, reject, null, projectId)
-            }
+            },
+            skipAuthTokenCheck: true
         })),
         swallow()
     )

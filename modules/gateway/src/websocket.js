@@ -3,13 +3,25 @@ const {initializeUplink} = require('./websocket-uplink')
 const {Servers} = require('./websocket-server')
 const {Clients} = require('./websocket-client')
 const {USER_UP, USER_DOWN, USER_UPDATE, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN} = require('./websocket-events')
+const {userTag} = require('./tag')
+const log = require('#sepal/log').getLogger('websocket')
 
 const initializeWebSocketServer = ({wss, userStore, userStatus$, toUser$}) => {
     const servers = Servers()
     const clients = Clients()
     
     initializeUplink({servers, clients, userStore})
-    initializeDownlink({servers, clients, wss, userStatus$, toUser$})
+    initializeDownlink({servers, clients, wss, userStore, userStatus$, toUser$})
+
+    userStore.userUpdate$.subscribe({
+        next: user => {
+            log.debug(`${userTag(user.username)} updated`)
+            servers.broadcast({event: USER_UPDATE, user})
+            toUser$.next({username: user.username, event: {[USER_UPDATE]: user}})
+        },
+        error: error => log.error('Unexpected userUpdate$ error', error),
+        complete: () => log.error('Unexpected userUpdate$ complete')
+    })
 }
 
 module.exports = {initializeWebSocketServer}
@@ -22,12 +34,11 @@ const SERVER_CONTRACT = () => ({
     onUserUp: {event: USER_UP, user},
     onUserDown: {event: USER_DOWN, user},
     onUserUpdate: {event: USER_UPDATE, user},
-    onClientUp: {event: CLIENT_UP, user, clientId},
-    onClientDown: {event: CLIENT_DOWN, user, clientId},
-    onSubscriptionUp: {event: SUBSCRIPTION_UP, user, clientId, subscriptionId},
-    onSubscriptionDown: {event: SUBSCRIPTION_DOWN, user, clientId, subscriptionId},
-    onUserUpdate: {user},
-    onClientMessage: {user, clientId, subscriptionId, data},
+    onClientUp: {event: CLIENT_UP, username, clientId},
+    onClientDown: {event: CLIENT_DOWN, username, clientId},
+    onSubscriptionUp: {event: SUBSCRIPTION_UP, username, clientId, subscriptionId},
+    onSubscriptionDown: {event: SUBSCRIPTION_DOWN, username, clientId, subscriptionId},
+    onClientMessage: {username, clientId, subscriptionId, data},
     out: {username, data},
     out: {clientId, subscriptionId, data}
 })

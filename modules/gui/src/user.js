@@ -41,26 +41,26 @@ const eeNotAvailableError$ = () => {
         title: msg('user.googleAccount.unavailable.title'),
         message: msg('user.googleAccount.unavailable.message'),
         link: `http://code.earthengine.google.com/register?project=${googleProjectId()}`,
-        timeout: 0
+        timeout: 0,
+        group: true
     })
     return of(null)
 }
 
-const missingOAuthScopesError$ = () =>
-    revokeGoogleAccess$().pipe(
-        tap(() => {
-            userDetailsHint(true)
-            Notifications.error({
-                title: msg('user.googleAccount.missingScopes.title'),
-                message: msg('user.googleAccount.missingScopes.message'),
-                timeout: 0,
-                group: true,
-                onDismiss: () => userDetailsHint(false)
-            })
-        })
-    )
+const missingOAuthScopesError$ = () => {
+    userDetailsHint(true)
+    Notifications.error({
+        title: msg('user.googleAccount.missingScopes.title'),
+        message: msg('user.googleAccount.missingScopes.message'),
+        timeout: 0,
+        group: true,
+        onDismiss: () => userDetailsHint(false)
+    })
+    return revokeGoogleAccess$()
+}
 
 const missingGoogleTokensError$ = () => {
+    userDetailsHint(true)
     Notifications.error({
         title: msg('user.googleAccount.revoked.title'),
         message: msg('user.googleAccount.revoked.message'),
@@ -75,7 +75,8 @@ const unspecifiedError$ = () => {
     Notifications.error({
         title: msg('user.googleAccount.unspecifiedError.title'),
         message: msg('user.googleAccount.unspecifiedError.message'),
-        timeout: 0
+        timeout: 0,
+        group: true
     })
     return of(null)
 }
@@ -111,7 +112,7 @@ export const resetPassword$ = ({token, username, password, type, recaptchaToken}
 export const updateUser = user => {
     publishCurrentUserEvent(user)
     actionBuilder('SET_CURRENT_USER', {user})
-        .set('user', {
+        .assign('user', {
             currentUser: user,
             initialized: true,
             loggedOn: !!user
@@ -165,19 +166,17 @@ export const validateEmail$ = ({email, recaptchaToken}) =>
         map(({valid}) => valid)
     )
 
-export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) =>
-    api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}).pipe(
-        tap(({name, email, organization}) =>
-            actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
-                .set('user.currentUser.name', name)
-                .set('user.currentUser.email', email)
-                .set('user.currentUser.organization', organization)
-                .set('user.currentUser.intendedUse', intendedUse)
-                .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
-                .set('user.currentUser.manualMapRenderingEnabled', manualMapRenderingEnabled)
-                .dispatch()
-        )
-    )
+export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) => {
+    actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
+        .set('user.currentUser.name', name)
+        .set('user.currentUser.email', email)
+        .set('user.currentUser.organization', organization)
+        .set('user.currentUser.intendedUse', intendedUse)
+        .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
+        .set('user.currentUser.manualMapRenderingEnabled', manualMapRenderingEnabled)
+        .dispatch()
+    return api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled})
+}
 
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
     api.user.changePassword$({oldPassword, newPassword}).pipe(
