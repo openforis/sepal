@@ -21,7 +21,7 @@ const {initMessageQueue} = require('#sepal/messageQueue')
 const {Auth} = require('./auth')
 const {Proxy} = require('./proxy')
 const {SessionManager} = require('./session')
-const {setRequestUser, getSessionUsername} = require('./user')
+const {setRequestUser, getSessionUsername, getRequestUser, removeRequestUser} = require('./user')
 const {UserStore} = require('./userStore')
 const {initializeGoogleAccessTokenRefresher} = require('./googleAccessToken')
 const {usernameTag, urlTag} = require('./tag')
@@ -127,6 +127,7 @@ const main = async () => {
     server.on('upgrade', (req, socket, head) => {
         sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
             const username = getSessionUsername(req)
+            removeRequestUser(req)
             if (username) {
                 const requestPath = url.parse(req.url).pathname
                 if (requestPath === webSocketPath) {
