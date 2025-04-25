@@ -5000,8 +5000,7 @@
             "switchingToSEPALGoogleAccount": "Passage au compte Google de SEPAL",
             "title": "Détails de l'utilisateur",
             "update": {
-                "error": "",
-                "success": ""
+                "error": ""
             },
             "confirmation": {
                 "message": ""
