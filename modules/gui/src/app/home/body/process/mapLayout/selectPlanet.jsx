@@ -85,7 +85,7 @@ class _SelectPlanet extends React.Component {
     validateApiKey(apiKey) {
         this.apiKeyChanged$.next()
         this.setState({validatedApiKey: null},
-            this.props.stream('VALIDATE_API_KEY',
+            () => this.props.stream('VALIDATE_API_KEY',
                 api.planet.validateApiKey$(apiKey).pipe(
                     takeUntil(this.apiKeyChanged$)),
                 () => this.setState({validatedApiKey: apiKey}),
