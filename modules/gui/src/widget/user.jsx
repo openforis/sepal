@@ -4,10 +4,7 @@ import {filter, map} from 'rxjs'
 import {event$} from '~/api/ws'
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
-import {msg} from '~/translate'
 import {updateUser} from '~/user'
-
-import {Notifications} from './notifications'
 
 class _User extends React.Component {
     render() {
@@ -21,20 +18,11 @@ class _User extends React.Component {
                 filter(({userUpdate}) => userUpdate),
                 map(({userUpdate}) => userUpdate)
             ).subscribe(
-                user => {
-                    updateUser(user)
-                    this.notify()
-                }
+                user => updateUser(user)
             )
         )
     }
 
-    notify() {
-        Notifications.success({
-            title: msg('user.userDetails.update.success'),
-            group: true
-        })
-    }
 }
 
 export const User = compose(
