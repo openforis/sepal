@@ -165,7 +165,8 @@
         },
         "controls": {
             "reload": {
-                "tooltip": ""
+                "tooltip": "",
+                "progress": ""
             },
             "clearSelection": {
                 "tooltip": "Borrar selección"
