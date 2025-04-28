@@ -51,14 +51,6 @@ const initializeGoogleAccessTokenRefresher = ({userStore, userStatus$, toUser$})
             tap(delay => log.debug(`${userTag(username)} Google access token refresh in ${formatDistanceStrict(0, delay)}`)),
             switchMap(delay => timer(delay))
         )
-        
-    const updateUser$ = user =>
-        updateGoogleAccessToken$(user).pipe(
-            switchMap(updatedUser => updatedUser
-                ? setUser$(updatedUser)
-                : updateFailed$(user)
-            )
-        )
 
     const disconnectUser = username =>
         toUser$.next({username, event: {disconnectGoogleAccount: true}})
@@ -73,7 +65,14 @@ const initializeGoogleAccessTokenRefresher = ({userStore, userStatus$, toUser$})
         of(username).pipe(
             tap(() => log.debug(`${userTag(username)} Google access token refreshing now`)),
             exhaustMap(() => getUser$(username).pipe(
-                switchMap(user => updateUser$(user))
+                switchMap(user =>
+                    updateGoogleAccessToken$(user).pipe(
+                        switchMap(updatedUser => updatedUser
+                            ? setUser$(updatedUser)
+                            : updateFailed$(user)
+                        )
+                    )
+                )
             )),
             autoRetry({
                 maxRetries: 3,

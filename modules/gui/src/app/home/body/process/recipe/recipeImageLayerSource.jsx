@@ -3,7 +3,7 @@ import React from 'react'
 
 import {createAoiFeatureLayerSource} from '~/app/home/map/aoiFeatureLayerSource'
 import {createGoogleSatelliteImageLayerSource} from '~/app/home/map/imageLayerSource/googleSatelliteImageLayerSource'
-import {createNicfiPlanetImageLayerSource} from '~/app/home/map/imageLayerSource/planetImageLayerSource'
+// import {createNicfiPlanetImageLayerSource} from '~/app/home/map/imageLayerSource/planetImageLayerSource'
 import {createLabelsFeatureLayerSource} from '~/app/home/map/labelsFeatureLayerSource'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -95,11 +95,11 @@ RecipeImageLayerSource.propTypes = {
 
 export const initializeLayers = ({recipeId, savedLayers, additionalFeatureLayerSources = [], skipThis, defaultGoogleSatellite}) => {
     const recipeImageLayerSource = !skipThis && createCurrentRecipeImageLayerSource(recipeId)
-    const planetImageLayerSource = createNicfiPlanetImageLayerSource()
+    // const planetImageLayerSource = createNicfiPlanetImageLayerSource()
     const googleSatelliteImageLayerSource = createGoogleSatelliteImageLayerSource()
     const imageLayerSources = [
         ...skipThis ? [] : [recipeImageLayerSource],
-        planetImageLayerSource,
+        // planetImageLayerSource,
         googleSatelliteImageLayerSource
     ]
 
