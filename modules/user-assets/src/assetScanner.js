@@ -100,7 +100,7 @@ const scanTree$ = username => {
     increaseBusy(username)
     return loadNode$(username, [], true).pipe(
         reduce((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
-        tap(assets => log.info(`${userTag(username)} assets loaded ${formatDistanceToNowStrict(t0)}:`, getStats(assets))),
+        tap(assets => log.info(`${userTag(username)} assets loaded in ${formatDistanceToNowStrict(t0)}:`, getStats(assets))),
         finalize(() => {
             resetProgress(username)
             decreaseBusy(username)
