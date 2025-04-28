@@ -60,7 +60,9 @@ const SessionManager = (sessionStore, userStore) => {
             if (userSessionIds.length === 0) {
                 await userStore.removeUser(username)
             }
-            log.debug(() => `${usernameTag(username)} Logout, ${userSessionIds.length} active session(s) remaining`)
+            log.info(`${usernameTag(username)} Logout, ${userSessionIds.length} active session(s) remaining`)
+        } else {
+            log.warn('Logout without user in session')
         }
 
         const cookieHeader = req.get('Cookie')

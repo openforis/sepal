@@ -3,6 +3,7 @@ const modules = require('../config/modules')
 const {postJson$, get$} = require('#sepal/httpClient')
 const {SEPAL_USER_HEADER} = require('./user')
 const {userTag} = require('./tag')
+const {formatDistanceStrict} = require('date-fns/formatDistanceStrict')
 
 const log = require('#sepal/log').getLogger('userApi')
 
@@ -44,14 +45,13 @@ const updateGoogleAccessToken$ = user => {
     log.debug(`${userTag(user.username)} Google access token refreshing...`)
     return refreshGoogleAccessToken$(user).pipe(
         map(({body: googleTokens, statusCode}) => {
-            if (statusCode !== 204) {
-                if (googleTokens) {
-                    log.debug(`${userTag(user.username)} Google access token updated`, googleTokens)
-                    return {...user, googleTokens: JSON.parse(googleTokens)}
-                } else {
-                    log.warn(`${userTag(user.username)} Google access token missing`)
-                    return null
-                }
+            if (statusCode !== 204) if (googleTokens) {
+                const expiration = formatDistanceStrict(googleTokens.accessTokenExpiryDate, Date.now(), {addSuffix: true})
+                log.info(`${userTag(user.username)} Google access token updated. Expiring ${expiration}`)
+                return {...user, googleTokens: JSON.parse(googleTokens)}
+            } else {
+                log.warn(`${userTag(user.username)} Google access token missing`)
+                return null
             } else {
                 log.info(`${userTag(user.username)} Google access token invalidated`)
                 return null
