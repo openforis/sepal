@@ -57,9 +57,6 @@ const SessionManager = (sessionStore, userStore) => {
         
         if (username) {
             const userSessionIds = await getSessionIdsByUsername(username)
-            if (userSessionIds.length === 0) {
-                await userStore.removeUser(username)
-            }
             log.info(`${usernameTag(username)} Logout, ${userSessionIds.length} active session(s) remaining`)
         } else {
             log.warn('Logout without user in session')
