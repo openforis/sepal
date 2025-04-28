@@ -31,8 +31,8 @@ const SessionManager = (sessionStore, userStore) => {
             userSessionIds.map(
                 async sessionId => await removeSession(sessionId)
             )
-        ).then(() => {
-            userStore.removeUser(username)
+        ).then(async () => {
+            await userStore.removeUser(username)
             return true
         })
     }
