@@ -33,7 +33,7 @@ const RETRY_CONFIG = {
     minRetryDelay: 500,
     maxRetryDelay: 10000,
     retryDelayFactor: 2,
-    maxRetries: Number.MAX_SAFE_INTEGER
+    maxRetries: -1
 }
 
 const timedRefresh$ = (task$, refreshSeconds = 60, _name) =>
