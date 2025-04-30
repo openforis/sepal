@@ -1,5 +1,5 @@
 const {WebSocket} = require('ws')
-const {finalize, map, interval, merge} = require('rxjs')
+const {finalize, map, interval, merge, firstValueFrom} = require('rxjs')
 const {webSocket} = require('rxjs/webSocket')
 
 const {webSocketEndpoints} = require('../config/endpoints')
@@ -17,12 +17,12 @@ const initializeUplink = ({servers, clients, userStore}) => {
         clients.broadcast({modules: {update: {[module]: ready}}})
         if (ready) {
             clients.forEachUser(username =>
-                userStore.getUser(username).then(
+                firstValueFrom(userStore.getUser$(username)).then(
                     user => servers.send(module, {event: USER_UP, user})
                 )
             )
             clients.forEach(({username, clientId}) =>
-                userStore.getUser(username).then(
+                firstValueFrom(userStore.getUser$(username)).then(
                     user => {
                         servers.send(module, {event: CLIENT_UP, user, clientId})
                     }
