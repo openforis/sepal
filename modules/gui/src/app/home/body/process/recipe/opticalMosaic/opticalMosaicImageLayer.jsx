@@ -90,7 +90,7 @@ class _OpticalMosaicImageLayer extends React.Component {
 
     canPanSharpen() {
         const {recipe, layerConfig: {visParams}} = this.props
-        const sources = selectFrom(recipe, 'model.sources')
+        const sources = selectFrom(recipe, 'model.sources.dataSets') || {}
         return sources.LANDSAT
         && this.reflectance() === 'TOA'
         && visParams
