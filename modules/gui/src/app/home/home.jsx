@@ -111,7 +111,7 @@ class _Home extends React.Component {
     constructor(props) {
         super(props)
         const {stream} = props
-        const errorHandler = () => Notifications.error({message: msg('home.connectivityError')})
+        const errorHandler = () => Notifications.error({message: msg('home.connectivityError'), group: true})
         stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_TASKS', updateTasks$(), null, errorHandler)
