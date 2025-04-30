@@ -25,11 +25,11 @@ export const autoRetry = ({
                 ? Date.now() - initialTimestamp
                 : undefined
             // handle no retries
-            if (maxRetries === 0) {
+            if (maxRetries > 0 && retryCount >= maxRetries) {
                 return throwError(() => error)
             }
             // handle max retries
-            if (maxRetries && retryCount >= maxRetries) {
+            if (maxRetries > 0 && retryCount >= maxRetries) {
                 const retryError = `Max retries (${maxRetries}) exceeded${elapsed ? ` after ${elapsed}ms` : ''}.`
                 onMaxRetries && onMaxRetries(error, retryError)
                 error.retryError = retryError
@@ -58,7 +58,7 @@ export const autoRetry = ({
             // retry
             const retryDelay = Math.min(maxRetryDelay, minRetryDelay * Math.pow(retryDelayFactor, retryCount - 1))
             const retryInfo = maxRetries
-                ? ` (${retryCount}/${maxRetries}))`
+                ? ` (${retryCount}/${maxRetries > 0 ? maxRetries : 'infinite'})`
                 : ''
             const retryMessage = `Retrying in ${retryDelay}ms${retryInfo}.`
             onRetry && onRetry(error, retryMessage, retryDelay, retryCount)
