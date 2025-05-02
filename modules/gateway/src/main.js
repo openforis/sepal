@@ -18,7 +18,8 @@ const log = require('#sepal/log').getLogger('gateway')
 
 const {initMessageQueue} = require('#sepal/messageQueue')
 
-const {Auth} = require('./auth')
+const {AuthMiddleware} = require('./authMiddleware')
+const {GoogleAccessTokenMiddleware} = require('./googleAccessTokenMiddleware')
 const {Proxy} = require('./proxy')
 const {SessionManager} = require('./session')
 const {setRequestUser, getSessionUsername, removeRequestUser} = require('./user')
@@ -35,8 +36,9 @@ const userStore = UserStore(redis)
 const sessionStore = new RedisSessionStore({client: redis})
 
 const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore, userStore)
-const {authMiddleware} = Auth(userStore)
-const {proxyEndpoints} = Proxy(userStore, authMiddleware)
+const {authMiddleware} = AuthMiddleware(userStore)
+const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
+const {proxyEndpoints} = Proxy(userStore, authMiddleware, googleAccessTokenMiddleware)
 
 const getSecret = async () => {
     const secret = await redis.get('secret')

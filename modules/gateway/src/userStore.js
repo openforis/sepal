@@ -1,9 +1,9 @@
 const log = require('#sepal/log').getLogger('userStore')
 const {usernameTag, userTag} = require('./tag')
-const {catchError, from, switchMap, Subject, EMPTY} = require('rxjs')
-const {deserialize, serialize, removeRequestUser} = require('./user')
+const {catchError, from, switchMap, Subject, EMPTY, map, throwError, tap, of, firstValueFrom} = require('rxjs')
+const {removeRequestUser} = require('./user')
 const {getSessionUsername, setRequestUser} = require('./user')
-const {getUser$} = require('./userApi')
+const {loadUser$} = require('./userApi')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 const USER_PREFIX = 'user'
@@ -18,53 +18,56 @@ const UserStore = redis => {
     const userKey = username =>
         `${USER_PREFIX}:${username.toLowerCase()}`
 
-    const getUser = async username => {
-        log.trace(`${userTag(username)} retrieve`)
-        return await redis.get(userKey(username))
-            .then(serializedUser => {
-                const user = deserialize(serializedUser)
-                log.trace(`${userTag(username)} retrieved`)
-                return user
-            })
-    }
+    const getUser$ = username =>
+        from(redis.get(userKey(username))).pipe(
+            switchMap(serializedUser =>
+                serializedUser
+                    ? of(JSON.parse(serializedUser)).pipe(
+                        tap(() => log.debug(`${userTag(username)} retrieved`)),
+                        catchError(error =>
+                            throwError(() => new Error(`${userTag(username)} could not be deserialized`, {cause: error}))
+                        )
+                    )
+                    : loadUser$(username).pipe(
+                        tap(() => log.debug(`${userTag(username)} not in store, loaded from backend`)),
+                        catchError(error =>
+                            throwError(() => new Error(`${userTag(username)} not in store, could not be loaded from backend`, {cause: error}))
+                        ),
+                        switchMap(user => setUser$(user))
+                    )
+            )
+        )
 
-    const setUser = async user => {
-        log.trace(`${userTag(user.username)} saving`, user.googleTokens)
-        return await redis.set(userKey(user.username), serialize(user))
-            .then(result => {
-                if (result === 'OK') {
-                    log.isTrace()
-                        ? log.trace(`${userTag(user.username)} saved:`, user)
-                        : log.debug(`${userTag(user.username)} saved`)
-                    userUpdate$.next(user)
-                    return true
-                } else {
-                    throw new Error(`${usernameTag(user.username)} Could not save user into store`, result)
-                }
-            })
-    }
-    
-    const removeUser = async username => {
-        log.trace(`${userTag(username)} remove`)
-        return await redis.del(userKey(username))
-            .then(result => result !== 0)
-            .then(removed => {
-                if (removed) {
-                    log.debug(`${userTag(username)} removed`)
-                } else {
-                    log.debug(`${userTag(username)} not removed as missing`)
-                }
-                return removed
-            })
-    }
+    const setUser$ = user =>
+        getUser$(user.username).pipe(
+            switchMap(prevUser => from(redis.set(userKey(user.username), JSON.stringify(user))).pipe(
+                switchMap(result =>
+                    result === 'OK'
+                        ? of(user)
+                        : throwError(() => new Error(`${userTag(user?.username)} cannot be saved`, result))
+                ),
+                tap(user => log.debug(`${userTag(user?.username)} saved`)),
+                tap(user => userUpdate$.next({prevUser, user}))
+            ))
+        )
+
+    const removeUser$ = username =>
+        from(redis.del(userKey(username))).pipe(
+            map(result => result !== 0),
+            tap(removed =>
+                removed
+                    ? log.debug(`${userTag(username)} removed`)
+                    : log.warn(`${userTag(username)} not removed as missing`)
+            )
+        )
     
     const updateUser$ = username => {
         if (username) {
-            log.debug(`${userTag(username)} updating`)
-            return getUser$(username).pipe(
+            log.debug(`${userTag(username)} updating...`)
+            return loadUser$(username).pipe(
                 switchMap(user => {
                     log.debug(`${userTag(user.username)} updated, ${user.googleTokens ? 'connected to Google' : 'disconnected from Google'}`)
-                    return from(setUser(user))
+                    return setUser$(user)
                 }),
                 catchError(error => {
                     log.warn(`${userTag(username)} could not be updated`, error)
@@ -81,13 +84,9 @@ const UserStore = redis => {
         const username = getSessionUsername(req)
         removeRequestUser(req)
         if (username) {
-            getUser(username)
+            firstValueFrom(getUser$(username))
                 .then(user => {
-                    if (user) {
-                        setRequestUser(req, user)
-                    } else {
-                        log.warn(`${usernameTag(username)} Cannot inject user into request headers`)
-                    }
+                    setRequestUser(req, user)
                     next()
                 })
                 .catch(err => {
@@ -100,7 +99,7 @@ const UserStore = redis => {
     }
 
     return {
-        getUser, setUser, removeUser, updateUser$, userMiddleware, userUpdate$
+        getUser$, setUser$, removeUser$, updateUser$, userMiddleware, userUpdate$
     }
 }
 

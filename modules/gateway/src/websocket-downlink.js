@@ -1,7 +1,7 @@
 const {v4: uuid} = require('uuid')
 
 const {moduleTag, clientTag, userTag} = require('./tag')
-const {filter, interval, map, Subject, groupBy, mergeMap, debounceTime, takeUntil, scan, switchMap, from} = require('rxjs')
+const {filter, interval, map, Subject, groupBy, mergeMap, debounceTime, takeUntil, scan, switchMap, catchError} = require('rxjs')
 const {USER_UP, USER_DOWN, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN} = require('./websocket-events')
 
 const log = require('#sepal/log').getLogger('websocket/downlink')
@@ -45,8 +45,11 @@ const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUs
     const userConnected$ = user$.pipe(
         filter(({connected}) => connected),
         switchMap(({username}) =>
-            from(userStore.getUser(username)).pipe(
-                map(user => ({username, user}))
+            userStore.getUser$(username).pipe(
+                map(user => ({username, user})),
+                catchError(error => {
+                    log.error(`${userTag(username)} failed to get user`, error)
+                })
             )
         )
     )
@@ -54,8 +57,11 @@ const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUs
     const userDisconnected$ = user$.pipe(
         filter(({disconnected}) => disconnected),
         switchMap(({username}) =>
-            from(userStore.getUser(username)).pipe(
-                map(user => ({username, user}))
+            userStore.getUser$(username).pipe(
+                map(user => ({username, user})),
+                catchError(error => {
+                    log.error(`${userTag(username)} failed to get user`, error)
+                })
             )
         )
     )
@@ -64,7 +70,7 @@ const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUs
         next: ({username, user}) => {
             if (user) {
                 log.info(`${userTag(username)} connected`)
-                userStatus$?.next({event: USER_UP, user})
+                userStatus$.next({event: USER_UP, user})
                 servers.broadcast({event: USER_UP, user})
             } else {
                 log.warn(`${userTag(username)} connected, but not found in user store`)
@@ -78,7 +84,7 @@ const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUs
         next: ({username, user}) => {
             if (user) {
                 log.info(`${userTag(username)} disconnected`)
-                userStatus$?.next({event: USER_DOWN, user})
+                userStatus$.next({event: USER_DOWN, user})
                 servers.broadcast({event: USER_DOWN, user})
             } else {
                 log.warn(`${userTag(username)} disconnected, but not found in user store`)

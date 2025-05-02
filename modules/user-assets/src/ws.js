@@ -22,9 +22,19 @@ const ws$ = in$ => {
         assetManager.userDown(user)
     }
 
-    const onUserUpdate = ({user}) => {
-        log.debug(`${userTag(user.username)} update`)
-        assetManager.userUpdate(user)
+    const onGoogleAccessTokenAdded = ({user}) => {
+        log.debug(`${userTag(user.username)} Google access token added`)
+        assetManager.googleAccessToken({user, added: true})
+    }
+
+    const onGoogleAccessTokenUpdated = ({user}) => {
+        log.debug(`${userTag(user.username)} Google access token updated`)
+        assetManager.googleAccessToken({user, updated: true})
+    }
+
+    const onGoogleAccessTokenRemoved = ({user}) => {
+        log.debug(`${userTag(user.username)} Google access token removed`)
+        assetManager.googleAccessToken({user, removed: true})
     }
 
     const onSubscriptionUp = ({username, clientId, subscriptionId}) => {
@@ -60,7 +70,9 @@ const ws$ = in$ => {
     const EVENT_HANDLERS = {
         'userUp': onUserUp,
         'userDown': onUserDown,
-        'userUpdate': onUserUpdate,
+        'googleAccessTokenAdded': onGoogleAccessTokenAdded,
+        'googleAccessTokenUpdated': onGoogleAccessTokenUpdated,
+        'googleAccessTokenRemoved': onGoogleAccessTokenRemoved,
         'subscriptionUp': onSubscriptionUp,
         'subscriptionDown': onSubscriptionDown
     }

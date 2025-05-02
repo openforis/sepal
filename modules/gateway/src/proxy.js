@@ -7,7 +7,7 @@ const {getRequestUser, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} = require('
 const {usernameTag, urlTag} = require('./tag')
 const log = require('#sepal/log').getLogger('proxy')
 
-const Proxy = (userStore, authMiddleware) => {
+const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
 
     const refreshUser$ = new Subject()
     
@@ -98,7 +98,7 @@ const Proxy = (userStore, authMiddleware) => {
             })
     
             app.use(path, ...(authenticate
-                ? [authMiddleware, proxyMiddleware]
+                ? [authMiddleware, googleAccessTokenMiddleware, proxyMiddleware]
                 : [proxyMiddleware])
             )
             return {path, target, proxy: proxyMiddleware}

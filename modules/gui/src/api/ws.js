@@ -46,7 +46,7 @@ const connectionStatus = status =>
         .dispatch()
 
 const {upstream$, downstream$} = WebSocket(ENDPOINT, {
-    maxRetries: Number.MAX_SAFE_INTEGER,
+    maxRetries: -1,
     minRetryDelay: 1000,
     retryDelayFactor: 1,
     onRetry: (_error, _retryMessage, _retryDelay, _retryCount) => {

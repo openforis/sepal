@@ -1,10 +1,11 @@
 {
     "port": 5000,
     "categories": {
-        "auth": "info",
+        "authMiddleware": "info",
+        "googleAccessTokenMiddleware": "info",
         "gateway": "info",
         "googleAccessToken": "debug",
-        "proxy": "debug",
+        "proxy": "warn",
         "session": "info",
         "user": "info",
         "userApi": "info",
