@@ -36,20 +36,17 @@ function createCredentialsFile() {
     const writeCredentials$ = (credentialsJson, credentialsPath) => {
         // Escape single quotes in JSON to prevent shell syntax errors
         const escapedJson = credentialsJson.replace(/'/g, '\'\\\'\'')
-        // Use 'bash -c' to execute the command with shell features
-        const command = 'sudo'
+        const command = 'sh'
         const args = [
-            'bash',
             '-c',
             `echo '${escapedJson}' > '${credentialsPath}'`,
         ]
-    
         return exec$('/', command, args)
     }
 
     writeCredentials$(credentialsJson, credentialsPath).subscribe({
-        next: output => {
-            log.info('Credentials written successfully:', output)
+        next: () => {
+            log.info('Credentials written successfully')
         },
         error: err => {
             log.error('Error writing credentials:', err)

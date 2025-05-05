@@ -30,12 +30,11 @@ services:
       GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
       GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
       NICFI_PLANET_API_KEY: "${NICFI_PLANET_API_KEY}"
-
-    # healthcheck:
-    #   test: bash -c "exec 6<> /dev/tcp/localhost/5011"
-    #   timeout: 60s
-    #   interval: 1s
-    #   retries: 60
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      timeout: 60s
+      interval: 1s
+      retries: 60
     networks:
       - sepal
     restart: always

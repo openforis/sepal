@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-# Echo the current path
-echo "Current path: $(pwd)"
+#!/bin/sh
 
 if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]
 then
