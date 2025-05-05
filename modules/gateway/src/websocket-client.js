@@ -1,6 +1,6 @@
 const {WebSocket} = require('ws')
 
-const {clientTag} = require('./tag')
+const {clientTag, eventTag, userTag} = require('./tag')
 
 const log = require('#sepal/log').getLogger('websocket/client')
 
@@ -97,6 +97,21 @@ const Clients = () => {
             .forEach(clientId => sendByClientId({module, clientId}, message))
     }
 
+    const sendEvent = (username, type, data) => {
+        log.info(`Sending ${eventTag(type)} to ${userTag(username)}`)
+        Object.entries(clients)
+            .filter(([_, {username: currentUsername}]) => currentUsername === username)
+            .map(([clientId]) => clientId)
+            .forEach(clientId => send(clientId, {event: {type, data}}))
+    }
+
+    const broadcastEvent = (type, data) => {
+        log.info(`Sending ${eventTag(type)} to all clients`)
+        Object.entries(clients)
+            .map(([clientId]) => clientId)
+            .forEach(clientId => send(clientId, {event: {type, data}}))
+    }
+
     const forEach = callback => {
         log.debug('Iterating clients')
         Object.entries(clients).forEach(
@@ -110,7 +125,7 @@ const Clients = () => {
         return usernames.forEach(username => callback(username))
     }
 
-    return {add, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendByClientId}
+    return {add, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendEvent, broadcastEvent}
 }
 
 module.exports = {Clients}

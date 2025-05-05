@@ -16,11 +16,11 @@ const getRefreshDelay = googleTokens =>
 const isRefreshRequired = googleTokens =>
     getRefreshDelay(googleTokens) === 0
 
-const initializeGoogleAccessTokenRefresher = ({userStore, userStatus$, toUser$}) => {
+const initializeGoogleAccessTokenRefresher = ({userStore, event$}) => {
 
-    const monitor$ = userStatus$.pipe(
-        filter(({event}) => [USER_UP, GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_UPDATED].includes(event)),
-        map(({user}) => user),
+    const monitor$ = event$.pipe(
+        filter(({type}) => [USER_UP, GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_UPDATED].includes(type)),
+        map(({data: {user}}) => user),
         filter(({googleTokens}) => !!googleTokens),
         tap(({username, googleTokens}) => {
             const googleAccessTokenValid = googleTokens.accessTokenExpiryDate > Date.now()
@@ -28,14 +28,14 @@ const initializeGoogleAccessTokenRefresher = ({userStore, userStatus$, toUser$})
         })
     )
 
-    const unmonitor$ = userStatus$.pipe(
-        filter(({event}) => [USER_DOWN, GOOGLE_ACCESS_TOKEN_REMOVED].includes(event)),
-        map(({user}) => user)
+    const unmonitor$ = event$.pipe(
+        filter(({type}) => [USER_DOWN, GOOGLE_ACCESS_TOKEN_REMOVED].includes(type)),
+        map(({data: {user}}) => user)
     )
 
     const currentUserDisconnected$ = username =>
         unmonitor$.pipe(
-            filter(user => user.username === username),
+            filter(user => user.username === username)
         )
 
     const refreshDelay$ = username =>
@@ -49,20 +49,15 @@ const initializeGoogleAccessTokenRefresher = ({userStore, userStatus$, toUser$})
             switchMap(delay => timer(delay))
         )
 
-    const disconnectUser = username => {
-        log.fatal('disconnect', username)
-        return toUser$.next({username, event: {disconnectGoogleAccount: true}})
-    }
-
     const refresh$ = username =>
         userStore.getUser$(username).pipe(
             tap(() => log.debug(`${userTag(username)} Google access token refreshing now`)),
             switchMap(user => updateGoogleAccessToken$(user)),
-            switchMap(updatedUser => userStore.setUser$(updatedUser)),
-            tap(({username, googleTokens}) => !googleTokens && disconnectUser(username)),
+            switchMap(updatedUser => userStore.setUser$(updatedUser))
         )
 
     monitor$.pipe(
+        filter(({username}) => username),
         groupBy(({username}) => username),
         mergeMap(userGroup$ => userGroup$.pipe(
             tap(() => log.debug(`${userTag(userGroup$.key)} Google access token monitored`)),

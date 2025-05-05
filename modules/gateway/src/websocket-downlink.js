@@ -2,14 +2,14 @@ const {v4: uuid} = require('uuid')
 
 const {moduleTag, clientTag, userTag} = require('./tag')
 const {filter, interval, map, Subject, groupBy, mergeMap, debounceTime, takeUntil, scan, switchMap, catchError} = require('rxjs')
-const {USER_UP, USER_DOWN, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN} = require('./websocket-events')
+const {USER_UP, USER_DOWN, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN, CLIENT_VERSION_MISMATCH} = require('./websocket-events')
 
 const log = require('#sepal/log').getLogger('websocket/downlink')
 
 const HEARTBEAT_INTERVAL_MS = 10 * 1000
 const BUILD_NUMBER = process.env.BUILD_NUMBER
 
-const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUser$}) => {
+const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
 
     const heartbeatResponse$ = new Subject()
     const client$ = new Subject()
@@ -70,8 +70,7 @@ const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUs
         next: ({username, user}) => {
             if (user) {
                 log.info(`${userTag(username)} connected`)
-                userStatus$.next({event: USER_UP, user})
-                servers.broadcast({event: USER_UP, user})
+                event$.next({type: USER_UP, data: {user}})
             } else {
                 log.warn(`${userTag(username)} connected, but not found in user store`)
             }
@@ -84,20 +83,13 @@ const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUs
         next: ({username, user}) => {
             if (user) {
                 log.info(`${userTag(username)} disconnected`)
-                userStatus$.next({event: USER_DOWN, user})
-                servers.broadcast({event: USER_DOWN, user})
+                event$.next({type: USER_DOWN, data: {user}})
             } else {
                 log.warn(`${userTag(username)} disconnected, but not found in user store`)
             }
         },
         error: error => log.error('Unexpected userDisconnected$ stream error', error),
         complete: () => log.error('Unexpected userDisconnected$ stream closed')
-    })
-
-    toUser$?.subscribe({
-        next: ({username, event}) => clients.sendByUsername({username}, {event}),
-        error: error => log.error('Unexpected toUser$ stream error', error),
-        complete: () => log.error('Unexpected toUser$ stream closed')
     })
 
     const clientDisconnected$ = clientId =>
@@ -132,7 +124,7 @@ const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUs
         ws.on('close', () => onClientDisconnected(username, clientId))
 
         clients.send(clientId, {modules: {state: servers.list()}})
-        servers.broadcast({event: CLIENT_UP, username, clientId})
+        event$.next({type: CLIENT_UP, data: {username, clientId}})
     }
     
     const onClientMessage = (username, clientId, message) => {
@@ -161,7 +153,7 @@ const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUs
     const onVersion = (username, clientId, {buildNumber}) => {
         if (buildNumber !== BUILD_NUMBER) {
             log.info(`${clientTag(username, clientId)} running outdated version:`, buildNumber)
-            clients.send(clientId, {event: {versionMismatch: true}})
+            event$.next({type: CLIENT_VERSION_MISMATCH, data: {username, clientId}})
         }
     }
 
@@ -172,12 +164,12 @@ const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUs
 
     const onSubscribed = (username, clientId, subscriptionId, module) => {
         clients.addSubscription(clientId, subscriptionId, module)
-        servers.send(module, {event: SUBSCRIPTION_UP, username, clientId, subscriptionId})
+        event$.next({type: SUBSCRIPTION_UP, data: {module, username, clientId, subscriptionId}})
     }
 
     const onUnsubscribed = (username, clientId, subscriptionId, module) => {
         clients.removeSubscription(clientId, subscriptionId)
-        servers.send(module, {event: SUBSCRIPTION_DOWN, username, clientId, subscriptionId})
+        event$.next({type: SUBSCRIPTION_DOWN, data: {module, username, clientId, subscriptionId}})
     }
 
     const onData = (username, clientId, subscriptionId, module, data) => {
@@ -203,9 +195,9 @@ const initializeDownlink = ({servers, clients, wss, userStore, userStatus$, toUs
         client$.next({username, clientId, disconnected: true})
         Object.entries(clients.getSubscriptions(clientId)).forEach(([subscriptionId, module]) => {
             clients.removeSubscription(clientId, subscriptionId)
-            servers.send(module, {event: SUBSCRIPTION_DOWN, username, clientId, subscriptionId})
+            event$.next({type: SUBSCRIPTION_DOWN, data: {module, username, clientId, subscriptionId}})
         })
-        servers.broadcast({event: CLIENT_DOWN, username, clientId})
+        event$.next({type: CLIENT_DOWN, data: {username, clientId}})
         clients.remove(clientId)
     }
     
