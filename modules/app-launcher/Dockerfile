@@ -17,7 +17,6 @@ RUN apk update && apk add --no-cache \
     nano \
     unzip \
     zip \
-    sudo \
     docker
 
 RUN apk add --no-cache docker \
@@ -26,9 +25,6 @@ RUN apk add --no-cache docker \
     -o /usr/local/lib/docker/cli-plugins/docker-compose \
     && chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
-
-RUN addgroup node wheel \
-    && echo '%wheel ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # Set prompt
 RUN echo "export PS1='[\u@${MODULE_NAME}:\w]\\$ '" \
