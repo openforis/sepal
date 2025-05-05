@@ -1,29 +1,14 @@
-const {readFile} = require('fs')
-const {stat} = require('fs/promises')
-const {Subject, from, of, catchError, map} = require('rxjs')
+const {readFile} = require('fs/promises')
+const {from, throwError, catchError, map} = require('rxjs')
 
 const fileToJson$ = path => {
-    const json$ = new Subject()
-    readFile(path, 'utf8', (error, s) => {
-        if (error) {
-            json$.error(error)
-        } else {
-            try {
-                json$.next(JSON.parse(s))
-                json$.complete()
-            } catch (e) {
-                json$.error(e)
-            }
-        }
-    })
-    return json$
-}
-
-const lastModifiedDate$ = path => {
-    return from(stat(path)).pipe(
-        map(stats => stats.mtime),
-        catchError(() => of(null))
+    return from(readFile(path, 'utf8')).pipe(
+        map(content => JSON.parse(content)),
+        catchError(error => {
+            if (error.code === 'ENOENT') {
+                return throwError(() => new Error(`File not found: ${path}`))
+            } return throwError(() => new Error(`Error reading file ${path}: ${error.message}`))
+        })
     )
 }
-
-module.exports = {fileToJson$, lastModifiedDate$}
+module.exports = {fileToJson$}
