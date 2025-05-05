@@ -24,8 +24,10 @@ class _VersionCheck extends React.Component {
         const {addSubscription} = this.props
         addSubscription(
             event$.pipe(
-                filter(({versionMismatch}) => versionMismatch)
-            ).subscribe(this.notify)
+                filter(({type}) => type === 'versionMismatch')
+            ).subscribe(
+                () => this.notify()
+            )
         )
     }
 

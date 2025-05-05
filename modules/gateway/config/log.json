@@ -12,6 +12,7 @@
         "userStore": "info",
         "websocket": "info",
         "websocket/client": "info",
+        "websocket/event": "info",
         "websocket/server": "info",
         "websocket/uplink": "info",
         "websocket/downlink": "info"

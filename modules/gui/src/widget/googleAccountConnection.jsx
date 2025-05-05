@@ -19,7 +19,7 @@ class _GoogleAccountConnection extends React.Component {
         const {addSubscription} = this.props
         addSubscription(
             event$.pipe(
-                filter(({disconnectGoogleAccount}) => disconnectGoogleAccount),
+                filter(({type}) => type === 'googleAccessTokenRemoved'),
                 switchMap(() => loadUser$())
             ).subscribe(
                 () => this.notify()

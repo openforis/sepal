@@ -1,10 +1,10 @@
 import React from 'react'
-import {filter, map} from 'rxjs'
+import {filter, switchMap} from 'rxjs'
 
 import {event$} from '~/api/ws'
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
-import {updateUser} from '~/user'
+import {loadUser$} from '~/user'
 
 class _User extends React.Component {
     render() {
@@ -15,11 +15,9 @@ class _User extends React.Component {
         const {addSubscription} = this.props
         addSubscription(
             event$.pipe(
-                filter(({userUpdate}) => userUpdate),
-                map(({userUpdate}) => userUpdate)
-            ).subscribe(
-                user => updateUser(user)
-            )
+                filter(({type}) => type === 'userUpdated'),
+                switchMap(() => loadUser$())
+            ).subscribe()
         )
     }
 

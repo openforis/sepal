@@ -28,11 +28,10 @@ const {initializeGoogleAccessTokenRefresher} = require('./googleAccessToken')
 const {usernameTag, urlTag} = require('./tag')
 const {webSocketPath} = require('../config/endpoints')
 
-const toUser$ = new Subject()
-const userStatus$ = new Subject()
+const event$ = new Subject()
 
 const redis = new Redis(redisUri)
-const userStore = UserStore(redis)
+const userStore = UserStore(redis, event$)
 const sessionStore = new RedisSessionStore({client: redis})
 
 const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore, userStore)
@@ -123,9 +122,9 @@ const main = async () => {
         }
     }
 
-    initializeGoogleAccessTokenRefresher({userStore, userStatus$, toUser$})
+    initializeGoogleAccessTokenRefresher({userStore, event$})
 
-    initializeWebSocketServer({wss, userStore, userStatus$, toUser$})
+    initializeWebSocketServer({wss, userStore, event$})
 
     // HACK: User has to be injected here as the session is not available in proxyRes and proxyResWsz
     server.on('upgrade', (req, socket, head) => {

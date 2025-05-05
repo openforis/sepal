@@ -21,9 +21,10 @@ export const loadUser$ = () => api.user.loadCurrentUser$().pipe(
         return of(null)
     }),
     tap(user => updateUser(user)),
-    switchMap(() => googleProjectId()
-        ? api.gee.healthcheck$()
-        : of(true)
+    switchMap(() =>
+        googleProjectId()
+            ? api.gee.healthcheck$()
+            : of(true)
     ),
     catchError(error => {
         const errorCode = error.response?.errorCode

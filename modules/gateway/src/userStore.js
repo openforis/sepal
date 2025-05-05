@@ -1,19 +1,19 @@
+const _ = require('lodash')
 const log = require('#sepal/log').getLogger('userStore')
 const {usernameTag, userTag} = require('./tag')
-const {catchError, from, switchMap, Subject, EMPTY, map, throwError, tap, of, firstValueFrom} = require('rxjs')
+const {catchError, from, switchMap, EMPTY, throwError, tap, of, firstValueFrom} = require('rxjs')
 const {removeRequestUser} = require('./user')
 const {getSessionUsername, setRequestUser} = require('./user')
 const {loadUser$} = require('./userApi')
+const {USER_UPDATED, GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED, GOOGLE_ACCESS_TOKEN_UPDATED} = require('./websocket-events')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 const USER_PREFIX = 'user'
 
-const UserStore = redis => {
+const UserStore = (redis, event$) => {
     if (!redis) {
         throw new Error('Cannot initialize UserStore due to missing argument: redis')
     }
-
-    const userUpdate$ = new Subject()
 
     const userKey = username =>
         `${USER_PREFIX}:${username.toLowerCase()}`
@@ -47,19 +47,33 @@ const UserStore = redis => {
                         : throwError(() => new Error(`${userTag(user?.username)} cannot be saved`, result))
                 ),
                 tap(user => log.debug(`${userTag(user?.username)} saved`)),
-                tap(user => userUpdate$.next({prevUser, user}))
+                tap(user => handleUpdate(prevUser, user))
             ))
         )
 
-    const removeUser$ = username =>
-        from(redis.del(userKey(username))).pipe(
-            map(result => result !== 0),
-            tap(removed =>
-                removed
-                    ? log.debug(`${userTag(username)} removed`)
-                    : log.warn(`${userTag(username)} not removed as missing`)
-            )
-        )
+    const handleUpdate = (prevUser, user) => {
+        if (!_.isEqual(prevUser, user)) {
+            log.debug(`${userTag(user.username)} updated`)
+            event$.next({type: USER_UPDATED, data: {user}})
+            if (!prevUser.googleTokens && user.googleTokens) {
+                event$.next({type: GOOGLE_ACCESS_TOKEN_ADDED, data: {user}})
+            } else if (prevUser.googleTokens && !user.googleTokens) {
+                event$.next({type: GOOGLE_ACCESS_TOKEN_REMOVED, data: {user}})
+            } else if (!_.isEqual(prevUser.googleTokens, user.googleTokens)) {
+                event$.next({type: GOOGLE_ACCESS_TOKEN_UPDATED, data: {user}})
+            }
+        }
+    }
+
+    // const removeUser$ = username =>
+    //     from(redis.del(userKey(username))).pipe(
+    //         map(result => result !== 0),
+    //         tap(removed =>
+    //             removed
+    //                 ? log.debug(`${userTag(username)} removed`)
+    //                 : log.warn(`${userTag(username)} not removed as missing`)
+    //         )
+    //     )
     
     const updateUser$ = username => {
         if (username) {
@@ -99,7 +113,7 @@ const UserStore = redis => {
     }
 
     return {
-        getUser$, setUser$, removeUser$, updateUser$, userMiddleware, userUpdate$
+        getUser$, setUser$, updateUser$, userMiddleware
     }
 }
 

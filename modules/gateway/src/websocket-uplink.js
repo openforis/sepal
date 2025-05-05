@@ -1,36 +1,18 @@
 const {WebSocket} = require('ws')
-const {finalize, map, interval, merge, firstValueFrom} = require('rxjs')
+const {finalize, map, interval, merge} = require('rxjs')
 const {webSocket} = require('rxjs/webSocket')
 
 const {webSocketEndpoints} = require('../config/endpoints')
 const {autoRetry} = require('sepal/src/rxjs')
 const {moduleTag, clientTag} = require('./tag')
-const {CLIENT_UP, USER_UP} = require('./websocket-events')
+const {MODULE_UP, MODULE_DOWN} = require('./websocket-events')
 
 const log = require('#sepal/log').getLogger('websocket/uplink')
 
 const HEARTBEAT_INTERVAL_MS = 1 * 1000
 
-const initializeUplink = ({servers, clients, userStore}) => {
+const initializeUplink = ({servers, clients, event$}) => {
     
-    const moduleReady = (module, ready) => {
-        clients.broadcast({modules: {update: {[module]: ready}}})
-        if (ready) {
-            clients.forEachUser(username =>
-                firstValueFrom(userStore.getUser$(username)).then(
-                    user => servers.send(module, {event: USER_UP, user})
-                )
-            )
-            clients.forEach(({username, clientId}) =>
-                firstValueFrom(userStore.getUser$(username)).then(
-                    user => {
-                        servers.send(module, {event: CLIENT_UP, user, clientId})
-                    }
-                )
-            )
-        }
-    }
-
     const onHeartbeat = (hb, module, upstream$) => {
         log.trace(`Sending heartbeat to ${moduleTag(module)}:`, hb)
         upstream$.next({hb})
@@ -42,7 +24,7 @@ const initializeUplink = ({servers, clients, userStore}) => {
             log.trace(`Received heartbeat from ${moduleTag(module)}:`, hb)
         } else if (ready) {
             log.info(`${moduleTag(module)} connected`)
-            moduleReady(module, true)
+            event$.next({type: MODULE_UP, data: {module}})
         } else if (data) {
             const {username, clientId, subscriptionId} = other
             if (clientId) {
@@ -91,7 +73,7 @@ const initializeUplink = ({servers, clients, userStore}) => {
                 onRetry: (error, retryMessage, retryDelay, retryCount) => {
                     if (retryCount === 1) {
                         log.info(`${moduleTag(module)} connection lost, retrying every ${retryDelay}ms.`)
-                        moduleReady(module, false)
+                        event$.next({type: MODULE_DOWN, data: {module}})
                     }
                 }
             }),

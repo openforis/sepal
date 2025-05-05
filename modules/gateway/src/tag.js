@@ -6,6 +6,9 @@ const usernameTag = username =>
 const urlTag = url =>
     `[${url}]`
 
+const eventTag = event =>
+    `Event<${event}>`
+
 const moduleTag = module =>
     `Module<${module}>`
 
@@ -21,6 +24,7 @@ const subscriptionTag = (username = '?', clientId, subscriptionId) =>
 module.exports = {
     usernameTag,
     urlTag,
+    eventTag,
     moduleTag,
     userTag,
     clientTag,
