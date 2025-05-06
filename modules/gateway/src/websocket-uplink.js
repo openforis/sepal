@@ -33,9 +33,9 @@ const initializeUplink = ({servers, clients, event$}) => {
                 } else {
                     log.debug(`Forwarding message to ${clientTag(username, clientId)}`)
                 }
-                clients.send(clientId, {subscriptionId, data})
+                clients.send(clientId, {module, subscriptionId, data})
             } else {
-                clients.sendByUsername({module, username}, {data})
+                clients.sendByUsername({module, username}, {module, data})
             }
         } else {
             log.warn(`Received unexpected message from ${moduleTag(module)}:`, msg)

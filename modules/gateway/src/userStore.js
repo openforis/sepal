@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const log = require('#sepal/log').getLogger('userStore')
 const {usernameTag, userTag} = require('./tag')
-const {catchError, from, switchMap, EMPTY, throwError, tap, of, firstValueFrom} = require('rxjs')
+const {catchError, from, switchMap, EMPTY, throwError, map, tap, of, firstValueFrom} = require('rxjs')
 const {removeRequestUser} = require('./user')
 const {getSessionUsername, setRequestUser} = require('./user')
 const {loadUser$} = require('./userApi')
@@ -39,16 +39,14 @@ const UserStore = (redis, event$) => {
         )
 
     const setUser$ = user =>
-        getUser$(user.username).pipe(
-            switchMap(prevUser => from(redis.set(userKey(user.username), JSON.stringify(user))).pipe(
-                switchMap(result =>
-                    result === 'OK'
-                        ? of(user)
-                        : throwError(() => new Error(`${userTag(user?.username)} cannot be saved`, result))
-                ),
-                tap(user => log.debug(`${userTag(user?.username)} saved`)),
-                tap(user => handleUpdate(prevUser, user))
-            ))
+        from(redis.set(userKey(user.username), JSON.stringify(user), 'GET')).pipe(
+            map(prevUser => ({prevUser: JSON.parse(prevUser), user})),
+            catchError(cause =>
+                throwError(() => new Error(`${userTag(user?.username)} cannot be saved`, {cause}))
+            ),
+            tap(({prevUser, user}) => handleUpdate(prevUser, user)),
+            map(({user}) => user),
+            tap(user => log.debug(`${userTag(user?.username)} saved`)),
         )
 
     const handleUpdate = (prevUser, user) => {

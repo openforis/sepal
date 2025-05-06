@@ -5,7 +5,7 @@ const {userTag, subscriptionTag} = require('./tag')
 const {setAssets, getAssets, removeAssets, expireAssets} = require('./assetStore')
 const log = require('#sepal/log').getLogger('assetManager')
 
-const {Subject, groupBy, mergeMap, map, tap, repeat, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race, defer, take, merge, share} = require('rxjs')
+const {Subject, groupBy, mergeMap, map, tap, repeat, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race, defer, take, merge} = require('rxjs')
 const {setUser, getUser, removeUser} = require('./userStore')
 const {scanTree$, scanNode$, busy$, isBusy} = require('./assetScanner')
 const {pollIntervalMilliseconds} = require('./config')

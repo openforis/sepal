@@ -217,18 +217,14 @@ const execute$ = (url, method, {
                 maxRetries,
                 minRetryDelay,
                 maxRetryDelay,
-                retryDelayFactor
+                retryDelayFactor,
+                onRetry$: error => {
+                    if (error.status < 500) {
+                        return throwError(() => error)
+                    }
+                }
             })
         )
-        // retry({
-        //     delay: (error, retryCount) => {
-        //         if (error.status < 500 || retryCount > maxRetries) {
-        //             return throwError(() => error)
-        //         }
-        //         log.debug(() => `Retrying websocket connection to ${url}: ${retryCount}${maxRetries ? `/${maxRetries}` : ''}`)
-        //         return timer(Math.min(maxRetryDelay, minRetryDelay * Math.pow(retryDelayFactor, retryCount - 1)))
-        //     }
-        // })
     )
 }
 
