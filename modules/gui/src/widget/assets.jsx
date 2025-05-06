@@ -34,7 +34,8 @@ export const withAssets = () =>
                         userAssets: assets?.user || [],
                         otherAssets: assets?.other || [],
                         recentAssets: assets?.recent || [],
-                        busy: assets?.busy || false,
+                        busy: assets?.status?.busy || false,
+                        progress: assets?.status?.progress || 0,
                         error: assets?.error || false,
                         updateAsset: asset => command$.next({updateAsset: {asset}}),
                         removeAsset: id => command$.next({removeAsset: {id}}),
@@ -106,10 +107,10 @@ class _Assets extends React.Component {
         data !== undefined && this.onData(data)
     }
 
-    onData({tree, node, busy}) {
+    onData({tree, node, status}) {
         tree !== undefined && this.onTree(tree)
         node !== undefined && this.onNode(node)
-        busy !== undefined && this.onBusy(busy)
+        status !== undefined && this.onStatus(status)
     }
 
     onTree(treeUpdate) {
@@ -122,9 +123,9 @@ class _Assets extends React.Component {
         this.setAssetTree(AssetTree.updateTree(tree, nodeUpdate))
     }
 
-    onBusy(busy) {
-        actionBuilder('ASSETS_BUSY', {busy})
-            .set('assets.busy', busy)
+    onStatus(status) {
+        actionBuilder('ASSETS_STATUS', {status})
+            .set('assets.status', status)
             .dispatch()
     }
 
