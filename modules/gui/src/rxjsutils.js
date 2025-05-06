@@ -17,7 +17,8 @@ export const autoRetry = ({
     onAbort$ = onError$,
     onRetryTimeout$ = onError$,
     onMaxRetries$ = onError$,
-    onRetry
+    onRetry,
+    onRetry$
 }) => pipe(
     retry({
         delay: (error, retryCount) => {
@@ -62,7 +63,7 @@ export const autoRetry = ({
                 : ''
             const retryMessage = `Retrying in ${retryDelay}ms${retryInfo}.`
             onRetry && onRetry(error, retryMessage, retryDelay, retryCount)
-            return timer(retryDelay)
+            return onRetry$ && onRetry$(error, retryMessage, retryDelay, retryCount) || timer(retryDelay)
         },
         resetOnSuccess: true
     })
