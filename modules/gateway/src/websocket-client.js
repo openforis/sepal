@@ -83,18 +83,11 @@ const Clients = () => {
         )
     }
 
-    const sendByClientId = ({module, clientId}, message) => {
-        Object.entries(getSubscriptions(clientId))
-            .filter(([, currentModule]) => !module || currentModule === module)
-            .map(([subscriptionId]) => subscriptionId)
-            .forEach(subscriptionId => send(clientId, {subscriptionId, ...message}))
-    }
-
     const sendByUsername = ({module, username}, message) => {
         Object.entries(clients)
-            .filter(([_, {username: currentUsername}]) => !username || currentUsername === username)
+            .filter(([_, {username: currentUsername}]) => currentUsername === username)
             .map(([clientId]) => clientId)
-            .forEach(clientId => sendByClientId({module, clientId}, message))
+            .forEach(clientId => send(clientId, {module, ...message}))
     }
 
     const sendEvent = (username, type, data) => {
