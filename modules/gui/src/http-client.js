@@ -168,6 +168,7 @@ const execute$ = (url, method, {
             ...headers
         }
     }
+    const t0 = Date.now()
     return ajax({url: urlWithQuery, method, headers, ...args}).pipe(
         map(response => validateResponse(response, validStatuses)),
         catchError(error => {
@@ -181,7 +182,10 @@ const execute$ = (url, method, {
             }
         }),
         autoRetry(
-            applyDefaults(DEFAULT_RETRY_CONFIG, retry)
+            applyDefaults(DEFAULT_RETRY_CONFIG, {
+                initialTimestamp: t0,
+                ...retry
+            })
         )
     )
 }
