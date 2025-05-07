@@ -5,7 +5,9 @@ export default {
     login$: ({email, password}) =>
         post$('/api/ceo-gateway/login-token', {
             body: {email, password},
-            maxRetries: 1,
+            retry: {
+                maxRetries: 1
+            }
         }),
      
     getAllInstitutions$: ({token}) =>
