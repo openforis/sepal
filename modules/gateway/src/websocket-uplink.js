@@ -68,7 +68,7 @@ const initializeUplink = ({servers, clients, event$}) => {
     
         const downstream$ = upstream$.pipe(
             autoRetry({
-                maxRetries: null,
+                maxRetries: -1,
                 minRetryDelay: 1000,
                 onRetry: (error, retryMessage, retryDelay, retryCount) => {
                     if (retryCount === 1) {

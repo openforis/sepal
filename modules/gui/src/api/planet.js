@@ -6,7 +6,9 @@ export default {
             username: apiKey,
             crossDomain: true,
             query: {_page_size: 250},
-            maxRetries: 0
+            retry: {
+                maxRetries: 0
+            }
         }),
 
     loadMosaics$: apiKey =>

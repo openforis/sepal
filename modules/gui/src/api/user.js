@@ -6,9 +6,6 @@ export default {
             validStatuses: [200, 401]
         }),
 
-    loadUserMessages$: () =>
-        get$('/api/notification/notifications', {maxRetries: 0}),
-
     updateMessage$: message =>
         post$(`/api/notification/messages/${message.id}`, {
             body: message
@@ -24,8 +21,15 @@ export default {
             }
         }),
 
-    loadCurrentUserReport$: () =>
-        get$('/api/sessions/report', {maxRetries: 0}),
+    loadUserMessages$: ({retry}) =>
+        get$('/api/notification/notifications', {
+            retry
+        }),
+    
+    loadCurrentUserReport$: ({retry}) =>
+        get$('/api/sessions/report', {
+            retry
+        }),
 
     signUp$: ({username, name, email, organization, intendedUse}, recaptchaToken) =>
         post$('/api/user/signup', {
