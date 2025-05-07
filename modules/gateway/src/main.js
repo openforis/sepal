@@ -9,7 +9,7 @@ const Session = require('express-session')
 const {v4: uuid} = require('uuid')
 const url = require('url')
 const {WebSocketServer} = require('ws')
-const {Subject, from} = require('rxjs')
+const {Subject, firstValueFrom} = require('rxjs')
 
 const apiMetrics = require('prometheus-api-metrics')
 const {RedisStore: RedisSessionStore} = require('connect-redis')
@@ -136,7 +136,7 @@ const main = async () => {
                 if (requestPath === webSocketPath) {
                     handleGlobalWebSocket(requestPath, req, socket, head, username)
                 } else {
-                    from(userStore.getUser$(username)).then(user => {
+                    firstValueFrom(userStore.getUser$(username)).then(user => {
                         if (user) {
                             log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
                             setRequestUser(req, user)
