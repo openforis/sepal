@@ -5,7 +5,7 @@
         "config": "info",
         "email": "info",
         "emailQueue": "info",
-        "http": "info",
+        "http/server": "info",
         "main": "info",
         "messageHandler": "info",
         "messageQueue": "info",

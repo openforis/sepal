@@ -8,11 +8,8 @@ export const autoRetry = ({
     minRetriesBeforeTimeout = 0,
     retryTimeout,
     initialTimestamp,
-    abort,
-    onError$,
-    onAbort$ = onError$,
-    onRetryTimeout$ = onError$,
-    onMaxRetries$ = onError$,
+    skip,
+    onRetryError,
     onRetry
 }) => pipe(
     retry({
@@ -20,30 +17,29 @@ export const autoRetry = ({
             const elapsed = initialTimestamp
                 ? Date.now() - initialTimestamp
                 : undefined
-            // handle abort
-            if (abort && abort(error)) {
-                const retryError = 'Non-retriable'
-                return onAbort$
-                    ? onAbort$(error, retryError)
-                    : throwError(() => new Error(retryError, {cause: error}))
+            // handle skip
+            if (skip && skip(error)) {
+                const retryError = 'Retries skipped'
+                onRetryError && onRetryError(error, retryError)
+                return throwError(() => error)
             }
-            // handle no retrie
+            // handle no retries
             if (maxRetries === 0) {
-                return throwError(() => new Error('Zero retries allowed', {cause: error}))
+                const retryError = 'Retries not allowed'
+                onRetryError && onRetryError(error, retryError)
+                return throwError(() => error)
             }
             // handle max retries
             if (maxRetries > 0 && retryCount >= maxRetries) {
-                const retryError = `Max retries (${maxRetries}) exceeded${elapsed ? ` after ${elapsed}ms` : ''}.`
-                return onMaxRetries$
-                    ? onMaxRetries$(error, retryError)
-                    : throwError(() => new Error(retryError, {cause: error}))
+                const retryError = `Max retries (${maxRetries}) exceeded${elapsed ? ` after ${elapsed}ms` : ''}`
+                onRetryError && onRetryError(error, retryError)
+                return throwError(() => error)
             }
             // handle timeout
             if (retryTimeout && elapsed && retryCount > minRetriesBeforeTimeout && elapsed > retryTimeout) {
-                const retryError = `Retry timeout (${retryTimeout}) exceeded after ${retryCount} ${retryCount === 1 ? 'attempt' : 'attempts'}.`
-                return onRetryTimeout$
-                    ? onRetryTimeout$(error, retryError)
-                    : throwError(() => new Error(retryError, {cause: error}))
+                const retryError = `Timeout (${retryTimeout}) exceeded after ${retryCount} ${retryCount === 1 ? 'attempt' : 'attempts'}`
+                onRetryError && onRetryError(error, retryError)
+                return throwError(() => error)
             }
             // retry
             const retryDelay = Math.min(maxRetryDelay, minRetryDelay * Math.pow(retryDelayFactor, retryCount - 1))

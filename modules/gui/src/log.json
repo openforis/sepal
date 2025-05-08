@@ -4,7 +4,7 @@
     "browse": "info",
     "default": "info",
     "eventPublisher": "info",
-    "http": "debug",
+    "http/client": "info",
     "layer": "info",
     "map": "info",
     "maps": "info",
