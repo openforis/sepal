@@ -9,7 +9,7 @@ const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
     return getGeometry$().pipe(
         switchMap(geometry => {
             const table = ee.FeatureCollection([ee.Feature(geometry)])
-            return ee.getMap$(table.style({color, fillColor}))
+            return ee.getMap$(table.style({color, fillColor}), null, 'create geometry map')
         })
     )
 }
