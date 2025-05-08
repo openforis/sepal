@@ -6,7 +6,7 @@ const {concat, forkJoin, of, switchMap, takeLast, tap} = require('rxjs')
 const {stratifiedSystematicSample, filterSamples} = require('./stratifiedSampling')
 const {exportLimiter$} = require('#task/jobs/service/exportLimiter')
 const {task$} = require('#task/ee/task')
-const ee = require('#sepal/ee')
+const ee = require('#sepal/ee/ee')
 const moment = require('moment')
 const _ = require('lodash')
 

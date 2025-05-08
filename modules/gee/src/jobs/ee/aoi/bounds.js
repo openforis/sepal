@@ -1,7 +1,7 @@
 const {job} = require('#gee/jobs/job')
  
 const worker$ = ({aoi}) => {
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const {toGeometry} = require('#sepal/ee/aoi')
     const {of} = require('rxjs')
 

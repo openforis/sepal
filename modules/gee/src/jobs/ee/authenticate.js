@@ -38,7 +38,7 @@ const getCredentials = ctx => {
 const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initArgs: {eeEndpoint} = {}}) => {
     const {switchMap} = require('rxjs')
     const {swallow} = require('#sepal/rxjs')
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const log = require('#sepal/log').getLogger('auth')
 
     if (sepalUser) {

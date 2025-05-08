@@ -7,7 +7,7 @@ const REQUIRED_SCOPES = [
 ]
 
 const worker$ = (_ignore, {sepalUser}) => {
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const {catchError, from, map, switchMap, throwError} = require('rxjs')
     const {ClientException} = require('sepal/src/exception')
     const {ERROR_CODES: {EE_NOT_AVAILABLE, MISSING_OAUTH_SCOPES, MISSING_GOOGLE_TOKENS}} = require('sepal/src/exception')

@@ -32,7 +32,7 @@ module.exports = {
         worker$
     }) => {
         const workerWithWorkloadTag$ = (...args) => {
-            const ee = require('#sepal/ee')
+            const ee = require('#sepal/ee/ee')
             // const [_ignore, {googleTokens}] = args
             const tag = `sepal-work-${jobName
                 .toLowerCase()
