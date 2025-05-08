@@ -10,6 +10,7 @@
         "ee": "info",
         "drive": "info",
         "gdal": "info",
+        "http/client": "info",
         "http/server": "info",
         "limiter": "info",
         "scheduler": "info",

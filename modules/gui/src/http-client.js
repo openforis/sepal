@@ -15,7 +15,7 @@ const DEFAULT_RETRY_CONFIG = {
     minRetryDelay: 500,
     maxRetryDelay: 2000,
     retryDelayFactor: 2,
-    abort: error => error.status && error.status < 500
+    skip: error => error.status && error.status < 500
 }
 
 const toResponse = map(e => e.response)

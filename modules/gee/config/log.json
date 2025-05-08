@@ -8,6 +8,7 @@
         "channel-reverse": "info",
         "ee": "info",
         "factory": "info",
+        "http/client": "info",
         "http/server": "info",
         "limiter": "info",
         "logger": "info",
