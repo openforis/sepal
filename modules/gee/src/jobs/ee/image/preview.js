@@ -10,8 +10,8 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
     const {sequence} = require('#sepal/utils/array')
     const _ = require('lodash')
 
-    const getRetiledMap$ = (image, retile = TILE_SIZE, ...args) =>
-        ee.getMap$(retile === TILE_SIZE ? image : image.retile(retile), ...args)
+    const getRetiledMap$ = (image, retile = TILE_SIZE, visParams) =>
+        ee.getMap$(retile === TILE_SIZE ? image : image.retile(retile), visParams, 'create preview map')
 
     if (visParams) {
         const {getImage$} = ImageFactory(recipe, {selection: distinct(visParams.bands), baseBands: distinct(visParams.baseBands), ...otherArgs})
@@ -113,8 +113,8 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
             switchMap(image => getVisParams$(image).pipe(
                 switchMap(visParams =>
                     visParams.hsv
-                        ? ee.getMap$(hsvToRgb(image, visParams))
-                        : ee.getMap$(image, visParams))
+                        ? ee.getMap$(hsvToRgb(image, visParams), null, 'create preview map')
+                        : ee.getMap$(image, visParams), null, 'create preview map')
             ))
         )
     }
