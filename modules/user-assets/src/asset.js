@@ -17,7 +17,9 @@ const getAsset$ = (user, id = '') => {
         headers: {
             'sepal-user': getSepalUserHeader(user)
         },
-        maxRetries: 0
+        retry: {
+            maxRetries: 0
+        }
     }).pipe(
         map(({body}) => JSON.parse(body))
     )
@@ -29,7 +31,9 @@ const deleteAsset$ = (user, id) =>
         headers: {
             'sepal-user': getSepalUserHeader(user)
         },
-        maxRetries: 0
+        retry: {
+            maxRetries: 0
+        }
     }).pipe(
         // map(({body}) => JSON.parse(body))
     )
@@ -40,7 +44,9 @@ const createFolder$ = (user, id) =>
         headers: {
             'sepal-user': getSepalUserHeader(user)
         },
-        maxRetries: 0
+        retry: {
+            maxRetries: 0
+        }
     })
 
 const getSepalUserHeader = user =>

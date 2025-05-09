@@ -165,7 +165,8 @@
         },
         "controls": {
             "reload": {
-                "tooltip": "Reload"
+                "tooltip": "Reload",
+                "progress": "Reloading... {count}"
             },
             "clearSelection": {
                 "tooltip": "Clear selection"
@@ -5299,8 +5300,7 @@
             "switchingToSEPALGoogleAccount": "Switching to SEPAL's Google Account",
             "title": "User details",
             "update": {
-                "error": "Could not update user.",
-                "success": "User has been updated."
+                "error": "Could not update user."
             },
             "confirmation": {
                 "message": "User role will be changed to \"{role}\""

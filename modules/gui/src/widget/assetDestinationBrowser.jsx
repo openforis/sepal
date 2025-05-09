@@ -85,7 +85,10 @@ class _AssetDestinationBrowser extends React.Component {
     }
 
     renderReloadButton() {
-        const {assets: {busy}} = this.props
+        const {assets: {busy, progress}} = this.props
+        const reloadTooltip = busy
+            ? msg('browse.controls.reload.progress', {count: progress})
+            : msg('browse.controls.reload.tooltip')
         return (
             <Button
                 key='reload'
@@ -94,9 +97,12 @@ class _AssetDestinationBrowser extends React.Component {
                 air='none'
                 icon='rotate'
                 iconAttributes={{spin: busy}}
-                tooltip={msg('asset.reload')}
-                tabIndex={-1}
+                tooltip={reloadTooltip}
+                tooltipPlacement='top'
+                tooltipVisible={progress}
+                tooltipAllowedWhenDisabled
                 disabled={isServiceAccount() || busy}
+                tabIndex={-1}
                 onClick={this.reloadAssets}
             />
         )

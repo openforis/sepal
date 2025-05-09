@@ -2,14 +2,15 @@ const {initializeDownlink} = require('./websocket-downlink')
 const {initializeUplink} = require('./websocket-uplink')
 const {Servers} = require('./websocket-server')
 const {Clients} = require('./websocket-client')
-const {USER_UP, USER_DOWN, USER_UPDATE, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN} = require('./websocket-events')
+const {USER_UP, USER_DOWN, USER_UPDATED, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN, initializeEvents} = require('./websocket-events')
 
-const initializeWebSocketServer = ({wss, userStore, userStatus$, toUser$}) => {
+const initializeWebSocketServer = ({wss, userStore, event$}) => {
     const servers = Servers()
     const clients = Clients()
-    
-    initializeUplink({servers, clients, userStore})
-    initializeDownlink({servers, clients, wss, userStatus$, toUser$})
+
+    initializeUplink({servers, clients, event$})
+    initializeDownlink({servers, clients, wss, userStore, event$})
+    initializeEvents({servers, clients, userStore, event$})
 }
 
 module.exports = {initializeWebSocketServer}
@@ -21,13 +22,12 @@ const SERVER_CONTRACT = () => ({
     onHeartBeat: ({hb}) => ({hb}),
     onUserUp: {event: USER_UP, user},
     onUserDown: {event: USER_DOWN, user},
-    onUserUpdate: {event: USER_UPDATE, user},
-    onClientUp: {event: CLIENT_UP, user, clientId},
-    onClientDown: {event: CLIENT_DOWN, user, clientId},
-    onSubscriptionUp: {event: SUBSCRIPTION_UP, user, clientId, subscriptionId},
-    onSubscriptionDown: {event: SUBSCRIPTION_DOWN, user, clientId, subscriptionId},
-    onUserUpdate: {user},
-    onClientMessage: {user, clientId, subscriptionId, data},
+    onUserUpdate: {event: USER_UPDATED, user},
+    onClientUp: {event: CLIENT_UP, username, clientId},
+    onClientDown: {event: CLIENT_DOWN, username, clientId},
+    onSubscriptionUp: {event: SUBSCRIPTION_UP, username, clientId, subscriptionId},
+    onSubscriptionDown: {event: SUBSCRIPTION_DOWN, username, clientId, subscriptionId},
+    onClientMessage: {username, clientId, subscriptionId, data},
     out: {username, data},
     out: {clientId, subscriptionId, data}
 })

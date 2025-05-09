@@ -46,7 +46,7 @@ const connectionStatus = status =>
         .dispatch()
 
 const {upstream$, downstream$} = WebSocket(ENDPOINT, {
-    maxRetries: Number.MAX_SAFE_INTEGER,
+    maxRetries: -1,
     minRetryDelay: 1000,
     retryDelayFactor: 1,
     onRetry: (_error, _retryMessage, _retryDelay, _retryCount) => {
@@ -101,7 +101,7 @@ const handleUpdate = update => {
     )
 }
 
-const handleMessage = ({modules: {state, update} = {}, subscriptionId, data, hb, event}) => {
+const handleMessage = ({modules: {state, update} = {}, module, subscriptionId, data, hb, event}) => {
     if (hb) {
         handleHeartbeat(hb)
     } else if (event) {
@@ -110,8 +110,12 @@ const handleMessage = ({modules: {state, update} = {}, subscriptionId, data, hb,
         handleState(state)
     } else if (update) {
         handleUpdate(update)
-    } else if (subscriptionId && data) {
-        sendToSubscriber(subscriptionId, {data})
+    } else if (module && data) {
+        if (subscriptionId) {
+            sendToSubscriber(subscriptionId, {data})
+        } else {
+            sendToModuleSubscribers(module, {data})
+        }
     }
 }
 
@@ -145,7 +149,12 @@ const removeSubscription = subscriptionId => {
         log.debug('Removing module subscription:', module)
         subscription.moduleDownstream$.complete()
         delete subscriptionsById[subscriptionId]
-        delete subscriptionIdsByModule[module]
+        subscriptionIdsByModule[module] = subscriptionIdsByModule[module].filter(
+            currentSubscriptionId => currentSubscriptionId !== subscriptionId
+        )
+        if (subscriptionIdsByModule[module].length === 0) {
+            delete subscriptionIdsByModule[module]
+        }
     } else {
         log.warn('Cannot remove non-existing websocket subscription:', subscriptionId)
     }

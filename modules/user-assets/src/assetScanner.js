@@ -23,15 +23,32 @@ const globalLimiter$ = Limiter({
     concurrency: GLOBAL_CONCURRENCY
 })
 
+const progress = {}
 const busy = {}
 const busy$ = new Subject()
+
+const getProgress = username =>
+    progress[username] || 0
+
+const increaseProgress = username => {
+    if (getProgress(username)) {
+        progress[username]++
+    } else {
+        progress[username] = 1
+    }
+    busy$.next({username, status: {busy: true, progress: getProgress(username)}})
+}
+
+const resetProgress = username => {
+    delete progress[username]
+}
 
 const increaseBusy = username => {
     if (busy[username]) {
         busy[username]++
     } else {
         busy[username] = 1
-        busy$.next({username, busy: true})
+        busy$.next({username, status: {busy: true, progress: getProgress(username)}})
     }
 }
 
@@ -41,7 +58,7 @@ const decreaseBusy = username => {
             busy[username]--
         } else {
             delete busy[username]
-            busy$.next({username, busy: false})
+            busy$.next({username, status: {busy: false}})
         }
     }
 }
@@ -55,13 +72,13 @@ const createRoot = () =>
 const createNode = path =>
     STree.createNode(path)
 
-const addNode = (tree, path, item) =>
-    STree.alter(tree, tree =>
-        STree.setValue(
-            STree.traverse(tree, [...path, getKey(item, path)], true),
-            {type: item.type, updateTime: item.updateTime, quota: item.quota}
-        )
+const addNode = (tree, path, item) => {
+    STree.setValue(
+        STree.traverse(tree, [...path, getKey(item, path)], true),
+        {type: item.type, updateTime: item.updateTime, quota: item.quota}
     )
+    return tree
+}
 
 const addNodes = (tree, path, nodes = []) =>
     nodes.reduce((tree, node) => addNode(tree, path, node), tree)
@@ -83,8 +100,11 @@ const scanTree$ = username => {
     increaseBusy(username)
     return loadNode$(username, [], true).pipe(
         reduce((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
-        tap(assets => log.info(`${userTag(username)} assets loaded ${formatDistanceToNowStrict(t0)}:`, getStats(assets))),
-        finalize(() => decreaseBusy(username))
+        tap(assets => log.info(`${userTag(username)} assets loaded in ${formatDistanceToNowStrict(t0)}:`, getStats(assets))),
+        finalize(() => {
+            resetProgress(username)
+            decreaseBusy(username)
+        })
     )
 }
 
@@ -114,6 +134,7 @@ const loadNodeMissingUser$ = (username, path) =>
 
 const loadNode$ = (username, path = [], node = {}) =>
     limiter$(() => from(getUser(username, {allowMissing: true})).pipe(
+        tap(() => increaseProgress(username)),
         switchMap(user => user
             ? loadNodeValidUser$(user, path, node.id)
             : loadNodeMissingUser$(username, path)
@@ -130,10 +151,11 @@ const loadNodes$ = (username, path, nodes) =>
         .map(node => loadNode$(username, [...path, getKey(node, path)], node))
 
 const scanNode$ = (username, path) => {
-    log.debug(`${userTag(username)} loading node:`, path)
+    log.debug(`${userTag(username)} loading:`, STree.toStringPath(path))
     increaseBusy(username)
     return from(getUser(username)).pipe(
         switchMap(user => getAsset$(user, STree.toStringPath(path))),
+        tap(() => log.info(`${userTag(username)} loaded:`, STree.toStringPath(path))),
         map(childNodes => {
             const node = createNode(path)
             childNodes.forEach(

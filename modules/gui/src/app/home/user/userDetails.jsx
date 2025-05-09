@@ -53,11 +53,11 @@ const hint$ = new Subject()
 
 class _UserDetails extends React.Component {
 
+    // regular subscription to make sure backend request is not cancelled
     updateUserDetails(userDetails) {
-        updateCurrentUserDetails$(userDetails).subscribe(
-            () => Notifications.success({message: msg('user.userDetails.update.success')}),
-            error => Notifications.error({message: msg('user.userDetails.update.error'), error})
-        )
+        updateCurrentUserDetails$(userDetails).subscribe({
+            error: error => Notifications.error({message: msg('user.userDetails.update.error'), error})
+        })
     }
 
     renderPanel() {

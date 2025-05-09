@@ -1,57 +1,68 @@
-const {map, catchError, of} = require('rxjs')
+const {map, catchError, tap, switchMap, of} = require('rxjs')
 const modules = require('../config/modules')
-const {postJson$} = require('#sepal/httpClient')
+const {postJson$, get$} = require('#sepal/httpClient')
 const {SEPAL_USER_HEADER} = require('./user')
 const {userTag} = require('./tag')
+const {formatDistanceStrict} = require('date-fns/formatDistanceStrict')
 
 const log = require('#sepal/log').getLogger('userApi')
 
+const CURRENT_USER_URL = `http://${modules.user}/current`
 const REFRESH_GOOGLE_ACCESS_TOKEN_URL = `http://${modules.user}/google/refresh-access-token`
 const REVOKE_GOOGLE_ACCESS_URL = `http://${modules.user}/google/revoke-access`
 
+const loadUser$ = username => {
+    log.trace(`${userTag(username)} Loading user...`)
+    return get$(CURRENT_USER_URL, {
+        headers: {[SEPAL_USER_HEADER]: JSON.stringify({username})}
+    }).pipe(
+        map((({body}) => JSON.parse(body))),
+        tap(() => log.debug(`${userTag(username)} Loaded user`))
+    )
+}
+
 const refreshGoogleAccessToken$ = user => {
-    log.debug(`${userTag(user.username)} Refreshing Google access token`)
+    log.trace(`${userTag(user.username)} Refreshing Google access token...`)
     return postJson$(REFRESH_GOOGLE_ACCESS_TOKEN_URL, {
         headers: {
             [SEPAL_USER_HEADER]: JSON.stringify(user)
         }
-    })
+    }).pipe(
+        map(({body, statusCode}) => ({googleTokens: JSON.parse(body), statusCode})),
+        tap(() => log.debug(`${userTag(user.username)} Refreshed Google access token`))
+    )
 }
 
 const revokeGoogleAccess$ = user => {
-    log.warn(`${userTag(user?.username)} Revoking Google access token`)
+    log.fatal(`${userTag(user?.username)} Revoking Google access token...`)
     return postJson$(REVOKE_GOOGLE_ACCESS_URL, {
         headers: {
             [SEPAL_USER_HEADER]: JSON.stringify(user)
         }
     }).pipe(
         map(({body}) => JSON.parse(body)),
-        map(({googleTokens: _googleTokens, ...user}) => user)
+        map(({googleTokens: _googleTokens, ...user}) => user),
+        tap(user => log.info(`${userTag(user?.username)} Revoked Google access token`))
     )
 }
 
 const updateGoogleAccessToken$ = user => {
     log.debug(`${userTag(user.username)} Google access token refreshing...`)
     return refreshGoogleAccessToken$(user).pipe(
-        map(({body: googleTokens, statusCode}) => {
+        switchMap(({googleTokens, statusCode}) => {
             if (statusCode !== 204) {
-                if (googleTokens) {
-                    log.debug(`${userTag(user.username)} Google access token updated`, googleTokens)
-                    return {...user, googleTokens: JSON.parse(googleTokens)}
-                } else {
-                    log.warn(`${userTag(user.username)} Google access token missing`)
-                    return null
-                }
+                const expiration = formatDistanceStrict(googleTokens.accessTokenExpiryDate, Date.now(), {addSuffix: true})
+                log.info(`${userTag(user.username)} Google access token updated, expiring ${expiration}`)
+                return of({...user, googleTokens})
             } else {
                 log.info(`${userTag(user.username)} Google access token invalidated`)
-                return null
+                return revokeGoogleAccess$(user)
             }
         }),
         catchError(error => {
-            log.warn(`${userTag(user.username)} Google access token update failed:`, error)
-            return of(null)
+            throw new Error(`${userTag(user.username)} Google access token update failed:`, {cause: error})
         })
     )
 }
 
-module.exports = {revokeGoogleAccess$, updateGoogleAccessToken$}
+module.exports = {loadUser$, revokeGoogleAccess$, updateGoogleAccessToken$}

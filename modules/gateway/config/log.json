@@ -1,16 +1,20 @@
 {
     "port": 5000,
     "categories": {
-        "auth": "info",
+        "authMiddleware": "info",
+        "googleAccessTokenMiddleware": "info",
         "gateway": "info",
         "googleAccessToken": "debug",
-        "proxy": "debug",
+        "http/client": "info",
+        "http/server": "info",
+        "proxy": "warn",
         "session": "info",
         "user": "info",
         "userApi": "info",
         "userStore": "info",
         "websocket": "info",
         "websocket/client": "info",
+        "websocket/event": "info",
         "websocket/server": "info",
         "websocket/uplink": "info",
         "websocket/downlink": "info"

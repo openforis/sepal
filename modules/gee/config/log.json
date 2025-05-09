@@ -1,14 +1,15 @@
 {
     "port": 5000,
     "categories": {
-        "auth": "debug",
+        "auth": "info",
         "config": "info",
         "default": "info",
         "channel-forward": "info",
         "channel-reverse": "info",
         "ee": "info",
         "factory": "info",
-        "http": "info",
+        "http/client": "info",
+        "http/server": "info",
         "limiter": "info",
         "logger": "info",
         "main": "info",

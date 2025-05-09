@@ -131,7 +131,12 @@ class _AppInstance extends React.Component {
                     if (this.useIFrameSrc()) {
                         return of({src: `/api${app.path}`})
                     } else {
-                        return get$(`/api${app.path}`, {responseType: 'text', maxRetries: 9}).pipe(
+                        return get$(`/api${app.path}`, {
+                            responseType: 'text',
+                            retry: {
+                                maxRetries: 9
+                            }
+                        }).pipe(
                             map(srcDoc => ({srcDoc}))
                         )
                     }

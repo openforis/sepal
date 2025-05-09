@@ -5,7 +5,10 @@ export default {
         get$('https://api.planet.com/basemaps/v1/mosaics', {
             username: apiKey,
             crossDomain: true,
-            query: {_page_size: 250}
+            query: {_page_size: 250},
+            retry: {
+                maxRetries: 0
+            }
         }),
 
     loadMosaics$: apiKey =>

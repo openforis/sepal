@@ -1,4 +1,4 @@
-const {moduleTag} = require('./tag')
+const {moduleTag, eventTag} = require('./tag')
 
 const log = require('#sepal/log').getLogger('websocket/server')
 
@@ -47,14 +47,19 @@ const Servers = () => {
         }
     }
 
-    const broadcast = message => {
-        log.debug('Sending message to all modules')
+    const sendEvent = (module, type, data) => {
+        log.debug(`Sending ${eventTag(type)} to ${moduleTag(module)}:`)
+        send(module, {event: type, ...data}) // change to {event: {type, data}}
+    }
+
+    const broadcastEvent = (type, data) => {
+        log.debug(`Broadcasting ${eventTag(type)} to all modules:`)
         Object.keys(servers).forEach(
-            module => send(module, message)
+            module => send(module, {event: type, ...data}) // change to {event: {type, data}}
         )
     }
 
-    return {add, remove, list, send, broadcast}
+    return {add, remove, list, send, sendEvent, broadcastEvent}
 }
 
 module.exports = {Servers}

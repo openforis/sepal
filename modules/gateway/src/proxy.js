@@ -1,21 +1,25 @@
 const {createProxyMiddleware} = require('http-proxy-middleware')
-const {Subject, from, mergeMap} = require('rxjs')
+const {Subject, catchError, mergeMap, EMPTY} = require('rxjs')
 const {rewriteLocation} = require('./rewrite')
 const {endpoints} = require('../config/endpoints')
 const {sepalHost} = require('./config')
-const {getRequestUser, SEPAL_USER_HEADER} = require('./user')
+const {getRequestUser, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} = require('./user')
 const {usernameTag, urlTag} = require('./tag')
 const log = require('#sepal/log').getLogger('proxy')
 
-const Proxy = (userStore, authMiddleware) => {
+const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
 
-    const userUpdate$ = new Subject()
+    const refreshUser$ = new Subject()
     
-    userUpdate$.pipe(
-        mergeMap(user => from(userStore.updateUser(user)))
+    refreshUser$.pipe(
+        mergeMap(username => userStore.updateUser$(username)),
+        catchError(error => {
+            log.error('Unexpected refreshUser$ error', error)
+            return EMPTY
+        })
     ).subscribe({
-        error: error => log.error('Unexpected foo$ stream error', error),
-        complete: () => log.error('Unexpected foo$ stream closed')
+        error: error => log.error('Unexpected refreshUser$ stream error', error),
+        complete: () => log.error('Unexpected refreshUser$ stream closed')
     })
 
     const proxy = app =>
@@ -60,7 +64,7 @@ const Proxy = (userStore, authMiddleware) => {
                         // https://github.com/chimurai/http-proxy-middleware/issues/978
                         proxyReq.path = proxyReq.path.replace(path, '')
                     },
-                    proxyRes: (proxyRes, req, _res) => {
+                    proxyRes: (proxyRes, _req, _res) => {
                         if (rewrite) {
                             const location = proxyRes.headers['location']
                             if (location) {
@@ -73,8 +77,8 @@ const Proxy = (userStore, authMiddleware) => {
                         proxyRes.headers['X-Content-Type-Options'] = 'nosniff'
                         proxyRes.headers['Strict-Transport-Security'] = 'max-age=16000000; includeSubDomains; preload'
                         proxyRes.headers['Referrer-Policy'] = 'no-referrer'
-                        if (proxyRes.headers['sepal-user-updated']) {
-                            userUpdate$.next(getRequestUser(req))
+                        if (proxyRes.headers[SEPAL_USER_UPDATED_HEADER]) {
+                            refreshUser$.next(proxyRes.headers[SEPAL_USER_UPDATED_HEADER])
                         }
                     },
                     error: (error, req, res) => {
@@ -94,7 +98,7 @@ const Proxy = (userStore, authMiddleware) => {
             })
     
             app.use(path, ...(authenticate
-                ? [authMiddleware, proxyMiddleware]
+                ? [authMiddleware, googleAccessTokenMiddleware, proxyMiddleware]
                 : [proxyMiddleware])
             )
             return {path, target, proxy: proxyMiddleware}

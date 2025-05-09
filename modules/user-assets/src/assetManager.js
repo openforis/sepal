@@ -5,7 +5,7 @@ const {userTag, subscriptionTag} = require('./tag')
 const {setAssets, getAssets, removeAssets, expireAssets} = require('./assetStore')
 const log = require('#sepal/log').getLogger('assetManager')
 
-const {Subject, groupBy, mergeMap, map, tap, repeat, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race, defer, take, merge, share} = require('rxjs')
+const {Subject, groupBy, mergeMap, map, tap, repeat, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race, defer, take, merge} = require('rxjs')
 const {setUser, getUser, removeUser} = require('./userStore')
 const {scanTree$, scanNode$, busy$, isBusy} = require('./assetScanner')
 const {pollIntervalMilliseconds} = require('./config')
@@ -21,7 +21,7 @@ const createAssetManager = ({out$, stop$}) => {
 
     const userUp$ = new Subject()
     const userDown$ = new Subject()
-    const userUpdate$ = new Subject()
+    const googleAccessToken$ = new Subject()
     const subscriptionUp$ = new Subject()
     const subscriptionDown$ = new Subject()
     const update$ = new Subject()
@@ -67,15 +67,15 @@ const createAssetManager = ({out$, stop$}) => {
     const monitor$ = merge(
         userUp$.pipe(
             tap(user => userStatus(user, 'up')),
-            filter(({googleTokens}) => googleTokens?.projectId)
+            filter(user => user?.googleTokens?.projectId)
         ),
-        userUpdate$.pipe(
-            filter(({googleTokens}) => googleTokens?.projectId),
+        googleAccessToken$.pipe(
+            filter(({user, added, updated}) => user?.googleTokens?.projectId && (added || updated)),
+            map(({user}) => user),
             tap(user => userStatus(user, 'updated'))
         )
     ).pipe(
-        mergeMap(user => from(onMonitor(user))),
-        share()
+        mergeMap(user => from(onMonitor(user)))
     )
 
     const onUnmonitor = async user => {
@@ -90,13 +90,13 @@ const createAssetManager = ({out$, stop$}) => {
         userDown$.pipe(
             tap(user => userStatus(user, 'down'))
         ),
-        userUpdate$.pipe(
-            filter(({googleTokens}) => !googleTokens?.projectId),
+        googleAccessToken$.pipe(
+            filter(({removed}) => removed),
+            map(({user}) => user),
             tap(user => userStatus(user, 'updated'))
         )
     ).pipe(
-        mergeMap(user => from(onUnmonitor(user))),
-        share()
+        mergeMap(user => from(onUnmonitor(user)))
     )
 
     const unmonitorCurrentUser$ = username =>
@@ -322,7 +322,7 @@ const createAssetManager = ({out$, stop$}) => {
     })
 
     busy$.pipe(
-        map(({username, busy}) => ({username, data: {busy}}))
+        map(({username, status}) => ({username, data: {status}}))
     ).subscribe({
         next: ({username, data}) => out$.next({username, data}),
         error: error => log.error('Unexpected stream error', error),
@@ -335,8 +335,8 @@ const createAssetManager = ({out$, stop$}) => {
     const userDown = user =>
         userDown$.next(user)
     
-    const userUpdate = user =>
-        userUpdate$.next(user)
+    const googleAccessToken = ({user, added, updated, removed}) =>
+        googleAccessToken$.next({user, added, updated, removed})
 
     const subscriptionUp = ({username, clientId, subscriptionId}) =>
         subscriptionUp$.next({username, clientId, subscriptionId})
@@ -362,7 +362,7 @@ const createAssetManager = ({out$, stop$}) => {
         create$.next({username, clientId, subscriptionId, path})
     }
 
-    return {userUp, userDown, userUpdate, subscriptionUp, subscriptionDown, reload, cancelReload, remove, createFolder}
+    return {userUp, userDown, googleAccessToken, subscriptionUp, subscriptionDown, reload, cancelReload, remove, createFolder}
 }
 
 module.exports = {createAssetManager}

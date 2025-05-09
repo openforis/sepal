@@ -11,7 +11,9 @@ const worker$ = (_ignore, {sepalUser: {googleTokens}}) => {
     const headers = {Authorization: `Bearer ${googleTokens.accessToken}`}
 
     const cloudProjects$ = () =>
-        http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {headers}).pipe(
+        http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {
+            headers
+        }).pipe(
             map(({body}) => JSON.parse(body)),
             map(({projects = []}) => projects)
         )

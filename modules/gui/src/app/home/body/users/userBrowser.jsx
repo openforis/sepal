@@ -184,13 +184,8 @@ class _UserBrowser extends React.Component {
 
         this.props.stream('UPDATE_USER',
             update$(userDetails),
-            userDetails => {
-                this.updateUserDetails(userDetails)
-                Notifications.success({message: msg('user.userDetails.update.success')})
-            },
-            error => {
-                Notifications.error({message: msg('user.userDetails.update.error'), error})
-            }
+            userDetails => this.updateUserDetails(userDetails),
+            error => Notifications.error({message: msg('user.userDetails.update.error'), error})
         )
     }
 

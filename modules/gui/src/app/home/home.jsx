@@ -7,13 +7,13 @@ import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {autoRetry} from '~/rxjsutils'
 import {msg} from '~/translate'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import {Assets} from '~/widget/assets'
 import {GoogleAccountConnection} from '~/widget/googleAccountConnection'
 import {Notifications} from '~/widget/notifications'
 import {PortalContainer} from '~/widget/portal'
+import {User} from '~/widget/user'
 import {VersionCheck} from '~/widget/versionCheck'
 import {WebSocketConnection} from '~/widget/webSocketConnection'
 
@@ -30,19 +30,33 @@ const mapStateToProps = () => ({
 
 const RETRY_CONFIG = {
     minRetryDelay: 500,
-    maxRetryDelay: 10000,
+    maxRetryDelay: 8000,
     retryDelayFactor: 2,
-    maxRetries: Number.MAX_SAFE_INTEGER
+    maxRetries: -1
 }
+
+const loadCurrentUserReport$ = () =>
+    api.user.loadCurrentUserReport$({
+        retry: RETRY_CONFIG
+    })
+
+const loadUserMessages$ = () =>
+    api.user.loadUserMessages$({
+        retry: RETRY_CONFIG
+    })
+
+const loadTasks$ = () =>
+    api.tasks.loadAll$({
+        retry: RETRY_CONFIG
+    })
 
 const timedRefresh$ = (task$, refreshSeconds = 60, _name) =>
     timer(0, refreshSeconds * 1000).pipe(
-        exhaustMap(count => task$(count)),
-        autoRetry(RETRY_CONFIG)
+        exhaustMap(count => task$(count))
     )
 
 const updateUserReport$ = () =>
-    timedRefresh$(api.user.loadCurrentUserReport$, 10, 'user report').pipe(
+    timedRefresh$(() => loadCurrentUserReport$(), 10, 'user report').pipe(
         map(currentUserReport => {
             const projectedStorageSpending = projectStorageSpending(currentUserReport.spending)
             currentUserReport.spending.projectedStorageSpending = projectedStorageSpending
@@ -89,7 +103,7 @@ const hasBudget = currentUserReport => {
 }
 
 const updateUserMessages$ = () =>
-    timedRefresh$(api.user.loadUserMessages$, 60, 'user messages').pipe(
+    timedRefresh$(() => loadUserMessages$(), 60, 'user messages').pipe(
         map(userMessages =>
             actionBuilder('UPDATE_USER_MESSAGES')
                 .set('user.userMessages', userMessages)
@@ -98,7 +112,7 @@ const updateUserMessages$ = () =>
     )
 
 const updateTasks$ = () =>
-    timedRefresh$(api.tasks.loadAll$, 5, 'tasks').pipe(
+    timedRefresh$(() => loadTasks$(), 5, 'tasks').pipe(
         map(tasks =>
             actionBuilder('UPDATE_TASKS')
                 .set('tasks', tasks)
@@ -110,7 +124,7 @@ class _Home extends React.Component {
     constructor(props) {
         super(props)
         const {stream} = props
-        const errorHandler = () => Notifications.error({message: msg('home.connectivityError')})
+        const errorHandler = () => Notifications.error({message: msg('home.connectivityError'), group: true})
         stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_TASKS', updateTasks$(), null, errorHandler)
@@ -132,6 +146,7 @@ class _Home extends React.Component {
                     </div>
                     <PortalContainer/>
                     <WebSocketConnection/>
+                    <User/>
                     <Assets/>
                     <GoogleAccountConnection/>
                     <VersionCheck/>

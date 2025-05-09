@@ -1,47 +1,37 @@
 import base64 from 'base-64'
 import _ from 'lodash'
-import {catchError, map, of, tap, throwError} from 'rxjs'
+import {catchError, map, of, throwError} from 'rxjs'
 import {ajax} from 'rxjs/ajax'
 import {webSocket} from 'rxjs/webSocket'
 
-import {getLogger} from '~/log'
 import {autoRetry} from '~/rxjsutils'
 import {msg} from '~/translate'
-import {currentUser, logout$, updateUser} from '~/user'
+import {logout$} from '~/user'
 import {applyDefaults} from '~/utils'
 import {Notifications} from '~/widget/notifications'
-
-// eslint-disable-next-line no-unused-vars
-const log = getLogger('http')
-
+ 
 const DEFAULT_RETRY_CONFIG = {
     maxRetries: 5,
     minRetryDelay: 500,
+    maxRetryDelay: 2000,
     retryDelayFactor: 2,
-    abort: error => error.statusCode < 500
+    skip: error => error.status && error.status < 500
 }
 
 const toResponse = map(e => e.response)
 
-export const get$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelayFactor, query, body, headers, validStatuses, ...args} = {}) =>
+export const get$ = (url, {query, body, headers, validStatuses, retry, ...args} = {}) =>
     execute$(url, 'GET', {
-        maxRetries,
-        minRetryDelay,
-        maxRetryDelay,
-        retryDelayFactor,
         query,
         body,
         headers,
         validStatuses,
+        retry,
         ...args
     }).pipe(toResponse)
 
-export const post$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelayFactor, query, body, headers, validStatuses, ...args} = {}) =>
+export const post$ = (url, {query, body, headers, validStatuses, retry, ...args} = {}) =>
     execute$(url, 'POST', {
-        maxRetries,
-        minRetryDelay,
-        maxRetryDelay,
-        retryDelayFactor,
         query,
         body: toQueryString(body),
         headers: {
@@ -49,15 +39,12 @@ export const post$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelay
             ...headers
         },
         validStatuses,
+        retry,
         ...args
     }).pipe(toResponse)
 
-export const postJson$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelayFactor, query, body, headers, validStatuses, ...args} = {}) =>
+export const postJson$ = (url, {query, body, headers, validStatuses, retry, ...args} = {}) =>
     execute$(url, 'POST', {
-        maxRetries,
-        minRetryDelay,
-        maxRetryDelay,
-        retryDelayFactor,
         query,
         body: body && JSON.stringify(body),
         headers: {
@@ -65,15 +52,12 @@ export const postJson$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryD
             ...headers
         },
         validStatuses,
+        retry,
         ...args
     }).pipe(toResponse)
 
-export const postBinary$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelayFactor, query, body, headers, validStatuses, ...args} = {}) =>
+export const postBinary$ = (url, {query, body, headers, validStatuses, retry, ...args} = {}) =>
     execute$(url, 'POST', {
-        maxRetries,
-        minRetryDelay,
-        maxRetryDelay,
-        retryDelayFactor,
         query,
         body,
         headers: {
@@ -81,15 +65,12 @@ export const postBinary$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retr
             ...headers
         },
         validStatuses,
+        retry,
         ...args
     }).pipe(toResponse)
 
-export const delete$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelayFactor, query, body, headers, validStatuses, ...args} = {}) =>
+export const delete$ = (url, {query, body, headers, validStatuses, retry, ...args} = {}) =>
     execute$(url, 'DELETE', {
-        maxRetries,
-        minRetryDelay,
-        maxRetryDelay,
-        retryDelayFactor,
         query,
         body,
         headers: {
@@ -97,15 +78,12 @@ export const delete$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDel
             ...headers
         },
         validStatuses,
+        retry,
         ...args
     }).pipe(toResponse)
 
-export const deleteJson$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelayFactor, query, body, headers, validStatuses, ...args} = {}) =>
+export const deleteJson$ = (url, {query, body, headers, validStatuses, retry, ...args} = {}) =>
     execute$(url, 'DELETE', {
-        maxRetries,
-        minRetryDelay,
-        maxRetryDelay,
-        retryDelayFactor,
         query,
         body: body && JSON.stringify(body),
         headers: {
@@ -113,16 +91,11 @@ export const deleteJson$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retr
             ...headers
         },
         validStatuses,
+        retry,
         ...args
     }).pipe(toResponse)
 
-export const WebSocket = (url, {
-    maxRetries,
-    minRetryDelay,
-    maxRetryDelay,
-    retryDelayFactor,
-    onRetry
-} = {}) => {
+export const WebSocket = (url, retry) => {
     const buildNumber = window._sepal_global_.buildNumber
     const upstream$ = webSocket({
         url: webSocketUrl(url),
@@ -133,13 +106,7 @@ export const WebSocket = (url, {
 
     const downstream$ = upstream$.pipe(
         autoRetry(
-            applyDefaults(DEFAULT_RETRY_CONFIG, {
-                maxRetries,
-                minRetryDelay,
-                maxRetryDelay,
-                retryDelayFactor,
-                onRetry
-            })
+            applyDefaults(DEFAULT_RETRY_CONFIG, retry)
         )
     )
     return {upstream$, downstream$}
@@ -179,15 +146,12 @@ const validateResponse = (response, validStatuses) =>
         : throwError(() => response)
 
 const execute$ = (url, method, {
-    maxRetries,
-    minRetryDelay,
-    maxRetryDelay,
-    retryDelayFactor,
     query,
     username,
     password,
     headers,
     validStatuses,
+    retry,
     ...args
 }) => {
     const queryString = toQueryString(query)
@@ -204,43 +168,25 @@ const execute$ = (url, method, {
             ...headers
         }
     }
+    const t0 = Date.now()
     return ajax({url: urlWithQuery, method, headers, ...args}).pipe(
-        tap(({responseHeaders}) => {
-            if (responseHeaders['sepal-user']) { // Make sure the user is up-to-date. Google Tokens might have changed
-                const previousUser = _.omit(currentUser(), ['googleTokens']) // make sure googleTokens are always updated
-                const updatedUser = JSON.parse(responseHeaders['sepal-user'])
-                const user = {...previousUser, ...updatedUser}
-                updateUser(user)
-            }
-        }),
         map(response => validateResponse(response, validStatuses)),
-        catchError(e => {
-            if (validStatuses && validStatuses.includes(e.status)) {
-                return of(e)
-            } else if (e.status === 401 && isRelative(url)) {
+        catchError(error => {
+            if (validStatuses && validStatuses.includes(error.status)) {
+                return of(error)
+            } else if (error.status === 401 && isRelative(url)) {
                 Notifications.warning({message: msg('unauthorized.warning'), group: true})
                 return logout$()
             } else {
-                return throwError(() => e)
+                return throwError(() => error)
             }
         }),
         autoRetry(
             applyDefaults(DEFAULT_RETRY_CONFIG, {
-                maxRetries,
-                minRetryDelay,
-                maxRetryDelay,
-                retryDelayFactor
+                initialTimestamp: t0,
+                ...retry
             })
         )
-        // retry({
-        //     delay: (error, retryCount) => {
-        //         if (error.status < 500 || retryCount > maxRetries) {
-        //             return throwError(() => error)
-        //         }
-        //         log.debug(() => `Retrying websocket connection to ${url}: ${retryCount}${maxRetries ? `/${maxRetries}` : ''}`)
-        //         return timer(Math.min(maxRetryDelay, minRetryDelay * Math.pow(retryDelayFactor, retryCount - 1)))
-        //     }
-        // })
     )
 }
 

@@ -4,44 +4,15 @@ const {webSocket} = require('rxjs/webSocket')
 
 const {webSocketEndpoints} = require('../config/endpoints')
 const {autoRetry} = require('sepal/src/rxjs')
-const {moduleTag, clientTag, userTag} = require('./tag')
-const {CLIENT_UP, USER_UP, USER_UPDATE} = require('./websocket-events')
+const {moduleTag, clientTag} = require('./tag')
+const {MODULE_UP, MODULE_DOWN} = require('./websocket-events')
 
 const log = require('#sepal/log').getLogger('websocket/uplink')
 
 const HEARTBEAT_INTERVAL_MS = 1 * 1000
 
-const initializeUplink = ({servers, clients, userStore: {getUser, userUpdate$}}) => {
+const initializeUplink = ({servers, clients, event$}) => {
     
-    const onUserUpdate = user => {
-        log.debug(`${userTag(user.username)} updated`)
-        servers.broadcast({event: USER_UPDATE, user})
-    }
-
-    userUpdate$.subscribe({
-        next: user => onUserUpdate(user),
-        error: error => log.error('Unexpected userUpdate$ error', error),
-        complete: () => log.error('Unexpected userUpdate$ complete')
-    })
-    
-    const moduleReady = (module, ready) => {
-        clients.broadcast({modules: {update: {[module]: ready}}})
-        if (ready) {
-            clients.forEachUser(username =>
-                getUser(username).then(
-                    user => servers.send(module, {event: USER_UP, user})
-                )
-            )
-            clients.forEach(({username, clientId}) =>
-                getUser(username).then(
-                    user => {
-                        servers.send(module, {event: CLIENT_UP, user, clientId})
-                    }
-                )
-            )
-        }
-    }
-
     const onHeartbeat = (hb, module, upstream$) => {
         log.trace(`Sending heartbeat to ${moduleTag(module)}:`, hb)
         upstream$.next({hb})
@@ -53,7 +24,7 @@ const initializeUplink = ({servers, clients, userStore: {getUser, userUpdate$}})
             log.trace(`Received heartbeat from ${moduleTag(module)}:`, hb)
         } else if (ready) {
             log.info(`${moduleTag(module)} connected`)
-            moduleReady(module, true)
+            event$.next({type: MODULE_UP, data: {module}})
         } else if (data) {
             const {username, clientId, subscriptionId} = other
             if (clientId) {
@@ -62,9 +33,9 @@ const initializeUplink = ({servers, clients, userStore: {getUser, userUpdate$}})
                 } else {
                     log.debug(`Forwarding message to ${clientTag(username, clientId)}`)
                 }
-                clients.send(clientId, {subscriptionId, data})
+                clients.send(clientId, {module, subscriptionId, data})
             } else {
-                clients.sendByUsername({module, username}, {data})
+                clients.sendByUsername({module, username}, {module, data})
             }
         } else {
             log.warn(`Received unexpected message from ${moduleTag(module)}:`, msg)
@@ -97,12 +68,12 @@ const initializeUplink = ({servers, clients, userStore: {getUser, userUpdate$}})
     
         const downstream$ = upstream$.pipe(
             autoRetry({
-                maxRetries: null,
+                maxRetries: -1,
                 minRetryDelay: 1000,
                 onRetry: (error, retryMessage, retryDelay, retryCount) => {
                     if (retryCount === 1) {
                         log.info(`${moduleTag(module)} connection lost, retrying every ${retryDelay}ms.`)
-                        moduleReady(module, false)
+                        event$.next({type: MODULE_DOWN, data: {module}})
                     }
                 }
             }),
