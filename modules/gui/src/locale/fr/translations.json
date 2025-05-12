@@ -488,7 +488,7 @@
         "reset-password": {
             "button": "Initialiser mot de passe",
             "password": {
-                "invalid": "Le mot de passe doit avoir au moins 8 caractères",
+                "invalid": "",
                 "label": "Mot de passe",
                 "placeholder": "Entrer un mot de passe",
                 "required": "Mot de passe requis"
@@ -4792,7 +4792,7 @@
                     "required": "Nouveau mot de passe requis"
                 },
                 "newPassword": {
-                    "invalid": "Le mot de passe doit avoir au moins 8 caractères",
+                    "invalid": "",
                     "label": "Nouveau mot de passe",
                     "notMatching": "Les mots de passe ne correspondent pas",
                     "required": "Nouveau mot de passe requis"
