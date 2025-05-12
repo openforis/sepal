@@ -64,13 +64,18 @@ const createAssetManager = ({out$, stop$}) => {
         return user
     }
 
+    const isGoogleAccessTokenValid = user =>
+        user.googleTokens
+            && user.googleTokens.projectId
+            && user.googleTokens.accessTokenExpiryDate > Date.now()
+
     const monitor$ = merge(
         userUp$.pipe(
-            tap(user => userStatus(user, 'up')),
-            filter(user => user?.googleTokens?.projectId)
+            filter(user => isGoogleAccessTokenValid(user)),
+            tap(user => userStatus(user, 'up with valid Google access token')),
         ),
         googleAccessToken$.pipe(
-            filter(({user, added, updated}) => user?.googleTokens?.projectId && (added || updated)),
+            filter(({user, added, updated}) => isGoogleAccessTokenValid(user) && (added || updated)),
             map(({user}) => user),
             tap(user => userStatus(user, 'updated'))
         )
@@ -91,7 +96,7 @@ const createAssetManager = ({out$, stop$}) => {
             tap(user => userStatus(user, 'down'))
         ),
         googleAccessToken$.pipe(
-            filter(({removed}) => removed),
+            filter(({user, removed}) => !isGoogleAccessTokenValid(user) || removed),
             map(({user}) => user),
             tap(user => userStatus(user, 'updated'))
         )
