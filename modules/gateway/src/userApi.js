@@ -28,7 +28,7 @@ const refreshGoogleAccessToken$ = user => {
             [SEPAL_USER_HEADER]: JSON.stringify(user)
         }
     }).pipe(
-        map(({body, statusCode}) => ({googleTokens: JSON.parse(body), statusCode})),
+        map(({body, statusCode}) => ({googleTokens: body && JSON.parse(body), statusCode})),
         tap(() => log.debug(`${userTag(user.username)} Refreshed Google access token`))
     )
 }
