@@ -488,7 +488,7 @@
         "reset-password": {
             "button": "Establecer contraseña",
             "password": {
-                "invalid": "La contraseña debe tener al menos 8 caracteres",
+                "invalid": "",
                 "label": "Contraseña",
                 "placeholder": "Introduce una nueva contraseña",
                 "required": "La contraseña es necesaria"
@@ -4792,7 +4792,7 @@
                     "required": "Se requiere una nueva contraseña"
                 },
                 "newPassword": {
-                    "invalid": "Las contraseñas deben tener al menos 8 caracteres",
+                    "invalid": "",
                     "label": "Nueva contraseña",
                     "notMatching": "Las contraseñas no coinciden",
                     "required": "Se requiere una nueva contraseña"
