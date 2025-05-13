@@ -3,7 +3,7 @@ const {job} = require('#gee/jobs/job')
 const worker$ = ({id}, {sepalUser: {username, googleTokens}}) => {
     const {map, merge, toArray, of, switchMap, mergeMap, catchError} = require('rxjs')
     const http = require('#sepal/httpClient')
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const log = require('#sepal/log').getLogger('ee')
     const _ = require('lodash')
 

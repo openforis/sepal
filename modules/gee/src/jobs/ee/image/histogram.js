@@ -5,7 +5,7 @@ const MAX_PIXELS = 1e5
 
 const worker$ = ({recipe, band, aoi, mapBounds}) => {
     const ImageFactory = require('#sepal/ee/imageFactory')
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const {switchMap} = require('rxjs')
     const {toGeometry$} = require('#sepal/ee/aoi')
 

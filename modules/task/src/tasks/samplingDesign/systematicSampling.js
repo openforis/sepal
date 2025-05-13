@@ -1,4 +1,4 @@
-const ee = require('#sepal/ee')
+const ee = require('#sepal/ee/ee')
 const {toId, toColor} = require('./featureProperties')
 
 module.exports = {stratifiedSystematicSample, filterSamples}

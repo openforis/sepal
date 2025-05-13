@@ -8,7 +8,7 @@
         "@codemirror/language": "^6.11.0",
         "@codemirror/lint": "^6.8.5",
         "@codemirror/state": "^6.5.2",
-        "@codemirror/view": "^6.36.7",
+        "@codemirror/view": "^6.36.8",
         "@fontsource/merriweather": "^5.2.7",
         "@fontsource/source-sans-pro": "^5.2.5",
         "@fontsource/ubuntu": "^5.2.5",

@@ -3,7 +3,7 @@ const {job} = require('#gee/jobs/job')
 const worker$ = ({asset, allowedTypes}) => {
     const {of, catchError, forkJoin, map, switchMap, throwError} = require('rxjs')
     const {ClientException, NotFoundException} = require('#sepal/exception')
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const _ = require('lodash')
 
     const addFirstImageMetadata$ = asset => {

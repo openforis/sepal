@@ -5,7 +5,7 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
 
     const TILE_SIZE = 256
     
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const {switchMap} = require('rxjs')
     const {sequence} = require('#sepal/utils/array')
     const _ = require('lodash')

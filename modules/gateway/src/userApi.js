@@ -34,7 +34,7 @@ const refreshGoogleAccessToken$ = user => {
 }
 
 const revokeGoogleAccess$ = user => {
-    log.fatal(`${userTag(user?.username)} Revoking Google access token...`)
+    log.debug(`${userTag(user?.username)} Revoking Google access token...`)
     return postJson$(REVOKE_GOOGLE_ACCESS_URL, {
         headers: {
             [SEPAL_USER_HEADER]: JSON.stringify(user)
