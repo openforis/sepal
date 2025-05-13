@@ -36,7 +36,7 @@ const getCredentials = ctx => {
 }
 
 const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initArgs: {eeEndpoint} = {}}) => {
-    const {switchMap} = require('rxjs')
+    const {switchMap, of} = require('rxjs')
     const {swallow} = require('#sepal/rxjs')
     const ee = require('#sepal/ee/ee')
     const log = require('#sepal/log').getLogger('auth')
@@ -79,22 +79,18 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
         ee.sepal.setAuthType('USER')
         const secondsToExpiration = calculateSecondsToExpiration(googleTokens.accessTokenExpiryDate)
         log.debug(userTag(username), `Authenticating user account (expiring in ${secondsToExpiration} s)`)
-        return ee.$({
-            description: 'authenticate user account',
-            operation: (resolve, reject) => {
-                ee.data.setAuthToken(
-                    null, // clientId - no need to specify as EE API doesn't refresh the token
-                    'Bearer', // tokenType
-                    googleTokens.accessToken,
-                    null, // expiresIn - by setting this to null, we prevent a setTimeout() call in EE API
-                    null, // extraScopes - we have no extra scopes
-                    // extraScopes - we have no extra scopes
-                    error => error ? reject(error) : resolve(), // error callback
-                    false // updateAuthLibrary - we don't want EE API to refresh the token
-                )
-            },
-            skipAuthTokenCheck: true
-        })
+        ee.data.setAuthToken(
+            null, // clientId - no need to specify as EE API doesn't refresh the token
+            'Bearer', // tokenType
+            googleTokens.accessToken,
+            null, // expiresIn - by setting this to null, we prevent a setTimeout() call in EE API
+            null, // extraScopes - we have no extra scopes
+            null, // error callback
+            false // updateAuthLibrary - we don't want EE API to refresh the token
+        )
+        // Make sure refresh of previously authenticated service account is prevented
+        ee.data.setAuthTokenRefresher(null)
+        return of(true)
     }
 
     const authenticate$ = ({sepalUser: {googleTokens, username}, serviceAccountCredentials}) =>
@@ -111,8 +107,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
                 // [HACK] Force ee to change projectId after first initialization (ee.initialize() doesn't do that).
                 ee.data.initialize(eeEndpoint, null, null, projectId)
                 ee.initialize(eeEndpoint, null, resolve, reject, null, projectId)
-            },
-            skipAuthTokenCheck: true
+            }
         })),
         swallow()
     )
