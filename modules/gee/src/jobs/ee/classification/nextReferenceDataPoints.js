@@ -4,7 +4,7 @@ const PROBABILITY_THRESHOLD = 75
 const NUMBER_OF_POINTS = 5
 
 const worker$ = recipe => {
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const {map, switchMap} = require('rxjs')
     const classify = require('#sepal/ee/classification/classification')
     const {getRows$} = require('#sepal/ee/table')

@@ -1,4 +1,4 @@
-const ee = require('#sepal/ee')
+const ee = require('#sepal/ee/ee')
 const {interval, of, throwError, catchError, distinctUntilChanged, map, exhaustMap, switchMap, takeWhile, tap} = require('rxjs')
 const {finalizeObservable} = require('#sepal/rxjs')
 const MONITORING_FREQUENCY = 10000

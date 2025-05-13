@@ -1,4 +1,4 @@
-const ee = require('#sepal/ee')
+const ee = require('#sepal/ee/ee')
 const {concat, defer, map, switchMap} = require('rxjs')
 const {finalizeObservable, swallow} = require('#sepal/rxjs')
 const drive = require('#task/drive')

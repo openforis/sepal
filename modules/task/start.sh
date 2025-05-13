@@ -21,6 +21,7 @@ then
     --watch "${MODULE}"/src \
     --watch "${MODULE}/config" \
     --watch "${JS_SHARED}" \
+    --watch "${JS_EE}" \
     --inspect=0.0.0.0:9229 \
     src/main.js \
     --gee-email "$EE_ACCOUNT" \

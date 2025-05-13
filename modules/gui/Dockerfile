@@ -6,7 +6,7 @@ ENV MODULE_NAME gui
 ENV MODULE /usr/local/src/sepal/modules/gui
 
 # install global packages
-RUN apk update && apk add net-tools nginx gettext envsubst
+RUN apk update && apk add net-tools nginx gettext envsubst netcat-openbsd
 
 # install module packages
 WORKDIR ${MODULE}

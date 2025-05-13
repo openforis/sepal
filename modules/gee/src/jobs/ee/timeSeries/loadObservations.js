@@ -6,7 +6,7 @@ const worker$ = ({recipe, bands, latLng}) => {
     const {getCollection$} = require('#sepal/ee/timeSeries/collection')
     const {toGeometry} = require('#sepal/ee/aoi')
     const {map, mergeMap, of, switchMap, toArray} = require('rxjs')
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const _ = require('lodash')
 
     const aoi = {type: 'POINT', ...latLng}

@@ -53,11 +53,11 @@ const UserStore = (redis, event$) => {
         if (!_.isEqual(prevUser, user)) {
             log.debug(`${userTag(user.username)} updated`)
             event$.next({type: USER_UPDATED, data: {user}})
-            if (!prevUser.googleTokens && user.googleTokens) {
+            if (!prevUser?.googleTokens && user.googleTokens) {
                 event$.next({type: GOOGLE_ACCESS_TOKEN_ADDED, data: {user}})
-            } else if (prevUser.googleTokens && !user.googleTokens) {
+            } else if (prevUser?.googleTokens && !user.googleTokens) {
                 event$.next({type: GOOGLE_ACCESS_TOKEN_REMOVED, data: {user}})
-            } else if (!_.isEqual(prevUser.googleTokens, user.googleTokens)) {
+            } else if (!_.isEqual(prevUser?.googleTokens, user.googleTokens)) {
                 event$.next({type: GOOGLE_ACCESS_TOKEN_UPDATED, data: {user}})
             }
         }

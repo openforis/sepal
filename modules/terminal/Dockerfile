@@ -7,7 +7,7 @@ ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
 # install global packages
-RUN apk update && apk add net-tools sudo python3 g++ make openssh
+RUN apk update && apk add net-tools sudo python3 g++ make openssh netcat-openbsd
 RUN npm install -g nodemon
 
 # configure sudoers

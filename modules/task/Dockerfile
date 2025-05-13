@@ -7,6 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV MODULE_NAME task
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV JS_SHARED /usr/local/src/sepal/lib/js/shared
+ENV JS_EE /usr/local/src/sepal/lib/js/ee
 ENV PYTHON_SHARED /usr/local/src/sepal/lib/python/shared
 ENV NODE_MAJOR=22
 
@@ -30,7 +31,16 @@ USER root
 ADD lib/python/shared ${PYTHON_SHARED}
 RUN chmod +x ${PYTHON_SHARED}/stack_time_series.py && \
     ln -s ${PYTHON_SHARED}/stack_time_series.py /usr/local/bin/sepal-stack-time-series
+ADD modules/${MODULE_NAME}/lib/shared/package-lock.json ${JS_SHARED}
 RUN chown -R node: ${JS_SHARED}
+USER node
+RUN npm install
+
+WORKDIR ${JS_EE}
+USER root
+ADD lib/js/ee ${JS_EE}
+ADD modules/${MODULE_NAME}/lib/ee/package-lock.json ${JS_EE}
+RUN chown -R node: ${JS_EE}
 USER node
 RUN npm install
 

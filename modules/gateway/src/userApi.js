@@ -28,13 +28,13 @@ const refreshGoogleAccessToken$ = user => {
             [SEPAL_USER_HEADER]: JSON.stringify(user)
         }
     }).pipe(
-        map(({body, statusCode}) => ({googleTokens: JSON.parse(body), statusCode})),
+        map(({body, statusCode}) => ({googleTokens: body && JSON.parse(body), statusCode})),
         tap(() => log.debug(`${userTag(user.username)} Refreshed Google access token`))
     )
 }
 
 const revokeGoogleAccess$ = user => {
-    log.fatal(`${userTag(user?.username)} Revoking Google access token...`)
+    log.debug(`${userTag(user?.username)} Revoking Google access token...`)
     return postJson$(REVOKE_GOOGLE_ACCESS_URL, {
         headers: {
             [SEPAL_USER_HEADER]: JSON.stringify(user)
