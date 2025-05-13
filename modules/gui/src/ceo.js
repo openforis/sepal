@@ -1,6 +1,6 @@
 import Papa from 'papaparse'
-import {map, Subject, tap, zip} from 'rxjs'
-import {switchMap, toArray} from 'rxjs/operators'
+import {forkJoin, map, of, Subject, tap, zip} from 'rxjs'
+import {catchError, switchMap, toArray} from 'rxjs/operators'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -25,12 +25,38 @@ export const loadInstitutions$ = token => {
         token: token,
     }).pipe(
         map(institutions => institutions.filter(inst => inst.isMember === true)),
-        map(institutions => institutions.map(({id, name}) => ({value: id, label: name}))),
-        tap(institutions =>
+        switchMap(institutions => {
+            if (institutions.length === 0) {
+                return of([])
+            }
+            const institutions$ = institutions.map(institution => {
+                return api.ceoGateway.getInstitution$({
+                    token: token,
+                    institutionId: institution.id
+                }).pipe(
+                    map(detailedInst => {
+                        if (detailedInst && detailedInst.institutionAdmin === true) {
+                            return {
+                                value: institution.id, // detailedInst doesn't contain id
+                                label: detailedInst.name
+                            }
+                        } else {
+                            return null
+                        }
+                    }),
+                    catchError(() => of(null))
+                )
+            })
+            
+            return forkJoin(institutions$).pipe(
+                map(results => results.filter(Boolean))
+            )
+        }),
+        tap(institutions => {
             actionBuilder('SET_INSTITUTIONS', {institutions})
                 .set('ceo.data.institutions', institutions)
                 .dispatch()
-        )
+        })
     )
 }
 
