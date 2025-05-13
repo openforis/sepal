@@ -488,7 +488,7 @@
         "reset-password": {
             "button": "Set password",
             "password": {
-                "invalid": "Password must be at least 8 characters long",
+                "invalid": "Password must be at least 12 characters long",
                 "label": "Password",
                 "placeholder": "Enter a new password",
                 "required": "Password is required"
@@ -5092,7 +5092,7 @@
                     "required": "New password is required"
                 },
                 "newPassword": {
-                    "invalid": "Passwords must be at least 8 characters long",
+                    "invalid": "Passwords must be at least 12 characters long",
                     "label": "New password",
                     "notMatching": "Passwords are not matching",
                     "required": "New password is required"

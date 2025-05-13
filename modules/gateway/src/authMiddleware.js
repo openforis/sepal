@@ -70,20 +70,25 @@ const AuthMiddleware = userStore => {
                 const header = req.get('Authorization')
                 const basicAuth = Buffer.from(header.substring('basic '.length), 'base64').toString()
                 const [username, password] = basicAuth.split(':')
-                log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticating user`)
-                return post$(AUTHENTICATION_URL, {
-                    body: {username, password},
-                    validStatuses: [OK, UNAUTHORIZED]
-                }).pipe(
-                    switchMap(response => {
-                        const {statusCode} = response
-                        switch (statusCode) {
-                        case OK: return authorized$(username, response)
-                        case UNAUTHORIZED: return unauthorized$(username)
-                        default: return failure$(username, response)
-                        }
-                    })
-                )
+                if (username && password) {
+                    log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticating user`)
+                    return post$(AUTHENTICATION_URL, {
+                        body: {username, password},
+                        validStatuses: [OK, UNAUTHORIZED]
+                    }).pipe(
+                        switchMap(response => {
+                            const {statusCode} = response
+                            switch (statusCode) {
+                            case OK: return authorized$(username, response)
+                            case UNAUTHORIZED: return unauthorized$(username)
+                            default: return failure$(username, response)
+                            }
+                        })
+                    )
+                } else {
+                    log.warn(`${usernameTag(username)} Missing credentials`)
+                    return unauthorized$(username)
+                }
             }
     
             const missingAuthHeader$ = () => {
@@ -109,7 +114,7 @@ const AuthMiddleware = userStore => {
                 : res.status(statusCode) && res.end()
 
         } catch(error) {
-            log.fatal('Unexpected AuthMiddleware error', error)
+            log.error('Unexpected AuthMiddleware error', error)
             res.status(INTERNAL_SERVER_ERROR)
             res.end()
         }
