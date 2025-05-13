@@ -6,7 +6,7 @@ const worker$ = ({aoi, stratification, band, scale, crs, batch}, {sepalUser}) =>
     const {exportToCSV$} = require('../batch/exportToCSV')
     const {parseGroups} = require('../batch/parse')
     const imageFactory = require('sepal/src/ee/imageFactory')
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
 
     const description = 'area-per-stratum'
     return toGeometry$(aoi).pipe(

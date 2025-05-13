@@ -2,7 +2,7 @@ const {swallow} = require('#sepal/rxjs')
 const {concat, of} = require('rxjs')
 const {exportLimiter$} = require('#task/jobs/service/exportLimiter')
 const {task$} = require('#task/ee/task')
-const ee = require('#sepal/ee')
+const ee = require('#sepal/ee/ee')
 const _ = require('lodash')
 
 module.exports = {

@@ -6,7 +6,7 @@ const worker$ = ({aoi, stratification, stratificationBand, probability, probabil
     const {exportToCSV$} = require('../batch/exportToCSV')
     const {parseGroups} = require('../batch/parse')
     const imageFactory = require('sepal/src/ee/imageFactory')
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
 
     const description = 'probability-per-stratum'
     console.log({aoi, stratification, stratificationBand, probability, probabilityBand, scale, crs, batch})

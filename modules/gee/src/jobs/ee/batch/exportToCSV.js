@@ -1,5 +1,5 @@
 const {drive} = require('./drive')
-const ee = require('#sepal/ee')
+const ee = require('#sepal/ee/ee')
 const {interval, map, switchMap, takeLast, takeWhile} = require('rxjs')
 const moment = require('moment')
 

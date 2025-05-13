@@ -5,7 +5,7 @@ const worker$ = (requestParams, {sepalUser}) => {
     // TODO: Only do this if there are free slots available to export
     // TODO: Make sure task is canceled when request is cancelled
     // TODO: Handle errrors
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const {interval, map, switchMap, takeLast, takeWhile} = require('rxjs')
     const moment = require('moment')
 
