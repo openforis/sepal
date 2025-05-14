@@ -1,11 +1,11 @@
 const _ = require('lodash')
-const {formatDistanceStrict} = require('date-fns')
+const {formatDistanceStrict, formatDistanceToNowStrict} = require('date-fns')
 
 const {userTag, subscriptionTag} = require('./tag')
 const {setAssets, getAssets, removeAssets, expireAssets} = require('./assetStore')
 const log = require('#sepal/log').getLogger('assetManager')
 
-const {Subject, groupBy, mergeMap, map, tap, repeat, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race, defer, take, merge} = require('rxjs')
+const {Subject, groupBy, mergeMap, map, tap, repeat, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race, defer, take, merge, share} = require('rxjs')
 const {setUser, getUser, removeUser} = require('./userStore')
 const {scanTree$, scanNode$, busy$, isBusy} = require('./assetScanner')
 const {pollIntervalMilliseconds} = require('./config')
@@ -69,18 +69,23 @@ const createAssetManager = ({out$, stop$}) => {
             && user.googleTokens.projectId
             && user.googleTokens.accessTokenExpiryDate > Date.now()
 
+    const googleAccessTokenUpdated$ = googleAccessToken$.pipe(
+        tap(({user}) => userStatus(user, 'updated')),
+        share()
+    )
+
     const monitor$ = merge(
         userUp$.pipe(
+            tap(user => userStatus(user, 'up')),
             filter(user => isGoogleAccessTokenValid(user)),
-            tap(user => userStatus(user, 'up with valid Google access token')),
         ),
-        googleAccessToken$.pipe(
+        googleAccessTokenUpdated$.pipe(
             filter(({user, added, updated}) => isGoogleAccessTokenValid(user) && (added || updated)),
-            map(({user}) => user),
-            tap(user => userStatus(user, 'updated'))
+            map(({user}) => user)
         )
     ).pipe(
-        mergeMap(user => from(onMonitor(user)))
+        mergeMap(user => from(onMonitor(user))),
+        share()
     )
 
     const onUnmonitor = async user => {
@@ -95,13 +100,13 @@ const createAssetManager = ({out$, stop$}) => {
         userDown$.pipe(
             tap(user => userStatus(user, 'down'))
         ),
-        googleAccessToken$.pipe(
+        googleAccessTokenUpdated$.pipe(
             filter(({user, removed}) => !isGoogleAccessTokenValid(user) || removed),
-            map(({user}) => user),
-            tap(user => userStatus(user, 'updated'))
+            map(({user}) => user)
         )
     ).pipe(
-        mergeMap(user => from(onUnmonitor(user)))
+        mergeMap(user => from(onUnmonitor(user))),
+        share()
     )
 
     const unmonitorCurrentUser$ = username =>
@@ -183,11 +188,17 @@ const createAssetManager = ({out$, stop$}) => {
         }
     }
 
+    const getStats = assets =>
+        STree.reduce(assets, (acc, {value: {type} = {}}) => (type ? {
+            ...acc,
+            [type]: (acc[type] || 0) + 1
+        } : acc), {})
+    
     const loadAssets$ = username =>
-        of(username).pipe(
+        of(Date.now()).pipe(
             tap(() => log.debug(`${userTag(username)} reloading now...`)),
-            exhaustMap(() => scanTree$(username).pipe(
-                tap(() => log.debug(`${userTag(username)} reload complete`)),
+            exhaustMap(t0 => scanTree$(username).pipe(
+                tap(assets => log.info(`${userTag(username)} reload complete in ${formatDistanceToNowStrict(t0)}`, getStats(assets))),
                 map(tree => ({username, tree})),
                 takeUntil(unmonitorCurrentUser$(username))
             )),
@@ -208,7 +219,7 @@ const createAssetManager = ({out$, stop$}) => {
         groupBy(({username}) => username),
         mergeMap(userGroup$ => userGroup$.pipe(
             exhaustMap(({username}) => {
-                log.debug(`${userTag(userGroup$.key)} monitoring assets`)
+                log.info(`${userTag(userGroup$.key)} monitoring assets`)
                 return defer(() => reloadTrigger$(username)).pipe(
                     switchMap(username => loadAssets$(username)),
                     take(1),
@@ -216,7 +227,7 @@ const createAssetManager = ({out$, stop$}) => {
                     takeUntil(unmonitorCurrentUser$(username).pipe(
                         switchMap(() => from(removeUser(username, {allowMissing: true})))
                     )),
-                    finalize(() => log.debug(`${userTag(username)} unmonitoring assets`))
+                    finalize(() => log.info(`${userTag(username)} unmonitoring assets`))
                 )
             }
             )
@@ -244,13 +255,13 @@ const createAssetManager = ({out$, stop$}) => {
                 if (!assets) reload$.next(username)
             }),
             map(({assets} = {}) => ({tree: assets || emptyTree()})),
-            tap(() => log.debug(`${subscriptionTag({username, clientId, subscriptionId})} serving cached assets`))
+            tap(() => log.info(`${subscriptionTag({username, clientId, subscriptionId})} served cached assets`))
         )
 
     const userAssetsUpdated$ = ({username, clientId, subscriptionId}) =>
         update$.pipe(
             filter(({username: assetsUsername}) => assetsUsername === username),
-            tap(() => log.debug(`${subscriptionTag({username, clientId, subscriptionId})} serving updated assets`))
+            tap(() => log.info(`${subscriptionTag({username, clientId, subscriptionId})} served updated assets`))
         )
 
     const assets$ = ({username, clientId, subscriptionId}) =>

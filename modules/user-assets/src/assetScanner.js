@@ -7,7 +7,6 @@ const {getUser} = require('./userStore')
 const {STree} = require('#sepal/tree/sTree')
 const {getAsset$} = require('./asset')
 const {Limiter} = require('./limiter')
-const {formatDistanceToNowStrict} = require('date-fns/formatDistanceToNowStrict')
 
 const GLOBAL_CONCURRENCY = 10
 const USER_CONCURRENCY = 2
@@ -88,19 +87,10 @@ const getKey = ({id}, path) => {
     return id.substr(len ? len + 1 : 0)
 }
 
-const getStats = assets =>
-    STree.reduce(assets, (acc, {value: {type} = {}}) => (type ? {
-        ...acc,
-        [type]: (acc[type] || 0) + 1
-    } : acc), {})
-
 const scanTree$ = username => {
-    log.info(`${userTag(username)} assets loading...`)
-    const t0 = Date.now()
     increaseBusy(username)
     return loadNode$(username, [], true).pipe(
         reduce((tree, {path, nodes}) => addNodes(tree, path, nodes), createRoot()),
-        tap(assets => log.info(`${userTag(username)} assets loaded in ${formatDistanceToNowStrict(t0)}:`, getStats(assets))),
         finalize(() => {
             resetProgress(username)
             decreaseBusy(username)
@@ -115,6 +105,7 @@ const limiter$ = fn$ =>
 
 const loadNodeValidUser$ = (user, path, id) => {
     const t0 = Date.now()
+    log.trace(`${userTag(user.username)} loading: ${STree.toStringPath(path) || 'roots'}`)
     return getAsset$(user, id).pipe(
         tap(() => log.debug(`${userTag(user.username)} loaded: ${STree.toStringPath(path) || 'roots'} (${Date.now() - t0}ms)`)),
         catchError(error =>
@@ -153,9 +144,10 @@ const loadNodes$ = (username, path, nodes) =>
 const scanNode$ = (username, path) => {
     log.debug(`${userTag(username)} loading:`, STree.toStringPath(path))
     increaseBusy(username)
+    log.trace(`${userTag(username)} loading:`, STree.toStringPath(path))
     return from(getUser(username)).pipe(
         switchMap(user => getAsset$(user, STree.toStringPath(path))),
-        tap(() => log.info(`${userTag(username)} loaded:`, STree.toStringPath(path))),
+        tap(() => log.debug(`${userTag(username)} loaded:`, STree.toStringPath(path))),
         map(childNodes => {
             const node = createNode(path)
             childNodes.forEach(

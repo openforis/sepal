@@ -3,6 +3,7 @@ const {ClientException} = require('sepal/src/exception')
 const urljoin = require('url-join').default
 const {map} = require('rxjs')
 const {post$} = require('#sepal/httpClient')
+const setCookieParser = require('set-cookie-parser')
 
 const loginToken$ = ctx => {
     const {email, password} = ctx.request.body
@@ -21,8 +22,11 @@ const loginToken$ = ctx => {
         }
     }).pipe(
         map(response => {
-            const cookiesToSet = response.headers['set-cookie']
-            if (!cookiesToSet) {
+            const rawHeader = response.headers.get('set-cookie') || ''
+            const cookieStrings = setCookieParser.splitCookiesString(rawHeader)
+            const cookies = setCookieParser.parse(cookieStrings, {decodeValues: false})
+            const cookieToSet = cookies.find(c => c.name === 'ring-session')
+            if (!cookieToSet) {
                 throw new ClientException('email or password are invalid', {
                     userMessage: {
                         message: 'email or password are invalid',
@@ -31,7 +35,7 @@ const loginToken$ = ctx => {
                 })
             }
             return {
-                sessionCookie: cookiesToSet[0]
+                sessionCookie: `${cookieToSet.name}=${cookieToSet.value}`
             }
         })
     )
