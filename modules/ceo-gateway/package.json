@@ -9,12 +9,12 @@
     },
     "dependencies": {
         "commander": "^13.1.0",
-        "rxjs": "^7.8.2",
         "log4js": "^6.9.1",
+        "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
+        "set-cookie-parser": "^2.7.1",
         "url-join": "^5.0.0"
     },
-    "devDependencies": {},
     "imports": {
         "#sepal/*": "sepal/src/*.js",
         "#sepal/*.json": "sepal/src/*.json",

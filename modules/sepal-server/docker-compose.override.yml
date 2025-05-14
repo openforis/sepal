@@ -14,7 +14,9 @@ services:
       - 'host.docker.internal:host-gateway'
 
   socat:
-    image: alpine/socat
+    build:
+      context: .
+      dockerfile: Dockerfile.socat
     container_name: docker-api
     command: TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
     volumes:
