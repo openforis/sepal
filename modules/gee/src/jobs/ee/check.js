@@ -6,7 +6,9 @@ const REQUIRED_SCOPES = [
     'https://www.googleapis.com/auth/earthengine'
 ]
 
-const worker$ = (_ignore, {sepalUser}) => {
+const worker$ = ({
+    credentials: {sepalUser}
+}) => {
     const ee = require('#sepal/ee/ee')
     const {catchError, from, map, switchMap, throwError} = require('rxjs')
     const {ClientException} = require('sepal/src/exception')

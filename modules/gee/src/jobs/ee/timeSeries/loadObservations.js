@@ -2,7 +2,9 @@ const {job} = require('#gee/jobs/job')
 
 const CHUNK_SIZE = 100
 
-const worker$ = ({recipe, bands, latLng}) => {
+const worker$ = ({
+    requestArgs: {recipe, bands, latLng}
+}) => {
     const {getCollection$} = require('#sepal/ee/timeSeries/collection')
     const {toGeometry} = require('#sepal/ee/aoi')
     const {map, mergeMap, of, switchMap, toArray} = require('rxjs')

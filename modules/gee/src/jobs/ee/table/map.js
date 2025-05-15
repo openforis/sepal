@@ -1,6 +1,8 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({tableId, columnName, columnValue, buffer, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
+const worker$ = ({
+    requestArgs: {tableId, columnName, columnValue, buffer, color = '#FFFFFF50', fillColor = '#FFFFFF08'}
+}) => {
     const ee = require('#sepal/ee/ee')
     const {filterTable} = require('#sepal/ee/table')
     const {forkJoin, map} = require('rxjs')
@@ -26,6 +28,5 @@ const worker$ = ({tableId, columnName, columnValue, buffer, color = '#FFFFFF50',
 module.exports = job({
     jobName: 'Request EE Table map',
     jobPath: __filename,
-    args: ctx => [ctx.request.query],
     worker$
 })

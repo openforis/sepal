@@ -1,6 +1,8 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({tableId, columnName}) => {
+const worker$ = ({
+    requestArgs: {tableId, columnName}
+}) => {
     const ee = require('#sepal/ee/ee')
 
     return ee.getInfo$(
@@ -15,6 +17,5 @@ const worker$ = ({tableId, columnName}) => {
 module.exports = job({
     jobName: 'Get EE Table column values',
     jobPath: __filename,
-    args: ctx => [ctx.request.query],
     worker$
 })

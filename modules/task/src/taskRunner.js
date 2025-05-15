@@ -23,7 +23,10 @@ const taskTag = id => tag('Task', id)
 
 const msg = (id, msg) => `${taskTag, id}: ${msg}`
 
-const executeTask$ = ({id, name, params}, {cmd$}) => {
+const worker$ = ({
+    task: {id, name, params},
+    cmd$
+}) => {
     const cancel$ = cmd$
 
     const getTask = (id, name) => {
@@ -103,6 +106,6 @@ module.exports = job({
     jobPath: __filename,
     before: [require('#task/jobs/configure'), require('#task/jobs/ee/initialize')],
     services: [contextService, exportLimiterService, driveLimiterService, driveSerializerService, gcsSerializerService],
-    args: ({task}) => [task],
-    worker$: executeTask$
+    args: ({task}) => ({task}),
+    worker$
 })
