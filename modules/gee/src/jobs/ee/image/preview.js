@@ -1,6 +1,8 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
+const worker$ = ({
+    requestArgs: {recipe, visParams, bands, ...otherArgs}
+}) => {
     const ImageFactory = require('#sepal/ee/imageFactory')
 
     const TILE_SIZE = 256

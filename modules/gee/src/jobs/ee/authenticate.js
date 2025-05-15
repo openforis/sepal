@@ -17,25 +17,10 @@ To use highvolume endpoint, configure initArgs in worker:
 
 const userTag = username => tag('User', username || 'ANON')
 
-const getSepalUser = ctx => {
-    const sepalUser = ctx.request.headers['sepal-user']
-    return sepalUser
-        ? JSON.parse(sepalUser)
-        : {}
-}
-
-const getCredentials = ctx => {
-    const config = require('#gee/config')
-    const sepalUser = getSepalUser(ctx)
-    const serviceAccountCredentials = config.serviceAccountCredentials
-    return {
-        sepalUser,
-        serviceAccountCredentials,
-        googleProjectId: config.googleProjectId
-    }
-}
-
-const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initArgs: {eeEndpoint} = {}}) => {
+const worker$ = ({
+    credentials: {sepalUser, serviceAccountCredentials, googleProjectId},
+    initArgs: {eeEndpoint} = {}
+}) => {
     const {switchMap, of} = require('rxjs')
     const {swallow} = require('#sepal/rxjs')
     const ee = require('#sepal/ee/ee')
@@ -116,7 +101,6 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
 module.exports = job({
     jobName: 'EE Authentication',
     before: [require('#gee/jobs/configure')],
-    args: ctx => [getCredentials(ctx)],
     services: [eeLimiterService],
     worker$
 })

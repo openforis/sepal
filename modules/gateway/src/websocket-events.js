@@ -10,7 +10,7 @@ const USER_DOWN = 'userDown'
 const USER_UPDATED = 'userUpdated'
 const CLIENT_UP = 'clientUp'
 const CLIENT_DOWN = 'clientDown'
-const CLIENT_VERSION_MISMATCH = 'versionMismatch'
+const CLIENT_VERSION_MISMATCH = 'clientVersionMismatch'
 const SUBSCRIPTION_UP = 'subscriptionUp'
 const SUBSCRIPTION_DOWN = 'subscriptionDown'
 const GOOGLE_ACCESS_TOKEN_ADDED = 'googleAccessTokenAdded'
@@ -68,9 +68,8 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
     const clientVersionMismatch = ({username, clientId}) => {
         log.debug(`${clientTag(username, clientId)} version mismatch`)
         clients.sendEvent(username, CLIENT_VERSION_MISMATCH)
-        clients.sendEvent(username, 'versionMismatch') // TODO: remove after deployment
     }
-    
+
     const subscriptionUp = ({module, username, clientId, subscriptionId}) => {
         log.debug(`${subscriptionTag(username, clientId, subscriptionId)} up`)
         servers.sendEvent(module, SUBSCRIPTION_UP, {username, clientId, subscriptionId})

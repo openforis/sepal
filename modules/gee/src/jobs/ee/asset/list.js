@@ -1,6 +1,9 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({id}, {sepalUser: {username, googleTokens}}) => {
+const worker$ = ({
+    requestArgs: {id},
+    credentials: {sepalUser: {username, googleTokens}}
+}) => {
     const {map, merge, toArray, of, switchMap, mergeMap, catchError} = require('rxjs')
     const http = require('#sepal/httpClient')
     const ee = require('#sepal/ee/ee')

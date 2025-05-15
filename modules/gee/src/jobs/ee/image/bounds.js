@@ -1,6 +1,8 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({recipe}) => {
+const worker$ = ({
+    requestArgs: {recipe}
+}) => {
     const ee = require('#sepal/ee/ee')
     const ImageFactory = require('#sepal/ee/imageFactory')
     const {of} = require('rxjs')

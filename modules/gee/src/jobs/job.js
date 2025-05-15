@@ -13,7 +13,8 @@ const getCredentials = ctx => {
     const serviceAccountCredentials = config.serviceAccountCredentials
     return {
         sepalUser,
-        serviceAccountCredentials
+        serviceAccountCredentials,
+        googleProjectId: config.googleProjectId
     }
 }
 
@@ -28,12 +29,14 @@ module.exports = {
         ctx,
         before = [require('#gee/jobs/ee/authenticate')],
         services,
-        args = ctx => [{...ctx.request.query, ...ctx.request.body}, getCredentials(ctx)],
+        args = ctx => ({
+            requestArgs: {...ctx.request.query, ...ctx.request.body},
+            credentials: getCredentials(ctx)
+        }),
         worker$
     }) => {
         const workerWithWorkloadTag$ = (...args) => {
             const ee = require('#sepal/ee/ee')
-            // const [_ignore, {googleTokens}] = args
             const tag = `sepal-work-${jobName
                 .toLowerCase()
                 .replace(/[^a-z0-9_-]/g, '_')

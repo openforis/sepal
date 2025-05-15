@@ -1,6 +1,8 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({tableId}) => {
+const worker$ = ({
+    requestArgs: {tableId}
+}) => {
     const ee = require('#sepal/ee/ee')
     const {ClientException, NotFoundException} = require('#sepal/exception')
     const {EEException} = require('#sepal/ee/exception')
@@ -56,6 +58,5 @@ const worker$ = ({tableId}) => {
 module.exports = job({
     jobName: 'Get table columns',
     jobPath: __filename,
-    args: ctx => [ctx.request.query],
     worker$
 })
