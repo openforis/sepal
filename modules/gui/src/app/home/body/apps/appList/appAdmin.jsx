@@ -386,7 +386,7 @@ export class AppAdmin extends React.Component {
                     title={msg('apps.admin.title', {app: app.id || 'Unknown'})}
                 />
                 <Panel.Content scrollable>
-                    <Layout type='vertical' spacing='regular'>
+                    <Layout type='vertical' spacing='none'>
                         <div className={styles.section}>
                             {this.renderContainerInfo()}
                         </div>
