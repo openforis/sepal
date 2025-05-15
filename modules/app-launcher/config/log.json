@@ -4,6 +4,7 @@
         "main": "debug",
         "proxy": "debug",
         "user": "debug",
-        "terminal": "debug"
+        "terminal": "info",
+        "managementRoutes" : "debug"
     }
 }

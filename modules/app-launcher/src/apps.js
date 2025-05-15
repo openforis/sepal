@@ -20,7 +20,7 @@ const apps$ = () =>
     fileToJson$('/var/lib/sepal/app-manager/apps.json').pipe(
         switchMap(({apps}) => from(apps)),
         filter(({repository}) => repository),
-        filter(({endpoint}) => endpoint === 'solara'),
+        filter(({endpoint}) => endpoint === 'docker'),
         map(({endpoint, label, repository, branch}) => {
             const name = basename(repository)
             return {

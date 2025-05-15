@@ -5,23 +5,41 @@ const log = require('#sepal/log').getLogger('main')
 const url = require('url')
 const {isMatch} = require('micromatch')
 const _ = require('lodash')
-const {port} = require('./config')
+const {port, managementPort} = require('./config')
 const {proxyEndpoints$} = require('./proxy')
 
 const {createCredentialsFile} = require('./gee')
 const {monitorApps} = require('./apps')
 const {getRequestUser, setRequestUser} = require('./user')
 const {usernameTag} = require('./tag')
+const routes = require('./managementRoutes')
+const server = require('#sepal/httpServer')
+const {createProxyMiddleware} = require('http-proxy-middleware')
 
 const startServer = () => {
     const app = express()
+    app.use(
+        '/management',
+        createProxyMiddleware({
+            target: `http://localhost:${managementPort}`,
+            changeOrigin: true,
+        })
+    )
+    
     const server = app.listen(port)
+    
     server.setMaxListeners(30)
     proxyEndpoints$(app).subscribe({
         next: proxies => registerUpgradeListener(server, proxies),
         error: error => log.error('Failed to register proxies.', error)
     })
-
+}
+const startManagementServer = async () => {
+    const port = managementPort
+    await server.start({
+        port,
+        routes
+    })
 }
 
 const registerUpgradeListener = (server, proxies) => {
@@ -54,6 +72,7 @@ const registerUpgradeListener = (server, proxies) => {
 const main = async () => {
     createCredentialsFile()
     monitorApps()
+    await startManagementServer()
     startServer()
     log.info('Initialized')
 }

@@ -10,7 +10,7 @@ const log = require('#sepal/log').getLogger('proxy')
 const proxyEndpoints$ = expressApp => fileToJson$('/var/lib/sepal/app-manager/apps.json').pipe(
     switchMap(({apps}) => from(apps)),
     filter(({repository}) => repository),
-    filter(({endpoint}) => endpoint === 'solara'),
+    filter(({endpoint}) => endpoint === 'docker'),
     map(proxy(expressApp)),
     toArray()
 )
