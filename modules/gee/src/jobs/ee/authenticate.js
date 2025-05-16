@@ -17,25 +17,10 @@ To use highvolume endpoint, configure initArgs in worker:
 
 const userTag = username => tag('User', username || 'ANON')
 
-const getSepalUser = ctx => {
-    const sepalUser = ctx.request.headers['sepal-user']
-    return sepalUser
-        ? JSON.parse(sepalUser)
-        : {}
-}
-
-const getCredentials = ctx => {
-    const config = require('#gee/config')
-    const sepalUser = getSepalUser(ctx)
-    const serviceAccountCredentials = config.serviceAccountCredentials
-    return {
-        sepalUser,
-        serviceAccountCredentials,
-        googleProjectId: config.googleProjectId
-    }
-}
-
-const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initArgs: {eeEndpoint} = {}}) => {
+const worker$ = ({
+    credentials: {sepalUser, serviceAccountCredentials, googleProjectId},
+    initArgs: {eeEndpoint} = {}
+}) => {
     const {switchMap, of} = require('rxjs')
     const {swallow} = require('#sepal/rxjs')
     const ee = require('#sepal/ee/ee')
@@ -79,6 +64,11 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
         ee.sepal.setAuthType('USER')
         const secondsToExpiration = calculateSecondsToExpiration(googleTokens.accessTokenExpiryDate)
         log.debug(userTag(username), `Authenticating user account (expiring in ${secondsToExpiration} s)`)
+        
+        // Make sure refresh of previously authenticated service account is prevented
+        ee.data.clearAuthToken()
+        ee.data.setAuthTokenRefresher(null)
+
         ee.data.setAuthToken(
             null, // clientId - no need to specify as EE API doesn't refresh the token
             'Bearer', // tokenType
@@ -88,8 +78,6 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
             null, // error callback
             false // updateAuthLibrary - we don't want EE API to refresh the token
         )
-        // Make sure refresh of previously authenticated service account is prevented
-        ee.data.setAuthTokenRefresher(null)
         return of(true)
     }
 
@@ -116,7 +104,6 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
 module.exports = job({
     jobName: 'EE Authentication',
     before: [require('#gee/jobs/configure')],
-    args: ctx => [getCredentials(ctx)],
     services: [eeLimiterService],
     worker$
 })

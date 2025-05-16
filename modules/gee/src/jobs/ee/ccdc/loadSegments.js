@@ -1,6 +1,8 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({recipe, latLng, bands}) => {
+const worker$ = ({
+    requestArgs: {recipe, latLng, bands}
+}) => {
     const {toGeometry$} = require('#sepal/ee/aoi')
     const {of, map, switchMap} = require('rxjs')
     const ccdc = require('#sepal/ee/timeSeries/ccdc')

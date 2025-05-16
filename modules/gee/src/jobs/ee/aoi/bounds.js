@@ -1,6 +1,8 @@
 const {job} = require('#gee/jobs/job')
  
-const worker$ = ({aoi}) => {
+const worker$ = ({
+    requestArgs: {aoi}
+}) => {
     const ee = require('#sepal/ee/ee')
     const {toGeometry$} = require('#sepal/ee/aoi')
     const {of, switchMap} = require('rxjs')
