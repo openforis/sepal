@@ -1,4 +1,4 @@
-const ImageFactory = require('sepal/src/ee/imageFactory')
+const ImageFactory = require('#sepal/ee/imageFactory')
 const {toGeometry$} = require('#sepal/ee/aoi')
 const {swallow} = require('#sepal/rxjs')
 const {catchError, concat, filter, forkJoin, switchMap, throwError} = require('rxjs')

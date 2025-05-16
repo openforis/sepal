@@ -4,7 +4,7 @@ const {USER_UP, USER_DOWN, GOOGLE_ACCESS_TOKEN_UPDATED, GOOGLE_ACCESS_TOKEN_ADDE
 const {updateGoogleAccessToken$} = require('./userApi')
 const log = require('#sepal/log').getLogger('googleAccessToken')
 const {formatDistanceStrict} = require('date-fns')
-const {autoRetry} = require('sepal/src/rxjs')
+const {autoRetry} = require('#sepal/rxjs')
 
 const REFRESH_IF_EXPIRES_IN_MINUTES = 10
 const MIN_RETRY_DELAY_MS = 2 * 1000 // 2 seconds

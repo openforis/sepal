@@ -1,6 +1,6 @@
 const {job} = require('#gee/jobs/job')
 const {eeLimiterService} = require('#sepal/ee/eeLimiterService')
-const {tag} = require('sepal/src/tag')
+const {tag} = require('#sepal/tag')
 
 const DEFAULT_MAX_RETRIES = 3
 

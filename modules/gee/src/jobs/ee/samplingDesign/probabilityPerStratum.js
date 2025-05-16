@@ -2,10 +2,10 @@ const {job} = require('#gee/jobs/job')
 
 const worker$ = ({aoi, stratification, stratificationBand, probability, probabilityBand, scale, crs, batch}, {sepalUser}) => {
     const {forkJoin, map, switchMap} = require('rxjs')
-    const {toGeometry$} = require('sepal/src/ee/aoi')
+    const {toGeometry$} = require('#sepal/ee/aoi')
     const {exportToCSV$} = require('../batch/exportToCSV')
     const {parseGroups} = require('../batch/parse')
-    const imageFactory = require('sepal/src/ee/imageFactory')
+    const imageFactory = require('#sepal/ee/imageFactory')
     const ee = require('#sepal/ee/ee')
 
     const description = 'probability-per-stratum'

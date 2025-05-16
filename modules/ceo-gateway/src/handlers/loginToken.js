@@ -1,5 +1,5 @@
 const {ceoUrl} = require('../config')
-const {ClientException} = require('sepal/src/exception')
+const {ClientException} = require('#sepal/exception')
 const urljoin = require('url-join').default
 const {map} = require('rxjs')
 const {post$} = require('#sepal/httpClient')
@@ -27,9 +27,9 @@ const loginToken$ = ctx => {
             const cookies = setCookieParser.parse(cookieStrings, {decodeValues: false})
             const cookieToSet = cookies.find(c => c.name === 'ring-session')
             if (!cookieToSet) {
-                throw new ClientException('email or password are invalid', {
+                throw new ClientException('email or password is invalid', {
                     userMessage: {
-                        message: 'email or password are invalid',
+                        message: 'email or password is invalid',
                         key: 'process.classification.panel.trainingData.form.ceo.login.invalid.credentials'
                     }
                 })
