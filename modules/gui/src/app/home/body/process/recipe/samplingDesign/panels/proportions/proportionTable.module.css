@@ -1,10 +1,9 @@
 .proportions {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     row-gap: .5rem;
     font-size: small;
 }
-
 
 .row {
     display: contents;
@@ -47,10 +46,11 @@
     grid-column: 1 / span 2;
 }
 
-.reportingCategory {
-    grid-column: 3 / span 2;
-}
+/* .reportingCategory {
+    grid-column: 2 / span 1;
+} */
 
 .overall {
+    text-wrap: nowrap;
     grid-column: 1 / span 2;
 }

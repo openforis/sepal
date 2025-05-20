@@ -1,5 +1,6 @@
 .panel {
     max-width: 34rem;
+    min-height: 18rem;
 }
 
 .band .scale {
@@ -14,4 +15,9 @@
 
 .overallProportion {
     width: 10rem;
+}
+
+.info {
+    color: #a0a0a0;
+    font-size: .9rem;
 }

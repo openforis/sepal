@@ -8,7 +8,7 @@ import styles from './proportionTable.module.css'
 
 export const ProportionTable = ({proportions, overallProportion}) => (
     <div className={styles.proportions}>
-        <HeaderGroups/>
+        {/* <HeaderGroups/> */}
         <Header/>
         {proportions.value.map(entry =>
             <Proportion key={entry.stratum} entry={entry}/>
@@ -27,19 +27,19 @@ const HeaderGroups = () => (
 
 const Header = () => (
     <div className={styles.header}>
-        <div className={styles.stratumHeader}>Stratum</div>
-        <div className={styles.area}>Area (ha)</div>
-        <div className={styles.weight}>Proportion (%)</div>
+        <div className={styles.stratumHeader}/>
+        {/* <div className={styles.area}>Area (ha)</div> */}
+        <div className={styles.weight}>Proportion of reporting category in stratum</div>
     </div>
 )
 
 const Footer = ({proportions, overallProportion}) => {
-    const totalArea = _.sum(proportions.value.map(({area}) => area))
+    // const totalArea = _.sum(proportions.value.map(({area}) => area))
     return (
         <div className={styles.footer}>
-            <div className={styles.overall}>Overall</div>
-            <div className={styles.number}>{format.units(totalArea / 1e4, 3)}</div>
-            <div className={styles.number}>{format.units(overallProportion * 100)}</div>
+            <div className={styles.overall}>Anticipated overall proportion</div>
+            {/* <div className={styles.number}>{format.units(totalArea / 1e4, 3)}</div> */}
+            <div className={styles.number}>{format.units(overallProportion * 100)}%</div>
         </div>
     )
 }
@@ -51,8 +51,8 @@ const Proportion = ({entry: {label, color, proportion, area}}) => {
                 <ColorElement color={color}/>
             </div>
             <div className={styles.label}>{label}</div>
-            <div className={styles.number}>{format.units(area / 1e4, 3)}</div>
-            <div className={styles.number}>{format.units(proportion * 100)}</div>
+            {/* <div className={styles.number}>{format.units(area / 1e4, 3)}</div> */}
+            <div className={styles.number}>{format.units(proportion * 100)}%</div>
         </div>
     )
 }

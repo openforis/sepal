@@ -9,6 +9,7 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {ButtonGroup} from '~/widget/buttonGroup'
 import {Form} from '~/widget/form'
 import {FormCombo} from '~/widget/form/combo'
 import {Icon} from '~/widget/icon'
@@ -34,23 +35,35 @@ const mapRecipeToProps = recipe => ({
 
 const fields = {
     requiresUpdate: new Form.Field(),
+    skip: new Form.Field(),
+    manual: new Form.Field(),
     anticipationStrategy: new Form.Field(),
     type: new Form.Field(),
     assetId: new Form.Field()
-        .skip((_value, {anticipationStrategy, type}) => ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy) || type !== 'ASSET')
+        .skip((_value, {skip, manual, anticipationStrategy, type}) =>
+            skip.length
+                || manual.length
+                || ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy) || type !== 'ASSET')
         .notBlank('process.samplingDesign.panel.proportions.form.asset.required'),
     recipeId: new Form.Field()
-        .skip((_value, {anticipationStrategy, type}) => ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy) || type !== 'RECIPE')
+        .skip((_value, {skip, manual, anticipationStrategy, type}) =>
+            skip.length
+                || manual.length
+                || ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy) || type !== 'RECIPE')
         .notBlank('process.samplingDesign.panel.proportions.form.recipe.required'),
     band: new Form.Field()
-        .skip((_value, {anticipationStrategy, type, assetId, recipeId}) =>
-            ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy)
+        .skip((_value, {skip, anticipationStrategy, type, assetId, recipeId}) =>
+            skip.length
+                || ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy)
                 || (type === 'ASSET' && !assetId)
                 || (type === 'RECIPE' && !recipeId))
         .notBlank('process.samplingDesign.panel.proportions.form.band.required'),
     percentage: new Form.Field(),
     scale: new Form.Field()
-        .skip((_value, {anticipationStrategy}) => ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy))
+        .skip((_value, {skip, manual, anticipationStrategy}) =>
+            skip.length
+                || manual.length
+                || ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy))
         .notBlank('process.samplingDesign.panel.proportions.form.scale.required'),
     eeStrategy: new Form.Field(),
     anticipatedOverallProportion: new Form.Field(),
@@ -84,6 +97,7 @@ class _Proportions extends React.Component {
                 className={styles.panel}>
                 <Panel.Header
                     icon='chart-pie'
+                    label={this.renderHeaderButtons()}
                     title={msg('process.samplingDesign.panel.proportions.title')}/>
             
                 <Panel.Content>
@@ -95,16 +109,70 @@ class _Proportions extends React.Component {
         )
     }
 
-    renderContent() {
-        const {inputs: {anticipationStrategy, anticipatedProportions}} = this.props
+    renderHeaderButtons() {
+        const {inputs: {skip, manual}} = this.props
         return (
-            <Layout>
-                {this.renderAnticipationStrategy()}
-                {['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy.value) ? this.renderImageSelection() : null}
-                {this.renderStrataProportion()}
-                {anticipatedProportions.value ? this.renderOverallProportion() : null}
-                
-            </Layout>
+            <ButtonGroup>
+                <Form.Buttons
+                    spacing='tight'
+                    groupSpacing='none'
+                    size='small'
+                    shape='pill'
+                    input={manual}
+                    disabled={skip.value?.length}
+                    options={[
+                        {
+                            value: true,
+                            label: msg('process.samplingDesign.panel.proportions.form.manual.label'),
+                            tooltip: msg('process.samplingDesign.panel.proportions.form.manual.tooltip')
+                        },
+                    ]}
+                    multiple
+                />
+                <Form.Buttons
+                    spacing='tight'
+                    groupSpacing='none'
+                    size='small'
+                    shape='pill'
+                    input={skip}
+                    options={[
+                        {
+                            value: true,
+                            label: msg('Skip'),
+                            tooltip: msg('process.samplingDesign.panel.proportions.form.manual.tooltip')
+                        },
+                    ]}
+                    multiple
+                />
+            </ButtonGroup>
+        )
+    }
+
+    renderContent() {
+        const {inputs: {anticipationStrategy, anticipatedProportions, skip, manual}} = this.props
+        const isManual = manual.value?.length
+        return skip.value?.length
+            ? this.renderSkippedMessage()
+            : (
+                <Layout>
+                    <div className={styles.info}>
+                        {msg('process.samplingDesign.panel.proportions.info')}
+                    </div>
+                    {isManual ? null : this.renderAnticipationStrategy()}
+                    {isManual ? null : ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy.value) ? this.renderImageSelection() : null}
+                    {this.renderStrataProportion()}
+                    {isManual ? null : anticipatedProportions.value ? this.renderOverallProportion() : null}
+                </Layout>
+            )
+    }
+
+    renderSkippedMessage() {
+        return (
+
+            <NoData
+                alignment='center'
+                message={msg('process.samplingDesign.panel.proportions.form.skip.message')}
+            />
         )
     }
 
@@ -115,11 +183,6 @@ class _Proportions extends React.Component {
                 label={msg('process.samplingDesign.panel.proportions.form.anticipationStrategy.label')}
                 input={anticipationStrategy}
                 options={[
-                    {
-                        value: 'MANUAL',
-                        label: msg('process.samplingDesign.panel.proportions.form.anticipationStrategy.MANUAL.label'),
-                        tooltip: msg('process.samplingDesign.panel.proportions.form.anticipationStrategy.MANUAL.tooltip'),
-                    },
                     {
                         value: 'PROBABILITY',
                         label: msg('process.samplingDesign.panel.proportions.form.anticipationStrategy.PROBABILITY.label'),
@@ -213,6 +276,7 @@ class _Proportions extends React.Component {
     renderBand() {
         const {inputs: {band, percentage, probabilityPerStratum}} = this.props
         const {bands = []} = this.state
+
         const options = bands
             .map(band => ({value: band, label: band}))
 
@@ -227,7 +291,7 @@ class _Proportions extends React.Component {
                 air={'less'}
                 size={'x-small'}
                 options={[
-                    {value: true, label: '%'}
+                    {value: true, label: '%', tooltip: 'Specify if band specify fraction or percentage'}
                 ]}
                 multiple
                 tabIndex={-1}
@@ -338,8 +402,10 @@ class _Proportions extends React.Component {
     }
 
     componentDidMount() {
-        const {stratificationScale, inputs: {requiresUpdate, anticipationStrategy, scale, type, eeStrategy}} = this.props
+        const {stratificationScale, inputs: {requiresUpdate, skip, manual, anticipationStrategy, scale, type, eeStrategy}} = this.props
         requiresUpdate.set(false)
+        skip.value || skip.set([])
+        manual.value || manual.set([])
         anticipationStrategy.value || anticipationStrategy.set('MANUAL')
         scale.value || scale.set(stratificationScale || '30')
         type.value || type.set('ASSET')
