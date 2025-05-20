@@ -5,22 +5,31 @@
     font-size: small;
 }
 
+.hexStrata {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
+    row-gap: .5rem;
+    font-size: small;
+}
 
 .stratum {
     display: contents;
 }
 
-.header {
+.header,
+.footer {
     display: contents;
 }
 
-.header>* {
+.header>*,
+.footer>* {
     font-weight: bold;
     background-color: var(--look-default-active-background-color) !important;
     color: #808080;
 }
 
 .header>*,
+.footer>*,
 .stratum>* {
     --border-radius: var(--button-border-radius);
     border-radius: var(--border-radius);
@@ -29,16 +38,11 @@
     opacity: .5;
 }
 
-.value {
+.number {
     text-align: right;
 }
 
-.area {
-    /* color: #808080; */
-    text-align: right;
-}
-
-.weight {
-    /* color: #808080; */
-    text-align: right;
+.overall {
+    text-wrap: nowrap;
+    grid-column: 1 / span 3;
 }

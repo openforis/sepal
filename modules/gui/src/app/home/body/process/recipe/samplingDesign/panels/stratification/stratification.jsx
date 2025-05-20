@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
@@ -8,12 +9,17 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {uuid} from '~/uuid'
+import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
+import {ButtonSelect} from '~/widget/buttonSelect'
+import {downloadCsv} from '~/widget/download'
 import {Form} from '~/widget/form'
 import {FormCombo} from '~/widget/form/combo'
 import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
+import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
@@ -22,31 +28,34 @@ import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
 
 const mapRecipeToProps = recipe => ({
-    aoi: selectFrom(recipe, 'model.aoi') || []
+    aoi: selectFrom(recipe, 'model.aoi') || [],
+    importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries'),
+    title: recipe.title || recipe.placeholder,
+    stratificationRequiresUpdate: selectFrom(recipe, 'model.stratification.requiresUpdate'),
 })
 
 const fields = {
     requiresUpdate: new Form.Field(),
-    unstratified: new Form.Field(),
+    skip: new Form.Field(),
     type: new Form.Field(),
     assetId: new Form.Field()
-        .skip((_value, {unstratified, type}) => unstratified.length || type !== 'ASSET')
+        .skip((_value, {skip, type}) => skip.length || type !== 'ASSET')
         .notBlank('process.samplingDesign.panel.stratification.form.asset.required'),
     recipeId: new Form.Field()
-        .skip((_value, {unstratified, type}) => unstratified.length || type !== 'RECIPE')
+        .skip((_value, {skip, type}) => skip.length || type !== 'RECIPE')
         .notBlank('process.samplingDesign.panel.stratification.form.recipe.required'),
     band: new Form.Field()
-        .skip((_value, {unstratified, type, assetId, recipeId}) =>
-            unstratified.length
+        .skip((_value, {skip, type, assetId, recipeId}) =>
+            skip.length
                 || (type === 'ASSET' && !assetId)
                 || (type === 'RECIPE' && !recipeId))
         .notBlank('process.samplingDesign.panel.stratification.form.band.required'),
     scale: new Form.Field()
-        .skip((_value, {unstratified}) => unstratified.length)
+        .skip((_value, {skip}) => skip.length)
         .notBlank('process.samplingDesign.panel.stratification.form.scale.required'),
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
-        .skip((_value, {unstratified}) => unstratified.length)
+        .skip((_value, {skip}) => skip.length)
         .notBlank('process.samplingDesign.panel.stratification.form.band.required'),
 }
 
@@ -55,6 +64,7 @@ class _Stratification extends React.Component {
     state = {
         bands: undefined,
         entriesByBand: {},
+        showHexColorCode: false
     }
 
     constructor(props) {
@@ -77,21 +87,23 @@ class _Stratification extends React.Component {
                 className={styles.panel}>
                 <Panel.Header
                     icon='map'
-                    label={this.renderUntratified()}
+                    label={this.renderHeaderButtons()}
                     title={msg('process.samplingDesign.panel.stratification.title')}/>
             
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
 
-                <Form.PanelButtons/>
+                <Form.PanelButtons>
+                    {this.renderImportButton()}
+                </Form.PanelButtons>
             </RecipeFormPanel>
         )
     }
 
     renderContent() {
-        const {inputs: {type}} = this.props
-        return this.isStratified()
+        const {inputs: {type, skip}} = this.props
+        return !skip.value?.length
             ? (
                 <Layout>
                     {type.value === 'ASSET' ? this.renderAsset() : null}
@@ -105,29 +117,55 @@ class _Stratification extends React.Component {
             )
             : (
                 <NoData
-                    alignment='left'
-                    message={msg('process.samplingDesign.panel.stratification.form.unstratified.message')}
+                    alignment='center'
+                    message={msg('process.samplingDesign.panel.stratification.form.skip.message')}
                 />
             )
     }
 
-    renderUntratified() {
-        const {inputs: {unstratified}} = this.props
+    renderHeaderButtons() {
+        const {inputs: {skip}} = this.props
         return (
             <Form.Buttons
-                spacing='none'
+                spacing='tight'
                 groupSpacing='none'
                 size='small'
                 shape='pill'
-                input={unstratified}
+                input={skip}
                 options={[
                     {
                         value: true,
-                        label: msg('process.samplingDesign.panel.stratification.form.unstratified.label'),
-                        tooltip: msg('process.samplingDesign.panel.stratification.form.unstratified.tooltip')
+                        label: msg('process.samplingDesign.panel.stratification.form.skip.label'),
+                        tooltip: msg('process.samplingDesign.panel.stratification.form.skip.tooltip')
                     },
                 ]}
                 multiple
+            />
+        )
+    }
+
+    renderImportButton() {
+        const {inputs: {strata}} = this.props
+        const options = [
+            {
+                value: 'import',
+                label: msg('map.legendBuilder.load.options.importFromCsv.label'),
+                onSelect: () => this.importLegend()
+            },
+            {
+                value: 'export',
+                label: msg('map.legendBuilder.load.options.exportToCsv.label'),
+                disabled: !strata.value || !strata.value.length,
+                onSelect: () => this.exportStratification()
+            }
+        ]
+        return (
+            <ButtonSelect
+                icon={'file'}
+                label={msg('CSV')}
+                placement='above'
+                tooltipPlacement='bottom'
+                options={options}
             />
         )
     }
@@ -229,15 +267,16 @@ class _Stratification extends React.Component {
 
     renderStrata() {
         const {inputs: {eeStrategy, strata}} = this.props
-        const editButton = (
+        const {showHexColorCode} = this.state
+        const hexCodeButton = (
             <Button
-                key='edit'
-                chromeless
-                shape='circle'
-                icon='edit'
-                size='small'
-                disabled={!strata.value}
-                onClick={() => console.log('edit')}
+                key={'showHexColorCode'}
+                look={showHexColorCode ? 'selected' : 'default'}
+                size='x-small'
+                shape='pill'
+                label={msg('process.samplingDesign.panel.stratification.form.hexButton.label')}
+                tooltip={msg('process.samplingDesign.panel.stratification.form.hexButton.tooltip')}
+                onClick={() => this.toggleshowHexColorCode()}
             />
         )
         const eeStrategyButtons = (
@@ -251,13 +290,13 @@ class _Stratification extends React.Component {
                 options={[
                     {
                         value: 'ONLINE',
-                        label: msg('online'),
-                        tooltip: msg('process.samplingDesign.panel.stratification.form.unstratified.tooltip')
+                        label: msg('process.samplingDesign.panel.stratification.form.eeStrategy.online.label'),
+                        tooltip: msg('process.samplingDesign.panel.stratification.form.eeStrategy.online.tooltip')
                     },
                     {
                         value: 'BATCH',
-                        label: msg('batch'),
-                        tooltip: msg('process.samplingDesign.panel.stratification.form.unstratified.tooltip')
+                        label: msg('process.samplingDesign.panel.stratification.form.eeStrategy.batch.label'),
+                        tooltip: msg('process.samplingDesign.panel.stratification.form.eeStrategy.batch.tooltip')
                     },
                 ]}
             />
@@ -265,24 +304,32 @@ class _Stratification extends React.Component {
         return (
             <Widget
                 label={msg('process.samplingDesign.panel.stratification.form.strata.label')}
-                labelButtons={[editButton, eeStrategyButtons]}>
+                labelButtons={[hexCodeButton, eeStrategyButtons]}>
                 {strata.value
-                    ? <StrataTable strata={strata}/>
+                    ? <StrataTable
+                        strata={strata.value}
+                        showHexColorCode={showHexColorCode}
+                        onChange={(updatedStrata, hasInvalidStratum) => {
+                            strata.set(updatedStrata)
+                            strata.setInvalid(hasInvalidStratum ? 'Invalid strata' : '')
+                        }}
+                    />
                     : this.props.stream('AREA_PER_STRATUM').active
                         ? <NoData
+                            className={styles.noData}
                             alignment='left'
                             message={(
                                 <div>
                                     <Icon name='spinner'/>
-                                    {' ' + msg('Loading...')}
+                                    {' ' + msg('process.samplingDesign.panel.stratification.form.strata.loading')}
                                 </div>
                             )}
                         />
                         : <NoData
+                            className={styles.noData}
                             alignment='left'
-                            message={msg('Select stratification and band.')}
+                            message={msg('process.samplingDesign.panel.stratification.form.strata.select')}
                         />}
-                
             </Widget>
         )
     }
@@ -290,12 +337,35 @@ class _Stratification extends React.Component {
     // TODO: Make sure stratification image is added to the recipe layers
 
     componentDidMount() {
-        const {inputs: {requiresUpdate, unstratified, scale, type, eeStrategy}} = this.props
+        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, type, eeStrategy}} = this.props
         requiresUpdate.set(false)
-        unstratified.value || unstratified.set([])
+        skip.value || skip.set([])
         scale.value || scale.set('30')
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
+
+        stratificationRequiresUpdate && this.calculateAreaPerStratum()
+    }
+
+    componentDidUpdate(prevProps) {
+        const {inputs, importedLegendEntries, recipeActionBuilder} = this.props
+        if (importedLegendEntries && !_.isEqual(importedLegendEntries, prevProps.importedLegendEntries)) {
+            recipeActionBuilder('CLEAR_IMPORTED_LEGEND_ENTRIES', {importedLegendEntries})
+                .del('ui.importedLegendEntries')
+                .dispatch()
+            const updatedStrata = inputs.strata.value.map(stratum => {
+                const updatedStratum = importedLegendEntries.find(({value}) => value === stratum.value) || {}
+                return ({
+                    ...stratum,
+                    ..._.pick(updatedStratum, ['color', 'label'])
+                })
+            })
+            inputs.strata.set(updatedStrata)
+        }
+    }
+
+    toggleshowHexColorCode() {
+        this.setState(({showHexColorCode}) => ({showHexColorCode: !showHexColorCode}))
     }
 
     onTypeChanged() {
@@ -307,10 +377,8 @@ class _Stratification extends React.Component {
     }
 
     onImageChanged() {
-        const {inputs: {band, strata}} = this.props
-        console.log('onImageChanged')
+        const {inputs: {band}} = this.props
         band.set(null)
-        // strata.set(null)
         this.calculateAreaPerStratum()
     }
 
@@ -319,11 +387,29 @@ class _Stratification extends React.Component {
     }
 
     onAssetLoaded({metadata, visualizations}) {
+        const {inputs: {assetId}} = this.props
         const bands = metadata.bands.map(({id}) => id) || []
+
+        this.updateImageLayerSources({
+            id: assetId.value,
+            type: 'Asset',
+            sourceConfig: {
+                asset: assetId.value,
+                metadata,
+                visualizations
+            },
+        })
         this.onImageLoaded(bands, visualizations)
     }
 
     onRecipeLoaded({bandNames: bands, recipe}) {
+        this.updateImageLayerSources({
+            id: recipe.id,
+            type: 'Recipe',
+            sourceConfig: {
+                recipeId: recipe.id
+            },
+        })
         this.onImageLoaded(bands, getAllVisualizations(recipe))
     }
 
@@ -357,18 +443,15 @@ class _Stratification extends React.Component {
     }
 
     onBandChanged() {
-        console.log('onBandChanged')
-        this.calculateAreaPerStratum()
+        setImmediate(() => this.calculateAreaPerStratum())
     }
 
     onScaleChanged() {
-        console.log('onScaleChanged')
-        this.calculateAreaPerStratum()
+        setImmediate(() => this.calculateAreaPerStratum())
     }
 
     onEEStrategyChanged() {
-        console.log('onBandChanged')
-        this.calculateAreaPerStratum()
+        setImmediate(() => this.calculateAreaPerStratum())
     }
 
     onAreaPerStratumLoaded(areaPerStratum) {
@@ -383,6 +466,7 @@ class _Stratification extends React.Component {
             const weight = area / totalArea
             return {
                 ...(entry || {value: stratum, label: '' + stratum, color: '#000000'}),
+                id: uuid(),
                 area,
                 weight
             }
@@ -419,22 +503,47 @@ class _Stratification extends React.Component {
                 takeUntil(this.cancel$)
             ),
             this.onAreaPerStratumLoaded,
-            error => console.error('Something went wrong', error) // TODO:
+            error => {
+                const errorMessage = error?.response?.messageKey
+                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                    : error
+                Notifications.error({
+                    message: msg('process.samplingDesign.panel.stratification.loadError'),
+                    error: errorMessage,
+                    group: true,
+                    timeout: 0
+                })
+            }
         )
     }
 
-    isStratified() {
-        const {inputs: {unstratified}} = this.props
-        return !unstratified.value?.length
+    updateImageLayerSources(source) {
+        const {recipeActionBuilder} = this.props
+        recipeActionBuilder('UPDATE_STRATIFICATION_IMAGE_LAYER_SOURCE', {source})
+            .set(['layers.additionalImageLayerSources', {id: source.id}], source)
+            .dispatch()
     }
-    // TODO: Trigger area calculation on any change. As long as all properties are specified. Cancel if not stratified
-    // Not on mount, as we expect to already have areas persisted
+    
+    exportStratification() {
+        const {title, inputs: {strata}} = this.props
+        const csv = [
+            ['color,value,label,area,weight'],
+            strata.value.map(({color, value, label, area, weight}) => `${color},${value},"${label.replaceAll('"', '\\"')}",${area},${weight}`)
+        ].flat().join('\n')
+        const filename = `${title}_stratification.csv`
+        downloadCsv(csv, filename)
+    }
+    
+    importLegend() {
+        const {activator: {activatables: {legendImport}}} = this.props
+        legendImport.activate()
+    }
 
 }
 
 const valuesToModel = values => {
     return {
-        unstratified: values.unstratified?.length,
+        skip: values.skip?.length,
         scale: parseFloat(values.scale),
         type: values.type,
         assetId: values.assetId,
@@ -447,20 +556,26 @@ const valuesToModel = values => {
 
 const modelToValues = model => {
     return {
-        unstratified: model.unstratified ? [true] : [],
+        skip: model.unstratified ? [true] : [],
         scale: model.scale,
         type: model.type,
         assetId: model.assetId,
         recipeId: model.recipeId,
         band: model.band,
-        strata: model.strata,
+        strata: model?.strata?.map(stratum => ({id: uuid(), ...stratum})),
         eeStrategy: model.eeStrategy
     }
 }
 
+const additionalPolicy = () => ({
+    _: 'disallow',
+    legendImport: 'allow'
+})
+
 export const Stratification = compose(
     _Stratification,
-    recipeFormPanel({id: 'stratification', fields, mapRecipeToProps, modelToValues, valuesToModel})
+    recipeFormPanel({id: 'stratification', fields, mapRecipeToProps, additionalPolicy, modelToValues, valuesToModel}),
+    withActivators('legendImport')
 )
 
 Stratification.propTypes = {

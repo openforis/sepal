@@ -4578,10 +4578,10 @@
                 "stratification": {
                     "button": "STR",
                     "form": {
-                        "unstratified": {
-                            "label": "Unstratified",
+                        "skip": {
+                            "label": "Skip",
                             "tooltip": "Determine if the sampling determine should be stratified or unstratified.",
-                            "message": "Using an unstratified sampling design."
+                            "message": "You’ve chosen an unstratified sampling design, meaning samples will be drawn without considering variation across map classes or regions. To achieve the same level of confidence in your area estimates, more samples may be needed compared to a stratified design, which can target areas with higher variability more efficiently."
                         },
                         "type": {
                             "label": "Type",
@@ -4623,29 +4623,61 @@
                             "suffix": "meters",
                             "tooltip": "The scale to use when calculating stratum areas and allocating the samples"
                         },
+                        "hexButton": {
+                            "label": "HEX",
+                            "tooltip": "Toggle display of stratum color hex codes"
+                        },
                         "strata": {
-                            "label": "Strata"
+                            "label": "Strata",
+                            "select": "Select stratification and band.",
+                            "loading": "Calculating strata weights...",
+                            "table": {
+                                "value": "Value",
+                                "area": "Area (ha)",
+                                "weight": "Weight",
+                                "total": "Total"
+                            }
+                        },
+                        "eeStrategy": {
+                            "batch": {
+                                "label": "Batch",
+                                "tooltip": "Calculate the stratum areas using batch processing in Earth Engine. It will export the areas using an EE batch task, which allows for larger areas and smaller scale. If you already have export tasks in EE, it might take a long time for this to execute."
+                            },
+                            "online": {
+                                "label": "Online",
+                                "tooltip": "Calculate the stratum areas using online processing in Earth Engine. For large areas or small scale, this might fail. If so, switch to batch."
+                            }
                         }
                     },
+                    "loadError": "Failed to calculate strata weights.",
                     "title": "Stratification",
                     "tooltip": "Select if and/or how how to stratification the sampling"
                 },
                 "proportions": {
                     "button": "PRO",
                     "form": {
+                        "skip": {
+                            "label": "Skip",
+                            "tooltip": "Don't anticipate proportions. Some allocation strategies will not be available and SEPAL cannot estimate your sampling error.",
+                            "message": "Creating a sampling design without anticipated proportions. Some allocation strategies will not be available and SEPAL cannot estimate your sampling error."
+                        },
+                        "manual": {
+                            "label": "Manual",
+                            "tooltip": "Manually specify the anticipated proportions"
+                        },
                         "anticipationStrategy": {
-                            "label": "Anticipation strategy",
+                            "label": "Proportion Estimation Method",
                             "MANUAL": {
                                 "label": "Manual",
                                 "tooltip": "Manually enter the anticipated proportion of the reporting category you want to base your sampling design on"
                             },
                             "PROBABILITY": {
                                 "label": "Probability image",
-                                "tooltip": "Anticipate proportion based on a probability image. This could for instance be one of the probability bands of a SEPAL classification."
+                                "tooltip": "Anticipate proportion based on a probability image of your reporting category. This could for instance be one of the probability bands of a SEPAL classification."
                             },
                             "CATEGORICAL": {
                                 "label": "Categorical image",
-                                "tooltip": "Anticipate proportion based on the areas of a class in a categorical image. Do not use this option when you have a stratification containing the reporting category as a stratum."
+                                "tooltip": "Anticipate proportion based on the area of a your reporting category in a categorical image. You probably don't want to use this method when you have a stratification containing the reporting category as a stratum."
                             }
                         },
                         "image": {
@@ -4698,12 +4730,17 @@
                             "label": "Anticipated proportion per stratum"
                         }
                     },
+                    "info": "Select one reporting category to focus on, and estimate its proportion within each stratum. This enables additional allocation strategies and allows SEPAL to estimate your sampling error.",
                     "title": "Anticipate proportion",
                     "tooltip": "Anticipate proportion of target reporting category. This is used in sample size calculations and when performing optimal sample allocation."
                 },
                 "sampleAllocation": {
                     "button": "ALL",
                     "form": {
+                        "manual": {
+                            "label": "Manual",
+                            "tooltip": "Manually specify the sample allocation"
+                        },
                         "estimateSampleSize": {
                             "label": "Specify",
                             "false": {

@@ -1,5 +1,6 @@
 .panel {
     max-width: 34rem;
+    min-height: 21rem;
 }
 
 .band {
@@ -10,4 +11,22 @@
 .scale {
     flex-grow: 0;
     flex-shrink: 1;
+}
+
+.noData {
+    margin: 1rem 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+}
+
+.slow {
+    /* margin-left: 1rem; */
+    color: #707070;
+}
+
+.overall {
+    text-wrap: nowrap;
+    grid-column: 1 / span 2;
 }
