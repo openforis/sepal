@@ -208,7 +208,10 @@ export default {
 
     areaPerStratum$: ({aoi, stratification, band, scale, batch}) =>
         postJson$('/api/gee/samplingDesign/areaPerStratum', {
-            body: {aoi, stratification, band, scale, batch}
+            body: {aoi, stratification, band, scale, batch},
+            retry: {
+                maxRetries: 1
+            }
         }),
 
     probabilityPerStratum$: ({aoi, stratification, stratificationBand, probability, probabilityBand, scale, batch}) =>
