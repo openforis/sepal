@@ -1,6 +1,9 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({aoi, stratification, stratificationBand, probability, probabilityBand, scale, crs, batch}, {sepalUser}) => {
+const worker$ = ({
+    requestArgs: {aoi, stratification, stratificationBand, probability, probabilityBand, scale, crs, batch},
+    credentials: {sepalUser}
+}) => {
     const {forkJoin, map, switchMap} = require('rxjs')
     const {toGeometry$} = require('#sepal/ee/aoi')
     const {exportToCSV$} = require('../batch/exportToCSV')
@@ -9,7 +12,6 @@ const worker$ = ({aoi, stratification, stratificationBand, probability, probabil
     const ee = require('#sepal/ee/ee')
 
     const description = 'probability-per-stratum'
-    console.log({aoi, stratification, stratificationBand, probability, probabilityBand, scale, crs, batch})
     return forkJoin({
         eeGeometry: toGeometry$(aoi),
         eeStratification: imageFactory(stratification, {selection: [stratificationBand]}).getImage$(),

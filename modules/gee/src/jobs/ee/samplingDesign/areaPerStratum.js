@@ -1,6 +1,9 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({aoi, stratification, band, scale, crs, batch}, {sepalUser}) => {
+const worker$ = ({
+    requestArgs: {aoi, stratification, band, scale, crs, batch},
+    credentials: {sepalUser}
+}) => {
     const {map, switchMap} = require('rxjs')
     const {toGeometry$} = require('#sepal/ee/aoi')
     const {exportToCSV$} = require('../batch/exportToCSV')
@@ -46,18 +49,8 @@ const worker$ = ({aoi, stratification, band, scale, crs, batch}, {sepalUser}) =>
     }
 }
 
-const finalize$ = () => {
-    const {of, switchMap, tap, timer} = require('rxjs')
-    return of(true).pipe(
-        tap(() => console.log('finalize$ start')),
-        switchMap(() => timer(5000)),
-        tap(() => console.log('finalize$ end')),
-    )
-}
-
 module.exports = job({
     jobName: 'Calculate area per stratum',
     jobPath: __filename,
-    worker$,
-    finalize$
+    worker$
 })
