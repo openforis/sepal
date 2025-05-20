@@ -3,7 +3,7 @@ import React from 'react'
 
 import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
-import {defaultColor, LegendBuilder} from '~/app/home/map/legendBuilder'
+import {LegendBuilder} from '~/app/home/map/legendBuilder'
 import {withMap} from '~/app/home/map/mapContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -18,6 +18,7 @@ import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import {downloadCsv} from '../download'
+import {defaultColor} from '../form/colorInput'
 import styles from './editLegendPanel.module.css'
 
 const fields = {
