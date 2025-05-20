@@ -14,8 +14,11 @@ export const AllocationTable = ({allocation, sampleSize, marginOfError, relative
             <Header
                 relativeMarginOfError={relativeMarginOfError}
             />
-            {allocation.map(entry => <Allocation key={entry.stratum} entry={entry}/>
-            )}
+            {allocation.map(entry => <Allocation
+                key={entry.stratum}
+                entry={entry}
+                relativeMarginOfError={relativeMarginOfError}
+            />)}
             <Footer
                 sampleSize={sampleSize}
                 marginOfError={marginOfError}
@@ -27,32 +30,30 @@ export const AllocationTable = ({allocation, sampleSize, marginOfError, relative
 // TODO: Use msg for header
 const Header = ({relativeMarginOfError}) => (
     <div className={styles.header}>
-        <div className={styles.stratum}>Stratum</div>
-        <div className={styles.area}>{relativeMarginOfError ? 'Relative margin of error (%)' : 'Margin of error (ha)'}</div>
-        {/* <div className={styles.area}>Anticipated error ({relativeMarginOfError ? '%' : 'ha'})</div> */}
+        <div className={styles.stratum}/>
+        <div className={styles.area}>{relativeMarginOfError ? 'Relative margin of error' : 'Margin of error (ha)'}</div>
         <div className={styles.weight}>Samples</div>
     </div>
 )
 
-const Footer = ({sampleSize, marginOfError}) => {
+const Footer = ({sampleSize, marginOfError, relativeMarginOfError}) => {
     return (
         <div className={styles.footer}>
             <div className={styles.overall}>Overall</div>
-            <div className={styles.number}>{format.units(marginOfError)}</div>
+            <div className={styles.number}>{format.units(marginOfError)}{relativeMarginOfError ? '%' : ''}</div>
             <div className={styles.number}>{renderInteger(sampleSize)}</div>
         </div>
     )
 }
 
-const Allocation = ({entry: {label, color, sampleSize, marginOfError}}) => {
+const Allocation = ({entry: {label, color, sampleSize, marginOfError}, relativeMarginOfError}) => {
     return (
         <div key={label} className={styles.row}>
             <div className={styles.color}>
                 <ColorElement color={color}/>
             </div>
             <div className={styles.label}>{label}</div>
-            <div className={styles.number}></div>
-            {/* <div className={styles.number}>{format.units(marginOfError)}</div> */}
+            <div className={styles.number}>{format.units(marginOfError)}{relativeMarginOfError ? '%' : ''}</div>
             <div className={styles.number}>{renderInteger(sampleSize)}</div>
         </div>
     )
