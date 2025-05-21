@@ -19,7 +19,7 @@ export class ColorInput extends React.Component {
                 tooltipPlacement='left'
                 onChange={value => {
                     input.set(value)
-                    onChange(value)
+                    onChange && onChange(value)
                 }}
             />
         )
