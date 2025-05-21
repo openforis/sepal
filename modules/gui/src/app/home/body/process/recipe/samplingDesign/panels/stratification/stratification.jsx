@@ -9,7 +9,6 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
-import {uuid} from '~/uuid'
 import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
 import {ButtonSelect} from '~/widget/buttonSelect'
@@ -78,6 +77,7 @@ class _Stratification extends React.Component {
         this.onScaleChanged = this.onScaleChanged.bind(this)
         this.onEEStrategyChanged = this.onEEStrategyChanged.bind(this)
         this.onAreaPerStratumLoaded = this.onAreaPerStratumLoaded.bind(this)
+        this.onSkipToggled = this.onSkipToggled.bind(this)
     }
 
     render() {
@@ -140,6 +140,7 @@ class _Stratification extends React.Component {
                     },
                 ]}
                 multiple
+                onChange={this.onSkipToggled}
             />
         )
     }
@@ -307,12 +308,8 @@ class _Stratification extends React.Component {
                 labelButtons={[hexCodeButton, eeStrategyButtons]}>
                 {strata.value
                     ? <StrataTable
-                        strata={strata.value}
+                        strata={strata}
                         showHexColorCode={showHexColorCode}
-                        onChange={(updatedStrata, hasInvalidStratum) => {
-                            strata.set(updatedStrata)
-                            strata.setInvalid(hasInvalidStratum ? 'Invalid strata' : '')
-                        }}
                     />
                     : this.props.stream('AREA_PER_STRATUM').active
                         ? <NoData
@@ -333,8 +330,6 @@ class _Stratification extends React.Component {
             </Widget>
         )
     }
-
-    // TODO: Make sure stratification image is added to the recipe layers
 
     componentDidMount() {
         const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, type, eeStrategy}} = this.props
@@ -466,12 +461,19 @@ class _Stratification extends React.Component {
             const weight = area / totalArea
             return {
                 ...(entry || {value: stratum, label: '' + stratum, color: '#000000'}),
-                id: uuid(),
                 area,
                 weight
             }
         })
         strata.set(labeledStrata)
+    }
+
+    onSkipToggled(skip) {
+        const isSkipped = !!skip?.length
+        if (!isSkipped) {
+            this.calculateAreaPerStratum()
+        }
+
     }
 
     calculateAreaPerStratum() {
@@ -542,27 +544,35 @@ class _Stratification extends React.Component {
 }
 
 const valuesToModel = values => {
+    const isSkipped = !!values.skip?.length
     return {
-        skip: values.skip?.length,
+        skip: isSkipped,
         scale: parseFloat(values.scale),
         type: values.type,
         assetId: values.assetId,
         recipeId: values.recipeId,
         band: values.band,
-        strata: values.strata,
+        strata: isSkipped
+            ? [{
+                color: '#000000',
+                label: msg('process.samplingDesign.panel.stratification.unstratified'),
+                value: 1,
+                weight: 1
+            }]
+            : values.strata,
         eeStrategy: values.eeStrategy
     }
 }
 
 const modelToValues = model => {
     return {
-        skip: model.unstratified ? [true] : [],
+        skip: model.skip ? [true] : [],
         scale: model.scale,
         type: model.type,
         assetId: model.assetId,
         recipeId: model.recipeId,
         band: model.band,
-        strata: model?.strata?.map(stratum => ({id: uuid(), ...stratum})),
+        strata: model.strata,
         eeStrategy: model.eeStrategy
     }
 }

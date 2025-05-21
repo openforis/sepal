@@ -4,12 +4,13 @@ import _ from 'lodash'
 import React from 'react'
 
 import {compose} from '~/compose'
+import format from '~/format'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {ColorInput} from '~/widget/form/colorInput'
-import {withForm} from '~/widget/form/form'
+import {withNestedForm} from '~/widget/form/nestedForms'
 
-import styles from './stratumForm.module.css'
+import styles from './strataTable.module.css'
 
 const isUnique = (key, value, strata) => !strata || strata.filter(stratum => stratum[key] === value).length <= 1
 
@@ -45,20 +46,23 @@ class _StratumForm extends React.Component {
     state = {invalid: true}
 
     render() {
-        const {showHexColorCode} = this.props
+        const {stratum, showHexColorCode} = this.props
         return (
-            <>
+            <div className={styles.stratum}>
                 {this.renderColorPicker()}
                 {showHexColorCode ? this.renderHexColor() : null}
                 {this.renderLabelInput()}
-            </>
+                <div className={styles.number}>{stratum.value}</div>
+                <div className={styles.number}>{format.units(stratum.area / 1e4, 3)}</div>
+                <div className={styles.number}>{format.units(stratum.weight * 100)}%</div>
+            </div>
         )
     }
 
     renderColorPicker() {
         const {form, stratum, strata, locked, inputs: {color}, onSwap} = this.props
         const otherColors = strata
-            .filter(({id}) => stratum.id !== id)
+            .filter(({value}) => stratum.value !== value)
             .map(({color}) => color)
         return (
             <ColorInput
@@ -67,7 +71,6 @@ class _StratumForm extends React.Component {
                 onSwap={color => onSwap(color)}
                 invalid={!!form.errors.colorUnique}
                 disabled={locked}
-                onChange={color => this.updateStrata({color})}
             />
         )
     }
@@ -80,7 +83,6 @@ class _StratumForm extends React.Component {
                 input={color}
                 errorMessage={[color, 'colorUnique']}
                 autoComplete={false}
-                onChange={color => this.updateStrata({color})}
             />
         )
     }
@@ -95,59 +97,14 @@ class _StratumForm extends React.Component {
                 autoFocus={!stratum.label}
                 errorMessage={[label, 'labelUnique']}
                 autoComplete={false}
-                onChange={label => this.updateStrata({label})}
             />
         )
     }
 
-    componentDidMount() {
-        this.updateInputs()
-    }
-
-    componentDidUpdate(prevProps) {
-        const {inputs: {color: prevColor, label: prevLabel}} = prevProps
-        const {form, stratum, inputs: {strata, color, label}, onChange} = this.props
-
-        if (!_.isEqual(prevProps.stratum, stratum)) {
-            this.updateInputs()
-        }
-
-        if (prevColor.value !== color.value || prevLabel.value !== label.value) {
-            const updatedStratum = {
-                ...stratum,
-                color: color.value,
-                label: label.value
-            }
-            const invalid = form.isInvalid()
-            onChange(updatedStratum, strata.value, invalid)
-        }
-    }
-
-    updateInputs() {
-        const {strata, stratum, inputs} = this.props
-        inputs.strata.set(strata)
-        inputs.color.set(stratum.color)
-        inputs.label.set(stratum.label)
-    }
-
-    updateStrata({color, label}) {
-        const {strata, stratum, inputs} = this.props
-        const updatedStratum = {
-            ...stratum,
-            color: color === undefined ? stratum.color : color,
-            label: label === undefined ? stratum.label : label
-        }
-        const updatedStrata = strata.map(prevStratum =>
-            prevStratum.id === updatedStratum.id
-                ? updatedStratum
-                : prevStratum
-        )
-        inputs.strata.set(updatedStrata)
-    }
 }
 
 export const StratumForm = compose(
     _StratumForm,
-    withForm({fields, constraints})
+    withNestedForm({fields, constraints, entityPropName: 'stratum', arrayFieldName: 'strata'})
 )
 

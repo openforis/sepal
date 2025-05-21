@@ -46,3 +46,7 @@
     text-wrap: nowrap;
     grid-column: 1 / span 3;
 }
+
+.colorText {
+    width: 6rem;
+}
