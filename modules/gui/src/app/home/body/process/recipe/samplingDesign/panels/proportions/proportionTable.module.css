@@ -46,11 +46,15 @@
     grid-column: 1 / span 2;
 }
 
-/* .reportingCategory {
-    grid-column: 2 / span 1;
-} */
-
 .overall {
     text-wrap: nowrap;
     grid-column: 1 / span 2;
+}
+
+.proportionInput {
+    display: flex;
+}
+
+.proportionInputSpacer {
+    flex-grow: 1;
 }

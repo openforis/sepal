@@ -4649,6 +4649,7 @@
                             }
                         }
                     },
+                    "unstratified": "Unstratified",
                     "loadError": "Failed to calculate strata weights.",
                     "title": "Stratification",
                     "tooltip": "Select if and/or how how to stratification the sampling"
@@ -4732,7 +4733,8 @@
                     },
                     "info": "Select one reporting category to focus on, and estimate its proportion within each stratum. This enables additional allocation strategies and allows SEPAL to estimate your sampling error.",
                     "title": "Anticipate proportion",
-                    "tooltip": "Anticipate proportion of target reporting category. This is used in sample size calculations and when performing optimal sample allocation."
+                    "tooltip": "Anticipate proportion of target reporting category. This is used in sample size calculations and when performing optimal sample allocation.",
+                    "loadError": "Failed to calculate anticipated proportions."
                 },
                 "sampleAllocation": {
                     "button": "ALL",

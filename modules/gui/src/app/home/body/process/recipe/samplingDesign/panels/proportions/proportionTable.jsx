@@ -1,58 +1,41 @@
 import _ from 'lodash'
 
 import format from '~/format'
-import {msg} from '~/translate'
 import {ColorElement} from '~/widget/colorElement'
+import {NestedForms} from '~/widget/form/nestedForms'
 
+import {ProportionForm} from './proportionForm'
 import styles from './proportionTable.module.css'
 
-export const ProportionTable = ({proportions, overallProportion}) => (
+export const ProportionTable = ({manual, proportions, overallProportion}) =>
     <div className={styles.proportions}>
-        {/* <HeaderGroups/> */}
-        <Header/>
-        {proportions.value.map(entry =>
-            <Proportion key={entry.stratum} entry={entry}/>
-        )}
-        <Footer proportions={proportions} overallProportion={overallProportion}/>
+        <NestedForms arrayInput={proportions} idPropName='stratum'>
+            <Header/>
+            {proportions.value.map(entry => manual
+                ? <ProportionForm key={entry.stratum} entry={entry}/>
+                : <Proportion key={entry.stratum} entry={entry}/>
+            )}
+            <Footer proportions={proportions} overallProportion={overallProportion}/>
+        </NestedForms>
     </div>
-)
 
-// TODO: Use msg for header
-const HeaderGroups = () => (
-    <div className={styles.headerGroups}>
-        <div className={styles.stratum}></div>
-        <div className={styles.reportingCategory}>Reporting category</div>
-    </div>
-)
-
-const Header = () => (
+const Header = () =>
     <div className={styles.header}>
         <div className={styles.stratumHeader}/>
-        {/* <div className={styles.area}>Area (ha)</div> */}
         <div className={styles.weight}>Proportion of reporting category in stratum</div>
     </div>
-)
 
-const Footer = ({proportions, overallProportion}) => {
-    // const totalArea = _.sum(proportions.value.map(({area}) => area))
-    return (
-        <div className={styles.footer}>
-            <div className={styles.overall}>Anticipated overall proportion</div>
-            {/* <div className={styles.number}>{format.units(totalArea / 1e4, 3)}</div> */}
-            <div className={styles.number}>{format.units(overallProportion * 100)}%</div>
-        </div>
-    )
-}
+const Footer = ({overallProportion}) =>
+    <div className={styles.footer}>
+        <div className={styles.overall}>Anticipated overall proportion</div>
+        <div className={styles.number}>{format.units(overallProportion)}%</div>
+    </div>
 
-const Proportion = ({entry: {label, color, proportion, area}}) => {
-    return (
-        <div className={styles.row}>
-            <div className={styles.color}>
-                <ColorElement color={color}/>
-            </div>
-            <div className={styles.label}>{label}</div>
-            {/* <div className={styles.number}>{format.units(area / 1e4, 3)}</div> */}
-            <div className={styles.number}>{format.units(proportion * 100)}%</div>
+const Proportion = ({entry: {label, color, proportion}}) =>
+    <div className={styles.row}>
+        <div className={styles.color}>
+            <ColorElement color={color}/>
         </div>
-    )
-}
+        <div className={styles.label}>{label}</div>
+        <div className={styles.number}>{format.units(proportion)}%</div>
+    </div>

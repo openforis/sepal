@@ -15,6 +15,7 @@ import {FormCombo} from '~/widget/form/combo'
 import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
+import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
@@ -88,6 +89,7 @@ class _Proportions extends React.Component {
         this.onPercentageChanged = this.onPercentageChanged.bind(this)
         this.onOverallProportionChanged = this.onOverallProportionChanged.bind(this)
         this.onProbabilitiyPerStratumCalculated = this.onProbabilitiyPerStratumCalculated.bind(this)
+        this.onManualToggled = this.onManualToggled.bind(this)
     }
 
     render() {
@@ -128,6 +130,7 @@ class _Proportions extends React.Component {
                         },
                     ]}
                     multiple
+                    onChange={this.onManualToggled}
                 />
                 <Form.Buttons
                     spacing='tight'
@@ -149,8 +152,7 @@ class _Proportions extends React.Component {
     }
 
     renderContent() {
-        const {inputs: {anticipationStrategy, anticipatedProportions, skip, manual}} = this.props
-        const isManual = manual.value?.length
+        const {inputs: {anticipationStrategy, anticipatedProportions, skip}} = this.props
         return skip.value?.length
             ? this.renderSkippedMessage()
             : (
@@ -158,10 +160,10 @@ class _Proportions extends React.Component {
                     <div className={styles.info}>
                         {msg('process.samplingDesign.panel.proportions.info')}
                     </div>
-                    {isManual ? null : this.renderAnticipationStrategy()}
-                    {isManual ? null : ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy.value) ? this.renderImageSelection() : null}
+                    {this.isManual() ? null : this.renderAnticipationStrategy()}
+                    {this.isManual() ? null : ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy.value) ? this.renderImageSelection() : null}
                     {this.renderStrataProportion()}
-                    {isManual ? null : anticipatedProportions.value ? this.renderOverallProportion() : null}
+                    {this.isManual() ? null : anticipatedProportions.value ? this.renderOverallProportion() : null}
                 </Layout>
             )
     }
@@ -347,7 +349,7 @@ class _Proportions extends React.Component {
     }
 
     renderStrataProportion() {
-        const {strata, inputs: {eeStrategy, anticipatedProportions}} = this.props
+        const {inputs: {eeStrategy, anticipatedProportions}} = this.props
         const eeStrategyButtons = (
             <Form.Buttons
                 key='eeStrategy'
@@ -370,17 +372,20 @@ class _Proportions extends React.Component {
                 ]}
             />
         )
-        const totalArea = _.sum(strata.map(({area}) => area))
-        const overallArea = anticipatedProportions.value && _.sum(anticipatedProportions.value.map(({area}) => area))
-        const overallProportion = overallArea / totalArea
+        const overallProportion = _.sum(
+            anticipatedProportions.value?.map(({weight, proportion}) => {
+                return weight * proportion
+            })
+        )
         return (
             <Widget
                 label={msg('process.samplingDesign.panel.proportions.form.strataProportion.label')}
-                labelButtons={[eeStrategyButtons]}>
+                labelButtons={this.isManual() ? [] : [eeStrategyButtons]}>
                 {anticipatedProportions.value
                     ? <ProportionTable
                         proportions={anticipatedProportions}
                         overallProportion={overallProportion}
+                        manual={this.isManual()}
                     />
                     : this.props.stream('PROBABILITY_PER_STRATUM').active
                         ? <NoData
@@ -505,8 +510,27 @@ class _Proportions extends React.Component {
         anticipatedProportions.set(proportions)
     }
 
+    onManualToggled(manual) {
+        const {strata, inputs: {anticipatedProportions}} = this.props
+        const isManual = !!manual?.length
+        if (isManual && !anticipatedProportions.value) {
+            const initialProportions = strata.map(stratum => ({
+                color: stratum.color,
+                label: stratum.label,
+                stratum: stratum.value,
+                area: stratum.area,
+                weight: stratum.weight,
+                proportion: 0
+            }))
+            anticipatedProportions.set(initialProportions)
+        } else if (!isManual) {
+            this.calculateAnticipatedProportions()
+        }
+    }
+
     calculateMaxAnticipatedTargetProportion() {
         const {strata, inputs: {probabilityPerStratum}} = this.props
+        
         if (!probabilityPerStratum.value) {
             return 100
         } else {
@@ -561,12 +585,25 @@ class _Proportions extends React.Component {
                 takeUntil(this.cancel$)
             ),
             this.onProbabilitiyPerStratumCalculated,
-            error => console.error('Something went wrong', error) // TODO: Implement
+            error => {
+                const errorMessage = error?.response?.messageKey
+                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                    : error
+                Notifications.error({
+                    message: msg('process.samplingDesign.panel.proportions.loadError'),
+                    error: errorMessage,
+                    group: true,
+                    timeout: 0
+                })
+            }
         )
     }
 
     onProbabilitiyPerStratumCalculated(loadedProbabilityPerStratum) {
         const {strata, inputs: {probabilityPerStratum, anticipatedOverallProportion, anticipatedProportions}} = this.props
+        if (this.isManual()) {
+            return // Ignore the result when manual
+        }
         const adjustedPercentage = this.isPercentage()
             || _.maxBy(loadedProbabilityPerStratum, 'probability').probability > 1
         if (adjustedPercentage && !this.isPercentage()) {
@@ -594,8 +631,8 @@ class _Proportions extends React.Component {
         })
         const overallProbability = _.sum(weightedProbabilities)
         const probabilityFactor = targetOverallProportion >= 0
-            ? targetOverallProportion / 100 / overallProbability
-            : adjustedPercentage ? 1 / 100 : 1
+            ? targetOverallProportion / overallProbability
+            : adjustedPercentage ? 1 : 100
         return probabilityPerStratum.map(({stratum, probability}) => {
             const {label, color, area, weight} = strata.find(({value}) => value === stratum)
             const proportion = probability * probabilityFactor
@@ -604,8 +641,9 @@ class _Proportions extends React.Component {
                 label,
                 color,
                 weight,
+                // area: area * proportion / 100,
+                area,
                 proportion,
-                area: area * proportion,
             })
         })
     }
@@ -619,6 +657,11 @@ class _Proportions extends React.Component {
         const {inputs: {percentage}} = this.props
         percentage.set(isPercentage ? [true] : [])
     }
+
+    isManual() {
+        const {inputs: {manual}} = this.props
+        return manual.value?.length
+    }
 }
 
 const proportionsDeps = props => {
@@ -628,11 +671,29 @@ const proportionsDeps = props => {
 }
 
 const valuesToModel = values => {
-    return values
+    return {
+        ...values,
+        anticipatedOverallProportion: values.anticipatedOverallProportion
+            && values.anticipatedOverallProportion / 100,
+        anticipatedProportions: values.anticipatedProportions
+            ?.map(entry => ({
+                ...entry,
+                proportion: entry.proportion && entry.proportion / 100
+            }))
+    }
 }
 
 const modelToValues = model => {
-    return model
+    return {
+        ...model,
+        anticipatedOverallProportion: model.anticipatedOverallProportion
+            && model.anticipatedOverallProportion * 100,
+        anticipatedProportions: model.anticipatedProportions
+            ?.map(entry => ({
+                ...entry,
+                proportion: entry.proportion && entry.proportion * 100
+            }))
+    }
 }
 
 export const Proportions = compose(
