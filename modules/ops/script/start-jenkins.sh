@@ -21,4 +21,4 @@ fi
 sudo -u jenkins rsync -a /var/lib/jenkins/jobs/* /var/jenkins_home/jobs/
 
 # Execute the parent image Entrypoint
-exec sudo --preserve-env --set-home --user jenkins /sbin/tini -s -- /usr/local/bin/jenkins.sh
+exec sudo --preserve-env --set-home --user jenkins PATH=$PATH /sbin/tini -s -- /usr/local/bin/jenkins.sh
