@@ -127,14 +127,11 @@ class _Stratification extends React.Component {
         const {inputs: {skip}} = this.props
         return (
             <Form.Buttons
-                spacing='tight'
-                groupSpacing='none'
-                size='small'
-                shape='pill'
                 input={skip}
                 options={[
                     {
                         value: true,
+                        icon: 'ban',
                         label: msg('process.samplingDesign.panel.stratification.form.skip.label'),
                         tooltip: msg('process.samplingDesign.panel.stratification.form.skip.tooltip')
                     },

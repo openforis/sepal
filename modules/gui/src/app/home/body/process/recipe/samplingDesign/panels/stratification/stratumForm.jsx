@@ -64,6 +64,7 @@ class _StratumForm extends React.Component {
         const otherColors = strata
             .filter(({value}) => stratum.value !== value)
             .map(({color}) => color)
+        const validationFields = [color, 'colorUnique']
         return (
             <ColorInput
                 input={color}
@@ -71,32 +72,37 @@ class _StratumForm extends React.Component {
                 onSwap={color => onSwap(color)}
                 invalid={!!form.errors.colorUnique}
                 disabled={locked}
+                tooltip={form.getErrorMessage(validationFields)}
             />
         )
     }
 
     renderHexColor() {
-        const {inputs: {color}} = this.props
+        const {form, inputs: {color}} = this.props
+        const validationFields = [color, 'colorUnique']
         return (
             <Form.Input
                 className={styles.colorText}
                 input={color}
-                errorMessage={[color, 'colorUnique']}
+                errorMessage={validationFields}
                 autoComplete={false}
+                inputTooltip={form.getErrorMessage(validationFields)}
             />
         )
     }
 
     renderLabelInput() {
-        const {stratum, inputs: {label}} = this.props
+        const {form, stratum, inputs: {label}} = this.props
+        const validationFields = [label, 'labelUnique']
         return (
             <Form.Input
                 className={styles.label}
                 input={label}
                 placeholder={msg('map.legendBuilder.entry.classLabel.placeholder')} // TODO: Message key?
                 autoFocus={!stratum.label}
-                errorMessage={[label, 'labelUnique']}
+                errorMessage={validationFields}
                 autoComplete={false}
+                inputTooltip={form.getErrorMessage(validationFields)}
             />
         )
     }
