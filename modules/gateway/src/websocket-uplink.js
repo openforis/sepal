@@ -44,7 +44,7 @@ const initializeUplink = ({servers, clients, event$}) => {
     
     const onDownstreamError = (error, module) => {
         if (error.type === 'close') {
-            log.debug(`Connection to ${moduleTag(module)} closed unexpectedly`)
+            log.warn(`Connection to ${moduleTag(module)} closed unexpectedly`)
         } else {
             log.error(`Connection to ${moduleTag(module)} error:`, error)
         }
@@ -72,7 +72,7 @@ const initializeUplink = ({servers, clients, event$}) => {
                 minRetryDelay: 1000,
                 onRetry: (error, retryMessage, retryDelay, retryCount) => {
                     if (retryCount === 1) {
-                        log.info(`${moduleTag(module)} connection lost, retrying every ${retryDelay}ms.`)
+                        log.info(`${moduleTag(module)} connection lost, retrying every ${retryDelay}ms until connected`)
                         event$.next({type: MODULE_DOWN, data: {module}})
                     }
                 }

@@ -60,11 +60,12 @@ const initializeGoogleAccessTokenRefresher = ({userStore, event$}) => {
         filter(({username}) => username),
         groupBy(({username}) => username),
         mergeMap(userGroup$ => userGroup$.pipe(
-            tap(() => log.debug(`${userTag(userGroup$.key)} Google access token monitored`)),
+            tap(() => log.info(`${userTag(userGroup$.key)} Google access token monitored`)),
             exhaustMap(({username}) =>
                 defer(() => refreshTrigger$(username)).pipe(
                     // warning: order of operators matters!
                     switchMap(() => refresh$(username)),
+                    tap(() => log.debug(`${userTag(username)} Google access token refreshed`)),
                     take(1),
                     repeat({delay: 1000}),
                     takeWhile(({googleTokens}) => !!googleTokens),
@@ -76,7 +77,7 @@ const initializeGoogleAccessTokenRefresher = ({userStore, event$}) => {
                         retryDelayFactor: 2,
                         onRetry: (error, retryMessage) => log.warn(`${userTag(username)} Google access token refresh error - ${retryMessage}`, error)
                     }),
-                    finalize(() => log.debug(`${userTag(username)} Google access token unmonitored`))
+                    finalize(() => log.info(`${userTag(username)} Google access token unmonitored`))
                 )
             )
         ))
