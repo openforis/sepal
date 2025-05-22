@@ -16,7 +16,7 @@ export class NestedForms extends React.Component {
         this.onChange = this.onChange.bind(this)
     }
 
-    onChange(entity, invalid) {
+    onChange(entity, error) {
         const {arrayInput, idPropName, onChange} = this.props
         const updatedArray = arrayInput.value.map(prevEntity =>
             prevEntity[idPropName] === entity[idPropName]
@@ -30,8 +30,8 @@ export class NestedForms extends React.Component {
                     invalidEntities,
                     updatedArray.map(entity => entity[idPropName])
                 )
-                return invalid
-                    ? {invalidEntities: {...filteredInvalidEntities, ...{[entity[idPropName]]: invalid}}}
+                return error
+                    ? {invalidEntities: {...filteredInvalidEntities, ...{[entity[idPropName]]: error}}}
                     : {invalidEntities: _.omit(filteredInvalidEntities, [entity[idPropName]])}
             },
             () => {
@@ -85,23 +85,29 @@ export const withNestedForm = ({fields, constraints, entityPropName, arrayFieldN
             }
 
             componentDidUpdate(prevProps) {
-                const {form} = this.props
+                const {inputs} = this.props
                 const entity = this.props[entityPropName]
                 const prevEntity = prevProps[entityPropName]
+                const array = inputs[arrayFieldName].value
+                const prevArray = prevProps.inputs[arrayFieldName].value
                 
                 if (!_.isEqual(prevEntity, entity)) {
                     this.updateInputs()
                 }
 
                 const inputEntity = this.inputsToEntity(this.props)
-                if (!_.isEqual(this.inputsToEntity(prevProps), inputEntity)) {
+                if (!_.isEqual(this.inputsToEntity(prevProps), inputEntity)
+                    || !_.isEqual(prevArray, array)) {
                     const updatedEntity = {
                         ...entity,
                         ...inputEntity
                     }
-                    const invalid = form.isInvalid()
-                    const {onChange} = this.context
-                    onChange(updatedEntity, invalid)
+                    setImmediate(() => {
+                        const errorMessages = Object.values(this.props.form.errors).filter(error => error)
+                        const error = errorMessages.length ? errorMessages[0] : ''
+                        const {onChange} = this.context
+                        onChange(updatedEntity, error)
+                    })
                 }
             }
 
