@@ -1,4 +1,4 @@
-const {groupBy, mergeMap, tap, takeUntil, filter, timer, switchMap, defer, map, repeat, takeWhile, take, finalize, exhaustMap} = require('rxjs')
+const {groupBy, mergeMap, tap, takeUntil, filter, timer, switchMap, defer, map, repeat, takeWhile, take, finalize, exhaustMap, share} = require('rxjs')
 const {userTag} = require('./tag')
 const {USER_UP, USER_DOWN, GOOGLE_ACCESS_TOKEN_UPDATED, GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED} = require('./websocket-events')
 const {updateGoogleAccessToken$} = require('./userApi')
@@ -30,7 +30,8 @@ const initializeGoogleAccessTokenRefresher = ({userStore, event$}) => {
 
     const unmonitor$ = event$.pipe(
         filter(({type}) => [USER_DOWN, GOOGLE_ACCESS_TOKEN_REMOVED].includes(type)),
-        map(({data: {user}}) => user)
+        map(({data: {user}}) => user),
+        share()
     )
 
     const currentUserDisconnected$ = username =>
