@@ -26,10 +26,13 @@ export class ColorInput extends React.Component {
     }
 
     renderTooltip() {
+        const {tooltip} = this.props
         const {swap} = this.state
-        return swap
-            ? this.renderSwap()
-            : this.renderColorButtons()
+        return tooltip
+            ? tooltip
+            : swap
+                ? this.renderSwap()
+                : this.renderColorButtons()
     }
 
     renderColorButtons() {
