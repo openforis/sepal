@@ -1,6 +1,7 @@
 import _ from 'lodash'
 
 import format from '~/format'
+import {msg} from '~/translate'
 import {ColorElement} from '~/widget/colorElement'
 import {NestedForms} from '~/widget/form/nestedForms'
 
@@ -21,21 +22,20 @@ export const ProportionTable = ({manual, proportions, overallProportion}) =>
 
 const Header = () =>
     <div className={styles.header}>
-        <div className={styles.stratumHeader}/>
-        <div className={styles.weight}>Proportion of reporting category in stratum</div>
+        <div className={styles.proportionHeader}>{msg('process.samplingDesign.panel.proportions.form.anticipatedProportions.header')}</div>
     </div>
 
 const Footer = ({overallProportion}) =>
     <div className={styles.footer}>
-        <div className={styles.overall}>Anticipated overall proportion</div>
+        <div className={styles.overall}>{msg('process.samplingDesign.panel.proportions.form.overallProportion.label')}</div>
         <div className={styles.number}>{format.units(overallProportion)}%</div>
     </div>
 
 const Proportion = ({entry: {label, color, proportion}}) =>
     <div className={styles.row}>
-        <div className={styles.color}>
+        <div>
             <ColorElement color={color}/>
         </div>
-        <div className={styles.label}>{label}</div>
+        <div>{label}</div>
         <div className={styles.number}>{format.units(proportion)}%</div>
     </div>

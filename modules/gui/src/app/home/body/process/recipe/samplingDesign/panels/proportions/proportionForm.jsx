@@ -22,18 +22,16 @@ class _ProportionForm extends React.Component {
         const {entry: {label, color}, inputs: {proportion}} = this.props
         return (
             <div className={styles.row}>
-                <div className={styles.color}>
-                    <ColorElement color={color}/>
-                </div>
-                <div className={styles.label}>{label}</div>
-                <div className={styles.proportionInput}>
-                    <div className={styles.proportionInputSpacer}/>
+                <ColorElement color={color}/>
+                <div>{label}</div>
+                <div>
                     <Form.Input
                         input={proportion}
                         type='number'
                         placeholder={msg('Proportion...')}
                         autoComplete={false}
                         suffix={msg('process.samplingDesign.panel.proportions.form.overallProportion.suffix')}
+                        inputTooltip={proportion.error}
                     />
                 </div>
             </div>

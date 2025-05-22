@@ -70,6 +70,8 @@ const fields = {
     anticipatedOverallProportion: new Form.Field(),
     probabilityPerStratum: new Form.Field(),
     anticipatedProportions: new Form.Field()
+        .skip((_value, {skip}) => skip.length)
+        .notBlank('process.samplingDesign.panel.proportions.form.anticipatedProportions.required'),
 }
 
 class _Proportions extends React.Component {
@@ -116,15 +118,12 @@ class _Proportions extends React.Component {
         return (
             <ButtonGroup>
                 <Form.Buttons
-                    spacing='tight'
-                    groupSpacing='none'
-                    size='small'
-                    shape='pill'
                     input={manual}
                     disabled={skip.value?.length}
                     options={[
                         {
                             value: true,
+                            icon: 'rectangle-list',
                             label: msg('process.samplingDesign.panel.proportions.form.manual.label'),
                             tooltip: msg('process.samplingDesign.panel.proportions.form.manual.tooltip')
                         },
@@ -133,14 +132,11 @@ class _Proportions extends React.Component {
                     onChange={this.onManualToggled}
                 />
                 <Form.Buttons
-                    spacing='tight'
-                    groupSpacing='none'
-                    size='small'
-                    shape='pill'
                     input={skip}
                     options={[
                         {
                             value: true,
+                            icon: 'ban',
                             label: msg('Skip'),
                             tooltip: msg('process.samplingDesign.panel.proportions.form.manual.tooltip')
                         },
@@ -411,7 +407,7 @@ class _Proportions extends React.Component {
         requiresUpdate.set(false)
         skip.value || skip.set([])
         manual.value || manual.set([])
-        anticipationStrategy.value || anticipationStrategy.set('MANUAL')
+        anticipationStrategy.value || anticipationStrategy.set('PROBABILITY')
         scale.value || scale.set(stratificationScale || '30')
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
@@ -445,11 +441,28 @@ class _Proportions extends React.Component {
     }
 
     onAssetLoaded({metadata, visualizations}) {
+        const {inputs: {assetId}} = this.props
         const bands = metadata.bands.map(({id}) => id) || []
+        this.updateImageLayerSources({
+            id: assetId.value,
+            type: 'Asset',
+            sourceConfig: {
+                asset: assetId.value,
+                metadata,
+                visualizations
+            },
+        })
         this.onImageLoaded(bands, visualizations)
     }
 
     onRecipeLoaded({bandNames: bands, recipe}) {
+        this.updateImageLayerSources({
+            id: recipe.id,
+            type: 'Recipe',
+            sourceConfig: {
+                recipeId: recipe.id
+            },
+        })
         this.onImageLoaded(bands, getAllVisualizations(recipe))
     }
 
@@ -524,6 +537,7 @@ class _Proportions extends React.Component {
             }))
             anticipatedProportions.set(initialProportions)
         } else if (!isManual) {
+            anticipatedProportions.set(null)
             this.calculateAnticipatedProportions()
         }
     }
@@ -648,6 +662,13 @@ class _Proportions extends React.Component {
         })
     }
 
+    updateImageLayerSources(source) {
+        const {recipeActionBuilder} = this.props
+        recipeActionBuilder('UPDATE_PROPORTIONS_IMAGE_LAYER_SOURCE', {source})
+            .set(['layers.additionalImageLayerSources', {id: source.id}], source)
+            .dispatch()
+    }
+    
     isPercentage() {
         const {inputs: {percentage}} = this.props
         return !!percentage.value.length

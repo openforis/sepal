@@ -1,6 +1,6 @@
 .proportions {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) min-content;
     row-gap: .5rem;
     font-size: small;
 }
@@ -9,21 +9,18 @@
     display: contents;
 }
 
-.headerGroups,
 .header,
 .footer {
     display: contents;
 }
 
 .header>*,
-.headerGroups,
 .footer>* {
     font-weight: bold;
     background-color: var(--look-default-active-background-color) !important;
     color: #808080;
 }
 
-.headerGroups>*,
 .header>*,
 .row>*,
 .footer>* {
@@ -34,27 +31,16 @@
     opacity: .5;
 }
 
-.number {
+.proportionHeader {
+    grid-column: 1 / span 3;
     text-align: right;
 }
 
-.stratum {
-    grid-column: 1 / span 2;
-}
-
-.stratumHeader {
-    grid-column: 1 / span 2;
+.number {
+    text-align: right;
+    flex-shrink: 1;
 }
 
 .overall {
-    text-wrap: nowrap;
     grid-column: 1 / span 2;
-}
-
-.proportionInput {
-    display: flex;
-}
-
-.proportionInputSpacer {
-    flex-grow: 1;
 }
