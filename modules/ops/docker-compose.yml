@@ -57,6 +57,7 @@ services:
     volumes:
       - "./ops.haproxy.cfg:/usr/local/etc/haproxy/haproxy.d/ops.cfg"
       - haproxy:/var/lib/acme
+    restart: always
     environment:
       HAPROXY_DOMAIN: "${OPS_DOMAIN}"
       JENKINS_PORT: "${JENKINS_PORT}"
