@@ -1,0 +1,35 @@
+.panel {
+    width: 48rem;
+    height: 52rem;
+    position: relative;
+}
+
+.statusRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+.statusIdle, .healthStarting {
+    color: var(--warning-color);
+}
+
+.statusRunning, .healthHealthy {
+    color: var(--success-color);
+}
+
+.statusError, .statusUnknown {
+    color: var(--error-color);
+}
+
+.logs {
+    min-height: 18rem;
+    max-height: 18rem;
+    font-family: monospace;
+    padding: 0.5rem;
+}
+
+.section {
+    margin-bottom: 1.5rem;
+}
