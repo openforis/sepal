@@ -74,6 +74,7 @@ const allocateSamples = ({sampleSize, strategy, strata, tuningConstant}) => {
     case 'OPTIMAL': return optimalAllocation({sampleSize, strata})
     case 'POWER': return powerAllocation({sampleSize, strata, tuningConstant})
     case 'BALANCED': return balancedAllocation({sampleSize, strata})
+    default: throw Error('Invalid allocation strategy: ' + strategy)
     }
 }
 

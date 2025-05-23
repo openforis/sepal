@@ -14,11 +14,13 @@ export const AllocationTable = ({allocation, sampleSize, marginOfError, relative
             <Header
                 relativeMarginOfError={relativeMarginOfError}
             />
-            {allocation.map(entry => <Allocation
-                key={entry.stratum}
-                entry={entry}
-                relativeMarginOfError={relativeMarginOfError}
-            />)}
+            {allocation.map(entry =>
+                <Allocation
+                    key={entry.stratum}
+                    entry={entry}
+                    relativeMarginOfError={relativeMarginOfError}
+                />
+            )}
             <Footer
                 sampleSize={sampleSize}
                 marginOfError={marginOfError}
@@ -46,9 +48,9 @@ const Footer = ({sampleSize, marginOfError, relativeMarginOfError}) => {
     )
 }
 
-const Allocation = ({entry: {label, color, sampleSize, marginOfError}, relativeMarginOfError}) => {
+const Allocation = ({entry: {label, color, stratum, sampleSize, marginOfError}, relativeMarginOfError}) => {
     return (
-        <div key={label} className={styles.row}>
+        <div className={styles.row}>
             <div className={styles.color}>
                 <ColorElement color={color}/>
             </div>

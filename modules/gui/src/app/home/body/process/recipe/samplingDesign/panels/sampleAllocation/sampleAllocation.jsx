@@ -21,7 +21,10 @@ import {calculateSampleSize} from './sampleSize'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
-    anticipatedProportions: selectFrom(recipe, 'model.proportions.anticipatedProportions'),
+    unstratified: selectFrom(recipe, 'model.stratification.skip'),
+    strata: selectFrom(recipe, 'model.stratification.strata'),
+    noProportions: selectFrom(recipe, 'model.proportions.skip'),
+    anticipatedProportions: selectFrom(recipe, 'model.proportions.anticipatedProportions')
 })
 
 const fields = {
@@ -95,17 +98,15 @@ class _SampleAllocation extends React.Component {
     }
 
     renderHeaderButtons() {
-        const {inputs: {manual}} = this.props
+        const {noProportions, inputs: {manual}} = this.props
         return (
             <Form.Buttons
-                spacing='tight'
-                groupSpacing='none'
-                size='small'
-                shape='pill'
                 input={manual}
+                disabled={noProportions}
                 options={[
                     {
                         value: true,
+                        icon: 'rectangle-list',
                         label: msg('process.samplingDesign.panel.sampleAllocation.form.manual.label'),
                         tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.manual.tooltip')
                     },
@@ -116,7 +117,7 @@ class _SampleAllocation extends React.Component {
     }
 
     renderContent() {
-        const {inputs: {manual, estimateSampleSize, allocationStrategy}} = this.props
+        const {noProportions, inputs: {manual, estimateSampleSize, allocationStrategy}} = this.props
         const usingPowerAllocation = allocationStrategy.value === 'POWER'
         const isManual = manual.value?.length
         return (
@@ -131,8 +132,8 @@ class _SampleAllocation extends React.Component {
                 )}
                 
                 <Layout type='horizontal'>
-                    {this.renderRelativeMarginOfError()}
-                    {this.renderConfidenceLevel()}
+                    {noProportions ? null : this.renderRelativeMarginOfError()}
+                    {noProportions ? null : this.renderConfidenceLevel()}
                 </Layout>
                 {isManual ? null : this.renderAllocationStrategy()}
                 {isManual ? null : (
@@ -259,7 +260,7 @@ class _SampleAllocation extends React.Component {
     }
 
     renderAllocationStrategy() {
-        const {inputs: {allocationStrategy}} = this.props
+        const {noProportions, inputs: {allocationStrategy}} = this.props
         return (
             <Form.Buttons
                 label={msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.label')}
@@ -276,19 +277,21 @@ class _SampleAllocation extends React.Component {
                         tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.EQUAL.tooltip'),
                     },
                     {
+                        value: 'BALANCED',
+                        label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.BALANCED.label'),
+                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.BALANCED.tooltip'),
+                    },
+                    {
                         value: 'OPTIMAL',
                         label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.OPTIMAL.label'),
                         tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.OPTIMAL.tooltip'),
+                        disabled: noProportions
                     },
                     {
                         value: 'POWER',
                         label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.POWER.label'),
                         tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.POWER.tooltip'),
-                    },
-                    {
-                        value: 'BALANCED',
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.BALANCED.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.BALANCED.tooltip'),
+                        disabled: noProportions
                     },
                 ]}
             />
@@ -342,16 +345,27 @@ class _SampleAllocation extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {requiresUpdate, manual, confidenceLevel, marginOfError, relativeMarginOfError, minSamplesPerStratum, allocationStrategy, powerTuningConstant}} = this.props
+        const {strata, anticipatedProportions, inputs: {requiresUpdate, manual, estimateSampleSize, confidenceLevel, marginOfError, relativeMarginOfError, minSamplesPerStratum, allocationStrategy, powerTuningConstant, allocation}} = this.props
         requiresUpdate.set(false)
         manual.value || manual.set([])
+        estimateSampleSize.value || estimateSampleSize.set(false)
         confidenceLevel.value || confidenceLevel.set(95)
         marginOfError.value || marginOfError.set(50)
         relativeMarginOfError.value || relativeMarginOfError.set(true)
+        anticipatedProportions
+            ? allocationStrategy.value || allocationStrategy.set('OPTIMAL')
+            : ['EQUAL', 'PROPORTIONAL', 'BALANCED'].includes(allocationStrategy.value) || allocationStrategy.set('BALANCED')
         minSamplesPerStratum.value || minSamplesPerStratum.set('1')
         allocationStrategy.value || allocationStrategy.set('EQUAL')
         powerTuningConstant.value || powerTuningConstant.set('0.5')
 
+        // TODO: If allocation stratum doesn't match strata, reset allocation based off stratum or anticipatedProportions
+
+        const expectedStrata = strata.map(({value}) => value)
+        const actualStrata = allocation.value?.map(({stratum}) => stratum)
+        if (!_.isEqual(expectedStrata, actualStrata)) {
+            allocation.set(anticipatedProportions || strata.map(stratum => ({...stratum, stratum: stratum.value})))
+        }
         setImmediate(() => this.allocate())
     }
     
@@ -362,20 +376,22 @@ class _SampleAllocation extends React.Component {
     }
         
     allocate() {
-        const {anticipatedProportions, inputs: {estimateSampleSize, sampleSize, marginOfError, relativeMarginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant, allocation}} = this.props
-
+        const {strata, anticipatedProportions, inputs: {manual, estimateSampleSize, sampleSize, marginOfError, relativeMarginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant, allocation}} = this.props
+        if (manual.value?.length) {
+            return
+        }
         // TODO: Make marginOfError for each stratum part of allocation
         const updateAllocation = sampleSize => {
             const calculatedAllocation = allocate({
                 sampleSize: parseInt(sampleSize),
                 strategy: allocationStrategy.value,
                 minSamplesPerStratum: parseInt(minSamplesPerStratum.value),
-                strata: anticipatedProportions,
+                strata: anticipatedProportions || strata.map(stratum => ({...stratum, stratum: stratum.value})),
                 tuningConstant: parseFloat(powerTuningConstant.value)
             })
             allocation.set(calculatedAllocation)
         }
-        if (estimateSampleSize.value) {
+        if (estimateSampleSize.value && anticipatedProportions) {
             const calculatedSampleSize = calculateSampleSize({
                 marginOfError: relativeMarginOfError.value ? parseFloat(marginOfError.value) / 100 : parseFloat(marginOfError.value),
                 relativeMarginOfError: relativeMarginOfError.value,
@@ -395,7 +411,7 @@ class _SampleAllocation extends React.Component {
                 }))
                 allocation.set(undefinedAllocation)
                 marginOfError.set(null)
-            } else {
+            } else if (anticipatedProportions) {
                 const calculatedMarginOfError = calculateMarginOfError({
                     sampleSize: parseInt(sampleSize.value),
                     relativeMarginOfError: relativeMarginOfError.value,
@@ -406,6 +422,8 @@ class _SampleAllocation extends React.Component {
                     tuningConstant: parseFloat(powerTuningConstant.value)
                 })
                 marginOfError.set(relativeMarginOfError.value ? Math.round(calculatedMarginOfError * 100) : calculatedMarginOfError)
+                updateAllocation(sampleSize.value)
+            } else {
                 updateAllocation(sampleSize.value)
             }
         }
