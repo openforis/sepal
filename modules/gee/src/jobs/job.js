@@ -33,7 +33,8 @@ module.exports = {
             requestArgs: {...ctx.request.query, ...ctx.request.body},
             credentials: getCredentials(ctx)
         }),
-        worker$
+        worker$,
+        finalize$
     }) => {
         const workerWithWorkloadTag$ = (...args) => {
             const ee = require('#sepal/ee/ee')
@@ -56,7 +57,8 @@ module.exports = {
             before,
             services,
             args,
-            worker$: workerWithWorkloadTag$
+            worker$: workerWithWorkloadTag$,
+            finalize$
         })
     }
 }

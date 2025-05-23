@@ -91,7 +91,7 @@ const Clients = () => {
     }
 
     const sendEvent = (username, type, data) => {
-        log.info(`Sending ${eventTag(type)} to ${userTag(username)}`)
+        log.debug(`Sending ${eventTag(type)} to ${userTag(username)}`)
         Object.entries(clients)
             .filter(([_, {username: currentUsername}]) => currentUsername === username)
             .map(([clientId]) => clientId)
@@ -99,7 +99,7 @@ const Clients = () => {
     }
 
     const broadcastEvent = (type, data) => {
-        log.info(`Sending ${eventTag(type)} to all clients`)
+        log.debug(`Sending ${eventTag(type)} to all clients`)
         Object.entries(clients)
             .map(([clientId]) => clientId)
             .forEach(clientId => send(clientId, {event: {type, data}}))
@@ -118,7 +118,7 @@ const Clients = () => {
         return usernames.forEach(username => callback(username))
     }
 
-    return {add, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendEvent, broadcastEvent}
+    return {add, get, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendEvent, broadcastEvent}
 }
 
 module.exports = {Clients}

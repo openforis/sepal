@@ -1,4 +1,4 @@
-const {groupBy, mergeMap, tap, takeUntil, filter, timer, switchMap, defer, map, repeat, takeWhile, take, finalize, exhaustMap} = require('rxjs')
+const {groupBy, mergeMap, tap, takeUntil, filter, timer, switchMap, defer, map, repeat, takeWhile, take, finalize, exhaustMap, share} = require('rxjs')
 const {userTag} = require('./tag')
 const {USER_UP, USER_DOWN, GOOGLE_ACCESS_TOKEN_UPDATED, GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED} = require('./websocket-events')
 const {updateGoogleAccessToken$} = require('./userApi')
@@ -30,7 +30,8 @@ const initializeGoogleAccessTokenRefresher = ({userStore, event$}) => {
 
     const unmonitor$ = event$.pipe(
         filter(({type}) => [USER_DOWN, GOOGLE_ACCESS_TOKEN_REMOVED].includes(type)),
-        map(({data: {user}}) => user)
+        map(({data: {user}}) => user),
+        share()
     )
 
     const currentUserDisconnected$ = username =>
@@ -60,11 +61,12 @@ const initializeGoogleAccessTokenRefresher = ({userStore, event$}) => {
         filter(({username}) => username),
         groupBy(({username}) => username),
         mergeMap(userGroup$ => userGroup$.pipe(
-            tap(() => log.debug(`${userTag(userGroup$.key)} Google access token monitored`)),
+            tap(() => log.info(`${userTag(userGroup$.key)} Google access token monitored`)),
             exhaustMap(({username}) =>
                 defer(() => refreshTrigger$(username)).pipe(
                     // warning: order of operators matters!
                     switchMap(() => refresh$(username)),
+                    tap(() => log.debug(`${userTag(username)} Google access token refreshed`)),
                     take(1),
                     repeat({delay: 1000}),
                     takeWhile(({googleTokens}) => !!googleTokens),
@@ -76,7 +78,7 @@ const initializeGoogleAccessTokenRefresher = ({userStore, event$}) => {
                         retryDelayFactor: 2,
                         onRetry: (error, retryMessage) => log.warn(`${userTag(username)} Google access token refresh error - ${retryMessage}`, error)
                     }),
-                    finalize(() => log.debug(`${userTag(username)} Google access token unmonitored`))
+                    finalize(() => log.info(`${userTag(username)} Google access token unmonitored`))
                 )
             )
         ))

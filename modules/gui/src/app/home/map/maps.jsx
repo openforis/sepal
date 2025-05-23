@@ -127,6 +127,7 @@ class _Maps extends React.Component {
             center: new google.maps.core.LatLng(16.7794913, 9.6771556),
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             zoomControl: false,
+            cameraControl: false,
             mapTypeControl: false,
             scaleControl: false,
             streetViewControl: false,
