@@ -25,7 +25,7 @@ import {ProportionTable} from './proportionTable'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
-    unstratified: selectFrom(recipe, 'model.stratification.unstratified'),
+    unstratified: selectFrom(recipe, 'model.stratification.skip'),
     stratificationType: selectFrom(recipe, 'model.stratification.type'),
     stratificationAssetId: selectFrom(recipe, 'model.stratification.assetId'),
     stratificationRecipeId: selectFrom(recipe, 'model.stratification.recipeId'),
@@ -92,6 +92,7 @@ class _Proportions extends React.Component {
         this.onOverallProportionChanged = this.onOverallProportionChanged.bind(this)
         this.onProbabilitiyPerStratumCalculated = this.onProbabilitiyPerStratumCalculated.bind(this)
         this.onManualToggled = this.onManualToggled.bind(this)
+        this.onSkipToggled = this.onSkipToggled.bind(this)
     }
 
     render() {
@@ -142,6 +143,7 @@ class _Proportions extends React.Component {
                         },
                     ]}
                     multiple
+                    onChange={this.onSkipToggled}
                 />
             </ButtonGroup>
         )
@@ -323,7 +325,6 @@ class _Proportions extends React.Component {
                 input={scale}
                 type='number'
                 suffix={msg('process.samplingDesign.panel.proportions.form.scale.suffix')}
-                onChange={this.onScaleChanged}
             />
         )
     }
@@ -542,6 +543,13 @@ class _Proportions extends React.Component {
         }
     }
 
+    onSkipToggled(skip) {
+        const isSkipped = !!skip?.length
+        if (!isSkipped) {
+            this.calculateAnticipatedProportions()
+        }
+    }
+
     calculateMaxAnticipatedTargetProportion() {
         const {strata, inputs: {probabilityPerStratum}} = this.props
         
@@ -563,20 +571,23 @@ class _Proportions extends React.Component {
 
     calculateAnticipatedProportions() {
         const {aoi, stream,
-            stratificationType, stratificationRecipeId, stratificationAssetId, stratificationBand,
+            unstratified, stratificationType, stratificationRecipeId, stratificationAssetId, stratificationBand,
             inputs: {scale, type, assetId, recipeId, band, eeStrategy, anticipatedProportions}
         } = this.props
 
         const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
         if (!scale.value || !id || !band.value) {
+            console.log('no scale or id or band', scale.value, id, band.value)
             return
         }
         
         anticipatedProportions.set(null)
-        const stratification = {
-            type: stratificationType === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
-            id: stratificationType === 'RECIPE' ? stratificationRecipeId : stratificationAssetId,
-        }
+        const stratification = unstratified
+            ? null
+            : {
+                type: stratificationType === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
+                id: stratificationType === 'RECIPE' ? stratificationRecipeId : stratificationAssetId,
+            }
         const probability = {
             type: type.value === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
             id,
@@ -586,6 +597,7 @@ class _Proportions extends React.Component {
             this.cancel$.next()
         }
 
+        console.log('calculating')
         stream('PROBABILITY_PER_STRATUM',
             api.gee.probabilityPerStratum$({
                 aoi,
@@ -692,21 +704,33 @@ const proportionsDeps = props => {
 }
 
 const valuesToModel = values => {
+    const isSkipped = !!values.skip?.length
     return {
         ...values,
-        anticipatedOverallProportion: values.anticipatedOverallProportion
-            && values.anticipatedOverallProportion / 100,
-        anticipatedProportions: values.anticipatedProportions
-            ?.map(entry => ({
-                ...entry,
-                proportion: entry.proportion && entry.proportion / 100
-            }))
+        skip: isSkipped,
+        percentage: !!values.percentage?.length,
+        probabilityPerStratum: isSkipped
+            ? null
+            : values.probabilityPerStratum,
+        anticipatedOverallProportion: isSkipped
+            ? null
+            : values.anticipatedOverallProportion
+                && values.anticipatedOverallProportion / 100,
+        anticipatedProportions: isSkipped
+            ? null
+            : values.anticipatedProportions
+                ?.map(entry => ({
+                    ...entry,
+                    proportion: entry.proportion && entry.proportion / 100
+                }))
     }
 }
 
 const modelToValues = model => {
     return {
         ...model,
+        skip: model.skip ? [true] : [],
+        percentage: model.percentage ? [true] : [],
         anticipatedOverallProportion: model.anticipatedOverallProportion
             && model.anticipatedOverallProportion * 100,
         anticipatedProportions: model.anticipatedProportions
