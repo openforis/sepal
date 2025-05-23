@@ -88,8 +88,8 @@ export const withNestedForm = ({fields, constraints, entityPropName, arrayFieldN
                 const {inputs} = this.props
                 const entity = this.props[entityPropName]
                 const prevEntity = prevProps[entityPropName]
-                const array = inputs[arrayFieldName].value
-                const prevArray = prevProps.inputs[arrayFieldName].value
+                const array = arrayFieldName && inputs[arrayFieldName].value
+                const prevArray = arrayFieldName && prevProps.inputs[arrayFieldName].value
                 
                 if (!_.isEqual(prevEntity, entity)) {
                     this.updateInputs()

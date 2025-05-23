@@ -28,7 +28,6 @@ class _ProportionForm extends React.Component {
                     <Form.Input
                         input={proportion}
                         type='number'
-                        placeholder={msg('Proportion...')}
                         autoComplete={false}
                         suffix={msg('process.samplingDesign.panel.proportions.form.overallProportion.suffix')}
                         inputTooltip={proportion.error}

@@ -4724,11 +4724,25 @@
                         "overallProportion": {
                             "label": "Anticipated overall proportion",
                             "placeholder": "Using value calculated from image",
-                            "tooltip": "...",
+                            "tooltip": "Manually override the calculated overall proportion with a custom target value. Individual stratum proportions will be adjusted to match this target, but no single stratum can exceed 100%.",
                             "suffix": "%"
                         },
                         "strataProportion": {
                             "label": "Anticipated proportion per stratum"
+                        },
+                        "anticipatedProportions": {
+                            "required": "You must anticipate the proportion per stratum",
+                            "header": "Proportion of reporting category in stratum"
+                        },
+                        "eeStrategy": {
+                            "batch": {
+                                "label": "Batch",
+                                "tooltip": "Calculate the anticipated proportions using batch processing in Earth Engine. It will export the proportions using an EE batch task, which allows for larger areas and smaller scale. If you already have export tasks in EE, it might take a long time for this to execute."
+                            },
+                            "online": {
+                                "label": "Online",
+                                "tooltip": "Calculate the anticipated proportions using online processing in Earth Engine. For large areas or small scale, this might fail. If so, switch to batch."
+                            }
                         }
                     },
                     "info": "Select one reporting category to focus on, and estimate its proportion within each stratum. This enables additional allocation strategies and allows SEPAL to estimate your sampling error.",
@@ -4737,7 +4751,7 @@
                     "loadError": "Failed to calculate anticipated proportions."
                 },
                 "sampleAllocation": {
-                    "button": "ALL",
+                    "button": "ALO",
                     "form": {
                         "manual": {
                             "label": "Manual",

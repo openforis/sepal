@@ -137,8 +137,8 @@ class _Proportions extends React.Component {
                         {
                             value: true,
                             icon: 'ban',
-                            label: msg('Skip'),
-                            tooltip: msg('process.samplingDesign.panel.proportions.form.manual.tooltip')
+                            label: msg('process.samplingDesign.panel.proportions.form.skip.label'),
+                            tooltip: msg('process.samplingDesign.panel.proportions.form.skip.tooltip')
                         },
                     ]}
                     multiple
@@ -357,13 +357,13 @@ class _Proportions extends React.Component {
                 options={[
                     {
                         value: 'ONLINE',
-                        label: msg('online'),
+                        label: msg('process.samplingDesign.panel.proportions.form.eeStrategy.online.label'),
                         tooltip: msg('process.samplingDesign.panel.proportions.form.eeStrategy.online.tooltip')
                     },
                     {
                         value: 'BATCH',
-                        label: msg('batch'),
-                        tooltip: msg('process.samplingDesign.panel.proportions.form.eeStrategy.batc.tooltip')
+                        label: msg('process.samplingDesign.panel.proportions.form.eeStrategy.batch.label'),
+                        tooltip: msg('process.samplingDesign.panel.proportions.form.eeStrategy.batch.tooltip')
                     },
                 ]}
             />
