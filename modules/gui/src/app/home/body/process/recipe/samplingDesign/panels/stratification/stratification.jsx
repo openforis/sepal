@@ -537,7 +537,6 @@ class _Stratification extends React.Component {
         const {activator: {activatables: {legendImport}}} = this.props
         legendImport.activate()
     }
-
 }
 
 const valuesToModel = values => {

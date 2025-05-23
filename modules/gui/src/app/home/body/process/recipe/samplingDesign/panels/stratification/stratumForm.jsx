@@ -24,7 +24,7 @@ const fields = {
             } catch (_error) {
                 return false
             }
-        }, 'map.legendBuilder.entry.error.invalidColor'), // TODO: Message key?
+        }, 'map.legendBuilder.entry.error.invalidColor'),
     label: new Form.Field()
         .notBlank(),
 }
@@ -34,12 +34,12 @@ const constraints = {
         .predicate(({
             color,
             strata
-        }) => isUnique('color', color, strata), 'map.legendBuilder.entry.error.duplicateColor'), // TODO: Message key?
+        }) => isUnique('color', color, strata), 'map.legendBuilder.entry.error.duplicateColor'),
     labelUnique: new Form.Constraint(['label', 'strata'])
         .predicate(({
             label,
             strata
-        }) => isUnique('label', label, strata), 'map.legendBuilder.entry.error.duplicateLabel') // TODO: Message key?
+        }) => isUnique('label', label, strata), 'map.legendBuilder.entry.error.duplicateLabel')
 }
 
 class _StratumForm extends React.Component {
@@ -98,7 +98,7 @@ class _StratumForm extends React.Component {
             <Form.Input
                 className={styles.label}
                 input={label}
-                placeholder={msg('map.legendBuilder.entry.classLabel.placeholder')} // TODO: Message key?
+                placeholder={msg('map.legendBuilder.entry.classLabel.placeholder')}
                 autoFocus={!stratum.label}
                 errorMessage={validationFields}
                 autoComplete={false}
