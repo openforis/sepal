@@ -92,4 +92,4 @@ const ws$ = in$ => {
     )
 }
 
-module.exports = ctx => ws$(ctx.args$)
+module.exports = ctx => ws$(ctx.arg$)

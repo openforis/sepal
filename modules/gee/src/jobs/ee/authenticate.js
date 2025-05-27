@@ -64,6 +64,11 @@ const worker$ = ({
         ee.sepal.setAuthType('USER')
         const secondsToExpiration = calculateSecondsToExpiration(googleTokens.accessTokenExpiryDate)
         log.debug(userTag(username), `Authenticating user account (expiring in ${secondsToExpiration} s)`)
+        
+        // Make sure refresh of previously authenticated service account is prevented
+        ee.data.clearAuthToken()
+        ee.data.setAuthTokenRefresher(null)
+
         ee.data.setAuthToken(
             null, // clientId - no need to specify as EE API doesn't refresh the token
             'Bearer', // tokenType
@@ -73,8 +78,6 @@ const worker$ = ({
             null, // error callback
             false // updateAuthLibrary - we don't want EE API to refresh the token
         )
-        // Make sure refresh of previously authenticated service account is prevented
-        ee.data.setAuthTokenRefresher(null)
         return of(true)
     }
 

@@ -18,7 +18,7 @@ import {SepalMap} from './sepalMap'
 const log = getLogger('maps')
 
 // Note: Google Maps API v.3.5+ deprecates Marker for AdvancedMarkerElement, which requires creating a MapId
-const GOOGLE_MAPS_VERSION = '3.57'
+const GOOGLE_MAPS_VERSION = '3.60'
 const GOOGLE_MAPS_LIBRARIES = ['core', 'drawing', 'geocoding', 'marker', 'places']
 
 const DEFAULT_ZOOM = 3
@@ -127,6 +127,7 @@ class _Maps extends React.Component {
             center: new google.maps.core.LatLng(16.7794913, 9.6771556),
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             zoomControl: false,
+            cameraControl: false,
             mapTypeControl: false,
             scaleControl: false,
             streetViewControl: false,

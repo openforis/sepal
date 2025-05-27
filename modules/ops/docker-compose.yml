@@ -20,7 +20,7 @@ services:
     ulimits:
       core: 0
     healthcheck:
-      test: bash -c "exec 6<> /dev/tcp/localhost/8080"
+      test: ["CMD", "nc", "-z", "localhost", "8080"]
       timeout: 60s
       interval: 1s
       retries: 60
@@ -53,17 +53,18 @@ services:
         condition: service_healthy
     ports:
       - "${JENKINS_PORT}:${JENKINS_PORT}"
-      - "443:5000" # Docker registry port
+      - "443:443" # Docker registry port
     volumes:
       - "./ops.haproxy.cfg:/usr/local/etc/haproxy/haproxy.d/ops.cfg"
       - haproxy:/var/lib/acme
+    restart: always
     environment:
       HAPROXY_DOMAIN: "${OPS_DOMAIN}"
       JENKINS_PORT: "${JENKINS_PORT}"
       DOCKER_REGISTRY_USERNAME: "${DOCKER_REGISTRY_USERNAME}"
       DOCKER_REGISTRY_PASSWORD: "${DOCKER_REGISTRY_PASSWORD}"
     healthcheck:
-      test: netstat -an | grep ${JENKINS_PORT} && netstat -an | grep 5000
+      test: nc -z localhost 443 && nc -z localhost ${JENKINS_PORT}
       timeout: 60s
       interval: 1s
       retries: 60

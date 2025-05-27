@@ -10,8 +10,8 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "commander": "^13.1.0",
-        "connect-redis": "^8.0.3",
+        "commander": "^14.0.0",
+        "connect-redis": "^8.1.0",
         "date-fns": "^4.1.0",
         "express": "^5.1.0",
         "express-session": "^1.18.1",
