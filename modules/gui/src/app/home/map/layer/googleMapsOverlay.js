@@ -38,9 +38,12 @@ export class GoogleMapsOverlay {
     }
 
     releaseTile(element) {
-        this.tileSubscriptionById[element.id].unsubscribe()
-        delete this.tileSubscriptionById[element.id]
-        this.tileProvider.releaseTile(element)
+        const tileSubscription = this.tileSubscriptionById[element.id]
+        if (tileSubscription) {
+            tileSubscription.unsubscribe()
+            delete this.tileSubscriptionById[element.id]
+            this.tileProvider.releaseTile(element)
+        }
     }
 
     close() {
