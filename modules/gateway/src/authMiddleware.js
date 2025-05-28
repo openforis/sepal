@@ -69,7 +69,8 @@ const AuthMiddleware = userStore => {
             const authenticate$ = () => {
                 const header = req.get('Authorization')
                 const basicAuth = Buffer.from(header.substring('basic '.length), 'base64').toString()
-                const [username, password] = basicAuth.split(':')
+                const [rawUsername, password] = basicAuth.split(':')
+                const username = rawUsername.toLowerCase()
                 if (username && password) {
                     log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticating user`)
                     return post$(AUTHENTICATION_URL, {
@@ -79,9 +80,9 @@ const AuthMiddleware = userStore => {
                         switchMap(response => {
                             const {statusCode} = response
                             switch (statusCode) {
-                            case OK: return authorized$(username, response)
-                            case UNAUTHORIZED: return unauthorized$(username)
-                            default: return failure$(username, response)
+                                case OK: return authorized$(username, response)
+                                case UNAUTHORIZED: return unauthorized$(username)
+                                default: return failure$(username, response)
                             }
                         })
                     )

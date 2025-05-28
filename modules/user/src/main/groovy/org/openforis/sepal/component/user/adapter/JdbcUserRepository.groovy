@@ -185,7 +185,7 @@ class JdbcUserRepository implements UserRepository {
         def user = new User(
                 id: row.id,
                 name: row.name,
-                username: row.username,
+                username: row.username?.toLowerCase(),
                 email: row.email,
                 organization: row.organization,
                 intendedUse: row.longText('intended_use'),
