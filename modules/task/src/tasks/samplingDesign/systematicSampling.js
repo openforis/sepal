@@ -31,8 +31,8 @@ function stratifiedSystematicSample(args) {
             .map(function (stratum) {
                 var targetDiameter = ee.Number(
                     // To reduce chance of not finding enough samples in stratum,
-                    // only 75% of the expected diameter is used in calclation
-                    0.75 * Math.sqrt(
+                    // only 50% of the expected diameter is used in calclation
+                    0.5 * Math.sqrt(
                         8 * stratum.area / (3 * Math.sqrt(3) * stratum.sampleSize)
                     )
                 )
