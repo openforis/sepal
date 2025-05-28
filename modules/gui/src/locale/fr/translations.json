@@ -4910,6 +4910,13 @@
             "admin": "",
             "user": ""
         },
+        "privacyPolicy": {
+            "title": "",
+            "accept": {
+                "label": "",
+                "error": ""
+            }
+        },
         "userDetails": {
             "form": {
                 "email": {
