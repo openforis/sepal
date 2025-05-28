@@ -28,7 +28,6 @@ class _PrivacyPolicy extends React.Component {
     acceptPrivacyPolicy() {
         const {user} = this.props
         updateCurrentUserDetails$({...user, privacyPolicyAccepted: true}).subscribe({
-            next: () => Notifications.info({message: msg('user.privacyPolicy.accept.success'), timeout: 5}),
             error: error => Notifications.error({message: msg('user.privacyPolicy.accept.error'), error})
         })
     }

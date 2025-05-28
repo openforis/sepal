@@ -4914,8 +4914,7 @@
             "title": "Privacy Policy",
             "accept": {
                 "label": "Accept",
-                "success": "Welcome to SEPAL",
-                "error": "Could not update user."
+                "error": "Could not update user"
             }
         },
         "userDetails": {
