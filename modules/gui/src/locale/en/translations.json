@@ -4910,6 +4910,14 @@
             "admin": "Admin",
             "user": "User"
         },
+        "privacyPolicy": {
+            "title": "Privacy Policy",
+            "accept": {
+                "label": "Accept",
+                "success": "Welcome to SEPAL",
+                "error": "Could not update user."
+            }
+        },
         "userDetails": {
             "form": {
                 "email": {

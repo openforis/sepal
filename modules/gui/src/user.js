@@ -29,10 +29,10 @@ export const loadUser$ = () => api.user.loadCurrentUser$().pipe(
     catchError(error => {
         const errorCode = error.response?.errorCode
         switch (errorCode) {
-        case 'EE_NOT_AVAILABLE': return eeNotAvailableError$()
-        case 'MISSING_OAUTH_SCOPES': return missingOAuthScopesError$()
-        case 'MISSING_GOOGLE_TOKENS': return missingGoogleTokensError$()
-        default: return unspecifiedError$()
+            case 'EE_NOT_AVAILABLE': return eeNotAvailableError$()
+            case 'MISSING_OAUTH_SCOPES': return missingOAuthScopesError$()
+            case 'MISSING_GOOGLE_TOKENS': return missingGoogleTokensError$()
+            default: return unspecifiedError$()
         }
     })
 )
@@ -167,7 +167,7 @@ export const validateEmail$ = ({email, recaptchaToken}) =>
         map(({valid}) => valid)
     )
 
-export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) => {
+export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, privacyPolicyAccepted}) => {
     actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
         .set('user.currentUser.name', name)
         .set('user.currentUser.email', email)
@@ -175,8 +175,9 @@ export const updateCurrentUserDetails$ = ({name, email, organization, intendedUs
         .set('user.currentUser.intendedUse', intendedUse)
         .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
         .set('user.currentUser.manualMapRenderingEnabled', manualMapRenderingEnabled)
+        .set('user.currentUser.privacyPolicyAccepted', privacyPolicyAccepted)
         .dispatch()
-    return api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled})
+    return api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, privacyPolicyAccepted})
 }
 
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
