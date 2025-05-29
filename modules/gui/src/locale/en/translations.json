@@ -54,7 +54,67 @@
         "run": {
             "error": "Failed to run {label}"
         },
-        "running": "App is running"
+        "running": "App is running",
+        "noInstanceRequired" : "No instance required",
+        "admin" : {
+            "tooltip" : "Open administration panel",
+            "controls" : "Admin controls",
+            "title": "{app} management panel",
+            "loading" : "Loading {app} management panel...",
+            "logs" : {
+                "title" : "Logs",
+                "empty": "No logs available"
+            },
+            "container" : {
+                "title" : "Container info",
+                "loading" : "Loading container info...",
+                "notFound" : "Container not found"
+            },
+            "repo": {
+                "title": "Repository",
+                "url": "Repository origin",
+                "branch": "Branch",
+                "lastCommit": "Last commit",
+                "lastUpdate": "Last update",
+                "lastClone" : "Repository last cloned",
+                "updateAvailable": "Update available"
+            },
+            "health": {
+                "healthy": "Healthy",
+                "unhealthy": "Unhealthy",
+                "starting" : "Starting"
+            },
+            "restart": {
+                "error": "Failed to restart",
+                "success": "Restarted"
+            },
+            "button" : {
+                "restart": "Restart container",
+                "update" : "Update repo",
+                "reloadStatus" : "Reload status",
+                "reloadLogs" : "Reaload logs"
+            },
+            "viewingLogs" : "Viewing logs for {app}",
+            "status" : {
+                "title" : "Container status",
+                "running" : "Running",
+                "idle" : "Idle",
+                "error" : "Error",
+                "unknown" : "Unknown",
+                "checking" : "Checking",
+                "exited" : "Exited"
+            },
+            "timestamp": {
+                "never": "Never"
+            },
+            "update": {
+                "available": "Update available",
+                "checkForUpdates": "Check for updates",
+                "error": "Failed to update",
+                "success": "Updated successfully",
+                "noChanges": "No updates available"
+            }
+        }
     },
     "asset": {
         "failedToLoad": "Failed to load EE asset",
