@@ -1224,7 +1224,8 @@
                             "GEE": "Google Earth Engine asset",
                             "label": "Destination",
                             "required": "A destination must be selected",
-                            "SEPAL": "SEPAL workspace"
+                            "SEPAL": "SEPAL workspace",
+                            "DRIVE": "Google Drive"
                         },
                         "scale": {
                             "label": "Scale",
@@ -1495,7 +1496,8 @@
                             "GEE": "Google Earth Engine asset",
                             "label": "Destination",
                             "required": "A destination must be selected",
-                            "SEPAL": "SEPAL workspace"
+                            "SEPAL": "SEPAL workspace",
+                            "DRIVE": "Google Drive"
                         },
                         "scale": {
                             "label": "Scale"
@@ -4499,7 +4501,8 @@
                     "GEE": "Google Earth Engine asset",
                     "label": "Destination",
                     "required": "A destination must be selected",
-                    "SEPAL": "SEPAL workspace"
+                    "SEPAL": "SEPAL workspace",
+                    "DRIVE": "Google Drive"
                 },
                 "fileDimensionsMultiple": {
                     "label": "File dimensions multiple",
@@ -4532,7 +4535,8 @@
                 },
                 "task": {
                     "GEE": "Export {name} as a Google Earth Engine asset",
-                    "SEPAL": "Retrieve {name} to SEPAL workspace"
+                    "SEPAL": "Retrieve {name} to SEPAL workspace",
+                    "DRIVE": "Retrieve {name} to Google Drive"
                 },
                 "tileSize": {
                     "label": "Tile size",

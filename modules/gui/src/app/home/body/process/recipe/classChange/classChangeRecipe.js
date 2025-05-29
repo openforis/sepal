@@ -76,7 +76,7 @@ const submitRetrieveRecipeTask = recipe => {
     const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
     const pyramidingPolicy = {}
     bands.forEach(band => pyramidingPolicy[band] = band === 'transition' ? 'mode' : 'mean')
-    const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
+    const operation = `image.${destination}`
     const recipeProperties = {
         recipe_id: recipe.id,
         recipe_projectId: recipe.projectId,

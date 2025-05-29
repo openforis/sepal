@@ -11,10 +11,11 @@ const {driveSerializerService} = require('#task/jobs/service/driveSerializer')
 const {gcsSerializerService} = require('#task/jobs/service/gcsSerializer')
 
 const tasks = {
-    'image.asset_export': () => require('./tasks/imageAssetExport'),
-    'image.sepal_export': () => require('./tasks/imageSepalExport'),
+    'image.GEE': () => require('./tasks/imageAssetExport'),
+    'image.SEPAL': () => require('./tasks/imageSepalExport'),
+    'image.DRIVE': () => require('./tasks/imageDriveExport'),
     'timeseries.download': () => require('./tasks/timeSeriesSepalExport'),
-    'ccdc.asset_export': () => require('./tasks/ccdcAssetExport')
+    'ccdc.GEE': () => require('./tasks/ccdcAssetExport')
 }
 
 const {tag} = require('#sepal/tag')

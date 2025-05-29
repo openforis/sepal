@@ -195,7 +195,7 @@ const submitRetrieveRecipeTask = recipe => {
     const title = msg(['process.retrieve.form.task.GEE'], {name})
     const visualizations = getAllVisualizations(recipe)
     const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
-    const operation = 'ccdc.asset_export'
+    const operation = 'ccdc.GEE'
     const recipeProperties = {
         recipe_id: recipe.id,
         recipe_projectId: recipe.projectId,

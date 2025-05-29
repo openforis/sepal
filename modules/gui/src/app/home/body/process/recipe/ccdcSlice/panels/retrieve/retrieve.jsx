@@ -116,7 +116,6 @@ class _Retrieve extends React.Component {
                         label={more ? msg('button.less') : msg('button.more')}
                         onClick={() => this.setState({more: !more})}
                     />
-
                 </Form.PanelButtons>
             </RecipeFormPanel>
         )
@@ -218,15 +217,19 @@ class _Retrieve extends React.Component {
         const {inputs: {destination}} = this.props
         const destinationOptions = [
             {
-                value: 'SEPAL',
-                label: msg('process.retrieve.form.destination.SEPAL')
-            },
-            {
                 value: 'GEE',
                 label: msg('process.retrieve.form.destination.GEE')
+            },
+            {
+                value: 'DRIVE',
+                label: msg('process.retrieve.form.destination.DRIVE')
+            },
+            {
+                value: 'SEPAL',
+                label: msg('process.retrieve.form.destination.SEPAL')
             }
         ]
-            .filter(({value}) => isGoogleAccount() || value !== 'GEE')
+            .filter(({value}) => isGoogleAccount() || value === 'SEPAL')
         return (
             <Form.Buttons
                 label={msg('process.retrieve.form.destination.label')}
