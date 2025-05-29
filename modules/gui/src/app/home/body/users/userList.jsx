@@ -103,18 +103,18 @@ export class UserList extends React.Component {
     userMatchesStatusFilter(user) {
         const {statusFilter} = this.state
         switch (statusFilter) {
-        case 'PENDING':
-            return UserStatus.isPending(user.status)
-        case 'ACTIVE':
-            return UserStatus.isActive(user.status)
-        case 'LOCKED':
-            return UserStatus.isLocked(user.status)
-        case 'OVERBUDGET':
-            return this.isUserOverBudget(user)
-        case 'BUDGET_UPDATE':
-            return this.isUserRequestingBudgetUpdate(user)
-        default:
-            return true
+            case 'PENDING':
+                return UserStatus.isPending(user.status)
+            case 'ACTIVE':
+                return UserStatus.isActive(user.status)
+            case 'LOCKED':
+                return UserStatus.isLocked(user.status)
+            case 'OVERBUDGET':
+                return this.isUserOverBudget(user)
+            case 'BUDGET_UPDATE':
+                return this.isUserRequestingBudgetUpdate(user)
+            default:
+                return true
         }
     }
 
@@ -166,6 +166,12 @@ export class UserList extends React.Component {
                 <div className={styles.info}>
                     {this.renderInfo(users)}
                 </div>
+                {this.renderColumnHeader({
+                    column: 'username',
+                    label: msg('user.userDetails.form.username.label'),
+                    defaultSortingDirection: 1,
+                    classNames: [styles.username]
+                })}
                 {this.renderColumnHeader({
                     column: 'name',
                     label: msg('user.userDetails.form.name.label'),
@@ -349,7 +355,7 @@ class UserItem extends React.PureComponent {
 
     render() {
         const {user, hovered} = this.props
-        const {name, status, googleTokens, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
+        const {username, name, status, googleTokens, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
         const isGoogleUser = !!googleTokens
         return (
             <div
@@ -364,6 +370,7 @@ class UserItem extends React.PureComponent {
                     hovered ? lookStyles.hoverForcedOn : null
                 ].join(' ')}
                 onClick={this.onClick}>
+                {this.renderUsername(username)}
                 {this.renderName(name)}
                 {this.renderStatus(status, isGoogleUser)}
                 {this.renderLastUpdate(updateTime)}
@@ -371,6 +378,15 @@ class UserItem extends React.PureComponent {
                 {this.renderInstanceSpending(budget, current)}
                 {this.renderStorageSpending(budget, current)}
                 {this.renderStorageQuota(budget, current)}
+            </div>
+        )
+    }
+
+    renderUsername(username) {
+        const {highlight} = this.props
+        return (
+            <div className={styles.username}>
+                <Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{username}</Highlight>
             </div>
         )
     }
