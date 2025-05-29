@@ -1224,7 +1224,8 @@
                             "GEE": "Asset Google Earth Engine",
                             "label": "Récupérer vers",
                             "required": "Une destination doit être sélectionnée",
-                            "SEPAL": "Espace de travail SEPAL"
+                            "SEPAL": "Espace de travail SEPAL",
+                            "DRIVE": ""
                         },
                         "scale": {
                             "label": "Echelle",
@@ -1257,7 +1258,8 @@
                     },
                     "task": {
                         "GEE": "Exporter {name} en tant qu'asset Google Earth Engine",
-                        "SEPAL": "Récupérer {name} vers l'espace de travail SEPAL"
+                        "SEPAL": "Récupérer {name} vers l'espace de travail SEPAL",
+                        "DRIVE": ""
                     },
                     "title": "Récupérer",
                     "tooltip": "Récupérer séries temporelles"
@@ -1495,7 +1497,8 @@
                             "GEE": "Asset Google Earth Engine",
                             "label": "Récupérer vers",
                             "required": "Une destination doit être sélectionnée",
-                            "SEPAL": "Espace de travail SEPAL"
+                            "SEPAL": "Espace de travail SEPAL",
+                            "DRIVE": ""
                         },
                         "scale": {
                             "label": "Échelle"
@@ -4499,7 +4502,8 @@
                     "GEE": "Asset Google Earth Engine",
                     "label": "Récupérer vers",
                     "required": "Une destination doit être choisie",
-                    "SEPAL": "Espace SEPAL"
+                    "SEPAL": "Espace SEPAL",
+                    "DRIVE": ""
                 },
                 "fileDimensionsMultiple": {
                     "label": "",
@@ -4532,7 +4536,8 @@
                 },
                 "task": {
                     "GEE": "Exporter {name} en tant qu'asset Google Earth Engine",
-                    "SEPAL": "Récupérer {name} vers l'espace de travail SEPAL"
+                    "SEPAL": "Récupérer {name} vers l'espace de travail SEPAL",
+                    "DRIVE": ""
                 },
                 "tileSize": {
                     "label": "",
