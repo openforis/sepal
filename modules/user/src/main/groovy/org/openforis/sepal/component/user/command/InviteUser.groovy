@@ -55,10 +55,11 @@ class InviteUserHandler implements CommandHandler<User, InviteUser> {
 
     User execute(InviteUser command) {
         def token = UUID.randomUUID() as String
+        def sanitizedUsername = command.invitedUsername?.toLowerCase()
         def now = clock.now()
         def userToInsert = new User(
                 name: command.name,
-                username: command.invitedUsername,
+                username: sanitizedUsername,
                 email: command.email,
                 organization: command.organization,
                 emailNotificationsEnabled: true,

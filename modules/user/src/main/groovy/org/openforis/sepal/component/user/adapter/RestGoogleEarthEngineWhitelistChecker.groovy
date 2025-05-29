@@ -14,9 +14,10 @@ class RestGoogleEarthEngineWhitelistChecker implements GoogleEarthEngineWhitelis
 
     boolean isWhitelisted(String username, GoogleTokens tokens) {
         try {
+            def sanitizedUsername = username?.toLowerCase()
             http.get(
                     path: 'healthcheck',
-                    headers: ['sepal-user': new User(username: username, googleTokens: tokens).jsonString()]
+                    headers: ['sepal-user': new User(username: sanitizedUsername, googleTokens: tokens).jsonString()]
             )
             return true
         } catch (Exception ignore) {

@@ -452,7 +452,7 @@ Button.propTypes = {
     innerButton: PropTypes.any,
     keybinding: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
     label: PropTypes.any,
-    labelStyle: PropTypes.oneOf(['default', 'smallcaps', 'smallcaps-highlight']),
+    labelStyle: PropTypes.oneOf(['default', 'smallcaps', 'smallcaps-highlight', 'info', 'success', 'error', 'warning']),
     linkTarget: PropTypes.string,
     linkUrl: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'selected', 'transparent', 'add', 'apply', 'cancel']),

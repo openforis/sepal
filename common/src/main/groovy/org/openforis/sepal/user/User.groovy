@@ -17,6 +17,7 @@ class User implements groovymvc.security.User {
     GoogleTokens googleTokens
     boolean emailNotificationsEnabled
     boolean manualMapRenderingEnabled
+    boolean privacyPolicyAccepted
     Status status
     Set<String> roles
     boolean systemUser
@@ -49,13 +50,14 @@ class User implements groovymvc.security.User {
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status,
                 roles: roles,
                 creationTime: creationTime,
                 updateTime: updateTime)
     }
 
-    User withDetails(String name, String email, String organization, String intendedUse, boolean emailNotificationsEnabled, boolean manualMapRenderingEnabled, boolean admin) {
+    User withDetails(String name, String email, String organization, String intendedUse, boolean emailNotificationsEnabled, boolean manualMapRenderingEnabled, boolean privacyPolicyAccepted, boolean admin) {
         new User(
                 id: id,
                 name: name,
@@ -65,6 +67,7 @@ class User implements groovymvc.security.User {
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status,
                 roles: admin ? [Roles.ADMIN] : [],
                 creationTime: creationTime,
@@ -81,6 +84,7 @@ class User implements groovymvc.security.User {
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: true,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status,
                 roles: admin ? [Roles.ADMIN] : [],
                 creationTime: creationTime,
@@ -97,6 +101,7 @@ class User implements groovymvc.security.User {
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: false,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status,
                 roles: admin ? [Roles.ADMIN] : [],
                 creationTime: creationTime,
@@ -113,6 +118,7 @@ class User implements groovymvc.security.User {
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status,
                 roles: roles,
                 creationTime: creationTime,
@@ -129,6 +135,7 @@ class User implements groovymvc.security.User {
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status,
                 roles: roles,
                 creationTime: creationTime,
@@ -145,6 +152,7 @@ class User implements groovymvc.security.User {
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: ACTIVE,
                 roles: roles,
                 creationTime: creationTime,
@@ -167,6 +175,7 @@ class User implements groovymvc.security.User {
                 ] : null,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status.name(),
                 roles: roles,
                 systemUser: systemUser,

@@ -1284,7 +1284,8 @@
                             "GEE": "Google Earth Engine asset",
                             "label": "Destination",
                             "required": "A destination must be selected",
-                            "SEPAL": "SEPAL workspace"
+                            "SEPAL": "SEPAL workspace",
+                            "DRIVE": "Google Drive"
                         },
                         "scale": {
                             "label": "Scale",
@@ -1317,7 +1318,8 @@
                     },
                     "task": {
                         "GEE": "Export {name} as a Google Earth Engine asset",
-                        "SEPAL": "Retrieve {name} to SEPAL workspace"
+                        "SEPAL": "Retrieve {name} to SEPAL workspace",
+                        "DRIVE": "Retrieve {name} to Google Drive"
                     },
                     "title": "Retrieve",
                     "tooltip": "Retrieve time-series"
@@ -1555,7 +1557,8 @@
                             "GEE": "Google Earth Engine asset",
                             "label": "Destination",
                             "required": "A destination must be selected",
-                            "SEPAL": "SEPAL workspace"
+                            "SEPAL": "SEPAL workspace",
+                            "DRIVE": "Google Drive"
                         },
                         "scale": {
                             "label": "Scale"
@@ -4559,7 +4562,8 @@
                     "GEE": "Google Earth Engine asset",
                     "label": "Destination",
                     "required": "A destination must be selected",
-                    "SEPAL": "SEPAL workspace"
+                    "SEPAL": "SEPAL workspace",
+                    "DRIVE": "Google Drive"
                 },
                 "fileDimensionsMultiple": {
                     "label": "File dimensions multiple",
@@ -4592,7 +4596,8 @@
                 },
                 "task": {
                     "GEE": "Export {name} as a Google Earth Engine asset",
-                    "SEPAL": "Retrieve {name} to SEPAL workspace"
+                    "SEPAL": "Retrieve {name} to SEPAL workspace",
+                    "DRIVE": "Retrieve {name} to Google Drive"
                 },
                 "tileSize": {
                     "label": "Tile size",
@@ -4969,6 +4974,13 @@
         "role": {
             "admin": "Admin",
             "user": "User"
+        },
+        "privacyPolicy": {
+            "title": "Privacy Policy",
+            "accept": {
+                "label": "Accept",
+                "error": "Could not update user"
+            }
         },
         "userDetails": {
             "form": {

@@ -361,6 +361,7 @@ class UserEndpoint {
                 googleTokens: user.googleTokens,
                 emailNotificationsEnabled: user.emailNotificationsEnabled,
                 manualMapRenderingEnabled: user.manualMapRenderingEnabled,
+                privacyPolicyAccepted: user.privacyPolicyAccepted,
                 status: user.status,
                 roles: user.roles,
                 systemUser: user.systemUser,

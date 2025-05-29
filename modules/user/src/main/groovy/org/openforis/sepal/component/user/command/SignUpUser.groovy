@@ -65,10 +65,11 @@ class SignUpUserHandler implements CommandHandler<Boolean, SignUpUser> {
     Boolean execute(SignUpUser command) {
         if (googleRecaptcha.isValid(command.recaptchaToken, 'SIGN_UP')) {
             def token = UUID.randomUUID() as String
+            def sanitizedUsername = command.username?.toLowerCase()
             def now = clock.now()
             def userToInsert = new User(
                     name: command.name,
-                    username: command.username,
+                    username: sanitizedUsername,
                     email: command.email,
                     organization: command.organization,
                     emailNotificationsEnabled: true,
