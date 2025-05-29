@@ -120,6 +120,10 @@
     color: #808080;
 }
 
+.admin {
+    color: white;
+}
+
 .sorted {
     color: var(--success-color);
 }

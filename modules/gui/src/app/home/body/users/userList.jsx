@@ -355,7 +355,7 @@ class UserItem extends React.PureComponent {
 
     render() {
         const {user, hovered} = this.props
-        const {username, name, status, googleTokens, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
+        const {username, name, status, admin, googleTokens, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
         const isGoogleUser = !!googleTokens
         return (
             <div
@@ -370,7 +370,7 @@ class UserItem extends React.PureComponent {
                     hovered ? lookStyles.hoverForcedOn : null
                 ].join(' ')}
                 onClick={this.onClick}>
-                {this.renderUsername(username)}
+                {this.renderUsername(username, admin)}
                 {this.renderName(name)}
                 {this.renderStatus(status, isGoogleUser)}
                 {this.renderLastUpdate(updateTime)}
@@ -382,10 +382,10 @@ class UserItem extends React.PureComponent {
         )
     }
 
-    renderUsername(username) {
+    renderUsername(username, admin) {
         const {highlight} = this.props
         return (
-            <div className={styles.username}>
+            <div className={[admin ? styles.admin : styles.username]}>
                 <Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{username}</Highlight>
             </div>
         )
