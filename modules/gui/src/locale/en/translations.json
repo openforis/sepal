@@ -1258,7 +1258,8 @@
                     },
                     "task": {
                         "GEE": "Export {name} as a Google Earth Engine asset",
-                        "SEPAL": "Retrieve {name} to SEPAL workspace"
+                        "SEPAL": "Retrieve {name} to SEPAL workspace",
+                        "DRIVE": "Retrieve {name} to Google Drive"
                     },
                     "title": "Retrieve",
                     "tooltip": "Retrieve time-series"
