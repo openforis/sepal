@@ -57,7 +57,7 @@ class User implements groovymvc.security.User {
                 updateTime: updateTime)
     }
 
-    User withDetails(String name, String email, String organization, String intendedUse, boolean emailNotificationsEnabled, boolean manualMapRenderingEnabled, boolean privacyPolicyAccepted, boolean admin) {
+    User withDetails(String name, String email, String organization, String intendedUse, boolean emailNotificationsEnabled, boolean manualMapRenderingEnabled, boolean admin) {
         new User(
                 id: id,
                 name: name,

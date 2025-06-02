@@ -166,7 +166,7 @@ export const validateEmail$ = ({email, recaptchaToken}) =>
         map(({valid}) => valid)
     )
 
-export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, privacyPolicyAccepted}) => {
+export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) => {
     actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
         .set('user.currentUser.name', name)
         .set('user.currentUser.email', email)
@@ -174,10 +174,12 @@ export const updateCurrentUserDetails$ = ({name, email, organization, intendedUs
         .set('user.currentUser.intendedUse', intendedUse)
         .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
         .set('user.currentUser.manualMapRenderingEnabled', manualMapRenderingEnabled)
-        .set('user.currentUser.privacyPolicyAccepted', privacyPolicyAccepted)
         .dispatch()
-    return api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, privacyPolicyAccepted})
+    return api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled})
 }
+
+export const acceptPrivacyPolicy$ = () =>
+    api.user.acceptPrivacyPolicy$()
 
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
     api.user.changePassword$({oldPassword, newPassword}).pipe(

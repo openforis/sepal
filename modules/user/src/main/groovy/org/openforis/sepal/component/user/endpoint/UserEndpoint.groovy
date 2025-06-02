@@ -227,6 +227,15 @@ class UserEndpoint {
                 send toJson(userToMap(user))
             }
 
+            post('/current/acceptPrivacyPolicy') {
+                response.contentType = 'application/json'
+                def command = new AcceptPrivacyPolicy()
+                command.username = sepalUser.username
+                component.submit(command)
+                response.addHeader('sepal-user-updated', sepalUser.username)
+                response.status = 204
+            }
+
             post('/details', [ADMIN]) {
                 response.contentType = 'application/json'
                 def command = new UpdateUserDetails(usernameToUpdate: params.username)
