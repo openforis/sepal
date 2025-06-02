@@ -25,12 +25,12 @@ class JdbcUserRepository implements UserRepository {
         def result = sql.executeInsert('''
                 INSERT INTO sepal_user (
                     username, name, email, organization, intended_use, email_notifications_enabled, manual_map_rendering_enabled,
-                    privacy_policy_accepted, token, admin, system_user, status, creation_time, update_time
+                    token, admin, system_user, status, creation_time, update_time
                 ) 
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                 [
                     user.username, user.name, user.email, user.organization, user.intendedUse, user.emailNotificationsEnabled, user.manualMapRenderingEnabled,
-                    user.privacyPolicyAccepted, token, user.admin, user.systemUser, User.Status.PENDING.name(), user.creationTime, user.updateTime
+                    token, user.admin, user.systemUser, User.Status.PENDING.name(), user.creationTime, user.updateTime
                 ]
         )
         return user.withId(result[0][0] as long)
@@ -39,8 +39,15 @@ class JdbcUserRepository implements UserRepository {
     void updateUserDetails(User user) {
         sql.executeUpdate('''
                 UPDATE sepal_user
-                SET name = ?, email = ?, organization = ?, intended_use = ?, email_notifications_enabled = ?, manual_map_rendering_enabled = ?, privacy_policy_accepted = ?, admin = ?, update_time = ? 
-                WHERE username = ?''', [user.name, user.email, user.organization, user.intendedUse, user.emailNotificationsEnabled, user.manualMapRenderingEnabled, user.privacyPolicyAccepted, user.admin, user.updateTime, user.username])
+                SET name = ?, email = ?, organization = ?, intended_use = ?, email_notifications_enabled = ?, manual_map_rendering_enabled = ?, admin = ?, update_time = ? 
+                WHERE username = ?''', [user.name, user.email, user.organization, user.intendedUse, user.emailNotificationsEnabled, user.manualMapRenderingEnabled, user.admin, user.updateTime, user.username])
+    }
+
+    void acceptPrivacyPolicy(String username) {
+        sql.executeUpdate('''
+                UPDATE sepal_user
+                SET privacy_policy_accepted = true 
+                WHERE username = ?''', [username])
     }
 
     void deleteUser(String username) {

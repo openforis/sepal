@@ -23,7 +23,6 @@ class UpdateUserDetails extends AbstractCommand<User> {
     String intendedUse
     boolean emailNotificationsEnabled
     boolean manualMapRenderingEnabled
-    boolean privacyPolicyAccepted
     boolean admin
 }
 
@@ -57,7 +56,6 @@ class UpdateUserDetailsHandler implements CommandHandler<User, UpdateUserDetails
                         command.intendedUse,
                         command.emailNotificationsEnabled,
                         command.manualMapRenderingEnabled,
-                        command.privacyPolicyAccepted,
                         command.admin
                 )
                 .withUpdateTime(clock.now())

@@ -8,6 +8,8 @@ interface UserRepository {
 
     void updateUserDetails(User user)
 
+    void acceptPrivacyPolicy(String username)
+
     void deleteUser(String username)
 
     List<User> listUsers()

@@ -80,10 +80,13 @@ export default {
             body: {token, password, recaptchaToken}
         }),
 
-    updateCurrentUserDetails$: ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, privacyPolicyAccepted}) =>
+    updateCurrentUserDetails$: ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) =>
         post$('/api/user/current/details', {
-            body: {name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, privacyPolicyAccepted}
+            body: {name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}
         }),
+
+    acceptPrivacyPolicy$: () =>
+        post$('/api/user/current/acceptPrivacyPolicy'),
 
     changePassword$: ({oldPassword, newPassword}) =>
         post$('/api/user/current/password', {

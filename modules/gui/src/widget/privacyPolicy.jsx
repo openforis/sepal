@@ -4,7 +4,7 @@ import React from 'react'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {msg} from '~/translate'
-import {currentUser, updateCurrentUserDetails$} from '~/user'
+import {acceptPrivacyPolicy$, currentUser} from '~/user'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
@@ -26,8 +26,7 @@ class _PrivacyPolicy extends React.Component {
 
     // regular subscription to make sure backend request is not cancelled
     acceptPrivacyPolicy() {
-        const {user} = this.props
-        updateCurrentUserDetails$({...user, privacyPolicyAccepted: true}).subscribe({
+        acceptPrivacyPolicy$().subscribe({
             error: error => Notifications.error({message: msg('user.privacyPolicy.accept.error'), error})
         })
     }

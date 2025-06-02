@@ -30,8 +30,7 @@ const fields = {
     intendedUse: new Form.Field(),
     // .notBlank('user.userDetails.form.intendedUse.required'),
     emailNotificationsEnabled: new Form.Field(),
-    manualMapRenderingEnabled: new Form.Field(),
-    privacyPolicyAccepted: new Form.Field(),
+    manualMapRenderingEnabled: new Form.Field()
 }
 
 const mapStateToProps = state => {
@@ -44,8 +43,7 @@ const mapStateToProps = state => {
             organization: user.organization,
             intendedUse: user.intendedUse,
             emailNotificationsEnabled: user.emailNotificationsEnabled,
-            manualMapRenderingEnabled: user.manualMapRenderingEnabled,
-            privacyPolicyAccepted: user.privacyPolicyAccepted
+            manualMapRenderingEnabled: user.manualMapRenderingEnabled
         },
         tasks: state.tasks
     }
