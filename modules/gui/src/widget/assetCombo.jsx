@@ -85,7 +85,7 @@ class _AssetCombo extends React.Component {
     }
 
     renderReloadButton() {
-        const {assets: {loading: loadingUserAssets}} = this.props
+        const {assets: {busy: loadingUserAssets}} = this.props
         const {searchingDatasets} = this.state
         return (
             <Button
