@@ -355,8 +355,7 @@ class UserItem extends React.PureComponent {
 
     render() {
         const {user, hovered} = this.props
-        const {username, name, status, admin, googleTokens, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
-        const isGoogleUser = !!googleTokens
+        const {username, name, status, admin, googleUser, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
         return (
             <div
                 className={[
@@ -372,7 +371,7 @@ class UserItem extends React.PureComponent {
                 onClick={this.onClick}>
                 {this.renderUsername(username, admin)}
                 {this.renderName(name)}
-                {this.renderStatus(status, isGoogleUser)}
+                {this.renderStatus(status, googleUser)}
                 {this.renderLastUpdate(updateTime)}
                 {this.renderBudgetUpdateRequest(budgetUpdateRequest)}
                 {this.renderInstanceSpending(budget, current)}

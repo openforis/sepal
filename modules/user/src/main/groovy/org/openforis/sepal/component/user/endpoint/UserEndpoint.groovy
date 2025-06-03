@@ -245,14 +245,14 @@ class UserEndpoint {
                 command.username = sepalUser.username
                 def user = component.submit(command)
                 response.addHeader('sepal-user-updated', params.username)
-                send toJson(userToMap(user))
+                send toJson(userToMap(user, false))
             }
 
             get('/list', [ADMIN]) {
                 response.contentType = 'application/json'
                 def users = component.submit(new ListUsers())
                 users.removeAll { it.systemUser }
-                send toJson(users.collect { userToMap(it) })
+                send toJson(users.collect { userToMap(it, false) })
             }
 
             get('/email-notifications-enabled/{email}', [ADMIN]) {
@@ -359,7 +359,7 @@ class UserEndpoint {
         }
     }
 
-    Map userToMap(User user) {
+    Map userToMap(User user, boolean withGoogleTokens = true) {
         [
                 id: user.id,
                 name: user.name,
@@ -367,7 +367,8 @@ class UserEndpoint {
                 email: user.email,
                 organization: user.organization,
                 intendedUse: user.intendedUse,
-                googleTokens: user.googleTokens,
+                googleUser: user.googleTokens != null,
+                googleTokens: withGoogleTokens ? user.googleTokens : null,
                 emailNotificationsEnabled: user.emailNotificationsEnabled,
                 manualMapRenderingEnabled: user.manualMapRenderingEnabled,
                 privacyPolicyAccepted: user.privacyPolicyAccepted,
