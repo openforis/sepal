@@ -70,7 +70,6 @@
         "recentAssets": "",
         "userAssets": "",
         "otherAssets": "",
-        "reload": "",
         "settings": "",
         "datasets": {
             "community": {
@@ -86,6 +85,10 @@
         "copyId": {
             "tooltip": "",
             "success": ""
+        },
+        "reload": {
+            "tooltip": "",
+            "progress": ""
         },
         "browser": {
             "tooltip": "",
@@ -164,10 +167,6 @@
             "assets": ""
         },
         "controls": {
-            "reload": {
-                "tooltip": "",
-                "progress": ""
-            },
             "clearSelection": {
                 "tooltip": ""
             },
