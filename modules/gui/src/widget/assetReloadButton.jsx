@@ -12,7 +12,6 @@ class _AssetReloadButton extends React.Component {
     constructor(props) {
         super(props)
         this.reloadAssets = this.reloadAssets.bind(this)
-
     }
 
     render() {
