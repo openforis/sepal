@@ -12,13 +12,13 @@ import {connect} from '~/connect'
 import {escapeRegExp, splitString} from '~/string'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
-import {isServiceAccount} from '~/user'
 import {uuid} from '~/uuid'
 import {withAssets} from '~/widget/assets'
 import {Button} from '~/widget/button'
 import {CrudItem} from '~/widget/crudItem'
 import {Notifications} from '~/widget/notifications'
 
+import {AssetReloadButton} from './assetReloadButton'
 import {Combo} from './combo'
 
 // check for allowed characters and minimum path depth (2)
@@ -85,20 +85,13 @@ class _AssetCombo extends React.Component {
     }
 
     renderReloadButton() {
-        const {assets: {busy: loadingUserAssets}} = this.props
         const {searchingDatasets} = this.state
         return (
-            <Button
+            <AssetReloadButton
                 key='reload'
-                chromeless
                 shape='none'
                 air='none'
-                icon='rotate'
-                iconAttributes={{spin: loadingUserAssets || searchingDatasets}}
-                tooltip={msg('asset.reload')}
-                tabIndex={-1}
-                disabled={isServiceAccount() || loadingUserAssets || searchingDatasets}
-                onClick={this.reloadAssets}
+                spin={searchingDatasets}
             />
         )
     }
