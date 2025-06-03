@@ -70,7 +70,6 @@
         "recentAssets": "Asset récent",
         "userAssets": "Assets utilisateur",
         "otherAssets": "Autre assets",
-        "reload": "",
         "settings": "",
         "datasets": {
             "community": {
@@ -86,6 +85,10 @@
         "copyId": {
             "tooltip": "",
             "success": "Id de l'asset copié dans le presse-papiers"
+        },
+        "reload": {
+            "tooltip": "",
+            "progress": ""
         },
         "browser": {
             "tooltip": "Ouvrir le navigateur d'asset",
@@ -164,10 +167,6 @@
             "assets": ""
         },
         "controls": {
-            "reload": {
-                "tooltip": "",
-                "progress": ""
-            },
             "clearSelection": {
                 "tooltip": "Vider la sélection"
             },
