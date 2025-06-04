@@ -7,9 +7,11 @@ import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Icon} from '~/widget/icon'
 import {Textarea} from '~/widget/input'
+import {Label} from '~/widget/label'
 import {Layout} from '~/widget/layout'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
+import {Widget} from '~/widget/widget'
 
 import styles from './appAdmin.module.css'
 const log = getLogger('appAdmin')
@@ -170,75 +172,91 @@ export class AppAdmin extends React.Component {
     }
 
     renderLogsView() {
-        const {logs} = this.state
-        
-        if (!logs || logs.length === 0) {
-            return <div>{msg('apps.admin.logs.empty')}</div>
-        }
-        const logContent = logs.join('\n')
+        const {logs, loadingLogs} = this.state
         
         return (
-            <div>
-                {msg('apps.admin.logs.title')}
-                <Textarea
-                    className={styles.logs}
-                    value={logContent}
-                    readOnly={true}
-                    spellCheck={false}
-                    minRows={5}
-                />
-            </div>
+            <Widget label={msg('apps.admin.logs.title')} framed>
+                {loadingLogs ? (
+                    <div className={styles.row}>
+                        <div className={styles.fieldValue}>
+                            <Icon name='spinner'/> {msg('apps.admin.status.checking')}
+                        </div>
+                    </div>
+                ) : !logs || logs.length === 0 ? (
+                    <div className={styles.row}>
+                        <div className={styles.fieldValue}>{msg('apps.admin.logs.empty')}</div>
+                    </div>
+                ) : (
+                    <Textarea
+                        className={styles.logs}
+                        value={logs.join('\n')}
+                        readOnly={true}
+                        spellCheck={false}
+                        minRows={5}
+                    />
+                )}
+            </Widget>
         )
     }
 
     renderRepoInfo() {
         const {repo, error} = this.state
         const {url: repoUrl, lastCloneTimestamp, lastCommitId, commitUrl} = repo
+        
         return (
-            <div>
-                {msg('apps.admin.repo.title')}
+            <Widget label={msg('apps.admin.repo.title')} framed>
                 {repoUrl && (
-                    <div>
-                        {msg('apps.admin.repo.url')}: {<a
-                            href={repoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.commitLink}
-                        >
-                            {repoUrl}
-                        </a>}
+                    <div className={styles.row}>
+                        <Label className={styles.fieldLabel}>{msg('apps.admin.repo.url')}:</Label>
+                        <div className={styles.fieldValue}>
+                            <a
+                                href={repoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                {repoUrl}
+                            </a>
+                        </div>
                     </div>
                 )}
+                
                 {lastCloneTimestamp && (
-                    <div>
-                        {msg('apps.admin.repo.lastClone')}: {this.formatTimestamp(lastCloneTimestamp)}
+                    <div className={styles.row}>
+                        <Label className={styles.fieldLabel}>{msg('apps.admin.repo.lastClone')}:</Label>
+                        <div className={styles.fieldValue}>
+                            {this.formatTimestamp(lastCloneTimestamp)}
+                        </div>
                     </div>
                 )}
+                
                 {lastCommitId && (
-                    <div>
-                        {msg('apps.admin.repo.lastCommit')}: {
-                            commitUrl
+                    <div className={styles.row}>
+                        <Label className={styles.fieldLabel}>{msg('apps.admin.repo.lastCommit')}:</Label>
+                        <div className={styles.fieldValue}>
+                            {commitUrl
                                 ? <a
                                     href={commitUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={styles.commitLink}
                                 >
                                     {lastCommitId.substring(0, 7)}
                                 </a>
                                 : lastCommitId.substring(0, 7)
-                        }
+                            }
+                        </div>
                     </div>
                 )}
+                
                 {error && (
-                    <div>{error}</div>
+                    <div className={styles.row}>
+                        <div className={styles.fieldValue}>{error}</div>
+                    </div>
                 )}
-            </div>
+            </Widget>
         )
     }
 
     renderContainerInfo() {
-
         const {container, loadingContainer} = this.state
         const {exists: containerExists, status, healthStatus, stats: containerStats} = container
 
@@ -254,77 +272,89 @@ export class AppAdmin extends React.Component {
         }[healthStatus] || styles.statusUnknown
         
         if (!loadingContainer && !containerExists) {
-            return <div>{msg('apps.admin.container.notFound')}</div>
+            return (
+                <Widget label={msg('apps.admin.container.title')} framed>
+                    <div className={styles.row}>
+                        <div className={styles.fieldValue}>{msg('apps.admin.container.notFound')}</div>
+                    </div>
+                </Widget>
+            )
         }
         
         return (
-            <div>
-                {msg('apps.admin.container.title')}
-                <div>
-                    <div className={styles.statusRow}>
-                        <span>Container status:</span>
-                        <Icon
-                            name={loadingContainer ? 'spinner' : 'circle'}
-                            className={loadingContainer ? styles.statusSpinner : statusClass}
-                        />
-                        <span>
-                            {loadingContainer
-                                ? msg('apps.admin.status.checking')
-                                : msg(`apps.admin.status.${status}`)}
-                        </span>
+            <Widget label={msg('apps.admin.container.title')} framed>
+                <div className={styles.row}>
+                    <Label className={styles.fieldLabel}>Container status:</Label>
+                    <div className={styles.fieldValue}>
+                        <div className={styles.statusRow}>
+                            <Icon
+                                name={loadingContainer ? 'spinner' : 'circle'}
+                                className={loadingContainer ? styles.statusSpinner : statusClass}
+                            />
+                            <span>
+                                {loadingContainer
+                                    ? msg('apps.admin.status.checking')
+                                    : msg(`apps.admin.status.${status}`)}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div>
-                    <div className={styles.statusRow}>
-                        <span>Main process:</span>
-                        <Icon
-                            name={loadingContainer ? 'spinner' : 'circle'}
-                            className={loadingContainer ? styles.statusSpinner : healthClass}
-                        />
-                        <span>
-                            {loadingContainer
-                                ? msg('apps.admin.status.checking')
-                                : msg(`apps.admin.health.${healthStatus}`)}
-                        </span>
+                <div className={styles.row}>
+                    <Label className={styles.fieldLabel}>Main process:</Label>
+                    <div className={styles.fieldValue}>
+                        <div className={styles.statusRow}>
+                            <Icon
+                                name={loadingContainer ? 'spinner' : 'circle'}
+                                className={loadingContainer ? styles.statusSpinner : healthClass}
+                            />
+                            <span>
+                                {loadingContainer
+                                    ? msg('apps.admin.status.checking')
+                                    : msg(`apps.admin.health.${healthStatus}`)}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div className={styles.statusRow}>
-                    <span>Memory usage:</span>
-                    {loadingContainer ? (
-                        <span className={styles.statsValue}>
-                            <Icon name='spinner' className={styles.statusSpinner}/> {msg('apps.admin.status.checking')}
-                        </span>
-                    ) : containerStats ? (
-                        <span className={styles.statsValue}>
-                            {containerStats.memoryUsage} / {containerStats.memoryLimit} ({containerStats.memoryPercent})
-                        </span>
-                    ) : (
-                        <span className={styles.statsValue}>
-                            {msg('apps.admin.status.notAvailable')}
-                        </span>
-                    )}
+                <div className={styles.row}>
+                    <Label className={styles.fieldLabel}>Memory usage:</Label>
+                    <div className={styles.fieldValue}>
+                        {loadingContainer ? (
+                            <span className={styles.statusRow}>
+                                <Icon name='spinner' className={styles.statusSpinner}/> {msg('apps.admin.status.checking')}
+                            </span>
+                        ) : containerStats ? (
+                            <span>
+                                {containerStats.memoryUsage} / {containerStats.memoryLimit} ({containerStats.memoryPercent})
+                            </span>
+                        ) : (
+                            <span>
+                                {msg('apps.admin.status.notAvailable')}
+                            </span>
+                        )}
+                    </div>
                 </div>
 
-                <div className={styles.statusRow}>
-                    <span>CPU usage:</span>
-                    {loadingContainer ? (
-                        <span className={styles.statsValue}>
-                            <Icon name='spinner' className={styles.statusSpinner}/> {msg('apps.admin.status.checking')}
-                        </span>
-                    ) : containerStats ? (
-                        <span className={styles.statsValue}>
-                            {containerStats.cpuPercent}
-                        </span>
-                    ) : (
-                        <span className={styles.statsValue}>
-                            {msg('apps.admin.status.notAvailable')}
-                        </span>
-                    )}
+                <div className={styles.row}>
+                    <Label className={styles.fieldLabel}>CPU usage:</Label>
+                    <div className={styles.fieldValue}>
+                        {loadingContainer ? (
+                            <span className={styles.statusRow}>
+                                <Icon name='spinner' className={styles.statusSpinner}/> {msg('apps.admin.status.checking')}
+                            </span>
+                        ) : containerStats ? (
+                            <span>
+                                {containerStats.cpuPercent}
+                            </span>
+                        ) : (
+                            <span>
+                                {msg('apps.admin.status.notAvailable')}
+                            </span>
+                        )}
+                    </div>
                 </div>
-
-            </div>
+            </Widget>
         )
     }
 
@@ -332,10 +362,9 @@ export class AppAdmin extends React.Component {
         const {loadingContainer, loadingLogs, updatingRepo, repo} = this.state
 
         return (
-            <div className={styles.section}>
-                {msg('apps.admin.controls')}
-                <div>
-                    <Layout type='horizontal' >
+            <Widget label={msg('apps.admin.controls')} framed>
+                <div className={styles.controlsContainer}>
+                    <Layout type='horizontal' spacing='compact' alignment='center'>
                         <Button
                             look='default'
                             icon='sync-alt'
@@ -367,12 +396,10 @@ export class AppAdmin extends React.Component {
                             label={msg('apps.admin.button.reloadLogs')}
                             onClick={() => this.reloadLogs()}
                             disabled={loadingLogs}
-                            style={{marginLeft: '10px'}}
                         />
                     </Layout>
                 </div>
-            </div>
-
+            </Widget>
         )
     }
 
@@ -380,26 +407,17 @@ export class AppAdmin extends React.Component {
         const {app, onClose} = this.props
         
         return (
-            <Panel className={styles.panel}type='modal'>
+            <Panel className={styles.panel} type='modal'>
                 <Panel.Header
                     icon='info-circle'
                     title={msg('apps.admin.title', {app: app.id || 'Unknown'})}
                 />
                 <Panel.Content scrollable>
-                    <Layout type='vertical' spacing='none'>
-                        <div className={styles.section}>
-                            {this.renderContainerInfo()}
-                        </div>
-
-                        <div className={styles.section}>
-                            {this.renderRepoInfo()}
-                        </div>
-                        <div className={styles.section}>
-                            {this.renderControls()}
-                        </div>
-                        <div className={styles.section}>
-                            {this.renderLogsView()}
-                        </div>
+                    <Layout type='vertical' spacing='compact'>
+                        {this.renderContainerInfo()}
+                        {this.renderRepoInfo()}
+                        {this.renderControls()}
+                        {this.renderLogsView()}
                     </Layout>
                 </Panel.Content>
                 <Panel.Buttons>
