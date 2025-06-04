@@ -1,25 +1,17 @@
 const {forkJoin, switchMap} = require('rxjs')
 const moment = require('moment')
-const {mkdirSafe$} = require('#task/rxjs/fileSystem')
 const {exportImageToDrive$} = require('../jobs/export/toDrive')
 const ImageFactory = require('#sepal/ee/imageFactory')
 const {getCurrentContext$} = require('#task/jobs/service/context')
 const {setWorkloadTag} = require('./workloadTag')
 
 module.exports = {
-    submit$: (taskId, {image: {recipe, workspacePath, bands, ...retrieveOptions}}) => {
+    submit$: (taskId, {image: {recipe, bands, ...retrieveOptions}}) => {
         setWorkloadTag(recipe)
         return getCurrentContext$().pipe(
-            switchMap(({config}) => {
+            switchMap(() => {
                 const description = recipe.title || recipe.placeholder
-                const preferredDownloadDir = workspacePath
-                    ? `${config.homeDir}/${workspacePath}/`
-                    : `${config.homeDir}/downloads/${description}/`
-                return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
-                    switchMap(downloadDir =>
-                        export$(taskId, {description, recipe, downloadDir, bands, ...retrieveOptions})
-                    )
-                )
+                return export$(taskId, {description, recipe, bands, ...retrieveOptions})
             })
         )
     }

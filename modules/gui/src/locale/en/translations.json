@@ -130,7 +130,6 @@
         "recentAssets": "Recent assets",
         "userAssets": "User assets",
         "otherAssets": "Other assets",
-        "reload": "Reload assets",
         "settings": "Asset settings",
         "datasets": {
             "community": {
@@ -146,6 +145,10 @@
         "copyId": {
             "tooltip": "Copy asset id to clipboard",
             "success": "Asset id copied to clipboard"
+        },
+        "reload": {
+            "tooltip": "Reload assets",
+            "progress": "Reloading... {count}"
         },
         "browser": {
             "tooltip": "Open asset browser",
@@ -224,10 +227,6 @@
             "assets": "Earth Engine assets"
         },
         "controls": {
-            "reload": {
-                "tooltip": "Reload",
-                "progress": "Reloading... {count}"
-            },
             "clearSelection": {
                 "tooltip": "Clear selection"
             },

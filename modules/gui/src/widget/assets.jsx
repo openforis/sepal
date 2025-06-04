@@ -144,12 +144,10 @@ class _Assets extends React.Component {
 
     reload() {
         this.userAssets.upstream$.next({reload: true})
-        this.setLoading(true)
     }
 
     cancelReload() {
         this.userAssets.upstream$.next({cancelReload: true})
-        this.setLoading(false)
     }
 
     removePath(path) {

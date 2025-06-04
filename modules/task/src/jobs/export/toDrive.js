@@ -60,14 +60,12 @@ const exportImageToDrive$ = (taskId, {
             ee.data.ExportType.IMAGE
         )
         const task = ee.batch.ExportTask.create(serverConfig)
-        return concat(
-            exportToDrive$(taskId, {
-                task,
-                description: `export to Drive (${description})`,
-                folder,
-                retries
-            })
-        )
+        return exportToDrive$(taskId, {
+            task,
+            description: `export to Drive (${description})`,
+            folder,
+            retries
+        })
     }
 
     return formatRegion$(region).pipe(
