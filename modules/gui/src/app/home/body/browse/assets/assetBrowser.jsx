@@ -9,6 +9,7 @@ import {getLogger} from '~/log'
 import lookStyles from '~/style/look.module.css'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
+import {AssetReloadButton} from '~/widget/assetReloadButton'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {ButtonPopup} from '~/widget/buttonPopup'
@@ -22,11 +23,10 @@ import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {SortButtons} from '~/widget/sortButtons'
 import {ToggleButton} from '~/widget/toggleButton'
 
+import styles from './assetBrowser.module.css'
 import {AssetTree} from './assetTree'
 
 const log = getLogger('browse')
-
-import styles from './assetBrowser.module.css'
 
 const ANIMATION_DURATION_MS = 1000
 
@@ -431,29 +431,15 @@ class _AssetBrowser extends React.Component {
     }
 
     renderActionButtons() {
-        const {tree, status: {busy, progress}} = this.state
+        const {tree} = this.state
         const {files, directories} = AssetTree.getSelectedItems(tree)
         const nothingSelected = files.length === 0 && directories.length === 0
         const oneDirectorySelected = files.length === 0 && directories.length === 1
         const deletable = files.length > 0 || directories.length > 0 && !directories.find(file => file.length === 1)
-        const reloadTooltip = busy
-            ? msg('browse.controls.reload.progress', {count: progress})
-            : msg('browse.controls.reload.tooltip')
-
         return (
             <ButtonGroup layout='horizontal'>
-                <Button
-                    chromeless
+                <AssetReloadButton
                     shape='circle'
-                    icon='rotate'
-                    iconAttributes={{spin: busy}}
-                    tooltip={reloadTooltip}
-                    tooltipPlacement='top'
-                    tooltipVisible={progress}
-                    tooltipAllowedWhenDisabled
-                    disabled={busy}
-                    keybinding='Shift+R'
-                    onClick={this.reload}
                 />
                 <ButtonPopup
                     chromeless

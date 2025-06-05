@@ -85,6 +85,9 @@ export default {
             body: {name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}
         }),
 
+    acceptPrivacyPolicy$: () =>
+        post$('/api/user/current/acceptPrivacyPolicy'),
+
     changePassword$: ({oldPassword, newPassword}) =>
         post$('/api/user/current/password', {
             body: {oldPassword, newPassword}

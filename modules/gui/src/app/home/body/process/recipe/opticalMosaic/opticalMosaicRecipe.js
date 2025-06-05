@@ -132,7 +132,7 @@ const submitRetrieveRecipeTask = recipe => {
     const visualizations = getAllVisualizations(recipe)
         .filter(({bands: visBands}) => visBands.every(band => bands.includes(band)))
     const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
-    const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
+    const operation = `image.${destination}`
     const recipeProperties = {
         recipe_id: recipe.id,
         recipe_projectId: recipe.projectId,

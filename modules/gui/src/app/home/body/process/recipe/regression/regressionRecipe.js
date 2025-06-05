@@ -49,7 +49,7 @@ const submitRetrieveRecipeTask = recipe => {
     const bands = ['regression']
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
-    const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
+    const operation = `image.${destination}`
     const recipeProperties = {
         recipe_id: recipe.id,
         recipe_projectId: recipe.projectId,

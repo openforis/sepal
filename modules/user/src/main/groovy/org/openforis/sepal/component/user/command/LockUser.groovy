@@ -43,7 +43,8 @@ class LockUserHandler implements CommandHandler<User, LockUser> {
     }
 
     User execute(LockUser command) {
-        def user = userRepository.lookupUser(command.usernameToLock)
+        def sanitzedUsername = command.usernameToLock?.toLowerCase()
+        def user = userRepository.lookupUser(sanitzedUsername)
                 
         if (!user) {
             LOG.info("Cannot lock non-existing user: " + command)
@@ -55,7 +56,7 @@ class LockUserHandler implements CommandHandler<User, LockUser> {
             return user
         }
 
-        userRepository.updateStatus(command.usernameToLock, Status.LOCKED)
+        userRepository.updateStatus(sanitzedUsername, Status.LOCKED)
         def lockedUser = user.withStatus(Status.LOCKED)
         messageQueue.publish(user: lockedUser)
         return lockedUser

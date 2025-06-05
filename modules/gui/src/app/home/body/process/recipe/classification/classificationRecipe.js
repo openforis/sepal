@@ -171,7 +171,7 @@ const submitRetrieveRecipeTask = recipe => {
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const pyramidingPolicy = {}
     bands.forEach(band => pyramidingPolicy[band] = band === 'class' ? 'mode' : 'mean')
-    const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
+    const operation = `image.${destination}`
     const recipeProperties = {
         recipe_id: recipe.id,
         recipe_projectId: recipe.projectId,

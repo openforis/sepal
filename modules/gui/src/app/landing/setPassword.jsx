@@ -4,7 +4,7 @@ import {switchMap} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import {compose} from '~/compose'
-import {history, query} from '~/route'
+import {query} from '~/route'
 import {msg} from '~/translate'
 import {credentialsPosted, resetPassword$, tokenUser, validateToken$} from '~/user'
 import {Button} from '~/widget/button'
@@ -66,7 +66,6 @@ class _SetPassword extends React.Component {
                     message: msg('landing.validate-token.error'),
                     timeout: 10
                 })
-                history().push('/') // [TODO] fix this
             }
         )
     }
@@ -92,7 +91,6 @@ class _SetPassword extends React.Component {
             ),
             user => {
                 credentialsPosted(user)
-                history().push('/')
                 Notifications.success({message: msg('landing.reset-password.success')})
             },
             () => {

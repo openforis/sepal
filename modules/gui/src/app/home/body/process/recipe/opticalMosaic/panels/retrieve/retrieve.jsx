@@ -20,6 +20,7 @@ class _Retrieve extends React.Component {
                 defaultScale={minScale(recipe)}
                 toSepal
                 toEE
+                toDrive
                 onRetrieve={retrieveOptions => {
                     return this.retrieve(retrieveOptions)
                 }}

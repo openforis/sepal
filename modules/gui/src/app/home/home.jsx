@@ -13,6 +13,7 @@ import {Assets} from '~/widget/assets'
 import {GoogleAccountConnection} from '~/widget/googleAccountConnection'
 import {Notifications} from '~/widget/notifications'
 import {PortalContainer} from '~/widget/portal'
+import {PrivacyPolicy} from '~/widget/privacyPolicy'
 import {User} from '~/widget/user'
 import {VersionCheck} from '~/widget/versionCheck'
 import {WebSocketConnection} from '~/widget/webSocketConnection'
@@ -150,6 +151,7 @@ class _Home extends React.Component {
                     <Assets/>
                     <GoogleAccountConnection/>
                     <VersionCheck/>
+                    <PrivacyPolicy/>
                 </div>
             </ActivationContext>
         )

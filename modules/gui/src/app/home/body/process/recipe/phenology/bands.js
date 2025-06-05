@@ -23,6 +23,10 @@ const bandGroups = [
     ['dayOfYear_2', 'days_2', 'median_2', 'slope_2', 'offset_2'],
     ['dayOfYear_3', 'days_3', 'median_3', 'slope_3', 'offset_3'],
     ['dayOfYear_4', 'days_4', 'median_4', 'slope_4', 'offset_4'],
+    [
+        'january', 'february', 'march', 'april', 'may', 'june',
+        'july', 'august', 'september', 'october', 'november', 'december'
+    ],
 ]
 
 const bandsByGroup = {
@@ -50,5 +54,17 @@ const bandsByGroup = {
         median_4: {dataType: typeInt},
         slope_4: {dataType: typeInt},
         offset_4: {dataType: typeFloat},
+        january: {dataType: typeFloat},
+        february: {dataType: typeFloat},
+        march: {dataType: typeFloat},
+        april: {dataType: typeFloat},
+        may: {dataType: typeFloat},
+        june: {dataType: typeFloat},
+        july: {dataType: typeFloat},
+        august: {dataType: typeFloat},
+        september: {dataType: typeFloat},
+        october: {dataType: typeFloat},
+        november: {dataType: typeFloat},
+        december: {dataType: typeFloat},
     }
 }

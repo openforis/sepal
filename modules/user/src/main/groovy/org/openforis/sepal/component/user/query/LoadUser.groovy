@@ -17,6 +17,7 @@ class LoadUserHandler implements QueryHandler<User, LoadUser> {
     }
 
     User execute(LoadUser query) {
-        return userRepository.lookupUser(query.username)
+        def sanitizedUsername = query.username?.toLowerCase()
+        return userRepository.lookupUser(sanitizedUsername)
     }
 }

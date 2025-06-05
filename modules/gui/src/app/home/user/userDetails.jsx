@@ -30,7 +30,7 @@ const fields = {
     intendedUse: new Form.Field(),
     // .notBlank('user.userDetails.form.intendedUse.required'),
     emailNotificationsEnabled: new Form.Field(),
-    manualMapRenderingEnabled: new Form.Field(),
+    manualMapRenderingEnabled: new Form.Field()
 }
 
 const mapStateToProps = state => {

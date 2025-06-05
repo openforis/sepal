@@ -212,6 +212,22 @@
     color: var(--success-color);
 }
 
+.button.labelStyle-info>.contents {
+    color: var(--info-color);
+}
+
+.button.labelStyle-success>.contents {
+    color: var(--success-color);
+}
+
+.button.labelStyle-warning>.contents {
+    color: var(--warning-color);
+}
+
+.button.labelStyle-error>.contents {
+    color: var(--error-color);
+}
+
 /* click-hold */
 
 .button.hold {
