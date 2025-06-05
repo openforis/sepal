@@ -2974,6 +2974,7 @@
                 "indexes": "Indices",
                 "label": "Bandes",
                 "metadata": "Metadonnées",
+                "months": "Mois",
                 "panSharpen": "",
                 "placeholder": "Sélectionner les bandes à visualiser"
             },
