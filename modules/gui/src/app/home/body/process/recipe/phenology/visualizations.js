@@ -17,9 +17,13 @@ export const visualizationOptions = _recipe => {
     })
     const bandCombinationOptions = {
         label: msg('process.mosaic.bands.combinations'),
-        options: visualizations.BASE.map(visParamsToOption),
+        options: visualizations.BASE.map(visParamsToOption)
     }
-    return [bandCombinationOptions]
+    const monthOptions = {
+        label: msg('process.mosaic.bands.months'),
+        options: visualizations.MONTHS.map(visParamsToOption)
+    }
+    return [bandCombinationOptions, monthOptions]
 }
 
 export const visualizations = {
@@ -52,5 +56,16 @@ export const visualizations = {
             min: -30,
             max: 70
         })
-    ]
+    ],
+    MONTHS: [
+        'january', 'february', 'march', 'april', 'may', 'june',
+        'july', 'august', 'september', 'october', 'november', 'december']
+        .map(month =>
+            normalize({
+                type: 'continuous',
+                bands: [month],
+                min: [-10000],
+                max: [10000],
+                palette: '#112040, #1C67A0, #6DB6B3, #FFFCCC, #ABAC21, #177228, #172313'
+            }))
 }

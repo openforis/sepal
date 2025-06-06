@@ -3034,6 +3034,7 @@
                 "indexes": "Indexes",
                 "label": "Bands",
                 "metadata": "Metadata",
+                "months": "Months",
                 "panSharpen": "Pan sharpen",
                 "placeholder": "Select preview bands"
             },
