@@ -141,6 +141,13 @@ const endpoints = [
     },
     {
         prefix: true,
+        path: '/api/app-launcher',
+        target: `http://${process.env.APP_LAUNCHER_HOST || modules.appLauncher}`,
+        authenticate: true,
+        rewrite: false
+    },
+    {
+        prefix: true,
         path: '/api/email',
         target: `http://${modules.email}`,
         authenticate: true

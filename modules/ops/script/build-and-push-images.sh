@@ -66,6 +66,7 @@ build user-assets
 build user-files
 build gui
 build ceo-gateway
+build app-launcher
 build app-manager
 build sepal-server
 
@@ -81,6 +82,7 @@ push ldap-backup
 push user
 push user-storage
 push user-storage-backup
+push app-launcher
 push app-manager
 push sepal
 push user-assets
