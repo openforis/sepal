@@ -14,7 +14,7 @@
         "logger": "info",
         "main": "info",
         "scheduler": "info",
-        "pool": "info",
+        "pool": "debug",
         "service": "info",
         "tokenLimiter": "info",
         "transport": "info",
