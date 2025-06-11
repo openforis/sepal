@@ -42,6 +42,35 @@ export class AppAdmin extends React.Component {
         }
     }
 
+    render() {
+        const {app, onClose} = this.props
+        
+        return (
+            <Panel className={styles.panel} type='modal'>
+                <Panel.Header
+                    icon='info-circle'
+                    title={msg('apps.admin.title', {app: app.id || 'Unknown'})}
+                    label
+                />
+                <Panel.Content scrollable>
+                    <Layout type='vertical' spacing='compact'>
+                        {this.renderContainerInfo()}
+                        {this.renderRepoInfo()}
+                        {this.renderLogsView()}
+                    </Layout>
+                </Panel.Content>
+                <Panel.Buttons>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Close
+                            keybinding={['Enter', 'Escape']}
+                            onClick={onClose}
+                        />
+                    </Panel.Buttons.Main>
+                </Panel.Buttons>
+            </Panel>
+        )
+    }
+
     componentDidMount() {
         this.loadStatus()
         this.loadLogs()
@@ -131,7 +160,7 @@ export class AppAdmin extends React.Component {
         )
     }
     
-    updateApp() {
+    updateAppRepo() {
         const {app} = this.props
         this.setState({updatingRepo: true})
         
@@ -139,7 +168,6 @@ export class AppAdmin extends React.Component {
             response => {
                 this.setState({updatingRepo: false})
                 this.loadStatus()
-                this.loadLogs()
                 if (response.updated) {
                     Notifications.success({message: msg('apps.admin.update.success')})
                 } else {
@@ -175,11 +203,11 @@ export class AppAdmin extends React.Component {
         const {logs, loadingLogs} = this.state
         
         return (
-            <Widget label={msg('apps.admin.logs.title')} framed>
+            <Widget label={msg('apps.admin.logs.title')} framed labelButtons={this.renderLogButton()}>
                 {loadingLogs ? (
                     <div className={styles.row}>
                         <div className={styles.fieldValue}>
-                            <Icon name='spinner'/> {msg('apps.admin.status.checking')}
+                            <Icon name='spinner'/> {msg('apps.admin.status.loading')}
                         </div>
                     </div>
                 ) : !logs || logs.length === 0 ? (
@@ -204,11 +232,11 @@ export class AppAdmin extends React.Component {
         const {url: repoUrl, lastCloneTimestamp, lastCommitId, commitUrl} = repo
         
         return (
-            <Widget label={msg('apps.admin.repo.title')} framed>
-                {repoUrl && (
-                    <div className={styles.row}>
-                        <Label className={styles.fieldLabel}>{msg('apps.admin.repo.url')}:</Label>
-                        <div className={styles.fieldValue}>
+            <Widget label={msg('apps.admin.repo.title')} framed labelButtons={this.renderRepositoryButtons()}>
+                <div className={styles.row}>
+                    <Label className={styles.fieldLabel}>{msg('apps.admin.repo.url')}:</Label>
+                    <div className={styles.fieldValue}>
+                        {repoUrl ? (
                             <a
                                 href={repoUrl}
                                 target="_blank"
@@ -216,24 +244,27 @@ export class AppAdmin extends React.Component {
                             >
                                 {repoUrl}
                             </a>
-                        </div>
+                        ) : (
+                            msg('apps.admin.status.loading')
+                        )}
                     </div>
-                )}
+                </div>
                 
-                {lastCloneTimestamp && (
-                    <div className={styles.row}>
-                        <Label className={styles.fieldLabel}>{msg('apps.admin.repo.lastClone')}:</Label>
-                        <div className={styles.fieldValue}>
-                            {this.formatTimestamp(lastCloneTimestamp)}
-                        </div>
+                <div className={styles.row}>
+                    <Label className={styles.fieldLabel}>{msg('apps.admin.repo.lastClone')}:</Label>
+                    <div className={styles.fieldValue}>
+                        {lastCloneTimestamp
+                            ? this.formatTimestamp(lastCloneTimestamp)
+                            : msg('apps.admin.status.loading')
+                        }
                     </div>
-                )}
+                </div>
                 
-                {lastCommitId && (
-                    <div className={styles.row}>
-                        <Label className={styles.fieldLabel}>{msg('apps.admin.repo.lastCommit')}:</Label>
-                        <div className={styles.fieldValue}>
-                            {commitUrl
+                <div className={styles.row}>
+                    <Label className={styles.fieldLabel}>{msg('apps.admin.repo.lastCommit')}:</Label>
+                    <div className={styles.fieldValue}>
+                        {lastCommitId
+                            ? (commitUrl
                                 ? <a
                                     href={commitUrl}
                                     target="_blank"
@@ -241,14 +272,15 @@ export class AppAdmin extends React.Component {
                                 >
                                     {lastCommitId.substring(0, 7)}
                                 </a>
-                                : lastCommitId.substring(0, 7)
-                            }
-                        </div>
+                                : lastCommitId.substring(0, 7))
+                            : msg('apps.admin.status.loading')
+                        }
                     </div>
-                )}
+                </div>
                 
                 {error && (
                     <div className={styles.row}>
+                        <Label className={styles.fieldLabel}>{msg('apps.admin.repo.error')}:</Label>
                         <div className={styles.fieldValue}>{error}</div>
                     </div>
                 )}
@@ -275,6 +307,7 @@ export class AppAdmin extends React.Component {
             return (
                 <Widget label={msg('apps.admin.container.title')} framed>
                     <div className={styles.row}>
+                        <Label className={styles.fieldLabel}>{msg('apps.admin.container.status')}:</Label>
                         <div className={styles.fieldValue}>{msg('apps.admin.container.notFound')}</div>
                     </div>
                 </Widget>
@@ -282,9 +315,9 @@ export class AppAdmin extends React.Component {
         }
         
         return (
-            <Widget label={msg('apps.admin.container.title')} framed>
+            <Widget label={msg('apps.admin.container.title')} framed labelButtons={this.renderContainerButtons()}>
                 <div className={styles.row}>
-                    <Label className={styles.fieldLabel}>Container status:</Label>
+                    <Label className={styles.fieldLabel}>{msg('apps.admin.container.containerStatus')}:</Label>
                     <div className={styles.fieldValue}>
                         <div className={styles.statusRow}>
                             <Icon
@@ -293,7 +326,7 @@ export class AppAdmin extends React.Component {
                             />
                             <span>
                                 {loadingContainer
-                                    ? msg('apps.admin.status.checking')
+                                    ? msg('apps.admin.status.loading')
                                     : msg(`apps.admin.status.${status}`)}
                             </span>
                         </div>
@@ -301,7 +334,7 @@ export class AppAdmin extends React.Component {
                 </div>
 
                 <div className={styles.row}>
-                    <Label className={styles.fieldLabel}>Main process:</Label>
+                    <Label className={styles.fieldLabel}>{msg('apps.admin.container.mainProcess')}:</Label>
                     <div className={styles.fieldValue}>
                         <div className={styles.statusRow}>
                             <Icon
@@ -310,7 +343,7 @@ export class AppAdmin extends React.Component {
                             />
                             <span>
                                 {loadingContainer
-                                    ? msg('apps.admin.status.checking')
+                                    ? msg('apps.admin.status.loading')
                                     : msg(`apps.admin.health.${healthStatus}`)}
                             </span>
                         </div>
@@ -318,11 +351,11 @@ export class AppAdmin extends React.Component {
                 </div>
 
                 <div className={styles.row}>
-                    <Label className={styles.fieldLabel}>Memory usage:</Label>
+                    <Label className={styles.fieldLabel}>{msg('apps.admin.container.memoryUsage')}:</Label>
                     <div className={styles.fieldValue}>
                         {loadingContainer ? (
                             <span className={styles.statusRow}>
-                                <Icon name='spinner' className={styles.statusSpinner}/> {msg('apps.admin.status.checking')}
+                                <Icon name='spinner' className={styles.statusSpinner}/> {msg('apps.admin.status.loading')}
                             </span>
                         ) : containerStats ? (
                             <span>
@@ -330,18 +363,18 @@ export class AppAdmin extends React.Component {
                             </span>
                         ) : (
                             <span>
-                                {msg('apps.admin.status.notAvailable')}
+                                {msg('apps.admin.status.loading')}
                             </span>
                         )}
                     </div>
                 </div>
 
                 <div className={styles.row}>
-                    <Label className={styles.fieldLabel}>CPU usage:</Label>
+                    <Label className={styles.fieldLabel}>{msg('apps.admin.container.cpuUsage')}:</Label>
                     <div className={styles.fieldValue}>
                         {loadingContainer ? (
                             <span className={styles.statusRow}>
-                                <Icon name='spinner' className={styles.statusSpinner}/> {msg('apps.admin.status.checking')}
+                                <Icon name='spinner' className={styles.statusSpinner}/> {msg('apps.admin.status.loading')}
                             </span>
                         ) : containerStats ? (
                             <span>
@@ -349,7 +382,7 @@ export class AppAdmin extends React.Component {
                             </span>
                         ) : (
                             <span>
-                                {msg('apps.admin.status.notAvailable')}
+                                {msg('apps.admin.status.loading')}
                             </span>
                         )}
                     </div>
@@ -358,79 +391,64 @@ export class AppAdmin extends React.Component {
         )
     }
 
-    renderControls() {
-        const {loadingContainer, loadingLogs, updatingRepo, repo} = this.state
+    renderContainerButtons() {
+        const {loadingContainer} = this.state
 
-        return (
-            <Widget label={msg('apps.admin.controls')} framed>
-                <div className={styles.controlsContainer}>
-                    <Layout type='horizontal' spacing='compact' alignment='center'>
-                        <Button
-                            look='default'
-                            icon='sync-alt'
-                            label={msg('apps.admin.button.reloadStatus')}
-                            onClick={() => this.reloadStatus()}
-                            disabled={loadingContainer}
-                        />
-                        <Button
-                            look='default'
-                            icon='sync'
-                            label={msg('apps.admin.button.restart')}
-                            onClick={() => this.restartApp()}
-                            disabled={loadingContainer}
-                        />
-                        <Button
-                            look='default'
-                            icon={updatingRepo ? 'spinner' : 'cloud-download-alt'}
-                            label={msg('apps.admin.button.update')}
-                            onClick={() => this.updateApp()}
-                            disabled={updatingRepo}
-                            tooltip={repo.updateAvailable
-                                ? msg('apps.admin.update.available')
-                                : msg('apps.admin.update.checkForUpdates')}
-                        />
-                        <Button
-                            look='default'
-                            size='small'
-                            icon='file-alt'
-                            label={msg('apps.admin.button.reloadLogs')}
-                            onClick={() => this.reloadLogs()}
-                            disabled={loadingLogs}
-                        />
-                    </Layout>
-                </div>
-            </Widget>
-        )
-    }
+        return <Layout type='horizontal' spacing='compact'>
+            <Button
+                icon='sync-alt'
+                tooltip={msg('apps.admin.button.reloadStatus')}
+                chromeless
+                shape='none'
+                onClick={() => this.reloadStatus()}
+                disabled={loadingContainer}
+            />
 
-    render() {
-        const {app, onClose} = this.props
+            <Button
+                icon='redo'
+                chromeless
+                shape='none'
+                tooltip={msg('apps.admin.button.restart')}
+                onClick={() => this.restartApp()}
+                disabled={loadingContainer}
+            />
+
+        </Layout>
         
+    }
+
+    renderRepositoryButtons() {
+        const {updatingRepo, repo} = this.state
         return (
-            <Panel className={styles.panel} type='modal'>
-                <Panel.Header
-                    icon='info-circle'
-                    title={msg('apps.admin.title', {app: app.id || 'Unknown'})}
+            <Layout type='horizontal' spacing='compact'>
+                <Button
+                    icon={updatingRepo ? 'spinner' : 'cloud-download-alt'}
+                    chromeless
+                    shape='none'
+                    onClick={() => this.updateAppRepo()}
+                    disabled={updatingRepo}
+                    tooltip={repo.updateAvailable
+                        ? msg('apps.admin.update.available')
+                        : msg('apps.admin.update.checkForUpdates')}
                 />
-                <Panel.Content scrollable>
-                    <Layout type='vertical' spacing='compact'>
-                        {this.renderContainerInfo()}
-                        {this.renderRepoInfo()}
-                        {this.renderControls()}
-                        {this.renderLogsView()}
-                    </Layout>
-                </Panel.Content>
-                <Panel.Buttons>
-                    <Panel.Buttons.Main>
-                        <Panel.Buttons.Close
-                            keybinding={['Enter', 'Escape']}
-                            onClick={onClose}
-                        />
-                    </Panel.Buttons.Main>
-                </Panel.Buttons>
-            </Panel>
+            </Layout>
         )
     }
+
+    renderLogButton() {
+        const {loadingLogs} = this.state
+        return (
+            <Button
+                chromeless
+                shape='none'
+                icon={loadingLogs ? 'spinner' : 'file-alt'}
+                tooltip={msg('apps.admin.button.reloadLogs')}
+                onClick={() => this.reloadLogs()}
+                disabled={loadingLogs}
+            />
+        )
+    }
+
 }
 
 AppAdmin.propTypes = {

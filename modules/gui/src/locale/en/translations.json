@@ -56,53 +56,48 @@
         },
         "running": "App is running",
         "noInstanceRequired" : "No instance required",
-        "admin" : {
-            "tooltip" : "Open administration panel",
-            "controls" : "Admin controls",
+        "admin": {
             "title": "{app} management panel",
-            "loading" : "Loading {app} management panel...",
-            "logs" : {
-                "title" : "Logs",
+            "logs": {
+                "title": "Logs",
                 "empty": "No logs available"
             },
-            "container" : {
-                "title" : "Container info",
-                "loading" : "Loading container info...",
-                "notFound" : "Container not found"
+            "container": {
+                "title": "Container info",
+                "notFound": "Container not found",
+                "status": "Status",
+                "containerStatus": "Container status",
+                "mainProcess": "Main process",
+                "memoryUsage": "Memory usage",
+                "cpuUsage": "CPU usage"
             },
             "repo": {
                 "title": "Repository",
                 "url": "Repository origin",
-                "branch": "Branch",
                 "lastCommit": "Last commit",
-                "lastUpdate": "Last update",
-                "lastClone" : "Repository last cloned",
-                "updateAvailable": "Update available"
+                "lastClone": "Repository last cloned",
+                "error": "Error"
             },
             "health": {
                 "healthy": "Healthy",
-                "unhealthy": "Unhealthy",
-                "starting" : "Starting"
+                "starting": "Starting"
             },
             "restart": {
                 "error": "Failed to restart",
                 "success": "Restarted"
             },
-            "button" : {
+            "button": {
                 "restart": "Restart container",
-                "update" : "Update repo",
-                "reloadStatus" : "Reload status",
-                "reloadLogs" : "Reaload logs"
+                "reloadStatus": "Reload status",
+                "reloadLogs": "Reload logs"
             },
-            "viewingLogs" : "Viewing logs for {app}",
-            "status" : {
-                "title" : "Container status",
-                "running" : "Running",
-                "idle" : "Idle",
-                "error" : "Error",
-                "unknown" : "Unknown",
-                "checking" : "Checking",
-                "exited" : "Exited"
+            "status": {
+                "running": "Running",
+                "idle": "Idle",
+                "error": "Error",
+                "checking": "Checking",
+                "notAvailable": "Not available",
+                "loading": "Loading..."
             },
             "timestamp": {
                 "never": "Never"
