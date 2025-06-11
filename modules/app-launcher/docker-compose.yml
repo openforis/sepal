@@ -12,6 +12,8 @@ services:
           hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/app-launcher:${SEPAL_VERSION:-latest}"
     container_name: app-launcher
+    ports:
+      - 80:80
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - "${SEPAL_DATA_DIR}/app-manager/apps.json:/var/lib/sepal/app-manager/apps.json"
