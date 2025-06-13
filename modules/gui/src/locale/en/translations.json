@@ -76,7 +76,8 @@
                 "url": "Repository origin",
                 "lastCommit": "Last commit",
                 "lastClone": "Repository last cloned",
-                "error": "Error"
+                "error": "Error",
+                "branch" : "Branch"
             },
             "health": {
                 "healthy": "Healthy",

@@ -1,6 +1,6 @@
 const log = require('#sepal/log').getLogger('main')
 const path = require('path')
-const {exec$} = require('./terminal')
+const executeCommand = require('./terminal')
 
 const EE_PRIVATE_KEY = process.env.EE_PRIVATE_KEY
 const EE_ACCOUNT = process.env.EE_ACCOUNT
@@ -33,28 +33,22 @@ function createCredentialsFile() {
 
     const credentialsJson = JSON.stringify(credentials, null, 2)
 
-    const writeCredentials$ = (credentialsJson, credentialsPath) => {
+    // Write credentials to file
+    const writeCredentials = async (credentialsJson, credentialsPath) => {
         // Escape single quotes in JSON to prevent shell syntax errors
         const escapedJson = credentialsJson.replace(/'/g, '\'\\\'\'')
-        const command = 'sh'
-        const args = [
-            '-c',
-            `echo '${escapedJson}' > '${credentialsPath}'`,
-        ]
-        return exec$('/', command, args)
+        const command = `echo '${escapedJson}' > '${credentialsPath}'`
+        
+        try {
+            await executeCommand(command, {cwd: '/'})
+            log.info('Credentials written successfully')
+            log.info('Write operation completed.')
+        } catch (err) {
+            log.error('Error writing credentials:', err)
+        }
     }
 
-    writeCredentials$(credentialsJson, credentialsPath).subscribe({
-        next: () => {
-            log.info('Credentials written successfully')
-        },
-        error: err => {
-            log.error('Error writing credentials:', err)
-        },
-        complete: () => {
-            log.info('Write operation completed.')
-        },
-    })
+    writeCredentials(credentialsJson, credentialsPath)
     
 }
 

@@ -9,11 +9,12 @@ export default {
             query: {lines}
         }),
     
-    restartApp$: (appName, forceRebuild = false) =>
+    restartApp$: appName =>
         post$(`/api/app-launcher/management/restart/${appName}`, {
-            query: {forceRebuild}
         }),
     
-    updateApp$: appName =>
-        post$(`/api/app-launcher/management/update/${appName}`)
+    updateApp$: (appName, branch) =>
+        post$(`/api/app-launcher/management/update/${appName}`, {
+            query: {branch}
+        })
 }

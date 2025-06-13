@@ -50,6 +50,5 @@ ADD modules/${MODULE_NAME}/config ./config
 
 # add shell scripts
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
-ADD modules/${MODULE_NAME}/update-app.sh /usr/local/bin/update-app
 
 CMD ["sh", "/usr/local/bin/start.sh"]

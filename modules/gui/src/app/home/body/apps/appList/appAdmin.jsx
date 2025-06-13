@@ -35,7 +35,8 @@ export class AppAdmin extends React.Component {
                 lastCloneTimestamp: null,
                 lastCommitId: null,
                 commitUrl: null,
-                updateAvailable: false
+                updateAvailable: false,
+                branch: null
             },
             logs: [],
             error: null
@@ -44,7 +45,6 @@ export class AppAdmin extends React.Component {
 
     render() {
         const {app, onClose} = this.props
-        
         return (
             <Panel className={styles.panel} type='modal'>
                 <Panel.Header
@@ -83,43 +83,7 @@ export class AppAdmin extends React.Component {
             clearInterval(statusInterval)
         }
     }
-    
-    loadStatus() {
-        const {app} = this.props
-        api.appLauncher.getAppStatus$(app.id).subscribe(
-            info => {
-                this.setState({
-                    loadingContainer: false,
-                    container: {
-                        exists: !!info.container,
-                        status: info.container?.status || 'idle',
-                        healthStatus: info.container?.health?.status || null,
-                        stats: info.container?.stats || null,
-                        clients: info.container?.clients || null
-                    },
-                    repo: {
-                        url: info.repo?.url || null,
-                        lastCloneTimestamp: info.repo?.lastCloneTimestamp || null,
-                        lastCommitId: info.repo?.lastCommitId || null,
-                        commitUrl: info.repo?.commitUrl || null,
-                        updateAvailable: info.repo?.updateAvailable || false
-                    },
-                    error: info.error || null
-                })
-            },
-            error => {
-                this.setState({
-                    loadingContainer: false,
-                    container: {
-                        ...this.state.container,
-                        status: 'error'
-                    },
-                    error: 'Failed to load status: ' + (error.message || 'Unknown error')
-                })
-            }
-        )
-    }
-    
+        
     loadLogs() {
         const {app} = this.props
         this.setState({
@@ -141,42 +105,82 @@ export class AppAdmin extends React.Component {
             }
         )
     }
+
+    loadStatus() {
+        const {app} = this.props
+        api.appLauncher.getAppStatus$(app.id).subscribe(
+            info => {
+                this.setState({
+                    loadingContainer: false,
+                    container: {
+                        exists: !!info.container,
+                        status: info.container?.status || 'idle',
+                        healthStatus: info.container?.health?.status || null,
+                        stats: info.container?.stats || null,
+                        clients: info.container?.clients || null
+                    },
+                    repo: {
+                        url: info.repo?.url || null,
+                        lastCloneTimestamp: info.repo?.lastCloneTimestamp || null,
+                        lastCommitId: info.repo?.lastCommitId || null,
+                        commitUrl: info.repo?.commitUrl || null,
+                        updateAvailable: info.repo?.updateAvailable || false,
+                        branch: info.repo?.branch || null
+                    },
+                    error: info.error || null
+                })
+            },
+            error => {
+                this.setState({
+                    loadingContainer: false,
+                    container: {
+                        ...this.state.container,
+                        status: 'error'
+                    },
+                    error: 'Failed to load status: ' + (error.message || 'Unknown error')
+                })
+                Notifications.error({
+                    message: error.error
+                })
+            }
+        )
+    }
     
     restartApp() {
         const {app} = this.props
-        this.setState({loadingContainer: true})
+        this.setState({loadingContainer: true, logs: []})
         
         api.appLauncher.restartApp$(app.id).subscribe(
-            () => {
+            response => {
                 this.loadStatus()
                 this.loadLogs()
-                Notifications.success({message: msg('apps.admin.restart.success')})
+                Notifications.success({message: response.message || msg('apps.admin.restart.success')})
             },
             error => {
                 this.setState({loadingContainer: false})
-                Notifications.error({message: msg('apps.admin.restart.error')})
+                Notifications.error({message: error.error || msg('apps.admin.restart.error')})
                 log.error('Failed to restart app', error)
             }
         )
     }
     
-    updateAppRepo() {
+    updateApp() {
         const {app} = this.props
+        const {branch} = this.state.repo
         this.setState({updatingRepo: true})
-        
-        api.appLauncher.updateApp$(app.id).subscribe(
+        api.appLauncher.updateApp$(app.id, branch).subscribe(
             response => {
                 this.setState({updatingRepo: false})
                 this.loadStatus()
                 if (response.updated) {
-                    Notifications.success({message: msg('apps.admin.update.success')})
+                    Notifications.success({message: response.message || msg('apps.admin.update.success')})
                 } else {
-                    Notifications.info({message: msg('apps.admin.update.noChanges')})
+                    Notifications.info({message: response.message || msg('apps.admin.update.noChanges')})
                 }
             },
             error => {
                 this.setState({updatingRepo: false})
-                Notifications.error({message: msg('apps.admin.update.error')})
+                Notifications.error({message: error.error || msg('apps.admin.update.error')})
                 log.error('Failed to update app', error)
             }
         )
@@ -229,7 +233,7 @@ export class AppAdmin extends React.Component {
 
     renderRepoInfo() {
         const {repo, error} = this.state
-        const {url: repoUrl, lastCloneTimestamp, lastCommitId, commitUrl} = repo
+        const {url: repoUrl, lastCloneTimestamp, lastCommitId, commitUrl, branch} = repo
         
         return (
             <Widget label={msg('apps.admin.repo.title')} framed labelButtons={this.renderRepositoryButtons()}>
@@ -249,7 +253,12 @@ export class AppAdmin extends React.Component {
                         )}
                     </div>
                 </div>
-                
+                <div className={styles.row}>
+                    <Label className={styles.fieldLabel}>{msg('apps.admin.repo.branch')}:</Label>
+                    <div className={styles.fieldValue}>
+                        {branch || msg('apps.admin.status.loading')}
+                    </div>
+                </div>
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel}>{msg('apps.admin.repo.lastClone')}:</Label>
                     <div className={styles.fieldValue}>
@@ -259,7 +268,6 @@ export class AppAdmin extends React.Component {
                         }
                     </div>
                 </div>
-                
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel}>{msg('apps.admin.repo.lastCommit')}:</Label>
                     <div className={styles.fieldValue}>
@@ -277,7 +285,6 @@ export class AppAdmin extends React.Component {
                         }
                     </div>
                 </div>
-                
                 {error && (
                     <div className={styles.row}>
                         <Label className={styles.fieldLabel}>{msg('apps.admin.repo.error')}:</Label>
@@ -425,7 +432,7 @@ export class AppAdmin extends React.Component {
                     icon={updatingRepo ? 'spinner' : 'cloud-download-alt'}
                     chromeless
                     shape='none'
-                    onClick={() => this.updateAppRepo()}
+                    onClick={() => this.updateApp()}
                     disabled={updatingRepo}
                     tooltip={repo.updateAvailable
                         ? msg('apps.admin.update.available')

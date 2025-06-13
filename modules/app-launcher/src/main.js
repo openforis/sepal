@@ -5,7 +5,7 @@ const log = require('#sepal/log').getLogger('main')
 const url = require('url')
 const {isMatch} = require('micromatch')
 const _ = require('lodash')
-const {port, managementPort} = require('./config')
+const {port, managementPort, monitorEnabled} = require('./config')
 const {proxyEndpoints$} = require('./proxy')
 
 const {createCredentialsFile} = require('./gee')
@@ -40,6 +40,7 @@ const startManagementServer = async () => {
         port,
         routes
     })
+    log.info(`Management server started on port ${port}`)
 }
 
 const registerUpgradeListener = (server, proxies) => {
@@ -70,10 +71,18 @@ const registerUpgradeListener = (server, proxies) => {
 }
 
 const main = async () => {
+    
     createCredentialsFile()
-    monitorApps()
     await startManagementServer()
     startServer()
+    
+    if (monitorEnabled) {
+        log.info('Starting app monitoring')
+        monitorApps()
+    } else {
+        log.info('App monitoring disabled')
+    }
+    
     log.info('Initialized')
 }
 

@@ -1,33 +1,82 @@
-const {Subject} = require('rxjs')
-const log = require('#sepal/log').getLogger('terminal')
 const {spawn} = require('child_process')
+const log = require('#sepal/log').getLogger('terminal')
+const {ClientException} = require('sepal/src/exception')
 
-const exec$ = (workingDir, command, args, env) => {
-    const result$ = new Subject()
+// taken from dev-env/src/terminal.js
+const exec = ({command, args, cwd, env, detached, enableStdIn, showStdOut, showStdErr}) =>
+    new Promise((resolve, reject) => {
+        if (args) {
+            log.trace(`Running command ${command} with args:`, args)
+        } else {
+            log.trace(`Running command ${command} with no args:`)
+        }
+
+        const cmd = spawn(command, args, {
+            cwd,
+            env,
+            detached,
+            stdio: detached
+                ? 'ignore'
+                : enableStdIn
+                    ? 'inherit'
+                    : 'pipe',
+
+        })
+
+        if (detached) {
+            cmd.unref()
+            resolve({pid: cmd.pid})
+        } else {
+            let stdout = ''
+            let stderr = ''
+
+            cmd.stdout?.on('data', data => {
+                const out = data.toString('utf8')
+                if (showStdOut) {
+                    process.stdout.write(out)
+                }
+                stdout += out
+            })
+    
+            cmd.stderr?.on('data', data => {
+                const err = data.toString('utf8')
+                if (showStdErr) {
+                    process.stderr.write(err)
+                }
+                stderr += err
+            })
+    
+            cmd.on('close', code =>
+                code
+                    ? reject({code, stderr, stdout})
+                    : resolve({stdout, stderr})
+            )
+        }
+    })
+
+const executeCommand = async (command, options = {}) => {
     try {
-        let lastLine
-        log.debug(() => `${workingDir}$ ${command} ${args.join(' ')}`)
-        const process = spawn(command, args, {cwd: workingDir, env: env})
-        process.stdout.on('data', data => {
-            const s = data.toString().trim()
-            lastLine = s
-            log.debug(s)
+        log.debug(() => `Executing command: ${command}`)
+        if (options.cwd) {
+            log.debug(() => `Working directory: ${options.cwd}`)
+        }
+        
+        const {stdout, stderr} = await exec({
+            command: '/bin/sh',
+            args: ['-c', command],
+            cwd: options.cwd,
+            env: options.env,
+            showStdOut: options.showStdOut !== false,
+            showStdErr: options.showStdErr !== false
         })
-        process.stderr.on('data', data => log.warn(data.toString().trim()))
-        process.on('close', () => {
-            result$.next(lastLine)
-            result$.complete()
-        })
-        process.on('error', error => {
-            result$.error(error)
-        })
-        process.on('uncaughtException', error => {
-            result$.error(error)
-        })
+        
+        return {stdout, stderr}
     } catch (error) {
-        result$.error(error)
+        log.error(`Command execution failed: ${error.message || error.stderr || 'Unknown error'}`)
+        if (error.stderr) log.error(`Command stderr: ${error.stderr}`)
+        if (error.stdout) log.error(`Command stdout: ${error.stdout}`)
+        throw new ClientException(`Command execution failed: ${error.stderr || error.message || 'Unknown error'}`)
     }
-    return result$
 }
 
-module.exports = {exec$}
+module.exports = executeCommand

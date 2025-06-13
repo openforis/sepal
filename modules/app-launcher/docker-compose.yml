@@ -22,7 +22,6 @@ services:
     init: true
     environment:
       SEPAL_HOST: "${SEPAL_HOST}"
-      USERS_HOME_PATH: "${SEPAL_DATA_DIR}/sepal/home"
       EE_CREDENTIALS_PATH: "${SEPAL_DATA_DIR}/app-launcher/service-account-credentials.json"
       DOCKER_REGISTRY_HOST: "${DOCKER_REGISTRY_HOST}"
       SEPAL_DATA_DIR: "${SEPAL_DATA_DIR}"
@@ -30,8 +29,6 @@ services:
       EE_ACCOUNT: "${EE_ACCOUNT}"
       EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
       GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
-      GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
-      NICFI_PLANET_API_KEY: "${NICFI_PLANET_API_KEY}"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "80"]
       timeout: 60s

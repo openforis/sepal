@@ -12,4 +12,3 @@ services:
     volumes:  # To allow dynamic reloading in dev
       - ${SEPAL_PROJECT_DIR}/lib/js/shared:/usr/local/src/sepal/lib/js/shared
       - ${SEPAL_PROJECT_DIR}/modules/app-launcher:/usr/local/src/sepal/modules/app-launcher
-      - ${SEPAL_PROJECT_DIR}/modules/app-launcher/update-app.sh:/usr/local/bin/update-app

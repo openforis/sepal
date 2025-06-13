@@ -1,8 +1,9 @@
-const {EMPTY, from, interval, catchError, delay, exhaustMap, filter, map, concatMap, switchMap} = require('rxjs')
+const {EMPTY, from, interval, catchError, delay, exhaustMap, filter, map, concatMap, switchMap, of} = require('rxjs')
 const log = require('#sepal/log').getLogger('apps')
 const {fileToJson$} = require('./file')
-const {exec$} = require('./terminal')
 const {basename} = require('path')
+const {cloneOrPull} = require('./git')
+const {buildAndRestart, startContainer, isContainerRunning} = require('./docker')
 
 const monitorApps = () =>
     interval(10000).pipe(
@@ -38,25 +39,29 @@ const apps$ = () =>
         })
     )
 
-const updateApp$ = app => {
-    // Explicitly pass EE_CREDENTIALS_PATH to the child process
-    const env = {
-        EE_CREDENTIALS_PATH: process.env.EE_CREDENTIALS_PATH,
-        PATH: process.env.PATH,
-        HOME: process.env.HOME,
-        SEPAL_HOST: process.env.SEPAL_HOST
-    }
-    return exec$(
-        '/',
-        'update-app',
-        [app.path, app.label, app.repository, app.branch || 'HEAD'],
-        env
-    ).pipe(
+const updateApp$ = ({path, repository, branch, name}) =>
+    from(cloneOrPull({path, repository, branch})).pipe(
+        switchMap(({action}) => {
+            log.info(`Git operation completed: ${action}`)
+            if (action === 'cloned' || action === 'updated') {
+                log.info(`Repository ${action}. Building and restarting Docker containers.`)
+                return from(buildAndRestart(name))
+            }
+            return from(isContainerRunning(name)).pipe(
+                switchMap(running => {
+                    if (!running) {
+                        log.info('Containers are not running. Starting them without rebuilding.')
+                        return from(startContainer(name))
+                    }
+                    log.info('No updates available and containers are running.')
+                    return of(null)
+                })
+            )
+        }),
         catchError(error => {
             log.error('Failed to update app:', error)
             return EMPTY
         })
     )
-}
 
 module.exports = {monitorApps}

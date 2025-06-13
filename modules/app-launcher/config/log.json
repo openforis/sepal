@@ -4,7 +4,10 @@
         "main": "debug",
         "proxy": "debug",
         "user": "debug",
-        "terminal": "info",
-        "managementRoutes" : "debug"
+        "managementRoutes" : "debug",
+        "appsService": "debug",
+        "git": "debug",
+        "terminal": "debug",
+        "http/server" : "debug"
     }
 }
