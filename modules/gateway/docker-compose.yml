@@ -37,6 +37,7 @@ services:
       SEPAL_HOST: "${SEPAL_HOST}"
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
+      APP_LAUNCHER_HOST: "${SEPAL_APPS_HOST}"
     networks:
       - sepal
     extra_hosts:

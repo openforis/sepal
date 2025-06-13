@@ -23,6 +23,11 @@ ansible-playbook deploy.yml \
     --private-key="$PRIVATE_KEY" \
     --extra-vars "env_file=$CONFIG_HOME/env CONFIG_HOME=$CONFIG_HOME VERSION=$VERSION"
 
+ansible-playbook deploy-sepal-apps.yml \
+    -i "$(../inventory.sh SepalApps)" \
+    --private-key="$PRIVATE_KEY" \
+    --extra-vars "env_file=$CONFIG_HOME/env CONFIG_HOME=$CONFIG_HOME VERSION=$VERSION"
+
 ansible-playbook deploy-sepal-storage.yml \
     -i "$(../inventory.sh SepalStorage)" \
     --private-key="$PRIVATE_KEY" \

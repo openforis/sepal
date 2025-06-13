@@ -12,6 +12,7 @@ import {select} from '~/store'
 import {simplifyString, splitString} from '~/string'
 import {getLanguage, msg} from '~/translate'
 import {isServiceAccount} from '~/user'
+import {currentUser} from '~/user'
 import {Button} from '~/widget/button'
 import {Buttons} from '~/widget/buttons'
 import {CrudItem} from '~/widget/crudItem'
@@ -23,7 +24,9 @@ import {Notifications} from '~/widget/notifications'
 import {CenteredProgress} from '~/widget/progress'
 import {SearchBox} from '~/widget/searchBox'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
+import {Tag} from '~/widget/tag'
 
+import {AppAdmin} from './appAdmin'
 import {AppDetails} from './appDetails'
 import {AppItem} from './appItem'
 import styles from './appList.module.css'
@@ -37,7 +40,9 @@ const mapStateToProps = () => ({
     filterValue: select('apps.filterValue'),
     filterValues: select('apps.filterValues') || [],
     tagFilter: select('apps.tagFilter') || IGNORE,
-    googleAccountFilter: select('apps.googleAccountFilter')
+    googleAccountFilter: select('apps.googleAccountFilter'),
+    user: currentUser()
+    
 })
 
 const getHighlightMatcher = memoizeOne(
@@ -48,12 +53,14 @@ const getHighlightMatcher = memoizeOne(
 
 class _AppList extends React.Component {
     state = {
-        app: null
+        app: null,
+        adminApp: null
     }
 
     constructor(props) {
         super(props)
         this.closeAppDetails = this.closeAppDetails.bind(this)
+        this.closeAppAdmin = this.closeAppAdmin.bind(this)
         this.setFilter = this.setFilter.bind(this)
         this.setTagFilter = this.setTagFilter.bind(this)
         this.toggleGoogleAccountFilter = this.toggleGoogleAccountFilter.bind(this)
@@ -70,6 +77,7 @@ class _AppList extends React.Component {
                         ? this.renderProgress()
                         : this.renderAppList()}
                     {this.renderAppDetails()}
+                    {this.renderAppAdmin()}
                 </Content>
             </SectionLayout>
         )
@@ -84,10 +92,21 @@ class _AppList extends React.Component {
         this.setState({app: null})
     }
 
+    closeAppAdmin() {
+        this.setState({adminApp: null})
+    }
+
     renderAppDetails() {
         const {app} = this.state
         return app
             ? <AppDetails app={app} onClose={this.closeAppDetails}/>
+            : null
+    }
+
+    renderAppAdmin() {
+        const {adminApp} = this.state
+        return adminApp
+            ? <AppAdmin app={adminApp} onClose={this.closeAppAdmin}/>
             : null
     }
 
@@ -258,6 +277,39 @@ class _AppList extends React.Component {
             : this.renderAppStoppedIcon()
     }
 
+    renderNoInstanceRequiredChip(app) {
+        return this.isDockerApp(app)
+            ? (
+                <Tag
+                    key={'noInstanceRequiredChip'}
+                    size='small'
+                    label={msg('apps.noInstanceRequired')}
+                />
+            )
+            : null
+    }
+
+    renderAppAdminButton(app) {
+        return this.isDockerApp(app) && this.isUserAdmin()
+            ? (
+                <Button
+                    key={'dockerAdminButton'}
+                    look='default'
+                    shape='circle'
+                    size='small'
+                    icon='cog'
+                    iconSize='xs'
+                    tooltip={msg('apps.admin.tooltip')}
+                    tooltipPlacement='left'
+                    onClick={e => {
+                        e.stopPropagation()
+                        this.showAdmin(app)
+                    }}
+                />
+            )
+            : null
+    }
+
     renderApp(app, hovered) {
         const {onSelect} = this.props
         return (
@@ -268,8 +320,10 @@ class _AppList extends React.Component {
                     infoTooltip={msg('apps.info')}
                     tooltipPlacement='left'
                     inlineComponents={[
+                        this.renderNoInstanceRequiredChip(app),
+                        this.renderAppAdminButton(app),
                         this.renderGoogleAccountRequiredButton(app),
-                        this.renderStatusIcon(app)
+                        this.renderStatusIcon(app),
                     ]}
                     infoDisabled={false}
                     onInfo={() => this.showInfo(app)}>
@@ -294,8 +348,21 @@ class _AppList extends React.Component {
         return !this.isDisabled(app) && !this.isDisallowed(app)
     }
 
+    isDockerApp(app) {
+        return app.endpoint && app.endpoint.includes('docker')
+    }
+
+    isUserAdmin() {
+        const {user} = this.props
+        return user && user.admin
+    }
+
     showInfo(app) {
         this.setState({app})
+    }
+
+    showAdmin(adminApp) {
+        this.setState({adminApp})
     }
 
     getApps() {
