@@ -144,7 +144,7 @@ class _CompositeOptions extends React.Component {
                     label: msg('process.mosaic.panel.composite.form.corrections.calibrate.label'),
                     tooltip: msg('process.mosaic.panel.composite.form.corrections.calibrate.tooltip'),
                     neverSelected: _.flatten(Object.values(sources)).length < 2
-                        || corrections.value.includes('SR')
+                        || corrections.value?.includes('SR')
                 }]}
             />
         )
@@ -329,11 +329,11 @@ class _CompositeOptions extends React.Component {
                 {types
                     .map(type => {
                         switch(type) {
-                        case 'sentinel2CloudProbability': return this.renderSentinel2CloudProbability()
-                        case 'sentinel2CloudScorePlus': return this.renderSentinel2CloudScorePlus()
-                        case 'landsatCFMask': return this.renderLandsatCFMask()
-                        case 'sepalCloudScore': return this.renderSepalCloudScore()
-                        case 'pino26': return this.renderPino26()
+                            case 'sentinel2CloudProbability': return this.renderSentinel2CloudProbability()
+                            case 'sentinel2CloudScorePlus': return this.renderSentinel2CloudScorePlus()
+                            case 'landsatCFMask': return this.renderLandsatCFMask()
+                            case 'sepalCloudScore': return this.renderSepalCloudScore()
+                            case 'pino26': return this.renderPino26()
                         }
                     })}
             </Layout>
