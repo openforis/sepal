@@ -3,8 +3,7 @@ services:
     extends:
       file: ../docker-compose.logger.override.yml
       service: logger
-    ports:
-      []
+    ports: !override []
     environment:
       SEPAL_HOST_PROJECT_DIR: "${SEPAL_PROJECT_DIR}"
     extra_hosts:
