@@ -21,6 +21,36 @@ const proxy = expressApp =>
     ({id, port}) => {
         const path = `/${id}`
         const target = `http://${id}:${port}`
+
+        // This is to get the resourcez endpoint from solara - only for admin users (it returns the number of active users, etc.)
+        expressApp.use(
+            `${path}/resourcez`,
+            (req, res, next) => {
+                const user = getRequestUser(req)
+                if (user && user.admin) {
+                    next()
+                } else {
+                    log.warn(`[resourcez] unauthorized access attempt for ${req.originalUrl}`)
+                    res.status(403).send('Forbidden: Admin access required')
+                }
+            },
+            createProxyMiddleware({
+                target,
+                changeOrigin: true,
+                pathRewrite: {
+                    '^/': '/resourcez'
+                },
+                on: {
+                    proxyReq: (proxyReq, req) => {
+                        log.debug(`[resourcez] "${req.originalUrl}" → "${proxyReq.path}"`)
+                    },
+                    error: (err, req) => {
+                        log.warn(`[resourcez] proxy error for ${req.originalUrl}:`, err)
+                    }
+                }
+            })
+        )
+
         const proxyMiddleware = createProxyMiddleware({
             target,
             pathRewrite: {'/': ''},

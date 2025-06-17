@@ -38,6 +38,11 @@ export class AppAdmin extends React.Component {
                 updateAvailable: false,
                 branch: null
             },
+            resourcez: {
+                websockets: {
+                    open: 0
+                }
+            },
             logs: [],
             error: null
         }
@@ -108,6 +113,10 @@ export class AppAdmin extends React.Component {
 
     loadStatus() {
         const {app} = this.props
+        this.setState({
+            loadingContainer: true
+        })
+        
         api.appLauncher.getAppStatus$(app.id).subscribe(
             info => {
                 this.setState({
@@ -126,6 +135,10 @@ export class AppAdmin extends React.Component {
                         commitUrl: info.repo?.commitUrl || null,
                         updateAvailable: info.repo?.updateAvailable || false,
                         branch: info.repo?.branch || null
+                    },
+                    resourcez: {
+                        ...this.state.resourcez,
+                        websockets: info.resourcez?.websockets || {open: 0}
                     },
                     error: info.error || null
                 })
@@ -386,6 +399,25 @@ export class AppAdmin extends React.Component {
                         ) : containerStats ? (
                             <span>
                                 {containerStats.cpuPercent}
+                            </span>
+                        ) : (
+                            <span>
+                                {msg('apps.admin.status.loading')}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                <div className={styles.row}>
+                    <Label className={styles.fieldLabel}>{msg('apps.admin.container.connections')}:</Label>
+                    <div className={styles.fieldValue}>
+                        {loadingContainer ? (
+                            <span className={styles.statusRow}>
+                                <Icon name='spinner' className={styles.statusSpinner}/> {msg('apps.admin.status.loading')}
+                            </span>
+                        ) : this.state.resourcez.websockets ? (
+                            <span>
+                                {this.state.resourcez.websockets.open}
                             </span>
                         ) : (
                             <span>

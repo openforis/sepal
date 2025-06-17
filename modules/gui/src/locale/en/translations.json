@@ -69,7 +69,8 @@
                 "containerStatus": "Container status",
                 "mainProcess": "Main process",
                 "memoryUsage": "Memory usage",
-                "cpuUsage": "CPU usage"
+                "cpuUsage": "CPU usage",
+                "connections" : "Active connections"
             },
             "repo": {
                 "title": "Repository",
