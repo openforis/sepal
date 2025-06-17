@@ -40,7 +40,7 @@ class _RecipeInput extends React.Component {
     }
 
     render() {
-        const {stream, input, label, labelButtons, placeholder, autoFocus} = this.props
+        const {stream, input, label, labelButtons, placeholder, autoFocus, onChange} = this.props
         const {all} = this.state
         const options = this.getOptions()
 
@@ -73,7 +73,10 @@ class _RecipeInput extends React.Component {
                 autoFocus={autoFocus}
                 buttons={buttons}
                 busyMessage={stream('LOAD_RECIPE').active}
-                onChange={({value}) => this.loadRecipe(value)}
+                onChange={({value}) => {
+                    onChange && onChange(value)
+                    this.loadRecipe(value)
+                }}
             />
         )
     }
@@ -160,6 +163,7 @@ RecipeInput.propTypes = {
     labelButtons: PropTypes.any,
     placeholder: PropTypes.string,
     onError: PropTypes.func,
+    onChange: PropTypes.func,
     onLoaded: PropTypes.func,
     onLoading: PropTypes.func,
 }
