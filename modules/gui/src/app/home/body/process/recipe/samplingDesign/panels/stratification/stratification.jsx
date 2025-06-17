@@ -55,13 +55,14 @@ const fields = {
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
         .skip((_value, {skip}) => skip.length)
-        .notBlank('process.samplingDesign.panel.stratification.form.band.required'),
+        .notEmpty('process.samplingDesign.panel.stratification.form.band.required'),
 }
 
 class _Stratification extends React.Component {
     cancel$ = new Subject()
     state = {
         bands: undefined,
+        prevStrata: [],
         entriesByBand: {},
         showHexColorCode: false
     }
@@ -143,7 +144,7 @@ class _Stratification extends React.Component {
     }
 
     renderImportButton() {
-        const {inputs: {strata}} = this.props
+        const {inputs: {skip, strata}} = this.props
         const options = [
             {
                 value: 'import',
@@ -163,6 +164,7 @@ class _Stratification extends React.Component {
                 label={msg('CSV')}
                 placement='above'
                 tooltipPlacement='bottom'
+                disabled={skip.value?.length}
                 options={options}
             />
         )
@@ -264,7 +266,7 @@ class _Stratification extends React.Component {
     }
 
     renderStrata() {
-        const {inputs: {eeStrategy, strata}} = this.props
+        const {stream, inputs: {band, eeStrategy, strata}} = this.props
         const {showHexColorCode} = this.state
         const hexCodeButton = (
             <Button
@@ -274,6 +276,7 @@ class _Stratification extends React.Component {
                 shape='pill'
                 label={msg('process.samplingDesign.panel.stratification.form.hexButton.label')}
                 tooltip={msg('process.samplingDesign.panel.stratification.form.hexButton.tooltip')}
+                disabled={stream('AREA_PER_STRATUM').active || !strata.value?.length}
                 onClick={() => this.toggleshowHexColorCode()}
             />
         )
@@ -303,13 +306,9 @@ class _Stratification extends React.Component {
             <Widget
                 label={msg('process.samplingDesign.panel.stratification.form.strata.label')}
                 labelButtons={[hexCodeButton, eeStrategyButtons]}>
-                {strata.value
-                    ? <StrataTable
-                        strata={strata}
-                        showHexColorCode={showHexColorCode}
-                    />
-                    : this.props.stream('AREA_PER_STRATUM').active
-                        ? <NoData
+                {this.props.stream('AREA_PER_STRATUM').active
+                    ? (
+                        <NoData
                             className={styles.noData}
                             alignment='left'
                             message={(
@@ -318,25 +317,50 @@ class _Stratification extends React.Component {
                                     {' ' + msg('process.samplingDesign.panel.stratification.form.strata.loading')}
                                 </div>
                             )}
-                        />
-                        : <NoData
-                            className={styles.noData}
-                            alignment='left'
-                            message={msg('process.samplingDesign.panel.stratification.form.strata.select')}
-                        />}
+                        />                    
+                    ) 
+                    : strata.value?.length && band.value
+                        ? (
+                            <StrataTable
+                                strata={strata}
+                                showHexColorCode={showHexColorCode}
+                            />
+                        )
+                        : !band.value 
+                            ? (
+                                <NoData
+                                    className={styles.noData}
+                                    alignment='left'
+                                    message={msg('process.samplingDesign.panel.stratification.form.strata.select')}
+                                />
+                            )
+                            : (
+                                <NoData
+                                    className={styles.noData}
+                                    alignment='left'
+                                    message={msg('process.samplingDesign.panel.stratification.form.strata.noData')}
+                                />
+                            )
+                }
             </Widget>
         )
     }
 
     componentDidMount() {
-        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, type, eeStrategy}} = this.props
+        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, type, eeStrategy, strata}} = this.props
         requiresUpdate.set(false)
         skip.value || skip.set([])
         scale.value || scale.set('30')
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
 
-        stratificationRequiresUpdate && this.calculateAreaPerStratum()
+        if (stratificationRequiresUpdate) {
+            if (strata.value) {
+                this.setState({prevStrata: strata.value})
+            }
+            strata.set(null)
+            this.calculateAreaPerStratum()
+        }
     }
 
     componentDidUpdate(prevProps) {
@@ -365,16 +389,23 @@ class _Stratification extends React.Component {
         recipeId.set(null)
         assetId.set(null)
         band.set(null)
+        if (strata.value) {
+            this.setState({prevStrata: strata.value})
+        }
         strata.set(null)
     }
 
     onImageChanged() {
-        const {inputs: {band}} = this.props
+        const {inputs: {band, strata}} = this.props
         band.set(null)
-        this.calculateAreaPerStratum()
+        if (strata.value) {
+            this.setState({prevStrata: strata.value})
+        }
+        strata.set(null)
     }
 
     onImageLoading() {
+        const {inputs: {band}} = this.props
         this.setState({bands: undefined})
     }
 
@@ -429,7 +460,6 @@ class _Stratification extends React.Component {
             },
             {}
         )
-        
         this.setState({entriesByBand})
         updateBand && this.onBandChanged({value: defaultBand})
     }
@@ -448,16 +478,15 @@ class _Stratification extends React.Component {
 
     onAreaPerStratumLoaded(areaPerStratum) {
         const {inputs: {band, strata}} = this.props
-        const {entriesByBand} = this.state
-        // TODO: If we only changed the scale, any user-overriden labels should be kept
-        //      That means labels should be reset when we change band
+        const {prevStrata, entriesByBand} = this.state
         const totalArea = areaPerStratum.reduce((acc, {area}) => acc + area, 0)
+        const entries = entriesByBand[band.value] || []
         const labeledStrata = areaPerStratum.map(({stratum, area}) => {
-            const entries = entriesByBand[band.value] || []
             const entry = entries.find(({value}) => value === stratum)
+            const prevEntry = prevStrata?.find(({value}) => value == stratum)
             const weight = area / totalArea
             return {
-                ...(entry || {value: stratum, label: '' + stratum, color: '#000000'}),
+                ...(entry || prevEntry || {value: stratum, label: '' + stratum, color: '#000000'}),
                 area,
                 weight
             }
@@ -481,7 +510,6 @@ class _Stratification extends React.Component {
             return
         }
         
-        strata.set(null)
         const stratification = {
             type: type.value === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
             id,
