@@ -474,8 +474,10 @@ class _Proportions extends React.Component {
             ? bands[0]
             : null
         const updateBand = defaultBand && defaultBand !== band.value
-        updateBand && band.set(defaultBand)
-        updateBand && this.onBandChanged({value: defaultBand})
+        if (updateBand) {
+            band.set(defaultBand)
+            this.onBandChanged({value: defaultBand})
+        }
     }
 
     onBandChanged() {
@@ -572,12 +574,14 @@ class _Proportions extends React.Component {
     calculateAnticipatedProportions() {
         const {aoi, stream,
             unstratified, stratificationType, stratificationRecipeId, stratificationAssetId, stratificationBand,
-            inputs: {scale, type, assetId, recipeId, band, eeStrategy, anticipatedProportions}
+            inputs: {manual, scale, type, assetId, recipeId, band, eeStrategy, anticipatedProportions}
         } = this.props
+        if (manual.value?.length) {
+            return
+        }
 
         const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
         if (!scale.value || !id || !band.value) {
-            console.log('no scale or id or band', scale.value, id, band.value)
             return
         }
         
@@ -596,8 +600,6 @@ class _Proportions extends React.Component {
         if (stream('PROBABILITY_PER_STRATUM').active) {
             this.cancel$.next()
         }
-
-        console.log('calculating')
         stream('PROBABILITY_PER_STRATUM',
             api.gee.probabilityPerStratum$({
                 aoi,
@@ -667,7 +669,6 @@ class _Proportions extends React.Component {
                 label,
                 color,
                 weight,
-                // area: area * proportion / 100,
                 area,
                 proportion,
             })
@@ -698,8 +699,8 @@ class _Proportions extends React.Component {
 }
 
 const proportionsDeps = props => {
-    const {inputs: {anticipationStrategy, type, assetId, recipeId, band, scale, eeStrategy}} = props
-    return [anticipationStrategy, type, assetId, recipeId, band, scale, eeStrategy]
+    const {inputs: {manual, anticipationStrategy, type, assetId, recipeId, band, scale, eeStrategy}} = props
+    return [manual, anticipationStrategy, type, assetId, recipeId, band, scale, eeStrategy]
         .map(input => input?.value)
 }
 
