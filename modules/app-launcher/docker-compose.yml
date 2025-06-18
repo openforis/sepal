@@ -16,16 +16,17 @@ services:
       - 80:80
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - "${SEPAL_DATA_DIR}/app-manager/apps.json:/var/lib/sepal/app-manager/apps.json"
       - "${SEPAL_DATA_DIR}/sepal/shared/apps:/var/lib/sepal/app-manager/apps"
       - "${SEPAL_DATA_DIR}/app-launcher:/var/lib/sepal/app-launcher"
     init: true
     environment:
-      SEPAL_HOST: "${SEPAL_HOST}"
-      EE_CREDENTIALS_PATH: "${SEPAL_DATA_DIR}/app-launcher/service-account-credentials.json"
       DOCKER_REGISTRY_HOST: "${DOCKER_REGISTRY_HOST}"
+      SEPAL_HOST: "${SEPAL_HOST}"
+      SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      EE_CREDENTIALS_PATH: "${SEPAL_DATA_DIR}/app-launcher/service-account-credentials.json"
       SEPAL_DATA_DIR: "${SEPAL_DATA_DIR}"
       DEPLOY_ENVIRONMENT : "${DEPLOY_ENVIRONMENT}"
+      EE_CLIENT_ID: "${EE_CLIENT_ID}"
       EE_ACCOUNT: "${EE_ACCOUNT}"
       EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
       GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"

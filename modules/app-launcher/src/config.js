@@ -8,20 +8,41 @@ const DEFAULT_MONITOR_ENABLED = true
 
 program
     .option('--port <number>', 'Port', DEFAULT_PORT)
-    .option('--management-port <number>', 'Management Port', DEFAULT_MANAGEMENT_PORT)
+    .option('--management-port <number>', 'Management port', DEFAULT_MANAGEMENT_PORT)
     .option('--monitor-enabled', 'Enable app monitoring', DEFAULT_MONITOR_ENABLED)
+    .option('--sepal-host <value>')
+    .option('--sepal-admin-password <value>')
+    .option('--gee-email <value>')
+    .option('--gee-key <value>')
+    .option('--google-project-id <value>')
+    .option('--gee-client-id <value>')
+    .option('--deploy-environment <value>')
     .parse(process.argv)
 
 const {
     port,
     managementPort,
-    monitorEnabled
+    monitorEnabled,
+    sepalHost,
+    sepalAdminPassword,
+    geeEmail,
+    geeKey,
+    googleProjectId,
+    geeClientId,
+    deployEnvironment
 } = program.opts()
 
-log.info('Configuration loaded')
-
-module.exports = {
+const config = {
     port,
     managementPort,
-    monitorEnabled
+    monitorEnabled,
+    sepalHost,
+    sepalAdminPassword,
+    geeEmail,
+    geeKey,
+    googleProjectId,
+    geeClientId,
+    deployEnvironment
+    
 }
+module.exports = config

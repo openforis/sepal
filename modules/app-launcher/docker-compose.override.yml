@@ -6,6 +6,7 @@ services:
     ports: !override []
     environment:
       SEPAL_HOST_PROJECT_DIR: "${SEPAL_PROJECT_DIR}"
+      SEPAL_HOST: "host.docker.internal"
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     volumes:  # To allow dynamic reloading in dev

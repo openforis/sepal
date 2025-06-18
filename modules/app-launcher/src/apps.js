@@ -1,9 +1,9 @@
 const {EMPTY, from, interval, catchError, delay, exhaustMap, filter, map, concatMap, switchMap, of} = require('rxjs')
 const log = require('#sepal/log').getLogger('apps')
-const {fileToJson$} = require('./file')
 const {basename} = require('path')
 const {cloneOrPull} = require('./git')
 const {buildAndRestart, startContainer, isContainerRunning} = require('./docker')
+const {fetchAppsFromApi$} = require('./appsService')
 
 const monitorApps = () =>
     interval(10000).pipe(
@@ -18,7 +18,7 @@ const monitorApps = () =>
     })
 
 const apps$ = () =>
-    fileToJson$('/var/lib/sepal/app-manager/apps.json').pipe(
+    fetchAppsFromApi$().pipe(
         switchMap(({apps}) => from(apps)),
         filter(({repository}) => repository),
         filter(({endpoint}) => endpoint === 'docker'),

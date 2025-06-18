@@ -1,32 +1,21 @@
 const log = require('#sepal/log').getLogger('main')
 const path = require('path')
 const executeCommand = require('./terminal')
-
-const EE_PRIVATE_KEY = process.env.EE_PRIVATE_KEY
-const EE_ACCOUNT = process.env.EE_ACCOUNT
-const PROJECT_ID = process.env.GOOGLE_PROJECT_ID
-const EE_CLIENT_ID = process.env.EE_CLIENT_ID
+const {geeEmail, geeKey, googleProjectId, geeClientId} = require('./config')
 
 const credentialsPath = path.join('/var/lib/sepal/app-launcher/service-account-credentials.json')
 
-function get_ee_key() {
-    // taken from gee module
-    const geeKey = EE_PRIVATE_KEY
-    if (!geeKey) {
-        throw new Error('Environment variable EE_PRIVATE_KEY is not defined')
-    }
-    return geeKey.replace(/\\n/g, '\n')
-}
+const get_ee_key = () => geeKey.replace(/\\n/g, '\n')
 
 // Main function to create the credentials JSON
 function createCredentialsFile() {
     const credentials = {
         type: 'service_account',
-        project_id: PROJECT_ID,
-        client_email: EE_ACCOUNT,
+        project_id: googleProjectId,
+        client_email: geeEmail,
         private_key: get_ee_key(),
         private_key_id: '',
-        client_id: EE_CLIENT_ID,
+        client_id: geeClientId,
         auth_uri: 'https://accounts.google.com/o/oauth2/auth',
         token_uri: 'https://oauth2.googleapis.com/token'
     }

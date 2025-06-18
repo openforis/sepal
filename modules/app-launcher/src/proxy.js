@@ -1,13 +1,13 @@
 const {createProxyMiddleware} = require('http-proxy-middleware')
-const {sepalHost} = require('./config')
 const {filter, from, map, switchMap, toArray} = require('rxjs')
-const {fileToJson$} = require('./file')
 const {getRequestUser} = require('./user')
 const {usernameTag, urlTag} = require('./tag')
+const {fetchAppsFromApi$} = require('./appsService')
+const {sepalHost} = require('./config')
 
 const log = require('#sepal/log').getLogger('proxy')
 
-const proxyEndpoints$ = expressApp => fileToJson$('/var/lib/sepal/app-manager/apps.json').pipe(
+const proxyEndpoints$ = expressApp => fetchAppsFromApi$().pipe(
     switchMap(({apps}) => from(apps)),
     filter(({repository}) => repository),
     filter(({endpoint}) => endpoint === 'docker'),
