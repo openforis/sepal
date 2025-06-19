@@ -9,6 +9,12 @@ export default {
                 maxRetries: 1
             }
         }),
+
+    getInstitution$: ({token, institutionId}) =>
+        get$('/api/ceo-gateway/get-institution-by-id', {
+            headers: {'x-ceo-token': token},
+            query: {institutionId}
+        }),
      
     getAllInstitutions$: ({token}) =>
         get$('/api/ceo-gateway/get-all-institutions', {
