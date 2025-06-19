@@ -70,7 +70,6 @@
         "recentAssets": "Asset récent",
         "userAssets": "Assets utilisateur",
         "otherAssets": "Autre assets",
-        "reload": "",
         "settings": "",
         "datasets": {
             "community": {
@@ -86,6 +85,10 @@
         "copyId": {
             "tooltip": "",
             "success": "Id de l'asset copié dans le presse-papiers"
+        },
+        "reload": {
+            "tooltip": "",
+            "progress": ""
         },
         "browser": {
             "tooltip": "Ouvrir le navigateur d'asset",
@@ -164,10 +167,6 @@
             "assets": ""
         },
         "controls": {
-            "reload": {
-                "tooltip": "",
-                "progress": ""
-            },
             "clearSelection": {
                 "tooltip": "Vider la sélection"
             },
@@ -488,7 +487,7 @@
         "reset-password": {
             "button": "Initialiser mot de passe",
             "password": {
-                "invalid": "Le mot de passe doit avoir au moins 8 caractères",
+                "invalid": "",
                 "label": "Mot de passe",
                 "placeholder": "Entrer un mot de passe",
                 "required": "Mot de passe requis"
@@ -1224,7 +1223,8 @@
                             "GEE": "Asset Google Earth Engine",
                             "label": "Récupérer vers",
                             "required": "Une destination doit être sélectionnée",
-                            "SEPAL": "Espace de travail SEPAL"
+                            "SEPAL": "Espace de travail SEPAL",
+                            "DRIVE": ""
                         },
                         "scale": {
                             "label": "Echelle",
@@ -1257,7 +1257,8 @@
                     },
                     "task": {
                         "GEE": "Exporter {name} en tant qu'asset Google Earth Engine",
-                        "SEPAL": "Récupérer {name} vers l'espace de travail SEPAL"
+                        "SEPAL": "Récupérer {name} vers l'espace de travail SEPAL",
+                        "DRIVE": ""
                     },
                     "title": "Récupérer",
                     "tooltip": "Récupérer séries temporelles"
@@ -1495,7 +1496,8 @@
                             "GEE": "Asset Google Earth Engine",
                             "label": "Récupérer vers",
                             "required": "Une destination doit être sélectionnée",
-                            "SEPAL": "Espace de travail SEPAL"
+                            "SEPAL": "Espace de travail SEPAL",
+                            "DRIVE": ""
                         },
                         "scale": {
                             "label": "Échelle"
@@ -2972,6 +2974,7 @@
                 "indexes": "Indices",
                 "label": "Bandes",
                 "metadata": "Metadonnées",
+                "months": "Mois",
                 "panSharpen": "",
                 "placeholder": "Sélectionner les bandes à visualiser"
             },
@@ -4499,7 +4502,8 @@
                     "GEE": "Asset Google Earth Engine",
                     "label": "Récupérer vers",
                     "required": "Une destination doit être choisie",
-                    "SEPAL": "Espace SEPAL"
+                    "SEPAL": "Espace SEPAL",
+                    "DRIVE": ""
                 },
                 "fileDimensionsMultiple": {
                     "label": "",
@@ -4532,7 +4536,8 @@
                 },
                 "task": {
                     "GEE": "Exporter {name} en tant qu'asset Google Earth Engine",
-                    "SEPAL": "Récupérer {name} vers l'espace de travail SEPAL"
+                    "SEPAL": "Récupérer {name} vers l'espace de travail SEPAL",
+                    "DRIVE": ""
                 },
                 "tileSize": {
                     "label": "",
@@ -4792,7 +4797,7 @@
                     "required": "Nouveau mot de passe requis"
                 },
                 "newPassword": {
-                    "invalid": "Le mot de passe doit avoir au moins 8 caractères",
+                    "invalid": "",
                     "label": "Nouveau mot de passe",
                     "notMatching": "Les mots de passe ne correspondent pas",
                     "required": "Nouveau mot de passe requis"
@@ -4910,6 +4915,13 @@
             "admin": "",
             "user": ""
         },
+        "privacyPolicy": {
+            "title": "",
+            "accept": {
+                "label": "",
+                "error": ""
+            }
+        },
         "userDetails": {
             "form": {
                 "email": {
@@ -5000,8 +5012,7 @@
             "switchingToSEPALGoogleAccount": "Passage au compte Google de SEPAL",
             "title": "Détails de l'utilisateur",
             "update": {
-                "error": "",
-                "success": ""
+                "error": ""
             },
             "confirmation": {
                 "message": ""

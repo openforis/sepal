@@ -70,7 +70,6 @@
         "recentAssets": "Asset recientes",
         "userAssets": "",
         "otherAssets": "",
-        "reload": "",
         "settings": "",
         "datasets": {
             "community": {
@@ -86,6 +85,10 @@
         "copyId": {
             "tooltip": "",
             "success": ""
+        },
+        "reload": {
+            "tooltip": "",
+            "progress": ""
         },
         "browser": {
             "tooltip": "",
@@ -164,10 +167,6 @@
             "assets": ""
         },
         "controls": {
-            "reload": {
-                "tooltip": "",
-                "progress": ""
-            },
             "clearSelection": {
                 "tooltip": "Borrar selección"
             },
@@ -488,7 +487,7 @@
         "reset-password": {
             "button": "Establecer contraseña",
             "password": {
-                "invalid": "La contraseña debe tener al menos 8 caracteres",
+                "invalid": "",
                 "label": "Contraseña",
                 "placeholder": "Introduce una nueva contraseña",
                 "required": "La contraseña es necesaria"
@@ -1224,7 +1223,8 @@
                             "GEE": "Asset de Google Earth Engine",
                             "label": "Destino",
                             "required": "Debe seleccionar el destino",
-                            "SEPAL": "Espacio de trabajo SEPAL"
+                            "SEPAL": "Espacio de trabajo SEPAL",
+                            "DRIVE": ""
                         },
                         "scale": {
                             "label": "Escala",
@@ -1257,7 +1257,8 @@
                     },
                     "task": {
                         "GEE": "Exportar {name} como asset de Google Earth Engine",
-                        "SEPAL": "Recuperar {name} al espacio de trabajo de SEPAL"
+                        "SEPAL": "Recuperar {name} al espacio de trabajo de SEPAL",
+                        "DRIVE": ""
                     },
                     "title": "Recuperar",
                     "tooltip": "Recuperar series temporales"
@@ -1495,7 +1496,8 @@
                             "GEE": "Asset de Google Earth Engine",
                             "label": "Destino",
                             "required": "Debe seleccionar el destino",
-                            "SEPAL": "Espacio de trabajo SEPAL"
+                            "SEPAL": "Espacio de trabajo SEPAL",
+                            "DRIVE": ""
                         },
                         "scale": {
                             "label": "Escala"
@@ -2972,6 +2974,7 @@
                 "indexes": "Índices",
                 "label": "",
                 "metadata": "Metadatos",
+                "months": "",
                 "panSharpen": "",
                 "placeholder": "Selecciona las bandas preliminares"
             },
@@ -4499,7 +4502,8 @@
                     "GEE": "Asset Google Earth Engine",
                     "label": "importar a",
                     "required": "Debes seleccionar un destino",
-                    "SEPAL": "Espacio de trabajo SEPAL"
+                    "SEPAL": "Espacio de trabajo SEPAL",
+                    "DRIVE": ""
                 },
                 "fileDimensionsMultiple": {
                     "label": "",
@@ -4532,7 +4536,8 @@
                 },
                 "task": {
                     "GEE": "Exportar {name} como asset de Google Earth Engine",
-                    "SEPAL": "Importar {name} al espacio de trabajo de SEPAL"
+                    "SEPAL": "Importar {name} al espacio de trabajo de SEPAL",
+                    "DRIVE": ""
                 },
                 "tileSize": {
                     "label": "",
@@ -4792,7 +4797,7 @@
                     "required": "Se requiere una nueva contraseña"
                 },
                 "newPassword": {
-                    "invalid": "Las contraseñas deben tener al menos 8 caracteres",
+                    "invalid": "",
                     "label": "Nueva contraseña",
                     "notMatching": "Las contraseñas no coinciden",
                     "required": "Se requiere una nueva contraseña"
@@ -4910,6 +4915,13 @@
             "admin": "",
             "user": ""
         },
+        "privacyPolicy": {
+            "title": "",
+            "accept": {
+                "label": "",
+                "error": ""
+            }
+        },
         "userDetails": {
             "form": {
                 "email": {
@@ -5000,8 +5012,7 @@
             "switchingToSEPALGoogleAccount": "",
             "title": "Datos del usuario",
             "update": {
-                "error": "",
-                "success": ""
+                "error": ""
             },
             "confirmation": {
                 "message": ""

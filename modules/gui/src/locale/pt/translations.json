@@ -70,7 +70,6 @@
         "recentAssets": "",
         "userAssets": "",
         "otherAssets": "",
-        "reload": "",
         "settings": "",
         "datasets": {
             "community": {
@@ -86,6 +85,10 @@
         "copyId": {
             "tooltip": "",
             "success": ""
+        },
+        "reload": {
+            "tooltip": "",
+            "progress": ""
         },
         "browser": {
             "tooltip": "",
@@ -164,10 +167,6 @@
             "assets": ""
         },
         "controls": {
-            "reload": {
-                "tooltip": "",
-                "progress": ""
-            },
             "clearSelection": {
                 "tooltip": ""
             },
@@ -1224,7 +1223,8 @@
                             "GEE": "",
                             "label": "",
                             "required": "",
-                            "SEPAL": ""
+                            "SEPAL": "",
+                            "DRIVE": ""
                         },
                         "scale": {
                             "label": "",
@@ -1257,7 +1257,8 @@
                     },
                     "task": {
                         "GEE": "",
-                        "SEPAL": ""
+                        "SEPAL": "",
+                        "DRIVE": ""
                     },
                     "title": "",
                     "tooltip": ""
@@ -1495,7 +1496,8 @@
                             "GEE": "",
                             "label": "",
                             "required": "",
-                            "SEPAL": ""
+                            "SEPAL": "",
+                            "DRIVE": ""
                         },
                         "scale": {
                             "label": ""
@@ -2972,6 +2974,7 @@
                 "indexes": "",
                 "label": "",
                 "metadata": "",
+                "months": "",
                 "panSharpen": "",
                 "placeholder": ""
             },
@@ -4499,7 +4502,8 @@
                     "GEE": "",
                     "label": "",
                     "required": "",
-                    "SEPAL": ""
+                    "SEPAL": "",
+                    "DRIVE": ""
                 },
                 "fileDimensionsMultiple": {
                     "label": "",
@@ -4532,7 +4536,8 @@
                 },
                 "task": {
                     "GEE": "",
-                    "SEPAL": ""
+                    "SEPAL": "",
+                    "DRIVE": ""
                 },
                 "tileSize": {
                     "label": "",
@@ -4910,6 +4915,13 @@
             "admin": "",
             "user": ""
         },
+        "privacyPolicy": {
+            "title": "",
+            "accept": {
+                "label": "",
+                "error": ""
+            }
+        },
         "userDetails": {
             "form": {
                 "email": {
@@ -5000,8 +5012,7 @@
             "switchingToSEPALGoogleAccount": "",
             "title": "",
             "update": {
-                "error": "",
-                "success": ""
+                "error": ""
             },
             "confirmation": {
                 "message": ""
