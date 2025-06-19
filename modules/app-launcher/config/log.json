@@ -1,0 +1,13 @@
+{
+    "port": 5104,
+    "categories": {
+        "main": "debug",
+        "proxy": "debug",
+        "user": "debug",
+        "managementRoutes" : "debug",
+        "appsService": "debug",
+        "git": "debug",
+        "terminal": "debug",
+        "http/server" : "debug"
+    }
+}

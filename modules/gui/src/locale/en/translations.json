@@ -54,7 +54,64 @@
         "run": {
             "error": "Failed to run {label}"
         },
-        "running": "App is running"
+        "running": "App is running",
+        "noInstanceRequired" : "No instance required",
+        "admin": {
+            "title": "{app} management panel",
+            "logs": {
+                "title": "Logs",
+                "empty": "No logs available"
+            },
+            "container": {
+                "title": "Container info",
+                "notFound": "Container not found",
+                "status": "Status",
+                "containerStatus": "Container status",
+                "mainProcess": "Main process",
+                "memoryUsage": "Memory usage",
+                "cpuUsage": "CPU usage",
+                "connections" : "Active connections"
+            },
+            "repo": {
+                "title": "Repository",
+                "url": "Repository origin",
+                "lastCommit": "Last commit",
+                "lastClone": "Repository last cloned",
+                "error": "Error",
+                "branch" : "Branch"
+            },
+            "health": {
+                "healthy": "Healthy",
+                "starting": "Starting"
+            },
+            "restart": {
+                "error": "Failed to restart",
+                "success": "Restarted"
+            },
+            "button": {
+                "restart": "Restart container",
+                "reloadStatus": "Reload status",
+                "reloadLogs": "Reload logs"
+            },
+            "status": {
+                "running": "Running",
+                "idle": "Idle",
+                "error": "Error",
+                "checking": "Checking",
+                "notAvailable": "Not available",
+                "loading": "Loading..."
+            },
+            "timestamp": {
+                "never": "Never"
+            },
+            "update": {
+                "available": "Update available",
+                "checkForUpdates": "Check for updates",
+                "error": "Failed to update",
+                "success": "Updated successfully",
+                "noChanges": "No updates available"
+            }
+        }
     },
     "asset": {
         "failedToLoad": "Failed to load EE asset",

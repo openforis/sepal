@@ -1,5 +1,6 @@
 import {setApi} from '~/apiRegistry'
 
+import appLauncher from './api/appLauncher'
 import apps from './api/apps'
 import ceoGateway from './api/ceo'
 import gee from './api/gee'
@@ -28,5 +29,6 @@ export const initApi = () =>
         userAssets,
         userFiles,
         wmts,
-        ceoGateway
+        ceoGateway,
+        appLauncher,
     })
