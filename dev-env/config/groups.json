@@ -1,5 +1,6 @@
 {
     "default": [
+        "app-launcher",
         "app-manager",
         "ceo-gateway",
         "email",
@@ -20,6 +21,7 @@
         "user-storage"
     ],
     "process": [
+        "app-launcher",
         "ceo-gateway",
         "gateway",
         "gee",
@@ -42,9 +44,11 @@
         "sepal-server",
         "ssh-gateway",
         "terminal",
-        "user"
+        "user",
+        "app-launcher"
     ],
     "node": [
+        "app-launcher",
         "app-manager",
         "ceo-gateway",
         "email",

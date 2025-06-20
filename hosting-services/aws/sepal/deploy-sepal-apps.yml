@@ -1,4 +1,4 @@
-- name: Configure Sepal-Storage instance
+- name: Configure Sepal-Apps instance
   hosts: all
   user: ec2-user
   become: yes
@@ -14,7 +14,7 @@
         path: /etc/profile
         block: |
           # Bash prompt
-          PS1='{{ lookup('env', 'BASH_PROMPT_STORAGE') }}'
+          PS1='{{ lookup('env', 'BASH_PROMPT_APPS') }}'
 
     # set locale
     - name: Set locale
@@ -58,14 +58,20 @@
         src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
+    - name: Install docker
+      yum:
+        name:
+          - docker
+        state: present
+
     - name: Create /etc/docker
       file:
         path: "/etc/docker"
         state: directory
 
     - name: Copy /etc/docker/daemon.json
-      template: src=docker/storage-daemon.json dest=/etc/docker/daemon.json
-
+      template: src=docker/apps-daemon.json dest=/etc/docker/daemon.json
+        
     - name: Add ec2-user to docker group
       user:
         name: ec2-user
@@ -78,35 +84,15 @@
         enabled: yes
         masked: no
 
-    # EFS
-    - name: Install amazon-efs-utils
-      yum:
-        name: "amazon-efs-utils"
+    - name: pip install urllib3
+      pip:
+        name: urllib3==1.26.18
+        executable: pip3
 
-    - name: Create /data
-      file:
-        path: "/data"
-        state: directory
-
-    - name: Create /data/sepal
-      file:
-        path: "/data/sepal"
-        state: directory
-
-    - name: Create /data/sepal/home
-      file:
-        path: "/data/sepal/home"
-        state: directory
-
-    - name: Mount EFS user home dirs
-      mount:
-        name: "/data/sepal/home"
-        fstype: "efs"
-        state: "mounted"
-        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home"
-        opts: "defaults,_netdev"
-        dump: 0
-        passno: 0
+    - name: pip install requests
+      pip:
+        name: requests
+        executable: pip3
 
     - docker_network:
         name: sepal
@@ -148,4 +134,4 @@
     # - { role: live-patching }
     - { role: docker-login }
     - { role: run-module, module: logger }
-    - { role: run-module, module: user-storage }
+    - { role: run-module, module: app-launcher }

@@ -81,7 +81,23 @@ class _AppInstance extends React.Component {
 
     componentDidMount() {
         const {app: {id, endpoint, path}, tab: {busy}, stream} = this.props
-        if (!endpoint) {
+        if (endpoint === 'docker') {
+            busy.set(id, true)
+            this.setState({appState: 'INITIALIZED'})
+            publishEvent('launch_app', {app: id})
+            stream('RUN_APP',
+                get$(`${path}`, {
+                    responseType: 'text',
+                    retry: {
+                        maxRetries: 9
+                    }
+                }).pipe(
+                    map(srcDoc => ({srcDoc}))
+                ),
+                result => this.setState(result),
+                error => this.onError(error)
+            )
+        } else if (!endpoint) {
             this.setState({appState: 'INITIALIZED', src: path}, () =>
                 stream('RUN_APP', of())
             )
