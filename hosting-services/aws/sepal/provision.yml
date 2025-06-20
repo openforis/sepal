@@ -275,6 +275,7 @@
         record: "{{ lookup('env', 'SEPAL_APPS_HOST') }}"
         type: A
         value: "{{ sepal_apps_ip }}"
+        overwrite: true
         wait: true
             
     # Assign Sepal Instance Volume tags
