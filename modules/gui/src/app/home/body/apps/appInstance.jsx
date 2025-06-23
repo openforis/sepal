@@ -187,8 +187,3 @@ AppInstance.propTypes = {
         path: PropTypes.string
     })
 }
-
-AppInstance.contextTypes = {
-    active: PropTypes.bool,
-    focus: PropTypes.func
-}
