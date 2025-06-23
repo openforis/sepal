@@ -39,7 +39,7 @@ const UserStore = (redis, event$) => {
         )
 
     const setUser$ = user =>
-        from(redis.set(userKey(user.username), JSON.stringify(user), 'GET')).pipe(
+        from(redis.set(userKey(user.username), JSON.stringify(user), {GET: true})).pipe(
             map(prevUser => ({prevUser: JSON.parse(prevUser), user})),
             catchError(cause =>
                 throwError(() => new Error(`${userTag(user?.username)} cannot be saved`, {cause}))
@@ -63,16 +63,6 @@ const UserStore = (redis, event$) => {
         }
     }
 
-    // const removeUser$ = username =>
-    //     from(redis.del(userKey(username))).pipe(
-    //         map(result => result !== 0),
-    //         tap(removed =>
-    //             removed
-    //                 ? log.debug(`${userTag(username)} removed`)
-    //                 : log.warn(`${userTag(username)} not removed as missing`)
-    //         )
-    //     )
-    
     const updateUser$ = username => {
         if (username) {
             log.debug(`${userTag(username)} updating...`)
