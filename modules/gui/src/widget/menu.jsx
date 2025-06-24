@@ -14,8 +14,8 @@ const Context = React.createContext()
 const withMenuContext = withContext(Context, 'menuContext')
 
 class _MenuItem extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onClick = this.onClick.bind(this)
     }
 
@@ -52,8 +52,8 @@ export class Menu extends React.Component {
         open: false
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.toggle = this.toggle.bind(this)
         this.close = this.close.bind(this)
     }

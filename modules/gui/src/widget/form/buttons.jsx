@@ -5,8 +5,8 @@ import React from 'react'
 import {Buttons} from '~/widget/buttons'
 
 export class FormButtons extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onChange = this.onChange.bind(this)
     }
 

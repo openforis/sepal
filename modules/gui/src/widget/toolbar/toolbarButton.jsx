@@ -7,8 +7,8 @@ import {Context} from './context'
 import styles from './toolbarButton.module.css'
 
 export class ToolbarButton extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.renderContext = this.renderContext.bind(this)
     }
 

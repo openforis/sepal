@@ -17,8 +17,8 @@ export const withEventShield = () =>
             class WithEventShieldHOC extends React.Component {
                 componentId = uuid()
 
-                constructor() {
-                    super()
+                constructor(props) {
+                    super(props)
                     this.setEnabled = this.setEnabled.bind(this)
                 }
 

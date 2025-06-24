@@ -8,8 +8,8 @@ import {AssetCombo} from '~/widget/assetCombo'
 import {withFormContext} from './context'
 
 class _FormAssetCombo extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onChange = this.onChange.bind(this)
         this.onError = this.onError.bind(this)
     }

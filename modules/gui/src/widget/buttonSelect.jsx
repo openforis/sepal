@@ -30,8 +30,8 @@ class _ButtonSelect extends React.Component {
         selected: false
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.handleBlur = this.handleBlur.bind(this)
         this.toggleOptions = this.toggleOptions.bind(this)
         this.hideOptions = this.hideOptions.bind(this)

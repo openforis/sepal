@@ -20,8 +20,8 @@ class _App extends React.Component {
         app: null
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.runApp = this.runApp.bind(this)
     }
 

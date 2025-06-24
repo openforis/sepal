@@ -41,8 +41,8 @@ class _FileBrowser extends React.Component {
         sorting: {sortingOrder: 'name', sortingDirection: 1}
     }
     
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onUpdate = this.onUpdate.bind(this)
         this.removeSelected = this.removeSelected.bind(this)
         this.clearSelection = this.clearSelection.bind(this)

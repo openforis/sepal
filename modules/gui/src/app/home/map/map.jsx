@@ -86,8 +86,8 @@ class _Map extends React.Component {
 
     markers = {}
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.ref = React.createRef()
         this.onResize = this.onResize.bind(this)
         this.mapDelegate = this.mapDelegate.bind(this)

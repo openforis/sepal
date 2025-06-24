@@ -33,8 +33,8 @@ class _Projects extends React.Component {
         editProject: null
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.close = this.close.bind(this)
     }
 

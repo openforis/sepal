@@ -10,8 +10,8 @@ const orderMap = {
 }
 
 export class SortButton extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.toggleSortOrder = this.toggleSortOrder.bind(this)
     }
 

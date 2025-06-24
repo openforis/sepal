@@ -15,8 +15,8 @@ class _StaticMap extends React.Component {
     map = React.createRef()
     randomize$ = new Subject()
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.randomize = this.randomize.bind(this)
     }
 

@@ -43,8 +43,8 @@ class _SplitView extends React.PureComponent {
         initialized: false
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onDragging = this.onDragging.bind(this)
         this.onPosition = this.onPosition.bind(this)
     }

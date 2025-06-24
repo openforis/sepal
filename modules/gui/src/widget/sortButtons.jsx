@@ -5,8 +5,8 @@ import {ButtonGroup} from './buttonGroup'
 import {SortButton} from './sortButton'
 
 export class SortButtons extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.renderButton = this.renderButton.bind(this)
     }
 

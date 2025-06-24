@@ -5,8 +5,8 @@ export const withSubscriptions = () =>
         class WithSubscriptionHOC extends React.Component {
             subscriptions = []
 
-            constructor() {
-                super()
+            constructor(props) {
+                super(props)
                 this.addSubscription = this.addSubscription.bind(this)
             }
 

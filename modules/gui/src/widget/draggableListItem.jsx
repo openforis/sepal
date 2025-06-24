@@ -26,8 +26,8 @@ class _DraggableListItem extends React.Component {
         dragOverValue: null
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onMouseOver = this.onMouseOver.bind(this)
         this.onMouseOut = this.onMouseOut.bind(this)
         this.onClick = this.onClick.bind(this)

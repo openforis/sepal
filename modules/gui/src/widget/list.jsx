@@ -18,8 +18,8 @@ import styles from './list.module.css'
 class _ScrollableList extends React.Component {
     autoCenter$ = new Subject()
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.ref = React.createRef()
         this.renderScrollable = this.renderScrollable.bind(this)
     }

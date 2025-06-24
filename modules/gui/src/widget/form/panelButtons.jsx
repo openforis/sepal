@@ -6,8 +6,8 @@ import {Panel} from '~/widget/panel/panel'
 import {FormPanelContext} from './panel'
 
 export class FormPanelButtons extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.renderFormPanelContext = this.renderFormPanelContext.bind(this)
     }
 

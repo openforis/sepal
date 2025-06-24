@@ -71,8 +71,8 @@ const getHighlightMatcher = memoizeOne(
 )
 
 class _CreateRecipe extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.createRecipe = this.createRecipe.bind(this)
         this.renderRecipeType = this.renderRecipeType.bind(this)
         this.closePanel = this.closePanel.bind(this)
@@ -347,8 +347,8 @@ CreateRecipe.propTypes = {
 }
 
 class RecipeType extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.createRecipe = this.createRecipe.bind(this)
     }
     

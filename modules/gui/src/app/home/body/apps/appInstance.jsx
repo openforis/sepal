@@ -26,8 +26,8 @@ class _AppInstance extends React.Component {
         srcDoc: undefined
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.iFrameLoaded = this.iFrameLoaded.bind(this)
     }
 

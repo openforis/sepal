@@ -7,8 +7,8 @@ import {isMobile} from '~/widget/userAgent'
 export const EnabledContext = React.createContext()
 
 export class Enabled extends React.PureComponent {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.renderEnabled = this.renderEnabled.bind(this)
     }
 
@@ -63,8 +63,8 @@ Enabled.propTypes = {
 const withEnabled = () =>
     WrappedComponent =>
         class WithEnabledHoC extends React.Component {
-            constructor() {
-                super()
+            constructor(props) {
+                super(props)
                 this.renderEnabled = this.renderEnabled.bind(this)
             }
 
@@ -107,8 +107,8 @@ export const withEnableDetector = () =>
                 onDisable = null
                 onChange = null
 
-                constructor() {
-                    super()
+                constructor(props) {
+                    super(props)
                     this.setOnEnable = this.setOnEnable.bind(this)
                     this.setOnDisable = this.setOnDisable.bind(this)
                     this.setOnChange = this.setOnChange.bind(this)
