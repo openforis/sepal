@@ -155,56 +155,56 @@ class _FloatingBox extends React.Component {
 
         if (contentHeight) {
             switch (vPlacement) {
-            case 'center':
-                return {
-                    top: verticalElementCenter - contentHeight / 2,
-                    bottom: viewportHeight - verticalElementCenter - contentHeight / 2,
-                    maxHeight: viewportHeight,
-                    vPlacement
-                }
-            case 'above':
-                return {
-                    top: elementTop - contentHeight,
-                    bottom: viewportHeight - elementTop,
-                    maxHeight: elementTop,
-                    vPlacement
-                }
-            case 'over-above':
-                return {
-                    top: elementBottom - contentHeight,
-                    bottom: viewportHeight - elementBottom,
-                    maxHeight: elementBottom,
-                    vPlacement
-                }
-            case 'over':
-                return {
-                    top: elementTop,
-                    bottom: viewportHeight - elementBottom,
-                    maxHeight: elementBottom - elementTop,
-                    vPlacement
-                }
-            case 'over-below':
-                return {
-                    top: elementTop,
-                    bottom: viewportHeight - elementTop - contentHeight,
-                    maxHeight: viewportHeight - elementTop,
-                    vPlacement
-                }
-            case 'below':
-                return {
-                    top: elementBottom,
-                    bottom: viewportHeight - elementBottom - contentHeight,
-                    maxHeight: viewportHeight - elementBottom,
-                    vPlacement
-                }
-            case 'above-or-below':
-                return this.getAboveOrBelowVerticalPosition()
-            case 'below-or-above':
-                return this.getBelowOrAboveVerticalPosition()
-            case 'fit-above-or-below':
-                return this.getAboveOrBelowVerticalPosition(contentHeight)
-            case 'fit-below-or-above':
-                return this.getBelowOrAboveVerticalPosition(contentHeight)
+                case 'center':
+                    return {
+                        top: verticalElementCenter - contentHeight / 2,
+                        bottom: viewportHeight - verticalElementCenter - contentHeight / 2,
+                        maxHeight: viewportHeight,
+                        vPlacement
+                    }
+                case 'above':
+                    return {
+                        top: elementTop - contentHeight,
+                        bottom: viewportHeight - elementTop,
+                        maxHeight: elementTop,
+                        vPlacement
+                    }
+                case 'over-above':
+                    return {
+                        top: elementBottom - contentHeight,
+                        bottom: viewportHeight - elementBottom,
+                        maxHeight: elementBottom,
+                        vPlacement
+                    }
+                case 'over':
+                    return {
+                        top: elementTop,
+                        bottom: viewportHeight - elementBottom,
+                        maxHeight: elementBottom - elementTop,
+                        vPlacement
+                    }
+                case 'over-below':
+                    return {
+                        top: elementTop,
+                        bottom: viewportHeight - elementTop - contentHeight,
+                        maxHeight: viewportHeight - elementTop,
+                        vPlacement
+                    }
+                case 'below':
+                    return {
+                        top: elementBottom,
+                        bottom: viewportHeight - elementBottom - contentHeight,
+                        maxHeight: viewportHeight - elementBottom,
+                        vPlacement
+                    }
+                case 'above-or-below':
+                    return this.getAboveOrBelowVerticalPosition()
+                case 'below-or-above':
+                    return this.getBelowOrAboveVerticalPosition()
+                case 'fit-above-or-below':
+                    return this.getAboveOrBelowVerticalPosition(contentHeight)
+                case 'fit-below-or-above':
+                    return this.getBelowOrAboveVerticalPosition(contentHeight)
             }
         }
         return {}
@@ -277,56 +277,56 @@ class _FloatingBox extends React.Component {
 
         if (contentWidth) {
             switch (hPlacement) {
-            case 'center':
-                return {
-                    left: horizontalElementCenter - contentWidth / 2,
-                    right: viewportWidth - horizontalElementCenter - contentWidth / 2,
-                    maxWidth: viewportWidth,
-                    hPlacement
-                }
-            case 'left':
-                return {
-                    left: elementLeft - contentWidth,
-                    right: viewportWidth - elementLeft,
-                    maxWidth: elementLeft,
-                    hPlacement
-                }
-            case 'over-left':
-                return {
-                    left: elementRight - contentWidth,
-                    right: viewportWidth - elementRight,
-                    maxWidth: elementRight,
-                    hPlacement
-                }
-            case 'over':
-                return {
-                    left: elementLeft,
-                    right: viewportWidth - elementRight,
-                    maxWidth: elementRight - elementLeft,
-                    hPlacement
-                }
-            case 'over-right':
-                return {
-                    left: elementLeft,
-                    right: viewportWidth - elementLeft - contentWidth,
-                    maxWidth: viewportWidth - elementLeft,
-                    hPlacement
-                }
-            case 'right':
-                return {
-                    left: elementRight,
-                    right: viewportWidth - elementRight - contentWidth,
-                    maxWidth: viewportWidth - elementRight,
-                    hPlacement
-                }
-            case 'left-or-right':
-                return this.getLeftOrRightVerticalPosition(contentWidth, false)
-            case 'right-or-left':
-                return this.getRightOrLeftVerticalPosition(contentWidth, false)
-            case 'over-left-or-over-right':
-                return this.getLeftOrRightVerticalPosition(contentWidth, true)
-            case 'over-right-or-over-left':
-                return this.getRightOrLeftVerticalPosition(contentWidth, true)
+                case 'center':
+                    return {
+                        left: horizontalElementCenter - contentWidth / 2,
+                        right: viewportWidth - horizontalElementCenter - contentWidth / 2,
+                        maxWidth: viewportWidth,
+                        hPlacement
+                    }
+                case 'left':
+                    return {
+                        left: elementLeft - contentWidth,
+                        right: viewportWidth - elementLeft,
+                        maxWidth: elementLeft,
+                        hPlacement
+                    }
+                case 'over-left':
+                    return {
+                        left: elementRight - contentWidth,
+                        right: viewportWidth - elementRight,
+                        maxWidth: elementRight,
+                        hPlacement
+                    }
+                case 'over':
+                    return {
+                        left: elementLeft,
+                        right: viewportWidth - elementRight,
+                        maxWidth: elementRight - elementLeft,
+                        hPlacement
+                    }
+                case 'over-right':
+                    return {
+                        left: elementLeft,
+                        right: viewportWidth - elementLeft - contentWidth,
+                        maxWidth: viewportWidth - elementLeft,
+                        hPlacement
+                    }
+                case 'right':
+                    return {
+                        left: elementRight,
+                        right: viewportWidth - elementRight - contentWidth,
+                        maxWidth: viewportWidth - elementRight,
+                        hPlacement
+                    }
+                case 'left-or-right':
+                    return this.getLeftOrRightVerticalPosition(contentWidth, false)
+                case 'right-or-left':
+                    return this.getRightOrLeftVerticalPosition(contentWidth, false)
+                case 'over-left-or-over-right':
+                    return this.getLeftOrRightVerticalPosition(contentWidth, true)
+                case 'over-right-or-over-left':
+                    return this.getRightOrLeftVerticalPosition(contentWidth, true)
             }
         }
         return {}

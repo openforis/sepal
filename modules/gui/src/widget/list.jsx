@@ -100,8 +100,7 @@ class _List extends React.Component {
 
     constructor(props) {
         super(props)
-        const {forwardedRef} = props
-        this.list = forwardedRef || React.createRef()
+        this.list = props.forwardedRef || React.createRef()
         this.highlighted = React.createRef()
         this.selected = React.createRef()
         this.selectHighlighted = this.selectHighlighted.bind(this)
