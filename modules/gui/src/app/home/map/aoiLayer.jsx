@@ -24,53 +24,53 @@ export const countryToEETable = aoi => ({
 export const AoiLayer = ({id, layerConfig = {}, layerIndex, map, recipe}) => {
     const aoi = layerConfig.aoi || recipe.model.aoi || {}
     switch (aoi.type) {
-    case 'COUNTRY': return (
-        <EETableLayer
-            id={id}
-            map={map}
-            tableId={countryEETable}
-            columnName='id'
-            columnValue={aoi.areaCode || aoi.countryCode}
-            buffer={aoi.buffer}
-            color={color}
-            fillColor={fillColor}
-            layerIndex={layerIndex}
-            watchedProps={aoi}
-        />
-    )
-    case 'EE_TABLE': return (
-        <EETableLayer
-            id={id}
-            map={map}
-            tableId={aoi.id}
-            columnName={aoi.keyColumn}
-            columnValue={aoi.key}
-            buffer={aoi.buffer}
-            color={color}
-            fillColor={fillColor}
-            layerIndex={layerIndex}
-            watchedProps={aoi}
-        />
-    )
-    case 'POLYGON': return (
-        <PolygonLayer
-            id={id}
-            map={map}
-            path={aoi.path}
-            fill={false}
-            color={color}
-            fillColor={fillColor}
-        />
-    )
-    default: return (
-        <RecipeGeometryLayer
-            id={id}
-            map={map}
-            color={color}
-            fillColor={fillColor}
-            layerIndex={layerIndex}
-            recipe={recipe}
-        />
-    )
+        case 'COUNTRY': return (
+            <EETableLayer
+                id={id}
+                map={map}
+                tableId={countryEETable}
+                columnName='id'
+                columnValue={aoi.areaCode || aoi.countryCode}
+                buffer={aoi.buffer}
+                color={color}
+                fillColor={fillColor}
+                layerIndex={layerIndex}
+                watchedProps={aoi}
+            />
+        )
+        case 'EE_TABLE': return (
+            <EETableLayer
+                id={id}
+                map={map}
+                tableId={aoi.id}
+                columnName={aoi.keyColumn}
+                columnValue={aoi.key}
+                buffer={aoi.buffer}
+                color={color}
+                fillColor={fillColor}
+                layerIndex={layerIndex}
+                watchedProps={aoi}
+            />
+        )
+        case 'POLYGON': return (
+            <PolygonLayer
+                id={id}
+                map={map}
+                path={aoi.path}
+                fill={false}
+                color={color}
+                fillColor={fillColor}
+            />
+        )
+        default: return (
+            <RecipeGeometryLayer
+                id={id}
+                map={map}
+                color={color}
+                fillColor={fillColor}
+                layerIndex={layerIndex}
+                recipe={recipe}
+            />
+        )
     }
 }

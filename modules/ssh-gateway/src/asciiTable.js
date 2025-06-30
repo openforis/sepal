@@ -72,9 +72,9 @@ class Cell {
     paddedValue() {
         const s = _.toString(this.value)
         switch (this.align) {
-        case 'right': return s.padStart(this.width)
-        case 'left': return s.padEnd(this.width)
-        default: return s.padStart((s.length + this.width) / 2).padEnd(this.width)
+            case 'right': return s.padStart(this.width)
+            case 'left': return s.padEnd(this.width)
+            default: return s.padStart((s.length + this.width) / 2).padEnd(this.width)
         }
     }
 

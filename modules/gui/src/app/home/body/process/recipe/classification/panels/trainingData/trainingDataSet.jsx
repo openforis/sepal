@@ -212,18 +212,18 @@ class _TrainingDataSet extends React.Component {
     getSelectedImage() {
         const {inputs: {section, recipe, asset}} = this.props
         switch (section.value) {
-        case 'ASSET':
-            return {
-                type: 'ASSET',
-                id: asset.value
-            }
-        case 'RECIPE_REF':
-            return {
-                type: 'RECIPE_REF',
-                id: recipe.value
-            }
-        default:
-            throw Error(`Unexpected image section: ${section.value}`)
+            case 'ASSET':
+                return {
+                    type: 'ASSET',
+                    id: asset.value
+                }
+            case 'RECIPE_REF':
+                return {
+                    type: 'RECIPE_REF',
+                    id: recipe.value
+                }
+            default:
+                throw Error(`Unexpected image section: ${section.value}`)
         }
     }
 

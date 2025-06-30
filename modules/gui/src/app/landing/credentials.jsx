@@ -68,9 +68,9 @@ export class Credentials extends React.Component {
             return <SetPassword type='assign'/>
         }
         switch (mode) {
-        case 'login': return this.renderLogin()
-        case 'signUp': return this.renderSignUp()
-        case 'forgotPassword': return this.renderForgotPassword()
+            case 'login': return this.renderLogin()
+            case 'signUp': return this.renderSignUp()
+            case 'forgotPassword': return this.renderForgotPassword()
         }
     }
 

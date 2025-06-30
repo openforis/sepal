@@ -88,12 +88,12 @@ class _Dates extends React.Component {
     renderDatePickers() {
         const {inputs: {type}} = this.props
         switch (type.value) {
-        case 'POINT_IN_TIME_MOSAIC':
-            return this.renderPointInTimeMosaic()
-        case 'CUSTOM_TIME_SCAN':
-            return this.renderCustomTimeScan()
-        default:
-            return this.renderYearlyTimeScan()
+            case 'POINT_IN_TIME_MOSAIC':
+                return this.renderPointInTimeMosaic()
+            case 'CUSTOM_TIME_SCAN':
+                return this.renderCustomTimeScan()
+            default:
+                return this.renderYearlyTimeScan()
         }
     }
 

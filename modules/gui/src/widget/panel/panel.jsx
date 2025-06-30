@@ -28,12 +28,12 @@ class _Panel extends React.Component {
     render() {
         const {type} = this.props
         switch (type) {
-        case 'normal':
-            return this.renderNormal()
-        case 'modal':
-            return this.renderModal()
-        default:
-            return this.renderPortal(type)
+            case 'normal':
+                return this.renderNormal()
+            case 'modal':
+                return this.renderModal()
+            default:
+                return this.renderPortal(type)
         }
     }
 

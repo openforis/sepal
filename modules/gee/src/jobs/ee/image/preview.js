@@ -70,12 +70,12 @@ const worker$ = ({
             }
 
             switch (type) {
-            case 'categorical':
-                return getRetiledMap$(image.select(_.uniq(bands)), recipe.retile, toCategoricalVisParams())
-            case 'hsv':
-                return getRetiledMap$(toHsv(image.select(_.uniq(bands))), recipe.retile)
-            default:
-                return getRetiledMap$(image.select(_.uniq(bands)), recipe.retile, {bands, ...range(), gamma, palette})
+                case 'categorical':
+                    return getRetiledMap$(image.select(_.uniq(bands)), recipe.retile, toCategoricalVisParams())
+                case 'hsv':
+                    return getRetiledMap$(toHsv(image.select(_.uniq(bands))), recipe.retile)
+                default:
+                    return getRetiledMap$(image.select(_.uniq(bands)), recipe.retile, {bands, ...range(), gamma, palette})
             }
         }
 

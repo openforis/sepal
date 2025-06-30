@@ -100,34 +100,34 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
 
     const handleEvent = (type, data) => {
         switch (type) {
-        case MODULE_UP:
-            return moduleUp(data)
-        case MODULE_DOWN:
-            return moduleDown(data)
-        case USER_UP:
-            return userUp(data)
-        case USER_DOWN:
-            return userDown(data)
-        case USER_UPDATED:
-            return userUpdated(data)
-        case CLIENT_UP:
-            return clientUp(data)
-        case CLIENT_DOWN:
-            return clientDown(data)
-        case CLIENT_VERSION_MISMATCH:
-            return clientVersionMismatch(data)
-        case SUBSCRIPTION_UP:
-            return subscriptionUp(data)
-        case SUBSCRIPTION_DOWN:
-            return subscriptionDown(data)
-        case GOOGLE_ACCESS_TOKEN_ADDED:
-            return googleAccesstokenAdded(data)
-        case GOOGLE_ACCESS_TOKEN_UPDATED:
-            return googleAccesstokenUpdated(data)
-        case GOOGLE_ACCESS_TOKEN_REMOVED:
-            return googleAccesstokenRemoved(data)
-        default:
-            log.warn(`Unkown event type ${type}`)
+            case MODULE_UP:
+                return moduleUp(data)
+            case MODULE_DOWN:
+                return moduleDown(data)
+            case USER_UP:
+                return userUp(data)
+            case USER_DOWN:
+                return userDown(data)
+            case USER_UPDATED:
+                return userUpdated(data)
+            case CLIENT_UP:
+                return clientUp(data)
+            case CLIENT_DOWN:
+                return clientDown(data)
+            case CLIENT_VERSION_MISMATCH:
+                return clientVersionMismatch(data)
+            case SUBSCRIPTION_UP:
+                return subscriptionUp(data)
+            case SUBSCRIPTION_DOWN:
+                return subscriptionDown(data)
+            case GOOGLE_ACCESS_TOKEN_ADDED:
+                return googleAccesstokenAdded(data)
+            case GOOGLE_ACCESS_TOKEN_UPDATED:
+                return googleAccesstokenUpdated(data)
+            case GOOGLE_ACCESS_TOKEN_REMOVED:
+                return googleAccesstokenRemoved(data)
+            default:
+                log.warn(`Unkown event type ${type}`)
         }
     }
 
