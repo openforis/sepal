@@ -18,7 +18,7 @@
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
         "uuid": "^11.1.0",
-        "ws": "^8.18.2"
+        "ws": "^8.18.3"
     },
     "devDependencies": {
     },
