@@ -6,7 +6,7 @@ import {withForwardedRef} from '~/ref'
 
 import styles from './layout.module.css'
 
-const typeClassNames = type =>
+const typeClassNames = (type = '') =>
     type.split('-').map(className => styles[className])
 
 class _Layout extends React.Component {
