@@ -26,8 +26,8 @@ class _MapZoomPanel extends React.Component {
         scrollWheelEnabled: null
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.search = this.search.bind(this)
         this.onEscape = this.onEscape.bind(this)
         this.zoomIn = this.zoomIn.bind(this)

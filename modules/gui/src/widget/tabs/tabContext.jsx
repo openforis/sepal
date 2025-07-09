@@ -17,14 +17,20 @@ export const withTab = () =>
     WrappedComponent => compose(
         class WithTabContextHOC extends React.Component {
             render() {
-                const props = {
+                return React.createElement(WrappedComponent, {
                     ...this.props,
                     tab: {
                         busy: this.busy(),
                         busy$: this.busy$()
                     }
+                })
+            }
+
+            busy() {
+                const {tab: {id: tabId, busyIn$}} = this.props
+                return {
+                    set: (busyId, busy) => busyIn$.next({tabId, busyId, busy})
                 }
-                return React.createElement(WrappedComponent, props)
             }
 
             busy$() {
@@ -33,13 +39,6 @@ export const withTab = () =>
                     filter(({tabId: currentTabId}) => currentTabId === tabId),
                     map(({busy, count}) => ({busy, count}))
                 )
-            }
-
-            busy() {
-                const {tab: {id: tabId, busyIn$}} = this.props
-                return {
-                    set: (busyId, busy) => busyIn$.next({tabId, busyId, busy})
-                }
             }
         },
         withTabContext()

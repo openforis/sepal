@@ -16,8 +16,8 @@ export class InlineConfirmationButton extends React.Component {
         showConfirmation: false
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.renderContents = this.renderContents.bind(this)
         this.onClick = this.onClick.bind(this)
         this.onClickHold = this.onClickHold.bind(this)

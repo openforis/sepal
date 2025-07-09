@@ -4,8 +4,8 @@ import React from 'react'
 import {Slider} from '~/widget/slider'
 
 export class FormSlider extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onChange = this.onChange.bind(this)
     }
 

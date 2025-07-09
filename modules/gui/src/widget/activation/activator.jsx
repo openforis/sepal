@@ -134,8 +134,8 @@ Activator.propTypes = {
 export const withActivators = (...ids) =>
     WrappedComponent =>
         class ActivatorHoc extends React.Component {
-            constructor() {
-                super()
+            constructor(props) {
+                super(props)
                 this.renderActivator = this.renderActivator.bind(this)
             }
 

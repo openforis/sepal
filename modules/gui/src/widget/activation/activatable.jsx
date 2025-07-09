@@ -17,8 +17,8 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class _Activatable extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.renderActivator = this.renderActivator.bind(this)
     }
 
@@ -107,8 +107,8 @@ Activatable.propTypes = {
 export const withActivatable = ({id, policy, alwaysAllow}) =>
     WrappedComponent =>
         class ActivatableHOC extends React.Component {
-            constructor() {
-                super()
+            constructor(props) {
+                super(props)
                 this.renderActivatable = this.renderActivatable.bind(this)
             }
 

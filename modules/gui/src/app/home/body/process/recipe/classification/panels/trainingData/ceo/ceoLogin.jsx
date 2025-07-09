@@ -25,8 +25,8 @@ const fields = {
 }
 export class _CeoLogin extends React.Component {
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.login$ = this.login$.bind(this)
         this.close = this.close.bind(this)
     }

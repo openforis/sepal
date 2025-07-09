@@ -62,14 +62,14 @@ export const filterReferenceData$ = ({inputs, recipe}) => {
 
 const remap = (row, inputs) => {
     switch (inputs.classColumnFormat.value) {
-    case 'SINGLE_COLUMN':
-        return remapSingleColumn(row, inputs)
-    case 'MULTIPLE_COLUMNS':
-        return remapMultipleColumns(row, inputs)
-    case 'OTHER_FORMAT':
-        return remapOtherFormat(row, inputs)
-    default:
-        throw new Error(`Invalid classColumnFormat: ${inputs.classColumnFormat.value}`)
+        case 'SINGLE_COLUMN':
+            return remapSingleColumn(row, inputs)
+        case 'MULTIPLE_COLUMNS':
+            return remapMultipleColumns(row, inputs)
+        case 'OTHER_FORMAT':
+            return remapOtherFormat(row, inputs)
+        default:
+            throw new Error(`Invalid classColumnFormat: ${inputs.classColumnFormat.value}`)
     }
 }
 

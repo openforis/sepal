@@ -26,8 +26,8 @@ class _AppInstance extends React.Component {
         srcDoc: undefined
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.iFrameLoaded = this.iFrameLoaded.bind(this)
     }
 
@@ -186,9 +186,4 @@ AppInstance.propTypes = {
         label: PropTypes.string,
         path: PropTypes.string
     })
-}
-
-AppInstance.contextTypes = {
-    active: PropTypes.bool,
-    focus: PropTypes.func
 }

@@ -16,7 +16,7 @@
         "http-proxy": "^1.18.1",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
-        "minimatch": "^10.0.1",
+        "minimatch": "^10.0.3",
         "sepal": "../../lib/js/shared"
     },
     "devDependencies": {

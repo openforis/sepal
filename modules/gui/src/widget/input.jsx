@@ -364,11 +364,11 @@ Input.defaultProps = {
 class _Textarea extends React.Component {
     constructor(props) {
         super(props)
+        this.ref = props.forwardedRef || React.createRef()
         this.onFocus = this.onFocus.bind(this)
         this.onBlur = this.onBlur.bind(this)
         this.onChange = this.onChange.bind(this)
         this.captureEvents = this.captureEvents.bind(this)
-        this.ref = props.forwardedRef || React.createRef()
     }
 
     change$ = new Subject()

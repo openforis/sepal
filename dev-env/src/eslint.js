@@ -31,7 +31,7 @@ const eslintModule = async (module, path, options) => {
 }
 
 export const eslint = async (modules, options) => {
-    const rootModules = getModules(modules)
+    const rootModules = getModules(modules, [':node'])
     const libs = getLibDepList(rootModules)
     for (const lib of libs) {
         await eslintModule(lib, `lib/js/${lib}`, options)

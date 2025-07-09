@@ -133,7 +133,7 @@ const main = async () => {
 
     program.command('eslint')
         .description('Run eslint')
-        .argument('module', 'Module to test')
+        .argument('[module...]', 'Modules to eslint')
         .option('-f, --fix', 'Fix autofixable ESLint errors.')
         .action(eslint)
 

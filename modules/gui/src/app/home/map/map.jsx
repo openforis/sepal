@@ -86,8 +86,8 @@ class _Map extends React.Component {
 
     markers = {}
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.ref = React.createRef()
         this.onResize = this.onResize.bind(this)
         this.mapDelegate = this.mapDelegate.bind(this)
@@ -518,9 +518,9 @@ class _Map extends React.Component {
 
                                     const valueForDirection = (axis, direction) => {
                                         switch(direction) {
-                                        case 0: return areaPixel[axis] - (mapPixel[axis] - screenPixel[axis])
-                                        case -1: return areaPixel[axis] - (mapPixel[axis] + splitPosition[axis] - screenPixel[axis])
-                                        case 1: return areaPixel[axis] - (mapPixel[axis] - splitPosition[axis] - screenPixel[axis])
+                                            case 0: return areaPixel[axis] - (mapPixel[axis] - screenPixel[axis])
+                                            case -1: return areaPixel[axis] - (mapPixel[axis] + splitPosition[axis] - screenPixel[axis])
+                                            case 1: return areaPixel[axis] - (mapPixel[axis] - splitPosition[axis] - screenPixel[axis])
                                         }
                                     }
 

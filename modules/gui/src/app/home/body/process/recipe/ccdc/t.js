@@ -11,14 +11,14 @@ export const fromT = (t, dateFormat) => {
     }
 
     switch (dateFormat) {
-    case J_DAYS:
-        return fromJDays()
-    case FRACTIONAL_YEARS:
-        return format.fractionalYearsToDate(t)
-    case UNIX_TIME_MILLIS:
-        return new Date(t)
-    default:
-        throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
+        case J_DAYS:
+            return fromJDays()
+        case FRACTIONAL_YEARS:
+            return format.fractionalYearsToDate(t)
+        case UNIX_TIME_MILLIS:
+            return new Date(t)
+        default:
+            throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
     }
 }
 
@@ -36,13 +36,13 @@ export const toT = (date, dateFormat) => {
     }
 
     switch (dateFormat) {
-    case J_DAYS:
-        return toJDay()
-    case FRACTIONAL_YEARS:
-        return toFractionalYears()
-    case UNIX_TIME_MILLIS:
-        return date.getTime()
-    default:
-        throw Error('Only dateFormat 0 (jdate), 1 (fractional years), and 2 (unix seconds) is supported')
+        case J_DAYS:
+            return toJDay()
+        case FRACTIONAL_YEARS:
+            return toFractionalYears()
+        case UNIX_TIME_MILLIS:
+            return date.getTime()
+        default:
+            throw Error('Only dateFormat 0 (jdate), 1 (fractional years), and 2 (unix seconds) is supported')
     }
 }

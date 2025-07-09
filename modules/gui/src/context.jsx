@@ -1,18 +1,18 @@
 import React from 'react'
 
-export const withContext = (context, prop, required = false) => () =>
+export const withContext = (Context, prop, required = false) => () =>
     WrappedComponent =>
         class WithContextHOC extends React.Component {
-            constructor() {
-                super()
+            constructor(props) {
+                super(props)
                 this.wrap = this.wrap.bind(this)
             }
 
             render() {
                 return (
-                    <context.Consumer>
+                    <Context.Consumer>
                         {this.wrap}
-                    </context.Consumer>
+                    </Context.Consumer>
                 )
             }
 

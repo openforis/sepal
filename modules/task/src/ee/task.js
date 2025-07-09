@@ -58,26 +58,26 @@ const task$ = (taskId, task, description) => {
 
     const toProgress = state => {
         switch (state) {
-        case 'UNSUBMITTED':
-            return {
-                state,
-                defaultMessage: 'Submitting export task to Google Earth Engine',
-                messageKey: 'tasks.ee.export.pending'
-            }
-        case 'READY':
-            return {
-                state,
-                defaultMessage: 'Waiting for Google Earth Engine to start export',
-                messageKey: 'tasks.ee.export.ready'
-            }
-        case 'RUNNING':
-            return {
-                state,
-                defaultMessage: 'Google Earth Engine is exporting',
-                messageKey: 'tasks.ee.export.running'
-            }
-        default:
-            throw Error(`Unknown state (${description}): ${state}`)
+            case 'UNSUBMITTED':
+                return {
+                    state,
+                    defaultMessage: 'Submitting export task to Google Earth Engine',
+                    messageKey: 'tasks.ee.export.pending'
+                }
+            case 'READY':
+                return {
+                    state,
+                    defaultMessage: 'Waiting for Google Earth Engine to start export',
+                    messageKey: 'tasks.ee.export.ready'
+                }
+            case 'RUNNING':
+                return {
+                    state,
+                    defaultMessage: 'Google Earth Engine is exporting',
+                    messageKey: 'tasks.ee.export.running'
+                }
+            default:
+                throw Error(`Unknown state (${description}): ${state}`)
         }
     }
 

@@ -26,15 +26,15 @@ const changesBands = () => {
 const mosaicBands = recipe => {
     const dataSetType = recipe.model.sources.dataSetType
     switch(dataSetType) {
-    case 'OPTICAL': return opticalBands({
-        model: {
-            sources: recipe.model.sources
-        },
-        compositeOptions: recipe.model.options
-    })
-    case 'RADAR': return radarBands(recipe)
-    case 'PLANET': return planetBands()
-    default: return {}
+        case 'OPTICAL': return opticalBands({
+            model: {
+                sources: recipe.model.sources
+            },
+            compositeOptions: recipe.model.options
+        })
+        case 'RADAR': return radarBands(recipe)
+        case 'PLANET': return planetBands()
+        default: return {}
     }
 }
 

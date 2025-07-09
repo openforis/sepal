@@ -45,8 +45,8 @@ const mapRecipeToProps = recipe => ({
 class _MapLayoutPanel extends React.Component {
     sourceDrag$ = new Subject()
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.setMode = this.setMode.bind(this)
     }
 
