@@ -6,7 +6,7 @@ const worker$ = ({
     const ImageFactory = require('#sepal/ee/imageFactory')
     const {expand, forkJoin, last, map, switchMap, takeWhile} = require('rxjs')
     const {getRows$} = require('#sepal/ee/table')
-    const ee = require('sepal/src/ee')
+    const ee = require('#sepal/ee/ee')
     const {EEException} = require('#sepal/ee/exception')
     const log = require('#sepal/log').getLogger('ee')
 
