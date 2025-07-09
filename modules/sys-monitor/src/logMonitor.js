@@ -54,20 +54,20 @@ const start = () => {
     tail.on('line', line => processLine(line))
     tail.on('restart', reason => {
         switch (reason) {
-        case 'PRIMEFOUND':
-            log.debug('Restarting: file appeared')
-            break
-        case 'NEWPRIME':
-            log.debug('Restarting: file changed')
-            break
-        case 'TRUNCATE':
-            log.debug('Restarting: file truncated')
-            break
-        case 'CATCHUP':
-            log.debug('Restarting: file replaced')
-            break
-        default:
-            log.debug('Restarting: ' + reason)
+            case 'PRIMEFOUND':
+                log.debug('Restarting: file appeared')
+                break
+            case 'NEWPRIME':
+                log.debug('Restarting: file changed')
+                break
+            case 'TRUNCATE':
+                log.debug('Restarting: file truncated')
+                break
+            case 'CATCHUP':
+                log.debug('Restarting: file replaced')
+                break
+            default:
+                log.debug('Restarting: ' + reason)
         }
     })
     

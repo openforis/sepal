@@ -61,57 +61,57 @@ function evaluate(node, context, options) {
     function evaluateNode(node) {
         switch (node.type) {
 
-        case 'ArrayExpression':
-            return evaluateArray(node.elements)
+            case 'ArrayExpression':
+                return evaluateArray(node.elements)
 
-        case 'BinaryExpression':
-            return binops[node.operator](evaluateNode(node.left), evaluateNode(node.right))
+            case 'BinaryExpression':
+                return binops[node.operator](evaluateNode(node.left), evaluateNode(node.right))
 
-        case 'CallExpression':
-            let caller, fn, assign
-            if (node.callee.type === 'MemberExpression') {
-                assign = evaluateMember(node.callee)
-                caller = assign[0]
-                fn = assign[1]
-            } else {
-                fn = evaluateNode(node.callee)
-            }
-            if (typeof fn !== 'function') {
+            case 'CallExpression':
+                let caller, fn, assign
+                if (node.callee.type === 'MemberExpression') {
+                    assign = evaluateMember(node.callee)
+                    caller = assign[0]
+                    fn = assign[1]
+                } else {
+                    fn = evaluateNode(node.callee)
+                }
+                if (typeof fn !== 'function') {
+                    return undefined
+                }
+                return fn.apply(caller, evaluateArray(node.arguments))
+
+            case 'ConditionalExpression':
+                return evaluateNode(node.test)
+                    ? evaluateNode(node.consequent)
+                    : evaluateNode(node.alternate)
+
+            case 'Identifier':
+                assertInObject(node.name, context, options)
+                return context[node.name]
+
+            case 'Literal':
+                return node.value
+
+            case 'LogicalExpression':
+                if (node.operator === '||') {
+                    return evaluateNode(node.left) || evaluateNode(node.right)
+                } else if (node.operator === '&&') {
+                    return evaluateNode(node.left) && evaluateNode(node.right)
+                }
+                return binops[node.operator](evaluateNode(node.left), evaluateNode(node.right))
+
+            case 'MemberExpression':
+                return evaluateMember(node)[1]
+
+            case 'ThisExpression':
+                return context
+
+            case 'UnaryExpression':
+                return unops[node.operator](evaluateNode(node.argument))
+
+            default:
                 return undefined
-            }
-            return fn.apply(caller, evaluateArray(node.arguments))
-
-        case 'ConditionalExpression':
-            return evaluateNode(node.test)
-                ? evaluateNode(node.consequent)
-                : evaluateNode(node.alternate)
-
-        case 'Identifier':
-            assertInObject(node.name, context, options)
-            return context[node.name]
-
-        case 'Literal':
-            return node.value
-
-        case 'LogicalExpression':
-            if (node.operator === '||') {
-                return evaluateNode(node.left) || evaluateNode(node.right)
-            } else if (node.operator === '&&') {
-                return evaluateNode(node.left) && evaluateNode(node.right)
-            }
-            return binops[node.operator](evaluateNode(node.left), evaluateNode(node.right))
-
-        case 'MemberExpression':
-            return evaluateMember(node)[1]
-
-        case 'ThisExpression':
-            return context
-
-        case 'UnaryExpression':
-            return unops[node.operator](evaluateNode(node.argument))
-
-        default:
-            return undefined
         }
     }
 }
@@ -139,76 +139,76 @@ async function evalAsync(node, context, options) {
     async function evaluateNode(node) {
         switch (node.type) {
 
-        case 'ArrayExpression':
-            return await evaluateArray(node.elements)
+            case 'ArrayExpression':
+                return await evaluateArray(node.elements)
 
-        case 'BinaryExpression': {
-            const [left, right] = await Promise.all([
-                evaluateNode(node.left),
-                evaluateNode(node.right)
-            ])
-            return binops[node.operator](left, right)
-        }
-
-        case 'CallExpression':
-            let caller, fn, assign
-            if (node.callee.type === 'MemberExpression') {
-                assign = await evaluateMember(node.callee)
-                caller = assign[0]
-                fn = assign[1]
-            } else {
-                fn = await evaluateNode(node.callee)
+            case 'BinaryExpression': {
+                const [left, right] = await Promise.all([
+                    evaluateNode(node.left),
+                    evaluateNode(node.right)
+                ])
+                return binops[node.operator](left, right)
             }
-            if (typeof fn !== 'function') {
+
+            case 'CallExpression':
+                let caller, fn, assign
+                if (node.callee.type === 'MemberExpression') {
+                    assign = await evaluateMember(node.callee)
+                    caller = assign[0]
+                    fn = assign[1]
+                } else {
+                    fn = await evaluateNode(node.callee)
+                }
+                if (typeof fn !== 'function') {
+                    return undefined
+                }
+                return await fn.apply(
+                    caller,
+                    await evaluateArray(node.arguments)
+                )
+
+            case 'ConditionalExpression':
+                return (await evaluateNode(node.test))
+                    ? await evaluateNode(node.consequent)
+                    : await evaluateNode(node.alternate)
+
+            case 'Identifier':
+                assertInObject(node.name, context, options)
+                return context[node.name]
+
+            case 'Literal':
+                return node.value
+
+            case 'LogicalExpression': {
+                if (node.operator === '||') {
+                    return (
+                        (await evaluateNode(node.left)) || (await evaluateNode(node.right))
+                    )
+                } else if (node.operator === '&&') {
+                    return (
+                        (await evaluateNode(node.left)) && (await evaluateNode(node.right))
+                    )
+                }
+
+                const [left, right] = await Promise.all([
+                    evaluateNode(node.left),
+                    evaluateNode(node.right)
+                ])
+
+                return binops[node.operator](left, right)
+            }
+
+            case 'MemberExpression':
+                return (await evaluateMember(node))[1]
+
+            case 'ThisExpression':
+                return context
+
+            case 'UnaryExpression':
+                return unops[node.operator](await evaluateNode(node.argument))
+
+            default:
                 return undefined
-            }
-            return await fn.apply(
-                caller,
-                await evaluateArray(node.arguments)
-            )
-
-        case 'ConditionalExpression':
-            return (await evaluateNode(node.test))
-                ? await evaluateNode(node.consequent)
-                : await evaluateNode(node.alternate)
-
-        case 'Identifier':
-            assertInObject(node.name, context, options)
-            return context[node.name]
-
-        case 'Literal':
-            return node.value
-
-        case 'LogicalExpression': {
-            if (node.operator === '||') {
-                return (
-                    (await evaluateNode(node.left)) || (await evaluateNode(node.right))
-                )
-            } else if (node.operator === '&&') {
-                return (
-                    (await evaluateNode(node.left)) && (await evaluateNode(node.right))
-                )
-            }
-
-            const [left, right] = await Promise.all([
-                evaluateNode(node.left),
-                evaluateNode(node.right)
-            ])
-
-            return binops[node.operator](left, right)
-        }
-
-        case 'MemberExpression':
-            return (await evaluateMember(node))[1]
-
-        case 'ThisExpression':
-            return context
-
-        case 'UnaryExpression':
-            return unops[node.operator](await evaluateNode(node.argument))
-
-        default:
-            return undefined
         }
     }
 }

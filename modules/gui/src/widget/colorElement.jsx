@@ -22,8 +22,8 @@ export class ColorElement extends React.Component {
         color: null
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onBlur = this.onBlur.bind(this)
         this.onClick = this.onClick.bind(this)
         this.onChange = this.onChange.bind(this)

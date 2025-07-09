@@ -24,11 +24,11 @@ export const toBandValues = (rgb, visParams, dataTypes) => {
         .map((inverted, i) => inverted ? visParams.min[i] : visParams.max[i])
     const {type} = visParams
     switch (type) {
-    case 'continuous': return toContinuous(rgb, {...visParams, min, max}, dataTypes)
-    case 'categorical': return toCategorical(rgb, visParams, dataTypes)
-    case 'rgb': return toRgb(rgb, {...visParams, min, max}, dataTypes)
-    case 'hsv': return toHsv(rgb, {...visParams, min, max}, dataTypes)
-    default: return []
+        case 'continuous': return toContinuous(rgb, {...visParams, min, max}, dataTypes)
+        case 'categorical': return toCategorical(rgb, visParams, dataTypes)
+        case 'rgb': return toRgb(rgb, {...visParams, min, max}, dataTypes)
+        case 'hsv': return toHsv(rgb, {...visParams, min, max}, dataTypes)
+        default: return []
     }
 }
 

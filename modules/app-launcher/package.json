@@ -10,15 +10,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "commander": "^12.1.0",
-    "dockerode": "^4.0.6",
-    "express": "^4.21.1",
-    "http-proxy-middleware": "^3.0.3",
-    "koa": "^2.15.3",
-    "lodash": "^4.17.15",
+    "commander": "^14.0.0",
+    "dockerode": "^4.0.7",
+    "express": "^5.1.0",
+    "http-proxy-middleware": "^3.0.5",
+    "lodash": "^4.17.21",
     "micromatch": "^4.0.8",
     "path": "^0.12.7",
-    "rxjs": "^7.8.1",
+    "rxjs": "^7.8.2",
     "sepal": "../../lib/js/shared"
   },
   "imports": {

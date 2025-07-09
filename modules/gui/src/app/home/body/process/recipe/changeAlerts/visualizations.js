@@ -32,10 +32,10 @@ export const visualizationOptions = (recipe, visualizationType, mosaicType) => {
 const getMosaicVisualizations = (recipe, visualizationType, mosaicType) => {
     const dataSetType = selectFrom(recipe, 'model.sources.dataSetType')
     switch(dataSetType) {
-    case 'OPTICAL': return toOpticalVisualizations(recipe)
-    case 'RADAR': return toRadarVisualizations(recipe, visualizationType, mosaicType)
-    case 'PLANET': return toPlanetVisualizations(recipe)
-    default: return []
+        case 'OPTICAL': return toOpticalVisualizations(recipe)
+        case 'RADAR': return toRadarVisualizations(recipe, visualizationType, mosaicType)
+        case 'PLANET': return toPlanetVisualizations(recipe)
+        default: return []
     }
 }
 

@@ -30,14 +30,14 @@ const tag = ({from, to, cc, bcc, subject}) =>
 
 const getBody = (content, contentType) => {
     switch (contentType) {
-    case 'text/plain':
-        return content
-    case 'text/markdown':
-        return marked(content)
-    case 'text/html':
-        return new Handlebars.SafeString(content)
-    default:
-        throw new Error(`Unknown content-type: ${contentType}`)
+        case 'text/plain':
+            return content
+        case 'text/markdown':
+            return marked(content)
+        case 'text/html':
+            return new Handlebars.SafeString(content)
+        default:
+            throw new Error(`Unknown content-type: ${contentType}`)
     }
 }
 

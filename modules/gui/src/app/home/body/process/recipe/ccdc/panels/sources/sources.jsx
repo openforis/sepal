@@ -217,10 +217,10 @@ class _Sources extends React.Component {
     dataSetOptions() {
         const {dates, inputs: {dataSetType}} = this.props
         switch (dataSetType.value) {
-        case 'OPTICAL': return opticalDataSetOptions({...dates})
-        case 'RADAR': return radarDataSetOptions({...dates})
-        case 'PLANET': return planetDataSetOptions({...dates})
-        default: return []
+            case 'OPTICAL': return opticalDataSetOptions({...dates})
+            case 'RADAR': return radarDataSetOptions({...dates})
+            case 'PLANET': return planetDataSetOptions({...dates})
+            default: return []
         }
     }
 

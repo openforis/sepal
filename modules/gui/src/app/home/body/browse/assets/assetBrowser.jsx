@@ -43,8 +43,8 @@ class _AssetBrowser extends React.Component {
         }
     }
     
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.reload = this.reload.bind(this)
         this.removeSelected = this.removeSelected.bind(this)
         this.clearSelection = this.clearSelection.bind(this)

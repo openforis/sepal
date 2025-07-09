@@ -79,12 +79,12 @@ const formatValue = ({value, digits}) =>
 
 const formatCoordinate = ({value, positive, negative, digits}) => {
     switch(Math.sign(value)) {
-    case 1:
-        return `${formatValue({value, digits})} ${positive}`
-    case -1:
-        return `${formatValue({value, digits})} ${negative}`
-    default:
-        return '0'
+        case 1:
+            return `${formatValue({value, digits})} ${positive}`
+        case -1:
+            return `${formatValue({value, digits})} ${negative}`
+        default:
+            return '0'
     }
 }
 

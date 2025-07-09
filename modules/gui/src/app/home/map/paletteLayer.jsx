@@ -239,8 +239,8 @@ const Value = ({value}) => {
 
 const formatValue = ({dataType, value, magnitude}) => {
     switch (dataType) {
-    case 'fractionalYears': return format.date(format.fractionalYearsToDate(value))
-    default: return format.numberToMagnitude({value, magnitude})
+        case 'fractionalYears': return format.date(format.fractionalYearsToDate(value))
+        default: return format.numberToMagnitude({value, magnitude})
     }
 }
 

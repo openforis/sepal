@@ -19,8 +19,8 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class _ProcessMenu extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.duplicateRecipe = this.duplicateRecipe.bind(this)
         this.exportRecipe = this.exportRecipe.bind(this)
         this.save = this.save.bind(this)

@@ -99,21 +99,21 @@ class _Maps extends React.Component {
     getStyleOptions(style = 'sepalStyle') {
         // https://developers.google.com/maps/documentation/javascript/style-reference
         switch (style) {
-        case 'sepalStyle':
-            return [
-                {stylers: [{visibility: 'simplified'}]},
-                {stylers: [{color: '#131314'}]},
-                {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
-                {featureType: 'poi', stylers: [{visibility: 'off'}]},
-                {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
-                {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
-            ]
-        case 'overlayStyle':
-            return [
-                {stylers: [{visibility: 'off'}]}
-            ]
-        default:
-            throw Error(`Unsupported map style ${style}`)
+            case 'sepalStyle':
+                return [
+                    {stylers: [{visibility: 'simplified'}]},
+                    {stylers: [{color: '#131314'}]},
+                    {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
+                    {featureType: 'poi', stylers: [{visibility: 'off'}]},
+                    {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
+                    {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
+                ]
+            case 'overlayStyle':
+                return [
+                    {stylers: [{visibility: 'off'}]}
+                ]
+            default:
+                throw Error(`Unsupported map style ${style}`)
         }
     }
 

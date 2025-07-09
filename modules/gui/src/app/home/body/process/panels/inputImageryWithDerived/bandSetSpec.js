@@ -22,14 +22,14 @@ export const BandSetSpec = {
  
 const specClass = spec => {
     switch (spec.type) {
-    case 'IMAGE_BANDS':
-        return ImageBands
-    case 'PAIR_WISE_EXPRESSION':
-        return PairWiseExpression
-    case 'INDEXES':
-        return Indexes
-    default :
-        throw Error(`Unsupported band set spec class: ${JSON.stringify(spec)}`)
+        case 'IMAGE_BANDS':
+            return ImageBands
+        case 'PAIR_WISE_EXPRESSION':
+            return PairWiseExpression
+        case 'INDEXES':
+            return Indexes
+        default :
+            throw Error(`Unsupported band set spec class: ${JSON.stringify(spec)}`)
     }
 }
 

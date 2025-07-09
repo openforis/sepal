@@ -17,14 +17,14 @@ library.add(fas)
 
 const fontAwesomeCollection = type => {
     switch (type) {
-    case 'solid':
-        return 'fas'
-    case 'regular':
-        return 'far'
-    case 'brands':
-        return 'fab'
-    default:
-        throw Error(`Unsupported icon type: ${type}`)
+        case 'solid':
+            return 'fas'
+        case 'regular':
+            return 'far'
+        case 'brands':
+            return 'fab'
+        default:
+            throw Error(`Unsupported icon type: ${type}`)
     }
 }
 

@@ -4,7 +4,7 @@ const {amqpUri, redisUri, port, secure} = require('./config')
 const {initializeWebSocketServer} = require('./websocket')
 const {isMatch} = require('micromatch')
 const express = require('express')
-const Redis = require('ioredis')
+const {createClient} = require('redis')
 const Session = require('express-session')
 const {v4: uuid} = require('uuid')
 const url = require('url')
@@ -30,30 +30,34 @@ const {webSocketPath} = require('../config/endpoints')
 
 const event$ = new Subject()
 
-const redis = new Redis(redisUri)
-const userStore = UserStore(redis, event$)
-const sessionStore = new RedisSessionStore({client: redis})
-
-const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore, userStore)
-const {authMiddleware} = AuthMiddleware(userStore)
-const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
-const {proxyEndpoints} = Proxy(userStore, authMiddleware, googleAccessTokenMiddleware)
-
-const getSecret = async () => {
-    const secret = await redis.get('secret')
-
-    if (secret) {
-        log.info('Reusing saved secret')
-        return secret
-    } else {
-        const secret = uuid()
-        log.info('Creating new secret')
-        await redis.set('secret', secret)
-        return secret
-    }
-}
-
 const main = async () => {
+    const redis = await createClient({url: redisUri})
+        .on('connect', () => log.info('Connected to Redis:', redisUri))
+        .on('error', err => log.error('Redis connection error', err))
+        .connect()
+
+    const userStore = UserStore(redis, event$)
+    const sessionStore = new RedisSessionStore({client: redis})
+
+    const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore, userStore)
+    const {authMiddleware} = AuthMiddleware(userStore)
+    const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
+    const {proxyEndpoints} = Proxy(userStore, authMiddleware, googleAccessTokenMiddleware)
+
+    const getSecret = async () => {
+        const secret = await redis.get('secret')
+
+        if (secret) {
+            log.info('Reusing saved secret')
+            return secret
+        } else {
+            const secret = uuid()
+            log.info('Creating new secret')
+            await redis.set('secret', secret)
+            return secret
+        }
+    }
+
     await initMessageQueue(amqpUri, {
         subscribers: [
             {queue: 'gateway.userLocked', topic: 'user.UserLocked', handler: messageHandler}

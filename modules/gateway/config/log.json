@@ -4,7 +4,7 @@
         "authMiddleware": "info",
         "googleAccessTokenMiddleware": "info",
         "gateway": "info",
-        "googleAccessToken": "debug",
+        "googleAccessToken": "info",
         "http/client": "info",
         "http/server": "info",
         "proxy": "warn",

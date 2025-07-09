@@ -51,8 +51,8 @@ const denormalize = (value, min, max, scale, invert) =>
 class SliderContainer extends React.Component {
     clickTarget = React.createRef()
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.normalize = this.normalize.bind(this)
         this.denormalize = this.denormalize.bind(this)
     }
@@ -476,8 +476,8 @@ export class Slider extends React.Component {
         previewValue: null
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.ref = React.createRef()
         this.onPreview = this.onPreview.bind(this)
         this.onResize = this.onResize.bind(this)

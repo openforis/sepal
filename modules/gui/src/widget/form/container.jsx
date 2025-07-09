@@ -2,8 +2,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 export class FormContainer extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onSubmit = this.onSubmit.bind(this)
     }
 

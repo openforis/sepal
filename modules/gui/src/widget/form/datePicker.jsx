@@ -41,8 +41,8 @@ class _FormDatePicker extends React.Component {
     inputElement = React.createRef()
     state = {value: ''}
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onSelect = this.onSelect.bind(this)
         this.onChange = this.onChange.bind(this)
         this.onBlur = this.onBlur.bind(this)

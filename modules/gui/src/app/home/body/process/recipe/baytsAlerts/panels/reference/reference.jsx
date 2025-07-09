@@ -78,12 +78,12 @@ const modelToValues = ({id, type, bands, startDate, endDate, visualizations}) =>
         visualizations
     }
     switch (type) {
-    case 'RECIPE_REF':
-        return {...values, recipe: id}
-    case 'ASSET':
-        return {...values, asset: id}
-    default:
-        return values
+        case 'RECIPE_REF':
+            return {...values, recipe: id}
+        case 'ASSET':
+            return {...values, asset: id}
+        default:
+            return values
     }
 }
 
@@ -96,12 +96,12 @@ const valuesToModel = ({section, asset, recipe, bands, startDate, endDate, visua
         visualizations
     }
     switch (section) {
-    case 'RECIPE_REF':
-        return {...model, id: recipe}
-    case 'ASSET':
-        return {...model, id: asset}
-    default:
-        return null
+        case 'RECIPE_REF':
+            return {...model, id: recipe}
+        case 'ASSET':
+            return {...model, id: asset}
+        default:
+            return null
     }
 }
 

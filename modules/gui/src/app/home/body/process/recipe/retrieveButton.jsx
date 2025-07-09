@@ -16,8 +16,8 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _RetrieveButton extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.hint = this.hint.bind(this)
     }
 
@@ -47,8 +47,6 @@ class _RetrieveButton extends React.Component {
             (tooltip || msg('process.retrieve.tooltip')),
             (this.isBudgetExceeded() ? msg('user.quotaUpdate.info') : null)
         ]
-        // return (tooltip || msg('process.retrieve.tooltip')) +
-        //     (this.isBudgetExceeded() ? ` - ${msg('user.quotaUpdate.info')}` : '')
     }
 
     hint(enabled) {

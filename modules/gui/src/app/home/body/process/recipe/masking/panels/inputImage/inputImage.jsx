@@ -87,27 +87,27 @@ export class InputImage extends React.Component {
 
         const imageMaskLayerSource = () => {
             switch (section) {
-            case 'RECIPE_REF':
-                return {
-                    id: recipeId,
-                    type: 'Recipe',
-                    sourceConfig: {
-                        recipeId
+                case 'RECIPE_REF':
+                    return {
+                        id: recipeId,
+                        type: 'Recipe',
+                        sourceConfig: {
+                            recipeId
+                        }
                     }
-                }
-            case 'ASSET':
-                return {
-                    id: asset,
-                    type: 'Asset',
-                    sourceConfig: {
-                        description: asset,
-                        asset,
-                        metadata,
-                        visualizations
+                case 'ASSET':
+                    return {
+                        id: asset,
+                        type: 'Asset',
+                        sourceConfig: {
+                            description: asset,
+                            asset,
+                            metadata,
+                            visualizations
+                        }
                     }
-                }
-            default:
-                return
+                default:
+                    return
             }
         }
 
@@ -127,12 +127,12 @@ export const modelToValues = model => {
         visualiations: model.visualizations
     }
     switch (model.type) {
-    case 'RECIPE_REF':
-        return {...values, recipe: model.id}
-    case 'ASSET':
-        return {...values, asset: model.id}
-    default:
-        return values
+        case 'RECIPE_REF':
+            return {...values, recipe: model.id}
+        case 'ASSET':
+            return {...values, asset: model.id}
+        default:
+            return values
     }
 }
 
@@ -143,12 +143,12 @@ export const valuesToModel = values => {
         visualizations: values.visualizations
     }
     switch (values.section) {
-    case 'RECIPE_REF':
-        return {...model, id: values.recipe}
-    case 'ASSET':
-        return {...model, id: values.asset}
-    default:
-        return null
+        case 'RECIPE_REF':
+            return {...model, id: values.recipe}
+        case 'ASSET':
+            return {...model, id: values.asset}
+        default:
+            return null
     }
 }
 

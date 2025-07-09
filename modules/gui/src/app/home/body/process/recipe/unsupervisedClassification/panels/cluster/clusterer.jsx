@@ -147,16 +147,16 @@ class _Clusterer extends React.Component {
 
         const renderTypeForm = () => {
             switch (type.value) {
-            case 'CASCADE_KMEANS':
-                return renderCascadeKMeans()
-            case 'KMEANS':
-                return renderKMeans()
-            case 'LVQ':
-                return renderLVQ()
-            case 'XMEANS':
-                return renderXMeans()
-            default:
-                return
+                case 'CASCADE_KMEANS':
+                    return renderCascadeKMeans()
+                case 'KMEANS':
+                    return renderKMeans()
+                case 'LVQ':
+                    return renderLVQ()
+                case 'XMEANS':
+                    return renderXMeans()
+                default:
+                    return
             }
         }
         const renderCascadeKMeans = () =>
@@ -194,16 +194,16 @@ class _Clusterer extends React.Component {
 
         const renderTypeForm = () => {
             switch (type.value) {
-            case 'CASCADE_KMEANS':
-                return renderCascadeKMeans()
-            case 'KMEANS':
-                return renderKMeans()
-            case 'LVQ':
-                return renderLVQ()
-            case 'XMEANS':
-                return renderXMeans()
-            default:
-                return
+                case 'CASCADE_KMEANS':
+                    return renderCascadeKMeans()
+                case 'KMEANS':
+                    return renderKMeans()
+                case 'LVQ':
+                    return renderLVQ()
+                case 'XMEANS':
+                    return renderXMeans()
+                default:
+                    return
             }
         }
 

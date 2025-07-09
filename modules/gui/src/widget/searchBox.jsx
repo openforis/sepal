@@ -26,8 +26,8 @@ class _SearchBox extends React.Component {
         showOptions: true
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.showOptions = this.showOptions.bind(this)
         this.hideOptions = this.hideOptions.bind(this)
         this.selectOption = this.selectOption.bind(this)

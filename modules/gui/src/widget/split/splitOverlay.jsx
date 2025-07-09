@@ -8,8 +8,8 @@ import {SplitContext} from './splitContext'
 import styles from './splitView.module.css'
 
 export class SplitOverlay extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.renderSplitContext = this.renderSplitContext.bind(this)
     }
 

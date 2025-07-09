@@ -8,29 +8,29 @@ const emailNotificationsEnabledKey = key => `emailNotificationsEnabled:${key}`
 
 const fromBoolean = value => {
     switch (value) {
-    case undefined:
-        return null
-    case true:
-        return 'true'
-    case false:
-        return 'false'
-    default:
-        log.warn('fromBoolean expected three-state boolean, got unexpected value:', value)
-        return undefined
+        case undefined:
+            return null
+        case true:
+            return 'true'
+        case false:
+            return 'false'
+        default:
+            log.warn('fromBoolean expected three-state boolean, got unexpected value:', value)
+            return undefined
     }
 }
 
 const toBoolean = value => {
     switch (value) {
-    case null:
-        return undefined
-    case 'true':
-        return true
-    case 'false':
-        return false
-    default:
-        log.warn('toBoolean expected three-state boolean, got unexpected value:', value)
-        return undefined
+        case null:
+            return undefined
+        case 'true':
+            return true
+        case 'false':
+            return false
+        default:
+            log.warn('toBoolean expected three-state boolean, got unexpected value:', value)
+            return undefined
     }
 }
 

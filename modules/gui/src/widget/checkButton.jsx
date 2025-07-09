@@ -6,8 +6,8 @@ import {Button} from '~/widget/button'
 import styles from './checkButton.module.css'
 
 export class CheckButton extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onToggle = this.onToggle.bind(this)
     }
 

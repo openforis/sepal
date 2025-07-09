@@ -38,14 +38,14 @@ export class UserStatus extends React.Component {
     getIcon() {
         const {status, isGoogleUser} = this.props
         switch(status) {
-        case UserStatus.LOCKED:
-            return this.getLockedUserIcon()
-        case UserStatus.PENDING:
-            return this.getPendingUserIcon()
-        case UserStatus.ACTIVE:
-            return isGoogleUser ? this.getConnectedActiveUserIcon() : this.getDisconnectedActiveUserIcon()
-        default:
-            return this.getUnknownUserIcon()
+            case UserStatus.LOCKED:
+                return this.getLockedUserIcon()
+            case UserStatus.PENDING:
+                return this.getPendingUserIcon()
+            case UserStatus.ACTIVE:
+                return isGoogleUser ? this.getConnectedActiveUserIcon() : this.getDisconnectedActiveUserIcon()
+            default:
+                return this.getUnknownUserIcon()
         }
     }
 

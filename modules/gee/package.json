@@ -11,7 +11,7 @@
     "license": "ISC",
     "dependencies": {
         "commander": "^14.0.0",
-        "googleapis": "^149.0.0",
+        "googleapis": "^150.0.1",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
         "moment": "^2.30.1",

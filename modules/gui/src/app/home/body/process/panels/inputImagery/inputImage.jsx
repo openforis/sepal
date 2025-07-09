@@ -109,26 +109,26 @@ class _InputImage extends React.Component {
 
         const toImageLayerSource = () => {
             switch (section) {
-            case 'RECIPE_REF':
-                return {
-                    id: recipeId,
-                    type: 'Recipe',
-                    sourceConfig: {
-                        recipeId
+                case 'RECIPE_REF':
+                    return {
+                        id: recipeId,
+                        type: 'Recipe',
+                        sourceConfig: {
+                            recipeId
+                        }
                     }
-                }
-            case 'ASSET':
-                return {
-                    id: asset,
-                    type: 'Asset',
-                    sourceConfig: {
-                        description: asset,
-                        asset,
-                        visualizations
+                case 'ASSET':
+                    return {
+                        id: asset,
+                        type: 'Asset',
+                        sourceConfig: {
+                            description: asset,
+                            asset,
+                            visualizations
+                        }
                     }
-                }
-            default:
-                throw Error(`Unexpected section: ${section}`)
+                default:
+                    throw Error(`Unexpected section: ${section}`)
             }
         }
 
@@ -150,18 +150,18 @@ class _InputImage extends React.Component {
     getSelectedImage() {
         const {inputs: {section, recipe, asset}} = this.props
         switch (section.value) {
-        case 'ASSET':
-            return {
-                type: 'ASSET',
-                id: asset.value
-            }
-        case 'RECIPE_REF':
-            return {
-                type: 'RECIPE_REF',
-                id: recipe.value
-            }
-        default:
-            throw Error(`Unexpected image section: ${section.value}`)
+            case 'ASSET':
+                return {
+                    type: 'ASSET',
+                    id: asset.value
+                }
+            case 'RECIPE_REF':
+                return {
+                    type: 'RECIPE_REF',
+                    id: recipe.value
+                }
+            default:
+                throw Error(`Unexpected image section: ${section.value}`)
         }
     }
 }
@@ -177,12 +177,12 @@ const modelToValues = model => {
         includedBands: model.includedBands
     }
     switch (model.type) {
-    case 'RECIPE_REF':
-        return {...values, recipe: model.id}
-    case 'ASSET':
-        return {...values, asset: model.id}
-    default:
-        return values
+        case 'RECIPE_REF':
+            return {...values, recipe: model.id}
+        case 'ASSET':
+            return {...values, asset: model.id}
+        default:
+            return values
     }
 }
 
@@ -197,12 +197,12 @@ const valuesToModel = values => {
         includedBands: values.includedBands
     }
     switch (values.section) {
-    case 'RECIPE_REF':
-        return {...model, id: values.recipe}
-    case 'ASSET':
-        return {...model, id: values.asset}
-    default:
-        return null
+        case 'RECIPE_REF':
+            return {...model, id: values.recipe}
+        case 'ASSET':
+            return {...model, id: values.asset}
+        default:
+            return null
     }
 }
 

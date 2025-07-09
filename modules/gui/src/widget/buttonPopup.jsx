@@ -23,8 +23,8 @@ class _ButtonPopup extends React.Component {
         showPopup: false
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.handleBlur = this.handleBlur.bind(this)
         this.togglePopup = this.togglePopup.bind(this)
         this.onClick = this.onClick.bind(this)

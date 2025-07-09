@@ -6,14 +6,14 @@ export const determineUsedBands = ({expression, images, calculations}) => {
 
     const bandsFromNode = node => {
         switch (node.type) {
-        case 'Identifier': return bandsFromIdentifier(node)
-        case 'MemberExpression': return bandsFromMemberExpression(node)
-        case 'BinaryExpression': return bandsFromBinaryExpression(node)
-        case 'UnaryExpression': return bandsFromUnaryExpression(node)
-        case 'ConditionalExpression': return bandsFromConditionalExpression(node)
-        case 'CallExpression': return bandsFromCallExpression(node)
-        case 'Literal': return bandsFromLiteral(node)
-        default: throw Error('Invalid expression')
+            case 'Identifier': return bandsFromIdentifier(node)
+            case 'MemberExpression': return bandsFromMemberExpression(node)
+            case 'BinaryExpression': return bandsFromBinaryExpression(node)
+            case 'UnaryExpression': return bandsFromUnaryExpression(node)
+            case 'ConditionalExpression': return bandsFromConditionalExpression(node)
+            case 'CallExpression': return bandsFromCallExpression(node)
+            case 'Literal': return bandsFromLiteral(node)
+            default: throw Error('Invalid expression')
         }
     }
 

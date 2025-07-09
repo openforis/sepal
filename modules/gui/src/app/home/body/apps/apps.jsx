@@ -6,8 +6,8 @@ import {Tabs} from '~/widget/tabs/tabs'
 import {App} from './app'
 
 export class Apps extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.renderApp = this.renderApp.bind(this)
         this.isLandingTab = this.isLandingTab.bind(this)
     }
