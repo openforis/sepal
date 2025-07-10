@@ -3,7 +3,7 @@ const {finalize, map, interval, merge} = require('rxjs')
 const {webSocket} = require('rxjs/webSocket')
 
 const {webSocketEndpoints} = require('../config/endpoints')
-const {autoRetry} = require('sepal/src/rxjs')
+const {autoRetry} = require('#sepal/rxjs')
 const {moduleTag, clientTag} = require('./tag')
 const {MODULE_UP, MODULE_DOWN} = require('./websocket-events')
 

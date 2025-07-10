@@ -1,6 +1,6 @@
 const fs = require('fs').promises
 const log = require('#sepal/log').getLogger('git')
-const {ClientException} = require('sepal/src/exception')
+const {ClientException} = require('#sepal/exception')
 const executeCommand = require('./terminal')
 
 const MAX_RETRIES = 3

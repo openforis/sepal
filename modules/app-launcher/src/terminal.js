@@ -1,6 +1,6 @@
 const {spawn} = require('child_process')
 const log = require('#sepal/log').getLogger('terminal')
-const {ClientException} = require('sepal/src/exception')
+const {ClientException} = require('#sepal/exception')
 
 // taken from dev-env/src/terminal.js
 const exec = ({command, args, cwd, env, detached, enableStdIn, showStdOut, showStdErr}) =>
