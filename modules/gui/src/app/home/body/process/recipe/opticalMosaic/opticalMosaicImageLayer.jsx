@@ -6,6 +6,7 @@ import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizati
 import {withMapArea} from '~/app/home/map/mapAreaContext'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {selectFrom} from '~/stateUtils'
 import {Buttons} from '~/widget/buttons'
 import {Layout} from '~/widget/layout'
@@ -105,12 +106,11 @@ class _OpticalMosaicImageLayer extends React.Component {
 
 export const OpticalMosaicImageLayer = compose(
     _OpticalMosaicImageLayer,
-    withMapArea()
+    withMapArea(),
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-OpticalMosaicImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 OpticalMosaicImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

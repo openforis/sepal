@@ -1,12 +1,14 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {msg} from '~/translate'
 
 import {InlineConfirmationButton} from './inlineConfirmationButton'
 import {ModalConfirmationButton} from './modalConfirmationButton'
 
-export class RemoveButton extends React.Component {
+class _RemoveButton extends React.Component {
     render() {
         const {message} = this.props
         return message
@@ -58,6 +60,15 @@ export class RemoveButton extends React.Component {
     }
 }
 
+export const RemoveButton = compose(
+    _RemoveButton,
+    asFunctionalComponent({
+        shape: 'circle',
+        icon: 'trash',
+        unsafe: false
+    })
+)
+
 RemoveButton.propTypes = {
     onRemove: PropTypes.func.isRequired,
     air: PropTypes.any,
@@ -73,10 +84,4 @@ RemoveButton.propTypes = {
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,
     unsafe: PropTypes.any
-}
-
-RemoveButton.defaultProps = {
-    shape: 'circle',
-    icon: 'trash',
-    unsafe: false
 }

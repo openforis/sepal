@@ -7,6 +7,7 @@ import {map} from 'rxjs'
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {asFunctionalComponent} from '~/classComponent'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -235,12 +236,11 @@ export const PlanetImageLayer = compose(
     withMapArea(),
     withRecipe(mapRecipeToProps),
     withMapApiKey(),
-    withSubscriptions()
+    withSubscriptions(),
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-PlanetImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 PlanetImageLayer.propTypes = {
     layerConfig: PropTypes.object,

@@ -1,11 +1,13 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Icon} from '~/widget/icon'
 
-export class UserStatus extends React.Component {
+class _UserStatus extends React.Component {
     static LOCKED = 'LOCKED'
     static PENDING = 'PENDING'
     static ACTIVE = 'ACTIVE'
@@ -70,9 +72,12 @@ export class UserStatus extends React.Component {
     }
 }
 
-UserStatus.defaultProps = {
-    status: 'UNKNOWN'
-}
+export const UserStatus = compose(
+    _UserStatus,
+    asFunctionalComponent({
+        status: 'UNKNOWN'
+    })
+)
 
 UserStatus.propTypes = {
     status: PropTypes.string

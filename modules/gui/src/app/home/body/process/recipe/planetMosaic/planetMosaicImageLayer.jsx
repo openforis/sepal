@@ -4,6 +4,7 @@ import React from 'react'
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 
 import {visualizationOptions} from './visualizations'
 
@@ -38,12 +39,11 @@ class _PlanetMosaicImageLayer extends React.Component {
 }
 
 export const PlanetMosaicImageLayer = compose(
-    _PlanetMosaicImageLayer
+    _PlanetMosaicImageLayer,
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-PlanetMosaicImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 PlanetMosaicImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

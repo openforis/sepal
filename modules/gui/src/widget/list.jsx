@@ -5,7 +5,7 @@ import {distinctUntilChanged, fromEvent, merge, sample, Subject} from 'rxjs'
 
 import {compose} from '~/compose'
 import {isEqual} from '~/hash'
-import {withForwardedRef} from '~/ref'
+import {asFunctionalComponent} from '~/classComponent'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -53,7 +53,10 @@ class _ScrollableList extends React.Component {
 export const ScrollableList = compose(
     _ScrollableList,
     withSubscriptions(),
-    withForwardedRef()
+    asFunctionalComponent({
+        alignment: 'left',
+        tooltipPlacement: 'right'
+    })
 )
 
 ScrollableList.propTypes = {
@@ -82,11 +85,6 @@ ScrollableList.propTypes = {
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,
     onCancel: PropTypes.func
-}
-
-ScrollableList.defaultProps = {
-    alignment: 'left',
-    tooltipPlacement: 'right'
 }
 
 class _List extends React.Component {

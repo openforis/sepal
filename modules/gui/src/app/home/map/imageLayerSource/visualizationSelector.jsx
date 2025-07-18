@@ -4,6 +4,7 @@ import React from 'react'
 
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
@@ -132,12 +133,11 @@ export const VisualizationSelector = compose(
     withActivators({
         visParams: ({mapArea: {area}}) => `visParams-${area}`
     }),
-    withMapArea()
+    withMapArea(),
+    asFunctionalComponent({
+        presetOptions: []
+    })
 )
-
-VisualizationSelector.defaultProps = {
-    presetOptions: []
-}
 
 VisualizationSelector.propTypes = {
     source: PropTypes.any.isRequired,

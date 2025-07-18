@@ -1,11 +1,14 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
+
 import {Icon} from './icon'
 import {Shape} from './shape'
 import styles from './tag.module.css'
 
-export class Tag extends React.Component {
+class _Tag extends React.Component {
     render() {
         const {size} = this.props
         return (
@@ -35,12 +38,15 @@ export class Tag extends React.Component {
     }
 }
 
+export const Tag = compose(
+    _Tag,
+    asFunctionalComponent({
+        size: 'normal'
+    })
+)
+
 Tag.propTypes = {
     children: PropTypes.any,
     label: PropTypes.any,
     size: PropTypes.any
-}
-
-Tag.defaultProps = {
-    size: 'normal'
 }

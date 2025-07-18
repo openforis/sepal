@@ -3,6 +3,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import Highlight from 'react-highlighter'
 
+import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {RemoveButton} from '~/widget/removeButton'
@@ -11,7 +13,7 @@ import {CheckButton} from './checkButton'
 import styles from './crudItem.module.css'
 import {Icon} from './icon'
 
-export class CrudItem extends React.Component {
+class _CrudItem extends React.Component {
     render() {
         return (
             <div className={styles.container}>
@@ -265,6 +267,15 @@ export class CrudItem extends React.Component {
     }
 }
 
+export const CrudItem = compose(
+    _CrudItem,
+    asFunctionalComponent({
+        highlightDescription: true,
+        highlightTitle: true,
+        tooltipPlacement: 'left'
+    })
+)
+
 CrudItem.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
@@ -307,10 +318,4 @@ CrudItem.propTypes = {
     onInfo: PropTypes.func,
     onRemove: PropTypes.func,
     onSelect: PropTypes.func
-}
-
-CrudItem.defaultProps = {
-    highlightDescription: true,
-    highlightTitle: true,
-    tooltipPlacement: 'left'
 }

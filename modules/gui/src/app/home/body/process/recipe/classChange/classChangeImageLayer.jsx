@@ -4,6 +4,7 @@ import React from 'react'
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {msg} from '~/translate'
 
 import {getAvailableBands} from './bands'
@@ -50,12 +51,11 @@ class _ClassChangeImageLayer extends React.Component {
 }
 
 export const ClassChangeImageLayer = compose(
-    _ClassChangeImageLayer
+    _ClassChangeImageLayer,
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-ClassChangeImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 ClassChangeImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

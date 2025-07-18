@@ -4,6 +4,7 @@ import React from 'react'
 
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {asFunctionalComponent} from '~/classComponent'
 import {selectFrom} from '~/stateUtils'
 import {escapeRegExp, simplifyString, splitString} from '~/string'
 import {AutoFocus} from '~/widget/autoFocus'
@@ -453,7 +454,14 @@ class _Combo extends React.Component {
 
 export const Combo = compose(
     _Combo,
-    connect(mapStateToProps)
+    connect(mapStateToProps),
+    asFunctionalComponent({
+        alignment: 'left',
+        border: 'true',
+        hPlacement: 'over',
+        vPlacement: 'below-or-above',
+        tooltipPlacement: 'top'
+    })
 )
 
 Combo.propTypes = {
@@ -516,12 +524,4 @@ Combo.propTypes = {
     onCancel: PropTypes.func,
     onChange: PropTypes.func,
     onFilterChange: PropTypes.func // arguments: filter, filterReset
-}
-
-Combo.defaultProps = {
-    alignment: 'left',
-    border: 'true',
-    hPlacement: 'over',
-    vPlacement: 'below-or-above',
-    tooltipPlacement: 'top'
 }

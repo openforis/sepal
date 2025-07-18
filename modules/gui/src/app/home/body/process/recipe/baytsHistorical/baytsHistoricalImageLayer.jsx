@@ -4,6 +4,7 @@ import React from 'react'
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 
 import {visualizationOptions} from './visualizations'
 
@@ -38,12 +39,11 @@ class _BaytsHistoricalImageLayer extends React.Component {
 }
 
 export const BaytsHistoricalImageLayer = compose(
-    _BaytsHistoricalImageLayer
+    _BaytsHistoricalImageLayer,
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-BaytsHistoricalImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 BaytsHistoricalImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

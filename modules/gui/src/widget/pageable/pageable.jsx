@@ -4,6 +4,7 @@ import React from 'react'
 
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {asFunctionalComponent} from '~/classComponent'
 import {selectFrom} from '~/stateUtils'
 import {Keybinding} from '~/widget/keybinding'
 
@@ -223,7 +224,11 @@ class _Pageable extends React.Component {
 
 export const Pageable = compose(
     _Pageable,
-    connect(mapStateToProps)
+    connect(mapStateToProps),
+    asFunctionalComponent({
+        fillFirstPage: true,
+        fillLastPage: false,
+    })
 )
 
 Pageable.propTypes = {
@@ -231,11 +236,6 @@ Pageable.propTypes = {
     items: PropTypes.array.isRequired,
     fillFirstPage: PropTypes.bool,
     fillLastPage: PropTypes.bool
-}
-
-Pageable.defaultProps = {
-    fillFirstPage: true,
-    fillLastPage: false,
 }
 
 Pageable.Data = PageableData

@@ -6,6 +6,7 @@ import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizati
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {asFunctionalComponent} from '~/classComponent'
 import {selectFrom} from '~/stateUtils'
 
 import {visualizationOptions} from './visualizations'
@@ -61,11 +62,10 @@ class _StackImageLayer extends React.Component {
 export const StackImageLayer = compose(
     _StackImageLayer,
     connect(mapStateToProps),
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-StackImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 StackImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

@@ -4,6 +4,7 @@ import React from 'react'
 import {debounceTime, Subject} from 'rxjs'
 
 import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {withSubscriptions} from '~/subscription'
 
 import styles from './fastList.module.css'
@@ -13,7 +14,7 @@ import {Scrollable, withScrollable} from './scrollable'
 
 const NOT_HOVERED = -1
 
-export class FastList extends React.Component {
+class _FastList extends React.Component {
     constructor(props) {
         super(props)
         this.renderContent = this.renderContent.bind(this)
@@ -40,6 +41,14 @@ export class FastList extends React.Component {
     }
 }
 
+export const FastList = compose(
+    _FastList,
+    asFunctionalComponent({
+        overflow: 10,
+        spacing: 'none'
+    })
+)
+
 FastList.propTypes = {
     itemKey: PropTypes.func.isRequired,
     items: PropTypes.array.isRequired,
@@ -47,11 +56,6 @@ FastList.propTypes = {
     itemRenderer: PropTypes.func,
     overflow: PropTypes.number,
     spacing: PropTypes.any
-}
-
-FastList.defaultProps = {
-    overflow: 10,
-    spacing: 'none'
 }
 
 class _FastListContent extends React.PureComponent {

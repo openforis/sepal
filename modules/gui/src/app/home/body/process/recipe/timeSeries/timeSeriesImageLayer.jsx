@@ -6,6 +6,7 @@ import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizati
 import {withMapArea} from '~/app/home/map/mapAreaContext'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {msg} from '~/translate'
 
 import {getAvailableBands} from './bands'
@@ -63,11 +64,10 @@ class _TimeSeriesImageLayer extends React.Component {
 export const TimeSeriesImageLayer = compose(
     _TimeSeriesImageLayer,
     withMapArea(),
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-TimeSeriesImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 TimeSeriesImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

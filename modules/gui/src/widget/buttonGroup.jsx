@@ -3,7 +3,7 @@ import React from 'react'
 
 import {compose} from '~/compose'
 import {withContext} from '~/context'
-import {withForwardedRef} from '~/ref'
+import {asFunctionalComponent} from '~/classComponent'
 
 import {Widget} from './widget'
 
@@ -55,7 +55,11 @@ const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, 
 export const ButtonGroup = compose(
     _ButtonGroup,
     withButtonGroup(),
-    withForwardedRef()
+    asFunctionalComponent({
+        alignment: 'left',
+        layout: 'horizontal',
+        spacing: 'compact'
+    })
 )
 
 ButtonGroup.propTypes = {
@@ -74,10 +78,4 @@ ButtonGroup.propTypes = {
     tooltipTrigger: PropTypes.any,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func
-}
-
-ButtonGroup.defaultProps = {
-    alignment: 'left',
-    layout: 'horizontal',
-    spacing: 'compact'
 }

@@ -6,6 +6,7 @@ import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizati
 import {withMapArea} from '~/app/home/map/mapAreaContext'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Buttons} from '~/widget/buttons'
@@ -175,12 +176,11 @@ class _ChangeAlertsImageLayer extends React.Component {
 export const ChangeAlertsImageLayer = compose(
     _ChangeAlertsImageLayer,
     withMapArea(),
-    withRecipe(mapRecipeToProps)
+    withRecipe(mapRecipeToProps),
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-ChangeAlertsImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 ChangeAlertsImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

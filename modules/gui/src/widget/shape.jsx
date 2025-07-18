@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
-import {withForwardedRef} from '~/ref'
 import lookStyles from '~/style/look.module.css'
 import {Icon} from '~/widget/icon'
 import {Tooltip} from '~/widget/tooltip'
@@ -100,7 +100,17 @@ class _Shape extends React.Component {
 
 export const Shape = compose(
     _Shape,
-    withForwardedRef()
+    asFunctionalComponent({
+        air: 'normal',
+        alignment: 'left',
+        iconPlacement: 'left',
+        iconVariant: 'normal',
+        look: 'default',
+        shape: 'rectangle',
+        shown: true,
+        size: 'normal',
+        width: 'fit'
+    })
 )
 
 Shape.propTypes = {
@@ -129,16 +139,4 @@ Shape.propTypes = {
     tooltipDisabled: PropTypes.any,
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
     width: PropTypes.oneOf(['fit', 'fill'])
-}
-
-Shape.defaultProps = {
-    air: 'normal',
-    alignment: 'left',
-    iconPlacement: 'left',
-    iconVariant: 'normal',
-    look: 'default',
-    shape: 'rectangle',
-    shown: true,
-    size: 'normal',
-    width: 'fit'
 }

@@ -4,7 +4,7 @@ import React from 'react'
 import {animationFrames, concatWith, delay, distinctUntilChanged, EMPTY, filter, fromEvent, map, merge, of, sample, scan, shareReplay, Subject, switchMap, takeUntil, takeWhile} from 'rxjs'
 
 import {compose} from '~/compose'
-import {withForwardedRef} from '~/ref'
+import {asFunctionalComponent} from '~/classComponent'
 import {withSubscriptions} from '~/subscription'
 import {Keybinding} from '~/widget/keybinding'
 
@@ -555,7 +555,7 @@ export const Scrollable = compose(
     _Scrollable,
     withEventShield(),
     withSubscriptions(),
-    withForwardedRef()
+    asFunctionalComponent()
 )
 
 Scrollable.propTypes = {

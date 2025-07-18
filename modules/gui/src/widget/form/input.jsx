@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {compose} from '~/compose'
-import {withForwardedRef} from '~/ref'
+import {asFunctionalComponent} from '~/classComponent'
 import {withFormContext} from '~/widget/form/context'
 import {Input, Textarea} from '~/widget/input'
 
@@ -89,7 +89,10 @@ class _FormInput extends React.Component {
 export const FormInput = compose(
     _FormInput,
     withFormContext(),
-    withForwardedRef()
+    asFunctionalComponent({
+        validate: 'onBlur',
+        errorMessage: true
+    })
 )
 
 FormInput.propTypes = {
@@ -120,9 +123,4 @@ FormInput.propTypes = {
     onBlur: PropTypes.func,
     onChange: PropTypes.func,
     onChangeDebounced: PropTypes.func
-}
-
-FormInput.defaultProps = {
-    validate: 'onBlur',
-    errorMessage: true
 }

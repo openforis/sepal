@@ -5,6 +5,7 @@ import React from 'react'
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
@@ -59,12 +60,11 @@ class _RegressionImageLayer extends React.Component {
 }
 
 export const RegressionImageLayer = compose(
-    _RegressionImageLayer
+    _RegressionImageLayer,
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-RegressionImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 RegressionImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

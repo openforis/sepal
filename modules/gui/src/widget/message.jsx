@@ -1,10 +1,13 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
+
 import {Icon} from './icon'
 import styles from './message.module.css'
 
-export class Message extends React.Component {
+class _Message extends React.Component {
     render() {
         const {className, text, type, centered, children} = this.props
         return (
@@ -30,9 +33,12 @@ export class Message extends React.Component {
     }
 }
 
-Message.defaultProps = {
-    type: 'normal'
-}
+export const Message = compose(
+    _Message,
+    asFunctionalComponent({
+        type: 'normal'
+    })
+)
 
 Message.propTypes = {
     centered: PropTypes.any,

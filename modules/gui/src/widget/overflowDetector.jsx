@@ -1,9 +1,12 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
+
 import styles from './overflowDetector.module.css'
 
-export class OverflowDetector extends React.Component {
+class _OverflowDetector extends React.Component {
     ref = React.createRef()
 
     render() {
@@ -21,12 +24,15 @@ export class OverflowDetector extends React.Component {
     }
 }
 
+export const OverflowDetector = compose(
+    _OverflowDetector,
+    asFunctionalComponent({
+        direction: 'y'
+    })
+)
+
 OverflowDetector.propTypes = {
     children: PropTypes.func.isRequired,
     className: PropTypes.string,
     direction: PropTypes.oneOf(['x', 'y'])
-}
-
-OverflowDetector.defaultProps = {
-    direction: 'y'
 }

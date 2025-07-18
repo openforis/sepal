@@ -2,8 +2,8 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
-import {withForwardedRef} from '~/ref'
 import {Label} from '~/widget/label'
 import {Layout} from '~/widget/layout'
 
@@ -87,7 +87,10 @@ export class _Widget extends React.Component {
 
 export const Widget = compose(
     _Widget,
-    withForwardedRef()
+    asFunctionalComponent({
+        layout: 'vertical',
+        spacing: 'none' // TODO: why spacing none by default?
+    })
 )
 
 Widget.propTypes = {
@@ -112,9 +115,4 @@ Widget.propTypes = {
     onClick: PropTypes.func,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func
-}
-
-Widget.defaultProps = {
-    layout: 'vertical',
-    spacing: 'none' // TODO: why spacing none by default?
 }

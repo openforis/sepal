@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {debounceTime, distinctUntilChanged, filter, merge, Subject} from 'rxjs'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
 import {FloatingBox} from '~/widget/floatingBox'
@@ -166,7 +167,11 @@ class _SearchBox extends React.Component {
 
 export const SearchBox = compose(
     _SearchBox,
-    withSubscriptions()
+    withSubscriptions(),
+    asFunctionalComponent({
+        debounce: 250,
+        value: ''
+    })
 )
 
 SearchBox.propTypes = {
@@ -183,9 +188,4 @@ SearchBox.propTypes = {
     width: PropTypes.any,
     onSearchValue: PropTypes.func,
     onSelect: PropTypes.func
-}
-
-SearchBox.defaultProps = {
-    debounce: 250,
-    value: ''
 }

@@ -7,6 +7,7 @@ import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizati
 import {withMapArea} from '~/app/home/map/mapAreaContext'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
@@ -98,12 +99,11 @@ class _CCDCSliceImageLayer extends React.Component {
 
 export const CCDCSliceImageLayer = compose(
     _CCDCSliceImageLayer,
-    withMapArea()
+    withMapArea(),
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-CCDCSliceImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 CCDCSliceImageLayer.propTypes = {
     currentRecipe: PropTypes.object.isRequired,

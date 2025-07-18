@@ -5,7 +5,7 @@ import React from 'react'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {withContext} from '~/context'
-import {withForwardedRef} from '~/ref'
+import {asFunctionalComponent} from '~/classComponent'
 import {selectFrom} from '~/stateUtils'
 import {BlurDetector} from '~/widget/blurDetector'
 import {Portal} from '~/widget/portal'
@@ -425,7 +425,11 @@ export const FloatingBox = compose(
     _FloatingBox,
     connect(mapStateToProps),
     withFloatingBox(),
-    withForwardedRef()
+    asFunctionalComponent({
+        hPlacement: 'over-right',
+        vPlacement: 'below',
+        elementBlur: false
+    })
 )
 
 FloatingBox.propTypes = {
@@ -436,10 +440,4 @@ FloatingBox.propTypes = {
     hPlacement: PropTypes.oneOf(['center', 'left', 'over-left', 'over', 'over-right', 'right', 'left-or-right', 'right-or-left', 'over-left-or-over-right', 'over-right-or-over-left']),
     vPlacement: PropTypes.oneOf(['center', 'above', 'over-above', 'over', 'over-below', 'below', 'above-or-below', 'below-or-above', 'fit-above-or-below', 'fit-below-or-above']),
     onBlur: PropTypes.func
-}
-
-FloatingBox.defaultProps = {
-    hPlacement: 'over-right',
-    vPlacement: 'below',
-    elementBlur: false
 }

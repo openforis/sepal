@@ -1,12 +1,14 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {Padding} from '~/widget/padding'
 import {Scrollable} from '~/widget/scrollable'
 
 import styles from './panelContent.module.css'
 
-export class PanelContent extends React.Component {
+class _PanelContent extends React.Component {
     render() {
         const {className, scrollable, noHorizontalPadding, noVerticalPadding, children} = this.props
         return scrollable
@@ -35,9 +37,12 @@ export class PanelContent extends React.Component {
     }
 }
 
-PanelContent.defaultProps = {
-    scrollable: true
-}
+export const PanelContent = compose(
+    _PanelContent,
+    asFunctionalComponent({
+        scrollable: true
+    })
+)
 
 PanelContent.propTypes = {
     children: PropTypes.any.isRequired,

@@ -9,6 +9,7 @@ import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizati
 import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {asFunctionalComponent} from '~/classComponent'
 import {escapeRegExp, splitString} from '~/string'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
@@ -509,7 +510,10 @@ export const AssetCombo = compose(
     _AssetCombo,
     connect(),
     withSubscriptions(),
-    withAssets()
+    withAssets(),
+    asFunctionalComponent({
+        mode: ASSET
+    })
 )
 
 AssetCombo.propTypes = {
@@ -542,8 +546,4 @@ AssetCombo.propTypes = {
     onError: PropTypes.func,
     onLoaded: PropTypes.func,
     onLoading: PropTypes.func
-}
-
-AssetCombo.defaultProps = {
-    mode: ASSET
 }

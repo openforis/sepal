@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {msg} from '~/translate'
 import {AssetCombo} from '~/widget/assetCombo'
 
@@ -84,7 +85,10 @@ class _FormAssetCombo extends React.Component {
 
 export const FormAssetCombo = compose(
     _FormAssetCombo,
-    withFormContext()
+    withFormContext(),
+    asFunctionalComponent({
+        errorMessage: true
+    })
 )
 
 FormAssetCombo.propTypes = {
@@ -118,8 +122,4 @@ FormAssetCombo.propTypes = {
     onError: PropTypes.func,
     onLoaded: PropTypes.func,
     onLoading: PropTypes.func
-}
-
-FormAssetCombo.defaultProps = {
-    errorMessage: true
 }

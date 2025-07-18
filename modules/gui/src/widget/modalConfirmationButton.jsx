@@ -1,11 +1,13 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Confirm} from '~/widget/confirm'
 
-export class ModalConfirmationButton extends React.Component {
+class _ModalConfirmationButton extends React.Component {
     state = {
         askConfirmation: false
     }
@@ -66,9 +68,12 @@ export class ModalConfirmationButton extends React.Component {
     }
 }
 
-ModalConfirmationButton.defaultProps = {
-    tooltipPlacement: 'top'
-}
+export const ModalConfirmationButton = compose(
+    _ModalConfirmationButton,
+    asFunctionalComponent({
+        tooltipPlacement: 'top'
+    })
+)
 
 ModalConfirmationButton.propTypes = {
     message: PropTypes.string.isRequired,

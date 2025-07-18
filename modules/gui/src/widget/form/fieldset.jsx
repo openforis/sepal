@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {compose} from '~/compose'
+import {asFunctionalComponent} from '~/classComponent'
 import {withFormContext} from '~/widget/form/context'
 import {Widget} from '~/widget/widget'
 
@@ -30,7 +31,11 @@ class _FormFieldSet extends React.Component {
 
 export const FormFieldSet = compose(
     _FormFieldSet,
-    withFormContext()
+    withFormContext(),
+    asFunctionalComponent({
+        spacing: 'normal',
+        layout: 'vertical'
+    })
 )
 
 FormFieldSet.propTypes = {
@@ -44,9 +49,4 @@ FormFieldSet.propTypes = {
     spacing: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any
-}
-
-FormFieldSet.defaultProps = {
-    spacing: 'normal',
-    layout: 'vertical'
 }

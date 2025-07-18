@@ -6,6 +6,7 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {updateProject} from '~/app/home/body/process/recipeList/projects'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {asFunctionalComponent} from '~/classComponent'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {isGoogleAccount} from '~/user'
@@ -554,14 +555,13 @@ class _Retrieve extends React.Component {
 export const Retrieve = compose(
     _Retrieve,
     connect(mapStateToProps),
-    recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps})
+    recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps}),
+    asFunctionalComponent({
+        scaleTicks: [10, 15, 20, 30, 60, 100],
+        defaultCrs: 'EPSG:4326',
+        defaultScale: 30,
+        defaultShardSize: 256,
+        defaultFileDimensionsMultiple: 10,
+        defaultTileSize: 2
+    })
 )
-
-Retrieve.defaultProps = {
-    scaleTicks: [10, 15, 20, 30, 60, 100],
-    defaultCrs: 'EPSG:4326',
-    defaultScale: 30,
-    defaultShardSize: 256,
-    defaultFileDimensionsMultiple: 10,
-    defaultTileSize: 2
-}

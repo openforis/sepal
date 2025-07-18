@@ -5,6 +5,7 @@ import {Subject} from 'rxjs'
 
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {asFunctionalComponent} from '~/classComponent'
 import {selectFrom} from '~/stateUtils'
 import {withSubscriptions} from '~/subscription'
 import {Button} from '~/widget/button'
@@ -259,7 +260,10 @@ class _ButtonSelect extends React.Component {
 export const ButtonSelect = compose(
     _ButtonSelect,
     withSubscriptions(),
-    connect(mapStateToProps)
+    connect(mapStateToProps),
+    asFunctionalComponent({
+        placement: 'below'
+    })
 )
 
 ButtonSelect.propTypes = {
@@ -285,8 +289,4 @@ ButtonSelect.propTypes = {
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func,
     onSelect: PropTypes.func
-}
-
-ButtonSelect.defaultProps = {
-    placement: 'below'
 }
