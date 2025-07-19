@@ -54,7 +54,64 @@
         "run": {
             "error": "No se pudo ejecutar {label}"
         },
-        "running": "La aplicación está funcionando"
+        "running": "La aplicación está funcionando",
+        "noInstanceRequired": "",
+        "admin": {
+            "title": "",
+            "logs": {
+                "title": "",
+                "empty": ""
+            },
+            "container": {
+                "title": "",
+                "notFound": "",
+                "status": "",
+                "containerStatus": "",
+                "mainProcess": "",
+                "memoryUsage": "",
+                "cpuUsage": "",
+                "connections": ""
+            },
+            "repo": {
+                "title": "",
+                "url": "",
+                "lastCommit": "",
+                "lastClone": "",
+                "error": "",
+                "branch": ""
+            },
+            "health": {
+                "healthy": "",
+                "starting": ""
+            },
+            "restart": {
+                "error": "",
+                "success": ""
+            },
+            "button": {
+                "restart": "",
+                "reloadStatus": "",
+                "reloadLogs": ""
+            },
+            "status": {
+                "running": "",
+                "idle": "",
+                "error": "",
+                "checking": "",
+                "notAvailable": "",
+                "loading": "Cargando..."
+            },
+            "timestamp": {
+                "never": ""
+            },
+            "update": {
+                "available": "",
+                "checkForUpdates": "",
+                "error": "",
+                "success": "",
+                "noChanges": ""
+            }
+        }
     },
     "asset": {
         "failedToLoad": "Fallo en la carga de la tabla de EE",
