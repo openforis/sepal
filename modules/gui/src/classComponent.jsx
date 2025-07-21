@@ -7,20 +7,19 @@ export const asFunctionalComponent = (defaultProps = {}) =>
     component =>
         ({ref, children, ...props}) => {
             if (!isClassComponent(component)) {
-                throw Error('Cannot use asFunctionalComponent with functional components')
+                throw Error('Can only use asFunctionalComponent() HOC with class components')
             }
             const refProps = ref
-                ? isClassComponent(component)
-                    ? {forwardedRef: ref}
-                    : {ref}
+                ? {forwardedRef: ref}
                 : {}
+            const validProps = Object.fromEntries(
+                Object.entries(props).filter(
+                    ([_, value]) => value !== undefined
+                )
+            )
             return React.createElement(component, {
                 ...refProps,
                 ...defaultProps,
-                ...Object.fromEntries(
-                    Object.entries(props).filter(
-                        ([_, value]) => value !== undefined
-                    )
-                )
+                ...validProps
             }, children)
         }
