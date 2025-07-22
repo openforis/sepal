@@ -2,8 +2,8 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {compose} from '~/compose'
 import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 
 import styles from './gauge.module.css'
 import {Layout} from './layout'

@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {compose} from '~/compose'
 import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {Padding} from '~/widget/padding'
 import {Scrollable} from '~/widget/scrollable'
 

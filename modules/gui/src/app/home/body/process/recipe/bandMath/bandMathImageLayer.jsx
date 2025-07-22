@@ -4,9 +4,9 @@ import React from 'react'
 
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {asFunctionalComponent} from '~/classComponent'
 import {selectFrom} from '~/stateUtils'
 
 import {visualizationOptions} from './visualizations'

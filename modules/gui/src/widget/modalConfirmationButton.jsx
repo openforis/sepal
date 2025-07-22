@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {compose} from '~/compose'
 import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Confirm} from '~/widget/confirm'

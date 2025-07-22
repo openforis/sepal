@@ -3,8 +3,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {animationFrames, concatWith, delay, distinctUntilChanged, EMPTY, filter, fromEvent, map, merge, of, sample, scan, shareReplay, Subject, switchMap, takeUntil, takeWhile} from 'rxjs'
 
-import {compose} from '~/compose'
 import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
 import {Keybinding} from '~/widget/keybinding'
 

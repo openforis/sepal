@@ -7,8 +7,8 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {compose} from '~/compose'
 import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {Tooltip} from '~/widget/tooltip'
 
 import styles from './icon.module.css'

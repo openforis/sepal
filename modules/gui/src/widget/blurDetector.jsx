@@ -3,9 +3,9 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, switchMap} from 'rxjs'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {withContext} from '~/context'
-import {asFunctionalComponent} from '~/classComponent'
 import {withSubscriptions} from '~/subscription'
 
 import styles from './blurDetector.module.css'

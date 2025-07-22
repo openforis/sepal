@@ -5,7 +5,6 @@ import {isObservable} from 'rxjs'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {FormContainer} from '~/widget/form/container'
-import {Icon} from '~/widget/icon'
 import {Panel} from '~/widget/panel/panel'
 import {PanelButtonContext} from '~/widget/toolbar/panelButtonContext'
 

@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {withContext} from '~/context'
-import {asFunctionalComponent} from '~/classComponent'
 
 import {Widget} from './widget'
 

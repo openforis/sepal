@@ -3,8 +3,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {debounceTime, Subject} from 'rxjs'
 
-import {compose} from '~/compose'
 import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
 
 import styles from './fastList.module.css'
