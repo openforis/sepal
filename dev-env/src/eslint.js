@@ -6,7 +6,7 @@ import Path from 'path'
 import _ from 'lodash'
 
 const runEslint = async (module, modulePath, {fix}) => {
-    showModuleStatus(module, MESSAGE.CHECKING_PACKAGES)
+    showModuleStatus(module, MESSAGE.VALIDATING_SOURCES)
     try {
         await exec({
             command: Path.join(SEPAL_SRC, 'node_modules/eslint/bin/eslint.js'),
@@ -20,7 +20,7 @@ const runEslint = async (module, modulePath, {fix}) => {
             showStdErr: true
         })
     } catch (err) {}
-    showModuleStatus(module, MESSAGE.CHECKED_PACKAGES)
+    showModuleStatus(module, MESSAGE.VALIDATED_SOURCES)
 }
 
 const eslintModule = async (module, path, options) => {
