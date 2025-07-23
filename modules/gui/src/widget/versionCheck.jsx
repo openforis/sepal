@@ -1,64 +1,47 @@
-import React from 'react'
+import {useEffect} from 'react'
 import {filter} from 'rxjs'
 
 import {event$} from '~/api/ws'
-import {compose} from '~/compose'
-import {withSubscriptions} from '~/subscription'
+import {useSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 
 import {Button} from './button'
 import {Notifications} from './notifications'
 
-class _VersionCheck extends React.Component {
-    constructor(props) {
-        super(props)
-        this.notify = this.notify.bind(this)
-        this.renderReloadButton = this.renderReloadButton.bind(this)
-    }
+export const VersionCheck = () => {
+    const [addSubscription] = useSubscriptions()
 
-    render() {
-        return null
-    }
-
-    componentDidMount() {
-        const {addSubscription} = this.props
+    useEffect(() => {
         addSubscription(
             event$.pipe(
                 filter(({type}) => type === 'clientVersionMismatch')
             ).subscribe(
-                () => this.notify()
+                () => notify()
             )
         )
-    }
+    }, [])
 
-    notify() {
+    const reload = () =>
+        window.location.replace('/')
+
+    const renderReloadButton = () => (
+        <Button
+            look={'add'}
+            shape='pill'
+            label={msg('home.versionMismatch.reloadNow')}
+            width='max'
+            onClick={reload}
+        />
+    )
+
+    const notify = () =>
         Notifications.success({
             title: msg('home.versionMismatch.title'),
             message: msg('home.versionMismatch.message'),
             timeout: 0,
             group: true,
-            content: this.renderReloadButton
+            content: renderReloadButton
         })
-    }
 
-    renderReloadButton() {
-        return (
-            <Button
-                look={'add'}
-                shape='pill'
-                label={msg('home.versionMismatch.reloadNow')}
-                width='max'
-                onClick={this.reload}
-            />
-        )
-    }
-
-    reload() {
-        window.location.replace('/')
-    }
+    return null
 }
-
-export const VersionCheck = compose(
-    _VersionCheck,
-    withSubscriptions()
-)

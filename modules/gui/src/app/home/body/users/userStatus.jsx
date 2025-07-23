@@ -1,13 +1,11 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {asFunctionalComponent} from '~/classComponent'
-import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Icon} from '~/widget/icon'
 
-class _UserStatus extends React.Component {
+export class UserStatus extends React.Component {
     static LOCKED = 'LOCKED'
     static PENDING = 'PENDING'
     static ACTIVE = 'ACTIVE'
@@ -22,23 +20,20 @@ class _UserStatus extends React.Component {
         status === UserStatus.ACTIVE
 
     render() {
-        const {status} = this.props
+        const {status = 'UNKNOWN'} = this.props
         return (
             <Button
                 chromeless
                 shape='none'
                 air='none'
                 icon={this.getIcon(status)}
-                // look={this.getLook(status)}
-                // iconVariant={this.getIconVariant(status)}
-                // iconDimmed={UserStatus.isLocked(status)}
                 label={msg(`user.status.${status}`).toUpperCase()}
             />
         )
     }
 
-    getIcon() {
-        const {status, isGoogleUser} = this.props
+    getIcon(status) {
+        const {isGoogleUser} = this.props
         switch(status) {
             case UserStatus.LOCKED:
                 return this.getLockedUserIcon()
@@ -71,13 +66,6 @@ class _UserStatus extends React.Component {
         return <Icon name='google' type='brands' look='add' variant='success'/>
     }
 }
-
-export const UserStatus = compose(
-    _UserStatus,
-    asFunctionalComponent({
-        status: 'UNKNOWN'
-    })
-)
 
 UserStatus.propTypes = {
     status: PropTypes.string

@@ -1,11 +1,11 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {Link} from 'react-router'
 import {combineLatest, distinctUntilChanged, EMPTY, fromEvent, switchMap, take, takeUntil, timer} from 'rxjs'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
-import {Link} from '~/route'
 import lookStyles from '~/style/look.module.css'
 import {withSubscriptions} from '~/subscription'
 import {download} from '~/widget/download'
