@@ -42,10 +42,8 @@ export const withSubscriptions = () =>
 export const useSubscriptions = () => {
     const subscriptions = []
         
-    const addSubscription = subscription => {
-        console.log('adding subscription')
-        return subscription && subscriptions.push(subscription)
-    }
+    const addSubscription = subscription =>
+        subscription && subscriptions.push(subscription)
 
     const addSubscriptions = (...currentSubscriptions) =>
         currentSubscriptions.forEach(
@@ -53,7 +51,6 @@ export const useSubscriptions = () => {
         )
 
     const unsubscribe = subscription => {
-        console.log('removing subscription')
         if (typeof subscription === 'function') {
             return subscription()
         }
