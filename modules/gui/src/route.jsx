@@ -1,35 +1,25 @@
 import React from 'react'
 import {useLocation, useNavigate, useSearchParams} from 'react-router'
 
+import {withProps} from './hoc'
+
 export const isPathInLocation = (path, locationPathname) =>
     new RegExp(`^${path}([?#/].*)?$`).test(locationPathname)
 
 export const withLocation = () =>
-    WrappedComponent =>
-        ({children, ...props}) => {
-            const location = useLocation()
-            return React.createElement(WrappedComponent, {
-                ...props,
-                location
-            }, children)
-        }
+    withProps(() => {
+        const location = useLocation()
+        return {location}
+    })
 
 export const withSearchParams = () =>
-    WrappedComponent =>
-        ({children, ...props}) => {
-            const [searchParams] = useSearchParams()
-            return React.createElement(WrappedComponent, {
-                ...props,
-                searchParams
-            }, children)
-        }
+    withProps(() => {
+        const [searchParams] = useSearchParams()
+        return {searchParams}
+    })
 
 export const withNavigation = () =>
-    WrappedComponent =>
-        ({children, ...props}) => {
-            const navigate = useNavigate()
-            return React.createElement(WrappedComponent, {
-                ...props,
-                navigate
-            }, children)
-        }
+    withProps(() => {
+        const navigate = useNavigate()
+        return {navigate}
+    })
