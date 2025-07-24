@@ -1,5 +1,4 @@
 {
     "reject": [
-        "prom-client"
     ]
 }
