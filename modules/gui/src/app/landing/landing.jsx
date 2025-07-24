@@ -1,7 +1,7 @@
 import {useState} from 'react'
+import {useLocation} from 'react-router'
 
 import {LanguageSelector} from '~/app/landing/languageSelector'
-import {location} from '~/route'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 
@@ -15,6 +15,7 @@ import {Title} from './title'
 
 export const Landing = () => {
     const [launched, setLaunched] = useState(false)
+    const location = useLocation()
 
     const renderAuth = () => (
         <div className={styles.landing}>
@@ -30,7 +31,7 @@ export const Landing = () => {
                 <Feature name='terminal' icon='terminal'/>
             </div>
             <div className={styles.credentials}>
-                <Credentials location={location}/>
+                <Credentials/>
             </div>
             <div className={styles.privacy}>
                 <Button

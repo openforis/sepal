@@ -1,20 +1,7 @@
-// import PropTypes from 'prop-types'
-import QueryString from 'qs'
 import React from 'react'
-import {useLocation, useNavigate, useSearchParams} from 'react-router-dom'
+import {useLocation, useNavigate, useSearchParams} from 'react-router'
 
-import {state} from '~/store'
-
-export const location = () => state().location
-
-export const query = () => {
-    let queryString = location().search
-    if (queryString.startsWith('?'))
-        queryString = queryString.substring(1)
-    return QueryString.parse(queryString)
-}
-
-export const isPathInLocation = (path, locationPathname = location().pathname) =>
+export const isPathInLocation = (path, locationPathname) =>
     new RegExp(`^${path}([?#/].*)?$`).test(locationPathname)
 
 export const withLocation = () =>
