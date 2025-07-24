@@ -12,6 +12,7 @@ import {shell} from './shell.js'
 import {log} from './log.js'
 import {npmUpdate} from './npm-update.js'
 import {npmInstall} from './npm-install.js'
+import {npmAudit} from './npm-audit.js'
 import {npmTest} from './npm-test.js'
 import {eslint} from './eslint.js'
 
@@ -123,6 +124,12 @@ const main = async () => {
         .option('-c, --clean', 'Clean package-lock.json and node_modules')
         .argument('[module...]', 'Modules to install')
         .action(npmInstall)
+
+    program.command('npm-audit')
+        .description('Audit npm modules')
+        .option('-f, --fix', 'Fix')
+        .argument('[module...]', 'Modules to audit')
+        .action(npmAudit)
 
     program.command('npm-test')
         .description('Run npm interactive tests')
