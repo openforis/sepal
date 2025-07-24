@@ -1,4 +1,3 @@
-import React from 'react'
 import {useLocation, useNavigate, useSearchParams} from 'react-router'
 
 import {withProps} from './hoc'
