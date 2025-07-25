@@ -52,7 +52,7 @@
         "react-number-format": "^5.4.4",
         "react-redux": "9.2.0",
         "react-resize-detector": "12.1.0",
-        "react-router-dom": "7.7.0",
+        "react-router-dom": "7.7.1",
         "react-textarea-autosize": "^8.5.9",
         "redux": "5.0.1",
         "rxjs": "7.8.2",
