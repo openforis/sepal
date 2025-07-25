@@ -8,6 +8,7 @@ import {msg} from '~/translate'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
 import {Buttons} from '~/widget/buttons'
+import {ButtonSelect} from '~/widget/buttonSelect'
 import {Layout} from '~/widget/layout'
 import {Message} from '~/widget/message'
 import {Padding} from '~/widget/padding'
@@ -15,7 +16,6 @@ import {Panel} from '~/widget/panel/panel'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 import {isChromiumBasedBrowser, isHighDensityDisplay} from '~/widget/userAgent'
 
-import {AddImageLayerSource} from './addImageLayerSource'
 import {Areas} from './areas'
 import {ImageLayerSources} from './imageLayerSources'
 import styles from './mapLayout.module.css'
@@ -28,7 +28,6 @@ export class MapLayout extends React.Component {
         return (
             <React.Fragment>
                 <MapLayoutPanel/>
-                <AddImageLayerSource/>
                 <SelectRecipe/>
                 <SelectAsset/>
                 <SelectPlanet/>
@@ -53,6 +52,19 @@ class _MapLayoutPanel extends React.Component {
     render() {
         const {activatable: {deactivate}} = this.props
         const close = deactivate
+        const options = [{
+            value: 'recipe',
+            label: msg('map.layout.addImageLayerSource.types.Recipe.description'),
+            onSelect: () => this.selectRecipe()
+        }, {
+            value: 'asset',
+            label: msg('map.layout.addImageLayerSource.types.Asset.description'),
+            onSelect: () => this.selectAsset()
+        }, {
+            value: 'planet',
+            label: msg('map.layout.addImageLayerSource.types.Planet.description'),
+            onSelect: () => this.selectPlanet()
+        }]
         return (
             <Panel
                 className={styles.panel}
@@ -76,7 +88,15 @@ class _MapLayoutPanel extends React.Component {
                         />
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
-                        <Panel.Buttons.Add onClick={() => this.addImageLayerSource()}/>
+                        <ButtonSelect
+                            label={msg('button.add')}
+                            // tooltip={msg('process.classification.panel.inputImagery.derivedBands.tooltip')}
+                            look='add'
+                            icon='plus'
+                            placement='above'
+                            tooltipPlacement='bottom'
+                            options={options}
+                        />
                     </Panel.Buttons.Extra>
                 </Panel.Buttons>
             </Panel>
@@ -129,6 +149,21 @@ class _MapLayoutPanel extends React.Component {
             .dispatch()
     }
 
+    selectRecipe() {
+        const {activator: {activatables: {selectRecipe}}} = this.props
+        selectRecipe.activate()
+    }
+
+    selectAsset() {
+        const {activator: {activatables: {selectAsset}}} = this.props
+        selectAsset.activate()
+    }
+
+    selectPlanet() {
+        const {activator: {activatables: {selectPlanet}}} = this.props
+        selectPlanet.activate()
+    }
+
     addImageLayerSource() {
         const {activator: {activatables: {addImageLayerSource}}} = this.props
         addImageLayerSource.activate()
@@ -147,7 +182,7 @@ export const MapLayoutPanel = compose(
         policy,
         alwaysAllow: true
     }),
-    withActivators('addImageLayerSource')
+    withActivators('selectRecipe', 'selectAsset', 'selectPlanet')
 )
 
 export const MapLayoutButton = () =>
