@@ -1,8 +1,7 @@
 const Path = require('path')
 const {createReadStream, realpathSync} = require('fs')
-const {stat, readdir, realpath, writeFile, mkdir} = require('fs/promises')
+const {stat, readdir, realpath, writeFile, mkdir, readFile} = require('fs/promises')
 const log = require('#sepal/log').getLogger('filesystem')
-
 const resolvePath = (baseDir, path) => {
     const realBaseDir = realpathSync(baseDir)
     const absolutePath = realpathSync(Path.join(realBaseDir, path))
@@ -67,23 +66,23 @@ const download = async (homeDir, ctx) => {
 }
 
 const setFile = async (homeDir, ctx) => {
+
     const sepalUser = getSepalUser(ctx.request)
     if (sepalUser) {
         const username = sepalUser.username
         const {absolutePath: userHomeDir} = resolvePath(homeDir, username)
-        const path = ctx.query.path
-        
-        if (!path) {
+        const filePath = ctx.query.path
+        if (!filePath) {
             log.warn(() => 'No path specified for file')
+
             ctx.response.status = 400
             ctx.body = {error: 'No path specified'}
             return
         }
 
         try {
-            const {absolutePath} = await resolvePathForWrite(userHomeDir, path)
+            const {absolutePath} = await resolvePathForWrite(userHomeDir, filePath)
             const dirPath = Path.dirname(absolutePath)
-            
             // Check if parent directory exists
             try {
                 const stats = await stat(dirPath)
@@ -97,20 +96,34 @@ const setFile = async (homeDir, ctx) => {
                 ctx.body = {error: 'Parent directory does not exist. Use createFolder endpoint first.'}
                 return
             }
-            
+
             log.debug(() => `Setting file: ${absolutePath}`)
-            
-            // Get content from the request
-            const file = ctx.request.body?.file
-            if (file) {
-                await writeFile(absolutePath, file)
-            } else {
-                log.warn(() => 'No file content provided')
+
+            // read the payload from multipart upload
+            let fileBuffer
+            if (ctx.request.files?.file) {
+                const upload = ctx.request.files.file
+                // {
+                // "size": int,
+                // "filepath": String,
+                // "newFilename": String,
+                // "mimetype": String,
+                // "mtime": String,
+                // "originalFilename": String
+                // }
+
+                fileBuffer = await readFile(upload.filepath)
+            }
+
+            if (!fileBuffer) {
                 ctx.response.status = 400
                 ctx.body = {error: 'No file content provided'}
                 return
             }
-            
+
+            await mkdir(dirPath, {recursive: true})
+            await writeFile(absolutePath, fileBuffer)
+
             ctx.response.status = 200
             ctx.body = {
                 message: 'File set successfully',
