@@ -3021,7 +3021,6 @@
             "exportRecipe": "",
             "removeRecipe.tooltip": "",
             "selectRecipe.tooltip": "",
-            "revertToOldRevision": "",
             "saveRecipe": "",
             "searchRecipes": ""
         },
@@ -4610,11 +4609,6 @@
             },
             "title": "",
             "tooltip": ""
-        },
-        "revisions": {
-            "none": "",
-            "revert": "",
-            "title": ""
         },
         "saveRecipe": {
             "error": "",

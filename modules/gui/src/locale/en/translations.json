@@ -3021,7 +3021,6 @@
             "exportRecipe": "Export recipe",
             "removeRecipe.tooltip": "Remove recipe",
             "selectRecipe.tooltip": "Select recipe",
-            "revertToOldRevision": "Revert to old revision...",
             "saveRecipe": "Save recipe...",
             "searchRecipes": "Search recipes"
         },
@@ -4610,11 +4609,6 @@
             },
             "title": "Retrieve",
             "tooltip": "Retrieve recipe"
-        },
-        "revisions": {
-            "none": "No revision available.",
-            "revert": "Revert to revision",
-            "title": "Revisions"
         },
         "saveRecipe": {
             "error": "Sorry, but something went wrong when trying to save your recipe. If you close the window/tab, you will lose any changes you've made since last successful save. To make sure you have some record the data within this recipe, you might want to export it. Go to the top right recipe menu and select \"Export recipe\".",

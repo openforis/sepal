@@ -3021,7 +3021,6 @@
             "exportRecipe": "Exportar flujo de trabajo",
             "removeRecipe.tooltip": "Eliminar flujo de trabajo",
             "selectRecipe.tooltip": "",
-            "revertToOldRevision": "Volver a una antigua revisión...",
             "saveRecipe": "Guarda el flujo de trabajo...",
             "searchRecipes": "Buscar flujo de trabajo"
         },
@@ -4610,11 +4609,6 @@
             },
             "title": "Importar",
             "tooltip": ""
-        },
-        "revisions": {
-            "none": "Ninguna revisión disponible.",
-            "revert": "Volver a la revisión",
-            "title": "Revisiones"
         },
         "saveRecipe": {
             "error": "",
