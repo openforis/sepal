@@ -21,23 +21,23 @@ const loadUser$ = username => {
     )
 }
 
-const refreshGoogleAccessToken$ = user => {
-    log.trace(`${userTag(user.username)} Refreshing Google access token...`)
+const refreshGoogleAccessToken$ = ({username, googleTokens}) => {
+    log.trace(`${userTag(username)} Refreshing Google access token...`)
     return postJson$(REFRESH_GOOGLE_ACCESS_TOKEN_URL, {
         headers: {
-            [SEPAL_USER_HEADER]: JSON.stringify(user)
+            [SEPAL_USER_HEADER]: JSON.stringify({username, googleTokens})
         }
     }).pipe(
         map(({body, statusCode}) => ({googleTokens: body && JSON.parse(body), statusCode})),
-        tap(() => log.debug(`${userTag(user.username)} Refreshed Google access token`))
+        tap(() => log.debug(`${userTag(username)} Refreshed Google access token`))
     )
 }
 
-const revokeGoogleAccess$ = user => {
-    log.debug(`${userTag(user?.username)} Revoking Google access token...`)
+const revokeGoogleAccess$ = ({username, googleTokens}) => {
+    log.debug(`${userTag(username)} Revoking Google access token...`)
     return postJson$(REVOKE_GOOGLE_ACCESS_URL, {
         headers: {
-            [SEPAL_USER_HEADER]: JSON.stringify(user)
+            [SEPAL_USER_HEADER]: JSON.stringify({username, googleTokens})
         }
     }).pipe(
         map(({body}) => JSON.parse(body)),
