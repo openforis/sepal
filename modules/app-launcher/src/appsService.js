@@ -30,6 +30,52 @@ const getAppStatus = async ctx => {
     }
 }
 
+const getAppContainerStatus = async ctx => {
+    const {appName} = ctx.params
+    const appPath = getAppPath(appName)
+
+    if (!await pathExists(appPath)) {
+        ctx.status = 404
+        ctx.body = {error: `App directory not found: ${appPath}`}
+        return
+    }
+    
+    try {
+        const containerData = await getContainerInfo(appName)
+        ctx.status = 200
+        ctx.body = {
+            container: containerData,
+            error: null
+        }
+    } catch (error) {
+        ctx.status = 500
+        ctx.body = {error: error.message || 'Unknown error'}
+    }
+}
+
+const getAppRepoInfo = async ctx => {
+    const {appName} = ctx.params
+    const appPath = getAppPath(appName)
+
+    if (!await pathExists(appPath)) {
+        ctx.status = 404
+        ctx.body = {error: `App directory not found: ${appPath}`}
+        return
+    }
+    
+    try {
+        const gitInfo = await getRepoInfo(appPath)
+        ctx.status = 200
+        ctx.body = {
+            repo: gitInfo,
+            error: null
+        }
+    } catch (error) {
+        ctx.status = 500
+        ctx.body = {error: error.message || 'Unknown error'}
+    }
+}
+
 const getAppLogs = async ctx => {
     const {appName} = ctx.params
     const {query} = ctx.request
@@ -215,6 +261,8 @@ const refreshProxies = async ctx => {
 
 module.exports = {
     getAppStatus,
+    getAppContainerStatus,
+    getAppRepoInfo,
     getAppLogs,
     restartApp,
     updateApp,

@@ -21,6 +21,26 @@ export default {
             }))
         ),
     
+    getAppContainerStatus$: appName =>
+        forkJoin({
+            containerStatus: get$(`/api/app-launcher/management/container-status/${appName}`),
+            // This comes directly from the app
+            resourcez: get$(`/api/app-launcher/${appName}/resourcez`).pipe(
+                catchError(error => {
+                    console.warn(`Failed to load resourcez for ${appName}:`, error)
+                    return of({websockets: {open: 0}})
+                })
+            )
+        }).pipe(
+            map(({containerStatus, resourcez}) => ({
+                ...containerStatus,
+                resourcez
+            }))
+        ),
+    
+    getAppRepoInfo$: appName =>
+        get$(`/api/app-launcher/management/repo-info/${appName}`),
+    
     getAppLogs$: (appName, lines = 50) =>
         get$(`/api/app-launcher/management/logs/${appName}`, {
             query: {lines}
