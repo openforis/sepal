@@ -3,7 +3,7 @@ const log = require('#sepal/log').getLogger('apps')
 const {basename} = require('path')
 const {cloneOrPull} = require('./git')
 const {buildAndRestart, startContainer, isContainerRunning} = require('./docker')
-const {fetchAppsFromApi$} = require('./appsService')
+const {fetchAppsFromApi$} = require('./apiService')
 
 const monitorApps = () =>
     interval(10000).pipe(

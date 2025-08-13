@@ -1,27 +1,9 @@
 const {getRepoInfo, pullUpdates} = require('./git')
 const {pathExists, getContainerInfo, isContainerRunning, startContainer, buildAndRestart, restartContainer, getContainerLogs} = require('./docker')
+const {refreshProxyEndpoints} = require('./proxyManager')
 const log = require('#sepal/log').getLogger('appsService')
 
-const {EMPTY, catchError, map} = require('rxjs')
-const {get$} = require('#sepal/httpClient')
-const {sepalHost, sepalAdminPassword} = require('./config')
-
 const getAppPath = appName => `/var/lib/sepal/app-manager/apps/${appName}`
-
-const fetchAppsFromApi$ = () => {
-
-    const apiUrl = `https://${sepalHost}/api/apps/list`
-    return get$(apiUrl, {
-        username: 'sepalsAdmin',
-        password: sepalAdminPassword,
-    }).pipe(
-        map(response => JSON.parse(response.body)),
-        catchError(error => {
-            log.error('Failed to fetch apps from API:', error)
-            return EMPTY
-        })
-    )
-}
 
 const getAppStatus = async ctx => {
     const {appName} = ctx.params
@@ -153,10 +135,24 @@ const updateApp = async ctx => {
     }
 }
 
+const refreshProxies = async ctx => {
+    try {
+        log.info('Refresh proxies request received')
+        const result = await refreshProxyEndpoints()
+        log.info('Proxy refresh completed successfully')
+        ctx.response.status = 200
+        ctx.response.body = result
+    } catch (error) {
+        log.error('Failed to refresh proxies:', error)
+        ctx.response.status = 500
+        ctx.response.body = {error: error.message}
+    }
+}
+
 module.exports = {
     getAppStatus,
     getAppLogs,
     restartApp,
     updateApp,
-    fetchAppsFromApi$,
+    refreshProxies,
 }
