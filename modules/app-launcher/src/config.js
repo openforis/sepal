@@ -3,12 +3,11 @@ const _ = require('lodash')
 
 const DEFAULT_PORT = 80
 const DEFAULT_MANAGEMENT_PORT = 8080
-const DEFAULT_MONITOR_ENABLED = true
 
 program
     .option('--port <number>', 'Port', DEFAULT_PORT)
     .option('--management-port <number>', 'Management port', DEFAULT_MANAGEMENT_PORT)
-    .option('--monitor-enabled', 'Enable app monitoring', DEFAULT_MONITOR_ENABLED)
+    .option('--monitor-enabled <value>', 'Enable app monitoring', 'false')
     .option('--sepal-host <value>')
     .option('--sepal-admin-password <value>')
     .option('--gee-email <value>')
@@ -34,7 +33,7 @@ const {
 const config = {
     port,
     managementPort,
-    monitorEnabled,
+    monitorEnabled: monitorEnabled === 'true',
     sepalHost,
     sepalAdminPassword,
     geeEmail,
