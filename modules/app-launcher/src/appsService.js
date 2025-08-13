@@ -80,6 +80,11 @@ const restartApp = async ctx => {
     }
 }
 
+/**
+ * @deprecated This function might be deprecated in favor of using separate operations.
+ * For better control, use pullUpdatesOnly() first to pull git updates,
+ * then buildAndRestartApp() to rebuild and restart containers if needed.
+ */
 const updateApp = async ctx => {
     const {appName} = ctx.params
     const {branch} = ctx.query
@@ -135,6 +140,65 @@ const updateApp = async ctx => {
     }
 }
 
+const pullUpdatesOnly = async ctx => {
+    const {appName} = ctx.params
+    const {branch} = ctx.query
+    const appPath = getAppPath(appName)
+    
+    log.debug(`Pulling updates for app ${appName} at path ${appPath} on branch ${branch}`)
+    
+    if (!await pathExists(appPath)) {
+        ctx.status = 404
+        ctx.body = {error: `App directory not found: ${appPath}`}
+        return
+    }
+    
+    try {
+        const result = await pullUpdates(appPath, branch)
+        const updated = result.gitAction === 'updated'
+        
+        ctx.status = 200
+        ctx.body = {
+            success: true,
+            message: updated ? 'Updates pulled successfully' : 'No updates available',
+            updated,
+            gitAction: result.gitAction
+        }
+    } catch (gitError) {
+        log.error(`Git operation failed: ${gitError.message}`)
+        ctx.status = 500
+        ctx.body = {error: `Git operation failed: ${gitError.message}`}
+    }
+}
+
+const buildAndRestartApp = async ctx => {
+    const {appName} = ctx.params
+    const appPath = getAppPath(appName)
+    
+    log.debug(`Building and restarting app ${appName} at path ${appPath}`)
+    
+    if (!await pathExists(appPath)) {
+        ctx.status = 404
+        ctx.body = {error: `App directory not found: ${appPath}`}
+        return
+    }
+    
+    try {
+        log.info('Rebuilding and restarting Docker containers.')
+        await buildAndRestart(appName)
+        
+        ctx.status = 200
+        ctx.body = {
+            success: true,
+            message: 'App rebuilt and restarted successfully'
+        }
+    } catch (error) {
+        log.error(`Error building and restarting ${appName}: ${error.message}`)
+        ctx.status = 500
+        ctx.body = {error: error.message || 'Unknown error'}
+    }
+}
+
 const refreshProxies = async ctx => {
     try {
         log.info('Refresh proxies request received')
@@ -154,5 +218,7 @@ module.exports = {
     getAppLogs,
     restartApp,
     updateApp,
+    pullUpdatesOnly,
+    buildAndRestartApp,
     refreshProxies,
 }

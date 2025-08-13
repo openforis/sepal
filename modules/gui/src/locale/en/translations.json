@@ -88,8 +88,13 @@
                 "error": "Failed to restart",
                 "success": "Restarted"
             },
+            "buildRestart": {
+                "error": "Failed to build and restart",
+                "success": "Built and restarted successfully"
+            },
             "button": {
                 "restart": "Restart container",
+                "buildRestart": "Build and restart container",
                 "reloadStatus": "Reload status",
                 "reloadLogs": "Reload logs"
             },

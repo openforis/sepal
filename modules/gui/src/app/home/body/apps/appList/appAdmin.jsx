@@ -59,8 +59,8 @@ export class AppAdmin extends React.Component {
                 />
                 <Panel.Content scrollable>
                     <Layout type='vertical' spacing='compact'>
-                        {this.renderContainerInfo()}
                         {this.renderRepoInfo()}
+                        {this.renderContainerInfo()}
                         {this.renderLogsView()}
                     </Layout>
                 </Panel.Content>
@@ -177,11 +177,29 @@ export class AppAdmin extends React.Component {
         )
     }
     
+    buildAndRestartApp() {
+        const {app} = this.props
+        this.setState({loadingContainer: true, logs: []})
+        
+        api.appLauncher.buildAndRestartApp$(app.id).subscribe(
+            response => {
+                this.loadStatus()
+                this.loadLogs()
+                Notifications.success({message: response.message || msg('apps.admin.buildRestart.success')})
+            },
+            error => {
+                this.setState({loadingContainer: false})
+                Notifications.error({message: error.error || msg('apps.admin.buildRestart.error')})
+                log.error('Failed to build and restart app', error)
+            }
+        )
+    }
+    
     updateApp() {
         const {app} = this.props
         const {branch} = this.state.repo
         this.setState({updatingRepo: true})
-        api.appLauncher.updateApp$(app.id, branch).subscribe(
+        api.appLauncher.pullUpdatesOnly$(app.id, branch).subscribe(
             response => {
                 this.setState({updatingRepo: false})
                 this.loadStatus()
@@ -449,6 +467,15 @@ export class AppAdmin extends React.Component {
                 shape='none'
                 tooltip={msg('apps.admin.button.restart')}
                 onClick={() => this.restartApp()}
+                disabled={loadingContainer}
+            />
+
+            <Button
+                icon='hammer'
+                chromeless
+                shape='none'
+                tooltip={msg('apps.admin.button.buildRestart')}
+                onClick={() => this.buildAndRestartApp()}
                 disabled={loadingContainer}
             />
 
