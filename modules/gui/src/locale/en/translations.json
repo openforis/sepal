@@ -117,12 +117,6 @@
                 "noChanges": "No updates available"
             },
             "tooltip": "Manage app"
-        },
-        "refreshProxies": {
-            "label": "Refresh Proxies",
-            "tooltip": "Refresh proxy endpoints for newly deployed apps",
-            "success": "Proxy endpoints refreshed successfully",
-            "error": "Failed to refresh proxy endpoints"
         }
     },
     "asset": {
