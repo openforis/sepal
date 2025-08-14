@@ -1,4 +1,4 @@
-const {getAppStatus, getAppContainerStatus, getAppRepoInfo, getAppLogs, restartApp, updateApp, pullUpdatesOnly, buildAndRestartApp, refreshProxies} = require('./appsService')
+const {getAppStatus, getAppContainerStatus, getAppRepoInfo, getAppLogs, restartApp, updateApp, pullUpdatesOnly, buildAndRestartApp} = require('./appsService')
 
 module.exports = router => router
     .get('/status/:appName', async ctx => await getAppStatus(ctx))
@@ -9,5 +9,4 @@ module.exports = router => router
     .post('/update/:appName', async ctx => await updateApp(ctx))
     .post('/pull/:appName', async ctx => await pullUpdatesOnly(ctx))
     .post('/build-restart/:appName', async ctx => await buildAndRestartApp(ctx))
-    .post('/refresh-proxies', async ctx => await refreshProxies(ctx))
 

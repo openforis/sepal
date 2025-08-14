@@ -1,6 +1,5 @@
 const {getRepoInfo, pullUpdates} = require('./git')
 const {pathExists, getContainerInfo, isContainerRunning, startContainer, buildAndRestart, restartContainer, getContainerLogs} = require('./docker')
-const {refreshProxyEndpoints} = require('./proxyManager')
 const log = require('#sepal/log').getLogger('appsService')
 
 const getAppPath = appName => `/var/lib/sepal/app-manager/apps/${appName}`
@@ -245,20 +244,6 @@ const buildAndRestartApp = async ctx => {
     }
 }
 
-const refreshProxies = async ctx => {
-    try {
-        log.info('Refresh proxies request received')
-        const result = await refreshProxyEndpoints()
-        log.info('Proxy refresh completed successfully')
-        ctx.response.status = 200
-        ctx.response.body = result
-    } catch (error) {
-        log.error('Failed to refresh proxies:', error)
-        ctx.response.status = 500
-        ctx.response.body = {error: error.message}
-    }
-}
-
 module.exports = {
     getAppStatus,
     getAppContainerStatus,
@@ -268,5 +253,4 @@ module.exports = {
     updateApp,
     pullUpdatesOnly,
     buildAndRestartApp,
-    refreshProxies,
 }

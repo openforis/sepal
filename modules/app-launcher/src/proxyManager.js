@@ -17,8 +17,8 @@ const refreshProxyEndpoints = async () => {
     }
 
     try {
-        log.info('Refreshing proxy endpoints...')
         
+        log.info('Refreshing proxy endpoints...')
         const proxies = await new Promise((resolve, reject) => {
             proxyEndpoints$(appInstance).subscribe({
                 next: resolve,
