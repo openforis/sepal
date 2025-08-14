@@ -177,13 +177,6 @@ export class AppAdmin extends React.Component {
             }
         )
     }
-
-    loadStatus() {
-        // Legacy method that loads both repo info and container status
-        // Used for backward compatibility when both need to be refreshed
-        this.loadRepoInfo()
-        this.loadContainerStatus()
-    }
     
     restartApp() {
         const {app} = this.props
