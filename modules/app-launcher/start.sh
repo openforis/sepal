@@ -16,8 +16,7 @@ then
     --gee-key "$EE_PRIVATE_KEY" \
     --google-project-id "$GOOGLE_PROJECT_ID" \
     --gee-client-id "$GEE_CLIENT_ID" \
-    --deploy-environment "$DEPLOY_ENVIRONMENT" \
-    --monitor-enabled false
+    --deploy-environment "$DEPLOY_ENVIRONMENT"
 else
   echo "Starting node"
   exec node \
@@ -27,6 +26,5 @@ else
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \
     --google-project-id "$GOOGLE_PROJECT_ID" \
-    --deploy-environment "$DEPLOY_ENVIRONMENT" \
-    --monitor-enabled false
+    --deploy-environment "$DEPLOY_ENVIRONMENT"  
 fi

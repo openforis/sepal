@@ -4,12 +4,13 @@ const {basename} = require('path')
 const {cloneOrPull} = require('./git')
 const {buildAndRestart, startContainer, isContainerRunning} = require('./docker')
 const {fetchAppsFromApi$} = require('./apiService')
+const {refreshProxyEndpoints} = require('./proxyManager')
 
 const monitorApps = () =>
-    interval(10000).pipe(
+    interval(30000).pipe(
         exhaustMap(() => apps$().pipe(
             concatMap(app => updateApp$(app).pipe(
-                delay(10000),
+                delay(30000),
             )),
         ))
     ).subscribe({
@@ -51,7 +52,9 @@ const updateApp$ = ({path, repository, branch, name}) =>
                 switchMap(running => {
                     if (!running) {
                         log.info('Containers are not running. Starting them without rebuilding.')
-                        return from(startContainer(name))
+                        return from(startContainer(name)).pipe(
+                            switchMap(() => refreshProxies())
+                        )
                     }
                     log.info('No updates available and containers are running.')
                     return of(null)
@@ -63,5 +66,15 @@ const updateApp$ = ({path, repository, branch, name}) =>
             return EMPTY
         })
     )
+
+const refreshProxies = () => {
+    log.info('Refreshing proxy endpoints after container started...')
+    return from(refreshProxyEndpoints()).pipe(
+        catchError(error => {
+            log.error('Failed to refresh proxy endpoints:', error)
+            return of(null)
+        })
+    )
+}
 
 module.exports = {monitorApps}

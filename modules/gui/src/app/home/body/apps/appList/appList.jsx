@@ -5,7 +5,6 @@ import React from 'react'
 
 import {actionBuilder} from '~/action-builder'
 import {userDetailsHint} from '~/app/home/user/userDetails'
-import api from '~/apiRegistry'
 import {loadApps$} from '~/apps'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -156,9 +155,6 @@ class _AppList extends React.Component {
                     {this.renderInfo(apps)}
                     {this.renderTagFilter(tags)}
                 </Layout>
-                <Layout type='horizontal'>
-                    {this.renderRefreshProxiesButton()}
-                </Layout>
             </Layout>
         )
     }
@@ -187,18 +183,6 @@ class _AppList extends React.Component {
                 tooltipPlacement='left'
                 tooltipOnVisible={this.userDetailsHint}
                 onClick={this.toggleGoogleAccountFilter}
-            />
-        ) : null
-    }
-
-    renderRefreshProxiesButton() {
-        return this.isUserAdmin() ? (
-            <Button
-                shape='pill'
-                icon='sync-alt'
-                label={msg('apps.refreshProxies.label')}
-                tooltip={msg('apps.refreshProxies.tooltip')}
-                onClick={this.refreshProxies}
             />
         ) : null
     }
@@ -454,21 +438,6 @@ class _AppList extends React.Component {
         actionBuilder('UPDATE_GOOGLE_ACCOUNT_FILTER', !googleAccountFilter)
             .set('apps.googleAccountFilter', !googleAccountFilter)
             .dispatch()
-    }
-
-    refreshProxies = () => {
-        api.appLauncher.refreshProxies$().subscribe({
-            next: () => {
-                Notifications.success({
-                    message: msg('apps.refreshProxies.success'),
-                })
-            },
-            error: () => {
-                Notifications.error({
-                    message: msg('apps.refreshProxies.error'),
-                })
-            }
-        })
     }
 
     componentDidMount() {

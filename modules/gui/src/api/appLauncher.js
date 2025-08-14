@@ -63,7 +63,4 @@ export default {
         post$(`/api/app-launcher/management/update/${appName}`, {
             query: {branch}
         }),
-    
-    refreshProxies$: () =>
-        post$('/api/app-launcher/management/refresh-proxies')
 }
