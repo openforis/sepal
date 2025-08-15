@@ -8,6 +8,7 @@
         "appsService": "debug",
         "git": "debug",
         "terminal": "debug",
-        "http/server" : "debug"
+        "http/server" : "debug",
+        "proxyManager" : "debug"
     }
 }

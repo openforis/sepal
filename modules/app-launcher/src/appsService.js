@@ -2,26 +2,7 @@ const {getRepoInfo, pullUpdates} = require('./git')
 const {pathExists, getContainerInfo, isContainerRunning, startContainer, buildAndRestart, restartContainer, getContainerLogs} = require('./docker')
 const log = require('#sepal/log').getLogger('appsService')
 
-const {EMPTY, catchError, map} = require('rxjs')
-const {get$} = require('#sepal/httpClient')
-const {sepalHost, sepalAdminPassword} = require('./config')
-
 const getAppPath = appName => `/var/lib/sepal/app-manager/apps/${appName}`
-
-const fetchAppsFromApi$ = () => {
-
-    const apiUrl = `https://${sepalHost}/api/apps/list`
-    return get$(apiUrl, {
-        username: 'sepalsAdmin',
-        password: sepalAdminPassword,
-    }).pipe(
-        map(response => JSON.parse(response.body)),
-        catchError(error => {
-            log.error('Failed to fetch apps from API:', error)
-            return EMPTY
-        })
-    )
-}
 
 const getAppStatus = async ctx => {
     const {appName} = ctx.params
@@ -40,6 +21,52 @@ const getAppStatus = async ctx => {
         ctx.body = {
             repo: gitInfo,
             container: containerData,
+            error: null
+        }
+    } catch (error) {
+        ctx.status = 500
+        ctx.body = {error: error.message || 'Unknown error'}
+    }
+}
+
+const getAppContainerStatus = async ctx => {
+    const {appName} = ctx.params
+    const appPath = getAppPath(appName)
+
+    if (!await pathExists(appPath)) {
+        ctx.status = 404
+        ctx.body = {error: `App directory not found: ${appPath}`}
+        return
+    }
+    
+    try {
+        const containerData = await getContainerInfo(appName)
+        ctx.status = 200
+        ctx.body = {
+            container: containerData,
+            error: null
+        }
+    } catch (error) {
+        ctx.status = 500
+        ctx.body = {error: error.message || 'Unknown error'}
+    }
+}
+
+const getAppRepoInfo = async ctx => {
+    const {appName} = ctx.params
+    const appPath = getAppPath(appName)
+
+    if (!await pathExists(appPath)) {
+        ctx.status = 404
+        ctx.body = {error: `App directory not found: ${appPath}`}
+        return
+    }
+    
+    try {
+        const gitInfo = await getRepoInfo(appPath)
+        ctx.status = 200
+        ctx.body = {
+            repo: gitInfo,
             error: null
         }
     } catch (error) {
@@ -98,6 +125,11 @@ const restartApp = async ctx => {
     }
 }
 
+/**
+ * @deprecated This function might be deprecated in favor of using separate operations.
+ * For better control, use pullUpdatesOnly() first to pull git updates,
+ * then buildAndRestartApp() to rebuild and restart containers if needed.
+ */
 const updateApp = async ctx => {
     const {appName} = ctx.params
     const {branch} = ctx.query
@@ -153,10 +185,72 @@ const updateApp = async ctx => {
     }
 }
 
+const pullUpdatesOnly = async ctx => {
+    const {appName} = ctx.params
+    const {branch} = ctx.query
+    const appPath = getAppPath(appName)
+    
+    log.debug(`Pulling updates for app ${appName} at path ${appPath} on branch ${branch}`)
+    
+    if (!await pathExists(appPath)) {
+        ctx.status = 404
+        ctx.body = {error: `App directory not found: ${appPath}`}
+        return
+    }
+    
+    try {
+        const result = await pullUpdates(appPath, branch)
+        const updated = result.gitAction === 'updated'
+        
+        ctx.status = 200
+        ctx.body = {
+            success: true,
+            message: updated ? 'Updates pulled successfully' : 'No updates available',
+            updated,
+            gitAction: result.gitAction
+        }
+    } catch (gitError) {
+        log.error(`Git operation failed: ${gitError.message}`)
+        ctx.status = 500
+        ctx.body = {error: `Git operation failed: ${gitError.message}`}
+    }
+}
+
+const buildAndRestartApp = async ctx => {
+    const {appName} = ctx.params
+    const appPath = getAppPath(appName)
+    
+    log.debug(`Building and restarting app ${appName} at path ${appPath}`)
+    
+    if (!await pathExists(appPath)) {
+        ctx.status = 404
+        ctx.body = {error: `App directory not found: ${appPath}`}
+        return
+    }
+    
+    try {
+        log.info('Rebuilding and restarting Docker containers.')
+        await buildAndRestart(appName)
+        
+        ctx.status = 200
+        ctx.body = {
+            success: true,
+            message: 'App rebuilt and restarted successfully'
+        }
+    } catch (error) {
+        log.error(`Error building and restarting ${appName}: ${error.message}`)
+        ctx.status = 500
+        ctx.body = {error: error.message || 'Unknown error'}
+    }
+}
+
 module.exports = {
     getAppStatus,
+    getAppContainerStatus,
+    getAppRepoInfo,
     getAppLogs,
     restartApp,
     updateApp,
-    fetchAppsFromApi$,
+    pullUpdatesOnly,
+    buildAndRestartApp,
 }
