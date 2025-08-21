@@ -88,8 +88,13 @@
                 "error": "",
                 "success": ""
             },
+            "buildRestart": {
+                "error": "",
+                "success": ""
+            },
             "button": {
                 "restart": "",
+                "buildRestart": "",
                 "reloadStatus": "",
                 "reloadLogs": ""
             },
@@ -110,7 +115,8 @@
                 "error": "",
                 "success": "",
                 "noChanges": ""
-            }
+            },
+            "tooltip": ""
         }
     },
     "asset": {
