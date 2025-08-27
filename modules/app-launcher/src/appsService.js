@@ -159,7 +159,8 @@ const updateApp = async ctx => {
     try {
         if (updated) {
             log.info('Repository updated. Rebuilding and restarting Docker containers.')
-            await buildAndRestart(appName)
+            const {url: repository} = await getRepoInfo(appPath)
+            await buildAndRestart(appName, repository)
             message = 'App updated successfully and rebuilt'
         } else {
             const running = await isContainerRunning(appName)
@@ -230,7 +231,8 @@ const buildAndRestartApp = async ctx => {
     
     try {
         log.info('Rebuilding and restarting Docker containers.')
-        await buildAndRestart(appName)
+        const {url: repository} = await getRepoInfo(appPath)
+        await buildAndRestart(appName, repository)
         
         ctx.status = 200
         ctx.body = {

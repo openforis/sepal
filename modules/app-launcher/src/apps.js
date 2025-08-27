@@ -46,7 +46,7 @@ const updateApp$ = ({path, repository, branch, name}) =>
             log.info(`Git operation completed: ${action}`)
             if (action === 'cloned' || action === 'updated') {
                 log.info(`Repository ${action}. Building and restarting Docker containers.`)
-                return from(buildAndRestart(name))
+                return from(buildAndRestart(name, repository))
             }
             return from(isContainerRunning(name)).pipe(
                 switchMap(running => {
