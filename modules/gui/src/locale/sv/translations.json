@@ -82,7 +82,8 @@
             },
             "health": {
                 "healthy": "",
-                "starting": ""
+                "starting": "",
+                "unhealthy": ""
             },
             "restart": {
                 "error": "",
@@ -104,7 +105,8 @@
                 "error": "",
                 "checking": "",
                 "notAvailable": "",
-                "loading": ""
+                "loading": "",
+                "exited": ""
             },
             "timestamp": {
                 "never": ""
