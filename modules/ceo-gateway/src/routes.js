@@ -9,10 +9,9 @@ const routes = router => router
             path: 'get-all-institutions'
         })
     ))
-    .get('/get-institution-by-id', stream(ctx =>
+    .get('/get-user-admin-institutions', stream(ctx =>
         getFromCeo$(ctx, {
-            path: 'get-institution-by-id',
-            query: {institutionId: requiredQueryParam(ctx, 'institutionId')}
+            path: 'get-user-admin-institutions'
         })
     ))
     .get('/get-institution-projects', stream(ctx =>

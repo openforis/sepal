@@ -21,37 +21,13 @@ export const ceoLogin$ = ({email, password}) => {
 }
 
 export const loadInstitutions$ = token => {
-    return api.ceoGateway.getAllInstitutions$({
+    return api.ceoGateway.getUserAdminInstitution$({
         token: token,
     }).pipe(
-        map(institutions => institutions.filter(inst => inst.isMember === true)),
-        switchMap(institutions => {
-            if (institutions.length === 0) {
-                return of([])
-            }
-            const institutions$ = institutions.map(institution => {
-                return api.ceoGateway.getInstitution$({
-                    token: token,
-                    institutionId: institution.id
-                }).pipe(
-                    map(detailedInst => {
-                        if (detailedInst && detailedInst.institutionAdmin === true) {
-                            return {
-                                value: institution.id, // detailedInst doesn't contain id
-                                label: detailedInst.name
-                            }
-                        } else {
-                            return null
-                        }
-                    }),
-                    catchError(() => of(null))
-                )
-            })
-            
-            return forkJoin(institutions$).pipe(
-                map(results => results.filter(Boolean))
-            )
-        }),
+        map(institutions => institutions.map(({id, name}) => ({
+            value: id,
+            label: name
+        }))),
         tap(institutions => {
             actionBuilder('SET_INSTITUTIONS', {institutions})
                 .set('ceo.data.institutions', institutions)

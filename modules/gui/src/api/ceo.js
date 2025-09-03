@@ -10,10 +10,9 @@ export default {
             }
         }),
 
-    getInstitution$: ({token, institutionId}) =>
-        get$('/api/ceo-gateway/get-institution-by-id', {
+    getUserAdminInstitution$: ({token}) =>
+        get$('/api/ceo-gateway/get-user-admin-institutions', {
             headers: {'x-ceo-token': token},
-            query: {institutionId}
         }),
      
     getAllInstitutions$: ({token}) =>
