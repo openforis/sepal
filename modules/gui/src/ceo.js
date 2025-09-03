@@ -1,6 +1,6 @@
 import Papa from 'papaparse'
-import {forkJoin, map, of, Subject, tap, zip} from 'rxjs'
-import {catchError, switchMap, toArray} from 'rxjs/operators'
+import {map, Subject, tap, zip} from 'rxjs'
+import {switchMap, toArray} from 'rxjs/operators'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
