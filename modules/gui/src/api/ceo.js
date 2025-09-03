@@ -10,7 +10,7 @@ export default {
             }
         }),
 
-    getUserAdminInstitution$: ({token}) =>
+    getUserAdminInstitutions$: ({token}) =>
         get$('/api/ceo-gateway/get-user-admin-institutions', {
             headers: {'x-ceo-token': token},
         }),

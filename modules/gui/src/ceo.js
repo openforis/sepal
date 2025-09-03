@@ -21,7 +21,7 @@ export const ceoLogin$ = ({email, password}) => {
 }
 
 export const loadInstitutions$ = token => {
-    return api.ceoGateway.getUserAdminInstitution$({
+    return api.ceoGateway.getUserAdminInstitutions$({
         token: token,
     }).pipe(
         map(institutions => institutions.map(({id, name}) => ({
