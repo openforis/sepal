@@ -1,4 +1,4 @@
-- name: Configure Sepal instance
+- name: Configure Sepal-Storage instance
   hosts: all
   user: ec2-user
   become: yes
@@ -32,45 +32,19 @@
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
 
-    # Transitional: remove previously installed configuration
-    - name: Remove /etc/rsyslog.d/docker.conf
-      file:
-        path: "/etc/rsyslog.d/docker.conf"
-        state: absent
-    
-    # Transitional: remove previously installed configuration
-    - name: Remove /etc/rsyslog.d/worker-instance.conf
-      file:
-        path: "/etc/rsyslog.d/worker-instance.conf"
-        state: absent
-    
     - name: Start rsyslog
       service: name=rsyslog state=restarted
 
-    # Transitional: remove previously installed configuration
-    - name: Remove /etc/logrotate.d/docker
-      file:
-        path: "/etc/logrotate.d/docker"
-        state: absent
-    
-    # Transitional: remove previously installed configuration
-    - name: Remove /etc/logrotate.d/worker-instance
-      file:
-        path: "/etc/logrotate.d/worker-instance"
-        state: absent
-    
     # docker
     - name: Create filesystem on Docker volume
       filesystem:
         fstype: xfs
         dev: /dev/sdb
-#        dev: /dev/xvdb
 
     - name: Mount Docker volume
       mount:
         path: /var/lib/docker
         src: /dev/sdb
-#        src: /dev/xvdb
         fstype: xfs
         state: mounted
 
@@ -83,17 +57,6 @@
       copy:
         src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
-
-    # - name: Install docker
-    #   command: "amazon-linux-extras install docker -y"
-
-    # - name: Install Development Tools
-    #   yum:
-    #     name: "@Development Tools"
-
-    # - name: Install pip
-    #   yum:
-    #     name: python-pip
 
     - name: Create /etc/docker
       file:
@@ -114,11 +77,6 @@
         state: started
         enabled: yes
         masked: no
-
-    # - name: pip install docker
-    #   pip:
-    #     name: "docker"
-    #     executable: pip3
 
     # EFS
     - name: Install amazon-efs-utils
@@ -189,6 +147,5 @@
   roles:
     # - { role: live-patching }
     - { role: docker-login }
-    # - { role: run-module, module: user-storage-backup }
     - { role: run-module, module: logger }
     - { role: run-module, module: user-storage }

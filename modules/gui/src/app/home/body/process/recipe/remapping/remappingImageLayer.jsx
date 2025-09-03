@@ -4,6 +4,7 @@ import React from 'react'
 
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -65,12 +66,11 @@ class _RemappingImageLayer extends React.Component {
 }
 
 export const RemappingImageLayer = compose(
-    _RemappingImageLayer
+    _RemappingImageLayer,
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-RemappingImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 RemappingImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

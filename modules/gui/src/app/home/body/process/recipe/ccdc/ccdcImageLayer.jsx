@@ -5,6 +5,7 @@ import React from 'react'
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {withMapArea} from '~/app/home/map/mapAreaContext'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 
@@ -63,11 +64,10 @@ class _CCDCImageLayer extends React.Component {
 export const CCDCImageLayer = compose(
     _CCDCImageLayer,
     withMapArea(),
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-CCDCImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 CCDCImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

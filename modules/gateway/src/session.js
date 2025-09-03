@@ -31,8 +31,8 @@ const SessionManager = (sessionStore, userStore) => {
             userSessionIds.map(
                 async sessionId => await removeSession(sessionId)
             )
-        ).then(() => {
-            userStore.removeUser(username)
+        ).then(async () => {
+            await userStore.removeUser(username)
             return true
         })
     }
@@ -57,10 +57,9 @@ const SessionManager = (sessionStore, userStore) => {
         
         if (username) {
             const userSessionIds = await getSessionIdsByUsername(username)
-            if (userSessionIds.length === 0) {
-                await userStore.removeUser(username)
-            }
-            log.debug(() => `${usernameTag(username)} Logout, ${userSessionIds.length} active session(s) remaining`)
+            log.info(`${usernameTag(username)} Logout, ${userSessionIds.length} active session(s) remaining`)
+        } else {
+            log.warn('Logout without user in session')
         }
 
         const cookieHeader = req.get('Cookie')

@@ -3,9 +3,9 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {distinctUntilChanged, fromEvent, merge, sample, Subject} from 'rxjs'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {isEqual} from '~/hash'
-import {withForwardedRef} from '~/ref'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -18,8 +18,8 @@ import styles from './list.module.css'
 class _ScrollableList extends React.Component {
     autoCenter$ = new Subject()
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.ref = React.createRef()
         this.renderScrollable = this.renderScrollable.bind(this)
     }
@@ -53,7 +53,10 @@ class _ScrollableList extends React.Component {
 export const ScrollableList = compose(
     _ScrollableList,
     withSubscriptions(),
-    withForwardedRef()
+    asFunctionalComponent({
+        alignment: 'left',
+        tooltipPlacement: 'right'
+    })
 )
 
 ScrollableList.propTypes = {
@@ -84,11 +87,6 @@ ScrollableList.propTypes = {
     onCancel: PropTypes.func
 }
 
-ScrollableList.defaultProps = {
-    alignment: 'left',
-    tooltipPlacement: 'right'
-}
-
 class _List extends React.Component {
     autoCenter$ = new Subject()
     mouseOption$ = new Subject()
@@ -100,8 +98,7 @@ class _List extends React.Component {
 
     constructor(props) {
         super(props)
-        const {forwardedRef} = props
-        this.list = forwardedRef || React.createRef()
+        this.list = props.forwardedRef || React.createRef()
         this.highlighted = React.createRef()
         this.selected = React.createRef()
         this.selectHighlighted = this.selectHighlighted.bind(this)

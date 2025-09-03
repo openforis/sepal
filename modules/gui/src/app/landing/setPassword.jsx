@@ -4,7 +4,7 @@ import {switchMap} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import {compose} from '~/compose'
-import {history, query} from '~/route'
+import {withNavigation, withSearchParams} from '~/route'
 import {msg} from '~/translate'
 import {credentialsPosted, resetPassword$, tokenUser, validateToken$} from '~/user'
 import {Button} from '~/widget/button'
@@ -51,8 +51,8 @@ class _SetPassword extends React.Component {
     }
 
     componentDidMount() {
-        const {stream, inputs: {username}} = this.props
-        const token = query().token
+        const {stream, inputs: {username}, searchParams} = this.props
+        const token = searchParams.get('token')
         stream('VALIDATE_TOKEN',
             validateToken$(token),
             user => {
@@ -66,7 +66,6 @@ class _SetPassword extends React.Component {
                     message: msg('landing.validate-token.error'),
                     timeout: 10
                 })
-                history().push('/-/process') // [TODO] fix this
             }
         )
     }
@@ -82,8 +81,8 @@ class _SetPassword extends React.Component {
     }
 
     resetPassword(username, password) {
-        const {type, recaptcha: {recaptcha$}, stream} = this.props
-        const token = query().token
+        const {type, recaptcha: {recaptcha$}, stream, searchParams, navigate} = this.props
+        const token = searchParams.get('token')
         stream('RESET_PASSWORD',
             recaptcha$('RESET_PASSWORD').pipe(
                 switchMap(recaptchaToken =>
@@ -92,8 +91,8 @@ class _SetPassword extends React.Component {
             ),
             user => {
                 credentialsPosted(user)
-                history().push('/-/process')
                 Notifications.success({message: msg('landing.reset-password.success')})
+                navigate('/')
             },
             () => {
                 Notifications.error({message: msg('landing.reset-password.error')})
@@ -164,7 +163,9 @@ class _SetPassword extends React.Component {
 export const SetPassword = compose(
     _SetPassword,
     withForm({fields, constraints, mapStateToProps}),
-    withRecaptcha()
+    withRecaptcha(),
+    withSearchParams(),
+    withNavigation()
 )
 
 SetPassword.propTypes = {

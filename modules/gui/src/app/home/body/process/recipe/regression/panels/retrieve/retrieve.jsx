@@ -16,6 +16,7 @@ class _Retrieve extends React.Component {
                 defaultScale={30}
                 toSepal
                 toEE
+                toDrive
                 allBands
                 onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
             />

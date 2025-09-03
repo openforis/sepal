@@ -1,4 +1,4 @@
-import {catchError, map, of, switchMap, tap} from 'rxjs'
+import {catchError, delay, map, of, switchMap, tap} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -21,16 +21,18 @@ export const loadUser$ = () => api.user.loadCurrentUser$().pipe(
         return of(null)
     }),
     tap(user => updateUser(user)),
-    switchMap(() => googleProjectId()
-        ? api.gee.healthcheck$()
-        : of(true)
+    switchMap(() =>
+        googleProjectId()
+            ? api.gee.healthcheck$()
+            : of(true)
     ),
     catchError(error => {
         const errorCode = error.response?.errorCode
         switch (errorCode) {
-        case 'EE_NOT_AVAILABLE': return eeNotAvailableError$()
-        case 'MISSING_OAUTH_SCOPES': return missingOAuthScopesError$()
-        default: return unspecifiedError$()
+            case 'EE_NOT_AVAILABLE': return eeNotAvailableError$()
+            case 'MISSING_OAUTH_SCOPES': return missingOAuthScopesError$()
+            case 'MISSING_GOOGLE_TOKENS': return missingGoogleTokensError$()
+            default: return unspecifiedError$()
         }
     })
 )
@@ -40,29 +42,42 @@ const eeNotAvailableError$ = () => {
         title: msg('user.googleAccount.unavailable.title'),
         message: msg('user.googleAccount.unavailable.message'),
         link: `http://code.earthengine.google.com/register?project=${googleProjectId()}`,
-        timeout: 0
+        timeout: 0,
+        group: true
     })
     return of(null)
 }
 
-const missingOAuthScopesError$ = () =>
-    revokeGoogleAccess$().pipe(
-        tap(() => {
-            userDetailsHint(true)
-            Notifications.error({
-                title: msg('user.googleAccount.missingScopes.title'),
-                message: msg('user.googleAccount.missingScopes.message'),
-                timeout: 0,
-                onDismiss: () => userDetailsHint(false)
-            })
-        })
-    )
+const missingOAuthScopesError$ = () => {
+    userDetailsHint(true)
+    Notifications.error({
+        title: msg('user.googleAccount.missingScopes.title'),
+        message: msg('user.googleAccount.missingScopes.message'),
+        timeout: 0,
+        group: true,
+        onDismiss: () => userDetailsHint(false)
+    })
+    return revokeGoogleAccess$()
+}
+
+const missingGoogleTokensError$ = () => {
+    userDetailsHint(true)
+    Notifications.error({
+        title: msg('user.googleAccount.revoked.title'),
+        message: msg('user.googleAccount.revoked.message'),
+        timeout: 0,
+        group: true,
+        onDismiss: () => userDetailsHint(false)
+    })
+    return revokeGoogleAccess$()
+}
 
 const unspecifiedError$ = () => {
     Notifications.error({
         title: msg('user.googleAccount.unspecifiedError.title'),
         message: msg('user.googleAccount.unspecifiedError.message'),
-        timeout: 0
+        timeout: 0,
+        group: true
     })
     return of(null)
 }
@@ -84,21 +99,20 @@ export const logout$ = () =>
 
 export const resetPassword$ = ({token, username, password, type, recaptchaToken}) =>
     api.user.resetPassword$({token, password, recaptchaToken}).pipe(
-        tap(() =>
-            publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')
-        ),
-        switchMap(() =>
-            login$({username, password})
-        ),
-        switchMap(() =>
-            api.user.invalidateOtherSessions$()
+        tap(() => publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')),
+        delay(2000),
+        switchMap(() => login$({username, password})),
+        switchMap(user =>
+            api.user.invalidateOtherSessions$().pipe(
+                map(() => user)
+            )
         )
     )
 
 export const updateUser = user => {
     publishCurrentUserEvent(user)
     actionBuilder('SET_CURRENT_USER', {user})
-        .set('user', {
+        .assign('user', {
             currentUser: user,
             initialized: true,
             loggedOn: !!user
@@ -152,19 +166,20 @@ export const validateEmail$ = ({email, recaptchaToken}) =>
         map(({valid}) => valid)
     )
 
-export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) =>
-    api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}).pipe(
-        tap(({name, email, organization}) =>
-            actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
-                .set('user.currentUser.name', name)
-                .set('user.currentUser.email', email)
-                .set('user.currentUser.organization', organization)
-                .set('user.currentUser.intendedUse', intendedUse)
-                .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
-                .set('user.currentUser.manualMapRenderingEnabled', manualMapRenderingEnabled)
-                .dispatch()
-        )
-    )
+export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) => {
+    actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
+        .set('user.currentUser.name', name)
+        .set('user.currentUser.email', email)
+        .set('user.currentUser.organization', organization)
+        .set('user.currentUser.intendedUse', intendedUse)
+        .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
+        .set('user.currentUser.manualMapRenderingEnabled', manualMapRenderingEnabled)
+        .dispatch()
+    return api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled})
+}
+
+export const acceptPrivacyPolicy$ = () =>
+    api.user.acceptPrivacyPolicy$()
 
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
     api.user.changePassword$({oldPassword, newPassword}).pipe(

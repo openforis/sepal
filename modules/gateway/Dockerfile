@@ -30,6 +30,10 @@ ADD modules/${MODULE_NAME}/config ./config
 # add shell scripts
 ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin
 
+# expose environment variables
+ARG BUILD_NUMBER
+ENV BUILD_NUMBER=$BUILD_NUMBER
+
 # run
 USER node
 CMD start.sh

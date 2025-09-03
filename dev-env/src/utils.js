@@ -27,6 +27,8 @@ export const STATUS = {
     INSTALLING_SHARED_PACKAGES: 'INSTALLING_SHARED_PACKAGES',
     INSTALLING_MODULE_PACKAGES: 'INSTALLING_MODULE_PACKAGES',
     INSTALLED_PACKAGES: 'INSTALLED_PACKAGES',
+    AUDITING_PACKAGES: 'AUDITING_PACKAGES',
+    AUDITED_PACKAGES: 'AUDITED_PACKAGES',
     REBUILDING_PACKAGES: 'REBUILDING_PACKAGES',
     SKIPPED: 'SKIPPED'
 }
@@ -47,10 +49,12 @@ export const MESSAGE = {
     INSTALLING_SHARED_PACKAGES: chalk.magenta('INSTALLING SHARED PACKAGES...'),
     INSTALLING_MODULE_PACKAGES: chalk.magenta('INSTALLING MODULE PACKAGES...'),
     INSTALLED_PACKAGES: chalk.magentaBright('INSTALLED PACKAGES'),
+    AUDITING_PACKAGES: chalk.magenta('AUDITING PACKAGES...'),
+    AUDITED_PACKAGES: chalk.magentaBright('AUDITED PACKAGES'),
     TESTING_PACKAGES: chalk.magenta('TESTING PACKAGES...'),
     TESTED_PACKAGES: chalk.magentaBright('TESTED PACKAGES'),
-    CHECKING_PACKAGES: chalk.magenta('CHECKING PACKAGES...'),
-    CHECKED_PACKAGES: chalk.magentaBright('CHECKED PACKAGES'),
+    VALIDATING_SOURCES: chalk.magenta('VALIDATING SOURCES...'),
+    VALIDATED_SOURCES: chalk.magentaBright('VALIDATED SOURCES'),
     SKIPPED: chalk.grey('SKIPPED'),
     RUNNING: chalk.greenBright('RUNNING'),
     WATCHING: chalk.greenBright('WATCHING'),
@@ -121,9 +125,9 @@ const expandGroups = modules =>
         .uniq()
         .value()
 
-export const getModules = modules => {
+export const getModules = (modules, defaultModules = [':default']) => {
     if (_.isEmpty(modules)) {
-        const modules = expandGroups([':default'])
+        const modules = expandGroups(defaultModules)
         return modules.length
             ? modules
             : getAllModules()

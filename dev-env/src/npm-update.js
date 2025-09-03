@@ -41,7 +41,7 @@ const updateModule = async (module, path, {upgrade, target} = {}) => {
 }
 
 export const npmUpdate = async (modules, options) => {
-    const rootModules = getModules(modules)
+    const rootModules = getModules(modules, [':node'])
     const libs = getLibDepList(rootModules)
     for (const lib of libs) {
         await updateModule(lib, `lib/js/${lib}`, options)

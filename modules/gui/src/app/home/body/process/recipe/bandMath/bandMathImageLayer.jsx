@@ -4,6 +4,7 @@ import React from 'react'
 
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
@@ -64,11 +65,10 @@ class _BandMathImageLayer extends React.Component {
 export const BandMathImageLayer = compose(
     _BandMathImageLayer,
     connect(mapStateToProps),
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-BandMathImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 BandMathImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

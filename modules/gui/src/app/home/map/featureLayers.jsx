@@ -51,25 +51,25 @@ class _FeatureLayer extends React.Component {
         const {source, map, recipe, layerConfig, layerIndex} = this.props
         const id = source.type
         switch (source.type) {
-        case 'Labels':return <LabelsLayer id={id} layerIndex={layerIndex} map={map}/>
-        case 'Legend': return <LegendLayer/>
-        case 'Palette': return <PaletteLayer/>
-        case 'Values': return <ValuesLayer/>
-        case 'Aoi': return (
-            <AoiLayer
-                id={source.type}
-                layerConfig={layerConfig}
-                layerIndex={layerIndex}
-                recipe={recipe}
-                map={map}
-            />
-        )
-        case 'SceneAreas':
-            return <SceneAreasLayer map={map}/>
-        case 'ReferenceData':
-            return <ReferenceDataLayer map={map}/>
-        default:
-            throw Error(`Unsupported feature layer type: ${source.type}`)
+            case 'Labels':return <LabelsLayer id={id} layerIndex={layerIndex} map={map}/>
+            case 'Legend': return <LegendLayer/>
+            case 'Palette': return <PaletteLayer/>
+            case 'Values': return <ValuesLayer/>
+            case 'Aoi': return (
+                <AoiLayer
+                    id={source.type}
+                    layerConfig={layerConfig}
+                    layerIndex={layerIndex}
+                    recipe={recipe}
+                    map={map}
+                />
+            )
+            case 'SceneAreas':
+                return <SceneAreasLayer map={map}/>
+            case 'ReferenceData':
+                return <ReferenceDataLayer map={map}/>
+            default:
+                throw Error(`Unsupported feature layer type: ${source.type}`)
         }
     }
 

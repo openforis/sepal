@@ -1,12 +1,14 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({recipe, latLng, bands}) => {
+const worker$ = ({
+    requestArgs: {recipe, latLng, bands}
+}) => {
     const {toGeometry} = require('#sepal/ee/aoi')
     const {of, map, switchMap} = require('rxjs')
     const ccdc = require('#sepal/ee/timeSeries/ccdc')
     const imageFactory = require('#sepal/ee/imageFactory')
     const _ = require('lodash')
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
 
     const aoi = {type: 'POINT', ...latLng}
     const geometry = toGeometry(aoi)

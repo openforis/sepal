@@ -5,6 +5,7 @@ import React from 'react'
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {withMapArea} from '~/app/home/map/mapAreaContext'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -197,12 +198,11 @@ class _BaytsAlertsImageLayer extends React.Component {
 export const BaytsAlertsImageLayer = compose(
     _BaytsAlertsImageLayer,
     withMapArea(),
-    withRecipe(mapRecipeToProps)
+    withRecipe(mapRecipeToProps),
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-BaytsAlertsImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 BaytsAlertsImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

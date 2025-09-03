@@ -3,6 +3,7 @@ import React from 'react'
 
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 
 import {visualizationOptions} from './visualizations'
@@ -38,12 +39,11 @@ class _RadarMosaicImageLayer extends React.Component {
 }
 
 export const RadarMosaicImageLayer = compose(
-    _RadarMosaicImageLayer
+    _RadarMosaicImageLayer,
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-RadarMosaicImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 RadarMosaicImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

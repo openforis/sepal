@@ -10,14 +10,14 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "commander": "^13.1.0",
+        "commander": "^14.0.0",
         "date-fns": "^4.1.0",
-        "ioredis": "^5.6.0",
+        "ioredis": "^5.7.0",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
-        "ws": "^8.18.1"
+        "ws": "^8.18.3"
     },
     "imports": {
         "#sepal/*": "sepal/src/*.js",

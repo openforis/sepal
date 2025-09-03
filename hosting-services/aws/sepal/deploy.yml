@@ -136,6 +136,11 @@
       yum:
         name: "multitail"
 
+    # Install htop
+    - name: Install htop
+      yum:
+        name: "htop"
+
     # profile.d
     - name: Copy profile.d
       copy:

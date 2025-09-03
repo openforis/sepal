@@ -28,8 +28,8 @@ class _PreviewMap extends React.Component {
         map: null
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.refCallback = this.refCallback.bind(this)
     }
 

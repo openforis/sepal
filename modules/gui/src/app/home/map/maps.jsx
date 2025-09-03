@@ -18,7 +18,7 @@ import {SepalMap} from './sepalMap'
 const log = getLogger('maps')
 
 // Note: Google Maps API v.3.5+ deprecates Marker for AdvancedMarkerElement, which requires creating a MapId
-const GOOGLE_MAPS_VERSION = '3.57'
+const GOOGLE_MAPS_VERSION = '3.60'
 const GOOGLE_MAPS_LIBRARIES = ['core', 'drawing', 'geocoding', 'marker', 'places']
 
 const DEFAULT_ZOOM = 3
@@ -99,21 +99,21 @@ class _Maps extends React.Component {
     getStyleOptions(style = 'sepalStyle') {
         // https://developers.google.com/maps/documentation/javascript/style-reference
         switch (style) {
-        case 'sepalStyle':
-            return [
-                {stylers: [{visibility: 'simplified'}]},
-                {stylers: [{color: '#131314'}]},
-                {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
-                {featureType: 'poi', stylers: [{visibility: 'off'}]},
-                {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
-                {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
-            ]
-        case 'overlayStyle':
-            return [
-                {stylers: [{visibility: 'off'}]}
-            ]
-        default:
-            throw Error(`Unsupported map style ${style}`)
+            case 'sepalStyle':
+                return [
+                    {stylers: [{visibility: 'simplified'}]},
+                    {stylers: [{color: '#131314'}]},
+                    {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
+                    {featureType: 'poi', stylers: [{visibility: 'off'}]},
+                    {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
+                    {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
+                ]
+            case 'overlayStyle':
+                return [
+                    {stylers: [{visibility: 'off'}]}
+                ]
+            default:
+                throw Error(`Unsupported map style ${style}`)
         }
     }
 
@@ -127,6 +127,7 @@ class _Maps extends React.Component {
             center: new google.maps.core.LatLng(16.7794913, 9.6771556),
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             zoomControl: false,
+            cameraControl: false,
             mapTypeControl: false,
             scaleControl: false,
             streetViewControl: false,

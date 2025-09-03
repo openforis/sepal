@@ -6,6 +6,8 @@ import PropTypes from 'prop-types'
 import RcTooltip from 'rc-tooltip'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {isMobile} from '~/widget/userAgent'
 
 import {DEFAULT_PORTAL_CONTAINER_ID} from './portal'
@@ -13,7 +15,7 @@ import styles from './tooltip.module.css'
 
 const CLOSE_DELAY_MS = 250
 
-export class Tooltip extends React.Component {
+class _Tooltip extends React.Component {
     constructor(props) {
         super(props)
         this.close = this.close.bind(this)
@@ -85,6 +87,19 @@ export class Tooltip extends React.Component {
     }
 }
 
+export const Tooltip = compose(
+    _Tooltip,
+    asFunctionalComponent({
+        clickTrigger: false,
+        hoverTrigger: true,
+        focusTrigger: false,
+        delay: 750,
+        disabled: false,
+        placement: 'top',
+        destroyTooltipOnHide: true
+    })
+)
+
 Tooltip.propTypes = {
     afterVisibleChange: PropTypes.func,
     bottom: PropTypes.bool,
@@ -106,14 +121,4 @@ Tooltip.propTypes = {
     topRight: PropTypes.bool,
     onVisibleChange: PropTypes.func
 
-}
-
-Tooltip.defaultProps = {
-    clickTrigger: false,
-    hoverTrigger: true,
-    focusTrigger: false,
-    delay: 750,
-    disabled: false,
-    placement: 'top',
-    destroyTooltipOnHide: true
 }

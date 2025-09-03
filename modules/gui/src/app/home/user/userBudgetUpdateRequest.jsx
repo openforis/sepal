@@ -47,8 +47,8 @@ const mapStateToProps = () => {
 }
 
 export class _BudgetUpdateRequest extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.save = this.save.bind(this)
         this.cancel = this.cancel.bind(this)
     }

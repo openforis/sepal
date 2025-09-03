@@ -4,6 +4,7 @@ import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {updateProject} from '~/app/home/body/process/recipeList/projects'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
@@ -199,20 +200,25 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     renderDestination() {
-        const {toSepal, toEE, inputs: {destination}} = this.props
+        const {toSepal, toEE, toDrive, inputs: {destination}} = this.props
         const destinationOptions = [
-            {
-                value: 'SEPAL',
-                label: msg('process.retrieve.form.destination.SEPAL')
-            },
             {
                 value: 'GEE',
                 label: msg('process.retrieve.form.destination.GEE')
+            },
+            {
+                value: 'DRIVE',
+                label: msg('process.retrieve.form.destination.DRIVE')
+            },
+            {
+                value: 'SEPAL',
+                label: msg('process.retrieve.form.destination.SEPAL')
             }
         ]
-            .filter(({value}) => isGoogleAccount() || value !== 'GEE')
+            .filter(({value}) => isGoogleAccount() || value === 'SEPAL')
             .filter(({value}) => toSepal || value !== 'SEPAL')
             .filter(({value}) => toEE || value !== 'GEE')
+            .filter(({value}) => toDrive || value !== 'DRIVE')
         return (
             <Form.Buttons
                 label={msg('process.retrieve.form.destination.label')}
@@ -370,13 +376,16 @@ class _MosaicRetrievePanel extends React.Component {
 
     update() {
         const {toEE, toSepal, inputs: {destination, assetType}} = this.props
-        if (toSepal && !destination.value) {
-            destination.set('SEPAL')
-        } else if (isGoogleAccount() && toEE && !destination.value) {
-            destination.set('GEE')
-        }
-        if (!assetType.value && destination.value === 'GEE') {
-            assetType.set('Image')
+        if (!destination.value) {
+            if (toEE && isGoogleAccount()) {
+                destination.set('GEE')
+            } else if (toSepal) {
+                destination.set('SEPAL')
+            }
+        } else {
+            if (destination.value === 'GEE' && !assetType.value) {
+                assetType.set('Image')
+            }
         }
     }
 
@@ -403,17 +412,16 @@ class _MosaicRetrievePanel extends React.Component {
 export const MosaicRetrievePanel = compose(
     _MosaicRetrievePanel,
     connect(mapStateToProps),
-    recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps})
+    recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps}),
+    asFunctionalComponent({
+        scaleTicks: [10, 15, 20, 30, 60, 100],
+        defaultCrs: 'EPSG:4326',
+        defaultScale: 30,
+        defaultShardSize: 256,
+        defaultFileDimensionsMultiple: 10,
+        defaultTileSize: 2
+    })
 )
-
-MosaicRetrievePanel.defaultProps = {
-    scaleTicks: [10, 15, 20, 30, 60, 100],
-    defaultCrs: 'EPSG:4326',
-    defaultScale: 30,
-    defaultShardSize: 256,
-    defaultFileDimensionsMultiple: 10,
-    defaultTileSize: 2
-}
 
 MosaicRetrievePanel.propTypes = {
     defaultCrs: PropTypes.string.isRequired,

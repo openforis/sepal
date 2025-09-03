@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import {useLocation} from 'react-router'
 
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -27,14 +28,14 @@ class _Menu extends React.Component {
             <div className={className}>
                 <div className={[styles.menu, floating && styles.floating].join(' ')}>
                     <div className={styles.section}>
-                        <SectionLink name='process' icon='globe'/>
-                        <SectionLink name='browse' icon='folder-open'/>
-                        <SectionLink name='terminal' icon='terminal' disabled={budgetExceeded}/>
-                        <SectionLink name='app-launch-pad' icon='wrench' disabled={budgetExceeded}/>
+                        <SectionLink name='process' path='/' icon='globe'/>
+                        <SectionLink name='browse' path='/-/browse' icon='folder-open'/>
+                        <SectionLink name='terminal' path='/-/terminal' icon='terminal' disabled={budgetExceeded}/>
+                        <SectionLink name='app-launch-pad' path='/-/app-launch-pad' icon='wrench' disabled={budgetExceeded}/>
                     </div>
                     <div className={styles.section}>
-                        <SectionLink name='tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'} disabled={budgetExceeded}/>
-                        {user.admin ? <SectionLink name='users' icon='users'/> : null}
+                        <SectionLink name='tasks' path='/-/tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'} disabled={budgetExceeded}/>
+                        {user.admin ? <SectionLink name='users' path='/-/users' icon='users'/> : null}
                         <Link name='help' icon='question-circle' href='https://docs.sepal.io/'/>
                         <MenuMode className={styles.mode}/>
                     </div>
@@ -63,14 +64,16 @@ const Link = ({name, icon, href}) =>
         linkTarget='_blank'
     />
 
-const _SectionLink = ({active, name, icon, disabled}) => {
-    const link = `/-/${name}`
+const SectionLink = ({path, name, icon, disabled}) => {
+    const location = useLocation()
+    const active = isPathInLocation(path, location.pathname)
     const activeClass = active ? styles.active : null
+
     return (
         <Button
             className={[styles[name], activeClass].join(' ')}
             icon={icon}
-            route={link}
+            route={path}
             tooltip={[
                 msg(`home.sections.${name}`),
                 (disabled ? msg('user.quotaUpdate.info') : null)
@@ -81,19 +84,4 @@ const _SectionLink = ({active, name, icon, disabled}) => {
             disabled={disabled}
         />
     )
-}
-
-const SectionLink = compose(
-    _SectionLink,
-    connect(
-        (state, {name}) => ({
-            active: isPathInLocation(`/-/${name}`)
-        })
-    )
-)
-
-SectionLink.propTypes = {
-    disabled: PropTypes.any,
-    icon: PropTypes.string,
-    name: PropTypes.string
 }

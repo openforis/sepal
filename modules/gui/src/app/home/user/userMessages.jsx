@@ -8,6 +8,7 @@ import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {Msg, msg} from '~/translate'
+import {currentUser} from '~/user'
 import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
@@ -120,12 +121,12 @@ class _UserMessages extends React.Component {
     toggleReadState(userMessage) {
         const nextState = state => {
             switch(state) {
-            case 'READ':
-                return 'UNREAD'
-            case 'UNREAD':
-                return 'READ'
-            default:
-                throw Error(`Unsupported message state "${state}"`)
+                case 'READ':
+                    return 'UNREAD'
+                case 'UNREAD':
+                    return 'READ'
+                default:
+                    throw Error(`Unsupported message state "${state}"`)
             }
         }
         this.updateUserMessage({
@@ -317,9 +318,9 @@ class _UserMessagesButton extends React.Component {
     }
 
     componentDidUpdate() {
-        const {unreadUserMessages, activator: {activatables: {userMessages}}} = this.props
+        const {user, unreadUserMessages, activator: {activatables: {userMessages}}} = this.props
         const {shown} = this.state
-        if (unreadUserMessages && !shown && userMessages.canActivate) {
+        if (user.privacyPolicyAccepted && unreadUserMessages && !shown && userMessages.canActivate) {
             userMessages.activate()
             this.setState({shown: true})
         }
@@ -329,6 +330,7 @@ class _UserMessagesButton extends React.Component {
 export const UserMessagesButton = compose(
     _UserMessagesButton,
     connect(state => ({
+        user: currentUser(),
         unreadUserMessages: unreadMessagesCount(state.user.userMessages)
     })),
     withActivators('userMessages')

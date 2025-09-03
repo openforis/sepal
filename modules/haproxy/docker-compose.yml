@@ -31,7 +31,7 @@ services:
       net.ipv4.tcp_keepalive_intvl: 60
       net.ipv4.tcp_keepalive_probes: 6
     healthcheck:
-      test: bash -c "exec 6<> /dev/tcp/localhost/80"
+      test: ["CMD", "curl", "-f", "http://localhost/healthcheck"]
       timeout: 60s
       interval: 1s
       retries: 60

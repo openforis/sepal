@@ -1,8 +1,10 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = (_ignore, {sepalUser: {googleTokens}}) => {
+const worker$ = ({
+    credentials: {sepalUser: {googleTokens}}
+}) => {
     const {map} = require('rxjs')
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const _ = require('lodash')
 
     if (!googleTokens) {

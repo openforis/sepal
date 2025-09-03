@@ -5,6 +5,7 @@ import React from 'react'
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {withMapArea} from '~/app/home/map/mapAreaContext'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {Buttons} from '~/widget/buttons'
@@ -90,7 +91,7 @@ class _OpticalMosaicImageLayer extends React.Component {
 
     canPanSharpen() {
         const {recipe, layerConfig: {visParams}} = this.props
-        const sources = selectFrom(recipe, 'model.sources')
+        const sources = selectFrom(recipe, 'model.sources.dataSets') || {}
         return sources.LANDSAT
         && this.reflectance() === 'TOA'
         && visParams
@@ -105,12 +106,11 @@ class _OpticalMosaicImageLayer extends React.Component {
 
 export const OpticalMosaicImageLayer = compose(
     _OpticalMosaicImageLayer,
-    withMapArea()
+    withMapArea(),
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-OpticalMosaicImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 OpticalMosaicImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

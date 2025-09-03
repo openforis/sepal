@@ -102,35 +102,35 @@ class _Aoi extends React.Component {
 
 const valuesToModel = values => {
     switch (values.section) {
-    case 'ASSET_BOUNDS':
-        return {
-            type: 'ASSET_BOUNDS'
-        }
-    case 'COUNTRY':
-        return {
-            type: 'EE_TABLE',
-            id: countryEETable,
-            keyColumn: 'id',
-            key: values.area || values.country,
-            level: values.area ? 'AREA' : 'COUNTRY',
-            buffer: values.buffer
-        }
-    case 'EE_TABLE':
-        return {
-            type: 'EE_TABLE',
-            id: values.eeTable,
-            keyColumn: values.eeTableRowSelection === 'FILTER' ? values.eeTableColumn : null,
-            key: values.eeTableRowSelection === 'FILTER' ? values.eeTableRow : null,
-            bounds: values.bounds,
-            buffer: values.buffer
-        }
-    case 'POLYGON':
-        return {
-            type: 'POLYGON',
-            path: values.polygon
-        }
-    default:
-        throw Error(`Invalid aoi section: ${values.section}`)
+        case 'ASSET_BOUNDS':
+            return {
+                type: 'ASSET_BOUNDS'
+            }
+        case 'COUNTRY':
+            return {
+                type: 'EE_TABLE',
+                id: countryEETable,
+                keyColumn: 'id',
+                key: values.area || values.country,
+                level: values.area ? 'AREA' : 'COUNTRY',
+                buffer: values.buffer
+            }
+        case 'EE_TABLE':
+            return {
+                type: 'EE_TABLE',
+                id: values.eeTable,
+                keyColumn: values.eeTableRowSelection === 'FILTER' ? values.eeTableColumn : null,
+                key: values.eeTableRowSelection === 'FILTER' ? values.eeTableRow : null,
+                bounds: values.bounds,
+                buffer: values.buffer
+            }
+        case 'POLYGON':
+            return {
+                type: 'POLYGON',
+                path: values.polygon
+            }
+        default:
+            throw Error(`Invalid aoi section: ${values.section}`)
     }
 }
 

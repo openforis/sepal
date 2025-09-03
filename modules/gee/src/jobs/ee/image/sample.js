@@ -1,11 +1,12 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ctx => {
-    const {recipeToSample, count, scale, classBand, recipe, bands} = ctx
+const worker$ = ({
+    requestArgs: {recipeToSample, count, scale, classBand, recipe, bands}
+}) => {
     const ImageFactory = require('#sepal/ee/imageFactory')
     const {expand, forkJoin, last, map, switchMap, takeWhile} = require('rxjs')
     const {getRows$} = require('#sepal/ee/table')
-    const ee = require('sepal/src/ee')
+    const ee = require('#sepal/ee/ee')
     const {EEException} = require('#sepal/ee/exception')
     const log = require('#sepal/log').getLogger('ee')
 
@@ -122,6 +123,5 @@ const worker$ = ctx => {
 module.exports = job({
     jobName: 'Sample image',
     jobPath: __filename,
-    args: ctx => [ctx.request.body],
     worker$
 })

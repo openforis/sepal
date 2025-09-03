@@ -4,6 +4,7 @@ import React from 'react'
 
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -58,12 +59,11 @@ class _UnsupervisedClassificationImageLayer extends React.Component {
 }
 
 export const UnsupervisedClassificationImageLayer = compose(
-    _UnsupervisedClassificationImageLayer
+    _UnsupervisedClassificationImageLayer,
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-UnsupervisedClassificationImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 UnsupervisedClassificationImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

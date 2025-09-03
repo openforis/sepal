@@ -1,7 +1,9 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({select, from, where = [], distinct = [], orderBy = []}) => {
-    const ee = require('#sepal/ee')
+const worker$ = ({
+    requestArgs: {select, from, where = [], distinct = [], orderBy = []}
+}) => {
+    const ee = require('#sepal/ee/ee')
     const {map} = require('rxjs')
 
     const collection = ee.FeatureCollection(from)

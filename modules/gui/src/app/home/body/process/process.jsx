@@ -2,7 +2,6 @@ import _ from 'lodash'
 import React from 'react'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {Revisions} from '~/app/home/body/process/revisions'
 import {compose} from '~/compose'
 import {select} from '~/store'
 import {msg} from '~/translate'
@@ -67,7 +66,6 @@ class _Process extends React.Component {
         return (
             <Recipe id={recipeId}>
                 <ProcessMenu recipeId={recipeId}/>
-                <Revisions recipeId={recipeId}/>
             </Recipe>
         )
     }

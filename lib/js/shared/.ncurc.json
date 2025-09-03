@@ -1,5 +1,3 @@
 {
-    "reject": [
-        "serialize-error"
-    ]
+    "reject": []
 }

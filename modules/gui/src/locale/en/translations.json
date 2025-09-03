@@ -54,7 +54,72 @@
         "run": {
             "error": "Failed to run {label}"
         },
-        "running": "App is running"
+        "running": "App is running",
+        "noInstanceRequired" : "No instance required",
+        "admin": {
+            "title": "{app} management panel",
+            "logs": {
+                "title": "Logs",
+                "empty": "No logs available"
+            },
+            "container": {
+                "title": "Container info",
+                "notFound": "Container not found",
+                "status": "Status",
+                "containerStatus": "Container status",
+                "mainProcess": "Main process",
+                "memoryUsage": "Memory usage",
+                "cpuUsage": "CPU usage",
+                "connections" : "Active connections"
+            },
+            "repo": {
+                "title": "Repository",
+                "url": "Repository origin",
+                "lastCommit": "Last commit",
+                "lastClone": "Repository last cloned",
+                "error": "Error",
+                "branch" : "Branch"
+            },
+            "health": {
+                "healthy": "Healthy",
+                "starting": "Starting",
+                "unhealthy": "Unhealthy"
+            },
+            "restart": {
+                "error": "Failed to restart",
+                "success": "Restarted"
+            },
+            "buildRestart": {
+                "error": "Failed to build and restart",
+                "success": "Built and restarted successfully"
+            },
+            "button": {
+                "restart": "Restart container",
+                "buildRestart": "Build and restart container",
+                "reloadStatus": "Reload status",
+                "reloadLogs": "Reload logs"
+            },
+            "status": {
+                "running": "Running",
+                "idle": "Idle",
+                "error": "Error",
+                "checking": "Checking",
+                "notAvailable": "Not available",
+                "loading": "Loading...",
+                "exited": "Exited"
+            },
+            "timestamp": {
+                "never": "Never"
+            },
+            "update": {
+                "available": "Update available",
+                "checkForUpdates": "Check for updates",
+                "error": "Failed to update",
+                "success": "Updated successfully",
+                "noChanges": "No updates available"
+            },
+            "tooltip": "Manage app"
+        }
     },
     "asset": {
         "failedToLoad": "Failed to load EE asset",
@@ -70,7 +135,6 @@
         "recentAssets": "Recent assets",
         "userAssets": "User assets",
         "otherAssets": "Other assets",
-        "reload": "Reload assets",
         "settings": "Asset settings",
         "datasets": {
             "community": {
@@ -86,6 +150,10 @@
         "copyId": {
             "tooltip": "Copy asset id to clipboard",
             "success": "Asset id copied to clipboard"
+        },
+        "reload": {
+            "tooltip": "Reload assets",
+            "progress": "Reloading... {count}"
         },
         "browser": {
             "tooltip": "Open asset browser",
@@ -164,9 +232,6 @@
             "assets": "Earth Engine assets"
         },
         "controls": {
-            "reload": {
-                "tooltip": "Reload"
-            },
             "clearSelection": {
                 "tooltip": "Clear selection"
             },
@@ -325,6 +390,11 @@
     },
     "home": {
         "connectivityError": "You are currently unable to connect to the SEPAL server.",
+        "versionMismatch": {
+            "title": "SEPAL has been updated!",
+            "message": "Please reload your browser as soon as possible to make sure everything works as expected.",
+            "reloadNow": "Reload now"
+        },
         "sections": {
             "account": "Account settings",
             "app-launch-pad": "Apps",
@@ -482,7 +552,7 @@
         "reset-password": {
             "button": "Set password",
             "password": {
-                "invalid": "Password must be at least 8 characters long",
+                "invalid": "Password must be at least 12 characters long",
                 "label": "Password",
                 "placeholder": "Enter a new password",
                 "required": "Password is required"
@@ -1218,7 +1288,8 @@
                             "GEE": "Google Earth Engine asset",
                             "label": "Destination",
                             "required": "A destination must be selected",
-                            "SEPAL": "SEPAL workspace"
+                            "SEPAL": "SEPAL workspace",
+                            "DRIVE": "Google Drive"
                         },
                         "scale": {
                             "label": "Scale",
@@ -1251,7 +1322,8 @@
                     },
                     "task": {
                         "GEE": "Export {name} as a Google Earth Engine asset",
-                        "SEPAL": "Retrieve {name} to SEPAL workspace"
+                        "SEPAL": "Retrieve {name} to SEPAL workspace",
+                        "DRIVE": "Retrieve {name} to Google Drive"
                     },
                     "title": "Retrieve",
                     "tooltip": "Retrieve time-series"
@@ -1489,7 +1561,8 @@
                             "GEE": "Google Earth Engine asset",
                             "label": "Destination",
                             "required": "A destination must be selected",
-                            "SEPAL": "SEPAL workspace"
+                            "SEPAL": "SEPAL workspace",
+                            "DRIVE": "Google Drive"
                         },
                         "scale": {
                             "label": "Scale"
@@ -2956,7 +3029,6 @@
             "exportRecipe": "Export recipe",
             "removeRecipe.tooltip": "Remove recipe",
             "selectRecipe.tooltip": "Select recipe",
-            "revertToOldRevision": "Revert to old revision...",
             "saveRecipe": "Save recipe...",
             "searchRecipes": "Search recipes"
         },
@@ -2966,6 +3038,7 @@
                 "indexes": "Indexes",
                 "label": "Bands",
                 "metadata": "Metadata",
+                "months": "Months",
                 "panSharpen": "Pan sharpen",
                 "placeholder": "Select preview bands"
             },
@@ -4493,7 +4566,8 @@
                     "GEE": "Google Earth Engine asset",
                     "label": "Destination",
                     "required": "A destination must be selected",
-                    "SEPAL": "SEPAL workspace"
+                    "SEPAL": "SEPAL workspace",
+                    "DRIVE": "Google Drive"
                 },
                 "fileDimensionsMultiple": {
                     "label": "File dimensions multiple",
@@ -4526,7 +4600,8 @@
                 },
                 "task": {
                     "GEE": "Export {name} as a Google Earth Engine asset",
-                    "SEPAL": "Retrieve {name} to SEPAL workspace"
+                    "SEPAL": "Retrieve {name} to SEPAL workspace",
+                    "DRIVE": "Retrieve {name} to Google Drive"
                 },
                 "tileSize": {
                     "label": "Tile size",
@@ -4542,11 +4617,6 @@
             },
             "title": "Retrieve",
             "tooltip": "Retrieve recipe"
-        },
-        "revisions": {
-            "none": "No revision available.",
-            "revert": "Revert to revision",
-            "title": "Revisions"
         },
         "saveRecipe": {
             "error": "Sorry, but something went wrong when trying to save your recipe. If you close the window/tab, you will lose any changes you've made since last successful save. To make sure you have some record the data within this recipe, you might want to export it. Go to the top right recipe menu and select \"Export recipe\".",
@@ -4786,7 +4856,7 @@
                     "required": "New password is required"
                 },
                 "newPassword": {
-                    "invalid": "Passwords must be at least 8 characters long",
+                    "invalid": "Passwords must be at least 12 characters long",
                     "label": "New password",
                     "notMatching": "Passwords are not matching",
                     "required": "New password is required"
@@ -4904,6 +4974,13 @@
             "admin": "Admin",
             "user": "User"
         },
+        "privacyPolicy": {
+            "title": "Privacy Policy",
+            "accept": {
+                "label": "Accept",
+                "error": "Could not update user"
+            }
+        },
         "userDetails": {
             "form": {
                 "email": {
@@ -4994,8 +5071,7 @@
             "switchingToSEPALGoogleAccount": "Switching to SEPAL's Google Account",
             "title": "User details",
             "update": {
-                "error": "Could not update user.",
-                "success": "User has been updated."
+                "error": "Could not update user."
             },
             "confirmation": {
                 "message": "User role will be changed to \"{role}\""

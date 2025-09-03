@@ -483,10 +483,10 @@ class _RecipeList extends React.Component {
 
     getSorter(recipe, sortingOrder) {
         switch (sortingOrder) {
-        case 'updateTime':
-            return this.getSorterByUpdateTime(recipe)
-        case 'name':
-            return this.getSorterByName(recipe)
+            case 'updateTime':
+                return this.getSorterByUpdateTime(recipe)
+            case 'name':
+                return this.getSorterByName(recipe)
         }
     }
 

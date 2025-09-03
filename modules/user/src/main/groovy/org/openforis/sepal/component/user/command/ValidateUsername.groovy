@@ -25,8 +25,9 @@ class ValidateUsernameHandler implements CommandHandler<Boolean, ValidateUsernam
     }
 
     Boolean execute(ValidateUsername command) {
+        def sanitizedUsername = command.username?.toLowerCase()
         googleRecaptcha.isValid(command.recaptchaToken, 'VALIDATE_USERNAME') &&
-            Username.isValid(command.username) &&
-            userRepository.findUserByUsername(command.username) == null
+            Username.isValid(sanitizedUsername) &&
+            userRepository.findUserByUsername(sanitizedUsername) == null
     }
 }

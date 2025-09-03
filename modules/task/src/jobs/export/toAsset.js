@@ -1,4 +1,4 @@
-const ee = require('#sepal/ee')
+const ee = require('#sepal/ee/ee')
 const {EMPTY, concat, defer, from, catchError, last, map, mergeMap, of, scan, switchMap, tap, throwError} = require('rxjs')
 const {swallow} = require('#sepal/rxjs')
 const tile = require('#sepal/ee/tile')

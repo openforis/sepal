@@ -4,6 +4,7 @@ import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {updateProject} from '~/app/home/body/process/recipeList/projects'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
@@ -116,7 +117,6 @@ class _Retrieve extends React.Component {
                         label={more ? msg('button.less') : msg('button.more')}
                         onClick={() => this.setState({more: !more})}
                     />
-
                 </Form.PanelButtons>
             </RecipeFormPanel>
         )
@@ -218,15 +218,19 @@ class _Retrieve extends React.Component {
         const {inputs: {destination}} = this.props
         const destinationOptions = [
             {
-                value: 'SEPAL',
-                label: msg('process.retrieve.form.destination.SEPAL')
-            },
-            {
                 value: 'GEE',
                 label: msg('process.retrieve.form.destination.GEE')
+            },
+            {
+                value: 'DRIVE',
+                label: msg('process.retrieve.form.destination.DRIVE')
+            },
+            {
+                value: 'SEPAL',
+                label: msg('process.retrieve.form.destination.SEPAL')
             }
         ]
-            .filter(({value}) => isGoogleAccount() || value !== 'GEE')
+            .filter(({value}) => isGoogleAccount() || value === 'SEPAL')
         return (
             <Form.Buttons
                 label={msg('process.retrieve.form.destination.label')}
@@ -551,14 +555,13 @@ class _Retrieve extends React.Component {
 export const Retrieve = compose(
     _Retrieve,
     connect(mapStateToProps),
-    recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps})
+    recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps}),
+    asFunctionalComponent({
+        scaleTicks: [10, 15, 20, 30, 60, 100],
+        defaultCrs: 'EPSG:4326',
+        defaultScale: 30,
+        defaultShardSize: 256,
+        defaultFileDimensionsMultiple: 10,
+        defaultTileSize: 2
+    })
 )
-
-Retrieve.defaultProps = {
-    scaleTicks: [10, 15, 20, 30, 60, 100],
-    defaultCrs: 'EPSG:4326',
-    defaultScale: 30,
-    defaultShardSize: 256,
-    defaultFileDimensionsMultiple: 10,
-    defaultTileSize: 2
-}

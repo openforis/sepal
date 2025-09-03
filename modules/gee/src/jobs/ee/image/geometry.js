@@ -1,7 +1,9 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
-    const ee = require('#sepal/ee')
+const worker$ = ({
+    requestArgs: {recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}
+}) => {
+    const ee = require('#sepal/ee/ee')
     const ImageFactory = require('#sepal/ee/imageFactory')
     const {switchMap} = require('rxjs')
 
@@ -9,7 +11,7 @@ const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
     return getGeometry$().pipe(
         switchMap(geometry => {
             const table = ee.FeatureCollection([ee.Feature(geometry)])
-            return ee.getMap$(table.style({color, fillColor}))
+            return ee.getMap$(table.style({color, fillColor}), null, 'create geometry map')
         })
     )
 }

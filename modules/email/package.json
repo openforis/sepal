@@ -11,17 +11,17 @@
     "license": "ISC",
     "dependencies": {
         "bull": "^4.16.5",
-        "commander": "^13.1.0",
+        "commander": "^14.0.0",
         "handlebars": "^4.7.8",
-        "ioredis": "^5.6.0",
+        "ioredis": "^5.7.0",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
-        "marked": "^15.0.7",
+        "marked": "^16.1.2",
         "moment": "^2.30.1",
-        "nodemailer": "^6.10.0",
+        "nodemailer": "^7.0.5",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
-        "short-unique-id": "^5.2.2"
+        "short-unique-id": "^5.3.2"
     },
     "devDependencies": {
     },

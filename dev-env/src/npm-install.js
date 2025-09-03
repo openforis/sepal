@@ -1,16 +1,15 @@
-import {exec} from './exec.js'
 import {stopModule} from './stop.js'
 import {getModules, isNodeModule, showModuleStatus, MESSAGE} from './utils.js'
 import {SEPAL_SRC} from './config.js'
 import {getLibDeps} from './deps.js'
-import {access, rm} from 'fs/promises'
+import {access} from 'fs/promises'
 import _ from 'lodash'
 import {compose} from './compose.js'
 
 const installLibPackages = async (module, lib, {clean, verbose}) => {
     const libPath = `${SEPAL_SRC}/lib/js/${lib}`
     await access(`${libPath}/package.json`)
-    showModuleStatus(module, MESSAGE.INSTALLING_SHARED_PACKAGES)
+    showModuleStatus([module, lib].join('/'), MESSAGE.INSTALLING_SHARED_PACKAGES)
     await compose({
         module,
         command: 'run',
@@ -61,7 +60,7 @@ const updateModule = async (module, options) => {
 }
 
 export const npmInstall = async (modules, options) => {
-    const rootModules = getModules(modules)
+    const rootModules = getModules(modules, [':node'])
     for (const module of rootModules) {
         await updateModule(module, options)
     }

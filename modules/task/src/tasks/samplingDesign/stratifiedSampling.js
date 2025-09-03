@@ -1,4 +1,4 @@
-const ee = require('#sepal/ee')
+const ee = require('#sepal/ee/ee')
 
 module.exports = {stratifiedSystematicSample, filterSamples}
     

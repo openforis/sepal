@@ -223,8 +223,17 @@ class UserEndpoint {
                 command.usernameToUpdate = sepalUser.username
                 command.admin = sepalUser.admin
                 def user = component.submit(command)
-                response.addHeader('sepal-user-updated', 'true')
+                response.addHeader('sepal-user-updated', sepalUser.username)
                 send toJson(userToMap(user))
+            }
+
+            post('/current/acceptPrivacyPolicy') {
+                response.contentType = 'application/json'
+                def command = new AcceptPrivacyPolicy()
+                command.username = sepalUser.username
+                component.submit(command)
+                response.addHeader('sepal-user-updated', sepalUser.username)
+                response.status = 204
             }
 
             post('/details', [ADMIN]) {
@@ -235,14 +244,15 @@ class UserEndpoint {
                     throw new InvalidRequest(errors)
                 command.username = sepalUser.username
                 def user = component.submit(command)
-                send toJson(userToMap(user))
+                response.addHeader('sepal-user-updated', params.username)
+                send toJson(userToMap(user, false))
             }
 
             get('/list', [ADMIN]) {
                 response.contentType = 'application/json'
                 def users = component.submit(new ListUsers())
                 users.removeAll { it.systemUser }
-                send toJson(users.collect { userToMap(it) })
+                send toJson(users.collect { userToMap(it, false) })
             }
 
             get('/email-notifications-enabled/{email}', [ADMIN]) {
@@ -271,6 +281,7 @@ class UserEndpoint {
                 if (errors)
                     throw new InvalidRequest(errors)
                 def user = component.submit(command)
+                response.addHeader('sepal-user-updated', params.username)
                 send toJson(userToMap(user))
             }
 
@@ -281,6 +292,7 @@ class UserEndpoint {
                 if (errors)
                     throw new InvalidRequest(errors)
                 def user = component.submit(command)
+                response.addHeader('sepal-user-updated', params.username)
                 send toJson(userToMap(user))
             }
 
@@ -304,7 +316,7 @@ class UserEndpoint {
                                 username: sepalUser.username,
                                 authorizationCode: params.required('code', String)
                         ))
-                response.addHeader('sepal-user-updated', 'true')
+                response.addHeader('sepal-user-updated', sepalUser.username)
                 response.sendRedirect(params.required('state', String))
             }
 
@@ -315,7 +327,7 @@ class UserEndpoint {
                                 username: sepalUser.username,
                                 tokens: sepalUser.googleTokens
                         ))
-                response.addHeader('sepal-user-updated', 'true')
+                response.addHeader('sepal-user-updated', sepalUser.username)
                 send toJson(userToMap(user))
             }
 
@@ -326,7 +338,7 @@ class UserEndpoint {
                                 username: sepalUser.username,
                                 tokens: sepalUser.googleTokens
                         ))
-                response.addHeader('sepal-user-updated', 'true')
+                response.addHeader('sepal-user-updated', sepalUser.username)
                 if (tokens) 
                     send toJson(tokens)
                 else
@@ -341,13 +353,13 @@ class UserEndpoint {
                             projectId: legacyProject ? null : params.projectId,
                             legacyProject: legacyProject,
                     ))
-                response.addHeader('sepal-user-updated', 'true')
+                response.addHeader('sepal-user-updated', sepalUser.username)
                 response.status = 204
             }
         }
     }
 
-    Map userToMap(User user) {
+    Map userToMap(User user, boolean withGoogleTokens = true) {
         [
                 id: user.id,
                 name: user.name,
@@ -355,9 +367,11 @@ class UserEndpoint {
                 email: user.email,
                 organization: user.organization,
                 intendedUse: user.intendedUse,
-                googleTokens: user.googleTokens,
+                googleUser: user.googleTokens != null,
+                googleTokens: withGoogleTokens ? user.googleTokens : null,
                 emailNotificationsEnabled: user.emailNotificationsEnabled,
                 manualMapRenderingEnabled: user.manualMapRenderingEnabled,
+                privacyPolicyAccepted: user.privacyPolicyAccepted,
                 status: user.status,
                 roles: user.roles,
                 systemUser: user.systemUser,

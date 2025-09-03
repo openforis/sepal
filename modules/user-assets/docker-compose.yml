@@ -34,7 +34,7 @@ services:
       - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      POLL_INTERVAL_MS: "3600000"
+      POLL_INTERVAL_MINUTES: "720"
     networks:
       - sepal
     healthcheck:

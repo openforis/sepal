@@ -97,9 +97,9 @@ class _Dates extends React.Component {
     renderDatePickers() {
         const {inputs: {type}} = this.props
         switch(type.value) {
-        case 'YEAR': return this.renderYear()
-        case 'CUSTOM_DATE_RANGE': return this.renderCustomDateRange()
-        default: return this.renderAllDates()
+            case 'YEAR': return this.renderYear()
+            case 'CUSTOM_DATE_RANGE': return this.renderCustomDateRange()
+            default: return this.renderAllDates()
         }
     }
 

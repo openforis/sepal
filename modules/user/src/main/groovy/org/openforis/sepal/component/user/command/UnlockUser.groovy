@@ -42,7 +42,8 @@ class UnlockUserHandler implements CommandHandler<User, UnlockUser> {
     }
 
     User execute(UnlockUser command) {
-        def user = userRepository.lookupUser(command.usernameToUnlock)
+        def sanitzedUsername = command.usernameToUnlock?.toLowerCase()
+        def user = userRepository.lookupUser(sanitzedUsername)
         def token = UUID.randomUUID() as String
                 
         if (!user) {
@@ -55,7 +56,7 @@ class UnlockUserHandler implements CommandHandler<User, UnlockUser> {
             return user
         }
 
-        userRepository.updateStatus(command.usernameToUnlock, Status.PENDING)
+        userRepository.updateStatus(sanitzedUsername, Status.PENDING)
         userRepository.updateToken(user.username, token, clock.now())
 
         def unlockedUser = user.withStatus(Status.PENDING)

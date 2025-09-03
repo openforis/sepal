@@ -4,6 +4,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {sequence} from '~/array'
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import format from '~/format'
 import {msg} from '~/translate'
 import {Graph} from '~/widget/graph'
@@ -13,7 +15,7 @@ import {Widget} from '~/widget/widget'
 import styles from './ccdcGraph.module.css'
 import {fromT, toT} from './t'
 
-export class CCDCGraph extends React.Component {
+class _CCDCGraph extends React.Component {
     state = {}
 
     constructor(props) {
@@ -313,13 +315,16 @@ export class CCDCGraph extends React.Component {
 
 const remToPx = rem => rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
 
-CCDCGraph.defaultProps = {
-    extrapolateSegment: 'CLOSEST',
-    extrapolateMaxDays: 30,
-    gapStrategy: 'MASK',
-    scale: 1,
-    dateFormat: 0
-}
+export const CCDCGraph = compose(
+    _CCDCGraph,
+    asFunctionalComponent({
+        extrapolateSegment: 'CLOSEST',
+        extrapolateMaxDays: 30,
+        gapStrategy: 'MASK',
+        scale: 1,
+        dateFormat: 0
+    })
+)
 
 CCDCGraph.propTypes = {
     band: PropTypes.string,
@@ -483,13 +488,13 @@ const slice = ({coefs, date, dateFormat, harmonics}) => {
 
 const getOmega = dateFormat => {
     switch (dateFormat) {
-    case J_DAYS:
-        return 2.0 * Math.PI / 365.25
-    case FRACTIONAL_YEARS:
-        return 2.0 * Math.PI
-    case UNIX_TIME_MILLIS:
-        return 2.0 * Math.PI / (1000 * 60 * 60 * 24 * 365.25)
-    default:
-        throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
+        case J_DAYS:
+            return 2.0 * Math.PI / 365.25
+        case FRACTIONAL_YEARS:
+            return 2.0 * Math.PI
+        case UNIX_TIME_MILLIS:
+            return 2.0 * Math.PI / (1000 * 60 * 60 * 24 * 365.25)
+        default:
+            throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
     }
 }

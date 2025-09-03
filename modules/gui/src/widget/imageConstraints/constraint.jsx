@@ -224,9 +224,9 @@ class _Constraint extends React.Component {
     renderValue() {
         const {inputs: {operator}} = this.props
         switch (operator.value) {
-        case 'class': return this.renderClassSelector()
-        case 'range': return this.renderRangeSelector()
-        default: return this.renderSingleValueSelector()
+            case 'class': return this.renderClassSelector()
+            case 'range': return this.renderRangeSelector()
+            default: return this.renderSingleValueSelector()
         }
     }
 
@@ -356,9 +356,9 @@ class _Constraint extends React.Component {
             ? `${source}${isSelected(fromBitInclusive) ? '[' : '('}${fromBit.value}, ${toBit.value}${isSelected(toBitInclusive) ? ']' : ')'}`
             : source
         switch (operator.value) {
-        case 'class': return this.toSelectedClassesDescription()
-        case 'range': return `${format(from)} ${isSelected(fromInclusive) ? '≤' : '<'} ${formattedSource} ${isSelected(toInclusive) ? '≤' : '<'} ${format(to)}`
-        default: return `${formattedSource} ${operator.value} ${this.extractValue()}`
+            case 'class': return this.toSelectedClassesDescription()
+            case 'range': return `${format(from)} ${isSelected(fromInclusive) ? '≤' : '<'} ${formattedSource} ${isSelected(toInclusive) ? '≤' : '<'} ${format(to)}`
+            default: return `${formattedSource} ${operator.value} ${this.extractValue()}`
         }
     }
 
@@ -401,21 +401,21 @@ class _Constraint extends React.Component {
         }
         
         switch(operator.value) {
-        case 'class': return {
-            ...constraint,
-            selectedClasses: selectedClasses.value
-        }
-        case 'range': return {
-            ...constraint,
-            from: parseFloat(from.value),
-            fromInclusive: toBoolean(fromInclusive),
-            to: parseFloat(to.value),
-            toInclusive: toBoolean(toInclusive)
-        }
-        default: return {
-            ...constraint,
-            value: this.extractValue()
-        }
+            case 'class': return {
+                ...constraint,
+                selectedClasses: selectedClasses.value
+            }
+            case 'range': return {
+                ...constraint,
+                from: parseFloat(from.value),
+                fromInclusive: toBoolean(fromInclusive),
+                to: parseFloat(to.value),
+                toInclusive: toBoolean(toInclusive)
+            }
+            default: return {
+                ...constraint,
+                value: this.extractValue()
+            }
         }
     }
 

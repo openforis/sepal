@@ -1,17 +1,19 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
+const worker$ = ({
+    requestArgs: {recipe, visParams, bands, ...otherArgs}
+}) => {
     const ImageFactory = require('#sepal/ee/imageFactory')
 
     const TILE_SIZE = 256
     
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const {switchMap} = require('rxjs')
     const {sequence} = require('#sepal/utils/array')
     const _ = require('lodash')
 
-    const getRetiledMap$ = (image, retile = TILE_SIZE, ...args) =>
-        ee.getMap$(retile === TILE_SIZE ? image : image.retile(retile), ...args)
+    const getRetiledMap$ = (image, retile = TILE_SIZE, visParams) =>
+        ee.getMap$(retile === TILE_SIZE ? image : image.retile(retile), visParams, 'create preview map')
 
     if (visParams) {
         const {getImage$} = ImageFactory(recipe, {selection: distinct(visParams.bands), baseBands: distinct(visParams.baseBands), ...otherArgs})
@@ -68,12 +70,12 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
             }
 
             switch (type) {
-            case 'categorical':
-                return getRetiledMap$(image.select(_.uniq(bands)), recipe.retile, toCategoricalVisParams())
-            case 'hsv':
-                return getRetiledMap$(toHsv(image.select(_.uniq(bands))), recipe.retile)
-            default:
-                return getRetiledMap$(image.select(_.uniq(bands)), recipe.retile, {bands, ...range(), gamma, palette})
+                case 'categorical':
+                    return getRetiledMap$(image.select(_.uniq(bands)), recipe.retile, toCategoricalVisParams())
+                case 'hsv':
+                    return getRetiledMap$(toHsv(image.select(_.uniq(bands))), recipe.retile)
+                default:
+                    return getRetiledMap$(image.select(_.uniq(bands)), recipe.retile, {bands, ...range(), gamma, palette})
             }
         }
 
@@ -113,8 +115,8 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
             switchMap(image => getVisParams$(image).pipe(
                 switchMap(visParams =>
                     visParams.hsv
-                        ? ee.getMap$(hsvToRgb(image, visParams))
-                        : ee.getMap$(image, visParams))
+                        ? ee.getMap$(hsvToRgb(image, visParams), null, 'create preview map')
+                        : ee.getMap$(image, visParams), null, 'create preview map')
             ))
         )
     }

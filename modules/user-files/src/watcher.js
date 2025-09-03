@@ -152,6 +152,7 @@ const createWatcher = async ({out$, stop$}) => {
         from(readdir(absolutePath)).pipe(
             switchMap(dir => of(...dir)),
             mergeMap(filename => from(scanFile(absolutePath, filename))),
+            filter(fileInfo => !!fileInfo),
             reduce((acc, {name, ...fileInfo}) => ({...acc, [name]: fileInfo}), {}),
             map(items => ({username, clientId, subscriptionId, data: {path, items}})),
             catchError(error => {

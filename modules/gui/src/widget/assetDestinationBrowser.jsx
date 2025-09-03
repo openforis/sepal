@@ -7,13 +7,13 @@ import {compose} from '~/compose'
 import format from '~/format'
 import {isEqual} from '~/hash'
 import {msg} from '~/translate'
-import {isServiceAccount} from '~/user'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Notifications} from '~/widget/notifications'
 
 import {withActivatable} from './activation/activatable'
 import styles from './assetDestinationBrowser.module.css'
+import {AssetReloadButton} from './assetReloadButton'
 import {withAssets} from './assets'
 import {Button} from './button'
 import {ButtonPopup} from './buttonPopup'
@@ -85,19 +85,11 @@ class _AssetDestinationBrowser extends React.Component {
     }
 
     renderReloadButton() {
-        const {assets: {busy}} = this.props
         return (
-            <Button
+            <AssetReloadButton
                 key='reload'
-                chromeless
                 shape='none'
                 air='none'
-                icon='rotate'
-                iconAttributes={{spin: busy}}
-                tooltip={msg('asset.reload')}
-                tabIndex={-1}
-                disabled={isServiceAccount() || busy}
-                onClick={this.reloadAssets}
             />
         )
     }

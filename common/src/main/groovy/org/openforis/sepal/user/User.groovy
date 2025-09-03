@@ -17,6 +17,7 @@ class User implements groovymvc.security.User {
     GoogleTokens googleTokens
     boolean emailNotificationsEnabled
     boolean manualMapRenderingEnabled
+    boolean privacyPolicyAccepted
     Status status
     Set<String> roles
     boolean systemUser
@@ -47,10 +48,13 @@ class User implements groovymvc.security.User {
                 email: email,
                 organization: organization,
                 intendedUse: intendedUse,
+                googleTokens: googleTokens,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status,
                 roles: roles,
+                systemUser: systemUser,
                 creationTime: creationTime,
                 updateTime: updateTime)
     }
@@ -63,10 +67,13 @@ class User implements groovymvc.security.User {
                 email: email,
                 organization: organization,
                 intendedUse: intendedUse,
+                googleTokens: googleTokens,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status,
                 roles: admin ? [Roles.ADMIN] : [],
+                systemUser: systemUser,
                 creationTime: creationTime,
                 updateTime: updateTime)
     }
@@ -79,10 +86,13 @@ class User implements groovymvc.security.User {
                 email: email,
                 organization: organization,
                 intendedUse: intendedUse,
+                googleTokens: googleTokens,
                 emailNotificationsEnabled: true,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status,
                 roles: admin ? [Roles.ADMIN] : [],
+                systemUser: systemUser,
                 creationTime: creationTime,
                 updateTime: updateTime)
     }
@@ -95,10 +105,13 @@ class User implements groovymvc.security.User {
                 email: email,
                 organization: organization,
                 intendedUse: intendedUse,
+                googleTokens: googleTokens,
                 emailNotificationsEnabled: false,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status,
                 roles: admin ? [Roles.ADMIN] : [],
+                systemUser: systemUser,
                 creationTime: creationTime,
                 updateTime: updateTime)
     }
@@ -111,10 +124,13 @@ class User implements groovymvc.security.User {
                 email: email,
                 organization: organization,
                 intendedUse: intendedUse,
+                googleTokens: googleTokens,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status,
                 roles: roles,
+                systemUser: systemUser,
                 creationTime: creationTime,
                 updateTime: updateTime)
     }
@@ -127,10 +143,13 @@ class User implements groovymvc.security.User {
                 email: email,
                 organization: organization,
                 intendedUse: intendedUse,
+                googleTokens: googleTokens,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status,
                 roles: roles,
+                systemUser: systemUser,
                 creationTime: creationTime,
                 updateTime: updateTime)
     }
@@ -143,10 +162,13 @@ class User implements groovymvc.security.User {
                 email: email,
                 organization: organization,
                 intendedUse: intendedUse,
+                googleTokens: googleTokens,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: ACTIVE,
                 roles: roles,
+                systemUser: systemUser,
                 creationTime: creationTime,
                 updateTime: updateTime)
     }
@@ -167,6 +189,7 @@ class User implements groovymvc.security.User {
                 ] : null,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 manualMapRenderingEnabled: manualMapRenderingEnabled,
+                privacyPolicyAccepted: privacyPolicyAccepted,
                 status: status.name(),
                 roles: roles,
                 systemUser: systemUser,

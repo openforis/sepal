@@ -9,6 +9,7 @@ import {getLogger} from '~/log'
 import lookStyles from '~/style/look.module.css'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
+import {AssetReloadButton} from '~/widget/assetReloadButton'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {ButtonPopup} from '~/widget/buttonPopup'
@@ -22,11 +23,10 @@ import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {SortButtons} from '~/widget/sortButtons'
 import {ToggleButton} from '~/widget/toggleButton'
 
+import styles from './assetBrowser.module.css'
 import {AssetTree} from './assetTree'
 
 const log = getLogger('browse')
-
-import styles from './assetBrowser.module.css'
 
 const ANIMATION_DURATION_MS = 1000
 
@@ -38,11 +38,13 @@ class _AssetBrowser extends React.Component {
         tree: AssetTree.create(),
         splitDirs: false,
         sorting: {sortingOrder: 'name', sortingDirection: 1},
-        busy: false
+        status: {
+            busy: false
+        }
     }
     
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.reload = this.reload.bind(this)
         this.removeSelected = this.removeSelected.bind(this)
         this.clearSelection = this.clearSelection.bind(this)
@@ -84,10 +86,10 @@ class _AssetBrowser extends React.Component {
         data !== undefined && this.onData(data)
     }
 
-    onData({tree, node, busy}) {
+    onData({tree, node, status}) {
         tree !== undefined && this.onTree(tree)
         node !== undefined && this.onNode(node)
-        busy !== undefined && this.onBusy(busy)
+        status !== undefined && this.onStatus(status)
     }
 
     onTree(treeUpdate) {
@@ -100,8 +102,8 @@ class _AssetBrowser extends React.Component {
         this.setState({tree: AssetTree.updateTree(tree, nodeUpdate)})
     }
 
-    onBusy(busy) {
-        this.setState({busy})
+    onStatus(status) {
+        this.setState({status})
     }
 
     getOpenDirectories(path = []) {
@@ -429,23 +431,15 @@ class _AssetBrowser extends React.Component {
     }
 
     renderActionButtons() {
-        const {tree, busy} = this.state
+        const {tree} = this.state
         const {files, directories} = AssetTree.getSelectedItems(tree)
         const nothingSelected = files.length === 0 && directories.length === 0
         const oneDirectorySelected = files.length === 0 && directories.length === 1
         const deletable = files.length > 0 || directories.length > 0 && !directories.find(file => file.length === 1)
         return (
             <ButtonGroup layout='horizontal'>
-                <Button
-                    chromeless
+                <AssetReloadButton
                     shape='circle'
-                    icon='rotate'
-                    iconAttributes={{spin: busy}}
-                    tooltip={msg('browse.controls.reload.tooltip')}
-                    tooltipPlacement='top'
-                    disabled={busy}
-                    keybinding='Shift+R'
-                    onClick={this.reload}
                 />
                 <ButtonPopup
                     chromeless

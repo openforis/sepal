@@ -1,7 +1,7 @@
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
 const {get$} = require('#sepal/httpClient')
 const {firstValueFrom} = require('rxjs')
-const log = require('#sepal/log').getLogger('http')
+const log = require('#sepal/log').getLogger('http/server')
 
 const getEmailNotificationsEnabled = async emailAddress => {
     log.debug(() => `Getting email notifications preference for address <${emailAddress}> from origin`)

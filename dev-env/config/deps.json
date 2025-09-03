@@ -10,6 +10,15 @@
             "logger"
         ]
     },
+    "app-launcher" : {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger"
+        ]
+    },
     "backup": {
         "build": {},
         "run": []
@@ -45,7 +54,8 @@
     },
     "gee": {
         "lib": [
-            "shared"
+            "shared",
+            "ee"
         ],
         "build": {},
         "run": [
@@ -180,7 +190,8 @@
     },
     "task": {
         "lib": [
-            "shared"
+            "shared",
+            "ee"
         ],
         "build": {
             "sandbox-base": "build"

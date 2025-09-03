@@ -19,8 +19,8 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class _ProcessMenu extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.duplicateRecipe = this.duplicateRecipe.bind(this)
         this.exportRecipe = this.exportRecipe.bind(this)
         this.save = this.save.bind(this)
@@ -31,9 +31,7 @@ class _ProcessMenu extends React.Component {
         if (recipe && recipe.type && recipe.ui.initialized) {
             return (
                 <Menu>
-                    {this.isRecipeUnsaved()
-                        ? this.renderUnsavedRecipeItems()
-                        : this.renderSavedRecipeItems()}
+                    {this.renderSaveRecipeMenuEntry()}
                     <Menu.Item onSelect={this.duplicateRecipe}>
                         {msg('process.menu.duplicateRecipe.label')}
                     </Menu.Item>
@@ -47,21 +45,12 @@ class _ProcessMenu extends React.Component {
         }
     }
 
-    renderUnsavedRecipeItems() {
-        return (
+    renderSaveRecipeMenuEntry() {
+        return this.isRecipeUnsaved() ? (
             <Menu.Item onSelect={this.save}>
                 {msg('process.menu.saveRecipe')}
             </Menu.Item>
-        )
-    }
-
-    renderSavedRecipeItems() {
-        const {activator: {activatables: {revisions: {activate}}}} = this.props
-        return (
-            <Menu.Item onSelect={activate}>
-                {msg('process.menu.revertToOldRevision')}
-            </Menu.Item>
-        )
+        ) : null
     }
 
     save() {
@@ -93,5 +82,5 @@ class _ProcessMenu extends React.Component {
 export const ProcessMenu = compose(
     _ProcessMenu,
     connect(mapStateToProps),
-    withActivators('saveRecipeDialog', 'revisions')
+    withActivators(['saveRecipeDialog'])
 )

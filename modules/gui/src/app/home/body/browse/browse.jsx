@@ -39,12 +39,12 @@ export class Browse extends React.Component {
 
     renderTab({id, type}) {
         switch (type) {
-        case FILE_BROWSER:
-            return <FileBrowser id={id}/>
-        case ASSET_BROWSER:
-            return <AssetBrowser id={id}/>
-        default:
-            return null
+            case FILE_BROWSER:
+                return <FileBrowser id={id}/>
+            case ASSET_BROWSER:
+                return <AssetBrowser id={id}/>
+            default:
+                return null
         }
     }
 }

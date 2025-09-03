@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {Button} from '~/widget/button'
 
 const orderMap = {
@@ -9,9 +11,9 @@ const orderMap = {
     '1': 'sort-down'
 }
 
-export class SortButton extends React.Component {
-    constructor() {
-        super()
+class _SortButton extends React.Component {
+    constructor(props) {
+        super(props)
         this.toggleSortOrder = this.toggleSortOrder.bind(this)
     }
 
@@ -42,6 +44,14 @@ export class SortButton extends React.Component {
     }
 }
 
+export const SortButton = compose(
+    _SortButton,
+    asFunctionalComponent({
+        shape: 'pill',
+        defaultSortingDirection: 1
+    })
+)
+
 SortButton.propTypes = {
     onChange: PropTypes.any.isRequired,
     additionalClassName: PropTypes.any,
@@ -50,9 +60,4 @@ SortButton.propTypes = {
     shape: PropTypes.any,
     sorted: PropTypes.any,
     sortingDirection: PropTypes.oneOf([-1, 1])
-}
-
-SortButton.defaultProps = {
-    shape: 'pill',
-    defaultSortingDirection: 1
 }

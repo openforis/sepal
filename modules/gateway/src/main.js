@@ -4,12 +4,12 @@ const {amqpUri, redisUri, port, secure} = require('./config')
 const {initializeWebSocketServer} = require('./websocket')
 const {isMatch} = require('micromatch')
 const express = require('express')
-const Redis = require('ioredis')
+const {createClient} = require('redis')
 const Session = require('express-session')
 const {v4: uuid} = require('uuid')
 const url = require('url')
 const {WebSocketServer} = require('ws')
-const {Subject} = require('rxjs')
+const {Subject, firstValueFrom} = require('rxjs')
 
 const apiMetrics = require('prometheus-api-metrics')
 const {RedisStore: RedisSessionStore} = require('connect-redis')
@@ -18,41 +18,46 @@ const log = require('#sepal/log').getLogger('gateway')
 
 const {initMessageQueue} = require('#sepal/messageQueue')
 
-const {Auth} = require('./auth')
+const {AuthMiddleware} = require('./authMiddleware')
+const {GoogleAccessTokenMiddleware} = require('./googleAccessTokenMiddleware')
 const {Proxy} = require('./proxy')
 const {SessionManager} = require('./session')
-const {setRequestUser, getSessionUsername} = require('./user')
+const {setRequestUser, getSessionUsername, removeRequestUser} = require('./user')
 const {UserStore} = require('./userStore')
 const {initializeGoogleAccessTokenRefresher} = require('./googleAccessToken')
 const {usernameTag, urlTag} = require('./tag')
 const {webSocketPath} = require('../config/endpoints')
 
-const toUser$ = new Subject()
-const userStatus$ = new Subject()
-
-const redis = new Redis(redisUri)
-const userStore = UserStore(redis)
-const sessionStore = new RedisSessionStore({client: redis})
-
-const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore, userStore)
-const {authMiddleware} = Auth(userStore)
-const {proxyEndpoints} = Proxy(userStore, authMiddleware)
-
-const getSecret = async () => {
-    const secret = await redis.get('secret')
-
-    if (secret) {
-        log.info('Reusing saved secret')
-        return secret
-    } else {
-        const secret = uuid()
-        log.info('Creating new secret')
-        await redis.set('secret', secret)
-        return secret
-    }
-}
+const event$ = new Subject()
 
 const main = async () => {
+    const redis = await createClient({url: redisUri})
+        .on('connect', () => log.info('Connected to Redis:', redisUri))
+        .on('error', err => log.error('Redis connection error', err))
+        .connect()
+
+    const userStore = UserStore(redis, event$)
+    const sessionStore = new RedisSessionStore({client: redis})
+
+    const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore, userStore)
+    const {authMiddleware} = AuthMiddleware(userStore)
+    const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
+    const {proxyEndpoints} = Proxy(userStore, authMiddleware, googleAccessTokenMiddleware)
+
+    const getSecret = async () => {
+        const secret = await redis.get('secret')
+
+        if (secret) {
+            log.info('Reusing saved secret')
+            return secret
+        } else {
+            const secret = uuid()
+            log.info('Creating new secret')
+            await redis.set('secret', secret)
+            return secret
+        }
+    }
+
     await initMessageQueue(amqpUri, {
         subscribers: [
             {queue: 'gateway.userLocked', topic: 'user.UserLocked', handler: messageHandler}
@@ -80,8 +85,10 @@ const main = async () => {
     app.use(sessionParser)
     app.use(userStore.userMiddleware)
 
+    // Auth not needed for these endpoints
     app.use('/api/user/logout', logout)
     app.use('/api/user/invalidateOtherSessions', invalidateOtherSessions)
+    
     app.use('/api/gateway/metrics', authMiddleware, apiMetrics({metricsPath: '/api/gateway/metrics'}))
 
     const proxies = proxyEndpoints(app)
@@ -101,14 +108,14 @@ const main = async () => {
         socket.destroy()
     }
 
-    const handleGlobalWebSocket = (requestPath, req, socket, head, user) => {
+    const handleGlobalWebSocket = (requestPath, req, socket, head, username) => {
         log.debug(`Requesting WebSocket upgrade for ${requestPath}`)
         wss.handleUpgrade(req, socket, head, ws =>
-            wss.emit('connection', ws, req, user)
+            wss.emit('connection', ws, req, username)
         )
     }
 
-    const handleProxiedWebSocket = (requestPath, req, socket, head, {username}) => {
+    const handleProxiedWebSocket = (requestPath, req, socket, head, username) => {
         const {proxy, target} = proxies.find(({path}) => !path || requestPath === path || isMatch(requestPath, `${path}/**`)) || {}
         if (proxy) {
             log.debug(`${usernameTag(username)} Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
@@ -119,29 +126,30 @@ const main = async () => {
         }
     }
 
-    initializeGoogleAccessTokenRefresher({userStore, userStatus$, toUser$})
+    initializeGoogleAccessTokenRefresher({userStore, event$})
 
-    initializeWebSocketServer({wss, userStore, userStatus$, toUser$})
+    initializeWebSocketServer({wss, userStore, event$})
 
     // HACK: User has to be injected here as the session is not available in proxyRes and proxyResWsz
     server.on('upgrade', (req, socket, head) => {
         sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
             const username = getSessionUsername(req)
+            removeRequestUser(req)
             if (username) {
-                userStore.getUser(username).then(user => {
-                    const requestPath = url.parse(req.url).pathname
-                    if (user) {
-                        log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
-                        setRequestUser(req, user)
-                    } else {
-                        log.warn(`${usernameTag(username)} Websocket upgrade without a user`)
-                    }
-                    if (requestPath === webSocketPath) {
-                        handleGlobalWebSocket(requestPath, req, socket, head, user)
-                    } else {
-                        handleProxiedWebSocket(requestPath, req, socket, head, user)
-                    }
-                })
+                const requestPath = url.parse(req.url).pathname
+                if (requestPath === webSocketPath) {
+                    handleGlobalWebSocket(requestPath, req, socket, head, username)
+                } else {
+                    firstValueFrom(userStore.getUser$(username)).then(user => {
+                        if (user) {
+                            log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
+                            setRequestUser(req, user)
+                        } else {
+                            log.warn(`${usernameTag(username)} Websocket upgrade without a user`)
+                        }
+                        handleProxiedWebSocket(requestPath, req, socket, head, username)
+                    })
+                }
             } else {
                 webSocketAccessDenied(socket)
             }

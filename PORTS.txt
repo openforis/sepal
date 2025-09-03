@@ -1,5 +1,6 @@
 Modules
 
+    app-launcher    8680:80
     app-manager     80
     ceo-gateway     80
     email           80

@@ -84,12 +84,12 @@ const modelToValues = ({id, type, dateFormat, bands, baseBands, segmentBands, st
         visualizations
     }
     switch (type) {
-    case 'RECIPE_REF':
-        return {...values, recipe: id}
-    case 'ASSET':
-        return {...values, asset: id}
-    default:
-        return values
+        case 'RECIPE_REF':
+            return {...values, recipe: id}
+        case 'ASSET':
+            return {...values, asset: id}
+        default:
+            return values
     }
 }
 
@@ -105,12 +105,12 @@ const valuesToModel = ({type, section, asset, recipe, bands, dateFormat, baseBan
         visualizations
     }
     switch (section) {
-    case 'RECIPE_REF':
-        return {...model, id: recipe}
-    case 'ASSET':
-        return {...model, id: asset}
-    default:
-        return null
+        case 'RECIPE_REF':
+            return {...model, id: recipe}
+        case 'ASSET':
+            return {...model, id: asset}
+        default:
+            return null
     }
 }
 

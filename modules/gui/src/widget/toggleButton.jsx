@@ -4,8 +4,8 @@ import React from 'react'
 import {Button} from '~/widget/button'
 
 export class ToggleButton extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onChange = this.onChange.bind(this)
     }
 

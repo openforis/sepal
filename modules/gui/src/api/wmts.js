@@ -15,8 +15,10 @@ const formatTileUrl = ({urlTemplate, x, y, zoom}) => {
 export default {
     loadTile$: ({urlTemplate, x, y, zoom}) =>
         get$(formatTileUrl({urlTemplate, x, y, zoom}), {
-            maxRetries: 0,
             responseType: 'blob',
-            crossDomain: true
+            crossDomain: true,
+            retry: {
+                maxRetries: 0
+            }
         })
 }

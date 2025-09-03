@@ -147,22 +147,22 @@ class _Classifier extends React.Component {
 
         const renderTypeForm = () => {
             switch (type.value) {
-            case 'RANDOM_FOREST':
-                return renderRandomForest()
-            case 'GRADIENT_TREE_BOOST':
-                return renderGradientTreeBoost()
-            case 'CART':
-                return renderCart()
-            case 'NAIVE_BAYES':
-                return renderNaiveBayes()
-            case 'SVM':
-                return renderSvm()
-            case 'MINIMUM_DISTANCE':
-                return renderMinimumDistance()
-            case 'DECISION_TREE':
-                return renderDecisionTree()
-            default:
-                return
+                case 'RANDOM_FOREST':
+                    return renderRandomForest()
+                case 'GRADIENT_TREE_BOOST':
+                    return renderGradientTreeBoost()
+                case 'CART':
+                    return renderCart()
+                case 'NAIVE_BAYES':
+                    return renderNaiveBayes()
+                case 'SVM':
+                    return renderSvm()
+                case 'MINIMUM_DISTANCE':
+                    return renderMinimumDistance()
+                case 'DECISION_TREE':
+                    return renderDecisionTree()
+                default:
+                    return
             }
         }
         const renderRandomForest = () =>
@@ -208,22 +208,22 @@ class _Classifier extends React.Component {
 
         const renderTypeForm = () => {
             switch (type.value) {
-            case 'RANDOM_FOREST':
-                return renderRandomForest()
-            case 'GRADIENT_TREE_BOOST':
-                return renderGradientTreeBoost()
-            case 'CART':
-                return renderCart()
-            case 'NAIVE_BAYES':
-                return renderNaiveBayes()
-            case 'SVM':
-                return renderSvm()
-            case 'MINIMUM_DISTANCE':
-                return renderMinimumDistance()
-            case 'DECISION_TREE':
-                return renderDecisionTree()
-            default:
-                return
+                case 'RANDOM_FOREST':
+                    return renderRandomForest()
+                case 'GRADIENT_TREE_BOOST':
+                    return renderGradientTreeBoost()
+                case 'CART':
+                    return renderCart()
+                case 'NAIVE_BAYES':
+                    return renderNaiveBayes()
+                case 'SVM':
+                    return renderSvm()
+                case 'MINIMUM_DISTANCE':
+                    return renderMinimumDistance()
+                case 'DECISION_TREE':
+                    return renderDecisionTree()
+                default:
+                    return
             }
         }
 

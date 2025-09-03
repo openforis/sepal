@@ -1,0 +1,14 @@
+services:
+  app-launcher:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
+    ports: !override []
+    environment:
+      SEPAL_HOST_PROJECT_DIR: "${SEPAL_PROJECT_DIR}"
+      SEPAL_HOST: "host.docker.internal"
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:  # To allow dynamic reloading in dev
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared:/usr/local/src/sepal/lib/js/shared
+      - ${SEPAL_PROJECT_DIR}/modules/app-launcher:/usr/local/src/sepal/modules/app-launcher

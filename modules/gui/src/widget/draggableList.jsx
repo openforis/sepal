@@ -16,8 +16,8 @@ class _DraggableList extends React.Component {
         inside: true
     }
     
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.dragSource = {}
         this.dragDestination = {}
         this.onDrag = this.onDrag.bind(this)

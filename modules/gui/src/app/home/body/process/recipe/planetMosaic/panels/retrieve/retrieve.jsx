@@ -17,6 +17,7 @@ class _Retrieve extends React.Component {
                 ticks={[3, 5, 10, 30, 100]}
                 toSepal
                 toEE
+                toDrive
                 onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
             />
         )

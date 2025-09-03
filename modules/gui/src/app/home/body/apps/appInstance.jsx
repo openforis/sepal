@@ -26,8 +26,8 @@ class _AppInstance extends React.Component {
         srcDoc: undefined
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.iFrameLoaded = this.iFrameLoaded.bind(this)
     }
 
@@ -81,7 +81,23 @@ class _AppInstance extends React.Component {
 
     componentDidMount() {
         const {app: {id, endpoint, path}, tab: {busy}, stream} = this.props
-        if (!endpoint) {
+        if (endpoint === 'docker') {
+            busy.set(id, true)
+            this.setState({appState: 'INITIALIZED'})
+            publishEvent('launch_app', {app: id})
+            stream('RUN_APP',
+                get$(`${path}`, {
+                    responseType: 'text',
+                    retry: {
+                        maxRetries: 9
+                    }
+                }).pipe(
+                    map(srcDoc => ({srcDoc}))
+                ),
+                result => this.setState(result),
+                error => this.onError(error)
+            )
+        } else if (!endpoint) {
             this.setState({appState: 'INITIALIZED', src: path}, () =>
                 stream('RUN_APP', of())
             )
@@ -131,7 +147,12 @@ class _AppInstance extends React.Component {
                     if (this.useIFrameSrc()) {
                         return of({src: `/api${app.path}`})
                     } else {
-                        return get$(`/api${app.path}`, {responseType: 'text', maxRetries: 9}).pipe(
+                        return get$(`/api${app.path}`, {
+                            responseType: 'text',
+                            retry: {
+                                maxRetries: 9
+                            }
+                        }).pipe(
                             map(srcDoc => ({srcDoc}))
                         )
                     }
@@ -165,9 +186,4 @@ AppInstance.propTypes = {
         label: PropTypes.string,
         path: PropTypes.string
     })
-}
-
-AppInstance.contextTypes = {
-    active: PropTypes.bool,
-    focus: PropTypes.func
 }

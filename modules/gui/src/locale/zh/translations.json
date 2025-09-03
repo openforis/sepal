@@ -54,7 +54,64 @@
         "run": {
             "error": ""
         },
-        "running": ""
+        "running": "",
+        "noInstanceRequired": "",
+        "admin": {
+            "title": "",
+            "logs": {
+                "title": "",
+                "empty": ""
+            },
+            "container": {
+                "title": "",
+                "notFound": "",
+                "status": "",
+                "containerStatus": "",
+                "mainProcess": "",
+                "memoryUsage": "",
+                "cpuUsage": "",
+                "connections": ""
+            },
+            "repo": {
+                "title": "",
+                "url": "",
+                "lastCommit": "",
+                "lastClone": "",
+                "error": "",
+                "branch": ""
+            },
+            "health": {
+                "healthy": "",
+                "starting": ""
+            },
+            "restart": {
+                "error": "",
+                "success": ""
+            },
+            "button": {
+                "restart": "",
+                "reloadStatus": "",
+                "reloadLogs": ""
+            },
+            "status": {
+                "running": "",
+                "idle": "",
+                "error": "",
+                "checking": "",
+                "notAvailable": "",
+                "loading": ""
+            },
+            "timestamp": {
+                "never": ""
+            },
+            "update": {
+                "available": "",
+                "checkForUpdates": "",
+                "error": "",
+                "success": "",
+                "noChanges": ""
+            }
+        }
     },
     "asset": {
         "failedToLoad": "",
@@ -70,7 +127,6 @@
         "recentAssets": "",
         "userAssets": "",
         "otherAssets": "",
-        "reload": "",
         "settings": "",
         "datasets": {
             "community": {
@@ -86,6 +142,10 @@
         "copyId": {
             "tooltip": "",
             "success": ""
+        },
+        "reload": {
+            "tooltip": "",
+            "progress": ""
         },
         "browser": {
             "tooltip": "",
@@ -164,9 +224,6 @@
             "assets": ""
         },
         "controls": {
-            "reload": {
-                "tooltip": ""
-            },
             "clearSelection": {
                 "tooltip": ""
             },
@@ -325,6 +382,11 @@
     },
     "home": {
         "connectivityError": "",
+        "versionMismatch": {
+            "title": "",
+            "message": "",
+            "reloadNow": ""
+        },
         "sections": {
             "account": "",
             "app-launch-pad": "",
@@ -1218,7 +1280,8 @@
                             "GEE": "",
                             "label": "",
                             "required": "",
-                            "SEPAL": ""
+                            "SEPAL": "",
+                            "DRIVE": ""
                         },
                         "scale": {
                             "label": "",
@@ -1251,7 +1314,8 @@
                     },
                     "task": {
                         "GEE": "",
-                        "SEPAL": ""
+                        "SEPAL": "",
+                        "DRIVE": ""
                     },
                     "title": "",
                     "tooltip": ""
@@ -1489,7 +1553,8 @@
                             "GEE": "",
                             "label": "",
                             "required": "",
-                            "SEPAL": ""
+                            "SEPAL": "",
+                            "DRIVE": ""
                         },
                         "scale": {
                             "label": ""
@@ -2956,7 +3021,6 @@
             "exportRecipe": "",
             "removeRecipe.tooltip": "",
             "selectRecipe.tooltip": "",
-            "revertToOldRevision": "",
             "saveRecipe": "",
             "searchRecipes": ""
         },
@@ -2966,6 +3030,7 @@
                 "indexes": "",
                 "label": "",
                 "metadata": "",
+                "months": "",
                 "panSharpen": "",
                 "placeholder": ""
             },
@@ -4493,7 +4558,8 @@
                     "GEE": "",
                     "label": "",
                     "required": "",
-                    "SEPAL": ""
+                    "SEPAL": "",
+                    "DRIVE": ""
                 },
                 "fileDimensionsMultiple": {
                     "label": "",
@@ -4526,7 +4592,8 @@
                 },
                 "task": {
                     "GEE": "",
-                    "SEPAL": ""
+                    "SEPAL": "",
+                    "DRIVE": ""
                 },
                 "tileSize": {
                     "label": "",
@@ -4542,11 +4609,6 @@
             },
             "title": "",
             "tooltip": ""
-        },
-        "revisions": {
-            "none": "",
-            "revert": "",
-            "title": ""
         },
         "saveRecipe": {
             "error": "",
@@ -4904,6 +4966,13 @@
             "admin": "",
             "user": ""
         },
+        "privacyPolicy": {
+            "title": "",
+            "accept": {
+                "label": "",
+                "error": ""
+            }
+        },
         "userDetails": {
             "form": {
                 "email": {
@@ -4994,8 +5063,7 @@
             "switchingToSEPALGoogleAccount": "",
             "title": "",
             "update": {
-                "error": "",
-                "success": ""
+                "error": ""
             },
             "confirmation": {
                 "message": ""

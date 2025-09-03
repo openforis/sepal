@@ -3,9 +3,12 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
+
 import styles from './graph.module.css'
 
-export class Graph extends React.Component {
+class _Graph extends React.Component {
     state = {}
     graph = null
     options = null
@@ -199,9 +202,12 @@ const createUnderlayCallback = highlights =>
 const CALLBACKS = ['clickCallback', 'drawCallback', 'drawHighlightPointCallback', 'drawPointCallback',
     'highlightCallback', 'pointClickCallback', 'underlayCallback', 'unhighlightCallback', 'zoomCallback']
 
-Graph.defaultProps = {
-    color: '#FFB300'
-}
+export const Graph = compose(
+    _Graph,
+    asFunctionalComponent({
+        color: '#FFB300'
+    })
+)
 
 Graph.propTypes = {
     data: PropTypes.array.isRequired,

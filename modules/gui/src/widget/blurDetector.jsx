@@ -3,9 +3,9 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, switchMap} from 'rxjs'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {withContext} from '~/context'
-import {withForwardedRef} from '~/ref'
 import {withSubscriptions} from '~/subscription'
 
 import styles from './blurDetector.module.css'
@@ -167,7 +167,9 @@ export const BlurDetector = compose(
     withBlurDetector(),
     withEventShield(),
     withSubscriptions(),
-    withForwardedRef(),
+    asFunctionalComponent({
+        autoBlurTimeout: 2000
+    })
 )
 
 BlurDetector.propTypes = {
@@ -179,8 +181,4 @@ BlurDetector.propTypes = {
     style: PropTypes.object,
     onBlur: PropTypes.func,
     onClick: PropTypes.func
-}
-
-BlurDetector.defaultProps = {
-    autoBlurTimeout: 2000
 }

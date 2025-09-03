@@ -1,6 +1,6 @@
 const {WebSocket} = require('ws')
 
-const {clientTag} = require('./tag')
+const {clientTag, eventTag, userTag} = require('./tag')
 
 const log = require('#sepal/log').getLogger('websocket/client')
 
@@ -83,18 +83,26 @@ const Clients = () => {
         )
     }
 
-    const sendByClientId = ({module, clientId}, message) => {
-        Object.entries(getSubscriptions(clientId))
-            .filter(([, currentModule]) => !module || currentModule === module)
-            .map(([subscriptionId]) => subscriptionId)
-            .forEach(subscriptionId => send(clientId, {subscriptionId, ...message}))
-    }
-
     const sendByUsername = ({module, username}, message) => {
         Object.entries(clients)
-            .filter(([_, {username: currentUsername}]) => !username || currentUsername === username)
+            .filter(([_, {username: currentUsername}]) => currentUsername === username)
             .map(([clientId]) => clientId)
-            .forEach(clientId => sendByClientId({module, clientId}, message))
+            .forEach(clientId => send(clientId, {module, ...message}))
+    }
+
+    const sendEvent = (username, type, data) => {
+        log.debug(`Sending ${eventTag(type)} to ${userTag(username)}`)
+        Object.entries(clients)
+            .filter(([_, {username: currentUsername}]) => currentUsername === username)
+            .map(([clientId]) => clientId)
+            .forEach(clientId => send(clientId, {event: {type, data}}))
+    }
+
+    const broadcastEvent = (type, data) => {
+        log.debug(`Sending ${eventTag(type)} to all clients`)
+        Object.entries(clients)
+            .map(([clientId]) => clientId)
+            .forEach(clientId => send(clientId, {event: {type, data}}))
     }
 
     const forEach = callback => {
@@ -110,7 +118,7 @@ const Clients = () => {
         return usernames.forEach(username => callback(username))
     }
 
-    return {add, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendByClientId}
+    return {add, get, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendEvent, broadcastEvent}
 }
 
 module.exports = {Clients}

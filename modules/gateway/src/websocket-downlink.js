@@ -1,14 +1,15 @@
 const {v4: uuid} = require('uuid')
 
 const {moduleTag, clientTag, userTag} = require('./tag')
-const {filter, interval, map, Subject, groupBy, mergeMap, debounceTime, takeUntil, scan} = require('rxjs')
-const {USER_UP, USER_DOWN, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN} = require('./websocket-events')
+const {filter, interval, map, Subject, groupBy, mergeMap, debounceTime, takeUntil, scan, switchMap, catchError} = require('rxjs')
+const {USER_UP, USER_DOWN, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN, CLIENT_VERSION_MISMATCH} = require('./websocket-events')
 
 const log = require('#sepal/log').getLogger('websocket/downlink')
 
 const HEARTBEAT_INTERVAL_MS = 10 * 1000
+const BUILD_NUMBER = process.env.BUILD_NUMBER
 
-const initializeDownlink = ({servers, clients, wss, userStatus$, toUser$}) => {
+const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
 
     const heartbeatResponse$ = new Subject()
     const client$ = new Subject()
@@ -22,16 +23,16 @@ const initializeDownlink = ({servers, clients, wss, userStatus$, toUser$}) => {
             )
         )
     ).subscribe({
-        next: ({user, clientId}) => onClientDisconnected(user, clientId),
+        next: ({username, clientId}) => onClientDisconnected(username, clientId),
         error: error => log.error('Unexpected heartbeatResponse$ stream error', error),
         complete: () => log.error('Unexpected heartbeatResponse$ stream closed')
     })
     
     const user$ = client$.pipe(
-        groupBy(({user: {username}}) => username),
-        mergeMap(user$ => user$.pipe(
-            scan(({count}, {user, connected = false, disconnected = false}) => ({
-                user,
+        groupBy(({username}) => username),
+        mergeMap(username$ => username$.pipe(
+            scan(({count}, {username, connected = false, disconnected = false}) => ({
+                username,
                 count: count + (connected ? 1 : 0) + (disconnected ? -1 : 0),
                 connected: !!(count === 0 && connected),
                 disconnected: !!(count === 1 && disconnected),
@@ -43,38 +44,52 @@ const initializeDownlink = ({servers, clients, wss, userStatus$, toUser$}) => {
 
     const userConnected$ = user$.pipe(
         filter(({connected}) => connected),
-        map(({user}) => user)
+        switchMap(({username}) =>
+            userStore.getUser$(username).pipe(
+                map(user => ({username, user})),
+                catchError(error => {
+                    log.error(`${userTag(username)} failed to get user`, error)
+                })
+            )
+        )
     )
 
     const userDisconnected$ = user$.pipe(
         filter(({disconnected}) => disconnected),
-        map(({user}) => user)
+        switchMap(({username}) =>
+            userStore.getUser$(username).pipe(
+                map(user => ({username, user})),
+                catchError(error => {
+                    log.error(`${userTag(username)} failed to get user`, error)
+                })
+            )
+        )
     )
 
     userConnected$.subscribe({
-        next: user => {
-            log.info(`${userTag(user.username)} connected`)
-            userStatus$?.next({event: USER_UP, user})
-            servers.broadcast({event: USER_UP, user})
+        next: ({username, user}) => {
+            if (user) {
+                log.info(`${userTag(username)} connected`)
+                event$.next({type: USER_UP, data: {user}})
+            } else {
+                log.warn(`${userTag(username)} connected, but not found in user store`)
+            }
         },
         error: error => log.error('Unexpected userConnected$ stream error', error),
         complete: () => log.error('Unexpected userConnected$ stream closed')
     })
 
     userDisconnected$.subscribe({
-        next: user => {
-            log.info(`${userTag(user.username)} disconnected`)
-            userStatus$?.next({event: USER_DOWN, user})
-            servers.broadcast({event: USER_DOWN, user})
+        next: ({username, user}) => {
+            if (user) {
+                log.info(`${userTag(username)} disconnected`)
+                event$.next({type: USER_DOWN, data: {user}})
+            } else {
+                log.warn(`${userTag(username)} disconnected, but not found in user store`)
+            }
         },
         error: error => log.error('Unexpected userDisconnected$ stream error', error),
         complete: () => log.error('Unexpected userDisconnected$ stream closed')
-    })
-
-    toUser$?.subscribe({
-        next: ({username, event}) => clients.sendByUsername(username, {event}),
-        error: error => log.error('Unexpected toUser$ stream error', error),
-        complete: () => log.error('Unexpected toUser$ stream closed')
     })
 
     const clientDisconnected$ = clientId =>
@@ -82,9 +97,9 @@ const initializeDownlink = ({servers, clients, wss, userStatus$, toUser$}) => {
             filter(({clientId: currentClientId, disconnected}) => currentClientId === clientId && disconnected)
         )
 
-    const onClientConnected = (ws, user) => {
+    const onClientConnected = (ws, username) => {
         const clientId = uuid()
-        log.info(`${clientTag(user.username, clientId)} connected`)
+        log.info(`${clientTag(username, clientId)} connected`)
 
         const heartbeatRequest$ = interval(HEARTBEAT_INTERVAL_MS).pipe(
             map(() => Date.now())
@@ -94,75 +109,100 @@ const initializeDownlink = ({servers, clients, wss, userStatus$, toUser$}) => {
             takeUntil(clientDisconnected$(clientId))
         ).subscribe({
             next: hb => {
-                log.trace(`Sending heartbeat to user ${user.username}:`, hb)
+                log.trace(`Sending heartbeat to user ${username}:`, hb)
                 clients.send(clientId, {hb})
             },
             error: error => log.error('Unexpected heartbeatRequest$ stream error', error),
-            complete: () => log.debug(`${clientTag(user.username, clientId)} heartbeat stopped`)
+            complete: () => log.debug(`${clientTag(username, clientId)} heartbeat stopped`)
         })
 
-        clients.add(user.username, clientId, ws)
-        client$.next({user, clientId, connected: true})
+        clients.add(username, clientId, ws)
+        client$.next({username, clientId, connected: true})
 
-        ws.on('message', message => onClientMessage(user, clientId, message))
-        ws.on('error', error => onClientError(user, clientId, error))
-        ws.on('close', () => onClientDisconnected(user, clientId))
+        ws.on('message', message => onClientMessage(username, clientId, message))
+        ws.on('error', error => onClientError(username, clientId, error))
+        ws.on('close', () => onClientDisconnected(username, clientId))
 
         clients.send(clientId, {modules: {state: servers.list()}})
-        servers.broadcast({event: CLIENT_UP, user, clientId})
+        event$.next({type: CLIENT_UP, data: {username, clientId}})
     }
     
-    const onClientMessage = (user, clientId, message) => {
+    const onClientMessage = (username, clientId, message) => {
         if (message) {
             try {
-                const {hb, module, subscriptionId, subscribed, unsubscribed, data} = JSON.parse(message)
-                if (hb) {
-                    log.trace('Heartbeat reply received', hb)
-                    heartbeatResponse$.next({user, clientId})
+                const {version, hb, module, subscriptionId, subscribed, unsubscribed, data} = JSON.parse(message)
+                if (version) {
+                    onVersion(username, clientId, version)
+                } else if (hb) {
+                    onHeartbeat(username, clientId, hb)
                 } else if (subscribed) {
-                    clients.addSubscription(clientId, subscriptionId, module)
-                    servers.send(module, {event: SUBSCRIPTION_UP, user, clientId, subscriptionId})
+                    onSubscribed(username, clientId, subscriptionId, module)
                 } else if (unsubscribed) {
-                    clients.removeSubscription(clientId, subscriptionId)
-                    servers.send(module, {event: SUBSCRIPTION_DOWN, user, clientId, subscriptionId})
+                    onUnsubscribed(username, clientId, subscriptionId, module)
                 } else if (data) {
-                    if (log.isTrace()) {
-                        log.trace(`Forwarding message to ${moduleTag(module)}:`, data)
-                    } else {
-                        log.debug(`Forwarding message to ${moduleTag(module)}`)
-                    }
-                    servers.send(module, {user, clientId, subscriptionId, data})
+                    onData(username, clientId, subscriptionId, module, data)
                 } else {
-                    log.warn('Unsupported client message:', message)
+                    log.warn('Unsupported client message:', message.toString())
                 }
             } catch (error) {
                 log.error('Could not parse client message:', error)
             }
         }
     }
-    
-    const onClientError = (user, clientId, error) => {
-        log.error(`${clientTag(user.username, clientId)} error:`, error)
-        disconnect(user, clientId)
-    }
-    
-    const onClientDisconnected = (user, clientId) => {
-        log.info(`${clientTag(user.username, clientId)} disconnected`)
-        disconnect(user, clientId)
+
+    const onVersion = (username, clientId, {buildNumber}) => {
+        if (buildNumber !== BUILD_NUMBER) {
+            log.info(`${clientTag(username, clientId)} running outdated version:`, buildNumber)
+            event$.next({type: CLIENT_VERSION_MISMATCH, data: {username, clientId}})
+        }
     }
 
-    const disconnect = (user, clientId) => {
-        client$.next({user, clientId, disconnected: true})
+    const onHeartbeat = (username, clientId, hb) => {
+        log.trace('Heartbeat reply received', hb)
+        heartbeatResponse$.next({username, clientId})
+    }
+
+    const onSubscribed = (username, clientId, subscriptionId, module) => {
+        clients.addSubscription(clientId, subscriptionId, module)
+        event$.next({type: SUBSCRIPTION_UP, data: {module, username, clientId, subscriptionId}})
+    }
+
+    const onUnsubscribed = (username, clientId, subscriptionId, module) => {
+        clients.removeSubscription(clientId, subscriptionId)
+        event$.next({type: SUBSCRIPTION_DOWN, data: {module, username, clientId, subscriptionId}})
+    }
+
+    const onData = (username, clientId, subscriptionId, module, data) => {
+        if (log.isTrace()) {
+            log.trace(`Forwarding message to ${moduleTag(module)}:`, data)
+        } else {
+            log.debug(`Forwarding message to ${moduleTag(module)}`)
+        }
+        servers.send(module, {username, clientId, subscriptionId, data})
+    }
+
+    const onClientError = (username, clientId, error) => {
+        log.error(`${clientTag(username, clientId)} error:`, error)
+        disconnect(username, clientId)
+    }
+    
+    const onClientDisconnected = (username, clientId) => {
+        log.info(`${clientTag(username, clientId)} disconnected`)
+        disconnect(username, clientId)
+    }
+
+    const disconnect = (username, clientId) => {
+        client$.next({username, clientId, disconnected: true})
         Object.entries(clients.getSubscriptions(clientId)).forEach(([subscriptionId, module]) => {
             clients.removeSubscription(clientId, subscriptionId)
-            servers.send(module, {event: SUBSCRIPTION_DOWN, user, clientId, subscriptionId})
+            event$.next({type: SUBSCRIPTION_DOWN, data: {module, username, clientId, subscriptionId}})
         })
-        servers.broadcast({event: CLIENT_DOWN, user, clientId})
+        event$.next({type: CLIENT_DOWN, data: {username, clientId}})
         clients.remove(clientId)
     }
     
-    wss.on('connection', (ws, _req, user) =>
-        onClientConnected(ws, user)
+    wss.on('connection', (ws, _req, username) =>
+        onClientConnected(ws, username)
     )
 }
 

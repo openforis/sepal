@@ -1,5 +1,5 @@
 const {stream} = require('#sepal/httpServer')
-const {ClientException} = require('sepal/src/exception')
+const {ClientException} = require('#sepal/exception')
 const {getFromCeo$} = require('./handlers/getFromCeo')
 const {loginToken$} = require('./handlers/loginToken')
 const routes = router => router

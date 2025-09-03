@@ -133,10 +133,12 @@ const bucketExists$ = user =>
 
 const getEmail$ = accessToken =>
     http.get$('https://www.googleapis.com/drive/v3/about?fields=user', {
-        maxRetries: 0,
         headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
+        },
+        retry: {
+            maxRetries: 0
         }
     }).pipe(
         map(response => JSON.parse(response.body).user.emailAddress)

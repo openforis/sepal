@@ -4,8 +4,8 @@ import React from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 import {debounceTime, distinctUntilChanged, Subject} from 'rxjs'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
-import {withForwardedRef} from '~/ref'
 import {withSubscriptions} from '~/subscription'
 import {Button} from '~/widget/button'
 import {Keybinding} from '~/widget/keybinding'
@@ -309,7 +309,16 @@ class _Input extends React.Component {
 export const Input = compose(
     _Input,
     withSubscriptions(),
-    withForwardedRef()
+    asFunctionalComponent({
+        autoFocus: false,
+        autoComplete: false,
+        autoCorrect: false,
+        autoCapitalize: false,
+        border: true,
+        spellCheck: false,
+        type: 'text',
+        tooltipPlacement: 'top'
+    })
 )
 
 Input.propTypes = {
@@ -350,25 +359,14 @@ Input.propTypes = {
     onFocus: PropTypes.func
 }
 
-Input.defaultProps = {
-    autoFocus: false,
-    autoComplete: false,
-    autoCorrect: false,
-    autoCapitalize: false,
-    border: true,
-    spellCheck: false,
-    type: 'text',
-    tooltipPlacement: 'top'
-}
-
 class _Textarea extends React.Component {
     constructor(props) {
         super(props)
+        this.ref = props.forwardedRef || React.createRef()
         this.onFocus = this.onFocus.bind(this)
         this.onBlur = this.onBlur.bind(this)
         this.onChange = this.onChange.bind(this)
         this.captureEvents = this.captureEvents.bind(this)
-        this.ref = props.forwardedRef || React.createRef()
     }
 
     change$ = new Subject()
@@ -481,7 +479,10 @@ class _Textarea extends React.Component {
 export const Textarea = compose(
     _Textarea,
     withSubscriptions(),
-    withForwardedRef()
+    asFunctionalComponent({
+        autoFocus: false,
+        border: true
+    })
 )
 
 Textarea.propTypes = {
@@ -507,9 +508,4 @@ Textarea.propTypes = {
     onChange: PropTypes.func,
     onChangeDebounced: PropTypes.func,
     onFocus: PropTypes.func
-}
-
-Textarea.defaultProps = {
-    autoFocus: false,
-    border: true
 }

@@ -1,7 +1,9 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({tableId, columnName, columnValue, buffer, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
-    const ee = require('#sepal/ee')
+const worker$ = ({
+    requestArgs: {tableId, columnName, columnValue, buffer, color = '#FFFFFF50', fillColor = '#FFFFFF08'}
+}) => {
+    const ee = require('#sepal/ee/ee')
     const {filterTable} = require('#sepal/ee/table')
     const {forkJoin, map} = require('rxjs')
     const _ = require('lodash')
@@ -17,7 +19,7 @@ const worker$ = ({tableId, columnName, columnValue, buffer, color = '#FFFFFF50',
     const boundsPolygon = ee.List(bounds.coordinates().get(0))
     return forkJoin({
         bounds: ee.getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)]), 'get bounds'),
-        eeMap: ee.getMap$(table.style({color, fillColor}))
+        eeMap: ee.getMap$(table.style({color, fillColor}), null, 'create ee table map')
     }).pipe(
         map(({bounds, eeMap}) => ({bounds, ...eeMap}))
     )
@@ -26,6 +28,5 @@ const worker$ = ({tableId, columnName, columnValue, buffer, color = '#FFFFFF50',
 module.exports = job({
     jobName: 'Request EE Table map',
     jobPath: __filename,
-    args: ctx => [ctx.request.query],
     worker$
 })

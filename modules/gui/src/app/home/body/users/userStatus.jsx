@@ -20,32 +20,29 @@ export class UserStatus extends React.Component {
         status === UserStatus.ACTIVE
 
     render() {
-        const {status} = this.props
+        const {status = 'UNKNOWN'} = this.props
         return (
             <Button
                 chromeless
                 shape='none'
                 air='none'
                 icon={this.getIcon(status)}
-                // look={this.getLook(status)}
-                // iconVariant={this.getIconVariant(status)}
-                // iconDimmed={UserStatus.isLocked(status)}
                 label={msg(`user.status.${status}`).toUpperCase()}
             />
         )
     }
 
-    getIcon() {
-        const {status, isGoogleUser} = this.props
+    getIcon(status) {
+        const {isGoogleUser} = this.props
         switch(status) {
-        case UserStatus.LOCKED:
-            return this.getLockedUserIcon()
-        case UserStatus.PENDING:
-            return this.getPendingUserIcon()
-        case UserStatus.ACTIVE:
-            return isGoogleUser ? this.getConnectedActiveUserIcon() : this.getDisconnectedActiveUserIcon()
-        default:
-            return this.getUnknownUserIcon()
+            case UserStatus.LOCKED:
+                return this.getLockedUserIcon()
+            case UserStatus.PENDING:
+                return this.getPendingUserIcon()
+            case UserStatus.ACTIVE:
+                return isGoogleUser ? this.getConnectedActiveUserIcon() : this.getDisconnectedActiveUserIcon()
+            default:
+                return this.getUnknownUserIcon()
         }
     }
 
@@ -68,10 +65,6 @@ export class UserStatus extends React.Component {
     getConnectedActiveUserIcon() {
         return <Icon name='google' type='brands' look='add' variant='success'/>
     }
-}
-
-UserStatus.defaultProps = {
-    status: 'UNKNOWN'
 }
 
 UserStatus.propTypes = {

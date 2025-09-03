@@ -7,16 +7,14 @@ import '@fontsource/source-sans-pro/600.css'
 import '@fontsource/source-sans-pro/700.css'
 
 import {composeWithDevTools} from '@redux-devtools/extension'
-import {createBrowserHistory} from 'history'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
-import {Router} from 'react-router-dom'
+import {BrowserRouter} from 'react-router'
 import {applyMiddleware, legacy_createStore as createStore} from 'redux'
 
 import {initApi} from '~/api'
 import {App} from '~/app/app'
 import {isDevelopment} from '~/environment'
-import {syncHistoryAndStore} from '~/route'
 import {initStore} from '~/store'
 import {TranslationProvider} from '~/translate'
 
@@ -59,9 +57,6 @@ const store = createStore(
 
 initStore(store)
 
-const history = createBrowserHistory()
-syncHistoryAndStore(history, store)
-
 const container = document.getElementById('app')
 const root = createRoot(container)
 
@@ -69,9 +64,9 @@ root.render(
     <ErrorBoundary>
         <Provider store={store}>
             <TranslationProvider>
-                <Router history={history}>
+                <BrowserRouter>
                     <App/>
-                </Router>
+                </BrowserRouter>
             </TranslationProvider>
         </Provider>
     </ErrorBoundary>

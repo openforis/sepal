@@ -1,9 +1,12 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({id}, {sepalUser: {username, googleTokens}}) => {
+const worker$ = ({
+    requestArgs: {id},
+    credentials: {sepalUser: {username, googleTokens}}
+}) => {
     const {map, merge, toArray, of, switchMap, mergeMap, catchError} = require('rxjs')
     const http = require('#sepal/httpClient')
-    const ee = require('#sepal/ee')
+    const ee = require('#sepal/ee/ee')
     const log = require('#sepal/log').getLogger('ee')
     const _ = require('lodash')
 
@@ -33,7 +36,9 @@ const worker$ = ({id}, {sepalUser: {username, googleTokens}}) => {
         )
 
     const getRootInfo$ = ({id, name}) =>
-        http.get$(`https://earthengine.googleapis.com/v1/${name || id}`, {headers}).pipe(
+        http.get$(`https://earthengine.googleapis.com/v1/${name || id}`, {
+            headers
+        }).pipe(
             map(({body}) => JSON.parse(body)),
             catchError(() => {
                 log.debug(`Unable to determine quota for ${id || name}`)
@@ -55,7 +60,9 @@ const worker$ = ({id}, {sepalUser: {username, googleTokens}}) => {
         )
     
     const cloudProjectRoots$ = () =>
-        http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {headers: {Authorization: `Bearer ${googleTokens.accessToken}`}}).pipe(
+        http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {
+            headers: {Authorization: `Bearer ${googleTokens.accessToken}`}
+        }).pipe(
             map(({body}) => JSON.parse(body)),
             map(mapCloudProjectRoots),
             catchError(e => {

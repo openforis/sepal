@@ -6,19 +6,20 @@ import {debounceTime, first, map, Subject, switchMap, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
 import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
+import {asFunctionalComponent} from '~/classComponent'
 import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {escapeRegExp, splitString} from '~/string'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
-import {isServiceAccount} from '~/user'
 import {uuid} from '~/uuid'
 import {withAssets} from '~/widget/assets'
 import {Button} from '~/widget/button'
 import {CrudItem} from '~/widget/crudItem'
 import {Notifications} from '~/widget/notifications'
 
+import {AssetReloadButton} from './assetReloadButton'
 import {Combo} from './combo'
 
 // check for allowed characters and minimum path depth (2)
@@ -85,20 +86,13 @@ class _AssetCombo extends React.Component {
     }
 
     renderReloadButton() {
-        const {assets: {loading: loadingUserAssets}} = this.props
         const {searchingDatasets} = this.state
         return (
-            <Button
+            <AssetReloadButton
                 key='reload'
-                chromeless
                 shape='none'
                 air='none'
-                icon='rotate'
-                iconAttributes={{spin: loadingUserAssets || searchingDatasets}}
-                tooltip={msg('asset.reload')}
-                tabIndex={-1}
-                disabled={isServiceAccount() || loadingUserAssets || searchingDatasets}
-                onClick={this.reloadAssets}
+                spin={searchingDatasets}
             />
         )
     }
@@ -516,7 +510,10 @@ export const AssetCombo = compose(
     _AssetCombo,
     connect(),
     withSubscriptions(),
-    withAssets()
+    withAssets(),
+    asFunctionalComponent({
+        mode: ASSET
+    })
 )
 
 AssetCombo.propTypes = {
@@ -549,8 +546,4 @@ AssetCombo.propTypes = {
     onError: PropTypes.func,
     onLoaded: PropTypes.func,
     onLoading: PropTypes.func
-}
-
-AssetCombo.defaultProps = {
-    mode: ASSET
 }
