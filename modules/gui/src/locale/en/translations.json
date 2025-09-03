@@ -2240,7 +2240,7 @@
                                 "label": "Institution",
                                 "placeholder": "Select an institution",
                                 "required": "You must select an institution",
-                                "tooltip": "You can only see institutions that you are member of"
+                                "tooltip": "You can only see institutions where you are both a member and an admin"
                             },
                             "project": {
                                 "label": "Project",
