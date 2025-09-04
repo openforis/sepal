@@ -46,21 +46,35 @@ const download = async (homeDir, ctx) => {
     const sepalUser = getSepalUser(ctx.request)
     if (sepalUser) {
         const username = sepalUser.username
-        const {absolutePath: userHomeDir} = resolvePath(homeDir, username)
+        const {absolutePath: userHomeDir, isSubPath: validUserHome} = resolvePath(homeDir, username)
+        if (!validUserHome) {
+            log.warn('Cannot download - invalid user home:', userHomeDir)
+            ctx.response.status = 404
+            return
+        }
         const path = ctx.query.path
-        const {absolutePath} = resolvePath(userHomeDir, path)
-        const filename = Path.parse(absolutePath).base
-        const stats = await stat(absolutePath)
-        if (stats.isFile()) {
-            log.debug(() => `Downloading: ${absolutePath}`)
-            ctx.body = createReadStream(absolutePath)
-            ctx.attachment(filename)
-        } else {
-            log.warn(() => `Cannot download non-file: ${absolutePath}`)
+        try {
+            const {absolutePath, isSubPath: validPath} = resolvePath(userHomeDir, path)
+            if (!validPath) {
+                log.warn('Cannot download - invalid path:', absolutePath)
+                ctx.response.status = 404
+                return
+            }
+            const filename = Path.parse(absolutePath).base
+            const stats = await stat(absolutePath)
+            if (stats.isFile()) {
+                log.debug(() => `Downloading: ${absolutePath}`)
+                ctx.body = createReadStream(absolutePath)
+                ctx.attachment(filename)
+            } else {
+                log.warn(() => `Cannot download - non-file: ${absolutePath}`)
+                ctx.response.status = 404
+            }
+        } catch (error) {
             ctx.response.status = 404
         }
     } else {
-        log.warn(() => 'Cannot download: unauthenticated user')
+        log.warn(() => 'Cannot download - unauthenticated user')
         ctx.response.status = 401
     }
 }
@@ -70,7 +84,12 @@ const setFile = async (homeDir, ctx) => {
     const sepalUser = getSepalUser(ctx.request)
     if (sepalUser) {
         const username = sepalUser.username
-        const {absolutePath: userHomeDir} = resolvePath(homeDir, username)
+        const {absolutePath: userHomeDir, isSubPath: validUserHome} = resolvePath(homeDir, username)
+        if (!validUserHome) {
+            log.warn('Cannot set file - invalid user home:', userHomeDir)
+            ctx.response.status = 404
+            return
+        }
         const filePath = ctx.query.path
         if (!filePath) {
             log.warn(() => 'No path specified for file')
@@ -144,7 +163,12 @@ const createFolder = async (homeDir, ctx) => {
     const sepalUser = getSepalUser(ctx.request)
     if (sepalUser) {
         const username = sepalUser.username
-        const {absolutePath: userHomeDir} = resolvePath(homeDir, username)
+        const {absolutePath: userHomeDir, isSubPath: validUserHome} = resolvePath(homeDir, username)
+        if (!validUserHome) {
+            log.warn('Cannot create folder - invalid user home:', userHomeDir)
+            ctx.response.status = 404
+            return
+        }
         const path = ctx.query.path
         const recursive = ctx.query.recursive === 'true'
         
@@ -201,10 +225,20 @@ const listFiles = async (homeDir, ctx) => {
     const sepalUser = getSepalUser(ctx.request)
     if (sepalUser) {
         const username = sepalUser.username
-        const {absolutePath: userHomeDir} = resolvePath(homeDir, username)
+        const {absolutePath: userHomeDir, isSubPath: validUserHome} = resolvePath(homeDir, username)
+        if (!validUserHome) {
+            log.warn('Cannot list files - invalid user home:', userHomeDir)
+            ctx.response.status = 404
+            return
+        }
         const path = ctx.query.path || '.'
         const includeHidden = ctx.query.includeHidden === 'true'
-        const {absolutePath} = resolvePath(userHomeDir, path)
+        const {absolutePath, isSubPath: validPath} = resolvePath(userHomeDir, path)
+        if (!validPath) {
+            log.warn('Cannot list files - invalid path:', absolutePath)
+            ctx.response.status = 404
+            return
+        }
         const extensionsParam = ctx.query.extensions
         const extensions = extensionsParam
             ? extensionsParam.split(',').map(ext => ext.trim())
