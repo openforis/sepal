@@ -1,6 +1,7 @@
 const Path = require('path')
-const {createReadStream, realpathSync} = require('fs')
-const {stat, readdir, realpath, writeFile, mkdir, readFile} = require('fs/promises')
+const {createReadStream, realpathSync, createWriteStream} = require('fs')
+const {stat, readdir, realpath, mkdir, unlink, lstat} = require('fs/promises')
+
 const log = require('#sepal/log').getLogger('filesystem')
 const resolvePath = (baseDir, path) => {
     const realBaseDir = realpathSync(baseDir)
@@ -16,23 +17,48 @@ const resolvePath = (baseDir, path) => {
     }
 }
 
-const resolvePathForWrite = async (baseDir, relPath) => {
-    const realBaseDir = await realpath(baseDir)
-    const joinedPath = Path.join(realBaseDir, relPath)
-    const relativePath = Path.relative(realBaseDir, joinedPath)
-    const isSubPath = !!relativePath && !relativePath.startsWith('..') && !Path.isAbsolute(relativePath)
-    const isExternalPath = !isSubPath
-  
-    if (isExternalPath) {
-        throw new Error('The provided path resolves outside the allowed base directory.')
+async function resolvePathForWrite(baseDir, relPath) {
+    if (!relPath || relPath === '.' || Path.isAbsolute(relPath)) {
+        throw new Error('Path must be a non-empty relative path')
     }
-    
-    return {
-        absolutePath: joinedPath,
-        relativePath,
-        isSubPath,
-        isExternalPath
+    const baseAbs = await realpath(baseDir)
+    const targetAbs = Path.join(baseAbs, relPath)
+    const rel = Path.relative(baseAbs, targetAbs)
+    if (rel === '' || rel.startsWith('..') || Path.isAbsolute(rel)) {
+        throw new Error('Path escapes base directory')
     }
+    const parts = rel.split(Path.sep)
+    let current = baseAbs
+    for (let i = 0; i < parts.length; i++) {
+        current = Path.join(current, parts[i])
+        const isLast = i === parts.length - 1
+        try {
+            const st = await lstat(current)
+            if (st.isSymbolicLink()) {
+                throw new Error('Symlinks are not allowed')
+            }
+            if (isLast) {
+                if (st.isDirectory()) {
+                    throw new Error('Target exists and is a directory')
+                }
+                if (!st.isFile()) {
+                    throw new Error('Target exists but is not a regular file')
+                }
+                return {baseAbs, targetAbs: current, rel, existed: true}
+            } else if (!st.isDirectory()) {
+                throw new Error('Parent path component is not a directory')
+            }
+        } catch (err) {
+            if (err && err.code === 'ENOENT') {
+                if (isLast) {
+                    return {baseAbs, targetAbs, rel, existed: false}
+                }
+                throw new Error('Parent directory does not exist')
+            }
+            throw err
+        }
+    }
+    throw new Error('Unexpected resolution state')
 }
 
 const getSepalUser = request => {
@@ -46,97 +72,83 @@ const download = async (homeDir, ctx) => {
     const sepalUser = getSepalUser(ctx.request)
     if (sepalUser) {
         const username = sepalUser.username
-        const {absolutePath: userHomeDir} = resolvePath(homeDir, username)
+        const {absolutePath: userHomeDir, isSubPath: validUserHome} = resolvePath(homeDir, username)
+        if (!validUserHome) {
+            log.warn('Cannot download - invalid user home:', userHomeDir)
+            ctx.response.status = 404
+            return
+        }
         const path = ctx.query.path
-        const {absolutePath} = resolvePath(userHomeDir, path)
-        const filename = Path.parse(absolutePath).base
-        const stats = await stat(absolutePath)
-        if (stats.isFile()) {
-            log.debug(() => `Downloading: ${absolutePath}`)
-            ctx.body = createReadStream(absolutePath)
-            ctx.attachment(filename)
-        } else {
-            log.warn(() => `Cannot download non-file: ${absolutePath}`)
+        try {
+            const {absolutePath, isSubPath: validPath} = resolvePath(userHomeDir, path)
+            if (!validPath) {
+                log.warn('Cannot download - invalid path:', absolutePath)
+                ctx.response.status = 404
+                return
+            }
+            const filename = Path.parse(absolutePath).base
+            const stats = await stat(absolutePath)
+            if (stats.isFile()) {
+                log.debug(() => `Downloading: ${absolutePath}`)
+                ctx.body = createReadStream(absolutePath)
+                ctx.attachment(filename)
+            } else {
+                log.warn(() => `Cannot download - non-file: ${absolutePath}`)
+                ctx.response.status = 404
+            }
+        } catch (error) {
             ctx.response.status = 404
         }
     } else {
-        log.warn(() => 'Cannot download: unauthenticated user')
+        log.warn(() => 'Cannot download - unauthenticated user')
         ctx.response.status = 401
     }
 }
 
 const setFile = async (homeDir, ctx) => {
-
     const sepalUser = getSepalUser(ctx.request)
-    if (sepalUser) {
-        const username = sepalUser.username
-        const {absolutePath: userHomeDir} = resolvePath(homeDir, username)
-        const filePath = ctx.query.path
-        if (!filePath) {
-            log.warn(() => 'No path specified for file')
-
-            ctx.response.status = 400
-            ctx.body = {error: 'No path specified'}
-            return
-        }
-
-        try {
-            const {absolutePath} = await resolvePathForWrite(userHomeDir, filePath)
-            const dirPath = Path.dirname(absolutePath)
-            // Check if parent directory exists
-            try {
-                const stats = await stat(dirPath)
-                if (!stats.isDirectory()) {
-                    ctx.response.status = 400
-                    ctx.body = {error: 'Parent path exists but is not a directory'}
-                    return
-                }
-            } catch (error) {
-                ctx.response.status = 404
-                ctx.body = {error: 'Parent directory does not exist. Use createFolder endpoint first.'}
-                return
-            }
-
-            log.debug(() => `Setting file: ${absolutePath}`)
-
-            // read the payload from multipart upload
-            let fileBuffer
-            if (ctx.request.files?.file) {
-                const upload = ctx.request.files.file
-                // {
-                // "size": int,
-                // "filepath": String,
-                // "newFilename": String,
-                // "mimetype": String,
-                // "mtime": String,
-                // "originalFilename": String
-                // }
-
-                fileBuffer = await readFile(upload.filepath)
-            }
-
-            if (!fileBuffer) {
-                ctx.response.status = 400
-                ctx.body = {error: 'No file content provided'}
-                return
-            }
-
-            await mkdir(dirPath, {recursive: true})
-            await writeFile(absolutePath, fileBuffer)
-
-            ctx.response.status = 200
-            ctx.body = {
-                message: 'File set successfully',
-                path: Path.relative(userHomeDir, absolutePath)
-            }
-        } catch (error) {
-            log.error(() => `Error setting file: ${error.message}`)
-            ctx.response.status = 500
-            ctx.body = {error: 'Failed to write file'}
-        }
-    } else {
+    if (!sepalUser) {
         log.warn(() => 'Cannot set file: unauthenticated user')
         ctx.response.status = 401
+        return
+    }
+
+    const relPath = ctx.query.path
+    const upload = ctx.request.files?.file
+    if (!relPath) {
+        ctx.response.status = 400
+        ctx.body = {error: 'No path specified'}
+        return
+    }
+    if (!upload?.filepath) {
+        ctx.response.status = 400
+        ctx.body = {error: 'No file content provided'}
+        return
+    }
+
+    try {
+        const joinedRel = Path.join(sepalUser.username, relPath)
+        const {targetAbs} = await resolvePathForWrite(homeDir, joinedRel)
+
+        log.debug(() => `Setting file: ${targetAbs}`)
+
+        await new Promise((resolve, reject) => {
+            const src = createReadStream(upload.filepath)
+            const dst = createWriteStream(targetAbs, {flags: 'w'})
+            src.on('error', reject)
+            dst.on('error', reject)
+            dst.on('finish', resolve)
+            src.pipe(dst)
+        })
+
+        try { await unlink(upload.filepath) } catch { /* empty */ }
+
+        ctx.response.status = 200
+        ctx.body = {message: 'File set successfully', path: relPath}
+    } catch (error) {
+        log.warn(() => `Error setting file: ${error.message}`)
+        ctx.response.status = 500
+        ctx.body = {error: 'Failed to write file'}
     }
 }
 
@@ -144,7 +156,12 @@ const createFolder = async (homeDir, ctx) => {
     const sepalUser = getSepalUser(ctx.request)
     if (sepalUser) {
         const username = sepalUser.username
-        const {absolutePath: userHomeDir} = resolvePath(homeDir, username)
+        const {absolutePath: userHomeDir, isSubPath: validUserHome} = resolvePath(homeDir, username)
+        if (!validUserHome) {
+            log.warn('Cannot create folder - invalid user home:', userHomeDir)
+            ctx.response.status = 404
+            return
+        }
         const path = ctx.query.path
         const recursive = ctx.query.recursive === 'true'
         
@@ -156,7 +173,7 @@ const createFolder = async (homeDir, ctx) => {
         }
 
         try {
-            // use resolvePathForWrite to check if a path that doesn't exist can be created
+
             const {absolutePath} = await resolvePathForWrite(userHomeDir, path)
             
             try {
@@ -201,10 +218,20 @@ const listFiles = async (homeDir, ctx) => {
     const sepalUser = getSepalUser(ctx.request)
     if (sepalUser) {
         const username = sepalUser.username
-        const {absolutePath: userHomeDir} = resolvePath(homeDir, username)
+        const {absolutePath: userHomeDir, isSubPath: validUserHome} = resolvePath(homeDir, username)
+        if (!validUserHome) {
+            log.warn('Cannot list files - invalid user home:', userHomeDir)
+            ctx.response.status = 404
+            return
+        }
         const path = ctx.query.path || '.'
         const includeHidden = ctx.query.includeHidden === 'true'
-        const {absolutePath} = resolvePath(userHomeDir, path)
+        const {absolutePath, isSubPath: validPath} = resolvePath(userHomeDir, path)
+        if (!validPath) {
+            log.warn('Cannot list files - invalid path:', absolutePath)
+            ctx.response.status = 404
+            return
+        }
         const extensionsParam = ctx.query.extensions
         const extensions = extensionsParam
             ? extensionsParam.split(',').map(ext => ext.trim())
