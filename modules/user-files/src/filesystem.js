@@ -236,8 +236,6 @@ const setFile = async (homeDir, ctx) => {
             return
         }
 
-        log.debug(() => `Setting file: ${targetAbs}`)
-
         await new Promise((resolve, reject) => {
             const src = createReadStream(upload.filepath)
             const dst = createWriteStream(targetAbs, {flags: 'w'})
@@ -296,10 +294,6 @@ const createFolder = async (homeDir, ctx) => {
             homeDir, joinedRel, username, 'mkdir', recursive
         )
 
-        // log out the parameters and results for debugging
-        log.debug(() => `Create folder request: ${JSON.stringify(ctx.query)}`)
-        log.debug(() => `Resolved paths - target: ${targetAbs}, first missing: ${firstMissing}`)
-
         if (existed) {
             log.warn(() => `Directory already exists: ${targetAbs}`)
             ctx.response.status = 409
@@ -308,18 +302,13 @@ const createFolder = async (homeDir, ctx) => {
         }
 
         if (recursive) {
-            log.debug(() => `Creating directory recursively: ${targetAbs}`)
             await createDirectoryRecursive(targetAbs, userInfo, firstMissing)
         } else {
-            // parent already validated to exist & be owned by user by the resolver
             await mkdir(targetAbs)
             await chown(targetAbs, userInfo.uid, userInfo.gid)
             await chmod(targetAbs, 0o755)
         }
 
-        log.debug(() => `Created directory: ${targetAbs}`)
-        
-        // Calculate path relative to user home directory for response
         const userHomeDir = Path.join(homeDir, username)
         ctx.response.status = 201
         ctx.body = {
@@ -344,8 +333,6 @@ const createFolder = async (homeDir, ctx) => {
 }
 
 const listFiles = async (homeDir, ctx) => {
-    log.debug(() => `List files request: ${JSON.stringify(ctx.query)}`)
-
     const sepalUser = getSepalUser(ctx.request)
     if (!sepalUser?.username) {
         log.warn(() => 'Cannot list files: unauthenticated user')
@@ -391,7 +378,6 @@ const listFiles = async (homeDir, ctx) => {
                 const isDir = fst.isDirectory()
                 const isLink = fst.isSymbolicLink()
 
-                // Apply extension filter to files & symlinks (by name), not directories
                 if (!isDir && exts) {
                     const ext = Path.extname(name)
                     if (!exts.has(ext)) return null
@@ -401,7 +387,7 @@ const listFiles = async (homeDir, ctx) => {
                     name,
                     path: Path.relative(userHomeDir, filePath),
                     type: isDir ? 'directory' : (isLink ? 'symlink' : 'file'),
-                    size: fst.size,          // for symlinks: size of link itself
+                    size: fst.size, // for symlinks: size of link itself
                     modifiedTime: fst.mtime,
                     ...(isLink ? {isSymlink: true} : null),
                 }
@@ -414,14 +400,11 @@ const listFiles = async (homeDir, ctx) => {
         const fileDetailsArray = await Promise.all(visible.map(describe))
         const files = fileDetailsArray.filter(Boolean)
 
-        // Optional: stable sort (dirs first, then alpha)
         files.sort((a, b) => (a.type === 'directory') === (b.type === 'directory')
             ? a.name.localeCompare(b.name)
             : (a.type === 'directory' ? -1 : 1))
 
-        log.debug(() => `Listing directory: ${absolutePath}`)
         ctx.body = {path: Path.relative(userHomeDir, absolutePath), files}
-        log.debug(() => `Listed ${files.length} entries`)
     } catch (error) {
         log.error(() => `Error listing directory: ${error.message}`)
         ctx.response.status = 500
