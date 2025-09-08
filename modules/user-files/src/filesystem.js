@@ -212,6 +212,7 @@ const setFile = async (homeDir, ctx) => {
 
     const relPath = ctx.query.path
     const upload = ctx.request.files?.file
+    const allowOverwrite = ctx.query.overwrite === 'true'
     if (!relPath) {
         ctx.response.status = 400
         ctx.body = {error: 'No path specified'}
@@ -229,7 +230,7 @@ const setFile = async (homeDir, ctx) => {
             homeDir, joinedRel, sepalUser.username, 'writeFile'
         )
 
-        if (existed) {
+        if (existed && !allowOverwrite) {
             log.warn(() => `Cannot overwrite existing file: ${targetAbs}`)
             ctx.response.status = 409
             ctx.body = {error: 'Cannot overwrite existing files'}
@@ -253,7 +254,11 @@ const setFile = async (homeDir, ctx) => {
         }
 
         ctx.response.status = 200
-        ctx.body = {message: 'File set successfully', path: relPath}
+        ctx.body = {
+            message: existed ? 'File overwritten successfully' : 'File created successfully',
+            path: relPath,
+            overwritten: existed
+        }
     } catch (error) {
         log.warn(() => `Error setting file: ${error.message}`)
         const msg = ('' + error.message).toLowerCase()
