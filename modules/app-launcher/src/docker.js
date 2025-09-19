@@ -40,18 +40,7 @@ const composeFiles = async (appPath, includeOverride = true) => {
     return files.map(f => `--file ${f}`).join(' ')
 }
 
-const cleanupAppImages = async (appName, repository) => {
-    try {
-        log.info(`Cleaning up old images for app ${appName}...`)
-        const pruneCommand = `docker image prune -f --filter "label=org.opencontainers.image.source=${repository}"`
-        await executeCommand(pruneCommand, {})
-        log.info(`Cleaned up old images for app ${appName}`)
-    } catch (error) {
-        log.warn(`Failed to cleanup images for app ${appName}: ${error.message}`)
-    }
-}
-
-const buildAndRestart = async (appName, repository) => {
+const buildAndRestart = async appName => {
     const appPath = getAppPath(appName)
     let attempt = 1
     while (attempt <= MAX_RETRIES) {
@@ -60,11 +49,6 @@ const buildAndRestart = async (appName, repository) => {
             const command = await buildDockerCommand(appPath)
             await executeCommand(command, execOptions(appPath))
             log.info('Docker image built successfully')
-            
-            if (repository) {
-                await cleanupAppImages(appName, repository)
-            }
-            
             await startContainer(appName)
             return
         } catch (error) {

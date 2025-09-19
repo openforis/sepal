@@ -82,20 +82,14 @@
             },
             "health": {
                 "healthy": "Healthy",
-                "starting": "Starting",
-                "unhealthy": "Unhealthy"
+                "starting": "Starting"
             },
             "restart": {
                 "error": "Failed to restart",
                 "success": "Restarted"
             },
-            "buildRestart": {
-                "error": "Failed to build and restart",
-                "success": "Built and restarted successfully"
-            },
             "button": {
                 "restart": "Restart container",
-                "buildRestart": "Build and restart container",
                 "reloadStatus": "Reload status",
                 "reloadLogs": "Reload logs"
             },
@@ -105,8 +99,7 @@
                 "error": "Error",
                 "checking": "Checking",
                 "notAvailable": "Not available",
-                "loading": "Loading...",
-                "exited": "Exited"
+                "loading": "Loading..."
             },
             "timestamp": {
                 "never": "Never"
@@ -117,8 +110,7 @@
                 "error": "Failed to update",
                 "success": "Updated successfully",
                 "noChanges": "No updates available"
-            },
-            "tooltip": "Manage app"
+            }
         }
     },
     "asset": {
@@ -2240,7 +2232,7 @@
                                 "label": "Institution",
                                 "placeholder": "Select an institution",
                                 "required": "You must select an institution",
-                                "tooltip": "You can only see institutions where you are both a member and an admin"
+                                "tooltip": "You can only see institutions that you are member of"
                             },
                             "project": {
                                 "label": "Project",

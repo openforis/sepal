@@ -21,18 +21,16 @@ export const ceoLogin$ = ({email, password}) => {
 }
 
 export const loadInstitutions$ = token => {
-    return api.ceoGateway.getUserAdminInstitutions$({
+    return api.ceoGateway.getAllInstitutions$({
         token: token,
     }).pipe(
-        map(institutions => institutions.map(({id, name}) => ({
-            value: id,
-            label: name
-        }))),
-        tap(institutions => {
+        map(institutions => institutions.filter(inst => inst.isMember === true)),
+        map(institutions => institutions.map(({id, name}) => ({value: id, label: name}))),
+        tap(institutions =>
             actionBuilder('SET_INSTITUTIONS', {institutions})
                 .set('ceo.data.institutions', institutions)
                 .dispatch()
-        })
+        )
     )
 }
 

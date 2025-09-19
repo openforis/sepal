@@ -26,5 +26,5 @@ else
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \
     --google-project-id "$GOOGLE_PROJECT_ID" \
-    --deploy-environment "$DEPLOY_ENVIRONMENT"  
+    --deploy-environment "$DEPLOY_ENVIRONMENT"
 fi

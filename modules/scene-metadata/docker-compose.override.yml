@@ -1,0 +1,17 @@
+services:
+  # scene-metadata-redis:
+  #   extends:
+  #     file: ../docker-compose.logger.override.yml
+  #     service: logger
+
+  scene-metadata:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
+    volumes:  # To allow dynamic reloading in dev
+      - ${SEPAL_PROJECT_DIR}/modules/scene-metadata/lib/shared/package-lock.json:/usr/local/src/sepal/lib/js/shared/package-lock.json
+      - ${SEPAL_PROJECT_DIR}/modules/scene-metadata/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared/package.json:/usr/local/src/sepal/lib/js/shared/package.json
+      # - ${SEPAL_PROJECT_DIR}/lib/js/shared:/usr/local/src/sepal/lib/js/shared
+      - ${SEPAL_PROJECT_DIR}/modules/scene-metadata:/usr/local/src/sepal/modules/scene-metadata

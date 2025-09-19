@@ -2,16 +2,12 @@ const {stream} = require('#sepal/httpServer')
 const {ClientException} = require('#sepal/exception')
 const {getFromCeo$} = require('./handlers/getFromCeo')
 const {loginToken$} = require('./handlers/loginToken')
+
 const routes = router => router
     .post('/login-token', stream(ctx => loginToken$(ctx)))
     .get('/get-all-institutions', stream(ctx =>
         getFromCeo$(ctx, {
             path: 'get-all-institutions'
-        })
-    ))
-    .get('/get-user-admin-institutions', stream(ctx =>
-        getFromCeo$(ctx, {
-            path: 'get-user-admin-institutions'
         })
     ))
     .get('/get-institution-projects', stream(ctx =>

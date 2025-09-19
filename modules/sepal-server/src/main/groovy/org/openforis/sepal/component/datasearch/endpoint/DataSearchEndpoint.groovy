@@ -6,7 +6,6 @@ import groovymvc.Params
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.datasearch.api.*
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
-import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
 import org.openforis.sepal.component.task.command.SubmitTask
 
@@ -37,16 +36,6 @@ class DataSearchEndpoint {
             get('/data/map-api-keys') {
                 response.contentType = "application/json"
                 send toJson(google: googleMapsApiKey, nicfiPlanet: nicfiPlanetApiKey)
-            }
-            post('/data/sceneareas') {
-                response.contentType = "application/json"
-                def source = params.required('source', String)
-                def sceneAreas = component.submit(new FindSceneAreasForAoi(
-                    sepalUser,
-                    source,
-                    toAoi(params)))
-                def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
-                send(toJson(data))
             }
 
             post('/data/best-scenes') {

@@ -9,11 +9,6 @@ export default {
                 maxRetries: 1
             }
         }),
-
-    getUserAdminInstitutions$: ({token}) =>
-        get$('/api/ceo-gateway/get-user-admin-institutions', {
-            headers: {'x-ceo-token': token},
-        }),
      
     getAllInstitutions$: ({token}) =>
         get$('/api/ceo-gateway/get-all-institutions', {

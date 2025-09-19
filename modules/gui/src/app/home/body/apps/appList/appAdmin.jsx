@@ -22,13 +22,10 @@ export class AppAdmin extends React.Component {
         this.state = {
             loadingContainer: true,
             loadingLogs: true,
-            loadingRepo: true,
             updatingRepo: false,
-            restarting: false,
-            buildingAndRestarting: false,
             container: {
                 exists: false,
-                status: null,
+                status: 'idle',
                 healthStatus: null,
                 stats: null,
                 clients: null
@@ -62,8 +59,8 @@ export class AppAdmin extends React.Component {
                 />
                 <Panel.Content scrollable>
                     <Layout type='vertical' spacing='compact'>
-                        {this.renderRepoInfo()}
                         {this.renderContainerInfo()}
+                        {this.renderRepoInfo()}
                         {this.renderLogsView()}
                     </Layout>
                 </Panel.Content>
@@ -80,10 +77,9 @@ export class AppAdmin extends React.Component {
     }
 
     componentDidMount() {
-        this.loadRepoInfo()
-        this.loadContainerStatus()
+        this.loadStatus()
         this.loadLogs()
-        this.statusInterval = setInterval(() => this.loadContainerStatus(), 10000)
+        this.statusInterval = setInterval(() => this.loadStatus(), 10000)
     }
 
     componentWillUnmount() {
@@ -115,42 +111,13 @@ export class AppAdmin extends React.Component {
         )
     }
 
-    loadRepoInfo() {
-        const {app} = this.props
-        this.setState({loadingRepo: true})
-        
-        api.appLauncher.getAppRepoInfo$(app.id).subscribe(
-            info => {
-                this.setState({
-                    loadingRepo: false,
-                    repo: {
-                        url: info.repo?.url || null,
-                        lastCloneTimestamp: info.repo?.lastCloneTimestamp || null,
-                        lastCommitId: info.repo?.lastCommitId || null,
-                        commitUrl: info.repo?.commitUrl || null,
-                        updateAvailable: info.repo?.updateAvailable || false,
-                        branch: info.repo?.branch || null
-                    },
-                    error: info.error || null
-                })
-            },
-            error => {
-                this.setState({
-                    loadingRepo: false,
-                    error: 'Failed to load repo info: ' + (error.message || 'Unknown error')
-                })
-                log.error('Failed to load repo info', error)
-            }
-        )
-    }
-
-    loadContainerStatus() {
+    loadStatus() {
         const {app} = this.props
         this.setState({
             loadingContainer: true
         })
         
-        api.appLauncher.getAppContainerStatus$(app.id).subscribe(
+        api.appLauncher.getAppStatus$(app.id).subscribe(
             info => {
                 this.setState({
                     loadingContainer: false,
@@ -160,6 +127,14 @@ export class AppAdmin extends React.Component {
                         healthStatus: info.container?.health?.status || null,
                         stats: info.container?.stats || null,
                         clients: info.container?.clients || null
+                    },
+                    repo: {
+                        url: info.repo?.url || null,
+                        lastCloneTimestamp: info.repo?.lastCloneTimestamp || null,
+                        lastCommitId: info.repo?.lastCommitId || null,
+                        commitUrl: info.repo?.commitUrl || null,
+                        updateAvailable: info.repo?.updateAvailable || false,
+                        branch: info.repo?.branch || null
                     },
                     resourcez: {
                         ...this.state.resourcez,
@@ -175,7 +150,7 @@ export class AppAdmin extends React.Component {
                         ...this.state.container,
                         status: 'error'
                     },
-                    error: 'Failed to load container status: ' + (error.message || 'Unknown error')
+                    error: 'Failed to load status: ' + (error.message || 'Unknown error')
                 })
                 Notifications.error({
                     message: error.error
@@ -186,42 +161,18 @@ export class AppAdmin extends React.Component {
     
     restartApp() {
         const {app} = this.props
-        this.setState({restarting: true, logs: []})
-        this.loadContainerStatus()
+        this.setState({loadingContainer: true, logs: []})
         
         api.appLauncher.restartApp$(app.id).subscribe(
             response => {
-                this.setState({restarting: false})
-                this.loadContainerStatus()
+                this.loadStatus()
                 this.loadLogs()
                 Notifications.success({message: response.message || msg('apps.admin.restart.success')})
             },
             error => {
-                this.setState({restarting: false})
-                this.loadContainerStatus()
+                this.setState({loadingContainer: false})
                 Notifications.error({message: error.error || msg('apps.admin.restart.error')})
                 log.error('Failed to restart app', error)
-            }
-        )
-    }
-    
-    buildAndRestartApp() {
-        const {app} = this.props
-        this.setState({buildingAndRestarting: true, logs: []})
-        this.loadContainerStatus()
-        
-        api.appLauncher.buildAndRestartApp$(app.id).subscribe(
-            response => {
-                this.setState({buildingAndRestarting: false})
-                this.loadContainerStatus()
-                this.loadLogs()
-                Notifications.success({message: response.message || msg('apps.admin.buildRestart.success')})
-            },
-            error => {
-                this.setState({buildingAndRestarting: false})
-                this.loadContainerStatus()
-                Notifications.error({message: error.error || msg('apps.admin.buildRestart.error')})
-                log.error('Failed to build and restart app', error)
             }
         )
     }
@@ -230,10 +181,10 @@ export class AppAdmin extends React.Component {
         const {app} = this.props
         const {branch} = this.state.repo
         this.setState({updatingRepo: true})
-        api.appLauncher.pullUpdatesOnly$(app.id, branch).subscribe(
+        api.appLauncher.updateApp$(app.id, branch).subscribe(
             response => {
                 this.setState({updatingRepo: false})
-                this.loadRepoInfo()
+                this.loadStatus()
                 if (response.updated) {
                     Notifications.success({message: response.message || msg('apps.admin.update.success')})
                 } else {
@@ -250,7 +201,7 @@ export class AppAdmin extends React.Component {
     
     reloadStatus() {
         this.setState({loadingContainer: true})
-        this.loadContainerStatus()
+        this.loadStatus()
         this.loadLogs()
     }
     
@@ -270,45 +221,31 @@ export class AppAdmin extends React.Component {
         
         return (
             <Widget label={msg('apps.admin.logs.title')} framed labelButtons={this.renderLogButton()}>
-                {!logs || logs.length === 0 ? (
+                {loadingLogs ? (
                     <div className={styles.row}>
                         <div className={styles.fieldValue}>
-                            <span className={styles.statusRow}>
-                                {loadingLogs && <Icon name='spinner' className={styles.statusSpinner}/>}
-                                <span>{msg('apps.admin.logs.empty')}</span>
-                            </span>
+                            <Icon name='spinner'/> {msg('apps.admin.status.loading')}
                         </div>
                     </div>
-                ) : (
-                    <div style={{position: 'relative'}}>
-                        {loadingLogs && (
-                            <div style={{
-                                position: 'absolute', 
-                                top: '8px', 
-                                right: '8px', 
-                                zIndex: 1,
-                                background: 'rgba(255,255,255,0.9)',
-                                padding: '4px',
-                                borderRadius: '4px'
-                            }}>
-                                <Icon name='spinner' className={styles.statusSpinner}/>
-                            </div>
-                        )}
-                        <Textarea
-                            className={styles.logs}
-                            value={logs.join('\n')}
-                            readOnly={true}
-                            spellCheck={false}
-                            minRows={5}
-                        />
+                ) : !logs || logs.length === 0 ? (
+                    <div className={styles.row}>
+                        <div className={styles.fieldValue}>{msg('apps.admin.logs.empty')}</div>
                     </div>
+                ) : (
+                    <Textarea
+                        className={styles.logs}
+                        value={logs.join('\n')}
+                        readOnly={true}
+                        spellCheck={false}
+                        minRows={5}
+                    />
                 )}
             </Widget>
         )
     }
 
     renderRepoInfo() {
-        const {repo, error, loadingRepo} = this.state
+        const {repo, error} = this.state
         const {url: repoUrl, lastCloneTimestamp, lastCommitId, commitUrl, branch} = repo
         
         return (
@@ -316,63 +253,49 @@ export class AppAdmin extends React.Component {
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel}>{msg('apps.admin.repo.url')}:</Label>
                     <div className={styles.fieldValue}>
-                        <span className={styles.statusRow}>
-                            {loadingRepo && <Icon name='spinner' className={styles.statusSpinner}/>}
-                            {repoUrl ? (
-                                <a
-                                    href={repoUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    {repoUrl}
-                                </a>
-                            ) : (
-                                <span>{msg('apps.admin.status.loading')}</span>
-                            )}
-                        </span>
+                        {repoUrl ? (
+                            <a
+                                href={repoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                {repoUrl}
+                            </a>
+                        ) : (
+                            msg('apps.admin.status.loading')
+                        )}
                     </div>
                 </div>
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel}>{msg('apps.admin.repo.branch')}:</Label>
                     <div className={styles.fieldValue}>
-                        <span className={styles.statusRow}>
-                            {loadingRepo && <Icon name='spinner' className={styles.statusSpinner}/>}
-                            <span>{branch || msg('apps.admin.status.loading')}</span>
-                        </span>
+                        {branch || msg('apps.admin.status.loading')}
                     </div>
                 </div>
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel}>{msg('apps.admin.repo.lastClone')}:</Label>
                     <div className={styles.fieldValue}>
-                        <span className={styles.statusRow}>
-                            {loadingRepo && <Icon name='spinner' className={styles.statusSpinner}/>}
-                            <span>
-                                {lastCloneTimestamp
-                                    ? this.formatTimestamp(lastCloneTimestamp)
-                                    : msg('apps.admin.status.loading')
-                                }
-                            </span>
-                        </span>
+                        {lastCloneTimestamp
+                            ? this.formatTimestamp(lastCloneTimestamp)
+                            : msg('apps.admin.status.loading')
+                        }
                     </div>
                 </div>
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel}>{msg('apps.admin.repo.lastCommit')}:</Label>
                     <div className={styles.fieldValue}>
-                        <span className={styles.statusRow}>
-                            {loadingRepo && <Icon name='spinner' className={styles.statusSpinner}/>}
-                            {lastCommitId
-                                ? (commitUrl
-                                    ? <a
-                                        href={commitUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        {lastCommitId.substring(0, 7)}
-                                    </a>
-                                    : <span>{lastCommitId.substring(0, 7)}</span>)
-                                : <span>{msg('apps.admin.status.loading')}</span>
-                            }
-                        </span>
+                        {lastCommitId
+                            ? (commitUrl
+                                ? <a
+                                    href={commitUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    {lastCommitId.substring(0, 7)}
+                                </a>
+                                : lastCommitId.substring(0, 7))
+                            : msg('apps.admin.status.loading')
+                        }
                     </div>
                 </div>
                 {error && (
@@ -398,7 +321,6 @@ export class AppAdmin extends React.Component {
         const healthClass = {
             'healthy': styles.healthHealthy,
             'starting': styles.healthStarting,
-            'unhealthy': styles.statusError
         }[healthStatus] || styles.statusUnknown
         
         if (!loadingContainer && !containerExists) {
@@ -418,15 +340,14 @@ export class AppAdmin extends React.Component {
                     <Label className={styles.fieldLabel}>{msg('apps.admin.container.containerStatus')}:</Label>
                     <div className={styles.fieldValue}>
                         <div className={styles.statusRow}>
-                            {loadingContainer && <Icon name='spinner' className={styles.statusSpinner}/>}
                             <Icon
-                                name='circle'
-                                className={statusClass}
+                                name={loadingContainer ? 'spinner' : 'circle'}
+                                className={loadingContainer ? styles.statusSpinner : statusClass}
                             />
                             <span>
-                                {status 
-                                    ? msg(`apps.admin.status.${status}`)
-                                    : msg('apps.admin.status.loading')}
+                                {loadingContainer
+                                    ? msg('apps.admin.status.loading')
+                                    : msg(`apps.admin.status.${status}`)}
                             </span>
                         </div>
                     </div>
@@ -436,15 +357,14 @@ export class AppAdmin extends React.Component {
                     <Label className={styles.fieldLabel}>{msg('apps.admin.container.mainProcess')}:</Label>
                     <div className={styles.fieldValue}>
                         <div className={styles.statusRow}>
-                            {loadingContainer && <Icon name='spinner' className={styles.statusSpinner}/>}
                             <Icon
-                                name='circle'
-                                className={healthClass}
+                                name={loadingContainer ? 'spinner' : 'circle'}
+                                className={loadingContainer ? styles.statusSpinner : healthClass}
                             />
                             <span>
-                                {healthStatus 
-                                    ? msg(`apps.admin.health.${healthStatus}`)
-                                    : msg('apps.admin.status.loading')}
+                                {loadingContainer
+                                    ? msg('apps.admin.status.loading')
+                                    : msg(`apps.admin.health.${healthStatus}`)}
                             </span>
                         </div>
                     </div>
@@ -453,45 +373,57 @@ export class AppAdmin extends React.Component {
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel}>{msg('apps.admin.container.memoryUsage')}:</Label>
                     <div className={styles.fieldValue}>
-                        <span className={styles.statusRow}>
-                            {loadingContainer && <Icon name='spinner' className={styles.statusSpinner}/>}
-                            <span>
-                                {containerStats 
-                                    ? `${containerStats.memoryUsage} / ${containerStats.memoryLimit} (${containerStats.memoryPercent})`
-                                    : msg('apps.admin.status.loading')
-                                }
+                        {loadingContainer ? (
+                            <span className={styles.statusRow}>
+                                <Icon name='spinner' className={styles.statusSpinner}/> {msg('apps.admin.status.loading')}
                             </span>
-                        </span>
+                        ) : containerStats ? (
+                            <span>
+                                {containerStats.memoryUsage} / {containerStats.memoryLimit} ({containerStats.memoryPercent})
+                            </span>
+                        ) : (
+                            <span>
+                                {msg('apps.admin.status.loading')}
+                            </span>
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel}>{msg('apps.admin.container.cpuUsage')}:</Label>
                     <div className={styles.fieldValue}>
-                        <span className={styles.statusRow}>
-                            {loadingContainer && <Icon name='spinner' className={styles.statusSpinner}/>}
-                            <span>
-                                {containerStats 
-                                    ? containerStats.cpuPercent
-                                    : msg('apps.admin.status.loading')
-                                }
+                        {loadingContainer ? (
+                            <span className={styles.statusRow}>
+                                <Icon name='spinner' className={styles.statusSpinner}/> {msg('apps.admin.status.loading')}
                             </span>
-                        </span>
+                        ) : containerStats ? (
+                            <span>
+                                {containerStats.cpuPercent}
+                            </span>
+                        ) : (
+                            <span>
+                                {msg('apps.admin.status.loading')}
+                            </span>
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel}>{msg('apps.admin.container.connections')}:</Label>
                     <div className={styles.fieldValue}>
-                        <span className={styles.statusRow}>
-                            {loadingContainer && <Icon name='spinner' className={styles.statusSpinner}/>}
-                            <span>
-                                {this.state.resourcez.websockets 
-                                    ? this.state.resourcez.websockets.open
-                                    : msg('apps.admin.status.loading')
-                                }
+                        {loadingContainer ? (
+                            <span className={styles.statusRow}>
+                                <Icon name='spinner' className={styles.statusSpinner}/> {msg('apps.admin.status.loading')}
                             </span>
-                        </span>
+                        ) : this.state.resourcez.websockets ? (
+                            <span>
+                                {this.state.resourcez.websockets.open}
+                            </span>
+                        ) : (
+                            <span>
+                                {msg('apps.admin.status.loading')}
+                            </span>
+                        )}
                     </div>
                 </div>
             </Widget>
@@ -499,7 +431,7 @@ export class AppAdmin extends React.Component {
     }
 
     renderContainerButtons() {
-        const {loadingContainer, restarting, buildingAndRestarting} = this.state
+        const {loadingContainer} = this.state
 
         return <Layout type='horizontal' spacing='compact'>
             <Button
@@ -512,21 +444,12 @@ export class AppAdmin extends React.Component {
             />
 
             <Button
-                icon={restarting ? 'spinner' : 'redo'}
+                icon='redo'
                 chromeless
                 shape='none'
                 tooltip={msg('apps.admin.button.restart')}
                 onClick={() => this.restartApp()}
-                disabled={restarting}
-            />
-
-            <Button
-                icon={buildingAndRestarting ? 'spinner' : 'hammer'}
-                chromeless
-                shape='none'
-                tooltip={msg('apps.admin.button.buildRestart')}
-                onClick={() => this.buildAndRestartApp()}
-                disabled={buildingAndRestarting}
+                disabled={loadingContainer}
             />
 
         </Layout>
