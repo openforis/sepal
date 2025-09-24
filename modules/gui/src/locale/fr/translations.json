@@ -54,7 +54,72 @@
         "run": {
             "error": "Echec d'exécution {label}"
         },
-        "running": "L'app est lancée"
+        "running": "L'app est lancée",
+        "noInstanceRequired": "",
+        "admin": {
+            "title": "",
+            "logs": {
+                "title": "",
+                "empty": ""
+            },
+            "container": {
+                "title": "",
+                "notFound": "",
+                "status": "",
+                "containerStatus": "",
+                "mainProcess": "",
+                "memoryUsage": "",
+                "cpuUsage": "",
+                "connections": ""
+            },
+            "repo": {
+                "title": "",
+                "url": "",
+                "lastCommit": "",
+                "lastClone": "",
+                "error": "Erreur",
+                "branch": ""
+            },
+            "health": {
+                "healthy": "",
+                "starting": "",
+                "unhealthy": ""
+            },
+            "restart": {
+                "error": "",
+                "success": ""
+            },
+            "buildRestart": {
+                "error": "",
+                "success": ""
+            },
+            "button": {
+                "restart": "",
+                "buildRestart": "",
+                "reloadStatus": "",
+                "reloadLogs": ""
+            },
+            "status": {
+                "running": "",
+                "idle": "",
+                "error": "Erreur",
+                "checking": "",
+                "notAvailable": "",
+                "loading": "Chargement...",
+                "exited": ""
+            },
+            "timestamp": {
+                "never": ""
+            },
+            "update": {
+                "available": "",
+                "checkForUpdates": "",
+                "error": "",
+                "success": "",
+                "noChanges": ""
+            },
+            "tooltip": ""
+        }
     },
     "asset": {
         "failedToLoad": "Échec du chargement de l'asset EE",

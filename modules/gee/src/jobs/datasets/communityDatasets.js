@@ -1,6 +1,6 @@
 // const Job = require('#sepal/worker/job')
 const {get$} = require('#sepal/httpClient')
-const {map, timer, tap, switchMap, catchError, EMPTY} = require('rxjs')
+const {map, timer, tap, switchMap} = require('rxjs')
 const _ = require('lodash')
 const {escapeRegExp, simplifyString, splitString} = require('#sepal/string')
 const log = require('#sepal/log').getLogger('ee')
@@ -18,10 +18,6 @@ const EXCLUDED_LICENSES = [
 
 const getDatasets$ = () =>
     get$(URL).pipe(
-        catchError(error => {
-            log.error('Error while downloading Awesome GEE community datasets - ', error)
-            return EMPTY
-        }),
         map(({body}) => JSON.parse(body)),
         map(datasets => mapDataset(datasets))
     )

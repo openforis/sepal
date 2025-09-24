@@ -155,15 +155,6 @@
         "build": {},
         "run": false
     },
-    "scene-metadata": {
-        "lib": [
-            "shared"
-        ],
-        "build": {},
-        "run": [
-            "logger"
-        ]
-    },
     "sepal-server": {
         "build": {
             "java": "build",

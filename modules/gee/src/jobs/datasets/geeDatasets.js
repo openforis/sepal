@@ -1,5 +1,5 @@
 const {get$} = require('#sepal/httpClient')
-const {of, map, switchMap, mergeMap, toArray, timer, tap, catchError, EMPTY} = require('rxjs')
+const {of, map, switchMap, mergeMap, toArray, timer, tap} = require('rxjs')
 const _ = require('lodash')
 const {escapeRegExp, simplifyString, splitString} = require('#sepal/string')
 const log = require('#sepal/log').getLogger('ee')
@@ -12,10 +12,6 @@ let datasets = []
 
 const getNode$ = (url = URL) =>
     get$(url).pipe(
-        catchError(error => {
-            log.error('Error while downloading GEE catalog - ', error)
-            return EMPTY
-        }),
         map(({body}) => JSON.parse(body)),
         switchMap(({type, title, id, 'gee:type': geeType, links, providers}) =>
             type === 'Catalog'

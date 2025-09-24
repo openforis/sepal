@@ -6,6 +6,7 @@ import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.datasearch.api.*
 import org.openforis.sepal.component.datasearch.command.UpdateSceneMetaData
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
+import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
 import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.sql.SqlConnectionManager
@@ -42,6 +43,23 @@ class DataSearchTest extends Specification {
         'some-nicfi-planet-api-key',
         new SynchronousEventDispatcher()
     )
+
+    def 'When finding scene areas for AOI, scene areas are returned'() {
+        def expectedSceneAreas = sceneAreaProvider.areas(SOME_FUSION_TABLE, SOME_KEY_COLUMN, SOME_KEY_VALUE, [sceneArea('some scene area')])
+
+        when:
+        def sceneAreas = component.submit(new FindSceneAreasForAoi(
+            sepalUser,
+            'LANDSAT',
+            new FusionTableShape(
+                tableName: SOME_FUSION_TABLE,
+                keyColumn: SOME_KEY_COLUMN,
+                keyValue: SOME_KEY_VALUE
+            )))
+
+        then:
+        sceneAreas == expectedSceneAreas
+    }
 
     def 'Given no scenes exist, when finding scenes, no scenes are returned'() {
         expect:

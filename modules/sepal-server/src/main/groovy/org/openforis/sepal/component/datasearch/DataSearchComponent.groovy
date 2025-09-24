@@ -70,6 +70,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
             new UpdateSentinel2SceneMetaDataHandler(sentinel2Metadata, sceneMetaDataRepository)
         ]))
 
+        query(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(geeGateway))
         query(FindScenesForSceneArea, new FindScenesForSceneAreaHandler(sceneMetaDataRepository))
         query(FindBestScenes, new FindBestScenesHandler(sceneMetaDataRepository))
     }
