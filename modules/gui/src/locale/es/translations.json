@@ -82,14 +82,20 @@
             },
             "health": {
                 "healthy": "",
-                "starting": ""
+                "starting": "",
+                "unhealthy": ""
             },
             "restart": {
                 "error": "",
                 "success": ""
             },
+            "buildRestart": {
+                "error": "",
+                "success": ""
+            },
             "button": {
                 "restart": "",
+                "buildRestart": "",
                 "reloadStatus": "",
                 "reloadLogs": ""
             },
@@ -99,7 +105,8 @@
                 "error": "",
                 "checking": "",
                 "notAvailable": "",
-                "loading": "Cargando..."
+                "loading": "Cargando...",
+                "exited": ""
             },
             "timestamp": {
                 "never": ""
@@ -110,7 +117,8 @@
                 "error": "",
                 "success": "",
                 "noChanges": ""
-            }
+            },
+            "tooltip": ""
         }
     },
     "asset": {
