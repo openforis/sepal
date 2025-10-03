@@ -1,0 +1,12 @@
+{
+    "port": 5000,
+    "categories": {
+        "config": "info",
+        "csv": "info",
+        "database": "info",
+        "filesystem": "info",
+        "landsat": "info",
+        "main": "info",
+        "sentinel2": "info"
+    }
+}

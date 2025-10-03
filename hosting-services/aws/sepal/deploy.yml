@@ -279,3 +279,4 @@
     - { role: run-module, module: letsencrypt }
     - { role: run-module, module: haproxy }
     - { role: run-module, module: sys-monitor }
+    - { role: run-module, module: scene-metadata }

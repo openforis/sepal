@@ -1,0 +1,55 @@
+services:
+  scene-metadata-redis:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
+    image: "redis:6"
+    container_name: scene-metadata-redis
+    volumes:
+      - "${SEPAL_DATA_DIR}/scene-metadata-redis:/data"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      timeout: 60s
+      interval: 1s
+      retries: 60
+    networks:
+      - sepal
+    restart: always
+
+  scene-metadata:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
+    build:
+      context: ../..
+      dockerfile: ./modules/scene-metadata/Dockerfile
+      ulimits:
+        nofile:
+          soft: 65536
+          hard: 65536
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/scene-metadata:${SEPAL_VERSION:-latest}"
+    container_name: scene-metadata
+    init: true
+    volumes:
+      - "${SEPAL_DATA_DIR}/mysql-files:/var/lib/mysql-files"
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      MYSQL_HOST: "mysql"
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_FILES_DIR: "/var/lib/mysql-files"
+      UPDATE_TIME: "02:30" 
+      MIN_DAYS_PUBLISHED: 2
+    networks:
+      - sepal
+    restart: always
+    ulimits:
+      core: 0
+
+volumes:
+  mysql-files:
+    external: true
+
+networks:
+  sepal:
+    external: true

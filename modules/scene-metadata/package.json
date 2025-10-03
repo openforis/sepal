@@ -1,0 +1,28 @@
+{
+    "name": "scene-metadata",
+    "version": "1.0.0",
+    "description": "",
+    "main": "main.js",
+    "scripts": {
+        "test": "jest",
+        "testWatch": "jest --watchAll"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "commander": "^14.0.0",
+        "csv-parse": "^6.1.0",
+        "csv-stringify": "^6.6.0",
+        "date-fns": "^4.1.0",
+        "log4js": "^6.9.1",
+        "mysql2": "^3.14.4",
+        "redis": "^5.8.0",
+        "rxjs": "^7.8.2",
+        "sepal": "../../lib/js/shared"
+    },
+    "imports": {
+        "#sepal/*": "sepal/src/*.js",
+        "#sepal/*.json": "sepal/src/*.json",
+        "#config/*.json": "./config/*.json"
+    }
+}
