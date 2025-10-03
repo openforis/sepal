@@ -16,6 +16,7 @@ services:
       - "${SEPAL_DATA_DIR}/mysql:/data"
       # Parent image volume
       - "${SEPAL_DATA_DIR}/mysql/db:/var/lib/mysql"
+      - "${SEPAL_DATA_DIR}/mysql-files:/var/lib/mysql-files"
     environment:
       MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
@@ -49,6 +50,10 @@ services:
     depends_on:
       - mysql
     restart: always
+
+volumes:
+  mysql-files:
+    external: true
 
 networks:
   sepal:
