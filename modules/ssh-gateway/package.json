@@ -10,12 +10,12 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "commander": "^14.0.0",
+        "commander": "^14.0.1",
         "lodash": "^4.17.21",
         "moment": "^2.30.1",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
-        "uuid": "^11.1.0"
+        "uuid": "^13.0.0"
     },
     "devDependencies": {
     },
