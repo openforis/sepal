@@ -161,7 +161,8 @@
         ],
         "build": {},
         "run": [
-            "logger"
+            "logger",
+            "mysql"
         ]
     },
     "sepal-server": {
