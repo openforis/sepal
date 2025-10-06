@@ -41,7 +41,7 @@ const initializeData = async ({redis, database}) => {
         await download()
         await load({redis, database, update: false, timestamp})
         await database.finalize()
-        await redis.setInitialized(timestamp.toISOString)
+        await redis.setInitialized(timestamp.toISOString())
         log.info(`Initialized database (${formatInterval(t0)})`)
     }
 }
