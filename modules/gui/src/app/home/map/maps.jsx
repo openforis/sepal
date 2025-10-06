@@ -1,4 +1,4 @@
-import {Loader} from '@googlemaps/js-api-loader'
+import {importLibrary, setOptions} from '@googlemaps/js-api-loader'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -18,7 +18,7 @@ import {SepalMap} from './sepalMap'
 const log = getLogger('maps')
 
 // Note: Google Maps API v.3.5+ deprecates Marker for AdvancedMarkerElement, which requires creating a MapId
-const GOOGLE_MAPS_VERSION = '3.60'
+const GOOGLE_MAPS_VERSION = '3.62'
 const GOOGLE_MAPS_LIBRARIES = ['core', 'drawing', 'geocoding', 'marker', 'places']
 
 const DEFAULT_ZOOM = 3
@@ -69,13 +69,13 @@ class _Maps extends React.Component {
     }
 
     initGoogleMaps$(googleMapsApiKey) {
-        const loader = new Loader({
-            apiKey: googleMapsApiKey,
-            version: GOOGLE_MAPS_VERSION
+        setOptions({
+            key: googleMapsApiKey,
+            v: GOOGLE_MAPS_VERSION,
         })
         
         const libraries = ['maps', ...GOOGLE_MAPS_LIBRARIES].reduce(
-            (libraries, library) => ({...libraries, [library]: from(loader.importLibrary(library))}),
+            (libraries, library) => ({...libraries, [library]: from(importLibrary(library))}),
             {}
         )
 
