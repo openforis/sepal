@@ -79,6 +79,9 @@
     width: calc(var(--thumbnail-size) - 2px);
     position: relative;
     background-color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .image {

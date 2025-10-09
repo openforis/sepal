@@ -1,7 +1,5 @@
-const {getDayOfYear} = require('date-fns')
-const {getSceneId, getSceneAreaId, browseUrl} = require('./sentinel2')
+const {getId, scene} = require('./sentinel2')
 const {updateFromStac} = require('./stac')
-const log = require('#sepal/log').getLogger('sentinel2')
 
 const sceneMapper = ({
     properties: {
@@ -10,22 +8,11 @@ const sceneMapper = ({
         'datetime': acquiredTimestamp,
     }
 }) => {
-    const sceneId = getSceneId(productUri)
-    return sceneId ? {
-        sceneId,
-        source: 'SENTINEL_2',
-        dataSet: 'SENTINEL_2',
-        sceneAreaId: getSceneAreaId(productUri),
-        acquiredTimestamp,
-        dayOfYear: getDayOfYear(acquiredTimestamp),
-        cloudCover: parseFloat(cloudCover),
-        sunAzimuth: 0,
-        sunElevation: 0,
-        thumbnailUrl: browseUrl(productUri)
-    } : null
+    const id = getId(productUri)
+    return id
+        ? scene({id, productUri, acquiredTimestamp, cloudCover})
+        : null
 }
-
-log.fatal(updateFromStac)
 
 const updateSentinel2 = async ({redis, database, timestamp}) =>
     await updateFromStac({

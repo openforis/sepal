@@ -63,7 +63,6 @@ class CsvBackedSentinel2GatewayWithCoverageAndFootprint implements DataSetMetada
                         cloudCover: data.CLOUDY_PIXEL_PERCENTAGE.toDouble(),
                         coverage: data.DATA_COVERAGE_PERCENTAGE.toDouble(),
                         footprint: footprint(data),
-                        browseUrl: browseUrl(id),
                         updateTime: parseDate(id.substring(16, 31))
                 )
             }
@@ -86,18 +85,6 @@ class CsvBackedSentinel2GatewayWithCoverageAndFootprint implements DataSetMetada
 
     private boolean isSceneIncluded(data) {
         return true
-    }
-
-    private URI browseUrl(id) {
-        def utmCode = id.substring(33, 35) as int
-        def latitudeBand = id.substring(35, 36)
-        def square = id.substring(36, 38)
-        def year = id.substring(0, 4) as int
-        def month = id.substring(4, 6) as int
-        def day = id.substring(6, 8) as int
-        def awsPath = "$utmCode/$latitudeBand/$square/$year/$month/$day/0"
-        def base = 'https://roda.sentinel-hub.com/sentinel-s2-l1c/tiles'
-        return URI.create("$base/$awsPath/preview.jpg")
     }
 
     static DataSetMetadataGateway create(File workingDir) {

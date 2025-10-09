@@ -1,4 +1,5 @@
-const {updateTime} = require('./config')
+const {subDays} = require('date-fns/subDays')
+const {updateTime, minDaysPublished} = require('./config')
 const {initializeDatabase} = require('./database')
 const {downloadLandsat, loadLandsat} = require('./landsatCsv')
 const {updateLandsat} = require('./landsatStac')
@@ -24,9 +25,9 @@ const download = async () => {
     log.info(`Downloaded CSV files (${formatInterval(t0)})`)
 }
 
-const load = async ({redis, database, update, timestamp}) => {
-    await loadLandsat({redis, database, timestamp, update})
-    await loadSentinel2({redis, database, timestamp, update})
+const load = async ({redis, database, update, maxTimestamp, timestamp}) => {
+    await loadLandsat({redis, database, maxTimestamp, timestamp, update})
+    await loadSentinel2({redis, database, maxTimestamp, timestamp, update})
 }
 
 const initializeData = async ({redis, database}) => {
@@ -34,12 +35,13 @@ const initializeData = async ({redis, database}) => {
     if (initialized) {
         log.info('Skipped initialization from CSV files')
     } else {
+        const maxTimestamp = subDays(new Date(), minDaysPublished).toISOString()
         const timestamp = new Date()
         log.info(`Initializing database (timestamp: ${timestamp.toISOString()})`)
         const t0 = Date.now()
         await database.prepare()
         await download()
-        await load({redis, database, update: false, timestamp})
+        await load({redis, database, update: false, maxTimestamp, timestamp})
         await database.finalize()
         await redis.setInitialized(timestamp.toISOString())
         log.info(`Initialized database (${formatInterval(t0)})`)
@@ -48,10 +50,8 @@ const initializeData = async ({redis, database}) => {
 
 const updateData = async ({redis, database}) => {
     const timestamp = new Date()
-    log.info(`Updating database, (timestamp: ${timestamp.toISOString()})`)
+    log.info(`Updating database (timestamp: ${timestamp.toISOString()})`)
     const t0 = Date.now()
-    // await download()
-    // await loadLandsat({redis, database, timestamp, update: true})
     await updateLandsat({redis, database, timestamp})
     await updateSentinel2({redis, database, timestamp})
     log.info(`Updated database (${formatInterval(t0)})`)

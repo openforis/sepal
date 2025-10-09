@@ -80,7 +80,7 @@ const initializeDatabase = async () => {
                     OPTIONALLY ENCLOSED BY '"'
                     LINES TERMINATED BY '\n'
                     IGNORE 0 ROWS
-                    (id, meta_data_source, sensor_id, scene_area_id, @acquisition_date, day_of_year, cloud_cover, sun_azimuth, sun_elevation, browse_url)
+                    (id, meta_data_source, sensor_id, scene_area_id, @acquisition_date, day_of_year, cloud_cover, sun_azimuth, sun_elevation)
                     SET acquisition_date = STR_TO_DATE(@acquisition_date, '%Y-%m-%dT%H:%i:%s.%fZ'),
                         update_time = STR_TO_DATE('${updateTime}', '%Y-%m-%dT%H:%i:%s.%fZ');
             `)
@@ -121,8 +121,8 @@ const initializeDatabase = async () => {
         process.exit()
     })
 
-    const mapValues = ({sceneId, source, dataSet, sceneAreaId, acquiredTimestamp, dayOfYear, cloudCover, sunAzimuth, sunElevation, thumbnailUrl}, timestamp) =>
-        ([sceneId, source, dataSet, sceneAreaId, new Date(acquiredTimestamp), dayOfYear, cloudCover, sunAzimuth, sunElevation, thumbnailUrl, timestamp])
+    const mapValues = ({sceneId, source, dataSet, sceneAreaId, acquiredTimestamp, dayOfYear, cloudCover, sunAzimuth, sunElevation}, timestamp) =>
+        ([sceneId, source, dataSet, sceneAreaId, new Date(acquiredTimestamp), dayOfYear, cloudCover, sunAzimuth, sunElevation, timestamp])
 
     const beginTransaction = async () => {
         if (transaction.connection) {
@@ -165,7 +165,7 @@ const initializeDatabase = async () => {
             const t0 = Date.now()
             await transaction.connection.query(`
                 INSERT IGNORE INTO ${CURRENT_DATABASE_NAME}.${TABLE_NAME}
-                (id, meta_data_source, sensor_id, scene_area_id, acquisition_date, day_of_year, cloud_cover, sun_azimuth, sun_elevation, browse_url, update_time)
+                (id, meta_data_source, sensor_id, scene_area_id, acquisition_date, day_of_year, cloud_cover, sun_azimuth, sun_elevation, update_time)
                 VALUES ?
                 `, [scenes.map(scene => mapValues(scene, timestamp))])
             log.info(`Updates ingested (${formatInterval(t0)})`)

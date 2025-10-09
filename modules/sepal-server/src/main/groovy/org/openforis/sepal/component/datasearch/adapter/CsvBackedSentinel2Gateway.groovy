@@ -56,7 +56,6 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
         try {
             if (isSceneIncluded(data)) {
                 def id = id(data)
-                def awsPath = awsPath(id)
                 def size = data.TOTAL_SIZE ? data.TOTAL_SIZE as long : 0
                 def cloudCover = data.CLOUD_COVER ? data.CLOUD_COVER.toDouble() : 0
                 def coverage = size ? size / (size - size * cloudCover / 100d) : cloudCover
@@ -67,7 +66,6 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
                         dataSet: sensor,
                         acquisitionDate: parseDate(data.SENSING_TIME),
                         cloudCover: data.CLOUD_COVER.toDouble(),
-                        browseUrl: browseUrl(awsPath),
                         updateTime: parseDate(data.SENSING_TIME),
                         sunAzimuth: 0,
                         sunElevation: 0,
@@ -101,26 +99,6 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
 
     private boolean isSceneIncluded(data) {
         return !!data.SENSING_TIME
-    }
-
-    private String awsPath(id) {
-        def utmCode = id.substring(33, 35) as int
-        def latitudeBand = id.substring(35, 36)
-        def square = id.substring(36, 38)
-        def year = id.substring(0, 4) as int
-        def month = id.substring(4, 6) as int
-        def day = id.substring(6, 8) as int
-        return "$utmCode/$latitudeBand/$square/$year/$month/$day/0"
-    }
-
-    private URI browseUrl(awsPath) {
-        def base = 'https://roda.sentinel-hub.com/sentinel-s2-l1c/tiles'
-        return URI.create("$base/$awsPath/preview.jpg")
-    }
-
-    double coveragePercentage(awsPath) {
-        def response = aws.get(path: "$awsPath/tileInfo.json")
-        return response.data.dataCoveragePercentage as double
     }
 
     private Date parseDate(String s) {

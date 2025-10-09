@@ -106,7 +106,6 @@ class DataSearchEndpoint {
         [
             id: scene.id,
             dataSet: scene.dataSet,
-            browseUrl: scene.browseUrl as String,
             date: toDateString(scene.acquisitionDate),
             cloudCover: scene.cloudCover,
             daysFromTarget: daysFromDayOfYear(scene.acquisitionDate, targetDayOfYear)

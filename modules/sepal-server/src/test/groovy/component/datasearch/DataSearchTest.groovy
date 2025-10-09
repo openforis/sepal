@@ -271,7 +271,6 @@ class DataSearchTest extends Specification {
             cloudCover: args.cloudCover ?: 0.1,
             sunAzimuth: 123.4,
             sunElevation: 12.4,
-            browseUrl: URI.create('http://some.browse/url'),
             updateTime: args.updateTime ?: parseDateString('2016-01-01')
         )
     }

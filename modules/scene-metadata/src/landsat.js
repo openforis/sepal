@@ -1,9 +1,11 @@
+const {getDayOfYear} = require('date-fns/getDayOfYear')
+
 const DATASET_BY_PREFIX = {
-    LT4: 'LANDSAT_TM',
-    LT5: 'LANDSAT_TM',
-    LE7: 'LANDSAT_7',
-    LC8: 'LANDSAT_8',
-    LC9: 'LANDSAT_9'
+    LT04: 'LANDSAT_TM',
+    LT05: 'LANDSAT_TM',
+    LE07: 'LANDSAT_7',
+    LC08: 'LANDSAT_8',
+    LC09: 'LANDSAT_9'
 }
 
 const OPERATIONAL = {
@@ -12,11 +14,8 @@ const OPERATIONAL = {
     'landsat-tm': false
 }
 
-const getPrefix = sceneId =>
-    sceneId.substring(0, 3)
-
-const getDatasetByPrefix = prefix =>
-    DATASET_BY_PREFIX[prefix]
+const getDataset = id =>
+    DATASET_BY_PREFIX[id.substring(0, 4)]
 
 const isOperational = source =>
     OPERATIONAL[source] || false
@@ -34,4 +33,17 @@ const getCloudCover = (cloudCover, dataset) =>
         ? Math.min(100, parseFloat(cloudCover) + 22)
         : parseFloat(cloudCover)
 
-module.exports = {getPrefix, getDatasetByPrefix, isOperational, isSceneIncluded, getSceneAreaId, getCloudCover}
+const scene = ({id, dataSet, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sunAzimuth, sunElevation}) => ({
+    id,
+    source: 'LANDSAT',
+    dataSet,
+    sceneAreaId: getSceneAreaId(wrsPath, wrsRow),
+    acquiredTimestamp,
+    dayOfYear: getDayOfYear(acquiredTimestamp),
+    cloudCover: getCloudCover(cloudCover, dataSet),
+    sunAzimuth: parseFloat(sunAzimuth),
+    sunElevation: parseFloat(sunElevation)
+                
+})
+                
+module.exports = {getDataset, isOperational, isSceneIncluded, scene}

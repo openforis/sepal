@@ -2,7 +2,7 @@ const {map, tap, EMPTY} = require('rxjs')
 const {postJson$} = require('#sepal/httpClient')
 const log = require('#sepal/log').getLogger('earthSearch')
 
-const EARTH_SEARCH_URL = 'https://earth-search.aws.element84.com/v1/search'
+const SEARCH_URL = 'https://earth-search.aws.element84.com/v1/search'
 
 const COLLECTION = {
     'landsat-ot': 'landsat-c2-l2',
@@ -44,8 +44,8 @@ const getCollection = source => {
 const getUpdates$ = ({source, sceneMapper, minTimestamp, maxTimestamp, token}) => {
     const collection = getCollection(source)
     if (maxTimestamp >= minTimestamp) {
-        log.info(token ? `Retrieving ${collection} scenes, token: ${token}` : `Getting scenes between ${minTimestamp} and ${maxTimestamp}`)
-        return postJson$(EARTH_SEARCH_URL, {
+        log.info(token ? `Retrieving ${collection} scenes, token: ${token}` : `Getting ${collection} scenes between ${minTimestamp} and ${maxTimestamp}`)
+        return postJson$(SEARCH_URL, {
             body: {
                 collections: [collection],
                 datetime: `${minTimestamp}/${maxTimestamp}`,

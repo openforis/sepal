@@ -12,13 +12,16 @@ const {remove} = require('./filesystem')
 const getPath = filename =>
     `${process.env.MYSQL_FILES_DIR}/${filename}`
 
-const processCollection = async ({collection, sceneMapper, lastTimestamp, chunkSize, chunkHandler}) => {
+const isInTimeRange = (timestamp, minTimestamp, maxTimestamp) =>
+    (!minTimestamp || timestamp >= minTimestamp) && (!maxTimestamp || timestamp <= maxTimestamp)
+
+const processCollection = async ({collection, sceneMapper, minTimestamp, maxTimestamp, chunkSize, chunkHandler}) => {
     const inStream = createReadStream(getPath(`${collection}.csv.gz`))
     let readCount = 0
     let writeCount = 0
     let chunk = 1
     let outStream
-    let updatedTimestamp = lastTimestamp
+    let updatedTimestamp
 
     const updateTimestamp = timestamp => {
         if (!updatedTimestamp || timestamp > updatedTimestamp) {
@@ -47,10 +50,9 @@ const processCollection = async ({collection, sceneMapper, lastTimestamp, chunkS
             if (readCount % 10000 === 0) {
                 showStats()
             }
-            const scene = sceneMapper(row, lastTimestamp)
+
+            const scene = sceneMapper({row, minTimestamp, maxTimestamp})
             if (scene) {
-                // log.fatal(scene.acquiredTimestamp)
-                // process.exit(1)
                 updateTimestamp(scene.acquiredTimestamp)
                 callback(null, scene)
             } else {
@@ -104,11 +106,12 @@ const ingest = async (database, path, timestamp, update) => {
     await database.ingest(path, timestamp, update)
 }
 
-const processCSV = async ({collection, sceneMapper, redis: {getLastUpdate, setLastUpdate}, database, timestamp, update}) => {
-    const lastTimestamp = await getLastUpdate(collection)
-
+const processCSV = async ({collection, sceneMapper, redis: {getLastUpdate, setLastUpdate}, database, maxTimestamp, timestamp, update}) => {
     const queue$ = new Subject()
     const done$ = new ReplaySubject(1)
+    const minTimestamp = update
+        ? await getLastUpdate(collection)
+        : null
 
     queue$.pipe(
         concatMap(file => processFile$(file)),
@@ -137,7 +140,7 @@ const processCSV = async ({collection, sceneMapper, redis: {getLastUpdate, setLa
 
     const chunkSize = 10000
     const chunkHandler = file => queue$.next(file)
-    const updatedTimestamp = await processCollection({collection, sceneMapper, lastTimestamp, chunkSize, chunkHandler})
+    const updatedTimestamp = await processCollection({collection, sceneMapper, minTimestamp, maxTimestamp, chunkSize, chunkHandler})
 
     setImmediate(() => queue$.next(null))
 
@@ -145,5 +148,4 @@ const processCSV = async ({collection, sceneMapper, redis: {getLastUpdate, setLa
     await setLastUpdate(collection, updatedTimestamp)
 }
 
-module.exports = {processCSV}
-    
+module.exports = {isInTimeRange, processCSV}

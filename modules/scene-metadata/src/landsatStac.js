@@ -1,42 +1,26 @@
-const {getDayOfYear} = require('date-fns')
-const {getPrefix, getDatasetByPrefix, isSceneIncluded, getSceneAreaId, getCloudCover} = require('./landsat')
+const {isSceneIncluded, getDataset, scene} = require('./landsat')
 const {updateFromStac} = require('./stac')
 const log = require('#sepal/log').getLogger('landsat')
 
 const sceneMapper = ({
+    id,
     properties: {
-        'landsat:scene_id': sceneId,
         'landsat:wrs_path': wrsPath,
         'landsat:wrs_row': wrsRow,
         'landsat:collection_category': collectionCategory,
         'landsat:cloud_cover_land': cloudCover,
         'view:sun_azimuth': sunAzimuth,
         'view:sun_elevation': sunElevation,
-        'datetime': datetime,
-    },
-    links
-}, lastTimestamp) => {
-    const prefix = getPrefix(sceneId)
-    const dataSet = getDatasetByPrefix(prefix)
-    const thumbnailUrl = links?.find(link => link.rel === 'thumbnail')?.href
+        'datetime': acquiredTimestamp,
+    }
+}) => {
+    const dataSet = getDataset(id)
     if (dataSet) {
         if (isSceneIncluded({dataSet, collectionCategory, cloudCover})) {
-            const acquiredTimestamp = datetime
-            return !lastTimestamp || acquiredTimestamp >= lastTimestamp ? {
-                sceneId,
-                source: 'LANDSAT',
-                dataSet,
-                sceneAreaId: getSceneAreaId(wrsPath, wrsRow),
-                acquiredTimestamp,
-                dayOfYear: getDayOfYear(datetime),
-                cloudCover: getCloudCover(cloudCover, dataSet),
-                sunAzimuth: parseFloat(sunAzimuth),
-                sunElevation: parseFloat(sunElevation),
-                thumbnailUrl
-            } : null
+            return scene({id, dataSet, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sunAzimuth, sunElevation})
         }
     } else {
-        log.debug(`Unexpected scene id prefix ${prefix}, ignoring scene ${sceneId}`)
+        log.debug(`Ignoring unexpected id: ${id}`)
     }
 }
 

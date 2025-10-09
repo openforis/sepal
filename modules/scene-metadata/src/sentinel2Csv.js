@@ -1,6 +1,5 @@
-const {getDayOfYear} = require('date-fns')
-const {getSceneId, getSceneAreaId, browseUrl} = require('./sentinel2')
-const {processCSV} = require('./csv')
+const {getId, scene} = require('./sentinel2')
+const {processCSV, isInTimeRange} = require('./csv')
 const {formatInterval} = require('./time')
 const {download} = require('./filesystem')
 const log = require('#sepal/log').getLogger('sentinel2')
@@ -8,26 +7,21 @@ const log = require('#sepal/log').getLogger('sentinel2')
 const CSV_URL = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz'
 
 const sceneMapper = ({
-    'PRODUCT_ID': productUri,
-    'CLOUD_COVER': cloudCover,
-    'SENSING_TIME': acquiredTimestamp
-}, lastTimestamp) => {
-    const sceneId = getSceneId(productUri)
-    return sceneId && (!lastTimestamp || acquiredTimestamp >= lastTimestamp) ? {
-        sceneId,
-        source: 'SENTINEL_2',
-        dataSet: 'SENTINEL_2',
-        sceneAreaId: getSceneAreaId(productUri),
-        acquiredTimestamp,
-        dayOfYear: getDayOfYear(acquiredTimestamp),
-        cloudCover: parseFloat(cloudCover),
-        sunAzimuth: 0,
-        sunElevation: 0,
-        thumbnailUrl: browseUrl(productUri)
-    } : null
+    row: {
+        'PRODUCT_ID': productUri,
+        'CLOUD_COVER': cloudCover,
+        'SENSING_TIME': acquiredTimestamp
+    },
+    minTimestamp,
+    maxTimestamp
+}) => {
+    const id = getId(productUri)
+    return id && isInTimeRange(acquiredTimestamp, minTimestamp, maxTimestamp)
+        ? scene({id, productUri, acquiredTimestamp, cloudCover})
+        : null
 }
 
-const loadSentinel2 = async ({redis, database, timestamp, update}) => {
+const loadSentinel2 = async ({redis, database, maxTimestamp, timestamp, update}) => {
     log.debug('Loading Sentinel-2 data from CSV...')
     const t0 = Date.now()
     await processCSV({
@@ -35,6 +29,7 @@ const loadSentinel2 = async ({redis, database, timestamp, update}) => {
         sceneMapper,
         redis,
         database,
+        maxTimestamp,
         timestamp,
         update
     }).catch(err => log.error('Error:', err))
