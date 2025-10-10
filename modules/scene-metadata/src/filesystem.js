@@ -17,7 +17,7 @@ const download = async ({url, collection}) => {
     const fileStream = createWriteStream(file)
     
     try {
-        log.debug(`Downloading file ${url}...`)
+        log.info(`Downloading file ${url}...`)
         const t0 = Date.now()
         await pipeline(
             webStream,
