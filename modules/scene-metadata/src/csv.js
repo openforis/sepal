@@ -138,7 +138,7 @@ const processCSV = async ({collection, sceneMapper, redis: {getLastUpdate, setLa
         await remove(file)
     }
 
-    const chunkSize = 10000
+    const chunkSize = 100000
     const chunkHandler = file => queue$.next(file)
     const updatedTimestamp = await processCollection({collection, sceneMapper, minTimestamp, maxTimestamp, chunkSize, chunkHandler})
 
