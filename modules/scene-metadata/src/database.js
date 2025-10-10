@@ -7,6 +7,8 @@ const NEW_DATABASE_NAME = 'sdms_new'
 const OLD_DATABASE_NAME = 'sdms_old'
 const TABLE_NAME = 'scene_meta_data'
 
+const USE_TRANSACTIONS = false
+
 const transaction = {
     connection: null
 }
@@ -60,8 +62,8 @@ const initializeDatabase = async () => {
         await createTable()
         // await pool.execute('SET unique_checks = 0')
         // await pool.execute('SET foreign_key_checks = 0')
-        // await pool.execute('SET sql_log_bin = 0')
-        // await pool.execute('SET GLOBAL innodb_flush_log_at_trx_commit = 2')
+        await pool.execute('SET sql_log_bin = 0')
+        await pool.execute('SET GLOBAL innodb_flush_log_at_trx_commit = 2')
         log.info('Prepared database')
     }
     
@@ -105,8 +107,8 @@ const initializeDatabase = async () => {
         await swapTable()
         // await pool.execute('SET unique_checks = 1')
         // await pool.execute('SET foreign_key_checks = 1')
-        // await pool.execute('SET sql_log_bin = 1')
-        // await pool.execute('SET GLOBAL innodb_flush_log_at_trx_commit = 1')
+        await pool.execute('SET sql_log_bin = 1')
+        await pool.execute('SET GLOBAL innodb_flush_log_at_trx_commit = 1')
         await cleanup()
         log.info('Finalized')
     }
@@ -121,27 +123,31 @@ const initializeDatabase = async () => {
         process.exit()
     })
 
-    const mapValues = ({sceneId, source, dataSet, sceneAreaId, acquiredTimestamp, dayOfYear, cloudCover, sunAzimuth, sunElevation}, timestamp) =>
-        ([sceneId, source, dataSet, sceneAreaId, new Date(acquiredTimestamp), dayOfYear, cloudCover, sunAzimuth, sunElevation, timestamp])
+    const mapValues = ({id, source, dataSet, sceneAreaId, acquiredTimestamp, dayOfYear, cloudCover, sunAzimuth, sunElevation}, timestamp) =>
+        ([id, source, dataSet, sceneAreaId, new Date(acquiredTimestamp), dayOfYear, cloudCover, sunAzimuth, sunElevation, timestamp])
 
     const beginTransaction = async () => {
         if (transaction.connection) {
             throw new Error('Cannot begin, transaction already in progress')
         } else {
-            log.debug('Starting transaction...')
             transaction.connection = await pool.getConnection()
-            await transaction.connection.beginTransaction()
-            log.info('Transaction started')
+            if (USE_TRANSACTIONS) {
+                log.debug('Starting transaction...')
+                await transaction.connection.beginTransaction()
+                log.info('Transaction started')
+            }
         }
     }
 
     const commitTransaction = async () => {
         if (transaction.connection) {
-            log.debug('Committing transaction...')
-            await transaction.connection.commit()
+            if (USE_TRANSACTIONS) {
+                log.debug('Committing transaction...')
+                await transaction.connection.commit()
+                log.info('Transaction committed')
+            }
             transaction.connection.release()
             transaction.connection = null
-            log.info('Transaction committed')
         } else {
             throw new Error('Cannot commit, no transaction in progress')
         }
@@ -149,11 +155,13 @@ const initializeDatabase = async () => {
 
     const rollbackTransaction = async () => {
         if (transaction.connection) {
-            log.debug('Rolling back transaction...')
-            await transaction.connection.rollback()
+            if (USE_TRANSACTIONS) {
+                log.debug('Rolling back transaction...')
+                await transaction.connection.rollback()
+                log.info('Transaction rolled back')
+            }
             transaction.connection.release()
             transaction.connection = null
-            log.info('Transaction rolled back')
         } else {
             throw new Error('Cannot rollback, no transaction in progress')
         }
