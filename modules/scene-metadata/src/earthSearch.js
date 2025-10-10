@@ -7,11 +7,12 @@ const SEARCH_URL = 'https://earth-search.aws.element84.com/v1/search'
 const COLLECTION = {
     'landsat-ot': 'landsat-c2-l2',
     'sentinel-2': 'sentinel-2-l1c'
+    // 'sentinel-2': 'sentinel-2-l2a'
 }
 
 const BLOCK_SIZE = {
-    'landsat-c2-l2': 200,
-    'sentinel-2-l1c': 500,
+    'landsat-ot': 200,
+    'sentinel-2': 500,
 }
 
 const getScenes = (features, sceneMapper) =>
@@ -49,7 +50,8 @@ const getUpdates$ = ({source, sceneMapper, minTimestamp, maxTimestamp, token}) =
             body: {
                 collections: [collection],
                 datetime: `${minTimestamp}/${maxTimestamp}`,
-                limit: BLOCK_SIZE[collection],
+                sortby: '+properties.datetime',
+                limit: BLOCK_SIZE[source],
                 next: token
             },
             retry: {
