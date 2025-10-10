@@ -29,12 +29,12 @@ const sceneMapper = ({
     minTimestamp,
     maxTimestamp
 }) => {
-    const id = productId.substring(0, 26) + productId.substring(35)
-    const dataSet = getDataset(id)
+    const dataSet = getDataset(productId)
     if (dataSet) {
         if (isSceneIncluded({dataSet, collectionCategory, cloudCover})) {
+            const id = productId.substring(0, 26) + productId.substring(35)
             const acquiredTimestamp = parse(datetime, 'yyyy/MM/dd', new Date()).toISOString()
-            return isInTimeRange(acquiredTimestamp, minTimestamp, maxTimestamp)
+            return id && isInTimeRange(acquiredTimestamp, minTimestamp, maxTimestamp)
                 ? scene({
                     id,
                     dataSet,
@@ -48,7 +48,7 @@ const sceneMapper = ({
                 : null
         }
     } else {
-        log.debug(`Ignoring unexpected id: ${id}`)
+        log.debug(`Ignoring unexpected id: ${productId}`)
     }
 }
 
