@@ -6,6 +6,7 @@ import {getBuildDeps, getBuildRunDeps, getLibDeps} from './deps.js'
 import {log} from './log.js'
 import _ from 'lodash'
 import {SEPAL_SRC} from './config.js'
+import {npmInstall} from './npm-install.js'
 
 const ensurePackageLockExists = async (modulePath, lib) => {
     const path = lib ? `${modulePath}/lib/${lib}` : modulePath
@@ -108,6 +109,7 @@ export const build = async (modules, options) => {
     for (const {module, action, pull} of buildActions) {
         if (action === 'build') {
             await buildModule(module, options, pull)
+            await npmInstall(module, {})
         } else if (action === 'run') {
             await start(module, {stop: true})
         } else {
