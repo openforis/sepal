@@ -44,6 +44,10 @@ const initializeDatabase = async () => {
             CREATE TABLE ${NEW_DATABASE_NAME}.${TABLE_NAME}
             LIKE ${CURRENT_DATABASE_NAME}.${TABLE_NAME}
         `)
+        await pool.execute(`
+            ALTER TABLE ${NEW_DATABASE_NAME}.${TABLE_NAME}
+            ENGINE = MyISAM
+        `)
         log.info('Cloned table structure')
     }
 
