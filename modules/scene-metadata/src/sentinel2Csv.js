@@ -1,4 +1,4 @@
-const {getId, scene} = require('./sentinel2')
+const {scene, getIdFromGranuleId} = require('./sentinel2')
 const {processCSV, isInTimeRange} = require('./csv')
 const {formatInterval} = require('./time')
 const {download} = require('./filesystem')
@@ -8,6 +8,7 @@ const CSV_URL = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index
 
 const sceneMapper = ({
     row: {
+        'GRANULE_ID': granuleId,
         'PRODUCT_ID': productUri,
         'CLOUD_COVER': cloudCover,
         'SENSING_TIME': acquiredTimestamp
@@ -15,7 +16,7 @@ const sceneMapper = ({
     minTimestamp,
     maxTimestamp
 }) => {
-    const id = getId(productUri)
+    const id = getIdFromGranuleId(productUri, granuleId)
     return id && isInTimeRange(acquiredTimestamp, minTimestamp, maxTimestamp)
         ? scene({id, productUri, acquiredTimestamp, cloudCover})
         : null
