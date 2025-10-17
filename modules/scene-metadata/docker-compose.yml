@@ -39,7 +39,7 @@ services:
       MYSQL_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
       MYSQL_FILES_DIR: "/var/lib/mysql-files"
       UPDATE_TIME: "02:30" 
-      MIN_DAYS_PUBLISHED: 2
+      MIN_DAYS_PUBLISHED: 1
     networks:
       - sepal
     restart: always
