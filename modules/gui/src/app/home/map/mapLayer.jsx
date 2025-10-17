@@ -102,11 +102,7 @@ MapLayer.propTypes = {
 class _MapObject extends React.Component {
     render() {
         const {map, lat, lng, width, height, className, children} = this.props
-        const {google, googleMap} = map.getGoogle()
-        const shown = googleMap.getBounds().contains({lng, lat})
-        if (!shown) {
-            return null
-        }
+        const {google} = map.getGoogle()
         return (
             <ProjectionContext.Consumer>
                 {({projection}) => {
@@ -131,8 +127,7 @@ class _MapObject extends React.Component {
 }
 
 export const MapObject = compose(
-    _MapObject,
-    // connect(state => ({projectionChange: state.map.projectionChange}))
+    _MapObject
 )
 
 MapObject.propTypes = {
