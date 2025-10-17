@@ -2,6 +2,8 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {ButtonSelect} from '~/widget/buttonSelect'
@@ -9,7 +11,7 @@ import {Widget} from '~/widget/widget'
 
 import styles from './buttons.module.css'
 
-export class Buttons extends React.Component {
+class _Buttons extends React.Component {
     isSelected(value) {
         const {multiple, selected} = this.props
         return multiple
@@ -166,9 +168,12 @@ export class Buttons extends React.Component {
     }
 }
 
-Buttons.defaultProps = {
-    groupSpacing: 'compact-separated'
-}
+export const Buttons = compose(
+    _Buttons,
+    asFunctionalComponent({
+        groupSpacing: 'compact-separated'
+    })
+)
 
 Buttons.propTypes = {
     air: PropTypes.any,

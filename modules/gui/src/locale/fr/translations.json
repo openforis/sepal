@@ -54,7 +54,72 @@
         "run": {
             "error": "Echec d'exécution {label}"
         },
-        "running": "L'app est lancée"
+        "running": "L'app est lancée",
+        "noInstanceRequired": "",
+        "admin": {
+            "title": "",
+            "logs": {
+                "title": "",
+                "empty": ""
+            },
+            "container": {
+                "title": "",
+                "notFound": "",
+                "status": "",
+                "containerStatus": "",
+                "mainProcess": "",
+                "memoryUsage": "",
+                "cpuUsage": "",
+                "connections": ""
+            },
+            "repo": {
+                "title": "",
+                "url": "",
+                "lastCommit": "",
+                "lastClone": "",
+                "error": "Erreur",
+                "branch": ""
+            },
+            "health": {
+                "healthy": "",
+                "starting": "",
+                "unhealthy": ""
+            },
+            "restart": {
+                "error": "",
+                "success": ""
+            },
+            "buildRestart": {
+                "error": "",
+                "success": ""
+            },
+            "button": {
+                "restart": "",
+                "buildRestart": "",
+                "reloadStatus": "",
+                "reloadLogs": ""
+            },
+            "status": {
+                "running": "",
+                "idle": "",
+                "error": "Erreur",
+                "checking": "",
+                "notAvailable": "",
+                "loading": "Chargement...",
+                "exited": ""
+            },
+            "timestamp": {
+                "never": ""
+            },
+            "update": {
+                "available": "",
+                "checkForUpdates": "",
+                "error": "",
+                "success": "",
+                "noChanges": ""
+            },
+            "tooltip": ""
+        }
     },
     "asset": {
         "failedToLoad": "Échec du chargement de l'asset EE",
@@ -2964,7 +3029,6 @@
             "exportRecipe": "Exporter une formule",
             "removeRecipe.tooltip": "Supprimer la formule",
             "selectRecipe.tooltip": "",
-            "revertToOldRevision": "Retour à la révision précédente",
             "saveRecipe": "Sauvegarder la formule...",
             "searchRecipes": "Chercher une formule"
         },
@@ -4553,11 +4617,6 @@
             },
             "title": "Récupérer",
             "tooltip": ""
-        },
-        "revisions": {
-            "none": "Pas de révision disponible.",
-            "revert": "Retourner aux révisions",
-            "title": "Révisions"
         },
         "saveRecipe": {
             "error": "Désolé, mais quelque chose s'est mal passé lorsque vous avez essayé d'enregistrer votre formule. Si vous fermez la fenêtre/l'onglet, vous perdrez toutes les modifications apportées depuis le dernier enregistrement réussi. Pour être sûr de pouvoir enregistrer les données de cette recette, vous pouvez l'exporter. Allez dans le menu des formules en haut à droite et sélectionnez \"Exporter la formule\".",

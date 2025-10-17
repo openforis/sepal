@@ -1,14 +1,14 @@
 import _ from 'lodash'
 import React from 'react'
-import {debounceTime, groupBy, map, mergeMap, Subject, switchMap} from 'rxjs'
+import {groupBy, map, mergeMap, Subject, switchMap} from 'rxjs'
 
 import {actionBuilder, scopedActionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {publishEvent} from '~/eventPublisher'
-import {gzip$, ungzip$} from '~/gzip'
-import {deserialize, serialize} from '~/serialize'
+import {gzip$} from '~/gzip'
+import {serialize} from '~/serialize'
 import {selectFrom} from '~/stateUtils'
 import {select, subscribe} from '~/store'
 import {msg} from '~/translate'
@@ -17,95 +17,36 @@ import {downloadObjectZip$} from '~/widget/download'
 import {Notifications} from '~/widget/notifications'
 import {addTab, closeTab} from '~/widget/tabs/tabActions'
 
-const saveToBackend$ = (() => {
-    const save$ = new Subject()
+const save$ = new Subject()
 
-    save$.pipe(
-        groupBy(recipe => recipe.id),
-        mergeMap(group$ =>
-            group$.pipe(
-                map(recipe => {
-                    if (recipe.ui.unsaved) {
-                        publishEvent('insert_recipe', {recipe_type: recipe.type})
-                    }
-                    return _.omit(recipe, ['ui'])
-                }),
-                switchMap(recipe =>
-                    gzip$(recipe).pipe(
-                        switchMap(compressedRecipe =>
-                            api.recipe.save$({
-                                id: recipe.id,
-                                projectId: recipe.projectId,
-                                type: recipe.type,
-                                name: recipe.title || recipe.placeholder,
-                                gzippedContents: compressedRecipe
-                            })
-                        )
+save$.pipe(
+    groupBy(recipe => recipe.id),
+    mergeMap(group$ =>
+        group$.pipe(
+            map(recipe => {
+                if (recipe.ui.unsaved) {
+                    publishEvent('insert_recipe', {recipe_type: recipe.type})
+                }
+                return _.omit(recipe, ['ui'])
+            }),
+            switchMap(recipe =>
+                gzip$(recipe).pipe(
+                    switchMap(compressedRecipe =>
+                        api.recipe.save$({
+                            id: recipe.id,
+                            projectId: recipe.projectId,
+                            type: recipe.type,
+                            name: recipe.title || recipe.placeholder,
+                            gzippedContents: compressedRecipe
+                        })
                     )
                 )
             )
         )
-    ).subscribe({
-        error: error => Notifications.error({timeout: 0, message: msg('process.saveRecipe.error'), error})
-    })
-
-    return save$
-})()
-
-const revisionId = (recipeId, revision) => `sepal:${recipeId}:${revision}`
-const saveRevision = (recipeId, recipe) => localStorage.setItem(revisionId(recipeId, Date.now()), recipe)
-const loadRevision = (recipeId, revision) => localStorage.getItem(revisionId(recipeId, revision))
-const removeRevision = (recipeId, revision) => localStorage.removeItem(revisionId(recipeId, revision))
-
-const saveToLocalStorage$ = (() => {
-    const save$ = new Subject()
-    const DEBOUNCE_SECONDS = 10
-
-    save$.pipe(
-        groupBy(recipe => recipe.id),
-        mergeMap(group$ =>
-            group$.pipe(
-                debounceTime(DEBOUNCE_SECONDS * 1000),
-                map(recipe => _.omit(recipe, ['ui'])),
-                switchMap(recipe =>
-                    gzip$(recipe, {to: 'string'}).pipe(
-                        map(compressedRecipe => ({recipeId: recipe.id, revision: compressedRecipe}))
-                    )
-                )
-            )
-        )
-    ).subscribe(({recipeId, revision}) => {
-        saveRevisionToLocalStorage(recipeId, revision)
-    })
-
-    const saveRevisionToLocalStorage = (recipeId, revision) => {
-        try {
-            saveRevision(recipeId, revision)
-        } catch (_error) {
-            if (removeRevisionFromLocalStorage(recipeId)) {
-                saveRevisionToLocalStorage(recipeId, revision)
-            }
-        }
-    }
-
-    const removeRevisionFromLocalStorage = _recipeId => {
-        // [TODO] implement removal strategy
-        const key = _(localStorage)
-            .keys()
-            .filter(key => key.startsWith('sepal:'))
-            .map(key => ({key, timestamp: key.split(':')[2]}))
-            .filter(value => value)
-            .sortBy({key: 1})
-            .first()
-            .key
-        if (key) {
-            localStorage.removeItem(key)
-        }
-        return key
-    }
-
-    return save$
-})()
+    )
+).subscribe({
+    error: error => Notifications.error({timeout: 0, message: msg('process.saveRecipe.error'), error})
+})
 
 export const recipePath = (recipeId, path) =>
     ['process.loadedRecipes', recipeId, path]
@@ -162,8 +103,7 @@ export const saveRecipe = tab => {
             .set(recipePath(recipe.id, 'title'), recipe.title)
             .dispatch()
         updateRecipeList(recipe)
-        saveToBackend$.next(recipe)
-        saveToLocalStorage$.next(recipe)
+        save$.next(recipe)
     }
 }
 
@@ -224,7 +164,6 @@ export const removeRecipes$ = recipeIds =>
     api.recipe.remove$(recipeIds).pipe(
         map(() =>
             _.transform(recipeIds, (actionBuilder, recipeId) => {
-                removeAllRevisions(recipeId)
                 actionBuilder
                     .del(['process.recipes', {id: recipeId}])
                     .del(['process.loadedRecipes', recipeId])
@@ -290,48 +229,12 @@ subscribe('process.loadedRecipes', loadedRecipes => {
             )
         if (recipesToSave.length > 0) {
             recipesToSave.forEach(recipe => {
-                saveToBackend$.next(recipe)
-                saveToLocalStorage$.next(recipe)
+                save$.next(recipe)
             })
         }
         prevRecipes = recipes
     }
 })
-
-const uncompressRecipe$ = compressedRecipe => deserialize(ungzip$(compressedRecipe))
-
-export const getRevisions = recipeId =>
-    _(localStorage)
-        .keys()
-        .filter(key => key.startsWith('sepal:'))
-        .map(key => (key.split(':')))
-        .filter(([_prefix, id, _timestamp]) => recipeId === id)
-        .map(([_prefix, _id, timestamp]) => timestamp)
-        .sortBy()
-        .reverse()
-        .value()
-
-const removeAllRevisions = recipeId =>
-    getRevisions(recipeId)
-        .forEach(revision => removeRevision(recipeId, revision))
-
-export const revertToRevision$ = (recipeId, revision) =>
-    uncompressRecipe$(loadRevision(recipeId, revision)).pipe(
-        map(recipe => {
-            prevRecipes = prevRecipes.filter(tab => tab.id !== recipeId)
-            closeTab(recipeId, 'process')
-            const selectedTabId = select('process.selectedTabId')
-            const initializedRecipe = initializeRecipe(recipe)
-            const {id, placeholder, title, type} = initializedRecipe
-            actionBuilder('REVERT_RECIPE')
-                .set(tabPath(selectedTabId), {id, placeholder, title, type})
-                .set(recipePath(selectedTabId), initializedRecipe)
-                .set('process.selectedTabId', recipeId)
-                .dispatch()
-            saveToBackend$.next(recipe)
-            return recipe
-        })
-    )
 
 export const recipe = RecipeState =>
     WrappedComponent => {

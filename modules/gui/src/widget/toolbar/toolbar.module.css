@@ -1,6 +1,6 @@
 .toolbar {
     --button-panel-margin: .5rem;
-    --icon-size: 1.1rem;
+    --icon-size: 1.0rem;
     position: absolute;
     pointer-events: all;
     z-index: 2; /* same as panels */

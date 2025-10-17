@@ -5,6 +5,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {HexColorPicker} from 'react-colorful'
 
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {FloatingBox} from '~/widget/floatingBox'
@@ -14,7 +16,7 @@ import {isMobile} from '~/widget/userAgent'
 
 import styles from './colorElement.module.css'
 
-export class ColorElement extends React.Component {
+class _ColorElement extends React.Component {
     ref = React.createRef()
 
     state = {
@@ -159,6 +161,13 @@ export class ColorElement extends React.Component {
     }
 }
 
+export const ColorElement = compose(
+    _ColorElement,
+    asFunctionalComponent({
+        color: ''
+    })
+)
+
 ColorElement.propTypes = {
     className: PropTypes.string,
     color: PropTypes.string,
@@ -168,8 +177,4 @@ ColorElement.propTypes = {
     tooltipPlacement: PropTypes.any,
     onChange: PropTypes.func,
     onClick: PropTypes.func
-}
-
-ColorElement.defaultProps = {
-    color: ''
 }

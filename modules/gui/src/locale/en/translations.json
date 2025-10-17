@@ -55,7 +55,7 @@
             "error": "Failed to run {label}"
         },
         "running": "App is running",
-        "noInstanceRequired" : "No instance required",
+        "noInstanceRequired": "No instance required",
         "admin": {
             "title": "{app} management panel",
             "logs": {
@@ -70,7 +70,7 @@
                 "mainProcess": "Main process",
                 "memoryUsage": "Memory usage",
                 "cpuUsage": "CPU usage",
-                "connections" : "Active connections"
+                "connections": "Active connections"
             },
             "repo": {
                 "title": "Repository",
@@ -78,18 +78,24 @@
                 "lastCommit": "Last commit",
                 "lastClone": "Repository last cloned",
                 "error": "Error",
-                "branch" : "Branch"
+                "branch": "Branch"
             },
             "health": {
                 "healthy": "Healthy",
-                "starting": "Starting"
+                "starting": "Starting",
+                "unhealthy": "Unhealthy"
             },
             "restart": {
                 "error": "Failed to restart",
                 "success": "Restarted"
             },
+            "buildRestart": {
+                "error": "Failed to build and restart",
+                "success": "Built and restarted successfully"
+            },
             "button": {
                 "restart": "Restart container",
+                "buildRestart": "Build and restart container",
                 "reloadStatus": "Reload status",
                 "reloadLogs": "Reload logs"
             },
@@ -99,7 +105,8 @@
                 "error": "Error",
                 "checking": "Checking",
                 "notAvailable": "Not available",
-                "loading": "Loading..."
+                "loading": "Loading...",
+                "exited": "Exited"
             },
             "timestamp": {
                 "never": "Never"
@@ -110,7 +117,8 @@
                 "error": "Failed to update",
                 "success": "Updated successfully",
                 "noChanges": "No updates available"
-            }
+            },
+            "tooltip": "Manage app"
         }
     },
     "asset": {
@@ -2232,7 +2240,7 @@
                                 "label": "Institution",
                                 "placeholder": "Select an institution",
                                 "required": "You must select an institution",
-                                "tooltip": "You can only see institutions that you are member of"
+                                "tooltip": "You can only see institutions where you are both a member and an admin"
                             },
                             "project": {
                                 "label": "Project",
@@ -3021,7 +3029,6 @@
             "exportRecipe": "Export recipe",
             "removeRecipe.tooltip": "Remove recipe",
             "selectRecipe.tooltip": "Select recipe",
-            "revertToOldRevision": "Revert to old revision...",
             "saveRecipe": "Save recipe...",
             "searchRecipes": "Search recipes"
         },
@@ -4626,11 +4633,6 @@
             },
             "title": "Retrieve",
             "tooltip": "Retrieve recipe"
-        },
-        "revisions": {
-            "none": "No revision available.",
-            "revert": "Revert to revision",
-            "title": "Revisions"
         },
         "samplingDesign": {
             "bands": {},

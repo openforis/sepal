@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import {useLocation} from 'react-router'
 
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -63,14 +64,16 @@ const Link = ({name, icon, href}) =>
         linkTarget='_blank'
     />
 
-const _SectionLink = ({active, name, icon, disabled}) => {
-    const link = `/-/${name}`
+const SectionLink = ({path, name, icon, disabled}) => {
+    const location = useLocation()
+    const active = isPathInLocation(path, location.pathname)
     const activeClass = active ? styles.active : null
+
     return (
         <Button
             className={[styles[name], activeClass].join(' ')}
             icon={icon}
-            route={link}
+            route={path}
             tooltip={[
                 msg(`home.sections.${name}`),
                 (disabled ? msg('user.quotaUpdate.info') : null)
@@ -81,19 +84,4 @@ const _SectionLink = ({active, name, icon, disabled}) => {
             disabled={disabled}
         />
     )
-}
-
-const SectionLink = compose(
-    _SectionLink,
-    connect(
-        (state, {path}) => ({
-            active: isPathInLocation(path)
-        })
-    )
-)
-
-SectionLink.propTypes = {
-    disabled: PropTypes.any,
-    icon: PropTypes.string,
-    name: PropTypes.string
 }

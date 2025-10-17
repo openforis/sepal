@@ -1,11 +1,11 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {Link} from 'react-router'
 import {combineLatest, distinctUntilChanged, EMPTY, fromEvent, switchMap, take, takeUntil, timer} from 'rxjs'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
-import {withForwardedRef} from '~/ref'
-import {Link} from '~/route'
 import lookStyles from '~/style/look.module.css'
 import {withSubscriptions} from '~/subscription'
 import {download} from '~/widget/download'
@@ -422,7 +422,20 @@ export const Button =
         React.memo(_Button),
         withSubscriptions(),
         withButtonGroup(),
-        withForwardedRef()
+        asFunctionalComponent({
+            air: 'normal',
+            alignment: 'center',
+            elementType: 'button',
+            iconPlacement: 'left',
+            iconVariant: 'normal',
+            labelStyle: 'default',
+            linkTarget: '_blank',
+            look: 'default',
+            shape: 'rectangle',
+            size: 'normal',
+            type: 'button',
+            width: 'fit'
+        })
     )
 
 Button.propTypes = {
@@ -480,19 +493,4 @@ Button.propTypes = {
     onMouseLeave: PropTypes.func,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func
-}
-
-Button.defaultProps = {
-    air: 'normal',
-    alignment: 'center',
-    elementType: 'button',
-    iconPlacement: 'left',
-    iconVariant: 'normal',
-    labelStyle: 'default',
-    linkTarget: '_blank',
-    look: 'default',
-    shape: 'rectangle',
-    size: 'normal',
-    type: 'button',
-    width: 'fit'
 }

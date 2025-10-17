@@ -49,6 +49,9 @@ check program mysql-backup with path /usr/local/bin/dockercheck-mysql-backup
 check program rabbitmq with path /usr/local/bin/dockercheck-rabbitmq
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
+check program sepal with path /usr/local/bin/dockercheck-scene-metadata
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
+
 check program sepal with path /usr/local/bin/dockercheck-sepal
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 

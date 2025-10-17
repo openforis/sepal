@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types'
-import React from 'react'
+import {useEffect, useState} from 'react'
+import {useLocation} from 'react-router'
 
 import {Enabled} from '~/enabled'
 import {isPathInLocation} from '~/route'
@@ -7,57 +7,42 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 
 import styles from './section.module.css'
 
-export class Section extends React.Component {
-    state = {
-        initialized: false,
-        active: false
-    }
+export const Section = ({path, children}) => {
+    const location = useLocation()
+    const [initialized, setInitialized] = useState(false)
+    const [enabled, setEnabled] = useState(false)
+    const portalContainerId = `portal_selectable_${path}`
 
-    static getDerivedStateFromProps(props, state) {
-        const active = isPathInLocation(props.path)
-        // lazy-initialize sections at first activation
-        const initialized = state.initialized || active
-        return {active, initialized}
-    }
+    useEffect(() => {
+        setEnabled(isPathInLocation(path, location.pathname))
+    }, [path, location])
 
-    render() {
-        const {initialized} = this.state
-        return initialized
-            ? this.renderInitialized()
-            : null
-    }
+    useEffect(() => {
+        setInitialized(initialized || enabled)
+    }, [initialized, enabled])
 
-    renderInitialized() {
-        const {active} = this.state
-        return (
-            <div className={[
-                styles.section,
-                active ? styles.active : null,
-            ].join(' ')}>
-                {this.renderEnabled()}
-            </div>
-        )
-    }
+    const renderEnabled = () => (
+        <Enabled
+            enabled={enabled}
+            enabledClassName={styles.enabled}
+            disabledClassName={styles.disabled}>
+            <PortalContext id={portalContainerId}>
+                <PortalContainer id={portalContainerId} className={styles.portalContainer}/>
+                {children}
+            </PortalContext>
+        </Enabled>
+    )
 
-    renderEnabled() {
-        const {path, children} = this.props
-        const {active} = this.state
-        const portalContainerId = `portal_selectable_${path}`
-        return (
-            <Enabled
-                enabled={active}
-                enabledClassName={styles.enabled}
-                disabledClassName={styles.disabled}>
-                <PortalContext id={portalContainerId}>
-                    <PortalContainer id={portalContainerId} className={styles.portalContainer}/>
-                    {children}
-                </PortalContext>
-            </Enabled>
-        )
-    }
-}
+    const renderInitialized = () => (
+        <div className={[
+            styles.section,
+            enabled ? styles.active : null,
+        ].join(' ')}>
+            {renderEnabled()}
+        </div>
+    )
 
-Section.propTypes = {
-    children: PropTypes.any,
-    path: PropTypes.string
+    return initialized
+        ? renderInitialized()
+        : null
 }

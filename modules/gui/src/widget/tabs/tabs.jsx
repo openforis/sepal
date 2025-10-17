@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {EMPTY, groupBy, map, mergeMap, mergeScan, of, shareReplay, Subject} from 'rxjs'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
@@ -327,7 +328,10 @@ class _Tabs extends React.Component {
 export const Tabs = compose(
     _Tabs,
     connect(mapStateToProps),
-    withSubscriptions()
+    withSubscriptions(),
+    asFunctionalComponent({
+        maxTabs: 10
+    })
 )
 
 Tabs.propTypes = {
@@ -350,8 +354,4 @@ Tabs.propTypes = {
     onAdd: PropTypes.func,
     onClose: PropTypes.func,
     onTitleChanged: PropTypes.func
-}
-
-Tabs.defaultProps = {
-    maxTabs: 10
 }

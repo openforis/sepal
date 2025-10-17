@@ -2,12 +2,14 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {ButtonSelect} from '~/widget/buttonSelect'
 import {Panel} from '~/widget/panel/panel'
 
 import {Form} from './form'
 
-export class PanelSections extends React.Component {
+class _PanelSections extends React.Component {
     render() {
         const {icon, step} = this.props
         const section = this.findSection()
@@ -109,6 +111,13 @@ export class PanelSections extends React.Component {
     }
 }
 
+export const PanelSections = compose(
+    _PanelSections,
+    asFunctionalComponent({
+        defaultButtons: <Form.PanelButtons/>
+    })
+)
+
 PanelSections.propTypes = {
     inputs: PropTypes.any.isRequired,
     sections: PropTypes.array.isRequired,
@@ -121,6 +130,3 @@ PanelSections.propTypes = {
     onChange: PropTypes.func
 }
 
-PanelSections.defaultProps = {
-    defaultButtons: <Form.PanelButtons/>
-}

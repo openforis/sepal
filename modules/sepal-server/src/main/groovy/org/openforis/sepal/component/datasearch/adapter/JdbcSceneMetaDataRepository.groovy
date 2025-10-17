@@ -28,7 +28,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
     private void update(SceneMetaData scene, Sql sql) {
         def params = scene.with {
             [dataSet, sceneAreaId, acquisitionDate, DateTime.dayOfYearIgnoringLeapDay(acquisitionDate), cloudCover,
-             sunAzimuth, sunElevation, browseUrl.toString(), updateTime, source, id]
+             sunAzimuth, sunElevation, updateTime, source, id]
         }
 
         def rowsUpdated = sql.executeUpdate('''
@@ -40,7 +40,6 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                       cloud_cover = ?,
                       sun_azimuth = ?,
                       sun_elevation = ?,
-                      browse_url = ?,
                       update_time = ?,
                       meta_data_source = ?
                 WHERE id = ?''', params)
@@ -48,15 +47,15 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
             sql.executeInsert('''
                     INSERT INTO scene_meta_data(
                         sensor_id, scene_area_id, acquisition_date, day_of_year, cloud_cover, sun_azimuth, sun_elevation, 
-                        browse_url, update_time, meta_data_source, id)
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', params)
+                        update_time, meta_data_source, id)
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', params)
     }
 
     List<SceneMetaData> findScenesInSceneArea(SceneQuery query) {
         def scenes = []
         sql.eachRow("""
             SELECT id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, 
-                   sun_azimuth, sun_elevation, browse_url, update_time,
+                   sun_azimuth, sun_elevation, update_time,
                    
                     (1.0 - ?) * cloud_cover / 100.0 + ? *
                     LEAST(
@@ -106,7 +105,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                         ABS(day_of_year - $query.targetDayOfYear),
                         365 - ABS(day_of_year - $query.targetDayOfYear)) days_from_target_date,
                     id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, 
-                    sun_azimuth, sun_elevation, browse_url, update_time
+                    sun_azimuth, sun_elevation, update_time
                 FROM scene_meta_data
                 WHERE scene_area_id  = ?
                 AND sensor_id in (${placeholders(query.dataSets)})
@@ -137,7 +136,6 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                         cloudCover: rs.getDouble('cloud_cover'),
                         sunAzimuth: rs.getDouble('sun_azimuth'),
                         sunElevation: rs.getDouble('sun_elevation'),
-                        browseUrl: URI.create(rs.getString('browse_url')),
                         updateTime: new Date(rs.getTimestamp('update_time').time as long)
                 )
                 if (!callback.call(scene))
@@ -185,7 +183,6 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                 cloudCover: row.cloud_cover,
                 sunAzimuth: row.sun_azimuth,
                 sunElevation: row.sun_elevation,
-                browseUrl: URI.create(row.browse_url),
                 updateTime: new Date(row.update_time.time as long)
         )
     }

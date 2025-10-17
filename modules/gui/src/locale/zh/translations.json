@@ -54,7 +54,72 @@
         "run": {
             "error": ""
         },
-        "running": ""
+        "running": "",
+        "noInstanceRequired": "",
+        "admin": {
+            "title": "",
+            "logs": {
+                "title": "",
+                "empty": ""
+            },
+            "container": {
+                "title": "",
+                "notFound": "",
+                "status": "",
+                "containerStatus": "",
+                "mainProcess": "",
+                "memoryUsage": "",
+                "cpuUsage": "",
+                "connections": ""
+            },
+            "repo": {
+                "title": "",
+                "url": "",
+                "lastCommit": "",
+                "lastClone": "",
+                "error": "",
+                "branch": ""
+            },
+            "health": {
+                "healthy": "",
+                "starting": "",
+                "unhealthy": ""
+            },
+            "restart": {
+                "error": "",
+                "success": ""
+            },
+            "buildRestart": {
+                "error": "",
+                "success": ""
+            },
+            "button": {
+                "restart": "",
+                "buildRestart": "",
+                "reloadStatus": "",
+                "reloadLogs": ""
+            },
+            "status": {
+                "running": "",
+                "idle": "",
+                "error": "",
+                "checking": "",
+                "notAvailable": "",
+                "loading": "",
+                "exited": ""
+            },
+            "timestamp": {
+                "never": ""
+            },
+            "update": {
+                "available": "",
+                "checkForUpdates": "",
+                "error": "",
+                "success": "",
+                "noChanges": ""
+            },
+            "tooltip": ""
+        }
     },
     "asset": {
         "failedToLoad": "",
@@ -2964,7 +3029,6 @@
             "exportRecipe": "",
             "removeRecipe.tooltip": "",
             "selectRecipe.tooltip": "",
-            "revertToOldRevision": "",
             "saveRecipe": "",
             "searchRecipes": ""
         },
@@ -4553,11 +4617,6 @@
             },
             "title": "",
             "tooltip": ""
-        },
-        "revisions": {
-            "none": "",
-            "revert": "",
-            "title": ""
         },
         "saveRecipe": {
             "error": "",

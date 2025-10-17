@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -132,12 +133,11 @@ export const VisualizationSelector = compose(
     withActivators({
         visParams: ({mapArea: {area}}) => `visParams-${area}`
     }),
-    withMapArea()
+    withMapArea(),
+    asFunctionalComponent({
+        presetOptions: []
+    })
 )
-
-VisualizationSelector.defaultProps = {
-    presetOptions: []
-}
 
 VisualizationSelector.propTypes = {
     source: PropTypes.any.isRequired,

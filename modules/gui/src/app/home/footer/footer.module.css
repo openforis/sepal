@@ -27,7 +27,7 @@
     font-size: .9rem;
 }
 
-@media screen and (max-width: 25rem) {
+@media screen and (max-width: 30rem) {
     .copyright {
         display: none;
     }

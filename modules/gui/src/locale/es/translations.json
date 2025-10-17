@@ -54,7 +54,72 @@
         "run": {
             "error": "No se pudo ejecutar {label}"
         },
-        "running": "La aplicación está funcionando"
+        "running": "La aplicación está funcionando",
+        "noInstanceRequired": "",
+        "admin": {
+            "title": "",
+            "logs": {
+                "title": "",
+                "empty": ""
+            },
+            "container": {
+                "title": "",
+                "notFound": "",
+                "status": "",
+                "containerStatus": "",
+                "mainProcess": "",
+                "memoryUsage": "",
+                "cpuUsage": "",
+                "connections": ""
+            },
+            "repo": {
+                "title": "",
+                "url": "",
+                "lastCommit": "",
+                "lastClone": "",
+                "error": "",
+                "branch": ""
+            },
+            "health": {
+                "healthy": "",
+                "starting": "",
+                "unhealthy": ""
+            },
+            "restart": {
+                "error": "",
+                "success": ""
+            },
+            "buildRestart": {
+                "error": "",
+                "success": ""
+            },
+            "button": {
+                "restart": "",
+                "buildRestart": "",
+                "reloadStatus": "",
+                "reloadLogs": ""
+            },
+            "status": {
+                "running": "",
+                "idle": "",
+                "error": "",
+                "checking": "",
+                "notAvailable": "",
+                "loading": "Cargando...",
+                "exited": ""
+            },
+            "timestamp": {
+                "never": ""
+            },
+            "update": {
+                "available": "",
+                "checkForUpdates": "",
+                "error": "",
+                "success": "",
+                "noChanges": ""
+            },
+            "tooltip": ""
+        }
     },
     "asset": {
         "failedToLoad": "Fallo en la carga de la tabla de EE",
@@ -2964,7 +3029,6 @@
             "exportRecipe": "Exportar flujo de trabajo",
             "removeRecipe.tooltip": "Eliminar flujo de trabajo",
             "selectRecipe.tooltip": "",
-            "revertToOldRevision": "Volver a una antigua revisión...",
             "saveRecipe": "Guarda el flujo de trabajo...",
             "searchRecipes": "Buscar flujo de trabajo"
         },
@@ -4553,11 +4617,6 @@
             },
             "title": "Importar",
             "tooltip": ""
-        },
-        "revisions": {
-            "none": "Ninguna revisión disponible.",
-            "revert": "Volver a la revisión",
-            "title": "Revisiones"
         },
         "saveRecipe": {
             "error": "",

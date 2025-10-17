@@ -1,7 +1,7 @@
-import React from 'react'
+import {useState} from 'react'
+import {useLocation} from 'react-router'
 
 import {isPathInLocation} from '~/route'
-import {AnimateReplacement} from '~/widget/animate'
 import {Recaptcha} from '~/widget/recaptcha'
 
 import styles from './credentials.module.css'
@@ -10,87 +10,65 @@ import {Login} from './login'
 import {SetPassword} from './setPassword'
 import {SignUp} from './signup'
 
-export class Credentials extends React.Component {
-    state = {
-        mode: 'login'
-    }
+export const Credentials = () => {
+    const [mode, setMode] = useState('login')
+    const location = useLocation()
 
-    constructor(props) {
-        super(props)
-        this.switchToLogin = this.switchToLogin.bind(this)
-        this.switchToSignUp = this.switchToSignUp.bind(this)
-        this.switchToForgotPassword = this.switchToForgotPassword.bind(this)
-    }
+    const switchToLogin = () =>
+        setMode('login')
 
-    switchToLogin() {
-        this.setState({mode: 'login'})
-    }
+    const switchToSignUp = () =>
+        setMode('signUp')
+    
+    const switchToForgotPassword = () =>
+        setMode('forgotPassword')
 
-    switchToSignUp() {
-        this.setState({mode: 'signUp'})
-    }
+    const renderLogin = () => (
+        <Login
+            onForgotPassword={switchToForgotPassword}
+            onSignUp={switchToSignUp}
+        />
+    )
 
-    switchToForgotPassword() {
-        this.setState({mode: 'forgotPassword'})
-    }
+    const renderSignUp = () => (
+        <SignUp
+            onCancel={switchToLogin}
+        />
+    )
 
-    renderLogin() {
-        return (
-            <Login
-                onForgotPassword={this.switchToForgotPassword}
-                onSignUp={this.switchToSignUp}
-            />
-        )
-    }
+    const renderForgotPassword = () => (
+        <ForgotPassword
+            onCancel={switchToLogin}
+        />
+    )
 
-    renderSignUp() {
-        return (
-            <SignUp
-                onCancel={this.switchToLogin}
-            />
-        )
-    }
+    const renderResetPassword = () => (
+        <SetPassword type='reset'/>
+    )
 
-    renderForgotPassword() {
-        return (
-            <ForgotPassword
-                onCancel={this.switchToLogin}
-            />
-        )
-    }
+    const renderAssignPassword = () => (
+        <SetPassword type='assign'/>
+    )
 
-    renderPanel() {
-        const {mode} = this.state
-        if (isPathInLocation('/reset-password')) {
-            return <SetPassword type='reset'/>
+    const renderPanel = () => {
+        if (isPathInLocation('/reset-password', location.pathname)) {
+            return renderResetPassword()
         }
-        if (isPathInLocation('/setup-account')) {
-            return <SetPassword type='assign'/>
+        if (isPathInLocation('/setup-account', location.pathname)) {
+            return renderAssignPassword()
         }
         switch (mode) {
-            case 'login': return this.renderLogin()
-            case 'signUp': return this.renderSignUp()
-            case 'forgotPassword': return this.renderForgotPassword()
+            case 'login': return renderLogin()
+            case 'signUp': return renderSignUp()
+            case 'forgotPassword': return renderForgotPassword()
         }
     }
 
-    render() {
-        const {mode} = this.state
-        const ANIMATION_DURATION_MS = 500
-        return (
-            <Recaptcha siteKey={window._sepal_global_.googleRecaptchaSiteKey}>
-                <div className={styles.container}>
-                    <AnimateReplacement
-                        currentKey={mode}
-                        timeout={ANIMATION_DURATION_MS}
-                        classNames={{enter: styles.formEnter, exit: styles.formExit}}
-                        style={{height: '100%', '--animation-duration': `${ANIMATION_DURATION_MS}ms`}}>
-                        {this.renderPanel()}
-                    </AnimateReplacement>
-                </div>
-            </Recaptcha>
-        )
-    }
+    return (
+        <Recaptcha siteKey={window._sepal_global_.googleRecaptchaSiteKey}>
+            <div className={styles.container}>
+                {renderPanel()}
+            </div>
+        </Recaptcha>
+    )
 }
-
-Credentials.propTypes = {}

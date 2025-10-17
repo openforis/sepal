@@ -4,6 +4,7 @@ import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {updateProject} from '~/app/home/body/process/recipeList/projects'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
@@ -411,17 +412,16 @@ class _MosaicRetrievePanel extends React.Component {
 export const MosaicRetrievePanel = compose(
     _MosaicRetrievePanel,
     connect(mapStateToProps),
-    recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps})
+    recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps}),
+    asFunctionalComponent({
+        scaleTicks: [10, 15, 20, 30, 60, 100],
+        defaultCrs: 'EPSG:4326',
+        defaultScale: 30,
+        defaultShardSize: 256,
+        defaultFileDimensionsMultiple: 10,
+        defaultTileSize: 2
+    })
 )
-
-MosaicRetrievePanel.defaultProps = {
-    scaleTicks: [10, 15, 20, 30, 60, 100],
-    defaultCrs: 'EPSG:4326',
-    defaultScale: 30,
-    defaultShardSize: 256,
-    defaultFileDimensionsMultiple: 10,
-    defaultTileSize: 2
-}
 
 MosaicRetrievePanel.propTypes = {
     defaultCrs: PropTypes.string.isRequired,

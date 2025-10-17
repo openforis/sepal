@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {Combo} from '~/widget/combo'
 
@@ -74,7 +75,10 @@ class _FormCombo extends React.Component {
 
 export const FormCombo = compose(
     _FormCombo,
-    withFormContext()
+    withFormContext(),
+    asFunctionalComponent({
+        errorMessage: true
+    })
 )
 
 FormCombo.propTypes = {
@@ -106,8 +110,4 @@ FormCombo.propTypes = {
     onCancel: PropTypes.func,
     onChange: PropTypes.func,
     onFilterChange: PropTypes.func
-}
-
-FormCombo.defaultProps = {
-    errorMessage: true
 }

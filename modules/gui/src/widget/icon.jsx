@@ -7,6 +7,8 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {Tooltip} from '~/widget/tooltip'
 
 import styles from './icon.module.css'
@@ -30,7 +32,7 @@ const fontAwesomeCollection = type => {
 
 const OMITTED_ATTRIBUTES = ['icon', 'name', 'type', 'className', 'variant']
 
-export class Icon extends React.Component {
+class _Icon extends React.Component {
     render() {
         const {tooltip, tooltipPlacement, tooltipClickTrigger, tooltipDelay, tooltipDisabled} = this.props
         return (
@@ -78,6 +80,15 @@ export class Icon extends React.Component {
     }
 }
 
+export const Icon = compose(
+    _Icon,
+    asFunctionalComponent({
+        size: '1x',
+        type: 'solid',
+        variant: 'normal'
+    })
+)
+
 Icon.propTypes = {
     name: PropTypes.string.isRequired,
     attributes: PropTypes.object,
@@ -91,10 +102,4 @@ Icon.propTypes = {
     tooltipPlacement: PropTypes.any,
     type: PropTypes.oneOf(['solid', 'regular', 'brands']),
     variant: PropTypes.oneOf(['normal', 'error', 'info', 'success', 'warning'])
-}
-
-Icon.defaultProps = {
-    size: '1x',
-    type: 'solid',
-    variant: 'normal'
 }

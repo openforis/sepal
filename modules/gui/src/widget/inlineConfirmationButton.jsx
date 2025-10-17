@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Keybinding} from '~/widget/keybinding'
@@ -9,7 +11,7 @@ import {ButtonGroup} from './buttonGroup'
 import {FloatingBox} from './floatingBox'
 import styles from './inlineConfirmationButton.module.css'
 
-export class InlineConfirmationButton extends React.Component {
+class _InlineConfirmationButton extends React.Component {
     ref = React.createRef()
 
     state = {
@@ -146,10 +148,12 @@ export class InlineConfirmationButton extends React.Component {
     }
 }
 
-InlineConfirmationButton.defaultProps = {
-    tooltipPlacement: 'top',
-    confirmationIcon: 'exclamation-triangle'
-}
+export const InlineConfirmationButton = compose(
+    _InlineConfirmationButton,
+    asFunctionalComponent({
+        tooltipPlacement: 'top'
+    })
+)
 
 InlineConfirmationButton.propTypes = {
     onConfirm: PropTypes.func.isRequired,

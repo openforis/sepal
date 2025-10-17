@@ -69,6 +69,7 @@ build ceo-gateway
 build app-launcher
 build app-manager
 build sepal-server
+build scene-metadata
 
 echo "${DOCKER_REGISTRY_PASSWORD}" | docker login "${DOCKER_REGISTRY_HOST}" -u "${DOCKER_REGISTRY_USERNAME}" --password-stdin
 
@@ -99,6 +100,7 @@ push task
 push terminal
 push letsencrypt
 push haproxy
+push scene-metadata
 
 docker logout localhost
 docker system prune --force

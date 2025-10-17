@@ -2,6 +2,7 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
@@ -201,7 +202,11 @@ class _ButtonPopup extends React.Component {
 
 export const ButtonPopup = compose(
     _ButtonPopup,
-    connect(mapStateToProps)
+    connect(mapStateToProps),
+    asFunctionalComponent({
+        vPlacement: 'below',
+        hPlacement: 'over-right'
+    })
 )
 
 ButtonPopup.propTypes = {
@@ -226,9 +231,4 @@ ButtonPopup.propTypes = {
     onClick: PropTypes.func,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func,
-}
-
-ButtonPopup.defaultProps = {
-    vPlacement: 'below',
-    hPlacement: 'over-right'
 }

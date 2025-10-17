@@ -1,11 +1,14 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
+
 import {Icon} from './icon'
 import styles from './label.module.css'
 import {Layout} from './layout'
 
-export class Label extends React.Component {
+class _Label extends React.Component {
     render() {
         const {className, size, alignment, disabled} = this.props
         return (
@@ -109,6 +112,15 @@ export class Label extends React.Component {
     }
 }
 
+export const Label = compose(
+    _Label,
+    asFunctionalComponent({
+        alignment: 'left',
+        size: 'normal',
+        tooltipSeverity: 'info'
+    })
+)
+
 Label.propTypes = {
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     buttons: PropTypes.oneOfType([
@@ -125,10 +137,4 @@ Label.propTypes = {
     tooltipPlacement: PropTypes.any,
     tooltipSeverity: PropTypes.oneOf(['info', 'warning']),
     warning: PropTypes.any
-}
-
-Label.defaultProps = {
-    alignment: 'left',
-    size: 'normal',
-    tooltipSeverity: 'info'
 }

@@ -1,8 +1,10 @@
 const {createProxyMiddleware} = require('http-proxy-middleware')
 const {filter, from, map, switchMap, toArray} = require('rxjs')
-const {getRequestUser} = require('./user')
+const url = require('url')
+const {isMatch} = require('micromatch')
+const {getRequestUser, setRequestUser} = require('./user')
 const {usernameTag, urlTag} = require('./tag')
-const {fetchAppsFromApi$} = require('./appsService')
+const {fetchAppsFromApi$} = require('./apiService')
 const {sepalHost} = require('./config')
 
 const log = require('#sepal/log').getLogger('proxy')
@@ -15,7 +17,37 @@ const proxyEndpoints$ = expressApp => fetchAppsFromApi$().pipe(
     toArray()
 )
 
-module.exports = {proxyEndpoints$}
+const registerUpgradeListener = (server, proxies) => {
+    // this was taken from gateway/src/main.js
+    server.on('upgrade', (req, socket, head) => {
+        const requestPath = url.parse(req.url).pathname
+        const user = getRequestUser(req)
+        if (!user) {
+            // TODO: Return a 400
+            log.error('Websocket upgrade without a user')
+            return
+        }
+        // TODO: Maybe not needed
+        setRequestUser(req, user)
+        
+        const proxyMatch = proxies
+            .find(({path}) =>
+                !path || requestPath === path || isMatch(requestPath, `${path}/**`)
+            )
+        
+        const username = user.username
+        if (proxyMatch) {
+            const {proxy, target} = proxyMatch
+            log.debug(`${usernameTag(username)} Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
+            proxy.upgrade(req, socket, head)
+        } else {
+            // TODO: Return a 400
+            log.warn(`${usernameTag(username)} No proxy found for WebSocket upgrade "${requestPath}"`)
+        }
+    })
+}
+
+module.exports = {proxyEndpoints$, registerUpgradeListener}
 
 const proxy = expressApp =>
     ({id, port}) => {

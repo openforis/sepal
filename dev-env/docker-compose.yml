@@ -13,6 +13,7 @@ services:
     container_name: sepal-dev
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /:/host:ro
       - ..:/usr/local/src/sepal
       - ${SEPAL_CONFIG:-~/.sepal}:/etc/sepal/config
     networks:

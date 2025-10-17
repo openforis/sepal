@@ -1,12 +1,12 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
-import {withForwardedRef} from '~/ref'
 
 import styles from './layout.module.css'
 
-const typeClassNames = type =>
+const typeClassNames = (type = '') =>
     type.split('-').map(className => styles[className])
 
 class _Layout extends React.Component {
@@ -40,7 +40,11 @@ class _Layout extends React.Component {
 
 export const Layout = compose(
     _Layout,
-    withForwardedRef()
+    asFunctionalComponent({
+        alignment: 'spaced',
+        spacing: 'normal',
+        type: 'vertical'
+    })
 )
 
 Layout.propTypes = {
@@ -55,12 +59,6 @@ Layout.propTypes = {
     onClick: PropTypes.func,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func
-}
-
-Layout.defaultProps = {
-    alignment: 'spaced',
-    spacing: 'normal',
-    type: 'vertical'
 }
 
 class LayoutSpacer extends React.Component {

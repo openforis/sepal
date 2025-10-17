@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject} from 'rxjs'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
 import {ElementResizeDetector} from '~/widget/elementResizeDetector'
@@ -280,7 +281,10 @@ class _SplitView extends React.PureComponent {
 
 export const SplitView = compose(
     _SplitView,
-    withSubscriptions()
+    withSubscriptions(),
+    asFunctionalComponent({
+        mode: 'stack'
+    })
 )
 
 SplitView.propTypes = {
@@ -300,8 +304,4 @@ SplitView.propTypes = {
     mode: PropTypes.oneOf(['stack', 'grid']),
     overlay: PropTypes.any,
     position$: PropTypes.any,
-}
-
-SplitView.defaultProps = {
-    mode: 'stack'
 }

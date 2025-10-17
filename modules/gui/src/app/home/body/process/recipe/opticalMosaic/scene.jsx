@@ -9,6 +9,7 @@ import {HoverDetector, HoverOverlay} from '~/widget/hover'
 import {Icon} from '~/widget/icon'
 
 import daysBetween from './daysBetween'
+import {getScenePreviewUrl} from './scenePreviewUrl'
 import styles from './sceneSelection.module.css'
 import {getDataSet} from './sources'
 
@@ -27,18 +28,14 @@ export class Scene extends React.Component {
     }
 
     renderThumbnail() {
-        const {scene: {browseUrl: imageUrl}} = this.props
-        const thumbnailUrl = this.imageThumbnail(imageUrl)
+        const {scene} = this.props
+        const imageUrl = getScenePreviewUrl(scene)
         return (
             <div className={styles.thumbnail}>
-                {this.renderImage(thumbnailUrl)}
+                <Icon name='spinner'/>
                 {this.renderImage(imageUrl)}
             </div>
         )
-    }
-
-    imageThumbnail(url) {
-        return url.replace('https://earthexplorer.usgs.gov/browse/', 'https://earthexplorer.usgs.gov/browse/thumbnails/')
     }
 
     renderImage(url) {

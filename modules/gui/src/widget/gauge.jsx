@@ -2,10 +2,13 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
+import {compose} from '~/compose'
+
 import styles from './gauge.module.css'
 import {Layout} from './layout'
 
-export class Gauge extends React.Component {
+class _Gauge extends React.Component {
     render() {
         const {className, infoTop, infoBottom, infoLeft, infoRight} = this.props
         return (
@@ -60,9 +63,12 @@ export class Gauge extends React.Component {
     }
 }
 
-Gauge.defaultProps = {
-    minValue: 0
-}
+export const Gauge = compose(
+    _Gauge,
+    asFunctionalComponent({
+        minValue: 0
+    })
+)
 
 Gauge.propTypes = {
     maxValue: PropTypes.number.isRequired,

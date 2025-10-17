@@ -101,7 +101,6 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
                         coverage: 100,
                         sunAzimuth: data['Sun Azimuth L0RA'] ? data['Sun Azimuth L0RA'].toDouble() : 0d,
                         sunElevation: data['Sun Elevation L0RA'] ? data['Sun Elevation L0RA'].toDouble() : 0d,
-                        browseUrl: URI.create(data['Browse Link'] as String),
                         updateTime: new SimpleDateFormat('yy/MM/dd').parse(data['Date Product Generated L1'] as String)
                 )
                 return metadata

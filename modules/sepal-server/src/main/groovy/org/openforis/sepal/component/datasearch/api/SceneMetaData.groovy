@@ -14,6 +14,5 @@ class SceneMetaData {
     double sunAzimuth
     double sunElevation
     double[][] footprint
-    URI browseUrl
     Date updateTime
 }

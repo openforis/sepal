@@ -10,6 +10,7 @@ import {Panel} from '~/widget/panel/panel'
 
 import daysBetween from './daysBetween'
 import styles from './scenePreview.module.css'
+import {getScenePreviewUrl} from './scenePreviewUrl'
 import {getDataSet} from './sources'
 
 const mapRecipeToProps = recipe => ({
@@ -26,7 +27,8 @@ class _ScenePreview extends React.Component {
     render() {
         const {targetDate, scene} = this.props
         if (scene) {
-            const {id, dataSet, date, cloudCover, browseUrl} = scene
+            const {id, dataSet, date, cloudCover} = scene
+            const browseUrl = getScenePreviewUrl(scene)
             const daysFromTarget = daysBetween(targetDate, date)
             const daysFromTargetString = daysFromTarget === 0
                 ? msg('process.mosaic.panel.sceneSelection.preview.onTarget')

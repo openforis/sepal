@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -112,14 +113,15 @@ class _Legend extends React.Component {
     }
 }
 
-_Legend.defaultProps = {entries: []}
-
 const toUpdatedEntryPath = componentId => ['ui', 'widget.Legend', componentId, 'updatedEntries']
 
 export const Legend = compose(
     _Legend,
     withRecipe(mapRecipeToProps),
-    withActivators('editLegendPanel')
+    withActivators('editLegendPanel'),
+    asFunctionalComponent({
+        entries: []
+    })
 )
 
 Legend.propTypes = {

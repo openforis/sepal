@@ -3,6 +3,7 @@ import React from 'react'
 
 import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 
 import {visualizationOptions} from './visualizations'
@@ -38,12 +39,11 @@ class _PhenologyImageLayer extends React.Component {
 }
 
 export const PhenologyImageLayer = compose(
-    _PhenologyImageLayer
+    _PhenologyImageLayer,
+    asFunctionalComponent({
+        layerConfig: defaultLayerConfig
+    })
 )
-
-PhenologyImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
 
 PhenologyImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,

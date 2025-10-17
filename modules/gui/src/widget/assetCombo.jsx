@@ -6,6 +6,7 @@ import {debounceTime, first, map, Subject, switchMap, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
 import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
+import {asFunctionalComponent} from '~/classComponent'
 import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -509,7 +510,10 @@ export const AssetCombo = compose(
     _AssetCombo,
     connect(),
     withSubscriptions(),
-    withAssets()
+    withAssets(),
+    asFunctionalComponent({
+        mode: ASSET
+    })
 )
 
 AssetCombo.propTypes = {
@@ -542,8 +546,4 @@ AssetCombo.propTypes = {
     onError: PropTypes.func,
     onLoaded: PropTypes.func,
     onLoading: PropTypes.func
-}
-
-AssetCombo.defaultProps = {
-    mode: ASSET
 }

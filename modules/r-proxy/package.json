@@ -11,7 +11,7 @@
     "license": "ISC",
     "dependencies": {
         "bull": "^4.16.5",
-        "commander": "^14.0.0",
+        "commander": "^14.0.1",
         "compare-versions": "^6.1.1",
         "http-proxy": "^1.18.1",
         "lodash": "^4.17.21",
