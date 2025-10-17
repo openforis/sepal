@@ -16,7 +16,8 @@ const isInTimeRange = (timestamp, minTimestamp, maxTimestamp) =>
     (!minTimestamp || timestamp >= minTimestamp) && (!maxTimestamp || timestamp <= maxTimestamp)
 
 const processCollection = async ({collection, sceneMapper, minTimestamp, maxTimestamp, chunkSize, chunkHandler}) => {
-    const inStream = createReadStream(getPath(`${collection}.csv.gz`))
+    const csvPath = getPath(`${collection}.csv.gz`)
+    const inStream = createReadStream(csvPath)
     let readCount = 0
     let writeCount = 0
     let chunk = 1
@@ -93,6 +94,7 @@ const processCollection = async ({collection, sceneMapper, minTimestamp, maxTime
         if (writeCount % chunkSize !== 0) {
             handleChunk()
         }
+        await remove(csvPath)
     } catch (error) {
         log.warn(`Error while processing collection ${collection}`, error)
     }
