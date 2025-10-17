@@ -53,7 +53,6 @@ class _SceneSelection extends React.Component {
         const {scenes} = this.state
         return scenes
             .filter(scene => !selectedScenes.value.find(selectedScene => selectedScene.id === scene.id))
-
     }
 
     getSelectedScenes() {
@@ -66,7 +65,7 @@ class _SceneSelection extends React.Component {
 
     render() {
         const {recipeId, dates: {targetDate}, form, activatable: {deactivate}, stream} = this.props
-        const loading = stream('LOAD_SCENES').dispatching
+        const loading = stream('LOAD_SCENES').active
         return (
             <React.Fragment>
                 <ScenePreview recipeId={recipeId} targetDate={targetDate}/>
@@ -106,8 +105,7 @@ class _SceneSelection extends React.Component {
     renderScenes() {
         const availableScenes = this.getAvailableScenes()
         const selectedScenes = this.getSelectedScenes()
-        const haveScenes = availableScenes.length || selectedScenes.length
-        return haveScenes ? (
+        return availableScenes.length || selectedScenes.length ? (
             <div className={styles.scenes}>
                 <div className={styles.availableScenes}>
                     {this.renderScenesSection({
@@ -170,7 +168,6 @@ class _SceneSelection extends React.Component {
 
     loadScenes() {
         const {sceneAreaId, dates, sources, sceneSelectionOptions, stream} = this.props
-        this.setScenes([])
         stream('LOAD_SCENES',
             api.gee.scenesInSceneArea$({sceneAreaId, dates, sources, sceneSelectionOptions}),
             scenes => this.setScenes(scenes)
