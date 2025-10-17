@@ -91,7 +91,7 @@
     left: 0;
     right: 0;
     background-image: var(--image);
-    background-size: contain;
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 }

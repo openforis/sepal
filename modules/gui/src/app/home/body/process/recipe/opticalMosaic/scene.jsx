@@ -2,10 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import format from '~/format'
-import {msg} from '~/translate'
 import {Button} from '~/widget/button'
-import {ButtonGroup} from '~/widget/buttonGroup'
-import {HoverDetector, HoverOverlay} from '~/widget/hover'
 import {Icon} from '~/widget/icon'
 
 import daysBetween from './daysBetween'
@@ -15,15 +12,18 @@ import {getDataSet} from './sources'
 
 export class Scene extends React.Component {
     render() {
-        const {className} = this.props
+        const {className, scene, onPreview} = this.props
         return (
-            <HoverDetector className={[styles.scene, className].join(' ')}>
+            <div
+                className={[styles.scene, className].join(' ')}
+                style={{cursor: 'pointer'}}
+                onClick={() => onPreview(scene)}>
                 {this.renderThumbnail()}
                 {this.renderDetails()}
-                <HoverOverlay>
+                <div style={{position: 'absolute', top: '1px', left: '1px'}}>
                     {this.renderSceneOverlay()}
-                </HoverOverlay>
-            </HoverDetector>
+                </div>
+            </div>
         )
     }
 
@@ -102,52 +102,32 @@ export class Scene extends React.Component {
         )
     }
 
-    renderSceneOverlay() {
+    renderSceneOverlay(hover) {
         const {selected} = this.props
         return selected
-            ? this.renderSelectedSceneOverlay()
-            : this.renderAvailableSceneOverlay()
+            ? this.renderSelectedSceneOverlay(hover)
+            : this.renderAvailableSceneOverlay(hover)
     }
 
     renderAvailableSceneOverlay() {
-        const {scene, onAdd, onPreview} = this.props
+        const {scene, onAdd} = this.props
         return (
-            <ButtonGroup
-                className={styles.overlayControls}
-                layout='vertical'
-                alignment='fill'>
-                <Button
-                    look='add'
-                    icon='plus'
-                    label={msg('button.add')}
-                    onClick={() => onAdd(scene)}/>
-                <Button
-                    look='default'
-                    icon='eye'
-                    label={msg('process.mosaic.panel.sceneSelection.preview.label')}
-                    onClick={() => onPreview(scene)}/>
-            </ButtonGroup>
+            <Button
+                look='add'
+                icon='plus'
+                air='less'
+                onClick={() => onAdd(scene)}/>
         )
     }
 
     renderSelectedSceneOverlay() {
-        const {scene, onRemove, onPreview} = this.props
+        const {scene, onRemove} = this.props
         return (
-            <ButtonGroup
-                className={styles.overlayControls}
-                layout='horizontal'
-                alignment='fill'>
-                <Button
-                    look='cancel'
-                    icon='minus'
-                    label={msg('button.remove')}
-                    onClick={() => onRemove(scene)}/>
-                <Button
-                    look='default'
-                    icon='eye'
-                    label={msg('process.mosaic.panel.sceneSelection.preview.label')}
-                    onClick={() => onPreview(scene)}/>
-            </ButtonGroup>
+            <Button
+                look='cancel'
+                icon='minus'
+                air='less'
+                onClick={() => onRemove(scene)}/>
         )
     }
 }
