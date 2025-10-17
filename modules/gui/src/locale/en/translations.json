@@ -4695,6 +4695,7 @@
                             "label": "Strata",
                             "select": "Select stratification and band.",
                             "loading": "Calculating strata weights...",
+                            "noData": "No strata found in your AOI.",
                             "table": {
                                 "value": "Value",
                                 "area": "Area (ha)",

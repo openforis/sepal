@@ -4,6 +4,7 @@ import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
+import format from '~/format'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
@@ -14,7 +15,7 @@ import {Widget} from '~/widget/widget'
 
 import {allocate} from './allocate'
 import {AllocationTable} from './allocationTable'
-// import {calculateStratumErrors} from './confidenceInterval'
+import {calculateBounds} from './confidenceInterval'
 import {calculateMarginOfError} from './marginOfError'
 import styles from './sampleAllocation.module.css'
 import {calculateSampleSize} from './sampleSize'
@@ -33,19 +34,23 @@ const fields = {
     estimateSampleSize: new Form.Field(),
     confidenceLevel: new Form.Field()
         .notBlank()
+        .max(100)
         .number(),
     sampleSize: new Form.Field()
         .skip((_sampleSize, {manual, estimateSampleSize}) => manual.length || estimateSampleSize)
         .notBlank()
+        .min(1)
         .int(),
     marginOfError: new Form.Field()
         .skip((_marginOfError, {manual, estimateSampleSize}) => manual.length || !estimateSampleSize)
         .notBlank()
+        .greaterThan(0)
         .number(),
     relativeMarginOfError: new Form.Field(),
     allocationStrategy: new Form.Field(),
     minSamplesPerStratum: new Form.Field()
-        .notBlank(),
+        .notBlank()
+        .min(0),
     powerTuningConstant: new Form.Field()
         .skip((_powerTuningConstant, {manual, allocationStrategy}) => manual.length || allocationStrategy !== 'POWER')
         .notBlank()
@@ -76,6 +81,7 @@ const constraints = {
 class _SampleAllocation extends React.Component {
     constructor(props) {
         super(props)
+        this.updateMarginOfError = this.updateMarginOfError.bind(this)
     }
 
     render() {
@@ -98,75 +104,97 @@ class _SampleAllocation extends React.Component {
     }
 
     renderHeaderButtons() {
-        const {noProportions, inputs: {manual}} = this.props
+        const {strata, inputs: {manual}} = this.props
         return (
             <Form.Buttons
                 input={manual}
-                disabled={noProportions}
+                disabled={strata.length <= 1}
                 options={[
                     {
                         value: true,
                         icon: 'rectangle-list',
                         label: msg('process.samplingDesign.panel.sampleAllocation.form.manual.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.manual.tooltip')
+                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.manual.tooltip'),
                     },
                 ]}
                 multiple
+                onChange={manual => this.onManualToggled(manual.length)}
             />
         )
     }
 
     renderContent() {
-        const {noProportions, inputs: {manual, estimateSampleSize, allocationStrategy}} = this.props
+        const {noProportions, inputs: {allocationStrategy}} = this.props
         const usingPowerAllocation = allocationStrategy.value === 'POWER'
-        const isManual = manual.value?.length
         return (
             <Layout>
-                {isManual ? null : (
+                {this.isManual() ? null : (
                     <Layout type='horizontal'>
-                        {this.renderEstimateSampleSize()}
-                        {estimateSampleSize.value
-                            ? this.renderMarginOfError()
-                            : this.renderSampleSize()}
+                        <div className={styles.left}>
+                            {this.renderTarget()}
+                        </div>
+                        <div className={styles.right}>
+                            {noProportions ? null : this.renderConfidenceLevel()}
+                        </div>
                     </Layout>
                 )}
                 
-                <Layout type='horizontal'>
-                    {noProportions ? null : this.renderRelativeMarginOfError()}
-                    {noProportions ? null : this.renderConfidenceLevel()}
-                </Layout>
-                {isManual ? null : this.renderAllocationStrategy()}
-                {isManual ? null : (
-                    <Layout type='horizontal' alignment='distribute'>
-                        {this.renderMinSamplesPerStratum()}
-                        {usingPowerAllocation ? this.renderPowerTuningConstant() : <div/>}
+                {this.isManual() ? null : this.renderAllocationStrategy()}
+                
+                {this.isManual() ? null : (
+                    <Layout type='horizontal'>
+                        <div className={styles.left}>
+                            {this.renderMinSamplesPerStratum()}
+                        </div>
+                        <div className={styles.right}>
+                            {usingPowerAllocation ? this.renderPowerTuningConstant() : null}
+                        </div>
                     </Layout>
                 )}
                 {this.renderAllocation()}
             </Layout>
         )
-
     }
 
-    renderEstimateSampleSize() {
-        const {inputs: {estimateSampleSize}} = this.props
-        return (
+    renderTarget() {
+        const {noProportions, inputs: {estimateSampleSize, sampleSize, marginOfError}} = this.props
+        // TODO: Update messages -> target
+
+        const estimateSampleSizeButtons = (
             <Form.Buttons
-                className={styles.estimateSampleSize}
-                label={msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.label')}
+                key='estimateSampleSize'
+                spacing='none'
+                groupSpacing='none'
+                size='x-small'
+                shape='pill'
                 input={estimateSampleSize}
                 options={[
                     {
-                        value: false,
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.false.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.false.tooltip'),
+                        value: true,
+                        label: msg('Error'),
+                        // label: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.true.label'),
+                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.true.tooltip')
                     },
                     {
-                        value: true,
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.true.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.true.tooltip')
+                        value: false,
+                        label: msg('Samples'),
+                        // label: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.false.label'),
+                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.false.tooltip'),
                     }
                 ]}
+            />
+        )
+        return (
+            <Form.Input
+                label={msg('Target')}
+                labelButtons={noProportions ? [] : [estimateSampleSizeButtons]}
+                placeholder={msg(estimateSampleSize.value ? 'Margin of Error...' : 'Sample size...')}
+                tooltip={msg('process.samplingDesign.panel.sampleAllocation.form.marginOfError.tooltip')}
+                input={estimateSampleSize.value ? marginOfError : sampleSize}
+                errorMessage={[marginOfError, 'noNaN']}
+                validate='onChange'
+                type='number'
+                suffix={estimateSampleSize.value ? '%' : undefined}
             />
         )
     }
@@ -175,7 +203,6 @@ class _SampleAllocation extends React.Component {
         const {inputs: {confidenceLevel}} = this.props
         return (
             <Form.Input
-                className={styles.confidenceLevel}
                 label={msg('process.samplingDesign.panel.sampleAllocation.form.confidenceLevel.label')}
                 placeholder={msg('process.samplingDesign.panel.sampleAllocation.form.confidenceLevel.placeholder')}
                 tooltip={msg('process.samplingDesign.panel.sampleAllocation.form.confidenceLevel.tooltip')}
@@ -183,78 +210,6 @@ class _SampleAllocation extends React.Component {
                 type='number'
                 errorMessage={[confidenceLevel, 'noNaN']}
                 suffix={msg('process.samplingDesign.panel.sampleAllocation.form.confidenceLevel.suffix')}
-            />
-        )
-    }
-
-    renderSampleSize() {
-        const {inputs: {sampleSize}} = this.props
-        return (
-            <Form.Input
-                className={styles.sampleSize}
-                label={msg('process.samplingDesign.panel.sampleAllocation.form.sampleSize.label')}
-                placeholder={msg('process.samplingDesign.panel.sampleAllocation.form.sampleSize.placeholder')}
-                tooltip={msg('process.samplingDesign.panel.sampleAllocation.form.sampleSize.tooltip')}
-                input={sampleSize}
-                errorMessage={[sampleSize, 'enoughSamples']}
-                type='number'
-            />
-        )
-    }
-
-    renderMarginOfError() {
-        const {inputs: {marginOfError, relativeMarginOfError}} = this.props
-        return (
-            <Form.Input
-                className={styles.marginOfError}
-                label={msg('process.samplingDesign.panel.sampleAllocation.form.marginOfError.label')}
-                placeholder={msg('process.samplingDesign.panel.sampleAllocation.form.marginOfError.placeholder')}
-                tooltip={msg('process.samplingDesign.panel.sampleAllocation.form.marginOfError.tooltip')}
-                input={marginOfError}
-                errorMessage={[marginOfError, 'noNaN']}
-                validate='onChange'
-                type='number'
-                suffix={relativeMarginOfError.value ? '%' : 'ha'}
-            />
-        )
-    }
-
-    renderMinSamplesPerStratum() {
-        const {inputs: {minSamplesPerStratum, allocationStrategy}} = this.props
-        const disabled = allocationStrategy.value === 'EQUAL'
-        return (
-            <Form.Input
-                className={styles.minSamplesPerStratum}
-                label={msg('process.samplingDesign.panel.sampleAllocation.form.minSamplesPerStratum.label')}
-                placeholder={msg('process.samplingDesign.panel.sampleAllocation.form.minSamplesPerStratum.placeholder')}
-                tooltip={msg('process.samplingDesign.panel.sampleAllocation.form.minSamplesPerStratum.tooltip')}
-                input={minSamplesPerStratum}
-                errorMessage={disabled ? undefined : [minSamplesPerStratum, 'enoughSamples']}
-                type='number'
-                disabled={disabled}
-            />
-        )
-    }
-
-    renderRelativeMarginOfError() {
-        const {inputs: {relativeMarginOfError}} = this.props
-        return (
-            <Form.Buttons
-                className={styles.relativeMarginOfError}
-                label={msg('process.samplingDesign.panel.sampleAllocation.form.relativeMarginOfError.label')}
-                input={relativeMarginOfError}
-                options={[
-                    {
-                        value: true,
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.relativeMarginOfError.true.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.relativeMarginOfError.true.tooltip')
-                    },
-                    {
-                        value: false,
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.relativeMarginOfError.false.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.relativeMarginOfError.false.tooltip')
-                    },
-                ]}
             />
         )
     }
@@ -298,11 +253,26 @@ class _SampleAllocation extends React.Component {
         )
     }
 
+    renderMinSamplesPerStratum() {
+        const {inputs: {minSamplesPerStratum, allocationStrategy}} = this.props
+        const disabled = allocationStrategy.value === 'EQUAL'
+        return (
+            <Form.Input
+                label={msg('process.samplingDesign.panel.sampleAllocation.form.minSamplesPerStratum.label')}
+                placeholder={msg('process.samplingDesign.panel.sampleAllocation.form.minSamplesPerStratum.placeholder')}
+                tooltip={msg('process.samplingDesign.panel.sampleAllocation.form.minSamplesPerStratum.tooltip')}
+                input={minSamplesPerStratum}
+                errorMessage={disabled ? undefined : [minSamplesPerStratum, 'enoughSamples']}
+                type='number'
+                disabled={disabled}
+            />
+        )
+    }
+
     renderPowerTuningConstant() {
         const {inputs: {powerTuningConstant}} = this.props
         return (
             <Form.Input
-                className={styles.powerTuningConstant}
                 label={msg('process.samplingDesign.panel.sampleAllocation.form.powerTuningConstant.label')}
                 placeholder={msg('process.samplingDesign.panel.sampleAllocation.form.powerTuningConstant.placeholder')}
                 tooltip={msg('process.samplingDesign.panel.sampleAllocation.form.powerTuningConstant.tooltip')}
@@ -313,27 +283,22 @@ class _SampleAllocation extends React.Component {
     }
 
     renderAllocation() {
-        const {inputs: {allocation, marginOfError, relativeMarginOfError, confidenceLevel}} = this.props
+        const {noProportions, inputs: {allocation, marginOfError, relativeMarginOfError}} = this.props
         const sampleSize = allocation.value
-            ? _.sum(allocation.value.map(({sampleSize}) => sampleSize))
+            ? _.sum(allocation.value.map(({sampleSize}) => parseInt(sampleSize)))
             : 0
-        // const stratumErrors = allocation.value
-        //     ? calculateStratumErrors({
-        //         confidenceLevel: parseFloat(confidenceLevel.value) / 100,
-        //         allocation: allocation.value,
-        //         relative: relativeMarginOfError.value
-        //     })
-        //     : null
-        // console.log(stratumErrors)
         return (
             <Widget
                 label={msg('process.samplingDesign.panel.sampleAllocation.form.allocation.label')}>
                 {allocation.value
                     ? <AllocationTable
-                        allocation={allocation.value}
+                        allocation={allocation}
                         sampleSize={sampleSize}
                         marginOfError={marginOfError.value}
                         relativeMarginOfError={relativeMarginOfError.value}
+                        manual={this.isManual()}
+                        noProportions={noProportions}
+                        onChange={() => setImmediate(this.updateMarginOfError)}
                     />
                     : <NoData
                         alignment='left'
@@ -347,7 +312,11 @@ class _SampleAllocation extends React.Component {
     componentDidMount() {
         const {strata, anticipatedProportions, inputs: {requiresUpdate, manual, estimateSampleSize, confidenceLevel, marginOfError, relativeMarginOfError, minSamplesPerStratum, allocationStrategy, powerTuningConstant, allocation}} = this.props
         requiresUpdate.set(false)
-        manual.value || manual.set([])
+        if (strata.length === 1) {
+            manual.set([true])
+        } else {
+            manual.value || manual.set([])
+        }
         estimateSampleSize.value || estimateSampleSize.set(false)
         confidenceLevel.value || confidenceLevel.set(95)
         marginOfError.value || marginOfError.set(50)
@@ -359,10 +328,10 @@ class _SampleAllocation extends React.Component {
         allocationStrategy.value || allocationStrategy.set('EQUAL')
         powerTuningConstant.value || powerTuningConstant.set('0.5')
 
-        // TODO: If allocation stratum doesn't match strata, reset allocation based off stratum or anticipatedProportions
-
         const expectedStrata = strata.map(({value}) => value)
-        const actualStrata = allocation.value?.map(({stratum}) => stratum)
+        const actualStrata = allocation.value
+            ? allocation.value?.map(({stratum}) => stratum)
+            : null
         if (!_.isEqual(expectedStrata, actualStrata)) {
             allocation.set(anticipatedProportions || strata.map(stratum => ({...stratum, stratum: stratum.value})))
         }
@@ -374,13 +343,37 @@ class _SampleAllocation extends React.Component {
             this.allocate()
         }
     }
+
+    onManualToggled(manual) {
+        const {inputs: {allocation}} = this.props
+        if (manual) {
+            const updatedAllocation = allocation.value.map(entry => ({...entry, sampleSize: entry.sampleSize || 1}))
+            allocation.set(updatedAllocation)
+            setImmediate(() => this.updateMarginOfError())
+        } else {
+            setImmediate(() => this.allocate())
+        }
+    }
+
+    updateMarginOfError() {
+        const {inputs: {allocation, marginOfError, relativeMarginOfError, confidenceLevel}} = this.props
+        const [lower, proportion, upper] = calculateBounds({
+            confidenceLevel: confidenceLevel.value / 100,
+            allocation: allocation.value.map(entry => ({...entry, sampleSize: parseInt(entry.sampleSize)}))
+        })
+        const estimatedMarginOfError = Math.max(proportion - lower, upper - proportion)
+        const calculatedMarginOfError = relativeMarginOfError
+            ? estimatedMarginOfError / proportion
+            : estimatedMarginOfError
+        const updatedMarginOfError = relativeMarginOfError.value ? calculatedMarginOfError * 100 : calculatedMarginOfError
+        marginOfError.set(updatedMarginOfError)
+    }
         
     allocate() {
-        const {strata, anticipatedProportions, inputs: {manual, estimateSampleSize, sampleSize, marginOfError, relativeMarginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant, allocation}} = this.props
-        if (manual.value?.length) {
+        const {strata, anticipatedProportions, inputs: {estimateSampleSize, sampleSize, marginOfError, relativeMarginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant, allocation}} = this.props
+        if (this.isManual()) {
             return
         }
-        // TODO: Make marginOfError for each stratum part of allocation
         const updateAllocation = sampleSize => {
             const calculatedAllocation = allocate({
                 sampleSize: parseInt(sampleSize),
@@ -421,12 +414,18 @@ class _SampleAllocation extends React.Component {
                     strata: anticipatedProportions,
                     tuningConstant: parseFloat(powerTuningConstant.value)
                 })
-                marginOfError.set(relativeMarginOfError.value ? Math.round(calculatedMarginOfError * 100) : calculatedMarginOfError)
+                const updatedMarginOfError = relativeMarginOfError.value ? calculatedMarginOfError * 100 : calculatedMarginOfError
+                marginOfError.set(updatedMarginOfError)
                 updateAllocation(sampleSize.value)
             } else {
                 updateAllocation(sampleSize.value)
             }
         }
+    }
+
+    isManual() {
+        const {inputs: {manual}} = this.props
+        return manual.value?.length
     }
 }
 

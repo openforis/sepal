@@ -67,14 +67,15 @@ const adjustToSampleSize = ({sampleSize, minSamplesPerStratum, allocation}) => {
         ).adjustedStrata
     }
 }
+
 const allocateSamples = ({sampleSize, strategy, strata, tuningConstant}) => {
     switch (strategy) {
-    case 'EQUAL': return equalAllocation({sampleSize, strata})
-    case 'PROPORTIONAL': return proportionalAllocation({sampleSize, strata})
-    case 'OPTIMAL': return optimalAllocation({sampleSize, strata})
-    case 'POWER': return powerAllocation({sampleSize, strata, tuningConstant})
-    case 'BALANCED': return balancedAllocation({sampleSize, strata})
-    default: throw Error('Invalid allocation strategy: ' + strategy)
+        case 'EQUAL': return equalAllocation({sampleSize, strata})
+        case 'PROPORTIONAL': return proportionalAllocation({sampleSize, strata})
+        case 'OPTIMAL': return optimalAllocation({sampleSize, strata})
+        case 'POWER': return powerAllocation({sampleSize, strata, tuningConstant})
+        case 'BALANCED': return balancedAllocation({sampleSize, strata})
+        default: throw Error('Invalid allocation strategy: ' + strategy)
     }
 }
 
@@ -101,7 +102,8 @@ const powerAllocation = ({sampleSize, strata, tuningConstant}) => {
         const populationMean = stratum.proportion
         const weight = stratum.weight
         const standardDeviation = Math.sqrt(populationMean * (1 - populationMean))
-        const coefficientOfVariation = standardDeviation / populationMean
+        // Handle case when there is 0 proportion. Assume no variation
+        const coefficientOfVariation = populationMean ? standardDeviation / populationMean : 0
         const importance = weight * populationMean
         return ({
             ...stratum,
@@ -121,7 +123,7 @@ const balancedAllocation = ({sampleSize, strata}) => {
     return _.zip(proportional, equal)
         .map(([proportionalStratum, equalStratum]) => ({
             ...proportionalStratum,
-            sampleSize: (proportionalStratum.sampleSize + equalStratum.sampleSize) / 2
+            sampleSize: Math.round((proportionalStratum.sampleSize + equalStratum.sampleSize) / 2)
         }))
 }
 

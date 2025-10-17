@@ -91,7 +91,6 @@ class _Proportions extends React.Component {
         this.onPercentageChanged = this.onPercentageChanged.bind(this)
         this.onOverallProportionChanged = this.onOverallProportionChanged.bind(this)
         this.onProbabilitiyPerStratumCalculated = this.onProbabilitiyPerStratumCalculated.bind(this)
-        this.onManualToggled = this.onManualToggled.bind(this)
         this.onSkipToggled = this.onSkipToggled.bind(this)
     }
 
@@ -130,7 +129,7 @@ class _Proportions extends React.Component {
                         },
                     ]}
                     multiple
-                    onChange={this.onManualToggled}
+                    onChange={manual => this.onManualToggled(!!manual?.length)}
                 />
                 <Form.Buttons
                     input={skip}
@@ -528,8 +527,8 @@ class _Proportions extends React.Component {
 
     onManualToggled(manual) {
         const {strata, inputs: {anticipatedProportions}} = this.props
-        const isManual = !!manual?.length
-        if (isManual && !anticipatedProportions.value) {
+        // manual && this.cancel$.next()
+        if (manual && !anticipatedProportions.value) {
             const initialProportions = strata.map(stratum => ({
                 color: stratum.color,
                 label: stratum.label,
@@ -539,7 +538,7 @@ class _Proportions extends React.Component {
                 proportion: 0
             }))
             anticipatedProportions.set(initialProportions)
-        } else if (!isManual) {
+        } else if (!manual) {
             anticipatedProportions.set(null)
             this.calculateAnticipatedProportions()
         }
@@ -547,8 +546,10 @@ class _Proportions extends React.Component {
 
     onSkipToggled(skip) {
         const isSkipped = !!skip?.length
-        if (!isSkipped) {
-            this.calculateAnticipatedProportions()
+        if (isSkipped) {
+            // this.cancel$.next()
+        } else {
+            this.onManualToggled(this.isManual())
         }
     }
 
@@ -653,24 +654,24 @@ class _Proportions extends React.Component {
         if (adjustedPercentage && !percentage) {
             setImmediate(() => this.setPercentage(true))
         }
-        const weightedProbabilities = probabilityPerStratum.map(({stratum, probability}) => {
-            const weight = strata.find(({value}) => value === stratum).weight
+        const weightedProbabilities = strata.map(({value, weight}) => {
+            const probability = probabilityPerStratum.find(({stratum}) => stratum === value)?.probability || 0
             return weight * probability
         })
         const overallProbability = _.sum(weightedProbabilities)
         const probabilityFactor = targetOverallProportion >= 0
             ? targetOverallProportion / overallProbability
             : adjustedPercentage ? 1 : 100
-        return probabilityPerStratum.map(({stratum, probability}) => {
-            const {label, color, area, weight} = strata.find(({value}) => value === stratum)
+        return strata.map(({label, color, value, area, weight}) => {
+            const probability = probabilityPerStratum.find(({stratum}) => stratum === value)?.probability || 0
             const proportion = probability * probabilityFactor
             return ({
-                stratum,
+                stratum: value,
                 label,
                 color,
                 weight,
-                area,
-                proportion,
+                area: smartRound(area),
+                proportion: smartRound(proportion),
             })
         })
     }
@@ -737,7 +738,7 @@ const modelToValues = model => {
         anticipatedProportions: model.anticipatedProportions
             ?.map(entry => ({
                 ...entry,
-                proportion: entry.proportion && entry.proportion * 100
+                proportion: entry.proportion && smartRound(entry.proportion * 100)
             }))
     }
 }
@@ -749,4 +750,18 @@ export const Proportions = compose(
 
 Proportions.propTypes = {
     recipeId: PropTypes.string
+}
+
+function smartRound(num) {
+    if (num === 0) return 0
+    if (!num) return num
+    const abs = Math.abs(num)
+    const basePrecision = 2
+    const rounded = Number(num.toFixed(basePrecision))
+    if (rounded !== 0) return rounded
+
+    const extraPrecision = Math.ceil(-Math.log10(abs))
+    const totalPrecision = Math.min(extraPrecision + 1, 15)
+
+    return Number(num.toFixed(totalPrecision))
 }

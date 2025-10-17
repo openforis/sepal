@@ -10,7 +10,6 @@ import {withNestedForm} from '~/widget/form/nestedForms'
 import styles from './proportionTable.module.css'
 
 const fields = {
-    proportions: new Form.Field(),
     proportion: new Form.Field()
         .notBlank()
         .number()

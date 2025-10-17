@@ -8,5 +8,4 @@ export const calculateMarginOfError = ({sampleSize, relativeMarginOfError, confi
     return relativeMarginOfError
         ? estimatedMarginOfError / proportion
         : estimatedMarginOfError
-    
 }

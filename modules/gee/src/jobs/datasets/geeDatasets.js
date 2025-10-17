@@ -1,7 +1,7 @@
-const {get$} = require('#sepal/httpClient')
-const {of, map, switchMap, mergeMap, toArray, timer, tap, catchError, EMPTY} = require('rxjs')
+const { get$ } = require('#sepal/httpClient')
+const { of, map, switchMap, mergeMap, toArray, timer, tap } = require('rxjs')
 const _ = require('lodash')
-const {escapeRegExp, simplifyString, splitString} = require('#sepal/string')
+const { escapeRegExp, simplifyString, splitString } = require('#sepal/string')
 const log = require('#sepal/log').getLogger('ee')
 
 const URL = 'https://earthengine-stac.storage.googleapis.com/catalog/catalog.json'
@@ -12,12 +12,8 @@ let datasets = []
 
 const getNode$ = (url = URL) =>
     get$(url).pipe(
-        catchError(error => {
-            log.error('Error while downloading GEE catalog - ', error)
-            return EMPTY
-        }),
-        map(({body}) => JSON.parse(body)),
-        switchMap(({type, title, id, 'gee:type': geeType, links, providers}) =>
+        map(({ body }) => JSON.parse(body)),
+        switchMap(({ type, title, id, 'gee:type': geeType, links, providers }) =>
             type === 'Catalog'
                 ? getChildNodes$(links).pipe(
                     mergeMap(url => getNode$(url), CONCURRENCY)
@@ -37,20 +33,20 @@ const getChildNodes$ = links =>
 
 const getChildNodes = links =>
     links
-        .filter(({rel}) => rel === 'child')
-        .map(({href}) => href)
+        .filter(({ rel }) => rel === 'child')
+        .map(({ href }) => href)
 
 const TYPE_MAP = {
     'image': 'Image',
     'image_collection': 'ImageCollection',
     'table': 'Table'
 }
-    
+
 const mapType = type =>
     TYPE_MAP[type]
 
 const getUrl = providers =>
-    providers.find(({roles}) => roles.includes('host'))?.url
+    providers.find(({ roles }) => roles.includes('host'))?.url
 
 const sortByDeprecationAndTitle = (a, b) => {
     const aTitle = a.title
@@ -69,14 +65,14 @@ const sortByDeprecationAndTitle = (a, b) => {
 }
 const getDatasets = (text, allowedTypes) =>
     datasets
-        .filter(({type}) => isMatchingAllowedTypes(type, allowedTypes))
+        .filter(({ type }) => isMatchingAllowedTypes(type, allowedTypes))
         .filter(dataset => isMatchingText(dataset, getSearchElements(text)))
-        .map(({title, id, type, url}) => ({title, id, type, url}))
+        .map(({ title, id, type, url }) => ({ title, id, type, url }))
         .toSorted(sortByDeprecationAndTitle)
 
 const getSearchElements = text =>
     splitString(escapeRegExp(text))
-    
+
 const isMatchingAllowedTypes = (type, allowedTypes) =>
     !allowedTypes || allowedTypes.includes(type)
 
@@ -93,7 +89,7 @@ const propertyMatchers = {
     searchTitle: search => simplifyString(search),
     id: search => search
 }
-    
+
 const propertyMatcher = (property, search) =>
     RegExp(propertyMatchers[property](search), 'i')
 
@@ -111,4 +107,4 @@ timer(0, REFRESH_INTERVAL_HOURS * 3600000).pipe(
     }
 })
 
-module.exports = {getDatasets}
+module.exports = { getDatasets }

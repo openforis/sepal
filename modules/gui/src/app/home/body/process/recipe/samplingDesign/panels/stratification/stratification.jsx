@@ -302,6 +302,7 @@ class _Stratification extends React.Component {
                 ]}
             />
         )
+
         return (
             <Widget
                 label={msg('process.samplingDesign.panel.stratification.form.strata.label')}
@@ -317,8 +318,8 @@ class _Stratification extends React.Component {
                                     {' ' + msg('process.samplingDesign.panel.stratification.form.strata.loading')}
                                 </div>
                             )}
-                        />                    
-                    ) 
+                        />
+                    )
                     : strata.value?.length && band.value
                         ? (
                             <StrataTable
@@ -326,7 +327,7 @@ class _Stratification extends React.Component {
                                 showHexColorCode={showHexColorCode}
                             />
                         )
-                        : !band.value 
+                        : !band.value
                             ? (
                                 <NoData
                                     className={styles.noData}
@@ -405,7 +406,6 @@ class _Stratification extends React.Component {
     }
 
     onImageLoading() {
-        const {inputs: {band}} = this.props
         this.setState({bands: undefined})
     }
 
@@ -499,11 +499,10 @@ class _Stratification extends React.Component {
         if (!isSkipped) {
             this.calculateAreaPerStratum()
         }
-
     }
 
     calculateAreaPerStratum() {
-        const {aoi, stream, inputs: {scale, type, assetId, recipeId, band, eeStrategy, strata}} = this.props
+        const {aoi, stream, inputs: {scale, type, assetId, recipeId, band, eeStrategy}} = this.props
 
         const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
         if (!scale.value || !id || !band.value) {

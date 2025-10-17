@@ -8,17 +8,18 @@ import {NestedForms} from '~/widget/form/nestedForms'
 import {ProportionForm} from './proportionForm'
 import styles from './proportionTable.module.css'
 
-export const ProportionTable = ({manual, proportions, overallProportion}) =>
-    <div className={styles.proportions}>
+export const ProportionTable = ({manual, proportions, overallProportion}) => {
+    return <div className={styles.proportions}>
         <NestedForms arrayInput={proportions} idPropName='stratum'>
             <Header/>
             {proportions.value.map(entry => manual
                 ? <ProportionForm key={entry.stratum} entry={entry}/>
                 : <Proportion key={entry.stratum} entry={entry}/>
             )}
-            <Footer proportions={proportions} overallProportion={overallProportion}/>
+            <Footer overallProportion={overallProportion}/>
         </NestedForms>
     </div>
+}
 
 const Header = () =>
     <div className={styles.header}>

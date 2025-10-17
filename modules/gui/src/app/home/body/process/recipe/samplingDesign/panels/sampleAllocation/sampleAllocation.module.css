@@ -2,9 +2,12 @@
     max-width: 34rem;
 }
 
-/* .sampleSize,
-.marginOfError,
-.confidenceLevel {
+
+.left {
     flex-grow: 1;
-    flex-shrink: 0;
-} */
+}
+
+.right {
+    min-width: 12rem;
+    margin-left: 2rem;
+}

@@ -8,47 +8,47 @@ const Context = React.createContext()
 
 export class NestedForms extends React.Component {
     state = {
-        invalidEntities: []
+        invalidEntities: {}
     }
 
     constructor(props) {
         super(props)
         this.onChange = this.onChange.bind(this)
+        this.onErrorChange = this.onErrorChange.bind(this)
     }
 
-    onChange(entity, error) {
-        const {arrayInput, idPropName, onChange} = this.props
+    onChange(entity) {
+        const {arrayInput, idPropName} = this.props
+
         const updatedArray = arrayInput.value.map(prevEntity =>
             prevEntity[idPropName] === entity[idPropName]
                 ? entity
                 : prevEntity
         )
         arrayInput.set(updatedArray)
-        this.setState(
-            ({invalidEntities}) => {
-                const filteredInvalidEntities = _.pick(
-                    invalidEntities,
-                    updatedArray.map(entity => entity[idPropName])
-                )
-                return error
-                    ? {invalidEntities: {...filteredInvalidEntities, ...{[entity[idPropName]]: error}}}
-                    : {invalidEntities: _.omit(filteredInvalidEntities, [entity[idPropName]])}
-            },
-            () => {
-                const anyInvalid = this.hasInvalidEntity()
-                arrayInput.setInvalid(anyInvalid
-                    ? Object.values(this.state.invalidEntities)[0]
-                    : ''
-                )
-                onChange && onChange(entity, anyInvalid)
+    }
+
+    onErrorChange(entity, error) {
+        const {arrayInput, idPropName} = this.props
+        const prevError = arrayInput.error
+        this.setState(({invalidEntities}) => {
+            const updatedInvalidEntries = error
+                ? {...invalidEntities, ...{[entity[idPropName]]: error}}
+                : _.omit(invalidEntities, [entity[idPropName]])
+            return _.isEqual(invalidEntities, updatedInvalidEntries)
+                ? null
+                : {invalidEntities: updatedInvalidEntries}
+        }, () => {
+            if (prevError !== error) {
+                arrayInput.setInvalid(error)
             }
-        )
+        })
     }
 
     render() {
         const {arrayInput, children} = this.props
         return (
-            <Context.Provider value={{arrayInput, onChange: this.onChange}}>
+            <Context.Provider value={{arrayInput, onChange: this.onChange, onErrorChange: this.onErrorChange}}>
                 {children}
             </Context.Provider>
         )
@@ -90,6 +90,7 @@ export const withNestedForm = ({fields, constraints, entityPropName, arrayFieldN
                 const prevEntity = prevProps[entityPropName]
                 const array = arrayFieldName && inputs[arrayFieldName].value
                 const prevArray = arrayFieldName && prevProps.inputs[arrayFieldName].value
+                const {onChange, onErrorChange} = this.context
                 
                 if (!_.isEqual(prevEntity, entity)) {
                     this.updateInputs()
@@ -102,11 +103,12 @@ export const withNestedForm = ({fields, constraints, entityPropName, arrayFieldN
                         ...entity,
                         ...inputEntity
                     }
+                    onChange(updatedEntity)
+
                     setImmediate(() => {
-                        const errorMessages = Object.values(this.props.form.errors).filter(error => error)
-                        const error = errorMessages.length ? errorMessages[0] : ''
-                        const {onChange} = this.context
-                        onChange(updatedEntity, error)
+                        const errors = Object.values(this.props.form.errors).filter(error => error)
+                        const hasError = !!errors.length
+                        onErrorChange(entity, hasError ? errors[0] : '')
                     })
                 }
             }
@@ -134,4 +136,3 @@ export const withNestedForm = ({fields, constraints, entityPropName, arrayFieldN
             withForm({fields, constraints})
         )
     }
-    
