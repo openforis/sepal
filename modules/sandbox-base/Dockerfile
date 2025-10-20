@@ -119,6 +119,7 @@ RUN apt-get -y update && apt-get install -y \
     libgeos-dev \
     libgeos++-dev \
     libgfortran5 \
+    libgit2-dev \
     libglade2-dev \
     libglu1-mesa-dev \
     libgmp3-dev \
