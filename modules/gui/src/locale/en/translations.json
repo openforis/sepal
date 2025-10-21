@@ -3594,7 +3594,9 @@
                 "initializing": "Loading preview...",
                 "label": "Optical mosaic",
                 "loading": "Loading tiles: {pending}",
-                "tilesFailed": "{failed} failed"
+                "tilesFailed": "{failed} failed",
+                "addScene": "Add scene",
+                "removeScene": "Remove scene"
             },
             "sceneAreas": {
                 "description": "Manually select individual scenes to include in mosaic",

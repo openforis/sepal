@@ -97,9 +97,6 @@ export const RecipeActions = id => {
         setSelectedScenes(scenes) {
             return set('SET_SELECTED_SCENES', 'model.scenes', scenes, {scenes})
         },
-        setSceneToPreview(scene) {
-            return set('SET_SCENE_TO_PREVIEW', 'ui.sceneToPreview', scene, {scene})
-        },
         setAutoSelectScenesState(state) {
             return set('SET_AUTO_SELECTING_SCENES', 'ui.autoSelectScenesState', state, {state})
         },

@@ -1,10 +1,7 @@
 import React from 'react'
 
-import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import {compose} from '~/compose'
-import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {Button} from '~/widget/button'
 import {Icon} from '~/widget/icon'
 import {Panel} from '~/widget/panel/panel'
 
@@ -13,15 +10,10 @@ import styles from './scenePreview.module.css'
 import {getScenePreviewUrl} from './scenePreviewUrl'
 import {getDataSet} from './sources'
 
-const mapRecipeToProps = recipe => ({
-    recipeId: recipe.id,
-    scene: selectFrom(recipe, 'ui.sceneToPreview')
-})
-
-class _ScenePreview extends React.Component {
+export class ScenePreview extends React.Component {
     constructor(props) {
         super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
+        this.close = this.close.bind(this)
     }
 
     render() {
@@ -35,7 +27,6 @@ class _ScenePreview extends React.Component {
                 : daysFromTarget < 0
                     ? msg('process.mosaic.panel.sceneSelection.preview.beforeTarget', {daysFromTarget: -daysFromTarget})
                     : msg('process.mosaic.panel.sceneSelection.preview.afterTarget', {daysFromTarget})
-            const close = () => this.closePreview()
             return (
                 <Panel
                     className={styles.panel}
@@ -45,7 +36,7 @@ class _ScenePreview extends React.Component {
                         title={'Scene preview'}
                         label={id}/>
                     <Panel.Content>
-                        <div onClick={() => this.closePreview()}
+                        <div onClick={this.close}
                             className={styles.thumbnail}
                             style={{'backgroundImage': `url(${browseUrl})`}}>
                             <img src={browseUrl} alt={id}/>
@@ -61,9 +52,13 @@ class _ScenePreview extends React.Component {
                         <Panel.Buttons.Main>
                             <Panel.Buttons.Close
                                 keybinding={['Enter', 'Escape']}
-                                onClick={close}
+                                onClick={this.close}
                             />
                         </Panel.Buttons.Main>
+                        <Panel.Buttons.Extra>
+                            {this.renderAddButton()}
+                            {this.renderRemoveButton()}
+                        </Panel.Buttons.Extra>
                     </Panel.Buttons>
                 </Panel>
             )
@@ -71,15 +66,33 @@ class _ScenePreview extends React.Component {
             return null
     }
 
-    closePreview() {
-        this.recipeActions.setSceneToPreview(null).dispatch()
+    renderAddButton() {
+        const {scene, selected, onAdd} = this.props
+        return onAdd && !selected ? (
+            <Button
+                look='add'
+                icon='plus'
+                label={msg('process.mosaic.preview.addScene')}
+                onClick={() => onAdd(scene)}/>
+        ) : null
+    }
+
+    renderRemoveButton() {
+        const {scene, selected, onRemove} = this.props
+        return onRemove && selected ? (
+            <Button
+                look='cancel'
+                icon='minus'
+                label={msg('process.mosaic.preview.removeScene')}
+                onClick={() => onRemove(scene)}/>
+        ) : null
+    }
+
+    close() {
+        const {onClose} = this.props
+        onClose && onClose()
     }
 }
-
-export const ScenePreview = compose(
-    _ScenePreview,
-    withRecipe(mapRecipeToProps)
-)
 
 const LabelValue = ({name, value, icon}) =>
     <div className={styles[name]}>

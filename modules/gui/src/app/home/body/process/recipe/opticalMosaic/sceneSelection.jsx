@@ -42,10 +42,12 @@ class _SceneSelection extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
-        this.state = {
-            scenes: []
-        }
         this.recipeActions = RecipeActions(recipeId)
+    }
+
+    state = {
+        scenes: [],
+        previewScene: null
     }
 
     getAvailableScenes() {
@@ -61,6 +63,11 @@ class _SceneSelection extends React.Component {
         return selectedScenes.value
             .map(scene => scenesById[scene.id])
             .filter(scene => scene)
+    }
+
+    isSceneSelected(scene) {
+        const {inputs: {selectedScenes}} = this.props
+        return !!selectedScenes.value.find(selectedScene => selectedScene.id === scene.id)
     }
 
     render() {
@@ -88,6 +95,7 @@ class _SceneSelection extends React.Component {
                         {loading
                             ? this.renderProgress()
                             : this.renderScenes()}
+                        {this.renderPreview()}
                     </Panel.Content>
 
                     <Form.PanelButtons/>
@@ -157,6 +165,19 @@ class _SceneSelection extends React.Component {
         )
     }
 
+    renderPreview() {
+        const {previewScene} = this.state
+        return previewScene ? (
+            <ScenePreview
+                scene={previewScene}
+                selected={this.isSceneSelected(previewScene)}
+                onAdd={() => this.addScene(previewScene)}
+                onRemove={() => this.removeScene(previewScene)}
+                onClose={() => this.previewScene(null)}
+            />
+        ) : null
+    }
+
     componentDidMount() {
         this.loadScenes()
     }
@@ -202,7 +223,7 @@ class _SceneSelection extends React.Component {
     }
 
     previewScene(scene) {
-        this.recipeActions.setSceneToPreview(scene).dispatch()
+        this.setState({previewScene: scene})
     }
 
     setScenes(scenes) {
