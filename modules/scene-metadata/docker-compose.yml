@@ -38,8 +38,8 @@ services:
       MYSQL_USER: "root"
       MYSQL_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
       MYSQL_FILES_DIR: "/var/lib/mysql-files"
-      UPDATE_TIME: "02:30" 
-      MIN_DAYS_PUBLISHED: 1
+      UPDATE_INTERVAL_MINUTES: 60
+      MIN_HOURS_PUBLISHED: 24
     networks:
       - sepal
     restart: always

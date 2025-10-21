@@ -11,13 +11,13 @@ then
     --inspect=0.0.0.0:9229 \
     src/main.js \
     --redis-uri "redis://scene-metadata-redis" \
-    --update-time ${UPDATE_TIME} \
-    --min-days-published ${MIN_DAYS_PUBLISHED}
+    --update-interval-minutes ${UPDATE_INTERVAL_MINUTES} \
+    --min-hours-published ${MIN_HOURS_PUBLISHED}
 else
   echo "Starting node"
   exec node \
     src/main.js \
     --redis-uri "redis://scene-metadata-redis" \
-    --update-time ${UPDATE_TIME} \
-    --min-days-published ${MIN_DAYS_PUBLISHED}
+    --update-interval-minutes ${UPDATE_INTERVAL_MINUTES} \
+    --min-hours-published ${MIN_HOURS_PUBLISHED}
 fi

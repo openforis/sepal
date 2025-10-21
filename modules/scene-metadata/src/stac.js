@@ -1,8 +1,8 @@
-const {formatInterval} = require('./time')
+const {subHours} = require('date-fns/subHours')
 const {from, expand, EMPTY, finalize, switchMap, lastValueFrom, filter, reduce, map, exhaustMap, catchError} = require('rxjs')
+const {formatInterval} = require('./time')
 const {getUpdates$} = require('./earthSearch')
-const {subDays} = require('date-fns/subDays')
-const {minDaysPublished} = require('./config')
+const {minHoursPublished} = require('./config')
 const log = require('#sepal/log').getLogger('stac')
 
 const updateTimestamp = (timestamp, mostRecentTimestamp) =>
@@ -16,7 +16,7 @@ const updateFromStac$ = ({source, sceneMapper, redis, database, timestamp}) => {
     return from(redis.getLastUpdate(source)).pipe(
         map(lastUpdate => ({
             minTimestamp: lastUpdate,
-            maxTimestamp: subDays(new Date(), minDaysPublished).toISOString()
+            maxTimestamp: subHours(new Date(), minHoursPublished).toISOString()
         })),
         switchMap(({minTimestamp, maxTimestamp}) =>
             from(database.beginTransaction()).pipe(

@@ -1,17 +1,17 @@
-const {subDays} = require('date-fns/subDays')
-const {updateTime, minDaysPublished} = require('./config')
+const {subHours} = require('date-fns/subHours')
+const {timer, exhaustMap, from} = require('rxjs')
+const {updateIntervalMinutes, minHoursPublished} = require('./config')
 const {initializeDatabase} = require('./database')
 const {downloadLandsat, loadLandsat} = require('./landsatCsv')
 const {updateLandsat} = require('./landsatStac')
 const {initializeRedis} = require('./redis')
 const {downloadSentinel2, loadSentinel2} = require('./sentinel2Csv')
 const {updateSentinel2} = require('./sentinel2Stac')
-const {getMillisecondsUntilTime, formatInterval, formatTime, parseTime} = require('./time')
-const {timer, exhaustMap, from, merge, of, EMPTY} = require('rxjs')
+const {formatInterval} = require('./time')
 
 require('#sepal/log').configureServer(require('#config/log.json'))
 
-const MAX_INITIAL_DELAY_MS = 3600 * 1000 // 1 hour
+const INITIAL_UPDATE_DELAY_SECONDS = 10
 
 const log = require('#sepal/log').getLogger('main')
 
@@ -35,7 +35,7 @@ const initializeData = async ({redis, database}) => {
     if (initialized) {
         log.info('Skipped initialization from CSV files')
     } else {
-        const maxTimestamp = subDays(new Date(), minDaysPublished).toISOString()
+        const maxTimestamp = subHours(new Date(), minHoursPublished).toISOString()
         const timestamp = new Date()
         log.info(`Initializing database (timestamp: ${timestamp.toISOString()})`)
         const t0 = Date.now()
@@ -57,28 +57,9 @@ const updateData = async ({redis, database}) => {
     log.info(`Updated database (${formatInterval(t0)})`)
 }
 
-const initialUpdate$ = initialDelay => {
-    if (initialDelay > MAX_INITIAL_DELAY_MS) {
-        log.info('Running initial update before scheduled time')
-        return of(true)
-    } else {
-        log.info('Skipping initial update, will run at scheduled time')
-        return EMPTY
-    }
-}
-
-const dailyUpdate$ = initialDelay =>
-    timer(initialDelay, 86400 * 1000) // 24 hours
-
 const scheduleUpdates = ({redis, database}) => {
-    const {hours, minutes} = parseTime(updateTime)
-    const initialDelay = getMillisecondsUntilTime(hours, minutes)
-
-    log.info(`Scheduling daily updates at ${formatTime({hours, minutes})}`)
-    merge(
-        initialUpdate$(initialDelay),
-        dailyUpdate$(initialDelay)
-    ).pipe(
+    log.info(`Running updates every ${updateIntervalMinutes} minutes`)
+    timer(INITIAL_UPDATE_DELAY_SECONDS * 1000, updateIntervalMinutes * 60 * 1000).pipe(
         exhaustMap(() => from(updateData({redis, database})))
     ).subscribe({
         next: () => log.debug('Running scheduled updates'),

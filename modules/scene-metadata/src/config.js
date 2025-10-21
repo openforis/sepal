@@ -1,8 +1,8 @@
 const {program} = require('commander')
 const log = require('#sepal/log').getLogger('config')
 
-const UPDATE_TIME = '00:00'
-const MIN_DAYS_PUBLISHED = 3
+const UPDATE_INTERVAL_MINUTES = 60
+const MIN_HOURS_PUBLISHED = 24
 
 const fatalError = error => {
     log.fatal(error)
@@ -14,8 +14,8 @@ program.exitOverride()
 try {
     program
         .requiredOption('--redis-uri <value>', 'Redis URI')
-        .option('--update-time <string>', 'Update hours (h)', UPDATE_TIME)
-        .option('--min-days-published <number>', 'Min days published (days)', MIN_DAYS_PUBLISHED)
+        .option('--update-interval-minutes <number>', 'Update interval minutes (minutes)', UPDATE_INTERVAL_MINUTES)
+        .option('--min-hours-published <number>', 'Min hours published (hours)', MIN_HOURS_PUBLISHED)
         .parse(process.argv)
 } catch (error) {
     fatalError(error)
@@ -23,14 +23,14 @@ try {
 
 const {
     redisUri,
-    updateTime,
-    minDaysPublished
+    updateIntervalMinutes,
+    minHoursPublished
 } = program.opts()
 
 log.info('Configuration loaded')
 
 module.exports = {
     redisUri,
-    updateTime,
-    minDaysPublished
+    updateIntervalMinutes,
+    minHoursPublished
 }
