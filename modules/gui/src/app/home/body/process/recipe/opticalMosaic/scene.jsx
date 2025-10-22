@@ -11,6 +11,11 @@ import {getScenePreviewUrl} from './scenePreviewUrl'
 import {getDataSet} from './sources'
 
 export class Scene extends React.Component {
+    state = {
+        loaded: false,
+        failed: false
+    }
+
     render() {
         const {className, scene, selected, onPreview} = this.props
         return (
@@ -34,15 +39,40 @@ export class Scene extends React.Component {
         const imageUrl = getScenePreviewUrl(scene)
         return (
             <div className={styles.thumbnail}>
-                <Icon name='spinner'/>
-                {this.renderImage(imageUrl)}
+                {this.renderLoading()}
+                {this.renderResult(imageUrl)}
             </div>
         )
     }
 
+    renderLoading() {
+        const {loaded, failed} = this.state
+        return loaded || failed
+            ? null
+            : <Icon className={styles.icon} name='spinner'/>
+    }
+
+    renderResult(imageUrl) {
+        const {failed} = this.state
+        return failed
+            ? this.renderFailed()
+            : this.renderImage(imageUrl)
+    }
+
     renderImage(url) {
         return (
-            <div className={styles.image} style={{'--image': `url("${url}")`}}/>
+            <img
+                className={styles.image}
+                src={url}
+                onLoad={() => this.setState({loaded: true})}
+                onError={() => this.setState({failed: true})}
+            />
+        )
+    }
+
+    renderFailed() {
+        return (
+            <Icon className={styles.icon} name='times'/>
         )
     }
 
