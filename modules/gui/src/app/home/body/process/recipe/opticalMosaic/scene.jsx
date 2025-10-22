@@ -6,23 +6,25 @@ import {Button} from '~/widget/button'
 import {Icon} from '~/widget/icon'
 
 import daysBetween from './daysBetween'
+import styles from './scene.module.css'
 import {getScenePreviewUrl} from './scenePreviewUrl'
-import styles from './sceneSelection.module.css'
 import {getDataSet} from './sources'
 
 export class Scene extends React.Component {
     render() {
-        const {className, scene, onPreview} = this.props
+        const {className, scene, selected, onPreview} = this.props
         return (
             <div
-                className={[styles.scene, className].join(' ')}
+                className={[
+                    styles.scene,
+                    selected ? styles.selected : '',
+                    className
+                ].join(' ')}
                 style={{cursor: 'pointer'}}
                 onClick={() => onPreview(scene)}>
                 {this.renderThumbnail()}
                 {this.renderDetails()}
-                <div style={{position: 'absolute', top: '1px', left: '1px'}}>
-                    {this.renderSceneOverlay()}
-                </div>
+                {this.renderSceneOverlay()}
             </div>
         )
     }
@@ -62,8 +64,8 @@ export class Scene extends React.Component {
     }
     renderInfo(dataSet, date) {
         return (
-            <div className={styles.date}>
-                <div className={[styles.info, styles.dataSet].join(' ')}>
+            <div>
+                <div className={styles.info}>
                     <Icon name='satellite-dish'/>
                     {getDataSet(dataSet).shortName}
                 </div>
@@ -102,14 +104,19 @@ export class Scene extends React.Component {
         )
     }
 
-    renderSceneOverlay(hover) {
+    renderSceneOverlay() {
         const {selected} = this.props
-        return selected
-            ? this.renderSelectedSceneOverlay(hover)
-            : this.renderAvailableSceneOverlay(hover)
+        return (
+            <div className={styles.overlay}>
+                {selected
+                    ? this.renderRemoveButton()
+                    : this.renderAddButton()}
+            </div>
+
+        )
     }
 
-    renderAvailableSceneOverlay() {
+    renderAddButton() {
         const {scene, onAdd} = this.props
         return (
             <Button
@@ -120,7 +127,7 @@ export class Scene extends React.Component {
         )
     }
 
-    renderSelectedSceneOverlay() {
+    renderRemoveButton() {
         const {scene, onRemove} = this.props
         return (
             <Button
