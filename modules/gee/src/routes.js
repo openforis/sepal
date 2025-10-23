@@ -8,6 +8,7 @@ const nextReferenceDataPoints$ = require('#gee/jobs/ee/classification/nextRefere
 const assetVisualizations$ = require('#gee/jobs/ee/image/assetVisualizations')
 const imageBands$ = require('#gee/jobs/ee/image/bands')
 const imageHistogram$ = require('#gee/jobs/ee/image/histogram')
+const imageJson$ = require('#gee/jobs/ee/image/eeJson')
 const distinctBandValues$ = require('#gee/jobs/ee/image/distinctBandValues')
 const assetMetadata$ = require('#gee/jobs/ee/asset/metadata')
 const projects$ = require('#gee/jobs/ee/projects')
@@ -34,6 +35,10 @@ module.exports = router =>
         .post('/preview', stream(ctx => preview$(ctx)))
         .post('/bands', stream(ctx => imageBands$(ctx)))
         .post('/image/assetVisualizations', stream(ctx => assetVisualizations$(ctx)))
+        .get('/image/json', stream(ctx => {
+            ctx.type = 'application/json'
+            return imageJson$(ctx)
+        }))
         .post('/image/histogram', stream(ctx => imageHistogram$(ctx)))
         .post('/image/distinctBandValues', stream(ctx => distinctBandValues$(ctx)))
         .post('/image/sample', stream(ctx => sampleImage$(ctx)))
