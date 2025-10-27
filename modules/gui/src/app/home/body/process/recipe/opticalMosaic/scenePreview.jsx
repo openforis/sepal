@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 
 import {msg} from '~/translate'
@@ -17,6 +18,7 @@ export class ScenePreview extends React.Component {
 
     render() {
         const {targetDate, scene, imageUrl} = this.props
+        console.log('Rendering ScenePreview', {scene, imageUrl, targetDate})
         if (scene) {
             const {id, dataSet, date, cloudCover} = scene
             const daysFromTarget = daysBetween(targetDate, date)
@@ -100,3 +102,13 @@ const LabelValue = ({name, value, icon}) =>
         </label>
         <div className={styles.value}>{value}</div>
     </div>
+
+ScenePreview.propTypes = {
+    imageUrl: PropTypes.string,
+    scene: PropTypes.object,
+    selected: PropTypes.bool,
+    targetDate: PropTypes.string,
+    onAdd: PropTypes.func,
+    onClose: PropTypes.func,
+    onRemove: PropTypes.func,
+}

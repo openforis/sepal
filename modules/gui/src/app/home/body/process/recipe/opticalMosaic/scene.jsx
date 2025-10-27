@@ -181,13 +181,14 @@ class _Scene extends React.Component {
     }
 
     renderPreview() {
-        const {scene, selected, onAdd, onRemove} = this.props
+        const {scene, selected, targetDate, onAdd, onRemove} = this.props
         const {url, preview} = this.state
         return preview ? (
             <ScenePreview
                 scene={scene}
                 selected={selected}
                 imageUrl={url}
+                targetDate={targetDate}
                 onAdd={() => onAdd(scene)}
                 onRemove={() => onRemove(scene)}
                 onClose={() => this.setState({preview: false})}
