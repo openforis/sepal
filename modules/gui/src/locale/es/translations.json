@@ -3594,7 +3594,9 @@
                 "initializing": "Cargando vista previa...",
                 "label": "Mosaico óptico",
                 "loading": "Cargado {loaded} de {count} tiles",
-                "tilesFailed": "{failed} falló"
+                "tilesFailed": "{failed} falló",
+                "addScene": "",
+                "removeScene": ""
             },
             "sceneAreas": {
                 "description": "Seleccionar manualmente escenas individuales para incluirlas en el mosaico",
