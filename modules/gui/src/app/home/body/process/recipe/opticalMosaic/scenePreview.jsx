@@ -7,7 +7,6 @@ import {Panel} from '~/widget/panel/panel'
 
 import daysBetween from './daysBetween'
 import styles from './scenePreview.module.css'
-import {getScenePreviewUrl} from './scenePreviewUrl'
 import {getDataSet} from './sources'
 
 export class ScenePreview extends React.Component {
@@ -17,10 +16,9 @@ export class ScenePreview extends React.Component {
     }
 
     render() {
-        const {targetDate, scene} = this.props
+        const {targetDate, scene, imageUrl} = this.props
         if (scene) {
             const {id, dataSet, date, cloudCover} = scene
-            const browseUrl = getScenePreviewUrl(scene)
             const daysFromTarget = daysBetween(targetDate, date)
             const daysFromTargetString = daysFromTarget === 0
                 ? msg('process.mosaic.panel.sceneSelection.preview.onTarget')
@@ -38,8 +36,8 @@ export class ScenePreview extends React.Component {
                     <Panel.Content>
                         <div onClick={this.close}
                             className={styles.thumbnail}
-                            style={{'backgroundImage': `url(${browseUrl})`}}>
-                            <img src={browseUrl} alt={id}/>
+                            style={{'backgroundImage': `url(${imageUrl})`}}>
+                            <img src={imageUrl} alt={id}/>
                         </div>
                         <div className={styles.details}>
                             <LabelValue name='dataSet' value={getDataSet(dataSet).name} icon='satellite-dish'/>

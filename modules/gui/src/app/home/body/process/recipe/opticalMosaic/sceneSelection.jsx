@@ -2,7 +2,6 @@ import React from 'react'
 
 import api from '~/apiRegistry'
 import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {ScenePreview} from '~/app/home/body/process/recipe/opticalMosaic/scenePreview'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {isPartiallyEqual} from '~/hash'
@@ -46,8 +45,7 @@ class _SceneSelection extends React.Component {
     }
 
     state = {
-        scenes: [],
-        previewScene: null
+        scenes: []
     }
 
     getAvailableScenes() {
@@ -71,11 +69,10 @@ class _SceneSelection extends React.Component {
     }
 
     render() {
-        const {recipeId, dates: {targetDate}, form, activatable: {deactivate}, stream} = this.props
+        const {form, activatable: {deactivate}, stream} = this.props
         const loading = stream('LOAD_SCENES').active
         return (
             <React.Fragment>
-                <ScenePreview recipeId={recipeId} targetDate={targetDate}/>
                 <Form.Panel
                     policy={policy}
                     className={styles.panel}
@@ -95,7 +92,6 @@ class _SceneSelection extends React.Component {
                         {loading
                             ? this.renderProgress()
                             : this.renderScenes()}
-                        {this.renderPreview()}
                     </Panel.Content>
 
                     <Form.PanelButtons/>
@@ -160,22 +156,8 @@ class _SceneSelection extends React.Component {
                 selected={selected}
                 onAdd={() => this.addScene(scene)}
                 onRemove={() => this.removeScene(scene)}
-                onPreview={(() => this.previewScene(scene))}
             />
         )
-    }
-
-    renderPreview() {
-        const {previewScene} = this.state
-        return previewScene ? (
-            <ScenePreview
-                scene={previewScene}
-                selected={this.isSceneSelected(previewScene)}
-                onAdd={() => this.addScene(previewScene)}
-                onRemove={() => this.removeScene(previewScene)}
-                onClose={() => this.previewScene(null)}
-            />
-        ) : null
     }
 
     componentDidMount() {
@@ -220,10 +202,6 @@ class _SceneSelection extends React.Component {
     removeScene(sceneToRemove) {
         const {inputs: {selectedScenes}} = this.props
         selectedScenes.set(selectedScenes.value.filter(scene => scene.id !== sceneToRemove.id))
-    }
-
-    previewScene(scene) {
-        this.setState({previewScene: scene})
     }
 
     setScenes(scenes) {

@@ -1,23 +1,32 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import {catchError, first, of, Subject, switchMap} from 'rxjs'
 
+import api from '~/apiRegistry'
+import {compose} from '~/compose'
 import format from '~/format'
+import {withSubscriptions} from '~/subscription'
 import {Button} from '~/widget/button'
 import {Icon} from '~/widget/icon'
 
 import daysBetween from './daysBetween'
 import styles from './scene.module.css'
-import {getScenePreviewUrl} from './scenePreviewUrl'
+import {ScenePreview} from './scenePreview'
+import {getScenePreviewUrl, toGEEImageId, usgsLandsatPreview} from './scenePreviewUrl'
 import {getDataSet} from './sources'
 
-export class Scene extends React.Component {
+class _Scene extends React.Component {
+    image$ = new Subject()
+
     state = {
         loaded: false,
-        failed: false
+        failed: false,
+        url: null,
+        preview: false
     }
 
     render() {
-        const {className, scene, selected, onPreview} = this.props
+        const {className, selected} = this.props
         return (
             <div
                 className={[
@@ -26,10 +35,11 @@ export class Scene extends React.Component {
                     className
                 ].join(' ')}
                 style={{cursor: 'pointer'}}
-                onClick={() => onPreview(scene)}>
+                onClick={() => this.setState({preview: true})}>
                 {this.renderThumbnail()}
                 {this.renderDetails()}
                 {this.renderSceneOverlay()}
+                {this.renderPreview()}
             </div>
         )
     }
@@ -59,13 +69,14 @@ export class Scene extends React.Component {
             : this.renderImage(imageUrl)
     }
 
-    renderImage(url) {
+    renderImage() {
+        const {url} = this.state
         return (
             <img
                 className={styles.image}
                 src={url}
-                onLoad={() => this.setState({loaded: true})}
-                onError={() => this.setState({failed: true})}
+                onLoad={() => this.image$.next(true)}
+                onError={() => this.image$.next(false)}
             />
         )
     }
@@ -92,6 +103,7 @@ export class Scene extends React.Component {
             </div>
         )
     }
+
     renderInfo(dataSet, date) {
         return (
             <div>
@@ -167,13 +179,57 @@ export class Scene extends React.Component {
                 onClick={() => onRemove(scene)}/>
         )
     }
+
+    renderPreview() {
+        const {scene, selected, onAdd, onRemove} = this.props
+        const {url, preview} = this.state
+        return preview ? (
+            <ScenePreview
+                scene={scene}
+                selected={selected}
+                imageUrl={url}
+                onAdd={() => onAdd(scene)}
+                onRemove={() => onRemove(scene)}
+                onClose={() => this.setState({preview: false})}
+            />
+        ) : null
+    }
+
+    setImage$(url) {
+        this.setState({url})
+        return this.image$.pipe(first())
+    }
+
+    componentDidMount() {
+        const {scene, addSubscription} = this.props
+
+        addSubscription(
+            this.setImage$(getScenePreviewUrl(scene)).pipe(
+                switchMap(success => success
+                    ? of(true)
+                    : api.gee.landsatProductId$({sceneId: toGEEImageId(scene.id)}).pipe(
+                        switchMap(({landsatProductId}) =>
+                            this.setImage$(usgsLandsatPreview(landsatProductId))
+                        ),
+                        catchError(() => of(false))
+                    )
+                )
+            ).subscribe({
+                next: success => this.setState({loaded: success, failed: !success})
+            })
+        )
+    }
 }
+
+export const Scene = compose(
+    _Scene,
+    withSubscriptions()
+)
 
 Scene.propTypes = {
     scene: PropTypes.object,
     selected: PropTypes.bool,
     targetDate: PropTypes.string,
     onAdd: PropTypes.func,
-    onPreview: PropTypes.func,
     onRemove: PropTypes.func
 }

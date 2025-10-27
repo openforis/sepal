@@ -205,4 +205,14 @@ export default {
                 })
             }
         }),
+
+    landsatProductId$: ({sceneId}) =>
+        get$('/api/gee/landsatProductId', {
+            query: {
+                sceneId
+            },
+            retry: {
+                maxRetries: 0
+            }
+        }),
 }

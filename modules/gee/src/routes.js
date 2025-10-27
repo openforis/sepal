@@ -26,6 +26,7 @@ const tableRows$ = require('#gee/jobs/ee/table/rows')
 const tableQuery$ = require('#gee/jobs/ee/table/query')
 const tableMap$ = require('#gee/jobs/ee/table/map')
 const datasets$ = require('#gee/jobs/datasets/datasets')
+const landsatProductId$ = require('#gee/jobs/ee/image/landsatProductId')
 const check$ = require('#gee/jobs/ee/check')
 
 module.exports = router =>
@@ -56,4 +57,5 @@ module.exports = router =>
         .post('/table/query', stream(ctx => tableQuery$(ctx)))
         .get('/table/map', stream(ctx => tableMap$(ctx)))
         .get('/datasets', stream(ctx => datasets$(ctx)))
+        .get('/landsatProductId', stream(ctx => landsatProductId$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))
