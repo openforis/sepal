@@ -11,7 +11,7 @@
     "license": "ISC",
     "dependencies": {
         "bull": "^4.16.5",
-        "commander": "^14.0.1",
+        "commander": "^14.0.2",
         "date-fns": "^4.1.0",
         "ioredis": "^5.8.2",
         "lodash": "^4.17.21",

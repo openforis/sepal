@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "commander": "^14.0.1",
+    "commander": "^14.0.2",
     "dockerode": "^4.0.9",
     "express": "^5.1.0",
     "http-proxy-middleware": "^3.0.5",
