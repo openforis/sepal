@@ -18,7 +18,6 @@ export class ScenePreview extends React.Component {
 
     render() {
         const {targetDate, scene, imageUrl} = this.props
-        console.log('Rendering ScenePreview', {scene, imageUrl, targetDate})
         if (scene) {
             const {id, dataSet, date, cloudCover} = scene
             const daysFromTarget = daysBetween(targetDate, date)
