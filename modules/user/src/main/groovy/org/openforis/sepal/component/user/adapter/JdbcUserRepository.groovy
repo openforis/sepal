@@ -58,7 +58,7 @@ class JdbcUserRepository implements UserRepository {
         def users = []
         sql.eachRow('''
                 SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, manual_map_rendering_enabled, privacy_policy_accepted,
-                       admin, system_user, status, google_refresh_token,  google_access_token, google_access_token_expiration, google_project_id, google_legacy_project,
+                       admin, system_user, status, google_refresh_token, google_access_token, google_access_token_expiration, google_project_id, google_legacy_project,
                        creation_time, update_time
                 FROM sepal_user 
                 ORDER BY creation_time DESC''') {
