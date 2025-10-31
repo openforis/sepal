@@ -52,7 +52,7 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
     const userUpdated = ({user}) => {
         log.debug(`${userTag(user.username)} updated`)
         servers.broadcastEvent(USER_UPDATED, {user})
-        clients.sendEvent(user.username, USER_UPDATED)
+        clients.sendEventToUser(user.username, USER_UPDATED)
     }
 
     const clientUp = ({username, clientId}) => {
@@ -67,7 +67,7 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
     
     const clientVersionMismatch = ({username, clientId}) => {
         log.debug(`${clientTag(username, clientId)} version mismatch`)
-        clients.sendEvent(username, CLIENT_VERSION_MISMATCH)
+        clients.sendEventToClient(username, clientId, CLIENT_VERSION_MISMATCH)
     }
 
     const subscriptionUp = ({module, username, clientId, subscriptionId}) => {
@@ -83,19 +83,19 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
     const googleAccesstokenAdded = ({user}) => {
         log.debug(`${userTag(user.username)} Google access token added`)
         servers.broadcastEvent(GOOGLE_ACCESS_TOKEN_ADDED, {user})
-        clients.sendEvent(user.username, GOOGLE_ACCESS_TOKEN_ADDED)
+        clients.sendEventToUser(user.username, GOOGLE_ACCESS_TOKEN_ADDED)
     }
     
     const googleAccesstokenUpdated = ({user}) => {
         log.debug(`${userTag(user.username)} Google access token updated`)
         servers.broadcastEvent(GOOGLE_ACCESS_TOKEN_UPDATED, {user})
-        clients.sendEvent(user.username, GOOGLE_ACCESS_TOKEN_UPDATED)
+        clients.sendEventToUser(user.username, GOOGLE_ACCESS_TOKEN_UPDATED)
     }
     
     const googleAccesstokenRemoved = ({user}) => {
         log.debug(`${userTag(user.username)} Google access token removed`)
         servers.broadcastEvent(GOOGLE_ACCESS_TOKEN_REMOVED, {user})
-        clients.sendEvent(user.username, GOOGLE_ACCESS_TOKEN_REMOVED)
+        clients.sendEventToUser(user.username, GOOGLE_ACCESS_TOKEN_REMOVED)
     }
 
     const handleEvent = (type, data) => {

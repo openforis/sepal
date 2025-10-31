@@ -12,7 +12,7 @@
         "log4js": "^6.9.1",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
-        "set-cookie-parser": "^2.7.1",
+        "set-cookie-parser": "^2.7.2",
         "url-join": "^5.0.0"
     },
     "imports": {
