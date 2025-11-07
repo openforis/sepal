@@ -66,7 +66,7 @@ function update_venv {
         "$venv_path"/bin/python3 -m pip install --no-cache-dir ipykernel wheel >> "$venv_log_file"
         "$venv_path"/bin/python3 -m pip install --no-cache-dir numpy >> "$venv_log_file"
         "$venv_path"/bin/python3 -m pip install --no-cache-dir gdal==3.8.3 >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install --no-cache-dir "git+https://github.com/openforis/earthengine-api.git@v1.1.5rc0#egg=earthengine-api&subdirectory=python" >> "$venv_log_file"
+        "$venv_path"/bin/python3 -m pip install --no-cache-dir "git+https://github.com/openforis/earthengine-api.git@v1.6.14#egg=earthengine-api&subdirectory=python" >> "$venv_log_file"
         "$venv_path"/bin/python3 -m pip install --no-cache-dir -r "$app_path"/requirements.txt >> "$venv_log_file"
         if [[ -d $current_venv_path ]] 
         then
