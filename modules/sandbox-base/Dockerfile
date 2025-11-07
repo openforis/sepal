@@ -1,9 +1,13 @@
 # Image with preinstalled Java, Python, and R
 
-FROM ubuntu:jammy
+FROM ubuntu:noble
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
+
+ARG PIP_BREAK_SYSTEM_PACKAGES=1
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+
 
 # Use specific Java version
 ARG JAVA_VERSION=11.0.11.hs-adpt
@@ -35,12 +39,12 @@ RUN apt-get -y update && apt-get install -y \
 RUN apt-add-repository -y ppa:ubuntugis/ubuntugis-unstable
 
 # Add repositories for R
-RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | tee -a /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc
-RUN add-apt-repository -y "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
-RUN add-apt-repository -y ppa:c2d4u.team/c2d4u4.0+
+# RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | tee -a /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc
+# RUN add-apt-repository -y "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
+# RUN add-apt-repository -y ppa:c2d4u.team/c2d4u4.0+
 
 # Removing this to prevent dependency errors further down the line
-RUN apt-get remove -y python3-blinker
+# RUN apt-get remove -y python3-blinker
 
 # Install general purpose utilities
 RUN apt-get -y update && apt-get install -y \
@@ -63,7 +67,7 @@ RUN apt-get -y update && apt-get install -y \
     imagemagick \
     jq \
     locales \
-    mlocate \
+    plocate \
     nano \
     p7zip-full \
     parallel \
@@ -80,8 +84,8 @@ RUN apt-get -y update && apt-get install -y \
 
 # Install GIS utilities
 RUN apt-get update -y && apt-get install -y \
-    gdal-bin=3.8.4+dfsg-1~jammy0 \
-    proj-bin=9.3.1-1~jammy0 \
+    gdal-bin=3.11.4+dfsg-1~noble0 \
+    proj-bin=9.4.1-1~noble0 \
     gsl-bin \
     saga \
     shapelib \
@@ -142,9 +146,6 @@ RUN apt-get -y update && apt-get install -y \
     libxrandr-dev \
     libxt-dev
 
-# Make sure pip is up-to-date
-RUN pip3 install --upgrade pip
-
 RUN pip3 install \
     pandas \
     pyshp \
@@ -167,3 +168,6 @@ RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install java ${JAVA_
 
 # Configure R Java home
 RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && R CMD javareconf'
+
+# Ubuntu user has uid 1000, which we need ourselves
+RUN deluser --remove-home ubuntu 
