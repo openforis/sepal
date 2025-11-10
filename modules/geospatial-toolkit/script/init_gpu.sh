@@ -18,7 +18,7 @@ wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/
 dpkg -i cuda-keyring_1.1-1_all.deb
 apt-get update
 
-apt-get -y install cuda-toolkit
+apt-get -y install cuda-toolkit=12.9.1-1
 apt-get -y install cudnn-cuda-12
 
 export CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))
@@ -40,7 +40,7 @@ export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/:$CUDNN_PATH/lib:$LD_LIBRARY_PATH
 # tensorflow 2.20.0 crashes, pinning an older version
 pip3 install \
     pyopencl \
-    tensorflow==2.17.0 \
+    tensorflow==2.19.1 \
     tf-keras \
     torch \
     torchvision \
