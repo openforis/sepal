@@ -5,8 +5,7 @@ import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.query.EmailNotificationsEnabled
 import org.openforis.sepal.component.user.query.GoogleAccessRequestUrl
-import org.openforis.sepal.component.user.query.ListUsers
-import org.openforis.sepal.component.user.query.LoadUser
+import org.openforis.sepal.component.user.query.*
 import org.openforis.sepal.endpoint.InvalidRequest
 import org.openforis.sepal.user.User
 import org.slf4j.Logger
@@ -253,6 +252,23 @@ class UserEndpoint {
                 def users = component.submit(new ListUsers())
                 users.removeAll { it.systemUser }
                 send toJson(users.collect { userToMap(it, false) })
+            }
+
+            get('/mostRecentLoginByUser', [ADMIN]) {
+                response.contentType = 'application/json'
+                def mostRecentLoginByUser = component.submit(
+                    new MostRecentLoginByUser(
+                        username: sepalUser.username
+                    )
+                )
+                send toJson(mostRecentLoginByUser)
+            }
+
+            get('/info', [ADMIN]) {
+                response.contentType = 'application/json'
+                def query = new LoadUser(username: params.required('username', String).toLowerCase())
+                def user = component.submit(query)
+                send toJson(userToMap(user))
             }
 
             get('/email-notifications-enabled/{email}', [ADMIN]) {

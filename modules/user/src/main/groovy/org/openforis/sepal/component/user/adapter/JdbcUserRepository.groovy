@@ -67,6 +67,17 @@ class JdbcUserRepository implements UserRepository {
         return users
     }
 
+    Map<String, Date> mostRecentLoginByUser() {
+        def result = sql.rows('''
+            SELECT username, last_login_time
+            FROM sepal_user
+            WHERE last_login_time is NOT NULL
+        ''')
+        return result.collectEntries { row ->
+            [(row.username): toDate(row.last_login_time)]
+        }
+    }
+
     void setLastLoginTime(String username, Date loginTime) {
         sql.executeUpdate('''
                 UPDATE sepal_user 
