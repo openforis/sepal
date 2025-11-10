@@ -19,4 +19,5 @@ interface WorkerSessionRepository {
 
     List<WorkerSession> timedOutSessions()
 
+    Map<String, Date> mostRecentlyClosedSessionByUser()
 }
