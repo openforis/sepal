@@ -97,7 +97,9 @@ RUN apt-get update -y && apt-get install -y \
 RUN apt-get -y update && apt-get install -y \
     r-base \
     r-base-dev \
-    r-cran-rmpi
+    r-cran-rmpi \
+    libtirpc-dev \
+    libglpk-dev # required by igraph
 
 # Install python and related
 RUN apt-get -y update && apt-get install -y \
