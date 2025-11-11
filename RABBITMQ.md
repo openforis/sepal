@@ -28,6 +28,14 @@ RabbitMQ "sepal.topic" exchange documentation
     - pub: user
     - sub: <none>
 
+- user.UserUp: {user}
+    - pub: gateway
+    - sub: user-storage
+
+- user.UserDown: {user}
+    - pub: gateway
+    - sub: user-storage
+
 - userStorage.size: {username, size}
     - pub: user-storage
     - sub: sepal-server

@@ -4,13 +4,13 @@ const {Servers} = require('./websocket-server')
 const {Clients} = require('./websocket-client')
 const {USER_UP, USER_DOWN, USER_UPDATED, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN, initializeEvents} = require('./websocket-events')
 
-const initializeWebSocketServer = ({wss, userStore, event$}) => {
+const initializeWebSocketServer = ({wss, userStore, event$, userUp$, userDown$}) => {
     const servers = Servers()
     const clients = Clients()
 
     initializeUplink({servers, clients, event$})
     initializeDownlink({servers, clients, wss, userStore, event$})
-    initializeEvents({servers, clients, userStore, event$})
+    initializeEvents({servers, clients, userStore, event$, userUp$, userDown$})
 }
 
 module.exports = {initializeWebSocketServer}

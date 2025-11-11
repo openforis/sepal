@@ -17,7 +17,7 @@ const GOOGLE_ACCESS_TOKEN_ADDED = 'googleAccessTokenAdded'
 const GOOGLE_ACCESS_TOKEN_UPDATED = 'googleAccessTokenUpdated'
 const GOOGLE_ACCESS_TOKEN_REMOVED = 'googleAccessTokenRemoved'
 
-const initializeEvents = ({servers, clients, userStore, event$}) => {
+const initializeEvents = ({servers, clients, userStore, event$, userUp$, userDown$}) => {
 
     const moduleUp = ({module}) => {
         log.debug(`${moduleTag(module)} up`)
@@ -42,11 +42,13 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
     const userUp = ({user}) => {
         log.debug(`${userTag(user.username)} up`)
         servers.broadcastEvent(USER_UP, {user})
+        userUp$.next(user)
     }
 
     const userDown = ({user}) => {
         log.debug(`${userTag(user.username)} down`)
         servers.broadcastEvent(USER_DOWN, {user})
+        userDown$.next(user)
     }
 
     const userUpdated = ({user}) => {

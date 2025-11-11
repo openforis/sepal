@@ -29,6 +29,8 @@ const {usernameTag, urlTag} = require('./tag')
 const {webSocketPath} = require('../config/endpoints')
 
 const event$ = new Subject()
+const userUp$ = new Subject()
+const userDown$ = new Subject()
 
 const main = async () => {
     const redis = await createClient({url: redisUri})
@@ -59,6 +61,10 @@ const main = async () => {
     }
 
     await initMessageQueue(amqpUri, {
+        publishers: [
+            {key: 'user.UserUp', publish$: userUp$},
+            {key: 'user.UserDown', publish$: userDown$}
+        ],
         subscribers: [
             {queue: 'gateway.userLocked', topic: 'user.UserLocked', handler: messageHandler}
         ]
@@ -128,7 +134,7 @@ const main = async () => {
 
     initializeGoogleAccessTokenRefresher({userStore, event$})
 
-    initializeWebSocketServer({wss, userStore, event$})
+    initializeWebSocketServer({wss, userStore, event$, userUp$, userDown$})
 
     // HACK: User has to be injected here as the session is not available in proxyRes and proxyResWsz
     server.on('upgrade', (req, socket, head) => {
