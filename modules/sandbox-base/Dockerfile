@@ -39,12 +39,8 @@ RUN apt-get -y update && apt-get install -y \
 RUN apt-add-repository -y ppa:ubuntugis/ubuntugis-unstable
 
 # Add repositories for R
-# RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | tee -a /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc
-# RUN add-apt-repository -y "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
-# RUN add-apt-repository -y ppa:c2d4u.team/c2d4u4.0+
-
-# Removing this to prevent dependency errors further down the line
-# RUN apt-get remove -y python3-blinker
+RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | tee -a /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc
+RUN add-apt-repository -y "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
 
 # Install general purpose utilities
 RUN apt-get -y update && apt-get install -y \
