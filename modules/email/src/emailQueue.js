@@ -11,11 +11,11 @@ const queue = new Bull('email-queue', redisUri)
 queue.process(concurrency, async job => {
     const id = job.id
     const email = job.data
-    const {to: originalTo, cc: originalCc, bcc: originalBcc, ...props} = email
+    const {to: originalTo, cc: originalCc, bcc: originalBcc, forceEmailNotificationEnabled, ...props} = email
 
-    const to = await filterEmailNotificationsEnabled(originalTo)
-    const cc = await filterEmailNotificationsEnabled(originalCc)
-    const bcc = await filterEmailNotificationsEnabled(originalBcc)
+    const to = await filterEmailNotificationsEnabled(originalTo, forceEmailNotificationEnabled)
+    const cc = await filterEmailNotificationsEnabled(originalCc, forceEmailNotificationEnabled)
+    const bcc = await filterEmailNotificationsEnabled(originalBcc, forceEmailNotificationEnabled)
 
     if (to.length || cc.length || bcc.length) {
         return await send({id, email: {to, cc, bcc, ...props}})

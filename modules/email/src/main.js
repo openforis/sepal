@@ -13,7 +13,8 @@ const {messageHandler} = require('./messageHandler')
 const main = async () => {
     await initMessageQueue(amqpUri, {
         subscribers: [
-            {queue: 'email.send', topic: 'email.send', handler: messageHandler},
+            {queue: 'email.sendToAddress', topic: 'email.sendToAddress', handler: messageHandler},
+            {queue: 'email.sendToUser', topic: 'email.sendToUser', handler: messageHandler},
             {queue: 'email.emailNotificationsEnabled', topic: 'user.emailNotificationsEnabled', handler: messageHandler}
         ]
     })

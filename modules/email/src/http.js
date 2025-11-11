@@ -16,4 +16,20 @@ const getEmailNotificationsEnabled = async emailAddress => {
     return json.emailNotificationsEnabled
 }
 
-module.exports = {getEmailNotificationsEnabled}
+const getEmail = async username => {
+    log.debug(() => `Getting email address for user <${username}> from origin`)
+    const response = await firstValueFrom(
+        get$(`https://${sepalHost}/api/user/info`, {
+            username: sepalUsername,
+            password: sepalPassword,
+            query: {
+                username
+            }
+        })
+    )
+
+    const json = JSON.parse(response.body)
+    return json?.email
+}
+
+module.exports = {getEmailNotificationsEnabled, getEmail}
