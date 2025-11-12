@@ -24,7 +24,7 @@ apt-get -y install cudnn9-cuda-12 cuda-cudart-12.9
 # tensorflow 2.20.0 crashes, pinning an older version
 pip3 install \
     pyopencl \
-    tensorflow[and-cuda] \
+    tensorflow[and-cuda]==2.19.1 \
     tf-keras \
     torch \
     torchvision \
