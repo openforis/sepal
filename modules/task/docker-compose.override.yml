@@ -1,12 +1,15 @@
 services:
   task:
     volumes:  # To allow dynamic reloading in dev
-      - ${SEPAL_PROJECT_DIR}/modules/task/lib/shared/package-lock.json:/usr/local/src/sepal/lib/js/shared/package-lock.json
-      - ${SEPAL_PROJECT_DIR}/modules/task/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
-      - ${SEPAL_PROJECT_DIR}/modules/task/lib/ee/package-lock.json:/usr/local/src/sepal/lib/js/ee/package-lock.json
-      - ${SEPAL_PROJECT_DIR}/modules/task/lib/ee/node_modules:/usr/local/src/sepal/lib/js/ee/node_modules
+      # lib/shared
       - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
       - ${SEPAL_PROJECT_DIR}/lib/js/shared/package.json:/usr/local/src/sepal/lib/js/shared/package.json
+      - ${SEPAL_PROJECT_DIR}/modules/task/lib/shared/package-lock.json:/usr/local/src/sepal/lib/js/shared/package-lock.json
+      - ${SEPAL_PROJECT_DIR}/modules/task/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
+      # lib/ee
       - ${SEPAL_PROJECT_DIR}/lib/js/ee/src:/usr/local/src/sepal/lib/js/ee/src
       - ${SEPAL_PROJECT_DIR}/lib/js/ee/package.json:/usr/local/src/sepal/lib/js/ee/package.json
+      - ${SEPAL_PROJECT_DIR}/modules/task/lib/ee/package-lock.json:/usr/local/src/sepal/lib/js/ee/package-lock.json
+      - ${SEPAL_PROJECT_DIR}/modules/task/lib/ee/node_modules:/usr/local/src/sepal/lib/js/ee/node_modules
+      # module
       - ${SEPAL_PROJECT_DIR}/modules/task:/usr/local/src/sepal/modules/task
