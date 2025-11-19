@@ -1,5 +1,5 @@
-const mysql = require('mysql2/promise')
 const {formatInterval} = require('./time')
+const {createPool} = require('#sepal/db/mysql')
 const log = require('#sepal/log').getLogger('database')
 
 const CURRENT_DATABASE_NAME = 'sdms'
@@ -14,13 +14,7 @@ const transaction = {
 }
 
 const initializeDatabase = async () => {
-    const pool = mysql.createPool({
-        host: process.env.MYSQL_HOST,
-        user: process.env.MYSQL_USER,
-        password: process.env.MYSQL_PASSWORD,
-        database: CURRENT_DATABASE_NAME,
-        connectionLimit: 5,
-    })
+    const pool = await createPool(CURRENT_DATABASE_NAME)
 
     const dropDatabase = async name => {
         log.debug(`Dropping database ${name}...`)
