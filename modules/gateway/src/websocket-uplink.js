@@ -5,7 +5,7 @@ const {webSocket} = require('rxjs/webSocket')
 const {webSocketEndpoints} = require('../config/endpoints')
 const {autoRetry} = require('#sepal/rxjs')
 const {moduleTag, clientTag} = require('./tag')
-const {MODULE_UP, MODULE_DOWN} = require('./websocket-events')
+const {MODULE_UP, MODULE_DOWN} = require('#sepal/event/definitions')
 
 const log = require('#sepal/log').getLogger('websocket/uplink')
 

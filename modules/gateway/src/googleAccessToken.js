@@ -1,6 +1,6 @@
 const {groupBy, mergeMap, tap, takeUntil, filter, timer, switchMap, defer, map, repeat, takeWhile, take, finalize, exhaustMap, share} = require('rxjs')
 const {userTag} = require('./tag')
-const {USER_UP, USER_DOWN, GOOGLE_ACCESS_TOKEN_UPDATED, GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED} = require('./websocket-events')
+const {USER_UP, USER_DOWN, GOOGLE_ACCESS_TOKEN_UPDATED, GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED} = require('#sepal/event/definitions')
 const {updateGoogleAccessToken$} = require('./userApi')
 const log = require('#sepal/log').getLogger('googleAccessToken')
 const {formatDistanceStrict} = require('date-fns')
