@@ -278,10 +278,9 @@ class _UserDetails extends React.Component {
     }
 
     renderStatus() {
-        const {userDetails: {status, googleTokens}} = this.props
-        const isGoogleUser = !!googleTokens
+        const {userDetails: {status, googleUser}} = this.props
         return (
-            <UserStatus status={status} isGoogleUser={isGoogleUser}/>
+            <UserStatus status={status} googleUser={googleUser} label={true}/>
         )
     }
 

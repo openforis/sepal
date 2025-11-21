@@ -4972,6 +4972,12 @@
             "LOCKED": "Locked",
             "PENDING": "Pending"
         },
+        "storageStatus": {
+            "UNKNOWN": "Unknown",
+            "ACTIVE": "Active",
+            "NOTIFIED": "Notified",
+            "ERASED": "Erased"
+        },
         "role": {
             "admin": "Admin",
             "user": "User"
@@ -5177,6 +5183,17 @@
                 },
                 "budgetUpdateRequest": {
                     "label": "Budget update"
+                }
+            },
+            "storageStatus": {
+                "active": {
+                    "label": "Normal"
+                },
+                "notified": {
+                    "label": "Notified"
+                },
+                "erased": {
+                    "label": "Erased"
                 }
             }
         },

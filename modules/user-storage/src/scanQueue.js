@@ -1,11 +1,11 @@
 const {calculateUserStorage} = require('./filesystem')
-const {redisUri, minDelayMilliseconds, maxDelayMilliseconds, delayIncreaseFactor, concurrency, maxRetries, initialRetryDelayMilliseconds} = require('./config')
-const {getSessionStatus, getSetUserStorage} = require('./persistence')
+const {redisUri, scanMinDelayMilliseconds, scanMaxDelayMilliseconds, scanDelayIncreaseFactor, scanConcurrency, scamMaxRetries, scanInitialRetryDelayMilliseconds} = require('./config')
+const {getSessionStatus, getSetUserStorage} = require('./kvstore')
 const Bull = require('bull')
 const {v4: uuid} = require('uuid')
 const {formatDistanceToNow} = require('date-fns')
 const {Subject} = require('rxjs')
-const log = require('#sepal/log').getLogger('jobQueue')
+const log = require('#sepal/log').getLogger('scanQueue')
 
 const DELAY_SPREAD = .2
 
@@ -20,7 +20,7 @@ const spreadDelay = delay =>
     Math.floor(delay * (1 + (Math.random() - .5) * 2 * DELAY_SPREAD))
 
 const increasingDelay = delay =>
-    Math.max(Math.min(delay * delayIncreaseFactor, maxDelayMilliseconds), minDelayMilliseconds)
+    Math.max(Math.min(delay * scanDelayIncreaseFactor, scanMaxDelayMilliseconds), scanMinDelayMilliseconds)
 
 const timeDistance = delay =>
     formatDistanceToNow(Date.now() + delay)
@@ -33,7 +33,7 @@ const logStats = async () =>
         `failed: ${await queue.getFailedCount()}`,
     ].join(', '))
 
-queue.process(concurrency, async job => {
+queue.process(scanConcurrency, async job => {
     const {username} = job.data
     return {
         size: await calculateUserStorage(username)
@@ -67,13 +67,13 @@ queue.on('completed', async (job, {size}) => {
     if (workerSession) {
         await reschedule({
             priority: 3,
-            delay: minDelayMilliseconds
+            delay: scanMinDelayMilliseconds
         })
-    } else if (job.opts.delay < maxDelayMilliseconds && job.opts.priority !== 6) {
+    } else if (job.opts.delay < scanMaxDelayMilliseconds && job.opts.priority !== 6) {
         if (size !== previousSize) {
             await reschedule({
                 priority: 4,
-                delay: minDelayMilliseconds
+                delay: scanMinDelayMilliseconds
             })
         } else {
             await reschedule({
@@ -84,14 +84,14 @@ queue.on('completed', async (job, {size}) => {
     } else {
         await reschedule({
             priority: 6,
-            delay: maxDelayMilliseconds
+            delay: scanMaxDelayMilliseconds
         })
     }
 
     scanComplete$.next({username, size})
 })
 
-const scan = async ({username, delay: nominalDelay = maxDelayMilliseconds, priority = 1}) => {
+const scan = async ({username, delay: nominalDelay = scanMaxDelayMilliseconds, priority = 1}) => {
     const delay = spreadDelay(nominalDelay)
     log.debug(`Rescanning user ${username} with priority ${priority} ${delay ? `in ${timeDistance(delay)}` : 'now'}`)
     await queue.removeJobs(rescanJobId(username, '*'))
@@ -99,10 +99,10 @@ const scan = async ({username, delay: nominalDelay = maxDelayMilliseconds, prior
         jobId: rescanJobId(username),
         priority,
         delay,
-        attempts: maxRetries,
+        attempts: scamMaxRetries,
         backoff: {
             type: 'exponential',
-            delay: initialRetryDelayMilliseconds
+            delay: scanInitialRetryDelayMilliseconds
         },
         removeOnComplete: 10,
         removeOnFail: 10

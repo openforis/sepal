@@ -4,12 +4,10 @@ const path = require('path')
 const fs = require('fs')
 const log = require('#sepal/log').getLogger('filesystem')
 
-const diskUsage = path =>
+const command = async callback =>
     new Promise((resolve, reject) => {
-        log.trace(`Calculating size of path ${path}`)
-        const cmd = spawn('sudo', ['diskus', '-v', path])
-
         let result = ''
+        const cmd = callback()
     
         cmd.stdout.on('data', data =>
             result += data.toString('utf8')
@@ -22,15 +20,23 @@ const diskUsage = path =>
         cmd.on('close', code =>
             code
                 ? reject(code)
-                : resolve(Number(result))
+                : resolve(result)
         )
     })
+
+const diskUsage = async path => {
+    log.debug(`Calculating size of path ${path}`)
+    const result = await command(
+        () => spawn('sudo', ['diskus', '-v', path])
+    )
+    return Number(result)
+}
 
 const userHomePath = username =>
     path.join(homeDir, username)
 
 const calculateUserStorage = async username => {
-    log.trace(`Calculating storage for user ${username}`)
+    log.debug(`Calculating storage for user ${username}`)
     const t0 = Date.now()
     const size = await diskUsage(userHomePath(username))
     const t1 = Date.now()
@@ -52,6 +58,19 @@ const scanUserHomes = async callback => {
     }
 }
 
+const eraseUserStorage = async username => {
+    const userPath = userHomePath(username)
+    log.debug(`Erasing storage for user ${username} at path ${userPath}`)
+    try {
+        await command(
+            () => spawn('sudo', ['find', userPath, '-mindepth', '1', '-delete'])
+        )
+        log.info(`Erased storage for user ${username} at path ${userPath}`)
+    } catch (error) {
+        log.warn(`Cannot erase storage for user ${username} at path ${userPath}`)
+    }
+}
+
 module.exports = {
-    calculateUserStorage, scanUserHomes
+    calculateUserStorage, scanUserHomes, eraseUserStorage
 }

@@ -1,7 +1,7 @@
 const {scanUserHomes} = require('./filesystem')
 const {minDelayMilliseconds, maxDelayMilliseconds} = require('./config')
-const {getUserStorage} = require('./persistence')
-const {scan} = require('./jobQueue')
+const {getUserStorage} = require('./kvstore')
+const {scan} = require('./scanQueue')
 const log = require('#sepal/log').getLogger('scan')
 
 const scheduleMap = {

@@ -14,12 +14,15 @@ then
     --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
     --redis-uri redis://user-storage-redis \
     --home-dir /sepalUsers \
-    --min-delay-seconds ${MIN_DELAY_SECONDS} \
-    --max-delay-seconds ${MAX_DELAY_SECONDS} \
-    --delay-increase-factor ${DELAY_INCREASE_FACTOR} \
-    --concurrency ${CONCURRENCY} \
-    --max-retries ${MAX_RETRIES} \
-    --initial-retry-delay-seconds ${INITIAL_RETRY_DELAY_SECONDS}
+    --scan-min-delay-seconds ${SCAN_MIN_DELAY_SECONDS} \
+    --scan-max-delay-seconds ${SCAN_MAX_DELAY_SECONDS} \
+    --scan-delay-increase-factor ${SCAN_DELAY_INCREASE_FACTOR} \
+    --scan-concurrency ${SCAN_CONCURRENCY} \
+    --scan-max-retries ${SCAN_MAX_RETRIES} \
+    --scan-initial-retry-delay-seconds ${SCAN_INITIAL_RETRY_DELAY_SECONDS} \
+    --sepal-host "${SEPAL_HOST}" \
+    --sepal-username "sepalAdmin" \
+    --sepal-password "$SEPAL_ADMIN_PASSWORD"
 else
   echo "Starting node"
   exec node \
@@ -27,10 +30,13 @@ else
     --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
     --redis-uri redis://user-storage-redis \
     --home-dir /sepalUsers \
-    --min-delay-seconds ${MIN_DELAY_SECONDS} \
-    --max-delay-seconds ${MAX_DELAY_SECONDS} \
-    --delay-increase-factor ${DELAY_INCREASE_FACTOR} \
-    --concurrency ${CONCURRENCY} \
-    --max-retries ${MAX_RETRIES} \
-    --initial-retry-delay-seconds ${INITIAL_RETRY_DELAY_SECONDS}
+    --scan-min-delay-seconds ${SCAN_MIN_DELAY_SECONDS} \
+    --scan-max-delay-seconds ${SCAN_MAX_DELAY_SECONDS} \
+    --scan-delay-increase-factor ${SCAN_DELAY_INCREASE_FACTOR} \
+    --scan-concurrency ${SCAN_CONCURRENCY} \
+    --scan-max-retries ${SCAN_MAX_RETRIES} \
+    --scan-initial-retry-delay-seconds ${SCAN_INITIAL_RETRY_DELAY_SECONDS} \
+    --sepal-host "${SEPAL_HOST}" \
+    --sepal-username "sepalAdmin" \
+    --sepal-password "$SEPAL_ADMIN_PASSWORD"
 fi

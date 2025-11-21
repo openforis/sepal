@@ -20,6 +20,7 @@ import {SearchBox} from '~/widget/searchBox'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {SortButton} from '~/widget/sortButton'
 
+import {StorageStatus} from './storageStatus'
 import styles from './userList.module.css'
 import {UserStatus} from './userStatus'
 
@@ -179,12 +180,6 @@ export class UserList extends React.Component {
                     classNames: [styles.name]
                 })}
                 {this.renderColumnHeader({
-                    column: 'status',
-                    label: msg('user.status.label'),
-                    defaultSortingDirection: 1,
-                    classNames: [styles.status]
-                })}
-                {this.renderColumnHeader({
                     column: 'updateTime',
                     label: msg('user.userDetails.form.lastUpdate.label'),
                     defaultSortingDirection: -1,
@@ -213,6 +208,12 @@ export class UserList extends React.Component {
                     label: msg('user.report.resources.used'),
                     defaultSortingDirection: -1,
                     classNames: [styles.storageBudgetUsed, styles.number]
+                })}
+                {this.renderColumnHeader({
+                    column: 'storage.event',
+                    label: msg('user.status.label'),
+                    defaultSortingDirection: 1,
+                    classNames: [styles.storageStatus]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.budget.storageQuota',
@@ -355,7 +356,7 @@ class UserItem extends React.PureComponent {
 
     render() {
         const {user, hovered} = this.props
-        const {username, name, status, admin, googleUser, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
+        const {username, name, status, admin, googleUser, updateTime, quota: {budget, current, budgetUpdateRequest} = {}, storage} = user
         return (
             <div
                 className={[
@@ -369,22 +370,28 @@ class UserItem extends React.PureComponent {
                     hovered ? lookStyles.hoverForcedOn : null
                 ].join(' ')}
                 onClick={this.onClick}>
-                {this.renderUsername(username, admin)}
+                {this.renderUsername(username, admin, status, googleUser)}
                 {this.renderName(name)}
-                {this.renderStatus(status, googleUser)}
-                {this.renderLastUpdate(updateTime)}
-                {this.renderBudgetUpdateRequest(budgetUpdateRequest)}
-                {this.renderInstanceSpending(budget, current)}
-                {this.renderStorageSpending(budget, current)}
-                {this.renderStorageQuota(budget, current)}
+                {this.renderLastUpdate(updateTime, budgetUpdateRequest)}
+                {this.renderInstanceSpendingMax(budget)}
+                {this.renderInstanceSpendingUsed(budget, current)}
+                {this.renderStorageSpendingMax(budget)}
+                {this.renderStorageSpendingUsed(budget, current)}
+                {this.renderStorageStatus(storage)}
+                {this.renderStorageQuotaMax(budget)}
+                {this.renderStorageQuotaUsed(budget, current)}
             </div>
         )
     }
 
-    renderUsername(username, admin) {
+    renderUsername(username, admin, status, googleUser) {
         const {highlight} = this.props
         return (
-            <div className={[admin ? styles.admin : styles.username]}>
+            <div className={[
+                styles.username,
+                admin ? styles.admin : null
+            ].join(' ')}>
+                {status ? this.renderDefinedStatus(status, googleUser) : this.renderUndefinedStatus() }
                 <Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{username}</Highlight>
             </div>
         )
@@ -393,23 +400,13 @@ class UserItem extends React.PureComponent {
     renderName(name) {
         const {highlight} = this.props
         return (
-            <div>
-                <Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{name}</Highlight>
-            </div>
+            <Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{name}</Highlight>
         )
     }
 
-    renderStatus(status, isGoogleUser) {
+    renderDefinedStatus(status, googleUser) {
         return (
-            <div>
-                {status ? this.renderDefinedStatus(status, isGoogleUser) : this.renderUndefinedStatus() }
-            </div>
-        )
-    }
-
-    renderDefinedStatus(status, isGoogleUser) {
-        return (
-            <UserStatus status={status} isGoogleUser={isGoogleUser}/>
+            <UserStatus status={status} googleUser={googleUser}/>
         )
     }
 
@@ -419,10 +416,11 @@ class UserItem extends React.PureComponent {
         )
     }
 
-    renderLastUpdate(updateTime) {
+    renderLastUpdate(updateTime, budgetUpdateRequest) {
         return (
-            <div>
+            <div style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
                 {moment(updateTime).fromNow()}
+                {this.renderBudgetUpdateRequest(budgetUpdateRequest)}
             </div>
         )
     }
@@ -435,48 +433,63 @@ class UserItem extends React.PureComponent {
         )
     }
 
-    renderInstanceSpending(budget = {}, current = {}) {
+    renderInstanceSpendingMax(budget = {}) {
         return (
-            <React.Fragment>
-                <div className={styles.number}>
-                    {format.dollars(budget.instanceSpending)}
-                </div>
-                <UserResourceUsage
-                    currentValue={current.instanceSpending}
-                    budgetValue={budget.instanceSpending}
-                    formattedValue={format.dollars(current.instanceSpending)}
-                />
-            </React.Fragment>
+            <div className={styles.number}>
+                {format.dollars(budget.instanceSpending)}
+            </div>
         )
     }
 
-    renderStorageSpending(budget = {}, current = {}) {
+    renderInstanceSpendingUsed(budget = {}, current = {}) {
         return (
-            <React.Fragment>
-                <div className={styles.number}>
-                    {format.dollars(budget.storageSpending)}
-                </div>
-                <UserResourceUsage
-                    currentValue={current.storageSpending}
-                    budgetValue={budget.storageSpending}
-                    formattedValue={format.dollars(current.storageSpending)}
-                />
-            </React.Fragment>
+            <UserResourceUsage
+                currentValue={current.instanceSpending}
+                budgetValue={budget.instanceSpending}
+                formattedValue={format.dollars(current.instanceSpending)}
+            />
         )
     }
 
-    renderStorageQuota(budget = {}, current = {}) {
+    renderStorageStatus(storage) {
         return (
-            <React.Fragment>
-                <div className={styles.number}>
-                    {format.fileSize(budget.storageQuota, {scale: 'G'})}
-                </div>
-                <UserResourceUsage
-                    currentValue={current.storageQuota}
-                    budgetValue={budget.storageQuota}
-                    formattedValue={format.fileSize(current.storageQuota, {scale: 'G'})}
-                />
-            </React.Fragment>
+            <StorageStatus status={storage?.event}/>
+        )
+    }
+
+    renderStorageSpendingMax(budget = {}) {
+        return (
+            <div className={styles.number}>
+                {format.dollars(budget.storageSpending)}
+            </div>
+        )
+    }
+
+    renderStorageSpendingUsed(budget = {}, current = {}) {
+        return (
+            <UserResourceUsage
+                currentValue={current.storageSpending}
+                budgetValue={budget.storageSpending}
+                formattedValue={format.dollars(current.storageSpending)}
+            />
+        )
+    }
+
+    renderStorageQuotaMax(budget = {}) {
+        return (
+            <div className={styles.number}>
+                {format.fileSize(budget.storageQuota, {scale: 'G'})}
+            </div>
+        )
+    }
+
+    renderStorageQuotaUsed(budget = {}, current = {}) {
+        return (
+            <UserResourceUsage
+                currentValue={current.storageQuota}
+                budgetValue={budget.storageQuota}
+                formattedValue={format.fileSize(current.storageQuota, {scale: 'G'})}
+            />
         )
     }
 }

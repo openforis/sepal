@@ -21,12 +21,14 @@ const mapStateToProps = state => ({
 
 const getUserList$ = () => forkJoin(
     api.user.getUserList$(),
-    api.user.getBudgetReport$()
+    api.user.getBudgetReport$(),
+    api.userStorage.getMostRecentEvents$()
 ).pipe(
-    map(([users, budget]) =>
+    map(([users, budget, mostRecentEvents]) =>
         _.map(users, user => ({
             ...user,
-            quota: budget[user.username] || {}
+            quota: budget[user.username] || {},
+            storage: mostRecentEvents[user.username] || {}
         }))
     )
 )
