@@ -409,7 +409,11 @@ const listFiles = async (homeDir, ctx) => {
             ? a.name.localeCompare(b.name)
             : (a.type === 'directory' ? -1 : 1))
 
-        ctx.body = {path: Path.relative(userHomeDir, absolutePath), files}
+        ctx.body = {
+            path: Path.relative(userHomeDir, absolutePath),
+            files,
+            count: files.length
+        }
     } catch (error) {
         log.error(() => `Error listing directory: ${error.message}`)
         ctx.response.status = 500
