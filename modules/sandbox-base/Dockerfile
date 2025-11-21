@@ -7,6 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 ARG PIP_BREAK_SYSTEM_PACKAGES=1
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
+ENV UV_BREAK_SYSTEM_PACKAGES=1
 
 
 # Use specific Java version
@@ -107,6 +108,8 @@ RUN apt-get -y update && apt-get install -y \
     python3-virtualenv \
     python3-wheel
 
+RUN pip3 install uv
+
 # Install Micromamba
 RUN curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xj -C /usr/local/bin/ --strip-components=1 bin/micromamba
 
@@ -147,11 +150,10 @@ RUN apt-get -y update && apt-get install -y \
     libxrandr-dev \
     libxt-dev
 
-RUN pip3 install \
+RUN uv pip install --system \
     pandas \
     pyshp \
-    # https://github.com/openforis/sepal/issues/328
-    rasterio==1.3.10 \ 
+    rasterio \
     scikit-learn \
     statsmodels
 

@@ -14,9 +14,10 @@ ADD modules/${MODULE_NAME}/kernels /etc/sepal/app-manager/kernels-templates
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 51716619E084DAB9
 
 # [HACK] Ensures /usr/local/share/jupyter/voila is available when docker volume is shadowing
+# The version of voila here has to be the same as in init_jupyter.sh
 RUN mkdir -p /usr/local/share/voila /usr/local/share/jupyter && \
-ln -sf /usr/local/share/voila /usr/local/share/jupyter/voila && \
-    pip3 install "voila==0.5.8"
+    ln -sf /usr/local/share/voila /usr/local/share/jupyter/voila && \
+    pip3 install "voila==0.5.11" 
 
 # Create "node" user with unrestricted sudo capabilities
 RUN adduser node

@@ -8,21 +8,21 @@ echo "**************************"
 ln -sf /usr/local/bin/pip* /usr/bin/
 export DISPLAY=:0.0
 apt-get update && apt-get install -y libzmq5-dev
-/usr/bin/python3 -m pip install jupyter
+uv pip install --system \
+    jupyter \
+    ipykernel \
+    jupyterlab \
+    jupyterlab-language-pack-fr-FR \
+    jupyterlab-language-pack-es-ES \
+    ipywidgets \
+    folium \
+    ipyleaflet \
+    jupyter-resource-usage \
+    ipyvuetify \
+    geemap \
+    ipecharts \
+    sidecar \
+    voila==0.5.11 # this version has to match with the one in app-manager module Dockerfile
+
 /usr/bin/python3 /usr/local/bin/jupyter-notebook --generate-config
-/usr/bin/python3 -m pip install ipykernel
 /usr/bin/python3 -m ipykernel install
-
-/usr/bin/python3 -m pip install jupyterlab
-/usr/bin/python3 -m pip install jupyterlab-language-pack-fr-FR
-/usr/bin/python3 -m pip install jupyterlab-language-pack-es-ES
-/usr/bin/python3 -m pip install ipywidgets
-/usr/bin/python3 -m pip install folium
-/usr/bin/python3 -m pip install ipyleaflet
-/usr/bin/python3 -m pip install jupyter-resource-usage
-
-/usr/bin/python3 -m pip install ipyvuetify
-/usr/bin/python3 -m pip install geemap
-/usr/bin/python3 -m pip install ipecharts
-/usr/bin/python3 -m pip install sidecar
-/usr/bin/python3 -m pip install voila

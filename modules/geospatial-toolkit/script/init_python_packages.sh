@@ -4,8 +4,8 @@ echo
 echo "************************************"
 echo "*** Installing misc python tools ***"
 echo "************************************"
-export GDAL_VERSION=$(pip3 show GDAL|grep 'Version: ' | cut -c10-)
-export NUMPY_VERSION=$(pip3 show numpy|grep 'Version: ' | cut -c10-)
+export GDAL_VERSION=$(gdal-config --version)
+export NUMPY_VERSION=$(uv pip show numpy|grep 'Version: ' | cut -c10-)
 
 function template {
     local template=$1
@@ -15,4 +15,4 @@ function template {
 
 template /config/requirements.txt /tmp/requirements.txt
 
-pip3 install -r /tmp/requirements.txt
+uv pip install --system -r /tmp/requirements.txt

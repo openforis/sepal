@@ -22,8 +22,8 @@ apt-get -y install cuda-toolkit=12.9.1-1
 apt-get -y install cudnn9-cuda-12 cuda-cudart-12.9
 
 # tensorflow 2.20.0 crashes, pinning an older version
-pip3 install 'tensorflow[and-cuda]<2.20.0'
-pip3 install \
+uv pip install --system \
+    'tensorflow[and-cuda]<2.20.0' \
     pyopencl \
     tf-keras \
     torch \
