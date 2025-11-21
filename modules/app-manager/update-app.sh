@@ -23,7 +23,7 @@ function update_app {
     cd $app_path
     git checkout $branch
     git pull
-    if [[ -f "$app_path/requirements.txt" ]]
+    if [[ -f "$app_path/requirements.txt" ]] || [[ -f "$app_path/sepal_environment.yml" ]]
     then
         update_kernel
     fi
@@ -55,19 +55,34 @@ function update_kernel {
 }
 
 function update_venv {
+    local req_file=""
+    if [[ -f "$app_path/sepal_environment.yml" ]]; then
+        req_file="$app_path/sepal_environment.yml"
+    elif [[ -f "$app_path/requirements.txt" ]]; then
+        req_file="$app_path/requirements.txt"
+    fi
+
     # $current_venv_path/.installed vs $app_path/needVenvUpdate
-    if [[ ! -f "$current_venv_path/.installed" ]] || [[ "$current_venv_path/.installed" -ot "$app_path/requirements.txt" ]]
+    if [[ ! -f "$current_venv_path/.installed" ]] || [[ "$current_venv_path/.installed" -ot "$req_file" ]]
     then
         rm -f $venv_log_file
         echo "Removing eventual existing venv: $venv_path" >> "$venv_log_file"
         rm -rf "$venv_path"
         echo "Creating venv: $venv_path" >> "$venv_log_file"
-        python3 -m venv $venv_path
-        "$venv_path"/bin/python3 -m pip install --no-cache-dir ipykernel wheel >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install --no-cache-dir numpy >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install --no-cache-dir gdal==3.8.3 >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install --no-cache-dir "git+https://github.com/openforis/earthengine-api.git@v1.6.14#egg=earthengine-api&subdirectory=python" >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install --no-cache-dir -r "$app_path"/requirements.txt >> "$venv_log_file"
+        
+        if [[ -f "$app_path/sepal_environment.yml" ]]; then
+             micromamba create -y -p "$venv_path" -f "$app_path/sepal_environment.yml" >> "$venv_log_file"
+             "$venv_path"/bin/pip install ipykernel >> "$venv_log_file"
+             "$venv_path"/bin/pip install --no-cache-dir "git+https://github.com/openforis/earthengine-api.git@v1.6.14#egg=earthengine-api&subdirectory=python" >> "$venv_log_file"
+        else
+            python3 -m venv $venv_path
+            "$venv_path"/bin/python3 -m pip install --no-cache-dir ipykernel wheel >> "$venv_log_file"
+            "$venv_path"/bin/python3 -m pip install --no-cache-dir numpy >> "$venv_log_file"
+            "$venv_path"/bin/python3 -m pip install --no-cache-dir gdal==3.8.3 >> "$venv_log_file"
+            "$venv_path"/bin/python3 -m pip install --no-cache-dir "git+https://github.com/openforis/earthengine-api.git@v1.6.14#egg=earthengine-api&subdirectory=python" >> "$venv_log_file"
+            "$venv_path"/bin/python3 -m pip install --no-cache-dir -r "$app_path"/requirements.txt >> "$venv_log_file"
+        fi
+
         if [[ -d $current_venv_path ]] 
         then
             echo "Moving away current venv: $current_venv_path" >> "$venv_log_file"

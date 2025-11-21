@@ -107,6 +107,9 @@ RUN apt-get -y update && apt-get install -y \
     python3-virtualenv \
     python3-wheel
 
+# Install Micromamba
+RUN curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xj -C /usr/local/bin/ --strip-components=1 bin/micromamba
+
 # Install libraries and headers
 RUN apt-get -y update && apt-get install -y \
     libboost-dev \
@@ -168,4 +171,4 @@ RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install java ${JAVA_
 RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && R CMD javareconf'
 
 # Ubuntu user has uid 1000, which we need ourselves
-RUN deluser --remove-home ubuntu 
+RUN deluser --remove-home ubuntu
