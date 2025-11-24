@@ -3,6 +3,7 @@ services:
     extends:
       file: ../docker-compose.logger.override.yml
       service: logger
+    ports: !override []
 
   mysql-admin:
     extends:

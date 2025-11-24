@@ -113,6 +113,11 @@
             cidr_ip: "{{ sepal_storage_ip }}/32"
             rule_desc: 'Sepal-Storage'
           - proto: tcp
+            from_port: 3306
+            to_port: 3306
+            cidr_ip: "{{ sepal_storage_ip }}/32"
+            rule_desc: 'Sepal-Storage'
+          - proto: tcp
             from_port: 22
             to_port: 22
             cidr_ip: "{{ local_ip_address }}/32"
