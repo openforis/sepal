@@ -50,6 +50,7 @@ RUN npm install
 # add module source
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
 ADD modules/${MODULE_NAME}/config ${MODULE}/config
+ADD modules/${MODULE_NAME}/migrations ${MODULE}/migrations
 
 # add shell scripts
 ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
