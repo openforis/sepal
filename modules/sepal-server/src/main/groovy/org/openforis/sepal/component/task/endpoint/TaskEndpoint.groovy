@@ -59,6 +59,26 @@ class TaskEndpoint {
                 send toJson(task)
             }
 
+            get('/tasks/task/{id}/details') {
+                def task = component.submit(
+                    new GetTask(
+                        taskId: params.required('id', String),
+                        username: currentUser.username
+                    )
+                )
+                def taskDetails = [
+                    id: task.id,
+                    recipeId: task.recipeId,
+                    name: task.title,
+                    status: task.state,
+                    statusDescription: task.statusDescription,
+                    creationTime: task.creationTime,
+                    updateTime: task.updateTime,
+                    params: task.params
+                ]
+                send toJson(taskDetails)
+            }
+
             post('/tasks/task/{id}/cancel') {
                 submit(new CancelTask(taskId: params.required('id', String), username: currentUser.username))
                 response.status = 204
@@ -88,6 +108,14 @@ class TaskEndpoint {
                     state: params.required('state', Task.State),
                     statusDescription: params.required('statusDescription'),
                     username: currentUser.username
+                ))
+                response.status = 204
+            }
+
+            post('/tasks/task/{id}/params-updated', [ADMIN, TASK_EXECUTOR]) {
+                submit(new UpdateTaskParams(
+                    taskId: params.required('id', String),
+                    params: fromJson(body)
                 ))
                 response.status = 204
             }
