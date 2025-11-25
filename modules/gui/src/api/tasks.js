@@ -6,6 +6,9 @@ export default {
             retry
         }),
 
+    loadDetails$: taskId =>
+        get$(`/api/tasks/task/${taskId}/details`),
+
     submit$: task =>
         postJson$('/api/tasks', {
             body: task
