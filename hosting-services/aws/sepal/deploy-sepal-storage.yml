@@ -78,6 +78,36 @@
         enabled: yes
         masked: no
 
+    - name: Update python3-docker via yum
+      yum:
+        name: python3-docker
+        state: latest
+
+    - ec2_instance_info:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        filters:
+          tag:Type: "Sepal"
+          tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+          instance-state-name: running
+      delegate_to: localhost
+      register: ec2_sepal
+
+    - set_fact:
+        sepal_private_ip: "{{ ec2_sepal.instances[0].private_ip_address }}"
+
+    - debug:
+        msg: "{{ sepal_private_ip }}"
+
+    # - docker_network:
+    #     name: sepal
+    #     state: absent
+
+    - name: Join the swarm as a worker
+      docker_swarm:
+        state: join
+        join_token: "{{ SWARM_TOKEN }}"
+        remote_addrs: ["{{ sepal_private_ip }}:2377"]
+
     # EFS
     - name: Install amazon-efs-utils
       yum:
@@ -107,12 +137,6 @@
         opts: "defaults,_netdev"
         dump: 0
         passno: 0
-
-    - docker_network:
-        name: sepal
-        ipam_config:
-          - subnet: 172.20.0.0/16
-            iprange: 172.20.0.0/24
 
     - file: path="/usr/local/lib/docker/cli-plugins" state=directory
     - uri:
@@ -147,5 +171,5 @@
   roles:
     # - { role: live-patching }
     - { role: docker-login }
-    - { role: run-module, module: logger }
+    # - { role: run-module, module: logger }
     - { role: run-module, module: user-storage }

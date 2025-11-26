@@ -206,8 +206,29 @@
         name: requests
         executable: pip3
 
+    - name: pip install docker
+      pip:
+        name: docker
+        executable: pip3
+
+    - name: Init a new swarm with default parameters
+      docker_swarm:
+        advertise_addr: "{{ SEPAL_IP }}"
+      register: swarm_init
+
+    - debug:
+        msg: "{{ swarm_init.swarm_facts.JoinTokens.Worker }}"
+
+    - name: Write token to /tmp/swarm-token
+      copy:
+        dest: /tmp/swarm-token
+        content: "{{ swarm_init.swarm_facts.JoinTokens.Worker }}"
+      delegate_to: localhost
+
     - docker_network:
         name: sepal
+        driver: overlay
+        attachable: yes
         ipam_config:
           - subnet: 172.20.0.0/16
             iprange: 172.20.0.0/24
