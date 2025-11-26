@@ -1,6 +1,6 @@
 const {concat, forkJoin, switchMap} = require('rxjs')
 const moment = require('moment')
-const {mkdirSafe$} = require('#task/rxjs/fileSystem')
+const {mkdir$, createLock$, releaseLock$} = require('#task/rxjs/fileSystem')
 const {createVrt$, setBandNames$} = require('#sepal/gdal')
 const {exportImageToSepal$} = require('../jobs/export/toSepal')
 const ImageFactory = require('#sepal/ee/imageFactory')
@@ -17,12 +17,19 @@ module.exports = {
                 const preferredDownloadDir = workspacePath
                     ? `${config.homeDir}/${workspacePath}/`
                     : `${config.homeDir}/downloads/${description}/`
-                return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
-                    switchMap(downloadDir => concat(
-                        export$(taskId, {description, exportPrefix, recipe, downloadDir, bands, ...retrieveOptions}),
-                        postProcess$({description: exportPrefix, downloadDir, bands})
-                    )
-                    )
+                    // the UI already validated the path here, no need to have mkdirsafe here
+                return mkdir$(preferredDownloadDir, {recursive: true}).pipe(
+                    switchMap(downloadDir => {
+                        return createLock$(downloadDir).pipe(
+                            switchMap(() => {
+                                const work$ = concat(
+                                    export$(taskId, {description, exportPrefix, recipe, downloadDir, bands, ...retrieveOptions}),
+                                    postProcess$({description: exportPrefix, downloadDir, bands})
+                                )
+                                return concat(work$, releaseLock$(downloadDir))
+                            })
+                        )
+                    })
                 )
             })
         )
