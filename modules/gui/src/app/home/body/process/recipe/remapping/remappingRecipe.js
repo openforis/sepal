@@ -1,10 +1,8 @@
 import _ from 'lodash'
 
-import api from '~/apiRegistry'
 import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
-import {msg} from '~/translate'
+import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {uuid} from '~/uuid'
 
 export const getDefaultModel = () => ({
@@ -33,41 +31,11 @@ export const RecipeActions = id => {
     }
 }
 
-const submitRetrieveRecipeTask = recipe => {
-    const name = recipe.title || recipe.placeholder
-    const bands = recipe.ui.retrieveOptions.bands
-    const destination = recipe.ui.retrieveOptions.destination
-    const taskTitle = msg(['process.retrieve.form.task', destination], {name})
-    const pyramidingPolicy = {}
-    bands.forEach(band => pyramidingPolicy[band] = band === 'class' ? 'mode' : 'mean')
-    const operation = `image.${destination}`
-    const recipeProperties = {
-        recipe_id: recipe.id,
-        recipe_projectId: recipe.projectId,
-        recipe_type: recipe.type,
-        recipe_title: recipe.title || recipe.placeholder,
-        ..._(recipe.model)
-            .mapValues(value => JSON.stringify(value))
-            .mapKeys((_value, key) => `recipe_${key}`)
-            .value()
-    }
-    const task = {
-        operation,
-        params: {
-            title: taskTitle,
-            description: name,
-            image: {
-                recipe: _.omit(recipe, ['ui']),
-                ...recipe.ui.retrieveOptions,
-                bands: {selection: bands},
-                visualizations: getAllVisualizations(recipe),
-                pyramidingPolicy,
-                properties: recipeProperties
-            }
-        }
-    }
-    return api.tasks.submit$(task).subscribe()
-}
+const submitRetrieveRecipeTask = recipe =>
+    submitTask(recipe, {
+        pyramidingPolicy: pyramidingPolicies.classBased,
+        includeTimeRange: false
+    })
 
 export const bandsAvailableToAdd = (bands, includedBands) =>
     (Object.keys(bands || {}))
