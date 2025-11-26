@@ -1,13 +1,19 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import {catchError, debounceTime, EMPTY, map, Subject, switchMap, tap} from 'rxjs'
 
+import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 import {toSafeString} from '~/string'
+import {withSubscriptions} from '~/subscription'
+import {msg} from '~/translate'
 import {currentUser} from '~/user'
 import {Form} from '~/widget/form'
+
+const DEBOUNCE_TIME_MS = 750
 
 const mapStateToProps = state => ({
     projects: selectFrom(state, 'process.projects')
@@ -20,92 +26,77 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _WorkspaceDestination extends React.Component {
+    workspacePath$ = new Subject()
+    
     state = {
-        currentType: undefined
+        currentType: undefined,
+        loading: null
     }
 
     constructor(props) {
         super(props)
-        // this.onLoading = this.onLoading.bind(this)
-        // this.onError = this.onError.bind(this)
+        this.onError = this.onError.bind(this)
+        this.onWorkspaceChecked = this.onWorkspaceChecked.bind(this)
     }
 
     render() {
-        return this.renderInput()
-        // const {currentType} = this.state
-        // const showStrategy = ['Image', 'ImageCollection'].includes(currentType)
-        // return showStrategy
-        //     ? (
-        //         <Layout spacing='tight'>
-        //             {this.renderInput()}
-        //             {this.renderStrategy()}
-        //         </Layout>
-        //     )
-        //     : this.renderInput()
-    }
-
-    renderInput() {
         const {workspacePathInput, label, placeholder, autoFocus} = this.props
+        const {loading} = this.state
         return (
             <Form.Input
                 input={workspacePathInput}
                 label={label}
                 placeholder={placeholder}
                 autoFocus={autoFocus}
-                // onLoading={this.onLoading}
-                // onLoaded={({metadata} = {}) => this.onLoaded(metadata?.type)}
-                // onError={this.onError}
+                busyMessage={loading && msg('widget.loading')}
             />
         )
     }
 
-    // renderStrategy() {
-    //     const {strategyInput, type} = this.props
-    //     const {currentType} = this.state
-    //     const options = [
-    //         {
-    //             value: 'resume',
-    //             label: msg('widget.workspaceDestination.resume.label'),
-    //             tooltip: msg('widget.workspaceDestination.resume.tooltip'),
-    //             disabled: !currentType || type !== 'ImageCollection'
-    //         },
-    //         {
-    //             value: 'replace',
-    //             label: msg('widget.workspaceDestination.replace.label'),
-    //             tooltip: msg('widget.workspaceDestination.replace.tooltip')
-    //         }
-    //     ].filter(({value}) => value !== 'resume' || type === 'ImageCollection')
-    //     return (
-    //         <Form.Buttons
-    //             input={strategyInput}
-    //             options={options}
-    //             size='x-small'
-    //             alignment='right'
-    //             shape='pill'
-    //             air='less'
-    //         />
-    //     )
-    // }
-
     componentDidMount() {
         const {workspacePathInput} = this.props
+        this.loadWorkspaceContent()
         if (!workspacePathInput.value) {
             workspacePathInput.set(this.defaultWorkspacePath() || null)
+        } else {
+            this.checkWorkspacePath(workspacePathInput.value)
         }
     }
 
-    // componentDidUpdate(prevProps) {
-    //     const {workspacePathInput, strategyInput, type} = this.props
-    //     const {currentType} = this.state
-    //     if (currentType && strategyInput.value && workspacePathInput.error) {
-    //         workspacePathInput.setInvalid(null)
-    //     }
-    //     if (prevProps.type !== type && strategyInput.value === 'resume') {
-    //         // Switching type and resume strategy, we have to reset it prevent invalid strategy
-    //         strategyInput.set(null)
-    //         this.onLoaded(currentType)
-    //     }
-    // }
+    componentDidUpdate(prevProps) {
+        const {workspacePathInput} = this.props
+        const {workspacePathInput: prevWorkspacePathInput} = prevProps
+        if (workspacePathInput?.value !== prevWorkspacePathInput?.value) {
+            this.checkWorkspacePath(workspacePathInput.value)
+        }
+    }
+
+    loadWorkspaceContent() {
+        const {addSubscription} = this.props
+        addSubscription(
+            this.workspacePath$.pipe(
+                debounceTime(DEBOUNCE_TIME_MS),
+                tap(() => {
+                    this.setState({loading: true})
+                }),
+                switchMap(path =>
+                    api.userFiles.listFiles$(path, {includeHidden: true}).pipe(
+                        tap(() => {
+                            this.setState({loading: null})
+                        }),
+                        catchError(error => {
+                            this.setState({loading: null})
+                            this.onError(error)
+                            return EMPTY
+                        }),
+                        map(response => response)
+                    )
+                )
+            ).subscribe(
+                response => this.onWorkspaceChecked(response)
+            )
+        )
+    }
 
     defaultWorkspacePath() {
         const {recipeName} = this.props
@@ -127,51 +118,45 @@ class _WorkspaceDestination extends React.Component {
         return projects.find(({id}) => id === projectId)
     }
 
-    // onLoading() {
-    //     const {strategyInput} = this.props
-    //     strategyInput.set(null)
-    //     this.setState({currentType: null})
-    // }
+    onWorkspaceChecked(response) {
+        const {workspacePathInput} = this.props
+        if (response && response.count > 0) {
+            const hasPendingTask = response.files?.some(file => file.name === '.task_pending')
+            if (hasPendingTask) {
+                workspacePathInput.setInvalid(msg('widget.workspaceDestination.taskPending'))
+            } else {
+                workspacePathInput.setInvalid(msg('widget.workspaceDestination.notEmpty'))
+            }
+        } else {
+            workspacePathInput.setInvalid(null)
+        }
+    }
 
-    // onLoaded(currentType) {
-    //     const {workspacePathInput, strategyInput} = this.props
-    //     this.setState({currentType})
-    //     if (currentType) {
-    //         workspacePathInput.setInvalid(msg(
-    //             ['Image', 'ImageCollection'].includes(currentType)
-    //                 ? 'widget.workspaceDestination.exists.replaceable'
-    //                 : 'widget.workspaceDestination.exists.notReplaceable'
-    //         ))
-    //     } else {
-    //         strategyInput.set('new')
-    //     }
-    // }
+    onError(error) {
+        const {workspacePathInput} = this.props
+        if (error.status === 404) {
+            workspacePathInput.setInvalid(null)
+        } else {
+            workspacePathInput.setInvalid(msg('widget.workspaceDestination.loadError'))
+        }
+    }
 
-    // onError(error) {
-    //     const {workspacePathInput, onError} = this.props
-    //     if (error.status === 404) {
-    //         this.onLoaded()
-    //     } else {
-    //         onError && onError(error)
-    //         workspacePathInput.setInvalid(
-    //             error.response && error.response.messageKey
-    //                 ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-    //                 : msg('widget.workspacePathInput.loadError')
-    //         )
-    //     }
-    // }
+    checkWorkspacePath(path) {
+        if (path) {
+            this.workspacePath$.next(path)
+        }
+    }
 }
 
 export const WorkspaceDestination = compose(
     _WorkspaceDestination,
+    withSubscriptions(),
     connect(mapStateToProps),
     withRecipe(mapRecipeToProps)
 )
 
 WorkspaceDestination.propTypes = {
     workspacePathInput: PropTypes.object.isRequired,
-    // strategyInput: PropTypes.object.isRequired,
-    // type: PropTypes.any.isRequired,
     label: PropTypes.any,
     placeholder: PropTypes.string,
     tooltip: PropTypes.any
