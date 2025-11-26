@@ -56,6 +56,8 @@ const fields = {
         .skip((v, {destination}) => destination !== 'GEE')
         .number()
         .notBlank(),
+    filenamePrefix: new Form.Field()
+        .skip((v, {destination}) => destination !== 'SEPAL'),
     crs: new Form.Field()
         .notBlank(),
     crsTransform: new Form.Field()
@@ -74,7 +76,9 @@ const mapStateToProps = state => ({
 })
 
 const mapRecipeToProps = recipe => ({
-    projectId: recipe.projectId
+    projectId: recipe.projectId,
+    recipeTitle: recipe.title,
+    recipePlaceholder: recipe.placeholder
 })
 
 class _MosaicRetrievePanel extends React.Component {
@@ -118,6 +122,7 @@ class _MosaicRetrievePanel extends React.Component {
                 {this.renderScale()}
                 {toEE && toSepal && this.renderDestination()}
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
+                {destination.value === 'SEPAL' ? this.renderFilenamePrefix() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
                 {destination.value === 'GEE' ? this.renderSharing() : null}
@@ -239,6 +244,18 @@ class _MosaicRetrievePanel extends React.Component {
             />
         )
     }
+    
+    renderFilenamePrefix() {
+        const {inputs: {filenamePrefix}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.retrieve.form.filenamePrefix.label')}
+                placeholder={msg('process.retrieve.form.filenamePrefix.placeholder')}
+                tooltip={msg('process.retrieve.form.filenamePrefix.tooltip')}
+                input={filenamePrefix}
+            />
+        )
+    }
 
     renderAssetDestination() {
         const {inputs: {assetId, assetType, strategy}} = this.props
@@ -335,7 +352,7 @@ class _MosaicRetrievePanel extends React.Component {
     
     componentDidMount() {
         const {allBands, defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize,
-            inputs: {assetType, sharing, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize, useAllBands}
+            inputs: {assetType, sharing, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize, useAllBands, filenamePrefix}
         } = this.props
         const more = (crs.value && crs.value !== defaultCrs)
             || (crsTransform.value)
@@ -366,6 +383,10 @@ class _MosaicRetrievePanel extends React.Component {
         }
         if (allBands) {
             useAllBands.set(true)
+        }
+        if (!filenamePrefix.value) {
+            const recipeName = this.getRecipeName()
+            filenamePrefix.set(recipeName)
         }
         this.update()
     }
@@ -406,6 +427,11 @@ class _MosaicRetrievePanel extends React.Component {
     findProject() {
         const {projects, projectId} = this.props
         return projects.find(({id}) => id === projectId)
+    }
+    
+    getRecipeName() {
+        const {recipeTitle, recipePlaceholder} = this.props
+        return recipeTitle || recipePlaceholder || 'sepal_export'
     }
 }
 
