@@ -1,23 +1,22 @@
 const {forkJoin, switchMap} = require('rxjs')
-const moment = require('moment')
 const {exportImageToDrive$} = require('../jobs/export/toDrive')
 const ImageFactory = require('#sepal/ee/imageFactory')
 const {getCurrentContext$} = require('#task/jobs/service/context')
 const {setWorkloadTag} = require('./workloadTag')
 
 module.exports = {
-    submit$: (taskId, {image: {recipe, bands, ...retrieveOptions}}) => {
+    submit$: (taskId, {image: {recipe, bands, driveFolder: folder, ...retrieveOptions}}) => {
         setWorkloadTag(recipe)
         return getCurrentContext$().pipe(
             switchMap(() => {
                 const description = recipe.title || recipe.placeholder
-                return export$(taskId, {description, recipe, bands, ...retrieveOptions})
+                return export$(taskId, {description, recipe, bands, folder, ...retrieveOptions})
             })
         )
     }
 }
 
-const export$ = (taskId, {description, recipe, bands, scale, ...retrieveOptions}) => {
+const export$ = (taskId, {description, recipe, bands, scale, folder, ...retrieveOptions}) => {
     const factory = ImageFactory(recipe, bands)
     return forkJoin({
         image: factory.getImage$(),
@@ -26,7 +25,7 @@ const export$ = (taskId, {description, recipe, bands, scale, ...retrieveOptions}
         switchMap(({image, geometry}) =>
             exportImageToDrive$(taskId, {
                 image,
-                folder: `${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`,
+                folder,
                 ...retrieveOptions,
                 description,
                 region: geometry.bounds(scale),
