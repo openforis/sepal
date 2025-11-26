@@ -1,12 +1,7 @@
-import _ from 'lodash'
 import moment from 'moment'
 
-import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
-import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
-import {publishEvent} from '~/eventPublisher'
-import {msg} from '~/translate'
+import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 
 import {getAvailableBands} from './bands'
 
@@ -65,41 +60,9 @@ export const RecipeActions = id => {
 }
 
 const submitRetrieveRecipeTask = recipe => {
-    const name = recipe.title || recipe.placeholder
-    const destination = recipe.ui.retrieveOptions.destination
-    const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = Object.keys(getAvailableBands(recipe))
-    const visualizations = getAllVisualizations(recipe)
-    const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
-    const operation = `image.${destination}`
-    const recipeProperties = {
-        recipe_id: recipe.id,
-        recipe_projectId: recipe.projectId,
-        recipe_type: recipe.type,
-        recipe_title: recipe.title || recipe.placeholder,
-        ..._(recipe.model)
-            .mapValues(value => JSON.stringify(value))
-            .mapKeys((_value, key) => `recipe_${key}`)
-            .value()
-    }
-    const task = {
-        operation,
-        params: {
-            title: taskTitle,
-            description: name,
-            image: {
-                recipe: _.omit(recipe, ['ui']),
-                ...recipe.ui.retrieveOptions,
-                bands: {selection: bands},
-                visualizations,
-                properties: {...recipeProperties, 'system:time_start': timeStart, 'system:time_end': timeEnd}
-            }
-        }
-    }
-    publishEvent('submit_task', {
-        recipe_type: recipe.type,
-        destination,
-        data_set_type: 'RADAR'
+    return submitTask(recipe, {
+        dataSetType: 'RADAR',
+        customizeImage: image => ({...image, bands: {selection: bands}})
     })
-    return api.tasks.submit$(task).subscribe()
 }
