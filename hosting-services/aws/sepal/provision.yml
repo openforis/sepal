@@ -126,7 +126,7 @@
       register: ec2_sepal_storage
 
     - set_fact:
-        sepal_storage_ip: "{{ ec2_sepal_storage.instances[0].public_ip_address }}"
+        SEPAL_STORAGE_PUBLIC_IP: "{{ ec2_sepal_storage.instances[0].public_ip_address }}"
 
     # Sepal security group
 
@@ -161,16 +161,6 @@
             to_port: 65535
             cidr_ip: 172.31.0.0/16
             rule_desc: 'Subnet'
-          # - proto: tcp
-          #   from_port: 5672
-          #   to_port: 5672
-          #   cidr_ip: "{{ sepal_storage_ip }}/32"
-          #   rule_desc: 'Sepal-Storage'
-          # - proto: tcp
-          #   from_port: 3306
-          #   to_port: 3306
-          #   cidr_ip: "{{ sepal_storage_ip }}/32"
-          #   rule_desc: 'Sepal-Storage'
           - proto: tcp
             from_port: 22
             to_port: 22
@@ -251,7 +241,7 @@
       register: ec2_sepal
 
     - set_fact:
-        sepal_ip: "{{ ec2_sepal.instances[0].public_ip_address }}"
+        SEPAL_PUBLIC_IP: "{{ ec2_sepal.instances[0].public_ip_address }}"
 
     # Sepal-Apps security group
 
@@ -264,7 +254,7 @@
           - proto: tcp
             from_port: 80
             to_port: 80
-            cidr_ip: "{{ sepal_ip }}/32"
+            cidr_ip: "{{ SEPAL_PUBLIC_IP }}/32"
             rule_desc: 'Sepal'
           - proto: tcp
             from_port: 22
@@ -329,7 +319,7 @@
       register: ec2_sepal_apps
 
     - set_fact:
-        sepal_apps_ip: "{{ ec2_sepal_apps.instances[0].public_ip_address }}"
+        SEPAL_APPS_PUBLIC_IP: "{{ ec2_sepal_apps.instances[0].public_ip_address }}"
 
     # Sepal-Apps DNS
 
@@ -339,7 +329,7 @@
         zone: "{{ lookup('env', 'AWS_ROUTE_53_ZONE') }}"
         record: "{{ lookup('env', 'SEPAL_APPS_HOST') }}"
         type: A
-        value: "{{ sepal_apps_ip }}"
+        value: "{{ SEPAL_APPS_PUBLIC_IP }}"
         overwrite: true
         wait: true
             
