@@ -6,5 +6,5 @@ services:
       driver: syslog
       options:
         cache-disabled: "true"
-        syslog-address: udp://172.20.128.2:514
+        syslog-address: ${SYSLOG_ADDRESS:-udp://172.20.128.2}
         tag: docker/{{.Name}}
