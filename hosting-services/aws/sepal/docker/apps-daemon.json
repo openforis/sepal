@@ -3,7 +3,7 @@
   "log-driver": "syslog",
   "log-opts": {
       "cache-disabled": "true",
-      "syslog-address": "{{ SYSLOG_ADDRESS }}",
+      "syslog-address": "{{ syslog_address }}",
       "tag": "docker/{{ '{{.Name}}' }}"
   }
 }
