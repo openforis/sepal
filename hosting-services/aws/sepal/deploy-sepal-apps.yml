@@ -5,9 +5,6 @@
   gather_facts: true
 
   pre_tasks:
-    - set_fact:
-        SYSLOG_ADDRESS: "udp://{{ ec2_private_ip_address }}"
-
     # bash prompt
     - name: Set bash prompt
       blockinfile:
@@ -55,7 +52,7 @@
 
     - name: Copy docker-registry certificate
       copy:
-        src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
+        src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
     - name: Install docker
@@ -117,8 +114,8 @@
       copy:
         dest: "/etc/sepal/env.d/env-current"
         content: |
-          SEPAL_VERSION={{ VERSION }}
-          SYSLOG_ADDRESS={{ SYSLOG_ADDRESS }}
+          SEPAL_VERSION={{ version }}
+          SYSLOG_ADDRESS={{ syslog_address }}
 
     - name: Assemble a single env file
       ansible.builtin.assemble:

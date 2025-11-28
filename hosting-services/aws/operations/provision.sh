@@ -34,4 +34,4 @@ ansible-playbook provision.yml \
 ansible-playbook deploy.yml \
     -i "$(../inventory.sh Operations)" \
     --private-key=$PRIVATE_KEY \
-    --extra-vars "env_file=$CONFIG_HOME/env CONFIG_HOME=$CONFIG_HOME VERSION=$VERSION git_commit=nan"
+    --extra-vars "env_file=$CONFIG_HOME/env config_home=$CONFIG_HOME version=$VERSION git_commit=nan"
