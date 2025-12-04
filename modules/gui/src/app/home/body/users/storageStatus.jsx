@@ -7,27 +7,31 @@ import {Icon} from '~/widget/icon'
 
 export class StorageStatus extends React.Component {
     static ACTIVE = 'ACTIVE'
+    static INACTIVE = 'INACTIVE'
     static NOTIFIED = 'NOTIFIED'
     static ERASED = 'ERASED'
 
-    static isActive = status =>
-        status === StorageStatus.ACTIVE
+    // static isActive = status =>
+    //     status === StorageStatus.ACTIVE
 
-    static isNotified = status =>
-        status === StorageStatus.NOTIFIED
+    // static isInactive = status =>
+    //     status === StorageStatus.INACTIVE
 
-    static isErased = status =>
-        status === StorageStatus.ERASED
+    // static isNotified = status =>
+    //     status === StorageStatus.NOTIFIED
+
+    // static isErased = status =>
+    //     status === StorageStatus.ERASED
 
     render() {
-        const {status = 'UNKNOWN'} = this.props
+        const {status} = this.props
         return (
             <Button
                 chromeless
                 shape='none'
                 air='none'
                 icon={this.getIcon(status)}
-                label={msg(`user.storageStatus.${status}`).toUpperCase()}
+                label={status ? msg(`user.storageStatus.${status}`).toUpperCase() : null}
             />
         )
     }
@@ -36,6 +40,8 @@ export class StorageStatus extends React.Component {
         switch(status) {
             case StorageStatus.ACTIVE:
                 return this.getActiveIcon()
+            case StorageStatus.INACTIVE:
+                return this.getInactiveIcon()
             case StorageStatus.NOTIFIED:
                 return this.getNotifiedIcon()
             case StorageStatus.ERASED:
@@ -49,8 +55,12 @@ export class StorageStatus extends React.Component {
         return <Icon name='check' variant='success'/>
     }
 
+    getInactiveIcon() {
+        return <Icon name='clock' type='regular' variant='warning'/>
+    }
+
     getNotifiedIcon() {
-        return <Icon name='hourglass-half' variant='warning'/>
+        return <Icon name='clock' type='regular' variant='error'/>
     }
 
     getErasedIcon() {

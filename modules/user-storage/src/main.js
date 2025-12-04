@@ -11,11 +11,11 @@ const {scheduleFullScan} = require('./scan')
 const {scanComplete$, logStats: logScanQueueStats} = require('./scanQueue')
 const {messageHandler} = require('./messageHandler')
 const {initializeDatabase} = require('./database')
-const {scheduleFullInactivityCheck} = require('./inactivity')
 const {routes} = require('./routes')
 const {email$} = require('./email')
 const {setInitialized, getInitialized} = require('./kvstore')
-const {logStats: logInactivityQueueStats} = require('./inactivityQueue')
+const {logStats: logInactivityQueueStats, scheduleFullInactivityCheck} = require('./inactivityQueue')
+const {getMostRecentAccess$} = require('./http')
 
 const main = async () => {
     await initMessageQueue(amqpUri, {
@@ -42,6 +42,8 @@ const main = async () => {
     await scheduleFullScan()
     await logScanQueueStats()
     await logInactivityQueueStats()
+
+    getMostRecentAccess$('lookap28').subscribe()
 
     log.info('Initialized')
 }

@@ -257,8 +257,16 @@ class UserEndpoint {
             get('/mostRecentLoginByUser', [ADMIN]) {
                 response.contentType = 'application/json'
                 def mostRecentLoginByUser = component.submit(
-                    new MostRecentLoginByUser(
-                        username: sepalUser.username
+                    new MostRecentLoginByUser()
+                )
+                send toJson(mostRecentLoginByUser)
+            }
+
+            get('/mostRecentLogin', [ADMIN]) {
+                response.contentType = 'application/json'
+                def mostRecentLoginByUser = component.submit(
+                    new MostRecentLogin(
+                        username: params.username
                     )
                 )
                 send toJson(mostRecentLoginByUser)

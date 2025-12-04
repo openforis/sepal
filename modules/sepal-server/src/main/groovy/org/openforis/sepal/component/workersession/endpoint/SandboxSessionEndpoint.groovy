@@ -40,13 +40,10 @@ class SandboxSessionEndpoint {
                 otherUser(requestContext).generateReport()
             }
             get('/sessions/mostRecentlyClosedByUser', [ADMIN]) {
-                response.contentType = 'application/json'
-                def mostRecentlyClosedByUser = component.submit(
-                    new MostRecentlyClosedSessionByUser(
-                        username: requestContext.currentUser.username
-                    )
-                )
-                send toJson(mostRecentlyClosedByUser)
+                currentUser(requestContext).mostRecentlyClosedByUser()
+            }
+            get('/sessions/mostRecentlyClosed', [ADMIN]) {
+                otherUser(requestContext).mostRecentlyClosed()
             }
 
 
@@ -109,9 +106,32 @@ class SandboxSessionEndpoint {
                 response.contentType = 'application/json'
                 def report = component.submit(new GenerateUserSessionReport(
                         username: username,
-                        workerType: SANDBOX))
+                        workerType: SANDBOX
+                ))
                 def map = reportAsMap(report)
                 send toJson(map)
+            }
+        }
+        
+        void mostRecentlyClosedByUser() {
+            context.with {
+                response.contentType = 'application/json'
+                def mostRecentlyClosedByUser = component.submit(
+                    new MostRecentlyClosedSessionByUser()
+                )
+                send toJson(mostRecentlyClosedByUser)
+            }
+        }
+
+        void mostRecentlyClosed() {
+            context.with {
+                response.contentType = 'application/json'
+                def result = component.submit(
+                    new MostRecentlyClosedSession(
+                        username: username
+                    )
+                )
+                send toJson(result)
             }
         }
 

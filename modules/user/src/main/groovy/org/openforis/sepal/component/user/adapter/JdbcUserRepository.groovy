@@ -67,7 +67,7 @@ class JdbcUserRepository implements UserRepository {
         return users
     }
 
-    Map<String, Date> mostRecentLoginByUser() {
+    Map<String, Date> mostRecentLoginByUser(String username) {
         def result = sql.rows('''
             SELECT username, system_user, last_login_time
             FROM sepal_user
@@ -76,6 +76,17 @@ class JdbcUserRepository implements UserRepository {
         return result.collectEntries { row ->
             [(row.username): toDate(row.last_login_time)]
         }
+    }
+
+    Map<String, Date> mostRecentLogin(String username) {
+        def row = sql.firstRow('''
+            SELECT username, system_user, last_login_time
+            FROM sepal_user
+            WHERE system_user IS FALSE AND last_login_time IS NOT NULL AND username = ?
+        ''', [username])
+        if (row)
+            return [timestamp: toDate(row.last_login_time)]
+        return [:]
     }
 
     void setLastLoginTime(String username, Date loginTime) {

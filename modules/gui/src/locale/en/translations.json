@@ -4975,6 +4975,7 @@
         "storageStatus": {
             "UNKNOWN": "Unknown",
             "ACTIVE": "Active",
+            "INACTIVE": "Inactive",
             "NOTIFIED": "Notified",
             "ERASED": "Erased"
         },

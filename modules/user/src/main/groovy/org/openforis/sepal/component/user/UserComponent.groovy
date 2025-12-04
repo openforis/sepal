@@ -106,6 +106,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
         query(EmailNotificationsEnabled, new EmailNotificationsEnabledHandler(userRepository))
         query(ListUsers, new ListUsersHandler(userRepository))
         query(MostRecentLoginByUser, new MostRecentLoginByUserHandler(userRepository))
+        query(MostRecentLogin, new MostRecentLoginHandler(userRepository))
         query(GoogleAccessRequestUrl, new GoogleAccessRequestUrlHandler(googleOAuthClient))
     }
 

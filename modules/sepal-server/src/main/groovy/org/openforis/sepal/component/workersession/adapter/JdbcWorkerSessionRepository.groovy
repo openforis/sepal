@@ -121,6 +121,18 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
         }
     }
 
+    Map<String, Date> mostRecentlyClosedSession(String username) {
+        def row = sql.firstRow('''
+            SELECT username, MAX(update_time) AS update_time
+            FROM `sdms`.`worker_session`
+            WHERE state = 'CLOSED' and username = ?
+            GROUP BY username
+        ''', [username])
+        if (row)
+            return [timestamp: toDate(row.update_time)]
+        return [:]
+    }
+
     private WorkerSession toSession(GroovyRowResult row) {
         def state = row.state as WorkerSession.State
         new WorkerSession(
