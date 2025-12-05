@@ -7,7 +7,7 @@ const {redisHost} = require('./config')
 const {addEvent} = require('./database')
 const {getMostRecentAccessByUser$, getMostRecentAccess$} = require('./http')
 const {getUserStorage, DB} = require('./kvstore')
-const log = require('#sepal/log').getLogger('inactivityQueue')
+const log = require('#sepal/log').getLogger('inactivityCheck')
 
 const CONCURRENCY = 1
 const MAX_RETRIES = 100
@@ -41,10 +41,26 @@ const jobId = (username, action) =>
     `job-${username}-${action}`
 
 const STORAGE = {
-    INACTIVE_HIGH: Symbol('HIGH'),
-    INACTIVE_LOW: Symbol('LOW'),
-    INACTIVE_UNKNOWN: Symbol('UNKNOWN'),
+    INACTIVE_HIGH: Symbol('INACTIVE_HIGH'),
+    INACTIVE_LOW: Symbol('INACTIVE_LOW'),
+    INACTIVE_UNKNOWN: Symbol('INACTIVE_UNKNOWN'),
     ACTIVE: Symbol('ACTIVE')
+}
+
+const mark = async ({username}) => {
+    log.info(`Detected inactive user ${username} with significant storage`)
+}
+
+const notify = async username => {
+    log.info(`User ${username} still inactive with significant storage, sending notification email [DRY RUN]`)
+    // log.info(`User ${username} still inactive with significant storage, sending notification email`)
+    // await sendEmail({username, subject: 'Inactivity notification', content: 'Due to long inactivity, your storage will be erased soon.'})
+}
+
+const erase = async username => {
+    log.info(`User ${username} still inactive with significant storage, erasing storage [DRY RUN]`)
+    // log.info(`User ${username} still inactive with significant storage, erasing storage`)
+    // await eraseUserStorage(username)
 }
 
 const isActive = async username => {
@@ -72,7 +88,7 @@ const getStorageStatus = async username => {
 const markInactiveUser = async ({username}) => {
     switch (await getStorageStatus(username)) {
         case STORAGE.INACTIVE_HIGH:
-            log.info(`Detected inactive user ${username} with significant storage`)
+            await mark(username)
             await scheduleNotify({username})
             await addEvent({username, event: 'INACTIVE'})
             break
@@ -90,10 +106,7 @@ const markInactiveUser = async ({username}) => {
 const notifyInactiveUser = async ({username}) => {
     switch (await getStorageStatus(username)) {
         case STORAGE.INACTIVE_HIGH:
-            log.info(`User ${username} still inactive with significant storage, sending notification email [DRY RUN]`)
-            // log.info(`User ${username} still inactive with significant storage, sending notification email`)
-            // await sendEmail({username, subject: 'Inactivity notification', content: 'Due to long inactivity, your storage will be erased soon.'})
-
+            await notify(username)
             await scheduleErase({username})
             await addEvent({username, event: 'NOTIFIED'})
             break
@@ -112,10 +125,7 @@ const notifyInactiveUser = async ({username}) => {
 const eraseInactiveUserStorage = async ({username}) => {
     switch (await getStorageStatus(username)) {
         case STORAGE.INACTIVE_HIGH:
-            log.info(`User ${username} still inactive with significant storage, erasing storage [DRY RUN]`)
-            // log.info(`User ${username} still inactive with significant storage, erasing storage`)
-            // await eraseUserStorage(username)
-
+            await erase(username)
             await addEvent({username, event: 'ERASED'})
             break
         case STORAGE.INACTIVE_LOW:
@@ -228,7 +238,7 @@ const cancelInactivityCheck = async ({username}) => {
 }
 
 const scheduleFullInactivityCheck = async () => {
-    log.debug('Scheduling inactivity check for all users...')
+    log.debug('Scheduling check for all users')
     const userActivity = await firstValueFrom(getMostRecentAccessByUser$())
 
     await queue.pause()
@@ -246,7 +256,7 @@ const scheduleFullInactivityCheck = async () => {
     Object.entries(userActivity).forEach(([username, mostRecentTimestamp]) => {
         initializeInactivityCheck({username, mostRecentTimestamp})
     })
-    log.info('Scheduled inactivity check for all users')
+    log.info('Scheduled check for all users')
 }
 
 module.exports = {scheduleFullInactivityCheck, scheduleInactivityCheck, cancelInactivityCheck, logStats}

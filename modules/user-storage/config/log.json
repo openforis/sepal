@@ -3,16 +3,14 @@
     "categories": {
         "config": "info",
         "database": "info",
-        "email": "debug",
+        "email": "info",
         "filesystem": "info",
         "http": "info",
-        "inactivity": "debug",
-        "inactivityQueue": "trace",
+        "inactivityCheck": "info",
         "kvstore": "info",
         "main": "info",
         "messageHandler": "info",
         "messageQueue": "info",
-        "scan": "info",
-        "scanQueue": "info"
+        "storageCheck": "info"
     }
 }

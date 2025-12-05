@@ -19,16 +19,16 @@ const lastInactiveKey = key => `lastInactive:${key}`
 const storageKey = key => `storage:${key}`
 
 const getInitialized = async () => {
-    log.debug('Getting initialize...')
+    log.debug('Getting initialization timestamp...')
     const timestamp = await redis.get('initialized')
-    log.info('Got initialized:', timestamp)
+    log.info(timestamp ? `Got initialization timestamp: ${timestamp}` : 'Initialization timestamp not set')
     return timestamp
 }
 
 const setInitialized = async (timestamp = new Date()) => {
-    log.debug('Setting initialized...')
+    log.debug('Setting initialization timestamp...')
     await redis.set('initialized', timestamp)
-    log.info('Setting initialized:', timestamp)
+    log.info('Set initialization timestamp:', timestamp)
 }
 
 const setSessionActive = async username => {
