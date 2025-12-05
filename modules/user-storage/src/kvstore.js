@@ -1,8 +1,17 @@
 const Redis = require('ioredis')
-const {redisUri} = require('./config')
+const {redisHost} = require('./config')
 const log = require('#sepal/log').getLogger('kvstore')
 
-const redis = new Redis(redisUri)
+const DB = {
+    MAIN: 0,
+    SCAN_QUEUE: 1,
+    INACTIVITY_QUEUE: 2
+}
+
+const redis = new Redis({
+    host: redisHost,
+    db: DB.MAIN
+})
 
 const sessionKey = key => `session:${key}`
 const lastActiveKey = key => `lastActive:${key}`
@@ -53,4 +62,4 @@ const getUserStorage = async username => {
     return await redis.get(storageKey(username))
 }
 
-module.exports = {getInitialized, setInitialized, setSessionActive, setSessionInactive, getSessionStatus, getSetUserStorage, getUserStorage}
+module.exports = {DB, getInitialized, setInitialized, setSessionActive, setSessionInactive, getSessionStatus, getSetUserStorage, getUserStorage}

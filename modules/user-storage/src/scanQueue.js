@@ -1,6 +1,6 @@
 const {calculateUserStorage} = require('./filesystem')
-const {redisUri, scanMinDelayMilliseconds, scanMaxDelayMilliseconds, scanDelayIncreaseFactor, scanConcurrency, scamMaxRetries, scanInitialRetryDelayMilliseconds} = require('./config')
-const {getSessionStatus, getSetUserStorage} = require('./kvstore')
+const {redisHost, scanMinDelayMilliseconds, scanMaxDelayMilliseconds, scanDelayIncreaseFactor, scanConcurrency, scamMaxRetries, scanInitialRetryDelayMilliseconds} = require('./config')
+const {getSessionStatus, getSetUserStorage, DB} = require('./kvstore')
 const Bull = require('bull')
 const {v4: uuid} = require('uuid')
 const {formatDistanceToNow} = require('date-fns')
@@ -9,7 +9,12 @@ const log = require('#sepal/log').getLogger('scanQueue')
 
 const DELAY_SPREAD = .2
 
-const queue = new Bull('scan-queue', redisUri)
+const queue = new Bull('scan-queue', {
+    redis: {
+        host: redisHost,
+        db: DB.SCAN_QUEUE
+    }
+})
 
 const scanComplete$ = new Subject()
 

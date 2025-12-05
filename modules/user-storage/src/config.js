@@ -14,7 +14,7 @@ program.exitOverride()
 try {
     program
         .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
-        .requiredOption('--redis-uri <value>', 'Redis URI')
+        .requiredOption('--redis-host <value>', 'Redis host')
         .requiredOption('--sepal-host <value>')
         .requiredOption('--sepal-username <value>')
         .requiredOption('--sepal-password <value>')
@@ -33,7 +33,7 @@ try {
 
 const {
     amqpUri,
-    redisUri,
+    redisHost,
     sepalHost,
     sepalUsername,
     sepalPassword,
@@ -63,7 +63,7 @@ if (scanMaxDelaySeconds <= scanMinDelaySeconds) {
 
 module.exports = {
     amqpUri,
-    redisUri,
+    redisHost,
     sepalHost,
     sepalUsername,
     sepalPassword,

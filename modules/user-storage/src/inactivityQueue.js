@@ -2,11 +2,11 @@ const Bull = require('bull')
 const {firstValueFrom} = require('rxjs')
 const {formatDistance} = require('date-fns')
 // const {eraseUserStorage} = require('./filesystem')
-const {redisUri} = require('./config')
+const {redisHost} = require('./config')
 // const {sendEmail} = require('./email')
 const {addEvent} = require('./database')
 const {getMostRecentAccessByUser$, getMostRecentAccess$} = require('./http')
-const {getUserStorage} = require('./kvstore')
+const {getUserStorage, DB} = require('./kvstore')
 const log = require('#sepal/log').getLogger('inactivityQueue')
 
 const CONCURRENCY = 1
@@ -29,6 +29,13 @@ const MAX_SPREAD_MS = 3 * 60 * 60 * 1000 // 3 hours
 // const MAX_SPREAD_MS = 0 * 1000
 
 const USER_STORAGE_THRESHOLD_BYTES = 1 * 1024 * 1024 // 1 MB
+
+const queue = new Bull('inactivity-queue', {
+    redis: {
+        host: redisHost,
+        db: DB.INACTIVITY_QUEUE
+    }
+})
 
 const jobId = (username, action) =>
     `job-${username}-${action}`
@@ -122,8 +129,6 @@ const eraseInactiveUserStorage = async ({username}) => {
             break
     }
 }
-
-const queue = new Bull('inactivity-queue', redisUri)
 
 const logStats = async () =>
     log.isTrace() && log.trace('Stats:', [

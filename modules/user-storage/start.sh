@@ -12,7 +12,7 @@ then
     --inspect=0.0.0.0:9229 \
     src/main.js \
     --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
-    --redis-uri redis://user-storage-redis \
+    --redis-host user-storage-redis \
     --home-dir /sepalUsers \
     --scan-min-delay-seconds ${SCAN_MIN_DELAY_SECONDS} \
     --scan-max-delay-seconds ${SCAN_MAX_DELAY_SECONDS} \
@@ -28,7 +28,7 @@ else
   exec node \
     src/main.js \
     --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
-    --redis-uri redis://user-storage-redis \
+    --redis-host user-storage-redis \
     --home-dir /sepalUsers \
     --scan-min-delay-seconds ${SCAN_MIN_DELAY_SECONDS} \
     --scan-max-delay-seconds ${SCAN_MAX_DELAY_SECONDS} \
