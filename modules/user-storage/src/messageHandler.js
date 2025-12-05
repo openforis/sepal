@@ -1,9 +1,9 @@
 const _ = require('lodash')
 const log = require('#sepal/log').getLogger('messageQueue')
-const {scheduleRescan} = require('./scan')
+const {scheduleRescan} = require('./storageCheck')
 const {setSessionActive, setSessionInactive} = require('./kvstore')
 const {Subject, debounceTime, groupBy, mergeMap, switchMap, filter, catchError, EMPTY} = require('rxjs')
-const {scheduleInactivityCheck, cancelInactivityCheck} = require('./inactivityQueue')
+const {scheduleInactivityCheck, cancelInactivityCheck} = require('./inactivityCheck')
 const {CLIENT_UP, USER_DOWN} = require('sepal/src/event/definitions')
 
 const logError = (key, msg) =>

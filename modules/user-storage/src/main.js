@@ -7,14 +7,13 @@ const _ = require('lodash')
 const {initMessageQueue} = require('#sepal/messageQueue')
 const server = require('#sepal/httpServer')
 const {amqpUri, port} = require('./config')
-const {scheduleFullScan} = require('./scan')
-const {scanComplete$, logStats: logScanQueueStats} = require('./scanQueue')
+const {scanComplete$, logStats: logScanQueueStats, scheduleFullStorageCheck} = require('./storageCheck')
 const {messageHandler} = require('./messageHandler')
 const {initializeDatabase} = require('./database')
 const {routes} = require('./routes')
 const {email$} = require('./email')
 const {setInitialized, getInitialized} = require('./kvstore')
-const {logStats: logInactivityQueueStats, scheduleFullInactivityCheck} = require('./inactivityQueue')
+const {logStats: logInactivityQueueStats, scheduleFullInactivityCheck} = require('./inactivityCheck')
 const {getMostRecentAccess$} = require('./http')
 
 const main = async () => {
@@ -39,7 +38,7 @@ const main = async () => {
         await setInitialized()
     }
     
-    await scheduleFullScan()
+    await scheduleFullStorageCheck()
     await logScanQueueStats()
     await logInactivityQueueStats()
 

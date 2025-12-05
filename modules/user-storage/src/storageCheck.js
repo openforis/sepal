@@ -1,6 +1,6 @@
-const {calculateUserStorage} = require('./filesystem')
+const {calculateUserStorage, scanUserHomes} = require('./filesystem')
 const {redisHost, scanMinDelayMilliseconds, scanMaxDelayMilliseconds, scanDelayIncreaseFactor, scanConcurrency, scamMaxRetries, scanInitialRetryDelayMilliseconds} = require('./config')
-const {getSessionStatus, getSetUserStorage, DB} = require('./kvstore')
+const {getSessionStatus, getSetUserStorage, DB, getUserStorage} = require('./kvstore')
 const Bull = require('bull')
 const {v4: uuid} = require('uuid')
 const {formatDistanceToNow} = require('date-fns')
@@ -9,7 +9,7 @@ const log = require('#sepal/log').getLogger('scanQueue')
 
 const DELAY_SPREAD = .2
 
-const queue = new Bull('scan-queue', {
+const queue = new Bull('storage-check', {
     redis: {
         host: redisHost,
         db: DB.SCAN_QUEUE
@@ -64,7 +64,7 @@ queue.on('completed', async (job, {size}) => {
     const workerSession = await getSessionStatus(username)
     const previousSize = await getSetUserStorage(username, size)
     const reschedule = async ({priority, delay}) =>
-        await scan({
+        await scheduleStorageCheck({
             username,
             priority,
             delay
@@ -96,7 +96,7 @@ queue.on('completed', async (job, {size}) => {
     scanComplete$.next({username, size})
 })
 
-const scan = async ({username, delay: nominalDelay = scanMaxDelayMilliseconds, priority = 1}) => {
+const scheduleStorageCheck = async ({username, delay: nominalDelay = scanMaxDelayMilliseconds, priority = 1}) => {
     const delay = spreadDelay(nominalDelay)
     log.debug(`Rescanning user ${username} with priority ${priority} ${delay ? `in ${timeDistance(delay)}` : 'now'}`)
     await queue.removeJobs(rescanJobId(username, '*'))
@@ -114,4 +114,31 @@ const scan = async ({username, delay: nominalDelay = scanMaxDelayMilliseconds, p
     })
 }
 
-module.exports = {scan, scanComplete$, logStats}
+const scheduleMap = {
+    'filesDeleted': {priority: 1, delay: 0},
+    'sessionDeactivated': {priority: 2, delay: 0},
+    'sessionActivated': {priority: 3, delay: 0},
+    'initial': {priority: 6, delay: scanMinDelayMilliseconds},
+    'periodic': {priority: 6, delay: scanMaxDelayMilliseconds}
+}
+
+const scheduleRescan = async ({username, type}) => {
+    const {priority, delay} = scheduleMap[type]
+    return await scheduleStorageCheck({username, priority, delay})
+}
+
+const scheduleFullStorageCheck = async () => {
+    log.info('Starting full scan')
+    await scanUserHomes(
+        async username => {
+            const size = await getUserStorage(username)
+            if (size) {
+                await scheduleRescan({username, type: 'periodic'})
+            } else {
+                await scheduleRescan({username, type: 'initial'})
+            }
+        }
+    )
+}
+
+module.exports = {scheduleFullStorageCheck, scheduleStorageCheck, scanComplete$, logStats}

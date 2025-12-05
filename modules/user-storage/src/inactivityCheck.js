@@ -30,7 +30,7 @@ const MAX_SPREAD_MS = 3 * 60 * 60 * 1000 // 3 hours
 
 const USER_STORAGE_THRESHOLD_BYTES = 1 * 1024 * 1024 // 1 MB
 
-const queue = new Bull('inactivity-queue', {
+const queue = new Bull('inactivity-check', {
     redis: {
         host: redisHost,
         db: DB.INACTIVITY_QUEUE
