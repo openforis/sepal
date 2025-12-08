@@ -1,6 +1,7 @@
 sepal_ui==3.0.0
 
 ########  Google Earthengine  ########
+numpy<2
 oauth2client
 google-api-python-client
 oeel

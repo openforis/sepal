@@ -14,7 +14,6 @@ matplotlib
 pandas
 dask[complete]
 planet
-tensorflow-probability
 geeadd
 pyotb
 uv
