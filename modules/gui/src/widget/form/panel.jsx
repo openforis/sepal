@@ -9,7 +9,6 @@ import {Panel} from '~/widget/panel/panel'
 import {PanelButtonContext} from '~/widget/toolbar/panelButtonContext'
 
 import {withPanelWizard} from '../panelWizard'
-import styles from './panel.module.css'
 
 export const FormPanelContext = React.createContext()
 
@@ -92,13 +91,6 @@ class _FormPanel extends React.Component {
         this.setState({confirm: false})
     }
 
-    renderOverlay() {
-        const {stream} = this.props
-        return stream('FORM_PANEL_APPLY').active
-            ? <div className={styles.overlay}/>
-            : null
-    }
-
     render() {
         const {confirm} = this.state
         return (
@@ -159,7 +151,6 @@ class _FormPanel extends React.Component {
                             <FormContainer onSubmit={this.onSubmit}>
                                 {children}
                             </FormContainer>
-                            {/* {this.renderOverlay()} */}
                         </Panel>
                     </FormPanelContext.Provider>
                 )}
