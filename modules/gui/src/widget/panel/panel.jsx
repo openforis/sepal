@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
-import {connect} from '~/connect'
 import {withEnableDetector} from '~/enabled'
 import {Portal} from '~/widget/portal'
 
@@ -26,17 +26,13 @@ class _Panel extends React.Component {
     render() {
         const {placement} = this.props
         switch (placement) {
-            case 'inline':
-                return this.renderNormal()
             case 'modal':
                 return this.renderModal()
+            case 'inline':
+                return this.renderInline()
             default:
                 return this.renderOverlay(placement)
         }
-    }
-
-    renderNormal() {
-        return this.renderContent()
     }
 
     renderModal() {
@@ -53,6 +49,10 @@ class _Panel extends React.Component {
 
     onClick(e) {
         e.stopPropagation()
+    }
+
+    renderInline() {
+        return this.renderContent()
     }
 
     renderOverlay(placement) {
@@ -91,14 +91,16 @@ class _Panel extends React.Component {
 
 export const Panel = compose(
     _Panel,
-    connect(),
-    withEnableDetector()
+    withEnableDetector(),
+    asFunctionalComponent({
+        placement: 'modal'
+    })
 )
 
 Panel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    placement: PropTypes.oneOf(['inline', 'modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center'])
+    placement: PropTypes.oneOf(['modal', 'inline', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center'])
 }
 
 Panel.Header = PanelHeader

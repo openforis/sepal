@@ -97,7 +97,7 @@ export const recipeFormPanel = (
     }
 }
 
-export const RecipeFormPanel = ({className, placement = 'modal', isActionForm, onApply, onCancel, onClose, children}) =>
+export const RecipeFormPanel = ({className, placement, isActionForm, onApply, onCancel, onClose, children}) =>
     <Context.Consumer>
         {({id, evaluatedPath, form, statePath, valuesToModel, deactivate, prevValues}) => {
             const wrappedOnApply = values => {
