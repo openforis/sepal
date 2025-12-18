@@ -68,7 +68,7 @@ class _MapLayoutPanel extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                type='modal'>
+                placement='modal'>
                 <Panel.Header
                     icon='layer-group'
                     title={msg('map.layout.title')}

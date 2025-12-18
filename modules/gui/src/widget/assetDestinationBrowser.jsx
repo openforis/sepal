@@ -59,7 +59,7 @@ class _AssetDestinationBrowser extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
-                type='modal'
+                placement='modal'
                 form={form}
                 onApply={this.onApply}
                 onCancel={deactivate}>

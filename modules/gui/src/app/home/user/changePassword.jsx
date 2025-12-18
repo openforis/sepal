@@ -87,7 +87,7 @@ class _ChangePassword extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
-                type='modal'
+                placement='modal'
                 form={form}
                 isActionForm={true}
                 onApply={userPasswords => this.changePassword$(userPasswords)}

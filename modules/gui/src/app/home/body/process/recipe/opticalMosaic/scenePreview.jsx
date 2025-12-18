@@ -29,7 +29,7 @@ export class ScenePreview extends React.Component {
             return (
                 <Panel
                     className={styles.panel}
-                    type='modal'>
+                    placement='modal'>
                     <Panel.Header
                         icon='image'
                         title={'Scene preview'}

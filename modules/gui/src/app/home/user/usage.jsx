@@ -36,7 +36,7 @@ class _Usage extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                type='modal'>
+                placement='modal'>
                 <Panel.Header
                     icon='user'
                     title={msg('user.report.title')}/>

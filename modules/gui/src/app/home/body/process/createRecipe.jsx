@@ -117,7 +117,9 @@ class _CreateRecipe extends React.Component {
     renderPanel() {
         const {selectedRecipeType} = this.state
         return (
-            <Panel className={styles.panel} type='modal'>
+            <Panel
+                className={styles.panel}
+                placement='modal'>
                 {selectedRecipeType
                     ? this.renderRecipeTypeInfo(selectedRecipeType)
                     : this.renderRecipeTypeList()}

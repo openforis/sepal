@@ -60,7 +60,7 @@ class _ChartPixel extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                type='center'>
+                placement='center'>
                 <Panel.Header
                     icon='chart-area'
                     title={`${latLng.lat}, ${latLng.lng}`}/>

@@ -30,7 +30,9 @@ class _SelectRecipe extends React.Component {
         const {recipe} = this.state
         const {activatable: {deactivate}} = this.props
         return (
-            <Panel type='modal' className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                placement='modal'>
                 <Panel.Header title={msg('map.layout.addImageLayerSource.types.Recipe.description')}/>
                 <Panel.Content scrollable={false}>
                     {this.renderContent()}

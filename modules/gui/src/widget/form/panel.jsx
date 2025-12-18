@@ -133,7 +133,7 @@ class _FormPanel extends React.Component {
     }
 
     renderPanel() {
-        const {id, form = false, isActionForm, type = 'modal', panelWizard: {wizard, back, next} = {}, className, children, placement, stream} = this.props
+        const {id, form = false, isActionForm, panelWizard: {wizard, back, next} = {}, className, children, placement, stream} = this.props
         return (
             <PanelButtonContext.Consumer>
                 {placementFromContext => (
@@ -155,7 +155,7 @@ class _FormPanel extends React.Component {
                         <Panel
                             id={this.props.id}
                             className={className}
-                            type={placement || placementFromContext || type}>
+                            placement={placement || placementFromContext}>
                             <FormContainer onSubmit={this.onSubmit}>
                                 {children}
                             </FormContainer>

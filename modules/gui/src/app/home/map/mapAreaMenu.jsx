@@ -30,7 +30,9 @@ class _MapAreaMenuPanel extends React.Component {
                 hPlacement='center'
                 onBlur={deactivate}
             >
-                <Panel className={styles.panel} type='normal'>
+                <Panel
+                    className={styles.panel}
+                    placement='normal'>
                     <Panel.Header>
                         {this.getImageLayerSourceDescription()}
                     </Panel.Header>

@@ -69,7 +69,7 @@ class _UserSession extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
-                type='modal'
+                placement='modal'
                 form={form}
                 statePath='userSessions.userSessionPanel'
                 onApply={session => this.updateSession(session)}

@@ -127,7 +127,9 @@ class _VisParamsPanel extends React.Component {
         const {legendEntries, invalidLegendEntries} = this.state
         const invalid = form.isInvalid() || (type.value === 'categorical' && (invalidLegendEntries || !legendEntries.length))
         return (
-            <Panel type='modal' className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                placement='modal'>
                 <Panel.Header
                     icon='layer-group'
                     title={msg('map.visParams.title')}

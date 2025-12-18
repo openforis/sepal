@@ -223,7 +223,7 @@ class _UserMessages extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                type='modal'>
+                placement='modal'>
                 <Panel.Header
                     icon='bell'
                     title={msg('userMessages.title')}/>

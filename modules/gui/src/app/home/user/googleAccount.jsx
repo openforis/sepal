@@ -195,7 +195,7 @@ class _GoogleAccount extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
-                type='modal'
+                placement='modal'
                 form={form}
                 onApply={this.updateProject$}
                 onClose={this.close}>

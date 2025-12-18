@@ -64,7 +64,9 @@ class _LegendImport extends React.Component {
         const {activatable: {deactivate}, form} = this.props
         const invalid = form.isInvalid()
         return (
-            <Panel type='modal' className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                placement='modal'>
                 <Panel.Header
                     icon='file-import'
                     title={msg('map.legendBuilder.import.title')}

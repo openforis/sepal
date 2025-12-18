@@ -196,7 +196,7 @@ class _DatePickerPanel extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                type='modal'>
+                placement='modal'>
                 <Panel.Header
                     icon='calendar-alt'
                     title={title}/>

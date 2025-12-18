@@ -11,8 +11,6 @@ import {PanelButtons} from './panelButtons'
 import {PanelContent} from './panelContent'
 import {PanelHeader} from './panelHeader'
 
-// PANEL ----------------------------------------------------------------------
-
 class _Panel extends React.Component {
     state = {
         enabled: true
@@ -26,14 +24,14 @@ class _Panel extends React.Component {
     }
 
     render() {
-        const {type} = this.props
-        switch (type) {
+        const {placement} = this.props
+        switch (placement) {
             case 'normal':
                 return this.renderNormal()
             case 'modal':
                 return this.renderModal()
             default:
-                return this.renderPortal(type)
+                return this.renderPortal(placement)
         }
     }
 
@@ -57,10 +55,10 @@ class _Panel extends React.Component {
         e.stopPropagation()
     }
 
-    renderPortal(type) {
+    renderPortal(placement) {
         return (
             <Portal type='context'>
-                {type === 'center'
+                {placement === 'center'
                     ? this.renderCenteredContent()
                     : this.renderContent()}
             </Portal>
@@ -76,12 +74,12 @@ class _Panel extends React.Component {
     }
 
     renderContent() {
-        const {className, type, children} = this.props
+        const {className, placement, children} = this.props
         const {enabled} = this.state
         return (
             <div className={[
                 styles.panel,
-                styles[type],
+                styles[placement],
                 enabled ? null : styles.disabled,
                 className
             ].join(' ')}>
@@ -100,7 +98,7 @@ export const Panel = compose(
 Panel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    type: PropTypes.oneOf(['normal', 'modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center'])
+    placement: PropTypes.oneOf(['normal', 'modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center'])
 }
 
 Panel.Header = PanelHeader

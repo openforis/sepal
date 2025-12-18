@@ -75,7 +75,7 @@ class _SceneSelection extends React.Component {
             <React.Fragment>
                 <Form.Panel
                     className={styles.panel}
-                    type='center'
+                    placement='center'
                     form={form}
                     policy={policy}
                     onApply={({selectedScenes}) => this.onApply(selectedScenes)}

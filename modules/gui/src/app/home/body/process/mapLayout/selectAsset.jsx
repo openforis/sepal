@@ -35,7 +35,9 @@ class _SelectAsset extends React.Component {
         const {activatable: {deactivate}} = this.props
         const {loadedAsset} = this.state
         return (
-            <Panel type='modal' className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                placement='modal'>
                 <Panel.Header title={msg('map.layout.addImageLayerSource.types.Asset.description')}/>
                 <Panel.Content>
                     {this.renderContent()}
