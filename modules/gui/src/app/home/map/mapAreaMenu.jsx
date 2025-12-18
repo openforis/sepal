@@ -32,7 +32,7 @@ class _MapAreaMenuPanel extends React.Component {
             >
                 <Panel
                     className={styles.panel}
-                    placement='normal'>
+                    placement='inline'>
                     <Panel.Header>
                         {this.getImageLayerSourceDescription()}
                     </Panel.Header>

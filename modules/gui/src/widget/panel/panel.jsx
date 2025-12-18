@@ -26,7 +26,7 @@ class _Panel extends React.Component {
     render() {
         const {placement} = this.props
         switch (placement) {
-            case 'normal':
+            case 'inline':
                 return this.renderNormal()
             case 'modal':
                 return this.renderModal()
@@ -98,7 +98,7 @@ export const Panel = compose(
 Panel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    placement: PropTypes.oneOf(['normal', 'modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center'])
+    placement: PropTypes.oneOf(['inline', 'modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center'])
 }
 
 Panel.Header = PanelHeader
