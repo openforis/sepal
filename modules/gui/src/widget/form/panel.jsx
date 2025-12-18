@@ -195,7 +195,7 @@ FormPanel.propTypes = {
     className: PropTypes.string,
     confirmation: PropTypes.func,
     isActionForm: PropTypes.any,
-    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
+    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center']),
     policy: PropTypes.func,
     type: PropTypes.string,
     onApply: PropTypes.func,

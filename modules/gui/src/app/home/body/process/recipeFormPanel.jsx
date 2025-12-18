@@ -138,7 +138,7 @@ RecipeFormPanel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
     isActionForm: PropTypes.any,
-    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
+    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center']),
     onApply: PropTypes.func,
     onCancel: PropTypes.func,
     onClose: PropTypes.func
