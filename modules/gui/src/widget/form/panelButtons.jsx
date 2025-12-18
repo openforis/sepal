@@ -25,7 +25,7 @@ export class FormPanelButtons extends React.Component {
         return inWizard ? this.renderInWizard(renderProps) : this.renderInForm(renderProps)
     }
 
-    renderInForm({isActionForm, busy, dirty, invalid, onOk, onCancel}) {
+    renderInForm({isActionForm, busy, dirty, invalid, onOk, onCancel, onLeave}) {
         const {applyLabel, disabled, disabledCancel} = this.props
         const canSubmit = isActionForm || dirty
         return (
@@ -49,7 +49,7 @@ export class FormPanelButtons extends React.Component {
                         hidden={canSubmit}
                         disabled={disabled}
                         keybinding={['Enter', 'Escape']}
-                        onClick={onOk}/>
+                        onClick={onLeave}/>
                 </Panel.Buttons.Main>
                 {this.renderExtraButtons()}
             </Panel.Buttons>

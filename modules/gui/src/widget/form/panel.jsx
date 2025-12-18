@@ -28,9 +28,15 @@ class _FormPanel extends React.Component {
         this.onSubmit = this.onSubmit.bind(this)
         this.ok = this.ok.bind(this)
         this.cancel = this.cancel.bind(this)
+        this.leave = this.leave.bind(this)
         this.onBack = this.onBack.bind(this)
         this.onNext = this.onNext.bind(this)
         this.onDone = this.onDone.bind(this)
+    }
+
+    dirty() {
+        const {form, isActionForm} = this.props
+        return form && (isActionForm || form.isDirty())
     }
 
     apply(onSuccess) {
@@ -62,8 +68,7 @@ class _FormPanel extends React.Component {
     }
 
     ok() {
-        const {form, isActionForm} = this.props
-        if (form && (isActionForm || form.isDirty())) {
+        if (this.dirty()) {
             this.apply()
         } else {
             this.cancel()
@@ -80,6 +85,12 @@ class _FormPanel extends React.Component {
     close() {
         const {onClose} = this.props
         onClose && onClose()
+    }
+
+    leave() {
+        if (!this.dirty()) {
+            this.cancel()
+        }
     }
 
     confirm() {
@@ -140,6 +151,7 @@ class _FormPanel extends React.Component {
                         invalid: form && form.isInvalid(),
                         onOk: this.ok,
                         onCancel: this.cancel,
+                        onLeave: this.leave,
                         onBack: this.onBack,
                         onNext: this.onNext,
                         onDone: this.onDone
@@ -147,7 +159,8 @@ class _FormPanel extends React.Component {
                         <Panel
                             id={this.props.id}
                             className={className}
-                            placement={placement || placementFromContext}>
+                            placement={placement || placementFromContext}
+                            onBackdropClick={this.leave}>
                             <FormContainer onSubmit={this.onSubmit}>
                                 {children}
                             </FormContainer>
