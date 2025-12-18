@@ -27,8 +27,8 @@ class _Mapping extends React.Component {
     render() {
         return (
             <RecipeFormPanel
-                placement='bottom-right'
-                className={styles.panel}>
+                className={styles.panel}
+                placement='bottom-right'>
                 <Panel.Header
                     icon='list'
                     title={msg('process.indexChange.panel.mapping.title')}

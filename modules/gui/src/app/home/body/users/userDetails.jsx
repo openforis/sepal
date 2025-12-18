@@ -93,9 +93,9 @@ class _UserDetails extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                type='modal'
                 form={form}
                 statePath='userDetails'
-                modal
                 confirmation={
                     admin.isDirty() ?
                         ({confirm, cancel}) =>

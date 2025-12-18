@@ -114,6 +114,7 @@ export const RecipeFormPanel = ({className, placement, isActionForm, onApply, on
                 <Form.Panel
                     id={id}
                     className={className}
+                    type='modal'
                     form={form}
                     isActionForm={isActionForm}
                     placement={placement}

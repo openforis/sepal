@@ -74,10 +74,10 @@ class _SceneSelection extends React.Component {
         return (
             <React.Fragment>
                 <Form.Panel
-                    policy={policy}
                     className={styles.panel}
-                    form={form}
                     type='center'
+                    form={form}
+                    policy={policy}
                     onApply={({selectedScenes}) => this.onApply(selectedScenes)}
                     onCancel={() => this.deselectSceneArea()}
                     onClose={deactivate}>

@@ -58,9 +58,9 @@ export class _BudgetUpdateRequest extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                type='modal'
                 form={form}
                 statePath='userDetails'
-                modal
                 onApply={this.save}
                 onCancel={this.cancel}>
                 <Panel.Header

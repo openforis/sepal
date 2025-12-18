@@ -59,10 +59,10 @@ class _AssetDestinationBrowser extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                type='modal'
                 form={form}
                 onApply={this.onApply}
-                onCancel={deactivate}
-                modal>
+                onCancel={deactivate}>
                 <Panel.Header
                     title={msg('asset.browser.title')}
                     label={ this.renderReloadButton() }
