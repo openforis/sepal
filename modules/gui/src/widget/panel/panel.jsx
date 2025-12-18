@@ -18,7 +18,8 @@ class _Panel extends React.Component {
 
     constructor(props) {
         super(props)
-        this.onClick = this.onClick.bind(this)
+        this.onBackdropClick = this.onBackdropClick.bind(this)
+        this.onContentClick = this.onContentClick.bind(this)
         const {enableDetector: {onChange}} = props
         onChange(enabled => this.setState({enabled}))
     }
@@ -40,14 +41,22 @@ class _Panel extends React.Component {
             <Portal type='global' center>
                 <div
                     className={styles.modalWrapper}
-                    onClick={this.onClick}>
-                    {this.renderContent()}
+                    onClick={this.onBackdropClick}>
+                    <div onClick={this.onContentClick}>
+                        {this.renderContent()}
+                    </div>
                 </div>
             </Portal>
         )
     }
 
-    onClick(e) {
+    onBackdropClick(e) {
+        const {onBackdropClick} = this.props
+        onBackdropClick && onBackdropClick()
+        e.stopPropagation()
+    }
+
+    onContentClick(e) {
         e.stopPropagation()
     }
 
@@ -100,7 +109,8 @@ export const Panel = compose(
 Panel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    placement: PropTypes.oneOf(['modal', 'inline', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center'])
+    placement: PropTypes.oneOf(['modal', 'inline', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center']),
+    onBackdropClick: PropTypes.func
 }
 
 Panel.Header = PanelHeader
