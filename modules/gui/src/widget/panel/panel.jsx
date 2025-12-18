@@ -31,7 +31,7 @@ class _Panel extends React.Component {
             case 'modal':
                 return this.renderModal()
             default:
-                return this.renderPortal(placement)
+                return this.renderOverlay(placement)
         }
     }
 
@@ -55,7 +55,7 @@ class _Panel extends React.Component {
         e.stopPropagation()
     }
 
-    renderPortal(placement) {
+    renderOverlay(placement) {
         return (
             <Portal type='context'>
                 {placement === 'center'
