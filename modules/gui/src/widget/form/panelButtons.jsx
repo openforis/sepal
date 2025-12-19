@@ -8,84 +8,71 @@ import {FormPanelContext} from './panel'
 export class FormPanelButtons extends React.Component {
     constructor(props) {
         super(props)
-        this.renderFormPanelContext = this.renderFormPanelContext.bind(this)
+        this.renderFormPanelButtons = this.renderFormPanelButtons.bind(this)
     }
 
     render() {
         return (
             <FormPanelContext.Consumer>
-                {this.renderFormPanelContext}
+                {this.renderFormPanelButtons}
             </FormPanelContext.Consumer>
         )
     }
 
-    renderFormPanelContext(props) {
+    renderFormPanelButtons(props) {
         const renderProps = {...props, ...this.props}
         const inWizard = renderProps.wizard && renderProps.wizard.includes(renderProps.id)
         return inWizard ? this.renderInWizard(renderProps) : this.renderInForm(renderProps)
     }
 
-    renderInForm({isActionForm, busy, dirty, invalid, onOk, onCancel, onLeave}) {
+    renderInForm({state: {busy, submittable, invalid}, actions: {cancel, ok, close}}) {
         const {applyLabel, disabled, disabledCancel} = this.props
-        const canSubmit = isActionForm || dirty
         return (
             <Panel.Buttons>
                 <Panel.Buttons.Main>
                     <Panel.Buttons.Cancel
-                        hidden={!canSubmit || disabled || disabledCancel}
+                        hidden={!submittable || disabled || disabledCancel}
                         keybinding='Escape'
-                        onClick={onCancel}/>
+                        onClick={cancel}/>
                     <Panel.Buttons.Apply
                         type={'submit'}
                         label={applyLabel}
-                        hidden={!canSubmit}
+                        hidden={!submittable}
                         disabled={disabled || invalid}
                         keybinding='Enter'
                         busy={busy}
-                        onClick={onOk}/>
+                        onClick={ok}/>
                     <Panel.Buttons.Close
                         type={'submit'}
                         label={applyLabel}
-                        hidden={canSubmit}
+                        hidden={submittable}
                         disabled={disabled}
                         keybinding={['Enter', 'Escape']}
-                        onClick={onLeave}/>
+                        onClick={close}/>
                 </Panel.Buttons.Main>
                 {this.renderExtraButtons()}
             </Panel.Buttons>
         )
     }
 
-    renderInWizard({closable, isActionForm, dirty, invalid, first, last, onBack, onNext, onDone, onCancel}) {
-        const {applyLabel} = this.props
-        const canSubmit = isActionForm || dirty
+    renderInWizard({state: {invalid, first, last}, actions: {back, next, done}}) {
         return (
             <Panel.Buttons>
                 <Panel.Buttons.Main>
-                    <Panel.Buttons.Cancel
-                        hidden={!closable || !canSubmit}
-                        keybinding='Escape'
-                        onClick={onCancel}/>
-                    <Panel.Buttons.Close
-                        type={'submit'}
-                        label={applyLabel}
-                        hidden={!closable || canSubmit}
-                        keybinding='Enter'
-                        onClick={onDone}/>
                     <Panel.Buttons.Back
-                        hidden={!closable && first}
+                        hidden={first}
                         disabled={first}
-                        onClick={onBack}/>
-                    <Panel.Buttons.Done
-                        hidden={!last}
-                        disabled={invalid}
-                        keybinding='Enter'
-                        onClick={onDone}/>
+                        onClick={back}/>
                     <Panel.Buttons.Next
                         hidden={last}
                         disabled={invalid}
                         keybinding='Enter'
-                        onClick={onNext}/>
+                        onClick={next}/>
+                    <Panel.Buttons.Done
+                        hidden={!last}
+                        disabled={invalid}
+                        keybinding='Enter'
+                        onClick={done}/>
                 </Panel.Buttons.Main>
                 {this.renderExtraButtons()}
             </Panel.Buttons>
