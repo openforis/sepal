@@ -42,7 +42,8 @@ class _SelectPlanet extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                placement='modal'>
+                placement='modal'
+                onBackdropClick={deactivate}>
                 <Panel.Header title={msg('map.layout.addImageLayerSource.types.Planet.description')}/>
                 <Panel.Content>
                     {this.renderContent()}

@@ -66,7 +66,8 @@ class _LegendImport extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                placement='modal'>
+                placement='modal'
+                onBackdropClick={deactivate}>
                 <Panel.Header
                     icon='file-import'
                     title={msg('map.legendBuilder.import.title')}

@@ -29,7 +29,8 @@ export class ScenePreview extends React.Component {
             return (
                 <Panel
                     className={styles.panel}
-                    placement='modal'>
+                    placement='modal'
+                    onBackdropClick={this.close}>
                     <Panel.Header
                         icon='image'
                         title={'Scene preview'}

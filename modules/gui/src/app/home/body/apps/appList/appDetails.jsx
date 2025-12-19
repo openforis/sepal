@@ -12,7 +12,8 @@ export const AppDetails = props => {
     return (
         <Panel
             className={styles.panel}
-            placement='modal'>
+            placement='modal'
+            onBackdropClick={onClose}>
             <Panel.Header>
                 <AppItem app={app}/>
             </Panel.Header>

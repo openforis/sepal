@@ -36,7 +36,8 @@ class _ImageConstraints extends React.Component {
             ? (
                 <Panel
                     className={styles.panel}
-                    placement='modal'>
+                    placement='modal'
+                    onBackdropClick={this.close}>
                     <Panel.Header
                         icon={icon}
                         title={title}

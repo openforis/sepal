@@ -119,7 +119,8 @@ class _CreateRecipe extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                placement='modal'>
+                placement='modal'
+                onBackdropClick={this.closePanel}>
                 {selectedRecipeType
                     ? this.renderRecipeTypeInfo(selectedRecipeType)
                     : this.renderRecipeTypeList()}

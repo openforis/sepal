@@ -37,7 +37,8 @@ class _SelectAsset extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                placement='modal'>
+                placement='modal'
+                onBackdropClick={deactivate}>
                 <Panel.Header title={msg('map.layout.addImageLayerSource.types.Asset.description')}/>
                 <Panel.Content>
                     {this.renderContent()}

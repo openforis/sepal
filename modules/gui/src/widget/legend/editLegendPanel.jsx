@@ -48,7 +48,8 @@ class _EditLegendPanel extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                placement='modal'>
+                placement='modal'
+                onBackdropClick={deactivate}>
                 <Panel.Header
                     icon='layer-group'
                     title={msg('widget.legend.editLegendPanel.title')}

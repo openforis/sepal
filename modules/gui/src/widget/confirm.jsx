@@ -40,7 +40,8 @@ export class Confirm extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                placement='modal'>
+                placement='modal'
+                onBackdropClick={onCancel}>
                 <Panel.Header
                     className={styles.header}
                     icon='exclamation-triangle'

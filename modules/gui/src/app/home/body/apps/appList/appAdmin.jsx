@@ -56,7 +56,8 @@ export class AppAdmin extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                placement='modal'>
+                placement='modal'
+                onBackdropClick={onClose}>
                 <Panel.Header
                     icon='info-circle'
                     title={msg('apps.admin.title', {app: app.id || 'Unknown'})}

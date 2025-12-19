@@ -26,7 +26,8 @@ class _CloseRecipe extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                placement='modal'>
+                placement='modal'
+                onBackdropClick={cancel}>
                 <Panel.Header
                     icon='exclamation-triangle'
                     title={title}/>

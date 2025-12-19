@@ -129,7 +129,8 @@ class _VisParamsPanel extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                placement='modal'>
+                placement='modal'
+                onBackdropClick={deactivate}>
                 <Panel.Header
                     icon='layer-group'
                     title={msg('map.visParams.title')}
