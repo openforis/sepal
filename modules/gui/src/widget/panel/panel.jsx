@@ -42,9 +42,7 @@ class _Panel extends React.Component {
                 <div
                     className={styles.modalWrapper}
                     onClick={this.onBackdropClick}>
-                    <div onClick={this.onContentClick}>
-                        {this.renderContent()}
-                    </div>
+                    {this.renderContent()}
                 </div>
             </Portal>
         )
@@ -91,7 +89,7 @@ class _Panel extends React.Component {
                 styles[placement],
                 enabled ? null : styles.disabled,
                 className
-            ].join(' ')}>
+            ].join(' ')} onClick={this.onContentClick}>
                 {children}
             </div>
         )
