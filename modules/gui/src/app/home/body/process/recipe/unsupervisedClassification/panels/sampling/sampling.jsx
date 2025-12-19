@@ -27,8 +27,8 @@ class _Sampling extends React.Component {
     render() {
         return (
             <RecipeFormPanel
-                placement='bottom-right'
-                className={styles.panel}>
+                className={styles.panel}
+                placement='bottom-right'>
                 <Panel.Header
                     icon='cog'
                     title={msg('process.unsupervisedClassification.panel.sampling.title')}/>

@@ -46,7 +46,10 @@ class _EditLegendPanel extends React.Component {
         const {legendEntries, invalidLegendEntries} = this.state
         const invalid = form.isInvalid() || (invalidLegendEntries || !legendEntries.length)
         return (
-            <Panel type='modal' className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                placement='modal'
+                onBackdropClick={deactivate}>
                 <Panel.Header
                     icon='layer-group'
                     title={msg('widget.legend.editLegendPanel.title')}

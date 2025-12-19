@@ -54,7 +54,10 @@ export class AppAdmin extends React.Component {
     render() {
         const {app, onClose} = this.props
         return (
-            <Panel className={styles.panel} type='modal'>
+            <Panel
+                className={styles.panel}
+                placement='modal'
+                onBackdropClick={onClose}>
                 <Panel.Header
                     icon='info-circle'
                     title={msg('apps.admin.title', {app: app.id || 'Unknown'})}
@@ -283,9 +286,9 @@ export class AppAdmin extends React.Component {
                     <div style={{position: 'relative'}}>
                         {loadingLogs && (
                             <div style={{
-                                position: 'absolute', 
-                                top: '8px', 
-                                right: '8px', 
+                                position: 'absolute',
+                                top: '8px',
+                                right: '8px',
                                 zIndex: 1,
                                 background: 'rgba(255,255,255,0.9)',
                                 padding: '4px',
@@ -424,7 +427,7 @@ export class AppAdmin extends React.Component {
                                 className={statusClass}
                             />
                             <span>
-                                {status 
+                                {status
                                     ? msg(`apps.admin.status.${status}`)
                                     : msg('apps.admin.status.loading')}
                             </span>
@@ -442,7 +445,7 @@ export class AppAdmin extends React.Component {
                                 className={healthClass}
                             />
                             <span>
-                                {healthStatus 
+                                {healthStatus
                                     ? msg(`apps.admin.health.${healthStatus}`)
                                     : msg('apps.admin.status.loading')}
                             </span>
@@ -456,7 +459,7 @@ export class AppAdmin extends React.Component {
                         <span className={styles.statusRow}>
                             {loadingContainer && <Icon name='spinner' className={styles.statusSpinner}/>}
                             <span>
-                                {containerStats 
+                                {containerStats
                                     ? `${containerStats.memoryUsage} / ${containerStats.memoryLimit} (${containerStats.memoryPercent})`
                                     : msg('apps.admin.status.loading')
                                 }
@@ -471,7 +474,7 @@ export class AppAdmin extends React.Component {
                         <span className={styles.statusRow}>
                             {loadingContainer && <Icon name='spinner' className={styles.statusSpinner}/>}
                             <span>
-                                {containerStats 
+                                {containerStats
                                     ? containerStats.cpuPercent
                                     : msg('apps.admin.status.loading')
                                 }
@@ -486,7 +489,7 @@ export class AppAdmin extends React.Component {
                         <span className={styles.statusRow}>
                             {loadingContainer && <Icon name='spinner' className={styles.statusSpinner}/>}
                             <span>
-                                {this.state.resourcez.websockets 
+                                {this.state.resourcez.websockets
                                     ? this.state.resourcez.websockets.open
                                     : msg('apps.admin.status.loading')
                                 }

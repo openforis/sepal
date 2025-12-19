@@ -77,8 +77,8 @@ class _Classifier extends React.Component {
         const {inputs: {advanced}} = this.props
         return (
             <RecipeFormPanel
-                placement='bottom-right'
-                className={styles.panel}>
+                className={styles.panel}
+                placement='bottom-right'>
                 <Panel.Header
                     icon='cog'
                     title={msg('process.classification.panel.classifier.title')}/>

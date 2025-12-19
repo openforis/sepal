@@ -99,8 +99,8 @@ class _Retrieve extends React.Component {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                isActionForm
                 placement='top-right'
+                isActionForm
                 onApply={values => {
                     const {fileDimensionsMultiple, shardSize} = values
                     return this.retrieve({...values, fileDimensions: fileDimensionsMultiple * shardSize})

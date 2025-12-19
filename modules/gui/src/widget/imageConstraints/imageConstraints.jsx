@@ -34,7 +34,10 @@ class _ImageConstraints extends React.Component {
         const invalid = this.isInvalid()
         return constraints
             ? (
-                <Panel type='modal' className={styles.panel}>
+                <Panel
+                    className={styles.panel}
+                    placement='modal'
+                    onBackdropClick={this.close}>
                     <Panel.Header
                         icon={icon}
                         title={title}

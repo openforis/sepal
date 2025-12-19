@@ -114,9 +114,9 @@ export const RecipeFormPanel = ({className, placement, isActionForm, onApply, on
                 <Form.Panel
                     id={id}
                     className={className}
+                    placement={placement}
                     form={form}
                     isActionForm={isActionForm}
-                    placement={placement}
                     onApply={values => {
                         wrappedOnApply(values)
                     }}
@@ -138,7 +138,7 @@ RecipeFormPanel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
     isActionForm: PropTypes.any,
-    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
+    placement: PropTypes.any,
     onApply: PropTypes.func,
     onCancel: PropTypes.func,
     onClose: PropTypes.func

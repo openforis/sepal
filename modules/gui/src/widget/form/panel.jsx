@@ -9,7 +9,6 @@ import {Panel} from '~/widget/panel/panel'
 import {PanelButtonContext} from '~/widget/toolbar/panelButtonContext'
 
 import {withPanelWizard} from '../panelWizard'
-import styles from './panel.module.css'
 
 export const FormPanelContext = React.createContext()
 
@@ -26,12 +25,33 @@ class _FormPanel extends React.Component {
         super(props)
         this.confirm = this.confirm.bind(this)
         this.reject = this.reject.bind(this)
-        this.onSubmit = this.onSubmit.bind(this)
+        this.submit = this.submit.bind(this)
         this.ok = this.ok.bind(this)
         this.cancel = this.cancel.bind(this)
-        this.onBack = this.onBack.bind(this)
-        this.onNext = this.onNext.bind(this)
-        this.onDone = this.onDone.bind(this)
+        this.close = this.close.bind(this)
+        this.back = this.back.bind(this)
+        this.next = this.next.bind(this)
+        this.done = this.done.bind(this)
+    }
+
+    isDirty() {
+        const {form, isActionForm} = this.props
+        return form && (isActionForm || form.isDirty())
+    }
+
+    isBusy() {
+        const {stream} = this.props
+        return stream('FORM_PANEL_APPLY').active
+    }
+
+    isInvalid() {
+        const {form} = this.props
+        return form && form.isInvalid()
+    }
+
+    onClose() {
+        const {onClose} = this.props
+        onClose && onClose()
     }
 
     apply(onSuccess) {
@@ -49,7 +69,7 @@ class _FormPanel extends React.Component {
                     stream$: result,
                     onComplete: () => {
                         onSuccess && onSuccess()
-                        this.close()
+                        this.onClose()
                     },
                     onError: error => {
                         onError && onError(error)
@@ -57,14 +77,13 @@ class _FormPanel extends React.Component {
                 })
             } else {
                 onSuccess && onSuccess()
-                this.close()
+                this.onClose()
             }
         }
     }
 
     ok() {
-        const {form, isActionForm} = this.props
-        if (form && (isActionForm || form.isDirty())) {
+        if (this.isDirty()) {
             this.apply()
         } else {
             this.cancel()
@@ -75,12 +94,29 @@ class _FormPanel extends React.Component {
         const {onCancel} = this.props
         this.autoCancel = false
         onCancel && onCancel()
-        this.close()
+        this.onClose()
     }
 
     close() {
-        const {onClose} = this.props
-        onClose && onClose()
+        const {form} = this.props
+        if (!(form && form.isDirty())) {
+            this.cancel()
+        }
+    }
+
+    back() {
+        const {panelWizard} = this.props
+        panelWizard && this.apply(panelWizard.back)
+    }
+
+    next() {
+        const {panelWizard} = this.props
+        panelWizard && this.apply(panelWizard.next)
+    }
+
+    done() {
+        const {panelWizard} = this.props
+        panelWizard && this.apply(panelWizard.done)
     }
 
     confirm() {
@@ -92,11 +128,10 @@ class _FormPanel extends React.Component {
         this.setState({confirm: false})
     }
 
-    renderOverlay() {
-        const {stream} = this.props
-        return stream('FORM_PANEL_APPLY').active
-            ? <div className={styles.overlay}/>
-            : null
+    submit(...args) {
+        const {form = false, onApply} = this.props
+        console.warn('Unexpected PanelForm submit() called', args)
+        onApply && onApply(form && form.values())
     }
 
     render() {
@@ -117,49 +152,38 @@ class _FormPanel extends React.Component {
         })
     }
 
-    onBack() {
-        const {panelWizard} = this.props
-        panelWizard && this.apply(panelWizard.back)
-    }
-
-    onNext() {
-        const {panelWizard} = this.props
-        panelWizard && this.apply(panelWizard.next)
-    }
-
-    onDone() {
-        const {panelWizard} = this.props
-        panelWizard && this.apply(panelWizard.done)
-    }
-
     renderPanel() {
-        const {id, form = false, isActionForm, type = 'modal', panelWizard: {wizard, back, next} = {}, className, children, placement, stream} = this.props
+        const {id, panelWizard: {wizard, back, next} = {}, className, children, placement} = this.props
         return (
             <PanelButtonContext.Consumer>
                 {placementFromContext => (
                     <FormPanelContext.Provider value={{
                         id,
                         wizard,
-                        first: !back,
-                        last: !next,
-                        isActionForm: form && isActionForm,
-                        busy: stream('FORM_PANEL_APPLY').active,
-                        dirty: form && form.isDirty(),
-                        invalid: form && form.isInvalid(),
-                        onOk: this.ok,
-                        onCancel: this.cancel,
-                        onBack: this.onBack,
-                        onNext: this.onNext,
-                        onDone: this.onDone
+                        state: {
+                            first: !back,
+                            last: !next,
+                            busy: this.isBusy(),
+                            submittable: this.isDirty(),
+                            invalid: this.isInvalid(),
+                        },
+                        actions: {
+                            ok: this.ok,
+                            cancel: this.cancel,
+                            close: this.close,
+                            back: this.back,
+                            next: this.next,
+                            done: this.done
+                        }
                     }}>
                         <Panel
                             id={this.props.id}
                             className={className}
-                            type={placement || placementFromContext || type}>
-                            <FormContainer onSubmit={this.onSubmit}>
+                            placement={placement || placementFromContext}
+                            onBackdropClick={this.close}>
+                            <FormContainer onSubmit={this.submit}>
                                 {children}
                             </FormContainer>
-                            {/* {this.renderOverlay()} */}
                         </Panel>
                     </FormPanelContext.Provider>
                 )}
@@ -167,16 +191,10 @@ class _FormPanel extends React.Component {
         )
     }
 
-    onSubmit(...args) {
-        const {form = false, onApply} = this.props
-        console.warn('Unexpected PanelForm onSubmit called', args)
-        onApply && onApply(form && form.values())
-    }
-
     componentWillUnmount() {
         const {panelWizard: {wizard} = {}} = this.props
         if (wizard) {
-            this.close()
+            this.onClose()
         } else {
             this.autoCancel && this.cancel()
         }
@@ -195,7 +213,7 @@ FormPanel.propTypes = {
     className: PropTypes.string,
     confirmation: PropTypes.func,
     isActionForm: PropTypes.any,
-    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
+    placement: PropTypes.any,
     policy: PropTypes.func,
     type: PropTypes.string,
     onApply: PropTypes.func,

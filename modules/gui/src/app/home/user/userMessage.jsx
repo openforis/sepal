@@ -78,10 +78,10 @@ class _UserMessage extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                placement='modal'
                 form={form}
                 isActionForm={true}
                 statePath='userMessage'
-                modal
                 onApply={message => onApply(message)}
                 onCancel={onCancel}>
                 <Panel.Header
