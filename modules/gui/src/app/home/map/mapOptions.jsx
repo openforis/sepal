@@ -38,7 +38,9 @@ class _MapOptionsPanel extends React.Component {
 
     render() {
         return (
-            <Panel className={styles.panel} type='top-right'>
+            <Panel
+                className={styles.panel}
+                placement='top-right'>
                 <BlurDetector onBlur={this.close}>
                     <Panel.Content>
                         <Layout>

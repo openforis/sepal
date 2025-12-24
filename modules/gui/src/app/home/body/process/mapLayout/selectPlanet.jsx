@@ -40,7 +40,10 @@ class _SelectPlanet extends React.Component {
         const {activatable: {deactivate}} = this.props
         const {validatedApiKey} = this.state
         return (
-            <Panel type='modal' className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                placement='modal'
+                onBackdropClick={deactivate}>
                 <Panel.Header title={msg('map.layout.addImageLayerSource.types.Planet.description')}/>
                 <Panel.Content>
                     {this.renderContent()}

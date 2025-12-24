@@ -10,7 +10,10 @@ import {AppItem} from './appItem'
 export const AppDetails = props => {
     const {app, onClose} = props
     return (
-        <Panel className={styles.panel} type='modal'>
+        <Panel
+            className={styles.panel}
+            placement='modal'
+            onBackdropClick={onClose}>
             <Panel.Header>
                 <AppItem app={app}/>
             </Panel.Header>

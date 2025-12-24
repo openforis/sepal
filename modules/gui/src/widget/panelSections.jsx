@@ -64,7 +64,6 @@ class _PanelSections extends React.Component {
             return (
                 <Form.PanelButtons
                     id={'panelSections'}
-                    closable
                     wizard={['panelSections']}
                     first={first}
                     last={last}

@@ -75,7 +75,9 @@ class _MapInfoPanel extends React.Component {
         const {activatable: {deactivate}} = this.props
         const {view: {center, zoom}} = this.state
         return (
-            <Panel className={styles.panel} type='top-right'>
+            <Panel
+                className={styles.panel}
+                placement='top-right'>
                 <Panel.Content>
                     <Layout type='vertical'>
                         {center && zoom && this.renderCenter(center, zoom)}

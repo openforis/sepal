@@ -186,6 +186,13 @@ class _DatePickerPanel extends React.Component {
         super(props)
         this.select = this.select.bind(this)
         this.close = this.close.bind(this)
+        this.leave = this.leave.bind(this)
+    }
+
+    leave() {
+        if (!this.isDirty()) {
+            this.close()
+        }
     }
 
     render() {
@@ -196,7 +203,8 @@ class _DatePickerPanel extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                type='modal'>
+                placement='modal'
+                onBackdropClick={this.leave}>
                 <Panel.Header
                     icon='calendar-alt'
                     title={title}/>

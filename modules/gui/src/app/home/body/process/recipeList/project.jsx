@@ -53,10 +53,10 @@ class _Project extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                placement='modal'
                 form={form}
                 isActionForm={true}
                 statePath='project'
-                modal
                 onApply={project => onApply(project)}
                 onCancel={onCancel}>
                 <Panel.Header

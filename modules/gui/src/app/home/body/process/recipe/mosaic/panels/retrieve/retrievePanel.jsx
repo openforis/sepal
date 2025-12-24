@@ -90,8 +90,8 @@ class _MosaicRetrievePanel extends React.Component {
         return (
             <RecipeFormPanel
                 className={[styles.panel, className].join(' ')}
-                isActionForm
                 placement='top-right'
+                isActionForm
                 onApply={values => {
                     const {fileDimensionsMultiple, shardSize} = values
                     return this.retrieve({...values, fileDimensions: fileDimensionsMultiple * shardSize})

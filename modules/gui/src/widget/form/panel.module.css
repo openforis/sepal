@@ -86,16 +86,3 @@
     padding: var(--content-padding);
     overflow: hidden;
 }
-
-.overlay {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    background-color: hsla(0, 0%, 0%, .3);
-    pointer-events: all;
-}
