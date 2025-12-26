@@ -97,7 +97,7 @@ export class TaskDetails extends React.Component {
         }
         
         return (
-            <Panel className={styles.panel} type='modal'>
+            <Panel className={styles.panel} placement='modal' onBackdropClick={onClose}>
                 <Panel.Header
                     icon='tasks'
                     title={task.name}
