@@ -7,7 +7,8 @@ const {formatProperties} = require('./formatProperties')
 const {setWorkloadTag} = require('./workloadTag')
 
 module.exports = {
-    submit$: (taskId, {recipe, bands, scale, visualizations, properties, ...other}) => {
+    submit$: (taskId, {image, description}) => {
+        const {recipe, bands, scale, visualizations, properties, ...other} = image
         setWorkloadTag(recipe)
         const segments = ccdc(recipe, {selection: bands})
         return forkJoin({
@@ -19,6 +20,7 @@ module.exports = {
                 const allBands = getAllBands(bands)
                 return exportImageToAsset$(taskId, {
                     ...other,
+                    description,
                     image: segments,
                     region: geometry.bounds(),
                     scale,

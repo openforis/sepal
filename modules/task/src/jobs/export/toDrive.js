@@ -7,9 +7,7 @@ const {getCurrentContext$} = require('#task/jobs/service/context')
 const {exportLimiter$} = require('#task/jobs/service/exportLimiter')
 const {driveSerializer$} = require('#task/jobs/service/driveSerializer')
 const {task$} = require('#task/ee/task')
-
-const drivePath = folder =>
-    `SEPAL/exports/${folder}`
+const {drivePath} = require('./driveUtils')
 
 const createDriveFolder$ = folder =>
     defer(() => driveSerializer$(

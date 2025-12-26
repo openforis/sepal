@@ -1,11 +1,5 @@
-import _ from 'lodash'
-
-import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
-import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
-import {publishEvent} from '~/eventPublisher'
-import {msg} from '~/translate'
+import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 
 export const defaultModel = {}
 
@@ -41,45 +35,7 @@ export const hasError = recipe => {
     return imageToMask && imageToMask.errorBand && imageMask && imageMask.errorBand
 }
 
-const submitRetrieveRecipeTask = recipe => {
-    const name = recipe.title || recipe.placeholder
-    const destination = recipe.ui.retrieveOptions.destination
-    const taskTitle = msg(['process.retrieve.form.task', destination], {name})
-    const bands = recipe.ui.retrieveOptions.bands
-    const visualizations = getAllVisualizations(recipe)
-    const type = getRecipeType(recipe.type)
-    const [timeStart, timeEnd] = ((type.getDateRange && type.getDateRange(recipe)) || []).map(date => date.valueOf())
-    const pyramidingPolicy = {}
-    bands.forEach(band => pyramidingPolicy[band] = band === 'change' ? 'mode' : 'mean')
-    const operation = `image.${destination}`
-    const recipeProperties = {
-        recipe_id: recipe.id,
-        recipe_projectId: recipe.projectId,
-        recipe_type: recipe.type,
-        recipe_title: recipe.title || recipe.placeholder,
-        ..._(recipe.model)
-            .mapValues(value => JSON.stringify(value))
-            .mapKeys((_value, key) => `recipe_${key}`)
-            .value()
-    }
-    const task = {
-        operation,
-        params: {
-            title: taskTitle,
-            description: name,
-            image: {
-                recipe: _.omit(recipe, ['ui']),
-                ...recipe.ui.retrieveOptions,
-                bands: {selection: bands},
-                visualizations,
-                pyramidingPolicy,
-                properties: {...recipeProperties, 'system:time_start': timeStart, 'system:time_end': timeEnd}
-            }
-        }
-    }
-    publishEvent('submit_task', {
-        recipe_type: recipe.type,
-        destination
+const submitRetrieveRecipeTask = recipe =>
+    submitTask(recipe, {
+        pyramidingPolicy: pyramidingPolicies.changeBased('change')
     })
-    return api.tasks.submit$(task).subscribe()
-}
