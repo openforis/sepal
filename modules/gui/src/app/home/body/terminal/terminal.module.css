@@ -4,7 +4,8 @@
     pointer-events: all;
 }
 
- /* [HACK] Fix forced vertical scrollbar */
+ /* [HACK] Fix forced vertical scrollbar and transparency */
 :global .xterm-viewport {
     overflow-y: auto !important;
+    background-color: transparent !important;
 }
