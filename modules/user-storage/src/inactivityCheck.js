@@ -2,31 +2,16 @@ const Bull = require('bull')
 const {firstValueFrom} = require('rxjs')
 const {formatDistance} = require('date-fns')
 // const {eraseUserStorage} = require('./filesystem')
-const {redisHost} = require('./config')
+const {redisHost, inactivityTimeout, inactivityNotificationDelay, inactivityGracePeriodTimeout, inactivityMaxSpread} = require('./config')
 // const {sendEmail} = require('./email')
 const {addEvent} = require('./database')
 const {getMostRecentAccessByUser$, getMostRecentAccess$} = require('./http')
-const {getUserStorage, DB} = require('./kvstore')
+const {getUserStorage, DB, getInitialized, setInitialized} = require('./kvstore')
 const log = require('#sepal/log').getLogger('inactivityCheck')
 
 const CONCURRENCY = 1
 const MAX_RETRIES = 100
 const INITIAL_RETRY_DELAY_MS = 60 * 1000 // 1 minute
-
-// const INACTIVITY_TIMEOUT_MS = 365 * 24 * 60 * 60 * 1000 // 1 year
-// const NOTIFICATION_DELAY_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
-// const GRACE_PERIOD_TIMEOUT_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
-// const MAX_SPREAD_MS = 3 * 24 * 60 * 60 * 1000 // 3 days
-
-const INACTIVITY_TIMEOUT_MS = 365 * 24 * 60 * 60 * 1000 // 1 year
-const NOTIFICATION_DELAY_MS = 1 * 24 * 60 * 60 * 1000 // 1 days
-const GRACE_PERIOD_TIMEOUT_MS = 1 * 24 * 60 * 60 * 1000 // 1 days
-const MAX_SPREAD_MS = 3 * 60 * 60 * 1000 // 3 hours
-
-// const INACTIVITY_TIMEOUT_MS = 30 * 1000
-// const NOTIFICATION_DELAY_MS = 30 * 1000
-// const GRACE_PERIOD_TIMEOUT_MS = 30 * 1000
-// const MAX_SPREAD_MS = 0 * 1000
 
 const USER_STORAGE_THRESHOLD_BYTES = 1 * 1024 * 1024 // 1 MB
 
@@ -90,13 +75,15 @@ const markInactiveUser = async ({username}) => {
         case STORAGE.INACTIVE_HIGH:
             await mark(username)
             await scheduleNotify({username})
-            await addEvent({username, event: 'INACTIVE'})
+            await addEvent({username, event: 'INACTIVE_HIGH'})
             break
         case STORAGE.INACTIVE_LOW:
             log.info(`Detected inactive user ${username} with negligible storage, no action`)
+            await addEvent({username, event: 'INACTIVE_LOW'})
             break
         case STORAGE.INACTIVE_UNKNOWN:
             log.info(`Detected inactive user ${username} with unknown storage, will retry`)
+            await addEvent({username, event: 'INACTIVE_UNKNOWN'})
             throw new Error(`Unknown storage size for user ${username}`)
         case STORAGE.ACTIVE:
             break
@@ -112,9 +99,11 @@ const notifyInactiveUser = async ({username}) => {
             break
         case STORAGE.INACTIVE_LOW:
             log.info(`User ${username} still inactive but with negligible storage, not sending notification email`)
+            await addEvent({username, event: 'INACTIVE_LOW'})
             break
         case STORAGE.INACTIVE_UNKNOWN:
             log.info(`User ${username} still inactive but with unknown storage, will retry`)
+            await addEvent({username, event: 'INACTIVE_UNKNOWN'})
             throw new Error(`Unknown storage size for user ${username}`)
         case STORAGE.ACTIVE:
             log.info(`User ${username} now active, not sending notification email`)
@@ -126,13 +115,15 @@ const eraseInactiveUserStorage = async ({username}) => {
     switch (await getStorageStatus(username)) {
         case STORAGE.INACTIVE_HIGH:
             await erase(username)
-            await addEvent({username, event: 'ERASED'})
+            await addEvent({username, event: 'PURGED'})
             break
         case STORAGE.INACTIVE_LOW:
             log.info(`User ${username} still inactive but with negligible storage, not erasing storage`)
+            await addEvent({username, event: 'INACTIVE_LOW'})
             break
         case STORAGE.INACTIVE_UNKNOWN:
             log.info(`User ${username} still inactive but with unknown storage, will retry`)
+            await addEvent({username, event: 'INACTIVE_UNKNOWN'})
             throw new Error(`Unknown storage size for user ${username}`)
         case STORAGE.ACTIVE:
             log.info(`User ${username} now active, not erasing storage`)
@@ -147,20 +138,6 @@ const logStats = async () =>
         `delayed: ${await queue.getDelayedCount()}`,
         `failed: ${await queue.getFailedCount()}`,
     ].join(', '))
-
-queue.process(CONCURRENCY, async job => {
-    const {username, action} = job.data
-    switch (action) {
-        case 'mark':
-            return await markInactiveUser({username})
-        case 'notify':
-            return await notifyInactiveUser({username})
-        case 'erase':
-            return await eraseInactiveUserStorage({username})
-        default:
-            throw new Error(`Unknown action: ${action}`)
-    }
-})
 
 queue.on('error', error => {
     log.error(error)
@@ -183,17 +160,17 @@ queue.on('completed', async (job, _result) => {
     log.debug(`Completed job for user ${username}, action: ${action}`)
 })
 
-const scheduleMark = async ({username, delay = INACTIVITY_TIMEOUT_MS}) => {
+const scheduleMark = async ({username, delay = inactivityTimeout}) => {
     log.debug(`Scheduling inactive state for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
     return schedule({username, delay, action: 'mark'})
 }
 
-const scheduleNotify = async ({username, delay = NOTIFICATION_DELAY_MS}) => {
+const scheduleNotify = async ({username, delay = inactivityNotificationDelay}) => {
     log.debug(`Scheduling inactivity notification for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
     return schedule({username, delay, action: 'notify'})
 }
 
-const scheduleErase = async ({username, delay = GRACE_PERIOD_TIMEOUT_MS}) => {
+const scheduleErase = async ({username, delay = inactivityGracePeriodTimeout}) => {
     log.debug(`Scheduling inactivity storage erase for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
     await queue.removeJobs(jobId(username, '*'))
     return schedule({username, delay, action: 'erase'})
@@ -215,16 +192,10 @@ const schedule = async ({username, delay, action}) =>
 
 // positive: future, negative: past
 const relativeExpirationTime = mostRecentTimestamp =>
-    mostRecentTimestamp.getTime() + INACTIVITY_TIMEOUT_MS - Date.now()
+    mostRecentTimestamp.getTime() + inactivityTimeout - Date.now()
 
 const getDelay = (mostRecentTimestamp = new Date()) =>
-    Math.max(0, relativeExpirationTime(mostRecentTimestamp)) + Math.random() * MAX_SPREAD_MS
-
-const initializeInactivityCheck = async ({username, mostRecentTimestamp}) => {
-    if (!await queue.getJob(jobId(username, 'mark')) && !await queue.getJob(jobId(username, 'notify')) && !await queue.getJob(jobId(username, 'erase'))) {
-        await scheduleMark({username, delay: getDelay(mostRecentTimestamp)})
-    }
-}
+    Math.max(0, relativeExpirationTime(mostRecentTimestamp)) + Math.random() * inactivityMaxSpread
 
 const scheduleInactivityCheck = async ({username}) => {
     await queue.removeJobs(jobId(username, '*'))
@@ -237,26 +208,56 @@ const cancelInactivityCheck = async ({username}) => {
     await addEvent({username, event: 'ACTIVE'})
 }
 
-const scheduleFullInactivityCheck = async () => {
+const scheduleFullCheck = async () => {
     log.debug('Scheduling check for all users')
     const userActivity = await firstValueFrom(getMostRecentAccessByUser$())
-
-    await queue.pause()
     await queue.obliterate()
-    await queue.resume()
 
-    const {activeUsers, inactiveUsers} = Object.entries(userActivity)
-        .reduce((acc, [username, mostRecentTimestamp]) => {
-            acc.now - mostRecentTimestamp.getTime() < INACTIVITY_TIMEOUT_MS
-                ? acc.activeUsers.push({username, mostRecentTimestamp})
-                : acc.inactiveUsers.push({username, mostRecentTimestamp})
-            return acc
-        }, {activeUsers: [], inactiveUsers: [], now: Date.now()})
+    // const {activeUsers, inactiveUsers} = Object.entries(userActivity)
+    //     .reduce((acc, [username, mostRecentTimestamp]) => {
+    //         acc.now - mostRecentTimestamp.getTime() < INACTIVITY_TIMEOUT_MS
+    //             ? acc.activeUsers.push({username, mostRecentTimestamp})
+    //             : acc.inactiveUsers.push({username, mostRecentTimestamp})
+    //         return acc
+    //     }, {activeUsers: [], inactiveUsers: [], now: Date.now()})
 
-    Object.entries(userActivity).forEach(([username, mostRecentTimestamp]) => {
-        initializeInactivityCheck({username, mostRecentTimestamp})
-    })
+    Promise.all(
+        Object.entries(userActivity).map(async ([username, mostRecentTimestamp]) => {
+            if (!await queue.getJob(jobId(username, 'mark')) && !await queue.getJob(jobId(username, 'notify')) && !await queue.getJob(jobId(username, 'erase'))) {
+                const delay = getDelay(mostRecentTimestamp)
+                await scheduleMark({username, delay})
+                if (delay > 0) {
+                    await addEvent({username, event: 'ACTIVE'})
+                }
+            }
+        })
+    )
     log.info('Scheduled check for all users')
 }
 
-module.exports = {scheduleFullInactivityCheck, scheduleInactivityCheck, cancelInactivityCheck, logStats}
+const startInactivityCheck = async () => {
+    log.info('Starting inactivity check processor')
+
+    if (!await getInitialized()) {
+        await scheduleFullCheck()
+        await setInitialized()
+    }
+    
+    await logStats()
+    
+    queue.process(CONCURRENCY, async job => {
+        const {username, action} = job.data
+        switch (action) {
+            case 'mark':
+                return await markInactiveUser({username})
+            case 'notify':
+                return await notifyInactiveUser({username})
+            case 'erase':
+                return await eraseInactiveUserStorage({username})
+            default:
+                throw new Error(`Unknown action: ${action}`)
+        }
+    })
+}
+
+module.exports = {scheduleInactivityCheck, cancelInactivityCheck, startInactivityCheck}

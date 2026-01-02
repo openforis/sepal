@@ -3,7 +3,7 @@ const {get$} = require('#sepal/httpClient')
 const {forkJoin, map} = require('rxjs')
 const log = require('#sepal/log').getLogger('http')
 
-const merge = (...objects) =>
+const mergeMostRecent = (...objects) =>
     objects.reduce((acc, curr) => {
         Object.entries(curr).forEach(([key, dateString]) => {
             const date = new Date(dateString)
@@ -78,7 +78,7 @@ const getMostRecentAccessByUser$ = () =>
         getMostRecentSessionByUser$()
     ]).pipe(
         map(([mostRecentLoginByUser, mostRecentSessionByUser]) =>
-            merge(mostRecentLoginByUser, mostRecentSessionByUser)
+            mergeMostRecent(mostRecentLoginByUser, mostRecentSessionByUser)
         )
     )
 
@@ -88,7 +88,7 @@ const getMostRecentAccess$ = username =>
         getMostRecentSession$(username)
     ]).pipe(
         map(([mostRecentLoginByUser, mostRecentSessionByUser]) =>
-            merge(mostRecentLoginByUser, mostRecentSessionByUser),
+            mergeMostRecent(mostRecentLoginByUser, mostRecentSessionByUser)
         ),
         map(({timestamp}) => timestamp)
     )

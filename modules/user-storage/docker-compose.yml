@@ -35,18 +35,24 @@ services:
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_HOST: "${SEPAL_HOST}"
+      SEPAL_ADMIN_USERNAME: "sepalAdmin"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       RABBITMQ_HOST: "rabbitmq"
-      RABBITMQ_PORT: "5672"
       MYSQL_HOST: "mysql"
       MYSQL_USER: "root"
       MYSQL_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      REDIS_HOST: "user-storage-redis"
+      HOME_DIR: "/sepalUsers"
       SCAN_MIN_DELAY_SECONDS: "300"
       SCAN_MAX_DELAY_SECONDS: "86400"
       SCAN_DELAY_INCREASE_FACTOR: "2"
       SCAN_CONCURRENCY: "5"
       SCAN_MAX_RETRIES: "10"
       SCAN_INITIAL_RETRY_DELAY_SECONDS: "30"
+      INACTIVITY_TIMEOUT_DAYS: "365"
+      INACTIVITY_NOTIFICATION_DELAY_DAYS: "7"
+      INACTIVITY_GRACE_PERIOD_DAYS: "30"
+      INACTIVITY_MAX_SPREAD_HOURS: "6"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "80"]
       timeout: 60s

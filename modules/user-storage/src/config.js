@@ -1,53 +1,139 @@
-const {program} = require('commander')
+const {Command, Option} = require('commander')
 const log = require('#sepal/log').getLogger('config')
 const _ = require('lodash')
-
-const DEFAULT_PORT = 80
 
 const fatalError = error => {
     log.fatal(error)
     process.exit(1)
 }
 
-program.exitOverride()
+const command = new Command()
+    .exitOverride()
 
 try {
-    program
-        .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
-        .requiredOption('--redis-host <value>', 'Redis host')
-        .requiredOption('--sepal-host <value>')
-        .requiredOption('--sepal-username <value>')
-        .requiredOption('--sepal-password <value>')
-        .option('--port <number>', 'Port', DEFAULT_PORT)
-        .requiredOption('--home-dir <value>', 'Base directory of user homes')
-        .option('--scan-min-delay-seconds <number>', 'Minimum delay in seconds before rescheduling', parseInt)
-        .option('--scan-max-delay-seconds <number>', 'Maximum delay in seconds before rescheduling', parseInt)
-        .option('--scan-delay-increase-factor <number>', 'Auto-rescheduling delay increase factor', parseFloat)
-        .option('--scan-concurrency <number>', 'Concurrent rescan jobs', parseInt)
-        .option('--scan-max-retries <number>', 'Maximum number of retries when job has failed', parseInt)
-        .option('--scan-initial-retry-delay-seconds <number>', 'Initial delay in seconds between retries (exponential backoff)', parseInt)
+    command
+        .addOption(
+            new Option('--amqp-host <value>', 'RabbitMQ host')
+                .env('RABBITMQ_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--redis-host <value>', 'Redis host')
+                .env('REDIS_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--sepal-host <value>', 'Sepal host')
+                .env('SEPAL_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--sepal-username <value>', 'Sepal username')
+                .env('SEPAL_ADMIN_USERNAME')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--sepal-password <value>', 'Sepal password')
+                .env('SEPAL_ADMIN_PASSWORD')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--port <number>', 'Port')
+                .argParser(parseInt)
+                .env('HTTP_PORT')
+                .default(80)
+        )
+        .addOption(
+            new Option('--home-dir <value>', 'Base directory of user homes')
+                .env('HOME_DIR')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--scan-min-delay-seconds <number>', 'Minimum delay in seconds before rescheduling')
+                .argParser(parseFloat)
+                .env('SCAN_MIN_DELAY_SECONDS')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--scan-max-delay-seconds <number>', 'Maximum delay in seconds before rescheduling')
+                .argParser(parseFloat)
+                .env('SCAN_MAX_DELAY_SECONDS')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--scan-delay-increase-factor <number>', 'Auto-rescheduling delay increase factor')
+                .argParser(parseFloat)
+                .env('SCAN_DELAY_INCREASE_FACTOR')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--scan-concurrency <number>', 'Concurrent rescan jobs')
+                .argParser(parseInt)
+                .env('SCAN_CONCURRENCY')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--scan-max-retries <number>', 'Maximum number of retries when job has failed')
+                .argParser(parseInt)
+                .env('SCAN_MAX_RETRIES')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--scan-initial-retry-delay-seconds <number>', 'Initial delay in seconds between retries (exponential backoff)')
+                .argParser(parseFloat)
+                .env('SCAN_INITIAL_RETRY_DELAY_SECONDS')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--inactivity-timeout-days <number>', 'Inactivity timeout in days')
+                .argParser(parseFloat)
+                .env('INACTIVITY_TIMEOUT_DAYS')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--inactivity-notification-delay-days <number>', 'Inactivity notification delay in days')
+                .argParser(parseFloat)
+                .env('INACTIVITY_NOTIFICATION_DELAY_DAYS')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--inactivity-grace-period-days <number>', 'Inactivity grace period in days')
+                .argParser(parseFloat)
+                .env('INACTIVITY_GRACE_PERIOD_DAYS')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--max-spread-hours <number>', 'Maximum spread in hours')
+                .argParser(parseFloat)
+                .env('INACTIVITY_MAX_SPREAD_HOURS')
+                .makeOptionMandatory()
+        )
         .parse(process.argv)
+
+    log.info('Configuration loaded')
 } catch (error) {
     fatalError(error)
 }
 
 const {
-    amqpUri,
+    amqpHost,
     redisHost,
     sepalHost,
     sepalUsername,
     sepalPassword,
     port,
     homeDir,
-    scanMinDelaySeconds = 5,
-    scanMaxDelaySeconds = 86400,
-    scanDelayIncreaseFactor = 2,
-    scanConcurrency = 4,
-    scanMaxRetries = 10,
-    scanInitialRetryDelaySeconds = 30
-} = program.opts()
-
-log.info('Configuration loaded')
+    scanMinDelaySeconds,
+    scanMaxDelaySeconds,
+    scanDelayIncreaseFactor,
+    scanConcurrency,
+    scanMaxRetries,
+    scanInitialRetryDelaySeconds,
+    inactivityTimeoutDays,
+    inactivityNotificationDelayDays,
+    inactivityGracePeriodDays,
+    inactivityMaxSpreadHours
+} = command.opts()
 
 if (scanMinDelaySeconds < 5) {
     fatalError(`Argument --min-delay-seconds (${scanMinDelaySeconds}) cannot be less than 5`)
@@ -62,17 +148,21 @@ if (scanMaxDelaySeconds <= scanMinDelaySeconds) {
 }
 
 module.exports = {
-    amqpUri,
+    amqpUri: `amqp://${amqpHost}`,
     redisHost,
     sepalHost,
     sepalUsername,
     sepalPassword,
     port,
     homeDir,
-    scanMinDelayMilliseconds: scanMinDelaySeconds * 1000,
-    scanMaxDelayMilliseconds: scanMaxDelaySeconds * 1000,
+    scanMinDelay: scanMinDelaySeconds * 1000,
+    scanMaxDelay: scanMaxDelaySeconds * 1000,
     scanDelayIncreaseFactor,
     scanConcurrency,
     scanMaxRetries,
-    scanInitialRetryDelayMilliseconds: scanInitialRetryDelaySeconds * 1000
+    scanInitialRetryDelay: scanInitialRetryDelaySeconds * 1000,
+    inactivityTimeout: inactivityTimeoutDays * 24 * 60 * 60 * 1000,
+    inactivityNotificationDelay: inactivityNotificationDelayDays * 24 * 60 * 60 * 1000,
+    inactivityGracePeriod: inactivityGracePeriodDays * 24 * 60 * 60 * 1000,
+    inactivityMaxSpread: inactivityMaxSpreadHours * 60 * 60 * 1000
 }

@@ -7,14 +7,12 @@ const _ = require('lodash')
 const {initMessageQueue} = require('#sepal/messageQueue')
 const server = require('#sepal/httpServer')
 const {amqpUri, port} = require('./config')
-const {scanComplete$, logStats: logScanQueueStats, scheduleFullStorageCheck} = require('./storageCheck')
+const {scanComplete$, startStorageCheck} = require('./storageCheck')
 const {messageHandler} = require('./messageHandler')
 const {initializeDatabase} = require('./database')
 const {routes} = require('./routes')
 const {email$} = require('./email')
-const {setInitialized, getInitialized} = require('./kvstore')
-const {logStats: logInactivityQueueStats, scheduleFullInactivityCheck} = require('./inactivityCheck')
-const {getMostRecentAccess$} = require('./http')
+const {startInactivityCheck} = require('./inactivityCheck')
 
 const main = async () => {
     await initMessageQueue(amqpUri, {
@@ -23,26 +21,17 @@ const main = async () => {
             {key: 'email.sendToUser', publish$: email$}
         ],
         subscribers: [
-            {queue: 'userStorage.systemEvent', topic: 'systemEvent', handler: messageHandler},
-            {queue: 'userStorage.workerSession', topic: 'workerSession.#', handler: messageHandler},
-            {queue: 'userStorage.files', topic: 'files.#', handler: messageHandler},
-        ]
+            {queue: 'userStorage.systemEvent', topic: 'systemEvent'},
+            {queue: 'userStorage.workerSession', topic: 'workerSession.#'},
+            {queue: 'userStorage.files', topic: 'files.#'},
+        ],
+        handler: messageHandler
     })
 
     await initializeDatabase()
-
     await server.start({port, routes})
-
-    if (!await getInitialized()) {
-        await scheduleFullInactivityCheck()
-        await setInitialized()
-    }
-    
-    await scheduleFullStorageCheck()
-    await logScanQueueStats()
-    await logInactivityQueueStats()
-
-    getMostRecentAccess$('lookap28').subscribe()
+    await startInactivityCheck()
+    await startStorageCheck()
 
     log.info('Initialized')
 }

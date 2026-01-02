@@ -1,5 +1,5 @@
 const {calculateUserStorage, scanUserHomes} = require('./filesystem')
-const {redisHost, scanMinDelayMilliseconds, scanMaxDelayMilliseconds, scanDelayIncreaseFactor, scanConcurrency, scamMaxRetries, scanInitialRetryDelayMilliseconds} = require('./config')
+const {redisHost, scanMinDelay, scanMaxDelay, scanDelayIncreaseFactor, scanConcurrency, scamMaxRetries, scanInitialRetryDelay} = require('./config')
 const {getSessionStatus, getSetUserStorage, DB, getUserStorage} = require('./kvstore')
 const Bull = require('bull')
 const {v4: uuid} = require('uuid')
@@ -13,8 +13,8 @@ const SCHEDULE_OPTIONS = {
     'filesDeleted': {priority: 1, delay: 0},
     'sessionDeactivated': {priority: 2, delay: 0},
     'sessionActivated': {priority: 3, delay: 0},
-    'initial': {priority: 6, delay: scanMinDelayMilliseconds},
-    'periodic': {priority: 6, delay: scanMaxDelayMilliseconds}
+    'initial': {priority: 6, delay: scanMinDelay},
+    'periodic': {priority: 6, delay: scanMaxDelay}
 }
 
 const queue = new Bull('storage-check', {
@@ -33,7 +33,7 @@ const spreadDelay = delay =>
     Math.floor(delay * (1 + (Math.random() - .5) * 2 * MAX_RELATIVE_DELAY_SPREAD))
 
 const increasingDelay = delay =>
-    Math.max(Math.min(delay * scanDelayIncreaseFactor, scanMaxDelayMilliseconds), scanMinDelayMilliseconds)
+    Math.max(Math.min(delay * scanDelayIncreaseFactor, scanMaxDelay), scanMinDelay)
 
 const timeDistance = delay =>
     formatDistanceToNow(Date.now() + delay)
@@ -45,13 +45,6 @@ const logStats = async () =>
         `delayed: ${await queue.getDelayedCount()}`,
         `failed: ${await queue.getFailedCount()}`,
     ].join(', '))
-
-queue.process(scanConcurrency, async job => {
-    const {username} = job.data
-    return {
-        size: await calculateUserStorage(username)
-    }
-})
 
 queue.on('error', error => log.error(error))
 
@@ -80,13 +73,13 @@ queue.on('completed', async (job, {size}) => {
     if (workerSession) {
         await reschedule({
             priority: 3,
-            delay: scanMinDelayMilliseconds
+            delay: scanMinDelay
         })
-    } else if (job.opts.delay < scanMaxDelayMilliseconds && job.opts.priority !== 6) {
+    } else if (job.opts.delay < scanMaxDelay && job.opts.priority !== 6) {
         if (size !== previousSize) {
             await reschedule({
                 priority: 4,
-                delay: scanMinDelayMilliseconds
+                delay: scanMinDelay
             })
         } else {
             await reschedule({
@@ -97,14 +90,14 @@ queue.on('completed', async (job, {size}) => {
     } else {
         await reschedule({
             priority: 6,
-            delay: scanMaxDelayMilliseconds
+            delay: scanMaxDelay
         })
     }
 
     scanComplete$.next({username, size})
 })
 
-const scheduleStorageCheck = async ({username, delay: nominalDelay = scanMaxDelayMilliseconds, priority = 1}) => {
+const scheduleStorageCheck = async ({username, delay: nominalDelay = scanMaxDelay, priority = 1}) => {
     const delay = spreadDelay(nominalDelay)
     log.debug(`Scheduling check for user ${username} with priority ${priority} ${delay ? `in ${timeDistance(delay)}` : 'now'}`)
     await queue.removeJobs(rescanJobId(username, '*'))
@@ -115,7 +108,7 @@ const scheduleStorageCheck = async ({username, delay: nominalDelay = scanMaxDela
         attempts: scamMaxRetries,
         backoff: {
             type: 'exponential',
-            delay: scanInitialRetryDelayMilliseconds
+            delay: scanInitialRetryDelay
         },
         removeOnComplete: 10,
         removeOnFail: 10
@@ -127,7 +120,7 @@ const scheduleRescan = async ({username, type}) => {
     return await scheduleStorageCheck({username, priority, delay})
 }
 
-const scheduleFullStorageCheck = async () => {
+const scheduleFullCheck = async () => {
     log.debug('Scheduling check for all users')
     await scanUserHomes(
         async username => {
@@ -142,4 +135,16 @@ const scheduleFullStorageCheck = async () => {
     log.info('Scheduled check for all users')
 }
 
-module.exports = {scheduleFullStorageCheck, scheduleStorageCheck, scanComplete$, logStats}
+const startStorageCheck = async () => {
+    log.info('Starting storage check processor')
+    await scheduleFullCheck()
+    await logStats()
+    queue.process(scanConcurrency, async job => {
+        const {username} = job.data
+        return {
+            size: await calculateUserStorage(username)
+        }
+    })
+}
+
+module.exports = {scheduleStorageCheck, scanComplete$, startStorageCheck}
