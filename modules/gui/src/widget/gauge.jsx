@@ -50,7 +50,10 @@ class _Gauge extends React.Component {
 
     getFraction() {
         const {value, minValue, maxValue} = this.props
-        return (value - minValue) / (maxValue - minValue)
+        const range = maxValue - minValue
+        return range > 0
+            ? (value - minValue) / range
+            : 0
     }
 
     getInfo(info) {
