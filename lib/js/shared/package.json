@@ -10,7 +10,7 @@
     },
     "dependencies": {
         "@google/earthengine": "^1.7.4",
-        "@koa/router": "^15.1.1",
+        "@koa/router": "^15.2.0",
         "amqplib": "^0.10.9",
         "base-64": "^1.0.0",
         "koa": "^3.1.1",
@@ -26,7 +26,7 @@
         "serialize-error": "^12.0.0",
         "short-unique-id": "^5.3.2",
         "uuid": "^13.0.0",
-        "ws": "^8.18.3",
+        "ws": "^8.19.0",
         "xmlhttprequest": "npm:@lpaolini/xmlhttprequest@^1.8.1"
     },
     "devDependencies": {
