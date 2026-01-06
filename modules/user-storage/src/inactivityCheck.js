@@ -86,6 +86,7 @@ const markInactiveUser = async ({username}) => {
             await addEvent({username, event: 'INACTIVE_UNKNOWN'})
             throw new Error(`Unknown storage size for user ${username}`)
         case STORAGE.ACTIVE:
+            log.info(`User ${username} now active, not marking inactive`)
             break
     }
 }
@@ -195,7 +196,7 @@ const relativeExpirationTime = mostRecentTimestamp =>
     mostRecentTimestamp.getTime() + inactivityTimeout - Date.now()
 
 const getDelay = (mostRecentTimestamp = new Date()) =>
-    Math.max(0, relativeExpirationTime(mostRecentTimestamp)) + Math.random() * inactivityMaxSpread
+    Math.max(0, relativeExpirationTime(mostRecentTimestamp)) + Math.floor(Math.random() * inactivityMaxSpread)
 
 const scheduleInactivityCheck = async ({username}) => {
     await queue.removeJobs(jobId(username, '*'))

@@ -103,7 +103,7 @@ try {
                 .makeOptionMandatory()
         )
         .addOption(
-            new Option('--max-spread-hours <number>', 'Maximum spread in hours')
+            new Option('--inactivity-max-spread-hours <number>', 'Maximum spread in hours')
                 .argParser(parseFloat)
                 .env('INACTIVITY_MAX_SPREAD_HOURS')
                 .makeOptionMandatory()
