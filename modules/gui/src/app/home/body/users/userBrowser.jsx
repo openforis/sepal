@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React from 'react'
-import {forkJoin, map, tap, zip} from 'rxjs'
+import {catchError, forkJoin, map, of, tap, timer, zip} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -8,6 +8,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
+import {Icon} from '~/widget/icon'
 import {Notifications} from '~/widget/notifications'
 
 import styles from './userBrowser.module.css'
@@ -15,15 +16,22 @@ import {UserDetails} from './userDetails'
 import {UserList} from './userList'
 import {UserStatus} from './userStatus'
 
+const SPINNER_COMFORT_DELAY_MS = 500
+
 const mapStateToProps = state => ({
     users: state?.users?.users || []
 })
 
-const getUserList$ = () => forkJoin(
+const getUserList$ = () => forkJoin([
     api.user.getUserList$(),
-    api.user.getBudgetReport$(),
-    api.userStorage.getMostRecentEvents$()
-).pipe(
+    api.user.getBudgetReport$().pipe(
+        catchError(() => of({}))
+    ),
+    api.userStorage.getMostRecentEvents$().pipe(
+        catchError(() => of({}))
+    ),
+    timer(SPINNER_COMFORT_DELAY_MS)
+]).pipe(
     map(([users, budget, mostRecentEvents]) =>
         _.map(users, user => ({
             ...user,
@@ -49,7 +57,8 @@ class _UserBrowser extends React.Component {
     }
 
     componentDidMount() {
-        this.props.stream('LOAD_USER_LIST',
+        const {stream} = this.props
+        stream('LOAD_USER_LIST',
             getUserList$(),
             users => this.updateUsers(users)
         )
@@ -61,13 +70,28 @@ class _UserBrowser extends React.Component {
             .dispatch()
     }
 
-    render() {
-        const {users} = this.props
+    renderLoading() {
         return (
             <div className={styles.container}>
-                <UserList
-                    users={users}
-                    onSelect={this.editUser}/>
+                <Icon name='spinner' size='2x'/>
+            </div>
+        )
+    }
+
+    renderLoaded() {
+        const {users} = this.props
+        return (
+            <UserList
+                users={users}
+                onSelect={this.editUser}/>
+        )
+    }
+
+    render() {
+        const {stream} = this.props
+        return (
+            <div className={styles.container}>
+                {stream('LOAD_USER_LIST').active ? this.renderLoading() : this.renderLoaded()}
                 {this.renderUserDetails()}
             </div>
         )
