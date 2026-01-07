@@ -222,13 +222,15 @@ const scheduleFullCheck = async () => {
     //         return acc
     //     }, {activeUsers: [], inactiveUsers: [], now: Date.now()})
 
-    Promise.all(
+    await Promise.all(
         Object.entries(userActivity).map(async ([username, mostRecentTimestamp]) => {
             if (!await queue.getJob(jobId(username, 'mark')) && !await queue.getJob(jobId(username, 'notify')) && !await queue.getJob(jobId(username, 'erase'))) {
                 const delay = getDelay(mostRecentTimestamp)
                 await scheduleMark({username, delay})
                 if (delay > 0) {
                     await addEvent({username, event: 'ACTIVE'})
+                } else {
+                    await addEvent({username, event: 'INACTIVE_UNKNOWN'})
                 }
             }
         })
