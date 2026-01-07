@@ -25,19 +25,27 @@ const getPool = () => {
 
 const addEvent = async ({username, event}) => {
     log.debug(`Adding event to ${username}: ${event}`)
-    const [results, _fields] = await getPool().query(`
-        INSERT INTO ${DATABASE_NAME}.${TABLE_NAME}
-        (username, event, timestamp)
-        SELECT ?, ?, NOW()
-        WHERE IFNULL((
-            SELECT event
-            FROM ${DATABASE_NAME}.${TABLE_NAME}
-            WHERE username = ?
-            ORDER BY timestamp DESC
-            LIMIT 1
-        ), '') <> ?
-    `, [username, event, username, event])
-    return results
+    const connection = await getPool().getConnection()
+    const lockName = `user_history_${username}`
+    try {
+        await connection.query('SELECT GET_LOCK(?, 5) AS got_lock', [lockName])
+        const [results, _fields] = await connection.query(`
+            INSERT INTO ${DATABASE_NAME}.${TABLE_NAME}
+            (username, event, timestamp)
+            SELECT ?, ?, NOW()
+            WHERE COALESCE((
+                SELECT event
+                FROM ${DATABASE_NAME}.${TABLE_NAME}
+                WHERE username = ?
+                ORDER BY timestamp DESC
+                LIMIT 1
+            ), '') <> ?;    
+        `, [username, event, username, event])
+        await connection.query('SELECT RELEASE_LOCK(?)', [lockName])
+        return results
+    } finally {
+        connection.release()
+    }
 }
 
 const getMostRecentEvents = async () => {
