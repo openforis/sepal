@@ -52,7 +52,7 @@ services:
       INACTIVITY_TIMEOUT_DAYS: "365"
       INACTIVITY_NOTIFICATION_DELAY_DAYS: "7"
       INACTIVITY_GRACE_PERIOD_DAYS: "30"
-      INACTIVITY_MAX_SPREAD_HOURS: "6"
+      INACTIVITY_MAX_SPREAD_HOURS: "2"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "80"]
       timeout: 60s
