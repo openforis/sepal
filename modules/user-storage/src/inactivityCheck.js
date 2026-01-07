@@ -196,7 +196,7 @@ const relativeExpirationTime = mostRecentTimestamp =>
     mostRecentTimestamp.getTime() + inactivityTimeout - Date.now()
 
 const getDelay = (mostRecentTimestamp = new Date()) =>
-    Math.max(0, relativeExpirationTime(mostRecentTimestamp)) + Math.floor(Math.random() * inactivityMaxSpread)
+    Math.max(0, relativeExpirationTime(mostRecentTimestamp))
 
 const scheduleInactivityCheck = async ({username}) => {
     await queue.removeJobs(jobId(username, '*'))
@@ -226,6 +226,7 @@ const scheduleFullCheck = async () => {
         Object.entries(userActivity).map(async ([username, mostRecentTimestamp]) => {
             if (!await queue.getJob(jobId(username, 'mark')) && !await queue.getJob(jobId(username, 'notify')) && !await queue.getJob(jobId(username, 'erase'))) {
                 const delay = getDelay(mostRecentTimestamp)
+                // await scheduleMark({username, delay: delay + Math.floor(Math.random() * inactivityMaxSpread)})
                 await scheduleMark({username, delay})
                 if (delay > 0) {
                     await addEvent({username, event: 'ACTIVE'})
