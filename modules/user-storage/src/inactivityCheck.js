@@ -36,18 +36,14 @@ const STORAGE = {
     ACTIVE: Symbol('ACTIVE')
 }
 
-const mark = async username => {
-    log.info(`Detected inactive user ${username} with significant storage`)
-}
-
 const notify = async username => {
-    log.info(`User ${username} still inactive with significant storage, sending notification email [DRY RUN]`)
+    log.info(`DRY RUN - not sending inactivity notification email to user ${username}`)
     // log.info(`User ${username} still inactive with significant storage, sending notification email`)
     // await sendEmail({username, subject: 'Inactivity notification', content: 'Due to long inactivity, your storage will be erased soon.'})
 }
 
 const erase = async username => {
-    log.info(`User ${username} still inactive with significant storage, erasing storage [DRY RUN]`)
+    log.info(`DRY RUN - not erasing storage for inactive user ${username}`)
     // log.info(`User ${username} still inactive with significant storage, erasing storage`)
     // await eraseUserStorage(username)
 }
@@ -77,20 +73,20 @@ const getStorageStatus = async username => {
 const markInactiveUser = async ({username}) => {
     switch (await getStorageStatus(username)) {
         case STORAGE.INACTIVE_HIGH:
-            await mark(username)
+            log.info(`User ${username} inactive with significant storage, noted`)
             await scheduleNotify({username})
             await addEvent({username, event: 'INACTIVE_HIGH'})
             break
         case STORAGE.INACTIVE_LOW:
-            log.info(`Detected inactive user ${username} with negligible storage, no action`)
+            log.info(`User ${username} inactive with negligible storage, no action`)
             await addEvent({username, event: 'INACTIVE_LOW'})
             break
         case STORAGE.INACTIVE_UNKNOWN:
-            log.info(`Detected inactive user ${username} with unknown storage, will retry`)
+            log.info(`User ${username} inactive with unknown storage, will retry`)
             await addEvent({username, event: 'INACTIVE_UNKNOWN'})
             throw new Error(`Unknown storage size for user ${username}`)
         case STORAGE.ACTIVE:
-            log.info(`User ${username} now active, not marking inactive`)
+            log.info(`User ${username} now active, no action`)
             break
     }
 }
@@ -98,6 +94,7 @@ const markInactiveUser = async ({username}) => {
 const notifyInactiveUser = async ({username}) => {
     switch (await getStorageStatus(username)) {
         case STORAGE.INACTIVE_HIGH:
+            log.info(`User ${username} still inactive with significant storage, sending notification email`)
             await notify(username)
             await scheduleErase({username})
             await addEvent({username, event: 'NOTIFIED'})
@@ -119,6 +116,7 @@ const notifyInactiveUser = async ({username}) => {
 const eraseInactiveUserStorage = async ({username}) => {
     switch (await getStorageStatus(username)) {
         case STORAGE.INACTIVE_HIGH:
+            log.info(`User ${username} inactive with significant storage, erasing storage [DRY RUN]`)
             await erase(username)
             await addEvent({username, event: 'PURGED'})
             break
@@ -141,9 +139,11 @@ queueEvents.on('error', error => {
 })
 
 queueEvents.on('completed', async ({jobId}) => {
-    const job = await Job.fromId(queue, jobId)
-    const {username, action} = job.data
-    log.debug(`Completed job for user ${username}, action: ${action}`)
+    if (log.isDebug()) {
+        const job = await Job.fromId(queue, jobId)
+        const {username, action} = job.data
+        log.debug(`Completed job for user ${username}, action: ${action}`)
+    }
 })
 
 queueEvents.on('failed', async ({jobId, failedReason}) =>
@@ -161,17 +161,17 @@ const removeUserJobs = async username => {
 }
 
 const scheduleMark = async ({username, delay = inactivityTimeout}) => {
-    log.debug(`Scheduling inactive state for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
+    log.info(`Scheduling inactive state for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
     return schedule({username, delay, action: 'mark'})
 }
 
 const scheduleNotify = async ({username, delay = inactivityNotificationDelay}) => {
-    log.debug(`Scheduling inactivity notification for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
+    log.info(`Scheduling inactivity notification for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
     return schedule({username, delay, action: 'notify'})
 }
 
 const scheduleErase = async ({username, delay = inactivityGracePeriodTimeout}) => {
-    log.debug(`Scheduling inactivity storage erase for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
+    log.info(`Scheduling inactivity storage erase for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
     await removeUserJobs(username)
     return schedule({username, delay, action: 'erase'})
 }
@@ -203,7 +203,7 @@ const scheduleInactivityCheck = async ({username}) => {
 }
 
 const cancelInactivityCheck = async ({username}) => {
-    log.debug(`Clearing inactivity jobs for user ${username}`)
+    log.info(`Clearing inactivity jobs for user ${username}`)
     await removeUserJobs(username)
     await addEvent({username, event: 'ACTIVE'})
 }
