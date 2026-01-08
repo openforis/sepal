@@ -2,7 +2,7 @@ const _ = require('lodash')
 const log = require('#sepal/log').getLogger('messageQueue')
 const {scheduleRescan} = require('./storageCheck')
 const {setSessionActive, setSessionInactive} = require('./kvstore')
-const {Subject, debounceTime, groupBy, mergeMap, switchMap, filter, catchError, EMPTY} = require('rxjs')
+const {Subject, debounceTime, groupBy, mergeMap, switchMap, filter, catchError, EMPTY, from} = require('rxjs')
 const {scheduleInactivityCheck, cancelInactivityCheck} = require('./inactivityCheck')
 const {CLIENT_UP, USER_DOWN} = require('sepal/src/event/definitions')
 
@@ -24,20 +24,26 @@ const scheduleRescan$ = event$.pipe(
 
 const scheduleInactivityCheck$ = event$.pipe(
     filter(({type}) => ['userDown', 'sessionDeactivated'].includes(type)),
-    mergeMap(({username}) => scheduleInactivityCheck(({username}))),
-    catchError(error => {
-        log.error('Error scheduling inactivity check:', error)
-        return EMPTY
-    })
+    mergeMap(({username}) =>
+        from(scheduleInactivityCheck(({username}))).pipe(
+            catchError(error => {
+                log.error('Error scheduling inactivity check:', error)
+                return EMPTY
+            })
+        )
+    )
 )
 
 const cancelInactivityCheck$ = event$.pipe(
     filter(({type}) => ['clientUp', 'sessionActivated'].includes(type)),
-    mergeMap(({username}) => cancelInactivityCheck(({username}))),
-    catchError(error => {
-        log.error('Error cancelling inactivity check:', error)
-        return EMPTY
-    })
+    mergeMap(({username}) =>
+        from(cancelInactivityCheck(({username}))).pipe(
+            catchError(error => {
+                log.error('Error cancelling inactivity check:', error)
+                return EMPTY
+            })
+        )
+    )
 )
 
 scheduleRescan$.subscribe({

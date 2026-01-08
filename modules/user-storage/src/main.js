@@ -30,8 +30,8 @@ const main = async () => {
 
     await initializeDatabase()
     await server.start({port, routes})
-    await startInactivityCheck()
     await startStorageCheck()
+    await startInactivityCheck()
 
     log.info('Initialized')
 }

@@ -1,11 +1,13 @@
 const {calculateUserStorage, scanUserHomes} = require('./filesystem')
-const {redisHost, scanMinDelay, scanMaxDelay, scanDelayIncreaseFactor, scanConcurrency, scamMaxRetries, scanInitialRetryDelay} = require('./config')
+const {redisHost, scanMinDelay, scanMaxDelay, scanDelayIncreaseFactor, scanConcurrency, scanMaxRetries, scanInitialRetryDelay} = require('./config')
 const {getSessionStatus, getSetUserStorage, DB, getUserStorage} = require('./kvstore')
-const Bull = require('bull')
-const {v4: uuid} = require('uuid')
+const {Queue, QueueEvents, Worker, Job} = require('bullmq')
 const {formatDistanceToNow} = require('date-fns')
 const {Subject} = require('rxjs')
+const {Redis} = require('ioredis')
 const log = require('#sepal/log').getLogger('storageCheck')
+
+const QUEUE = 'storage-check'
 
 const MAX_RELATIVE_DELAY_SPREAD = .2
 
@@ -17,17 +19,24 @@ const SCHEDULE_OPTIONS = {
     'periodic': {priority: 6, delay: scanMaxDelay}
 }
 
-const queue = new Bull('storage-check', {
-    redis: {
-        host: redisHost,
-        db: DB.SCAN_QUEUE
-    }
+const connection = new Redis({
+    host: redisHost,
+    db: DB.SCAN_QUEUE,
+    maxRetriesPerRequest: null
+})
+
+const queue = new Queue(QUEUE, {
+    connection
+})
+
+const queueEvents = new QueueEvents(QUEUE, {
+    connection
 })
 
 const scanComplete$ = new Subject()
 
-const rescanJobId = (username, jobId = uuid()) =>
-    `rescan-${username}-${jobId}`
+const jobId = username =>
+    `job-${username}`
 
 const spreadDelay = delay =>
     Math.floor(delay * (1 + (Math.random() - .5) * 2 * MAX_RELATIVE_DELAY_SPREAD))
@@ -38,57 +47,39 @@ const increasingDelay = delay =>
 const timeDistance = delay =>
     formatDistanceToNow(Date.now() + delay)
 
-const logStats = async () =>
-    log.isTrace() && log.trace('Stats:', [
-        `active: ${await queue.getActiveCount()}`,
-        `waiting: ${await queue.getWaitingCount()}`,
-        `delayed: ${await queue.getDelayedCount()}`,
-        `failed: ${await queue.getFailedCount()}`,
-    ].join(', '))
+queueEvents.on('error', error =>
+    log.error(error)
+)
 
-queue.on('error', error => log.error(error))
-
-queue.on('failed', async (job, error) => {
-    const {username} = job.data
-    log.error(`Rescanning user ${username} failed:`, error)
-})
-
-queue.on('stalled', job => {
-    const {username} = job.data
-    log.warn(`Job stalled while rescanning user ${username}`, job)
-})
-
-queue.on('drained', async () => await logStats())
-
-queue.on('completed', async (job, {size}) => {
+queueEvents.on('completed', async ({jobId, returnvalue: {size}}) => {
+    const job = await Job.fromId(queue, jobId)
     const {username} = job.data
     const workerSession = await getSessionStatus(username)
     const previousSize = await getSetUserStorage(username, size)
-    const reschedule = async ({priority, delay}) =>
+
+    if (workerSession) {
         await scheduleStorageCheck({
             username,
-            priority,
-            delay
-        })
-    if (workerSession) {
-        await reschedule({
             priority: 3,
             delay: scanMinDelay
         })
     } else if (job.opts.delay < scanMaxDelay && job.opts.priority !== 6) {
         if (size !== previousSize) {
-            await reschedule({
+            await scheduleStorageCheck({
+                username,
                 priority: 4,
                 delay: scanMinDelay
             })
         } else {
-            await reschedule({
+            await scheduleStorageCheck({
+                username,
                 priority: 5,
                 delay: increasingDelay(job.opts.delay)
             })
         }
     } else {
-        await reschedule({
+        await scheduleStorageCheck({
+            username,
             priority: 6,
             delay: scanMaxDelay
         })
@@ -97,21 +88,30 @@ queue.on('completed', async (job, {size}) => {
     scanComplete$.next({username, size})
 })
 
+queueEvents.on('failed', async ({jobId, failedReason}) =>
+    log.error(`Job ${jobId} failed:`, failedReason)
+)
+
+queueEvents.on('stalled', ({jobId}) =>
+    log.warn(`Job ${jobId} stalled`)
+)
+
 const scheduleStorageCheck = async ({username, delay: nominalDelay = scanMaxDelay, priority = 1}) => {
     const delay = spreadDelay(nominalDelay)
     log.debug(`Scheduling check for user ${username} with priority ${priority} ${delay ? `in ${timeDistance(delay)}` : 'now'}`)
-    await queue.removeJobs(rescanJobId(username, '*'))
-    return await queue.add({username}, {
-        jobId: rescanJobId(username),
+    // await queue.removeJobs(rescanJobId(username, '*'))
+    await queue.remove(jobId(username))
+    return await queue.add('rescan', {username}, {
+        jobId: jobId(username),
         priority,
         delay,
-        attempts: scamMaxRetries,
+        attempts: scanMaxRetries,
         backoff: {
             type: 'exponential',
             delay: scanInitialRetryDelay
         },
         removeOnComplete: 10,
-        removeOnFail: 10
+        removeOnFail: 100
     })
 }
 
@@ -135,15 +135,20 @@ const scheduleFullCheck = async () => {
     log.info('Scheduled check for all users')
 }
 
+const processJob = async job => {
+    const {username} = job.data
+    return {
+        size: await calculateUserStorage(username)
+    }
+}
+
 const startStorageCheck = async () => {
     log.info('Starting storage check processor')
     await scheduleFullCheck()
-    await logStats()
-    queue.process(scanConcurrency, async job => {
-        const {username} = job.data
-        return {
-            size: await calculateUserStorage(username)
-        }
+    
+    new Worker(QUEUE, processJob, {
+        connection,
+        concurrency: scanConcurrency
     })
 }
 

@@ -1,4 +1,4 @@
-const Redis = require('ioredis')
+const {Redis} = require('ioredis')
 const {redisHost} = require('./config')
 const log = require('#sepal/log').getLogger('kvstore')
 
