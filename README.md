@@ -7,7 +7,7 @@ SEPAL
 [![Crowdin](https://badges.crowdin.net/sepal/localized.svg)](https://crowdin.com/project/sepal)
 
 SEPAL is a cloud computing platform for geographical data processing. It enables users to quickly process large amount
-of data without high network bandwidth requirements or need to invest in high-performance computing infrastructure.
+of data without coding, high network bandwidth requirements or need to invest in high-performance computing infrastructure.
 
 --------------------------------------------------------------------------------
 
@@ -22,25 +22,7 @@ You can contribute to the translation effort on our [crowdin project](https://cr
 
 Background
 ----------
-Reducing Emissions from Deforestation and Forest Degradation (REDD) is an effort to create a financial value for the
-carbon stored in forests, offering incentives for developing countries to reduce emissions from forested lands and
-invest in low-carbon paths to sustainable development. "REDD+" goes beyond deforestation and forest degradation,
-and includes the role of conservation, sustainable management of forests and enhancement of forest carbon stocks. The
-UN-REDD Programme is the United Nations collaborative initiative on Reducing Emissions from Deforestation and forest
-Degradation (REDD) in developing countries.
-
-[FAO](http://www.fao.org/home/en/), as a member of the [UN-REDD Programme](http://www.un-redd.org/), is responsible for
-assisting countries in developing robust national forest
-monitoring systems (NFMS) and operational satellite land monitoring systems (SLMS) to help them to meet the measurement,
-reporting and verification  (MRV) requirements of the REDD+.  Furthermore, countries need help in establishing and
-maintaining  a SLMS capable of producing the information required to make consequential decisions about forest
-management; decisions that promote sustainable forest management and can potentially mitigate the effects of global
-climate change on society.  Specifically, a solution is needed to address the existing challenges countries face when
-developing forest monitoring systems, due to difficulties accessing and processing remotely sensed data; a key source
-of information for monitoring forest area and forest area change over large, often remote areas.
-
-To tackle the problems mentioned above, FAO and Norway are collaborating on the System for Earth Observation
-Data Access, Processing and Analysis for Land Monitoring (SEPAL).
+FAO and Norway are collaborating on the System for Earth Observation Data Access, Processing and Analysis for Land Monitoring (SEPAL).
 
 It  consists of the following components:
 
@@ -55,6 +37,14 @@ performance computing infrastructures.  The direct link to data repositories all
 imagery and other earth observation data for processing.  The software tools, such as FAO’s
 [Open Foris Geospatial Toolkit](http://www.openforis.org/tools/geospatial-toolkit.html)
 perform powerful image processing, are completely customizable and function similarly ‘on the cloud’ or on the desktop.
+
+RESOURCES - LEARN MORE
+=====
+SEPAL Documentation - https://docs.sepal.io
+SEPAL 'In Action' - https://www.fao.org/in-action/sepal/
+SEPAL FAO Publications - https://www.fao.org/in-action/sepal/resources/publications/
+SEPAL Online Course - https://www.fao.org/in-action/sepal/certified-course/
+
 
 Screenshots
 -----------
