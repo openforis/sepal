@@ -4972,7 +4972,8 @@
             "LOCKED": "Locked",
             "PENDING": "Pending"
         },
-        "storageStatus": {
+        "activity": {
+            "label": "Activity",
             "ACTIVE": "Active",
             "INACTIVE_LOW": "Inactive/Low",
             "INACTIVE_HIGH": "Inactive/High",
@@ -5187,7 +5188,7 @@
                     "label": "Budget update"
                 }
             },
-            "storageStatus": {
+            "activity": {
                 "active": {
                     "label": "Normal"
                 },

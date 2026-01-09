@@ -280,7 +280,7 @@ class _UserDetails extends React.Component {
     renderStatus() {
         const {userDetails: {status, googleUser}} = this.props
         return (
-            <UserStatus status={status} googleUser={googleUser} label={true}/>
+            <UserStatus status={status} googleUser={googleUser} showLabel={true}/>
         )
     }
 

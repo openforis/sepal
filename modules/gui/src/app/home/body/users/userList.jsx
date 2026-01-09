@@ -20,7 +20,7 @@ import {SearchBox} from '~/widget/searchBox'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {SortButton} from '~/widget/sortButton'
 
-import {StorageStatus} from './storageStatus'
+import {UserActivity} from './userActivity'
 import styles from './userList.module.css'
 import {UserStatus} from './userStatus'
 
@@ -180,7 +180,13 @@ export class UserList extends React.Component {
                     classNames: [styles.name]
                 })}
                 {this.renderColumnHeader({
-                    column: 'updateTime',
+                    column: 'activity.event',
+                    label: msg('user.activity.label'),
+                    defaultSortingDirection: 1,
+                    classNames: [styles.activity]
+                })}
+                {this.renderColumnHeader({
+                    column: 'activity.timestamp',
                     label: msg('user.userDetails.form.lastUpdate.label'),
                     defaultSortingDirection: -1,
                     classNames: [styles.updateTime]
@@ -208,12 +214,6 @@ export class UserList extends React.Component {
                     label: msg('user.report.resources.used'),
                     defaultSortingDirection: -1,
                     classNames: [styles.storageBudgetUsed, styles.number]
-                })}
-                {this.renderColumnHeader({
-                    column: 'storage.event',
-                    label: msg('user.status.label'),
-                    defaultSortingDirection: 1,
-                    classNames: [styles.storageStatus]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.budget.storageQuota',
@@ -356,7 +356,7 @@ class UserItem extends React.PureComponent {
 
     render() {
         const {user, hovered} = this.props
-        const {username, name, status, admin, googleUser, updateTime, quota: {budget, current, budgetUpdateRequest} = {}, storage} = user
+        const {username, name, status, admin, googleUser, updateTime, quota: {budget, current, budgetUpdateRequest} = {}, activity} = user
         return (
             <div
                 className={[
@@ -372,12 +372,12 @@ class UserItem extends React.PureComponent {
                 onClick={this.onClick}>
                 {this.renderUsername(username, admin, status, googleUser)}
                 {this.renderName(name)}
+                {this.renderActivity(activity)}
                 {this.renderLastUpdate(updateTime, budgetUpdateRequest)}
                 {this.renderInstanceSpendingMax(budget)}
                 {this.renderInstanceSpendingUsed(budget, current)}
                 {this.renderStorageSpendingMax(budget)}
                 {this.renderStorageSpendingUsed(budget, current)}
-                {this.renderStorageStatus(storage)}
                 {this.renderStorageQuotaMax(budget)}
                 {this.renderStorageQuotaUsed(budget, current)}
             </div>
@@ -451,9 +451,9 @@ class UserItem extends React.PureComponent {
         )
     }
 
-    renderStorageStatus(storage) {
+    renderActivity(activity) {
         return (
-            <StorageStatus status={storage?.event}/>
+            <UserActivity activity={activity}/>
         )
     }
 

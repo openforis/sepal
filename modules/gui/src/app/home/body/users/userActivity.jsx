@@ -1,10 +1,12 @@
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
 
 import {msg} from '~/translate'
 import {Icon} from '~/widget/icon'
+import {Tooltip} from '~/widget/tooltip'
 
-export class StorageStatus extends React.Component {
+export class UserActivity extends React.Component {
     static ACTIVE = 'ACTIVE'
     static INACTIVE_LOW = 'INACTIVE_LOW'
     static INACTIVE_HIGH = 'INACTIVE_HIGH'
@@ -13,28 +15,33 @@ export class StorageStatus extends React.Component {
     static PURGED = 'PURGED'
 
     render() {
-        const {status} = this.props
+        const {activity: {event, timestamp}} = this.props
         return (
-            <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
-                {this.getIcon(status)}
-                {status ? msg(`user.storageStatus.${status}`) : null}
-            </div>
+            <Tooltip
+                msg={moment(timestamp).fromNow()}
+                delay={250}
+                placement='topRight'>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                    {this.getIcon(event)}
+                    {event ? msg(`user.activity.${event}`) : null}
+                </div>
+            </Tooltip>
         )
     }
 
     getIcon(status) {
         switch(status) {
-            case StorageStatus.ACTIVE:
+            case UserActivity.ACTIVE:
                 return this.getOkIcon()
-            case StorageStatus.INACTIVE_LOW:
+            case UserActivity.INACTIVE_LOW:
                 return this.getInactiveLowIcon()
-            case StorageStatus.INACTIVE_HIGH:
+            case UserActivity.INACTIVE_HIGH:
                 return this.getInactiveHighIcon()
-            case StorageStatus.INACTIVE_UNKNOWN:
+            case UserActivity.INACTIVE_UNKNOWN:
                 return this.getInactiveUnknownIcon()
-            case StorageStatus.NOTIFIED:
+            case UserActivity.NOTIFIED:
                 return this.getNotifiedIcon()
-            case StorageStatus.PURGED:
+            case UserActivity.PURGED:
                 return this.getPurgedIcon()
             default:
                 return this.getUnknownIcon()
@@ -70,6 +77,6 @@ export class StorageStatus extends React.Component {
     }
 }
 
-StorageStatus.propTypes = {
-    status: PropTypes.string
+UserActivity.propTypes = {
+    activity: PropTypes.string
 }

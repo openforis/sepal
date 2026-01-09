@@ -20,14 +20,14 @@ export class UserStatus extends React.Component {
         status === UserStatus.ACTIVE
 
     render() {
-        const {status = 'UNKNOWN', label} = this.props
+        const {status = 'UNKNOWN', showLabel} = this.props
         return (
             <Button
                 chromeless
                 shape='none'
                 air='none'
                 icon={this.getIcon(status)}
-                label={label && msg(`user.status.${status}`).toUpperCase()}
+                label={showLabel && msg(`user.status.${status}`).toUpperCase()}
             />
         )
     }
@@ -69,5 +69,6 @@ export class UserStatus extends React.Component {
 
 UserStatus.propTypes = {
     googleUser: PropTypes.any,
+    showLabel: PropTypes.any,
     status: PropTypes.string
 }
