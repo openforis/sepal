@@ -1,9 +1,9 @@
 const {Queue, QueueEvents, Worker, Job} = require('bullmq')
 const {firstValueFrom} = require('rxjs')
 const {formatDistance} = require('date-fns')
-// const {eraseUserStorage} = require('./filesystem')
+const {eraseUserStorage} = require('./filesystem')
 const {redisHost, inactivityTimeout, inactivityNotificationDelay, inactivityGracePeriodTimeout, inactivityMaxSpread, inactivityUserStorageThreshold, inactivityMaxRetries, inactivityInitialRetryDelay, inactivityConcurrency} = require('./config')
-// const {sendEmail} = require('./email')
+const {sendEmail} = require('./email')
 const {addEvent} = require('./database')
 const {getMostRecentAccessByUser$, getMostRecentAccess$} = require('./http')
 const {getUserStorage, DB, getInitialized, setInitialized} = require('./kvstore')
@@ -37,15 +37,17 @@ const STORAGE = {
 }
 
 const notify = async username => {
-    log.info(`DRY RUN - not sending inactivity notification email to user ${username}`)
-    // log.info(`User ${username} still inactive with significant storage, sending notification email`)
-    // await sendEmail({username, subject: 'Inactivity notification', content: 'Due to long inactivity, your storage will be erased soon.'})
+    if (username.startsWith('lookap')) {
+        log.info(`User ${username} still inactive with significant storage, sending notification email - TEST MODE`)
+        await sendEmail({username: 'lookap', subject: 'TEST - Inactivity notification', content: 'Due to long inactivity, your storage will be erased soon.'})
+    }
 }
 
 const erase = async username => {
-    log.info(`DRY RUN - not erasing storage for inactive user ${username}`)
-    // log.info(`User ${username} still inactive with significant storage, erasing storage`)
-    // await eraseUserStorage(username)
+    if (username.startsWith('lookap')) {
+        log.info(`User ${username} still inactive with significant storage, erasing storage - TEST MODE`)
+        await eraseUserStorage(username)
+    }
 }
 
 const isActive = async username => {
@@ -118,7 +120,7 @@ const notifyInactiveUser = async ({username}) => {
 const eraseInactiveUserStorage = async ({username}) => {
     switch (await getStorageStatus(username)) {
         case STORAGE.INACTIVE_HIGH:
-            log.info(`User ${username} inactive with significant storage, erasing storage [DRY RUN]`)
+            log.info(`User ${username} inactive with significant storage, erasing storage`)
             await erase(username)
             await addEvent({username, event: 'PURGED'})
             break
