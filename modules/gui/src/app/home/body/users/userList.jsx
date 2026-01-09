@@ -186,7 +186,7 @@ export class UserList extends React.Component {
                     classNames: [styles.activity]
                 })}
                 {this.renderColumnHeader({
-                    column: 'activity.timestamp',
+                    column: 'updateTime',
                     label: msg('user.userDetails.form.lastUpdate.label'),
                     defaultSortingDirection: -1,
                     classNames: [styles.updateTime]
