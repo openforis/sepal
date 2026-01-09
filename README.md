@@ -40,9 +40,9 @@ perform powerful image processing, are completely customizable and function simi
 
 RESOURCES - LEARN MORE
 =====
-SEPAL Documentation - https://docs.sepal.io
-SEPAL 'In Action' - https://www.fao.org/in-action/sepal/
-SEPAL FAO Publications - https://www.fao.org/in-action/sepal/resources/publications/
+SEPAL Documentation - https://docs.sepal.io  
+SEPAL 'In Action' - https://www.fao.org/in-action/sepal/  
+SEPAL FAO Publications - https://www.fao.org/in-action/sepal/resources/publications/  
 SEPAL Online Course - https://www.fao.org/in-action/sepal/certified-course/
 
 
