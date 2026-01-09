@@ -13,7 +13,7 @@
         "bullmq": "^5.66.4",
         "commander": "^14.0.2",
         "date-fns": "^4.1.0",
-        "ioredis": "^5.9.0",
+        "ioredis": "^5.9.1",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
         "moment": "^2.30.1",
