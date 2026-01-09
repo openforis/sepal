@@ -87,6 +87,7 @@ const markInactiveUser = async ({username}) => {
             throw new Error(`Unknown storage size for user ${username}`)
         case STORAGE.ACTIVE:
             log.info(`User ${username} now active, no action`)
+            await addEvent({username, event: 'ACTIVE'})
             break
     }
 }
@@ -109,6 +110,7 @@ const notifyInactiveUser = async ({username}) => {
             throw new Error(`Unknown storage size for user ${username}`)
         case STORAGE.ACTIVE:
             log.info(`User ${username} now active, not sending notification email`)
+            await addEvent({username, event: 'ACTIVE'})
             break
     }
 }
@@ -130,6 +132,7 @@ const eraseInactiveUserStorage = async ({username}) => {
             throw new Error(`Unknown storage size for user ${username}`)
         case STORAGE.ACTIVE:
             log.info(`User ${username} now active, not erasing storage`)
+            await addEvent({username, event: 'ACTIVE'})
             break
     }
 }
