@@ -38,7 +38,7 @@ imagery and other earth observation data for processing.  The software tools, su
 [Open Foris Geospatial Toolkit](http://www.openforis.org/tools/geospatial-toolkit.html)
 perform powerful image processing, are completely customizable and function similarly ‘on the cloud’ or on the desktop.
 
-RESOURCES - LEARN MORE
+Resources - Learn More
 =====
 SEPAL Documentation - https://docs.sepal.io  
 SEPAL 'In Action' - https://www.fao.org/in-action/sepal/  
