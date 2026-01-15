@@ -149,9 +149,11 @@ class _UserBrowser extends React.Component {
                         ...user
                     }
                 } else {
-                    users[index] = user
+                    users[index] = {
+                        activity: users[index].activity,
+                        ...user
+                    }
                 }
-
             }
             this.updateUsers(users)
         }

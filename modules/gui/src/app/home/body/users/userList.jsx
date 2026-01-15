@@ -356,7 +356,7 @@ class UserItem extends React.PureComponent {
 
     render() {
         const {user, hovered} = this.props
-        const {username, name, status, admin, googleUser, updateTime, quota: {budget, current, budgetUpdateRequest} = {}, activity} = user
+        const {username, name, status, admin, googleUser, updateTime, quota: {budget, current, budgetUpdateRequest} = {}, activity = {}} = user
         return (
             <div
                 className={[
