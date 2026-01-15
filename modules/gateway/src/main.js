@@ -39,7 +39,7 @@ const main = async () => {
     const userStore = UserStore(redis, event$)
     const sessionStore = new RedisSessionStore({client: redis})
 
-    const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore, userStore)
+    const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore)
     const {authMiddleware} = AuthMiddleware(userStore)
     const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
     const {proxyEndpoints} = Proxy(userStore, authMiddleware, googleAccessTokenMiddleware)
