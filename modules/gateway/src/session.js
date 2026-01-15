@@ -3,7 +3,7 @@ const {toPromise} = require('#sepal/util')
 const {usernameTag} = require('./tag')
 const {getSessionUsername} = require('./user')
 
-const SessionManager = (sessionStore, userStore) => {
+const SessionManager = sessionStore => {
     const getAllSessions = async () => {
         const [sessions] = await toPromise(
             callback => sessionStore.all(callback)
@@ -32,7 +32,6 @@ const SessionManager = (sessionStore, userStore) => {
                 async sessionId => await removeSession(sessionId)
             )
         ).then(async () => {
-            await userStore.removeUser(username)
             return true
         })
     }
