@@ -93,7 +93,7 @@ const getMostRecentAccess$ = username =>
         map(({timestamp}) => timestamp)
     )
 
-const getUser$ = async username => {
+const getUser$ = username => {
     log.debug(() => `Getting user: ${username}`)
     return get$(`https://${sepalHost}/api/user/info`, {
         username: sepalUsername,

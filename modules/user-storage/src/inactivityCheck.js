@@ -5,12 +5,40 @@ const {eraseUserStorage} = require('./filesystem')
 const {redisHost, inactivityTimeout, inactivityNotificationDelay, inactivityGracePeriodTimeout, inactivityMaxSpread, inactivityUserStorageThreshold, inactivityMaxRetries, inactivityInitialRetryDelay, inactivityConcurrency} = require('./config')
 const {sendEmail} = require('./email')
 const {addEvent} = require('./database')
-const {getMostRecentAccessByUser$, getMostRecentAccess$} = require('./http')
+const {getMostRecentAccessByUser$, getMostRecentAccess$, getUser$} = require('./http')
 const {getUserStorage, DB, getInitialized, setInitialized} = require('./kvstore')
 const {Redis} = require('ioredis')
 const log = require('#sepal/log').getLogger('inactivityCheck')
 
 const QUEUE = 'inactivity-check'
+
+const getEmailSubject = () => {
+    const environment = process.env.DEPLOY_ENVIRONMENT
+    return `Action required to retain your SEPAL data ${environment !== 'PROD' ? `in ${environment} environment` : ''}`
+}
+
+const getEmailMessage = name => {
+    const environment = process.env.DEPLOY_ENVIRONMENT
+    return `
+        Dear ${name},
+        <br><br>
+        We are writing to inform you that your SEPAL account at <b>${process.env.SEPAL_HOST}</b> ${environment !== 'PROD' ? `(<b>${environment}&nbsp;environment</b>)` : ''} has not shown any recent activity for an extended period.
+        <br><br>
+        As SEPAL incurs ongoing cloud storage costs for user data, we periodically review inactive accounts. If you wish to retain your existing data, you are required to confirm your continued use of the service by logging in to your SEPAL account.
+        <br><br>
+        If no login activity is detected within one (1) month from the date of this message, your account data will be permanently deleted. This deletion will occur automatically and without further notification, and the data will not be recoverable.
+        <br><br>
+        To retain your data, simply log in to your account at any time during the grace period.
+        <br><br>
+        If you no longer require your SEPAL account data, no action is needed.
+        <br><br>
+        If you have questions or require assistance, please contact our support team.
+        <br><br>
+        Sincerely,
+        <br>
+        The SEPAL Team
+    `
+}
 
 const connection = new Redis({
     host: redisHost,
@@ -37,14 +65,19 @@ const STORAGE = {
 }
 
 const notify = async username => {
-    if (username.startsWith('lookap')) {
+    if (username.startsWith('lookap')) { // REMOVE
         log.info(`User ${username} still inactive with significant storage, sending notification email - TEST MODE`)
-        await sendEmail({username: 'lookap', subject: 'TEST - Inactivity notification', content: 'Due to long inactivity, your storage will be erased soon.'})
+        const {name} = await firstValueFrom(getUser$('lookap1'))
+        await sendEmail({
+            username: 'lookap1',
+            subject: getEmailSubject(),
+            content: getEmailMessage(name)
+        })
     }
 }
 
 const erase = async username => {
-    if (username.startsWith('lookap')) {
+    if (username.startsWith('lookap')) { // REMOVE
         log.info(`User ${username} still inactive with significant storage, erasing storage - TEST MODE`)
         await eraseUserStorage(username)
     }
@@ -251,6 +284,8 @@ const processJob = async job => {
 
 const startInactivityCheck = async () => {
     log.info('Starting inactivity check processor')
+
+    await notify('lookap1')
 
     if (!await getInitialized()) {
         await scheduleFullCheck()
