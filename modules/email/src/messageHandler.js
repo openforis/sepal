@@ -31,7 +31,7 @@ const handlers = {
                     log.error(`Cannot send email to user ${username} - no email address found`)
                 }
             } catch (error) {
-                log.error(`Cannot send email to user ${username} - error feztching user info:`, error)
+                log.error(`Cannot send email to user ${username} - error fetching user info:`, error)
             }
         } else {
             logError(key, msg)
