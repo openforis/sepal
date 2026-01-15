@@ -285,8 +285,6 @@ const processJob = async job => {
 const startInactivityCheck = async () => {
     log.info('Starting inactivity check processor')
 
-    await notify('lookap1')
-
     if (!await getInitialized()) {
         await scheduleFullCheck()
         await setInitialized()
