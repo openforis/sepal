@@ -2,7 +2,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {msg} from '~/translate'
-import {Button} from '~/widget/button'
 import {Icon} from '~/widget/icon'
 
 export class UserStatus extends React.Component {
@@ -22,13 +21,10 @@ export class UserStatus extends React.Component {
     render() {
         const {status = 'UNKNOWN', showLabel} = this.props
         return (
-            <Button
-                chromeless
-                shape='none'
-                air='none'
-                icon={this.getIcon(status)}
-                label={showLabel && msg(`user.status.${status}`).toUpperCase()}
-            />
+            <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
+                {this.getIcon(status)}
+                {showLabel && msg(`user.status.${status}`)}
+            </div>
         )
     }
 

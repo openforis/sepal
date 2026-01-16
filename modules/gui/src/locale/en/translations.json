@@ -4968,7 +4968,7 @@
         "status": {
             "label": "Status",
             "UNKNOWN": "Unknown",
-            "ACTIVE": "Active",
+            "ACTIVE": "Operational",
             "LOCKED": "Locked",
             "PENDING": "Pending"
         },

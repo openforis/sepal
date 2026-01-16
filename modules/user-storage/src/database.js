@@ -51,15 +51,14 @@ const addEvent = async ({username, event}) => {
 const getMostRecentEvents = async () => {
     log.debug('Getting most recent event for any user')
     const [results, _fields] = await getPool().query(`
-        SELECT h.username, h.event, h.timestamp
-        FROM ${DATABASE_NAME}.${TABLE_NAME} h
-        JOIN (
-            SELECT username, MAX(timestamp) AS max_ts
+        SELECT t.id, t.username, t.event, t.timestamp
+        FROM ${DATABASE_NAME}.${TABLE_NAME} t
+        INNER JOIN (
+            SELECT username, MAX(id) AS max_id
             FROM ${DATABASE_NAME}.${TABLE_NAME}
             GROUP BY username
-        ) m ON h.username = m.username
-        AND h.timestamp = m.max_ts
-        ORDER BY h.username
+        ) AS sub
+        ON t.username = sub.username AND t.id = sub.max_id        
     `)
     return results.reduce((acc, {username, event, timestamp}) => {
         acc[username] = {event, timestamp}
@@ -70,11 +69,27 @@ const getMostRecentEvents = async () => {
 const getUserEvents = async username => {
     log.debug(`Getting events for user: ${username}`)
     const [results, _fields] = await getPool().query(`
-        SELECT event, timestamp
-        FROM ${DATABASE_NAME}.${TABLE_NAME}
-        WHERE username = ?
+        SELECT username, event, timestamp
+        FROM (
+            SELECT 
+                username,
+                event,
+                timestamp,
+                @prev_event := @current_event AS prev_event,
+                @current_event := event AS current_event,
+                @row_num := IF(@prev_event = event, @row_num + 1, 1) AS row_num
+            FROM (
+                SELECT username, event, timestamp
+                FROM ${DATABASE_NAME}.${TABLE_NAME}
+                WHERE username = ? 
+                AND event != 'INACTIVE_UNKNOWN'
+                ORDER BY timestamp DESC
+            ) AS filtered_events
+            CROSS JOIN (SELECT @current_event := '', @prev_event := '', @row_num := 0) AS vars
+        ) AS numbered_events
+        WHERE row_num = 1
         ORDER BY timestamp DESC
-        LIMIT 100
+        LIMIT 10
     `, [username])
     return results
 }

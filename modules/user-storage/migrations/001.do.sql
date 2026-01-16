@@ -36,7 +36,7 @@ END;
 
 CALL user_storage.DropIndexIfExists('user_storage', 'history', 'idx_history_1');
 ALTER TABLE `user_storage`.`history`
-ADD INDEX `idx_history_1` (`username`, `timestamp`) USING BTREE;
+ADD INDEX `idx_history_1` (`username`, `timestamp`, `id`) USING BTREE;
 
 CALL user_storage.DropIndexIfExists('user_storage', 'history', 'idx_history_2');
 ALTER TABLE `user_storage`.`history`

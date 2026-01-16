@@ -372,7 +372,7 @@ class UserItem extends React.PureComponent {
                 onClick={this.onClick}>
                 {this.renderUsername(username, admin, status, googleUser)}
                 {this.renderName(name)}
-                {this.renderActivity(activity)}
+                {this.renderActivity(user)}
                 {this.renderLastUpdate(updateTime, budgetUpdateRequest)}
                 {this.renderInstanceSpendingMax(budget)}
                 {this.renderInstanceSpendingUsed(budget, current)}
@@ -451,9 +451,9 @@ class UserItem extends React.PureComponent {
         )
     }
 
-    renderActivity(activity) {
+    renderActivity(user) {
         return (
-            <UserActivity activity={activity}/>
+            <UserActivity user={user}/>
         )
     }
 

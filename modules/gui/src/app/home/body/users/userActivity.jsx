@@ -2,26 +2,52 @@ import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import api from '~/apiRegistry'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {msg} from '~/translate'
 import {Icon} from '~/widget/icon'
+import {Layout} from '~/widget/layout'
 import {Tooltip} from '~/widget/tooltip'
 
-export class UserActivity extends React.Component {
-    static ACTIVE = 'ACTIVE'
-    static INACTIVE_LOW = 'INACTIVE_LOW'
-    static INACTIVE_HIGH = 'INACTIVE_HIGH'
-    static INACTIVE_UNKNOWN = 'INACTIVE_UNKNOWN'
-    static NOTIFIED = 'NOTIFIED'
-    static PURGED = 'PURGED'
+const getUserEvents$ = username =>
+    api.userStorage.getUserEvents$(username)
+
+const ACTIVE = 'ACTIVE'
+const INACTIVE_LOW = 'INACTIVE_LOW'
+const INACTIVE_HIGH = 'INACTIVE_HIGH'
+const INACTIVE_UNKNOWN = 'INACTIVE_UNKNOWN'
+const NOTIFIED = 'NOTIFIED'
+const PURGED = 'PURGED'
+
+class _UserActivity extends React.Component {
+
+    state = {
+        activity: null
+    }
+
+    loadHistory() {
+        const {user: {username}, stream} = this.props
+        stream('LOAD_USER_EVENTS',
+            getUserEvents$(username),
+            events => this.setState({events})
+        )
+    }
+
+    onTooltipVisible(visible) {
+        const {events} = this.state
+        visible && !events && this.loadHistory()
+    }
 
     render() {
-        const {activity: {event, timestamp}} = this.props
+        const {user: {activity: {event}}} = this.props
         return (
             <Tooltip
-                msg={moment(timestamp).fromNow()}
+                msg={this.renderHistory()}
+                onVisibleChange={visible => this.onTooltipVisible(visible)}
                 delay={250}
-                placement='topRight'>
-                <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                placement='bottomLeft'>
+                <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
                     {this.getIcon(event)}
                     {event ? msg(`user.activity.${event}`) : null}
                 </div>
@@ -29,19 +55,42 @@ export class UserActivity extends React.Component {
         )
     }
 
+    renderHistory() {
+        const {events} = this.state
+        return (
+            <div style={{display: 'flex', flexDirection: 'column', gap: '.5rem'}}>
+                {events?.map(({event, timestamp}) => this.renderEvent({event, timestamp}))}
+            </div>
+        )
+    }
+
+    renderEvent({event, timestamp}) {
+        return (
+            <Layout type='horizontal-nowrap' alignment='spaced'>
+                <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
+                    {this.getIcon(event)}
+                    {event ? msg(`user.activity.${event}`) : null}
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
+                    {timestamp ? moment(timestamp).format('LLL') : null}
+                </div>
+            </Layout>
+        )
+    }
+
     getIcon(status) {
         switch(status) {
-            case UserActivity.ACTIVE:
+            case ACTIVE:
                 return this.getOkIcon()
-            case UserActivity.INACTIVE_LOW:
+            case INACTIVE_LOW:
                 return this.getInactiveLowIcon()
-            case UserActivity.INACTIVE_HIGH:
+            case INACTIVE_HIGH:
                 return this.getInactiveHighIcon()
-            case UserActivity.INACTIVE_UNKNOWN:
+            case INACTIVE_UNKNOWN:
                 return this.getInactiveUnknownIcon()
-            case UserActivity.NOTIFIED:
+            case NOTIFIED:
                 return this.getNotifiedIcon()
-            case UserActivity.PURGED:
+            case PURGED:
                 return this.getPurgedIcon()
             default:
                 return this.getUnknownIcon()
@@ -77,6 +126,11 @@ export class UserActivity extends React.Component {
     }
 }
 
+export const UserActivity = compose(
+    _UserActivity,
+    connect()
+)
+
 UserActivity.propTypes = {
-    activity: PropTypes.string
+    user: PropTypes.any
 }
