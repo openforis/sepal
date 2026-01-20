@@ -4968,9 +4968,18 @@
         "status": {
             "label": "",
             "UNKNOWN": "",
-            "ACTIVE": "Activo",
+            "ACTIVE": "",
             "LOCKED": "",
             "PENDING": "Pendiente"
+        },
+        "activity": {
+            "label": "",
+            "ACTIVE": "Activo",
+            "INACTIVE_LOW": "",
+            "INACTIVE_HIGH": "",
+            "INACTIVE_UNKNOWN": "",
+            "NOTIFIED": "",
+            "PURGED": ""
         },
         "role": {
             "admin": "",
@@ -5176,6 +5185,17 @@
                     "label": ""
                 },
                 "budgetUpdateRequest": {
+                    "label": ""
+                }
+            },
+            "activity": {
+                "active": {
+                    "label": ""
+                },
+                "notified": {
+                    "label": ""
+                },
+                "erased": {
                     "label": ""
                 }
             }
