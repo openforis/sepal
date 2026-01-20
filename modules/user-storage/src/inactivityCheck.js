@@ -67,9 +67,9 @@ const STORAGE = {
 const notify = async username => {
     if (username.startsWith('lookap')) { // REMOVE
         log.info(`User ${username} still inactive with significant storage, sending notification email - TEST MODE`)
-        const {name} = await firstValueFrom(getUser$('lookap1'))
+        const {name} = await firstValueFrom(getUser$(username))
         await sendEmail({
-            username: 'lookap1',
+            username,
             subject: getEmailSubject(),
             content: getEmailMessage(name)
         })
