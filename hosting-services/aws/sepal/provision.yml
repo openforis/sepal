@@ -4,7 +4,58 @@
   gather_facts: false
 
   tasks:
-    # Sepal-Storage
+
+    # Sepal-Swarm security group
+
+    - name: Create Sepal-Swarm security group
+      ec2_group:
+        name: "Sepal-Swarm"
+        description: The Sepal-Swarm Security Group
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        rules:
+          - proto: tcp
+            from_port: 7496
+            to_port: 7496
+            group_name: "Sepal-Swarm"
+            rule_desc: 'Docker swarm container discovery (TCP)'
+          - proto: udp
+            from_port: 7946
+            to_port: 7946
+            group_name: "Sepal-Swarm"
+            rule_desc: 'Docker swarm container discovery (UDP)'
+          - proto: udp
+            from_port: 4789
+            to_port: 4789
+            group_name: "Sepal-Swarm"
+            rule_desc: 'Docker swarm VXLAN overlay data'
+        rules_egress:
+          - proto: all
+            from_port: 0
+            to_port: 65535
+            cidr_ip: 0.0.0.0/0
+      register: sepal_swarm_group
+
+    # Sepal-Swarm-Manager security group
+
+    - name: Create Sepal-Swarm-Manager security group
+      ec2_group:
+        name: "Sepal-Swarm-Manager"
+        description: The Sepal-Swarm-Manager Security Group
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        rules:
+          - proto: tcp
+            from_port: 2377
+            to_port: 2377
+            group_name: "Sepal-Swarm"
+            rule_desc: 'Docker swarm management'
+        rules_egress:
+          - proto: all
+            from_port: 0
+            to_port: 65535
+            cidr_ip: 0.0.0.0/0
+      register: sepal_swarm_manager_group
+
+    # Sepal-Storage security group
 
     - name: Create Sepal-Storage security group
       ec2_group:
@@ -29,11 +80,14 @@
             cidr_ip: 0.0.0.0/0
       register: sepal_storage_group
 
+    # Sepal-Storage instance
+
     - name: Provision Sepal-Storage instance
       ec2_instance:
         key_name: "{{ lookup('env', 'AWS_REGION') }}"
         security_groups: 
           - "Sepal-Storage"
+          - "Sepal-Swarm"
         instance_type: m5a.large
         image_id: "{{ lookup('env', 'AWS_AMI') }}"
         region: "{{ lookup('env', 'AWS_REGION') }}"
@@ -72,9 +126,9 @@
       register: ec2_sepal_storage
 
     - set_fact:
-        sepal_storage_ip: "{{ ec2_sepal_storage.instances[0].public_ip_address }}"
+        SEPAL_STORAGE_PUBLIC_IP: "{{ ec2_sepal_storage.instances[0].public_ip_address }}"
 
-    # Sepal
+    # Sepal security group
 
     - name: Create Sepal security group
       ec2_group:
@@ -108,11 +162,6 @@
             cidr_ip: 172.31.0.0/16
             rule_desc: 'Subnet'
           - proto: tcp
-            from_port: 5672
-            to_port: 5672
-            cidr_ip: "{{ sepal_storage_ip }}/32"
-            rule_desc: 'Sepal-Storage'
-          - proto: tcp
             from_port: 22
             to_port: 22
             cidr_ip: "{{ local_ip_address }}/32"
@@ -129,16 +178,18 @@
         subnet_id: "{{ lookup('env', 'AWS_SUBNET_ID') }}"
         security_groups: 
           - "Sepal"
+          - "Sepal-Swarm"
+          - "Sepal-Swarm-Manager"
         allow_reassignment: true
         secondary_private_ip_address_count: 1
         delete_on_termination: true
       register: sepal_eni
 
+    # Sepal instance
+
     - name: Provision Sepal instance
       ec2_instance:
         key_name: "{{ lookup('env', 'AWS_REGION') }}"
-        # security_groups: 
-        #   - "Sepal"
         instance_type: "{{ lookup('env', 'AWS_INSTANCE_TYPE') }}"
         image_id: "{{ lookup('env', 'AWS_AMI') }}"
         region: "{{ lookup('env', 'AWS_REGION') }}"
@@ -190,9 +241,9 @@
       register: ec2_sepal
 
     - set_fact:
-        sepal_ip: "{{ ec2_sepal.instances[0].public_ip_address }}"
+        SEPAL_PUBLIC_IP: "{{ ec2_sepal.instances[0].public_ip_address }}"
 
-    # Sepal-Apps
+    # Sepal-Apps security group
 
     - name: Create Sepal-Apps security group
       ec2_group:
@@ -203,7 +254,7 @@
           - proto: tcp
             from_port: 80
             to_port: 80
-            cidr_ip: "{{ sepal_ip }}/32"
+            cidr_ip: "{{ SEPAL_PUBLIC_IP }}/32"
             rule_desc: 'Sepal'
           - proto: tcp
             from_port: 22
@@ -221,6 +272,8 @@
             to_port: 65535
             cidr_ip: 0.0.0.0/0
       register: sepal_apps_group
+
+    # Sepal-Apps instance
 
     - name: Provision Sepal-Apps instance
       ec2_instance:
@@ -266,7 +319,9 @@
       register: ec2_sepal_apps
 
     - set_fact:
-        sepal_apps_ip: "{{ ec2_sepal_apps.instances[0].public_ip_address }}"
+        SEPAL_APPS_PUBLIC_IP: "{{ ec2_sepal_apps.instances[0].public_ip_address }}"
+
+    # Sepal-Apps DNS
 
     - name: Add DNS entry for Sepal-Apps instance
       amazon.aws.route53:
@@ -274,11 +329,12 @@
         zone: "{{ lookup('env', 'AWS_ROUTE_53_ZONE') }}"
         record: "{{ lookup('env', 'SEPAL_APPS_HOST') }}"
         type: A
-        value: "{{ sepal_apps_ip }}"
+        value: "{{ SEPAL_APPS_PUBLIC_IP }}"
         overwrite: true
         wait: true
             
     # Assign Sepal Instance Volume tags
+
     - amazon.aws.ec2_tag:
         region: "{{ lookup('env', 'AWS_REGION') }}"
         resource: "{{ ec2_sepal.instances[0].block_device_mappings[0].ebs.volume_id }}"
@@ -304,6 +360,7 @@
           Name: "Sepal {{ lookup('env', 'DEPLOY_ENVIRONMENT') }} Log"
 
     # Wait for SSH to be available on instances
+
     - name: Wait for SSH to be available on Sepal
       local_action: wait_for host="{{ item.public_ip_address }}"
                     port=22

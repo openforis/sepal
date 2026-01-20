@@ -72,31 +72,29 @@ class _SceneSelection extends React.Component {
         const {form, activatable: {deactivate}, stream} = this.props
         const loading = stream('LOAD_SCENES').active
         return (
-            <React.Fragment>
-                <Form.Panel
-                    policy={policy}
-                    className={styles.panel}
-                    form={form}
-                    type='center'
-                    onApply={({selectedScenes}) => this.onApply(selectedScenes)}
-                    onCancel={() => this.deselectSceneArea()}
-                    onClose={deactivate}>
-                    <Panel.Header
-                        icon='images'
-                        title={msg('process.mosaic.panel.autoSelectScenes.form.selectScenes')}/>
+            <Form.Panel
+                className={styles.panel}
+                placement='modal'
+                form={form}
+                policy={policy}
+                onApply={({selectedScenes}) => this.onApply(selectedScenes)}
+                onCancel={() => this.deselectSceneArea()}
+                onClose={deactivate}>
+                <Panel.Header
+                    icon='images'
+                    title={msg('process.mosaic.panel.autoSelectScenes.form.selectScenes')}/>
 
-                    <Panel.Content className={loading ? styles.loading : null}
-                        scrollable={false}
-                        noVerticalPadding
-                    >
-                        {loading
-                            ? this.renderProgress()
-                            : this.renderScenes()}
-                    </Panel.Content>
+                <Panel.Content className={loading ? styles.loading : null}
+                    scrollable={false}
+                    noVerticalPadding
+                >
+                    {loading
+                        ? this.renderProgress()
+                        : this.renderScenes()}
+                </Panel.Content>
 
-                    <Form.PanelButtons/>
-                </Form.Panel>
-            </React.Fragment>
+                <Form.PanelButtons/>
+            </Form.Panel>
         )
     }
 

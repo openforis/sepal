@@ -10,19 +10,17 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bull": "^4.16.5",
+        "bullmq": "^5.66.5",
         "commander": "^14.0.2",
         "date-fns": "^4.1.0",
-        "ioredis": "^5.8.2",
+        "ioredis": "^5.9.2",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
         "moment": "^2.30.1",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
         "uuid": "^13.0.0",
-        "ws": "^8.18.3"
-    },
-    "devDependencies": {
+        "ws": "^8.19.0"
     },
     "imports": {
         "#sepal/*": "sepal/src/*.js",

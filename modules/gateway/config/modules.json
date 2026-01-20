@@ -11,5 +11,6 @@
   "terminal": "terminal",
   "user": "user",
   "userAssets": "user-assets",
-  "userFiles": "user-files"
+  "userFiles": "user-files",
+  "userStorage": "user-storage"
 }

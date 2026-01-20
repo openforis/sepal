@@ -3,20 +3,23 @@ const {firstValueFrom} = require('rxjs')
 
 const log = require('#sepal/log').getLogger('websocket/event')
 
-const MODULE_UP = 'moduleUp'
-const MODULE_DOWN = 'moduleDown'
-const USER_UP = 'userUp'
-const USER_DOWN = 'userDown'
-const USER_UPDATED = 'userUpdated'
-const CLIENT_UP = 'clientUp'
-const CLIENT_DOWN = 'clientDown'
-const CLIENT_VERSION_MISMATCH = 'clientVersionMismatch'
-const SUBSCRIPTION_UP = 'subscriptionUp'
-const SUBSCRIPTION_DOWN = 'subscriptionDown'
-const GOOGLE_ACCESS_TOKEN_ADDED = 'googleAccessTokenAdded'
-const GOOGLE_ACCESS_TOKEN_UPDATED = 'googleAccessTokenUpdated'
-const GOOGLE_ACCESS_TOKEN_REMOVED = 'googleAccessTokenRemoved'
+const {
+    MODULE_UP,
+    MODULE_DOWN,
+    USER_UP,
+    USER_DOWN,
+    USER_UPDATED,
+    CLIENT_UP,
+    CLIENT_DOWN,
+    CLIENT_VERSION_MISMATCH,
+    SUBSCRIPTION_UP,
+    SUBSCRIPTION_DOWN,
+    GOOGLE_ACCESS_TOKEN_ADDED,
+    GOOGLE_ACCESS_TOKEN_UPDATED,
+    GOOGLE_ACCESS_TOKEN_REMOVED,
+} = require('#sepal/event/definitions')
 
+// const initializeEvents = ({servers, clients, userStore, event$, userUp$, userDown$, clientUp$, clientDown$}) => {
 const initializeEvents = ({servers, clients, userStore, event$}) => {
 
     const moduleUp = ({module}) => {
@@ -42,11 +45,13 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
     const userUp = ({user}) => {
         log.debug(`${userTag(user.username)} up`)
         servers.broadcastEvent(USER_UP, {user})
+        // userUp$.next(user)
     }
 
     const userDown = ({user}) => {
         log.debug(`${userTag(user.username)} down`)
         servers.broadcastEvent(USER_DOWN, {user})
+        // userDown$.next(user)
     }
 
     const userUpdated = ({user}) => {
@@ -58,11 +63,13 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
     const clientUp = ({username, clientId}) => {
         log.debug(`${clientTag(username, clientId)} up`)
         servers.broadcastEvent(CLIENT_UP, {username, clientId})
+        // clientUp$.next({username, clientId})
     }
     
     const clientDown = ({username, clientId}) => {
         log.debug(`${clientTag(username, clientId)} down`)
         servers.broadcastEvent(CLIENT_DOWN, {username, clientId})
+        // clientDown$.next({username, clientId})
     }
     
     const clientVersionMismatch = ({username, clientId}) => {
@@ -139,10 +146,5 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
 }
 
 module.exports = {
-    initializeEvents,
-    MODULE_UP, MODULE_DOWN,
-    USER_UP, USER_DOWN, USER_UPDATED,
-    CLIENT_UP, CLIENT_DOWN, CLIENT_VERSION_MISMATCH,
-    SUBSCRIPTION_UP, SUBSCRIPTION_DOWN,
-    GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED, GOOGLE_ACCESS_TOKEN_UPDATED
+    initializeEvents
 }

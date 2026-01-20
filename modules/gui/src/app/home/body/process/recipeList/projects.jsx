@@ -140,7 +140,8 @@ class _Projects extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                type='modal'>
+                placement='modal'
+                onBackdropClick={this.close}>
                 <Panel.Header
                     icon='folder-tree'
                     title={msg('process.projects.title')}

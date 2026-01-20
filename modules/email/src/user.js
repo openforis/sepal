@@ -12,7 +12,7 @@ const getEmailNotificationsEnabled = async emailAddress => {
     }
 }
 
-const filterEmailNotificationsEnabled = async emailAddressOrAddresses => {
+const filterEmailNotificationsEnabled = async (emailAddressOrAddresses, forceEmailNotificationEnabled) => {
     if (!emailAddressOrAddresses) {
         return []
     }
@@ -21,7 +21,7 @@ const filterEmailNotificationsEnabled = async emailAddressOrAddresses => {
     const emailAddressesEnabled = await Promise.all(
         emailAddresses.map(async emailAddress => ({
             emailAddress,
-            enabled: await getEmailNotificationsEnabled(emailAddress)
+            enabled: forceEmailNotificationEnabled || await getEmailNotificationsEnabled(emailAddress)
         }))
     )
 

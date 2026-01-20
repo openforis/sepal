@@ -69,9 +69,9 @@ class _UserSession extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                placement='modal'
                 form={form}
                 statePath='userSessions.userSessionPanel'
-                type='modal'
                 onApply={session => this.updateSession(session)}
                 onClose={() => this.unselectSession()}>
                 <Panel.Header

@@ -91,6 +91,13 @@ const endpoints = [
     },
     {
         prefix: true,
+        path: '/api/user-storage',
+        target: `http://${modules.userStorage}`,
+        ws: false,
+        authenticate: true
+    },
+    {
+        prefix: true,
         path: '/api/tasks',
         target: `http://${modules.sepal}/api/tasks`,
         authenticate: true

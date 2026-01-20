@@ -2,7 +2,8 @@ const {initializeDownlink} = require('./websocket-downlink')
 const {initializeUplink} = require('./websocket-uplink')
 const {Servers} = require('./websocket-server')
 const {Clients} = require('./websocket-client')
-const {USER_UP, USER_DOWN, USER_UPDATED, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN, initializeEvents} = require('./websocket-events')
+const {initializeEvents} = require('./websocket-events')
+const {USER_UP, USER_DOWN, USER_UPDATED, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN} = require('#sepal/event/definitions')
 
 const initializeWebSocketServer = ({wss, userStore, event$}) => {
     const servers = Servers()

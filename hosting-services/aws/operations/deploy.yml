@@ -52,7 +52,7 @@
 
     - name: Copy docker-registry certificate
       copy:
-        src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
+        src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
     - name: Install docker

@@ -97,6 +97,8 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         query(FindSessionById, new FindSessionByIdHandler(sessionRepository))
         query(FindPendingOrActiveSession, new FindPendingOrActiveSessionHandler(sessionRepository))
         query(GenerateUserSessionReport, new GenerateUserSessionReportHandler(sessionRepository, instanceManager, budgetManager))
+        query(MostRecentlyClosedSessionByUser, new MostRecentlyClosedSessionByUserHandler(sessionRepository))
+        query(MostRecentlyClosedSession, new MostRecentlyClosedSessionHandler(sessionRepository))
 
         instanceManager.onInstanceActivated { submit(new ActivatePendingSessionOnInstance(instance: it)) }
         instanceManager.onFailedToProvisionInstance {

@@ -39,7 +39,7 @@ const main = async () => {
     const userStore = UserStore(redis, event$)
     const sessionStore = new RedisSessionStore({client: redis})
 
-    const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore, userStore)
+    const {messageHandler, logout, invalidateOtherSessions} = SessionManager(sessionStore)
     const {authMiddleware} = AuthMiddleware(userStore)
     const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
     const {proxyEndpoints} = Proxy(userStore, authMiddleware, googleAccessTokenMiddleware)
@@ -59,6 +59,9 @@ const main = async () => {
     }
 
     await initMessageQueue(amqpUri, {
+        publishers: [
+            {key: 'systemEvent', publish$: event$},
+        ],
         subscribers: [
             {queue: 'gateway.userLocked', topic: 'user.UserLocked', handler: messageHandler}
         ]
@@ -127,7 +130,6 @@ const main = async () => {
     }
 
     initializeGoogleAccessTokenRefresher({userStore, event$})
-
     initializeWebSocketServer({wss, userStore, event$})
 
     // HACK: User has to be injected here as the session is not available in proxyRes and proxyResWsz

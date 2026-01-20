@@ -9,9 +9,21 @@ services:
       file: ../docker-compose.logger.override.yml
       service: logger
     volumes:  # To allow dynamic reloading in dev
+      # lib/shared
       - ${SEPAL_PROJECT_DIR}/modules/user-storage/lib/shared/package-lock.json:/usr/local/src/sepal/lib/js/shared/package-lock.json
       - ${SEPAL_PROJECT_DIR}/modules/user-storage/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
       - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
       - ${SEPAL_PROJECT_DIR}/lib/js/shared/package.json:/usr/local/src/sepal/lib/js/shared/package.json
-      # - ${SEPAL_PROJECT_DIR}/lib/js/shared:/usr/local/src/sepal/lib/js/shared
+      # module
       - ${SEPAL_PROJECT_DIR}/modules/user-storage:/usr/local/src/sepal/modules/user-storage
+    environment:
+      SCAN_MIN_DELAY_SECONDS: "5"
+      SCAN_MAX_DELAY_SECONDS: "40"
+      SCAN_DELAY_INCREASE_FACTOR: "2"
+      SCAN_CONCURRENCY: "5"
+      SCAN_MAX_RETRIES: "10"
+      SCAN_INITIAL_RETRY_DELAY_SECONDS: "5"
+      INACTIVITY_TIMEOUT_DAYS: "14"
+      INACTIVITY_NOTIFICATION_DELAY_DAYS: "1"
+      INACTIVITY_GRACE_PERIOD_DAYS: "1"
+      INACTIVITY_MAX_SPREAD_HOURS: "0"

@@ -1,7 +1,6 @@
 .panel {
-    height: 100%;
-    max-width: 71rem;
-    z-index: 5;
+    height: 95vh;
+    width: 95vw;
 }
 
 .loading {

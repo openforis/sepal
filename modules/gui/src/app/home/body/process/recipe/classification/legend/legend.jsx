@@ -38,8 +38,8 @@ class _Legend extends React.Component {
         const {dataCollectionManager} = this.props
         return (
             <RecipeFormPanel
-                placement='bottom-right'
                 className={styles.panel}
+                placement='bottom-right'
                 onApply={() => setTimeout(() => setTimeout(() => dataCollectionManager.updateAll()))}>
                 <Panel.Header
                     icon='list'

@@ -15,8 +15,8 @@
         "csv-stringify": "^6.6.0",
         "date-fns": "^4.1.0",
         "log4js": "^6.9.1",
-        "mysql2": "^3.15.3",
-        "redis": "^5.9.0",
+        "mysql2": "^3.16.1",
+        "redis": "^5.10.0",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared"
     },

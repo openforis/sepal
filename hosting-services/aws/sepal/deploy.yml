@@ -6,9 +6,16 @@
 
   pre_tasks:
     - set_fact:
-        SEPAL_IP: "{{ ec2_private_ip_address }}"
-        SEPAL_SSH_IP: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
-        SYSLOG_ADDRESS: "udp://{{ ec2_private_ip_address }}"
+        sepal_ip: "{{ ec2_private_ip_address }}"
+        sepal_ssh_ip: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
+        syslog_address: "udp://{{ ec2_private_ip_address }}"
+
+    # syslog address
+    - name: Write syslog_address to /tmp/syslog-address
+      copy:
+        dest: /tmp/syslog-address
+        content: "{{ syslog_address }}"
+      delegate_to: localhost
 
     # bash prompt
     - name: Set bash prompt
@@ -166,7 +173,7 @@
 
     - name: Copy docker-registry certificate
       copy:
-        src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
+        src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
     - name: Install docker
@@ -206,8 +213,29 @@
         name: requests
         executable: pip3
 
+    - name: pip install docker
+      pip:
+        name: docker
+        executable: pip3
+
+    - name: Init a new swarm with default parameters
+      docker_swarm:
+        advertise_addr: "{{ sepal_ip }}"
+      register: swarm_init
+
+    - debug:
+        msg: "{{ swarm_init.swarm_facts.JoinTokens.Worker }}"
+
+    - name: Write token to /tmp/swarm-token
+      copy:
+        dest: /tmp/swarm-token
+        content: "{{ swarm_init.swarm_facts.JoinTokens.Worker }}"
+      delegate_to: localhost
+
     - docker_network:
         name: sepal
+        driver: overlay
+        attachable: yes
         ipam_config:
           - subnet: 172.20.0.0/16
             iprange: 172.20.0.0/24
@@ -229,10 +257,10 @@
       copy:
         dest: "/etc/sepal/env.d/env-current"
         content: |
-          SEPAL_VERSION={{ VERSION }}
-          SEPAL_IP={{ SEPAL_IP }}
-          SEPAL_SSH_IP={{ SEPAL_SSH_IP }}
-          SYSLOG_ADDRESS={{ SYSLOG_ADDRESS }}
+          SEPAL_VERSION={{ version }}
+          SEPAL_IP={{ sepal_ip }}
+          SEPAL_SSH_IP={{ sepal_ssh_ip }}
+          SYSLOG_ADDRESS={{ syslog_address }}
 
     - name: Assemble a single env file
       ansible.builtin.assemble:

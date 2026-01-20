@@ -5,7 +5,7 @@ const {catchError, from, switchMap, EMPTY, throwError, map, tap, of, firstValueF
 const {removeRequestUser} = require('./user')
 const {getSessionUsername, setRequestUser} = require('./user')
 const {loadUser$} = require('./userApi')
-const {USER_UPDATED, GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED, GOOGLE_ACCESS_TOKEN_UPDATED} = require('./websocket-events')
+const {USER_UPDATED, GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED, GOOGLE_ACCESS_TOKEN_UPDATED} = require('#sepal/event/definitions')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 const USER_PREFIX = 'user'

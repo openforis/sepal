@@ -14,7 +14,7 @@
 
 .grid {
     display: grid;
-    grid-template-columns: 3fr 3fr 3fr 3fr 1fr repeat(6, 2fr);
+    grid-template-columns: 3fr 3fr 3fr 3fr 2fr 2fr 2fr 2fr 2fr 2fr;
     grid-template-rows: auto;
     column-gap: 1rem;
     width: 100%;
@@ -23,8 +23,8 @@
 
 .grid.header {
     grid-template-areas:
-        'info info info   info       info                ib  ib  sb  sb  st  st '
-        'username name status updateTime budgetUpdateRequest ibq ibu sbq sbu stq stu';
+        'info     info info     info       ib  ib  sb  sb  st  st '
+        'username name activity updateTime ibq ibu sbq sbu stq stu';
     color: var(--look-default-color);
     user-select: none;
     border-bottom: 1px solid gray;
@@ -32,7 +32,7 @@
 }
 
 .grid.header > * {
-    margin: 0 .5rem .5rem .5rem;
+    margin: 0 0 .5rem 0;
 }
 
 .grid > * {
@@ -47,11 +47,6 @@
 
 .grid > .name {
     grid-area: name;
-    align-self: end;
-}
-
-.grid > .status {
-    grid-area: status;
     align-self: end;
 }
 
@@ -102,6 +97,10 @@
     justify-self: right;
 }
 
+.grid > .activity {
+    grid-area: activity;
+}
+
 .grid > .storageSpaceMax {
     grid-area: stq;
     justify-self: right;
@@ -113,10 +112,12 @@
 }
 
 .grid.user {
-    padding: .25rem .5rem;
+    padding: .25rem 0;
 }
 
 .username {
+    display: flex;
+    gap: .5rem;
     color: #808080;
 }
 

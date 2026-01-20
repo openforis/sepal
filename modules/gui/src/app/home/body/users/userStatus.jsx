@@ -2,7 +2,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {msg} from '~/translate'
-import {Button} from '~/widget/button'
 import {Icon} from '~/widget/icon'
 
 export class UserStatus extends React.Component {
@@ -20,53 +19,52 @@ export class UserStatus extends React.Component {
         status === UserStatus.ACTIVE
 
     render() {
-        const {status = 'UNKNOWN'} = this.props
+        const {status = 'UNKNOWN', showLabel} = this.props
         return (
-            <Button
-                chromeless
-                shape='none'
-                air='none'
-                icon={this.getIcon(status)}
-                label={msg(`user.status.${status}`).toUpperCase()}
-            />
+            <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
+                {this.getIcon(status)}
+                {showLabel && msg(`user.status.${status}`)}
+            </div>
         )
     }
 
     getIcon(status) {
-        const {isGoogleUser} = this.props
+        const {googleUser} = this.props
         switch(status) {
             case UserStatus.LOCKED:
                 return this.getLockedUserIcon()
             case UserStatus.PENDING:
                 return this.getPendingUserIcon()
             case UserStatus.ACTIVE:
-                return isGoogleUser ? this.getConnectedActiveUserIcon() : this.getDisconnectedActiveUserIcon()
+                return googleUser ? this.getConnectedActiveUserIcon() : this.getDisconnectedActiveUserIcon()
             default:
                 return this.getUnknownUserIcon()
         }
     }
 
     getUnknownUserIcon() {
-        return <Icon name='question' look='default' variant='normal'/>
+        return <Icon name='question' variant='normal'/>
     }
 
     getLockedUserIcon() {
-        return <Icon name='lock' look='cancel' variant='normal' dimmed/>
+        return <Icon name='lock' variant='normal' dimmed/>
     }
 
     getPendingUserIcon() {
-        return <Icon name='hourglass-half' look='apply' variant='info'/>
+        return <Icon name='hourglass-half' variant='info'/>
     }
 
     getDisconnectedActiveUserIcon() {
-        return <Icon name='user' look='add' variant='success'/>
+        return <Icon name='user' variant='success'/>
     }
 
     getConnectedActiveUserIcon() {
-        return <Icon name='google' type='brands' look='add' variant='success'/>
+        return <Icon name='google' type='brands' variant='success'/>
     }
 }
 
 UserStatus.propTypes = {
+    googleUser: PropTypes.any,
+    showLabel: PropTypes.any,
     status: PropTypes.string
 }

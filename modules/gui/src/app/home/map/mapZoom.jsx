@@ -39,7 +39,9 @@ class _MapZoomPanel extends React.Component {
 
     render() {
         return (
-            <Panel className={styles.panel} type='top-right'>
+            <Panel
+                className={styles.panel}
+                placement='top-right'>
                 <Panel.Content>
                     <Layout spacing='compact'>
                         {this.renderZoomButtons()}

@@ -21,14 +21,18 @@ export ANSIBLE_CONFIG=../ansible.cfg
 ansible-playbook deploy.yml \
     -i "$(../inventory.sh Sepal)" \
     --private-key="$PRIVATE_KEY" \
-    --extra-vars "env_file=$CONFIG_HOME/env CONFIG_HOME=$CONFIG_HOME VERSION=$VERSION"
+    --extra-vars "env_file=$CONFIG_HOME/env config_home=$CONFIG_HOME version=$VERSION"
+
+# use values defined by deploy,yml
+SWARM_TOKEN="$(cat /tmp/swarm-token)"
+SYSLOG_ADDRESS="$(cat /tmp/syslog-address)"
 
 ansible-playbook deploy-sepal-apps.yml \
     -i "$(../inventory.sh SepalApps)" \
     --private-key="$PRIVATE_KEY" \
-    --extra-vars "env_file=$CONFIG_HOME/env CONFIG_HOME=$CONFIG_HOME VERSION=$VERSION"
+    --extra-vars "env_file=$CONFIG_HOME/env config_home=$CONFIG_HOME version=$VERSION swarm_token=$SWARM_TOKEN syslog_address=$SYSLOG_ADDRESS"
 
 ansible-playbook deploy-sepal-storage.yml \
     -i "$(../inventory.sh SepalStorage)" \
     --private-key="$PRIVATE_KEY" \
-    --extra-vars "env_file=$CONFIG_HOME/env CONFIG_HOME=$CONFIG_HOME VERSION=$VERSION"
+    --extra-vars "env_file=$CONFIG_HOME/env config_home=$CONFIG_HOME version=$VERSION swarm_token=$SWARM_TOKEN syslog_address=$SYSLOG_ADDRESS"

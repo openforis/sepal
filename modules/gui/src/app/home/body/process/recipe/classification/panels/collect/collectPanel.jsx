@@ -79,8 +79,8 @@ class _CollectPanel extends React.Component {
             </div>
         return (
             <Panel
-                type='top-right'
-                className={styles.panel}>
+                className={styles.panel}
+                placement='top-right'>
                 <Panel.Header
                     icon='map-marker'
                     title={point

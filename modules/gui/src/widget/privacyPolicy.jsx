@@ -61,7 +61,9 @@ class _PrivacyPolicy extends React.Component {
         return user.privacyPolicyAccepted ?
             null
             : (
-                <Panel className={styles.panel} type='modal'>
+                <Panel
+                    className={styles.panel}
+                    placement='modal'>
                     {this.renderPanel()}
                 </Panel>
             )

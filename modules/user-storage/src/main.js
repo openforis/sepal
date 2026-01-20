@@ -5,27 +5,33 @@ const log = require('#sepal/log').getLogger('main')
 const _ = require('lodash')
 
 const {initMessageQueue} = require('#sepal/messageQueue')
-const {amqpUri, port} = require('./config')
-const {scheduleFullScan} = require('./scan')
-const {scanComplete$, logStats} = require('./jobQueue')
-const {messageHandler} = require('./messageHandler')
 const server = require('#sepal/httpServer')
+const {amqpUri, port} = require('./config')
+const {scanComplete$, startStorageCheck} = require('./storageCheck')
+const {messageHandler} = require('./messageHandler')
+const {initializeDatabase} = require('./database')
+const {routes} = require('./routes')
+const {email$} = require('./email')
+const {startInactivityCheck} = require('./inactivityCheck')
 
 const main = async () => {
     await initMessageQueue(amqpUri, {
         publishers: [
-            {key: 'userStorage.size', publish$: scanComplete$}
+            {key: 'userStorage.size', publish$: scanComplete$},
+            {key: 'email.sendToUser', publish$: email$}
         ],
         subscribers: [
-            {queue: 'userStorage.workerSession', topic: 'workerSession.#', handler: messageHandler},
-            {queue: 'userStorage.files', topic: 'files.#', handler: messageHandler}
-        ]
+            {queue: 'userStorage.systemEvent', topic: 'systemEvent'},
+            {queue: 'userStorage.workerSession', topic: 'workerSession.#'},
+            {queue: 'userStorage.files', topic: 'files.#'},
+        ],
+        handler: messageHandler
     })
 
-    await server.start({port})
-
-    await scheduleFullScan()
-    await logStats()
+    await initializeDatabase()
+    await server.start({port, routes})
+    await startStorageCheck()
+    await startInactivityCheck()
 
     log.info('Initialized')
 }

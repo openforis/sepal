@@ -2,12 +2,15 @@
     "port": 5000,
     "categories": {
         "config": "info",
+        "database": "info",
+        "email": "info",
         "filesystem": "info",
-        "jobQueue": "info",
+        "http": "info",
+        "inactivityCheck": "info",
+        "kvstore": "info",
         "main": "info",
         "messageHandler": "info",
         "messageQueue": "info",
-        "persistence": "info",
-        "scan": "info"
+        "storageCheck": "info"
     }
 }

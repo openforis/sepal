@@ -58,13 +58,35 @@ class JdbcUserRepository implements UserRepository {
         def users = []
         sql.eachRow('''
                 SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, manual_map_rendering_enabled, privacy_policy_accepted,
-                       admin, system_user, status, google_refresh_token,  google_access_token, google_access_token_expiration, google_project_id, google_legacy_project,
+                       admin, system_user, status, google_refresh_token, google_access_token, google_access_token_expiration, google_project_id, google_legacy_project,
                        creation_time, update_time
                 FROM sepal_user 
                 ORDER BY creation_time DESC''') {
             users << toUser(it)
         }
         return users
+    }
+
+    Map<String, Date> mostRecentLoginByUser(String username) {
+        def result = sql.rows('''
+            SELECT username, system_user, last_login_time
+            FROM sepal_user
+            WHERE system_user IS FALSE AND last_login_time IS NOT NULL
+        ''')
+        return result.collectEntries { row ->
+            [(row.username): toDate(row.last_login_time)]
+        }
+    }
+
+    Map<String, Date> mostRecentLogin(String username) {
+        def row = sql.firstRow('''
+            SELECT username, system_user, last_login_time
+            FROM sepal_user
+            WHERE system_user IS FALSE AND last_login_time IS NOT NULL AND username = ?
+        ''', [username])
+        if (row)
+            return [timestamp: toDate(row.last_login_time)]
+        return [:]
     }
 
     void setLastLoginTime(String username, Date loginTime) {

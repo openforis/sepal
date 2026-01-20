@@ -30,8 +30,8 @@ class _Calculations extends React.Component {
         return (
             <>
                 <RecipeFormPanel
-                    placement='bottom-right'
-                    className={styles.panel}>
+                    className={styles.panel}
+                    placement='bottom-right'>
                     <Panel.Header
                         icon='calculator'
                         title={msg('process.bandMath.panel.calculations.title')}

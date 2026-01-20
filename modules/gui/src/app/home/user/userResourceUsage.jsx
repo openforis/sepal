@@ -16,7 +16,8 @@ export const UserResourceUsage = ({currentValue = 0, budgetValue = 0, formattedV
                     />
                 }
                 delay={250}
-                placement='topRight'>
+                placement='topRight'
+                disabled={budgetValue === 0}>
                 <div className={styles.usage} style={{'--usage': `${Math.min(currentValue / budgetValue, 1)}`}}>
                     {formattedValue}
                 </div>

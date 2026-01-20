@@ -2,7 +2,7 @@ const {v4: uuid} = require('uuid')
 
 const {moduleTag, clientTag, userTag} = require('./tag')
 const {filter, interval, map, Subject, groupBy, mergeMap, debounceTime, takeUntil, scan, switchMap, catchError} = require('rxjs')
-const {USER_UP, USER_DOWN, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN, CLIENT_VERSION_MISMATCH} = require('./websocket-events')
+const {USER_UP, USER_DOWN, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN, CLIENT_VERSION_MISMATCH} = require('#sepal/event/definitions')
 
 const log = require('#sepal/log').getLogger('websocket/downlink')
 

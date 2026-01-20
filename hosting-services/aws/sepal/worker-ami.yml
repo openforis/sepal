@@ -29,7 +29,7 @@
 
     - name: Copy LDAP Certificate
       copy:
-       src: "{{ CONFIG_HOME }}/certificates/ldap-ca.crt.pem"
+       src: "{{ config_home }}/certificates/ldap-ca.crt.pem"
        dest: "/data/ldap/certificates/ldap-ca.crt.pem"
 
     # EFS setup
@@ -122,7 +122,7 @@
 
     - name: Copy docker-registry certificate
       copy:
-        src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
+        src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
     - name: Install docker
@@ -177,10 +177,10 @@
       command: "docker login -p '{{ lookup('env', 'DOCKER_REGISTRY_PASSWORD') }}' -u '{{ lookup('env', 'DOCKER_REGISTRY_USERNAME') }}' {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
 
     - name: Pull sandbox
-      command: "docker pull {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/sandbox:{{ VERSION }}"
+      command: "docker pull {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/sandbox:{{ version }}"
 
     - name: Pull task
-      command: "docker pull {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/task:{{ VERSION }}"
+      command: "docker pull {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/task:{{ version }}"
 
     - name: Logout from docker registry
       command: "docker logout {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"

@@ -4968,9 +4968,18 @@
         "status": {
             "label": "Status",
             "UNKNOWN": "Unknown",
-            "ACTIVE": "Active",
+            "ACTIVE": "Operational",
             "LOCKED": "Locked",
             "PENDING": "Pending"
+        },
+        "activity": {
+            "label": "Activity",
+            "ACTIVE": "Active",
+            "INACTIVE_LOW": "Inactive/Low",
+            "INACTIVE_HIGH": "Inactive/High",
+            "INACTIVE_UNKNOWN": "Checking",
+            "NOTIFIED": "Notified",
+            "PURGED": "Purged"
         },
         "role": {
             "admin": "Admin",
@@ -5177,6 +5186,17 @@
                 },
                 "budgetUpdateRequest": {
                     "label": "Budget update"
+                }
+            },
+            "activity": {
+                "active": {
+                    "label": "Normal"
+                },
+                "notified": {
+                    "label": "Notified"
+                },
+                "erased": {
+                    "label": "Erased"
                 }
             }
         },

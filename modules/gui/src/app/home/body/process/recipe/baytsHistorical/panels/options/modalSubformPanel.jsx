@@ -19,8 +19,8 @@ export const modalSubformPanel = ({id, toTitle, toClassName, fields}) =>
                 const {form} = this.props
                 return (
                     <Form.Panel
-                        type='modal'
                         className={toClassName()}
+                        placement='modal'
                         form={form}
                         onApply={this.update}
                         onCancel={this.cancel}>

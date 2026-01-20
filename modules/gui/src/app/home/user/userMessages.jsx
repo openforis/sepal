@@ -223,7 +223,8 @@ class _UserMessages extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                type='modal'>
+                placement='modal'
+                onBackdropClick={deactivate}>
                 <Panel.Header
                     icon='bell'
                     title={msg('userMessages.title')}/>
