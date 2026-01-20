@@ -1,4 +1,4 @@
-FROM node:22-alpine
+FROM node:24-alpine
 
 ENV MODULE_NAME user-storage
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}

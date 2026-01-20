@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const log = require('#sepal/log').getLogger('messageQueue')
-const {scheduleRescan} = require('./storageCheck')
+const {scheduleStorageCheck} = require('./storageCheck')
 const {setSessionActive, setSessionInactive} = require('./kvstore')
 const {Subject, debounceTime, groupBy, mergeMap, switchMap, filter, catchError, EMPTY, from} = require('rxjs')
 const {scheduleInactivityCheck, cancelInactivityCheck} = require('./inactivityCheck')
@@ -17,7 +17,7 @@ const scheduleRescan$ = event$.pipe(
     mergeMap(group$ =>
         group$.pipe(
             debounceTime(1000),
-            switchMap(event => scheduleRescan(event))
+            switchMap(event => scheduleStorageCheck(event))
         )
     )
 )

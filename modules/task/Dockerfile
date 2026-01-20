@@ -9,7 +9,7 @@ ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV JS_SHARED /usr/local/src/sepal/lib/js/shared
 ENV JS_EE /usr/local/src/sepal/lib/js/ee
 ENV PYTHON_SHARED /usr/local/src/sepal/lib/python/shared
-ENV NODE_MAJOR=22
+ENV NODE_MAJOR=24
 
 # Install node.js
 
