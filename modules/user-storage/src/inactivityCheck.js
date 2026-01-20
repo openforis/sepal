@@ -2,7 +2,7 @@ const {Queue, QueueEvents, Worker, Job} = require('bullmq')
 const {firstValueFrom} = require('rxjs')
 const {formatDistance} = require('date-fns')
 const {eraseUserStorage} = require('./filesystem')
-const {redisHost, inactivityTimeout, inactivityNotificationDelay, inactivityGracePeriodTimeout, inactivityMaxSpread, inactivityUserStorageThreshold, inactivityMaxRetries, inactivityInitialRetryDelay, inactivityConcurrency} = require('./config')
+const {redisHost, inactivityTimeout, inactivityNotificationDelay, inactivityGracePeriod, inactivityMaxSpread, inactivityUserStorageThreshold, inactivityMaxRetries, inactivityInitialRetryDelay, inactivityConcurrency} = require('./config')
 const {sendEmail} = require('./email')
 const {addEvent} = require('./database')
 const {getMostRecentAccessByUser$, getMostRecentAccess$, getUser$} = require('./http')
@@ -208,7 +208,7 @@ const scheduleNotify = async ({username, delay = inactivityNotificationDelay}) =
     return schedule({username, delay, action: 'notify'})
 }
 
-const scheduleErase = async ({username, delay = inactivityGracePeriodTimeout}) => {
+const scheduleErase = async ({username, delay = inactivityGracePeriod}) => {
     log.info(`Scheduling inactivity storage erase for user ${username} ${delay ? `in ${formatDistance(0, delay, {includeSeconds: true})}` : 'now'}`)
     await removeUserJobs(username)
     return schedule({username, delay, action: 'erase'})
