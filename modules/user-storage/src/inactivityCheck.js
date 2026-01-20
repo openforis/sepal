@@ -65,22 +65,18 @@ const STORAGE = {
 }
 
 const notify = async username => {
-    if (username.startsWith('lookap')) { // REMOVE
-        log.info(`User ${username} still inactive with significant storage, sending notification email - TEST MODE`)
-        const {name} = await firstValueFrom(getUser$(username))
-        await sendEmail({
-            username,
-            subject: getEmailSubject(),
-            content: getEmailMessage(name)
-        })
-    }
+    log.info(`User ${username} still inactive with significant storage, sending notification email - TEST MODE`)
+    const {name} = await firstValueFrom(getUser$(username))
+    await sendEmail({
+        username,
+        subject: getEmailSubject(),
+        content: getEmailMessage(name)
+    })
 }
 
 const erase = async username => {
-    if (username.startsWith('lookap')) { // REMOVE
-        log.info(`User ${username} still inactive with significant storage, erasing storage - TEST MODE`)
-        await eraseUserStorage(username)
-    }
+    log.info(`User ${username} still inactive with significant storage, erasing storage - TEST MODE`)
+    await eraseUserStorage(username)
 }
 
 const isActive = async username => {
