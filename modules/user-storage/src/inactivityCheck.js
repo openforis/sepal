@@ -1,3 +1,4 @@
+const {Redis} = require('ioredis')
 const {Queue, QueueEvents, Worker, Job} = require('bullmq')
 const {firstValueFrom} = require('rxjs')
 const {formatDistance} = require('date-fns')
@@ -7,7 +8,6 @@ const {sendEmail} = require('./email')
 const {addEvent} = require('./database')
 const {getMostRecentAccessByUser$, getMostRecentAccess$, getUser$} = require('./http')
 const {getUserStorage, DB, getInitialized, setInitialized} = require('./kvstore')
-const {Redis} = require('ioredis')
 const log = require('#sepal/log').getLogger('inactivityCheck')
 
 const QUEUE = 'inactivity-check'
