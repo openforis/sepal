@@ -7,7 +7,7 @@ const _ = require('lodash')
 const {initMessageQueue} = require('#sepal/messageQueue')
 const {amqpUri, port} = require('./config')
 const server = require('#sepal/httpServer')
-const {logStats} = require('./emailQueue')
+const {initQueue} = require('./emailQueue')
 const {messageHandler} = require('./messageHandler')
 
 const main = async () => {
@@ -21,7 +21,7 @@ const main = async () => {
 
     await server.start({port})
 
-    await logStats()
+    await initQueue()
     
     log.info('Initialized')
 }

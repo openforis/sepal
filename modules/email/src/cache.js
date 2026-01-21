@@ -1,8 +1,11 @@
 const Redis = require('ioredis')
-const {redisUri} = require('./config')
+const {redisHost} = require('./config')
 const log = require('#sepal/log').getLogger('cache')
 
-const redis = new Redis(redisUri)
+const redis = new Redis({
+    host: redisHost,
+    db: 0
+})
 
 const emailNotificationsEnabledKey = key => `emailNotificationsEnabled:${key}`
 
