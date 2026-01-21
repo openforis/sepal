@@ -11,7 +11,7 @@ const logError = (key, msg) =>
 
 const event$ = new Subject()
 
-const scheduleRescan$ = event$.pipe(
+const scheduleStorageCheck$ = event$.pipe(
     filter(({type}) => ['sessionActivated', 'sessionDeactivated', 'filesDeleted'].includes(type)),
     groupBy(event => JSON.stringify(event)),
     mergeMap(group$ =>
@@ -46,9 +46,9 @@ const cancelInactivityCheck$ = event$.pipe(
     )
 )
 
-scheduleRescan$.subscribe({
-    error: error => log.fatal('Unexpected scheduleRescan$ error:', error),
-    complete: () => log.fatal('Unexpected scheduleRescan$ complete')
+scheduleStorageCheck$.subscribe({
+    error: error => log.fatal('Unexpected scheduleStorageCheck$ error:', error),
+    complete: () => log.fatal('Unexpected scheduleStorageCheck$ complete')
 })
 
 scheduleInactivityCheck$.subscribe({
