@@ -10,12 +10,12 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bullmq": "^5.66.5",
+        "bullmq": "^5.66.6",
         "commander": "^14.0.2",
         "compare-versions": "^6.1.1",
         "http-proxy": "^1.18.1",
         "ioredis": "^5.9.2",
-        "lodash": "^4.17.21",
+        "lodash": "^4.17.23",
         "log4js": "^6.9.1",
         "minimatch": "^10.1.1",
         "sepal": "../../lib/js/shared"
