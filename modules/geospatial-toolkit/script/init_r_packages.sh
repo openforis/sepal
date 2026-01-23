@@ -295,13 +295,12 @@ R -e "install.packages(c(\
         'zoo'
     ), repos='http://localhost:8180/')"
 
-
-
 R -e "remotes::install_url(c(\
         'http://localhost:8180/github/r-barnes/dggridR/archive/refs/heads/master.tar.gz',\
         'http://localhost:8180/github/bfast2/bfast/archive/refs/heads/master.tar.gz',\
         'http://localhost:8180/github/azvoleff/gfcanalysis/archive/refs/heads/master.tar.gz',\
         'http://localhost:8180/github/jreiche/bayts/archive/refs/heads/master.tar.gz'\
     ), repos='http://localhost:8180/', build = FALSE)"
+
 
 R -e "torch::install_torch(cuda_version = '12.8')"

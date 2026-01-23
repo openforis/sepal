@@ -21,7 +21,7 @@ try {
         .requiredOption('--cran-repo <value>', 'CRAN repository')
         .requiredOption('--repo-path <value>', 'Local repository path')
         .requiredOption('--lib-path <value>', 'R lib path')
-        .requiredOption('--redis-uri <value>', 'Redis URI')
+        .requiredOption('--redis-host <value>', 'Redis host')
         .option('--http-port <number>', 'HTTP port', DEFAULT_HTTP_PORT)
         .option('--auto-update-interval-hours <number>', 'Auto-update interval (hours)', DEFAULT_AUTO_UPDATE_INTERVAL_HOURS)
         .option('--update-now', 'Update now')
@@ -37,7 +37,7 @@ const {
     cranRepo,
     repoPath,
     libPath,
-    redisUri,
+    redisHost,
     httpPort,
     autoUpdateIntervalHours,
     updateNow
@@ -60,7 +60,7 @@ module.exports = {
     cranRepo,
     repoPath: platformReleaseRepoPath,
     libPath: platformReleaseLibPath,
-    redisUri,
+    redisHost,
     httpPort,
     autoUpdateIntervalHours,
     updateNow,

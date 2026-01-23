@@ -11,7 +11,7 @@ then
     --inspect=0.0.0.0:9229 \
     src/main.js \
     --amqp-uri "amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT}" \
-    --redis-uri "redis://email-redis" \
+    --redis-host "email-redis" \
     --smtp-host "${SMTP_HOST}" \
     --smtp-port "${SMTP_PORT}" \
     --smtp-secure "${SMTP_SECURE}" \
@@ -26,7 +26,7 @@ else
   exec node \
     src/main.js \
     --amqp-uri "amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT}" \
-    --redis-uri "redis://email-redis" \
+    --redis-host "email-redis" \
     --smtp-host "${SMTP_HOST}" \
     --smtp-port "${SMTP_PORT}" \
     --smtp-secure "${SMTP_SECURE}" \

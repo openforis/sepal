@@ -9,7 +9,7 @@ program.exitOverride()
 try {
     program
         .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
-        .requiredOption('--redis-uri <value>', 'Redis URI')
+        .requiredOption('--redis-host <value>', 'Redis host')
         .option('--port <number>', 'Port', DEFAULT_PORT)
         .option('--concurrency <number>', 'Concurrent rescan jobs', parseInt)
         .requiredOption('--smtp-host <value>', 'SMTP host')
@@ -29,7 +29,7 @@ try {
 
 const {
     amqpUri,
-    redisUri,
+    redisHost,
     port,
     concurrency = 4,
     smtpHost,
@@ -47,7 +47,7 @@ log.info('Configuration loaded')
 
 module.exports = {
     amqpUri,
-    redisUri,
+    redisHost,
     port,
     concurrency,
     smtpHost,
