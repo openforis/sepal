@@ -26,6 +26,7 @@ export CUDA_VERSION=12.8
 apt-get -y install cuda-toolkit=12.8.1-1
 apt-get -y install cudnn9-cuda-12 cuda-cudart-12.8
 
+
 # tensorflow 2.20.0 crashes, pinning an older version
 uv pip install --system 'tensorflow<2.20.0' \
     tensorflow-probability \
@@ -33,9 +34,13 @@ uv pip install --system 'tensorflow<2.20.0' \
     'numpy<2' 
 
 uv pip install --system \
+    --index-url https://download.pytorch.org/whl/cu128 \
+    --index-strategy unsafe-best-match \
+    torch==2.9.1 \
+    torchvision==0.24.1
+
+uv pip install --system \
     pyopencl \
-    torch \
-    torchvision \
     gpustat \
     nvitop
     
