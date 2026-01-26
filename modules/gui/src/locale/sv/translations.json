@@ -4972,6 +4972,15 @@
             "LOCKED": "",
             "PENDING": ""
         },
+        "activity": {
+            "label": "",
+            "ACTIVE": "",
+            "INACTIVE_LOW": "",
+            "INACTIVE_HIGH": "",
+            "INACTIVE_UNKNOWN": "",
+            "NOTIFIED": "",
+            "PURGED": ""
+        },
         "role": {
             "admin": "",
             "user": ""
@@ -5176,6 +5185,17 @@
                     "label": ""
                 },
                 "budgetUpdateRequest": {
+                    "label": ""
+                }
+            },
+            "activity": {
+                "active": {
+                    "label": ""
+                },
+                "notified": {
+                    "label": ""
+                },
+                "erased": {
                     "label": ""
                 }
             }
