@@ -160,21 +160,17 @@ class _FormPanel extends React.Component {
                     <FormPanelContext.Provider value={{
                         id,
                         wizard,
-                        state: {
-                            first: !back,
-                            last: !next,
-                            busy: this.isBusy(),
-                            submittable: this.isDirty(),
-                            invalid: this.isInvalid(),
-                        },
-                        actions: {
-                            ok: this.ok,
-                            cancel: this.cancel,
-                            close: this.close,
-                            back: this.back,
-                            next: this.next,
-                            done: this.done
-                        }
+                        first: !back,
+                        last: !next,
+                        busy: this.isBusy(),
+                        submittable: this.isDirty(),
+                        invalid: this.isInvalid(),
+                        onOk: this.ok,
+                        onCancel: this.cancel,
+                        onClose: this.close,
+                        onBack: this.back,
+                        onNext: this.next,
+                        onDone: this.done
                     }}>
                         <Panel
                             id={this.props.id}
