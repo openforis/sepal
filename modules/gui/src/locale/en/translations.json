@@ -1937,6 +1937,23 @@
                         },
                         "type": {
                             "label": "Type"
+                        },
+                        "normalize": {
+                          "label": "Normalize",
+                          "tooltip": "Determine whether the input bands should automatically be scaled to a comparable numeric range before classification",
+                          "YES": {
+                            "label": "Yes",
+                            "tooltip": "Automatically scales input bands to a comparable numeric range before classification"
+                          },
+                          "NO": {
+                            "label": "No",
+                            "tooltip": "Assume all input bands are already scaled appropriately for the selected classifier. This avoids redundant processing and improves performance"
+                          }
+                        },
+                        "tileScale": {
+                          "label": "Tile scale",
+                          "tooltip": "(Range: 0.1 to 16) Controls the tile size used during training data sampling and normalization. Larger values use smaller processing tiles, which reduce memory usage and can prevent out-of-memory errors, but may be slower.",
+                          "placeholder": "Tile scale..."
                         }
                     },
                     "title": "Classifier configuration",
@@ -2522,14 +2539,6 @@
                                 "label": "Epochs",
                                 "placeholder": "Epochs...",
                                 "tooltip": "Number of training epochs. Value should be greater than or equal to 1."
-                            },
-                            "normalizeInput": {
-                                "label": "Normalize input",
-                                "tooltip": "Specifies whether attributes should be normalized or not.",
-                                "options": {
-                                    "true.label": "Normalize",
-                                    "false.label": "Don't normalize"
-                                }
                             },
                             "maxIterationsOverall": {
                                 "label": "Max iterations",

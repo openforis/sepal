@@ -115,7 +115,14 @@ const fields = {
         .skip((value, {type}) => type !== 'MINIMUM_DISTANCE'),
     decisionTree: new Form.Field()
         .skip((value, {type}) => type !== 'DECISION_TREE')
+        .notBlank(),
+    tileScale: new Form.Field()
+        .skip((value, {type}) => !['SVM', 'MINIMUM_DISTANCE'].includes(type))
         .notBlank()
+        .number()
+        .min(0.1)
+        .max(16),
+    normalize: new Form.Field(),
 }
 
 class _Classifier extends React.Component {
@@ -182,15 +189,17 @@ class _Classifier extends React.Component {
             null
 
         const renderSvm = () =>
-            <React.Fragment>
+            <>
                 {this.renderDecisionProcedure()}
                 {this.renderSvmType()}
                 {this.renderKernelType()}
                 {this.renderOneClass()}
-            </React.Fragment>
+            </>
 
         const renderMinimumDistance = () =>
-            this.renderMetric()
+            <>
+                {this.renderMetric()}
+            </>
 
         const renderDecisionTree = () =>
             this.renderDecisionTree()
@@ -235,10 +244,11 @@ class _Classifier extends React.Component {
                 {this.renderBagFraction()}
                 {this.renderMaxNodes()}
                 {this.renderSeed()}
+                {this.renderTileScale()}
             </div>
 
         const renderGradientTreeBoost = () =>
-            <React.Fragment>
+            <>
                 <div className={styles.twoColumns}>
                     {this.renderNumberOfTrees()}
                     {this.renderShrinkage()}
@@ -246,22 +256,29 @@ class _Classifier extends React.Component {
                     {this.renderMaxNodes()}
                 </div>
                 {this.renderLoss()}
-                {this.renderSeed()}
-            </React.Fragment>
+                <div className={styles.twoColumns}>
+                    {this.renderSeed()}
+                    {this.renderTileScale()}
+                </div>
+            </>
 
         const renderCart = () =>
-            <div className={styles.twoColumns}>
-                {this.renderMinLeafPopulation()}
-                {this.renderMaxNodes()}
-            </div>
+            <>
+                <div className={styles.twoColumns}>
+                    {this.renderMinLeafPopulation()}
+                    {this.renderMaxNodes()}
+                </div>
+                {this.renderTileScale()}
+            </>
 
         const renderNaiveBayes = () =>
             <div className={styles.twoColumns}>
                 {this.renderLambda()}
+                {this.renderTileScale()}
             </div>
 
         const renderSvm = () =>
-            <React.Fragment>
+            <>
                 {this.renderDecisionProcedure()}
                 {this.renderSvmType()}
                 {this.renderKernelType()}
@@ -276,12 +293,20 @@ class _Classifier extends React.Component {
                     </div>
                     : null}
                 {this.renderOneClass()}
-            </React.Fragment>
+                <div className={styles.twoColumns}>
+                    {this.renderNormalize()}
+                    {this.renderTileScale()}
+                </div>
+            </>
 
         const renderMinimumDistance = () =>
-            <div className={styles.twoColumns}>
+            <>
                 {this.renderMetric()}
-            </div>
+                <div className={styles.twoColumns}>
+                    {this.renderNormalize()}
+                    {this.renderTileScale()}
+                </div>
+            </>
 
         const renderDecisionTree = () =>
             this.renderDecisionTree()
@@ -727,7 +752,7 @@ class _Classifier extends React.Component {
             return
 
         return (
-            <React.Fragment>
+            <>
                 <Form.Input
                     label={msg('process.classification.panel.classifier.form.decisionTree.label')}
                     tooltip={msg('process.classification.panel.classifier.form.decisionTree.tooltip')}
@@ -739,7 +764,35 @@ class _Classifier extends React.Component {
                     single
                     onSelect={file => file.text().then(text => decisionTree.set(text))}
                 />
-            </React.Fragment>
+            </>
+        )
+    }
+
+    renderNormalize() {
+        const {inputs: {normalize}} = this.props
+        const options = [
+            {value: 'YES', label: msg('process.classification.panel.classifier.form.normalize.YES.label'), tooltip: msg('process.classification.panel.classifier.form.normalize.YES.tooltip')},
+            {value: 'NO', label: msg('process.classification.panel.classifier.form.normalize.NO.label'), tooltip: msg('process.classification.panel.classifier.form.normalize.NO.tooltip')},
+        ]
+        return (
+            <Form.Buttons
+                label={msg('process.classification.panel.classifier.form.normalize.label')}
+                tooltip={msg('process.classification.panel.classifier.form.normalize.tooltip')}
+                input={normalize}
+                options={options}
+            />
+        )
+    }
+
+    renderTileScale() {
+        const {inputs: {tileScale}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.classification.panel.classifier.form.tileScale.label')}
+                tooltip={msg('process.classification.panel.classifier.form.tileScale.tooltip')}
+                placeholder={msg('process.classification.panel.classifier.form.tileScale.placeholder')}
+                input={tileScale}
+            />
         )
     }
 
@@ -772,7 +825,9 @@ const valuesToModel = values => ({
     nu: toFloat(values.nu),
     oneClass: toInt(values.oneClass),
     metric: values.metric,
-    decisionTree: values.decisionTree
+    decisionTree: values.decisionTree,
+    normalize: values.normalize,
+    tileScale: toFloat(values.tileScale) || 1,
 })
 
 const modelToValues = model => ({
@@ -798,7 +853,9 @@ const modelToValues = model => ({
     nu: model.nu,
     oneClass: model.oneClass,
     metric: model.metric,
-    decisionTree: model.decisionTree
+    decisionTree: model.decisionTree,
+    normalize: model.normalize || 'YES',
+    tileScale: model.tileScale || 1,
 })
 
 const toInt = input => {
