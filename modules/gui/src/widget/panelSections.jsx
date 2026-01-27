@@ -67,6 +67,7 @@ class _PanelSections extends React.Component {
                     wizard={['panelSections']}
                     first={first}
                     last={last}
+                    closable
                     onBack={() => step.set(step.value - 1)}
                     onNext={() => step.set(step.value + 1)}
                 />

@@ -42,7 +42,7 @@ const worker$ = ({
                         scale: parseInt(scale),
                         region: geometry,
                         geometries: true,
-                        tileScale: 16
+                        // tileScale: 16
                     })
                 return getRows$(
                     bands ? samples.select(bands) : samples.select(image.bandNames()),
@@ -106,13 +106,12 @@ const worker$ = ({
                         projection: 'EPSG:4326',
                         numPixels: numPixels,
                         seed: seed,
-                        tileScale: 16,
+                        // tileScale: 16,
                         geometries: true
                     })
                 }
 
             }
-
             return classBand
                 ? stratifiedSample()
                 : unstratifiedSample()

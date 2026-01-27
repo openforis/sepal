@@ -19,13 +19,15 @@ export class FormPanelButtons extends React.Component {
         )
     }
 
-    renderFormPanelButtons(props) {
-        const renderProps = {...props, ...this.props}
+    renderFormPanelButtons(context) {
+        const renderProps = {...context, ...this.props}
         const inWizard = renderProps.wizard && renderProps.wizard.includes(renderProps.id)
-        return inWizard ? this.renderInWizard(renderProps) : this.renderInForm(renderProps)
+        return inWizard
+            ? this.renderInWizard(renderProps)
+            : this.renderInForm(renderProps)
     }
 
-    renderInForm({state: {busy, submittable, invalid}, actions: {cancel, ok, close}}) {
+    renderInForm({busy, submittable, invalid, onCancel, onOk, onClose}) {
         const {applyLabel, disabled, disabledCancel} = this.props
         return (
             <Panel.Buttons>
@@ -33,7 +35,7 @@ export class FormPanelButtons extends React.Component {
                     <Panel.Buttons.Cancel
                         hidden={!submittable || disabled || disabledCancel}
                         keybinding='Escape'
-                        onClick={cancel}/>
+                        onClick={onCancel}/>
                     <Panel.Buttons.Apply
                         type={'submit'}
                         label={applyLabel}
@@ -41,38 +43,49 @@ export class FormPanelButtons extends React.Component {
                         disabled={disabled || invalid}
                         keybinding='Enter'
                         busy={busy}
-                        onClick={ok}/>
+                        onClick={onOk}/>
                     <Panel.Buttons.Close
                         type={'submit'}
                         label={applyLabel}
                         hidden={submittable}
                         disabled={disabled}
                         keybinding={['Enter', 'Escape']}
-                        onClick={close}/>
+                        onClick={onClose}/>
                 </Panel.Buttons.Main>
                 {this.renderExtraButtons()}
             </Panel.Buttons>
         )
     }
 
-    renderInWizard({state: {invalid, first, last}, actions: {back, next, done}}) {
+    renderInWizard({closable, submittable, invalid, first, last, onCancel, onBack, onNext, onDone}) {
+        const {applyLabel} = this.props
         return (
             <Panel.Buttons>
                 <Panel.Buttons.Main>
+                    <Panel.Buttons.Cancel
+                        hidden={!closable || !submittable}
+                        keybinding='Escape'
+                        onClick={onCancel}/>
+                    <Panel.Buttons.Close
+                        type={'submit'}
+                        label={applyLabel}
+                        hidden={!closable || submittable}
+                        keybinding='Enter'
+                        onClick={onDone}/>
                     <Panel.Buttons.Back
-                        hidden={first}
+                        hidden={!closable && first}
                         disabled={first}
-                        onClick={back}/>
+                        onClick={onBack}/>
                     <Panel.Buttons.Next
                         hidden={last}
                         disabled={invalid}
                         keybinding='Enter'
-                        onClick={next}/>
+                        onClick={onNext}/>
                     <Panel.Buttons.Done
                         hidden={!last}
                         disabled={invalid}
                         keybinding='Enter'
-                        onClick={done}/>
+                        onClick={onDone}/>
                 </Panel.Buttons.Main>
                 {this.renderExtraButtons()}
             </Panel.Buttons>

@@ -94,8 +94,6 @@ const fields = {
         .int()
         .min(1)
         .max(2147483647),
-    normalizeInput: new Form.Field()
-        .skip((value, {type}) => !['LVQ'].includes(type)),
     maxIterationsOverall: new Form.Field()
         .skip((value, {type}) => !['XMEANS'].includes(type))
         .int()
@@ -115,7 +113,14 @@ const fields = {
         .skip((value, {type}) => !['XMEANS'].includes(type)),
     cutoffFactor: new Form.Field()
         .skip((value, {type}) => !['XMEANS'].includes(type))
+        .number(),
+    tileScale: new Form.Field()
+        .skip((value, {type}) => !['SVM', 'MINIMUM_DISTANCE'].includes(type))
+        .notBlank()
         .number()
+        .min(0.1)
+        .max(16),
+    normalize: new Form.Field(),
 }
 
 class _Clusterer extends React.Component {
@@ -217,6 +222,10 @@ class _Clusterer extends React.Component {
                 </div>
                 {this.renderInit()}
                 {this.renderDistanceFunction()}
+                <div className={styles.twoColumns}>
+                    {this.renderNormalize()}
+                    {this.renderTileScale()}
+                </div>
             </>
 
         const renderKMeans = () =>
@@ -236,6 +245,10 @@ class _Clusterer extends React.Component {
                 {this.renderFast()}
                 {this.renderInit()}
                 {this.renderCanopies()}
+                <div className={styles.twoColumns}>
+                    {this.renderNormalize()}
+                    {this.renderTileScale()}
+                </div>
             </>
 
         const renderLVQ = () =>
@@ -245,7 +258,10 @@ class _Clusterer extends React.Component {
                     {this.renderLearningRate()}
                     {this.renderEpochs()}
                 </div>
-                {this.renderNormalizeInput()}
+                <div className={styles.twoColumns}>
+                    {this.renderNormalize()}
+                    {this.renderTileScale()}
+                </div>
             </>
 
         const renderXMeans = () =>
@@ -261,6 +277,10 @@ class _Clusterer extends React.Component {
                 </div>
                 {this.renderUseKD()}
                 {this.renderDistanceFunction()}
+                <div className={styles.twoColumns}>
+                    {this.renderNormalize()}
+                    {this.renderTileScale()}
+                </div>
             </>
 
         return (
@@ -618,31 +638,6 @@ class _Clusterer extends React.Component {
         )
     }
 
-    renderNormalizeInput() {
-        const {inputs: {type, normalizeInput}} = this.props
-        if (!['LVQ'].includes(type.value))
-            return
-
-        const options = [
-            {
-                value: false,
-                label: msg('process.unsupervisedClassification.panel.clusterer.form.config.normalizeInput.options.false.label')
-            },
-            {
-                value: true,
-                label: msg('process.unsupervisedClassification.panel.clusterer.form.config.normalizeInput.options.true.label')
-            }
-        ].filter(option => option)
-        return (
-            <Form.Buttons
-                label={msg('process.unsupervisedClassification.panel.clusterer.form.config.normalizeInput.label')}
-                tooltip={msg('process.unsupervisedClassification.panel.clusterer.form.config.normalizeInput.tooltip')}
-                input={normalizeInput}
-                options={options}
-            />
-        )
-    }
-
     renderMaxIterationsOverall() {
         const {inputs: {type, maxIterationsOverall}} = this.props
         if (!['XMEANS'].includes(type.value))
@@ -728,6 +723,34 @@ class _Clusterer extends React.Component {
         )
     }
 
+    renderNormalize() {
+        const {inputs: {normalize}} = this.props
+        const options = [
+            {value: 'YES', label: msg('process.classification.panel.classifier.form.normalize.YES.label'), tooltip: msg('process.classification.panel.classifier.form.normalize.YES.tooltip')},
+            {value: 'NO', label: msg('process.classification.panel.classifier.form.normalize.NO.label'), tooltip: msg('process.classification.panel.classifier.form.normalize.NO.tooltip')},
+        ]
+        return (
+            <Form.Buttons
+                label={msg('process.classification.panel.classifier.form.normalize.label')}
+                tooltip={msg('process.classification.panel.classifier.form.normalize.tooltip')}
+                input={normalize}
+                options={options}
+            />
+        )
+    }
+
+    renderTileScale() {
+        const {inputs: {tileScale}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.classification.panel.classifier.form.tileScale.label')}
+                tooltip={msg('process.classification.panel.classifier.form.tileScale.tooltip')}
+                placeholder={msg('process.classification.panel.classifier.form.tileScale.placeholder')}
+                input={tileScale}
+            />
+        )
+    }
+
     setAdvanced(enabled) {
         const {inputs: {advanced}} = this.props
         advanced.set(enabled)
@@ -754,12 +777,13 @@ const valuesToModel = values => ({
     seed: toInt(values.seed),
     learningRate: values.learningRate,
     epochs: values.epochs,
-    normalizeInput: values.normalizeInput,
     maxIterationsOverall: toInt(values.maxIterationsOverall),
     maxKMeans: toInt(values.maxKMeans),
     maxForChildren: toInt(values.maxForChildren),
     useKD: values.useKD,
     cutoffFactor: toFloat(values.cutoffFactor),
+    normalize: values.normalize,
+    tileScale: toFloat(values.tileScale) || 1,
 })
 
 const modelToValues = model => ({
@@ -782,12 +806,13 @@ const modelToValues = model => ({
     seed: withDefault(model.seed, 10),
     learningRate: withDefault(model.learningRate, 1),
     epochs: withDefault(model.epochs, 1000),
-    normalizeInput: withDefault(model.normalizeInput, false),
     maxIterationsOverall: withDefault(model.maxIterationsOverall, 3),
     maxKMeans: withDefault(model.maxKMeans, 1000),
     maxForChildren: withDefault(model.maxForChildren, 1000),
     useKD: withDefault(model.useKD, false),
     cutoffFactor: withDefault(model.cutoffFactor, 0),
+    normalize: model.normalize || 'YES',
+    tileScale: model.tileScale || 1,
 })
 
 const toInt = input => {
