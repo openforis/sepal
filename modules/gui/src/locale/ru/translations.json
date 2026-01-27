@@ -1937,6 +1937,23 @@
                         },
                         "type": {
                             "label": ""
+                        },
+                        "normalize": {
+                            "label": "",
+                            "tooltip": "",
+                            "YES": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "NO": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileScale": {
+                            "label": "",
+                            "tooltip": "",
+                            "placeholder": ""
                         }
                     },
                     "title": "",
@@ -2522,14 +2539,6 @@
                                 "label": "",
                                 "placeholder": "",
                                 "tooltip": ""
-                            },
-                            "normalizeInput": {
-                                "label": "",
-                                "tooltip": "",
-                                "options": {
-                                    "true.label": "",
-                                    "false.label": ""
-                                }
                             },
                             "maxIterationsOverall": {
                                 "label": "",
