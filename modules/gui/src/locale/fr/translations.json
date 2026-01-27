@@ -1937,6 +1937,23 @@
                         },
                         "type": {
                             "label": "Type"
+                        },
+                        "normalize": {
+                            "label": "",
+                            "tooltip": "",
+                            "YES": {
+                                "label": "Oui",
+                                "tooltip": ""
+                            },
+                            "NO": {
+                                "label": "Non",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileScale": {
+                            "label": "",
+                            "tooltip": "",
+                            "placeholder": ""
                         }
                     },
                     "title": "Sources auxiliaires",
@@ -2522,14 +2539,6 @@
                                 "label": "",
                                 "placeholder": "",
                                 "tooltip": ""
-                            },
-                            "normalizeInput": {
-                                "label": "",
-                                "tooltip": "",
-                                "options": {
-                                    "true.label": "",
-                                    "false.label": ""
-                                }
                             },
                             "maxIterationsOverall": {
                                 "label": "Nombre max d'itérations",
