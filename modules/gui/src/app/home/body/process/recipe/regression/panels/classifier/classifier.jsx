@@ -50,7 +50,6 @@ const fields = {
         .skip((value, {type}) => !['RANDOM_FOREST', 'GRADIENT_TREE_BOOST'].includes(type))
         .notBlank()
         .int(),
-
     shrinkage: new Form.Field()
         .skip((value, {type}) => type !== 'GRADIENT_TREE_BOOST')
         .notBlank()
@@ -66,10 +65,16 @@ const fields = {
     loss: new Form.Field()
         .skip((value, {type}) => type !== 'GRADIENT_TREE_BOOST')
         .notBlank(),
-
     decisionTree: new Form.Field()
         .skip((value, {type}) => type !== 'DECISION_TREE')
+        .notBlank(),
+    tileScale: new Form.Field()
+        .skip((value, {type}) => !['SVM', 'MINIMUM_DISTANCE'].includes(type))
         .notBlank()
+        .number()
+        .min(0.1)
+        .max(16),
+    normalize: new Form.Field(),
 }
 
 class _Classifier extends React.Component {
@@ -163,6 +168,7 @@ class _Classifier extends React.Component {
                 {this.renderBagFraction()}
                 {this.renderMaxNodes()}
                 {this.renderSeed()}
+                {this.renderTileScale()}
             </div>
 
         const renderGradientTreeBoost = () =>
@@ -174,14 +180,20 @@ class _Classifier extends React.Component {
                     {this.renderMaxNodes()}
                 </div>
                 {this.renderLoss()}
-                {this.renderSeed()}
+                <div className={styles.twoColumns}>
+                    {this.renderSeed()}
+                    {this.renderTileScale()}
+                </div>
             </React.Fragment>
 
         const renderCart = () =>
-            <div className={styles.twoColumns}>
-                {this.renderMinLeafPopulation()}
-                {this.renderMaxNodes()}
-            </div>
+            <>
+                <div className={styles.twoColumns}>
+                    {this.renderMinLeafPopulation()}
+                    {this.renderMaxNodes()}
+                </div>
+                {this.renderTileScale()}
+            </>
 
         const renderDecisionTree = () =>
             this.renderDecisionTree()
@@ -381,6 +393,18 @@ class _Classifier extends React.Component {
         )
     }
 
+    renderTileScale() {
+        const {inputs: {tileScale}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.classification.panel.classifier.form.tileScale.label')}
+                tooltip={msg('process.classification.panel.classifier.form.tileScale.tooltip')}
+                placeholder={msg('process.classification.panel.classifier.form.tileScale.placeholder')}
+                input={tileScale}
+            />
+        )
+    }
+    
     setAdvanced(enabled) {
         const {inputs: {advanced}} = this.props
         advanced.set(enabled)
@@ -397,7 +421,9 @@ const valuesToModel = values => ({
     seed: toInt(values.seed),
     shrinkage: toFloat(values.shrinkage) || 0.05,
     samplingRate: toFloat(values.samplingRate) || 0.7,
-    decisionTree: values.decisionTree
+    decisionTree: values.decisionTree,
+    normalize: values.normalize,
+    tileScale: toFloat(values.tileScale) || 1,
 })
 
 const modelToValues = model => ({
@@ -411,7 +437,9 @@ const modelToValues = model => ({
     shrinkage: model.shrinkage || 0.05,
     samplingRate: model.samplingRate || 0.7,
     loss: model.loss || 'LeastSquares',
-    decisionTree: model.decisionTree
+    decisionTree: model.decisionTree,
+    normalize: model.normalize || 'YES',
+    tileScale: model.tileScale || 1,
 })
 
 const toInt = input => {

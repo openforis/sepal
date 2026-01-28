@@ -28,7 +28,7 @@ const worker$ = ({
                     classBand: 'class',
                     scale: 30,
                     geometries: true,
-                    tileScale: 16
+                    // tileScale: 16
                 })
         ),
         switchMap(points =>

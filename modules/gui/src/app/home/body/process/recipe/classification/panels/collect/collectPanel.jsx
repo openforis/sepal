@@ -87,9 +87,10 @@ class _CollectPanel extends React.Component {
                         ? pointHeader()
                         : msg('process.classification.collect.findingNextPoint.title')}/>
                 <Panel.Content>
-                    {loadingNextPoint
+                    {this.renderForm()}
+                    {/* {loadingNextPoint
                         ? this.renderLoadingNextPoint()
-                        : this.renderForm()}
+                        : this.renderForm()} */}
                 </Panel.Content>
                 {this.renderButtons()}
             </Panel>
@@ -138,11 +139,11 @@ class _CollectPanel extends React.Component {
                         keybinding='Escape'
                         onClick={this.close}
                     />
-                    <Panel.Buttons.Next
+                    {/* <Panel.Buttons.Next
                         disabled={!hasTrainingData(recipe) || loadingNextPoint}
                         keybinding='Enter'
                         onClick={this.findNext}
-                    />
+                    /> */}
                 </Panel.Buttons.Main>
                 <Panel.Buttons.Remove
                     disabled={loadingNextPoint}
