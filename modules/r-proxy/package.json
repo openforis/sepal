@@ -10,7 +10,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bullmq": "^5.67.1",
+        "bullmq": "^5.67.2",
         "commander": "^14.0.2",
         "compare-versions": "^6.1.1",
         "http-proxy": "^1.18.1",
