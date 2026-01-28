@@ -23,7 +23,7 @@ const PURGED = 'PURGED'
 class _UserActivity extends React.Component {
 
     state = {
-        activity: null
+        events: null
     }
 
     loadHistory() {
@@ -40,18 +40,24 @@ class _UserActivity extends React.Component {
     }
 
     render() {
-        const {user: {activity: {event}}} = this.props
         return (
             <Tooltip
                 msg={this.renderHistory()}
                 onVisibleChange={visible => this.onTooltipVisible(visible)}
                 delay={250}
                 placement='bottomLeft'>
-                <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
-                    {this.getIcon(event)}
-                    {event ? msg(`user.activity.${event}`) : null}
-                </div>
+                {this.renderCurrent()}
             </Tooltip>
+        )
+    }
+
+    renderCurrent() {
+        const {user: {activity: {event}}} = this.props
+        return (
+            <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
+                {this.getIcon(event)}
+                {event ? msg(`user.activity.${event}`) : null}
+            </div>
         )
     }
 
@@ -59,7 +65,7 @@ class _UserActivity extends React.Component {
         const {events} = this.state
         return (
             <div style={{display: 'flex', flexDirection: 'column', gap: '.5rem'}}>
-                {events?.map(({event, timestamp}) => this.renderEvent({event, timestamp}))}
+                {events ? events?.map(({event, timestamp}) => this.renderEvent({event, timestamp})) : this.renderCurrent()}
             </div>
         )
     }
