@@ -62,17 +62,23 @@ class _UserActivity extends React.Component {
     }
 
     renderHistory() {
-        const {events} = this.state
         return (
             <div style={{display: 'flex', flexDirection: 'column', gap: '.5rem'}}>
-                {events ? events?.map(({event, timestamp}) => this.renderEvent({event, timestamp})) : this.renderCurrent()}
+                {this.renderEvents()}
             </div>
         )
     }
 
-    renderEvent({event, timestamp}) {
+    renderEvents() {
+        const {events} = this.state
+        return events
+            ? events.map(({event, timestamp}, index) => this.renderEvent({event, timestamp, index}))
+            : this.renderCurrent()
+    }
+
+    renderEvent({event, timestamp, index}) {
         return (
-            <Layout type='horizontal-nowrap' alignment='spaced'>
+            <Layout key={index} type='horizontal-nowrap' alignment='spaced'>
                 <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
                     {this.getIcon(event)}
                     {event ? msg(`user.activity.${event}`) : null}
