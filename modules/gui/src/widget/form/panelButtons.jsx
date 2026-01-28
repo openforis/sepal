@@ -20,11 +20,11 @@ export class FormPanelButtons extends React.Component {
     }
 
     renderFormPanelButtons(context) {
-        const renderProps = {...context, ...this.props}
-        const inWizard = renderProps.wizard && renderProps.wizard.includes(renderProps.id)
+        const mergedProps = {...context, ...this.props}
+        const inWizard = mergedProps.wizard && mergedProps.wizard.includes(mergedProps.id)
         return inWizard
-            ? this.renderInWizard(renderProps)
-            : this.renderInForm(renderProps)
+            ? this.renderInWizard(mergedProps)
+            : this.renderInForm(mergedProps)
     }
 
     renderInForm({busy, submittable, invalid, onCancel, onOk, onClose}) {
@@ -105,5 +105,20 @@ export class FormPanelButtons extends React.Component {
 FormPanelButtons.propTypes = {
     applyLabel: PropTypes.string,
     busy: PropTypes.bool,
-    children: PropTypes.any
+    children: PropTypes.any,
+    closable: PropTypes.bool,
+    disabled: PropTypes.bool,
+    disabledCancel: PropTypes.bool,
+    first: PropTypes.bool,
+    id: PropTypes.string,
+    invalid: PropTypes.bool,
+    last: PropTypes.bool,
+    submittable: PropTypes.bool,
+    wizard: PropTypes.bool,
+    onBack: PropTypes.func,
+    onCancel: PropTypes.func,
+    onClose: PropTypes.func,
+    onDone: PropTypes.func,
+    onNext: PropTypes.func,
+    onOk: PropTypes.func
 }

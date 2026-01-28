@@ -23,7 +23,7 @@ const PURGED = 'PURGED'
 class _UserActivity extends React.Component {
 
     state = {
-        activity: null
+        events: null
     }
 
     loadHistory() {
@@ -40,33 +40,45 @@ class _UserActivity extends React.Component {
     }
 
     render() {
-        const {user: {activity: {event}}} = this.props
         return (
             <Tooltip
                 msg={this.renderHistory()}
                 onVisibleChange={visible => this.onTooltipVisible(visible)}
                 delay={250}
                 placement='bottomLeft'>
-                <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
-                    {this.getIcon(event)}
-                    {event ? msg(`user.activity.${event}`) : null}
-                </div>
+                {this.renderCurrent()}
             </Tooltip>
         )
     }
 
-    renderHistory() {
-        const {events} = this.state
+    renderCurrent() {
+        const {user: {activity: {event}}} = this.props
         return (
-            <div style={{display: 'flex', flexDirection: 'column', gap: '.5rem'}}>
-                {events?.map(({event, timestamp}) => this.renderEvent({event, timestamp}))}
+            <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
+                {this.getIcon(event)}
+                {event ? msg(`user.activity.${event}`) : null}
             </div>
         )
     }
 
-    renderEvent({event, timestamp}) {
+    renderHistory() {
         return (
-            <Layout type='horizontal-nowrap' alignment='spaced'>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '.5rem'}}>
+                {this.renderEvents()}
+            </div>
+        )
+    }
+
+    renderEvents() {
+        const {events} = this.state
+        return events
+            ? events.map(({event, timestamp}, index) => this.renderEvent({event, timestamp, index}))
+            : this.renderCurrent()
+    }
+
+    renderEvent({event, timestamp, index}) {
+        return (
+            <Layout key={index} type='horizontal-nowrap' alignment='spaced'>
                 <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
                     {this.getIcon(event)}
                     {event ? msg(`user.activity.${event}`) : null}
