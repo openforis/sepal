@@ -27,9 +27,11 @@ services:
       LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
     healthcheck:
       test: bash -c "exec 6<> /dev/tcp/localhost/22"
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
     networks:
       - sepal
     restart: always

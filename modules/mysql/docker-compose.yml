@@ -26,9 +26,11 @@ services:
       - sepal
     healthcheck:
       test: bash -c "test -f /data/module_initialized"
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
     restart: always
     platform: linux/amd64 # Required for macOS builds
 
@@ -44,9 +46,11 @@ services:
       - "127.0.0.1:8980:80"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost"]
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
     networks:
       - sepal
     depends_on:

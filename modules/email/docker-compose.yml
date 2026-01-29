@@ -9,9 +9,11 @@ services:
       - "${SEPAL_DATA_DIR}/email-redis:/data"
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
     networks:
       - sepal
     restart: always
@@ -44,9 +46,11 @@ services:
       SMTP_FROM_DOMAIN: "${SMTP_FROM_DOMAIN}"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "80"]
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
     networks:
       - sepal
     restart: always

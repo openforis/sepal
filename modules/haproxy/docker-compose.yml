@@ -32,9 +32,11 @@ services:
       net.ipv4.tcp_keepalive_probes: 6
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/healthcheck"]
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
     restart: always
 
 networks:

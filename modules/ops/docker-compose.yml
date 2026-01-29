@@ -21,9 +21,11 @@ services:
       core: 0
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "8080"]
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
 
   docker-registry:
     build:
@@ -38,9 +40,11 @@ services:
       core: 0
     healthcheck:
       test: netstat -an | grep 5000
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
 
   haproxy:
     extends:
@@ -65,9 +69,11 @@ services:
       DOCKER_REGISTRY_PASSWORD: "${DOCKER_REGISTRY_PASSWORD}"
     healthcheck:
       test: nc -z localhost 443 && nc -z localhost ${JENKINS_PORT}
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
 
 volumes:
   jenkins:

@@ -25,8 +25,10 @@ services:
       - "${SEPAL_IP}:2375:2375"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "2375"]
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
     networks:
       - sepal

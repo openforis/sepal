@@ -9,9 +9,11 @@ services:
       - "${SEPAL_DATA_DIR}/scene-metadata-redis:/data"
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
     networks:
       - sepal
     restart: always
@@ -40,6 +42,13 @@ services:
       MYSQL_FILES_DIR: "/var/lib/mysql-files"
       UPDATE_INTERVAL_MINUTES: 60
       MIN_HOURS_PUBLISHED: 24
+    # healthcheck:
+    #   test: ["CMD", "nc", "-z", "localhost", "80"]
+    #   start_period: 60s
+    #   start_interval: 1s
+    #   interval: 20s
+    #   timeout: 5s
+    #   retries: 3
     networks:
       - sepal
     restart: always
