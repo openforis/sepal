@@ -14,8 +14,8 @@
         region: "{{ lookup('env', 'AWS_REGION') }}"
         rules:
           - proto: tcp
-            from_port: 7496
-            to_port: 7496
+            from_port: 7946
+            to_port: 7946
             group_name: "Sepal-Swarm"
             rule_desc: 'Docker swarm container discovery (TCP)'
           - proto: udp
