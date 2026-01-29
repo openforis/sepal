@@ -352,11 +352,10 @@ class _FileBrowser extends React.Component {
                 <div
                     className={[
                         lookStyles.look,
-                        selected ? lookStyles.highlight : lookStyles.transparent,
-                        selected ? null : lookStyles.chromeless,
+                        selected ? lookStyles.highlight : [lookStyles.transparent, lookStyles.chromeless],
                         adding ? styles.adding : null,
                         removing ? styles.removing : null
-                    ].join(' ')}
+                    ].flat().join(' ')}
                     style={{
                         '--depth': FileTree.getDepth(node),
                         '--animation-duration-ms': ANIMATION_DURATION_MS
