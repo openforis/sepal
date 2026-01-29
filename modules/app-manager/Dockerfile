@@ -12,25 +12,12 @@ ADD modules/${MODULE_NAME}/install-requirements.sh /usr/local/bin/install-requir
 RUN chmod +x /usr/local/bin/install-requirements
 ADD modules/${MODULE_NAME}/kernels /etc/sepal/app-manager/kernels-templates
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 51716619E084DAB9
-RUN apt-get update && apt-get install -y \
-    curl \
-    gcc \
-    git \
-    libpq-dev \
-    python3 \
-    python3-dev \
-    python3-pip \
-    python3-venv \
-    python3-wheel \
-    software-properties-common \
-    sudo
-
-RUN pip3 install --upgrade pip
 
 # [HACK] Ensures /usr/local/share/jupyter/voila is available when docker volume is shadowing
+# The version of voila here has to be the same as in init_jupyter.sh
 RUN mkdir -p /usr/local/share/voila /usr/local/share/jupyter && \
-ln -sf /usr/local/share/voila /usr/local/share/jupyter/voila && \
-    pip3 install "voila==0.5.8"
+    ln -sf /usr/local/share/voila /usr/local/share/jupyter/voila && \
+    pip3 install "voila==0.5.11" 
 
 # Create "node" user with unrestricted sudo capabilities
 RUN adduser node
@@ -44,8 +31,7 @@ RUN chmod 0440 /etc/sudoers.d/node
 RUN mkdir -p /etc/apt/keyrings
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
-RUN apt-get update
-RUN apt-get install nodejs -y
+RUN apt-get update && apt-get install nodejs -y
 
 RUN npm install -g nodemon
 

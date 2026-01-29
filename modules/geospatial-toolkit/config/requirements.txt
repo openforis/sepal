@@ -1,11 +1,12 @@
 # version 2022-11-24
 ########  geospatial data analysis  ########
 scikit-image
+packaging==24.0 # scikit-image tries to override the system package. Pinning to prevent
 scipy
 shapely
 shapely-geojson
 tqdm
-GDAL==$GDAL_VERSION
+GDAL[numpy]==$GDAL_VERSION
 bqplot
 numpy
 geopandas
@@ -13,14 +14,9 @@ matplotlib
 pandas
 dask[complete]
 planet
-tensorflow-probability
 geeadd
 pyotb
-
-########  Google Earthengine  ########
-oauth2client
-google-api-python-client==1.12.8
-oeel
+uv
 
 ########  BFAST dependencies ########
 wget
@@ -33,10 +29,10 @@ git+https://github.com/12rambau/bfast.git
 Unidecode
 pyperclip
 python-dateutil
-pytesmo==0.16.1
+pytesmo
 Wand
 PyPDF2 # more recent version are avaiable (PyPDF4)
-rasterio==1.3.10 # https://github.com/openforis/sepal/issues/328
+rasterio
 openpyxl
 pre-commit
 
