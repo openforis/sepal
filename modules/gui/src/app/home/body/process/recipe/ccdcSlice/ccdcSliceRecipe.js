@@ -4,11 +4,9 @@ import moment from 'moment'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {toT} from '~/app/home/body/process/recipe/ccdc/t'
-import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
+import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {normalize} from '~/app/home/map/visParams/visParams'
-import {publishEvent} from '~/eventPublisher'
 import {selectFrom} from '~/stateUtils'
-import {msg} from '~/translate'
 
 export const defaultModel = {
     date: {
@@ -105,9 +103,6 @@ export const additionalVisualizations = recipe => {
 }
 
 const submitRetrieveRecipeTask = recipe => {
-    const name = recipe.title || recipe.placeholder
-    const destination = recipe.ui.retrieveOptions.destination
-    const taskTitle = msg(['process.ccdcSlice.panel.retrieve.task', destination], {name})
     const {baseBands, bandTypes, segmentBands} = recipe.ui.retrieveOptions
     const bandTypeSuffixes = {
         value: '',
@@ -140,37 +135,12 @@ const submitRetrieveRecipeTask = recipe => {
         ...baseBands.map(({name}) => name),
         ...segmentBands
     ].filter(band => allBands.includes(band))
-    const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
-    const visualizations = getAllVisualizations(recipe)
-        .filter(({bands: visBands}) => visBands.every(band => bands.includes(band)))
-    const operation = `image.${destination}`
-    const recipeProperties = {
-        recipe_id: recipe.id,
-        recipe_projectId: recipe.projectId,
-        recipe_type: recipe.type,
-        recipe_title: recipe.title || recipe.placeholder,
-        ..._(recipe.model)
-            .mapValues(value => JSON.stringify(value))
-            .mapKeys((_value, key) => `recipe_${key}`)
-            .value()
-    }
-    const task = {
-        operation,
-        params: {
-            title: taskTitle,
-            description: name,
-            image: {
-                recipe: _.omit(recipe, ['ui']),
-                ...recipe.ui.retrieveOptions,
-                bands: {selection: bands, baseBands},
-                visualizations,
-                properties: {...recipeProperties, 'system:time_start': timeStart, 'system:time_end': timeEnd}
-            }
-        }
-    }
-    publishEvent('submit_task', {
-        recipe_type: recipe.type,
-        destination
+
+    return submitTask(recipe, {
+        filterVisualizations: true,
+        customizeImage: image => ({
+            ...image,
+            bands: {selection: bands, baseBands}
+        })
     })
-    return api.tasks.submit$(task).subscribe()
 }
