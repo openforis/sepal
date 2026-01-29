@@ -57,6 +57,7 @@
 
 .fileList li > div.adding {
     animation: adding var(--animation-duration) ease-in-out forwards;
+    pointer-events: none;
 }
 
 @keyframes adding {
@@ -69,6 +70,7 @@
 .fileList li > div.removing:hover,
 .fileList li > div.removing + ul li > div {
     background-color: var(--remove-color);
+    pointer-events: none;
 }
 
 .fileList li > div.removed,
@@ -76,6 +78,7 @@
 .fileList li > div.removed + ul li > div {
     background-color: var(--remove-color);
     animation: removed var(--animation-duration) ease-in-out forwards;
+    pointer-events: none;
 }
 
 @keyframes removed {

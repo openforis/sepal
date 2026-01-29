@@ -69,7 +69,7 @@ const setRemoving = (tree, paths) =>
         paths.forEach(
             path => STree.updateValue(
                 STree.traverse(tree, path),
-                value => ({...value, removing: true})
+                value => ({...value, removing: true, selected: false})
             )
         )
     )
