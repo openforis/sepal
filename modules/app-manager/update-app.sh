@@ -73,7 +73,6 @@ function update_venv {
         if [[ -f "$app_path/sepal_environment.yml" ]]; then
              micromamba create -y -p "$venv_path" -f "$app_path/sepal_environment.yml" >> "$venv_log_file"
              "$venv_path"/bin/pip install ipykernel >> "$venv_log_file"
-             "$venv_path"/bin/pip install --no-cache-dir "git+https://github.com/openforis/earthengine-api.git@v1.6.14#egg=earthengine-api&subdirectory=python" >> "$venv_log_file"
         else
             python3 -m venv $venv_path
             "$venv_path"/bin/python3 -m pip install --no-cache-dir ipykernel wheel >> "$venv_log_file"
