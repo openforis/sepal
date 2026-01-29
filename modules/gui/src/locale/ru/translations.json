@@ -1937,6 +1937,23 @@
                         },
                         "type": {
                             "label": ""
+                        },
+                        "normalize": {
+                            "label": "",
+                            "tooltip": "",
+                            "YES": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "NO": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "tileScale": {
+                            "label": "",
+                            "tooltip": "",
+                            "placeholder": ""
                         }
                     },
                     "title": "",
@@ -2522,14 +2539,6 @@
                                 "label": "",
                                 "placeholder": "",
                                 "tooltip": ""
-                            },
-                            "normalizeInput": {
-                                "label": "",
-                                "tooltip": "",
-                                "options": {
-                                    "true.label": "",
-                                    "false.label": ""
-                                }
                             },
                             "maxIterationsOverall": {
                                 "label": "",
@@ -4972,6 +4981,15 @@
             "LOCKED": "",
             "PENDING": ""
         },
+        "activity": {
+            "label": "",
+            "ACTIVE": "",
+            "INACTIVE_LOW": "",
+            "INACTIVE_HIGH": "",
+            "INACTIVE_UNKNOWN": "",
+            "NOTIFIED": "",
+            "PURGED": ""
+        },
         "role": {
             "admin": "",
             "user": ""
@@ -5176,6 +5194,17 @@
                     "label": ""
                 },
                 "budgetUpdateRequest": {
+                    "label": ""
+                }
+            },
+            "activity": {
+                "active": {
+                    "label": ""
+                },
+                "notified": {
+                    "label": ""
+                },
+                "erased": {
                     "label": ""
                 }
             }
