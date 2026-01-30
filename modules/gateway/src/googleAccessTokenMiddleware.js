@@ -1,4 +1,4 @@
-const {firstValueFrom, switchMap, catchError, tap, of} = require('rxjs')
+const {firstValueFrom, switchMap, catchError, tap, of, EMPTY} = require('rxjs')
 const {usernameTag, urlTag} = require('./tag')
 const {getRequestUser, setRequestUser} = require('./user')
 const {updateGoogleAccessToken$} = require('./userApi')
@@ -44,6 +44,7 @@ const GoogleAccessTokenMiddleware = userStore => {
                 refreshGoogleTokensIfNeeded$().pipe(
                     catchError(error => {
                         log.warn(`${usernameTag(user.username)} Failed to refresh Google tokens`, error)
+                        return EMPTY
                     })
                 )
             )
