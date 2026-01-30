@@ -57,7 +57,7 @@ queue.on('drained', async () =>
 
 const enqueue = async (message, {id = uid.rnd(), priority = 1} = {}) => {
     log.debug(() => `<${id}> Enqueuing email ${tag(message)} with priority ${priority}`)
-    return await queue.add(message, {
+    return await queue.add('email', message, {
         jobId: id,
         priority,
         attempts: 10,
