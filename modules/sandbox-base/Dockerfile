@@ -153,9 +153,12 @@ RUN apt-get -y update && apt-get install -y \
 RUN uv pip install --system \
     pandas \
     pyshp \
-    rasterio \
     scikit-learn \
     statsmodels
+
+RUN uv pip install --system --no-binary rasterio,pyproj,GDAL \
+    "rasterio==1.4.3" \
+    "pyproj==3.7.2"
 
 # Install Java: configure SDKMAN! directory
 ARG SDKMAN_DIR=/usr/local/lib/sdkman
