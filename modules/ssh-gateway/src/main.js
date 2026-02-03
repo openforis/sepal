@@ -32,6 +32,6 @@ const writeSession$ = session => {
         ${session.host} $1`
         return from(fs.writeFile(sshCommandPath, contents))
     } else {
-        from(fs.unlink(sshCommandPath))
+        return from(fs.unlink(sshCommandPath))
     }
 }
