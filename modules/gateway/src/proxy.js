@@ -54,9 +54,7 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                             log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Disabling caching`)
                             proxyReq.removeHeader('If-None-Match')
                             proxyReq.removeHeader('If-Modified-Since')
-                            proxyReq.removeHeader('Cache-Control')
-                            proxyReq.setHeader('Cache-Control', 'no-cache')
-                            proxyReq.setHeader('Cache-Control', 'max-age=0')
+                            proxyReq.setHeader('Cache-Control', 'no-cache, max-age=0')
                         }
                     },
                     proxyReqWs: (proxyReq, _req, _socket, _options, _head) => {
