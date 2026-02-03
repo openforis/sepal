@@ -10,10 +10,10 @@ const sendFile = (ctx, path) =>
             const lastModified = stats.mtime
             ctx.set('Last-Modified', lastModified.toUTCString())
             ctx.set('Cache-Control', 'max-age=10, must-revalidate')
-            if (ifModifiedSince && moment(ifModifiedSince).isSame(moment(lastModified))) {
+            if (ifModifiedSince && moment(ifModifiedSince).isSameOrAfter(moment(lastModified))) {
                 ctx.response.status = 304
             } else {
-                ctx.response.set('content-type', mime.lookup(path))
+                ctx.response.set('content-type', mime.lookup(path) || 'application/octet-stream')
                 ctx.body = fs.createReadStream(path)
             }
         })
