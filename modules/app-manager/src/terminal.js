@@ -21,9 +21,6 @@ const exec$ = (workingDir, command, args) => {
         process.on('error', error => {
             result$.error(error)
         })
-        process.on('uncaughtException', error => {
-            result$.error(error)
-        })
     } catch (error) {
         result$.error(error)
     }
