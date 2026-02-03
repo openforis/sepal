@@ -73,9 +73,10 @@ const resize = (req, res) => {
         const rows = parseInt(req.query.rows)
         session.terminal.resize(cols, rows)
         log.info(`Resized session: ${session.id}, cols: ${cols}, rows: ${rows}`)
-        res.end()
+        res.status(200).end()
     } catch (error) {
         log.error('Cannot resize session', error)
+        res.status(500).end()
     }
 }
 
