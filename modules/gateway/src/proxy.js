@@ -12,14 +12,17 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
     const refreshUser$ = new Subject()
     
     refreshUser$.pipe(
-        mergeMap(username => userStore.updateUser$(username)),
-        catchError(error => {
-            log.error('Unexpected refreshUser$ error', error)
-            return EMPTY
-        })
+        mergeMap(username =>
+            userStore.updateUser$(username).pipe(
+                catchError(error => {
+                    log.error('Unexpected refreshUser$ error', error)
+                    return EMPTY
+                })
+            )
+        )
     ).subscribe({
-        error: error => log.error('Unexpected refreshUser$ stream error', error),
-        complete: () => log.error('Unexpected refreshUser$ stream closed')
+        error: error => log.fatal('Unexpected refreshUser$ stream error', error),
+        complete: () => log.fatal('Unexpected refreshUser$ stream closed')
     })
 
     const proxy = app =>
