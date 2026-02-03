@@ -31,7 +31,7 @@ const worker$ = ({
     
         return from(oAuth2Client.getTokenInfo(accessToken)).pipe(
             switchMap(({scopes}) => {
-                const hasAllScopes = scopes.every(scope => REQUIRED_SCOPES.includes(scope))
+                const hasAllScopes = REQUIRED_SCOPES.every(requiredScope => scopes.includes(requiredScope))
                 return hasAllScopes
                     ? testEEInteraction()
                     : throwError(() => new ClientException('Doesn\'t have all scopes', {errorCode: MISSING_OAUTH_SCOPES}))
