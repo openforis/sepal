@@ -146,7 +146,7 @@ const updateApp = async ctx => {
     let gitAction
     try {
         const result = await pullUpdates(appPath, branch)
-        gitAction = result.gitAction
+        gitAction = result.action
     } catch (gitError) {
         log.error(`Git operation failed: ${gitError.message}`)
         ctx.status = 500
