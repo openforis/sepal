@@ -1,6 +1,7 @@
 const log = require('#sepal/log').getLogger('session')
 const pty = require('node-pty')
 const fs = require('fs')
+const path = require('path')
 
 const {homeDir, sshScriptPath} = require('./config')
 
@@ -20,7 +21,13 @@ const getUsername = sepalUser => {
 }
 
 const getKeyFile = username => {
-    const keyFile = `${homeDir}/${username}/.ssh/id_rsa`
+    const resolvedHome = path.resolve(homeDir)
+    const keyFile = path.resolve(homeDir, username, '.ssh', 'id_rsa')
+
+    if (!keyFile.startsWith(resolvedHome + path.sep)) {
+        throw new Error('Invalid username: path traversal detected')
+    }
+
     return keyFile
 }
 
