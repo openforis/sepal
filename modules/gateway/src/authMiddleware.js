@@ -66,11 +66,16 @@ const AuthMiddleware = userStore => {
                 return of(INTERNAL_SERVER_ERROR)
             }
 
-            const authenticate$ = () => {
+            const getRequestHeaderCredentials = () => {
                 const header = req.get('Authorization')
                 const basicAuth = Buffer.from(header.substring('basic '.length), 'base64').toString()
-                const [rawUsername, password] = basicAuth.split(':')
+                const [, rawUsername, password] = basicAuth.match(/([^:]*):(.*)/) || []
                 const username = rawUsername.toLowerCase()
+                return {username, password}
+            }
+
+            const authenticate$ = () => {
+                const {username, password} = getRequestHeaderCredentials()
                 if (username && password) {
                     log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticating user`)
                     return post$(AUTHENTICATION_URL, {
