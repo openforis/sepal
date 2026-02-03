@@ -185,19 +185,20 @@ const download = async (homeDir, ctx) => {
             const filename = Path.parse(absolutePath).base
             const stats = await stat(absolutePath)
             if (stats.isFile()) {
-                log.debug(() => `Downloading: ${absolutePath}`)
+                log.debug(`Downloading: ${absolutePath}`)
                 ctx.body = createReadStream(absolutePath)
                 ctx.attachment(filename)
             } else {
-                log.warn(() => `Cannot download - non-file: ${absolutePath}`)
+                log.warn(`Cannot download - non-file: ${absolutePath}`)
                 ctx.response.status = 400
                 ctx.body = {error: 'Cannot download - non-file, only files are supported'}
             }
         } catch (error) {
+            log.warn('Cannot download', error)
             ctx.response.status = 404
         }
     } else {
-        log.warn(() => 'Cannot download - unauthenticated user')
+        log.warn('Cannot download - unauthenticated user')
         ctx.response.status = 401
     }
 }
