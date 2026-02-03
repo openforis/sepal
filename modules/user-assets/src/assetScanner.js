@@ -120,7 +120,7 @@ const loadNodeValidUser$ = (user, path, id) => {
 
 const loadNodeMissingUser$ = (username, path) =>
     of([]).pipe(
-        log.warn(`${userTag(username)} skipped: ${STree.toStringPath(path) || 'roots'} - user unavailable`)
+        tap(() => log.warn(`${userTag(username)} skipped: ${STree.toStringPath(path) || 'roots'} - user unavailable`))
     )
 
 const loadNode$ = (username, path = [], node = {}) =>
