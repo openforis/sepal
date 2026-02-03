@@ -226,13 +226,11 @@ const getFilesByPath = ({path, pageToken}) =>
 const removeFolderByPath$ = ({path}) =>
     do$(`Remove folder by path: ${path}`,
         getFolderByPath$({path}).pipe(
-            catchError(e => {
-                if (e instanceof NotFoundException) {
-                    return EMPTY
-                } else {
-                    throwError(() => e)
-                }
-            }),
+            catchError(e =>
+                e instanceof NotFoundException
+                    ? EMPTY
+                    : throwError(() => e)
+            ),
             switchMap(({id}) => remove$({id})),
             catchError(e => {
                 log.warn(`Failed to remove ${path}`, e)
@@ -275,7 +273,7 @@ const downloadFile$ = (id, destinationStream) =>
         switchMap(stream => {
             const stream$ = new ReplaySubject()
             stream.on('data', data => stream$.next(data.length))
-            stream.on('error', error => stream.error(error))
+            stream.on('error', error => stream$.error(error))
             stream.on('end', () => stream$.complete())
             stream.pipe(destinationStream)
             return stream$
