@@ -85,12 +85,11 @@ const createWatcher = async ({out$, stop$}) => {
             takeUntil(clientOffline$(parseClientKey(clientGroup$.key))),
             finalize(() => log.debug(`${clientTag(parseClientKey(clientGroup$.key))} offline`))
         )),
-        takeUntil(stop$),
-        catchError(error => log.error(error))
+        takeUntil(stop$)
     ).subscribe({
         next: ({clientId, subscriptionId, data}) => out$.next({clientId, subscriptionId, data}),
-        error: error => log.error('Unexpected stream error', error),
-        complete: () => log.error('Unexpected stream complete')
+        error: error => log.fatal('Unexpected monitor$ stream error', error),
+        complete: () => log.fatal('Unexpected monitor$ stream complete')
     })
 
     remove$.pipe(
@@ -104,8 +103,8 @@ const createWatcher = async ({out$, stop$}) => {
         )
     ).subscribe({
         next: ({username, clientId, subscriptionId}) => trigger$.next({username, clientId, subscriptionId}),
-        error: error => log.error('Unexpected stream error', error),
-        complete: () => log.error('Unexpected stream complete')
+        error: error => log.fatal('Unexpected remove$ stream error', error),
+        complete: () => log.fatal('Unexpected remove$ stream complete')
     })
     
     stats$.pipe(
@@ -120,8 +119,8 @@ const createWatcher = async ({out$, stop$}) => {
         repeat()
     ).subscribe({
         next: ({clients, scans}) => log.info(`Stats: ${scans} scans by ${clients} clients`),
-        error: error => log.error('Unexpected stream error', error),
-        complete: () => log.error('Unexpected stream complete')
+        error: error => log.fatal('Unexpected stats$ stream error', error),
+        complete: () => log.fatal('Unexpected stats$ stream complete')
     })
 
     const scanDir$ = ({username, clientId, subscriptionId, path}) =>
