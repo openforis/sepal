@@ -101,14 +101,20 @@ timer(0, REFRESH_INTERVAL_HOURS * 3600000).pipe(
     tap(() => log.info('Loading GEE catalog')),
     switchMap(() =>
         getNode$().pipe(
-            toArray()
+            toArray(),
+            catchError(error => {
+                log.error('Error while loading GEE catalog - ', error)
+                return EMPTY
+            })
         )
     )
 ).subscribe({
     next: content => {
         datasets = content
         log.info(`GEE catalog loaded, ${datasets.length} datasets`)
-    }
+    },
+    error: error => log.fatal('Unexpected GEE catalog stream error:', error),
+    complete: () => log.fatal('Unexpected GEE catalog stream completed')
 })
 
 module.exports = {getDatasets}

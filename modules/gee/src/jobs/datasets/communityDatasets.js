@@ -80,12 +80,19 @@ const propertyMatcher = (property, search) =>
 
 timer(0, REFRESH_INTERVAL_HOURS * 3600000).pipe(
     tap(() => log.info('Loading Awesome GEE community datasets')),
-    switchMap(() => getDatasets$())
+    switchMap(() => getDatasets$().pipe(
+        catchError(error => {
+            log.error('Error while loading Awesome GEE community datasets - ', error)
+            return EMPTY
+        })
+    ))
 ).subscribe({
     next: content => {
         datasets = content
         log.info(`Awesome GEE community datasets loaded, ${datasets.length} datasets`)
-    }
+    },
+    error: error => log.fatal('Unexpected Awesome GEE community stream error:', error),
+    complete: () => log.fatal('Unexpected Awesome GEE community stream completed')
 })
 
 module.exports = {getDatasets}
