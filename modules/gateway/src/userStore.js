@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const log = require('#sepal/log').getLogger('userStore')
 const {usernameTag, userTag} = require('./tag')
-const {catchError, from, switchMap, EMPTY, throwError, map, tap, of, firstValueFrom} = require('rxjs')
+const {catchError, defer, from, switchMap, EMPTY, throwError, map, tap, of, firstValueFrom} = require('rxjs')
 const {removeRequestUser} = require('./user')
 const {getSessionUsername, setRequestUser} = require('./user')
 const {loadUser$} = require('./userApi')
@@ -22,7 +22,7 @@ const UserStore = (redis, event$) => {
         from(redis.get(userKey(username))).pipe(
             switchMap(serializedUser =>
                 serializedUser
-                    ? of(JSON.parse(serializedUser)).pipe(
+                    ? defer(() => of(JSON.parse(serializedUser))).pipe(
                         tap(() => log.debug(`${userTag(username)} retrieved`)),
                         catchError(error =>
                             throwError(() => new Error(`${userTag(username)} could not be deserialized`, {cause: error}))
