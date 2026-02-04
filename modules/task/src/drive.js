@@ -1,4 +1,4 @@
-const {defer, EMPTY, ReplaySubject, concat, from, of, throwError, catchError, expand, filter, map, mergeMap, mergeScan, scan, switchMap} = require('rxjs')
+const {defer, EMPTY, Subject, concat, from, of, throwError, catchError, expand, filter, map, mergeMap, mergeScan, scan, switchMap, finalize} = require('rxjs')
 const {google} = require('googleapis')
 const {NotFoundException} = require('#sepal/exception')
 const log = require('#sepal/log').getLogger('drive')
@@ -264,19 +264,40 @@ const getFolderTotalsByPath$ = path =>
  * @return {Observable} Emits bytes downloaded for each fragment downloaded
  */
 const downloadFile$ = (id, destinationStream) =>
-    drive$(`Download file by id: ${id}`, drive =>
-        drive.files.get(
-            {fileId: id, alt: 'media'},
-            {responseType: 'stream'}
+    defer(() =>
+        drive$(`Download file by id: ${id}`, drive =>
+            drive.files.get(
+                {fileId: id, alt: 'media'},
+                {responseType: 'stream'}
+            )
         )
     ).pipe(
         switchMap(stream => {
-            const stream$ = new ReplaySubject()
-            stream.on('data', data => stream$.next(data.length))
-            stream.on('error', error => stream$.error(error))
-            stream.on('end', () => stream$.complete())
+            const stream$ = new Subject()
+
+            const onData = data => {
+                stream$.next(data.length)
+            }
+            const onError = error => {
+                destinationStream.close()
+                stream$.error(error)
+            }
+            const onEnd = () => {
+                stream$.complete()
+            }
+
+            stream.on('data', onData)
+            stream.on('error', onError)
+            stream.on('end', onEnd)
             stream.pipe(destinationStream)
-            return stream$
+
+            return stream$.pipe(
+                finalize(() => {
+                    stream.off('data', onData)
+                    stream.off('error', onError)
+                    stream.off('end', onEnd)
+                })
+            )
         })
     )
 
