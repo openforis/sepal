@@ -1,5 +1,5 @@
 const {subHours} = require('date-fns/subHours')
-const {timer, exhaustMap, from} = require('rxjs')
+const {timer, exhaustMap, from, catchError, EMPTY} = require('rxjs')
 const {updateIntervalMinutes, minHoursPublished} = require('./config')
 const {initializeDatabase} = require('./database')
 const {downloadLandsat, loadLandsat} = require('./landsatCsv')
@@ -60,11 +60,18 @@ const updateData = async ({redis, database}) => {
 const scheduleUpdates = ({redis, database}) => {
     log.info(`Running updates every ${updateIntervalMinutes} minutes`)
     timer(INITIAL_UPDATE_DELAY_SECONDS * 1000, updateIntervalMinutes * 60 * 1000).pipe(
-        exhaustMap(() => from(updateData({redis, database})))
+        exhaustMap(() =>
+            from(updateData({redis, database})).pipe(
+                catchError(error => {
+                    log.error('Error during scheduled update:', error)
+                    return EMPTY
+                })
+            )
+        )
     ).subscribe({
         next: () => log.debug('Running scheduled updates'),
-        error: error => log.error('Error while running scheduled updates:', error),
-        complete: () => log.fatal('Unexpected stream complete')
+        error: error => log.fatal('Unexpected update scheduler stream error:', error),
+        complete: () => log.fatal('Unexpected update scheduler stream complete')
     })
 }
 
