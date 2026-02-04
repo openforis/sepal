@@ -5,7 +5,6 @@ const preview$ = require('#gee/jobs/ee/image/preview')
 const loadCCDCSegments$ = require('#gee/jobs/ee/ccdc/loadSegments')
 const loadTimeSeriesbservations$ = require('#gee/jobs/ee/timeSeries/loadObservations')
 const nextReferenceDataPoints$ = require('#gee/jobs/ee/classification/nextReferenceDataPoints')
-const assetVisualizations$ = require('#gee/jobs/ee/image/assetVisualizations')
 const imageBands$ = require('#gee/jobs/ee/image/bands')
 const imageHistogram$ = require('#gee/jobs/ee/image/histogram')
 const imageJson$ = require('#gee/jobs/ee/image/eeJson')
@@ -35,7 +34,6 @@ module.exports = router =>
         .post('/sceneareas', stream(ctx => sceneAreas$(ctx)))
         .post('/preview', stream(ctx => preview$(ctx)))
         .post('/bands', stream(ctx => imageBands$(ctx)))
-        .post('/image/assetVisualizations', stream(ctx => assetVisualizations$(ctx)))
         .get('/image/json', stream(ctx => {
             ctx.type = 'application/json'
             return imageJson$(ctx)
