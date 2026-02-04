@@ -22,7 +22,7 @@ const {tag} = require('#sepal/tag')
 
 const taskTag = id => tag('Task', id)
 
-const msg = (id, msg) => `${taskTag, id}: ${msg}`
+const msg = (id, msg) => `${taskTag(id)}: ${msg}`
 
 const worker$ = ({
     task: {id, name, params},
