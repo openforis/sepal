@@ -116,7 +116,7 @@ const worker$ = ({
                 switchMap(visParams =>
                     visParams.hsv
                         ? ee.getMap$(hsvToRgb(image, visParams), null, 'create preview map')
-                        : ee.getMap$(image, visParams), null, 'create preview map')
+                        : ee.getMap$(image, visParams, 'create preview map'))
             ))
         )
     }
