@@ -1,8 +1,19 @@
-const log = require('#sepal/log').getLogger('terminal')
-const {exec} = require('child_process')
+const {unlinkSync} = require('fs')
 const {interval, merge, Subject, map, filter, bufferTime} = require('rxjs')
-
 const Session = require('./session')
+const log = require('#sepal/log').getLogger('terminal')
+
+const removeKeyFile = keyFile => {
+    try {
+        log.debug('Removing keyfile:', keyFile)
+        unlinkSync(keyFile)
+        log.info('Removed keyfile:', keyFile)
+    } catch (err) {
+        if (err.code !== 'ENOENT') {
+            log.error('Failed to remove keyfile:', err)
+        }
+    }
+}
 
 const start = (websocket, req) => {
     try {
@@ -14,7 +25,7 @@ const start = (websocket, req) => {
     
         websocket.on('close', () => {
             terminal.kill()
-            exec(`rm -f ${session.tempKeyFile}`)
+            removeKeyFile(session.tempKeyFile)
             subscriptions.forEach(subscription =>
                 subscription.unsubscribe()
             )
