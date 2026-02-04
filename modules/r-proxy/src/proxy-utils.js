@@ -2,6 +2,7 @@ const log = require('#sepal/log').getLogger('proxy')
 const https = require('https')
 const fs = require('fs')
 const {stat} = require('fs/promises')
+const Path = require('path')
 
 const checkTarget = (url, {allowRedirect} = {}) =>
     new Promise((resolve, reject) => {
@@ -20,7 +21,7 @@ const serveFile = async ({res, path, type}) => {
         const requestStat = await stat(path)
         if (requestStat.isFile()) {
             log.info(`Serving ${type}:`, path)
-            res.setHeader('Content-Disposition', `attachment; filename="${path}"`)
+            res.setHeader('Content-Disposition', `attachment; filename="${Path.basename(path)}"`)
             fs.createReadStream(path).pipe(res)
             return true
         }
