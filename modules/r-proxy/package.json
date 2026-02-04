@@ -11,13 +11,13 @@
     "license": "ISC",
     "dependencies": {
         "bullmq": "^5.67.2",
-        "commander": "^14.0.2",
+        "commander": "^14.0.3",
         "compare-versions": "^6.1.1",
         "http-proxy": "^1.18.1",
         "ioredis": "^5.9.2",
         "lodash": "^4.17.23",
         "log4js": "^6.9.1",
-        "minimatch": "^10.1.1",
+        "minimatch": "^10.1.2",
         "sepal": "../../lib/js/shared"
     },
     "devDependencies": {

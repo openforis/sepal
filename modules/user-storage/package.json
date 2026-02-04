@@ -11,7 +11,7 @@
     "license": "ISC",
     "dependencies": {
         "bullmq": "^5.67.2",
-        "commander": "^14.0.2",
+        "commander": "^14.0.3",
         "date-fns": "^4.1.0",
         "ioredis": "^5.9.2",
         "lodash": "^4.17.23",
