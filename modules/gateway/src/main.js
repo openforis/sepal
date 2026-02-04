@@ -106,7 +106,6 @@ const main = async () => {
     server.setMaxListeners(30)
 
     const webSocketAccessDenied = socket => {
-        log.warn('WebSocket access denied without a username')
         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
         socket.destroy()
     }
@@ -142,17 +141,24 @@ const main = async () => {
                 if (requestPath === webSocketPath) {
                     handleGlobalWebSocket(requestPath, req, socket, head, username)
                 } else {
-                    firstValueFrom(userStore.getUser$(username)).then(user => {
-                        if (user) {
-                            log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
-                            setRequestUser(req, user)
-                        } else {
-                            log.warn(`${usernameTag(username)} Websocket upgrade without a user`)
-                        }
-                        handleProxiedWebSocket(requestPath, req, socket, head, username)
-                    })
+                    firstValueFrom(userStore.getUser$(username))
+                        .then(user => {
+                            if (user) {
+                                log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
+                                setRequestUser(req, user)
+                                handleProxiedWebSocket(requestPath, req, socket, head, username)
+                            } else {
+                                log.error(`${usernameTag(username)} User unavailable for websocket upgrade`)
+                                webSocketAccessDenied(socket)
+                            }
+                        })
+                        .catch(error => {
+                            log.error(`${usernameTag(username)} Error fetching user for websocket upgrade`, error)
+                            webSocketAccessDenied(socket)
+                        })
                 }
             } else {
+                log.warn('Missing username for websocket upgrade')
                 webSocketAccessDenied(socket)
             }
         })
