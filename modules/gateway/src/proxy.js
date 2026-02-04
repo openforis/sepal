@@ -84,9 +84,11 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                     },
                     error: (error, req, res) => {
                         log.error(`${urlTag(req.originalUrl)} Proxy error:`, error)
-                        res.writeHead(500, 'Something went wrong', {
-                            'Content-Type': 'text/plain'
-                        })
+                        if (res.writeHead && !res.headersSent) {
+                            res.writeHead(500, 'Something went wrong', {
+                                'Content-Type': 'text/plain'
+                            })
+                        }
                         res.end()
                     },
                     open: () => {
