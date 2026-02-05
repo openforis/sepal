@@ -1,4 +1,4 @@
-sepal_ui==3.0.0
+sepal_ui==3.0.1
 
 ########  Google Earthengine  ########
 numpy<2
