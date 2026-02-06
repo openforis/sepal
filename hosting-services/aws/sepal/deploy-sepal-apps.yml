@@ -97,6 +97,13 @@
           - subnet: 172.20.0.0/16
             iprange: 172.20.0.0/24
 
+    - name: Wait for overlay ready
+      command: docker network inspect sepal --format '{{ "{{" }} .Containers {{ "}}" }}'
+      register: network
+      retries: 15
+      delay: 2
+      until: network.stdout != "null"            
+
     - file: path="/usr/local/lib/docker/cli-plugins" state=directory
     - uri:
         url: https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64

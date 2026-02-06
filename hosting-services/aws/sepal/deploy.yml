@@ -226,6 +226,13 @@
     - debug:
         msg: "{{ swarm_init.swarm_facts.JoinTokens.Worker }}"
 
+    - name: Wait for swarm leader
+      command: docker node ls
+      register: node
+      retries: 15
+      delay: 2
+      until: node.stdout is search("Leader")      
+
     - name: Write token to /tmp/swarm-token
       copy:
         dest: /tmp/swarm-token
@@ -239,6 +246,13 @@
         ipam_config:
           - subnet: 172.20.0.0/16
             iprange: 172.20.0.0/24
+
+    - name: Wait for overlay ready
+      command: docker network inspect sepal --format '{{ "{{" }} .Containers {{ "}}" }}'
+      register: network
+      retries: 15
+      delay: 2
+      until: network.stdout != "null"            
 
     - file: path="/usr/local/lib/docker/cli-plugins" state=directory
     - uri:
