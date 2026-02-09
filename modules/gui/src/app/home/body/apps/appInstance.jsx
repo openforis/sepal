@@ -29,7 +29,6 @@ class _AppInstance extends React.Component {
     constructor(props) {
         super(props)
         this.iFrameLoaded = this.iFrameLoaded.bind(this)
-        this.disposeVoilaKernel = this.disposeVoilaKernel.bind(this)
     }
 
     render() {
@@ -136,13 +135,10 @@ class _AppInstance extends React.Component {
     }
 
     componentWillUnmount() {
-        // Dispose kernel for Voila/Jupyter apps (apps that use srcDoc)
-        if (!this.useIFrameSrc()) {
-            this.disposeVoilaKernel()
-        }
+        this.unloadIFrame()
     }
 
-    disposeVoilaKernel() {
+    unloadIFrame() {
         const iFrame = this.iFrameRef.current
         if (!iFrame?.contentWindow) {
             return
