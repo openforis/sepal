@@ -6,14 +6,30 @@
       src: "{{ role_path }}/../../modules/{{ module }}/docker-compose.yml"
       dest: "/var/lib/sepal/modules/{{ module }}/docker-compose.yml"
 
-- name: "{{ module }} | Up"
-  shell: "docker compose \
-      --env-file /etc/sepal/env \
-      --file /var/lib/sepal/modules/{{ module }}/docker-compose.yml \
-      up \
-      -d \
-      --no-deps \
-      --no-build"
+# - name: "{{ module }} | Up"
+#   shell: "docker compose \
+#       --env-file /etc/sepal/env \
+#       --file /var/lib/sepal/modules/{{ module }}/docker-compose.yml \
+#       up \
+#       -d \
+#       --no-deps \
+#       --no-build"
+
+- name: "{{ module }} | Up (retry-safe)"
+  docker_compose_v2:
+    project_src: "/var/lib/sepal/modules/{{ module }}"
+    files:
+      - docker-compose.yml
+    env_files:
+      - /etc/sepal/env
+    state: present
+    pull: false
+    build: false
+    dependencies: false
+  register: compose_result
+  retries: 30
+  delay: 2
+  until: compose_result is succeeded
 
 - name: "{{ module }} | Waiting for module"
   shell: "docker compose \
