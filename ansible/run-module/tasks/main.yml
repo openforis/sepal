@@ -16,18 +16,18 @@
 #       --no-build"
 
 - name: "{{ module }} | Up (retry-safe)"
-  docker_compose_v2:
+  community.docker.docker_compose_v2:
     project_src: "/var/lib/sepal/modules/{{ module }}"
     files:
       - docker-compose.yml
     env_files:
       - /etc/sepal/env
     state: present
-    pull: false
-    build: false
+    pull: never
+    build: never
     dependencies: false
   register: compose_result
-  retries: 30
+  retries: 10
   delay: 2
   until: compose_result is succeeded
 
