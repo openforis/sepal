@@ -2,9 +2,9 @@
 set -e
 
 echo
-echo "***********************************"
+echo "*************************"
 echo "*** Installing GMTSAR ***"
-echo "***********************************"
+echo "*************************"
 
 apt-get install -y csh subversion autoconf libtiff5-dev libhdf5-dev wget
 apt-get install -y liblapack-dev
@@ -27,6 +27,6 @@ git clone --branch 6.6 https://github.com/gmtsar/gmtsar GMTSAR
 cd GMTSAR
 autoconf
 autoupdate
-./configure CFLAGS="-fcommon" LDFLAGS="-z muldefs" --with-orbits-dir=/usr/local/orbits
+./configure --with-orbits-dir=/tmp CFLAGS='-z muldefs' LDFLAGS='-z muldefs'
 make
 make install
