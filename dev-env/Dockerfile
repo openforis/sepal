@@ -1,4 +1,4 @@
-FROM debian:bookworm
+FROM debian:trixie-slim
 
 SHELL ["/bin/bash", "-c"]
 
