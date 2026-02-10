@@ -95,10 +95,6 @@
     - debug:
         msg: "{{ sepal_private_ip }}"
 
-    # - docker_network:
-    #     name: sepal
-    #     state: absent
-
     - name: Join the swarm as a worker
       docker_swarm:
         state: join
