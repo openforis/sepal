@@ -15,11 +15,11 @@ apt-get install -y gmt-dcw gmt-gshhg
 apt-get install -y gmt
 
 cd /tmp
-wget http://topex.ucsd.edu/gmtsar/tar/ORBITS.tar
+wget -nv http://topex.ucsd.edu/gmtsar/tar/ORBITS.tar
 cd /usr/local
 mkdir orbits
 cd orbits
-tar -xvf /tmp/ORBITS.tar
+tar -xf /tmp/ORBITS.tar
 
 
 cd /usr/local
@@ -28,9 +28,5 @@ cd GMTSAR
 autoconf
 autoupdate
 ./configure CFLAGS="-fcommon" LDFLAGS="-z muldefs" --with-orbits-dir=/usr/local/orbits
-# ./configure --with-orbits-dir=/usr/local/orbits
 make
 make install
-
-export GMTSAR=/usr/local/GMTSAR
-export PATH=$GMTSAR/bin:"$PATH"
