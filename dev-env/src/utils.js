@@ -226,7 +226,9 @@ export const getStatus = async (modules, extended) => {
     const status = extended
         ? await getExtendedStatus(modules)
         : await getBaseStatus(modules)
-    return status.filter(({status}) => status.length)
+    return status
+        ? status?.filter(({status}) => status.length)
+        : []
 }
 
 export const showStatus = async (modules, options = {}) => {
