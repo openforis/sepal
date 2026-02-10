@@ -55,6 +55,8 @@ geeadd
 geeup
 cogee
 xee
+pystac-client
+contextily
 
 ########  OSK requirements  ########
 descartes

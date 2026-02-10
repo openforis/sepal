@@ -134,6 +134,22 @@ class _AppInstance extends React.Component {
         }
     }
 
+    componentWillUnmount() {
+        this.unloadIFrame()
+    }
+
+    unloadIFrame() {
+        const iFrame = this.iFrameRef.current
+        if (!iFrame?.contentWindow) {
+            return
+        }
+        try {
+            iFrame.contentWindow.dispatchEvent(new Event('beforeunload'))
+        } catch (_error) {
+            // iframe may already be destroyed
+        }
+    }
+
     runApp() {
         const {app, stream} = this.props
         publishEvent('launch_app', {app: app.id})

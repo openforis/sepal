@@ -12,8 +12,10 @@ rm -f $INSTALL_SCRIPT
 
 echo "snap.userdir=/tmp/.snap" >> /usr/local/snap/etc/snap.properties
 
-sen2cor=Sen2Cor-02.10.01-Linux64
-wget https://step.esa.int/thirdparties/sen2cor/2.10.0/$sen2cor.run
+sen2cor=Sen2Cor-02.12.03-Linux64
+wget https://step.esa.int/thirdparties/sen2cor/2.12.0/$sen2cor.run
+# sen2cor=Sen2Cor-02.10.01-Linux64
+# wget https://step.esa.int/thirdparties/sen2cor/2.10.0/$sen2cor.run
 chmod +x $sen2cor.run
 mv $sen2cor.run /usr/local/lib/
 cd /usr/local/lib
