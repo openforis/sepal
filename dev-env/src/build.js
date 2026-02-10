@@ -72,7 +72,9 @@ const buildModule = async (module, options = {}, pull) => {
                 BUILD_NUMBER: 'latest',
                 GIT_COMMIT: gitCommit
             },
-            showStdOut: !options.quiet
+            enableStdIn: !options.verbose,
+            showStdOut: !options.quiet,
+            showStdErr: true
         })
             
         showModuleStatus(module, MESSAGE.BUILT)

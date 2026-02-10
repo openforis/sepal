@@ -41,6 +41,7 @@ const main = async () => {
         .option('--nc, --no-cache', 'No cache')
         .option('-r, --recursive', 'Recursive')
         .option('-q, --quiet', 'Quiet')
+        .option('-v, --verbose', 'Verbose')
         .argument('[module...]', 'Modules to build')
         .action(build)
     
