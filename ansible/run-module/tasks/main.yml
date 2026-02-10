@@ -6,15 +6,6 @@
       src: "{{ role_path }}/../../modules/{{ module }}/docker-compose.yml"
       dest: "/var/lib/sepal/modules/{{ module }}/docker-compose.yml"
 
-# - name: "{{ module }} | Up"
-#   shell: "docker compose \
-#       --env-file /etc/sepal/env \
-#       --file /var/lib/sepal/modules/{{ module }}/docker-compose.yml \
-#       up \
-#       -d \
-#       --no-deps \
-#       --no-build"
-
 - name: "{{ module }} | Up (retry-safe)"
   community.docker.docker_compose_v2:
     project_src: "/var/lib/sepal/modules/{{ module }}"
@@ -23,7 +14,7 @@
     env_files:
       - /etc/sepal/env
     state: present
-    pull: never
+    pull: missing
     build: never
     dependencies: false
   register: compose_result

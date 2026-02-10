@@ -18,7 +18,6 @@ RUN pip3 install \
   pyyaml==5.4.1 \
   requests
 
-# RUN ansible-galaxy collection install amazon.aws -v --no-cache  -U -f
 RUN ansible-galaxy collection install community.docker -v --no-cache  -U -f
 RUN packer plugins install github.com/hashicorp/amazon && packer plugins install github.com/hashicorp/ansible
 ADD boto.conf /root/.boto
