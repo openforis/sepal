@@ -27,6 +27,6 @@ git clone --branch 6.6 https://github.com/gmtsar/gmtsar GMTSAR
 cd GMTSAR
 autoconf
 autoupdate
-./configure --with-orbits-dir=/tmp CFLAGS='-z muldefs' LDFLAGS='-z muldefs'
+./configure --with-orbits-dir=/usr/local/orbits CFLAGS='-z muldefs' LDFLAGS='-z muldefs'
 make
 make install
