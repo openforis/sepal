@@ -92,9 +92,6 @@
     - set_fact:
         sepal_private_ip: "{{ ec2_sepal.instances[0].private_ip_address }}"
 
-    - debug:
-        msg: "{{ sepal_private_ip }}"
-
     - name: Join the swarm as a worker
       docker_swarm:
         state: join
