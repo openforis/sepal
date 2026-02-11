@@ -5,32 +5,35 @@ echo
 echo "***********************************"
 echo "*** Installing ESA SNAP Toolbox ***"
 echo "***********************************"
-INSTALL_SCRIPT=esa-snap_all_unix_8_0.sh
-wget -nv http://step.esa.int/downloads/8.0/installers/$INSTALL_SCRIPT
-sh $INSTALL_SCRIPT -q -overwrite
-rm -f $INSTALL_SCRIPT
 
-echo "snap.userdir=/tmp/.snap" >> /usr/local/snap/etc/snap.properties
+INSTALL_SCRIPT="esa-snap_all_linux-13.0.0.sh"
+wget -nv -O "$INSTALL_SCRIPT" "https://download.esa.int/step/snap/13.0/installers/$INSTALL_SCRIPT"
+sh "$INSTALL_SCRIPT" -q -overwrite
+rm -f "$INSTALL_SCRIPT"
 
-sen2cor=Sen2Cor-02.12.03-Linux64
-wget https://step.esa.int/thirdparties/sen2cor/2.12.0/$sen2cor.run
-# sen2cor=Sen2Cor-02.10.01-Linux64
-# wget https://step.esa.int/thirdparties/sen2cor/2.10.0/$sen2cor.run
-chmod +x $sen2cor.run
-mv $sen2cor.run /usr/local/lib/
-cd /usr/local/lib
-./$sen2cor.run
-rm $sen2cor.run
-chmod -R +r /usr/local/lib/$sen2cor
-cd /usr/local/lib/$sen2cor/lib/python*/site-packages/sen2cor
-mkdir log
-chmod o+xw log
-ln -sf /usr/local/lib/$sen2cor/bin/L2A_Process /usr/local/bin/L2A_Process
-mv /root/sen2cor /etc/sen2cor
-chmod 755 $(find /etc/sen2cor -type d)
-chmod 644 $(find /etc/sen2cor -type f)
+cat <<EOF > /usr/local/esa-snap/etc/snap.properties
+snap.jai.defaultTileSize=512
+snap.jai.prefetchTiles=true
+snap.log.level=ERROR
+EOF
 
-snap --nosplash --nogui --modules --update-all 2>&1 | while read -r line; do \
-        echo "$line" && \
-        [ "$line" = "updates=0" ] && sleep 2 && pkill -TERM -f "snap/jre/bin/java"; \
-done; exit 0
+cat <<EOF > /usr/local/esa-snap/bin/gpt.vmoptions
+-XX:MaxRAMPercentage=75.0
+-Djava.awt.headless=true
+-Dsnap.log.level=ERROR
+EOF
+
+# Fix SLF4J Warning
+wget -nv -O /tmp/slf4j-simple-1.7.36.jar \
+  https://repo1.maven.org/maven2/org/slf4j/slf4j-simple/1.7.36/slf4j-simple-1.7.36.jar
+cp /tmp/slf4j-simple-1.7.36.jar /usr/local/esa-snap/snap/modules/
+chmod a+r /usr/local/esa-snap/snap/modules/slf4j-simple-1.7.36.jar
+rm /tmp/slf4j-simple-1.7.36.jar
+
+chmod -R a+rX /usr/local/esa-snap/snap/modules
+timeout 300 /usr/local/esa-snap/bin/snap \
+  --nosplash \
+  --nogui \
+  --modules \
+  --update-all \
+  2>&1 | grep -v "INFO:.*ssl" || true
