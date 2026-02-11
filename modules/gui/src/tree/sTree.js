@@ -106,25 +106,33 @@ const traverse = (node, path, create, callback) => {
     }
 }
 
-const traverseReduce = (node, path, callback, acc0) => {
+const traverseReduce = (node, path, reducer, acc0) => {
     assertNode(node)
     assertPath(path)
-    const acc = callback(acc0, {
+    const acc = reducer(acc0, {
         path: getPath(node),
         key: getKey(node),
-        value: getValue(node),
-        node
+        value: getValue(node)
     })
     const [pathHead, ...pathTail] = path
     return pathHead
-        ? traverseReduce(getChildNode(node, pathHead), pathTail, callback, acc)
+        ? traverseReduce(getChildNode(node, pathHead), pathTail, reducer, acc)
         : acc
 }
 
-const traverseFind = (node, path, callback) => {
+const traverseFind = (node, path, finder) => {
     assertNode(node)
     assertPath(path)
-    return traverseReduce(node, path, (found, {value, node}) => found ? found : callback(value) && node, null)
+    if (finder({
+        path: getPath(node),
+        key: getKey(node),
+        value: getValue(node)
+    })) {
+        return node
+    } else {
+        const [pathHead, ...pathTail] = path
+        return pathHead && traverseFind(getChildNode(node, pathHead), pathTail, finder)
+    }
 }
 
 const clone = (node, filterPredicate, parentClonedNode) => {
@@ -166,17 +174,27 @@ const reduce = (node, callback, acc) => {
         callback(acc, {
             path: getPath(node),
             key: getKey(node),
-            value: getValue(node),
-            node
+            value: getValue(node)
         })
     )
 }
     
-const find = (node, callback) => {
+const find = (node, finder) => {
     assertNode(node)
-    return reduce(node, (found, {value, node}) => found ? found : callback(value) && node, null)
+    const queue = [node]
+    while (queue.length) {
+        const node = queue.shift()
+        if (finder({
+            path: getPath(node),
+            key: getKey(node),
+            value: getValue(node)
+        })) {
+            return node
+        }
+        queue.push(...Object.values(getChildNodes(node)))
+    }
 }
-
+    
 const toTree = (node, nodeMapper = obj => obj) => {
     assertNode(node)
     assertNodeMapper(nodeMapper)
