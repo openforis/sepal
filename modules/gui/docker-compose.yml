@@ -7,8 +7,8 @@ services:
       context: ../..
       dockerfile: ./modules/gui/Dockerfile
       args:
-        BUILD_NUMBER: "${BUILD_NUMBER}"
-        GIT_COMMIT: "${GIT_COMMIT}"
+        BUILD_NUMBER: "${BUILD_NUMBER:-''}"
+        GIT_COMMIT: "${GIT_COMMIT:-''}"
       ulimits:
         nofile:
           soft: 65536
