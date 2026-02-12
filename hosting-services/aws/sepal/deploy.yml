@@ -224,7 +224,7 @@
       register: swarm_init
 
     - debug:
-        msg: "{{ swarm_init.swarm_facts.JoinTokens.Worker }}"
+        msg: "swarm worker join token: {{ swarm_init.swarm_facts.JoinTokens.Worker }}"
 
     - name: Wait for swarm leader
       command: docker node ls
