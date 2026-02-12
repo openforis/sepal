@@ -55,6 +55,14 @@
             cidr_ip: 0.0.0.0/0
       register: sepal_swarm_manager_group
 
+    # Create Sepal-Developers security group
+    - name: Create Sepal-Developers security group
+      ec2_group:
+        name: "Sepal-Developers"
+        description: The Sepal-Developers Group
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        purge_rules: false
+
     # Sepal-Storage security group
 
     - name: Create Sepal-Storage security group
@@ -88,6 +96,7 @@
         security_groups: 
           - "Sepal-Storage"
           - "Sepal-Swarm"
+          - "Sepal-Developers"
         instance_type: m5a.large
         image_id: "{{ lookup('env', 'AWS_AMI') }}"
         region: "{{ lookup('env', 'AWS_REGION') }}"
@@ -180,6 +189,7 @@
           - "Sepal"
           - "Sepal-Swarm"
           - "Sepal-Swarm-Manager"
+          - "Sepal-Developers"
         allow_reassignment: true
         secondary_private_ip_address_count: 1
         delete_on_termination: true
@@ -280,6 +290,7 @@
         key_name: "{{ lookup('env', 'AWS_REGION') }}"
         security_groups: 
           - "Sepal-Apps"
+          - "Sepal-Developers"
         instance_type: t3a.medium
         image_id: "{{ lookup('env', 'AWS_AMI') }}"
         region: "{{ lookup('env', 'AWS_REGION') }}"
