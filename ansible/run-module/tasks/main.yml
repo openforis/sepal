@@ -6,7 +6,7 @@
       src: "{{ role_path }}/../../modules/{{ module }}/docker-compose.yml"
       dest: "/var/lib/sepal/modules/{{ module }}/docker-compose.yml"
 
-- name: "{{ module }} | Up (retry-safe)"
+- name: "{{ module }} | Up"
   community.docker.docker_compose_v2:
     project_src: "/var/lib/sepal/modules/{{ module }}"
     files:
@@ -17,17 +17,9 @@
     pull: missing
     build: never
     dependencies: false
+    wait: true
+    wait_timeout: 300
   register: compose_result
   retries: 10
-  delay: 2
+  delay: 3
   until: compose_result is succeeded
-
-- name: "{{ module }} | Waiting for module"
-  shell: "docker compose \
-      --env-file /etc/sepal/env \
-      --file /var/lib/sepal/modules/{{ module }}/docker-compose.yml \
-      ps 2> /dev/null | grep -e '(unhealthy)' -e '(health: starting)' | wc -l"
-  register: status
-  until: status.stdout == '0'
-  retries: 3600
-  delay: 1
