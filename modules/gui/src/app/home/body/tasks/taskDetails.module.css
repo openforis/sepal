@@ -1,0 +1,45 @@
+.panel {
+    width: 40rem;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 2fr 4fr; /* Changed from 3fr 2fr to give more space to values */
+    grid-template-rows: auto;
+    column-gap: 1rem;
+    width: 100%;
+    align-items: center;
+    justify-items: right;
+    margin-bottom: 0.25rem;
+    grid-template-areas: 'label value';
+}
+
+.row .fieldLabel {
+    grid-area: label;
+    justify-self: left;
+}
+
+.row .fieldValue {
+    grid-area: value;
+    word-break: break-all;
+    font-weight: normal;
+
+    /* taken from widget.crudItem.module.css.description */
+    font-size: .9rem;
+    line-height: 1.5rem;
+    white-space: normal;
+    word-wrap: break-word;
+    text-align: left;
+}
+
+.row .fieldValueWithButton {
+    grid-area: value;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.row .fieldValueWithButton .fieldValue {
+    grid-area: unset;
+    flex: 1;
+}

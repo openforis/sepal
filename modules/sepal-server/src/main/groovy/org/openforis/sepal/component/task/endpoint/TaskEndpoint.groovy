@@ -59,6 +59,26 @@ class TaskEndpoint {
                 send toJson(task)
             }
 
+            get('/tasks/task/{id}/details') {
+                def task = component.submit(
+                    new GetTask(
+                        taskId: params.required('id', String),
+                        username: currentUser.username
+                    )
+                )
+                def taskDetails = [
+                    id: task.id,
+                    recipeId: task.recipeId,
+                    name: task.title,
+                    status: task.state,
+                    statusDescription: task.statusDescription,
+                    creationTime: task.creationTime,
+                    updateTime: task.updateTime,
+                    params: task.params
+                ]
+                send toJson(taskDetails)
+            }
+
             post('/tasks/task/{id}/cancel') {
                 submit(new CancelTask(taskId: params.required('id', String), username: currentUser.username))
                 response.status = 204

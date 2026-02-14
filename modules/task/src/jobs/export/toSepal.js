@@ -10,11 +10,9 @@ const {exportLimiter$} = require('#task/jobs/service/exportLimiter')
 const {driveSerializer$} = require('#task/jobs/service/driveSerializer')
 const {gcsSerializer$} = require('#task/jobs/service/gcsSerializer')
 const {task$} = require('#task/ee/task')
+const {drivePath} = require('./driveUtils')
 
 const CONCURRENT_FILE_DOWNLOAD = 3
-
-const drivePath = folder =>
-    `SEPAL/exports/${folder}`
 
 const createDriveFolder$ = folder =>
     defer(() => driveSerializer$(
