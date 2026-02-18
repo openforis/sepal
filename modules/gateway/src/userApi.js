@@ -51,6 +51,9 @@ const updateGoogleAccessToken$ = user => {
     return refreshGoogleAccessToken$(user).pipe(
         switchMap(({googleTokens, statusCode}) => {
             if (statusCode !== 204) {
+                if (!googleTokens) {
+                    throw new Error(`${userTag(user.username)} Google access token refresh returned empty response`)
+                }
                 const expiration = formatDistanceStrict(googleTokens.accessTokenExpiryDate, Date.now(), {addSuffix: true})
                 log.info(`${userTag(user.username)} Google access token updated, expiring ${expiration}`)
                 return of({...user, googleTokens})
