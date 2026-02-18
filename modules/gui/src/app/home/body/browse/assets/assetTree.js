@@ -94,7 +94,10 @@ const setRemoving = (tree, paths) =>
             STree.scan(STree.traverse(tree, path), node =>
                 STree.updateValue(
                     node,
-                    ({selected: _selected, ...value}) => ({...value, removing: true})
+                    ({selected: _selected, ...value} = {}) =>
+                        Object.keys(value).length
+                            ? ({...value, removing: true})
+                            : undefined
                 )
             )
         )
@@ -141,13 +144,6 @@ const getSelectedItems = tree =>
             : ({directories, files})
     }, {directories: [], files: []})
 
-const getOpenDirectories = (tree, basePath) =>
-    STree.reduce(STree.traverse(tree, basePath), (directories, {value: {dir, opened} = {}, path}) => {
-        return dir && opened
-            ? [...directories, path]
-            : directories
-    }, [])
-
 const isExistingPath = (tree, path) =>
     !!STree.traverse(tree, path)
 
@@ -193,7 +189,7 @@ const isRemoving = node =>
 const toList = node =>
     STree.toArray(
         node,
-        ({path, value, depth}) => ({id: AssetTree.toStringPath(path), path, ...value, depth})
+        ({path, value, depth}) => ({id: toStringPath(path), path, ...value, depth})
     ).filter(({depth}) => depth > 0)
     
 const filter = (tree, filter) =>
@@ -201,6 +197,6 @@ const filter = (tree, filter) =>
 
 export const AssetTree = {
     create, expandDirectory, expandAllDirectories, collapseDirectory, collapseAllDirectories, selectItem, deselectItem, deselectDescendants,
-    setRemoving, updateTree, createFolder, getSelectedItems, getOpenDirectories, isExistingPath, toStringPath, fromStringPath, isLeaf, getPath,
+    setRemoving, updateTree, createFolder, getSelectedItems, isExistingPath, toStringPath, fromStringPath, isLeaf, getPath,
     getDepth, getChildNodes, getType, getUpdateTime, getQuota, isRoot, isDirectory, isSelected, isOpened, isAdding, isRemoving, toList, filter
 }

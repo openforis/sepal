@@ -271,7 +271,11 @@ const removeChildNode = (node, key) => {
 
 const setValue = (node, value) => {
     assertNode(node)
-    node.value = value
+    if (value !== undefined) {
+        node.value = value
+    } else {
+        delete node.value
+    }
     return node
 }
 
