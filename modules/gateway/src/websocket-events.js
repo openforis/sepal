@@ -29,6 +29,8 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
         clients.forEachUser(username =>
             firstValueFrom(userStore.getUser$(username)).then(
                 user => servers.sendEvent(module, USER_UP, {user})
+            ).catch(
+                error => log.warn(`${userTag(username)} Failed to get user on module up`, error)
             )
         )
         clients.forEach(({username, clientId}) =>
