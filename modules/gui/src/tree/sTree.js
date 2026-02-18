@@ -9,7 +9,7 @@ export const NODE = {
 // helpers
 
 const assertNode = node =>
-    assertValue(node, ({[NODE_KEY]: node}) => node !== undefined, `Tree: not a valid node: ${node}`, true)
+    assertValue(node, ({[NODE_KEY]: isNode}) => isNode === true, 'Tree: not a valid node', true)
 
 const assertString = value =>
     assertValue(value, value => typeof value === 'string', `Tree: not a valid string: ${value}`, true)
@@ -25,9 +25,14 @@ const fromStringPath = stringPath => {
     if (stringPath.startsWith('/')) {
         throw new Error('Absolute path not allowed')
     }
-    return stringPath === ''
-        ? []
-        : stringPath.split('/')
+    if (stringPath === '') {
+        return []
+    }
+    const path = stringPath.split('/')
+    if (path.some(segment => segment === '')) {
+        throw new Error('Empty path segment not allowed')
+    }
+    return path
 }
 
 const toStringPath = path => {
@@ -46,7 +51,7 @@ const createNode = (path, value) => {
         ...NODE,
         path
     }
-    if (value) {
+    if (value !== undefined) {
         node.value = value
     }
     return node
@@ -98,7 +103,7 @@ const traverse = (node, path, create, callback) => {
     assertPath(path)
     callback && callback(node)
     const [pathHead, ...pathTail] = path
-    if (pathHead) {
+    if (pathHead !== undefined) {
         const childNode = getChildNode(node, pathHead) || create && addChildNode(node, pathHead)
         return childNode && traverse(childNode, pathTail, create, callback)
     } else {
@@ -115,9 +120,12 @@ const traverseReduce = (node, path, reducer, acc0) => {
         value: getValue(node)
     })
     const [pathHead, ...pathTail] = path
-    return pathHead
-        ? traverseReduce(getChildNode(node, pathHead), pathTail, reducer, acc)
-        : acc
+    if (pathHead !== undefined) {
+        const childNode = getChildNode(node, pathHead)
+        return childNode ? traverseReduce(childNode, pathTail, reducer, acc) : acc
+    } else {
+        return acc
+    }
 }
 
 const traverseFind = (node, path, finder) => {
@@ -131,7 +139,10 @@ const traverseFind = (node, path, finder) => {
         return node
     } else {
         const [pathHead, ...pathTail] = path
-        return pathHead && traverseFind(getChildNode(node, pathHead), pathTail, finder)
+        if (pathHead !== undefined) {
+            const childNode = getChildNode(node, pathHead)
+            return childNode && traverseFind(childNode, pathTail, finder)
+        }
     }
 }
 
@@ -198,7 +209,7 @@ const find = (node, finder) => {
 const toTree = (node, nodeMapper = obj => obj) => {
     assertNode(node)
     assertNodeMapper(nodeMapper)
-    const path = node.path
+    const path = getPath(node)
     const value = getValue(node)
     const items = Object.entries(getChildNodes(node))
         .reduce(
@@ -211,7 +222,7 @@ const toTree = (node, nodeMapper = obj => obj) => {
 const toArray = (node, nodeMapper = obj => obj, depth = 0) => {
     assertNode(node)
     assertNodeMapper(nodeMapper)
-    const path = node.path
+    const path = getPath(node)
     const value = getValue(node)
     const items = Object.values(getChildNodes(node))
         .map(childNode => toArray(childNode, nodeMapper, depth + 1))
