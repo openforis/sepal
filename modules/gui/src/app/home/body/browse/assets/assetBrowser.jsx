@@ -106,11 +106,6 @@ class _AssetBrowser extends React.Component {
         this.setState({status})
     }
 
-    getOpenDirectories(path = []) {
-        const {tree} = this.state
-        return AssetTree.getOpenDirectories(tree, path)
-    }
-
     expandDirectory(node) {
         const {tree} = this.state
         const path = AssetTree.getPath(node)
