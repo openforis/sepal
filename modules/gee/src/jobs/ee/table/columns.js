@@ -31,7 +31,7 @@ const worker$ = ({
                                     args: {tableId}
                                 }
                             })
-                        : new NotFoundException('Table  not found ', {
+                        : new NotFoundException('Table not found ', {
                             cause: error,
                             userMessage: {
                                 message: 'Table not found',
