@@ -182,7 +182,7 @@ const createAssetManager = ({out$, stop$}) => {
 
     const saveAssets = async (username, assets) => {
         if (!STree.isLeaf(assets)) {
-            return await setAssets(username, assets)
+            await setAssets(username, assets)
         } else {
             log.info(`${userTag(username)} assets not saved (empty)`)
         }

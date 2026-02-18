@@ -11,18 +11,14 @@ const assetsKey = username =>
 const setAssets = async (username, assets, {expire} = {}) => {
     log.trace(`${userTag(username)} save assets`)
     await redis.set(assetsKey(username), serialize({assets, timestamp: expire ? null : Date.now()}))
-        .then(result => result === 'OK')
-        .then(saved => {
-            if (saved) {
-                log.isTrace()
-                    ? log.trace(`${userTag(username)} assets saved:`, assets)
-                    : log.debug(`${userTag(username)} assets saved`)
-            } else {
-                log.isTrace()
-                    ? log.warn(`${userTag(username)} could not save assets:`, assets)
-                    : log.warn(`${userTag(username)} could not save assets`)
-            }
-            return saved
+        .then(() => {
+            log.isTrace()
+                ? log.trace(`${userTag(username)} assets saved:`, assets)
+                : log.debug(`${userTag(username)} assets saved`)
+        })
+        .catch(error => {
+            log.error(`${userTag(username)} error saving assets:`, error)
+            throw error
         })
 }
 
@@ -52,7 +48,7 @@ const expireAssets = async username => {
     const {assets} = await getAssets(username, {allowMissing: true})
     if (assets) {
         log.trace(`${userTag(username)} expire assets`)
-        return await setAssets(username, assets, {expire: true})
+        await setAssets(username, assets, {expire: true})
     }
 }
 
