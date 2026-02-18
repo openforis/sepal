@@ -10,14 +10,14 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bullmq": "^5.68.0",
+        "bullmq": "^5.69.3",
         "commander": "^14.0.3",
         "compare-versions": "^6.1.1",
         "http-proxy": "^1.18.1",
-        "ioredis": "^5.9.2",
+        "ioredis": "^5.9.3",
         "lodash": "^4.17.23",
         "log4js": "^6.9.1",
-        "minimatch": "^10.1.2",
+        "minimatch": "^10.2.1",
         "sepal": "../../lib/js/shared"
     },
     "devDependencies": {
