@@ -93,7 +93,7 @@ const createWatcher = async ({out$, stop$}) => {
     })
 
     remove$.pipe(
-        switchMap(({username, clientId, subscriptionId, remove}) =>
+        mergeMap(({username, clientId, subscriptionId, remove}) =>
             minDuration$(
                 from(removePath({username, clientId, subscriptionId, path: remove})),
                 REMOVE_COMFORT_DELAY_MS
