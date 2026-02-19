@@ -50,8 +50,10 @@ const createAssetManager = ({out$, stop$}) => {
         const prevUser = await getUser(user.username, {allowMissing: true})
         await setUser(user)
         if (prevUser) {
-            const projectIdChanged = prevUser.googleTokens.projectId !== user.googleTokens.projectId
-            const accessTokenChanged = prevUser.googleTokens.accessToken !== user.googleTokens.accessToken
+            const prevTokens = prevUser.googleTokens
+            const currTokens = user.googleTokens
+            const projectIdChanged = prevTokens?.projectId !== currTokens?.projectId
+            const accessTokenChanged = prevTokens?.accessToken !== currTokens?.accessToken
             if (projectIdChanged) {
                 log.debug(`${userTag(user.username)} connected to Google project:`, user.googleTokens.projectId)
                 await expireAssets(user.username)
