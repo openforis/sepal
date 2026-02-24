@@ -494,7 +494,7 @@ class _AssetBrowser extends React.Component {
         return (
             <SectionLayout>
                 <Content className={styles.browse} menuPadding horizontalPadding verticalPadding>
-                    {this.renderTooolbar()}
+                    {this.renderToolbar()}
                     {this.renderHeader()}
                     {this.renderTree()}
                 </Content>
@@ -502,7 +502,7 @@ class _AssetBrowser extends React.Component {
         )
     }
 
-    renderTooolbar() {
+    renderToolbar() {
         return (
             <Layout type='horizontal' spacing='compact'>
                 {this.renderActionsToolbar()}
