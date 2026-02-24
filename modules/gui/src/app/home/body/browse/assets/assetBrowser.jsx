@@ -93,13 +93,11 @@ class _AssetBrowser extends React.Component {
     }
 
     onTree(treeUpdate) {
-        const {tree} = this.state
-        this.setState({tree: AssetTree.updateTree(tree, treeUpdate)})
+        this.setState(({tree}) => ({tree: AssetTree.updateTree(tree, treeUpdate)}))
     }
 
     onNode(nodeUpdate) {
-        const {tree} = this.state
-        this.setState({tree: AssetTree.updateTree(tree, nodeUpdate)})
+        this.setState(({tree}) => ({tree: AssetTree.updateTree(tree, nodeUpdate)}))
     }
 
     onStatus(status) {
@@ -107,25 +105,21 @@ class _AssetBrowser extends React.Component {
     }
 
     expandDirectory(node) {
-        const {tree} = this.state
         const path = AssetTree.getPath(node)
-        this.setState({tree: AssetTree.expandDirectory(tree, path)})
+        this.setState(({tree}) => ({tree: AssetTree.expandDirectory(tree, path)}))
     }
 
     expandAllDirectories() {
-        const {tree} = this.state
-        this.setState({tree: AssetTree.expandAllDirectories(tree)})
+        this.setState(({tree}) => ({tree: AssetTree.expandAllDirectories(tree)}))
     }
 
     collapseDirectory(node) {
-        const {tree} = this.state
         const path = AssetTree.getPath(node)
-        this.setState({tree: AssetTree.collapseDirectory(tree, path)})
+        this.setState(({tree}) => ({tree: AssetTree.collapseDirectory(tree, path)}))
     }
 
     collapseAllDirectories() {
-        const {tree} = this.state
-        this.setState({tree: AssetTree.collapseAllDirectories(tree)})
+        this.setState(({tree}) => ({tree: AssetTree.collapseAllDirectories(tree)}))
     }
 
     toggleSelected(node) {
@@ -137,20 +131,17 @@ class _AssetBrowser extends React.Component {
     }
 
     selectItem(node) {
-        const {tree} = this.state
         const path = AssetTree.getPath(node)
-        this.setState({tree: AssetTree.selectItem(tree, path)})
+        this.setState(({tree}) => ({tree: AssetTree.selectItem(tree, path)}))
     }
 
     deselectItem(node) {
-        const {tree} = this.state
         const path = AssetTree.getPath(node)
-        this.setState({tree: AssetTree.deselectItem(tree, path)})
+        this.setState(({tree}) => ({tree: AssetTree.deselectItem(tree, path)}))
     }
 
     clearSelection() {
-        const {tree} = this.state
-        this.setState({tree: AssetTree.deselectDescendants(tree, [])})
+        this.setState(({tree}) => ({tree: AssetTree.deselectDescendants(tree, [])}))
     }
 
     createFolder(folder) {
@@ -179,8 +170,7 @@ class _AssetBrowser extends React.Component {
     }
 
     removePaths(paths) {
-        const {tree} = this.state
-        this.setState({tree: AssetTree.setRemoving(tree, paths)})
+        this.setState(({tree}) => ({tree: AssetTree.setRemoving(tree, paths)}))
         this.remove(paths)
     }
 

@@ -122,23 +122,20 @@ class _FileBrowser extends React.Component {
     }
 
     expandDirectory(node) {
-        const {tree} = this.state
         const path = FileTree.getPath(node)
-        this.setState({tree: FileTree.expandDirectory(tree, path)}, () => {
+        this.setState(({tree}) => ({tree: FileTree.expandDirectory(tree, path)}), () => {
             this.monitor(this.getOpenDirectories(path))
         })
     }
 
     collapseDirectory(node) {
-        const {tree} = this.state
         const path = FileTree.getPath(node)
-        this.setState({tree: FileTree.collapseDirectory(tree, path)})
+        this.setState(({tree}) => ({tree: FileTree.collapseDirectory(tree, path)}))
         this.unmonitor([path])
     }
 
     collapseAllDirectories() {
-        const {tree} = this.state
-        this.setState({tree: FileTree.collapseAllDirectories(tree)})
+        this.setState(({tree}) => ({tree: FileTree.collapseAllDirectories(tree)}))
     }
 
     toggleSelected(node) {
@@ -148,25 +145,21 @@ class _FileBrowser extends React.Component {
     }
 
     selectItem(node) {
-        const {tree} = this.state
         const path = FileTree.getPath(node)
-        this.setState({tree: FileTree.selectItem(tree, path)})
+        this.setState(({tree}) => ({tree: FileTree.selectItem(tree, path)}))
     }
 
     deselectItem(node) {
-        const {tree} = this.state
         const path = FileTree.getPath(node)
-        this.setState({tree: FileTree.deselectItem(tree, path)})
+        this.setState(({tree}) => ({tree: FileTree.deselectItem(tree, path)}))
     }
 
     clearSelection() {
-        const {tree} = this.state
-        this.setState({tree: FileTree.deselectDescendants(tree, [])})
+        this.setState(({tree}) => ({tree: FileTree.deselectDescendants(tree, [])}))
     }
 
     removePaths(paths) {
-        const {tree} = this.state
-        this.setState({tree: FileTree.setRemoving(tree, paths)})
+        this.setState(({tree}) => ({tree: FileTree.setRemoving(tree, paths)}))
         this.remove(paths)
     }
 
