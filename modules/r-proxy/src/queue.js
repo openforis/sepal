@@ -66,7 +66,7 @@ queueEvents.on('error', error =>
 )
 
 queueEvents.on('failed', async ({jobId, failedReason}) => {
-    const job = await Job.fromId(jobId)
+    const job = await Job.fromId(queue, jobId)
     if (job) {
         const {name, version} = job.data
         log.error(`Rescanning ${name}/${version} failed:`, failedReason)
@@ -76,7 +76,7 @@ queueEvents.on('failed', async ({jobId, failedReason}) => {
 })
 
 queueEvents.on('stalled', async ({jobId}) => {
-    const job = await Job.fromId(jobId)
+    const job = await Job.fromId(queue, jobId)
     if (job) {
         const {name, version} = job.data
         log.warn(`Job stalled while rescanning ${name}/${version}`)

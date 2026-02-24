@@ -182,7 +182,7 @@ const createAssetManager = ({out$, stop$}) => {
 
     const saveAssets = async (username, assets) => {
         if (!STree.isLeaf(assets)) {
-            return await setAssets(username, assets)
+            await setAssets(username, assets)
         } else {
             log.info(`${userTag(username)} assets not saved (empty)`)
         }
@@ -225,7 +225,7 @@ const createAssetManager = ({out$, stop$}) => {
                     take(1),
                     repeat({delay: 0}),
                     takeUntil(unmonitorCurrentUser$(username).pipe(
-                        switchMap(() => from(removeUser(username, {allowMissing: true})))
+                        switchMap(() => from(removeUser(username)))
                     )),
                     finalize(() => log.info(`${userTag(username)} unmonitoring assets`))
                 )

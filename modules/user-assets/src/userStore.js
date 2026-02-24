@@ -29,22 +29,18 @@ const getUser = async (username, {allowMissing} = {}) => {
 const setUser = async user => {
     log.trace(`${userTag(user.username)} save`)
     await redis.set(userKey(user.username), serialize(user))
-        .then(result => result === 'OK')
-        .then(saved => {
-            if (saved) {
-                log.isTrace()
-                    ? log.trace(`${userTag(user.username)} saved:`, user)
-                    : log.debug(`${userTag(user.username)} saved`)
-            } else {
-                log.isTrace()
-                    ? log.warn(`${userTag(user.username)} could not save:`, user)
-                    : log.warn(`${userTag(user.username)} could not save`)
-            }
-            return saved
+        .then(() => {
+            log.isTrace()
+                ? log.trace(`${userTag(user.username)} saved:`, user)
+                : log.debug(`${userTag(user.username)} saved`)
+        })
+        .catch(error => {
+            log.error(`${userTag(user.username)} could not save:`, error)
+            throw error
         })
 }
 
-const removeUser = async (username, {allowMissing} = {}) => {
+const removeUser = async username => {
     log.trace(`${userTag(username)} remove`)
     await redis.del(userKey(username))
         .then(result => result !== 0)
@@ -52,13 +48,13 @@ const removeUser = async (username, {allowMissing} = {}) => {
             if (removed) {
                 log.debug(`${userTag(username)} removed`)
             } else {
-                if (allowMissing) {
-                    log.debug(`${userTag(username)} not removed as missing`)
-                } else {
-                    log.warn(`${userTag(username)} could not remove`)
-                }
+                log.debug(`${userTag(username)} not removed as missing`)
             }
             return removed
+        })
+        .catch(error => {
+            log.error(`${userTag(username)} could not remove`, error)
+            throw error
         })
 }
 

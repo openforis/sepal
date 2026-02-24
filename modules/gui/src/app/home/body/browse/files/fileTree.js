@@ -69,7 +69,10 @@ const setRemoving = (tree, paths) =>
         paths.forEach(
             path => STree.updateValue(
                 STree.traverse(tree, path),
-                value => ({...value, removing: true, selected: false})
+                ({selected: _selected, ...value} = {}) =>
+                    Object.keys(value).length
+                        ? ({...value, removing: true})
+                        : undefined
             )
         )
     )
@@ -77,11 +80,14 @@ const setRemoving = (tree, paths) =>
 const updateItem = (tree, path, items) =>
     STree.alter(tree, tree => {
         const node = STree.traverse(tree, path)
-        STree.updateValue(node, ({loading: _loading, ...value}) => value)
+        STree.updateValue(
+            node,
+            ({loading: _loading, ...value} = {}) => Object.keys(value).length ? value : undefined
+        )
         Object.entries(items).forEach(([key, value]) => {
             STree.updateValue(
                 STree.traverse(tree, [...path, key], true),
-                prevValue => ({...prevValue, ...value})
+                (prevValue = {}) => ({...prevValue, ...value})
             )
         })
         Object.keys(STree.getChildNodes(node)).forEach(key => {

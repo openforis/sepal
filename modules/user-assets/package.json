@@ -12,7 +12,7 @@
     "dependencies": {
         "commander": "^14.0.3",
         "date-fns": "^4.1.0",
-        "ioredis": "^5.9.2",
+        "ioredis": "^5.9.3",
         "lodash": "^4.17.23",
         "log4js": "^6.9.1",
         "rxjs": "^7.8.2",
