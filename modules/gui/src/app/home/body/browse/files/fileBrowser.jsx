@@ -269,9 +269,11 @@ class _FileBrowser extends React.Component {
     }
 
     renderIcon(key, node) {
-        return FileTree.isDirectory(node)
-            ? this.renderDirectoryIcon(node)
-            : this.renderFileIcon(key)
+        return FileTree.isAdding(node) || FileTree.isRemoving(node)
+            ? this.renderSpinner()
+            : FileTree.isDirectory(node)
+                ? this.renderDirectoryIcon(node)
+                : this.renderFileIcon(key)
     }
 
     toggleDirectory(e, node) {
