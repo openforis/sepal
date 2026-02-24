@@ -7,7 +7,7 @@ const getEmailNotificationsEnabled = async emailAddress => {
         return emailNotificationsEnabledCache
     } else {
         const emailNotificationsEnabledRemote = await getEmailNotificationsEnabledRemote(emailAddress)
-        setEmailNotificationsEnabledCache(emailAddress, emailNotificationsEnabledRemote)
+        await setEmailNotificationsEnabledCache(emailAddress, emailNotificationsEnabledRemote)
         return emailNotificationsEnabledRemote
     }
 }

@@ -196,32 +196,39 @@ const checkCranUpdates = async enqueueUpdateCranPackage => {
         }
     })()
 
-    rl.on('line', line => {
-        if (line.length) {
-            if (line.startsWith(' ')) {
-                // continuation of previous property: join
-                property.append(line)
+    return new Promise((resolve, reject) => {
+        rl.on('line', line => {
+            if (line.length) {
+                if (line.startsWith(' ')) {
+                    // continuation of previous property: join
+                    property.append(line)
+                } else {
+                    // new property: process previous property
+                    if (property.hasData()) {
+                        entry.set(property.get())
+                    }
+                    property.set(line)
+                }
             } else {
-                // new property: process previous property
-                if (property.hasData()) {
-                    entry.set(property.get())
+                // no more properties: process previous entry
+                const {Package: name, Version: version, Depends: depends} = entry.get()
+                if (name && version) {
+                    if (isVersionSatisfied({name, version, depends, installedVersion})) {
+                        enqueueUpdateCranPackage(name, version)
+                    }
                 }
-                property.set(line)
+                entry.reset()
             }
-        } else {
-            // no more properties: process previous entry
-            const {Package: name, Version: version, Depends: depends} = entry.get()
-            if (name && version) {
-                if (isVersionSatisfied({name, version, depends, installedVersion})) {
-                    enqueueUpdateCranPackage(name, version)
-                }
-            }
-            entry.reset()
-        }
-    })
+        })
 
-    rl.on('close', () => {
-        log.info('Checked availables packages')
+        rl.on('close', () => {
+            log.info('Checked availables packages')
+            resolve()
+        })
+
+        rl.on('error', error => {
+            reject(error)
+        })
     })
 }
 

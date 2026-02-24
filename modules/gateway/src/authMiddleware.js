@@ -70,7 +70,7 @@ const AuthMiddleware = userStore => {
                 const header = req.get('Authorization')
                 const basicAuth = Buffer.from(header.substring('basic '.length), 'base64').toString()
                 const [, rawUsername, password] = basicAuth.match(/([^:]*):(.*)/) || []
-                const username = rawUsername.toLowerCase()
+                const username = rawUsername?.toLowerCase()
                 return {username, password}
             }
 

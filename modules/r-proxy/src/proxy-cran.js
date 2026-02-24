@@ -50,7 +50,11 @@ proxy.on('proxyRes', (proxyRes, req, res, _options) => {
             })
             .catch(error => log.error('Cannot create dir:', error))
     } else {
-        log.debug(`Failed proxy request (${proxyRes.statusCode}):`, req.url)
+        log.warn(`Failed proxy request (${proxyRes.statusCode}):`, req.url)
+        res.writeHead(500, {
+            'Content-Type': 'text/plain'
+        })
+        res.end('Something went wrong.')
     }
 })
 

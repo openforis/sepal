@@ -105,8 +105,7 @@ class _FileBrowser extends React.Component {
     }
 
     onUpdate({path, items}) {
-        const {tree} = this.state
-        this.setState({tree: FileTree.updateItem(tree, FileTree.fromStringPath(path), items)})
+        this.setState(({tree}) => ({tree: FileTree.updateItem(tree, FileTree.fromStringPath(path), items)}))
     }
 
     enabled(enabled) {
