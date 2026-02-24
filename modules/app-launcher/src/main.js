@@ -12,6 +12,7 @@ const {createCredentialsFile} = require('./gee')
 const {monitorApps} = require('./apps')
 const server = require('#sepal/httpServer')
 const {createProxyMiddleware} = require('http-proxy-middleware')
+const {getRequestUser} = require('./user')
 
 const startServer = () => {
     // This is the main server for the app launcher
@@ -20,6 +21,15 @@ const startServer = () => {
     // for managemente requests we use a proxy to the management server
     app.use(
         '/management',
+        (req, res, next) => {
+            const user = getRequestUser(req)
+            if (user && user.admin) {
+                next()
+            } else {
+                log.warn(`[management] unauthorized access attempt for ${req.originalUrl}`)
+                res.status(403).send('Forbidden: Admin access required')
+            }
+        },
         createProxyMiddleware({
             target: `http://localhost:${managementPort}`,
             changeOrigin: true,
