@@ -6,7 +6,6 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.user.adapter.GoogleAccessTokenFileGateway
 import org.openforis.sepal.component.user.adapter.GoogleOAuthClient
-import org.openforis.sepal.component.user.api.GoogleEarthEngineWhitelistChecker
 import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.component.user.internal.UserChangeListener
 import org.openforis.sepal.messagebroker.MessageBroker
@@ -26,20 +25,17 @@ class AssociateGoogleAccountHandler implements CommandHandler<GoogleTokens, Asso
 
     private final GoogleOAuthClient oAuthClient
     private final UserRepository userRepository
-    private final GoogleEarthEngineWhitelistChecker googleEarthEngineWhitelistChecker
     private final GoogleAccessTokenFileGateway googleAccessTokenFileGateway
     private final MessageQueue<Map> messageQueue
 
     AssociateGoogleAccountHandler(
         GoogleOAuthClient oAuthClient,
         UserRepository userRepository,
-        GoogleEarthEngineWhitelistChecker googleEarthEngineWhitelistChecker,
         GoogleAccessTokenFileGateway googleAccessTokenFileGateway,
         MessageBroker messageBroker,
         UserChangeListener changeListener) {
         this.oAuthClient = oAuthClient
         this.userRepository = userRepository
-        this.googleEarthEngineWhitelistChecker = googleEarthEngineWhitelistChecker
         this.googleAccessTokenFileGateway = googleAccessTokenFileGateway
         this.messageQueue = messageBroker.createMessageQueue('user.associate_google_account', Map) {
             def user = it.user
@@ -50,10 +46,6 @@ class AssociateGoogleAccountHandler implements CommandHandler<GoogleTokens, Asso
 
     GoogleTokens execute(AssociateGoogleAccount command) {
         def tokens = oAuthClient.requestTokens(command.username, command.authorizationCode)
-        // if (!googleEarthEngineWhitelistChecker.isWhitelisted(command.username, tokens)) {
-        //     LOG.info('User is not whitelisted in Google Earth Engine, using Sepal service-account. command: ' + command)
-        //     tokens = null
-        // }
         userRepository.updateGoogleTokens(command.username, tokens)
         def user = userRepository.lookupUser(command.username)
         messageQueue.publish(user: user, tokens: tokens)

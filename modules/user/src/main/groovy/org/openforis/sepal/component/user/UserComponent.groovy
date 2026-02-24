@@ -6,7 +6,6 @@ import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.user.adapter.*
 import org.openforis.sepal.component.user.api.EmailGateway
 import org.openforis.sepal.component.user.api.ExternalUserDataGateway
-import org.openforis.sepal.component.user.api.GoogleEarthEngineWhitelistChecker
 import org.openforis.sepal.component.user.api.GoogleRecaptcha
 import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.endpoint.UserEndpoint
@@ -48,7 +47,6 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
                         serverConfig.googleOAuthClientId,
                         serverConfig.googleOAuthClientSecret
                 ),
-                new RestGoogleEarthEngineWhitelistChecker(serverConfig.googleEarthEngineEndpoint),
                 new GoogleAccessTokenFileGatewayImpl(serverConfig.homeDirectory),
                 new TopicPublishingUserChangeListener(
                         new RabbitMQTopic('user', serverConfig.rabbitMQHost, serverConfig.rabbitMQPort)
@@ -72,7 +70,6 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
             MessageBroker messageBroker,
             HandlerRegistryEventDispatcher eventDispatcher,
             GoogleOAuthClient googleOAuthClient,
-            GoogleEarthEngineWhitelistChecker googleEarthEngineWhitelistChecker,
             GoogleAccessTokenFileGateway googleAccessTokenFileGateway,
             UserChangeListener changeListener,
             Clock clock,
@@ -95,7 +92,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
         command(AcceptPrivacyPolicy, new AcceptPrivacyPolicyHandler(userRepository))
         command(ChangePassword, new ChangePasswordHandler(usernamePasswordVerifier, externalUserDataGateway))
         command(RequestPasswordReset, new RequestPasswordResetHandler(tokenManager, userRepository, emailGateway, messageBroker, clock, recaptcha))
-        command(AssociateGoogleAccount, new AssociateGoogleAccountHandler(googleOAuthClient, userRepository, googleEarthEngineWhitelistChecker, googleAccessTokenFileGateway, messageBroker, changeListener))
+        command(AssociateGoogleAccount, new AssociateGoogleAccountHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway, messageBroker, changeListener))
         command(RefreshGoogleAccessToken, new RefreshGoogleAccessTokenHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway, messageBroker, changeListener))
         command(UpdateGoogleProject, new UpdateGoogleProjectHandler(userRepository, googleAccessTokenFileGateway, messageBroker, changeListener))        
         command(RevokeGoogleAccountAccess, new RevokeGoogleAccountAccessHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway, messageBroker, changeListener))

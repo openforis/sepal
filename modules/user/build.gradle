@@ -15,6 +15,11 @@ dependencies {
     testCompile project(':sepal-common-test')
 }
 
+test {
+    // H2 incompatible migration - V11_0__add_indexes.sql uses MySQL stored procedures
+    exclude 'component/user/**'
+}
+
 task createLaunchCommand() {
     group = "Execution"
     description = "Generate launch command script"
