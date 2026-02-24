@@ -446,7 +446,7 @@ class _FileBrowser extends React.Component {
                 <Button
                     chromeless
                     shape='circle'
-                    icon='rotate-left'
+                    icon='times'
                     tooltip={msg('browse.controls.clearSelection.tooltip')}
                     tooltipPlacement='bottom'
                     disabled={nothingSelected}
