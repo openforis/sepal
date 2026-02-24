@@ -44,7 +44,7 @@ const GoogleAccessTokenMiddleware = userStore => {
                 refreshGoogleTokensIfNeeded$().pipe(
                     catchError(error => {
                         log.warn(`${usernameTag(user.username)} Failed to refresh Google tokens`, error)
-                        return EMPTY
+                        return of(true)
                     })
                 )
             )
