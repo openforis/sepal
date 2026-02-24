@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react'
+import React, {useEffect, useRef} from 'react'
 
 export const withSubscriptions = () =>
     WrappedComponent =>
@@ -40,10 +40,10 @@ export const withSubscriptions = () =>
         }
 
 export const useSubscriptions = () => {
-    const subscriptions = []
-        
+    const subscriptionsRef = useRef([])
+
     const addSubscription = subscription =>
-        subscription && subscriptions.push(subscription)
+        subscription && subscriptionsRef.current.push(subscription)
 
     const addSubscriptions = (...currentSubscriptions) =>
         currentSubscriptions.forEach(
@@ -59,12 +59,12 @@ export const useSubscriptions = () => {
         }
         console.error('Cannot unsubscribe unsupported subscription', subscription)
     }
-        
+
     useEffect(() => {
         return () => {
-            subscriptions.forEach(subscription => unsubscribe(subscription))
+            subscriptionsRef.current.forEach(subscription => unsubscribe(subscription))
         }
     }, [])
-        
+
     return [addSubscriptions]
 }
