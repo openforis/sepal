@@ -62,7 +62,7 @@ const worker$ = ({
     return getImage$().pipe(
         switchMap(image => ee.getInfo$(distinctValues(image), 'recipe histogram')),
         tap(values => {
-            if (values.length >= MAX_VALUE_COUNT) {
+            if (values.length > MAX_VALUE_COUNT) {
                 throw Error('Too many distinct values in image. Is this really a categorical image?')
             }
         })
