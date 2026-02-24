@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react'
+import React, {useCallback, useEffect, useRef} from 'react'
 
 export const withSubscriptions = () =>
     WrappedComponent =>
@@ -42,13 +42,15 @@ export const withSubscriptions = () =>
 export const useSubscriptions = () => {
     const subscriptionsRef = useRef([])
 
-    const addSubscription = subscription =>
+    const addSubscription = useCallback(subscription =>
         subscription && subscriptionsRef.current.push(subscription)
+    , [])
 
-    const addSubscriptions = (...currentSubscriptions) =>
+    const addSubscriptions = useCallback((...currentSubscriptions) =>
         currentSubscriptions.forEach(
             subscription => addSubscription(subscription)
         )
+    , [addSubscription])
 
     const unsubscribe = subscription => {
         if (typeof subscription === 'function') {
