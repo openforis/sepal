@@ -10,6 +10,8 @@ import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 import {Tooltip} from '~/widget/tooltip'
 
+import styles from './userActivity.module.css'
+
 const getUserEvents$ = username =>
     api.userStorage.getUserEvents$(username)
 
@@ -54,7 +56,7 @@ class _UserActivity extends React.Component {
     renderCurrent() {
         const {user: {activity: {event}}} = this.props
         return (
-            <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
+            <div className={styles.item}>
                 {this.getIcon(event)}
                 {event ? msg(`user.activity.${event}`) : null}
             </div>
@@ -63,7 +65,7 @@ class _UserActivity extends React.Component {
 
     renderHistory() {
         return (
-            <div style={{display: 'flex', flexDirection: 'column', gap: '.5rem'}}>
+            <div className={styles.history}>
                 {this.renderEvents()}
             </div>
         )
@@ -79,11 +81,11 @@ class _UserActivity extends React.Component {
     renderEvent({event, timestamp, index}) {
         return (
             <Layout key={index} type='horizontal-nowrap' alignment='spaced'>
-                <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
+                <div className={styles.item}>
                     {this.getIcon(event)}
                     {event ? msg(`user.activity.${event}`) : null}
                 </div>
-                <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
+                <div className={styles.item}>
                     {timestamp ? moment(timestamp).format('LLL') : null}
                 </div>
             </Layout>
