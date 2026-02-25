@@ -1,3 +1,4 @@
+import memoizeOne from 'memoize-one'
 import moment from 'moment'
 import {orderBy} from 'natural-orderby'
 import Path from 'path'
@@ -29,6 +30,49 @@ const log = getLogger('browse')
 import styles from './fileBrowser.module.css'
 
 const ANIMATION_DURATION_MS = 1000
+
+const getSorter = memoizeOne((splitDirs, sortingOrder, sortingDirection) => {
+    const orderMap = {
+        '-1': 'desc',
+        '1': 'asc'
+    }
+
+    const dirSorter = {
+        order: splitDirs ? ([_, node]) => FileTree.isDirectory(node) : null,
+        direction: splitDirs ? 'desc' : null
+    }
+
+    const nameSorter = {
+        order: ([key]) => key,
+        direction: orderMap[sortingDirection]
+    }
+
+    const dateSorter = {
+        order: ([_, node]) => FileTree.getMTime(node),
+        direction: orderMap[-sortingDirection]
+    }
+
+    const naturalSortingDirectoriesFirst = items =>
+        orderBy(
+            items,
+            [dirSorter.order, nameSorter.order].filter(Boolean),
+            [dirSorter.direction, nameSorter.direction].filter(Boolean)
+        )
+
+    const dateSortingDirectoriesFirst = items =>
+        orderBy(
+            items,
+            [dirSorter.order, dateSorter.order].filter(Boolean),
+            [dirSorter.direction, dateSorter.direction].filter(Boolean)
+        )
+
+    const sortingMap = {
+        name: naturalSortingDirectoriesFirst,
+        date: dateSortingDirectoriesFirst
+    }
+
+    return sortingMap[sortingOrder]
+})
 
 class _FileBrowser extends React.Component {
 
@@ -330,8 +374,8 @@ class _FileBrowser extends React.Component {
     }
 
     renderListItems(items) {
-        const {showDotFiles} = this.state
-        const sorter = this.getSorter()
+        const {showDotFiles, splitDirs, sorting: {sortingOrder, sortingDirection}} = this.state
+        const sorter = getSorter(splitDirs, sortingOrder, sortingDirection)
         return sorter(Object.entries(items))
             .filter(([fileName]) => showDotFiles || !fileName.startsWith('.'))
             .map(([key, node]) => this.renderListItem(key, node))
@@ -363,50 +407,6 @@ class _FileBrowser extends React.Component {
                 {this.renderList(node)}
             </li>
         )
-    }
-
-    getSorter() {
-        const {splitDirs, sorting: {sortingOrder, sortingDirection}} = this.state
-        const orderMap = {
-            '-1': 'desc',
-            '1': 'asc'
-        }
-
-        const dirSorter = {
-            order: splitDirs ? ([_, node]) => FileTree.isDirectory(node) : null,
-            direction: splitDirs ? 'desc' : null
-        }
-
-        const nameSorter = {
-            order: ([key]) => key,
-            direction: orderMap[sortingDirection]
-        }
-
-        const dateSorter = {
-            order: ([_, node]) => FileTree.getMTime(node),
-            direction: orderMap[-sortingDirection]
-        }
-
-        const naturalSortingDirectoriesFirst = items =>
-            orderBy(
-                items,
-                [dirSorter.order, nameSorter.order].filter(Boolean),
-                [dirSorter.direction, nameSorter.direction].filter(Boolean)
-            )
-
-        const dateSortingDirectoriesFirst = items =>
-            orderBy(
-                items,
-                [dirSorter.order, dateSorter.order].filter(Boolean),
-                [dirSorter.direction, dateSorter.direction].filter(Boolean)
-            )
-
-        const sortingMap = {
-            name: naturalSortingDirectoriesFirst,
-            date: dateSortingDirectoriesFirst
-        }
-
-        return sortingMap[sortingOrder]
     }
 
     renderActionButtons() {
