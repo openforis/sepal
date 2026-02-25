@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {delay, distinctUntilChanged, fromEvent, map, merge, of, switchMap, takeUntil, zipWith} from 'rxjs'
+import {delay, distinctUntilChanged, fromEvent, map, merge, of, switchMap, takeUntil, throttleTime, zipWith} from 'rxjs'
 
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
@@ -36,6 +36,7 @@ class _HoverDetector extends React.Component {
                 map(() => false)
             ),
             windowTouchMove$.pipe(
+                throttleTime(16),
                 map(e => {
                     const touch = e.touches[0]
                     const elementFromTouch = document.elementFromPoint(touch.clientX, touch.clientY)

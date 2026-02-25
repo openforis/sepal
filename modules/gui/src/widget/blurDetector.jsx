@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, switchMap} from 'rxjs'
+import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, switchMap, throttleTime} from 'rxjs'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
@@ -83,6 +83,7 @@ class _BlurDetector extends React.Component {
             )
             if (autoBlurTimeout) {
                 const over$ = fromEvent(document, 'mousemove').pipe(
+                    throttleTime(16),
                     map(e => this.isOver(e)),
                     distinctUntilChanged(),
                     shareReplay({bufferSize: 1, refCount: true})

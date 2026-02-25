@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {animationFrames, concatWith, delay, distinctUntilChanged, EMPTY, filter, fromEvent, map, merge, of, sample, scan, shareReplay, Subject, switchMap, takeUntil, takeWhile} from 'rxjs'
+import {animationFrames, concatWith, delay, distinctUntilChanged, EMPTY, filter, fromEvent, map, merge, of, sample, scan, shareReplay, Subject, switchMap, takeUntil, takeWhile, throttleTime} from 'rxjs'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
@@ -502,6 +502,7 @@ class _Scrollable extends React.PureComponent {
     handleMouseAway() {
         const {addSubscription, eventShield} = this.props
         const over$ = fromEvent(document, 'mousemove').pipe(
+            throttleTime(16),
             map(e => this.isOver(e)),
             distinctUntilChanged(),
             shareReplay({bufferSize: 1, refCount: true})
