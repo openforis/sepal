@@ -74,9 +74,10 @@ export class UserList extends React.Component {
 
     getUsers() {
         const {users} = this.props
-        const {sortingOrder, sortingDirection} = this.state
+        const {sortingOrder, sortingDirection, textFilterValues} = this.state
+        const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
         return _.chain(users)
-            .filter(user => this.userMatchesFilters(user))
+            .filter(user => this.userMatchesFilters(user, searchMatchers))
             .orderBy(user => {
                 const item = _.get(user, sortingOrder)
                 return _.isString(item) ? simplifyString(item).toUpperCase() : item
@@ -84,15 +85,13 @@ export class UserList extends React.Component {
             .value()
     }
 
-    userMatchesFilters(user) {
-        return this.userMatchesTextFilter(user) && this.userMatchesStatusFilter(user)
+    userMatchesFilters(user, searchMatchers) {
+        return this.userMatchesTextFilter(user, searchMatchers) && this.userMatchesStatusFilter(user)
     }
 
-    userMatchesTextFilter(user) {
-        const {textFilterValues} = this.state
-        const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
+    userMatchesTextFilter(user, searchMatchers) {
         const searchProperties = ['name', 'username', 'email', 'organization', 'intendedUse']
-        return textFilterValues
+        return searchMatchers.length
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
                     matcher.test(simplifyString(user[property]))

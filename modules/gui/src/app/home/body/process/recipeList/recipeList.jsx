@@ -466,10 +466,9 @@ class _RecipeList extends React.Component {
             : true
     }
 
-    recipeMatchesFilter(recipe, filterValues) {
-        const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
+    recipeMatchesFilter(recipe, searchMatchers) {
         const searchProperties = ['project', 'name']
-        return filterValues
+        return searchMatchers.length
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
                     matcher.test(simplifyString(recipe[property], {
@@ -505,12 +504,13 @@ class _RecipeList extends React.Component {
     updateFilteredRecipes() {
         const {projects = [], recipes, filterValues, selectedIds} = this.props
         const {sortingOrder, sortingDirection} = this.props
+        const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
         const filteredRecipes = _.chain(recipes)
             .map(recipe => {
                 const project = projects.find(project => project.id === recipe.projectId)
                 return {...recipe, project: project?.name}
             })
-            .filter(recipe => this.recipeMatchesProject(recipe) && this.recipeMatchesFilter(recipe, filterValues))
+            .filter(recipe => this.recipeMatchesProject(recipe) && this.recipeMatchesFilter(recipe, searchMatchers))
             .orderBy(recipe => this.getSorter(recipe, sortingOrder), sortingDirection === 1 ? 'asc' : 'desc')
             .value()
         actionBuilder('SET_FILTERED_RECIPES', {filteredRecipes})

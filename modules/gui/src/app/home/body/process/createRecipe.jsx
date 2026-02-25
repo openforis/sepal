@@ -282,22 +282,22 @@ class _CreateRecipe extends React.Component {
 
     getFilteredRecipeTypes() {
         const {recipeTypes} = this.props
+        const {textFilterValues} = this.state
+        const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
         return _.chain(recipeTypes)
             .map(({id, labels, tags, beta}) => ({id, labels, tags, beta}))
-            .filter(recipeType => this.recipeTypeMatchesFilters(recipeType))
+            .filter(recipeType => this.recipeTypeMatchesFilters(recipeType, searchMatchers))
             .value()
     }
 
-    recipeTypeMatchesFilters(recipeType) {
-        return this.recipeTypeMatchesFilterValues(recipeType)
+    recipeTypeMatchesFilters(recipeType, searchMatchers) {
+        return this.recipeTypeMatchesFilterValues(recipeType, searchMatchers)
             && this.recipeTypeMatchesTags(recipeType)
     }
 
-    recipeTypeMatchesFilterValues(recipeType) {
-        const {textFilterValues} = this.state
-        const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
+    recipeTypeMatchesFilterValues(recipeType, searchMatchers) {
         const searchProperties = ['labels.name', 'labels.creationDescription']
-        return textFilterValues
+        return searchMatchers.length
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
                     matcher.test(simplifyString(_.get(recipeType, property)))
