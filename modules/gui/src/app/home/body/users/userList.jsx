@@ -417,9 +417,9 @@ class UserItem extends React.PureComponent {
 
     renderLastUpdate(updateTime, budgetUpdateRequest) {
         return (
-            <div style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
-                {moment(updateTime).fromNow()}
+            <div className={styles.lastUpdate}>
                 {this.renderBudgetUpdateRequest(budgetUpdateRequest)}
+                {moment(updateTime).fromNow()}
             </div>
         )
     }

@@ -55,6 +55,12 @@
     align-self: end;
 }
 
+.grid > .lastUpdate {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+}
+
 .grid > .budgetUpdateRequest {
     grid-area: budgetUpdateRequest;
 }

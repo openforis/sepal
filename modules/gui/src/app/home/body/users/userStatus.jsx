@@ -4,6 +4,8 @@ import React from 'react'
 import {msg} from '~/translate'
 import {Icon} from '~/widget/icon'
 
+import styles from './userStatus.module.css'
+
 export class UserStatus extends React.Component {
     static LOCKED = 'LOCKED'
     static PENDING = 'PENDING'
@@ -21,7 +23,7 @@ export class UserStatus extends React.Component {
     render() {
         const {status = 'UNKNOWN', showLabel} = this.props
         return (
-            <div style={{display: 'flex', alignItems: 'center', gap: '.25rem'}}>
+            <div className={styles.item}>
                 {this.getIcon(status)}
                 {showLabel && msg(`user.status.${status}`)}
             </div>
