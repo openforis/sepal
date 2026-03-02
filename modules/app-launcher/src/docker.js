@@ -20,13 +20,6 @@ const pathExists = async filepath => {
         return false
     }
 }
-const execOptions = appPath => ({cwd: appPath})
-
-const buildDockerCommand = async (appPath, additionalCommands = '') => {
-    const gitCommit = await getCurrentCommitHash(appPath)
-    const composeFilesStr = await composeFiles(appPath)
-    return `export GIT_COMMIT=${gitCommit} && docker compose ${composeFilesStr} build --build-arg GIT_COMMIT="${gitCommit}"${additionalCommands ? ' && ' + additionalCommands : ''}`
-}
 
 const composeFiles = async (appPath, includeOverride = true) => {
     const files = [path.join(appPath, 'docker-compose.yml')]
@@ -37,14 +30,13 @@ const composeFiles = async (appPath, includeOverride = true) => {
     ) {
         files.push(path.join(appPath, 'docker-compose.override.yml'))
     }
-    return files.map(f => `--file ${f}`).join(' ')
+    return files.flatMap(f => ['--file', f])
 }
 
 const cleanupAppImages = async (appName, repository) => {
     try {
         log.info(`Cleaning up old images for app ${appName}...`)
-        const pruneCommand = `docker image prune -f --filter "label=org.opencontainers.image.source=${repository}"`
-        await executeCommand(pruneCommand, {})
+        await executeCommand('docker', ['image', 'prune', '-f', '--filter', `label=org.opencontainers.image.source=${repository}`])
         log.info(`Cleaned up old images for app ${appName}`)
     } catch (error) {
         log.warn(`Failed to cleanup images for app ${appName}: ${error.message}`)
@@ -57,8 +49,11 @@ const buildAndRestart = async (appName, repository) => {
     while (attempt <= MAX_RETRIES) {
         try {
             log.info(`Building Docker image for ${appName} (Attempt ${attempt})...`)
-            const command = await buildDockerCommand(appPath)
-            await executeCommand(command, execOptions(appPath))
+            const gitCommit = await getCurrentCommitHash(appPath)
+            const composeFilesArgs = await composeFiles(appPath)
+            await executeCommand('docker', [
+                'compose', ...composeFilesArgs, 'build', '--build-arg', `GIT_COMMIT=${gitCommit}`
+            ], {cwd: appPath, env: {...process.env, GIT_COMMIT: gitCommit}})
             log.info('Docker image built successfully')
             
             if (repository) {
@@ -83,9 +78,10 @@ const startContainer = async appName => {
     
     try {
         log.info(`Starting ${appName} container...`)
-        const composeFilesStr = await composeFiles(appPath)
-        const upCommand = `docker compose ${composeFilesStr} up -d`
-        await executeCommand(upCommand, execOptions(appPath))
+        const composeFilesArgs = await composeFiles(appPath)
+        await executeCommand('docker', [
+            'compose', ...composeFilesArgs, 'up', '-d'
+        ], {cwd: appPath})
         
         const containerRunning = await isContainerRunning(appName)
         if (!containerRunning) {
