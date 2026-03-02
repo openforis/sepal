@@ -26,7 +26,7 @@ const cloneRepository = async (repository, branch, appPath) => {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
             await executeCommand(
-                `git clone --branch=${branch} ${repository} ${appPath}`
+                'git', ['clone', `--branch=${branch}`, repository, appPath]
             )
             return
         } catch (err) {
@@ -48,7 +48,7 @@ const checkBranchExists = async (repository, branch) => {
     log.debug(`Checking branch ${branch} in ${repository}`)
     try {
         await executeCommand(
-            `git ls-remote --exit-code --heads ${repository} ${branch}`
+            'git', ['ls-remote', '--exit-code', '--heads', repository, branch]
         )
         return true
     } catch (err) {
@@ -64,8 +64,8 @@ const checkBranchExists = async (repository, branch) => {
 const checkoutBranch = async (appPath, branch) => {
     try {
         log.info(`Setting repository to branch '${branch}' (fetching from remote)`)
-        await executeCommand(`git -C ${appPath} fetch origin ${branch}`)
-        await executeCommand(`git -C ${appPath} checkout ${branch}`)
+        await executeCommand('git', ['fetch', 'origin', branch], {cwd: appPath})
+        await executeCommand('git', ['checkout', branch], {cwd: appPath})
         
     } catch (err) {
         log.error(`Failed to checkout branch '${branch}': ${err.message}`)
@@ -75,16 +75,16 @@ const checkoutBranch = async (appPath, branch) => {
 
 const getRepoInfo = async appPath => {
     const {stdout: commitTimestamp} = await executeCommand(
-        `git -C ${appPath} log -1 --format=%cI`
+        'git', ['log', '-1', '--format=%cI'], {cwd: appPath}
     )
     const {stdout: commitId} = await executeCommand(
-        `git -C ${appPath} log -1 --format=%H`
+        'git', ['log', '-1', '--format=%H'], {cwd: appPath}
     )
     const {stdout: originUrlRaw} = await executeCommand(
-        `git -C ${appPath} config --get remote.origin.url`
+        'git', ['config', '--get', 'remote.origin.url'], {cwd: appPath}
     )
     const {stdout: branchName} = await executeCommand(
-        `git -C ${appPath} rev-parse --abbrev-ref HEAD`
+        'git', ['rev-parse', '--abbrev-ref', 'HEAD'], {cwd: appPath}
     )
     const originUrl = originUrlRaw.trim()
   
@@ -98,9 +98,9 @@ const getRepoInfo = async appPath => {
 
     let updateAvailable = false
     try {
-        await executeCommand(`git -C ${appPath} remote update`)
-        const {stdout: local} = await executeCommand(`git -C ${appPath} rev-parse HEAD`)
-        const {stdout: remote} = await executeCommand(`git -C ${appPath} rev-parse @{u}`)
+        await executeCommand('git', ['remote', 'update'], {cwd: appPath})
+        const {stdout: local} = await executeCommand('git', ['rev-parse', 'HEAD'], {cwd: appPath})
+        const {stdout: remote} = await executeCommand('git', ['rev-parse', '@{u}'], {cwd: appPath})
         updateAvailable = local.trim() !== remote.trim()
     } catch (warnErr) {
         log.warn(`Could not check remote updates: ${warnErr.message}`)
@@ -143,7 +143,7 @@ const cloneOrPull = async ({path: appPath, repository, branch}) => {
 
 const getCurrentCommitHash = async appPath => {
     try {
-        const {stdout: commitHash} = await executeCommand(`git -C ${appPath} rev-parse HEAD`)
+        const {stdout: commitHash} = await executeCommand('git', ['rev-parse', 'HEAD'], {cwd: appPath})
         return commitHash.trim()
     } catch (err) {
         log.error(`Failed to get current commit hash: ${err.message}`)
@@ -160,7 +160,7 @@ const pullUpdates = async (appPath, branch) => {
         
         if (updateAvailable) {
             log.info(`Updates available for ${appPath} → pulling`)
-            await executeCommand(`git -C ${appPath} pull origin ${branch}`)
+            await executeCommand('git', ['pull', 'origin', branch], {cwd: appPath})
             log.info(`Successfully pulled updates for ${appPath}`)
             return {action: 'updated', success: true}
         }
