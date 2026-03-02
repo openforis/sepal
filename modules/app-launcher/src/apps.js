@@ -24,7 +24,7 @@ const apps$ = () =>
         filter(({repository}) => repository),
         filter(({endpoint}) => endpoint === 'docker'),
         map(({endpoint, label, repository, branch}) => {
-            const name = basename(repository)
+            const name = basename(repository).replace(/\.git$/, '')
             return {
                 endpoint,
                 name,
