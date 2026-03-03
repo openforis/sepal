@@ -85,7 +85,8 @@ class _RecipeList extends React.Component {
     renderList() {
         const {filteredRecipes} = this.props
         const {edit, move, remove} = this.state
-        const itemKey = recipe => `${recipe.id}|${edit}|${this.getHighlightMatcher()}`
+        const highlightKey = this.getHighlightMatcher().toString()
+        const itemKey = recipe => `${recipe.id}|${edit}|${highlightKey}`
         return (
             <Layout type='vertical' spacing='compact'>
                 {this.renderHeader1()}
