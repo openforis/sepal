@@ -123,6 +123,7 @@ const main = async () => {
         .description('Install npm modules')
         .option('-v, --verbose', 'Verbose')
         .option('-c, --clean', 'Clean package-lock.json and node_modules')
+        .option('-s, --sequential', 'Sequential install')
         .argument('[module...]', 'Modules to install')
         .action(npmInstall)
 
