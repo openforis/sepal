@@ -3,6 +3,7 @@ USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV DOCKER_BUILDKIT=0
+ARG DOCKER_COMPOSE_VERSION=v5.1.0
 
 RUN mkdir /var/log/sepal-build && chown jenkins: /var/log/sepal-build
 RUN apk update && apk add --no-cache \
@@ -14,7 +15,7 @@ RUN apk update && apk add --no-cache \
 
 # Install Docker Compose
 RUN mkdir -p /usr/local/lib/docker/cli-plugins
-RUN curl -SL https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
+RUN curl -SL https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
 RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 USER jenkins

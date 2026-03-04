@@ -5,6 +5,7 @@ EXPOSE 80
 ENV MODULE_NAME=app-launcher
 ENV MODULE=/usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED=/usr/local/src/sepal/lib/js/shared
+ARG DOCKER_COMPOSE_VERSION=v5.1.0
 
 RUN npm install -g nodemon
 RUN apk update && apk add --no-cache \
@@ -21,7 +22,7 @@ RUN apk update && apk add --no-cache \
 
 RUN apk add --no-cache docker \
     && mkdir -p /usr/local/lib/docker/cli-plugins \
-    && curl -SL https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 \
+    && curl -SL https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64 \
     -o /usr/local/lib/docker/cli-plugins/docker-compose \
     && chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 

@@ -17,6 +17,7 @@ VERSION: $VERSION]"
 
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_CONFIG=../ansible.cfg
+export DOCKER_COMPOSE_VERSION=v5.1.0
 
 ansible-playbook deploy.yml \
     -i "$(../inventory.sh Sepal)" \
