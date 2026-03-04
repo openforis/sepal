@@ -3,13 +3,21 @@ FROM debian:trixie-slim
 SHELL ["/bin/bash", "-c"]
 
 ARG DEBIAN_FRONTEND=noninteractive
-ENV PROJECT_DIR /usr/local/src/sepal
+ENV PROJECT_DIR /home/sepal/sepal
 ENV NODE_MAJOR=24
 ARG DOCKER_COMPOSE_VERSION=v2.40.0
 ARG JAVA_VERSION=11.0.11.hs-adpt
 ARG GRADLE_VERSION=6.9.1
 
-# Update and install base packages
+# Injected by compose build args
+
+ARG USER_UID
+ARG USER_GID
+ARG DOCKER_GID
+
+RUN echo "USER_UID: ${USER_UID}, USER_GID: ${USER_GID}, DOCKER_GID: ${DOCKER_GID}"
+
+# Install core packages
 
 RUN apt-get update && apt-get install -y \
     apt-utils \
@@ -26,15 +34,8 @@ RUN apt-get update && apt-get install -y \
     nano \
     ncdu \
     unzip \
+    sudo \
     zip
-
-# Setup git aliases
-RUN git config --global alias.st status \
-    && git config --global alias.ci commit \
-    && git config --global alias.br branch \
-    && git config --global alias.co checkout \
-    && git config --global alias.unstage 'reset HEAD --' \
-    && git config --global alias.last 'log -1 HEAD'
 
 # Install docker-cli
 
@@ -64,24 +65,10 @@ RUN apt-get install nodejs -y
 
 RUN npm install -g madge npm-check-updates wscat touch
 
-# Set bash prompt
-
-RUN echo "export PS1='[\[\033[1;35m\]\u@dev-env\[\033[0m\]:\w]\$ '" >> /root/.bashrc
-
 # Add shell script to path
 
 ADD sepal.sh /usr/local/bin/sepal
 RUN chmod +x /usr/local/bin/sepal
-
-# Add source code
-
-ADD ./package.json ${PROJECT_DIR}/dev-env/
-ADD ./package-lock.json ${PROJECT_DIR}/dev-env/
-ADD ./src ${PROJECT_DIR}/dev-env/src/
-ADD ./config ${PROJECT_DIR}/dev-env/config/
-
-WORKDIR $PROJECT_DIR/dev-env/
-RUN npm install
 
 # Install Java and Gradle
 
@@ -95,5 +82,42 @@ RUN source "${SDKMAN_DIR}/bin/sdkman-init.sh" && \
     ln -s "$(which gradle)" /usr/local/bin/gradle && \
     JAVA_HOME=$(sdk home java current) && \
     sed -i 's/jdk.tls.disabledAlgorithms=.*/jdk.tls.disabledAlgorithms=SSLv3, RC4, DES, MD5withRSA, /' "$JAVA_HOME/conf/security/java.security"
+
+# Create sepal user
+
+RUN addgroup --gid $DOCKER_GID docker
+RUN addgroup --gid $USER_GID sepal
+RUN adduser --uid $USER_UID --gid $USER_GID sepal
+RUN adduser sepal sudo 
+RUN adduser sepal docker 
+RUN echo 'sepal      ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
+
+# Switch to sepal user
+
+USER sepal
+
+# Setup git aliases
+
+RUN git config --global alias.st status \
+    && git config --global alias.ci commit \
+    && git config --global alias.br branch \
+    && git config --global alias.co checkout \
+    && git config --global alias.unstage 'reset HEAD --' \
+    && git config --global alias.last 'log -1 HEAD'
+
+# Set bash prompt
+
+RUN echo "export PS1='[\[\033[1;35m\]\u@dev-env\[\033[0m\]:\w]\$ '" >> /home/sepal/.bashrc
+
+# Add dev-env source code
+
+ADD --chown=sepal:sepal ./package.json ${PROJECT_DIR}/dev-env/
+ADD --chown=sepal:sepal ./package-lock.json ${PROJECT_DIR}/dev-env/
+ADD --chown=sepal:sepal ./src ${PROJECT_DIR}/dev-env/src/
+ADD --chown=sepal:sepal ./config ${PROJECT_DIR}/dev-env/config/
+
+WORKDIR ${PROJECT_DIR}/dev-env/
+
+RUN npm install
 
 WORKDIR $PROJECT_DIR

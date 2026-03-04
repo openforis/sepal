@@ -1,6 +1,6 @@
 import {stopModule} from './stop.js'
 import {getModules, isNodeModule, showModuleStatus, MESSAGE} from './utils.js'
-import {SEPAL_SRC} from './config.js'
+import {SEPAL_SRC, USER_GID, USER_UID} from './config.js'
 import {getLibDeps} from './deps.js'
 import {access} from 'fs/promises'
 import _ from 'lodash'
@@ -14,6 +14,7 @@ const installLibPackages = async (module, lib, {clean, verbose}) => {
         module,
         command: 'run',
         args: [
+            `--user=${USER_UID}:${USER_GID}`,
             '--rm',
             `--workdir=/usr/local/src/sepal/lib/js/${lib}`,
             module,
@@ -34,6 +35,7 @@ const installModulePackages = async (module, {clean, verbose}) => {
         module,
         command: 'run',
         args: [
+            `--user=${USER_UID}:${USER_GID}`,
             '--rm',
             module,
             'npm',

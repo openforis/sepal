@@ -4,6 +4,10 @@ COMMAND=$1
 WORKING_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 FORCE_REBUILD=0
 
+export USER_UID="$(id -u)"
+export USER_GID="$(id -g)"
+export DOCKER_GID="$(getent group docker | cut -d: -f3)"
+
 exec 6>/dev/null
 
 function start() {

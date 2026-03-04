@@ -1,8 +1,9 @@
 import {getModules, isNodeModule, showModuleStatus, MESSAGE} from './utils.js'
-import {SEPAL_SRC} from './config.js'
+import {SEPAL_SRC, USER_GID, USER_UID} from './config.js'
 import {access} from 'fs/promises'
 import _ from 'lodash'
 import {compose} from './compose.js'
+import { stopModule } from './stop.js'
 
 const auditModulePackages = async (module, {fix}) => {
     const modulePath = `${SEPAL_SRC}/modules/${module}`
@@ -11,6 +12,7 @@ const auditModulePackages = async (module, {fix}) => {
         module,
         command: 'run',
         args: [
+            `--user=${USER_UID}:${USER_GID}`,
             '--rm',
             module,
             'npm',
@@ -25,6 +27,7 @@ const auditModulePackages = async (module, {fix}) => {
 const auditModule = async (module, options) => {
     const modulePath = `${SEPAL_SRC}/modules/${module}`
     if (await isNodeModule(modulePath)) {
+        await stopModule(module)
         showModuleStatus(module, MESSAGE.AUDITING_PACKAGES)
         await auditModulePackages(module, options)
         showModuleStatus(module, MESSAGE.AUDITED_PACKAGES)
