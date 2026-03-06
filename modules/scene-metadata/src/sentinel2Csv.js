@@ -6,20 +6,30 @@ const log = require('#sepal/log').getLogger('sentinel2')
 
 const CSV_URL = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz'
 
+const getAcquiredTimestampFromId = id => {
+    const acquiredTimestamp = new Date(id.substring(16, 31).replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/, '$1-$2-$3T$4:$5:$6')).toISOString()
+    log.trace(`Inferred timestamp from id ${id}: ${acquiredTimestamp}`)
+    return acquiredTimestamp
+}
+
 const sceneMapper = ({
     row: {
         'GRANULE_ID': granuleId,
         'PRODUCT_ID': productUri,
         'CLOUD_COVER': cloudCover,
-        'SENSING_TIME': acquiredTimestamp
+        'SENSING_TIME': sensingTime
     },
     minTimestamp,
     maxTimestamp
 }) => {
     const id = getIdFromGranuleId(productUri, granuleId)
-    return id && isInTimeRange(acquiredTimestamp, minTimestamp, maxTimestamp)
-        ? scene({id, productUri, acquiredTimestamp, cloudCover})
-        : null
+    if (id) {
+        const acquiredTimestamp = sensingTime || getAcquiredTimestampFromId(id)
+        if (isInTimeRange(acquiredTimestamp, minTimestamp, maxTimestamp)) {
+            return scene({id, productUri, acquiredTimestamp, cloudCover})
+        }
+    }
+    return null
 }
 
 const loadSentinel2 = async ({redis, database, maxTimestamp, timestamp, update}) => {
