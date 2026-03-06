@@ -42,6 +42,11 @@ const getCollection = source => {
     return collection
 }
 
+const getStats = scenes => {
+    const stats = scenes.reduce((stats, {dataSet}) => ({...stats, [dataSet]: (stats[dataSet] || 0) + 1}), {})
+    return Object.keys(stats).sort().map(dataSet => `${dataSet}: ${stats[dataSet]}`).join(', ')
+}
+
 const getUpdates$ = ({source, sceneMapper, minTimestamp, maxTimestamp, token}) => {
     const collection = getCollection(source)
     if (maxTimestamp >= minTimestamp) {
@@ -60,7 +65,7 @@ const getUpdates$ = ({source, sceneMapper, minTimestamp, maxTimestamp, token}) =
         }).pipe(
             map(({body}) => JSON.parse(body)),
             map(response => getResponse(response, sceneMapper)),
-            tap(({scenes}) => log.info(scenes.length ? `Retrieved ${collection} scenes: ${scenes.length}` : `No more ${collection} scenes`))
+            tap(({scenes}) => log.info(scenes.length ? `Retrieved ${collection} scenes: ${scenes.length} (${getStats(scenes)})` : `No more ${collection} scenes`))
         )
     } else {
         log.info(`No scenes to retrieve between ${minTimestamp} and ${maxTimestamp}`)
