@@ -26,7 +26,7 @@ const isSceneIncluded = ({dataSet, collectionCategory, cloudCover}) =>
         && cloudCover >= 0
 
 const getSceneAreaId = (wrsPath, wrsRow) =>
-    `${wrsPath}_${wrsRow}`
+    `${parseInt(wrsPath)}_${parseInt(wrsRow)}`
 
 const getCloudCover = (cloudCover, dataset) =>
     dataset === 'LANDSAT_7'
