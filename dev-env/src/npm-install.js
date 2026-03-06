@@ -17,6 +17,7 @@ const installLibPackages = async (module, lib, {clean, verbose, sequential}) => 
         command: 'run',
         args: [
             `--user=${USER_UID}:${USER_GID}`,
+            '-e', 'HOME=/tmp',
             '--rm',
             `--workdir=/usr/local/src/sepal/lib/js/${lib}`,
             module,
@@ -40,6 +41,7 @@ const installModulePackages = async (module, {clean, verbose, sequential}) => {
         command: 'run',
         args: [
             `--user=${USER_UID}:${USER_GID}`,
+            '-e', 'HOME=/tmp',
             '--rm',
             module,
             'npm',
