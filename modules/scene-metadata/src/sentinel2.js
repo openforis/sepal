@@ -39,16 +39,17 @@ const getIdFromDatastripId = (productUri, datastripId) => {
 const getSceneAreaId = productUri =>
     productUri.substring(39, 39 + 5)
 
-const scene = ({id, productUri, acquiredTimestamp, cloudCover}) => ({
-    id,
-    source: 'SENTINEL_2',
-    dataSet: 'SENTINEL_2',
-    sceneAreaId: getSceneAreaId(productUri),
-    acquiredTimestamp,
-    dayOfYear: getDayOfYear(acquiredTimestamp),
-    cloudCover: parseFloat(cloudCover),
-    sunAzimuth: 0,
-    sunElevation: 0
-})
+const scene = ({id, productUri, acquiredTimestamp, cloudCover}) =>
+    id && productUri && acquiredTimestamp ? ({
+        id,
+        source: 'SENTINEL_2',
+        dataSet: 'SENTINEL_2',
+        sceneAreaId: getSceneAreaId(productUri),
+        acquiredTimestamp,
+        dayOfYear: getDayOfYear(acquiredTimestamp),
+        cloudCover: cloudCover.length ? parseFloat(cloudCover) : 100,
+        sunAzimuth: 0,
+        sunElevation: 0
+    }) : null
 
 module.exports = {getIdFromDatastripId, getIdFromGranuleId, scene}

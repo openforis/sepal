@@ -33,17 +33,17 @@ const getCloudCover = (cloudCover, dataset) =>
         ? Math.min(100, parseFloat(cloudCover) + 22)
         : parseFloat(cloudCover)
 
-const scene = ({id, dataSet, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sunAzimuth, sunElevation}) => ({
-    id,
-    source: 'LANDSAT',
-    dataSet,
-    sceneAreaId: getSceneAreaId(wrsPath, wrsRow),
-    acquiredTimestamp,
-    dayOfYear: getDayOfYear(acquiredTimestamp),
-    cloudCover: getCloudCover(cloudCover, dataSet),
-    sunAzimuth: parseFloat(sunAzimuth),
-    sunElevation: parseFloat(sunElevation)
-                
-})
+const scene = ({id, dataSet, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sunAzimuth, sunElevation}) =>
+    id && dataSet && wrsPath && wrsRow && acquiredTimestamp && cloudCover && sunAzimuth && sunElevation ? ({
+        id,
+        source: 'LANDSAT',
+        dataSet,
+        sceneAreaId: getSceneAreaId(wrsPath, wrsRow),
+        acquiredTimestamp,
+        dayOfYear: getDayOfYear(acquiredTimestamp),
+        cloudCover: getCloudCover(cloudCover, dataSet),
+        sunAzimuth: parseFloat(sunAzimuth),
+        sunElevation: parseFloat(sunElevation)
+    }) : null
                 
 module.exports = {getDataset, isOperational, isSceneIncluded, scene}
