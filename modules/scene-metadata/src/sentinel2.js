@@ -36,8 +36,17 @@ const getIdFromDatastripId = (productUri, datastripId) => {
     }
 }
 
-const getSceneAreaId = productUri =>
-    productUri.substring(39, 39 + 5)
+const getSceneAreaId = productUri => {
+    const match = productUri.match(PRODUCT_URI_MATCHER)
+    if (match) {
+        return match.groups.sceneArea.substring(1)
+    } else {
+        log.debug('Unexpected product uri format:', productUri)
+    }
+}
+
+const getCloudCover = cloudCover =>
+    cloudCover !== null && cloudCover !== '' ? parseFloat(cloudCover) : 100
 
 const scene = ({id, productUri, acquiredTimestamp, cloudCover}) =>
     id && productUri && acquiredTimestamp ? ({
@@ -47,7 +56,7 @@ const scene = ({id, productUri, acquiredTimestamp, cloudCover}) =>
         sceneAreaId: getSceneAreaId(productUri),
         acquiredTimestamp,
         dayOfYear: getDayOfYear(acquiredTimestamp),
-        cloudCover: cloudCover.length ? parseFloat(cloudCover) : 100,
+        cloudCover: getCloudCover(cloudCover),
         sunAzimuth: 0,
         sunElevation: 0
     }) : null
