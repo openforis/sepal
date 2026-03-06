@@ -1,5 +1,5 @@
 const {subHours} = require('date-fns/subHours')
-const {from, expand, EMPTY, finalize, switchMap, lastValueFrom, filter, reduce, map, exhaustMap, catchError} = require('rxjs')
+const {from, expand, EMPTY, finalize, switchMap, lastValueFrom, filter, reduce, map, concatMap, catchError} = require('rxjs')
 const {formatInterval} = require('./time')
 const {getUpdates$} = require('./earthSearch')
 const {minHoursPublished} = require('./config')
@@ -24,7 +24,7 @@ const updateFromStac$ = ({source, sceneMapper, redis, database, timestamp}) => {
                     getUpdates$({source, sceneMapper, minTimestamp, maxTimestamp}).pipe(
                         expand(({token}) => token ? getUpdates$({source, sceneMapper, minTimestamp, maxTimestamp, token}) : EMPTY),
                         filter(({scenes}) => scenes.length),
-                        exhaustMap(({scenes, mostRecentTimestamp}) =>
+                        concatMap(({scenes, mostRecentTimestamp}) =>
                             from(database.insert({scenes, timestamp})).pipe(
                                 map(() => mostRecentTimestamp)
                             )
