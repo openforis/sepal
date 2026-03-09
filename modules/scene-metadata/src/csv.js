@@ -52,8 +52,8 @@ const processCollection = async ({collection, sceneMapper, minTimestamp, maxTime
                 showStats()
             }
 
-            const scene = sceneMapper({row, minTimestamp, maxTimestamp})
-            if (scene) {
+            const scene = sceneMapper(row)
+            if (scene && isInTimeRange(scene.acquiredTimestamp, minTimestamp, maxTimestamp)) {
                 updateTimestamp(scene.acquiredTimestamp)
                 callback(null, scene)
             } else {
@@ -150,4 +150,4 @@ const processCSV = async ({collection, sceneMapper, redis: {getLastUpdate, setLa
     await setLastUpdate(collection, updatedTimestamp)
 }
 
-module.exports = {isInTimeRange, processCSV}
+module.exports = {processCSV}

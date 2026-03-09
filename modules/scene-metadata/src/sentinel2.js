@@ -45,6 +45,15 @@ const getSceneAreaId = productUri => {
     }
 }
 
+const parseCompactTimestamp = timestamp =>
+    new Date(timestamp.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/, '$1-$2-$3T$4:$5:$6')).toISOString()
+
+const getAcquiredTimestampFromId = id => {
+    const acquiredTimestamp = parseCompactTimestamp(id.substring(0, 15))
+    log.trace(`Inferred timestamp from id ${id}: ${acquiredTimestamp}`)
+    return acquiredTimestamp
+}
+
 const getCloudCover = cloudCover =>
     cloudCover !== null && cloudCover !== '' ? parseFloat(cloudCover) : 100
 
@@ -61,4 +70,4 @@ const scene = ({id, productUri, acquiredTimestamp, cloudCover}) =>
         sunElevation: 0
     }) : null
 
-module.exports = {getIdFromDatastripId, getIdFromGranuleId, scene}
+module.exports = {getAcquiredTimestampFromId, getIdFromDatastripId, getIdFromGranuleId, scene}

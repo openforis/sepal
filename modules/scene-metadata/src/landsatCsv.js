@@ -1,6 +1,6 @@
 const {parse} = require('date-fns')
 const {isSceneIncluded, isOperational, getDataset, scene} = require('./landsat')
-const {processCSV, isInTimeRange} = require('./csv')
+const {processCSV} = require('./csv')
 const {formatInterval} = require('./time')
 const {download} = require('./filesystem')
 const log = require('#sepal/log').getLogger('landsat')
@@ -14,27 +14,23 @@ const CSV_URL = {
 }
 
 const sceneMapper = ({
-    row: {
-        'Landsat Product Identifier L2': productId,
-        'WRS Path': wrsPath,
-        'WRS Row': wrsRow,
-        'Collection Category': collectionCategory,
-        'Scene Cloud Cover L1': cloudCover,
-        'Sun Azimuth L0RA': sunAzimuthL0,
-        'Sun Azimuth L1': sunAzimuthL1,
-        'Sun Elevation L0RA': sunElevationL0,
-        'Sun Elevation L1': sunElevationL1,
-        'Date Acquired': datetime
-    },
-    minTimestamp,
-    maxTimestamp
+    'Landsat Product Identifier L2': productId,
+    'WRS Path': wrsPath,
+    'WRS Row': wrsRow,
+    'Collection Category': collectionCategory,
+    'Scene Cloud Cover L1': cloudCover,
+    'Sun Azimuth L0RA': sunAzimuthL0,
+    'Sun Azimuth L1': sunAzimuthL1,
+    'Sun Elevation L0RA': sunElevationL0,
+    'Sun Elevation L1': sunElevationL1,
+    'Date Acquired': datetime
 }) => {
     const dataSet = getDataset(productId)
     if (dataSet) {
         if (isSceneIncluded({dataSet, collectionCategory, cloudCover})) {
             const id = productId.substring(0, 26) + productId.substring(35)
             const acquiredTimestamp = parse(datetime, 'yyyy/MM/dd', new Date()).toISOString()
-            return id && isInTimeRange(acquiredTimestamp, minTimestamp, maxTimestamp)
+            return id
                 ? scene({
                     id,
                     dataSet,
