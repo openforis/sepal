@@ -20,6 +20,7 @@ services:
       - /:/host:ro
       - ..:/home/sepal/sepal
       - ${SEPAL_CONFIG:-~/.sepal}:/etc/sepal/config
+      - ~/.ssh:/home/sepal/.ssh:ro
     networks:
       - sepal
     environment:
