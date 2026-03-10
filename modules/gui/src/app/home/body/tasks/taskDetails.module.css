@@ -43,3 +43,11 @@
     grid-area: unset;
     flex: 1;
 }
+
+.statusError {
+    color: var(--error-color);
+}
+
+.statusSuccess {
+    color: var(--success-color);
+}

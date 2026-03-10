@@ -124,24 +124,19 @@ export class TaskDetails extends React.Component {
     
     renderStatus() {
         const {task, duration} = this.state
-        
+
         return (
             <Widget label={msg('tasks.details.section.status')} framed>
-                <div className={styles.row}>
-                    <Label className={styles.fieldLabel} msg={msg('tasks.details.status')}/>
-                    <div className={styles.fieldValue}>{task.status}</div>
-                </div>
-                
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel} msg={msg('tasks.details.duration')}/>
                     <div className={styles.fieldValue}>{duration}</div>
                 </div>
-                
+
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel} msg={msg('tasks.details.creationTime')}/>
                     <div className={styles.fieldValue}>{task.creationTime ? format.fullDateTime(task.creationTime) : '--'}</div>
                 </div>
-                
+
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel} msg={msg('tasks.details.updateTime')}/>
                     <div className={styles.fieldValue}>{task.updateTime ? format.fullDateTime(task.updateTime) : '--'}</div>
@@ -205,7 +200,7 @@ export class TaskDetails extends React.Component {
                         <Label className={styles.fieldLabel} msg={msg('tasks.details.workspacePath')}/>
                         <div className={styles.fieldValueWithButton}>
                             <div className={styles.fieldValue}>
-                                {taskInfo.destination === 'DRIVE' ? `SEPAL/export/${taskInfo.outputPath}` : taskInfo.outputPath}
+                                {taskInfo.destination === 'DRIVE' ? `~/SEPAL/exports/${taskInfo.outputPath}` : `~/${taskInfo.outputPath}`}
                             </div>
                             <Button
                                 chromeless
@@ -216,7 +211,7 @@ export class TaskDetails extends React.Component {
                                 tooltip={msg('asset.copyId.tooltip')}
                                 tabIndex={-1}
                                 onClick={() => copyToClipboard(
-                                    taskInfo.destination === 'DRIVE' ? `SEPAL/export/${taskInfo.outputPath}` : taskInfo.outputPath,
+                                    taskInfo.destination === 'DRIVE' ? `~/SEPAL/exports/${taskInfo.outputPath}` : `~/${taskInfo.outputPath}`,
                                     msg('asset.copyId.success')
                                 )}
                             />
@@ -234,18 +229,30 @@ export class TaskDetails extends React.Component {
         )
     }
     
+    getStatusColorClass() {
+        const {task} = this.state
+        switch (task?.status) {
+            case 'FAILED':
+                return styles.statusError
+            case 'COMPLETED':
+                return styles.statusSuccess
+            default:
+                return ''
+        }
+    }
+
     renderProgress() {
         const {description} = this.props
-        
+
         if (!description) {
             return null
         }
-        
+
         return (
             <Widget label={msg('tasks.details.section.progress')} framed>
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel} msg={msg('tasks.details.status')}/>
-                    <div className={styles.fieldValue}>
+                    <div className={`${styles.fieldValue} ${this.getStatusColorClass()}`}>
                         {description}
                     </div>
                 </div>
