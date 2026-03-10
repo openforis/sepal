@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import moment from 'moment'
 
 import api from '~/apiRegistry'
@@ -5,6 +6,7 @@ import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
+import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
 import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
 
@@ -63,21 +65,30 @@ export const RecipeActions = id => {
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
-    const title = msg(['process.retrieve.form.task.SEPAL'], {name})
+    const destination = 'SEPAL'
+    const taskTitle = msg(['process.retrieve.form.task.SEPAL'], {name})
     const operation = 'timeseries.download'
+    
     const task = {
         operation,
         params: {
-            title,
+            title: taskTitle,
             description: name,
-            recipe,
-            ...recipe.ui.retrieveOptions,
-            indicator: recipe.ui.retrieveOptions.bands
+            image: {
+                ...recipe.ui.retrieveOptions,
+                recipe,
+                indicator: recipe.ui.retrieveOptions.bands
+            },
+            taskInfo: getTaskInfo({
+                recipe,
+                destination,
+                retrieveOptions: recipe.ui.retrieveOptions
+            })
         }
     }
     publishEvent('submit_task', {
         recipe_type: recipe.type,
-        destination: 'SEPAL',
+        destination,
         data_set_type: recipe.model.dataSetType
     })
     return api.tasks.submit$(task).subscribe()
