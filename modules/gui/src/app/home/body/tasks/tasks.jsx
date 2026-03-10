@@ -14,6 +14,7 @@ import {Scrollable} from '~/widget/scrollable'
 import {Content, SectionLayout, TopBar} from '~/widget/sectionLayout'
 import {Shape} from '~/widget/shape'
 
+import {TaskDetails} from './taskDetails'
 import styles from './tasks.module.css'
 
 const mapStateToProps = state => ({
@@ -24,7 +25,15 @@ class _Tasks extends React.Component {
     constructor(props) {
         super(props)
         this.renderTask = this.renderTask.bind(this)
-        this.state = {tasks: props.tasks || []}
+        this.showInfo = this.showInfo.bind(this)
+        this.closeTaskDetails = this.closeTaskDetails.bind(this)
+        this.removeTask = this.removeTask.bind(this)
+        this.stopTask = this.stopTask.bind(this)
+        this.copyToClipboard = this.copyToClipboard.bind(this)
+        this.state = {
+            tasks: props.tasks || [],
+            selectedTask: null
+        }
     }
 
     isRunning(task) {
@@ -42,7 +51,7 @@ class _Tasks extends React.Component {
                 chromeless
                 shape='circle'
                 icon='times'
-                onConfirm={() => this.stopTask(task)}
+                onConfirm={e => this.stopTask(task, e)}
                 tooltip={msg('tasks.stop.tooltip')}
                 tooltipPlacement='left'
             />
@@ -56,11 +65,24 @@ class _Tasks extends React.Component {
                 chromeless
                 shape='circle'
                 icon='copy'
-                onClick={() => this.copyToClipboard(task)}
+                onClick={e => {
+                    e.stopPropagation()
+                    this.copyToClipboard(task)
+                }}
                 tooltip={msg('tasks.copyToClipboard.tooltip')}
                 tooltipPlacement='left'
             />
         ) : null
+    }
+    
+    // Info button removed as clicking on the CrudItem now shows the task details
+    
+    showInfo(task) {
+        this.setState({selectedTask: task})
+    }
+    
+    closeTaskDetails() {
+        this.setState({selectedTask: null})
     }
 
     getStatusIcon(task) {
@@ -89,7 +111,9 @@ class _Tasks extends React.Component {
     renderTask(task) {
         const {icon, iconVariant} = this.getStatusIcon(task)
         return (
-            <ListItem key={task.id}>
+            <ListItem
+                key={task.id}
+                onClick={() => this.showInfo(task)}>
                 <CrudItem
                     title={task.name}
                     description={this.getDescription(task)}
@@ -103,7 +127,10 @@ class _Tasks extends React.Component {
                     ]}
                     removeTooltip={msg('tasks.remove.tooltip')}
                     removeDisabled={!this.isStopped(task)}
-                    onRemove={() => this.removeTask(task)}
+                    onRemove={e => {
+                        e.stopPropagation()
+                        this.removeTask(task)
+                    }}
                 />
             </ListItem>
         )
@@ -157,6 +184,21 @@ class _Tasks extends React.Component {
         )
     }
 
+    renderTaskDetails() {
+        const {selectedTask} = this.state
+        if (!selectedTask) {
+            return null
+        }
+        
+        return (
+            <TaskDetails
+                taskId={selectedTask.id}
+                description={this.getDescription(selectedTask)}
+                onClose={this.closeTaskDetails}
+            />
+        )
+    }
+    
     render() {
         return (
             <SectionLayout>
@@ -168,6 +210,7 @@ class _Tasks extends React.Component {
                         {this.renderTasks()}
                     </Scrollable>
                 </Content>
+                {this.renderTaskDetails()}
             </SectionLayout>
         )
     }
@@ -205,7 +248,10 @@ class _Tasks extends React.Component {
         )
     }
 
-    removeTask(task) {
+    removeTask(task, e) {
+        if (e) {
+            e.stopPropagation()
+        }
         const {stream} = this.props
         const {tasks} = this.state
         this.setState({
@@ -234,7 +280,10 @@ class _Tasks extends React.Component {
         return tasks.filter(({status}) => !['PENDING', 'ACTIVE'].includes(status))
     }
 
-    stopTask(task) {
+    stopTask(task, e) {
+        if (e) {
+            e.stopPropagation()
+        }
         const {stream} = this.props
         this.updateTaskInState(task, () => ({
             ...task,

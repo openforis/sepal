@@ -1321,9 +1321,9 @@
                         }
                     },
                     "task": {
-                        "GEE": "Export {name} as a Google Earth Engine asset",
-                        "SEPAL": "Retrieve {name} to SEPAL workspace",
-                        "DRIVE": "Retrieve {name} to Google Drive"
+                        "GEE": "Export recipe: {name} as a Google Earth Engine asset",
+                        "SEPAL": "Retrieve recipe: {name} to SEPAL workspace",
+                        "DRIVE": "Retrieve recipe: {name} to Google Drive"
                     },
                     "title": "Retrieve",
                     "tooltip": "Retrieve time-series"
@@ -1593,8 +1593,8 @@
                         }
                     },
                     "task": {
-                        "GEE": "Export {name} as a Google Earth Engine asset",
-                        "SEPAL": "Retrieve {name} to SEPAL workspace"
+                        "GEE": "Export recipe: {name} as a Google Earth Engine asset",
+                        "SEPAL": "Retrieve recipe: {name} to SEPAL workspace"
                     },
                     "title": "Retrieve",
                     "tooltip": "Retrieve time-series"
@@ -4610,9 +4610,9 @@
                     }
                 },
                 "task": {
-                    "GEE": "Export {name} as a Google Earth Engine asset",
-                    "SEPAL": "Retrieve {name} to SEPAL workspace",
-                    "DRIVE": "Retrieve {name} to Google Drive"
+                    "GEE": "Export recipe: {name} as a Google Earth Engine asset",
+                    "SEPAL": "Retrieve recipe: {name} to SEPAL workspace",
+                    "DRIVE": "Retrieve recipe:{name} to Google Drive"
                 },
                 "tileSize": {
                     "label": "Tile size",
@@ -4624,6 +4624,11 @@
                     "label": "Workspace path",
                     "placeholder": "Enter workspace path...",
                     "tooltip": "Relative path in your workspace home directory where the image should be retrieved to."
+                },
+                "filenamePrefix" : {
+                    "label" : "Filename prefix",
+                    "placeholder" : "Enter filename prefix...",
+                    "tooltip" : "Custom prefix that will be added to exported files"
                 }
             },
             "title": "Retrieve",
@@ -4818,6 +4823,64 @@
         "copyToClipboard": {
             "tooltip": "Copy to clipboard",
             "success": "Copied to clipboard"
+        },
+        "info": {
+            "tooltip": "View task details"
+        },
+        "details": {
+            "id": "Task ID",
+            "status": "Status",
+            "recipeName": "Recipe Name",
+            "recipeType": "Recipe Type",
+            "recipeId": "Recipe ID",
+            "creationTime": "Start Time",
+            "updateTime": "Last Update",
+            "duration": "Duration",
+            "description": "Description",
+            "workspacePath" : "Output path",
+            "filenamePrefix" : "Filename prefix",
+            "actualWorkspacePath" : "Actual workspace path",
+            "section" :{
+                "status" : "Status",
+                "conf" : "Recipe configuration",
+                "location" : "Location",
+                "progress" : "Progress"
+            },
+            "sharing" : {
+                "label" : "Access",
+                "PRIVATE" : "Private",
+                "PUBLIC" : "Public"
+            },
+            "destination" : {
+                "label" : "Destination",
+                "SEPAL" : "SEPAL workspace",
+                "GEE" : "Google Earth Engine asset",
+                "DRIVE" : "Google Drive"
+            },
+            "recipeTypeNames" : {
+                "MOSAIC": "Optical Mosaic",
+                "RADAR_MOSAIC": "Radar Mosaic",
+                "PLANET_MOSAIC": "Planet Mosaic",
+                "TIME_SERIES": "Time Series",
+                "CCDC": "CCDC",
+                "CCDC_SLICE": "CCDC Slice",
+                "CHANGE_ALERTS": "Change Alerts",
+                "BAYTS_HISTORICAL": "BAYTS Historical",
+                "BAYTS_ALERTS": "BAYTS Alerts",
+                "CLASSIFICATION": "Classification",
+                "UNSUPERVISED_CLASSIFICATION": "Unsupervised Classification",
+                "REGRESSION": "Regression",
+                "CLASS_CHANGE": "Class Change",
+                "INDEX_CHANGE": "Index Change",
+                "STACK": "Stack",
+                "BAND_MATH": "Band Math",
+                "REMAPPING": "Remapping",
+                "PHENOLOGY": "Phenology",
+                "MASKING": "Masking",
+                "ASSET_MOSAIC": "Asset Mosaic",
+                "RECIPE_REF": "Recipe Reference",
+                "ASSET": "Asset"
+            }
         },
         "remove": {
             "tooltip": "Remove task"
@@ -5232,6 +5295,11 @@
             "strategy": {
                 "label": "Strategy"
             }
+        },
+        "workspaceDestination" : {
+            "taskPending": "A task is already pending in this folder. Please choose a different folder.",
+            "notEmpty": "This folder must be completely empty. Please choose a different folder or remove its contents.",
+            "loadError": "Unable to load the workspace. Please try again."
         },
         "assetInput": {
             "loadError": "Unable to load asset"
