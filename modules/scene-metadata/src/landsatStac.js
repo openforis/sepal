@@ -14,10 +14,10 @@ const sceneMapper = ({
         'datetime': acquiredTimestamp,
     }
 }) => {
-    const dataSet = getDataset(id)
-    if (dataSet) {
-        if (isSceneIncluded({dataSet, collectionCategory, cloudCover})) {
-            return scene({id, dataSet, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sunAzimuth, sunElevation})
+    const dataset = getDataset(id)
+    if (dataset) {
+        if (isSceneIncluded({dataset, collectionCategory, cloudCover})) {
+            return scene({id, dataset, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sunAzimuth, sunElevation})
         }
     } else {
         log.debug(`Ignoring unexpected id: ${id}`)
@@ -27,7 +27,7 @@ const sceneMapper = ({
 const updateLandsat = async ({redis, database, timestamp}) => {
     await updateFromStac({
         source: 'landsat-ot',
-        dataSet: 'LANDSAT_8',
+        dataset: 'LANDSAT_8',
         query: {
             'platform': {'eq': 'landsat-8'}
         },
@@ -38,7 +38,7 @@ const updateLandsat = async ({redis, database, timestamp}) => {
     })
     await updateFromStac({
         source: 'landsat-ot',
-        dataSet: 'LANDSAT_9',
+        dataset: 'LANDSAT_9',
         query: {
             'platform': {'eq': 'landsat-9'}
         },

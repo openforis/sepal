@@ -22,11 +22,11 @@ const processCollection = async ({collection, sceneMapper, maxTimestamp, chunkSi
     let writeCount = 0
     let chunk = 1
     let outStream
-    const updatedTimestampByDataSet = {}
+    const updatedTimestampByDataset = {}
 
-    const updateTimestamp = ({dataSet, acquiredTimestamp}) => {
-        if (!updatedTimestampByDataSet[dataSet] || acquiredTimestamp > updatedTimestampByDataSet[dataSet]) {
-            updatedTimestampByDataSet[dataSet] = acquiredTimestamp
+    const updateTimestamp = ({dataset, acquiredTimestamp}) => {
+        if (!updatedTimestampByDataset[dataset] || acquiredTimestamp > updatedTimestampByDataset[dataset]) {
+            updatedTimestampByDataset[dataset] = acquiredTimestamp
         }
     }
 
@@ -101,7 +101,7 @@ const processCollection = async ({collection, sceneMapper, maxTimestamp, chunkSi
 
     log.info(`Processed collection ${collection}, in ${readCount}, out ${writeCount} (${formatInterval(t0)})`)
 
-    return updatedTimestampByDataSet
+    return updatedTimestampByDataset
 }
 
 const ingest = async (database, path, timestamp) => {

@@ -11,28 +11,28 @@ const DATASET_BY_PREFIX = {
 const getDataset = id =>
     DATASET_BY_PREFIX[id.substring(0, 4)]
 
-const isSceneIncluded = ({dataSet, collectionCategory, cloudCover}) =>
-    dataSet
+const isSceneIncluded = ({dataset, collectionCategory, cloudCover}) =>
+    dataset
         && ['T1', 'T2'].includes(collectionCategory)
         && cloudCover >= 0
 
 const getSceneAreaId = (wrsPath, wrsRow) =>
     `${parseInt(wrsPath)}_${parseInt(wrsRow)}`
 
-const getCloudCover = (cloudCover, dataSet) =>
-    dataSet === 'LANDSAT_7'
+const getCloudCover = (cloudCover, dataset) =>
+    dataset === 'LANDSAT_7'
         ? Math.min(100, parseFloat(cloudCover) + 22)
         : parseFloat(cloudCover)
 
-const scene = ({id, dataSet, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sunAzimuth, sunElevation}) =>
-    id && dataSet && wrsPath && wrsRow && acquiredTimestamp && cloudCover && sunAzimuth && sunElevation ? ({
+const scene = ({id, dataset, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sunAzimuth, sunElevation}) =>
+    id && dataset && wrsPath && wrsRow && acquiredTimestamp && cloudCover && sunAzimuth && sunElevation ? ({
         id,
         source: 'LANDSAT',
-        dataSet,
+        dataset,
         sceneAreaId: getSceneAreaId(wrsPath, wrsRow),
         acquiredTimestamp,
         dayOfYear: getDayOfYear(acquiredTimestamp),
-        cloudCover: getCloudCover(cloudCover, dataSet),
+        cloudCover: getCloudCover(cloudCover, dataset),
         sunAzimuth: parseFloat(sunAzimuth),
         sunElevation: parseFloat(sunElevation)
     }) : null

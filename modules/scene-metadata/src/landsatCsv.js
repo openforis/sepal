@@ -25,15 +25,15 @@ const sceneMapper = ({
     'Sun Elevation L1': sunElevationL1,
     'Date Acquired': datetime
 }) => {
-    const dataSet = getDataset(productId)
-    if (dataSet) {
-        if (isSceneIncluded({dataSet, collectionCategory, cloudCover})) {
+    const dataset = getDataset(productId)
+    if (dataset) {
+        if (isSceneIncluded({dataset, collectionCategory, cloudCover})) {
             const id = productId.substring(0, 26) + productId.substring(35)
             const acquiredTimestamp = parse(datetime, 'yyyy/MM/dd', new Date()).toISOString()
             return id
                 ? scene({
                     id,
-                    dataSet,
+                    dataset,
                     wrsPath,
                     wrsRow,
                     acquiredTimestamp,

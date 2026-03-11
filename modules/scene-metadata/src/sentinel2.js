@@ -61,7 +61,7 @@ const scene = ({id, productUri, acquiredTimestamp, cloudCover}) =>
     id && productUri && acquiredTimestamp ? ({
         id,
         source: 'SENTINEL_2',
-        dataSet: 'SENTINEL_2',
+        dataset: 'SENTINEL_2',
         sceneAreaId: getSceneAreaId(productUri),
         acquiredTimestamp,
         dayOfYear: getDayOfYear(acquiredTimestamp),

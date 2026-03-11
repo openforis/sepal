@@ -121,8 +121,8 @@ const initializeDatabase = async () => {
         process.exit()
     })
 
-    const mapValues = ({id, source, dataSet, sceneAreaId, acquiredTimestamp, dayOfYear, cloudCover, sunAzimuth, sunElevation}, timestamp) =>
-        ([id, source, dataSet, sceneAreaId, new Date(acquiredTimestamp), dayOfYear, cloudCover, sunAzimuth, sunElevation, timestamp])
+    const mapValues = ({id, source, dataset, sceneAreaId, acquiredTimestamp, dayOfYear, cloudCover, sunAzimuth, sunElevation}, timestamp) =>
+        ([id, source, dataset, sceneAreaId, new Date(acquiredTimestamp), dayOfYear, cloudCover, sunAzimuth, sunElevation, timestamp])
 
     const beginTransaction = async () => {
         if (transaction.connection) {

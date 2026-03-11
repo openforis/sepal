@@ -10,10 +10,10 @@ const updateTimestamp = (timestamp, mostRecentTimestamp) =>
         ? mostRecentTimestamp
         : timestamp
 
-const updateFromStac$ = ({source, dataSet, query, sceneMapper, redis, database, timestamp}) => {
+const updateFromStac$ = ({source, dataset, query, sceneMapper, redis, database, timestamp}) => {
     log.info('Updating database from Earth Search')
     const t0 = Date.now()
-    return from(redis.getLastUpdate(dataSet)).pipe(
+    return from(redis.getLastUpdate(dataset)).pipe(
         map(lastUpdate => ({
             minTimestamp: lastUpdate,
             maxTimestamp: subHours(new Date(), minHoursPublished).toISOString()
@@ -21,8 +21,8 @@ const updateFromStac$ = ({source, dataSet, query, sceneMapper, redis, database, 
         switchMap(({minTimestamp, maxTimestamp}) =>
             from(database.beginTransaction()).pipe(
                 switchMap(() =>
-                    getUpdates$({source, dataSet, query, sceneMapper, minTimestamp, maxTimestamp}).pipe(
-                        expand(({token}) => token ? getUpdates$({source, dataSet, query, sceneMapper, minTimestamp, maxTimestamp, token}) : EMPTY),
+                    getUpdates$({source, dataset, query, sceneMapper, minTimestamp, maxTimestamp}).pipe(
+                        expand(({token}) => token ? getUpdates$({source, dataset, query, sceneMapper, minTimestamp, maxTimestamp, token}) : EMPTY),
                         filter(({scenes}) => scenes.length),
                         concatMap(({scenes, mostRecentTimestamp}) =>
                             from(database.insert({scenes, timestamp})).pipe(
@@ -32,7 +32,7 @@ const updateFromStac$ = ({source, dataSet, query, sceneMapper, redis, database, 
                         reduce((updatedTimestamp, mostRecentTimestamp) => updateTimestamp(updatedTimestamp, mostRecentTimestamp), minTimestamp),
                     )
                 ),
-                switchMap(updatedTimestamp => from(redis.setLastUpdate({[dataSet]: updatedTimestamp}))),
+                switchMap(updatedTimestamp => from(redis.setLastUpdate({[dataset]: updatedTimestamp}))),
                 switchMap(() => from(database.commitTransaction())),
                 catchError(error => {
                     log.warn('Error during update, rolling back transaction', error)
@@ -44,7 +44,7 @@ const updateFromStac$ = ({source, dataSet, query, sceneMapper, redis, database, 
     )
 }
 
-const updateFromStac = async ({source, dataSet, query, sceneMapper, redis, database, timestamp}) =>
-    lastValueFrom(updateFromStac$({source, dataSet, query, sceneMapper, redis, database, timestamp}))
+const updateFromStac = async ({source, dataset, query, sceneMapper, redis, database, timestamp}) =>
+    lastValueFrom(updateFromStac$({source, dataset, query, sceneMapper, redis, database, timestamp}))
 
 module.exports = {updateFromStac}

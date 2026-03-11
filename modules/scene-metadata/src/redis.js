@@ -21,10 +21,10 @@ const initializeRedis = async () => {
         log.info('Setting initialized:', timestamp)
     }
 
-    const getLastUpdate = async dataSet => {
-        log.debug(`Getting last update for dataSet ${dataSet}...`)
-        const lastUpdate = await redis.get(`lastUpdate:${dataSet}`)
-        log.info(`Got last update for dataSet ${dataSet}:`, lastUpdate)
+    const getLastUpdate = async dataset => {
+        log.debug(`Getting last update for dataset ${dataset}...`)
+        const lastUpdate = await redis.get(`lastUpdate:${dataset}`)
+        log.info(`Got last update for dataset ${dataset}:`, lastUpdate)
         return lastUpdate
     }
 
