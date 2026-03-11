@@ -8,17 +8,8 @@ const DATASET_BY_PREFIX = {
     LC09: 'LANDSAT_9'
 }
 
-const OPERATIONAL = {
-    'landsat-ot': true,
-    'landsat-etm': false,
-    'landsat-tm': false
-}
-
 const getDataset = id =>
     DATASET_BY_PREFIX[id.substring(0, 4)]
-
-const isOperational = source =>
-    OPERATIONAL[source] || false
 
 const isSceneIncluded = ({dataSet, collectionCategory, cloudCover}) =>
     dataSet
@@ -28,8 +19,8 @@ const isSceneIncluded = ({dataSet, collectionCategory, cloudCover}) =>
 const getSceneAreaId = (wrsPath, wrsRow) =>
     `${parseInt(wrsPath)}_${parseInt(wrsRow)}`
 
-const getCloudCover = (cloudCover, dataset) =>
-    dataset === 'LANDSAT_7'
+const getCloudCover = (cloudCover, dataSet) =>
+    dataSet === 'LANDSAT_7'
         ? Math.min(100, parseFloat(cloudCover) + 22)
         : parseFloat(cloudCover)
 
@@ -46,4 +37,4 @@ const scene = ({id, dataSet, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sun
         sunElevation: parseFloat(sunElevation)
     }) : null
                 
-module.exports = {getDataset, isOperational, isSceneIncluded, scene}
+module.exports = {getDataset, isSceneIncluded, scene}

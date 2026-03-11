@@ -24,13 +24,29 @@ const sceneMapper = ({
     }
 }
 
-const updateLandsat = async ({redis, database, timestamp}) =>
+const updateLandsat = async ({redis, database, timestamp}) => {
     await updateFromStac({
         source: 'landsat-ot',
+        dataSet: 'LANDSAT_8',
+        query: {
+            'platform': {'eq': 'landsat-8'}
+        },
         sceneMapper,
         redis,
         database,
         timestamp
     })
+    await updateFromStac({
+        source: 'landsat-ot',
+        dataSet: 'LANDSAT_9',
+        query: {
+            'platform': {'eq': 'landsat-9'}
+        },
+        sceneMapper,
+        redis,
+        database,
+        timestamp
+    })
+}
 
 module.exports = {updateLandsat}

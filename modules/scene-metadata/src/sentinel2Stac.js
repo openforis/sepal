@@ -18,6 +18,7 @@ const sceneMapper = ({
 const updateSentinel2 = async ({redis, database, timestamp}) =>
     await updateFromStac({
         source: 'sentinel-2',
+        dataSet: 'SENTINEL_2',
         sceneMapper,
         redis,
         database,

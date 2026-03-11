@@ -25,9 +25,9 @@ const download = async () => {
     log.info(`Downloaded CSV files (${formatInterval(t0)})`)
 }
 
-const load = async ({redis, database, update, maxTimestamp, timestamp}) => {
-    await loadLandsat({redis, database, maxTimestamp, timestamp, update})
-    await loadSentinel2({redis, database, maxTimestamp, timestamp, update})
+const load = async ({redis, database, maxTimestamp, timestamp}) => {
+    await loadLandsat({redis, database, maxTimestamp, timestamp})
+    await loadSentinel2({redis, database, maxTimestamp, timestamp})
 }
 
 const initializeData = async ({redis, database}) => {
@@ -41,7 +41,7 @@ const initializeData = async ({redis, database}) => {
         const t0 = Date.now()
         await database.prepare()
         await download()
-        await load({redis, database, update: false, maxTimestamp, timestamp})
+        await load({redis, database, maxTimestamp, timestamp})
         await database.finalize()
         await redis.setInitialized(timestamp.toISOString())
         log.info(`Initialized database (${formatInterval(t0)})`)

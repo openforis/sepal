@@ -42,21 +42,17 @@ const getCollection = source => {
     return collection
 }
 
-const getStats = scenes => {
-    const stats = scenes.reduce((stats, {dataSet}) => ({...stats, [dataSet]: (stats[dataSet] || 0) + 1}), {})
-    return Object.keys(stats).sort().map(dataSet => `${dataSet}: ${stats[dataSet]}`).join(', ')
-}
-
-const getUpdates$ = ({source, sceneMapper, minTimestamp, maxTimestamp, token}) => {
+const getUpdates$ = ({source, dataSet, query, sceneMapper, minTimestamp, maxTimestamp, token}) => {
     const collection = getCollection(source)
     if (maxTimestamp >= minTimestamp) {
-        log.info(token ? `Retrieving ${collection} scenes, token: ${token}` : `Getting ${collection} scenes between ${minTimestamp} and ${maxTimestamp}`)
+        log.info(token ? `Retrieving ${collection}/${dataSet} scenes, token: ${token}` : `Getting ${collection}/${dataSet} scenes between ${minTimestamp} and ${maxTimestamp}`)
         return postJson$(SEARCH_URL, {
             body: {
                 collections: [collection],
                 datetime: `${minTimestamp}/${maxTimestamp}`,
                 sortby: '+properties.datetime',
                 limit: BLOCK_SIZE[source],
+                query,
                 next: token
             },
             retry: {
@@ -65,7 +61,7 @@ const getUpdates$ = ({source, sceneMapper, minTimestamp, maxTimestamp, token}) =
         }).pipe(
             map(({body}) => JSON.parse(body)),
             map(response => getResponse(response, sceneMapper)),
-            tap(({scenes}) => log.info(scenes.length ? `Retrieved ${collection} scenes: ${scenes.length} (${getStats(scenes)})` : `No more ${collection} scenes`))
+            tap(({scenes}) => log.info(scenes.length ? `Retrieved ${collection}/${dataSet} scenes: ${scenes.length}` : `No more ${collection}/${dataSet} scenes`))
         )
     } else {
         log.info(`No scenes to retrieve between ${minTimestamp} and ${maxTimestamp}`)

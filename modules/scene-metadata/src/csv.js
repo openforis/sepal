@@ -12,21 +12,21 @@ const {remove} = require('./filesystem')
 const getPath = filename =>
     `${process.env.MYSQL_FILES_DIR}/${filename}`
 
-const isInTimeRange = (timestamp, minTimestamp, maxTimestamp) =>
-    (!minTimestamp || timestamp >= minTimestamp) && (!maxTimestamp || timestamp <= maxTimestamp)
+const isInTimeRange = (timestamp, maxTimestamp) =>
+    !maxTimestamp || timestamp <= maxTimestamp
 
-const processCollection = async ({collection, sceneMapper, minTimestamp, maxTimestamp, chunkSize, chunkHandler}) => {
+const processCollection = async ({collection, sceneMapper, maxTimestamp, chunkSize, chunkHandler}) => {
     const csvPath = getPath(`${collection}.csv.gz`)
     const inStream = createReadStream(csvPath)
     let readCount = 0
     let writeCount = 0
     let chunk = 1
     let outStream
-    let updatedTimestamp
+    const updatedTimestampByDataSet = {}
 
-    const updateTimestamp = timestamp => {
-        if (!updatedTimestamp || timestamp > updatedTimestamp) {
-            updatedTimestamp = timestamp
+    const updateTimestamp = ({dataSet, acquiredTimestamp}) => {
+        if (!updatedTimestampByDataSet[dataSet] || acquiredTimestamp > updatedTimestampByDataSet[dataSet]) {
+            updatedTimestampByDataSet[dataSet] = acquiredTimestamp
         }
     }
 
@@ -53,8 +53,8 @@ const processCollection = async ({collection, sceneMapper, minTimestamp, maxTime
             }
 
             const scene = sceneMapper(row)
-            if (scene && isInTimeRange(scene.acquiredTimestamp, minTimestamp, maxTimestamp)) {
-                updateTimestamp(scene.acquiredTimestamp)
+            if (scene && isInTimeRange(scene.acquiredTimestamp, maxTimestamp)) {
+                updateTimestamp(scene)
                 callback(null, scene)
             } else {
                 callback()
@@ -101,19 +101,16 @@ const processCollection = async ({collection, sceneMapper, minTimestamp, maxTime
 
     log.info(`Processed collection ${collection}, in ${readCount}, out ${writeCount} (${formatInterval(t0)})`)
 
-    return updatedTimestamp
+    return updatedTimestampByDataSet
 }
 
-const ingest = async (database, path, timestamp, update) => {
-    await database.ingest(path, timestamp, update)
+const ingest = async (database, path, timestamp) => {
+    await database.ingest(path, timestamp)
 }
 
-const processCSV = async ({collection, sceneMapper, redis: {getLastUpdate, setLastUpdate}, database, maxTimestamp, timestamp, update}) => {
+const processCSV = async ({collection, sceneMapper, redis: {getLastUpdate, setLastUpdate}, database, maxTimestamp, timestamp}) => {
     const queue$ = new Subject()
     const done$ = new ReplaySubject(1)
-    const minTimestamp = update
-        ? await getLastUpdate(collection)
-        : null
 
     queue$.pipe(
         concatMap(file => processFile$(file)),
@@ -136,18 +133,18 @@ const processCSV = async ({collection, sceneMapper, redis: {getLastUpdate, setLa
         : of(false)
 
     const processFile = async file => {
-        await ingest(database, file, timestamp, update)
+        await ingest(database, file, timestamp)
         await remove(file)
     }
 
     const chunkSize = 100000
     const chunkHandler = file => queue$.next(file)
-    const updatedTimestamp = await processCollection({collection, sceneMapper, minTimestamp, maxTimestamp, chunkSize, chunkHandler})
+    const updatedTimestampByDataset = await processCollection({collection, sceneMapper, maxTimestamp, chunkSize, chunkHandler})
 
     setImmediate(() => queue$.next(null))
 
     await firstValueFrom(done$)
-    await setLastUpdate(collection, updatedTimestamp)
+    await setLastUpdate(updatedTimestampByDataset)
 }
 
 module.exports = {processCSV}

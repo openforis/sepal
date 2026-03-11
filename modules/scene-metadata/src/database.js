@@ -65,10 +65,10 @@ const initializeDatabase = async () => {
         log.info('Prepared database')
     }
     
-    const ingest = async (csvFile, timestamp, update = false) => {
+    const ingest = async (csvFile, timestamp) => {
         log.debug(`Ingesting data from file ${csvFile}`)
         const updateTime = timestamp.toISOString()
-        const table = `${update ? CURRENT_DATABASE_NAME : NEW_DATABASE_NAME}.${TABLE_NAME}`
+        const table = `${NEW_DATABASE_NAME}.${TABLE_NAME}`
         const t0 = Date.now()
         try {
             await pool.query(`

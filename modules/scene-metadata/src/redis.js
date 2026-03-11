@@ -21,21 +21,30 @@ const initializeRedis = async () => {
         log.info('Setting initialized:', timestamp)
     }
 
-    const getLastUpdate = async collection => {
-        log.debug(`Getting last update for collection ${collection}...`)
-        const lastUpdate = await redis.get(collection)
-        log.info(`Got last update for collection ${collection}:`, lastUpdate)
+    const getLastUpdate = async dataSet => {
+        log.debug(`Getting last update for dataSet ${dataSet}...`)
+        const lastUpdate = await redis.get(`lastUpdate:${dataSet}`)
+        log.info(`Got last update for dataSet ${dataSet}:`, lastUpdate)
         return lastUpdate
     }
 
-    const setLastUpdate = async (collection, lastUpdate) => {
-        log.debug(`Setting last update for collection ${collection}...`)
-        if (lastUpdate) {
-            await redis.set(collection, lastUpdate)
+    const setLastUpdate = async lastUpdateByDataset => {
+        log.debug('Setting last update:', lastUpdateByDataset)
+        if (lastUpdateByDataset) {
+            await redis.mSet(
+                Object.fromEntries(
+                    Object.entries(lastUpdateByDataset).map(
+                        ([key, value]) => [`lastUpdate:${key}`, value]
+                    )
+                )
+            )
         } else {
-            await redis.del(collection)
+            const keys = await redis.keys('lastUpdate:*')
+            if (keys.length > 0) {
+                await redis.del(keys)
+            }
         }
-        log.info(`Set last update for collection ${collection}:`, lastUpdate)
+        log.info('Set last update:', lastUpdateByDataset)
     }
 
     return {getInitialized, setInitialized, getLastUpdate, setLastUpdate}

@@ -1,5 +1,5 @@
 const {parse} = require('date-fns')
-const {isSceneIncluded, isOperational, getDataset, scene} = require('./landsat')
+const {isSceneIncluded, getDataset, scene} = require('./landsat')
 const {processCSV} = require('./csv')
 const {formatInterval} = require('./time')
 const {download} = require('./filesystem')
@@ -48,43 +48,38 @@ const sceneMapper = ({
     }
 }
 
-const loadLandsatCollection = async ({collection, redis, database, maxTimestamp, timestamp, update}) => {
-    if (!update || isOperational(collection)) {
-        await processCSV({
-            collection,
-            sceneMapper,
-            redis,
-            database,
-            maxTimestamp,
-            timestamp,
-            update
-        }).catch(err => log.error('Error:', err))
-    }
+const loadLandsatCollection = async ({collection, redis, database, maxTimestamp, timestamp}) => {
+    await processCSV({
+        collection,
+        sceneMapper,
+        redis,
+        database,
+        maxTimestamp,
+        timestamp
+    }).catch(err => log.error('Error:', err))
 }
 
-const loadLandsat = async ({redis, database, maxTimestamp, timestamp, update}) => {
+const loadLandsat = async ({redis, database, maxTimestamp, timestamp}) => {
     log.debug('Loading Landast data from CSV...')
     const t0 = Date.now()
-    await loadLandsatCollection({collection: 'landsat-tm', redis, database, maxTimestamp, timestamp, update})
-    await loadLandsatCollection({collection: 'landsat-etm', redis, database, maxTimestamp, timestamp, update})
-    await loadLandsatCollection({collection: 'landsat-ot', redis, database, maxTimestamp, timestamp, update})
+    await loadLandsatCollection({collection: 'landsat-tm', redis, database, maxTimestamp, timestamp})
+    await loadLandsatCollection({collection: 'landsat-etm', redis, database, maxTimestamp, timestamp})
+    await loadLandsatCollection({collection: 'landsat-ot', redis, database, maxTimestamp, timestamp})
     log.info(`Loaded Landsat data from CSV (${formatInterval(t0)})`)
 }
 
-const downloadLandsatCollection = async ({collection, update}) => {
-    if (!update || isOperational(collection)) {
-        await download({
-            url: CSV_URL[collection],
-            collection
-        })
-    }
+const downloadLandsatCollection = async ({collection}) => {
+    await download({
+        url: CSV_URL[collection],
+        collection
+    })
 }
 
-const downloadLandsat = async update =>
+const downloadLandsat = async () =>
     await Promise.all([
-        downloadLandsatCollection({collection: 'landsat-tm', update}),
-        downloadLandsatCollection({collection: 'landsat-etm', update}),
-        downloadLandsatCollection({collection: 'landsat-ot', update})
+        downloadLandsatCollection({collection: 'landsat-tm'}),
+        downloadLandsatCollection({collection: 'landsat-etm'}),
+        downloadLandsatCollection({collection: 'landsat-ot'})
     ])
 
 module.exports = {downloadLandsat, loadLandsat}

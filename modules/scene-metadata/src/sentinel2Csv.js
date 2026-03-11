@@ -20,7 +20,7 @@ const sceneMapper = ({
     return null
 }
 
-const loadSentinel2 = async ({redis, database, maxTimestamp, timestamp, update}) => {
+const loadSentinel2 = async ({redis, database, maxTimestamp, timestamp}) => {
     log.debug('Loading Sentinel-2 data from CSV...')
     const t0 = Date.now()
     await processCSV({
@@ -29,8 +29,7 @@ const loadSentinel2 = async ({redis, database, maxTimestamp, timestamp, update})
         redis,
         database,
         maxTimestamp,
-        timestamp,
-        update
+        timestamp
     }).catch(err => log.error('Error:', err))
     log.info(`Loaded Sentinel-2 data from CSV (${formatInterval(t0)})`)
 }
