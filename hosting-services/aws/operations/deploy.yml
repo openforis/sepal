@@ -102,6 +102,14 @@
         src: "{{ env_file }}"
         dest: "/etc/sepal/env"
 
+    - name: Copy scripts to /usr/local/bin
+      copy:
+        src: scripts/
+        dest: /usr/local/bin
+        owner: root
+        group: root
+        mode: +x
+
   roles:
     - { role: live-patching }
     - { role: build-module, module: haproxy-acme }

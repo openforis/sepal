@@ -1,0 +1,25 @@
+#!/bin/bash
+
+COMPOSE_ARGS="--env-file /etc/sepal/env --file /var/lib/sepal/modules/ops/docker-compose.yml"
+
+start() {
+	docker compose $COMPOSE_ARGS up -d
+}
+
+stop() {
+	docker compose $COMPOSE_ARGS down
+}
+
+purge() {
+	stop
+	docker system prune -a --force
+	docker volume rm ops_registry
+	start
+}
+
+case "$1" in
+	start) start ;;
+	stop) stop ;;
+	purge) purge ;;
+	*) echo "Usage: ops {start|stop|purge}" >&2; exit 1 ;;
+esac
