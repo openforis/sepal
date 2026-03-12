@@ -84,18 +84,24 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _Retrieve extends React.Component {
-    state = {more: false}
-
     constructor(props) {
         super(props)
+        this.state = {
+            more: false,
+            destinationValidationPending: this.requiresDestinationValidation(props)
+        }
         const {recipeId, inputs: {scale}} = this.props
         this.recipeActions = RecipeActions(recipeId)
         if (!scale.value)
             scale.set(30)
+        this.onDestinationChange = this.onDestinationChange.bind(this)
+        this.onDestinationValidityCheckChange = this.onDestinationValidityCheckChange.bind(this)
     }
 
     render() {
-        const {more} = this.state
+        const {form} = this.props
+        const {more, destinationValidationPending} = this.state
+        const invalid = destinationValidationPending || form.isInvalid()
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -112,7 +118,8 @@ class _Retrieve extends React.Component {
                     {this.renderContent()}
                 </Panel.Content>
                 <Form.PanelButtons
-                    applyLabel={msg('process.ccdcSlice.panel.retrieve.apply')}>
+                    applyLabel={msg('process.ccdcSlice.panel.retrieve.apply')}
+                    invalid={invalid}>
                     <Button
                         label={more ? msg('button.less') : msg('button.more')}
                         onClick={() => this.setState({more: !more})}
@@ -236,7 +243,8 @@ class _Retrieve extends React.Component {
                 label={msg('process.retrieve.form.destination.label')}
                 input={destination}
                 multiple={false}
-                options={destinationOptions}/>
+                options={destinationOptions}
+                onChange={this.onDestinationChange}/>
         )
     }
 
@@ -248,6 +256,7 @@ class _Retrieve extends React.Component {
                 placeholder={msg('process.retrieve.form.workspacePath.placeholder')}
                 tooltip={msg('process.retrieve.form.workspacePath.tooltip')}
                 workspacePathInput={workspacePath}
+                onValidityCheckChange={this.onDestinationValidityCheckChange}
             />
         )
     }
@@ -262,6 +271,7 @@ class _Retrieve extends React.Component {
                 tooltip={msg('process.retrieve.form.assetIt.tooltip')}
                 assetInput={assetId}
                 strategyInput={strategy}
+                onValidityCheckChange={this.onDestinationValidityCheckChange}
             />
         )
     }
@@ -519,13 +529,17 @@ class _Retrieve extends React.Component {
 
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
+        if (prevProps.inputs.destination.value !== this.props.inputs.destination.value) {
+            this.setDestinationValidationPending(this.requiresDestinationValidation())
+        }
         this.update()
     }
 
     update() {
         const {inputs: {destination, assetType}} = this.props
         if (!destination.value) {
+            this.setDestinationValidationPending(true)
             destination.set(isGoogleAccount() ? 'GEE' : 'SEPAL')
         }
         if (!assetType.value && destination.value === 'GEE') {
@@ -549,6 +563,25 @@ class _Retrieve extends React.Component {
     findProject() {
         const {projects, projectId} = this.props
         return projects.find(({id}) => id === projectId)
+    }
+
+    requiresDestinationValidation(props = this.props) {
+        const {inputs: {destination}} = props
+        return ['GEE', 'SEPAL'].includes(destination.value)
+    }
+
+    onDestinationChange(destination) {
+        this.setDestinationValidationPending(['GEE', 'SEPAL'].includes(destination))
+    }
+
+    onDestinationValidityCheckChange(destinationValidationPending) {
+        this.setDestinationValidationPending(destinationValidationPending)
+    }
+
+    setDestinationValidationPending(destinationValidationPending) {
+        if (this.state.destinationValidationPending !== destinationValidationPending) {
+            this.setState({destinationValidationPending})
+        }
     }
 }
 

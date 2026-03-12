@@ -6,6 +6,14 @@ export default {
             retry
         }),
 
+    loadDetails$: taskId =>
+        get$(`/api/tasks/task/${taskId}/details`),
+
+    listExisting$: ({outputPath, destination, status}) =>
+        get$('/api/tasks', {
+            query: {outputPath, destination, status}
+        }),
+
     submit$: task =>
         postJson$('/api/tasks', {
             body: task

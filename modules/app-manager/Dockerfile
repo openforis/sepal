@@ -8,8 +8,6 @@ ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 ENV NODE_MAJOR=24
 
-ADD modules/${MODULE_NAME}/install-requirements.sh /usr/local/bin/install-requirements
-RUN chmod +x /usr/local/bin/install-requirements
 ADD modules/${MODULE_NAME}/kernels /etc/sepal/app-manager/kernels-templates
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 51716619E084DAB9
 
