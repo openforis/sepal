@@ -14,12 +14,12 @@ apt-get install -y libgmt-dev
 apt-get install -y gmt-dcw gmt-gshhg
 apt-get install -y gmt
 
-cd /tmp
-wget -nv http://topex.ucsd.edu/gmtsar/tar/ORBITS.tar
-cd /usr/local
-mkdir orbits
-cd orbits
-tar -xf /tmp/ORBITS.tar
+# cd /tmp
+# wget -nv http://topex.ucsd.edu/gmtsar/tar/ORBITS.tar
+# cd /usr/local
+# mkdir orbits
+# cd orbits
+# tar -xf /tmp/ORBITS.tar
 
 
 cd /usr/local
@@ -27,6 +27,7 @@ git clone --branch 6.6 https://github.com/gmtsar/gmtsar GMTSAR
 cd GMTSAR
 autoconf
 autoupdate
-./configure --with-orbits-dir=/usr/local/orbits CFLAGS='-z muldefs' LDFLAGS='-z muldefs'
+# ./configure --with-orbits-dir=/usr/local/orbits CFLAGS='-z muldefs' LDFLAGS='-z muldefs'
+./configure --with-orbits-dir=/home/sepal-user/.gmtsar_orbits CFLAGS='-z muldefs' LDFLAGS='-z muldefs'
 make
 make install
