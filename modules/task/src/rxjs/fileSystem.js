@@ -47,23 +47,4 @@ const mkdirSafe$ = (preferredPath, options = {}) => defer(() => {
     )
 })
 
-const createLock$ = dir => {
-    const lockPath = Path.join(dir, '.task_pending')
-    return defer(() =>
-        fromPromise(fs.promises.writeFile(lockPath, '')).pipe(
-            map(() => lockPath)
-        )
-    )
-}
-
-const releaseLock$ = dir => {
-    const lockPath = Path.join(dir, '.task_pending')
-    return defer(() =>
-        fromPromise(fs.promises.unlink(lockPath)).pipe(
-            map(() => lockPath),
-            catchError(() => of(null))
-        )
-    )
-}
-
-module.exports = {exists$, ls$, mkdir$, mkdirSafe$, createLock$, releaseLock$}
+module.exports = {exists$, ls$, mkdir$, mkdirSafe$}

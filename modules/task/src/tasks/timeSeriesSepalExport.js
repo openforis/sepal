@@ -4,8 +4,8 @@ const {hasImagery: hasRadarImagery} = require('#sepal/ee/radar/collection')
 const {hasImagery: hasPlanetImagery} = require('#sepal/ee/planet/collection')
 const tile = require('#sepal/ee/tile')
 const {exportImageToSepal$} = require('../jobs/export/toSepal')
-const {mkdir$, createLock$, releaseLock$} = require('#task/rxjs/fileSystem')
-const {concat, forkJoin, from, of, map, mergeMap, scan, switchMap, tap, finalize} = require('rxjs')
+const {mkdir$} = require('#task/rxjs/fileSystem')
+const {concat, forkJoin, from, of, map, mergeMap, scan, switchMap, tap} = require('rxjs')
 const {swallow} = require('#sepal/rxjs')
 const Path = require('path')
 const {terminal$} = require('#sepal/terminal')
@@ -33,17 +33,7 @@ module.exports = {
                     // the UI already validated the path here, no need to have mkdirsafe here
                 return mkdir$(preferredDownloadDir, {recursive: true}).pipe(
                     switchMap(downloadDir => {
-                        return createLock$(downloadDir).pipe(
-                            switchMap(lockPath => {
-                                log.debug('Created lock for time series export', {lockPath})
-                                return export$(taskId, {description: exportPrefix, downloadDir, ...retrieveOptions}).pipe(
-                                    finalize(() => {
-                                        log.debug('Releasing lock for time series export', {lockPath})
-                                        releaseLock$(downloadDir).subscribe()
-                                    })
-                                )
-                            })
-                        )
+                        return export$(taskId, {description: exportPrefix, downloadDir, ...retrieveOptions})
                     })
                 )
             })

@@ -25,7 +25,21 @@ class TaskEndpoint {
 
             get('/tasks') {
                 response.contentType = 'application/json'
-                def tasks = component.submit(new UserTasks(username: currentUser.username)).collect {
+                def outputPath = params.optional('outputPath', String)
+                def destination = params.optional('destination', String)
+                def status = params.optional('status', String)
+                def tasks = component.submit(new UserTasks(username: currentUser.username))
+                if (status) {
+                    def statuses = status.split(',').collect { Task.State.valueOf(it.trim()) }
+                    tasks = tasks.findAll { statuses.contains(it.state) }
+                }
+                if (outputPath) {
+                    tasks = tasks.findAll { it.params?.taskInfo?.outputPath == outputPath }
+                }
+                if (destination) {
+                    tasks = tasks.findAll { it.params?.taskInfo?.destination == destination }
+                }
+                def result = tasks.collect {
                     [
                         id: it.id,
                         recipeId: it.recipeId,
@@ -34,7 +48,7 @@ class TaskEndpoint {
                         statusDescription: it.statusDescription
                     ]
                 }
-                send toJson(tasks)
+                send toJson(result)
             }
 
             post('/tasks') {

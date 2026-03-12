@@ -3,7 +3,9 @@ import React from 'react'
 
 import api from '~/apiRegistry'
 import {copyToClipboard} from '~/clipboard'
+import {compose} from '~/compose'
 import format from '~/format'
+import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Label} from '~/widget/label'
@@ -13,7 +15,7 @@ import {Widget} from '~/widget/widget'
 
 import styles from './taskDetails.module.css'
 
-export class TaskDetails extends React.Component {
+class _TaskDetails extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
@@ -28,27 +30,28 @@ export class TaskDetails extends React.Component {
     }
 
     loadTaskDetails() {
-        const {taskId} = this.props
-        
-        api.tasks.loadDetails$(taskId).subscribe({
-            next: task => {
-                this.setState({
-                    task,
-                    duration: this.calculateDuration(task)
-                })
-                
-                // Set up interval only if task is still running
-                if (task.status === 'ACTIVE') {
-                    this.intervalId = setInterval(() => {
-                        this.setState({duration: this.calculateDuration(task)})
-                    }, 1000)
+        const {taskId, addSubscription} = this.props
+
+        addSubscription(
+            api.tasks.loadDetails$(taskId).subscribe({
+                next: task => {
+                    this.setState({
+                        task,
+                        duration: this.calculateDuration(task)
+                    })
+
+                    // Set up interval only if task is still running
+                    if (task.status === 'ACTIVE') {
+                        this.intervalId = setInterval(() => {
+                            this.setState({duration: this.calculateDuration(task)})
+                        }, 1000)
+                    }
+                },
+                error: error => {
+                    console.error('Failed to load task details:', error)
                 }
-            },
-            error: error => {
-                // Error is logged but not displayed in UI
-                console.error('Failed to load task details:', error)
-            }
-        })
+            })
+        )
     }
 
     componentWillUnmount() {
@@ -261,8 +264,13 @@ export class TaskDetails extends React.Component {
     }
 }
 
-TaskDetails.propTypes = {
+_TaskDetails.propTypes = {
     taskId: PropTypes.string.isRequired,
     onClose: PropTypes.func.isRequired,
     description: PropTypes.string
 }
+
+export const TaskDetails = compose(
+    _TaskDetails,
+    withSubscriptions()
+)
