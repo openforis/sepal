@@ -5284,6 +5284,7 @@
         "replaceable": "This asset already exists, you have to confirm if you want to overwrite it or not"
       },
       "loadError": "Unable to load asset",
+      "taskPending": "A task is already exporting to this asset. Please choose a different asset ID.",
       "replace": {
         "label": "Replace",
         "tooltip": "Replace previous asset with this one."

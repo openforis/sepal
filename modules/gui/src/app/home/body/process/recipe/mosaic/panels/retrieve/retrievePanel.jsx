@@ -82,11 +82,20 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _MosaicRetrievePanel extends React.Component {
-    state = {more: false}
+    constructor(props) {
+        super(props)
+        this.state = {
+            more: false,
+            destinationValidationPending: this.requiresDestinationValidation(props)
+        }
+        this.onDestinationChange = this.onDestinationChange.bind(this)
+        this.onDestinationValidityCheckChange = this.onDestinationValidityCheckChange.bind(this)
+    }
 
     render() {
-        const {className} = this.props
-        const {more} = this.state
+        const {className, form} = this.props
+        const {more, destinationValidationPending} = this.state
+        const invalid = destinationValidationPending || form.isInvalid()
         return (
             <RecipeFormPanel
                 className={[styles.panel, className].join(' ')}
@@ -103,7 +112,8 @@ class _MosaicRetrievePanel extends React.Component {
                     {this.renderContent()}
                 </Panel.Content>
                 <Form.PanelButtons
-                    applyLabel={msg('process.retrieve.apply')}>
+                    applyLabel={msg('process.retrieve.apply')}
+                    invalid={invalid}>
                     <Button
                         label={more ? msg('button.less') : msg('button.more')}
                         onClick={() => this.setState({more: !more})}
@@ -229,7 +239,8 @@ class _MosaicRetrievePanel extends React.Component {
                 label={msg('process.retrieve.form.destination.label')}
                 input={destination}
                 multiple={false}
-                options={destinationOptions}/>
+                options={destinationOptions}
+                onChange={this.onDestinationChange}/>
         )
     }
 
@@ -241,6 +252,7 @@ class _MosaicRetrievePanel extends React.Component {
                 placeholder={msg('process.retrieve.form.workspacePath.placeholder')}
                 tooltip={msg('process.retrieve.form.workspacePath.tooltip')}
                 workspacePathInput={workspacePath}
+                onValidityCheckChange={this.onDestinationValidityCheckChange}
             />
         )
     }
@@ -267,6 +279,7 @@ class _MosaicRetrievePanel extends React.Component {
                 tooltip={msg('process.retrieve.form.assetIt.tooltip')}
                 assetInput={assetId}
                 strategyInput={strategy}
+                onValidityCheckChange={this.onDestinationValidityCheckChange}
             />
         )
     }
@@ -391,7 +404,10 @@ class _MosaicRetrievePanel extends React.Component {
         this.update()
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
+        if (prevProps.inputs.destination.value !== this.props.inputs.destination.value) {
+            this.setDestinationValidationPending(this.requiresDestinationValidation())
+        }
         this.update()
     }
 
@@ -399,8 +415,10 @@ class _MosaicRetrievePanel extends React.Component {
         const {toEE, toSepal, inputs: {destination, assetType}} = this.props
         if (!destination.value) {
             if (toEE && isGoogleAccount()) {
+                this.setDestinationValidationPending(true)
                 destination.set('GEE')
             } else if (toSepal) {
+                this.setDestinationValidationPending(true)
                 destination.set('SEPAL')
             }
         } else {
@@ -432,6 +450,25 @@ class _MosaicRetrievePanel extends React.Component {
     getRecipeName() {
         const {recipeTitle, recipePlaceholder} = this.props
         return recipeTitle || recipePlaceholder || 'sepal_export'
+    }
+
+    requiresDestinationValidation(props = this.props) {
+        const {inputs: {destination}} = props
+        return ['GEE', 'SEPAL'].includes(destination.value)
+    }
+
+    onDestinationChange(destination) {
+        this.setDestinationValidationPending(['GEE', 'SEPAL'].includes(destination))
+    }
+
+    onDestinationValidityCheckChange(destinationValidationPending) {
+        this.setDestinationValidationPending(destinationValidationPending)
+    }
+
+    setDestinationValidationPending(destinationValidationPending) {
+        if (this.state.destinationValidationPending !== destinationValidationPending) {
+            this.setState({destinationValidationPending})
+        }
     }
 }
 
