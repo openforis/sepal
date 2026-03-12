@@ -4,7 +4,7 @@ const {hasImagery: hasRadarImagery} = require('#sepal/ee/radar/collection')
 const {hasImagery: hasPlanetImagery} = require('#sepal/ee/planet/collection')
 const tile = require('#sepal/ee/tile')
 const {exportImageToSepal$} = require('../jobs/export/toSepal')
-const {mkdirSafe$} = require('#task/rxjs/fileSystem')
+const {mkdir$} = require('#task/rxjs/fileSystem')
 const {concat, forkJoin, from, of, map, mergeMap, scan, switchMap, tap} = require('rxjs')
 const {swallow} = require('#sepal/rxjs')
 const Path = require('path')
@@ -22,16 +22,19 @@ const DATE_DELTA = 3
 const DATE_DELTA_UNIT = 'months'
 
 module.exports = {
-    submit$: (taskId, {workspacePath, description, ...retrieveOptions}) => {
+    submit$: (taskId, {description, image: {workspacePath, filenamePrefix, ...retrieveOptions}}) => {
         setWorkloadTag(retrieveOptions.recipe)
         return getCurrentContext$().pipe(
             switchMap(({config}) => {
+                const exportPrefix = filenamePrefix || description
                 const preferredDownloadDir = workspacePath
                     ? `${config.homeDir}/${workspacePath}/`
                     : `${config.homeDir}/downloads/${description}/`
-                return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
-                    switchMap(downloadDir => export$(taskId, {description, downloadDir, ...retrieveOptions})
-                    )
+                    // the UI already validated the path here, no need to have mkdirsafe here
+                return mkdir$(preferredDownloadDir, {recursive: true}).pipe(
+                    switchMap(downloadDir => {
+                        return export$(taskId, {description: exportPrefix, downloadDir, ...retrieveOptions})
+                    })
                 )
             })
         )

@@ -1,12 +1,15 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import {catchError, map, of} from 'rxjs'
 
+import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 import {toSafeString} from '~/string'
+import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {currentUser} from '~/user'
 import {Form} from '~/widget/form'
@@ -27,8 +30,13 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _AssetDestination extends React.Component {
+    checking = false
+    metadataLoad = null
+    validationSequence = 0
+
     state = {
-        currentType: undefined
+        currentType: undefined,
+        checking: false
     }
 
     constructor(props) {
@@ -51,13 +59,14 @@ class _AssetDestination extends React.Component {
 
     renderAssetInput() {
         const {assetRoots, assetInput, type, label, placeholder, autoFocus} = this.props
+        const {checking} = this.state
         return (
             <Form.AssetInput
                 input={assetInput}
                 label={label}
                 placeholder={placeholder}
                 autoFocus={autoFocus}
-                busyMessage={!assetRoots}
+                busyMessage={!assetRoots || checking}
                 preferredTypes={[type]}
                 buttons={[
                     this.renderCopyIdButton(),
@@ -66,7 +75,7 @@ class _AssetDestination extends React.Component {
                 labelButtons={[this.renderStrategy()]}
                 destination
                 onLoading={this.onLoading}
-                onLoaded={({metadata} = {}) => this.onLoaded(metadata?.type)}
+                onLoaded={({asset, metadata} = {}) => this.onLoaded({asset, currentType: metadata?.type})}
                 onError={this.onError}
             />
         )
@@ -162,6 +171,8 @@ class _AssetDestination extends React.Component {
             if (assetRoots) {
                 assetInput.set(this.defaultAssetId() || null)
             }
+        } else {
+            this.startValidation()
         }
     }
 
@@ -171,13 +182,22 @@ class _AssetDestination extends React.Component {
         if (!prevProps.assetRoots && assetRoots && !assetInput.value) {
             assetInput.set(this.defaultAssetId() || null)
         }
+        if (prevProps.assetInput?.value !== assetInput.value) {
+            assetInput.value
+                ? this.startValidation()
+                : this.cancelValidation()
+        }
         if (currentType && strategyInput.value && assetInput.error) {
             assetInput.setInvalid(null)
         }
         if (prevProps.type !== type && strategyInput.value === 'resume') {
             // Switching type and resume strategy, we have to reset it prevent invalid strategy
             strategyInput.set(null)
-            this.onLoaded(currentType)
+            this.onLoaded({
+                asset: assetInput.value,
+                currentType,
+                validationSequence: this.startValidation()
+            })
         }
     }
 
@@ -201,41 +221,120 @@ class _AssetDestination extends React.Component {
         return projects.find(({id}) => id === projectId)
     }
 
-    onLoading() {
+    checkTaskConflict$(assetId) {
+        return api.tasks.listExisting$({
+            outputPath: assetId,
+            destination: 'GEE',
+            status: 'PENDING,ACTIVE'
+        }).pipe(
+            map(tasks => ({conflict: tasks?.length > 0})),
+            catchError(error => of({error}))
+        )
+    }
+
+    onLoading(asset) {
         const {strategyInput} = this.props
+        this.metadataLoad = {
+            asset,
+            validationSequence: this.validationSequence
+        }
         strategyInput.set(null)
         this.setState({currentType: null})
     }
 
-    onLoaded(currentType) {
-        const {assetInput, strategyInput} = this.props
-        this.setState({currentType})
-        if (currentType) {
-            assetInput.setInvalid(msg(
-                ['Image', 'ImageCollection'].includes(currentType)
-                    ? 'widget.assetDestination.exists.replaceable'
-                    : 'widget.assetDestination.exists.notReplaceable'
-            ))
-        } else {
-            strategyInput.set('new')
+    onLoaded({asset, currentType, validationSequence = this.metadataLoad?.validationSequence ?? this.validationSequence} = {}) {
+        const {assetInput} = this.props
+        if (validationSequence !== this.validationSequence || asset !== assetInput.value) {
+            return
         }
+        this.setState({currentType})
+        this.validateConflict(asset, validationSequence, currentType)
     }
 
     onError(error) {
-        const {strategyInput} = this.props
-        const {onError} = this.props
+        const {assetInput, onError} = this.props
+        const validationSequence = this.metadataLoad?.validationSequence ?? this.validationSequence
+        if (validationSequence !== this.validationSequence) {
+            return true
+        }
         if (error.status === 404) {
-            strategyInput.set('new')
+            this.validateConflict(assetInput.value, validationSequence)
             return true
         } else {
+            this.completeValidation(validationSequence, () => {
+                if (!onError) {
+                    assetInput.setInvalid(msg('widget.assetDestination.loadError'))
+                }
+            })
             onError && onError(error)
             return false
         }
+    }
+
+    validateConflict(asset, validationSequence, currentType) {
+        const {addSubscription, assetInput, strategyInput} = this.props
+        addSubscription(
+            this.checkTaskConflict$(asset).subscribe(({error, conflict}) =>
+                this.completeValidation(validationSequence, () => {
+                    if (error) {
+                        assetInput.setInvalid(msg('widget.assetDestination.loadError'))
+                    } else if (conflict) {
+                        assetInput.setInvalid(msg('widget.assetDestination.taskPending'))
+                    } else if (currentType) {
+                        assetInput.setInvalid(msg(
+                            ['Image', 'ImageCollection'].includes(currentType)
+                                ? 'widget.assetDestination.exists.replaceable'
+                                : 'widget.assetDestination.exists.notReplaceable'
+                        ))
+                    } else {
+                        assetInput.setInvalid(null)
+                        strategyInput.set('new')
+                    }
+                })
+            )
+        )
+    }
+
+    startValidation() {
+        const {assetInput} = this.props
+        this.validationSequence += 1
+        assetInput.setInvalid(null)
+        this.setChecking(true)
+        return this.validationSequence
+    }
+
+    cancelValidation() {
+        this.validationSequence += 1
+        this.setChecking(false)
+    }
+
+    completeValidation(validationSequence, callback) {
+        if (validationSequence !== this.validationSequence) {
+            return
+        }
+        callback && callback()
+        this.metadataLoad = null
+        this.setChecking(false)
+    }
+
+    setChecking(checking) {
+        if (this.checking === checking) {
+            return
+        }
+        this.checking = checking
+        this.setState({checking})
+        this.notifyValidityCheckChange(checking)
+    }
+
+    notifyValidityCheckChange(checking) {
+        const {onValidityCheckChange} = this.props
+        onValidityCheckChange && onValidityCheckChange(checking)
     }
 }
 
 export const AssetDestination = compose(
     _AssetDestination,
+    withSubscriptions(),
     connect(mapStateToProps),
     withRecipe(mapRecipeToProps),
     withActivators('assetBrowser')
@@ -247,5 +346,6 @@ AssetDestination.propTypes = {
     type: PropTypes.any.isRequired,
     label: PropTypes.any,
     placeholder: PropTypes.string,
-    tooltip: PropTypes.any
+    tooltip: PropTypes.any,
+    onValidityCheckChange: PropTypes.func
 }

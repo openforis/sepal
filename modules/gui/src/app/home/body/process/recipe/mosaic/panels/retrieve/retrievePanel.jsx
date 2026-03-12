@@ -56,6 +56,8 @@ const fields = {
         .skip((v, {destination}) => destination !== 'GEE')
         .number()
         .notBlank(),
+    filenamePrefix: new Form.Field()
+        .skip((v, {destination}) => destination !== 'SEPAL'),
     crs: new Form.Field()
         .notBlank(),
     crsTransform: new Form.Field()
@@ -74,15 +76,26 @@ const mapStateToProps = state => ({
 })
 
 const mapRecipeToProps = recipe => ({
-    projectId: recipe.projectId
+    projectId: recipe.projectId,
+    recipeTitle: recipe.title,
+    recipePlaceholder: recipe.placeholder
 })
 
 class _MosaicRetrievePanel extends React.Component {
-    state = {more: false}
+    constructor(props) {
+        super(props)
+        this.state = {
+            more: false,
+            destinationValidationPending: this.requiresDestinationValidation(props)
+        }
+        this.onDestinationChange = this.onDestinationChange.bind(this)
+        this.onDestinationValidityCheckChange = this.onDestinationValidityCheckChange.bind(this)
+    }
 
     render() {
-        const {className} = this.props
-        const {more} = this.state
+        const {className, form} = this.props
+        const {more, destinationValidationPending} = this.state
+        const invalid = destinationValidationPending || form.isInvalid()
         return (
             <RecipeFormPanel
                 className={[styles.panel, className].join(' ')}
@@ -99,7 +112,8 @@ class _MosaicRetrievePanel extends React.Component {
                     {this.renderContent()}
                 </Panel.Content>
                 <Form.PanelButtons
-                    applyLabel={msg('process.retrieve.apply')}>
+                    applyLabel={msg('process.retrieve.apply')}
+                    invalid={invalid}>
                     <Button
                         label={more ? msg('button.less') : msg('button.more')}
                         onClick={() => this.setState({more: !more})}
@@ -118,6 +132,7 @@ class _MosaicRetrievePanel extends React.Component {
                 {this.renderScale()}
                 {toEE && toSepal && this.renderDestination()}
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
+                {destination.value === 'SEPAL' ? this.renderFilenamePrefix() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
                 {destination.value === 'GEE' ? this.renderSharing() : null}
@@ -224,7 +239,8 @@ class _MosaicRetrievePanel extends React.Component {
                 label={msg('process.retrieve.form.destination.label')}
                 input={destination}
                 multiple={false}
-                options={destinationOptions}/>
+                options={destinationOptions}
+                onChange={this.onDestinationChange}/>
         )
     }
 
@@ -236,6 +252,19 @@ class _MosaicRetrievePanel extends React.Component {
                 placeholder={msg('process.retrieve.form.workspacePath.placeholder')}
                 tooltip={msg('process.retrieve.form.workspacePath.tooltip')}
                 workspacePathInput={workspacePath}
+                onValidityCheckChange={this.onDestinationValidityCheckChange}
+            />
+        )
+    }
+    
+    renderFilenamePrefix() {
+        const {inputs: {filenamePrefix}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.retrieve.form.filenamePrefix.label')}
+                placeholder={msg('process.retrieve.form.filenamePrefix.placeholder')}
+                tooltip={msg('process.retrieve.form.filenamePrefix.tooltip')}
+                input={filenamePrefix}
             />
         )
     }
@@ -250,6 +279,7 @@ class _MosaicRetrievePanel extends React.Component {
                 tooltip={msg('process.retrieve.form.assetIt.tooltip')}
                 assetInput={assetId}
                 strategyInput={strategy}
+                onValidityCheckChange={this.onDestinationValidityCheckChange}
             />
         )
     }
@@ -335,7 +365,7 @@ class _MosaicRetrievePanel extends React.Component {
     
     componentDidMount() {
         const {allBands, defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize,
-            inputs: {assetType, sharing, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize, useAllBands}
+            inputs: {assetType, sharing, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize, useAllBands, filenamePrefix}
         } = this.props
         const more = (crs.value && crs.value !== defaultCrs)
             || (crsTransform.value)
@@ -367,10 +397,17 @@ class _MosaicRetrievePanel extends React.Component {
         if (allBands) {
             useAllBands.set(true)
         }
+        if (!filenamePrefix.value) {
+            const recipeName = this.getRecipeName()
+            filenamePrefix.set(recipeName)
+        }
         this.update()
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
+        if (prevProps.inputs.destination.value !== this.props.inputs.destination.value) {
+            this.setDestinationValidationPending(this.requiresDestinationValidation())
+        }
         this.update()
     }
 
@@ -378,8 +415,10 @@ class _MosaicRetrievePanel extends React.Component {
         const {toEE, toSepal, inputs: {destination, assetType}} = this.props
         if (!destination.value) {
             if (toEE && isGoogleAccount()) {
+                this.setDestinationValidationPending(true)
                 destination.set('GEE')
             } else if (toSepal) {
+                this.setDestinationValidationPending(true)
                 destination.set('SEPAL')
             }
         } else {
@@ -406,6 +445,30 @@ class _MosaicRetrievePanel extends React.Component {
     findProject() {
         const {projects, projectId} = this.props
         return projects.find(({id}) => id === projectId)
+    }
+    
+    getRecipeName() {
+        const {recipeTitle, recipePlaceholder} = this.props
+        return recipeTitle || recipePlaceholder || 'sepal_export'
+    }
+
+    requiresDestinationValidation(props = this.props) {
+        const {inputs: {destination}} = props
+        return ['GEE', 'SEPAL'].includes(destination.value)
+    }
+
+    onDestinationChange(destination) {
+        this.setDestinationValidationPending(['GEE', 'SEPAL'].includes(destination))
+    }
+
+    onDestinationValidityCheckChange(destinationValidationPending) {
+        this.setDestinationValidationPending(destinationValidationPending)
+    }
+
+    setDestinationValidationPending(destinationValidationPending) {
+        if (this.state.destinationValidationPending !== destinationValidationPending) {
+            this.setState({destinationValidationPending})
+        }
     }
 }
 
