@@ -203,7 +203,7 @@ class _TaskDetails extends React.Component {
                         <Label className={styles.fieldLabel} msg={msg('tasks.details.workspacePath')}/>
                         <div className={styles.fieldValueWithButton}>
                             <div className={styles.fieldValue}>
-                                {taskInfo.destination === 'DRIVE' ? `~/SEPAL/exports/${taskInfo.outputPath}` : `~/${taskInfo.outputPath}`}
+                                {this.formatOutputPath(taskInfo)}
                             </div>
                             <Button
                                 chromeless
@@ -214,7 +214,7 @@ class _TaskDetails extends React.Component {
                                 tooltip={msg('asset.copyId.tooltip')}
                                 tabIndex={-1}
                                 onClick={() => copyToClipboard(
-                                    taskInfo.destination === 'DRIVE' ? `~/SEPAL/exports/${taskInfo.outputPath}` : `~/${taskInfo.outputPath}`,
+                                    this.formatOutputPath(taskInfo),
                                     msg('asset.copyId.success')
                                 )}
                             />
@@ -232,6 +232,15 @@ class _TaskDetails extends React.Component {
         )
     }
     
+    formatOutputPath(taskInfo) {
+        switch (taskInfo.destination) {
+            case 'SEPAL':
+                return `~/${taskInfo.outputPath}`
+            default:
+                return taskInfo.outputPath
+        }
+    }
+
     getStatusColorClass() {
         const {task} = this.state
         switch (task?.status) {
