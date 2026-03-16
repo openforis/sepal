@@ -1,7 +1,7 @@
 const {v4: uuid} = require('uuid')
 
 const {moduleTag, clientTag, userTag} = require('./tag')
-const {filter, interval, map, Subject, groupBy, mergeMap, debounceTime, takeUntil, scan, switchMap, catchError, EMPTY} = require('rxjs')
+const {filter, interval, map, Subject, groupBy, mergeMap, debounceTime, takeUntil, scan, catchError, EMPTY} = require('rxjs')
 const {USER_UP, USER_DOWN, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN, CLIENT_VERSION_MISMATCH} = require('#sepal/event/definitions')
 
 const log = require('#sepal/log').getLogger('websocket/downlink')
@@ -44,7 +44,7 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
 
     const userConnected$ = user$.pipe(
         filter(({connected}) => connected),
-        switchMap(({username}) =>
+        mergeMap(({username}) =>
             userStore.getUser$(username).pipe(
                 map(user => ({username, user})),
                 catchError(error => {
@@ -57,7 +57,7 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
 
     const userDisconnected$ = user$.pipe(
         filter(({disconnected}) => disconnected),
-        switchMap(({username}) =>
+        mergeMap(({username}) =>
             userStore.getUser$(username).pipe(
                 map(user => ({username, user})),
                 catchError(error => {
