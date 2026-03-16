@@ -23,10 +23,18 @@ const Servers = () => {
         }
     }
 
+    const unsubscribe = subscription => {
+        try {
+            subscription.unsubscribe()
+        } catch (error) {
+            log.error(`Cannot unsubscribe - ${error.message}`)
+        }
+    }
+
     const remove = module => {
         try {
             const {subscriptions} = get(module)
-            subscriptions.forEach(subscription => subscription.unsubscribe())
+            subscriptions.forEach(subscription => unsubscribe(subscription))
             delete servers[module]
             log.debug(`${moduleTag(module)} removed from servers, now ${Object.keys(servers).length}`)
         } catch (error) {
