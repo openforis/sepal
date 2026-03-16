@@ -74,7 +74,6 @@ const SessionManager = sessionStore => {
                 .forEach(cookie => res.cookie(cookie, '', {maxAge: 0}))
         }
         res.status(200).send({status: 'success', message: 'logout'})
-        res.end()
     }
 
     const invalidateOtherSessions = async (req, res, _next) => {
@@ -88,7 +87,6 @@ const SessionManager = sessionStore => {
         )
 
         res.status(200).send({status: 'success', message: 'other sessions invalidated'})
-        res.end()
     }
     
     return {
