@@ -136,7 +136,7 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
             case GOOGLE_ACCESS_TOKEN_REMOVED:
                 return googleAccesstokenRemoved(data)
             default:
-                log.warn(`Unkown event type ${type}`)
+                log.warn(`Unknown event type ${type}`)
         }
     }
 
