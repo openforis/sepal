@@ -93,7 +93,7 @@ const UserStore = (redis, event$) => {
                 })
                 .catch(err => {
                     log.warn(`${usernameTag(username)} Cannot get user for injecting into request headers`, err)
-                    next()
+                    next(err)
                 })
         } else {
             next()
