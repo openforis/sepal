@@ -16,6 +16,6 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "eslint": "^9.31.0"
+    "eslint": "^10"
   }
 }
