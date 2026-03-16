@@ -8,21 +8,23 @@ const SEPAL_BUDGET_UPDATED_HEADER = 'sepal-budget-updated'
 
 const serialize = value => {
     try {
-        return _.isNil(value)
+        return value === null || value === undefined
             ? null
             : JSON.stringify(value)
     } catch (_error) {
         log.warn('Cannot serialize value:', value)
+        return null
     }
 }
 
 const deserialize = value => {
     try {
-        return _.isNil(value)
+        return value === null || value === undefined
             ? null
             : JSON.parse(value)
     } catch (_error) {
         log.warn('Cannot deserialize value:', value)
+        return null
     }
 }
 

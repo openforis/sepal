@@ -54,11 +54,12 @@ const getSepalUserHeader = user =>
             
 const serialize = value => {
     try {
-        return _.isNil(value)
+        return value === null || value === undefined
             ? null
             : JSON.stringify(value)
     } catch (_error) {
         log.warn('Cannot serialize value:', value)
+        return null
     }
 }
     
