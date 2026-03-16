@@ -63,7 +63,7 @@ RUN apt-get install nodejs -y
 
 # Install global npm packages
 
-RUN npm install -g madge npm-check-updates wscat touch
+RUN npm install -g madge npm-check-updates wscat touch @anthropic-ai/claude-code
 
 # Add shell script to path
 
