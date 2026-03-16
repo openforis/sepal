@@ -10,6 +10,7 @@ RUN apk update && apk add net-tools nginx gettext envsubst netcat-openbsd
 
 # install module packages
 WORKDIR ${MODULE}
+ADD modules/${MODULE_NAME}/.npmrc .
 ADD modules/${MODULE_NAME}/package.json .
 ADD modules/${MODULE_NAME}/package-lock.json .
 RUN npm install
