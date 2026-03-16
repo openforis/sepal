@@ -1,8 +1,8 @@
-const {setWorkloadTag} = require('../workloadTag')
+// const {setWorkloadTag} = require('../workloadTag')
 
 module.exports = {
     submit$: (taskId, {workspacePath, description, ...retrieveOptions}) => {
-        console.log('samplesSepalExport', {taskId, workspacePath, description, retrieveOptions})
+        console.info('samplesSepalExport', {taskId, workspacePath, description, retrieveOptions})
         // setWorkloadTag(retrieveOptions.recipe)
         // return getCurrentContext$().pipe(
         //     switchMap(({config}) => {

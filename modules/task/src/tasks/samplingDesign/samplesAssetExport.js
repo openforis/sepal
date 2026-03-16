@@ -2,7 +2,7 @@ const ImageFactory = require('#sepal/ee/imageFactory')
 const {toGeometry$} = require('#sepal/ee/aoi')
 const {setWorkloadTag} = require('../workloadTag')
 const {swallow} = require('#sepal/rxjs')
-const {concat, forkJoin, of, switchMap, takeLast, tap} = require('rxjs')
+const {concat, forkJoin, of, switchMap, tap} = require('rxjs')
 const {stratifiedSystematicSample, filterSamples} = require('./stratifiedSampling')
 const {exportLimiter$} = require('#task/jobs/service/exportLimiter')
 const {task$} = require('#task/ee/task')
@@ -27,7 +27,7 @@ module.exports = {
             exportFilteredSamples$()
 
         ).pipe(
-            tap(console.log)
+            tap(console.info)
             // Finally that delete tempAssetId
         )
 
@@ -64,7 +64,7 @@ module.exports = {
         }
 
         function exportFilteredSamples$() {
-            console.log('filtering samples')
+            console.info('filtering samples')
             const filteredSamples = filterSamples({
                 samples: ee.FeatureCollection(tempAssetId),
                 allocation,

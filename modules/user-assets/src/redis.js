@@ -10,7 +10,7 @@ const serialize = value => {
         return value !== undefined
             ? JSON.stringify(value)
             : null
-    } catch (error) {
+    } catch (_error) {
         log.warn('Cannot serialize value:', value)
     }
 }
@@ -20,7 +20,7 @@ const deserialize = value => {
         return value !== undefined
             ? JSON.parse(value)
             : null
-    } catch (error) {
+    } catch (_error) {
         log.warn('Cannot deserialize value:', value)
     }
 }

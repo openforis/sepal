@@ -10,7 +10,7 @@ const test = name => {
                 data.forEach(data => {
                     const args = {}
                     Object.keys(data).forEach(key => args[key] =
-                            JSON.stringify(data[key])
+                        JSON.stringify(data[key])
                     )
                     it(nameTemplate(args), () => assertion(data))
                 }

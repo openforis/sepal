@@ -133,7 +133,7 @@ export const eeLint = (images, msg, onBandChanged) => {
             const recurse = (node, count) => {
                 const nextSibling = node.nextSibling
                 return nextSibling
-                    ? recurse(nextSibling, ++count)
+                    ? recurse(nextSibling, count + 1)
                     : count
             }
 

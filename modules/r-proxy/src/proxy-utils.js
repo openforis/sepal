@@ -27,6 +27,7 @@ const serveFile = async ({res, path, type}) => {
         }
         return false
     } catch (error) {
+        log.warn(`Failed to serve ${type}:`, path, error)
         return false
     }
 }

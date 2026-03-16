@@ -42,7 +42,7 @@ const getUserInfo = async username => {
         const [uid, gid] = stdout.trim().split(' ').map(Number)
         return {uid, gid}
     } catch (error) {
-        throw new Error(`User directory not found: ${username}`)
+        throw new Error(`User directory not found: ${username}`, {cause: error})
     }
 }
 
@@ -108,10 +108,10 @@ async function resolvePathForWrite(baseDir, relPath, username, op, recursive = f
             if (!firstMissing) firstMissing = current
             if (!isLast) {
                 if (operation === 'writeFile') {
-                    throw new Error(`Parent directory does not exist: ${current}`)
+                    throw new Error(`Parent directory does not exist: ${current}`, {cause: err})
                 }
                 if (!recursive) {
-                    throw new Error(`Parent directory does not exist (enable recursive): ${current}`)
+                    throw new Error(`Parent directory does not exist (enable recursive): ${current}`, {cause: err})
                 }
             } else {
                 return {targetAbs: current, userInfo, existed: false, firstMissing}

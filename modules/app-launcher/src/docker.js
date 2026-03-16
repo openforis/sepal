@@ -65,7 +65,7 @@ const buildAndRestart = async (appName, repository) => {
         } catch (error) {
             log.error(`Build attempt ${attempt} failed: ${error.message}`)
             if (attempt === MAX_RETRIES) {
-                throw new Error(`Failed to build Docker image after ${MAX_RETRIES} attempts: ${error.message}`)
+                throw new Error(`Failed to build Docker image after ${MAX_RETRIES} attempts: ${error.message}`, {cause: error})
             }
             attempt++
             await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS))

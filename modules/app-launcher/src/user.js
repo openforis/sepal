@@ -9,7 +9,7 @@ const serialize = value => {
         return _.isNil(value)
             ? null
             : JSON.stringify(value)
-    } catch (error) {
+    } catch (_error) {
         log.warn('Cannot serialize value:', value)
     }
 }
@@ -19,7 +19,7 @@ const deserialize = value => {
         return _.isNil(value)
             ? null
             : JSON.parse(value)
-    } catch (error) {
+    } catch (_error) {
         log.warn('Cannot deserialize value:', value)
     }
 }

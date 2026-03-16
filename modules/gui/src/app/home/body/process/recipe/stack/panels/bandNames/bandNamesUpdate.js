@@ -17,7 +17,7 @@ export const toBandNames = (images, prevBandNames) => {
 
         const recurseRename = (potentialName, i) => {
             return isDuplicate(potentialName)
-                ? recurseRename(`${name}_${i}`, ++i)
+                ? recurseRename(`${name}_${i}`, i + 1)
                 : potentialName
         }
 

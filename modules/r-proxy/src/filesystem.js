@@ -10,7 +10,7 @@ const isFile = async path => {
     try {
         const requestStat = await stat(path)
         return requestStat.isFile()
-    } catch (error) {
+    } catch (_error) {
         return false
     }
 }

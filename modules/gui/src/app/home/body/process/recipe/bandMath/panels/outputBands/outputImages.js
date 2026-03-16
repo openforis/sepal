@@ -40,7 +40,7 @@ export const createUniqueBandName = (image, band, outputImages) => {
 
     const recurseRename = (potentialName, i) =>
         otherOutputNames.includes(potentialName)
-            ? recurseRename(`${band.name}_${i}`, ++i)
+            ? recurseRename(`${band.name}_${i}`, i + 1)
             : potentialName
 
     return recurseRename(band.name, 1)

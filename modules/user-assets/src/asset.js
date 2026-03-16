@@ -57,7 +57,7 @@ const serialize = value => {
         return _.isNil(value)
             ? null
             : JSON.stringify(value)
-    } catch (error) {
+    } catch (_error) {
         log.warn('Cannot serialize value:', value)
     }
 }

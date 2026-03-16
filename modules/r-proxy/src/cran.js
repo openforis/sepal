@@ -76,7 +76,7 @@ const installCranPackage = async (name, path, version, repo) => {
             log.debug(`Checking ${name}/${version}`)
             await runScript('check_cran_package.r', [name, version, libPath])
             log.info(`Already installed ${name}/${version}`)
-        } catch (error) {
+        } catch (_error) {
             if (path) {
                 const url = `${cranRepo}/${path}`
                 log.info(`Installing ${name}/${version} from ${url}`)
@@ -163,7 +163,7 @@ const isVersionSatisfied = ({name, version, depends, installedVersion}) => {
                     log.info(`Skipping ${name}/${version}: requires R >= ${requiredVersion}`)
                     return false
                 }
-            } catch (error) {
+            } catch (_error) {
                 log.warn(`Cannot compare R version for ${name}/${version}:`, dependsR[1])
             }
         }

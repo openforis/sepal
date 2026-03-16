@@ -108,7 +108,7 @@ const ingest = async (database, path, timestamp) => {
     await database.ingest(path, timestamp)
 }
 
-const processCSV = async ({collection, sceneMapper, redis: {getLastUpdate, setLastUpdate}, database, maxTimestamp, timestamp}) => {
+const processCSV = async ({collection, sceneMapper, redis: {setLastUpdate}, database, maxTimestamp, timestamp}) => {
     const queue$ = new Subject()
     const done$ = new ReplaySubject(1)
 

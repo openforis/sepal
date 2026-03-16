@@ -32,7 +32,7 @@ const readFile = path => {
     try {
         return fs.readFileSync(path, {encoding: 'utf8'})
     } catch (error) {
-        log.warn(`Cannot read GEE key: ${path}`)
+        log.warn(`Cannot read GEE key: ${path}`, error)
         return null
     }
 }

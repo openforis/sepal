@@ -67,7 +67,7 @@ const eraseUserStorage = async username => {
         )
         log.info(`Erased storage for user ${username} at path ${userPath}`)
     } catch (error) {
-        log.warn(`Cannot erase storage for user ${username} at path ${userPath}`)
+        log.warn(`Cannot erase storage for user ${username} at path ${userPath}`, error)
     }
 }
 
