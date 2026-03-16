@@ -52,7 +52,9 @@ const SessionManager = sessionStore => {
 
     const logout = async (req, res, _next) => {
         const username = getSessionUsername(req)
-        req.session.destroy()
+        await new Promise((resolve, reject) =>
+            req.session.destroy(err => err ? reject(err) : resolve())
+        )
         
         if (username) {
             const userSessionIds = await getSessionIdsByUsername(username)
