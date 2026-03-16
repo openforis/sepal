@@ -89,8 +89,8 @@ const main = async () => {
     app.use(userStore.userMiddleware)
 
     // Auth not needed for these endpoints
-    app.use('/api/user/logout', logout)
-    app.use('/api/user/invalidateOtherSessions', invalidateOtherSessions)
+    app.post('/api/user/logout', logout)
+    app.post('/api/user/invalidateOtherSessions', invalidateOtherSessions)
     
     app.use('/api/gateway/metrics', authMiddleware, apiMetrics({metricsPath: '/api/gateway/metrics'}))
 
