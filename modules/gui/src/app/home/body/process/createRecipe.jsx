@@ -77,7 +77,6 @@ class _CreateRecipe extends React.Component {
         this.renderRecipeType = this.renderRecipeType.bind(this)
         this.closePanel = this.closePanel.bind(this)
         this.showRecipeTypeInfo = this.showRecipeTypeInfo.bind(this)
-        this.renderRecipeType = this.renderRecipeType.bind(this)
         this.setTextFilter = this.setTextFilter.bind(this)
         this.setTagsFilter = this.setTagsFilter.bind(this)
     }
