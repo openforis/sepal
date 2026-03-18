@@ -160,8 +160,42 @@ export default {
                 },
                 required: ['type', 'targetDate']
             },
-            sources: {/* ... */},
-            compositeOptions: {/* ... */}
+            sources: {
+                type: 'object',
+                properties: {
+                    cloudPercentageThreshold: {type: 'integer', minimum: 0, maximum: 100},
+                    dataSets: {
+                        type: 'object',
+                        properties: {
+                            LANDSAT: {type: 'array', items: {enum: ['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']}},
+                            SENTINEL_2: {type: 'array', items: {enum: ['SENTINEL_2']}}
+                        }
+                    }
+                },
+                required: ['dataSets']
+            },
+            compositeOptions: {
+                type: 'object',
+                properties: {
+                    corrections: {type: 'array', items: {enum: ['SR', 'BRDF', 'CALIBRATE']}},
+                    brdfMultiplier: {type: 'number', minimum: 0},
+                    filters: {type: 'array', items: {type: 'object'}},
+                    compose: {enum: ['MEDOID', 'MEDIAN']},
+                    cloudMasking: {
+                        type: 'array',
+                        items: {enum: ['sepalCloudScore', 'landsatCFMask', 'sentinel2CloudProbability', 'sentinel2CloudScorePlus']}
+                    },
+                    snowMasking: {enum: ['ON', 'OFF']},
+                    holes: {enum: ['ALLOW', 'REMOVE']}
+                }
+            },
+            sceneSelectionOptions: {
+                type: 'object',
+                properties: {
+                    type: {enum: ['ALL', 'SELECT']},
+                    targetDateWeight: {type: 'number', minimum: 0, maximum: 1}
+                }
+            }
         },
         required: ['aoi', 'dates', 'sources']
     },
