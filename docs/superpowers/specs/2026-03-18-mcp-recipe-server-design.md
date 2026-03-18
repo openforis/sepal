@@ -255,8 +255,13 @@ Dynamically built per session with:
 
 **`modules/gateway/config/endpoints.js`** — add HTTP route and websocket endpoint:
 ```javascript
-// HTTP route (CommonJS, matching gateway's existing style)
-'/api/mcp/*' → `http://${modules.mcpServer}`
+// HTTP route (added to endpoints array, CommonJS, matching gateway's existing style)
+{
+    prefix: true,
+    path: '/api/mcp',
+    target: `http://${modules.mcpServer}`,
+    authenticate: true  // Required: injects user context via sepal-user header
+}
 
 // Websocket endpoint (added to webSocketEndpoints array)
 {module: 'mcp-server', target: `ws://${modules.mcpServer}/ws`}
@@ -306,6 +311,8 @@ The MCP server receives gateway lifecycle events for session management:
 - `{event: 'subscriptionDown', username, clientId, subscriptionId}` — client unsubscribed, clean up session
 - `{event: 'clientDown', username, clientId}` — browser tab closed, clean up all sessions for client
 - `{hb: <timestamp>}` — heartbeat (respond with `{hb: <timestamp>}`)
+
+**Event ordering**: when a client disconnects, the gateway sends individual `subscriptionDown` events for each active subscription BEFORE sending `clientDown`. Session cleanup should be driven primarily by `subscriptionDown`, with `clientDown` serving as a safety net for any missed cleanups.
 
 ## GUI Chat Panel
 
@@ -358,9 +365,28 @@ The sepal-server recipe API uses gzip compression for recipe contents:
 - **Load** (`GET /api/processing-recipes/{id}`): returns raw JSON string containing the full recipe object (including `id`, `type`, `model`, `ui`, `layers`, etc.).
 - **List** (`GET /api/processing-recipes`): returns metadata only (id, projectId, name, type, creationTime, updateTime) — no contents.
 
-### Response Parsing Strategy
+### Recipe Contents Envelope
 
-When loading a recipe via `recipe_load`:
+The `contents` stored in the database is a JSON string with this structure:
+```javascript
+{
+    id: '<uuid>',
+    type: 'MOSAIC',
+    title: 'My Recipe',
+    projectId: '<uuid>',
+    model: { /* recipe-type-specific configuration */ },
+    ui: { /* UI-only state */ },
+    layers: [ /* map layer definitions */ ]
+}
+```
+
+When **creating or saving** a recipe via `recipeClient.js`:
+1. Construct the full contents envelope: `{id, type, model, ui: {initialized: true}, layers: []}`
+2. `JSON.stringify()` the envelope
+3. Gzip-compress the string
+4. POST the compressed binary as the request body
+
+When **loading** a recipe via `recipe_load`:
 1. Parse the raw JSON string from sepal-server
 2. Strip the `ui` key (UI-only state, not meaningful outside the browser)
 3. Strip the `layers` key (map layer state)
@@ -419,7 +445,15 @@ Errors are fed back to the LLM so it can explain issues and suggest corrections.
 - New service in `docker-compose.yml` on `sepal` network
 - Exposes port 80 internally
 - Runtime dependencies: `gateway`, `sepal-server`, `gee`
-- Entry in `dev-env/config/deps.json` with appropriate `lib` and `run` dependencies
+- Entry in `dev-env/config/deps.json`:
+  ```json
+  "mcp-server": {
+      "lib": ["shared"],
+      "build": [],
+      "run": ["gateway", "sepal-server", "gee"],
+      "gradle": false
+  }
+  ```
 - Entry in `modules/gateway/config/modules.json`: `"mcpServer": "mcp-server"`
 - Websocket endpoint added to `modules/gateway/config/endpoints.js` `webSocketEndpoints` array
 
