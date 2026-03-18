@@ -2,4 +2,5 @@
     --unread-color: var(--warning-color);
     --read-color: var(--success-color);
     width: 40rem;
+    height: 30vh;
 }

@@ -4442,6 +4442,7 @@
       "label": "Projects",
       "tooltip": "Manage projects",
       "noProjects": "No projects",
+      "search.placeholder": "Search projects",
       "selected": "Currently selected",
       "add": "Add"
     },
