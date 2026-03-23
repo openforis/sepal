@@ -2,9 +2,12 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import api from '~/apiRegistry'
+import {NO_PROJECT_SYMBOL} from '~/app/home/body/process/recipeList/recipeListConstants'
 import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 import format from '~/format'
+import {select} from '~/store'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -14,6 +17,10 @@ import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
 import styles from './taskDetails.module.css'
+
+const mapStateToProps = () => ({
+    projects: select('process.projects')
+})
 
 class _TaskDetails extends React.Component {
     constructor(props) {
@@ -41,7 +48,7 @@ class _TaskDetails extends React.Component {
                     })
 
                     // Set up interval only if task is still running
-                    if (task.status === 'ACTIVE') {
+                    if (['ACTIVE', 'PENDING', 'CANCELING'].includes(task.status)) {
                         this.intervalId = setInterval(() => {
                             this.setState({duration: this.calculateDuration(task)})
                         }, 1000)
@@ -67,7 +74,7 @@ class _TaskDetails extends React.Component {
         }
         
         const start = new Date(taskData.creationTime)
-        const end = taskData.status === 'ACTIVE'
+        const end = ['ACTIVE', 'PENDING', 'CANCELING'].includes(taskData.status)
             ? new Date()
             : (taskData.updateTime ? new Date(taskData.updateTime) : new Date())
         
@@ -149,23 +156,34 @@ class _TaskDetails extends React.Component {
     }
     
     renderConfiguration() {
+        const {projects} = this.props
         const {task} = this.state
         const taskInfo = task.params?.taskInfo
         const image = task.params?.image
         const recipe = image?.recipe
-        
+
         if (!recipe?.type && !taskInfo?.recipeType) {
             return null
         }
-        
+
         const recipeType = taskInfo?.recipeType || recipe?.type
-        
+        const projectId = taskInfo?.projectId
+        const project = projects?.find(({id}) => id === projectId)
+        const projectName = project?.name ?? NO_PROJECT_SYMBOL
+        const recipeName = task.params?.description
+
         return (
             <Widget label={msg('tasks.details.section.conf')} framed>
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel} msg={msg('tasks.details.recipeType')}/>
                     <div className={styles.fieldValue}>{msg(`tasks.details.recipeTypeNames.${recipeType}`)}</div>
                 </div>
+                {recipeName && (
+                    <div className={styles.row}>
+                        <Label className={styles.fieldLabel} msg={msg('tasks.details.origin')}/>
+                        <div className={styles.fieldValue}>{`${projectName} / ${recipeName}`}</div>
+                    </div>
+                )}
             </Widget>
         )
     }
@@ -174,7 +192,7 @@ class _TaskDetails extends React.Component {
         const {task} = this.state
         const taskInfo = task.params?.taskInfo
         
-        if (task.status === 'FAILED') {
+        if (['FAILED', 'CANCELED'].includes(task.status)) {
             return null
         }
         
@@ -191,7 +209,7 @@ class _TaskDetails extends React.Component {
                     </div>
                 )}
                 
-                {taskInfo?.destination === 'SEPAL' && taskInfo?.filenamePrefix && (
+                {['SEPAL', 'DRIVE'].includes(taskInfo?.destination) && taskInfo?.filenamePrefix && (
                     <div className={styles.row}>
                         <Label className={styles.fieldLabel} msg={msg('tasks.details.filenamePrefix')}/>
                         <div className={styles.fieldValue}>{taskInfo.filenamePrefix}</div>
@@ -200,7 +218,7 @@ class _TaskDetails extends React.Component {
                 
                 {taskInfo?.outputPath && (
                     <div className={styles.row}>
-                        <Label className={styles.fieldLabel} msg={msg('tasks.details.workspacePath')}/>
+                        <Label className={styles.fieldLabel} msg={this.getOutputPathLabel(taskInfo)}/>
                         <div className={styles.fieldValueWithButton}>
                             <div className={styles.fieldValue}>
                                 {this.formatOutputPath(taskInfo)}
@@ -236,27 +254,36 @@ class _TaskDetails extends React.Component {
         switch (taskInfo.destination) {
             case 'SEPAL':
                 return `~/${taskInfo.outputPath}`
+            case 'DRIVE':
+                return `SEPAL/exports/${taskInfo.outputPath}`
             default:
                 return taskInfo.outputPath
         }
     }
 
-    getStatusColorClass() {
+    getOutputPathLabel(taskInfo) {
+        switch (taskInfo.destination) {
+            case 'DRIVE': return msg('tasks.details.driveFolder')
+            default: return msg('tasks.details.workspacePath')
+        }
+    }
+
+    getStatusClass() {
         const {task} = this.state
         switch (task?.status) {
+            case 'PENDING': return styles.pending
+            case 'CANCELING': return styles.canceling
+            case 'COMPLETED': return styles.completed
             case 'FAILED':
-                return styles.statusError
-            case 'COMPLETED':
-                return styles.statusSuccess
-            default:
-                return ''
+            case 'CANCELED': return styles.failed
+            default: return styles.active
         }
     }
 
     renderProgress() {
-        const {description} = this.props
+        const {task} = this.state
 
-        if (!description) {
+        if (!task?.status) {
             return null
         }
 
@@ -264,8 +291,8 @@ class _TaskDetails extends React.Component {
             <Widget label={msg('tasks.details.section.progress')} framed>
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel} msg={msg('tasks.details.status')}/>
-                    <div className={`${styles.fieldValue} ${this.getStatusColorClass()}`}>
-                        {description}
+                    <div className={this.getStatusClass()}>
+                        {task.status}
                     </div>
                 </div>
             </Widget>
@@ -281,5 +308,6 @@ _TaskDetails.propTypes = {
 
 export const TaskDetails = compose(
     _TaskDetails,
+    connect(mapStateToProps),
     withSubscriptions()
 )
