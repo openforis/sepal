@@ -1,7 +1,7 @@
 {
-    "name": "mcp-server",
+    "name": "ai",
     "version": "1.0.0",
-    "description": "MCP server for SEPAL recipe interaction via chat",
+    "description": "MCP and chat server for SEPAL recipe interaction via chat",
     "main": "main.js",
     "scripts": {
         "test": "jest",

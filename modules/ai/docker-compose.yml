@@ -1,13 +1,13 @@
 services:
-  mcp-server:
+  ai:
     extends:
       file: ../docker-compose.logger.yml
       service: logger
     build:
       context: ../..
-      dockerfile: ./modules/mcp-server/Dockerfile
-    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/mcp-server:${SEPAL_VERSION:-latest}"
-    container_name: mcp-server
+      dockerfile: ./modules/ai/Dockerfile
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/ai:${SEPAL_VERSION:-latest}"
+    container_name: ai
     init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"

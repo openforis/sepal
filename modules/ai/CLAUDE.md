@@ -1,4 +1,4 @@
-# CLAUDE.md - modules/mcp-server
+# CLAUDE.md - modules/ai
 
 MCP (Model Context Protocol) server for AI-powered SEPAL recipe interaction via chat.
 
@@ -21,7 +21,7 @@ npm run testWatch     # Jest watch mode
 `src/main.js` — Koa HTTP server with WebSocket support via `#sepal/httpServer` `wsStream()`. Initializes registry, API clients, tools, schemas, templates, and the websocket handler.
 
 ### WebSocket Protocol
-Uses the gateway's subscription-based websocket routing. The browser subscribes to `mcp-server` module, and messages flow as `{module, subscriptionId, data}`.
+Uses the gateway's subscription-based websocket routing. The browser subscribes to `ai` module, and messages flow as `{module, subscriptionId, data}`.
 
 - **Lifecycle events**: `subscriptionUp/Down`, `clientUp/Down`, `userUp/Down` — handled for session management
 - **Chat messages**: `{type: 'message', text}` from client → LLM processing → `{type: 'response', text, status}` back

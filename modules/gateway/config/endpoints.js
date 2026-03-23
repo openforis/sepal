@@ -173,8 +173,8 @@ const endpoints = [
     },
     {
         prefix: true,
-        path: '/api/mcp',
-        target: `http://${modules.mcpServer}`,
+        path: '/api/ai',
+        target: `http://${modules.ai}`,
         authenticate: true
     },
     {
@@ -197,8 +197,8 @@ const webSocketEndpoints = [
         sendGoogleAccessToken: true
     },
     {
-        module: 'mcp-server',
-        target: `ws://${modules.mcpServer}/ws`
+        module: 'ai',
+        target: `ws://${modules.ai}/ws`
     }
 ]
 

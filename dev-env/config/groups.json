@@ -1,5 +1,6 @@
 {
     "default": [
+        "ai",
         "app-launcher",
         "app-manager",
         "ceo-gateway",
@@ -11,7 +12,6 @@
         "ldap",
         "llmster",
         "logger",
-        "mcp-server",
         "mysql",
         "rabbitmq",
         "scene-metadata",
@@ -37,12 +37,12 @@
         "user"
     ],
     "apps": [
+        "ai",
         "app-manager",
         "gateway",
         "gui",
         "haproxy",
         "ldap",
-        "mcp-server",
         "mysql",
         "rabbitmq",
         "sepal-server",
@@ -52,6 +52,7 @@
         "app-launcher"
     ],
     "node": [
+        "ai",
         "app-launcher",
         "app-manager",
         "ceo-gateway",

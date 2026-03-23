@@ -126,7 +126,8 @@ class _Home extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            chatOpen: false
+            chatOpen: false,
+            chatMode: 'overlay'
         }
         const {stream} = props
         const errorHandler = () => Notifications.error({message: msg('home.connectivityError'), group: true})
@@ -135,6 +136,7 @@ class _Home extends React.Component {
         stream('SCHEDULE_UPDATE_TASKS', updateTasks$(), null, errorHandler)
         this.toggleChat = this.toggleChat.bind(this)
         this.closeChat = this.closeChat.bind(this)
+        this.toggleChatMode = this.toggleChatMode.bind(this)
     }
 
     toggleChat() {
@@ -145,22 +147,44 @@ class _Home extends React.Component {
         this.setState({chatOpen: false})
     }
 
+    toggleChatMode() {
+        this.setState(prev => ({chatMode: prev.chatMode === 'overlay' ? 'split' : 'overlay'}))
+    }
+
     render() {
         const {floatingMenu, floatingFooter} = this.props
-        const {chatOpen} = this.state
+        const {chatOpen, chatMode} = this.state
+        const chatSplit = chatOpen && chatMode === 'split'
         return (
             <ActivationContext id='root'>
                 <div className={[
                     styles.container,
                     floatingMenu && styles.floatingMenu,
-                    floatingFooter && styles.floatingFooter
+                    floatingFooter && styles.floatingFooter,
+                    chatSplit && styles.chatSplit
                 ].join(' ')}>
                     <Menu className={styles.menu}/>
                     <div className={styles.main}>
                         <Body className={styles.body}/>
+                        {chatSplit && (
+                            <ChatPanel
+                                className={styles.chat}
+                                isOpen
+                                mode={chatMode}
+                                onClose={this.closeChat}
+                                onToggleMode={this.toggleChatMode}
+                            />
+                        )}
                         <Footer className={styles.footer} chatOpen={chatOpen} onChatToggle={this.toggleChat}/>
                     </div>
-                    <ChatPanel isOpen={chatOpen} onClose={this.closeChat}/>
+                    {!chatSplit && (
+                        <ChatPanel
+                            isOpen={chatOpen}
+                            mode={chatMode}
+                            onClose={this.closeChat}
+                            onToggleMode={this.toggleChatMode}
+                        />
+                    )}
                     <PortalContainer/>
                     <WebSocketConnection/>
                     <User/>

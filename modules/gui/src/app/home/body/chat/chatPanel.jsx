@@ -21,7 +21,7 @@ import styles from './chatPanel.module.css'
 
 const log = getLogger('chat')
 
-export const ChatPanel = ({isOpen, onClose}) => {
+export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggleMode}) => {
     const [messages, setMessages] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [isThinking, setIsThinking] = useState(false)
@@ -194,11 +194,22 @@ export const ChatPanel = ({isOpen, onClose}) => {
         return null
     }
 
+    const isSplit = mode === 'split'
+
     return (
-        <div className={styles.panel}>
+        <div className={[isSplit ? styles.split : styles.panel, className].join(' ')}>
             <div className={styles.header}>
                 <span className={styles.title}>Chat</span>
                 <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
+                    <Button
+                        chromeless
+                        shape='circle'
+                        size='small'
+                        icon={isSplit ? 'arrow-right' : 'arrow-left'}
+                        tooltip={isSplit ? 'Overlay' : 'Split'}
+                        tooltipPlacement='bottom'
+                        onClick={onToggleMode}
+                    />
                     <Button
                         chromeless
                         shape='circle'
@@ -230,6 +241,9 @@ export const ChatPanel = ({isOpen, onClose}) => {
 }
 
 ChatPanel.propTypes = {
+    className: PropTypes.string,
     isOpen: PropTypes.bool.isRequired,
-    onClose: PropTypes.func.isRequired
+    mode: PropTypes.oneOf(['overlay', 'split']),
+    onClose: PropTypes.func.isRequired,
+    onToggleMode: PropTypes.func.isRequired
 }

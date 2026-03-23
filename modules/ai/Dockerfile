@@ -2,7 +2,7 @@ FROM node:24-alpine
 
 EXPOSE 80
 
-ENV MODULE_NAME mcp-server
+ENV MODULE_NAME ai
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 

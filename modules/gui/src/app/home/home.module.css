@@ -54,13 +54,20 @@
     height: 100%;
     width: 100%;
     display: grid;
-    grid-template-rows: 1fr auto auto;
+    grid-template-rows: 1fr auto;
     grid-template-columns: 1fr;
     grid-gap: 0;
     grid-template-areas:
         'body'
         'footer';
     z-index: 1;
+}
+
+.chatSplit .main {
+    grid-template-columns: 1fr 400px;
+    grid-template-areas:
+        'body chat'
+        'footer footer';
 }
 
 .menuContainer {
@@ -85,6 +92,11 @@
     grid-area: body;
     height: 100%;
     pointer-events: none;
+}
+
+.chat {
+    grid-area: chat;
+    pointer-events: all;
 }
 
 .container:not(.floatingMenu) .body {

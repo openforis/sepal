@@ -15,22 +15,20 @@
     max-width: 85%;
     padding: 0.5rem 0.75rem;
     border-radius: 0.75rem;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     line-height: 1.4;
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
 
 .user .bubble {
-    background-color: hsla(210, 60%, 50%, 0.3);
+    background-color: hsla(var(--selected-hue), var(--selected-sat), 50%, 0.3);
     border-bottom-right-radius: 0.2rem;
-    color: hsl(0, 0%, 90%);
 }
 
 .assistant .bubble {
-    background-color: hsla(0, 0%, 100%, 0.08);
+    background-color: var(--section-wireframe-color);
     border-bottom-left-radius: 0.2rem;
-    color: hsl(0, 0%, 85%);
 }
 
 .text {
@@ -40,14 +38,14 @@
 .thinking {
     display: flex;
     gap: 0.3rem;
-    padding: 0.2rem 0;
+    padding: 0.25rem 0;
 }
 
 .thinking span {
     width: 0.4rem;
     height: 0.4rem;
     border-radius: 50%;
-    background-color: hsl(0, 0%, 55%);
+    background-color: var(--link-default-color);
     animation: bounce 1.2s infinite ease-in-out;
 }
 

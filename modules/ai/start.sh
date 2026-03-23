@@ -2,8 +2,8 @@
 
 export LLM_PROVIDER="lmstudio"
 export LLM_API_KEY="none"
-# export LLM_MODEL="qwen/qwen3.5-9b"
-export LLM_MODEL="unsloth/glm-4.7-flash"
+export LLM_MODEL="qwen/qwen3.5-9b"
+# export LLM_MODEL="unsloth/glm-4.7-flash"
 # export LLM_BASE_URL="http://host.docker.internal:1235"
 export LLM_BASE_URL="http://llmster:1234/v1"
 

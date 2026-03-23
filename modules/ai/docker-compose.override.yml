@@ -1,5 +1,5 @@
 services:
-  mcp-server:
+  ai:
     extends:
       file: ../docker-compose.logger.override.yml
       service: logger
@@ -7,7 +7,7 @@ services:
       # lib/shared
       - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
       - ${SEPAL_PROJECT_DIR}/lib/js/shared/package.json:/usr/local/src/sepal/lib/js/shared/package.json
-      - ${SEPAL_PROJECT_DIR}/modules/mcp-server/lib/shared/package-lock.json:/usr/local/src/sepal/lib/js/shared/package-lock.json
-      - ${SEPAL_PROJECT_DIR}/modules/mcp-server/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
+      - ${SEPAL_PROJECT_DIR}/modules/ai/lib/shared/package-lock.json:/usr/local/src/sepal/lib/js/shared/package-lock.json
+      - ${SEPAL_PROJECT_DIR}/modules/ai/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
       # module
-      - ${SEPAL_PROJECT_DIR}/modules/mcp-server:/usr/local/src/sepal/modules/mcp-server
+      - ${SEPAL_PROJECT_DIR}/modules/ai:/usr/local/src/sepal/modules/ai

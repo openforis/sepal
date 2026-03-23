@@ -3,32 +3,30 @@
     align-items: flex-end;
     gap: 0.25rem;
     padding: 0.5rem 0.75rem;
-    border-top: 1px solid hsla(0, 0%, 100%, 0.1);
-    background-color: hsla(0, 0%, 0%, 0.2);
+    border-top: 1px solid var(--wireframe-color);
+    background-color: var(--panel-default-overlay-color);
 }
 
 .textarea {
     flex: 1;
     resize: none;
-    border: 1px solid hsla(0, 0%, 100%, 0.15);
+    border: 1px solid var(--wireframe-color);
     border-radius: 0.5rem;
     padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
-    font-family: inherit;
     line-height: 1.4;
-    color: hsl(0, 0%, 90%);
-    background-color: hsla(0, 0%, 100%, 0.05);
+    color: inherit;
+    background-color: var(--section-wireframe-color);
     outline: none;
     overflow-y: auto;
     max-height: 100px;
 }
 
 .textarea:focus {
-    border-color: hsla(210, 60%, 50%, 0.5);
+    border-color: var(--info-color);
 }
 
 .textarea::placeholder {
-    color: hsl(0, 0%, 45%);
+    color: var(--link-default-color);
 }
 
 .textarea:disabled {

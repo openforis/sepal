@@ -12,8 +12,7 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: hsl(0, 0%, 50%);
-    font-size: 0.85rem;
+    color: var(--link-default-color);
     text-align: center;
     padding: 2rem;
 }

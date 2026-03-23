@@ -1,4 +1,16 @@
 {
+    "ai": { 
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger",
+            "gateway",
+            "sepal-server",
+            "gee"
+        ]
+    },
     "app-manager": {
         "lib": [
             "shared"
@@ -113,18 +125,6 @@
     "logger": {
         "build": {},
         "run": []
-    },
-    "mcp-server": {
-        "lib": [
-            "shared"
-        ],
-        "build": {},
-        "run": [
-            "logger",
-            "gateway",
-            "sepal-server",
-            "gee"
-        ]
     },
     "mysql": {
         "build": {},
