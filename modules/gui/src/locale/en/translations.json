@@ -4819,6 +4819,20 @@
         "running": "Google Earth Engine is exporting"
       }
     },
+    "duration": {
+      "label": "Duration"
+    },
+    "filter": {
+      "search": {
+        "placeholder": "Search tasks"
+      },
+      "status": {
+        "all": "All",
+        "active": "Active",
+        "completed": "Completed",
+        "failed": "Failed / Canceled"
+      }
+    },
     "none": "You have no background tasks.",
     "copyToClipboard": {
       "tooltip": "Copy to clipboard",
@@ -4831,6 +4845,7 @@
       "id": "Task ID",
       "status": "Status",
       "recipeName": "Recipe Name",
+      "origin": "Origin",
       "recipeType": "Recipe Type",
       "recipeId": "Recipe ID",
       "creationTime": "Start Time",
@@ -4838,6 +4853,7 @@
       "duration": "Duration",
       "description": "Description",
       "workspacePath": "Output path",
+      "driveFolder": "Drive folder",
       "filenamePrefix": "Filename prefix",
       "actualWorkspacePath": "Actual workspace path",
       "section": {
