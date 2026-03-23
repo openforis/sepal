@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types'
 import {useEffect, useRef} from 'react'
 
+import {msg} from '~/translate'
+
 import {ChatMessage, ThinkingIndicator} from './chatMessage'
 import styles from './chatMessages.module.css'
 
@@ -14,7 +16,7 @@ export const ChatMessages = ({messages, thinking}) => {
     return (
         <div className={styles.messages}>
             {messages.length === 0 && !thinking
-                ? <div className={styles.empty}>Send a message to start chatting about SEPAL recipes.</div>
+                ? <div className={styles.empty}>{msg('home.sections.chat.empty')}</div>
                 : messages.map((msg, i) => (
                     <ChatMessage key={i} role={msg.role} content={msg.content}/>
                 ))
