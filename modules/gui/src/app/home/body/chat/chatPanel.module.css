@@ -1,0 +1,55 @@
+.panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: var(--footer-height, 2rem);
+    width: 400px;
+    max-width: 100vw;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    background-color: hsla(220, 15%, 13%, 0.97);
+    border-left: 1px solid hsla(0, 0%, 100%, 0.1);
+    box-shadow: -4px 0 20px hsla(0, 0%, 0%, 0.4);
+    pointer-events: all;
+    animation: slideIn 200ms ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid hsla(0, 0%, 100%, 0.1);
+    flex-shrink: 0;
+}
+
+.title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: hsl(0, 0%, 80%);
+    letter-spacing: 0.03rem;
+}
+
+.disconnected {
+    position: absolute;
+    bottom: 4rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: hsla(40, 80%, 50%, 0.15);
+    color: hsl(40, 80%, 60%);
+    padding: 0.3rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+}

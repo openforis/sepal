@@ -10,3 +10,25 @@
 .markdown :last-child {
     margin-bottom: 0;
 }
+
+.markdown table {
+    border-collapse: collapse;
+    margin: .75rem 0;
+    width: 100%;
+}
+
+.markdown th,
+.markdown td {
+    border: 1px solid rgba(255, 255, 255, .2);
+    padding: .4rem .75rem;
+    text-align: left;
+}
+
+.markdown th {
+    background: rgba(255, 255, 255, .08);
+    font-weight: 600;
+}
+
+.markdown tr:nth-child(even) td {
+    background: rgba(255, 255, 255, .03);
+}

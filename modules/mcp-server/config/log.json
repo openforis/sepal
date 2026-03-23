@@ -1,0 +1,12 @@
+{
+    "port": 5000,
+    "categories": {
+        "config": "info",
+        "http/server": "info",
+        "main": "info",
+        "ws": "info",
+        "orchestrator": "info",
+        "session": "info",
+        "tools": "info"
+    }
+}

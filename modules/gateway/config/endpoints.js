@@ -172,6 +172,12 @@ const endpoints = [
         authenticate: true
     },
     {
+        prefix: true,
+        path: '/api/mcp',
+        target: `http://${modules.mcpServer}`,
+        authenticate: true
+    },
+    {
         prefix: false,
         path: '/privacy-policy',
         target: `http://${modules.gui}/resource/privacy-policy.html`,
@@ -189,6 +195,10 @@ const webSocketEndpoints = [
         module: 'user-assets',
         target: `ws://${modules.userAssets}/ws`,
         sendGoogleAccessToken: true
+    },
+    {
+        module: 'mcp-server',
+        target: `ws://${modules.mcpServer}/ws`
     }
 ]
 

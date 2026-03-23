@@ -1,0 +1,37 @@
+services:
+  mcp-server:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
+    build:
+      context: ../..
+      dockerfile: ./modules/mcp-server/Dockerfile
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/mcp-server:${SEPAL_VERSION:-latest}"
+    container_name: mcp-server
+    init: true
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      SEPAL_ENDPOINT: "http://sepal"
+      GEE_ENDPOINT: "http://gee"
+      LLM_PROVIDER: "${LLM_PROVIDER:-claude}"
+      LLM_API_KEY: "${LLM_API_KEY:-}"
+      LLM_MODEL: "${LLM_MODEL:-}"
+      LLM_BASE_URL: "${LLM_BASE_URL:-}"
+    networks:
+      - sepal
+    extra_hosts:
+      - 'host.docker.internal:${SEPAL_IP:-host-gateway}' # expose docker host ip address to container
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    restart: always
+    ulimits:
+      core: 0
+
+networks:
+  sepal:
+    external: true

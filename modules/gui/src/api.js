@@ -3,6 +3,7 @@ import {setApi} from '~/apiRegistry'
 import appLauncher from './api/appLauncher'
 import apps from './api/apps'
 import ceoGateway from './api/ceo'
+import chat from './api/chat'
 import gee from './api/gee'
 import google from './api/google'
 import map from './api/map'
@@ -19,6 +20,7 @@ import wmts from './api/wmts'
 export const initApi = () =>
     setApi({
         apps,
+        chat,
         gee,
         google,
         map,

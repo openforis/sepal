@@ -1,0 +1,71 @@
+.message {
+    display: flex;
+    padding: 0.25rem 0.75rem;
+}
+
+.message.user {
+    justify-content: flex-end;
+}
+
+.message.assistant {
+    justify-content: flex-start;
+}
+
+.bubble {
+    max-width: 85%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.user .bubble {
+    background-color: hsla(210, 60%, 50%, 0.3);
+    border-bottom-right-radius: 0.2rem;
+    color: hsl(0, 0%, 90%);
+}
+
+.assistant .bubble {
+    background-color: hsla(0, 0%, 100%, 0.08);
+    border-bottom-left-radius: 0.2rem;
+    color: hsl(0, 0%, 85%);
+}
+
+.text {
+    white-space: pre-wrap;
+}
+
+.thinking {
+    display: flex;
+    gap: 0.3rem;
+    padding: 0.2rem 0;
+}
+
+.thinking span {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background-color: hsl(0, 0%, 55%);
+    animation: bounce 1.2s infinite ease-in-out;
+}
+
+.thinking span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.thinking span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+@keyframes bounce {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    30% {
+        transform: translateY(-0.35rem);
+        opacity: 1;
+    }
+}

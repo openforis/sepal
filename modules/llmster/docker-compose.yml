@@ -1,0 +1,33 @@
+services:
+  llmster:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/llmster:${SEPAL_VERSION:-latest}"
+    container_name: llmster
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      LMS_API_KEY: "${LMS_API_KEY:-}"
+    networks:
+      - sepal
+    extra_hosts:
+      - 'host.docker.internal:${SEPAL_IP:-host-gateway}' # expose docker host ip address to container
+    volumes:
+      - llmster:/root/.lmstudio
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "1234"]
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    restart: always
+    ulimits:
+      core: 0
+
+networks:
+  sepal:
+    external: true
+
+volumes:
+  llmster:

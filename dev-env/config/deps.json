@@ -106,9 +106,25 @@
             "logger"
         ]
     },
+    "llmster": {
+        "build": {},
+        "run": []
+    },
     "logger": {
         "build": {},
         "run": []
+    },
+    "mcp-server": {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger",
+            "gateway",
+            "sepal-server",
+            "gee"
+        ]
     },
     "mysql": {
         "build": {},

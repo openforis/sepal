@@ -1,0 +1,36 @@
+import PropTypes from 'prop-types'
+import React, {useEffect, useRef} from 'react'
+
+import {ChatMessage, ThinkingIndicator} from './chatMessage'
+import styles from './chatMessages.module.css'
+
+export const ChatMessages = ({messages, thinking}) => {
+    const endRef = useRef(null)
+
+    useEffect(() => {
+        endRef.current?.scrollIntoView({behavior: 'smooth'})
+    }, [messages, thinking])
+
+    return (
+        <div className={styles.messages}>
+            {messages.length === 0 && !thinking
+                ? <div className={styles.empty}>Send a message to start chatting about SEPAL recipes.</div>
+                : messages.map((msg, i) => (
+                    <ChatMessage key={i} role={msg.role} content={msg.content}/>
+                ))
+            }
+            {thinking && <ThinkingIndicator/>}
+            <div ref={endRef}/>
+        </div>
+    )
+}
+
+ChatMessages.propTypes = {
+    messages: PropTypes.arrayOf(
+        PropTypes.shape({
+            content: PropTypes.string.isRequired,
+            role: PropTypes.string.isRequired
+        })
+    ).isRequired,
+    thinking: PropTypes.bool
+}

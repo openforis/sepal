@@ -1,0 +1,36 @@
+.inputContainer {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid hsla(0, 0%, 100%, 0.1);
+    background-color: hsla(0, 0%, 0%, 0.2);
+}
+
+.textarea {
+    flex: 1;
+    resize: none;
+    border: 1px solid hsla(0, 0%, 100%, 0.15);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    line-height: 1.4;
+    color: hsl(0, 0%, 90%);
+    background-color: hsla(0, 0%, 100%, 0.05);
+    outline: none;
+    overflow-y: auto;
+    max-height: 100px;
+}
+
+.textarea:focus {
+    border-color: hsla(210, 60%, 50%, 0.5);
+}
+
+.textarea::placeholder {
+    color: hsl(0, 0%, 45%);
+}
+
+.textarea:disabled {
+    opacity: 0.5;
+}

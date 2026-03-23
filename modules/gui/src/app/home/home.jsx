@@ -19,6 +19,7 @@ import {VersionCheck} from '~/widget/versionCheck'
 import {WebSocketConnection} from '~/widget/webSocketConnection'
 
 import {Body} from './body/body'
+import {ChatPanel} from './body/chat/chatPanel'
 import {Footer} from './footer/footer'
 import styles from './home.module.css'
 import {Menu} from './menu/menu'
@@ -124,15 +125,29 @@ const updateTasks$ = () =>
 class _Home extends React.Component {
     constructor(props) {
         super(props)
+        this.state = {
+            chatOpen: false
+        }
         const {stream} = props
         const errorHandler = () => Notifications.error({message: msg('home.connectivityError'), group: true})
         stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_TASKS', updateTasks$(), null, errorHandler)
+        this.toggleChat = this.toggleChat.bind(this)
+        this.closeChat = this.closeChat.bind(this)
+    }
+
+    toggleChat() {
+        this.setState(prev => ({chatOpen: !prev.chatOpen}))
+    }
+
+    closeChat() {
+        this.setState({chatOpen: false})
     }
 
     render() {
         const {floatingMenu, floatingFooter} = this.props
+        const {chatOpen} = this.state
         return (
             <ActivationContext id='root'>
                 <div className={[
@@ -143,8 +158,9 @@ class _Home extends React.Component {
                     <Menu className={styles.menu}/>
                     <div className={styles.main}>
                         <Body className={styles.body}/>
-                        <Footer className={styles.footer}/>
+                        <Footer className={styles.footer} chatOpen={chatOpen} onChatToggle={this.toggleChat}/>
                     </div>
+                    <ChatPanel isOpen={chatOpen} onClose={this.closeChat}/>
                     <PortalContainer/>
                     <WebSocketConnection/>
                     <User/>

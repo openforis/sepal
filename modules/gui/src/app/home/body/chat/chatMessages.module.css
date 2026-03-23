@@ -1,0 +1,19 @@
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: hsl(0, 0%, 50%);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 2rem;
+}

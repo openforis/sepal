@@ -5,6 +5,7 @@
   "email": "email",
   "gee": "gee",
   "gui": "gui",
+  "mcpServer": "mcp-server",
   "sandbox": "sepal:9191",
   "sepal": "sepal",
   "sysMonitor": "sys-monitor",

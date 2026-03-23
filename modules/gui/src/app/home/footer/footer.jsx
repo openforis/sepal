@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types'
+
 import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -8,12 +10,13 @@ import {ButtonGroup} from '~/widget/buttonGroup'
 import {Layout} from '~/widget/layout'
 import {WebSocketConnectionIndicator} from '~/widget/webSocketIndicator'
 
+import {ChatButton} from '../body/chat/chatButton'
 import {UsageButton} from '../user/usage'
 import {UserDetailsButton} from '../user/userDetails'
 import {UserMessagesButton} from '../user/userMessages'
 import styles from './footer.module.css'
 
-export const Footer = ({className}) => {
+export const Footer = ({className, chatOpen, onChatToggle}) => {
     return (
         <div className={className}>
             <div className={styles.footer}>
@@ -24,6 +27,7 @@ export const Footer = ({className}) => {
                 <div>
                     <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
                         <WebSocketConnectionIndicator/>
+                        <ChatButton isOpen={chatOpen} onClick={onChatToggle}/>
                         <UserMessagesButton/>
                         <UsageButton/>
                         <UserDetailsButton/>
@@ -35,7 +39,11 @@ export const Footer = ({className}) => {
     )
 }
 
-Footer.propTypes = {}
+Footer.propTypes = {
+    chatOpen: PropTypes.bool,
+    className: PropTypes.string,
+    onChatToggle: PropTypes.func
+}
 
 const _Logout = ({stream}) => {
     const logout = () => stream('LOGOUT', logout$())
