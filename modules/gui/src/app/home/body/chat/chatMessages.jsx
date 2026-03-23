@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import React, {useEffect, useRef} from 'react'
+import {useEffect, useRef} from 'react'
 
 import {ChatMessage, ThinkingIndicator} from './chatMessage'
 import styles from './chatMessages.module.css'
