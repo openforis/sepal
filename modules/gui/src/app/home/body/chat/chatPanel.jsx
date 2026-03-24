@@ -12,6 +12,7 @@ import {
 } from '~/app/home/body/process/recipe'
 import {getLogger} from '~/log'
 import {select} from '~/store'
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 
@@ -43,38 +44,24 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
                 if (msg.ready !== undefined) {
                     setIsConnected(msg.ready)
                 } else if (msg.data) {
-                    const {type, text, status, action, recipeId} = msg.data
-                    if (type === 'chunk') {
-                        setIsThinking(false)
-                        if (!streamingRef.current) {
-                            streamingRef.current = true
-                            setMessages(prev => [...prev, {role: 'assistant', content: text, streaming: true}])
-                        } else {
-                            setMessages(prev => {
-                                const updated = [...prev]
-                                const last = updated[updated.length - 1]
-                                if (last && last.streaming) {
-                                    updated[updated.length - 1] = {...last, content: last.content + text}
-                                }
-                                return updated
-                            })
-                        }
-                    } else if (type === 'chunk_end') {
-                        streamingRef.current = false
-                        setMessages(prev => {
-                            const updated = [...prev]
-                            const last = updated[updated.length - 1]
-                            if (last && last.streaming) {
-                                updated[updated.length - 1] = {...last, streaming: false}
-                            }
-                            return updated
-                        })
-                    } else if (type === 'response') {
-                        streamingRef.current = false
+                    const {type, text, complete, action, recipeId} = msg.data
+                    if (type === 'chat-response') {
                         setIsThinking(false)
                         if (text) {
-                            setMessages(prev => [...prev, {role: 'assistant', content: text}])
-                        } else {
+                            if (!streamingRef.current) {
+                                streamingRef.current = true
+                                setMessages(prev => [...prev, {role: 'assistant', content: text, streaming: !complete}])
+                            } else {
+                                setMessages(prev => {
+                                    const updated = [...prev]
+                                    const last = updated[updated.length - 1]
+                                    if (last && last.streaming) {
+                                        updated[updated.length - 1] = {...last, content: last.content + text, streaming: !complete}
+                                    }
+                                    return updated
+                                })
+                            }
+                        } else if (complete) {
                             setMessages(prev => {
                                 const updated = [...prev]
                                 const last = updated[updated.length - 1]
@@ -84,7 +71,8 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
                                 return updated
                             })
                         }
-                        if (status === 'complete') {
+                        if (complete) {
+                            streamingRef.current = false
                             setIsLoading(false)
                         }
                     } else if (type === 'status') {
@@ -199,14 +187,14 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
     return (
         <div className={[isSplit ? styles.split : styles.panel, className].join(' ')}>
             <div className={styles.header}>
-                <span className={styles.title}>Chat</span>
+                <span className={styles.title}>{msg('home.sections.chat.title')}</span>
                 <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
                     <Button
                         chromeless
                         shape='circle'
                         size='small'
                         icon={isSplit ? 'arrow-right' : 'arrow-left'}
-                        tooltip={isSplit ? 'Overlay' : 'Split'}
+                        tooltip={msg(isSplit ? 'home.sections.chat.overlay' : 'home.sections.chat.split')}
                         tooltipPlacement='bottom'
                         onClick={onToggleMode}
                     />
@@ -215,7 +203,7 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
                         shape='circle'
                         size='small'
                         icon='trash'
-                        tooltip='Clear conversation'
+                        tooltip={msg('home.sections.chat.clear')}
                         tooltipPlacement='bottom'
                         disabled={messages.length === 0}
                         onClick={handleClear}
@@ -225,7 +213,7 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
                         shape='circle'
                         size='small'
                         icon='times'
-                        tooltip='Close'
+                        tooltip={msg('home.sections.chat.close')}
                         tooltipPlacement='bottom'
                         onClick={onClose}
                     />
@@ -234,7 +222,7 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
             <ChatMessages messages={messages} thinking={isThinking}/>
             <ChatInput onSend={handleSend} disabled={isLoading || !isConnected}/>
             {!isConnected && (
-                <div className={styles.disconnected}>Connecting...</div>
+                <div className={styles.disconnected}>{msg('home.sections.chat.connecting')}</div>
             )}
         </div>
     )

@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import {useCallback, useEffect, useRef, useState} from 'react'
 
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 
 import styles from './chatInput.module.css'
@@ -48,7 +49,7 @@ export const ChatInput = ({onSend, disabled}) => {
                 value={text}
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
-                placeholder='Type a message...'
+                placeholder={msg('home.sections.chat.placeholder')}
                 disabled={disabled}
                 rows={1}
             />
