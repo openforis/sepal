@@ -155,7 +155,7 @@ const createOrchestrator = ({out$, config, registry}) => {
             log.warn(`No session for ${clientId}:${subscriptionId}`)
             send({
                 username, clientId, subscriptionId,
-                data: {type: 'response', text: 'Session not found. Please close and reopen the chat.', status: 'complete'}
+                data: {type: 'chat-response', text: 'Session not found. Please close and reopen the chat.', complete: true}
             })
             return
         }
@@ -163,7 +163,7 @@ const createOrchestrator = ({out$, config, registry}) => {
         if (isRateLimited(username, config.rateLimit)) {
             send({
                 username, clientId, subscriptionId,
-                data: {type: 'response', text: 'You are sending messages too quickly. Please wait a moment.', status: 'complete'}
+                data: {type: 'chat-response', text: 'You are sending messages too quickly. Please wait a moment.', complete: true}
             })
             return
         }
@@ -172,7 +172,7 @@ const createOrchestrator = ({out$, config, registry}) => {
         if (!provider) {
             send({
                 username, clientId, subscriptionId,
-                data: {type: 'response', text: `Echo: ${text}`, status: 'complete'}
+                data: {type: 'chat-response', text: `Echo: ${text}`, complete: true}
             })
             return
         }
@@ -193,7 +193,7 @@ const createOrchestrator = ({out$, config, registry}) => {
 
                 const chunkBuffer = createChunkBuffer(text => send({
                     username, clientId, subscriptionId,
-                    data: {type: 'chunk', text}
+                    data: {type: 'chat-response', text}
                 }))
 
                 const result = await provider.stream({
@@ -206,10 +206,6 @@ const createOrchestrator = ({out$, config, registry}) => {
                 chunkBuffer.end()
 
                 if (result.toolCalls && result.toolCalls.length > 0) {
-                    send({
-                        username, clientId, subscriptionId,
-                        data: {type: 'chunk_end'}
-                    })
                     session.messages.push({
                         role: 'assistant',
                         content: result.text,
@@ -228,7 +224,7 @@ const createOrchestrator = ({out$, config, registry}) => {
                     session.messages.push({role: 'assistant', content: result.text})
                     send({
                         username, clientId, subscriptionId,
-                        data: {type: 'response', status: 'complete'}
+                        data: {type: 'chat-response', complete: true}
                     })
                     done = true
                 }
@@ -238,7 +234,7 @@ const createOrchestrator = ({out$, config, registry}) => {
                 const msg = 'I reached the maximum number of tool call rounds. Here is what I have so far.'
                 send({
                     username, clientId, subscriptionId,
-                    data: {type: 'response', text: msg, status: 'complete'}
+                    data: {type: 'chat-response', text: msg, complete: true}
                 })
             }
         } catch (error) {
@@ -248,7 +244,7 @@ const createOrchestrator = ({out$, config, registry}) => {
                     await delay(RETRY_DELAY_MS)
                     const retryChunkBuffer = createChunkBuffer(text => send({
                         username, clientId, subscriptionId,
-                        data: {type: 'chunk', text}
+                        data: {type: 'chat-response', text}
                     }))
                     const retryResult = await provider.stream({
                         messages: session.messages,
@@ -260,20 +256,20 @@ const createOrchestrator = ({out$, config, registry}) => {
                     session.messages.push({role: 'assistant', content: retryResult.text})
                     send({
                         username, clientId, subscriptionId,
-                        data: {type: 'response', status: 'complete'}
+                        data: {type: 'chat-response', complete: true}
                     })
                 } catch (retryError) {
                     log.error('LLM retry also failed:', retryError)
                     send({
                         username, clientId, subscriptionId,
-                        data: {type: 'response', text: 'The AI service is rate-limited. Please try again in a moment.', status: 'complete'}
+                        data: {type: 'chat-response', text: 'The AI service is rate-limited. Please try again in a moment.', complete: true}
                     })
                 }
             } else {
                 log.error('Orchestrator error:', error)
                 send({
                     username, clientId, subscriptionId,
-                    data: {type: 'response', text: 'An error occurred while processing your message. Please try again.', status: 'complete'}
+                    data: {type: 'chat-response', text: 'An error occurred while processing your message. Please try again.', complete: true}
                 })
             }
         }

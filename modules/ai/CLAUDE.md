@@ -24,7 +24,7 @@ npm run testWatch     # Jest watch mode
 Uses the gateway's subscription-based websocket routing. The browser subscribes to `ai` module, and messages flow as `{module, subscriptionId, data}`.
 
 - **Lifecycle events**: `subscriptionUp/Down`, `clientUp/Down`, `userUp/Down` — handled for session management
-- **Chat messages**: `{type: 'message', text}` from client → LLM processing → `{type: 'response', text, status}` back
+- **Chat messages**: `{type: 'message', text}` from client → LLM processing → `{type: 'chat-response', text, complete}` back (final chunk includes `complete: true`)
 - **GUI actions**: `{type: 'gui-action', action: 'open'|'reload'|'close', recipeId}` sent to client
 
 ### REST API
