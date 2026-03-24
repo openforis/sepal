@@ -4820,6 +4820,20 @@
         "running": ""
       }
     },
+    "duration": {
+      "label": ""
+    },
+    "filter": {
+      "search": {
+        "placeholder": ""
+      },
+      "status": {
+        "all": "",
+        "active": "",
+        "completed": "",
+        "failed": ""
+      }
+    },
     "none": "",
     "copyToClipboard": {
       "tooltip": "",
@@ -4832,6 +4846,7 @@
       "id": "",
       "status": "",
       "recipeName": "",
+      "origin": "",
       "recipeType": "",
       "recipeId": "",
       "creationTime": "",
@@ -4839,6 +4854,7 @@
       "duration": "",
       "description": "",
       "workspacePath": "",
+      "driveFolder": "",
       "filenamePrefix": "",
       "actualWorkspacePath": "",
       "section": {
