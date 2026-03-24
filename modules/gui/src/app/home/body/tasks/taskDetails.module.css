@@ -44,10 +44,27 @@
     flex: 1;
 }
 
-.statusError {
-    color: var(--error-color);
+.active {
+    color: var(--font-color);
+    text-transform: uppercase;
 }
 
-.statusSuccess {
+.pending {
+    color: var(--warning-color);
+    text-transform: uppercase;
+}
+
+.canceling {
+    color: var(--warning-color);
+    text-transform: uppercase;
+}
+
+.completed {
     color: var(--success-color);
+    text-transform: uppercase;
+}
+
+.failed {
+    color: var(--error-color);
+    text-transform: uppercase;
 }

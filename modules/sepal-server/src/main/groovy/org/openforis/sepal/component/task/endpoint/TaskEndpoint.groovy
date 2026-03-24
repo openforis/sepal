@@ -45,7 +45,11 @@ class TaskEndpoint {
                         recipeId: it.recipeId,
                         name: it.title,
                         status: it.state,
-                        statusDescription: it.statusDescription
+                        statusDescription: it.statusDescription,
+                        creationTime: it.creationTime,
+                        updateTime: it.updateTime,
+                        description: it.params?.description,
+                        taskInfo: it.params?.taskInfo
                     ]
                 }
                 send toJson(result)
