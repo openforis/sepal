@@ -32,10 +32,22 @@ RUN apt-get update && apt-get install -y \
     inetutils-ping \
     lsb-release \
     nano \
-    ncdu \
     unzip \
     sudo \
     zip
+
+# Install Java and Gradle
+
+ENV SDKMAN_DIR=/usr/local/lib/sdkman
+RUN curl -s https://get.sdkman.io | bash && \
+    source "${SDKMAN_DIR}/bin/sdkman-init.sh" && \
+    yes | sdk install java ${JAVA_VERSION} && \
+    sdk install gradle ${GRADLE_VERSION}
+RUN source "${SDKMAN_DIR}/bin/sdkman-init.sh" && \    
+    ln -s "$(which java)" /usr/local/bin/java && \
+    ln -s "$(which gradle)" /usr/local/bin/gradle && \
+    JAVA_HOME=$(sdk home java current) && \
+    sed -i 's/jdk.tls.disabledAlgorithms=.*/jdk.tls.disabledAlgorithms=SSLv3, RC4, DES, MD5withRSA, /' "$JAVA_HOME/conf/security/java.security"
 
 # Install docker-cli
 
@@ -61,27 +73,20 @@ RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesourc
 RUN apt-get update
 RUN apt-get install nodejs -y
 
-# Install global npm packages
-
-RUN npm install -g madge npm-check-updates wscat touch @anthropic-ai/claude-code
-
 # Add shell script to path
 
 ADD sepal.sh /usr/local/bin/sepal
 RUN chmod +x /usr/local/bin/sepal
 
-# Install Java and Gradle
+# Install additional packages
 
-ENV SDKMAN_DIR=/usr/local/lib/sdkman
-RUN curl -s https://get.sdkman.io | bash && \
-    source "${SDKMAN_DIR}/bin/sdkman-init.sh" && \
-    yes | sdk install java ${JAVA_VERSION} && \
-    sdk install gradle ${GRADLE_VERSION}
-RUN source "${SDKMAN_DIR}/bin/sdkman-init.sh" && \    
-    ln -s "$(which java)" /usr/local/bin/java && \
-    ln -s "$(which gradle)" /usr/local/bin/gradle && \
-    JAVA_HOME=$(sdk home java current) && \
-    sed -i 's/jdk.tls.disabledAlgorithms=.*/jdk.tls.disabledAlgorithms=SSLv3, RC4, DES, MD5withRSA, /' "$JAVA_HOME/conf/security/java.security"
+RUN apt-get update && apt-get install -y \
+    ncdu \
+    tmux
+
+# Install global npm packages
+
+RUN npm install -g madge npm-check-updates wscat touch @anthropic-ai/claude-code
 
 # Create sepal user
 

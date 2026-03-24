@@ -21,6 +21,9 @@ services:
       - ..:/home/sepal/sepal
       - ${SEPAL_CONFIG:-~/.sepal}:/etc/sepal/config
       - ~/.ssh:/home/sepal/.ssh:ro
+      - ~/.tmux.conf:/home/sepal/.tmux.conf
+      - ~/.claude:/home/sepal/.claude
+      - ~/.claude.json:/home/sepal/.claude.json
     networks:
       - sepal
     environment:
