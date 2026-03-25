@@ -38,7 +38,7 @@ class _InlineConfirmationButton extends React.Component {
     }
 
     renderButton() {
-        const {busy, chromeless, air, disabled, icon, iconType, label, shape, size, tooltip, tooltipPlacement, width} = this.props
+        const {busy, chromeless, air, disabled, icon, iconType, label, shape, size, tooltip, tooltipPlacement, width, noClickHold} = this.props
         const {showConfirmation} = this.state
         return (
             <Button
@@ -57,7 +57,7 @@ class _InlineConfirmationButton extends React.Component {
                 tooltipDisabled={showConfirmation}
                 tooltipPlacement={tooltipPlacement}
                 onClick={this.onClick}
-                onClickHold={this.onClickHold}
+                onClickHold={!noClickHold && this.onClickHold}
             />
         )
     }
@@ -165,6 +165,7 @@ InlineConfirmationButton.propTypes = {
     icon: PropTypes.any,
     iconType: PropTypes.any,
     label: PropTypes.any,
+    noClickHold: PropTypes.any,
     shape: PropTypes.any,
     size: PropTypes.any,
     skipConfirmation: PropTypes.any,

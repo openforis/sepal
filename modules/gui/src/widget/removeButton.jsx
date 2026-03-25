@@ -17,7 +17,7 @@ class _RemoveButton extends React.Component {
     }
 
     renderModalConfirmationButton() {
-        const {chromeless, air, icon, label, tooltip, tooltipPlacement, title, message, shape, size, onRemove, disabled, unsafe, children} = this.props
+        const {chromeless, air, icon, label, tooltip, tooltipPlacement, title, message, shape, size, onRemove, disabled, unsafe, noClickHold, children} = this.props
         return (
             <ModalConfirmationButton
                 chromeless={chromeless}
@@ -32,6 +32,7 @@ class _RemoveButton extends React.Component {
                 skipConfirmation={unsafe}
                 title={title}
                 message={message}
+                noClickHold={noClickHold}
                 onConfirm={onRemove}
             >
                 {children}
@@ -40,7 +41,7 @@ class _RemoveButton extends React.Component {
     }
 
     renderInlineConfirmationButton() {
-        const {chromeless, air, icon, label, confirmationLabel, tooltip, tooltipPlacement, shape, size, onRemove, disabled, unsafe} = this.props
+        const {chromeless, air, icon, label, confirmationLabel, tooltip, tooltipPlacement, shape, size, onRemove, disabled, unsafe, noClickHold} = this.props
         return (
             <InlineConfirmationButton
                 chromeless={chromeless}
@@ -54,6 +55,7 @@ class _RemoveButton extends React.Component {
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
                 skipConfirmation={unsafe}
+                noClickHold={noClickHold}
                 onConfirm={onRemove}
             />
         )
@@ -77,6 +79,7 @@ RemoveButton.propTypes = {
     confirmationLabel: PropTypes.any,
     disabled: PropTypes.any,
     label: PropTypes.any,
+    noClickHold: PropTypes.any,
     message: PropTypes.any,
     shape: PropTypes.any,
     size: PropTypes.any,
