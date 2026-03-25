@@ -83,11 +83,11 @@ const Clients = () => {
         )
     }
 
-    const sendByUsername = ({module, username}, message) => {
+    const sendByUsername = ({username, excludeClientId}, message) => {
         Object.entries(clients)
-            .filter(([_, {username: currentUsername}]) => currentUsername === username)
+            .filter(([clientId, {username: currentUsername}]) => currentUsername === username && clientId !== excludeClientId)
             .map(([clientId]) => clientId)
-            .forEach(clientId => send(clientId, {module, ...message}))
+            .forEach(clientId => send(clientId, message))
     }
 
     const sendEventToUser = (username, type, data) => {

@@ -26,7 +26,7 @@ const initializeUplink = ({servers, clients, event$}) => {
             log.info(`${moduleTag(module)} connected`)
             event$.next({type: MODULE_UP, data: {module}})
         } else if (data) {
-            const {username, clientId, subscriptionId} = other
+            const {username, clientId, subscriptionId, excludeClientId} = other
             if (clientId) {
                 if (log.isTrace()) {
                     log.trace(`Forwarding message to ${clientTag(username, clientId)}:`, data)
@@ -35,7 +35,7 @@ const initializeUplink = ({servers, clients, event$}) => {
                 }
                 clients.send(clientId, {module, subscriptionId, data})
             } else {
-                clients.sendByUsername({module, username}, {module, data})
+                clients.sendByUsername({username, excludeClientId}, {module, data})
             }
         } else {
             log.warn(`Received unexpected message from ${moduleTag(module)}:`, msg)
