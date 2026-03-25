@@ -93,7 +93,16 @@ const createConversationStore = ({redisHost, ttlMs}) => {
         await redis.expire(msgk, ttlSeconds)
     }
 
-    return {createConversation, listConversations, loadConversation, deleteConversation, appendMessage, updateTitle, touchConversation}
+    const deleteAllConversations = async ({username}) => {
+        const ids = await redis.zrevrange(indexKey(username), 0, -1)
+        for (const id of ids) {
+            await redis.del(metaKey(username, id), messagesKey(username, id))
+        }
+        await redis.del(indexKey(username))
+        log.info(`All conversations deleted (${ids.length}) for ${username}`)
+    }
+
+    return {createConversation, listConversations, loadConversation, deleteConversation, deleteAllConversations, appendMessage, updateTitle, touchConversation}
 }
 
 module.exports = {createConversationStore}

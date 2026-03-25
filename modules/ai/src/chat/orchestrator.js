@@ -128,18 +128,18 @@ const createOrchestrator = ({out$, config, registry, conversationStore}) => {
                 const validationError = validateParams(tc.name, tc.input, tool.parameters)
                 if (validationError) {
                     results.push({
-                        toolCallId: tc.id,
+                        toolCallId: tc.id, name: tc.name,
                         result: {success: false, error: {code: 'VALIDATION_ERROR', message: `Invalid parameters: ${validationError}`}}
                     })
                 } else {
                     try {
                         log.debug(`Executing tool: ${tc.name}`)
                         const result = await tool.handler({username, params: tc.input || {}, send: sendFn, session})
-                        results.push({toolCallId: tc.id, result})
+                        results.push({toolCallId: tc.id, name: tc.name, result})
                     } catch (error) {
                         log.error(`Tool ${tc.name} error:`, error)
                         results.push({
-                            toolCallId: tc.id,
+                            toolCallId: tc.id, name: tc.name,
                             result: {success: false, error: {code: 'TOOL_ERROR', message: error.message}}
                         })
                     }
@@ -147,7 +147,7 @@ const createOrchestrator = ({out$, config, registry, conversationStore}) => {
             } else {
                 log.warn(`Unknown tool: ${tc.name}`)
                 results.push({
-                    toolCallId: tc.id,
+                    toolCallId: tc.id, name: tc.name,
                     result: {success: false, error: {code: 'UNKNOWN_TOOL', message: `Unknown tool: ${tc.name}`}}
                 })
             }
@@ -264,6 +264,11 @@ const createOrchestrator = ({out$, config, registry, conversationStore}) => {
                     }
                     messages.push(assistantMsg)
                     await persistMessage({username, conversationId, message: assistantMsg})
+
+                    send({
+                        username, clientId, subscriptionId,
+                        data: {type: 'tool-use', conversationId, tools: result.toolCalls.map(tc => tc.name)}
+                    })
 
                     const toolResults = await executeToolCalls({
                         toolCalls: result.toolCalls,
@@ -427,6 +432,29 @@ const createOrchestrator = ({out$, config, registry, conversationStore}) => {
         }
     }
 
+    const deleteAllConversations = async ({username, clientId, subscriptionId}) => {
+        if (!conversationStore) {
+            return
+        }
+        const session = sessions.get({clientId, subscriptionId})
+        try {
+            // Clear all ephemeral conversations for this user
+            for (const [convId] of ephemeralConversations) {
+                ephemeralConversations.delete(convId)
+            }
+            await conversationStore.deleteAllConversations({username})
+            if (session) {
+                session.conversationId = null
+                session.messages = []
+                session.workflow = null
+            }
+            send({username, clientId, subscriptionId, data: {type: 'conversations', conversations: []}})
+        } catch (error) {
+            log.error('Failed to delete all conversations:', error)
+            await listConversations({username, clientId, subscriptionId})
+        }
+    }
+
     const createSession = async ({username, clientId, subscriptionId}) => {
         sessions.create({username, clientId, subscriptionId})
         if (conversationStore) {
@@ -451,7 +479,7 @@ const createOrchestrator = ({out$, config, registry, conversationStore}) => {
         sessions.clear()
     }
 
-    return {createSession, removeSession, removeClientSessions, listConversations, createConversation, selectConversation, deleteConversation, handleMessage, shutdown}
+    return {createSession, removeSession, removeClientSessions, listConversations, createConversation, selectConversation, deleteConversation, deleteAllConversations, handleMessage, shutdown}
 }
 
 module.exports = {createOrchestrator}

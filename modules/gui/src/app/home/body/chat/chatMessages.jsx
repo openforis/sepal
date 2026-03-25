@@ -17,8 +17,8 @@ export const ChatMessages = ({messages, thinking}) => {
         <div className={styles.messages}>
             {messages.length === 0 && !thinking
                 ? <div className={styles.empty}>{msg('home.sections.chat.empty')}</div>
-                : messages.map((msg, i) => (
-                    <ChatMessage key={i} role={msg.role} content={msg.content}/>
+                : messages.map((m, i) => (
+                    <ChatMessage key={i} role={m.role} content={m.content} tools={m.tools}/>
                 ))
             }
             {thinking && <ThinkingIndicator/>}
@@ -30,7 +30,6 @@ export const ChatMessages = ({messages, thinking}) => {
 ChatMessages.propTypes = {
     messages: PropTypes.arrayOf(
         PropTypes.shape({
-            content: PropTypes.string.isRequired,
             role: PropTypes.string.isRequired
         })
     ).isRequired,

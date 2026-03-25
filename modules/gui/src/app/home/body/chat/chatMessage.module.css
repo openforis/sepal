@@ -57,6 +57,21 @@
     animation-delay: 0.3s;
 }
 
+.toolList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding-top: 0.25rem;
+}
+
+.toolName {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    padding: 0.1rem 0.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid currentColor;
+}
+
 @keyframes bounce {
     0%, 60%, 100% {
         transform: translateY(0);

@@ -57,6 +57,9 @@ const createWsHandler = ({config, registry, conversationStore}) => {
                     } else if (type === 'delete-conversation') {
                         orchestrator.deleteConversation({username, clientId, subscriptionId, conversationId})
                             .catch(error => log.error('Delete conversation error:', error))
+                    } else if (type === 'delete-all-conversations') {
+                        orchestrator.deleteAllConversations({username, clientId, subscriptionId})
+                            .catch(error => log.error('Delete all conversations error:', error))
                     } else {
                         log.warn('Unsupported message type:', type)
                     }
