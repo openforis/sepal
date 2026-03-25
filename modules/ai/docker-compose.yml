@@ -1,4 +1,23 @@
 services:
+  ai-redis:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
+    image: "redis:6"
+    container_name: ai-redis
+    volumes:
+      - "${SEPAL_DATA_DIR}/ai-redis:/data"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sepal
+    restart: always
+
   ai:
     extends:
       file: ../docker-compose.logger.yml
@@ -9,6 +28,9 @@ services:
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/ai:${SEPAL_VERSION:-latest}"
     container_name: ai
     init: true
+    depends_on:
+      ai-redis:
+        condition: service_healthy
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_ENDPOINT: "http://sepal"
@@ -17,6 +39,8 @@ services:
       LLM_API_KEY: "${LLM_API_KEY:-}"
       LLM_MODEL: "${LLM_MODEL:-}"
       LLM_BASE_URL: "${LLM_BASE_URL:-}"
+      REDIS_HOST: "ai-redis"
+      CONVERSATION_TTL_DAYS: "${CONVERSATION_TTL_DAYS:-30}"
     networks:
       - sepal
     extra_hosts:

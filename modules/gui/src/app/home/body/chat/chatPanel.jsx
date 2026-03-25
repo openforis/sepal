@@ -19,6 +19,7 @@ import {ButtonGroup} from '~/widget/buttonGroup'
 import {ChatInput} from './chatInput'
 import {ChatMessages} from './chatMessages'
 import styles from './chatPanel.module.css'
+import {ConversationList} from './conversationList'
 
 const log = getLogger('chat')
 
@@ -27,15 +28,17 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
     const [isLoading, setIsLoading] = useState(false)
     const [isThinking, setIsThinking] = useState(false)
     const [isConnected, setIsConnected] = useState(false)
+    const [view, setView] = useState('list')
+    const [conversations, setConversations] = useState([])
+    const [activeConversationId, setActiveConversationId] = useState(null)
     const wsRef = useRef(null)
     const actionSubRef = useRef(null)
     const streamingRef = useRef(false)
+    const activeConversationIdRef = useRef(null)
+    const messagesRef = useRef(messages)
+    messagesRef.current = messages
 
     useEffect(() => {
-        if (!isOpen) {
-            return
-        }
-
         const {upstream$, downstream$} = api.chat.ws()
         wsRef.current = upstream$
 
@@ -44,7 +47,13 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
                 if (msg.ready !== undefined) {
                     setIsConnected(msg.ready)
                 } else if (msg.data) {
-                    const {type, text, complete, action, recipeId} = msg.data
+                    const {type, text, complete, action, recipeId, conversations: convList, conversationId: convId, messages: convMessages} = msg.data
+                    if (type === 'chat-response' || type === 'status') {
+                        // Ignore messages from a different conversation
+                        if (convId && convId !== activeConversationIdRef.current) {
+                            return
+                        }
+                    }
                     if (type === 'chat-response') {
                         setIsThinking(false)
                         if (text) {
@@ -80,6 +89,37 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
                         setIsLoading(true)
                     } else if (type === 'gui-action') {
                         handleGuiAction({action, recipeId})
+                    } else if (type === 'conversations') {
+                        setConversations(convList || [])
+                    } else if (type === 'conversation-created') {
+                        activeConversationIdRef.current = convId
+                        setActiveConversationId(convId)
+                        setMessages([])
+                        streamingRef.current = false
+                        setIsLoading(false)
+                        setIsThinking(false)
+                        setView('chat')
+                    } else if (type === 'conversation-loaded') {
+                        activeConversationIdRef.current = convId
+                        setActiveConversationId(convId)
+                        setMessages((convMessages || []).filter(m => m.role === 'user' || m.role === 'assistant'))
+                        streamingRef.current = false
+                        setIsLoading(false)
+                        setIsThinking(false)
+                        setView('chat')
+                    } else if (type === 'conversation-claimed') {
+                        if (convId && convId === activeConversationIdRef.current) {
+                            activeConversationIdRef.current = null
+                            setActiveConversationId(null)
+                            setMessages([])
+                            streamingRef.current = false
+                            setIsLoading(false)
+                            setIsThinking(false)
+                            setView('list')
+                            if (wsRef.current) {
+                                wsRef.current.next({type: 'list-conversations'})
+                            }
+                        }
                     }
                 }
             },
@@ -97,7 +137,7 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
                 actionSubRef.current = null
             }
         }
-    }, [isOpen])
+    }, [])
 
     const openExistingRecipe = useCallback(recipeId => {
         if (isRecipeOpen(recipeId)) {
@@ -163,64 +203,107 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
     }, [openExistingRecipe, reloadRecipe])
 
     const handleSend = useCallback(text => {
-        if (wsRef.current && isConnected) {
+        if (wsRef.current && isConnected && activeConversationId) {
             setMessages(prev => [...prev, {role: 'user', content: text}])
             setIsLoading(true)
             wsRef.current.next({type: 'message', text})
         }
+    }, [isConnected, activeConversationId])
+
+    const handleNewConversation = useCallback(() => {
+        if (wsRef.current && isConnected) {
+            wsRef.current.next({type: 'create-conversation'})
+        }
     }, [isConnected])
 
-    const handleClear = useCallback(() => {
-        streamingRef.current = false
-        setMessages([])
-        if (wsRef.current) {
-            wsRef.current.next({type: 'clear'})
+    const handleSelectConversation = useCallback(conversationId => {
+        if (wsRef.current && isConnected) {
+            wsRef.current.next({type: 'select-conversation', conversationId})
         }
-    }, [])
+    }, [isConnected])
 
-    if (!isOpen) {
-        return null
-    }
+    const handleDeleteConversation = useCallback(conversationId => {
+        if (wsRef.current && isConnected) {
+            wsRef.current.next({type: 'delete-conversation', conversationId})
+        }
+    }, [isConnected])
+
+    const handleToggleView = useCallback(() => {
+        setView(prev => {
+            const next = prev === 'chat' ? 'list' : 'chat'
+            if (next === 'list') {
+                // Discard empty ephemeral conversation when switching to list
+                if (messagesRef.current.length === 0) {
+                    activeConversationIdRef.current = null
+                    setActiveConversationId(null)
+                }
+                if (wsRef.current && isConnected) {
+                    wsRef.current.next({type: 'list-conversations'})
+                }
+            }
+            return next
+        })
+    }, [isConnected])
 
     const isSplit = mode === 'split'
+    const panelClass = [
+        isSplit ? styles.split : styles.panel,
+        !isOpen && styles.hidden,
+        className
+    ].filter(Boolean).join(' ')
 
     return (
-        <div className={[isSplit ? styles.split : styles.panel, className].join(' ')}>
+        <div className={panelClass}>
             <div className={styles.header}>
+                <Button
+                    chromeless
+                    shape='circle'
+                    icon={isSplit ? 'thumbtack-slash' : 'thumbtack'}
+                    tooltip={msg(isSplit ? 'home.sections.chat.floating' : 'home.sections.chat.sticky')}
+                    tooltipPlacement='bottom'
+                    onClick={onToggleMode}
+                />
                 <span className={styles.title}>{msg('home.sections.chat.title')}</span>
                 <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
                     <Button
-                        chromeless
+                        look='add'
                         shape='circle'
-                        size='small'
-                        icon={isSplit ? 'arrow-right' : 'arrow-left'}
-                        tooltip={msg(isSplit ? 'home.sections.chat.overlay' : 'home.sections.chat.split')}
+                        icon='plus'
+                        tooltip={msg('home.sections.chat.newConversation')}
                         tooltipPlacement='bottom'
-                        onClick={onToggleMode}
+                        disabled={!isConnected || (activeConversationId && messages.length === 0)}
+                        onClick={handleNewConversation}
                     />
                     <Button
                         chromeless
                         shape='circle'
-                        size='small'
-                        icon='trash'
-                        tooltip={msg('home.sections.chat.clear')}
+                        icon={view === 'chat' ? 'list' : 'comment'}
+                        tooltip={msg(view === 'chat' ? 'home.sections.chat.showConversations' : 'home.sections.chat.showChat')}
                         tooltipPlacement='bottom'
-                        disabled={messages.length === 0}
-                        onClick={handleClear}
+                        onClick={handleToggleView}
                     />
                     <Button
                         chromeless
                         shape='circle'
-                        size='small'
                         icon='times'
                         tooltip={msg('home.sections.chat.close')}
-                        tooltipPlacement='bottom'
+                        tooltipPlacement='bottomRight'
                         onClick={onClose}
                     />
                 </ButtonGroup>
             </div>
-            <ChatMessages messages={messages} thinking={isThinking}/>
-            <ChatInput onSend={handleSend} disabled={isLoading || !isConnected}/>
+            {view === 'list'
+                ? <ConversationList
+                    conversations={conversations}
+                    activeConversationId={activeConversationId}
+                    onSelect={handleSelectConversation}
+                    onRemove={handleDeleteConversation}
+                />
+                : <>
+                    <ChatMessages messages={messages} thinking={isThinking}/>
+                    <ChatInput key={activeConversationId} onSend={handleSend} disabled={isLoading || !isConnected || !activeConversationId}/>
+                </>
+            }
             {!isConnected && (
                 <div className={styles.disconnected}>{msg('home.sections.chat.connecting')}</div>
             )}

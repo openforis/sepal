@@ -13,6 +13,7 @@
         "@anthropic-ai/sdk": "^0.39.0",
         "ajv": "^8.17.1",
         "commander": "^14.0.3",
+        "ioredis": "^5.10.0",
         "lodash": "^4.17.23",
         "log4js": "^6.9.1",
         "openai": "^4.77.0",

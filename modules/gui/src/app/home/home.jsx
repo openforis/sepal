@@ -166,25 +166,15 @@ class _Home extends React.Component {
                     <Menu className={styles.menu}/>
                     <div className={styles.main}>
                         <Body className={styles.body}/>
-                        {chatSplit && (
-                            <ChatPanel
-                                className={styles.chat}
-                                isOpen
-                                mode={chatMode}
-                                onClose={this.closeChat}
-                                onToggleMode={this.toggleChatMode}
-                            />
-                        )}
                         <Footer className={styles.footer} chatOpen={chatOpen} onChatToggle={this.toggleChat}/>
                     </div>
-                    {!chatSplit && (
-                        <ChatPanel
-                            isOpen={chatOpen}
-                            mode={chatMode}
-                            onClose={this.closeChat}
-                            onToggleMode={this.toggleChatMode}
-                        />
-                    )}
+                    <ChatPanel
+                        className={chatSplit ? styles.chat : undefined}
+                        isOpen={chatOpen}
+                        mode={chatMode}
+                        onClose={this.closeChat}
+                        onToggleMode={this.toggleChatMode}
+                    />
                     <PortalContainer/>
                     <WebSocketConnection/>
                     <User/>

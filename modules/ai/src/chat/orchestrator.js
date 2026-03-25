@@ -1,6 +1,7 @@
 const {readFileSync} = require('fs')
 const {join} = require('path')
 const {Subject, bufferTime, filter} = require('rxjs')
+const {v4: uuid} = require('uuid')
 const Ajv = require('ajv')
 const log = require('#sepal/log').getLogger('orchestrator')
 const {SessionStore} = require('./session')
@@ -56,8 +57,9 @@ const createChunkBuffer = onFlush => {
     }
 }
 
-const createOrchestrator = ({out$, config, registry}) => {
+const createOrchestrator = ({out$, config, registry, conversationStore}) => {
     const sessions = new SessionStore({ttlMs: config.sessionTtlMs})
+    const ephemeralConversations = new Set() // IDs not yet persisted to Redis
     const userRateLimits = {} // username -> {timestamps: []}
     let provider = null
     let formattedTools = []
@@ -82,6 +84,10 @@ const createOrchestrator = ({out$, config, registry}) => {
 
     const send = ({username, clientId, subscriptionId, data}) => {
         out$.next({username, clientId, subscriptionId, data})
+    }
+
+    const broadcast = ({username, excludeClientId, data}) => {
+        out$.next({username, excludeClientId, data})
     }
 
     const isRateLimited = (username, rateLimit) => {
@@ -149,6 +155,16 @@ const createOrchestrator = ({out$, config, registry}) => {
         return results
     }
 
+    const persistMessage = async ({username, conversationId, message}) => {
+        if (conversationStore && conversationId) {
+            try {
+                await conversationStore.appendMessage({username, conversationId, message})
+            } catch (error) {
+                log.error('Failed to persist message:', error)
+            }
+        }
+    }
+
     const handleMessage = async ({username, clientId, subscriptionId, text}) => {
         const session = sessions.get({clientId, subscriptionId})
         if (!session) {
@@ -160,10 +176,25 @@ const createOrchestrator = ({out$, config, registry}) => {
             return
         }
 
+        if (!session.conversationId) {
+            send({
+                username, clientId, subscriptionId,
+                data: {type: 'chat-response', text: 'No conversation selected. Please create or select a conversation.', complete: true}
+            })
+            return
+        }
+
+        // Snapshot conversation state at message time — isolates this request
+        // from conversation switches that may happen during the async LLM loop.
+        // selectConversation reassigns session.messages to a new array, so the
+        // local reference remains stable for this request's lifetime.
+        const conversationId = session.conversationId
+        const messages = session.messages
+
         if (isRateLimited(username, config.rateLimit)) {
             send({
                 username, clientId, subscriptionId,
-                data: {type: 'chat-response', text: 'You are sending messages too quickly. Please wait a moment.', complete: true}
+                data: {type: 'chat-response', conversationId, text: 'You are sending messages too quickly. Please wait a moment.', complete: true}
             })
             return
         }
@@ -172,14 +203,34 @@ const createOrchestrator = ({out$, config, registry}) => {
         if (!provider) {
             send({
                 username, clientId, subscriptionId,
-                data: {type: 'chat-response', text: `Echo: ${text}`, complete: true}
+                data: {type: 'chat-response', conversationId, text: `Echo: ${text}`, complete: true}
             })
             return
         }
 
-        session.messages.push({role: 'user', content: text})
+        // Persist ephemeral conversation to Redis on first message
+        if (ephemeralConversations.has(conversationId) && conversationStore) {
+            ephemeralConversations.delete(conversationId)
+            await conversationStore.createConversation({username, id: conversationId})
+        }
 
-        send({username, clientId, subscriptionId, data: {type: 'status', status: 'thinking'}})
+        const userMessage = {role: 'user', content: text}
+        messages.push(userMessage)
+        await persistMessage({username, conversationId, message: userMessage})
+
+        // Auto-generate title from first user message
+        if (messages.filter(m => m.role === 'user').length === 1 && conversationStore) {
+            const title = text.length > 80 ? text.substring(0, 80) + '...' : text
+            try {
+                await conversationStore.updateTitle({username, conversationId, title})
+                const conversations = await conversationStore.listConversations({username})
+                send({username, clientId, subscriptionId, data: {type: 'conversations', conversations}})
+            } catch (error) {
+                log.error('Failed to update conversation title:', error)
+            }
+        }
+
+        send({username, clientId, subscriptionId, data: {type: 'status', conversationId, status: 'thinking'}})
 
         const systemPrompt = buildSystemPrompt({username, registry})
         const sendFn = data => send({username, clientId, subscriptionId, data})
@@ -193,11 +244,11 @@ const createOrchestrator = ({out$, config, registry}) => {
 
                 const chunkBuffer = createChunkBuffer(text => send({
                     username, clientId, subscriptionId,
-                    data: {type: 'chat-response', text}
+                    data: {type: 'chat-response', conversationId, text}
                 }))
 
                 const result = await provider.stream({
-                    messages: session.messages,
+                    messages,
                     tools: formattedTools,
                     systemPrompt,
                     onChunk: chunk => chunkBuffer.append(chunk)
@@ -206,11 +257,13 @@ const createOrchestrator = ({out$, config, registry}) => {
                 chunkBuffer.end()
 
                 if (result.toolCalls && result.toolCalls.length > 0) {
-                    session.messages.push({
+                    const assistantMsg = {
                         role: 'assistant',
                         content: result.text,
                         toolCalls: result.toolCalls
-                    })
+                    }
+                    messages.push(assistantMsg)
+                    await persistMessage({username, conversationId, message: assistantMsg})
 
                     const toolResults = await executeToolCalls({
                         toolCalls: result.toolCalls,
@@ -219,12 +272,16 @@ const createOrchestrator = ({out$, config, registry}) => {
                         sendFn
                     })
 
-                    session.messages.push({role: 'tool', toolResults})
+                    const toolMsg = {role: 'tool', toolResults}
+                    messages.push(toolMsg)
+                    await persistMessage({username, conversationId, message: toolMsg})
                 } else {
-                    session.messages.push({role: 'assistant', content: result.text})
+                    const assistantMsg = {role: 'assistant', content: result.text}
+                    messages.push(assistantMsg)
+                    await persistMessage({username, conversationId, message: assistantMsg})
                     send({
                         username, clientId, subscriptionId,
-                        data: {type: 'chat-response', complete: true}
+                        data: {type: 'chat-response', conversationId, complete: true}
                     })
                     done = true
                 }
@@ -234,7 +291,7 @@ const createOrchestrator = ({out$, config, registry}) => {
                 const msg = 'I reached the maximum number of tool call rounds. Here is what I have so far.'
                 send({
                     username, clientId, subscriptionId,
-                    data: {type: 'chat-response', text: msg, complete: true}
+                    data: {type: 'chat-response', conversationId, text: msg, complete: true}
                 })
             }
         } catch (error) {
@@ -244,52 +301,146 @@ const createOrchestrator = ({out$, config, registry}) => {
                     await delay(RETRY_DELAY_MS)
                     const retryChunkBuffer = createChunkBuffer(text => send({
                         username, clientId, subscriptionId,
-                        data: {type: 'chat-response', text}
+                        data: {type: 'chat-response', conversationId, text}
                     }))
                     const retryResult = await provider.stream({
-                        messages: session.messages,
+                        messages,
                         tools: formattedTools,
                         systemPrompt,
                         onChunk: chunk => retryChunkBuffer.append(chunk)
                     })
                     retryChunkBuffer.end()
-                    session.messages.push({role: 'assistant', content: retryResult.text})
+                    const assistantMsg = {role: 'assistant', content: retryResult.text}
+                    messages.push(assistantMsg)
+                    await persistMessage({username, conversationId, message: assistantMsg})
                     send({
                         username, clientId, subscriptionId,
-                        data: {type: 'chat-response', complete: true}
+                        data: {type: 'chat-response', conversationId, complete: true}
                     })
                 } catch (retryError) {
                     log.error('LLM retry also failed:', retryError)
                     send({
                         username, clientId, subscriptionId,
-                        data: {type: 'chat-response', text: 'The AI service is rate-limited. Please try again in a moment.', complete: true}
+                        data: {type: 'chat-response', conversationId, text: 'The AI service is rate-limited. Please try again in a moment.', complete: true}
                     })
                 }
             } else {
                 log.error('Orchestrator error:', error)
                 send({
                     username, clientId, subscriptionId,
-                    data: {type: 'chat-response', text: 'An error occurred while processing your message. Please try again.', complete: true}
+                    data: {type: 'chat-response', conversationId, text: 'An error occurred while processing your message. Please try again.', complete: true}
                 })
             }
         }
     }
 
-    const createSession = ({username, clientId, subscriptionId}) => {
+    const listConversations = async ({username, clientId, subscriptionId}) => {
+        if (!conversationStore) {
+            send({username, clientId, subscriptionId, data: {type: 'conversations', conversations: []}})
+            return
+        }
+        try {
+            const conversations = await conversationStore.listConversations({username})
+            send({username, clientId, subscriptionId, data: {type: 'conversations', conversations}})
+        } catch (error) {
+            log.error('Failed to list conversations:', error)
+            send({username, clientId, subscriptionId, data: {type: 'conversations', conversations: []}})
+        }
+    }
+
+    const createConversation = ({username, clientId, subscriptionId}) => {
+        const id = uuid()
+        const now = new Date().toISOString()
+        const session = sessions.get({clientId, subscriptionId})
+        if (session) {
+            // Discard previous ephemeral conversation if any
+            if (session.conversationId && ephemeralConversations.has(session.conversationId)) {
+                ephemeralConversations.delete(session.conversationId)
+            }
+            session.conversationId = id
+            session.messages = []
+            session.workflow = null
+        }
+        ephemeralConversations.add(id)
+        send({username, clientId, subscriptionId, data: {type: 'conversation-created', conversationId: id, title: '', createdAt: now, updatedAt: now}})
+        broadcast({username, excludeClientId: clientId, data: {type: 'conversation-claimed', conversationId: id}})
+    }
+
+    const selectConversation = async ({username, clientId, subscriptionId, conversationId}) => {
+        if (!conversationStore) {
+            return
+        }
+        try {
+            await conversationStore.touchConversation({username, conversationId})
+            const result = await conversationStore.loadConversation({username, conversationId})
+            if (!result) {
+                log.warn(`Conversation not found: ${conversationId}`)
+                const conversations = await conversationStore.listConversations({username})
+                send({username, clientId, subscriptionId, data: {type: 'conversations', conversations}})
+                return
+            }
+            const session = sessions.get({clientId, subscriptionId})
+            if (session) {
+                // Discard ephemeral conversation if switching away from it
+                if (session.conversationId && ephemeralConversations.has(session.conversationId)) {
+                    ephemeralConversations.delete(session.conversationId)
+                }
+                session.conversationId = conversationId
+                session.messages = result.messages
+                session.workflow = null
+            }
+            send({username, clientId, subscriptionId, data: {type: 'conversation-loaded', conversationId, messages: result.messages}})
+            broadcast({username, excludeClientId: clientId, data: {type: 'conversation-claimed', conversationId}})
+        } catch (error) {
+            log.error('Failed to select conversation:', error)
+            send({username, clientId, subscriptionId, data: {type: 'chat-response', text: 'Failed to load conversation. Please try again.', complete: true}})
+        }
+    }
+
+    const deleteConversation = async ({username, clientId, subscriptionId, conversationId}) => {
+        if (!conversationStore) {
+            return
+        }
+        const session = sessions.get({clientId, subscriptionId})
+        if (ephemeralConversations.has(conversationId)) {
+            // Not persisted — just discard from memory
+            ephemeralConversations.delete(conversationId)
+            if (session && session.conversationId === conversationId) {
+                session.conversationId = null
+                session.messages = []
+                session.workflow = null
+            }
+            return
+        }
+        try {
+            await conversationStore.deleteConversation({username, conversationId})
+            if (session && session.conversationId === conversationId) {
+                session.conversationId = null
+                session.messages = []
+                session.workflow = null
+            }
+            const conversations = await conversationStore.listConversations({username})
+            send({username, clientId, subscriptionId, data: {type: 'conversations', conversations}})
+        } catch (error) {
+            log.error('Failed to delete conversation:', error)
+            await listConversations({username, clientId, subscriptionId})
+        }
+    }
+
+    const createSession = async ({username, clientId, subscriptionId}) => {
         sessions.create({username, clientId, subscriptionId})
+        if (conversationStore) {
+            const conversations = await conversationStore.listConversations({username})
+            if (conversations.length === 0) {
+                createConversation({username, clientId, subscriptionId})
+            } else {
+                send({username, clientId, subscriptionId, data: {type: 'conversations', conversations}})
+            }
+        }
     }
 
     const removeSession = ({clientId, subscriptionId}) => {
         sessions.remove({clientId, subscriptionId})
-    }
-
-    const clearSession = ({clientId, subscriptionId}) => {
-        const session = sessions.get({clientId, subscriptionId})
-        if (session) {
-            session.messages = []
-            session.workflow = null
-            log.info(`Session cleared: ${clientId}:${subscriptionId}`)
-        }
     }
 
     const removeClientSessions = ({clientId}) => {
@@ -300,7 +451,7 @@ const createOrchestrator = ({out$, config, registry}) => {
         sessions.clear()
     }
 
-    return {createSession, removeSession, removeClientSessions, clearSession, handleMessage, shutdown}
+    return {createSession, removeSession, removeClientSessions, listConversations, createConversation, selectConversation, deleteConversation, handleMessage, shutdown}
 }
 
 module.exports = {createOrchestrator}

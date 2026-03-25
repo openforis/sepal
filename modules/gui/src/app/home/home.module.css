@@ -64,10 +64,16 @@
 }
 
 .chatSplit .main {
-    grid-template-columns: 1fr 400px;
-    grid-template-areas:
-        'body chat'
-        'footer footer';
+    width: calc(100% - 400px);
+}
+
+.chatSplit .chat {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 400px;
+    z-index: 1;
 }
 
 .menuContainer {
@@ -95,7 +101,6 @@
 }
 
 .chat {
-    grid-area: chat;
     pointer-events: all;
 }
 

@@ -22,7 +22,9 @@ then
     --llm-provider "$LLM_PROVIDER" \
     --llm-api-key "$LLM_API_KEY" \
     --llm-model "$LLM_MODEL" \
-    ${LLM_BASE_URL:+--llm-base-url "$LLM_BASE_URL"}
+    ${LLM_BASE_URL:+--llm-base-url "$LLM_BASE_URL"} \
+    ${REDIS_HOST:+--redis-host "$REDIS_HOST"} \
+    ${CONVERSATION_TTL_DAYS:+--conversation-ttl-days "$CONVERSATION_TTL_DAYS"}
 else
   echo "Starting node"
   exec node \
@@ -32,5 +34,7 @@ else
     --llm-provider "$LLM_PROVIDER" \
     --llm-api-key "$LLM_API_KEY" \
     --llm-model "$LLM_MODEL" \
-    ${LLM_BASE_URL:+--llm-base-url "$LLM_BASE_URL"}
+    ${LLM_BASE_URL:+--llm-base-url "$LLM_BASE_URL"} \
+    ${REDIS_HOST:+--redis-host "$REDIS_HOST"} \
+    ${CONVERSATION_TTL_DAYS:+--conversation-ttl-days "$CONVERSATION_TTL_DAYS"}
 fi

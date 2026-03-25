@@ -12,6 +12,7 @@ const {createIntrospectionTools} = require('./mcp/tools/introspectionTools')
 const {createGuiTools} = require('./mcp/tools/guiTools')
 const {createTemplateTools} = require('./mcp/tools/templateTools')
 const {createWorkflowTools} = require('./mcp/tools/workflowTools')
+const {createConversationStore} = require('./chat/conversationStore')
 const {createWsHandler} = require('./ws')
 const {createRoutes} = require('./routes')
 
@@ -74,8 +75,15 @@ const main = async () => {
     registry.registerTools(allTools)
     log.info(`Registered ${allTools.length} tools`)
 
+    // Initialize conversation store
+    const conversationStore = createConversationStore({
+        redisHost: config.redisHost,
+        ttlMs: config.conversationTtlMs
+    })
+    log.info('Conversation store initialized')
+
     // Create websocket handler
-    const wsHandler = createWsHandler({config, registry})
+    const wsHandler = createWsHandler({config, registry, conversationStore})
 
     // Create routes
     const {routes, wsRoutes} = createRoutes({wsHandler})

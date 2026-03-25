@@ -29,6 +29,12 @@ export const ChatInput = ({onSend, disabled}) => {
     }, [handleSend])
 
     useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.focus()
+        }
+    }, [])
+
+    useEffect(() => {
         if (!disabled && textareaRef.current) {
             textareaRef.current.focus()
         }

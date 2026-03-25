@@ -19,6 +19,8 @@ try {
         .option('--llm-api-key <value>', 'LLM API key')
         .option('--llm-model <value>', 'LLM model name')
         .option('--llm-base-url <value>', 'LLM base URL (for OpenAI-compatible providers, e.g. http://localhost:1234/v1)')
+        .option('--redis-host <value>', 'Redis host', 'ai-redis')
+        .option('--conversation-ttl-days <number>', 'Conversation TTL in days', parseInt, 30)
         .option('--rate-limit <number>', 'Max messages per minute per user', parseInt, 20)
         .option('--session-ttl-minutes <number>', 'Chat session TTL in minutes', parseInt, 30)
         .parse(process.argv)
@@ -30,6 +32,8 @@ const {
     port,
     sepalEndpoint,
     geeEndpoint,
+    redisHost,
+    conversationTtlDays,
     llmProvider,
     llmApiKey,
     llmModel,
@@ -44,6 +48,8 @@ module.exports = {
     port,
     sepalEndpoint,
     geeEndpoint,
+    redisHost,
+    conversationTtlMs: conversationTtlDays * 24 * 60 * 60 * 1000,
     llmProvider,
     llmApiKey,
     llmModel,

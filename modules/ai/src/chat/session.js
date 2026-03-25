@@ -19,6 +19,7 @@ class SessionStore {
             username,
             clientId,
             subscriptionId,
+            conversationId: null,
             messages: [],
             workflow: null,
             lastActivity: Date.now(),
