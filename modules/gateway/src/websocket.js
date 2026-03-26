@@ -18,32 +18,98 @@ module.exports = {initializeWebSocketServer}
 
 /* eslint-disable */
 
-const SERVER_CONTRACT = () => ({
-    onConnect: () => ({ready: true}),
-    onHeartBeat: ({hb}) => ({hb}),
-    onUserUp: {event: USER_UP, user},
-    onUserDown: {event: USER_DOWN, user},
-    onUserUpdate: {event: USER_UPDATED, user},
-    onClientUp: {event: CLIENT_UP, username, clientId},
-    onClientDown: {event: CLIENT_DOWN, username, clientId},
-    onSubscriptionUp: {event: SUBSCRIPTION_UP, username, clientId, subscriptionId},
-    onSubscriptionDown: {event: SUBSCRIPTION_DOWN, username, clientId, subscriptionId},
-    onClientMessage: {username, clientId, subscriptionId, data},
-    out: {username, data},
-    out: {clientId, subscriptionId, data}
+// *********************************
+// Description of websocket protocol 
+// *********************************
+
+// module <- MODULE PROTOCOL -> gateway <- INTERNAL PROTOCOL -> client <- SUBSCRIPTION PROTOCOL -> subscriber
+
+const USER = new Object
+const USERNAME = new String
+const CLIENT_ID = new String
+const HEARTBEAT = new Number
+const BUILD_NUMBER = new String
+const MODULE_NAME = new String
+const MODULE_STATE = new Boolean
+const SUBSCRIPTION_ID = new String
+const SUBSCRIPTION_STATE = new Boolean
+const READY_STATE = new Boolean
+const EVENT_TYPE = new String
+const DATA = new Object
+
+// module <-> gateway: implemented by backend modules
+
+const MODULE_PROTOCOL = () => ({
+    rx: [
+        // heartbeat request
+        {hb: HEARTBEAT},
+        // user up
+        {event: USER_UP, user: USER},
+        // user down
+        {event: USER_DOWN, user: USER},
+        // user updated
+        {event: USER_UPDATED, user: USER},
+        // client up
+        {event: CLIENT_UP, username: USERNAME, clientId: CLIENT_ID},
+        // client down
+        {event: CLIENT_DOWN, username: USERNAME, clientId: CLIENT_ID},
+        // subscription up
+        {event: SUBSCRIPTION_UP, username: USERNAME, clientId: CLIENT_ID, subscriptionId: SUBSCRIPTION_ID},
+        // subscription down
+        {event: SUBSCRIPTION_DOWN, username: USERNAME, clientId: CLIENT_ID, subscriptionId: SUBSCRIPTION_ID},
+        // message from client
+        {username: USERNAME, clientId: CLIENT_ID, subscriptionId: SUBSCRIPTION_ID, data: DATA},
+    ],
+    tx: [
+        // heartbeat echo response
+        {hb: HEARTBEAT},
+        // server ready
+        {ready: true},
+        // multicast message to all clients of a specific user
+        {username: USERNAME, data: DATA},
+        // multicast message to all clients of a specific user except a specific client
+        {username: USERNAME, excludeClientId: CLIENT_ID, data: DATA},
+        // unicast message to specific client
+        {clientId: CLIENT_ID, subscriptionId: SUBSCRIPTION_ID, data: DATA},
+    ]
 })
 
-const CLIENT_CONTRACT = () => ({
-    onHeartBeat: ({hb}) => ({hb}),
-    onEvent: ({event}) => ({event}),
-    onModuleState: {modules: {state: ['foo', 'bar']}},
-    onModuleStateUpdate: {modules: {update: {foo: false, baz: true}}},
-    onServerData: {subscriptionId, data},
-    out: {module, subscriptionId, online},
-    out: {module, subscriptionId, data}
+// gateway <-> client: implemented internally by ws.js and gateway
+
+const INTERNAL_PROTOCOL = () => ({
+    rx: [
+        // heartbeat request
+        {hb: HEARTBEAT},
+        // system event
+        {event: {type: EVENT_TYPE, data: DATA}},
+        // available modules
+        {modules: {state: [MODULE_NAME, ...etc]}},
+        // module availability update
+        {modules: {update: {MODULE_NAME: MODULE_STATE, ...etc}}},
+        // data from backend module to client
+        {module: MODULE_NAME, subscriptionId: SUBSCRIPTION_ID, data: DATA},
+    ],
+    tx: [
+        // heartbeat echo response
+        {hb: HEARTBEAT},
+        // client version
+        {version: {buildNumber: BUILD_NUMBER}},
+        // subscription/unsubscription to module
+        {module: MODULE_NAME, subscriptionId: SUBSCRIPTION_ID, subscribed: SUBSCRIPTION_STATE},
+        // data from client to backend module
+        {module: MODULE_NAME, subscriptionId: SUBSCRIPTION_ID, data: DATA},
+    ]
 })
 
-const FROM_USER_EVENT = () => ({
-    onUserUp: {event: USER_UP, user},
-    onUserDown: {event: USER_DOWN, user}
+// client <-> subscriptiion: implemented by subscribers
+
+const SUBSCRIPTION_PROTOCOL = () => ({
+    rx: [
+        // connection ready state
+        {ready: READY_STATE},
+        // data from backend module to subscription
+        {data: DATA},
+    ],
+    // data from subscription to backend module
+    tx: DATA,
 })
