@@ -56,9 +56,14 @@ const {upstream$, downstream$} = WebSocket(ENDPOINT, {
     }
 })
 
+const send = msg => {
+    log.debug('Client message tx:', msg)
+    upstream$.next(msg)
+}
+
 const handleHeartbeat = hb => {
     log.trace('Heartbeat received, echoing', hb)
-    upstream$.next({hb})
+    send({hb})
 }
 
 const handleEvent = event => {
@@ -101,21 +106,27 @@ const handleUpdate = update => {
     )
 }
 
-const handleMessage = ({modules: {state, update} = {}, module, subscriptionId, data, hb, event}) => {
-    if (hb) {
-        handleHeartbeat(hb)
-    } else if (event) {
-        handleEvent(event)
-    } else if (state) {
-        handleState(state)
-    } else if (update) {
-        handleUpdate(update)
-    } else if (module && data) {
-        if (subscriptionId) {
-            sendToSubscriber(subscriptionId, {data})
-        } else {
-            sendToModuleSubscribers(module, {data})
+const handleMessage = msg => {
+    log.debug('Client message rx:', msg)
+    try {
+        const {modules: {state, update} = {}, module, subscriptionId, data, hb, event} = msg
+        if (hb) {
+            handleHeartbeat(hb)
+        } else if (event) {
+            handleEvent(event)
+        } else if (state) {
+            handleState(state)
+        } else if (update) {
+            handleUpdate(update)
+        } else if (module && data) {
+            if (subscriptionId) {
+                sendToSubscriber(subscriptionId, {data})
+            } else {
+                sendToModuleSubscribers(module, {data})
+            }
         }
+    } catch (error) {
+        log.error('Unhandled client message rx:', msg, error)
     }
 }
 
@@ -166,27 +177,30 @@ export const moduleWebSocket$ = (module, notifyBackend = false) => {
     
     const subscriptionId = addSubscription(module, moduleDownstream$, notifyBackend)
 
-    moduleUpstream$.subscribe({
-        next: data => upstream$.next({module, subscriptionId, data})
+    moduleUpstream$.pipe(
+        tap(msg => log.debug(`Subscription ${subscriptionId} message tx:`, msg))
+    ).subscribe({
+        next: data => send({module, subscriptionId, data})
     })
 
     const close = () => {
         moduleUpstream$.complete()
         moduleDownstream$.complete()
         removeSubscription(subscriptionId)
-        upstream$.next({module, subscriptionId, unsubscribed: true})
+        send({module, subscriptionId, unsubscribed: true})
     }
 
     const ready = readyModules.has(module)
 
     const subscribe = ready =>
-        ready === true && upstream$.next({module, subscriptionId, subscribed: true})
+        ready === true && send({module, subscriptionId, subscribed: true})
 
     return {
         upstream$: moduleUpstream$.pipe(
             finalize(() => close())
         ),
         downstream$: concat(of({ready}), moduleDownstream$).pipe(
+            tap(msg => log.debug(`Subscription ${subscriptionId} message rx:`, msg)),
             tap(({ready}) => subscribe(ready)),
             finalize(() => close())
         )
