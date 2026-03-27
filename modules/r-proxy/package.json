@@ -10,11 +10,11 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bullmq": "^5.71.0",
+        "bullmq": "^5.71.1",
         "commander": "^14.0.3",
         "compare-versions": "^6.1.1",
         "http-proxy": "^1.18.1",
-        "ioredis": "^5.10.0",
+        "ioredis": "^5.10.1",
         "lodash": "^4.17.23",
         "log4js": "^6.9.1",
         "minimatch": "^10.2.4",
