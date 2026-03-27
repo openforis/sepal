@@ -113,7 +113,7 @@ const proxy = expressApp =>
                     proxyReq.path = proxyReq.path.replace(path, '')
                 },
                 proxyRes: (proxyRes, _req, _res) => {
-                    proxyRes.headers['Content-Security-Policy'] = `connect-src 'self' https://${sepalHost} wss://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://*.google.com https://*.planet.com https://registry.npmjs.org; frame-ancestors 'self' https://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://registry.npmjs.org`
+                    proxyRes.headers['Content-Security-Policy'] = `default-src 'self'; script-src 'self' https://*.googleapis.com https://apis.google.com https://*.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://*.googleapis.com https://*.google.com https://*.planet.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://${sepalHost} wss://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://*.google.com https://*.planet.com https://registry.npmjs.org; frame-src 'self' https://*.google.com; frame-ancestors 'self' https://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://registry.npmjs.org; form-action 'self'; object-src 'none'; base-uri 'self'; worker-src 'self' blob:; manifest-src 'self'`
                     proxyRes.headers['X-Content-Type-Options'] = 'nosniff'
                     proxyRes.headers['Strict-Transport-Security'] = 'max-age=16000000; includeSubDomains; preload'
                     proxyRes.headers['Referrer-Policy'] = 'no-referrer'
