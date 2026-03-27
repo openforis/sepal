@@ -117,6 +117,7 @@ const proxy = expressApp =>
                     proxyRes.headers['X-Content-Type-Options'] = 'nosniff'
                     proxyRes.headers['Strict-Transport-Security'] = 'max-age=16000000; includeSubDomains; preload'
                     proxyRes.headers['Referrer-Policy'] = 'no-referrer'
+                    proxyRes.headers['Permissions-Policy'] = 'camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()'
                 },
                 error: (err, req, res) => {
                     log.warn(`${urlTag(req.originalUrl)} Proxy error:`, err)
