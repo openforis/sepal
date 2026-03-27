@@ -21,6 +21,7 @@ export const getTaskInfo = ({recipe, destination, retrieveOptions}) => {
     
     return {
         recipeType: recipe.type,
+        projectId: recipe.projectId,
         destination,
         outputPath,
         sharing: retrieveOptions.sharing,

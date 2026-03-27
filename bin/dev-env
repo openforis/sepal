@@ -8,6 +8,13 @@ export USER_UID="$(id -u)"
 export USER_GID="$(id -g)"
 export DOCKER_GID="$(getent group docker | cut -d: -f3)"
 
+# Ensure mounted files and directories exists
+
+mkdir -p ~/.ssh
+touch ~/.tmux.conf
+mkdir -p ~/.claude
+touch ~/.claude.json
+
 exec 6>/dev/null
 
 function start() {

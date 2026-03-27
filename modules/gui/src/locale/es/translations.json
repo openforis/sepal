@@ -4442,6 +4442,7 @@
       "label": "",
       "tooltip": "",
       "noProjects": "",
+      "search.placeholder": "",
       "selected": "",
       "add": "Añadir"
     },
@@ -4819,6 +4820,20 @@
         "running": "Google Earth Engine está exportando"
       }
     },
+    "duration": {
+      "label": ""
+    },
+    "filter": {
+      "search": {
+        "placeholder": ""
+      },
+      "status": {
+        "all": "Todo",
+        "active": "Activo",
+        "completed": "",
+        "failed": ""
+      }
+    },
     "none": "No tiene tareas de fondo.",
     "copyToClipboard": {
       "tooltip": "Copiar al portapapeles",
@@ -4831,6 +4846,7 @@
       "id": "",
       "status": "",
       "recipeName": "",
+      "origin": "",
       "recipeType": "",
       "recipeId": "",
       "creationTime": "",
@@ -4838,6 +4854,7 @@
       "duration": "",
       "description": "Descripción",
       "workspacePath": "",
+      "driveFolder": "",
       "filenamePrefix": "",
       "actualWorkspacePath": "",
       "section": {
