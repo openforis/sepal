@@ -22,6 +22,49 @@
         - "LANG=en_US.utf-8"
         - "LC_ALL=en_US.utf-8"
 
+    - name: Install monit
+      yum:
+        name: 'monit'
+
+    - name: Stop monit
+      systemd:
+        name: monit
+        state: stopped
+        enabled: yes
+        masked: no
+
+    - name: Configure monit/1
+      copy:
+        src: "monit/monit.d/"
+        dest: "/etc/monit.d/"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: Configure monit/2
+      template:
+        src: "monit/config.template"
+        dest: "/etc/monit.d/config"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: Configure monit/3
+      copy:
+        src: "monit/check/"
+        dest: "/usr/local/bin/"
+        owner: "root"
+        group: "root"
+        mode: "0755"
+
+    - name: Configure monit/4
+      template:
+        src: "monit/pushover-notify.template"
+        dest: "/usr/local/bin/pushover-notify"
+        owner: "root"
+        group: "root"
+        mode: "0755"
+
     - file: path="/data/sepal/etc" state=directory
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
 
