@@ -2,8 +2,10 @@
     "port": 5000,
     "categories": {
         "config": "info",
+        "conversationHandler": "info",
         "http/server": "info",
         "main": "info",
+        "messageHandler": "info",
         "ws": "info",
         "orchestrator": "info",
         "session": "info",

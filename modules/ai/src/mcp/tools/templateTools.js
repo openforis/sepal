@@ -1,6 +1,6 @@
 const _ = require('lodash')
 
-const createTemplateTools = ({registry, recipeClient}) => [
+const createTemplateTools = ({registry, recipeClient, recipeValidator}) => [
     {
         name: 'template_list',
         description: 'List available pre-built recipe templates, optionally filtered by type or tags',
@@ -59,7 +59,20 @@ const createTemplateTools = ({registry, recipeClient}) => [
                 }
             }
 
-            const model = _.merge({}, template.model, params.overrides)
+            let model = _.merge({}, template.model, params.overrides)
+            if (recipeValidator) {
+                model = recipeValidator.applyDefaults({type: template.recipeType, model})
+                const errors = recipeValidator.validateModel({type: template.recipeType, model})
+                if (errors) {
+                    return {
+                        success: false,
+                        error: {
+                            code: 'VALIDATION_ERROR',
+                            message: `Recipe model validation failed:\n${errors.join('\n')}`
+                        }
+                    }
+                }
+            }
             const result = await recipeClient.saveRecipe({
                 username,
                 type: template.recipeType,

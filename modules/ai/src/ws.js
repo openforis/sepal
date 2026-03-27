@@ -7,27 +7,33 @@ const createWsHandler = ({config, registry, conversationStore}) => {
     const ws$ = in$ => {
         const out$ = new Subject()
 
+        const send = ({username, clientId, subscriptionId, data}) => {
+            out$.next({username, clientId, subscriptionId, data})
+        }
+
+        const broadcast = ({username, excludeClientId, data}) => {
+            out$.next({username, excludeClientId, data})
+        }
+        
+        const response = {send, broadcast}
+        
         const init = async () => {
-            const orchestrator = createOrchestrator({out$, config, registry, conversationStore})
+            const {sessionHandler, conversationHandler, messageHandler} = createOrchestrator({response, config, registry, conversationStore})
 
             const EVENT_HANDLERS = {
                 subscriptionUp: ({username, clientId, subscriptionId}) => {
                     log.info(`Subscription up: ${clientId}:${subscriptionId} (${username})`)
-                    orchestrator.createSession({username, clientId, subscriptionId})
+                    sessionHandler.createSession({username, clientId, subscriptionId})
                         .catch(error => log.error('Create session error:', error))
                 },
                 subscriptionDown: ({username, clientId, subscriptionId}) => {
                     log.info(`Subscription down: ${clientId}:${subscriptionId} (${username})`)
-                    orchestrator.removeSession({clientId, subscriptionId})
+                    sessionHandler.removeSession({clientId, subscriptionId})
                 },
-                clientUp: ({username, clientId}) => log.debug(`Client up: ${clientId} (${username})`),
                 clientDown: ({username, clientId}) => {
                     log.info(`Client down: ${clientId} (${username})`)
-                    orchestrator.removeClientSessions({clientId})
-                },
-                userUp: ({username}) => log.debug(`User up: ${username}`),
-                userDown: ({username}) => log.debug(`User down: ${username}`),
-                userUpdated: ({username}) => log.debug(`User updated: ${username}`),
+                    sessionHandler.removeClientSessions({clientId})
+                }
             }
 
             const processMessage = message => {
@@ -39,26 +45,26 @@ const createWsHandler = ({config, registry, conversationStore}) => {
                     if (handler) {
                         handler({username, clientId, subscriptionId})
                     } else {
-                        log.warn('Unhandled event:', event)
+                        log.trace('Unhandled event (ignored):', event)
                     }
                 } else if (data) {
                     const {type, text, conversationId} = data
                     if (type === 'message') {
-                        orchestrator.handleMessage({username, clientId, subscriptionId, text})
+                        messageHandler.handleMessage({username, clientId, subscriptionId, text})
                             .catch(error => log.error('Message handling error:', error))
                     } else if (type === 'list-conversations') {
-                        orchestrator.listConversations({username, clientId, subscriptionId})
+                        conversationHandler.listConversations({username, clientId, subscriptionId})
                             .catch(error => log.error('List conversations error:', error))
                     } else if (type === 'create-conversation') {
-                        orchestrator.createConversation({username, clientId, subscriptionId})
+                        conversationHandler.createConversation({username, clientId, subscriptionId})
                     } else if (type === 'select-conversation') {
-                        orchestrator.selectConversation({username, clientId, subscriptionId, conversationId})
+                        conversationHandler.selectConversation({username, clientId, subscriptionId, conversationId})
                             .catch(error => log.error('Select conversation error:', error))
                     } else if (type === 'delete-conversation') {
-                        orchestrator.deleteConversation({username, clientId, subscriptionId, conversationId})
+                        conversationHandler.deleteConversation({username, clientId, subscriptionId, conversationId})
                             .catch(error => log.error('Delete conversation error:', error))
                     } else if (type === 'delete-all-conversations') {
-                        orchestrator.deleteAllConversations({username, clientId, subscriptionId})
+                        conversationHandler.deleteAllConversations({username, clientId, subscriptionId})
                             .catch(error => log.error('Delete all conversations error:', error))
                     } else {
                         log.warn('Unsupported message type:', type)
@@ -73,7 +79,7 @@ const createWsHandler = ({config, registry, conversationStore}) => {
                 error: error => log.error('Connection error (unexpected)', error),
                 complete: () => {
                     log.info('Disconnected')
-                    orchestrator.shutdown()
+                    sessionHandler.shutdown()
                 }
             })
         }

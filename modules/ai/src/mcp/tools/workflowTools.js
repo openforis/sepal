@@ -2,7 +2,7 @@ const _ = require('lodash')
 const {v4: uuid} = require('uuid')
 const log = require('#sepal/log').getLogger('tools')
 
-const createWorkflowTools = ({registry, recipeClient}) => [
+const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
     {
         name: 'workflow_start',
         description: 'Begin a guided step-by-step recipe creation for a given recipe type. Returns the first step with field descriptions.',
@@ -176,12 +176,26 @@ const createWorkflowTools = ({registry, recipeClient}) => [
             }
 
             const name = params.name || `${workflow.type} recipe`
+            let model = workflow.values
+            if (recipeValidator) {
+                model = recipeValidator.applyDefaults({type: workflow.type, model})
+                const errors = recipeValidator.validateModel({type: workflow.type, model})
+                if (errors) {
+                    return {
+                        success: false,
+                        error: {
+                            code: 'VALIDATION_ERROR',
+                            message: `Recipe model validation failed:\n${errors.join('\n')}`
+                        }
+                    }
+                }
+            }
             const result = await recipeClient.saveRecipe({
                 username,
                 type: workflow.type,
                 name,
                 projectId: params.projectId,
-                model: workflow.values
+                model
             })
 
             session.workflow = null

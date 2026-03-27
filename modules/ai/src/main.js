@@ -12,6 +12,7 @@ const {createIntrospectionTools} = require('./mcp/tools/introspectionTools')
 const {createGuiTools} = require('./mcp/tools/guiTools')
 const {createTemplateTools} = require('./mcp/tools/templateTools')
 const {createWorkflowTools} = require('./mcp/tools/workflowTools')
+const {createRecipeValidator} = require('./mcp/validation/recipeValidator')
 const {createConversationStore} = require('./chat/conversationStore')
 const {createWsHandler} = require('./ws')
 const {createRoutes} = require('./routes')
@@ -64,13 +65,17 @@ const main = async () => {
     templates.forEach(template => registry.registerTemplate(template))
     log.info(`Registered ${templates.length} templates`)
 
+    // Initialize recipe validator
+    const recipeValidator = createRecipeValidator({registry})
+    log.info('Recipe validator initialized')
+
     // Register tools
     const allTools = [
-        ...createRecipeTools({recipeClient, registry}),
+        ...createRecipeTools({recipeClient, registry, recipeValidator}),
         ...createIntrospectionTools({registry}),
         ...createGuiTools(),
-        ...createTemplateTools({registry, recipeClient}),
-        ...createWorkflowTools({registry, recipeClient}),
+        ...createTemplateTools({registry, recipeClient, recipeValidator}),
+        ...createWorkflowTools({registry, recipeClient, recipeValidator}),
     ]
     registry.registerTools(allTools)
     log.info(`Registered ${allTools.length} tools`)

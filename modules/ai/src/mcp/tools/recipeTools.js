@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const log = require('#sepal/log').getLogger('tools')
 
-const createRecipeTools = ({recipeClient, registry}) => [
+const createRecipeTools = ({recipeClient, registry, recipeValidator}) => [
     {
         name: 'recipe_list',
         description: 'List all recipes for the current user, optionally filtered by type or project',
@@ -46,12 +46,26 @@ const createRecipeTools = ({recipeClient, registry}) => [
             required: ['type', 'name', 'model']
         },
         handler: async ({username, params}) => {
+            let model = params.model
+            if (recipeValidator) {
+                model = recipeValidator.applyDefaults({type: params.type, model})
+                const errors = recipeValidator.validateModel({type: params.type, model})
+                if (errors) {
+                    return {
+                        success: false,
+                        error: {
+                            code: 'VALIDATION_ERROR',
+                            message: `Recipe model validation failed:\n${errors.join('\n')}`
+                        }
+                    }
+                }
+            }
             const result = await recipeClient.saveRecipe({
                 username,
                 type: params.type,
                 name: params.name,
                 projectId: params.projectId,
-                model: params.model
+                model
             })
             return {success: true, data: result}
         }
@@ -70,6 +84,18 @@ const createRecipeTools = ({recipeClient, registry}) => [
         handler: async ({username, params}) => {
             const existing = await recipeClient.loadRecipe({username, recipeId: params.recipeId})
             const mergedModel = _.merge({}, existing.model, params.model)
+            if (recipeValidator) {
+                const errors = recipeValidator.validateModel({type: existing.type, model: mergedModel})
+                if (errors) {
+                    return {
+                        success: false,
+                        error: {
+                            code: 'VALIDATION_ERROR',
+                            message: `Recipe model validation failed:\n${errors.join('\n')}`
+                        }
+                    }
+                }
+            }
             const result = await recipeClient.saveRecipe({
                 username,
                 id: params.recipeId,
