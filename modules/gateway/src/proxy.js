@@ -78,6 +78,7 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                         proxyRes.headers['X-Content-Type-Options'] = 'nosniff'
                         proxyRes.headers['Strict-Transport-Security'] = 'max-age=16000000; includeSubDomains; preload'
                         proxyRes.headers['Referrer-Policy'] = 'no-referrer'
+                        proxyRes.headers['Permissions-Policy'] = 'camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()'
                         if (proxyRes.headers[SEPAL_USER_UPDATED_HEADER]) {
                             refreshUser$.next(proxyRes.headers[SEPAL_USER_UPDATED_HEADER])
                         }
