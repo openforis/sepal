@@ -68,6 +68,8 @@ const main = async () => {
     })
 
     const app = express()
+    app.disable('x-powered-by')
+    
     const secret = await getSecret()
 
     const sessionParser = Session({
