@@ -5267,6 +5267,15 @@
         "overbudget": {
           "label": "Overbudget"
         },
+        "inactiveHigh": {
+          "label": "Inactive"
+        },
+        "notified": {
+          "label": "Notified"
+        },
+        "purged": {
+          "label": "Purged"
+        },
         "pending": {
           "label": "Pending"
         },

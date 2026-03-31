@@ -111,6 +111,12 @@ export class UserList extends React.Component {
                 return UserStatus.isLocked(user.status)
             case 'OVERBUDGET':
                 return this.isUserOverBudget(user)
+            case 'INACTIVE_HIGH':
+                return this.isUserInactiveHigh(user)
+            case 'NOTIFIED':
+                return this.isUserNotified(user)
+            case 'PURGED':
+                return this.isUserPurged(user)
             case 'BUDGET_UPDATE':
                 return this.isUserRequestingBudgetUpdate(user)
             default:
@@ -124,6 +130,18 @@ export class UserList extends React.Component {
             || current.storageSpending >= budget.storageSpending && budget.storageSpending > 0
             || current.storageQuota >= budget.storageQuota && budget.storageQuota > 0
         )
+    }
+
+    isUserInactiveHigh({activity: {event} = {}}) {
+        return event === 'INACTIVE_HIGH'
+    }
+
+    isUserNotified({activity: {event} = {}}) {
+        return event === 'NOTIFIED'
+    }
+
+    isUserPurged({activity: {event} = {}}) {
+        return event === 'PURGED'
     }
 
     isUserRequestingBudgetUpdate({quota: {budgetUpdateRequest} = {}}) {
@@ -256,6 +274,15 @@ export class UserList extends React.Component {
         }, {
             label: msg('users.filter.status.overbudget.label'),
             value: 'OVERBUDGET'
+        }, {
+            label: msg('users.filter.status.inactiveHigh.label'),
+            value: 'INACTIVE_HIGH'
+        }, {
+            label: msg('users.filter.status.notified.label'),
+            value: 'NOTIFIED'
+        }, {
+            label: msg('users.filter.status.purged.label'),
+            value: 'PURGED'
         }, {
             label: msg('users.filter.status.budgetUpdateRequest.label'),
             value: 'BUDGET_UPDATE'
