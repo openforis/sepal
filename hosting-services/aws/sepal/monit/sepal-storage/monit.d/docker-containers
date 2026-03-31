@@ -1,0 +1,5 @@
+check program user-storage with path /usr/local/bin/dockercheck-user-storage
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
+
+check program user-storage-redis with path /usr/local/bin/dockercheck-user-storage-redis
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
