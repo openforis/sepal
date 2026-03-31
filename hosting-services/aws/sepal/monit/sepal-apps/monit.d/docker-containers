@@ -1,0 +1,5 @@
+check program app-launcher with path /usr/local/bin/dockercheck-app-launcher
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
+
+check program logger with path /usr/local/bin/dockercheck-logger
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"

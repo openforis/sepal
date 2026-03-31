@@ -1,0 +1,40 @@
+#!/bin/bash
+
+function check_docker_daemon() {
+    pgrep dockerd > /dev/null
+    if [ $? -eq 0 ]; then
+        echo "Docker is running."
+        exit 0
+    else
+        echo "Docker is NOT running."
+        exit 1
+    fi
+}
+
+function check_docker_container() {
+    local CONTANINER_NAME="$1"
+    # invoke docker ps for getting container status
+    RUNNING=$(docker inspect --format '{{.State.Running}}' $CONTAINER_NAME)
+
+    # report and exit
+    if [[ "$RUNNING" = "true" ]]; then
+        echo "Docker container \"$CONTAINER_NAME\" is running."
+        exit 0
+    else
+        echo "Docker container \"$CONTAINER_NAME\" is NOT running."
+        exit 1
+    fi
+}
+
+# get own name
+SYMLINK_NAME="$(basename $0)"
+
+# strip "dockercheck-"
+CONTAINER_NAME="${SYMLINK_NAME:12}"
+
+if [ -z "$CONTAINER_NAME" ]; then
+    # check docker daemon if no container name is given
+    check_docker_daemon
+else
+    check_docker_container $CONTAINER_NAME
+fi

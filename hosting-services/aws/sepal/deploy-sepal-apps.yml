@@ -22,6 +22,9 @@
         - "LANG=en_US.utf-8"
         - "LC_ALL=en_US.utf-8"
 
+    - name: Install epel
+      command: "amazon-linux-extras install epel -y"
+
     - name: Install monit
       yum:
         name: 'monit'
@@ -35,7 +38,7 @@
 
     - name: Configure monit/1
       copy:
-        src: "monit/monit.d/"
+        src: "monit/sepal-apps/monit.d/"
         dest: "/etc/monit.d/"
         owner: "root"
         group: "root"
@@ -51,7 +54,7 @@
 
     - name: Configure monit/3
       copy:
-        src: "monit/check/"
+        src: "monit/sepal-apps/check/"
         dest: "/usr/local/bin/"
         owner: "root"
         group: "root"
@@ -177,8 +180,16 @@
         src: "{{ lookup('env', 'PROJECT_DIR') }}/modules/docker-compose.logger.yml"
         dest: "/var/lib/sepal/modules/"
 
+  post_tasks:
+    - name: Start monit
+      systemd:
+        name: monit
+        state: started
+        enabled: yes
+        masked: no
+
   roles:
-    # - { role: live-patching }
+    - { role: live-patching }
     - { role: docker-login }
     - { role: run-module, module: logger }
     - { role: run-module, module: app-launcher }

@@ -55,7 +55,7 @@
 
     - name: Configure monit/1
       copy:
-        src: "monit/monit.d/"
+        src: "monit/sepal/monit.d/"
         dest: "/etc/monit.d/"
         owner: "root"
         group: "root"
@@ -71,7 +71,7 @@
 
     - name: Configure monit/3
       copy:
-        src: "monit/check/"
+        src: "monit/sepal/check/"
         dest: "/usr/local/bin/"
         owner: "root"
         group: "root"
