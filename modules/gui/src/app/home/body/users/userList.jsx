@@ -260,9 +260,6 @@ export class UserList extends React.Component {
             label: msg('users.filter.status.locked.label'),
             value: 'LOCKED'
         }, {
-            label: msg('users.filter.status.overbudget.label'),
-            value: 'OVERBUDGET'
-        }, {
             label: msg('users.filter.status.inactive.label'),
             value: 'INACTIVE'
         }, {
@@ -271,6 +268,9 @@ export class UserList extends React.Component {
         }, {
             label: msg('users.filter.status.purged.label'),
             value: 'PURGED'
+        }, {
+            label: msg('users.filter.status.overbudget.label'),
+            value: 'OVERBUDGET'
         }, {
             label: msg('users.filter.status.budgetUpdateRequest.label'),
             value: 'BUDGET_UPDATE'
