@@ -5267,7 +5267,7 @@
         "overbudget": {
           "label": "Sobrepresupuesto"
         },
-        "inactiveHigh": {
+        "inactive": {
           "label": ""
         },
         "notified": {
