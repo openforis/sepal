@@ -17,7 +17,7 @@
         "ioredis": "^5.10.1",
         "lodash": "^4.17.23",
         "log4js": "^6.9.1",
-        "minimatch": "^10.2.4",
+        "minimatch": "^10.2.5",
         "sepal": "../../lib/js/shared"
     },
     "devDependencies": {
