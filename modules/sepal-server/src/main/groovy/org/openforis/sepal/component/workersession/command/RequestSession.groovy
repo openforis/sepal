@@ -38,11 +38,12 @@ class RequestSessionHandler implements CommandHandler<WorkerSession, RequestSess
 
     WorkerSession execute(RequestSession command) {
         budgetManager.check(command.username)
+        def sanitizedUsername = command.username?.toLowerCase()
         def now = clock.now()
         def session = new WorkerSession(
             id: UUID.randomUUID().toString(),
             state: WorkerSession.State.PENDING,
-            username: command.username,
+            username: sanitizedUsername,
             workerType: command.workerType,
             instanceType: command.instanceType,
             creationTime: now,

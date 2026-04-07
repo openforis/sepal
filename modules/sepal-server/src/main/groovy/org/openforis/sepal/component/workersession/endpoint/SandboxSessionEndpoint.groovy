@@ -97,7 +97,7 @@ class SandboxSessionEndpoint {
 
         private Handler(RequestContext context, String username, boolean forCurrentUser) {
             this.context = context
-            this.username = username
+            this.username = username?.toLowerCase()
             this.forCurrentUser = forCurrentUser
         }
 
@@ -198,7 +198,7 @@ class SandboxSessionEndpoint {
             context.with {
                 response.status = 204
                 component.submit(new CloseUserSessions(
-                        username: params.required('username')
+                        username: params.required('username')?.toLowerCase()
                 ))
             }
         }
