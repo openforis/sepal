@@ -150,6 +150,26 @@
       delay: 2
       until: network.stdout != "null"            
 
+    # EFS
+    - name: Install amazon-efs-utils
+      yum:
+        name: "amazon-efs-utils"
+
+    - name: Create /data/sepal/shared/apps
+      file:
+        path: "/data/sepal/shared/apps"
+        state: directory
+
+    - name: Mount EFS user home dirs
+      mount:
+        name: "/data/sepal/shared/apps"
+        fstype: "efs"
+        state: "mounted"
+        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/shared/apps"
+        opts: "defaults,_netdev"
+        dump: 0
+        passno: 0
+
     - file: path="/usr/local/lib/docker/cli-plugins" state=directory
     - uri:
         url: https://github.com/docker/compose/releases/download/{{ lookup('env', 'DOCKER_COMPOSE_VERSION') }}/docker-compose-linux-x86_64
