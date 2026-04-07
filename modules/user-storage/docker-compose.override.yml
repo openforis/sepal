@@ -17,8 +17,8 @@ services:
       # module
       - ${SEPAL_PROJECT_DIR}/modules/user-storage:/usr/local/src/sepal/modules/user-storage
     environment:
-      SCAN_MIN_DELAY_SECONDS: "5"
-      SCAN_MAX_DELAY_SECONDS: "40"
+      SCAN_MIN_DELAY_SECONDS: "30"
+      SCAN_MAX_DELAY_SECONDS: "600"
       SCAN_DELAY_INCREASE_FACTOR: "2"
       SCAN_CONCURRENCY: "5"
       SCAN_MAX_RETRIES: "10"
