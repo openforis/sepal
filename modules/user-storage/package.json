@@ -10,11 +10,11 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bullmq": "^5.71.1",
+        "bullmq": "^5.73.0",
         "commander": "^14.0.3",
         "date-fns": "^4.1.0",
         "ioredis": "^5.10.1",
-        "lodash": "^4.17.23",
+        "lodash": "^4.18.1",
         "log4js": "^6.9.1",
         "moment": "^2.30.1",
         "rxjs": "^7.8.2",
