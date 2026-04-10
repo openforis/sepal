@@ -29,7 +29,7 @@ const apps$ = () =>
                 endpoint,
                 name,
                 label,
-                path: `/var/lib/sepal/app-manager/apps/${name}`,
+                path: `/var/lib/sepal/app-launcher/apps/${name}`,
                 repository,
                 branch
             }

@@ -5,7 +5,7 @@ const log = require('#sepal/log').getLogger('appsService')
 const executeCommand = require('./terminal')
 const {getCurrentCommitHash} = require('./git')
 
-const getAppPath = appName => `/var/lib/sepal/app-manager/apps/${appName}`
+const getAppPath = appName => `/var/lib/sepal/app-launcher/apps/${appName}`
 
 const docker = new Docker()
 

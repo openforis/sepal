@@ -3,7 +3,7 @@ const {pathExists, getContainerInfo, isContainerRunning, startContainer, buildAn
 const {validateAppName, validateBranchName} = require('./validation')
 const log = require('#sepal/log').getLogger('appsService')
 
-const getAppPath = appName => `/var/lib/sepal/app-manager/apps/${appName}`
+const getAppPath = appName => `/var/lib/sepal/app-launcher/apps/${appName}`
 
 const getAppStatus = async ctx => {
     const appName = validateAppName(ctx.params.appName)
