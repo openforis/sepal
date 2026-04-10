@@ -155,17 +155,17 @@
       yum:
         name: "amazon-efs-utils"
 
-    - name: Create /data/sepal/shared/apps
+    - name: Create /data/app-launcher/apps
       file:
-        path: "/data/sepal/shared/apps"
+        path: "/data/app-launcher/apps"
         state: directory
 
     - name: Mount EFS user home dirs
       mount:
-        name: "/data/sepal/shared/apps"
+        name: "/data/app-launcher/apps"
         fstype: "efs"
         state: "mounted"
-        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/shared/apps"
+        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/app-launcher/apps"
         opts: "defaults,_netdev"
         dump: 0
         passno: 0

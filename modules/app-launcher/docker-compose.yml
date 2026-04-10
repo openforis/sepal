@@ -16,7 +16,7 @@ services:
       - 80:80
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - "${SEPAL_DATA_DIR}/sepal/shared/apps:/var/lib/sepal/app-manager/apps"
+      - "${SEPAL_DATA_DIR}/app-launcher/apps:/var/lib/sepal/app-manager/apps"
       - "${SEPAL_DATA_DIR}/app-launcher:/var/lib/sepal/app-launcher"
     init: true
     environment:
