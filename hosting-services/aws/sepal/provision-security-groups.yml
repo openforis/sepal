@@ -44,7 +44,6 @@
             group_name:
               - Sepal
               - Sepal-Storage
-              - Sepal-Apps
               - Sandbox
             rule_desc: 'Instance access'
         rules_egress:
