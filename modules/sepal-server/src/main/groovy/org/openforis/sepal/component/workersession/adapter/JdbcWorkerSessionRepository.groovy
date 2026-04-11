@@ -117,7 +117,7 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
             GROUP BY username
         ''')
         return result.collectEntries { row ->
-            [(row.username): toDate(row.update_time)]
+            [(row.username.toLowerCase()): toDate(row.update_time)]
         }
     }
 
