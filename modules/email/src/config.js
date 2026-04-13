@@ -1,6 +1,5 @@
 const {Command, Option} = require('commander')
 const log = require('#sepal/log').getLogger('config')
-const _ = require('lodash')
 
 const DEFAULT_PORT = 80
 const DEFAULT_CONCURRENCY = 4

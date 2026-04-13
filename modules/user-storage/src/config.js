@@ -134,8 +134,6 @@ try {
                 .makeOptionMandatory()
         )
         .parse(process.argv)
-
-    log.info('Configuration loaded')
 } catch (error) {
     fatalError(error)
 }
@@ -175,6 +173,8 @@ if (scanDelayIncreaseFactor <= 1) {
 if (scanMaxDelaySeconds <= scanMinDelaySeconds) {
     fatalError(`Argument --scan-max-delay-seconds (${scanMaxDelaySeconds}) cannot be less or equal to --scan-min-delay-seconds (${scanMinDelaySeconds})`)
 }
+
+log.info('Configuration loaded')
 
 module.exports = {
     amqpUri: `amqp://${amqpHost}`,
