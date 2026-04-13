@@ -40,8 +40,8 @@ try {
         )
         .addOption(
             new Option('--port <number>')
-                .argParser(parseInt)
                 .env('HTTP_PORT')
+                .argParser(v => parseInt(v))
                 .default(DEFAULT_HTTP_PORT)
         )
         .addOption(
@@ -69,14 +69,14 @@ try {
         )
         .addOption(
             new Option('--scan-concurrency <number>')
-                .argParser(parseInt)
                 .env('SCAN_CONCURRENCY')
+                .argParser(v => parseInt(v))
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--scan-max-retries <number>')
-                .argParser(parseInt)
                 .env('SCAN_MAX_RETRIES')
+                .argParser(v => parseInt(v))
                 .makeOptionMandatory()
         )
         .addOption(
