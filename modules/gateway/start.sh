@@ -9,17 +9,9 @@ then
     --watch "${MODULE}"/config \
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9229 \
-    src/main.js \
-    --amqp-uri "amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT}" \
-    --redis-uri "redis://gateway-redis" \
-    --sepalHost="${SEPAL_HOST}" \
-    --secure
+    src/main.js
 else
   echo "Starting node"
   exec node \
-      src/main.js \
-      --amqp-uri "amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT}" \
-      --redis-uri "redis://gateway-redis" \
-      --sepalHost="${SEPAL_HOST}" \
-      --secure
+      src/main.js
 fi

@@ -1,6 +1,6 @@
 require('#sepal/log').configureServer(require('#config/log.json'))
 
-const {amqpUri, redisUri, port, secure} = require('./config')
+const {amqpUri, redisUri, port} = require('./config')
 const {initializeWebSocketServer} = require('./websocket')
 const {isMatch} = require('micromatch')
 const express = require('express')
@@ -78,8 +78,8 @@ const main = async () => {
         name: 'SEPAL-SESSIONID',
         cookie: {
             httpOnly: true,
-            sameSite: secure,
-            secure
+            sameSite: true,
+            secure: true
         },
         proxy: true,
         resave: false,

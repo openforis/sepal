@@ -1,5 +1,5 @@
 {
-  "appLauncher" : "app-launcher:80",
+  "appLauncher" : "app-launcher",
   "appManager": "app-manager",
   "ceoGateway": "ceo-gateway",
   "email": "email",

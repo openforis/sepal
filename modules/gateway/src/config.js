@@ -1,30 +1,56 @@
-const {program} = require('commander')
+const {Command, Option} = require('commander')
 const log = require('#sepal/log').getLogger('config')
 
 const DEFAULT_PORT = 80
 
-program
-    .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
-    .requiredOption('--redis-uri <value>', 'Redis URI')
-    .option('--port <number>', 'Port', DEFAULT_PORT)
-    .option('--sepalHost <value>', 'Sepal host', 'localhost')
-    .option('--secure', 'Secure', false)
-    .parse(process.argv)
+const fatalError = error => {
+    log.fatal(error)
+    process.exit(1)
+}
+
+const command = new Command()
+    .exitOverride()
+
+try {
+    command
+        .addOption(
+            new Option('--sepal-host <value>')
+                .env('SEPAL_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--amqp-host <value>')
+                .env('RABBITMQ_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--redis-host <value>')
+                .env('REDIS_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--port <number>')
+                .argParser(parseInt)
+                .env('HTTP_PORT')
+                .default(DEFAULT_PORT)
+        )
+        .parse(process.argv)
+} catch (error) {
+    fatalError(error)
+}
 
 const {
-    amqpUri,
-    redisUri,
-    port,
     sepalHost,
-    secure
-} = program.opts()
+    amqpHost,
+    redisHost,
+    port
+} = command.opts()
 
 log.info('Configuration loaded')
 
 module.exports = {
-    amqpUri,
-    redisUri,
-    port,
     sepalHost,
-    secure
+    amqpUri: `amqp://${amqpHost}`,
+    redisUri: `redis://${redisHost}`,
+    port
 }
