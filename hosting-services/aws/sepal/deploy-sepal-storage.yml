@@ -122,10 +122,10 @@
         enabled: yes
         masked: no
 
-    - name: Update python3-docker via yum
-      yum:
-        name: python3-docker
-        state: latest
+    # - name: Update python3-docker via yum
+    #   yum:
+    #     name: python3-docker
+    #     state: latest
 
     - ec2_instance_info:
         region: "{{ lookup('env', 'AWS_REGION') }}"
