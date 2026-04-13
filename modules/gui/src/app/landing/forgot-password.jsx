@@ -40,7 +40,7 @@ class _ForgotPassword extends React.Component {
     }
 
     renderForm() {
-        const {form, inputs: {email}, action, onCancel} = this.props
+        const {form, inputs: {email}, stream, onCancel} = this.props
         return (
             <div className={styles.inputs}>
                 <Layout spacing='loose'>
@@ -76,9 +76,9 @@ class _ForgotPassword extends React.Component {
                             look='apply'
                             size='x-large'
                             shape='pill'
-                            icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'envelope'}
+                            icon={stream('REQUEST_PASSWORD_RESET').active ? 'spinner' : 'envelope'}
                             label={msg('landing.forgot-password.button')}
-                            disabled={form.isInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
+                            disabled={form.isInvalid() || stream('REQUEST_PASSWORD_RESET').active}
                             tabIndex={2}
                         />
                     </ButtonGroup>
