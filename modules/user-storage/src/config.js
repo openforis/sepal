@@ -24,8 +24,8 @@ try {
                 .makeOptionMandatory()
         )
         .addOption(
-            new Option('--sepal-host <value>')
-                .env('SEPAL_HOST')
+            new Option('--gateway-host <value>')
+                .env('GATEWAY_HOST')
                 .makeOptionMandatory()
         )
         .addOption(
@@ -143,7 +143,7 @@ try {
 const {
     amqpHost,
     redisHost,
-    sepalHost,
+    gatewayHost,
     sepalUsername,
     sepalPassword,
     port,
@@ -179,7 +179,7 @@ if (scanMaxDelaySeconds <= scanMinDelaySeconds) {
 module.exports = {
     amqpUri: `amqp://${amqpHost}`,
     redisHost,
-    sepalHost,
+    gatewayHost,
     sepalUsername,
     sepalPassword,
     port,
