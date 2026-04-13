@@ -13,7 +13,6 @@ const command = new Command()
 try {
     command
         .addOption(
-            // new Option('--amqp-host <value>', 'RabbitMQ host')
             new Option('--amqp-host <value>')
                 .env('RABBITMQ_HOST')
                 .makeOptionMandatory()
