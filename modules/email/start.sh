@@ -9,31 +9,9 @@ then
     --watch "${MODULE}/config" \
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9229 \
-    src/main.js \
-    --amqp-uri "amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT}" \
-    --redis-host "email-redis" \
-    --smtp-host "${SMTP_HOST}" \
-    --smtp-port "${SMTP_PORT}" \
-    --smtp-secure "${SMTP_SECURE}" \
-    --smtp-user "${SMTP_USERNAME}" \
-    --smtp-password "${SMTP_PASSWORD}" \
-    --smtp-from-domain "${SMTP_FROM_DOMAIN}" \
-    --sepal-host "${SEPAL_HOST}" \
-    --sepal-username "sepalAdmin" \
-    --sepal-password "$SEPAL_ADMIN_PASSWORD"
+    src/main.js
 else
   echo "Starting node"
   exec node \
-    src/main.js \
-    --amqp-uri "amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT}" \
-    --redis-host "email-redis" \
-    --smtp-host "${SMTP_HOST}" \
-    --smtp-port "${SMTP_PORT}" \
-    --smtp-secure "${SMTP_SECURE}" \
-    --smtp-user "${SMTP_USERNAME}" \
-    --smtp-password "${SMTP_PASSWORD}" \
-    --smtp-from-domain "${SMTP_FROM_DOMAIN}" \
-    --sepal-host "${SEPAL_HOST}" \
-    --sepal-username "sepalAdmin" \
-    --sepal-password "$SEPAL_ADMIN_PASSWORD"
+    src/main.js
 fi

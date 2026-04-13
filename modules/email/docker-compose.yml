@@ -34,10 +34,11 @@ services:
     init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      SEPAL_HOST: "${SEPAL_HOST}"
+      SEPAL_ADMIN_USERNAME: "sepalAdmin"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      GATEWAY_HOST: "gateway"
       RABBITMQ_HOST: "rabbitmq"
-      RABBITMQ_PORT: "5672"
+      REDIS_HOST: "email-redis"
       SMTP_HOST: "${SMTP_HOST}"
       SMTP_PORT: "${SMTP_PORT}"
       SMTP_SECURE: "false"
