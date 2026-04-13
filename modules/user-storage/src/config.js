@@ -1,6 +1,7 @@
 const {Command, Option} = require('commander')
 const log = require('#sepal/log').getLogger('config')
-const _ = require('lodash')
+
+const DEFAULT_HTTP_PORT = 80
 
 const fatalError = error => {
     log.fatal(error)
@@ -41,7 +42,7 @@ try {
             new Option('--port <number>')
                 .argParser(parseInt)
                 .env('HTTP_PORT')
-                .default(80)
+                .default(DEFAULT_HTTP_PORT)
         )
         .addOption(
             new Option('--home-dir <value>')
