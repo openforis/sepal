@@ -1,7 +1,7 @@
 const {Command, Option} = require('commander')
 const log = require('#sepal/log').getLogger('config')
 
-const DEFAULT_PORT = 80
+const DEFAULT_HTTP_PORT = 80
 
 const fatalError = error => {
     log.fatal(error)
@@ -30,9 +30,9 @@ try {
         )
         .addOption(
             new Option('--port <number>')
-                .argParser(parseInt)
                 .env('HTTP_PORT')
-                .default(DEFAULT_PORT)
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_HTTP_PORT)
         )
         .parse(process.argv)
 } catch (error) {

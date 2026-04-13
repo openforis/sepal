@@ -1,7 +1,7 @@
 const {Command, Option} = require('commander')
 const log = require('#sepal/log').getLogger('config')
 
-const DEFAULT_PORT = 80
+const DEFAULT_HTTP_PORT = 80
 const DEFAULT_CONCURRENCY = 4
 const DEFAULT_SMTP_PORT = 25
 const DEFAULT_SMTP_SECURE = false
@@ -38,14 +38,14 @@ try {
         )
         .addOption(
             new Option('--port <number>')
-                .argParser(parseInt)
                 .env('HTTP_PORT')
-                .default(DEFAULT_PORT)
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_HTTP_PORT)
         )
         .addOption(
             new Option('--concurrency <number>')
-                .argParser(parseInt)
                 .env('CONCURRENCY')
+                .argParser(v => parseInt(v))
                 .default(DEFAULT_CONCURRENCY)
         )
         .addOption(
