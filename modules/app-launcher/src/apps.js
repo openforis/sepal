@@ -1,4 +1,4 @@
-const {EMPTY, from, interval, catchError, delay, exhaustMap, filter, map, concatMap, switchMap, of} = require('rxjs')
+const {EMPTY, from, catchError, filter, map, concatMap, switchMap, of, repeat, defer} = require('rxjs')
 const log = require('#sepal/log').getLogger('apps')
 const {basename} = require('path')
 const {cloneOrPull} = require('./git')
@@ -6,13 +6,12 @@ const {buildAndRestart, startContainer, isContainerRunning} = require('./docker'
 const {fetchAppsFromApi$} = require('./apiService')
 const {refreshProxyEndpoints} = require('./proxyManager')
 
+const UPDATE_DELAY_SECONDS = 30
+
 const monitorApps = () =>
-    interval(30000).pipe(
-        exhaustMap(() => apps$().pipe(
-            concatMap(app => updateApp$(app).pipe(
-                delay(30000),
-            )),
-        ))
+    defer(() => apps$()).pipe(
+        concatMap(app => updateApp$(app)),
+        repeat({delay: UPDATE_DELAY_SECONDS * 1000})
     ).subscribe({
         error: error => log.fatal('Monitor exited:', error),
         complete: () => log.fatal('Monitor unexpectedly completed')
