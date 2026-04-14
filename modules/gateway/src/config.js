@@ -8,11 +8,11 @@ const fatalError = error => {
     process.exit(1)
 }
 
-const command = new Command()
-    .exitOverride()
+const program = new Command()
 
 try {
-    command
+    program
+        .exitOverride()
         .addOption(
             new Option('--sepal-host <value>')
                 .env('SEPAL_HOST')
@@ -34,7 +34,7 @@ try {
                 .argParser(v => parseInt(v))
                 .default(DEFAULT_HTTP_PORT)
         )
-        .parse(process.argv)
+        .parse()
 } catch (error) {
     fatalError(error)
 }
@@ -44,7 +44,7 @@ const {
     amqpHost,
     redisHost,
     port
-} = command.opts()
+} = program.opts()
 
 log.info('Configuration loaded')
 

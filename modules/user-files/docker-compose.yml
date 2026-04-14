@@ -17,7 +17,8 @@ services:
       - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      POLL_INTERVAL_MS: "6000"
+      HOME_DIR: "/sepalUsers"
+      POLL_INTERVAL_MS: 6000
     networks:
       - sepal
     healthcheck:

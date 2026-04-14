@@ -21,9 +21,9 @@ services:
     environment:
       DOCKER_REGISTRY_HOST: "${DOCKER_REGISTRY_HOST}"
       SEPAL_HOST: "${SEPAL_HOST}"
+      SEPAL_ADMIN_USERNAME: "sepalAdmin"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       EE_CREDENTIALS_PATH: "${SEPAL_DATA_DIR}/app-launcher/service-account-credentials.json"
-      SEPAL_DATA_DIR: "${SEPAL_DATA_DIR}"
       DEPLOY_ENVIRONMENT : "${DEPLOY_ENVIRONMENT}"
       EE_CLIENT_ID: "${EE_CLIENT_ID}"
       EE_ACCOUNT: "${EE_ACCOUNT}"

@@ -6,11 +6,16 @@ const DEFAULT_CONCURRENCY = 4
 const DEFAULT_SMTP_PORT = 25
 const DEFAULT_SMTP_SECURE = false
 
-const command = new Command()
-    .exitOverride()
+const fatalError = error => {
+    log.fatal(error)
+    process.exit(1)
+}
+
+const program = new Command()
 
 try {
-    command
+    program
+        .exitOverride()
         .addOption(
             new Option('--sepal-username <value>')
                 .env('SEPAL_ADMIN_USERNAME')
@@ -79,10 +84,9 @@ try {
                 .env('SMTP_FROM_DOMAIN')
                 .makeOptionMandatory()
         )
-        .parse(process.argv)
+        .parse()
 } catch (error) {
-    log.fatal(error)
-    process.exit(1)
+    fatalError(error)
 }
 
 const {
@@ -99,7 +103,7 @@ const {
     gatewayHost,
     sepalUsername,
     sepalPassword
-} = command.opts()
+} = program.opts()
 
 log.info('Configuration loaded')
 

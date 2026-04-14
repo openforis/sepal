@@ -17,7 +17,10 @@ services:
       - "${SEPAL_DATA_DIR}/user/home:/sepalUsers" # Users home directories with ssh keys
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      IP: "0.0.0.0"
+      HOME_DIR: "/sepalUsers"
       SSH_GATEWAY_HOST: 'ssh-gateway'
+      SSH_SCRIPT_PATH: "/usr/local/bin/ssh_gateway.sh"
     networks:
       - sepal
     healthcheck:

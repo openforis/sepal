@@ -5,11 +5,16 @@ const log = require('#sepal/log').getLogger('config')
 const DEFAULT_HTTP_PORT = 80
 const DEFAULT_INSTANCES = 3
 
-const command = new Command()
-    .exitOverride()
+const fatalError = error => {
+    log.fatal(error)
+    process.exit(1)
+}
+
+const program = new Command()
 
 try {
-    command
+    program
+        .exitOverride()
         .addOption(
             new Option('--sepal-username <value>')
                 .env('SEPAL_ADMIN_USERNAME')
@@ -52,10 +57,9 @@ try {
                 .argParser(v => parseInt(v))
                 .default(DEFAULT_INSTANCES)
         )
-        .parse(process.argv)
+        .parse()
 } catch (error) {
-    log.fatal(error)
-    process.exit(1)
+    fatalError(error)
 }
 
 const {geeEmail,
@@ -66,7 +70,7 @@ const {geeEmail,
     googleProjectId,
     port,
     instances
-} = command.opts()
+} = program.opts()
 
 const serviceAccountCredentials = {
     client_email: geeEmail,

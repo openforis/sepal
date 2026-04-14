@@ -13,6 +13,5 @@ then
     src/main.js
 else
   echo "Starting node"
-  exec node \
-    src/main.js
+  exec node src/main.js
 fi
