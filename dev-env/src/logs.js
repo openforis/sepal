@@ -3,6 +3,7 @@ import {isModule, isRunnable, showModuleStatus, MESSAGE, getModules} from './uti
 import _ from 'lodash'
 
 const logsModule = async (module, options) => {
+    console.log(options)
     if (isModule(module)) {
         if (isRunnable(module)) {
             const {logFollow, logTail, logRecent, follow = logFollow, tail = logTail, recent = logRecent, since, until} = options
@@ -12,8 +13,7 @@ const logsModule = async (module, options) => {
                 args: [
                     tail || recent || follow ? '--follow' : null,
                     tail ? '--since=0s' : null,
-                    // recent ? '--since=5m' : null,
-                    recent ? '--tail=10' : null,
+                    recent ? `--tail=20` : null,
                     since ? `--since=${since}` : null,
                     until ? `--until=${until}` : null
                 ],
