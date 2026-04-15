@@ -1,28 +1,71 @@
-const {program} = require('commander')
-const log = require('#sepal/log').getLogger('config')
-const _ = require('lodash')
+const {Command, Option} = require('commander')
 
-const DEFAULT_PORT = 80
+const log = require('#sepal/log').getLogger('config')
+
+const DEFAULT_HTTP_PORT = 80
 
 const fatalError = error => {
     log.fatal(error)
     process.exit(1)
 }
 
-program.exitOverride()
+const program = new Command()
 
 try {
     program
-        .requiredOption('--pushover-api-key <value>', 'Pushover API key')
-        .requiredOption('--pushover-group-key <value>', 'Pushover group key')
-        .option('--port <number>', 'Port', DEFAULT_PORT)
-        .requiredOption('--sepal-server-log <value>', 'Log file to monitor')
-        .option('--initial-delay-minutes <number>', 'Initial delay (mins)', parseInt)
-        .option('--auto-rearm-delay-hours <number>', 'Auto re-arm delay (hours)', parseInt)        // .requiredOption('--notify-to <values...>', 'Notifications addressees')
-        .option('--notify-from <value>', 'Notifications sender', 'sys-monitor')
-        .option('--emergency-notification-retry-delay <value>', 'Emergency notification retry delay', parseInt)
-        .option('--emergency-notification-retry-timeout <value>', 'Emergency notification retry timeout', parseInt)
-        .parse(process.argv)
+        .exitOverride()
+        .addOption(
+            new Option('--port <number>')
+                .env('HTTP_PORT')
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_HTTP_PORT)
+        )
+        .addOption(
+            new Option('--pushover-api-key <value>')
+                .env('PUSHOVER_API_KEY')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--pushover-group-key <value>')
+                .env('PUSHOVER_GROUP_KEY')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--sepal-server-log <value>')
+                .env('SEPAL_SERVER_LOG')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--initial-delay-minutes <number>')
+                .env('INITIAL_DELAY_MINUTES')
+                .argParser(v => parseInt(v))
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--auto-rearm-delay-hours <number>')
+                .env('AUTO_REARM_DELAY_HOURS')
+                .argParser(v => parseInt(v))
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--notify-from <value>')
+                .env('NOTIFY_FROM')
+                .default('sys-monitor')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--emergency-notification-retry-delay <number>')
+                .env('EMERGENCY_NOTIFICATION_RETRY_DELAY')
+                .argParser(v => parseInt(v))
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--emergency-notification-retry-timeout <number>')
+                .env('EMERGENCY_NOTIFICATION_RETRY_TIMEOUT')
+                .argParser(v => parseInt(v))
+                .makeOptionMandatory()
+        )
+        .parse()
 } catch (error) {
     fatalError(error)
 }

@@ -81,6 +81,7 @@ RUN chmod +x /usr/local/bin/sepal
 # Install additional packages
 
 RUN apt-get update && apt-get install -y \
+    multitail \
     ncdu \
     tmux
 

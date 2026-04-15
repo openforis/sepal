@@ -18,6 +18,7 @@ class MostRecentlyClosedSessionHandler implements QueryHandler<Map<String, Date>
     }
 
     Map<String, Date> execute(MostRecentlyClosedSession query) {
-        return sessionRepository.mostRecentlyClosedSession(query.username)
+        def sanitizedUsername = query.username?.toLowerCase()
+        return sessionRepository.mostRecentlyClosedSession(sanitizedUsername)
     }
 }

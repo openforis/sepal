@@ -65,7 +65,7 @@ const STORAGE = {
 }
 
 const notify = async username => {
-    log.info(`User ${username} still inactive with significant storage, sending notification email - TEST MODE`)
+    log.info(`User ${username} still inactive with significant storage, sending notification email`)
     const {name} = await firstValueFrom(getUser$(username))
     await sendEmail({
         username,
@@ -75,7 +75,7 @@ const notify = async username => {
 }
 
 const erase = async username => {
-    log.info(`User ${username} still inactive with significant storage, erasing storage - TEST MODE`)
+    log.info(`User ${username} still inactive with significant storage, erasing storage`)
     await eraseUserStorage(username)
 }
 
@@ -268,9 +268,9 @@ const processJob = async job => {
     const {username, action} = job.data
     switch (action) {
         case 'mark':
-            return await markInactiveUser({username})
+            return await markInactiveUser({username: username.toLowerCase()})
         case 'notify':
-            return await notifyInactiveUser({username})
+            return await notifyInactiveUser({username: username.toLowerCase()})
         case 'erase':
             return await eraseInactiveUserStorage({username})
         default:

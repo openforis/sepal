@@ -1,4 +1,4 @@
-const {sepalHost, sepalUsername, sepalPassword} = require('./config')
+const {gatewayHost, sepalUsername, sepalPassword} = require('./config')
 const {get$} = require('#sepal/httpClient')
 const {firstValueFrom, map} = require('rxjs')
 const log = require('#sepal/log').getLogger('http/server')
@@ -6,7 +6,7 @@ const log = require('#sepal/log').getLogger('http/server')
 const getEmailNotificationsEnabled = async emailAddress => {
     log.debug(() => `Getting email notifications preference for address <${emailAddress}> from origin`)
     const response = await firstValueFrom(
-        get$(`https://${sepalHost}/api/user/email-notifications-enabled/${emailAddress}`, {
+        get$(`http://${gatewayHost}/api/user/email-notifications-enabled/${emailAddress}`, {
             username: sepalUsername,
             password: sepalPassword
         })
@@ -19,7 +19,7 @@ const getEmailNotificationsEnabled = async emailAddress => {
 const getUser = async username => {
     log.debug(() => `Getting email address for user <${username}> from origin`)
     return firstValueFrom(
-        get$(`https://${sepalHost}/api/user/info`, {
+        get$(`http://${gatewayHost}/api/user/info`, {
             username: sepalUsername,
             password: sepalPassword,
             query: {

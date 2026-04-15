@@ -12,8 +12,7 @@ const logsModule = async (module, options) => {
                 args: [
                     tail || recent || follow ? '--follow' : null,
                     tail ? '--since=0s' : null,
-                    // recent ? '--since=5m' : null,
-                    recent ? '--tail=10' : null,
+                    recent ? `--tail=20` : null,
                     since ? `--since=${since}` : null,
                     until ? `--until=${until}` : null
                 ],

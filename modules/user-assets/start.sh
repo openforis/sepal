@@ -9,13 +9,8 @@ then
     --watch "${MODULE}/config" \
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9229 \
-    src/main.js \
-    --redis-uri "redis://user-assets-redis" \
-    --poll-interval-minutes ${POLL_INTERVAL_MINUTES}
+    src/main.js
 else
   echo "Starting node"
-  exec node \
-    src/main.js \
-    --redis-uri "redis://user-assets-redis" \
-    --poll-interval-minutes ${POLL_INTERVAL_MINUTES}
+  exec node src/main.js
 fi

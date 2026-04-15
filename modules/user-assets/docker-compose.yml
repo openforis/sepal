@@ -36,6 +36,7 @@ services:
       - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      REDIS_HOST: "user-assets-redis"
       POLL_INTERVAL_MINUTES: "720"
     networks:
       - sepal

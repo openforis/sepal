@@ -10,6 +10,7 @@ import {restart} from './restart.js'
 import {logs} from './logs.js'
 import {shell} from './shell.js'
 import {log} from './log.js'
+import {tail} from './tail.js'
 import {npmUpdate} from './npm-update.js'
 import {npmInstall} from './npm-install.js'
 import {npmAudit} from './npm-audit.js'
@@ -98,12 +99,23 @@ const main = async () => {
         .description('Show module log')
         .option('-l, --log', 'Show low (no-op, for consistency)')
         .option('-f, --follow', 'Follow')
-        .option('-r, --recent', 'Recent (shortcut for --follow --since 5m)')
+        .option('-r, --recent', 'Last 20 lines and follow')
         .option('-t, --tail', 'Tail (shortcut for --follow --since 0)')
         .option('-s, --since <time>', 'Since relative or absolute time')
         .option('-u, --until <time>', 'Until relative or absolute time')
         .argument('[module...]', 'Modules')
         .action(logs)
+    
+    program.command('tail')
+        .description('Show multi-module log tail')
+        .option('-f, --follow', 'Follow')
+        .option('-r, --recent', 'Last 20 lines and follow')
+        .option('-t, --tail', 'Tail (shortcut for --follow --since 0)')
+        .option('-s, --since <time>', 'Since relative or absolute time')
+        .option('-u, --until <time>', 'Until relative or absolute time')
+        .option('-m, --merge', 'Merge all streams into a single one')
+        .argument('[module...]', 'Modules')
+        .action(tail)
     
     program.command('shell')
         .description('Start module shell')

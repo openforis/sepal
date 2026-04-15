@@ -74,7 +74,7 @@ class JdbcUserRepository implements UserRepository {
             WHERE system_user IS FALSE AND last_login_time IS NOT NULL
         ''')
         return result.collectEntries { row ->
-            [(row.username): toDate(row.last_login_time)]
+            [(row.username.toLowerCase()): toDate(row.last_login_time)]
         }
     }
 

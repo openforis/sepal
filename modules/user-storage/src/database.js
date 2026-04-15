@@ -69,7 +69,7 @@ const getMostRecentEvents = async () => {
 const getUserEvents = async username => {
     log.debug(`Getting events for user: ${username}`)
     const [results, _fields] = await getPool().query(`
-        SELECT username, event, timestamp
+        SELECT event, timestamp
         FROM (
             SELECT 
                 username,

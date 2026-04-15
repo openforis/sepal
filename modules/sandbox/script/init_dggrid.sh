@@ -6,9 +6,13 @@ echo "*************************"
 echo "*** Installing DGGRID ***"
 echo "*************************"
 
+REPOSITORY=https://github.com/sahrk/DGGRID.git
+
 # https://github.com/sahrk/DGGRID/blob/master/INSTALL.md
 cd /usr/local/lib
-git clone https://github.com/sahrk/DGGRID.git
+# git clone --branch v8.44 https://github.com/sahrk/DGGRID.git
+# Use the latest release tag instead of master
+git clone --branch $(git ls-remote --tags --sort=-v:refname $REPOSITORY | head -n 1 | sed 's/.*refs\/tags\///; s/\^{}//') --depth 1 $REPOSITORY
 cd DGGRID
 mkdir build 
 cd build

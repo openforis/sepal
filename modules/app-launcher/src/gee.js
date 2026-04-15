@@ -1,7 +1,7 @@
 const fs = require('fs').promises
 const log = require('#sepal/log').getLogger('main')
 const path = require('path')
-const {geeEmail, geeKey, googleProjectId, geeClientId} = require('./config')
+const {geeEmail, geeKey, googleProjectId} = require('./config')
 
 const credentialsPath = path.join('/var/lib/sepal/app-launcher/service-account-credentials.json')
 
@@ -15,7 +15,6 @@ function createCredentialsFile() {
         client_email: geeEmail,
         private_key: get_ee_key(),
         private_key_id: '',
-        client_id: geeClientId,
         auth_uri: 'https://accounts.google.com/o/oauth2/auth',
         token_uri: 'https://oauth2.googleapis.com/token'
     }

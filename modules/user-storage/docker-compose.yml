@@ -36,9 +36,9 @@ services:
       - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      SEPAL_HOST: "${SEPAL_HOST}"
       SEPAL_ADMIN_USERNAME: "sepalAdmin"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      GATEWAY_HOST: "gateway"
       RABBITMQ_HOST: "rabbitmq"
       MYSQL_HOST: "mysql"
       MYSQL_USER: "root"

@@ -1,19 +1,19 @@
 const {Command, Option} = require('commander')
 const log = require('#sepal/log').getLogger('config')
-const _ = require('lodash')
+
+const DEFAULT_HTTP_PORT = 80
 
 const fatalError = error => {
     log.fatal(error)
     process.exit(1)
 }
 
-const command = new Command()
-    .exitOverride()
+const program = new Command()
 
 try {
-    command
+    program
+        .exitOverride()
         .addOption(
-            // new Option('--amqp-host <value>', 'RabbitMQ host')
             new Option('--amqp-host <value>')
                 .env('RABBITMQ_HOST')
                 .makeOptionMandatory()
@@ -24,8 +24,8 @@ try {
                 .makeOptionMandatory()
         )
         .addOption(
-            new Option('--sepal-host <value>')
-                .env('SEPAL_HOST')
+            new Option('--gateway-host <value>')
+                .env('GATEWAY_HOST')
                 .makeOptionMandatory()
         )
         .addOption(
@@ -40,9 +40,9 @@ try {
         )
         .addOption(
             new Option('--port <number>')
-                .argParser(parseInt)
                 .env('HTTP_PORT')
-                .default(80)
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_HTTP_PORT)
         )
         .addOption(
             new Option('--home-dir <value>')
@@ -51,91 +51,89 @@ try {
         )
         .addOption(
             new Option('--scan-min-delay-seconds <number>')
-                .argParser(parseFloat)
+                .argParser(v => parseFloat(v))
                 .env('SCAN_MIN_DELAY_SECONDS')
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--scan-max-delay-seconds <number>')
-                .argParser(parseFloat)
+                .argParser(v => parseFloat(v))
                 .env('SCAN_MAX_DELAY_SECONDS')
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--scan-delay-increase-factor <number>')
-                .argParser(parseFloat)
+                .argParser(v => parseFloat(v))
                 .env('SCAN_DELAY_INCREASE_FACTOR')
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--scan-concurrency <number>')
-                .argParser(parseInt)
                 .env('SCAN_CONCURRENCY')
+                .argParser(v => parseInt(v))
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--scan-max-retries <number>')
-                .argParser(parseInt)
                 .env('SCAN_MAX_RETRIES')
+                .argParser(v => parseInt(v))
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--scan-initial-retry-delay-seconds <number>')
-                .argParser(parseFloat)
+                .argParser(v => parseFloat(v))
                 .env('SCAN_INITIAL_RETRY_DELAY_SECONDS')
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--inactivity-timeout-days <number>')
-                .argParser(parseFloat)
+                .argParser(v => parseFloat(v))
                 .env('INACTIVITY_TIMEOUT_DAYS')
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--inactivity-notification-delay-days <number>')
-                .argParser(parseFloat)
+                .argParser(v => parseFloat(v))
                 .env('INACTIVITY_NOTIFICATION_DELAY_DAYS')
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--inactivity-grace-period-days <number>')
-                .argParser(parseFloat)
+                .argParser(v => parseFloat(v))
                 .env('INACTIVITY_GRACE_PERIOD_DAYS')
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--inactivity-max-spread-hours <number>')
-                .argParser(parseFloat)
+                .argParser(v => parseFloat(v))
                 .env('INACTIVITY_MAX_SPREAD_HOURS')
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--inactivity-concurrency <number>')
-                .argParser(parseFloat)
+                .argParser(v => parseFloat(v))
                 .env('INACTIVITY_CONCURRENCY')
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--inactivity-max-retries <number>')
-                .argParser(parseFloat)
+                .argParser(v => parseFloat(v))
                 .env('INACTIVITY_MAX_RETRIES')
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--inactivity-initial-retry-delay-seconds <number>')
-                .argParser(parseFloat)
+                .argParser(v => parseFloat(v))
                 .env('INACTIVITY_INITIAL_RETRY_DELAY_SECONDS')
                 .makeOptionMandatory()
         )
         .addOption(
             new Option('--inactivity-user-storage-threshold-mb <number>')
-                .argParser(parseFloat)
+                .argParser(v => parseFloat(v))
                 .env('INACTIVITY_USER_STORAGE_THRESHOLD_MB')
                 .makeOptionMandatory()
         )
-        .parse(process.argv)
-
-    log.info('Configuration loaded')
+        .parse()
 } catch (error) {
     fatalError(error)
 }
@@ -143,7 +141,7 @@ try {
 const {
     amqpHost,
     redisHost,
-    sepalHost,
+    gatewayHost,
     sepalUsername,
     sepalPassword,
     port,
@@ -162,7 +160,7 @@ const {
     inactivityMaxRetries,
     inactivityInitialRetryDelaySeconds,
     inactivityUserStorageThresholdMb
-} = command.opts()
+} = program.opts()
 
 if (scanMinDelaySeconds < 5) {
     fatalError(`Argument --scan-min-delay-seconds (${scanMinDelaySeconds}) cannot be less than 5`)
@@ -176,10 +174,12 @@ if (scanMaxDelaySeconds <= scanMinDelaySeconds) {
     fatalError(`Argument --scan-max-delay-seconds (${scanMaxDelaySeconds}) cannot be less or equal to --scan-min-delay-seconds (${scanMinDelaySeconds})`)
 }
 
+log.info('Configuration loaded')
+
 module.exports = {
     amqpUri: `amqp://${amqpHost}`,
     redisHost,
-    sepalHost,
+    gatewayHost,
     sepalUsername,
     sepalPassword,
     port,

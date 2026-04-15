@@ -1,3 +1,4 @@
+const {sepalAppsHost} = require('../src/config')
 const modules = require('./modules')
 
 const endpoints = [
@@ -149,7 +150,7 @@ const endpoints = [
     {
         prefix: true,
         path: '/api/app-launcher',
-        target: `http://${process.env.APP_LAUNCHER_HOST || modules.appLauncher}`,
+        target: `http://${sepalAppsHost || modules.appLauncher}`,
         authenticate: true,
         rewrite: false
     },

@@ -106,33 +106,6 @@
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
 
-    # Transitional: remove previously installed configuration
-    - name: Remove /etc/rsyslog.d/docker.conf
-      file:
-        path: "/etc/rsyslog.d/docker.conf"
-        state: absent
-    
-    # Transitional: remove previously installed configuration
-    - name: Remove /etc/rsyslog.d/worker-instance.conf
-      file:
-        path: "/etc/rsyslog.d/worker-instance.conf"
-        state: absent
-    
-    - name: Start rsyslog
-      service: name=rsyslog state=restarted
-
-    # Transitional: remove previously installed configuration
-    - name: Remove /etc/logrotate.d/docker
-      file:
-        path: "/etc/logrotate.d/docker"
-        state: absent
-    
-    # Transitional: remove previously installed configuration
-    - name: Remove /etc/logrotate.d/worker-instance
-      file:
-        path: "/etc/logrotate.d/worker-instance"
-        state: absent
-    
     # Install multitail
     - name: Install multitail
       yum:

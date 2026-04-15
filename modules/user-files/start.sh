@@ -9,15 +9,8 @@ then
     --watch "${MODULE}/config" \
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9229 \
-    src/main.js \
-    --home-dir /sepalUsers \
-    --poll-interval-milliseconds ${POLL_INTERVAL_MS} \
-    --instances "$INSTANCES"
+    src/main.js
 else
   echo "Starting node"
-  exec node \
-    src/main.js \
-    --home-dir /sepalUsers \
-    --poll-interval-milliseconds ${POLL_INTERVAL_MS} \
-    --instances "$INSTANCES"
+  exec node src/main.js
 fi

@@ -1,4 +1,4 @@
-const {sepalHost, sepalUsername, sepalPassword} = require('./config')
+const {gatewayHost, sepalUsername, sepalPassword} = require('./config')
 const {get$} = require('#sepal/httpClient')
 const {forkJoin, map} = require('rxjs')
 const log = require('#sepal/log').getLogger('http')
@@ -16,7 +16,7 @@ const mergeMostRecent = (...objects) =>
 
 const getMostRecentLoginByUser$ = () => {
     log.debug(() => 'Getting most recent login by any user')
-    return get$(`https://${sepalHost}/api/user/mostRecentLoginByUser`, {
+    return get$(`http://${gatewayHost}/api/user/mostRecentLoginByUser`, {
         username: sepalUsername,
         password: sepalPassword,
         retry: {
@@ -29,7 +29,7 @@ const getMostRecentLoginByUser$ = () => {
 
 const getMostRecentLogin$ = username => {
     log.debug(() => `Getting most recent login by user: ${username}`)
-    return get$(`https://${sepalHost}/api/user/mostRecentLogin`, {
+    return get$(`http://${gatewayHost}/api/user/mostRecentLogin`, {
         username: sepalUsername,
         password: sepalPassword,
         query: {
@@ -45,7 +45,7 @@ const getMostRecentLogin$ = username => {
 
 const getMostRecentSessionByUser$ = () => {
     log.debug(() => 'Getting most recent session by any user')
-    return get$(`https://${sepalHost}/api/sessions/mostRecentlyClosedByUser`, {
+    return get$(`http://${gatewayHost}/api/sessions/mostRecentlyClosedByUser`, {
         username: sepalUsername,
         password: sepalPassword,
         retry: {
@@ -58,7 +58,7 @@ const getMostRecentSessionByUser$ = () => {
 
 const getMostRecentSession$ = username => {
     log.debug(() => `Getting most recent session by user: ${username}`)
-    return get$(`https://${sepalHost}/api/sessions/mostRecentlyClosed`, {
+    return get$(`http://${gatewayHost}/api/sessions/mostRecentlyClosed`, {
         username: sepalUsername,
         password: sepalPassword,
         query: {
@@ -95,7 +95,7 @@ const getMostRecentAccess$ = username =>
 
 const getUser$ = username => {
     log.debug(() => `Getting user: ${username}`)
-    return get$(`https://${sepalHost}/api/user/info`, {
+    return get$(`http://${gatewayHost}/api/user/info`, {
         username: sepalUsername,
         password: sepalPassword,
         query: {

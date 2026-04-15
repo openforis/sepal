@@ -145,6 +145,15 @@ export const UserActivity = compose(
     connect()
 )
 
+UserActivity.isInactiveHigh = user =>
+    user?.activity?.event === INACTIVE_HIGH
+
+UserActivity.isNotified = user =>
+    user?.activity?.event === NOTIFIED
+    
+UserActivity.isPurged = user =>
+    user?.activity?.event === PURGED
+
 UserActivity.propTypes = {
     user: PropTypes.any
 }

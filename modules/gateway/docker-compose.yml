@@ -37,9 +37,9 @@ services:
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_HOST: "${SEPAL_HOST}"
+      SEPAL_APPS_HOST: "${SEPAL_APPS_HOST}"
       RABBITMQ_HOST: "rabbitmq"
-      RABBITMQ_PORT: "5672"
-      APP_LAUNCHER_HOST: "${SEPAL_APPS_HOST}"
+      REDIS_HOST: "gateway-redis"
     networks:
       - sepal
     extra_hosts:

@@ -33,10 +33,10 @@ class _AutoSelectScenes extends React.Component {
     }
 
     render() {
-        const {action} = this.props
+        const {stream} = this.props
         return (
             <div>
-                {action('AUTO_SELECT_SCENES').dispatching
+                {stream('AUTO_SELECT_SCENES').active
                     ? <MapStatus message={msg('process.mosaic.panel.autoSelectScenes.selecting')}/>
                     : null}
             </div>

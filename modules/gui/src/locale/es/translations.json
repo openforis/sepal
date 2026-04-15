@@ -5267,6 +5267,15 @@
         "overbudget": {
           "label": "Sobrepresupuesto"
         },
+        "inactive": {
+          "label": ""
+        },
+        "notified": {
+          "label": ""
+        },
+        "purged": {
+          "label": ""
+        },
         "pending": {
           "label": "Pendiente"
         },
