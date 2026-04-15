@@ -8,6 +8,8 @@ services:
     extends:
       file: ../docker-compose.logger.override.yml
       service: logger
+    environment:
+      SEPAL_APPS_HOST: "" # override to allow dynamic reloading in dev
     volumes:  # To allow dynamic reloading in dev
       # lib/shared
       - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
