@@ -14,6 +14,8 @@ const server = require('#sepal/httpServer')
 const {createProxyMiddleware} = require('http-proxy-middleware')
 const {getRequestUser} = require('./user')
 
+const managementHost = '127.0.0.1'
+
 const startServer = () => {
     // This is the main server for the app launcher
     const app = express()
@@ -31,7 +33,7 @@ const startServer = () => {
             }
         },
         createProxyMiddleware({
-            target: `http://localhost:${managementPort}`,
+            target: `http://${managementHost}:${managementPort}`,
             changeOrigin: true,
         })
     )
@@ -50,10 +52,11 @@ const startServer = () => {
 const startManagementServer = async () => {
     const port = managementPort
     await server.start({
+        host: managementHost,
         port,
         routes: managementRoutes
     })
-    log.info(`Management server started on port ${port}`)
+    log.info(`Management server started on ${managementHost}:${port}`)
 }
 
 const main = async () => {
