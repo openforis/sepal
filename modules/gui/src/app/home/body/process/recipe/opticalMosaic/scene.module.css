@@ -9,6 +9,7 @@
     border: 1px solid var(--wireframe-color);
     /* [HACK] Prevents Firefox from stretching a single selected scene to fill available space */
     max-height: calc(var(--thumbnail-size) + 5.5rem);
+    user-select: none;
 }
 
 .overlay {
