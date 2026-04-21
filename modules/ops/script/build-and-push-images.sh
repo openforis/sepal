@@ -30,16 +30,16 @@ function start {
   echo
   echo "******* Starting ${MODULE} *******"
   cd ${MODULE_DIR}
-  docker compose --file ${MODULE_DIR}/docker-compose.yml down
+#  docker compose --file ${MODULE_DIR}/docker-compose.yml down
   docker compose --file ${MODULE_DIR}/docker-compose.yml up -d
 }
 
-build logger
+# build logger
 start logger
 
 build sandbox-base
 
-build r-proxy
+# build r-proxy
 start r-proxy
 
 build email

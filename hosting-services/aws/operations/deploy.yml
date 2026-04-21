@@ -90,7 +90,11 @@
         enabled: yes
         masked: no
 
-    - docker_network: name=sepal
+    - docker_network:
+        name: sepal
+        ipam_config:
+          - subnet: 172.20.0.0/16
+            iprange: 172.20.0.0/24
     
     - name: Create /etc/sepal
       file:
