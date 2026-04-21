@@ -34,7 +34,8 @@ function start {
   docker compose --file ${MODULE_DIR}/docker-compose.yml up -d
 }
 
-build logger    
+build logger
+start logger
 
 build sandbox-base
 
