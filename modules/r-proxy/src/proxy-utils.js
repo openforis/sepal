@@ -34,7 +34,8 @@ const serveFile = async ({res, path, type}) => {
 
 const serveError = async (req, res) => {
     log.debug('Cannot serve:', req.url)
-    res.end()
+    res.writeHead(404, {'Content-Type': 'text/plain'})
+    res.end('Not found')
     return false
 }
 
