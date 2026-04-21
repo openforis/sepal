@@ -90,6 +90,7 @@ const serveProxied = async (req, res) => {
     const {base, name} = getCranPackageInfo(req.url)
     return await serveProxiedFile(req, res, getCranTarget(base, name, {archive: false}))
         || await serveProxiedFile(req, res, getCranTarget(base, name, {archive: true}))
+        || await serveProxiedFile(req, res, getCranTarget(base, name, {transit: true}))
 }
 
 const serveCran = async (req, res) =>
