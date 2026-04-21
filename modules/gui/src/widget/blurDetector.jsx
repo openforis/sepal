@@ -43,6 +43,7 @@ class _BlurDetector extends React.Component {
                 ref={this.ref}
                 className={[
                     className,
+                    styles.container,
                     fadeOut ? styles.fadeOut : null
                 ].join(' ')}
                 style={{...style, '--animation-duration-ms': ANIMATION_DURATION_MS}}

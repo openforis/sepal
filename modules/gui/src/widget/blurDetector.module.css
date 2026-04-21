@@ -1,3 +1,10 @@
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+}
+
 .fadeOut {
     animation-name: fadeOut;
     animation-duration: calc(var(--animation-duration-ms) * 1ms);
