@@ -3,7 +3,7 @@ USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV DOCKER_BUILDKIT=0
-ARG DOCKER_COMPOSE_VERSION=v5.1.0
+ARG DOCKER_COMPOSE_VERSION=v5.1.3
 
 RUN mkdir /var/log/sepal-build && chown jenkins: /var/log/sepal-build
 RUN apk update && apk add --no-cache \

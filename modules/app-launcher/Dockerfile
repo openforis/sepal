@@ -5,7 +5,7 @@ EXPOSE 80
 ENV MODULE_NAME=app-launcher
 ENV MODULE=/usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED=/usr/local/src/sepal/lib/js/shared
-ARG DOCKER_COMPOSE_VERSION=v5.1.0
+ARG DOCKER_COMPOSE_VERSION=v5.1.3
 
 RUN npm install -g nodemon
 RUN apk update && apk add --no-cache \
