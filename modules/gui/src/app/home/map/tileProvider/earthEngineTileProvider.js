@@ -1,24 +1,14 @@
 import {combineLatest, filter, map} from 'rxjs'
 
 import {toBandValues} from '../cursorValue'
-import {handleError$} from './earthEngineError'
-import {WMTSTileProvider} from './wmtsTileProvider'
+import {EarthEngineProvider, TILE_SIZE} from './earthEngineProvider'
 
-// ee.layers.AbstractOverlay.DEFAULT_TILE_EDGE_LENGTH (@google/earthengine)
-const TILE_SIZE = 256
-const CONCURRENCY = 8
-
-export class EarthEngineTileProvider extends WMTSTileProvider {
+export class EarthEngineTileProvider extends EarthEngineProvider {
     elements = {}
     offsets = {}
 
     constructor({urlTemplate, dataTypes, visParams, cursorValue$, boundsChanged$, dragging$, cursor$}) {
-        super({
-            type: 'EarthEngine',
-            urlTemplate,
-            concurrency: CONCURRENCY,
-            tileSize: TILE_SIZE
-        })
+        super({urlTemplate})
         this.dataTypes = dataTypes
         this.visParams = visParams
         this.cursorValue$ = cursorValue$
@@ -61,10 +51,6 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
             this.updateOffset(element)
             this.getElementContext(element).drawImage(image, 0, 0, TILE_SIZE, TILE_SIZE, 0, 0, TILE_SIZE, TILE_SIZE)
         }
-    }
-
-    handleError$(error, retryError) {
-        return handleError$(error, retryError)
     }
 
     renderErrorTile({element, _error}) {
