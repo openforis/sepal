@@ -119,8 +119,8 @@ const createTileManager = ({type, concurrency}) => {
         )
 
     tileRequest$.subscribe(
-        ({tileProviderId, tileId = uuid(), request, response$, cancel$, retries}) => {
-            requestQueue.enqueue({tileProviderId, tileId, request, response$, cancel$, retries})
+        ({tileProviderId, tileId = uuid(), request, response$, cancel$}) => {
+            requestQueue.enqueue({tileProviderId, tileId, request, response$, cancel$})
             requestExecutor.notify({tileProviderId, tileId})
         }
     )
