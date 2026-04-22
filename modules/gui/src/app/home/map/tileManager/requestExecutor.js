@@ -241,6 +241,7 @@ export const getRequestExecutor = ({tileResult$, concurrency}) => {
         cancelByTileProviderId(tileProviderId)
         delete activeRequestCount[tileProviderId]
         delete hiddenTileProviders[tileProviderId]
+        delete enabledTileProviders[tileProviderId]
     }
     
     return {execute, notify, cancelByTileId, cancelByTileProviderId, removeTileProvider, setHidden, setEnabled, getActiveRequestCount}
