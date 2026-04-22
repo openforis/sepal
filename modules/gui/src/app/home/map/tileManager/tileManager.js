@@ -139,7 +139,7 @@ const createTileManager = ({type, concurrency}) => {
                 log.trace(() => 'No request pending for any enabled tileProviders')
             }
             if (cancelledRequest) {
-                log.debug(`Re-enqueue ${tileTag(cancelledRequest)}`)
+                log.debug(() => `Re-enqueue ${tileTag(cancelledRequest)}`)
                 loadTile(cancelledRequest)
             }
             updateStatus(tileProviderId)
