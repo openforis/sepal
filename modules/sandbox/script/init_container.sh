@@ -35,6 +35,15 @@ chown -R $sandbox_user_id:$home_group_id /home/$sandbox_user/.shiny
 
 rm -rf /templates
 
+# Unset after writing so supervisord (PID 1, exec'd below) and its children don't inherit the key.
+if [ -n "$SEPAL_API_KEY" ]; then
+    umask 077
+    printf '%s' "$SEPAL_API_KEY" > /var/run/sepal-api-key
+    chown ${sandbox_user_id}:${home_group_id} /var/run/sepal-api-key
+    chmod 0600 /var/run/sepal-api-key
+    unset SEPAL_API_KEY
+fi
+
 printf '%s\n' \
     "R_LIBS_USER=/home/$sandbox_user/.R/library" \
     "R_LIBS_SITE=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library:/shiny/library" \

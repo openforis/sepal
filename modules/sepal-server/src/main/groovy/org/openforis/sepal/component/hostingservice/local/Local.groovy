@@ -7,12 +7,18 @@ import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.adapter.DockerInstanceProvisioner
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
+import org.openforis.sepal.component.workerinstance.api.SandboxSessionApiKey
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 
 @SuppressWarnings("GroovyUnusedDeclaration")
 class Local implements HostingServiceAdapter {
     private final config = new LocalConfig()
     private final double storageCostPerGbMonth = 0.33d // EFS pricing
+    private SandboxSessionApiKey sandboxSessionApiKey
+
+    void setSandboxSessionApiKey(SandboxSessionApiKey apiKey) {
+        this.sandboxSessionApiKey = apiKey
+    }
     // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/InstanceType.html
     final List<InstanceType> instanceTypes = [
             new InstanceType(id: 'T3aSmall', name: 't3a.small', tag: 't1', hourlyCost: 0.0204, cpuCount: 1, ramGiB: 2, idleCount: 1),
@@ -70,6 +76,6 @@ class Local implements HostingServiceAdapter {
 
     InstanceProvisioner getInstanceProvisioner() {
         // Provide logger container static IP address
-        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, 'udp://172.20.128.2')
+        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, 'udp://172.20.128.2', sandboxSessionApiKey)
     }
 }

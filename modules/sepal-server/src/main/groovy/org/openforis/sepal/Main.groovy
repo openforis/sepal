@@ -10,11 +10,14 @@ import org.openforis.sepal.component.task.TaskComponent
 import org.openforis.sepal.component.task.adapter.HttpWorkerGateway
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
+import org.openforis.sepal.component.workersession.adapter.JdbcWorkerSessionRepository
+import org.openforis.sepal.component.workersession.adapter.WorkerSessionSandboxApiKey
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.security.PathRestrictionsFactory
 import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.sql.SqlConnectionManager
+import org.openforis.sepal.util.SystemClock
 import org.openforis.sepal.util.lifecycle.Lifecycle
 import org.openforis.sepal.util.lifecycle.Stoppable
 import org.slf4j.Logger
@@ -26,8 +29,9 @@ class Main {
 
     Main() {
         def config = new SepalConfiguration()
-        def hostingServiceAdapter = HostingServiceAdapter.Factory.create(config.hostingService)
         def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile('sdms'))
+        def sandboxSessionApiKey = new WorkerSessionSandboxApiKey(new JdbcWorkerSessionRepository(connectionManager, new SystemClock()))
+        def hostingServiceAdapter = HostingServiceAdapter.Factory.create(config.hostingService, sandboxSessionApiKey)
 
         def processingRecipeComponent = start ProcessingRecipeComponent.create()
         def workerInstanceComponent = start WorkerInstanceComponent.create(hostingServiceAdapter)
