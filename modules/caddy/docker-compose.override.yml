@@ -1,0 +1,7 @@
+services:
+  caddy:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
+    volumes:  # To allow dynamic reloading in dev
+      - ${SEPAL_PROJECT_DIR}/modules/caddy/Caddyfile:/etc/caddy/Caddyfile:ro

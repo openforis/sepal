@@ -1,0 +1,84 @@
+{
+	email {$LETSENCRYPT_EMAIL}
+	admin off
+
+	# Mirror HAProxy `defaults` timeouts
+	servers {
+		timeouts {
+			read_header 30s # haproxy: timeout http-request 30s
+			idle 1m # haproxy: timeout client 1m
+			# read_body and write left at 0 so WebSocket tunnels aren't cut off
+			# (haproxy: timeout tunnel 2h — Caddy has no hard server-side tunnel cap)
+		}
+	}
+}
+
+{$SEPAL_HOST} {
+	# log {
+	#	output stdout
+	#	format console
+	#}
+	#log_skip /healthcheck
+
+	# Block TRACE and TRACK methods
+	@trace_track method TRACE TRACK
+	respond @trace_track 405
+
+	# Redirect legacy paths (kept for users with old bookmarks)
+	redir /process https://{$SEPAL_HOST}/ 301
+	redir /browse https://{$SEPAL_HOST}/-/browse 301
+	redir /terminal https://{$SEPAL_HOST}/-/terminal 301
+	redir /app-launch-pad https://{$SEPAL_HOST}/-/app-launch-pad 301
+	redir /tasks https://{$SEPAL_HOST}/-/tasks 301
+	redir /users https://{$SEPAL_HOST}/-/users 301
+
+	# Upstream (Groovy) servers may set cookies without Secure/SameSite.
+	# RE2 has no lookahead, so we append unconditionally; browsers tolerate duplicates.
+	header Set-Cookie "(.+)" "${1}; Secure; SameSite=Strict"
+
+	# Security headers applied to every response
+	header {
+		X-Content-Type-Options "nosniff"
+		Strict-Transport-Security "max-age=16000000; includeSubDomains; preload;"
+		Permissions-Policy "camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+		-Server
+		-X-Powered-By
+	}
+
+	encode gzip
+
+	# /api/* and /privacy-policy -> gateway
+	@gateway path /api/* /privacy-policy
+	handle @gateway {
+		reverse_proxy gateway:80 {
+			lb_retries 3
+			transport http {
+				dial_timeout 5s # haproxy: timeout connect 5s
+				response_header_timeout 15m # haproxy: timeout server 15m
+			}
+		}
+	}
+
+	# Everything else -> gui
+	handle {
+		header {
+			Content-Security-Policy "connect-src 'self' https://{$SEPAL_HOST} wss://{$SEPAL_HOST} https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://*.google.com https://*.planet.com https://registry.npmjs.org; frame-ancestors 'self' https://{$SEPAL_HOST} https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://registry.npmjs.org; object-src 'none'; base-uri 'self'"
+			Referrer-Policy "no-referrer"
+		}
+
+		reverse_proxy gui:80 {
+			lb_retries 3
+			transport http {
+				dial_timeout 5s # haproxy: timeout connect 5s
+				response_header_timeout 15m # haproxy: timeout server 15m
+			}
+
+			@html header Content-Type *text/html*
+			handle_response @html {
+				copy_response_headers
+				header Cache-Control "no-cache, no-store, must-revalidate"
+				copy_response
+			}
+		}
+	}
+}

@@ -44,12 +44,11 @@ start r-proxy
 
 build email
 build sys-monitor
-build letsencrypt
+build caddy
 build java
 build rabbitmq
 build ldap-backup
 build ldap
-build haproxy
 build backup
 build mysql-backup
 build mysql
@@ -99,8 +98,7 @@ push ssh-gateway
 push sandbox
 push task
 push terminal
-push letsencrypt
-push haproxy
+push caddy
 push scene-metadata
 
 docker logout localhost

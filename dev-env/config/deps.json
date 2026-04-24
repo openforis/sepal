@@ -23,6 +23,13 @@
         "build": {},
         "run": []
     },
+    "caddy": {
+        "build": {},
+        "run": [
+            "logger",
+            "gateway"
+        ]
+    },
     "ceo-gateway": {
         "lib": [
             "shared"
@@ -76,14 +83,6 @@
             "logger"
         ]
     },
-    "haproxy": {
-        "build": {},
-        "run": [
-            "logger",
-            "letsencrypt",
-            "gateway"
-        ]
-    },
     "java": {
         "build": {},
         "run": false
@@ -95,12 +94,6 @@
         ]
     },
     "ldap-backup": {
-        "build": {},
-        "run": [
-            "logger"
-        ]
-    },
-    "letsencrypt": {
         "build": {},
         "run": [
             "logger"

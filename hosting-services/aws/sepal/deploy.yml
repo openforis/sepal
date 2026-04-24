@@ -286,7 +286,6 @@
     - { role: run-module, module: ssh-gateway }
     - { role: run-module, module: terminal }
     - { role: run-module, module: gateway }
-    - { role: run-module, module: letsencrypt }
-    - { role: run-module, module: haproxy }
+    - { role: run-module, module: caddy }
     - { role: run-module, module: sys-monitor }
     - { role: run-module, module: scene-metadata }
