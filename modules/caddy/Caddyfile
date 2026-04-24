@@ -42,6 +42,7 @@
 		Strict-Transport-Security "max-age=16000000; includeSubDomains; preload;"
 		Permissions-Policy "camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
 		-Server
+        -Via
 		-X-Powered-By
 	}
 
@@ -75,7 +76,6 @@
 
 			@html header Content-Type *text/html*
 			handle_response @html {
-				copy_response_headers
 				header Cache-Control "no-cache, no-store, must-revalidate"
 				copy_response
 			}
