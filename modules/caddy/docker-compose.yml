@@ -32,13 +32,13 @@ services:
       net.ipv4.tcp_keepalive_time: 60
       net.ipv4.tcp_keepalive_intvl: 60
       net.ipv4.tcp_keepalive_probes: 6
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost/healthcheck"]
-    #   start_period: 60s
-    #   start_interval: 1s
-    #   interval: 20s
-    #   timeout: 5s
-    #   retries: 3
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "-T", "5", "http://localhost/healthcheck"]
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
     restart: always
 
 networks:

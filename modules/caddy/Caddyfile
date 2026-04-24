@@ -82,3 +82,17 @@
 		}
 	}
 }
+
+# Loopback-only listener for the Docker HEALTHCHECK.
+# The main {$SEPAL_HOST} block is host-matched, so a request with
+# `Host: localhost` from inside the container never reaches it.
+# The healthcheck intentionally probes Caddy itself (not upstreams): if
+# gateway or gui is down, Caddy is still healthy and must keep running.
+http://localhost {
+	handle /healthcheck {
+		respond "OK" 200
+	}
+	handle {
+		respond 404
+	}
+}
