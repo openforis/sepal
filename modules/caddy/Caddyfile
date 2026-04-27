@@ -2,13 +2,11 @@
 	email {$LETSENCRYPT_EMAIL}
 	admin off
 
-	# Mirror HAProxy `defaults` timeouts
 	servers {
 		timeouts {
-			read_header 30s # haproxy: timeout http-request 30s
-			idle 1m # haproxy: timeout client 1m
-			# read_body and write left at 0 so WebSocket tunnels aren't cut off
-			# (haproxy: timeout tunnel 2h — Caddy has no hard server-side tunnel cap)
+			read_header 30s
+			idle 1m
+			# read_body and write left at 0 so WebSocket tunnels aren't cut off.
 		}
 	}
 }
@@ -42,7 +40,7 @@
 		Strict-Transport-Security "max-age=16000000; includeSubDomains; preload;"
 		Permissions-Policy "camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
 		-Server
-        -Via
+		-Via
 		-X-Powered-By
 	}
 
@@ -54,8 +52,8 @@
 		reverse_proxy gateway:80 {
 			lb_retries 3
 			transport http {
-				dial_timeout 5s # haproxy: timeout connect 5s
-				response_header_timeout 15m # haproxy: timeout server 15m
+				dial_timeout 5s
+				response_header_timeout 15m
 			}
 		}
 	}
@@ -70,8 +68,8 @@
 		reverse_proxy gui:80 {
 			lb_retries 3
 			transport http {
-				dial_timeout 5s # haproxy: timeout connect 5s
-				response_header_timeout 15m # haproxy: timeout server 15m
+				dial_timeout 5s
+				response_header_timeout 15m
 			}
 
 			@html header Content-Type *text/html*
