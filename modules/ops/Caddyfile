@@ -1,0 +1,83 @@
+#   {$OPS_DOMAIN}:{$JENKINS_PORT}  -> jenkins:8080
+#   {$OPS_DOMAIN}:443              -> docker-registry:5000  (basic-auth gated)
+{
+	email {$LETSENCRYPT_EMAIL}
+	admin off
+
+	servers {
+		timeouts {
+			idle 60s
+		}
+	}
+}
+
+# --- Jenkins UI ---------------------------------------------------------------
+{$OPS_DOMAIN}:{$JENKINS_PORT} {
+	encode gzip
+
+	# Append Secure/SameSite to all Set-Cookie headers. RE2 has no lookaround,
+	# so we can't skip cookies that already have these attributes; duplicates
+	# are ignored by browsers.
+	header Set-Cookie "(.+)" "${1}; Secure; SameSite=Strict"
+
+	# Strip headers that leak server identity / proxy chain.
+	header {
+		-Server
+		-Via
+		-X-Powered-By
+	}
+
+	reverse_proxy jenkins:8080 {
+		lb_retries 3
+		header_up X-Forwarded-Proto https
+		header_up X-Forwarded-Host {$OPS_DOMAIN}
+		header_up X-Forwarded-Port {$JENKINS_PORT}
+		transport http {
+			dial_timeout 5s
+			response_header_timeout 60s
+		}
+	}
+}
+
+# --- Docker registry ----------------------------------------------------------
+{$OPS_DOMAIN}:443 {
+	encode gzip
+
+	# Same credentials as the registry itself enforces internally
+	# (modules/ops/script/start-registry.sh writes them to /auth/.htpasswd).
+	# basic_auth needs a bcrypt hash, computed in start-caddy.sh from
+	# DOCKER_REGISTRY_PASSWORD at container start.
+	basic_auth {
+		{$DOCKER_REGISTRY_USERNAME} {$DOCKER_REGISTRY_PASSWORD_HASH}
+	}
+
+	# Strip headers that leak server identity / proxy chain.
+	header {
+		-Server
+		-Via
+		-X-Powered-By
+	}
+
+	reverse_proxy docker-registry:5000 {
+		lb_retries 3
+		header_up X-Forwarded-Proto https
+		header_up X-Forwarded-Host {$OPS_DOMAIN}
+		header_up X-Forwarded-Port 443
+		transport http {
+			dial_timeout 5s
+			response_header_timeout 60s
+		}
+	}
+}
+
+# --- Loopback healthcheck -----------------------------------------------------
+# Docker HEALTHCHECK runs inside the container and hits Host: localhost, which
+# wouldn't match the {$OPS_DOMAIN} sites above.
+http://localhost {
+	handle /healthcheck {
+		respond "OK" 200
+	}
+	handle {
+		respond 404
+	}
+}
