@@ -7,7 +7,7 @@ set -e
 # expose it to the Caddyfile via {$DOCKER_REGISTRY_PASSWORD_HASH}.
 #
 # Stdin (rather than -p "$pass") keeps the password out of /proc/<pid>/cmdline.
-DOCKER_REGISTRY_PASSWORD_HASH=$(printf '%s' "$DOCKER_REGISTRY_PASSWORD" | caddy hash-password)
+DOCKER_REGISTRY_PASSWORD_HASH=$(echo "$DOCKER_REGISTRY_PASSWORD" | caddy hash-password)
 export DOCKER_REGISTRY_PASSWORD_HASH
 
 exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
