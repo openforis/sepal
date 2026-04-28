@@ -55,6 +55,7 @@
         "react-router-dom": "7.14.2",
         "react-textarea-autosize": "^8.5.9",
         "redux": "5.0.1",
+        "remark-gfm": "^4.0.1",
         "rxjs": "7.8.2",
         "thememirror": "^2.0.1"
     },
@@ -66,8 +67,8 @@
     },
     "devDependencies": {
         "@eslint/js": "^10",
-        "@stylistic/eslint-plugin": "^5",
         "@redux-devtools/extension": "^4.0.0",
+        "@stylistic/eslint-plugin": "^5",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/user-event": "^14.6.1",
         "@vitejs/plugin-react-swc": "^4.3.0",
