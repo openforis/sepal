@@ -20,7 +20,6 @@ RUN curl -SL https://github.com/docker/compose/releases/download/${DOCKER_COMPOS
 RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Install docker buildx
-
 RUN mkdir -p /usr/libexec/docker/cli-plugins
 RUN curl -SL https://github.com/docker/buildx/releases/download/${DOCKER_BUILDX_VERSION}/buildx-${DOCKER_BUILDX_VERSION}.linux-amd64 -o /usr/libexec/docker/cli-plugins/docker-buildx
 RUN chmod +x /usr/libexec/docker/cli-plugins/docker-buildx
