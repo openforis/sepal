@@ -56,7 +56,6 @@
     },
     "running": "L'app est lancée",
     "noInstanceRequired": "",
-    "noInstanceRequiredTooltip": "",
     "admin": {
       "title": "",
       "logs": {

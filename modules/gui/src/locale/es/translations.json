@@ -56,7 +56,6 @@
     },
     "running": "La aplicación está funcionando",
     "noInstanceRequired": "",
-    "noInstanceRequiredTooltip": "",
     "admin": {
       "title": "",
       "logs": {
