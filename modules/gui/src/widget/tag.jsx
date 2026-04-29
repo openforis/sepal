@@ -49,9 +49,9 @@ export const Tag = compose(
 
 Tag.propTypes = {
     children: PropTypes.any,
-    icon: PropTypes.any,
+    icon: PropTypes.string,
     label: PropTypes.any,
-    size: PropTypes.any,
+    size: PropTypes.oneOf(['x-small', 'small', 'normal', 'large', 'x-large', 'xx-large']),
     tooltip: PropTypes.any,
-    tooltipPlacement: PropTypes.string
+    tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right'])
 }
