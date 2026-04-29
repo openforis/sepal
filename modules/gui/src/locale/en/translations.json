@@ -56,7 +56,7 @@
     },
     "running": "App is running",
     "noInstanceRequired": "Instant",
-    "noInstanceRequiredTooltip": "No instance required",
+    "noInstanceRequiredTooltip": "This app doesn't require a dedicated instance to run.",
     "admin": {
       "title": "{app} management panel",
       "logs": {
