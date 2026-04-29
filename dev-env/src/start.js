@@ -36,6 +36,9 @@ const startModule = async (module, options = {}, rootModule, gradleOptions) => {
                 args: [
                     '--detach'
                 ],
+                env: options.preview
+                    ? {...process.env, PREVIEW_MODE: 'true'}
+                    : undefined,
                 showStdOut: options.verbose
             })
 
