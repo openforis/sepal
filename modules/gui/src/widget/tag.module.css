@@ -1,7 +1,6 @@
 .contents {
     text-transform: uppercase;
-}
-
-.contents > * + * {
-    margin-left: .5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
 }
