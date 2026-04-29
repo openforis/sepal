@@ -62,3 +62,6 @@ export const getRunDependencyMap = modules =>
 
 export const isWatchable = module =>
     deps[module]?.watch
+
+export const allowsProductionMode = module =>
+    deps[module]?.allowProductionMode === true

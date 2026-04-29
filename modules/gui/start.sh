@@ -8,9 +8,4 @@ if [ ! -d "node_modules" ]; then
   npm install
 fi
 
-if [ "${PREVIEW_MODE}" = "true" ]; then
-  npm run build
-  npm run preview
-else
-  npm start
-fi
+exec npm start

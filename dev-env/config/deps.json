@@ -81,7 +81,8 @@
         "build": {},
         "run": [
             "logger"
-        ]
+        ],
+        "allowProductionMode": true
     },
     "java": {
         "build": {},

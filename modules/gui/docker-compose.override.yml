@@ -5,8 +5,5 @@ services:
       service: logger
     build:
       target: build
-    user: node
     volumes:
       - ${SEPAL_PROJECT_DIR}/modules/gui:/usr/local/src/sepal/modules/gui # To allow dynamic reloading in dev
-    environment:
-      PREVIEW_MODE: "${PREVIEW_MODE:-false}"

@@ -14,11 +14,6 @@ export default defineConfig({
         port: 80,
         allowedHosts: true
     },
-    preview: {
-        host: '0.0.0.0',
-        port: 80,
-        allowedHosts: true
-    },
     build: {
         sourcemap: true
     },

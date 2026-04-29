@@ -2,7 +2,7 @@ import {compose} from './compose.js'
 import {start} from './start.js'
 import {exec} from './exec.js'
 import {getModules, isModule, showModuleStatus, MESSAGE, firstLine, isNodeModule} from './utils.js'
-import {getBuildDeps, getBuildRunDeps, getLibDeps} from './deps.js'
+import {allowsProductionMode, getBuildDeps, getBuildRunDeps, getLibDeps} from './deps.js'
 import {log} from './log.js'
 import _ from 'lodash'
 import {SEPAL_SRC} from './config.js'
@@ -72,6 +72,9 @@ const buildModule = async (module, options = {}, pull) => {
                 BUILD_NUMBER: 'latest',
                 GIT_COMMIT: gitCommit
             },
+            files: options.production && allowsProductionMode(module)
+                ? ['docker-compose.yml']
+                : undefined,
             enableStdIn: !options.verbose,
             showStdOut: !options.quiet,
             showStdErr: true
@@ -111,7 +114,9 @@ export const build = async (modules, options) => {
     for (const {module, action, pull} of buildActions) {
         if (action === 'build') {
             await buildModule(module, options, pull)
-            await npmInstall(module, {})
+            if (!(options.production && allowsProductionMode(module))) {
+                await npmInstall(module, {})
+            }
         } else if (action === 'run') {
             await start(module, {stop: true})
         } else {

@@ -2,7 +2,7 @@ import {compose} from './compose.js'
 import {exec} from './exec.js'
 import {getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning, multi, progress} from './utils.js'
 import {logs} from './logs.js'
-import {getRunDependencyMap} from './deps.js'
+import {allowsProductionMode, getRunDependencyMap} from './deps.js'
 import {SEPAL_SRC} from './config.js'
 import _ from 'lodash'
 
@@ -36,8 +36,8 @@ const startModule = async (module, options = {}, rootModule, gradleOptions) => {
                 args: [
                     '--detach'
                 ],
-                env: options.preview
-                    ? {...process.env, PREVIEW_MODE: 'true'}
+                files: options.production && allowsProductionMode(module)
+                    ? ['docker-compose.yml']
                     : undefined,
                 showStdOut: options.verbose
             })
