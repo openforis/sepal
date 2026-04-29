@@ -10,13 +10,15 @@ import styles from './tag.module.css'
 
 class _Tag extends React.Component {
     render() {
-        const {size} = this.props
+        const {size, tooltip, tooltipPlacement} = this.props
         return (
             <Shape
                 shape='pill'
                 look='transparent'
                 size={size}
-                disableHover>
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+                disableHover={!tooltip}>
                 <div className={styles.contents}>
                     {this.renderIcon()}
                     {this.renderContents()}
@@ -47,6 +49,9 @@ export const Tag = compose(
 
 Tag.propTypes = {
     children: PropTypes.any,
+    icon: PropTypes.any,
     label: PropTypes.any,
-    size: PropTypes.any
+    size: PropTypes.any,
+    tooltip: PropTypes.any,
+    tooltipPlacement: PropTypes.string
 }
