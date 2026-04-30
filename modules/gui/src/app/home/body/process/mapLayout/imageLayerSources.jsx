@@ -7,6 +7,7 @@ import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {select} from '~/store'
 import {msg} from '~/translate'
+import {uuid} from '~/uuid'
 import {CrudItem} from '~/widget/crudItem'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
@@ -41,7 +42,7 @@ export class _ImageLayerSources extends React.Component {
                     key={source.id}
                     drag$={drag$}
                     dragValue={{
-                        id: source.id,
+                        id: uuid(),
                         imageLayer: {sourceId: source.id},
                         featureLayers: []
                     }}>
