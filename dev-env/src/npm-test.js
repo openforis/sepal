@@ -3,7 +3,7 @@ import {SEPAL_SRC, USER_GID, USER_UID} from './config.js'
 import Path from 'path'
 import {access} from 'fs/promises'
 import _ from 'lodash'
-import { compose } from './compose.js'
+import {compose} from './compose.js'
 
 const runTests = async (module, modulePath, _options) => {
     showModuleStatus(module, MESSAGE.TESTING_PACKAGES)
