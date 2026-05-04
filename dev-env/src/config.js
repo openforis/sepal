@@ -8,6 +8,7 @@ export const STATUS_COLUMN = 30
 export const DEPS_COLUMN = 100
 
 export const GROUP_PREFIX = ':'
+export const EXCLUDE_PREFIX = '^'
 
 export const deps = JSON.parse(readFileSync('../config/deps.json', 'utf-8'))
 export const groups = JSON.parse(readFileSync('../config/groups.json', 'utf-8'))
