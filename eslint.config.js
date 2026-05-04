@@ -1,6 +1,7 @@
 const globals = require('globals')
 const js = require('@eslint/js')
 const stylistic = require('@stylistic/eslint-plugin')
+const simpleImportSort = require('eslint-plugin-simple-import-sort')
 
 const baseConfig = {
     files: ['**/*.js'],
@@ -13,6 +14,7 @@ const baseConfig = {
     },
     plugins: {
         '@stylistic': stylistic,
+        'simple-import-sort': simpleImportSort,
     },
     rules: {
         ...js.configs.recommended.rules,
@@ -38,6 +40,8 @@ const baseConfig = {
         '@stylistic/template-curly-spacing': 'error',
         'no-console': ['error', {allow: ['info', 'warn', 'error']}],
         'no-unused-vars': ['error', {argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_'}],
+        'simple-import-sort/imports': 'error',
+        'simple-import-sort/exports': 'error',
     }
 }
 
