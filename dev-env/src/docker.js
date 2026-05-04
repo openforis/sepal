@@ -1,5 +1,6 @@
-import {exec} from './exec.js'
 import _ from 'lodash'
+
+import {exec} from './exec.js'
 
 export const hasComposeOverride = async module => {
     const out = await exec({

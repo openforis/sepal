@@ -1,7 +1,8 @@
+import _ from 'lodash'
+
 import {ENV_FILE} from './config.js'
 import {exec} from './exec.js'
 import {modulePath} from './utils.js'
-import _ from 'lodash'
 
 export const compose = async ({module, command, args, env, noOverride, enableStdIn, showStdOut, showStdErr}) =>
     await exec({

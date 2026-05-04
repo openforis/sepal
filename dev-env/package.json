@@ -1,21 +1,21 @@
 {
-  "name": "dev-env",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "ansi": "^0.3.1",
-    "chalk": "^5.6.2",
-    "commander": "^14.0.3",
-    "lodash": "^4.18.1"
-  },
-  "devDependencies": {
-    "eslint": "^10"
-  }
+    "name": "dev-env",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "ansi": "^0.3.1",
+        "chalk": "^5.6.2",
+        "commander": "^14.0.3",
+        "lodash": "^4.18.1"
+    },
+    "devDependencies": {
+        "eslint": "^10"
+    }
 }

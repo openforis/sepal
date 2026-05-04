@@ -1,21 +1,22 @@
 #!/usr/bin/node
 
-import {program, Option} from 'commander'
-import {showStatus, exit} from './utils.js'
+import {Option, program} from 'commander'
+
 import {build} from './build.js'
 import {buildRestart} from './buildRestart.js'
+import {eslint} from './eslint.js'
+import {log} from './log.js'
+import {logs} from './logs.js'
+import {npmAudit} from './npm-audit.js'
+import {npmInstall} from './npm-install.js'
+import {npmTest} from './npm-test.js'
+import {npmUpdate} from './npm-update.js'
+import {restart} from './restart.js'
+import {shell} from './shell.js'
 import {start} from './start.js'
 import {stop} from './stop.js'
-import {restart} from './restart.js'
-import {logs} from './logs.js'
-import {shell} from './shell.js'
-import {log} from './log.js'
 import {tail} from './tail.js'
-import {npmUpdate} from './npm-update.js'
-import {npmInstall} from './npm-install.js'
-import {npmAudit} from './npm-audit.js'
-import {npmTest} from './npm-test.js'
-import {eslint} from './eslint.js'
+import {exit, showStatus} from './utils.js'
 
 const main = async () => {
     process.on('SIGINT', () => exit({interrupted: true}))

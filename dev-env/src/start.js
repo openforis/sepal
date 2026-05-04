@@ -1,10 +1,11 @@
-import {compose} from './compose.js'
-import {exec} from './exec.js'
-import {getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning, multi, progress, getMode} from './utils.js'
-import {logs} from './logs.js'
-import {allowsProductionMode, getRunDependencyMap} from './deps.js'
-import {SEPAL_SRC} from './config.js'
 import _ from 'lodash'
+
+import {compose} from './compose.js'
+import {SEPAL_SRC} from './config.js'
+import {allowsProductionMode, getRunDependencyMap} from './deps.js'
+import {exec} from './exec.js'
+import {logs} from './logs.js'
+import {getMode, getModules, getStatus, isGradleModule, isModule, isRunnable, isRunning, MESSAGE, multi, progress, showModuleStatus, showStatus} from './utils.js'
 
 const startModule = async (module, options = {}, rootModule, gradleOptions) => {
     if (isModule(module)) {

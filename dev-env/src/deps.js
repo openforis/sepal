@@ -1,5 +1,6 @@
-import {deps} from './config.js'
 import _ from 'lodash'
+
+import {deps} from './config.js'
 
 export const getLibDeps = module =>
     (deps[module] || {}).lib || []

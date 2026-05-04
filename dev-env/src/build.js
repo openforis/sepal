@@ -1,12 +1,13 @@
-import {compose} from './compose.js'
-import {start} from './start.js'
-import {exec} from './exec.js'
-import {getModules, isModule, showModuleStatus, MESSAGE, firstLine, isNodeModule} from './utils.js'
-import {allowsProductionMode, getBuildDeps, getBuildRunDeps, getLibDeps} from './deps.js'
-import {log} from './log.js'
 import _ from 'lodash'
+
+import {compose} from './compose.js'
 import {SEPAL_SRC} from './config.js'
+import {allowsProductionMode, getBuildDeps, getBuildRunDeps, getLibDeps} from './deps.js'
+import {exec} from './exec.js'
+import {log} from './log.js'
 import {npmInstall} from './npm-install.js'
+import {start} from './start.js'
+import {firstLine, getModules, isModule, isNodeModule, MESSAGE, showModuleStatus} from './utils.js'
 
 const ensurePackageLockExists = async (modulePath, lib) => {
     const path = lib ? `${modulePath}/lib/${lib}` : modulePath

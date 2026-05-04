@@ -5,7 +5,7 @@ const buildLogCommand = (module, {follow, recent, tail, since, until}) => {
     const flags = [
         follow ? '-f' : null,
         tail ? '-r 0' : null,
-        recent ? `-r 20` : null,
+        recent ? '-r 20' : null,
         since ? `-s ${since}` : null,
         until ? `-u ${until}` : null
     ].filter(Boolean).join(' ')

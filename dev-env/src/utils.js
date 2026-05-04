@@ -1,13 +1,14 @@
 import ansi from 'ansi'
 import chalk from 'chalk'
-import {deps, groups, NAME_COLUMN, STATUS_COLUMN, DEPS_COLUMN, GROUP_PREFIX, EXCLUDE_PREFIX, SEPAL_SRC} from './config.js'
-import {log} from './log.js'
-import {allowsProductionMode, getBuildDeps, getDirectRunDepList, getDirectRunDeps, getInverseRunDeps} from './deps.js'
-import _ from 'lodash'
 import {stat} from 'fs/promises'
+import _ from 'lodash'
 import Path from 'path'
+
 import {compose} from './compose.js'
+import {deps, DEPS_COLUMN, EXCLUDE_PREFIX, GROUP_PREFIX, groups, NAME_COLUMN, SEPAL_SRC, STATUS_COLUMN} from './config.js'
+import {allowsProductionMode, getBuildDeps, getDirectRunDepList, getDirectRunDeps, getInverseRunDeps} from './deps.js'
 import {hasComposeOverride, listModules} from './docker.js'
+import {log} from './log.js'
 
 const cursor = ansi(process.stdout)
 

@@ -1,9 +1,10 @@
-import {isNodeModule, showModuleStatus, MESSAGE} from './utils.js'
-import {SEPAL_SRC, USER_GID, USER_UID} from './config.js'
-import Path from 'path'
 import {access} from 'fs/promises'
 import _ from 'lodash'
+import Path from 'path'
+
 import {compose} from './compose.js'
+import {SEPAL_SRC, USER_GID, USER_UID} from './config.js'
+import {isNodeModule, MESSAGE, showModuleStatus} from './utils.js'
 
 const runTests = async (module, modulePath, _options) => {
     showModuleStatus(module, MESSAGE.TESTING_PACKAGES)

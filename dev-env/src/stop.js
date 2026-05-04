@@ -1,7 +1,8 @@
-import {compose} from './compose.js'
-import {getModules, isModule, isRunnable, showModuleStatus, showStatus, MESSAGE, multi} from './utils.js'
-import {getDirectRunDeps} from './deps.js'
 import _ from 'lodash'
+
+import {compose} from './compose.js'
+import {getDirectRunDeps} from './deps.js'
+import {getModules, isModule, isRunnable, MESSAGE, multi, showModuleStatus, showStatus} from './utils.js'
 
 export const stopModule = async (module, options = {}, _parent) => {
     if (isModule(module)) {
