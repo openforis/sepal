@@ -44,6 +44,24 @@ const updateModule = async module => {
     }
 }
 
+const composeBuild = async ({module, gitCommit, options, pull, noOverride}) =>
+    await compose({
+        module,
+        command: 'build',
+        args: [
+            !options.cache ? '--no-cache' : null,
+            !options.cache && pull ? '--pull' : null,
+        ],
+        env: {
+            ...process.env,
+            BUILD_NUMBER: 'latest',
+            GIT_COMMIT: gitCommit
+        },
+        noOverride,
+        showStdOut: !options.quiet,
+        showStdErr: true
+    })
+
 const buildModule = async (module, options = {}, pull) => {
     if (isModule(module)) {
         showModuleStatus(module, MESSAGE.BUILDING)
@@ -60,26 +78,13 @@ const buildModule = async (module, options = {}, pull) => {
 
         await updateModule(module)
 
-        await compose({
-            module,
-            command: 'build',
-            args: [
-                !options.cache ? '--no-cache' : null,
-                !options.cache && pull ? '--pull' : null,
-            ],
-            env: {
-                ...process.env,
-                BUILD_NUMBER: 'latest',
-                GIT_COMMIT: gitCommit
-            },
-            files: options.production && allowsProductionMode(module)
-                ? ['docker-compose.yml']
-                : undefined,
-            enableStdIn: !options.verbose,
-            showStdOut: !options.quiet,
-            showStdErr: true
-        })
-            
+        if (allowsProductionMode(module)) {
+            await composeBuild({module, gitCommit, options, pull, noOverride: true})
+            await composeBuild({module, gitCommit, options, pull: false})
+        } else {
+            await composeBuild({module, gitCommit, options, pull})
+        }
+
         showModuleStatus(module, MESSAGE.BUILT)
     }
 }
@@ -114,9 +119,7 @@ export const build = async (modules, options) => {
     for (const {module, action, pull} of buildActions) {
         if (action === 'build') {
             await buildModule(module, options, pull)
-            if (!(options.production && allowsProductionMode(module))) {
-                await npmInstall(module, {})
-            }
+            await npmInstall(module, {})
         } else if (action === 'run') {
             await start(module, {stop: true})
         } else {

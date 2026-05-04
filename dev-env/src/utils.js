@@ -1,12 +1,13 @@
 import ansi from 'ansi'
 import chalk from 'chalk'
-import {deps, groups, NAME_COLUMN, STATUS_COLUMN, DEPS_COLUMN, GROUP_PREFIX, EXCLUDE_PREFIX, SEPAL_SRC, ENV_FILE} from './config.js'
+import {deps, groups, NAME_COLUMN, STATUS_COLUMN, DEPS_COLUMN, GROUP_PREFIX, EXCLUDE_PREFIX, SEPAL_SRC} from './config.js'
 import {log} from './log.js'
-import {exec} from './exec.js'
-import {getBuildDeps, getDirectRunDepList, getDirectRunDeps, getInverseRunDeps} from './deps.js'
+import {allowsProductionMode, getBuildDeps, getDirectRunDepList, getDirectRunDeps, getInverseRunDeps} from './deps.js'
 import _ from 'lodash'
 import {stat} from 'fs/promises'
 import Path from 'path'
+import {compose} from './compose.js'
+import {hasComposeOverride, listModules} from './docker.js'
 
 const cursor = ansi(process.stdout)
 
@@ -149,16 +150,13 @@ export const modulePath = module =>
 
 export const getServices = async module => {
     try {
-        const ps = await exec({
-            command: 'docker',
+        const ps = await compose({
+            module,
+            command: 'ps',
             args: [
-                'compose',
-                `--env-file=${ENV_FILE}`,
-                'ps',
                 '--format',
                 'json'
-            ],
-            cwd: `${SEPAL_SRC}/modules/${module}`
+            ]
         })
 
         return ps
@@ -166,7 +164,11 @@ export const getServices = async module => {
             .filter(line => line.length)
             .map(line => {
                 const {Name: name, State: state, Health: health} = JSON.parse(line)
-                return {name, state: state.toUpperCase(), health: health.toUpperCase()}
+                return {
+                    name,
+                    state: state.toUpperCase(),
+                    health: health.toUpperCase()
+                }
             })
     } catch (error) {
         log.error('Could not get health', error)
@@ -174,21 +176,20 @@ export const getServices = async module => {
     }
 }
 
+export const isProductionMode = async module =>
+    allowsProductionMode(module) && !(await hasComposeOverride(module))
+
+export const getMode = async module =>
+    allowsProductionMode(module)
+        ? await hasComposeOverride(module)
+            ? 'dev'
+            : 'prod'
+        : ''
+
 const getBaseStatus = async modules => {
     const STATUS_MATCHER = /(\w+)\((\d+)\)/
     try {
-        const ls = await exec({
-            command: 'docker',
-            args: [
-                'compose',
-                'ls',
-                '--all',
-                '--format',
-                'json'
-            ]
-        })
-
-        return JSON.parse(ls)
+        const base = JSON.parse(await listModules())
             .map(
                 ({Name: module, Status: status}) => ({
                     module,
@@ -202,6 +203,18 @@ const getBaseStatus = async modules => {
             .filter(
                 ({module}) => modules.includes(module)
             )
+
+        return await Promise.all(
+            base.map(async entry => {
+                // const productionMode = await isProductionMode(entry.module)
+                const mode = await getMode(entry.module)
+                return {
+                    ...entry,
+                    // productionMode,
+                    mode
+                }
+            })
+        )
     } catch (error) {
         log.error('Could not get status', error)
         return null
@@ -226,7 +239,10 @@ const getExtendedStatus = async modules =>
                     .sort()
                     .value()
                     .join(', ')
-                return {module, services, status}
+                // const productionMode = await isProductionMode(module)
+                const mode = await getMode(module)
+                // return {module, services, status, productionMode}
+                return {module, services, status, mode}
             })
     )
 
@@ -244,12 +260,13 @@ export const showStatus = async (modules, options = {}) => {
         .sort()
         .sortedUniq()
         .value()
-    const status = await getStatus(sanitizedModules, options.extended)
+    const allModulesStatus = await getStatus(sanitizedModules, options.extended)
     for (const module of sanitizedModules) {
         if (isModule(module)) {
-            const moduleStatus = _.find(status, ({module: currentModule}) => currentModule === module)
+            const moduleStatus = _.find(allModulesStatus, ({module: currentModule}) => currentModule === module)
             if (moduleStatus) {
-                showModuleStatus(module, moduleStatus.status, {...options, sameLine: false})
+                const {status, mode} = moduleStatus
+                showModuleStatus(module, status, {...options, sameLine: false}, mode)
             } else if (isRunnable(module)) {
                 showModuleStatus(module, MESSAGE.STOPPED, options)
             } else {
@@ -259,7 +276,18 @@ export const showStatus = async (modules, options = {}) => {
     }
 }
 
-export const showModuleStatus = (module, status, options = {}) => {
+const formatMode = mode => {
+    switch (mode) {
+        case 'dev':
+            return chalk.bgGreen(' dev ')
+        case 'prod':
+            return chalk.bgRed(' prod ')
+        default:
+            return ''
+    }
+}
+
+export const showModuleStatus = (module, status, options = {}, mode) => {
     cursor
         .hide()
         .eraseLine()
@@ -267,6 +295,8 @@ export const showModuleStatus = (module, status, options = {}) => {
         .write(formatModule(module))
         .horizontalAbsolute(STATUS_COLUMN)
         .write(status)
+        .write(' ')
+        .write(formatMode(mode))
         .horizontalAbsolute(DEPS_COLUMN)
         .write(getDepInfo(module, options))
     if (options.sameLine) {

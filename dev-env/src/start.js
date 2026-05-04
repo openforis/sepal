@@ -1,6 +1,6 @@
 import {compose} from './compose.js'
 import {exec} from './exec.js'
-import {getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning, multi, progress} from './utils.js'
+import {getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning, multi, progress, getMode} from './utils.js'
 import {logs} from './logs.js'
 import {allowsProductionMode, getRunDependencyMap} from './deps.js'
 import {SEPAL_SRC} from './config.js'
@@ -28,6 +28,8 @@ const startModule = async (module, options = {}, rootModule, gradleOptions) => {
                 gradleOptions.build = false
             }
 
+            const productionMode = options.production && allowsProductionMode(module)
+
             showModuleStatus(module, MESSAGE.STARTING, {sameLine: true})
 
             await compose({
@@ -36,9 +38,7 @@ const startModule = async (module, options = {}, rootModule, gradleOptions) => {
                 args: [
                     '--detach'
                 ],
-                files: options.production && allowsProductionMode(module)
-                    ? ['docker-compose.yml']
-                    : undefined,
+                noOverride: productionMode,
                 showStdOut: options.verbose
             })
 
@@ -62,21 +62,22 @@ const waitModuleRunning = async module =>
     new Promise((resolve, reject) => {
         const wait = async (count = 0) => {
             const [{status, services}] = await getStatus([module], true)
+            const mode = await getMode(module)
             if (status) {
                 if (services) {
                     if (_.some(services, ({state, health}) => state === 'RUNNING' && health === 'UNHEALTHY')) {
-                        showModuleStatus(module, status, {sameLine: false})
+                        showModuleStatus(module, status, {sameLine: false}, mode)
                         return reject(`Cannot start module ${module}`)
                     }
                     if (_.every(services, ({state, health}) => state === 'RUNNING' && (health === '' || health === 'HEALTHY'))) {
-                        showModuleStatus(module, status, {sameLine: false})
+                        showModuleStatus(module, status, {sameLine: false}, mode)
                         return resolve()
                     }
                     showModuleStatus(module, [status, '.'.repeat(count)].join(' '), {sameLine: true})
                     setTimeout(() => wait(count + 1), 1000)
                 }
             } else {
-                showModuleStatus(module, MESSAGE.STOPPED)
+                showModuleStatus(module, MESSAGE.STOPPED, mode)
                 return resolve()
             }
         }
