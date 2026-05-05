@@ -85,6 +85,7 @@ function update_venv {
             echo "Moving away current venv: $current_venv_path" >> "$venv_log_file"
             mv -f "$current_venv_path" "$work_kernels"/venv-to-remove >> "$venv_log_file"
         fi
+        mkdir -p "$kernel_path" >> "$venv_log_file"
         echo "Moving new venv into place: "$venv_path" -> $current_venv_path" >> "$venv_log_file"
         mv -f "$venv_path" "$current_venv_path" >> "$venv_log_file"
         echo "Setting venv file permissions: $current_venv_path" >> "$venv_log_file"
