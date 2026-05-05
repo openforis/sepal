@@ -38,19 +38,17 @@ function clone {
     git fetch
 }
 
-function create_kernel {
+function create_kernel_json {
     echo "Creating kernel: $kernel_path"
     mkdir -p $kernel_path
-    echo "{\"argv\": [\"$venv_path/bin/python3\", \"-m\", \"ipykernel_launcher\", \"-f\", \"{connection_file}\"], \"display_name\": \" (venv) $app_label\", \"language\": \"python\"}" > "$kernel_path/kernel.json"
+    local env_entries="\"PYTHONNOUSERSITE\": \"1\""
+    if [[ -f "$app_path/sepal_environment.yml" ]]; then
+        env_entries="$env_entries, \"PROJ_LIB\": \"$venv_path/share/proj\", \"PROJ_DATA\": \"$venv_path/share/proj\", \"GDAL_DATA\": \"$venv_path/share/gdal\""
+    fi
+    echo "{\"argv\": [\"$venv_path/bin/python3\", \"-m\", \"ipykernel_launcher\", \"-f\", \"{connection_file}\"], \"display_name\": \" (venv) $app_label\", \"language\": \"python\", \"env\": {$env_entries}}" > "$kernel_path/kernel.json"
 }
 
 function update_kernel {
-    if [[ ! -d "$kernel_path" ]]
-    then
-        create_kernel
-    else
-        echo "Have an existing kernel: $kernel_path"
-    fi
     update_venv
 }
 
@@ -94,6 +92,7 @@ function update_venv {
         echo "Removing old venv" >> "$venv_log_file"
         rm -rf "$work_kernels"/venv-to-remove >> "$venv_log_file"
         touch $current_venv_path/.installed >> "$venv_log_file"
+        create_kernel_json >> "$venv_log_file"
         echo "Completed venv update: $current_venv_path" >> "$venv_log_file"
     else
         echo "Requirements not modified since last build: $app_path"
