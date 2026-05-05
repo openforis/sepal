@@ -3,8 +3,9 @@ const log = require('#sepal/log').getLogger('apps')
 const {basename} = require('path')
 const {cloneOrPull} = require('./git')
 const {buildAndRestart, startContainer, isContainerRunning} = require('./docker')
-const {fetchAppsFromApi$} = require('./apiService')
+const {fetchAppsFromApi$, fetchCatalog$} = require('./apiService')
 const {refreshProxyEndpoints} = require('./proxyManager')
+const {appsCatalogUrl} = require('./config')
 
 const UPDATE_DELAY_SECONDS = 30
 
@@ -17,12 +18,16 @@ const monitorApps = () =>
         complete: () => log.fatal('Monitor unexpectedly completed')
     })
 
+const source$ = () => appsCatalogUrl
+    ? fetchCatalog$(appsCatalogUrl)
+    : fetchAppsFromApi$()
+
 const apps$ = () =>
-    fetchAppsFromApi$().pipe(
+    source$().pipe(
         switchMap(({apps}) => from(apps)),
         filter(({repository}) => repository),
         filter(({endpoint}) => endpoint === 'docker'),
-        map(({endpoint, label, repository, branch}) => {
+        map(({endpoint, label, repository, branch, commit}) => {
             const name = basename(repository).replace(/\.git$/, '')
             return {
                 endpoint,
@@ -30,7 +35,8 @@ const apps$ = () =>
                 label,
                 path: `/var/lib/sepal/app-launcher/apps/${name}`,
                 repository,
-                branch
+                branch,
+                commit: commit || null
             }
         }),
         catchError(error => {
@@ -39,8 +45,8 @@ const apps$ = () =>
         })
     )
 
-const updateApp$ = ({path, repository, branch, name}) =>
-    from(cloneOrPull({path, repository, branch})).pipe(
+const updateApp$ = ({path, repository, branch, commit, name}) =>
+    from(cloneOrPull({path, repository, branch, commit})).pipe(
         switchMap(({action}) => {
             log.info(`Git operation completed: ${action}`)
             if (action === 'cloned' || action === 'updated') {
@@ -76,4 +82,4 @@ const refreshProxies = () => {
     )
 }
 
-module.exports = {monitorApps}
+module.exports = {monitorApps, apps$, source$}

@@ -4,12 +4,12 @@ const url = require('url')
 const {isMatch} = require('micromatch')
 const {getRequestUser, setRequestUser} = require('./user')
 const {usernameTag, urlTag} = require('./tag')
-const {fetchAppsFromApi$} = require('./apiService')
+const {source$} = require('./apps')
 const {sepalHost} = require('./config')
 
 const log = require('#sepal/log').getLogger('proxy')
 
-const proxyEndpoints$ = expressApp => fetchAppsFromApi$().pipe(
+const proxyEndpoints$ = expressApp => source$().pipe(
     switchMap(({apps}) => from(apps)),
     filter(({repository}) => repository),
     filter(({endpoint}) => endpoint === 'docker'),
