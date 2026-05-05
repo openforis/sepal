@@ -23,10 +23,8 @@ import {ChatPanel} from './body/chat/chatPanel'
 import {Footer} from './footer/footer'
 import styles from './home.module.css'
 import {Menu} from './menu/menu'
-import {isFloating} from './menu/menuMode'
 
 const mapStateToProps = () => ({
-    floatingMenu: isFloating(),
     floatingFooter: false
 })
 
