@@ -3825,7 +3825,8 @@
               },
               "maxAngle": {
                 "label": "Max angle"
-              }
+              },
+              "minBeforeMax": "Min angle must be less than max angle"
             },
             "spatialSpeckleFilter": {
               "label": "Spatial speckle filter",

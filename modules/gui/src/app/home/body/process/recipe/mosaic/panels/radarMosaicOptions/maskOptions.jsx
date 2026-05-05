@@ -46,10 +46,23 @@ MaskOptions.propTypes = {
 const fields = {
     minAngle: new Form.Field()
         .notBlank()
-        .number(),
+        .number()
+        .min(0)
+        .max(90),
     maxAngle: new Form.Field()
         .notBlank()
         .number()
+        .min(0)
+        .max(90)
+}
+
+const constraints = {
+    minBeforeMax: new Form.Constraint(['minAngle', 'maxAngle'])
+        .predicate(({minAngle, maxAngle}) => {
+            const min = parseFloat(minAngle)
+            const max = parseFloat(maxAngle)
+            return !isFinite(min) || !isFinite(max) || min < max
+        }, 'process.radarMosaic.panel.options.form.maskOptions.minBeforeMax')
 }
 
 class _MaskOptionsPanel extends React.Component {
@@ -64,6 +77,7 @@ class _MaskOptionsPanel extends React.Component {
                 <Form.Input
                     label={msg('process.radarMosaic.panel.options.form.maskOptions.maxAngle.label')}
                     input={maxAngle}
+                    errorMessage={[maxAngle, 'minBeforeMax']}
                 />
             </Layout>
         )
@@ -75,6 +89,7 @@ const MaskOptionsPanel = compose(
     modalSubformPanel({
         id: 'maskOptions',
         fields,
+        constraints,
         toTitle: () => msg('process.radarMosaic.panel.options.form.maskOptions.title'),
         toClassName: () => styles.maskOptionsPanel,
     })
