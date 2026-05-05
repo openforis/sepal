@@ -173,7 +173,7 @@ class _Options extends React.Component {
     }
 
     renderSpatialSpeckleFilter() {
-        const {inputs: {spatialSpeckleFilter}} = this.props
+        const {inputs: {spatialSpeckleFilter, multitemporalSpeckleFilter}} = this.props
         const options = [
             {
                 value: 'NONE',
@@ -216,6 +216,11 @@ class _Options extends React.Component {
                 label={msg('process.radarMosaic.panel.options.form.spatialSpeckleFilter.label')}
                 input={spatialSpeckleFilter}
                 options={options}
+                onChange={value => {
+                    if (value === 'NONE') {
+                        multitemporalSpeckleFilter.set('NONE')
+                    }
+                }}
             />
         )
     }
