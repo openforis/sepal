@@ -5,10 +5,11 @@ const {createMessageHandler} = require('./messageHandler')
 
 const createOrchestrator = ({response, config, registry, conversationStore}) => {
     const sessionStore = new SessionStore({ttlMs: config.sessionTtlMs})
+    const ephemeralConversations = new Set()
 
     const sessionHandler = createSessionHandler({response, conversationStore, sessionStore})
-    const conversationHandler = createConversationHandler({response, conversationStore, sessionStore})
-    const messageHandler = createMessageHandler({response, config, registry, conversationStore, sessionStore})
+    const conversationHandler = createConversationHandler({response, conversationStore, sessionStore, ephemeralConversations})
+    const messageHandler = createMessageHandler({response, config, registry, conversationStore, sessionStore, ephemeralConversations})
 
     return {sessionHandler, conversationHandler, messageHandler}
 }

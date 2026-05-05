@@ -1,8 +1,7 @@
 const {v4: uuid} = require('uuid')
 const log = require('#sepal/log').getLogger('conversationHandler')
 
-const createConversationHandler = ({response, conversationStore, sessionStore}) => {
-    const ephemeralConversations = new Set() // IDs not yet persisted to Redis
+const createConversationHandler = ({response, conversationStore, sessionStore, ephemeralConversations}) => {
 
     const listConversations = async ({username, clientId, subscriptionId}) => {
         if (!conversationStore) {

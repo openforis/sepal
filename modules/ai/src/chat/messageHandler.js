@@ -26,8 +26,7 @@ const createChunkBuffer = onFlush => {
     }
 }
 
-const createMessageHandler = ({response, config, registry, conversationStore, sessionStore}) => {
-    const ephemeralConversations = new Set() // IDs not yet persisted to Redis
+const createMessageHandler = ({response, config, registry, conversationStore, sessionStore, ephemeralConversations}) => {
     const userRateLimits = {} // username -> {timestamps: []}
 
     const {provider, formattedTools} = getLLM({config, registry})
@@ -75,8 +74,9 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                     })
                 } else {
                     try {
-                        log.debug(`Executing tool: ${tc.name}`)
+                        log.debug(`Executing tool: ${tc.name}`, tc.input)
                         const result = await tool.handler({username, params: tc.input || {}, send: sendFn, session})
+                        log.debug(`Tool result:`, {toolCallId: tc.id, result})
                         results.push({toolCallId: tc.id, result})
                     } catch (error) {
                         log.error(`Tool ${tc.name} error:`, error)
