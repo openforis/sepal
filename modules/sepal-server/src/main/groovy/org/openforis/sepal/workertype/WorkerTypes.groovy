@@ -14,15 +14,15 @@ final class WorkerTypes {
     ]
     static final String USER_HOME_NAME = 'sepal-user'
 
-    static WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
+    static WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config, String apiKey = null) {
         def factory = FACTORIES[id]
         if (!factory)
             throw new IllegalStateException('There exist no worker type with id ' + id)
-        factory.create(id, instance, config)
+        factory.create(id, instance, config, apiKey)
     }
 
     private static class TaskExecutorFactory implements Factory {
-        WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
+        WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config, String apiKey) {
             def taskExecutorPublishedPorts = [(8080): 80]
             def sepalEndpoint = "https://${config.sepalHost}:${config.sepalHttpsPort ?: 443}"
             def username = instance.reservation.username
@@ -63,7 +63,7 @@ final class WorkerTypes {
     }
 
     private static class SandboxFactory implements Factory {
-        WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
+        WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config, String apiKey) {
             def publishedPorts = [(222): 22, (8787): 8787, (3838): 3838, (8888): 8888]
             def username = instance.reservation.username
             def userHome = "${config.sepalHostDataDir}/sepal/home/${username}" as String
@@ -83,6 +83,7 @@ final class WorkerTypes {
                             ],
                             environment: [
                                     USER_PUBLIC_KEY: userPublicKey,
+                                    SEPAL_API_KEY: apiKey ?: '',
                                     NVIDIA_VISIBLE_DEVICES: 'all',
                                     NVIDIA_DRIVER_CAPABILITIES: 'all',
                             ],
@@ -99,7 +100,7 @@ final class WorkerTypes {
     }
 
     private interface Factory {
-        WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config)
+        WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config, String apiKey)
     }
 
     static String tempDir(instance, config) {

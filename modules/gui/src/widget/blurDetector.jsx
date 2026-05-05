@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, switchMap, throttleTime} from 'rxjs'
+import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, switchMap, tap, throttleTime} from 'rxjs'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
@@ -43,6 +43,7 @@ class _BlurDetector extends React.Component {
                 ref={this.ref}
                 className={[
                     className,
+                    styles.container,
                     fadeOut ? styles.fadeOut : null
                 ].join(' ')}
                 style={{...style, '--animation-duration-ms': ANIMATION_DURATION_MS}}
@@ -73,13 +74,17 @@ class _BlurDetector extends React.Component {
             addSubscription(
                 merge(
                     fromEvent(document, 'mousedown', {capture: true}),
-                    fromEvent(document, 'touchstart', {capture: true}),
-                    fromEvent(document, 'focus', {capture: true}),
+                    // Explicitly set passive: false for touchstart events (default is true)
+                    // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
+                    fromEvent(document, 'touchstart', {capture: true, passive: false}),
+                    fromEvent(document, 'focus', {capture: true})
                 ).pipe(
                     filter(this.isEnabled),
-                    map(e => this.isOver(e)),
-                    filter(over => !over)
-                ).subscribe(this.onBlur)
+                    filter(e => !this.isOver(e))
+                ).subscribe(e => {
+                    e.preventDefault()
+                    this.onBlur(e)
+                })
             )
             if (autoBlurTimeout) {
                 const over$ = fromEvent(document, 'mousemove').pipe(

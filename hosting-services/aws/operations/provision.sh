@@ -23,7 +23,8 @@ export DEPLOY_ENVIRONMENT="OPS"
 
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_CONFIG=../ansible.cfg
-export DOCKER_COMPOSE_VERSION=v5.1.0
+export DOCKER_COMPOSE_VERSION=v5.1.3
+export DOCKER_BUILDX_VERSION=v0.33.0
 
 source ../export-aws-keys.sh $CONFIG_HOME/secret.yml
 

@@ -27,14 +27,17 @@ const serveFile = async ({res, path, type}) => {
         }
         return false
     } catch (error) {
-        log.warn(`Failed to serve ${type}:`, path, error)
+        if (error.code !== 'ENOENT') {
+            log.warn(`Failed to serve ${type}:`, path, error)
+        }
         return false
     }
 }
 
 const serveError = async (req, res) => {
     log.debug('Cannot serve:', req.url)
-    res.end()
+    res.writeHead(404, {'Content-Type': 'text/plain'})
+    res.end('Not found')
     return false
 }
 

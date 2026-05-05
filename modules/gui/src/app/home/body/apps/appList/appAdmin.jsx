@@ -89,6 +89,11 @@ export class AppAdmin extends React.Component {
         this.statusInterval = setInterval(() => this.loadContainerStatus(), 10000)
     }
 
+    containerAppName() {
+        const {app} = this.props
+        return app.containerApp || app.id
+    }
+
     componentWillUnmount() {
         const statusInterval = this.statusInterval
         if (statusInterval) {
@@ -97,11 +102,10 @@ export class AppAdmin extends React.Component {
     }
         
     loadLogs() {
-        const {app} = this.props
         this.setState({
             loadingLogs: true
         })
-        api.appLauncher.getAppLogs$(app.id).subscribe(
+        api.appLauncher.getAppLogs$(this.containerAppName()).subscribe(
             response => {
                 this.setState({
                     logs: response.logs || [],
@@ -119,10 +123,9 @@ export class AppAdmin extends React.Component {
     }
 
     loadRepoInfo() {
-        const {app} = this.props
         this.setState({loadingRepo: true})
-        
-        api.appLauncher.getAppRepoInfo$(app.id).subscribe(
+
+        api.appLauncher.getAppRepoInfo$(this.containerAppName()).subscribe(
             info => {
                 this.setState({
                     loadingRepo: false,
@@ -148,12 +151,11 @@ export class AppAdmin extends React.Component {
     }
 
     loadContainerStatus() {
-        const {app} = this.props
         this.setState({
             loadingContainer: true
         })
-        
-        api.appLauncher.getAppContainerStatus$(app.id).subscribe(
+
+        api.appLauncher.getAppContainerStatus$(this.containerAppName()).subscribe(
             info => {
                 this.setState({
                     loadingContainer: false,
@@ -188,11 +190,10 @@ export class AppAdmin extends React.Component {
     }
     
     restartApp() {
-        const {app} = this.props
         this.setState({restarting: true, logs: []})
         this.loadContainerStatus()
-        
-        api.appLauncher.restartApp$(app.id).subscribe(
+
+        api.appLauncher.restartApp$(this.containerAppName()).subscribe(
             response => {
                 this.setState({restarting: false})
                 this.loadContainerStatus()
@@ -209,11 +210,10 @@ export class AppAdmin extends React.Component {
     }
     
     buildAndRestartApp() {
-        const {app} = this.props
         this.setState({buildingAndRestarting: true, logs: []})
         this.loadContainerStatus()
-        
-        api.appLauncher.buildAndRestartApp$(app.id).subscribe(
+
+        api.appLauncher.buildAndRestartApp$(this.containerAppName()).subscribe(
             response => {
                 this.setState({buildingAndRestarting: false})
                 this.loadContainerStatus()
@@ -230,10 +230,9 @@ export class AppAdmin extends React.Component {
     }
     
     updateApp() {
-        const {app} = this.props
         const {branch} = this.state.repo
         this.setState({updatingRepo: true})
-        api.appLauncher.pullUpdatesOnly$(app.id, branch).subscribe(
+        api.appLauncher.pullUpdatesOnly$(this.containerAppName(), branch).subscribe(
             response => {
                 this.setState({updatingRepo: false})
                 this.loadRepoInfo()

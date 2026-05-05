@@ -1,24 +1,27 @@
 services:
-  haproxy:
+  caddy:
     extends:
       file: ../docker-compose.logger.yml
       service: logger
     build:
       context: ../..
-      dockerfile: ./modules/haproxy/Dockerfile
+      dockerfile: ./modules/caddy/Dockerfile
       ulimits:
         nofile:
           soft: 65536
           hard: 65536
-    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/haproxy:${SEPAL_VERSION:-latest}"
-    container_name: haproxy
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/caddy:${SEPAL_VERSION:-latest}"
+    container_name: caddy
     ports:
       - "${SEPAL_IP}:${SEPAL_HTTP_PORT:-80}:80"
       - "${SEPAL_IP}:${SEPAL_HTTPS_PORT:-443}:443"
+      - "${SEPAL_IP}:${SEPAL_HTTPS_PORT:-443}:443/udp"
     volumes:
-      - "${SEPAL_DATA_DIR}/letsencrypt:/etc/letsencrypt"
+      - "${SEPAL_DATA_DIR}/caddy/data:/data"
+      - "${SEPAL_DATA_DIR}/caddy/config:/config"
     environment:
       SEPAL_HOST: "${SEPAL_HOST}"
+      LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"
     networks:
       - sepal
     ulimits:

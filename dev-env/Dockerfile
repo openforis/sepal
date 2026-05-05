@@ -5,7 +5,8 @@ SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PROJECT_DIR /home/sepal/sepal
 ENV NODE_MAJOR=24
-ARG DOCKER_COMPOSE_VERSION=v5.1.0
+ARG DOCKER_COMPOSE_VERSION=v5.1.3
+ARG DOCKER_BUILDX_VERSION=v0.33.0
 ARG JAVA_VERSION=11.0.11.hs-adpt
 ARG GRADLE_VERSION=6.9.1
 
@@ -64,6 +65,12 @@ RUN apt-get update && apt-get install -y docker-ce-cli
 RUN mkdir -p /usr/local/lib/docker/cli-plugins
 RUN curl -SL https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
 RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+# Install docker buildx
+
+RUN mkdir -p /usr/libexec/docker/cli-plugins
+RUN curl -SL https://github.com/docker/buildx/releases/download/${DOCKER_BUILDX_VERSION}/buildx-${DOCKER_BUILDX_VERSION}.linux-amd64 -o /usr/libexec/docker/cli-plugins/docker-buildx
+RUN chmod +x /usr/libexec/docker/cli-plugins/docker-buildx
 
 # Install node.js
 

@@ -79,6 +79,23 @@ class SandboxSessionEndpoint {
                 otherUser(requestContext).closeUserSessions()
                 send toJson(status: 'OK')
             }
+
+            post('/sessions/api-key-authenticate', [ADMIN]) {
+                response.contentType = 'application/json'
+                def apiKey = params['apiKey'] as String
+                if (!apiKey) {
+                    response.status = 400
+                    send toJson([error: 'apiKey required'])
+                    return
+                }
+                def username = component.submit(new FindUsernameByApiKey(apiKey: apiKey))
+                if (!username) {
+                    response.status = 401
+                    send toJson([:])
+                    return
+                }
+                send toJson([username: username])
+            }
         }
     }
 

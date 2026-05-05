@@ -22,4 +22,6 @@ interface WorkerSessionRepository {
     Map<String, Date> mostRecentlyClosedSessionByUser()
 
     Map<String, Date> mostRecentlyClosedSession(String username)
+
+    String findUsernameByApiKey(String apiKey)
 }

@@ -1,6 +1,6 @@
 import ansi from 'ansi'
 import chalk from 'chalk'
-import {deps, groups, NAME_COLUMN, STATUS_COLUMN, DEPS_COLUMN, GROUP_PREFIX, SEPAL_SRC, ENV_FILE} from './config.js'
+import {deps, groups, NAME_COLUMN, STATUS_COLUMN, DEPS_COLUMN, GROUP_PREFIX, EXCLUDE_PREFIX, SEPAL_SRC, ENV_FILE} from './config.js'
 import {log} from './log.js'
 import {exec} from './exec.js'
 import {getBuildDeps, getDirectRunDepList, getDirectRunDeps, getInverseRunDeps} from './deps.js'
@@ -125,15 +125,23 @@ const expandGroups = modules =>
         .uniq()
         .value()
 
+const isExclude = entry =>
+    entry.startsWith(EXCLUDE_PREFIX)
+
+const stripExclude = entry =>
+    entry.substring(EXCLUDE_PREFIX.length)
+
 export const getModules = (modules, defaultModules = [':default']) => {
-    if (_.isEmpty(modules)) {
-        const modules = expandGroups(defaultModules)
-        return modules.length
-            ? modules
-            : getAllModules()
+    const [excludeEntries, includeEntries] = _.partition(_.castArray(modules || []), isExclude)
+    let included
+    if (_.isEmpty(includeEntries)) {
+        const defaults = expandGroups(defaultModules)
+        included = defaults.length ? defaults : getAllModules()
     } else {
-        return expandGroups(_.castArray(modules))
+        included = expandGroups(includeEntries)
     }
+    const excluded = expandGroups(excludeEntries.map(stripExclude))
+    return _.difference(included, excluded)
 }
 
 export const modulePath = module =>

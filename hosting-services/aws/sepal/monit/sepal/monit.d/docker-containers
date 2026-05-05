@@ -4,6 +4,9 @@ check program app-manager with path /usr/local/bin/dockercheck-app-manager
 check program backup with path /usr/local/bin/dockercheck-backup
     if status != 0 then exec "/usr/local/bin/pushover-notify 0"
 
+check program caddy with path /usr/local/bin/dockercheck-caddy
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
+
 check program ceo-gateway with path /usr/local/bin/dockercheck-ceo-gateway
     if status != 0 then exec "/usr/local/bin/pushover-notify 0"
 
@@ -25,16 +28,10 @@ check program gee with path /usr/local/bin/dockercheck-gee
 check program gui with path /usr/local/bin/dockercheck-gui
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
-check program haproxy with path /usr/local/bin/dockercheck-haproxy
-    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
-
 check program ldap with path /usr/local/bin/dockercheck-ldap
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program ldap-backup with path /usr/local/bin/dockercheck-ldap-backup
-    if status != 0 then exec "/usr/local/bin/pushover-notify 0"
-
-check program letsencrypt with path /usr/local/bin/dockercheck-letsencrypt
     if status != 0 then exec "/usr/local/bin/pushover-notify 0"
 
 check program logger with path /usr/local/bin/dockercheck-logger

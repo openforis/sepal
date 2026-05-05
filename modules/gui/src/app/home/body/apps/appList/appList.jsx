@@ -197,11 +197,13 @@ class _AppList extends React.Component {
 
     renderTagFilter(tags) {
         const {tagFilter} = this.props
-        const toOption = ({label, value}) => ({
+        const toOption = ({label, value, icon, tooltip}) => ({
             label: label[getLanguage()]
                 || label['en']
                 || Object.values(label)[0],
-            value
+            value,
+            ...(icon ? {icon} : {}),
+            ...(tooltip ? {tooltip} : {})
         })
         const options = [
             {
@@ -283,7 +285,10 @@ class _AppList extends React.Component {
                 <Tag
                     key={'noInstanceRequiredChip'}
                     size='small'
+                    icon='bolt'
                     label={msg('apps.noInstanceRequired')}
+                    tooltip={msg('apps.noInstanceRequiredTooltip')}
+                    tooltipPlacement='left'
                 />
             )
             : null
@@ -349,7 +354,7 @@ class _AppList extends React.Component {
     }
 
     isDockerApp(app) {
-        return app.endpoint && app.endpoint.includes('docker')
+        return (app.endpoint && app.endpoint.includes('docker')) || !!app.containerApp
     }
 
     isUserAdmin() {

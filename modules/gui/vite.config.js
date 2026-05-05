@@ -14,6 +14,9 @@ export default defineConfig({
         port: 80,
         allowedHosts: true
     },
+    build: {
+        sourcemap: true
+    },
     resolve: {
         alias: [
             {find: '~', replacement: fileURLToPath(new URL('./src', import.meta.url))},

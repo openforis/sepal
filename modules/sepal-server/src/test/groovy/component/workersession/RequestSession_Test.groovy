@@ -4,6 +4,8 @@ import org.openforis.sepal.command.ExecutionFailed
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
+import static org.openforis.sepal.workertype.WorkerTypes.SANDBOX
+import static org.openforis.sepal.workertype.WorkerTypes.TASK_EXECUTOR
 
 class RequestSession_Test extends AbstractWorkerSessionTest {
     def 'When requesting session, budget is checked, instance is requested, a generated session id is returned, and session is pending'() {
@@ -38,5 +40,21 @@ class RequestSession_Test extends AbstractWorkerSessionTest {
         then:
         thrown ExecutionFailed
         noSessions()
+    }
+
+    def 'When requesting a SANDBOX session, an API key is minted and set on the returned session'() {
+        when:
+        def session = requestSession(workerType: SANDBOX)
+
+        then:
+        session.apiKey == 'test-api-key-1'
+    }
+
+    def 'When requesting a TASK_EXECUTOR session, no API key is minted'() {
+        when:
+        def session = requestSession(workerType: TASK_EXECUTOR)
+
+        then:
+        session.apiKey == null
     }
 }

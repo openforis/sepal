@@ -222,10 +222,19 @@
       delay: 2
       until: network.stdout != "null"            
 
-    - file: path="/usr/local/lib/docker/cli-plugins" state=directory
+    - file:
+        path: "/usr/local/lib/docker/cli-plugins"
+        state: directory
+
     - uri:
         url: https://github.com/docker/compose/releases/download/{{ lookup('env', 'DOCKER_COMPOSE_VERSION') }}/docker-compose-linux-x86_64
         dest: /usr/local/lib/docker/cli-plugins/docker-compose
+        mode: +x
+        status_code: [200, 304]
+
+    - uri:
+        url: https://github.com/docker/buildx/releases/download/{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
+        dest: /usr/libexec/docker/cli-plugins/docker-buildx
         mode: +x
         status_code: [200, 304]
 
@@ -286,7 +295,6 @@
     - { role: run-module, module: ssh-gateway }
     - { role: run-module, module: terminal }
     - { role: run-module, module: gateway }
-    - { role: run-module, module: letsencrypt }
-    - { role: run-module, module: haproxy }
+    - { role: run-module, module: caddy }
     - { role: run-module, module: sys-monitor }
     - { role: run-module, module: scene-metadata }

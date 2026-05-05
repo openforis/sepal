@@ -51,10 +51,12 @@ const isUpdatable = async (name, version) => {
     return packageNamePresent && !packageVersionPresent
 }
 
-const getCranPackageTarget = (base, name, {archive} = {}) =>
-    archive
-        ? `${cranRepo}/src/contrib/Archive/${name}/${base}`
-        : `${cranRepo}/src/contrib/${base}`
+const getCranPackageTarget = (base, name, {archive, transit} = {}) =>
+    transit
+        ? `${cranRepo}/src/contrib/Transit/${base}`
+        : archive
+            ? `${cranRepo}/src/contrib/Archive/${name}/${base}`
+            : `${cranRepo}/src/contrib/${base}`
 
 const getCranPackagesTarget = base =>
     `${cranRepo}/src/contrib/${base}`

@@ -27,6 +27,11 @@
             cidr_ip: 0.0.0.0/0
             rule_desc: 'HTTPS'
           - proto: udp
+            from_port: 443
+            to_port: 443
+            cidr_ip: 0.0.0.0/0
+            rule_desc: 'HTTP/3 (QUIC)'
+          - proto: udp
             from_port: 514
             to_port: 514
             cidr_ip: 172.31.0.0/16

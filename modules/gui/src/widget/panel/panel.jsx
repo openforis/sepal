@@ -6,6 +6,7 @@ import {compose} from '~/compose'
 import {withEnableDetector} from '~/enabled'
 import {Portal} from '~/widget/portal'
 
+import {BlurDetector} from '../blurDetector'
 import styles from './panel.module.css'
 import {PanelButtons} from './panelButtons'
 import {PanelContent} from './panelContent'
@@ -18,8 +19,6 @@ class _Panel extends React.Component {
 
     constructor(props) {
         super(props)
-        this.onBackdropClick = this.onBackdropClick.bind(this)
-        this.onContentClick = this.onContentClick.bind(this)
         const {enableDetector: {onChange}} = props
         onChange(enabled => this.setState({enabled}))
     }
@@ -37,25 +36,18 @@ class _Panel extends React.Component {
     }
 
     renderModal() {
+        const {onBackdropClick} = this.props
         return (
             <Portal type='global' center>
-                <div
-                    className={styles.modalWrapper}
-                    onClick={this.onBackdropClick}>
-                    {this.renderContent()}
+                <div className={styles.modalWrapper}>
+                    <BlurDetector
+                        autoBlurTimeout={0}
+                        onBlur={onBackdropClick}>
+                        {this.renderContent()}
+                    </BlurDetector>
                 </div>
             </Portal>
         )
-    }
-
-    onBackdropClick(e) {
-        const {onBackdropClick} = this.props
-        onBackdropClick && onBackdropClick()
-        e.stopPropagation()
-    }
-
-    onContentClick(e) {
-        e.stopPropagation()
     }
 
     renderInline() {
@@ -89,7 +81,7 @@ class _Panel extends React.Component {
                 styles[placement],
                 enabled ? null : styles.disabled,
                 className
-            ].join(' ')} onClick={this.onContentClick}>
+            ].join(' ')}>
                 {children}
             </div>
         )

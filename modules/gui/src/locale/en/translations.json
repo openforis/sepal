@@ -55,7 +55,8 @@
       "error": "Failed to run {label}"
     },
     "running": "App is running",
-    "noInstanceRequired": "No instance required",
+    "noInstanceRequired": "Instant",
+    "noInstanceRequiredTooltip": "This app doesn't require a dedicated instance to run.",
     "admin": {
       "title": "{app} management panel",
       "logs": {

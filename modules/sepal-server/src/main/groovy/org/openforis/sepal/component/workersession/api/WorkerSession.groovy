@@ -15,6 +15,8 @@ class WorkerSession {
     Date earliestTimeoutTime
     Date creationTime
     Date updateTime
+    // Credential — never include when serialising a WorkerSession (e.g. to JSON or to an event crossing RabbitMQ).
+    String apiKey
 
     boolean isPending() {
         state == PENDING
@@ -46,7 +48,8 @@ class WorkerSession {
                 instance: instance,
                 earliestTimeoutTime: earliestTimeoutTime,
                 creationTime: creationTime,
-                updateTime: updateTime
+                updateTime: updateTime,
+                apiKey: apiKey
         )
     }
 
@@ -60,7 +63,8 @@ class WorkerSession {
                 instance: instance,
                 earliestTimeoutTime: earliestTimeoutTime,
                 creationTime: creationTime,
-                updateTime: updateTime
+                updateTime: updateTime,
+                apiKey: apiKey
         )
     }
 
@@ -74,7 +78,23 @@ class WorkerSession {
                 instance: instance,
                 earliestTimeoutTime: time,
                 creationTime: creationTime,
-                updateTime: updateTime
+                updateTime: updateTime,
+                apiKey: apiKey
+        )
+    }
+
+    WorkerSession withApiKey(String apiKey) {
+        new WorkerSession(
+                id: id,
+                state: state,
+                username: username,
+                workerType: workerType,
+                instanceType: instanceType,
+                instance: instance,
+                earliestTimeoutTime: earliestTimeoutTime,
+                creationTime: creationTime,
+                updateTime: updateTime,
+                apiKey: apiKey
         )
     }
 

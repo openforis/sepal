@@ -30,25 +30,25 @@ function start {
   echo
   echo "******* Starting ${MODULE} *******"
   cd ${MODULE_DIR}
-  docker compose --file ${MODULE_DIR}/docker-compose.yml down
+#  docker compose --file ${MODULE_DIR}/docker-compose.yml down
   docker compose --file ${MODULE_DIR}/docker-compose.yml up -d
 }
 
-build logger    
+# build logger
+start logger
 
 build sandbox-base
 
-build r-proxy
+# build r-proxy
 start r-proxy
 
 build email
 build sys-monitor
-build letsencrypt
+build caddy
 build java
 build rabbitmq
 build ldap-backup
 build ldap
-build haproxy
 build backup
 build mysql-backup
 build mysql
@@ -98,8 +98,7 @@ push ssh-gateway
 push sandbox
 push task
 push terminal
-push letsencrypt
-push haproxy
+push caddy
 push scene-metadata
 
 docker logout localhost

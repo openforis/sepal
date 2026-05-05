@@ -111,9 +111,9 @@ have configurable disk quota.
 
 ### Components and services part of a SEPAL deployment
 
-**HAProxy** -
-Off-the-shelf load balancer, allowing SEPAL to be clustered for availability. Run both SSH and HTTPS on port 443,
-to prevent firewalls from blocking SSH.
+**Caddy** -
+Off-the-shelf HTTPS reverse proxy with automatic ACME certificate management. Terminates TLS on port 443
+and routes traffic to the `gateway` (`/api/*`, `/privacy-policy`) and `gui` (everything else) backends.
 
 **nginx** -
 Off-the-shelf HTTP and reverse proxy server, proxying all SEPAL HTTP endpoints.

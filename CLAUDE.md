@@ -26,7 +26,7 @@ SEPAL is a distributed microservices system where each module runs as an indepen
 - `email`, `terminal`, `user-assets`, `user-files`, `user-storage`, `ssh-gateway`, `scene-metadata`, `sys-monitor`, `ceo-gateway`, `r-proxy`
 
 **Infrastructure modules** (Docker-only, no application code):
-- `haproxy`, `mysql`, `rabbitmq`, `ldap`, `prometheus`, `logger`, `letsencrypt`
+- `caddy`, `mysql`, `rabbitmq`, `ldap`, `prometheus`, `logger`
 
 **Build-only modules** (images only, not runnable services):
 - `java` - Base Java Docker image
@@ -47,7 +47,7 @@ SEPAL is a distributed microservices system where each module runs as an indepen
 
 ### Key Infrastructure
 
-- **HAProxy** - Entry point, runs SSH and HTTPS on port 443
+- **Caddy** - HTTPS entry point (ports 80/443) with automatic ACME certificate management; reverse-proxies to `gateway` (for `/api/*`, `/privacy-policy`) and `gui` (everything else)
 - **nginx** - HTTP reverse proxy within containers
 - **MySQL** - Primary database (Flyway migrations for schema versioning)
 - **LDAP** - User authentication
@@ -167,7 +167,7 @@ Tests use Spock Framework 1.2 in `src/test/groovy/`.
 
 ## Service Ports
 
-See `PORTS.txt` for complete port mapping. Key ports: HAProxy 80/443, MySQL 3306, RabbitMQ 5672, LDAP 389/636, Prometheus 9090. Most application modules expose port 80 internally. JVM debug: 5005, Node debug: 9229.
+See `PORTS.txt` for complete port mapping. Key ports: Caddy 80/443, MySQL 3306, RabbitMQ 5672, LDAP 389/636, Prometheus 9090. Most application modules expose port 80 internally. JVM debug: 5005, Node debug: 9229.
 
 ## Contributing
 

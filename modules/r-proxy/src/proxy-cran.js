@@ -7,14 +7,17 @@ const {getCranRepoPath, getCranTarget, toBinaryPackagePath, getCranPackageInfo} 
 const {enqueueBuildCranPackage} = require('./queue')
 const {serveFile, checkTarget, serveError} = require('./proxy-utils')
 
+const isPackage = name =>
+    name !== 'PACKAGES'
+
 const buildBinaryPackage = req => {
     const requestData = getCranPackageInfo(req.url)
     if (requestData) {
         const {name, path, version} = requestData
-        if (name !== 'PACKAGES') {
+        if (isPackage(name)) {
             enqueueBuildCranPackage(name, path, version)
         } else {
-            log.debug(`Skipping ${name}`)
+            log.debug(`Skipping non-package ${name}`)
         }
     }
 }
@@ -35,7 +38,7 @@ proxy.on('proxyRes', (proxyRes, req, res, _options) => {
     if (proxyRes.statusCode === 200) {
         mkdir(repoDir, {recursive: true})
             .then(() => {
-                if (name !== 'PACKAGES') {
+                if (isPackage(name)) {
                     const stream = fs.createWriteStream(tmpPath)
                     stream.on('finish', () => {
                         log.debug('Moving to', repoPath)
@@ -71,9 +74,11 @@ const serveCachedBinary = async (req, res) =>
 
 const serveCachedSource = async (req, res) =>
     await serveFile({res, path: getCranRepoPath(req.url), type: 'CRAN/source'})
-    
-const serveCached = async (req, res) =>
-    await serveCachedBinary(req, res) || await serveCachedSource(req, res)
+
+const serveCached = async (req, res) => {
+    const {name} = getCranPackageInfo(req.url)
+    return isPackage(name) && (await serveCachedBinary(req, res) || await serveCachedSource(req, res))
+}
 
 const serveProxiedFile = async (req, res, target) => {
     if (await checkTarget(target, {allowRedirect: false})) {
@@ -90,6 +95,7 @@ const serveProxied = async (req, res) => {
     const {base, name} = getCranPackageInfo(req.url)
     return await serveProxiedFile(req, res, getCranTarget(base, name, {archive: false}))
         || await serveProxiedFile(req, res, getCranTarget(base, name, {archive: true}))
+        || await serveProxiedFile(req, res, getCranTarget(base, name, {transit: true}))
 }
 
 const serveCran = async (req, res) =>
