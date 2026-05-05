@@ -64,6 +64,10 @@ try {
             new Option('--deploy-environment <value>')
                 .env('DEPLOY_ENVIRONMENT')
         )
+        .addOption(
+            new Option('--apps-catalog-url <value>')
+                .env('SEPAL_APPS_CATALOG_URL')
+        )
         .parse()
 } catch (error) {
     fatalError(error)
@@ -79,7 +83,8 @@ const {
     geeEmail,
     geeKey,
     googleProjectId,
-    deployEnvironment
+    deployEnvironment,
+    appsCatalogUrl
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -94,5 +99,6 @@ module.exports = {
     geeEmail,
     geeKey,
     googleProjectId,
-    deployEnvironment
+    deployEnvironment,
+    appsCatalogUrl: appsCatalogUrl || null
 }
