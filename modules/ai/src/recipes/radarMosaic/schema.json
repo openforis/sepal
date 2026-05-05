@@ -1,0 +1,216 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://sepal.io/recipes/radarMosaic/schema.json",
+    "title": "RadarMosaicRecipe",
+    "description": "A SEPAL Radar Mosaic recipe model. Produces a Sentinel-1 Synthetic Aperture Radar (SAR) backscatter mosaic over a defined area, time period, and processing options.\n\n**What this recipe is for.** Sentinel-1 is the European Space Agency's C-band SAR satellite constellation (S1A and S1B). Unlike optical sensors (Landsat, Sentinel-2), SAR actively transmits microwave pulses and measures the returned signal — so it works through clouds, in rain, and at night. This makes it the only practical choice for cloud-prone regions (humid tropics) and time-critical applications (flood mapping, deforestation alerts).\n\n**Bands produced.** For a point-in-time mosaic: VV (vertical-transmit, vertical-receive backscatter, in dB), VH (vertical-transmit, horizontal-receive cross-pol backscatter, in dB), orbit (relative orbit number), dayOfYear, daysFromTarget. For a time-scan mosaic, additional aggregation bands per polarization: min, max, mean, median, stdDev, plus VV/VH ratio bands and NDCV (Normalized Difference Co/Cross polarization).\n\n**Output values.** All backscatter values are in **decibels (dB)** after the recipe's final db conversion. Typical land surface ranges: VV roughly -20 to 0 dB (forests around -8 to -12, urban around 0 to +5, water around -20 to -25); VH roughly -25 to -10 dB (always lower than VV).\n\nThis schema describes the persisted `model` object of an *initialized* recipe (one ready for processing). It does not cover UI state, recipe id, or recipe metadata. Cross-field constraints that JSON Schema cannot express are enforced by the companion rules.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["aoi", "dates", "options"],
+    "properties": {
+        "aoi": {
+            "description": "Area of Interest. Radar mosaic supports an Earth Engine table (country/area selection or user-supplied table) or a hand-drawn polygon. The asset-bounds variant is not valid for this recipe type — radar mosaic does not wrap a single asset.\n\nSee the AOI schema definitions for variant details. Required from the user; there is no sensible default.",
+            "oneOf": [
+                {"$ref": "../shared/aoi.schema.json#/$defs/eeTable"},
+                {"$ref": "../shared/aoi.schema.json#/$defs/polygon"}
+            ]
+        },
+        "dates": {"$ref": "#/$defs/dates"},
+        "options": {"$ref": "#/$defs/options"}
+    },
+    "$defs": {
+        "dates": {
+            "title": "RadarMosaicDates",
+            "description": "Time scope for the mosaic. Two distinct modes:\n\n**Point-in-time mosaic** — `{targetDate}`. The recipe selects scenes near `targetDate` (Sentinel-1's revisit interval is roughly 6–12 days at most latitudes) and composites them into a snapshot representing the target moment. The actual scenes used are within ±15 days when `outlierRemoval='NONE'` (a 30-day window) or ±183 days otherwise (a 366-day window — the wider window is needed so outlier statistics are stable). Use this mode for: visualizing a specific date, change detection at known timestamps.\n\n**Time-scan mosaic** — `{fromDate, toDate}`. The recipe composites every scene in the half-open interval `[fromDate, toDate)` and produces multi-temporal aggregation bands (min, max, mean, median, stdDev per polarization). Use this mode for: characterizing temporal behavior over a season or year, computing long-term statistics, building training data for time-series classification.\n\n**Sentinel-1 coverage.** Sentinel-1A launched April 2014; data is available from 2014-06-15 onward. Most regions have data; high latitudes and some Pacific islands have sparse coverage. Both A and B satellites operated from 2016 to late 2021; after S1B's failure (Dec 2021), revisit frequency dropped to roughly 12 days at the equator until S1C launched (Dec 2024).",
+            "oneOf": [
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["targetDate"],
+                    "properties": {
+                        "targetDate": {
+                            "$ref": "#/$defs/date",
+                            "description": "Center date for a point-in-time mosaic, as YYYY-MM-DD. The recipe selects Sentinel-1 scenes within a window centered on this date (±15 or ±183 days depending on outlierRemoval). Must be on or after 2014-06-15 (Sentinel-1 data start) and on or before today."
+                        }
+                    }
+                },
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["fromDate", "toDate"],
+                    "properties": {
+                        "fromDate": {
+                            "$ref": "#/$defs/date",
+                            "description": "Start of the time-scan interval (inclusive), as YYYY-MM-DD. The minimum useful value is 2014-06-15 (the start of Sentinel-1 coverage); earlier dates simply have no scenes. Must be strictly before toDate, must be on or after 2014-01-01, must be on or before today."
+                        },
+                        "toDate": {
+                            "$ref": "#/$defs/date",
+                            "description": "End of the time-scan interval (exclusive), as YYYY-MM-DD. Must be strictly after fromDate. Must be after 2014-06-15 for the interval to overlap any Sentinel-1 data. May be in the future (e.g. end-of-year for a yearly aggregate computed mid-year), but not more than the start of the year after the current year."
+                        }
+                    }
+                }
+            ],
+            "examples": [
+                {"targetDate": "2024-06-15"},
+                {"fromDate": "2024-01-01", "toDate": "2024-12-31"},
+                {"fromDate": "2024-06-01", "toDate": "2024-09-01"}
+            ]
+        },
+        "date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "format": "date",
+            "description": "Date as YYYY-MM-DD."
+        },
+        "options": {
+            "title": "RadarMosaicOptions",
+            "description": "SAR processing options. The defaults are tuned for general-purpose land monitoring at moderate scales. Many fields are conditionally meaningful — see each field's description. Field interactions worth knowing up front:\n\n- **Speckle filtering** is two-stage: a per-scene spatial filter (e.g. LEE_SIGMA) optionally combined with a temporal filter across multiple scenes (QUEGAN or RABASAR). The temporal stage requires the spatial stage.\n- **Geometric correction** (TERRAIN especially) substantially increases EE compute cost but is essential in mountainous areas — without it, slopes facing the satellite appear bright and slopes facing away appear dark, regardless of land cover.\n- **Border masking with SIDES** depends on incidence angle — set `minAngle` and `maxAngle` only if you've enabled `mask: ['SIDES', ...]`.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "orbits",
+                "orbitNumbers",
+                "geometricCorrection",
+                "spatialSpeckleFilter",
+                "multitemporalSpeckleFilter",
+                "outlierRemoval",
+                "mask",
+                "minObservations"
+            ],
+            "properties": {
+                "advanced": {
+                    "type": "boolean",
+                    "description": "UI hint — was the panel last edited in 'advanced' mode. Has no effect on processing. Safe to omit."
+                },
+                "orbits": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {"enum": ["ASCENDING", "DESCENDING"]},
+                    "description": "Which Sentinel-1 orbit directions to include. Sentinel-1 acquires from both ascending (south-to-north) and descending (north-to-south) passes; over most regions both are available, doubling the number of usable scenes.\n\n- `['ASCENDING', 'DESCENDING']` (default) — use both. Maximum scene count, best for any non-directional analysis.\n- `['ASCENDING']` or `['DESCENDING']` — use only one. Useful when comparing scenes acquired with the same look geometry (e.g. for change detection or polarimetric studies that depend on consistent incidence-angle distribution).\n\nAt least one direction must be selected.",
+                    "examples": [["ASCENDING", "DESCENDING"], ["ASCENDING"]]
+                },
+                "orbitNumbers": {
+                    "enum": ["ALL", "DOMINANT", "ADJACENT"],
+                    "description": "How to handle the multiple relative orbit numbers (orbit tracks) that may cover the AOI. Adjacent tracks overlap, but acquire at different incidence angles — combining them naively can introduce visible seams in the mosaic.\n\n- `'ALL'` (default) — use every orbit number covering the AOI. Best signal-to-noise (most observations per pixel) but may show seam artifacts at orbit boundaries due to incidence-angle differences.\n- `'DOMINANT'` — keep only the orbit covering the largest portion of the AOI (one per direction if `orbits` has both). Eliminates seams at the cost of fewer observations and possible coverage gaps near AOI edges.\n- `'ADJACENT'` — dominant plus the directly adjacent orbits. A middle ground. (Implementation note: in the current backend this falls back to DOMINANT.)\n\nUse `'DOMINANT'` for time-scan mosaics where seam artifacts would distort statistics; use `'ALL'` for point-in-time mosaics where every observation helps."
+                },
+                "geometricCorrection": {
+                    "enum": ["NONE", "ELLIPSOID", "TERRAIN"],
+                    "description": "How to convert the raw sigma-nought (σ⁰) backscatter values delivered by ESA into a quantity that's comparable across pixels with different look geometries.\n\n- `'NONE'` — leave values as raw σ⁰. Cheapest; rarely a good choice except for debugging.\n- `'ELLIPSOID'` — convert σ⁰ to gamma-nought (γ⁰) using the local incidence angle relative to the WGS84 ellipsoid. Removes the cosine effect that makes near-range pixels brighter than far-range. Suitable for flat terrain (flood plains, plateaus, low-relief agricultural land).\n- `'TERRAIN'` (default, **recommended for most uses**) — convert to flat-earth gamma-nought using the GLO-30 (Copernicus) digital elevation model. Removes both the look-angle effect AND the topographic effect (slopes facing the satellite appearing brighter than slopes facing away). **Essential for any analysis in mountainous or hilly terrain** — without it, terrain dominates the signal.\n\nTERRAIN is materially more expensive than the alternatives in Earth Engine (requires DEM lookup, slope/aspect computation, masking layover/shadow areas) but is almost always worth it. The DEM used is GLO-30 (Copernicus DEM at 30 m resolution); coverage is global except above ~85° latitude."
+                },
+                "spatialSpeckleFilter": {
+                    "enum": ["NONE", "GAMMA_MAP", "LEE", "REFINED_LEE", "LEE_SIGMA", "SNIC"],
+                    "description": "Per-scene spatial speckle filter. SAR images suffer from multiplicative speckle noise — a salt-and-pepper texture inherent to coherent imaging. Speckle filters reduce this noise while ideally preserving edges and texture.\n\n- `'NONE'` — no spatial filtering. Maximum spatial detail, maximum speckle. Reasonable when downstream processing aggregates many pixels (e.g. zonal statistics over large polygons), or when temporal averaging is heavy.\n- `'GAMMA_MAP'` — Maximum A Posteriori (MAP) filter assuming gamma-distributed scene reflectivity (Lopes et al. 1990). Good general-purpose filter; computationally moderate.\n- `'LEE'` — Classic Lee minimum-mean-square-error filter (Lee 1980). Simple, fast, but can blur edges in high-contrast areas.\n- `'REFINED_LEE'` — Direction-aware variant of Lee that uses gradient detection across 8 directions to preserve edges. Better at edges than LEE but ~5× more expensive in EE due to multi-directional kernel passes. Uses fixed 7×7 kernel — `kernelSize` is ignored.\n- `'LEE_SIGMA'` (default) — Improved Lee filter with adaptive sigma rejection (Lee et al. 2009). Best edge preservation among the simple filters; explicit `sigma` parameter controls the trade-off.\n- `'SNIC'` — Simple Non-Iterative Clustering superpixel segmentation. Replaces each pixel with its superpixel mean. Strongest noise reduction but loses fine detail and can produce visible segmentation artifacts. Most expensive; use sparingly for visual products.\n\n**Selection guidance:** Use `LEE_SIGMA` (default) for general use. Use `REFINED_LEE` if edges are critical and the AOI is small (cost matters). Use `NONE` if you'll apply heavy temporal averaging via `multitemporalSpeckleFilter` or downstream zonal statistics. Use `SNIC` only for visualization where smoothness matters more than detail."
+                },
+                "kernelSize": {
+                    "enum": [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25],
+                    "description": "Filter kernel side length in pixels (odd integers 3–25). The kernel is a square neighborhood — kernelSize=9 means a 9×9 window of 81 pixels around each output pixel. Sentinel-1 GRD pixels are 10 m, so kernelSize=9 corresponds to a ~90 m×90 m smoothing window.\n\nLarger kernels reduce more speckle but also blur more detail and edges. The choice is a trade-off:\n\n- **3, 5** — minimal smoothing. Preserve fine detail (forest gaps, small clearings) but residual speckle is high.\n- **7, 9** (default 9) — balanced. Good general-purpose values.\n- **11–15** — stronger smoothing. Good for visual products and homogeneous land cover (open fields, large forests). May blur small features.\n- **17–25** — heavy smoothing. Use when downstream processing requires a smoothed image; risks merging small distinct features.\n\nRequired when `spatialSpeckleFilter` is `GAMMA_MAP`, `LEE`, or `LEE_SIGMA`. Ignored for `NONE`, `REFINED_LEE` (which uses a fixed 7×7 kernel), and `SNIC` (which uses `snicSize` instead). EE cost scales roughly linearly with kernel area."
+                },
+                "sigma": {
+                    "enum": [0.5, 0.6, 0.7, 0.8, 0.9, 0.95],
+                    "description": "Sigma parameter for the Lee Sigma filter — controls how aggressively pixels are excluded from the local mean as outliers. Only valid when `spatialSpeckleFilter='LEE_SIGMA'`.\n\nThe parameter selects a fraction of the underlying pixel distribution to keep. Lower sigma keeps fewer pixels (more aggressive outlier rejection, sharper edges, less smoothing); higher sigma keeps more (smoother, more speckle reduction, more edge blurring).\n\n- `0.5` — most aggressive. Strong edge preservation; least smoothing.\n- `0.6`, `0.7`, `0.8` — increasing smoothness.\n- `0.9` (default) — recommended general-purpose value. Good balance.\n- `0.95` — most conservative. Maximum speckle reduction; some edge blurring.\n\nOnly the listed values are supported (the filter uses a hardcoded lookup table internally — arbitrary sigma values are not accepted)."
+                },
+                "strongScatterers": {
+                    "enum": ["RETAIN", "FILTER"],
+                    "description": "How to handle strong scatterers — pixels with unusually high backscatter, typically corner reflectors, urban structures, or specific vegetation geometries. Strong scatterers carry useful information (their high return is a real physical property, not noise) but their values dominate the local statistics that speckle filters rely on, blurring edges around them and underestimating their values.\n\n- `'RETAIN'` (default) — detect strong scatterers via the `strongScattererValues` thresholds and exclude them from the speckle filter input, then re-insert their original values in the output. Preserves the physical signal at the cost of slight extra compute.\n- `'FILTER'` — treat strong scatterers as ordinary pixels; they get smoothed along with everything else. Use when you want a smoothed appearance everywhere (visual products) and don't care about preserving point-target intensity.\n\nRequired when `spatialSpeckleFilter` is not `'NONE'`. The strong-scatterer detector requires at least 7 of the 9 surrounding pixels to also exceed the threshold — this prevents single noise spikes from being mistaken for true strong scatterers."
+                },
+                "strongScattererValues": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {"type": "number", "minimum": -30, "maximum": 30},
+                    "description": "Two-element array `[VV-threshold, VH-threshold]` in decibels (dB). A pixel is classified as a strong scatterer if its VV exceeds the VV-threshold AND its VH exceeds the VH-threshold (in linear power units, computed as 10^(threshold/10)).\n\nDefault `[0, -5]` means: VV > 0 dB AND VH > -5 dB. These thresholds are chosen to catch corner reflectors and urban targets while not flagging normal land surfaces (forest VV typically -8 to -12 dB; cropland -10 to -14 dB; cropland VH -16 to -20 dB).\n\nLowering thresholds catches more pixels (over-detection: ordinary bright pixels get treated as strong scatterers and skipped by the filter). Raising thresholds catches fewer (under-detection: real strong scatterers get smoothed).\n\nValid range per element is [-30, 30] dB — Sentinel-1 backscatter values rarely fall outside this band. Used when `strongScatterers='RETAIN'`."
+                },
+                "snicSize": {
+                    "enum": [3, 5, 7, 9, 11, 13, 15],
+                    "description": "Target seed spacing for SNIC (Simple Non-Iterative Clustering) superpixel segmentation, in pixels. Larger values produce larger superpixels — coarser segmentation, more smoothing, fewer distinct regions.\n\n- `3` — small superpixels, preserves fine boundaries, less smoothing.\n- `5` (default) — moderate. Reasonable for most uses.\n- `7–15` — increasingly coarse. Good for highly homogeneous land cover; loses small features.\n\nRequired when `spatialSpeckleFilter='SNIC'`. SNIC is computationally expensive — large `snicSize` actually reduces cost slightly because there are fewer superpixels to compute, but the dominant cost is the segmentation itself."
+                },
+                "snicCompactness": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 2,
+                    "description": "Spatial vs. spectral weighting for SNIC superpixels. Higher compactness produces more spatially compact (round) superpixels at the cost of less spectral homogeneity; lower compactness lets superpixels follow spectral boundaries more closely, producing irregular shapes that respect edges.\n\n- `0` — pure spectral. Superpixels follow speckle patterns and produce noisy, irregular shapes.\n- `0.15` (default) — slight spatial preference. Recommended.\n- `0.4`, `0.7`, `1`, `1.5`, `2` — increasingly spatial. At `2`, superpixels become nearly square regardless of image content.\n\nValid range is [0, 2]. Only meaningful when `spatialSpeckleFilter='SNIC'`. The GUI snaps to typical values 0, 0.15, 0.4, 0.7, 1, 1.5, 2 but any value in range is accepted."
+                },
+                "multitemporalSpeckleFilter": {
+                    "enum": ["NONE", "QUEGAN", "RABASAR"],
+                    "description": "Multi-temporal speckle filter applied across scenes — exploits the fact that speckle is independent between acquisitions to dramatically reduce noise without spatial blurring.\n\n- `'NONE'` (default) — no temporal filtering. Each scene processed independently.\n- `'QUEGAN'` — Quegan & Yu (2001) filter: estimates a per-pixel speckle ratio from a time series of `numberOfImages` scenes, then divides each filtered scene by it. Excellent noise reduction with edge preservation. Strongly recommended for time-scan mosaics over stable land cover.\n- `'RABASAR'` — Ratio-based multitemporal filter: divides each scene by a 'super-image' temporal mean, applies spatial filtering to the ratio (which is locally stationary), then multiplies back. Variant of Quegan with subtly different statistical properties; tends to handle change events better.\n\n**Critical constraint:** A multi-temporal filter only makes sense alongside a spatial filter — when `spatialSpeckleFilter='NONE'`, this MUST also be `'NONE'`. Setting it otherwise will fail validation.\n\nMulti-temporal filtering costs: scales with `numberOfImages` (more scenes = more noise reduction but more compute). For a point-in-time mosaic the gain is modest (only a few scenes near the target date); for time-scan mosaics across a year the noise reduction can be 5–10× over spatial-only filtering."
+                },
+                "numberOfImages": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "maximum": 100,
+                    "description": "Number of scenes used by the multi-temporal speckle filter to estimate the temporal statistics. More images means stronger noise reduction (variance falls roughly as 1/N) but proportionally more compute.\n\n- `2–5` — modest noise reduction. Useful when scenes are scarce.\n- `10` (default) — good noise reduction without excessive cost.\n- `20–50` — strong noise reduction; suitable for stable land cover where year-on-year change is minimal.\n- `>50` — diminishing returns; mainly useful for very long time series with stationary statistics.\n\n**Caveat:** the filter assumes the scenes used are statistically similar (no land-cover change). If you include scenes spanning a deforestation event or a flood, the filter will produce biased estimates around the change. For dynamic landscapes, prefer fewer images closer in time.\n\nRequired when both `spatialSpeckleFilter` and `multitemporalSpeckleFilter` are non-`'NONE'`. Valid range is [2, 100]; the GUI snaps to typical values 2, 5, 10, 20, 50, 100."
+                },
+                "outlierRemoval": {
+                    "enum": ["NONE", "MODERATE", "AGGRESSIVE"],
+                    "description": "Statistical outlier rejection across the time series. For each pixel, computes a temporal median and standard deviation, then masks observations more than N standard deviations away.\n\n- `'NONE'` — no outlier removal. Every observation in the time window is used. Use when you want to preserve all signal (including transient events like floods or fires).\n- `'MODERATE'` (default) — reject pixels >3 standard deviations from the temporal median. Catches most data artifacts (mis-georeferenced scenes, severe atmospheric effects rare in SAR but possible) without removing real change events.\n- `'AGGRESSIVE'` — reject >2.6 standard deviations. More conservative time series at the cost of suppressing some real variability.\n\nWhen `outlierRemoval='NONE'`, the date window for a point-in-time mosaic is ±15 days (30-day total). When set to MODERATE or AGGRESSIVE, the window expands to ±183 days (366-day total) so the temporal statistics are robust enough to detect outliers.\n\n**Performance note:** outlier removal requires reducing the entire collection to compute medians and standard deviations — adds notable EE compute cost. The historical comment in the source acknowledges this can run out of memory for large time series."
+                },
+                "mask": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {"enum": ["SIDES", "FIRST_LAST"]},
+                    "description": "Edge masks applied to each scene to remove unreliable border pixels.\n\n- `'SIDES'` — mask pixels at the near-range and far-range edges of the swath using the local incidence angle. Pixels are kept only when their incidence angle is between `minAngle` and `maxAngle`. Removes the very oblique pixels at swath edges where geometric effects dominate the signal.\n- `'FIRST_LAST'` — mask the first and last azimuth slices of each orbit pass (pixels at the start and end of the satellite's data acquisition). These edges have unreliable values due to processing artifacts.\n\nDefault `['SIDES', 'FIRST_LAST']` — both enabled. An empty array `[]` means no edge masking (keeps all pixels, including the unreliable ones).\n\nDuplicate values are not allowed; order doesn't matter."
+                },
+                "minAngle": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 90,
+                    "description": "Minimum local incidence angle in degrees for a pixel to be kept. Sentinel-1 GRD swath incidence angles range roughly 29° to 46° across the swath. Pixels below `minAngle` are at the near-range edge of the swath; their backscatter values are unusually high and unreliable.\n\nDefault `30.88` — empirically chosen as the boundary below which near-range geometric effects dominate. Lowering it keeps more pixels (with worse quality at the edge); raising it discards more.\n\nOnly used when `mask` includes `'SIDES'`. **Cross-field rule:** must be strictly less than `maxAngle`. Physical range is [0, 90] (incidence angles outside this are not physically meaningful)."
+                },
+                "maxAngle": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 90,
+                    "description": "Maximum local incidence angle in degrees for a pixel to be kept. Pixels above `maxAngle` are at the far-range edge of the swath, where the signal becomes weaker and more sensitive to small geometric variations.\n\nDefault `45.35` — the empirical far-range boundary. Lowering it discards more far-range pixels; raising it keeps more.\n\nOnly used when `mask` includes `'SIDES'`. Must be strictly greater than `minAngle`. Physical range is [0, 90]."
+                },
+                "minObservations": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50,
+                    "description": "Minimum number of valid scenes required for a pixel to appear in the output. Pixels with fewer overlapping observations are masked.\n\n- `1` (default) — output any pixel observed at least once. Maximum coverage; some pixels may be based on a single noisy observation.\n- `2–5` — require small redundancy. Reduces coverage slightly but excludes pixels too sparsely sampled to be reliable.\n- `10` — strong redundancy. Good for time-scan mosaics where temporal statistics matter; excludes large coverage gaps.\n- `>20` — strict requirement, suitable only for areas with dense Sentinel-1 coverage and long time intervals.\n\nValid range [1, 50]. The GUI snaps to typical values 1, 2, 5, 10, 20, 50 but any integer in range is accepted."
+                }
+            },
+            "allOf": [
+                {
+                    "description": "kernelSize required when spatialSpeckleFilter is GAMMA_MAP, LEE, or LEE_SIGMA.",
+                    "if": {"properties": {"spatialSpeckleFilter": {"enum": ["GAMMA_MAP", "LEE", "LEE_SIGMA"]}}, "required": ["spatialSpeckleFilter"]},
+                    "then": {"required": ["kernelSize"]}
+                },
+                {
+                    "description": "sigma required when spatialSpeckleFilter is LEE_SIGMA.",
+                    "if": {"properties": {"spatialSpeckleFilter": {"const": "LEE_SIGMA"}}, "required": ["spatialSpeckleFilter"]},
+                    "then": {"required": ["sigma"]}
+                },
+                {
+                    "description": "snicSize and snicCompactness required when spatialSpeckleFilter is SNIC.",
+                    "if": {"properties": {"spatialSpeckleFilter": {"const": "SNIC"}}, "required": ["spatialSpeckleFilter"]},
+                    "then": {"required": ["snicSize", "snicCompactness"]}
+                },
+                {
+                    "description": "strongScatterers required when spatialSpeckleFilter is not NONE.",
+                    "if": {"not": {"properties": {"spatialSpeckleFilter": {"const": "NONE"}}, "required": ["spatialSpeckleFilter"]}},
+                    "then": {"required": ["strongScatterers"]}
+                },
+                {
+                    "description": "strongScattererValues required when strongScatterers is RETAIN.",
+                    "if": {"properties": {"strongScatterers": {"const": "RETAIN"}}, "required": ["strongScatterers"]},
+                    "then": {"required": ["strongScattererValues"]}
+                },
+                {
+                    "description": "numberOfImages required when both speckle filters are non-NONE.",
+                    "if": {
+                        "allOf": [
+                            {"not": {"properties": {"spatialSpeckleFilter": {"const": "NONE"}}, "required": ["spatialSpeckleFilter"]}},
+                            {"not": {"properties": {"multitemporalSpeckleFilter": {"const": "NONE"}}, "required": ["multitemporalSpeckleFilter"]}}
+                        ]
+                    },
+                    "then": {"required": ["numberOfImages"]}
+                },
+                {
+                    "description": "minAngle and maxAngle required when mask includes 'SIDES'.",
+                    "if": {"properties": {"mask": {"type": "array", "contains": {"const": "SIDES"}}}, "required": ["mask"]},
+                    "then": {"required": ["minAngle", "maxAngle"]}
+                }
+            ]
+        }
+    }
+}
