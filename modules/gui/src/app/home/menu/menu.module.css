@@ -109,6 +109,16 @@
     border-color: hsla(var(--section-users-color-h), var(--section-users-color-s), calc(var(--section-users-color-l) + 20%), var(--border-opacity));
 }
 
+.menu button.help {
+    background-color: hsla(var(--section-help-color-h), var(--section-help-color-s), var(--section-help-color-l), var(--opacity));
+    border-color: hsla(var(--section-help-color-h), var(--section-help-color-s), calc(var(--section-help-color-l) + 20%), var(--border-opacity));
+}
+
+.menu button.chat {
+    background-color: hsla(var(--section-chat-color-h), var(--section-chat-color-s), var(--section-chat-color-l), var(--opacity));
+    border-color: hsla(var(--section-chat-color-h), var(--section-chat-color-s), calc(var(--section-chat-color-l) + 20%), var(--border-opacity));
+}
+
 @keyframes blink {
     100% {
         opacity: 0;

@@ -23,7 +23,7 @@ const mapStateToProps = (state = {}) => ({
 
 class _Menu extends React.Component {
     render() {
-        const {className, floating, user, hasActiveTasks, budgetExceeded} = this.props
+        const {className, floating, user, hasActiveTasks, budgetExceeded, chatOpen, onChatToggle} = this.props
         return (
             <div className={className}>
                 <div className={[styles.menu, floating && styles.floating].join(' ')}>
@@ -37,6 +37,7 @@ class _Menu extends React.Component {
                         <SectionLink name='tasks' path='/-/tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'} disabled={budgetExceeded}/>
                         {user.admin ? <SectionLink name='users' path='/-/users' icon='users'/> : null}
                         <Link name='help' icon='question-circle' href='https://docs.sepal.io/'/>
+                        <ToggleLink name='chat' icon='comments' active={chatOpen} onClick={onChatToggle}/>
                         <MenuMode className={styles.mode}/>
                     </div>
                 </div>
@@ -51,7 +52,9 @@ export const Menu = compose(
 )
 
 Menu.propTypes = {
-    className: PropTypes.string
+    className: PropTypes.string,
+    chatOpen: PropTypes.bool,
+    onChatToggle: PropTypes.func
 }
 
 const Link = ({name, icon, href}) =>
@@ -62,6 +65,15 @@ const Link = ({name, icon, href}) =>
         tooltipPlacement='right'
         linkUrl={href}
         linkTarget='_blank'
+    />
+
+const ToggleLink = ({name, icon, active, onClick}) =>
+    <Button
+        className={[styles[name], active ? styles.active : null].join(' ')}
+        icon={icon}
+        tooltip={msg(`home.sections.${name}`)}
+        tooltipPlacement='right'
+        onClick={onClick}
     />
 
 const SectionLink = ({path, name, icon, disabled}) => {

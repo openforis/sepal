@@ -10,13 +10,12 @@ import {ButtonGroup} from '~/widget/buttonGroup'
 import {Layout} from '~/widget/layout'
 import {WebSocketConnectionIndicator} from '~/widget/webSocketIndicator'
 
-import {ChatButton} from '../body/chat/chatButton'
 import {UsageButton} from '../user/usage'
 import {UserDetailsButton} from '../user/userDetails'
 import {UserMessagesButton} from '../user/userMessages'
 import styles from './footer.module.css'
 
-export const Footer = ({className, chatOpen, onChatToggle}) => {
+export const Footer = ({className}) => {
     return (
         <div className={className}>
             <div className={styles.footer}>
@@ -27,7 +26,6 @@ export const Footer = ({className, chatOpen, onChatToggle}) => {
                 <div>
                     <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
                         <WebSocketConnectionIndicator/>
-                        <ChatButton isOpen={chatOpen} onClick={onChatToggle}/>
                         <UserMessagesButton/>
                         <UsageButton/>
                         <UserDetailsButton/>
@@ -40,9 +38,7 @@ export const Footer = ({className, chatOpen, onChatToggle}) => {
 }
 
 Footer.propTypes = {
-    chatOpen: PropTypes.bool,
-    className: PropTypes.string,
-    onChatToggle: PropTypes.func
+    className: PropTypes.string
 }
 
 const _Logout = ({stream}) => {

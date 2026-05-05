@@ -163,10 +163,10 @@ class _Home extends React.Component {
                     floatingFooter && styles.floatingFooter,
                     chatSplit && styles.chatSplit
                 ].join(' ')}>
-                    <Menu className={styles.menu}/>
+                    <Menu className={styles.menu} chatOpen={chatOpen} onChatToggle={this.toggleChat}/>
                     <div className={styles.main}>
                         <Body className={styles.body}/>
-                        <Footer className={styles.footer} chatOpen={chatOpen} onChatToggle={this.toggleChat}/>
+                        <Footer className={styles.footer}/>
                     </div>
                     <ChatPanel
                         className={chatSplit ? styles.chat : undefined}

@@ -43,13 +43,22 @@ html {
     --section-terminal-color-s: 19%;
     --section-terminal-color-l: 26%;
 
-    --section-tasks-color-h: 3;
-    --section-tasks-color-s: 20%;
-    --section-tasks-color-l: 23%;
+    --section-tasks-color-h: 354;
+    --section-tasks-color-s: 22%;
+    --section-tasks-color-l: 26%;
 
-    --section-users-color-h: 124;
-    --section-users-color-s: 10%;
-    --section-users-color-l: 20%;
+    --section-users-color-h: 265;
+    --section-users-color-s: 14%;
+    --section-users-color-l: 27%;
+
+    --section-help-color-h: 85;
+    --section-help-color-s: 16%;
+    --section-help-color-l: 28%;
+
+    --section-chat-color-h: 180;
+    --section-chat-color-s: 18%;
+    --section-chat-color-l: 28%;
+
 
     --base-font-size: 14px;
     font-size: var(--base-font-size);
