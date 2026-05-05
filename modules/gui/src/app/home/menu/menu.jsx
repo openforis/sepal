@@ -12,10 +12,8 @@ import {Button} from '~/widget/button'
 
 import {usageHint} from '../user/usage'
 import styles from './menu.module.css'
-import {isFloating, MenuMode} from './menuMode'
 
 const mapStateToProps = (state = {}) => ({
-    floating: isFloating(),
     hasActiveTasks: !!(state.tasks && state.tasks.find(task => ['PENDING', 'ACTIVE'].includes(task.status))),
     budgetExceeded: select('user.budgetExceeded'),
     user: currentUser()
@@ -23,10 +21,10 @@ const mapStateToProps = (state = {}) => ({
 
 class _Menu extends React.Component {
     render() {
-        const {className, floating, user, hasActiveTasks, budgetExceeded, chatOpen, onChatToggle} = this.props
+        const {className, user, hasActiveTasks, budgetExceeded, chatOpen, onChatToggle} = this.props
         return (
             <div className={className}>
-                <div className={[styles.menu, floating && styles.floating].join(' ')}>
+                <div className={styles.menu}>
                     <div className={styles.section}>
                         <SectionLink name='process' path='/' icon='globe'/>
                         <SectionLink name='browse' path='/-/browse' icon='folder-open'/>
@@ -38,7 +36,6 @@ class _Menu extends React.Component {
                         {user.admin ? <SectionLink name='users' path='/-/users' icon='users'/> : null}
                         <Link name='help' icon='question-circle' href='https://docs.sepal.io/'/>
                         <ToggleLink name='chat' icon='comments' active={chatOpen} onClick={onChatToggle}/>
-                        <MenuMode className={styles.mode}/>
                     </div>
                 </div>
             </div>
