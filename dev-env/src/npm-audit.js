@@ -1,9 +1,10 @@
-import {getModules, isNodeModule, showModuleStatus, MESSAGE} from './utils.js'
-import {SEPAL_SRC, USER_GID, USER_UID} from './config.js'
 import {access} from 'fs/promises'
 import _ from 'lodash'
+
 import {compose} from './compose.js'
-import { stopModule } from './stop.js'
+import {SEPAL_SRC, USER_GID, USER_UID} from './config.js'
+import {stopModule} from './stop.js'
+import {getModules, isNodeModule, MESSAGE, showModuleStatus} from './utils.js'
 
 const auditModulePackages = async (module, {fix}) => {
     const modulePath = `${SEPAL_SRC}/modules/${module}`
