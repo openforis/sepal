@@ -38,14 +38,56 @@ function clone {
     git fetch
 }
 
+function json_escape {
+    local value=$1
+    value=${value//\\/\\\\}
+    value=${value//\"/\\\"}
+    value=${value//$'\n'/\\n}
+    value=${value//$'\r'/\\r}
+    value=${value//$'\t'/\\t}
+    printf '%s' "$value"
+}
+
 function create_kernel_json {
     echo "Creating kernel: $kernel_path"
-    mkdir -p $kernel_path
-    local env_entries="\"PYTHONNOUSERSITE\": \"1\""
-    if [[ -f "$app_path/sepal_environment.yml" ]]; then
-        env_entries="$env_entries, \"PROJ_LIB\": \"$venv_path/share/proj\", \"PROJ_DATA\": \"$venv_path/share/proj\", \"GDAL_DATA\": \"$venv_path/share/gdal\""
-    fi
-    echo "{\"argv\": [\"$venv_path/bin/python3\", \"-m\", \"ipykernel_launcher\", \"-f\", \"{connection_file}\"], \"display_name\": \" (venv) $app_label\", \"language\": \"python\", \"env\": {$env_entries}}" > "$kernel_path/kernel.json"
+    mkdir -p "$kernel_path"
+    local python_bin=$(json_escape "$venv_path/bin/python3")
+    local display_name=$(json_escape " (venv) $app_label")
+    local proj_data=$(json_escape "$venv_path/share/proj")
+    local gdal_data=$(json_escape "$venv_path/share/gdal")
+    {
+        cat <<EOF
+{
+  "argv": [
+    "$python_bin",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": "$display_name",
+  "language": "python",
+EOF
+        if [[ -f "$app_path/sepal_environment.yml" ]]; then
+            cat <<EOF
+  "env": {
+    "PYTHONNOUSERSITE": "1",
+    "PROJ_LIB": "$proj_data",
+    "PROJ_DATA": "$proj_data",
+    "GDAL_DATA": "$gdal_data"
+  }
+EOF
+        else
+            cat <<EOF
+  "env": {
+    "PYTHONNOUSERSITE": "1"
+  }
+EOF
+        fi
+        cat <<EOF
+}
+EOF
+    } > "$kernel_path/kernel.json"
 }
 
 function update_kernel {
