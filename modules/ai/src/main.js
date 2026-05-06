@@ -34,6 +34,7 @@ const main = async () => {
         require('./recipes/indexChange'),
         require('./recipes/classChange'),
         require('./recipes/remapping'),
+        require('./recipes/asset'),
     ]
     schemas.forEach(schema => registry.registerSchema(schema))
     log.info(`Registered ${schemas.length} recipe schemas`)
