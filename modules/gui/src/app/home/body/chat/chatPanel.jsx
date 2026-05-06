@@ -205,13 +205,18 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
         if (actionSubRef.current) {
             actionSubRef.current.unsubscribe()
         }
-        actionSubRef.current = api.recipe.load$(recipeId).pipe(
-            map(recipe => initializeRecipe(recipe))
-        ).subscribe({
-            next: recipe =>
-                actionBuilder('RELOAD_RECIPE', recipe)
-                    .set(['process.loadedRecipes', recipe.id], recipe)
-                    .dispatch(),
+        actionSubRef.current = api.recipe.load$(recipeId).subscribe({
+            next: loaded => {
+                const current = select(['process.loadedRecipes', recipeId]) || {}
+                const merged = {
+                    ...loaded,
+                    layers: loaded.layers?.areas ? loaded.layers : current.layers,
+                    ui: current.ui || {initialized: true}
+                }
+                actionBuilder('RELOAD_RECIPE', {recipeId})
+                    .set(['process.loadedRecipes', recipeId], merged)
+                    .dispatch()
+            },
             error: error => log.error('Failed to reload recipe', error)
         })
     }, [])

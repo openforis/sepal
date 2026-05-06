@@ -1,0 +1,121 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://sepal.io/recipes/shared/aoi.schema.json",
+    "title": "AreaOfInterest",
+    "description": "Definitions for the three Area of Interest variants used by SEPAL recipes. This schema does NOT define a top-level type — recipes compose their own `oneOf` from the variants they support (e.g. radarMosaic uses eeTable + polygon; the asset recipe also allows assetBounds).\n\nAOI selection has direct cost implications: smaller AOIs are faster and cheaper in Earth Engine; very large AOIs (continental scale) may hit memory or compute limits depending on what processing the recipe applies. When suggesting AOIs to a user, prefer the smallest area that captures their region of interest.",
+    "$defs": {
+        "countryTableId": {
+            "const": "users/wiell/SepalResources/gaul",
+            "description": "Earth Engine asset id of SEPAL's built-in country/area table — a derivative of the FAO GAUL (Global Administrative Unit Layers) dataset. Always use this exact id when selecting countries or sub-national administrative areas."
+        },
+        "eeTable": {
+            "title": "AoiEeTable",
+            "description": "AOI defined by selecting one or more rows from an Earth Engine FeatureCollection table. The geometry is the union of the selected features. There are two main use cases:\n\n1. **Country / administrative area selection** — set `id` to the SEPAL country table id (`users/wiell/SepalResources/gaul`), `keyColumn` to `'id'`, `key` to the ISO country code (for `level=COUNTRY`) or area code (for `level=AREA`), and `level` to either `'COUNTRY'` or `'AREA'`.\n\n2. **User-supplied table** — set `id` to any Earth Engine FeatureCollection asset the user has access to (e.g. `'projects/my-project/assets/my-table'`), and either filter by a column value (`keyColumn` + `key`) or include every row (`keyColumn: null`, `key: null`).\n\nThe optional `buffer` enlarges the geometry by a number of kilometers — useful when you want to include some surrounding context (e.g. coastline overflow), but increases the AOI area roughly proportionally to buffer distance.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "id", "keyColumn", "key"],
+            "properties": {
+                "type": {
+                    "const": "EE_TABLE",
+                    "description": "Discriminator. Must be the literal string 'EE_TABLE'."
+                },
+                "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Earth Engine asset id of the FeatureCollection. For country/area selection, this MUST be `users/wiell/SepalResources/gaul`. For a user-supplied table, this is any FeatureCollection asset id the user has read access to (typically `projects/<project-id>/assets/<table-name>` or `users/<user>/<asset-path>`).",
+                    "examples": ["users/wiell/SepalResources/gaul", "projects/my-project/assets/my-aoi-table"]
+                },
+                "keyColumn": {
+                    "type": ["string", "null"],
+                    "description": "Name of the column to filter by. When set, only rows where `keyColumn = key` are included. When `null`, every row in the table is included (useful when the entire table represents the AOI).\n\nFor the SEPAL country table, this MUST be `'id'`. For user tables, it can be any string column name in the table's schema.",
+                    "examples": ["id", "country_co", "ADM1_CODE", null]
+                },
+                "key": {
+                    "type": ["string", "null"],
+                    "description": "Value to match in `keyColumn`. Must be `null` when `keyColumn` is `null`, and a non-empty string when `keyColumn` is set.\n\nFor the SEPAL country table: when `level='COUNTRY'`, this is the 3-letter ISO 3166-1 alpha-3 country code (e.g. `'KEN'`, `'BRA'`, `'USA'`); when `level='AREA'`, this is the area code from the GAUL hierarchy.",
+                    "examples": ["KEN", "BRA", "USA", null]
+                },
+                "level": {
+                    "enum": ["COUNTRY", "AREA"],
+                    "description": "Distinguishes country-level from sub-national area-level selection in the SEPAL country table. Only valid (and only meaningful) when `id` is the country table id and `keyColumn='id'`. Must be omitted in all other cases.\n\n- `'COUNTRY'` — `key` is a country code, geometry is the entire country.\n- `'AREA'` — `key` is an area (province/state/district) code from the GAUL hierarchy, geometry is that single area."
+                },
+                "buffer": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Buffer distance in **kilometers** applied around the selected geometry. Default 0 (no buffer). Useful when the AOI boundary is precise (e.g. an administrative boundary) but the user wants to capture features just outside (coastlines, transboundary forest patches, etc.).\n\nLarger buffers proportionally enlarge the area Earth Engine has to process. Any integer in [0, 100] is valid; the GUI presents typical values 0, 1, 2, 5, 10, 20, 50, 100."
+                }
+            },
+            "examples": [
+                {"type": "EE_TABLE", "id": "users/wiell/SepalResources/gaul", "keyColumn": "id", "key": "KEN", "level": "COUNTRY"},
+                {"type": "EE_TABLE", "id": "users/wiell/SepalResources/gaul", "keyColumn": "id", "key": "BRA", "level": "COUNTRY", "buffer": 5},
+                {"type": "EE_TABLE", "id": "projects/my-project/assets/my-aoi-table", "keyColumn": "country_co", "key": "BR"},
+                {"type": "EE_TABLE", "id": "projects/my-project/assets/my-aoi-table", "keyColumn": null, "key": null}
+            ],
+            "allOf": [
+                {
+                    "description": "keyColumn and key must both be set or both be null.",
+                    "if": {"properties": {"keyColumn": {"type": "null"}}},
+                    "then": {"properties": {"key": {"type": "null"}}},
+                    "else": {"properties": {"key": {"type": "string", "minLength": 1}}}
+                }
+            ],
+            "dependentSchemas": {
+                "level": {
+                    "description": "`level` is allowed only when id is the built-in country table AND keyColumn is 'id' — the combination that represents a country/area selection.",
+                    "properties": {
+                        "id": {"$ref": "#/$defs/countryTableId"},
+                        "keyColumn": {"const": "id"}
+                    },
+                    "required": ["id", "keyColumn"]
+                }
+            }
+        },
+        "polygon": {
+            "title": "AoiPolygon",
+            "description": "AOI defined by an explicit polygon. Use this when the user wants to draw a custom region that doesn't correspond to a country, administrative area, or asset.\n\nCoordinate order is **[longitude, latitude]** (GeoJSON convention), not [lat, lng]. Coordinates are in WGS84 decimal degrees. The polygon does not need to be explicitly closed — the first and last points need not match. Polygons should not self-intersect.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "path"],
+            "properties": {
+                "type": {
+                    "const": "POLYGON",
+                    "description": "Discriminator. Must be the literal string 'POLYGON'."
+                },
+                "path": {
+                    "type": "array",
+                    "minItems": 3,
+                    "description": "Array of `[longitude, latitude]` points forming a closed polygon (the polygon is implicitly closed — do not duplicate the first point as the last). Minimum three points. Coordinates are in WGS84 decimal degrees: longitude in [-180, 180], latitude in [-90, 90].",
+                    "items": {
+                        "type": "array",
+                        "prefixItems": [
+                            {"type": "number", "minimum": -180, "maximum": 180, "description": "Longitude in decimal degrees, WGS84."},
+                            {"type": "number", "minimum": -90, "maximum": 90, "description": "Latitude in decimal degrees, WGS84."}
+                        ],
+                        "minItems": 2,
+                        "maxItems": 2
+                    }
+                }
+            },
+            "examples": [
+                {"type": "POLYGON", "path": [[36.7, -1.4], [37.0, -1.4], [37.0, -1.1], [36.7, -1.1]]}
+            ]
+        },
+        "assetBounds": {
+            "title": "AoiAssetBounds",
+            "description": "AOI defined by the bounding geometry of the recipe's input asset. This variant is only valid for recipe types that wrap a single bounding asset (currently only the `asset` recipe type) — the geometry is implicit in the asset itself, so no further fields are needed.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type"],
+            "properties": {
+                "type": {
+                    "const": "ASSET_BOUNDS",
+                    "description": "Discriminator. Must be the literal string 'ASSET_BOUNDS'."
+                }
+            },
+            "examples": [
+                {"type": "ASSET_BOUNDS"}
+            ]
+        }
+    }
+}

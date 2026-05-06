@@ -10,8 +10,9 @@ const {createGeeClient} = require('./sepal/geeClient')
 const {createRecipeTools} = require('./mcp/tools/recipeTools')
 const {createIntrospectionTools} = require('./mcp/tools/introspectionTools')
 const {createGuiTools} = require('./mcp/tools/guiTools')
-const {createTemplateTools} = require('./mcp/tools/templateTools')
-const {createWorkflowTools} = require('./mcp/tools/workflowTools')
+// Templates and workflows are disabled.
+// const {createTemplateTools} = require('./mcp/tools/templateTools')
+// const {createWorkflowTools} = require('./mcp/tools/workflowTools')
 const {createRecipeValidator} = require('./mcp/validation/recipeValidator')
 const {createConversationStore} = require('./chat/conversationStore')
 const {createWsHandler} = require('./ws')
@@ -25,57 +26,33 @@ const main = async () => {
     // Initialize registry
     const registry = createRegistry()
 
-    // Register recipe schemas
+    // Register recipe schemas. Each entry must be a recipe migrated to the
+    // new structure under ./recipes/<recipe>/. Add an entry as each recipe
+    // is migrated.
     const schemas = [
-        require('./mcp/schemas/mosaic'),
-        require('./mcp/schemas/radarMosaic'),
-        require('./mcp/schemas/planetMosaic'),
-        require('./mcp/schemas/classification'),
-        require('./mcp/schemas/unsupervisedClassification'),
-        require('./mcp/schemas/regression'),
-        require('./mcp/schemas/timeSeries'),
-        require('./mcp/schemas/ccdc'),
-        require('./mcp/schemas/ccdcSlice'),
-        require('./mcp/schemas/changeAlerts'),
-        require('./mcp/schemas/baytsHistorical'),
-        require('./mcp/schemas/baytsAlerts'),
-        require('./mcp/schemas/classChange'),
-        require('./mcp/schemas/indexChange'),
-        require('./mcp/schemas/phenology'),
-        require('./mcp/schemas/stack'),
-        require('./mcp/schemas/bandMath'),
-        require('./mcp/schemas/remapping'),
-        require('./mcp/schemas/masking'),
-        require('./mcp/schemas/asset'),
+        require('./recipes/radarMosaic'),
     ]
     schemas.forEach(schema => registry.registerSchema(schema))
     log.info(`Registered ${schemas.length} recipe schemas`)
 
-    // Register templates
-    const templates = [
-        require('./mcp/templates/landsatAnnualMosaic'),
-        require('./mcp/templates/sentinel2SeasonalMosaic'),
-        require('./mcp/templates/radarMonthlyMosaic'),
-        require('./mcp/templates/landCoverClassification'),
-        require('./mcp/templates/forestChangeDetection'),
-        require('./mcp/templates/ndviTimeSeries'),
-        require('./mcp/templates/deforestationAlerts'),
-        require('./mcp/templates/indexChangeMap'),
-    ]
-    templates.forEach(template => registry.registerTemplate(template))
-    log.info(`Registered ${templates.length} templates`)
+    // Templates are disabled.
+    // const templates = [
+    //     require('./mcp/templates/radarMonthlyMosaic'),
+    // ]
+    // templates.forEach(template => registry.registerTemplate(template))
+    // log.info(`Registered ${templates.length} templates`)
 
     // Initialize recipe validator
     const recipeValidator = createRecipeValidator({registry})
     log.info('Recipe validator initialized')
 
-    // Register tools
+    // Register tools. Templates and workflows are disabled.
     const allTools = [
         ...createRecipeTools({recipeClient, registry, recipeValidator}),
         ...createIntrospectionTools({registry}),
         ...createGuiTools(),
-        ...createTemplateTools({registry, recipeClient, recipeValidator}),
-        ...createWorkflowTools({registry, recipeClient, recipeValidator}),
+        // ...createTemplateTools({registry, recipeClient, recipeValidator}),
+        // ...createWorkflowTools({registry, recipeClient, recipeValidator}),
     ]
     registry.registerTools(allTools)
     log.info(`Registered ${allTools.length} tools`)
