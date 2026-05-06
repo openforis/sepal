@@ -26,11 +26,9 @@ const main = async () => {
     // Initialize registry
     const registry = createRegistry()
 
-    // Register recipe schemas. Each entry must be a recipe migrated to the
-    // new structure under ./recipes/<recipe>/. Add an entry as each recipe
-    // is migrated.
     const schemas = [
         require('./recipes/radarMosaic'),
+        require('./recipes/opticalMosaic'),
     ]
     schemas.forEach(schema => registry.registerSchema(schema))
     log.info(`Registered ${schemas.length} recipe schemas`)
