@@ -19,13 +19,14 @@ import {VersionCheck} from '~/widget/versionCheck'
 import {WebSocketConnection} from '~/widget/webSocketConnection'
 
 import {Body} from './body/body'
-import {ChatPanel} from './body/chat/chatPanel'
+import {ChatPanel, isChatSplit} from './body/chat/chatPanel'
 import {Footer} from './footer/footer'
 import styles from './home.module.css'
 import {Menu} from './menu/menu'
 
 const mapStateToProps = () => ({
-    floatingFooter: false
+    floatingFooter: false,
+    chatSplit: isChatSplit()
 })
 
 const RETRY_CONFIG = {
@@ -123,36 +124,15 @@ const updateTasks$ = () =>
 class _Home extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {
-            chatOpen: false,
-            chatMode: 'overlay'
-        }
         const {stream} = props
         const errorHandler = () => Notifications.error({message: msg('home.connectivityError'), group: true})
         stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_TASKS', updateTasks$(), null, errorHandler)
-        this.toggleChat = this.toggleChat.bind(this)
-        this.closeChat = this.closeChat.bind(this)
-        this.toggleChatMode = this.toggleChatMode.bind(this)
-    }
-
-    toggleChat() {
-        this.setState(prev => ({chatOpen: !prev.chatOpen}))
-    }
-
-    closeChat() {
-        this.setState({chatOpen: false})
-    }
-
-    toggleChatMode() {
-        this.setState(prev => ({chatMode: prev.chatMode === 'overlay' ? 'split' : 'overlay'}))
     }
 
     render() {
-        const {floatingMenu, floatingFooter} = this.props
-        const {chatOpen, chatMode} = this.state
-        const chatSplit = chatOpen && chatMode === 'split'
+        const {floatingMenu, floatingFooter, chatSplit} = this.props
         return (
             <ActivationContext id='root'>
                 <div className={[
@@ -161,18 +141,12 @@ class _Home extends React.Component {
                     floatingFooter && styles.floatingFooter,
                     chatSplit && styles.chatSplit
                 ].join(' ')}>
-                    <Menu className={styles.menu} chatOpen={chatOpen} onChatToggle={this.toggleChat}/>
+                    <Menu className={styles.menu}/>
                     <div className={styles.main}>
                         <Body className={styles.body}/>
                         <Footer className={styles.footer}/>
                     </div>
-                    <ChatPanel
-                        className={chatSplit ? styles.chat : undefined}
-                        isOpen={chatOpen}
-                        mode={chatMode}
-                        onClose={this.closeChat}
-                        onToggleMode={this.toggleChatMode}
-                    />
+                    <ChatPanel className={chatSplit ? styles.chat : undefined}/>
                     <PortalContainer/>
                     <WebSocketConnection/>
                     <User/>
@@ -192,6 +166,7 @@ export const Home = compose(
 )
 
 Home.propTypes = {
+    chatSplit: PropTypes.bool,
     floatingFooter: PropTypes.bool,
     floatingMenu: PropTypes.bool
 }
