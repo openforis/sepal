@@ -31,6 +31,7 @@ const main = async () => {
         require('./recipes/radarMosaic'),
         require('./recipes/opticalMosaic'),
         require('./recipes/classification'),
+        require('./recipes/indexChange'),
     ]
     schemas.forEach(schema => registry.registerSchema(schema))
     log.info(`Registered ${schemas.length} recipe schemas`)
