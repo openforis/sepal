@@ -1,11 +1,15 @@
 const {Subject, from, switchMap, startWith} = require('rxjs')
+const {v4: uuid} = require('uuid')
 const log = require('#sepal/log').getLogger('ws')
 const {createOrchestrator} = require('./chat/orchestrator')
+
+const GUI_REQUEST_TIMEOUT_MS = 15000
 
 const createWsHandler = ({config, registry, conversationStore}) => {
 
     const ws$ = in$ => {
         const out$ = new Subject()
+        const pendingRequests = new Map()
 
         const send = ({username, clientId, subscriptionId, data}) => {
             out$.next({username, clientId, subscriptionId, data})
@@ -14,9 +18,38 @@ const createWsHandler = ({config, registry, conversationStore}) => {
         const broadcast = ({username, excludeClientId, data}) => {
             out$.next({username, excludeClientId, data})
         }
-        
-        const response = {send, broadcast}
-        
+
+        // Send a request to the GUI and await a matching gui-response.
+        // The GUI must echo back the requestId on a {type: 'gui-response', requestId, success, data?, error?} message.
+        const request = ({username, clientId, subscriptionId, data, timeoutMs = GUI_REQUEST_TIMEOUT_MS}) =>
+            new Promise((resolve, reject) => {
+                const requestId = uuid()
+                const timer = setTimeout(() => {
+                    if (pendingRequests.delete(requestId)) {
+                        reject(new Error(`GUI request timed out after ${timeoutMs}ms (action=${data && data.action})`))
+                    }
+                }, timeoutMs)
+                pendingRequests.set(requestId, {resolve, reject, timer})
+                out$.next({username, clientId, subscriptionId, data: {...data, requestId}})
+            })
+
+        const resolveRequest = ({requestId, success, data, error}) => {
+            const pending = pendingRequests.get(requestId)
+            if (!pending) {
+                log.warn(`Received gui-response for unknown requestId: ${requestId}`)
+                return
+            }
+            pendingRequests.delete(requestId)
+            clearTimeout(pending.timer)
+            if (success === false) {
+                pending.reject(new Error(error || 'GUI request failed'))
+            } else {
+                pending.resolve(data)
+            }
+        }
+
+        const response = {send, broadcast, request}
+
         const init = async () => {
             const {sessionHandler, conversationHandler, messageHandler} = createOrchestrator({response, config, registry, conversationStore})
 
@@ -48,8 +81,10 @@ const createWsHandler = ({config, registry, conversationStore}) => {
                         log.trace('Unhandled event (ignored):', event)
                     }
                 } else if (data) {
-                    const {type, text, conversationId} = data
-                    if (type === 'message') {
+                    const {type, text, conversationId, requestId} = data
+                    if (type === 'gui-response') {
+                        resolveRequest({requestId, success: data.success, data: data.data, error: data.error})
+                    } else if (type === 'message') {
                         messageHandler.handleMessage({username, clientId, subscriptionId, text})
                             .catch(error => log.error('Message handling error:', error))
                     } else if (type === 'list-conversations') {
@@ -80,6 +115,11 @@ const createWsHandler = ({config, registry, conversationStore}) => {
                 complete: () => {
                     log.info('Disconnected')
                     sessionHandler.shutdown()
+                    pendingRequests.forEach(({reject, timer}) => {
+                        clearTimeout(timer)
+                        reject(new Error('WebSocket disconnected'))
+                    })
+                    pendingRequests.clear()
                 }
             })
         }

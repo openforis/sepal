@@ -1,310 +1,124 @@
 import PropTypes from 'prop-types'
-import {useCallback, useEffect, useRef, useState} from 'react'
-import {map, of, tap} from 'rxjs'
+import {useCallback, useEffect, useRef} from 'react'
 
-import {actionBuilder} from '~/action-builder'
-import api from '~/apiRegistry'
-import {closeRecipe, initializeRecipe, isRecipeOpen, selectRecipe} from '~/app/home/body/process/recipe'
 import {getLogger} from '~/log'
-import {select} from '~/store'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {Layout} from '~/widget/layout'
-import {Panel} from '~/widget/panel/panel'
 import {RemoveButton} from '~/widget/removeButton'
 
+import {handleChatGuiAction} from './chatGuiActionRegistry'
 import {ChatInput} from './chatInput'
 import {ChatMessages} from './chatMessages'
 import styles from './chatPanel.module.css'
 import {ConversationList} from './conversationList'
+import {useChatWebSocket} from './useChatWebSocket'
+import {useConversation} from './useConversation'
 
 const log = getLogger('chat')
 
-const processLoadedMessages = messages => {
-    const result = []
-    for (const m of messages) {
-        if (m.role === 'user') {
-            result.push(m)
-        } else if (m.role === 'assistant') {
-            const tools = m.toolCalls && m.toolCalls.length > 0
-                ? m.toolCalls.map(tc => tc.name)
-                : undefined
-            result.push({role: 'assistant', content: m.content || '', tools})
-        } else if (m.role === 'tool') {
-            // tool results are shown via the preceding assistant message's toolCalls
-        }
-    }
-    return result
-}
-
 export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggleMode}) => {
-    const [messages, setMessages] = useState([])
-    const [isLoading, setIsLoading] = useState(false)
-    const [isThinking, setIsThinking] = useState(false)
-    const [isConnected, setIsConnected] = useState(false)
-    const [view, setView] = useState('list')
-    const [conversations, setConversations] = useState([])
-    const [activeConversationId, setActiveConversationId] = useState(null)
-    const wsRef = useRef(null)
-    const actionSubRef = useRef(null)
-    const streamingRef = useRef(false)
-    const activeConversationIdRef = useRef(null)
-    const messagesRef = useRef(messages)
-    messagesRef.current = messages
+    const {isConnected, send, respond, message$} = useChatWebSocket()
+    const [state, dispatch] = useConversation()
+    const {messages, isLoading, isThinking, view, conversations, activeConversationId} = state
+
+    const activeConversationIdRef = useRef(activeConversationId)
+    activeConversationIdRef.current = activeConversationId
 
     useEffect(() => {
-        const {upstream$, downstream$} = api.chat.ws()
-        wsRef.current = upstream$
-
-        const subscription = downstream$.subscribe({
-            next: msg => {
-                if (msg.ready !== undefined) {
-                    setIsConnected(msg.ready)
-                } else if (msg.data) {
-                    const {type, text, complete, action, recipeId, tools, conversations: convList, conversationId: convId, messages: convMessages} = msg.data
-                    if (type === 'chat-response' || type === 'status' || type === 'tool-use') {
-                        // Ignore messages from a different conversation
-                        if (convId && convId !== activeConversationIdRef.current) {
-                            return
-                        }
+        const subscription = message$.subscribe(data => {
+            const {type, requestId, conversationId} = data
+            switch (type) {
+                case 'chat-response':
+                    dispatch({type: 'ASSISTANT_CHUNK', conversationId, text: data.text, complete: data.complete})
+                    break
+                case 'tool-use':
+                    dispatch({type: 'TOOL_USE', conversationId, tools: data.tools})
+                    break
+                case 'status':
+                    dispatch({type: 'STATUS_THINKING', conversationId})
+                    break
+                case 'gui-action': {
+                    const handled = handleChatGuiAction(data.action, {
+                        ...data,
+                        respond: payload => respond(requestId, payload)
+                    })
+                    if (!handled) {
+                        log.warn('Unknown GUI action:', data.action)
+                        respond(requestId, {success: false, error: `Unknown GUI action: ${data.action}`})
                     }
-                    if (type === 'chat-response') {
-                        setIsThinking(false)
-                        if (text) {
-                            if (!streamingRef.current) {
-                                streamingRef.current = true
-                                setMessages(prev => [...prev, {role: 'assistant', content: text, streaming: !complete}])
-                            } else {
-                                setMessages(prev => {
-                                    const updated = [...prev]
-                                    const last = updated[updated.length - 1]
-                                    if (last && last.streaming) {
-                                        updated[updated.length - 1] = {...last, content: last.content + text, streaming: !complete}
-                                    }
-                                    return updated
-                                })
-                            }
-                        } else if (complete) {
-                            setMessages(prev => {
-                                const updated = [...prev]
-                                const last = updated[updated.length - 1]
-                                if (last && last.streaming) {
-                                    updated[updated.length - 1] = {...last, streaming: false}
-                                }
-                                return updated
-                            })
-                        }
-                        if (complete) {
-                            streamingRef.current = false
-                            setIsLoading(false)
-                        }
-                    } else if (type === 'tool-use') {
-                        setIsThinking(false)
-                        const toolNames = tools || []
-                        if (streamingRef.current) {
-                            streamingRef.current = false
-                            setMessages(prev => {
-                                const updated = [...prev]
-                                const last = updated[updated.length - 1]
-                                if (last && last.role === 'assistant') {
-                                    updated[updated.length - 1] = {...last, streaming: false, tools: toolNames}
-                                }
-                                return updated
-                            })
-                        } else {
-                            setMessages(prev => [...prev, {role: 'assistant', content: '', tools: toolNames}])
-                        }
-                    } else if (type === 'status') {
-                        setIsThinking(true)
-                        setIsLoading(true)
-                    } else if (type === 'gui-action') {
-                        handleGuiAction({action, recipeId})
-                    } else if (type === 'conversations') {
-                        setConversations(convList || [])
-                    } else if (type === 'conversation-created') {
-                        activeConversationIdRef.current = convId
-                        setActiveConversationId(convId)
-                        setMessages([])
-                        streamingRef.current = false
-                        setIsLoading(false)
-                        setIsThinking(false)
-                        setView('chat')
-                    } else if (type === 'conversation-loaded') {
-                        activeConversationIdRef.current = convId
-                        setActiveConversationId(convId)
-                        setMessages(processLoadedMessages(convMessages || []))
-                        streamingRef.current = false
-                        setIsLoading(false)
-                        setIsThinking(false)
-                        setView('chat')
-                    } else if (type === 'conversation-claimed') {
-                        if (convId && convId === activeConversationIdRef.current) {
-                            activeConversationIdRef.current = null
-                            setActiveConversationId(null)
-                            setMessages([])
-                            streamingRef.current = false
-                            setIsLoading(false)
-                            setIsThinking(false)
-                            setView('list')
-                            if (wsRef.current) {
-                                wsRef.current.next({type: 'list-conversations'})
-                            }
-                        }
-                    }
+                    break
                 }
-            },
-            error: error => {
-                log.error('Chat websocket error', error)
-                setIsConnected(false)
+                case 'conversations':
+                    dispatch({type: 'CONVERSATIONS_SET', conversations: data.conversations})
+                    break
+                case 'conversation-created':
+                    dispatch({type: 'CONVERSATION_CREATED', conversationId})
+                    break
+                case 'conversation-loaded':
+                    dispatch({type: 'CONVERSATION_LOADED', conversationId, messages: data.messages})
+                    break
+                case 'conversation-claimed':
+                    if (conversationId === activeConversationIdRef.current) {
+                        dispatch({type: 'CONVERSATION_CLAIMED', conversationId})
+                        send({type: 'list-conversations'})
+                    }
+                    break
+                default:
+                    log.trace('Unhandled chat message type:', type)
             }
         })
-
-        return () => {
-            subscription.unsubscribe()
-            wsRef.current = null
-            if (actionSubRef.current) {
-                actionSubRef.current.unsubscribe()
-                actionSubRef.current = null
-            }
-        }
-    }, [])
-
-    const openExistingRecipe = useCallback(recipeId => {
-        if (isRecipeOpen(recipeId)) {
-            selectRecipe(recipeId)
-        } else {
-            const loadedRecipes = select('process.loadedRecipes') || {}
-            const recipe$ = Object.keys(loadedRecipes).includes(recipeId)
-                ? of(loadedRecipes[recipeId])
-                : api.recipe.load$(recipeId).pipe(
-                    map(recipe => initializeRecipe(recipe)),
-                    tap(recipe =>
-                        actionBuilder('CACHE_RECIPE', recipe)
-                            .set(['process.loadedRecipes', recipe.id], recipe)
-                            .dispatch()
-                    )
-                )
-            if (actionSubRef.current) {
-                actionSubRef.current.unsubscribe()
-            }
-            actionSubRef.current = recipe$.subscribe({
-                next: recipe => {
-                    const {id, placeholder, title, type} = recipe
-                    actionBuilder('OPEN_RECIPE')
-                        .set(['process.tabs', {id: select('process.selectedTabId')}], {id, placeholder, title, type})
-                        .set('process.selectedTabId', id)
-                        .dispatch()
-                },
-                error: error => log.error('Failed to open recipe', error)
-            })
-        }
-    }, [])
-
-    const reloadRecipe = useCallback(recipeId => {
-        if (actionSubRef.current) {
-            actionSubRef.current.unsubscribe()
-        }
-        actionSubRef.current = api.recipe.load$(recipeId).subscribe({
-            next: loaded => {
-                const current = select(['process.loadedRecipes', recipeId]) || {}
-                const merged = {
-                    ...loaded,
-                    layers: loaded.layers?.areas ? loaded.layers : current.layers,
-                    ui: current.ui || {initialized: true}
-                }
-                actionBuilder('RELOAD_RECIPE', {recipeId})
-                    .set(['process.loadedRecipes', recipeId], merged)
-                    .dispatch()
-            },
-            error: error => log.error('Failed to reload recipe', error)
-        })
-    }, [])
-
-    const handleGuiAction = useCallback(({action, recipeId}) => {
-        log.info(`GUI action: ${action} recipe ${recipeId}`)
-        switch (action) {
-            case 'open':
-                openExistingRecipe(recipeId)
-                break
-            case 'reload':
-                reloadRecipe(recipeId)
-                break
-            case 'close':
-                closeRecipe(recipeId)
-                break
-            default:
-                log.warn('Unknown GUI action:', action)
-        }
-    }, [openExistingRecipe, reloadRecipe])
+        return () => subscription.unsubscribe()
+    }, [message$, dispatch, respond, send])
 
     const handleSend = useCallback(text => {
-        if (wsRef.current && isConnected && activeConversationId) {
-            setMessages(prev => [...prev, {role: 'user', content: text}])
-            setIsLoading(true)
-            wsRef.current.next({type: 'message', text})
+        if (isConnected && activeConversationId) {
+            dispatch({type: 'USER_SENT', text})
+            send({type: 'message', text})
         }
-    }, [isConnected, activeConversationId])
+    }, [dispatch, send, isConnected, activeConversationId])
 
     const handleNewConversation = useCallback(() => {
-        if (wsRef.current && isConnected) {
-            wsRef.current.next({type: 'create-conversation'})
+        if (isConnected) {
+            send({type: 'create-conversation'})
         }
-    }, [isConnected])
+    }, [send, isConnected])
 
     const handleSelectConversation = useCallback(conversationId => {
-        if (wsRef.current && isConnected) {
-            wsRef.current.next({type: 'select-conversation', conversationId})
+        if (isConnected) {
+            send({type: 'select-conversation', conversationId})
         }
-    }, [isConnected])
+    }, [send, isConnected])
 
     const handleDeleteConversation = useCallback(conversationId => {
-        if (wsRef.current && isConnected) {
-            wsRef.current.next({type: 'delete-conversation', conversationId})
+        if (isConnected) {
+            send({type: 'delete-conversation', conversationId})
         }
-    }, [isConnected])
+    }, [send, isConnected])
 
     const handleDeleteActiveConversation = useCallback(() => {
-        if (activeConversationId) {
-            handleDeleteConversation(activeConversationId)
-            activeConversationIdRef.current = null
-            setActiveConversationId(null)
-            setMessages([])
-            streamingRef.current = false
-            setIsLoading(false)
-            setIsThinking(false)
-            setView('list')
-            if (wsRef.current && isConnected) {
-                wsRef.current.next({type: 'list-conversations'})
-            }
+        if (!activeConversationId) return
+        handleDeleteConversation(activeConversationId)
+        dispatch({type: 'RESET_AFTER_DELETE_ACTIVE'})
+        if (isConnected) {
+            send({type: 'list-conversations'})
         }
-    }, [activeConversationId, handleDeleteConversation, isConnected])
+    }, [activeConversationId, handleDeleteConversation, dispatch, send, isConnected])
 
     const handleDeleteAllConversations = useCallback(() => {
-        if (wsRef.current && isConnected) {
-            wsRef.current.next({type: 'delete-all-conversations'})
-            activeConversationIdRef.current = null
-            setActiveConversationId(null)
-            setMessages([])
-            streamingRef.current = false
-            setIsLoading(false)
-            setIsThinking(false)
+        if (isConnected) {
+            send({type: 'delete-all-conversations'})
+            dispatch({type: 'RESET_AFTER_DELETE_ALL'})
         }
-    }, [isConnected])
+    }, [send, dispatch, isConnected])
 
     const handleShowList = useCallback(() => {
-        setView(() => {
-            // Discard empty ephemeral conversation when switching to list
-            if (messagesRef.current.length === 0) {
-                activeConversationIdRef.current = null
-                setActiveConversationId(null)
-            }
-            if (wsRef.current && isConnected) {
-                wsRef.current.next({type: 'list-conversations'})
-            }
-            return 'list'
-        })
-    }, [isConnected])
+        dispatch({type: 'SHOW_LIST'})
+        if (isConnected) {
+            send({type: 'list-conversations'})
+        }
+    }, [dispatch, send, isConnected])
 
     const isSplit = mode === 'split'
     const isConversation = view === 'chat' && activeConversationId
@@ -410,15 +224,6 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
             {renderHeader()}
             {isConversation ? renderConversation() : renderConversationList()}
         </div>
-
-    // <Panel placement='inline'>
-    //     <Panel.Header>
-    //         {renderHeader()}
-    //     </Panel.Header>
-    //     <Panel.Content>
-    //         {isConversation ? renderConversation() : renderConversationList()}
-    //     </Panel.Content>
-    // </Panel>
     ) : null
 }
 

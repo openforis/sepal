@@ -61,7 +61,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
         return null
     }
 
-    const executeToolCalls = async ({toolCalls, username, session, sendFn}) => {
+    const executeToolCalls = async ({toolCalls, username, session, sendFn, requestFn}) => {
         const results = []
         for (const tc of toolCalls) {
             const tool = registry ? registry.getTool(tc.name) : null
@@ -75,7 +75,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                 } else {
                     try {
                         log.debug(`Executing tool: ${tc.name}`, tc.input)
-                        const result = await tool.handler({username, params: tc.input || {}, send: sendFn, session})
+                        const result = await tool.handler({username, params: tc.input || {}, send: sendFn, request: requestFn, session})
                         log.debug(`Tool result:`, {toolCallId: tc.id, result})
                         results.push({toolCallId: tc.id, result})
                     } catch (error) {
@@ -176,6 +176,8 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
 
         const systemPrompt = buildSystemPrompt({username, registry})
         const sendFn = data => response.send({username, clientId, subscriptionId, data})
+        const requestFn = (data, options = {}) =>
+            response.request({username, clientId, subscriptionId, data, ...options})
 
         try {
             let rounds = 0
@@ -211,7 +213,8 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                         toolCalls: result.toolCalls,
                         username,
                         session,
-                        sendFn
+                        sendFn,
+                        requestFn
                     })
 
                     const toolMsg = {role: 'tool', toolResults}

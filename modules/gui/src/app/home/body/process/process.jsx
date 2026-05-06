@@ -10,6 +10,7 @@ import {withLeaveAlert} from '~/widget/leaveAlert'
 import {Notifications} from '~/widget/notifications'
 import {Tabs} from '~/widget/tabs/tabs'
 
+import {registerChatGuiActions} from './chatGuiActions'
 import {CloseRecipe} from './closeRecipe'
 import {registerImageLayerSources} from './imageLayerSources'
 import {ProcessMenu} from './processMenu'
@@ -18,6 +19,7 @@ import {RecipeHome} from './recipeHome'
 import {registerRecipeImageLayers} from './recipeImageLayers'
 import {getRecipeType} from './recipeTypeRegistry'
 import {registerRecipeTypes} from './recipeTypes'
+import {registerRecipeVisualizations} from './recipeVisualizations'
 import {SaveRecipe} from './saveRecipe'
 
 class _Process extends React.Component {
@@ -29,7 +31,9 @@ class _Process extends React.Component {
         this.onCloseTab = this.onCloseTab.bind(this)
         registerRecipeTypes()
         registerRecipeImageLayers()
+        registerRecipeVisualizations()
         registerImageLayerSources()
+        registerChatGuiActions()
     }
 
     render() {
