@@ -3,7 +3,7 @@ const {bundleSchema} = require('../../recipes/bundleSchema')
 const createIntrospectionTools = ({registry}) => [
     {
         name: 'recipe_types',
-        description: 'List all available recipe types with descriptions',
+        description: 'List all available recipe types with the information needed to pick the right one for the user\'s request. Each entry returns a short description, concrete useCases, related terms (synonyms / jargon the user might say), chooseWhen / dontChooseWhen guidance, and a one-line outputs summary. Match the user\'s wording against terms and useCases first; consult chooseWhen / dontChooseWhen to disambiguate against neighbouring recipes.',
         parameters: {
             type: 'object',
             properties: {}
@@ -12,7 +12,12 @@ const createIntrospectionTools = ({registry}) => [
             const types = registry.listSchemas().map(s => ({
                 id: s.id,
                 name: s.name,
-                description: s.description
+                description: s.description,
+                useCases: s.useCases,
+                terms: s.terms,
+                chooseWhen: s.chooseWhen,
+                dontChooseWhen: s.dontChooseWhen,
+                outputs: s.outputs
             }))
             return {success: true, data: types}
         }

@@ -6,6 +6,15 @@ module.exports = {
     id: 'CLASS_CHANGE',
     name: 'Class Change',
     description: 'Detect categorical land-cover transitions between two classified images. Encodes per-pixel (from-class, to-class) pairs as integer transition codes; emits a confidence band when both inputs carry per-class probability bands and identical legends.',
+    useCases: [
+        'Land-cover transition mapping (forest → non-forest, cropland → urban, etc.)',
+        'Confidence-weighted transition map combining two classifications',
+        'Building a transition matrix between two snapshots'
+    ],
+    terms: ['class change', 'land-cover change', 'land-use change', 'transition', 'transition matrix', 'from-class to-class', 'categorical change', 'deforestation transition'],
+    chooseWhen: 'User has TWO classified maps (or two CLASSIFICATION recipes) of the same area and wants per-pixel categorical transitions.',
+    dontChooseWhen: 'User wants change on a continuous index — use INDEX_CHANGE. Wants to relabel a single classified map — use REMAPPING. Wants to produce the classified maps in the first place — use CLASSIFICATION.',
+    outputs: '`transition` band encoding (fromClass, toClass) pairs as integers; optional `confidence` band when both inputs have per-class probability bands and identical legends.',
     parameterSchema,
     rules,
     getDefaults,

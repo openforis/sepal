@@ -26,7 +26,7 @@ recipes/
   bundleSchema.js                 # Inlines cross-file $refs for the LLM
 ```
 
-`index.js` exports `{id, name, description, parameterSchema, rules, getDefaults, workflowSteps, bands, visualizations}` and is the only entry point — `main.js` requires `./recipes/<recipe>` and the registry handles the rest.
+`index.js` exports `{id, name, description, useCases, terms, chooseWhen, dontChooseWhen, outputs, parameterSchema, rules, getDefaults, workflowSteps, bands, visualizations}` and is the only entry point — `main.js` requires `./recipes/<recipe>` and the registry handles the rest.
 
 ## Philosophy: schema-as-truth, not GUI-mirror
 
@@ -37,6 +37,28 @@ The schema captures what's *correct*, not what the GUI happens to allow:
 - Exception: when discrete values encode real semantics (odd kernel sizes, sigma values from a hardcoded lookup table), enums are correct.
 
 When the schema is tighter than the GUI, that's a GUI bug, not a schema bug.
+
+## Selection fields (recipe_types tool)
+
+The `recipe_types` MCP tool returns one entry per registered recipe and is the LLM's **first stop** when the user describes what they want — well before it knows which `parameterSchema` to fetch. Each `index.js` therefore carries five selection fields that go beyond the bare description:
+
+```js
+useCases: ['Concrete user-facing use case', '…'],
+terms: ['SAR', 'radar', 'time-scan', 'VV', 'VH', '…'],
+chooseWhen: 'One sentence, written so the LLM can answer "is this the right recipe?" against it.',
+dontChooseWhen: 'Common confusable cases — name the alternative recipe by id.',
+outputs: 'One line summarizing the bands the recipe produces.',
+```
+
+Authoring guidance:
+
+- **`useCases`**: 3-6 concrete bullets, phrased the way a user would phrase the goal ("Two-date deforestation mapping", not "compute dNDVI"). Keep them disjoint — overlapping use cases dilute the signal.
+- **`terms`**: synonyms, jargon, satellite/sensor names, algorithm names, well-known indices, common abbreviations. The LLM matches the user's wording against this list. Include both the formal term and the colloquial form (e.g. `'SAR'` AND `'radar'`).
+- **`chooseWhen`**: a single sentence that is *true* for this recipe and *false* for its neighbours. If you can't write one, the recipes likely overlap — fix the modeling, don't paper it over.
+- **`dontChooseWhen`**: name the alternative recipe by id (e.g. "use MOSAIC instead"). This builds the cross-recipe disambiguation the LLM needs.
+- **`outputs`**: one line summarizing the bands. Mirrors `bands` but in prose form so the LLM doesn't need to parse the structured `bands` object just to confirm the recipe will produce what the user asked for.
+
+These fields are NOT for the validator; they are pure LLM guidance. If user feedback shows the LLM picks the wrong recipe for a class of requests, fix it here first — adjust `terms` / `chooseWhen` / `dontChooseWhen` rather than touching the schema.
 
 ## Description authoring
 

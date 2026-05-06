@@ -6,6 +6,16 @@ module.exports = {
     id: 'REMAPPING',
     name: 'Remapping',
     description: 'Reclassify pixels into a new categorical scheme by combining one or more input images via per-class constraint expressions. Useful for: collapsing a fine-grained land-cover map into broader classes, deriving a categorical product from continuous inputs (e.g. forest/non-forest from canopy cover), or fusing multiple raster layers into a single class label.',
+    useCases: [
+        'Collapse a fine-grained land-cover map into broader classes',
+        'Derive forest / non-forest from continuous canopy-cover percent',
+        'Fuse multiple raster inputs into a single class label via expressions',
+        'Threshold continuous bands into categorical zones (e.g. elevation belts)'
+    ],
+    terms: ['remapping', 'reclassification', 'recode', 'reclassify', 'class collapsing', 'fuse', 'combine', 'decision rules', 'constraint expressions', 'thresholding'],
+    chooseWhen: 'User has one or more raster inputs (continuous or categorical) and wants to define new categorical classes via per-class constraint expressions, without training data.',
+    dontChooseWhen: 'User wants supervised classification from training data — use CLASSIFICATION. Two-date class change — use CLASS_CHANGE. Continuous-index difference — use INDEX_CHANGE.',
+    outputs: 'A `class` band carrying the new categorical scheme defined in `legend.entries`.',
     parameterSchema,
     rules,
     getDefaults,

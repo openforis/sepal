@@ -6,6 +6,17 @@ module.exports = {
     id: 'INDEX_CHANGE',
     name: 'Index Change',
     description: 'Two-date change detection on a continuous spectral index. Compares the same band between a from-image and a to-image, producing difference/ratio/normalized-difference bands plus an optional categorical change map and (when both images carry uncertainty bands) confidence band.',
+    useCases: [
+        'Two-date deforestation mapping (NDVI drop)',
+        'Burn severity assessment (dNBR)',
+        'Water-body change (NDWI / MNDWI shift)',
+        'Urbanization / built-up expansion (NDBI, NBI)',
+        'Any continuous-index difference between two snapshots'
+    ],
+    terms: ['change detection', 'two-date', 'before/after', 'dNBR', 'dNDVI', 'NDVI loss', 'NDWI shift', 'difference', 'ratio', 'normalized difference', 'fromImage', 'toImage', 'burn severity', 'deforestation'],
+    chooseWhen: 'User wants change between two dates on a continuous spectral index — typically vegetation, water, burn, or built-up indices.',
+    dontChooseWhen: 'User has two CLASSIFIED maps and wants categorical transitions — use CLASS_CHANGE. Wants supervised classification — use CLASSIFICATION.',
+    outputs: 'Always: difference, normalized_difference, ratio. Categorical `change` band when a legend is defined. `error` and `confidence` bands when both inputs carry uncertainty bands.',
     parameterSchema,
     rules,
     getDefaults,
