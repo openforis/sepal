@@ -17,6 +17,9 @@
     --menu-width: 2.6rem;
     --menu-handle-width: .6rem;
 
+    /* chat dimensions */
+    --chat-default-width: 400px;
+
     position: relative;
     height: 100%;
     pointer-events: none;
@@ -64,7 +67,7 @@
 }
 
 .chatSplit .main {
-    width: calc(100% - 400px);
+    width: calc(100% - var(--chat-width, var(--chat-default-width)));
 }
 
 .chatSplit .chat {
@@ -72,7 +75,7 @@
     right: 0;
     top: 0;
     bottom: 0;
-    width: 400px;
+    width: var(--chat-width, var(--chat-default-width));
     z-index: 1;
 }
 

@@ -19,14 +19,15 @@ import {VersionCheck} from '~/widget/versionCheck'
 import {WebSocketConnection} from '~/widget/webSocketConnection'
 
 import {Body} from './body/body'
-import {ChatPanel, isChatSplit} from './body/chat/chatPanel'
+import {ChatPanel, getChatWidth, isChatSplit} from './body/chat/chatPanel'
 import {Footer} from './footer/footer'
 import styles from './home.module.css'
 import {Menu} from './menu/menu'
 
 const mapStateToProps = () => ({
     floatingFooter: false,
-    chatSplit: isChatSplit()
+    chatSplit: isChatSplit(),
+    chatWidth: getChatWidth()
 })
 
 const RETRY_CONFIG = {
@@ -132,15 +133,17 @@ class _Home extends React.Component {
     }
 
     render() {
-        const {floatingMenu, floatingFooter, chatSplit} = this.props
+        const {floatingMenu, floatingFooter, chatSplit, chatWidth} = this.props
         return (
             <ActivationContext id='root'>
-                <div className={[
-                    styles.container,
-                    floatingMenu && styles.floatingMenu,
-                    floatingFooter && styles.floatingFooter,
-                    chatSplit && styles.chatSplit
-                ].join(' ')}>
+                <div
+                    className={[
+                        styles.container,
+                        floatingMenu && styles.floatingMenu,
+                        floatingFooter && styles.floatingFooter,
+                        chatSplit && styles.chatSplit
+                    ].join(' ')}
+                    style={chatSplit ? {'--chat-width': `${chatWidth}px`} : undefined}>
                     <Menu className={styles.menu}/>
                     <div className={styles.main}>
                         <Body className={styles.body}/>
@@ -167,6 +170,7 @@ export const Home = compose(
 
 Home.propTypes = {
     chatSplit: PropTypes.bool,
+    chatWidth: PropTypes.number,
     floatingFooter: PropTypes.bool,
     floatingMenu: PropTypes.bool
 }

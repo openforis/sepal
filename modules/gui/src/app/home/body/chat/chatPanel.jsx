@@ -25,14 +25,38 @@ const CHAT_MODE_STORAGE_KEY = 'ChatMode'
 const CHAT_MODE_SPLIT = 'split'
 const CHAT_MODE_OVERLAY = 'overlay'
 
+const CHAT_WIDTH_STORAGE_KEY = 'ChatWidth'
+const DEFAULT_CHAT_WIDTH = 400
+const MIN_CHAT_WIDTH = 280
+const MAX_CHAT_WIDTH_RATIO = 0.8
+
 const loadStoredChatMode = () => {
     const stored = localStorage.getItem(CHAT_MODE_STORAGE_KEY)
     return stored === CHAT_MODE_SPLIT || stored === CHAT_MODE_OVERLAY ? stored : CHAT_MODE_OVERLAY
 }
 
+const loadStoredChatWidth = () => {
+    const stored = parseInt(localStorage.getItem(CHAT_WIDTH_STORAGE_KEY), 10)
+    return Number.isFinite(stored) && stored >= MIN_CHAT_WIDTH ? stored : DEFAULT_CHAT_WIDTH
+}
+
+const clampChatWidth = width => {
+    const max = Math.max(MIN_CHAT_WIDTH, Math.floor(window.innerWidth * MAX_CHAT_WIDTH_RATIO))
+    return Math.min(Math.max(Math.round(width), MIN_CHAT_WIDTH), max)
+}
+
 export const isChatOpen = () => !!select('chat.open')
 export const getChatMode = () => select('chat.mode') || loadStoredChatMode()
 export const isChatSplit = () => isChatOpen() && getChatMode() === CHAT_MODE_SPLIT
+export const getChatWidth = () => select('chat.width') ?? loadStoredChatWidth()
+
+const setChatWidth = width => {
+    const clamped = clampChatWidth(width)
+    localStorage.setItem(CHAT_WIDTH_STORAGE_KEY, String(clamped))
+    actionBuilder('SET_CHAT_WIDTH')
+        .set('chat.width', clamped)
+        .dispatch()
+}
 
 export const toggleChat = () =>
     actionBuilder('TOGGLE_CHAT')
@@ -55,6 +79,27 @@ const toggleChatMode = () => {
 export const ChatPanel = ({className}) => {
     const isOpen = useSelector(() => isChatOpen())
     const mode = useSelector(() => getChatMode())
+    const isSplit = mode === CHAT_MODE_SPLIT
+
+    const handleResizeStart = useCallback(event => {
+        event.preventDefault()
+        const startX = event.clientX
+        const startWidth = getChatWidth()
+        const onPointerMove = e => {
+            setChatWidth(startWidth + (startX - e.clientX))
+        }
+        const onPointerUp = () => {
+            window.removeEventListener('pointermove', onPointerMove)
+            window.removeEventListener('pointerup', onPointerUp)
+            document.body.style.userSelect = ''
+            document.body.style.cursor = ''
+        }
+        document.body.style.userSelect = 'none'
+        document.body.style.cursor = 'col-resize'
+        window.addEventListener('pointermove', onPointerMove)
+        window.addEventListener('pointerup', onPointerUp)
+    }, [])
+
     const {isConnected, send, respond, message$} = useChatWebSocket()
     const [state, dispatch] = useConversation()
     const {messages, isLoading, isThinking, view, conversations, activeConversationId} = state
@@ -156,7 +201,6 @@ export const ChatPanel = ({className}) => {
         }
     }, [dispatch, send, isConnected])
 
-    const isSplit = mode === CHAT_MODE_SPLIT
     const isConversation = view === 'chat' && activeConversationId
 
     const renderConversationToolbar = () => (
@@ -257,6 +301,12 @@ export const ChatPanel = ({className}) => {
             isSplit ? styles.split : styles.panel,
             className
         ].join(' ')}>
+            {isSplit ? (
+                <div
+                    className={styles.resizeHandle}
+                    onPointerDown={handleResizeStart}
+                />
+            ) : null}
             {renderHeader()}
             {isConversation ? renderConversation() : renderConversationList()}
         </div>
