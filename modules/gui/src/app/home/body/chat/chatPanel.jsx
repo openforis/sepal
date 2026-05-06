@@ -52,10 +52,13 @@ export const getChatWidth = () => select('chat.width') ?? loadStoredChatWidth()
 
 const setChatWidth = width => {
     const clamped = clampChatWidth(width)
-    localStorage.setItem(CHAT_WIDTH_STORAGE_KEY, String(clamped))
     actionBuilder('SET_CHAT_WIDTH')
         .set('chat.width', clamped)
         .dispatch()
+}
+
+const storeChatWidth = () => {
+    localStorage.setItem(CHAT_WIDTH_STORAGE_KEY, String(getChatWidth()))
 }
 
 export const toggleChat = () =>
@@ -89,15 +92,22 @@ export const ChatPanel = ({className}) => {
             setChatWidth(startWidth + (startX - e.clientX))
         }
         const onPointerUp = () => {
+            stopResize()
+            storeChatWidth()
+        }
+        const startResize = () => {
+            document.body.style.userSelect = 'none'
+            document.body.style.cursor = 'col-resize'
+            window.addEventListener('pointermove', onPointerMove)
+            window.addEventListener('pointerup', onPointerUp)
+        }
+        const stopResize = () => {
             window.removeEventListener('pointermove', onPointerMove)
             window.removeEventListener('pointerup', onPointerUp)
             document.body.style.userSelect = ''
             document.body.style.cursor = ''
         }
-        document.body.style.userSelect = 'none'
-        document.body.style.cursor = 'col-resize'
-        window.addEventListener('pointermove', onPointerMove)
-        window.addEventListener('pointerup', onPointerUp)
+        startResize()
     }, [])
 
     const {isConnected, send, respond, message$} = useChatWebSocket()
