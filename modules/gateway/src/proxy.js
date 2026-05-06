@@ -35,13 +35,20 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                 timeout,
                 logger: log,
                 on: {
-                    proxyReq: (proxyReq, req, _res) => {
+                    proxyReq: (proxyReq, req, res) => {
                         // Make sure the client doesn't inject the user header, and pretend to be another user.
                         const user = getRequestUser(req)
                         const username = user ? user.username : 'not-authenticated'
-                        req.socket.on('close', () => {
-                            log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Response closed`)
-                            proxyReq.destroy()
+                        // Listen on res (per-response), not req.socket: with HTTP keep-alive the socket is
+                        // shared across requests and accumulates listeners until MaxListeners fires.
+                        res.on('close', () => {
+                            if (!res.writableEnded) {
+                                log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Client closed before response completed`)
+                                proxyReq.destroy()
+                            }
+                            // httpxy adds a per-request 'timeout' listener via req.socket.setTimeout(msecs, cb)
+                            // that only auto-removes if it fires; clear it so it doesn't pile up on keep-alive.
+                            req.socket?.removeAllListeners('timeout')
                         })
                         if (authenticate && user) {
                             log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Setting sepal-user header`, user)
