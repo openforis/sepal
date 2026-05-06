@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/asset/schema.json",
     "title": "AssetRecipe",
-    "description": "A SEPAL Asset recipe (recipe id `ASSET_MOSAIC`). Wraps an Earth Engine `Image` or `ImageCollection` asset as a SEPAL recipe so it can be visualized, masked, filtered, composited, used as input to other recipes (classification, change detection, etc.), and exported through the standard pipeline.\n\n**The two asset modes.** The recipe behaves differently depending on `assetDetails.type`:\n\n- `'Image'` — the asset is a single image. The recipe applies `mask` (per-pixel band-value constraints) and clips to the AOI; `dates`, `filter`, and `composite` are ignored.\n- `'ImageCollection'` — the asset is a collection. The recipe filters by AOI bounds, optionally by `dates`, optionally by image-property `filter`, applies `mask` per image, then reduces to a single image via `composite.type`.\n\n**AOI semantics.** Unlike most recipes, the AOI may be `ASSET_BOUNDS` — meaning 'use the asset's own geometry'. This is the *only* recipe in SEPAL that supports the `ASSET_BOUNDS` AOI variant; for any other recipe, that variant is invalid.\n\nThis schema describes the persisted `model` of an *initialized* recipe. Cross-field constraints that JSON Schema cannot express are enforced by the companion rules.",
+    "description": "A SEPAL Asset recipe (recipe id `ASSET_MOSAIC`). Wraps an Earth Engine `Image` or `ImageCollection` asset as a SEPAL recipe so it can be visualized, masked, filtered, composited, used as input to other recipes (classification, change detection, etc.), and exported through the standard pipeline.\n\n**Minimum model shape (required for recipe_create).** The asset id is nested under `assetDetails`, NOT at the top level:\n\n```json\n{\n  \"aoi\": {\"type\": \"ASSET_BOUNDS\"},\n  \"assetDetails\": {\"assetId\": \"GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL\"}\n}\n```\n\nA common LLM mistake is to put `assetId` at the top level (`{assetId, aoi}`); that fails validation with `must have required property 'assetDetails'`. Always wrap `assetId` inside `assetDetails`.\n\n**The two asset modes.** The recipe behaves differently depending on `assetDetails.type`:\n\n- `'Image'` — the asset is a single image. The recipe applies `mask` (per-pixel band-value constraints) and clips to the AOI; `dates`, `filter`, and `composite` are ignored.\n- `'ImageCollection'` — the asset is a collection. The recipe filters by AOI bounds, optionally by `dates`, optionally by image-property `filter`, applies `mask` per image, then reduces to a single image via `composite.type`.\n\nThe LLM does not need to set `type` (or `bands`, `visualizations`, `metadata`) — the GUI auto-loads them from EE when the user opens the recipe.\n\n**AOI semantics.** Unlike most recipes, the AOI may be `ASSET_BOUNDS` — meaning 'use the asset's own geometry'. This is the *only* recipe in SEPAL that supports the `ASSET_BOUNDS` AOI variant; for any other recipe, that variant is invalid.\n\nThis schema describes the persisted `model` of an *initialized* recipe. Cross-field constraints that JSON Schema cannot express are enforced by the companion rules.",
     "type": "object",
     "additionalProperties": true,
     "required": ["aoi", "assetDetails"],
@@ -24,24 +24,24 @@
     "$defs": {
         "assetDetails": {
             "title": "AssetDetails",
-            "description": "The Earth Engine asset and its loaded metadata. The GUI populates this on asset selection: `assetId` is the user-supplied EE asset path, and `type`/`bands`/`visualizations`/`metadata` are loaded from EE.",
+            "description": "The Earth Engine asset and its loaded metadata. **The asset id MUST be set here as `assetDetails.assetId` — NOT at the top level of the model.** A common LLM mistake is to emit `{assetId, aoi}` at the top level of the model; that will fail validation. The correct shape is `{aoi, assetDetails: {assetId}}`.\n\nWhen creating a recipe, the LLM only needs to set `assetId` here. The other fields (`type`, `bands`, `visualizations`, `metadata`) are auto-populated by the GUI from an Earth Engine load when the user opens the recipe in the assetDetails panel — the LLM has no tool to discover them ahead of time. As long as `assetId` is correct, the recipe will save successfully and the GUI will hydrate the rest.\n\nNote: the recipe needs `assetDetails.type` (`'Image'` or `'ImageCollection'`) at retrieve-time to dispatch to the right backend. If the user attempts to retrieve / use the recipe before opening it in the GUI to hydrate metadata, retrieval will fail with `Invalid asset type: undefined`. The GUI handles this transparently when the user opens the recipe.",
             "type": "object",
             "additionalProperties": false,
-            "required": ["assetId", "type", "bands"],
+            "required": ["assetId"],
             "properties": {
                 "assetId": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "Earth Engine asset path. Common forms: `users/<user>/<asset>`, `projects/<project>/assets/<asset>`, `<provider>/<dataset>/<image>` (catalog asset)."
+                    "description": "Earth Engine asset path. Common forms: `users/<user>/<asset>`, `projects/<project>/assets/<asset>`, `<provider>/<dataset>/<image>` (catalog asset). Use `asset_search` to resolve an asset id from a dataset name when needed."
                 },
                 "type": {
                     "enum": ["Image", "ImageCollection"],
-                    "description": "Asset type as reported by EE. `Image` recipes ignore `dates`, `filter`, and `composite`; only `ImageCollection` recipes use those fields."
+                    "description": "Asset type. Auto-populated by the GUI from the EE load. `Image` recipes ignore `dates`, `filter`, and `composite`; `ImageCollection` recipes use them. The LLM should generally NOT set this — leave it absent and let the GUI hydrate it. Set explicitly only when you already know the value with certainty."
                 },
                 "bands": {
                     "type": "array",
                     "minItems": 1,
-                    "description": "Per-band metadata loaded from EE. Each entry typically includes at least `id` (band name); EE may also include `data_type`, `crs`, `crs_transform`, `dimensions`. The LLM does not need to synthesize this; pull it from the loaded asset state.",
+                    "description": "Per-band metadata loaded from EE. Auto-populated by the GUI; the LLM should NOT set this when creating a recipe.",
                     "items": {
                         "type": "object",
                         "additionalProperties": true,
@@ -53,12 +53,12 @@
                 },
                 "visualizations": {
                     "type": "array",
-                    "description": "Visualization presets cached from the asset (categorical or continuous). Used by the Mask panel to detect categorical bands and surface their class values."
+                    "description": "Visualization presets cached from the asset (categorical or continuous). Auto-populated by the GUI; the LLM should NOT set this."
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Full EE metadata blob (bands, properties, asset type, etc.). The Filter panel reads `metadata.properties` to expose filterable image-property names. Cosmetic for the LLM; populated by the GUI."
+                    "description": "Full EE metadata blob. Auto-populated by the GUI; the LLM should NOT set this."
                 }
             }
         },
