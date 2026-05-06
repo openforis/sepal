@@ -20,7 +20,7 @@
     "$defs": {
         "dates": {
             "title": "RadarMosaicDates",
-            "description": "Time scope for the mosaic. Two distinct modes:\n\n**Point-in-time mosaic** — `{targetDate}`. The recipe selects scenes near `targetDate` (Sentinel-1's revisit interval is roughly 6–12 days at most latitudes) and composites them into a snapshot representing the target moment. The actual scenes used are within ±15 days when `outlierRemoval='NONE'` (a 30-day window) or ±183 days otherwise (a 366-day window — the wider window is needed so outlier statistics are stable). Use this mode for: visualizing a specific date, change detection at known timestamps.\n\n**Time-scan mosaic** — `{fromDate, toDate}`. The recipe composites every scene in the half-open interval `[fromDate, toDate)` and produces multi-temporal aggregation bands (min, max, mean, median, stdDev per polarization). Use this mode for: characterizing temporal behavior over a season or year, computing long-term statistics, building training data for time-series classification.\n\n**Sentinel-1 coverage.** Sentinel-1A launched April 2014; data is available from 2014-06-15 onward. Most regions have data; high latitudes and some Pacific islands have sparse coverage. Both A and B satellites operated from 2016 to late 2021; after S1B's failure (Dec 2021), revisit frequency dropped to roughly 12 days at the equator until S1C launched (Dec 2024).",
+            "description": "Time scope for the mosaic. Two distinct modes:\n\n**Point-in-time mosaic** — `{targetDate}`. The recipe selects scenes near `targetDate` (Sentinel-1's revisit interval is roughly 6–12 days at most latitudes) and composites them into a snapshot representing the target moment. The actual scenes used are within ±15 days when `outlierRemoval='NONE'` (a 30-day window) or ±183 days otherwise (a 366-day window — the wider window is needed so outlier statistics are stable). Use this mode for: visualizing a specific date, change detection at known timestamps.\n\n**Time-scan mosaic** — `{fromDate, toDate}`. The recipe composites every scene in the **half-open interval `[fromDate, toDate)`** — i.e. scenes ON `fromDate` are included, scenes ON `toDate` are NOT. This is the key consequence: to mosaic the full calendar year 2024, use `{fromDate: '2024-01-01', toDate: '2025-01-01'}`, NOT `'2024-12-31'`. Produces multi-temporal aggregation bands (min, max, mean, median, stdDev per polarization). Use this mode for: characterizing temporal behavior over a season or year, computing long-term statistics, building training data for time-series classification.\n\n**Sentinel-1 coverage.** Sentinel-1A launched April 2014; data is available from 2014-06-15 onward. Most regions have data; high latitudes and some Pacific islands have sparse coverage. Both A and B satellites operated from 2016 to late 2021; after S1B's failure (Dec 2021), revisit frequency dropped to roughly 12 days at the equator until S1C launched (Dec 2024).",
             "oneOf": [
                 {
                     "type": "object",
@@ -40,18 +40,18 @@
                     "properties": {
                         "fromDate": {
                             "$ref": "#/$defs/date",
-                            "description": "Start of the time-scan interval (inclusive), as YYYY-MM-DD. The minimum useful value is 2014-06-15 (the start of Sentinel-1 coverage); earlier dates simply have no scenes. Must be strictly before toDate, must be on or after 2014-01-01, must be on or before today."
+                            "description": "**Inclusive** start of the time-scan interval, as YYYY-MM-DD. Scenes acquired on this date are included. The minimum useful value is 2014-06-15 (Sentinel-1 coverage start); earlier dates simply have no scenes. Must be strictly before toDate, must be on or after 2014-01-01, must be on or before today."
                         },
                         "toDate": {
                             "$ref": "#/$defs/date",
-                            "description": "End of the time-scan interval (exclusive), as YYYY-MM-DD. Must be strictly after fromDate. Must be after 2014-06-15 for the interval to overlap any Sentinel-1 data. May be in the future (e.g. end-of-year for a yearly aggregate computed mid-year), but not more than the start of the year after the current year."
+                            "description": "**Exclusive** end of the time-scan interval, as YYYY-MM-DD. Scenes acquired on this date are NOT included — set toDate to the day AFTER the last day you want covered. For the full calendar year 2024, use `2025-01-01`, NOT `2024-12-31`. For January 2024, use `2024-02-01`, NOT `2024-01-31`.\n\nMust be strictly after fromDate. Must be after 2014-06-15 for the interval to overlap any Sentinel-1 data. May be in the future (e.g. start of next year for a yearly aggregate computed mid-year), but not more than the start of the year after the current year."
                         }
                     }
                 }
             ],
             "examples": [
                 {"targetDate": "2024-06-15"},
-                {"fromDate": "2024-01-01", "toDate": "2024-12-31"},
+                {"fromDate": "2024-01-01", "toDate": "2025-01-01"},
                 {"fromDate": "2024-06-01", "toDate": "2024-09-01"}
             ]
         },
