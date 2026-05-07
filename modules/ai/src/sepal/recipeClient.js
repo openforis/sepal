@@ -1,6 +1,6 @@
 const {firstValueFrom} = require('rxjs')
 const {map} = require('rxjs')
-const {get$, postBinary$, postJson$, delete$} = require('#sepal/httpClient')
+const {get$, post$, postBinary$, postJson$, delete$} = require('#sepal/httpClient')
 const {gzipSync} = require('zlib')
 const {v4: uuid} = require('uuid')
 const log = require('#sepal/log').getLogger('tools')
@@ -122,20 +122,19 @@ const createRecipeClient = ({sepalEndpoint}) => {
         return result
     }
 
-    const saveProject = async ({username, name, defaultAssetFolder, defaultWorkspaceFolder}) => {
-        const project = {name}
+    const saveProject = async ({username, id, name, defaultAssetFolder, defaultWorkspaceFolder}) => {
+        const projectId = id || uuid()
+        const project = {id: projectId, name}
         if (defaultAssetFolder) project.defaultAssetFolder = defaultAssetFolder
         if (defaultWorkspaceFolder) project.defaultWorkspaceFolder = defaultWorkspaceFolder
 
-        const result = await firstValueFrom(
-            postJson$(`${baseUrl}/project`, {
+        await firstValueFrom(
+            post$(`${baseUrl}/project`, {
                 headers: sepalUserHeader(username),
                 body: project
-            }).pipe(
-                map(({body}) => body ? JSON.parse(body) : project)
-            )
+            })
         )
-        return result
+        return project
     }
 
     const deleteProject = async ({username, projectId}) => {
