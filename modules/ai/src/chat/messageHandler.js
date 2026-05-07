@@ -283,9 +283,10 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
 
                 if (result.toolCalls && result.toolCalls.length > 0) {
                     stallCount = 0
+                    const rawText = result.text || ''
                     const assistantMsg = {
                         role: 'assistant',
-                        content: result.text,
+                        content: rawText.trim() ? rawText : '',
                         toolCalls: result.toolCalls
                     }
                     messages.push(assistantMsg)
@@ -338,7 +339,8 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                         continue
                     }
                     stallCount = 0
-                    const assistantMsg = {role: 'assistant', content: result.text}
+                    const rawText = result.text || ''
+                    const assistantMsg = {role: 'assistant', content: rawText.trim() ? rawText : ''}
                     messages.push(assistantMsg)
                     await persistMessage({username, conversationId, message: assistantMsg})
                     response.send({

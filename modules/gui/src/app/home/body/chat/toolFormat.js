@@ -190,7 +190,7 @@ const safe = fn => {
     }
 }
 
-export const formatToolDisplay = ({name, input, data, error, status}) => {
+export const formatToolDisplay = ({name, input, data, status}) => {
     const formatter = formatters[name] || {}
     const label = formatter.label
         ? safe(() => formatter.label(input || {})) || translateToolName(name)
@@ -200,7 +200,10 @@ export const formatToolDisplay = ({name, input, data, error, status}) => {
         return {label, detail}
     }
     if (status === 'error') {
-        return {label, detail: error?.message || null}
+        // Don't surface internal error messages (validation paths, raw backend
+        // strings, etc.) to the user — the bubble's red xmark icon and the
+        // tool's label are enough to convey "this step didn't complete".
+        return {label, detail: null}
     }
     const detail = formatter.result ? safe(() => formatter.result(data, input || {})) : null
     return {label, detail}
