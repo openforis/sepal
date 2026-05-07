@@ -1,7 +1,9 @@
 import PropTypes from 'prop-types'
 import {useCallback, useEffect, useRef} from 'react'
+import {useSelector} from 'react-redux'
 
 import {getLogger} from '~/log'
+import {select} from '~/store'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
@@ -23,6 +25,10 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
     const [state, dispatch] = useConversation()
     const {messages, isLoading, isThinking, view, conversations, activeConversationId} = state
 
+    // Subscribe so the panel re-renders when the formatter lazy-loads recipes/projects
+    useSelector(() => select('process.recipes'))
+    useSelector(() => select('process.projects'))
+
     const activeConversationIdRef = useRef(activeConversationId)
     activeConversationIdRef.current = activeConversationId
 
@@ -33,8 +39,11 @@ export const ChatPanel = ({className, isOpen, mode = 'overlay', onClose, onToggl
                 case 'chat-response':
                     dispatch({type: 'ASSISTANT_CHUNK', conversationId, text: data.text, complete: data.complete})
                     break
-                case 'tool-use':
-                    dispatch({type: 'TOOL_USE', conversationId, tools: data.tools})
+                case 'tool-start':
+                    dispatch({type: 'TOOL_START', conversationId, toolCallId: data.toolCallId, name: data.name, input: data.input})
+                    break
+                case 'tool-end':
+                    dispatch({type: 'TOOL_END', conversationId, toolCallId: data.toolCallId, success: data.success, data: data.data, error: data.error})
                     break
                 case 'status':
                     dispatch({type: 'STATUS_THINKING', conversationId})

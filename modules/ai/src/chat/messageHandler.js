@@ -61,38 +61,40 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
         return null
     }
 
-    const executeToolCalls = async ({toolCalls, username, session, sendFn, requestFn}) => {
+    const executeToolCalls = async ({toolCalls, conversationId, username, session, sendFn, requestFn}) => {
         const results = []
         for (const tc of toolCalls) {
+            sendFn({type: 'tool-start', conversationId, toolCallId: tc.id, name: tc.name, input: tc.input || {}})
             const tool = registry ? registry.getTool(tc.name) : null
+            let toolResult
             if (tool) {
                 const validationError = validateParams(tc.name, tc.input, tool.parameters)
                 if (validationError) {
-                    results.push({
-                        toolCallId: tc.id,
-                        result: {success: false, error: {code: 'VALIDATION_ERROR', message: `Invalid parameters: ${validationError}`}}
-                    })
+                    toolResult = {success: false, error: {code: 'VALIDATION_ERROR', message: `Invalid parameters: ${validationError}`}}
                 } else {
                     try {
                         log.debug(`Executing tool: ${tc.name}`, tc.input)
-                        const result = await tool.handler({username, params: tc.input || {}, send: sendFn, request: requestFn, session})
-                        log.debug(`Tool result:`, {toolCallId: tc.id, result})
-                        results.push({toolCallId: tc.id, result})
+                        toolResult = await tool.handler({username, params: tc.input || {}, send: sendFn, request: requestFn, session})
+                        log.debug(`Tool result:`, {toolCallId: tc.id, result: toolResult})
                     } catch (error) {
                         log.error(`Tool ${tc.name} error:`, error)
-                        results.push({
-                            toolCallId: tc.id,
-                            result: {success: false, error: {code: 'TOOL_ERROR', message: error.message}}
-                        })
+                        toolResult = {success: false, error: {code: 'TOOL_ERROR', message: error.message}}
                     }
                 }
             } else {
                 log.warn(`Unknown tool: ${tc.name}`)
-                results.push({
-                    toolCallId: tc.id,
-                    result: {success: false, error: {code: 'UNKNOWN_TOOL', message: `Unknown tool: ${tc.name}`}}
-                })
+                toolResult = {success: false, error: {code: 'UNKNOWN_TOOL', message: `Unknown tool: ${tc.name}`}}
             }
+            const success = toolResult.success !== false
+            sendFn({
+                type: 'tool-end',
+                conversationId,
+                toolCallId: tc.id,
+                success,
+                data: success ? toolResult.data : undefined,
+                error: success ? undefined : toolResult.error
+            })
+            results.push({toolCallId: tc.id, result: toolResult})
         }
         return results
     }
@@ -172,8 +174,6 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
             }
         }
 
-        response.send({username, clientId, subscriptionId, data: {type: 'status', conversationId, status: 'thinking'}})
-
         const systemPrompt = buildSystemPrompt({username, registry})
         const sendFn = data => response.send({username, clientId, subscriptionId, data})
         const requestFn = (data, options = {}) =>
@@ -185,6 +185,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
 
             while (!done && rounds < MAX_TOOL_CALL_ROUNDS) {
                 rounds++
+                sendFn({type: 'status', conversationId, status: 'thinking'})
 
                 const chunkBuffer = createChunkBuffer(text => response.send({
                     username, clientId, subscriptionId,
@@ -211,6 +212,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
 
                     const toolResults = await executeToolCalls({
                         toolCalls: result.toolCalls,
+                        conversationId,
                         username,
                         session,
                         sendFn,
