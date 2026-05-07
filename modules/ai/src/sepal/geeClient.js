@@ -1,5 +1,5 @@
 const {firstValueFrom, map} = require('rxjs')
-const {postJson$} = require('#sepal/httpClient')
+const {get$, postJson$} = require('#sepal/httpClient')
 const log = require('#sepal/log').getLogger('tools')
 
 const sepalUserHeader = username =>
@@ -43,10 +43,27 @@ const createGeeClient = ({geeEndpoint}) => {
         return result
     }
 
+    const searchDatasets = async ({username, query, allowedTypes}) => {
+        const queryParams = {text: query}
+        if (allowedTypes && allowedTypes.length) {
+            queryParams.allowedTypes = allowedTypes
+        }
+        const result = await firstValueFrom(
+            get$(`${geeEndpoint}/datasets`, {
+                headers: sepalUserHeader(username),
+                query: queryParams
+            }).pipe(
+                map(({body}) => JSON.parse(body))
+            )
+        )
+        return result
+    }
+
     return {
         getRecipeBands,
         getRecipeGeometry,
-        getRecipeBounds
+        getRecipeBounds,
+        searchDatasets
     }
 }
 

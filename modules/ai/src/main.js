@@ -11,6 +11,7 @@ const {createRecipeTools} = require('./mcp/tools/recipeTools')
 const {createIntrospectionTools} = require('./mcp/tools/introspectionTools')
 const {createGuiTools} = require('./mcp/tools/guiTools')
 const {createAoiTools} = require('./mcp/tools/aoiTools')
+const {createAssetTools} = require('./mcp/tools/assetTools')
 // Templates and workflows are disabled.
 // const {createTemplateTools} = require('./mcp/tools/templateTools')
 // const {createWorkflowTools} = require('./mcp/tools/workflowTools')
@@ -56,6 +57,7 @@ const main = async () => {
         ...createIntrospectionTools({registry}),
         ...createGuiTools(),
         ...createAoiTools(),
+        ...createAssetTools({geeClient}),
         // ...createTemplateTools({registry, recipeClient, recipeValidator}),
         // ...createWorkflowTools({registry, recipeClient, recipeValidator}),
     ]
