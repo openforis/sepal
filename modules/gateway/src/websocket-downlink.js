@@ -1,7 +1,7 @@
 const {v4: uuid} = require('uuid')
 
 const {moduleTag, clientTag, userTag} = require('./tag')
-const {filter, interval, map, Subject, groupBy, mergeMap, debounceTime, takeUntil, scan, catchError, EMPTY} = require('rxjs')
+const {filter, interval, map, Subject, groupBy, mergeMap, debounceTime, takeUntil, scan, catchError, EMPTY, firstValueFrom} = require('rxjs')
 const {USER_UP, USER_DOWN, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN, CLIENT_VERSION_MISMATCH} = require('#sepal/event/definitions')
 
 const log = require('#sepal/log').getLogger('websocket/downlink')
@@ -188,7 +188,9 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
         } else {
             log.debug(`Forwarding message to ${moduleTag(module)}`)
         }
-        servers.send(module, {username, clientId, subscriptionId, data})
+        firstValueFrom(userStore.getUser$(username))
+            .then(user => servers.send(module, {user, clientId, subscriptionId, data}))
+            .catch(error => log.error(`${userTag(username)} failed to get user when forwarding message to ${moduleTag(module)}`, error))
     }
 
     const onClientError = (username, clientId, error) => {

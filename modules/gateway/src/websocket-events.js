@@ -34,7 +34,9 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
             )
         )
         clients.forEach(({username, clientId}) =>
-            servers.sendEvent(module, CLIENT_UP, {username, clientId})
+            firstValueFrom(userStore.getUser$(username))
+                .then(user => servers.sendEvent(module, CLIENT_UP, {user, clientId}))
+                .catch(error => log.warn(`${userTag(username)} Failed to get user on module up`, error))
         )
     }
 
@@ -64,13 +66,17 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
 
     const clientUp = ({username, clientId}) => {
         log.debug(`${clientTag(username, clientId)} up`)
-        servers.broadcastEvent(CLIENT_UP, {username, clientId})
+        firstValueFrom(userStore.getUser$(username))
+            .then(user => servers.broadcastEvent(CLIENT_UP, {user, clientId}))
+            .catch(error => log.warn(`${userTag(username)} Failed to get user on client up`, error))
         // clientUp$.next({username, clientId})
     }
     
     const clientDown = ({username, clientId}) => {
         log.debug(`${clientTag(username, clientId)} down`)
-        servers.broadcastEvent(CLIENT_DOWN, {username, clientId})
+        firstValueFrom(userStore.getUser$(username))
+            .then(user => servers.broadcastEvent(CLIENT_DOWN, {user, clientId}))
+            .catch(error => log.warn(`${userTag(username)} Failed to get user on client down`, error))
         // clientDown$.next({username, clientId})
     }
     
@@ -81,12 +87,16 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
 
     const subscriptionUp = ({module, username, clientId, subscriptionId}) => {
         log.debug(`${subscriptionTag(username, clientId, subscriptionId)} up`)
-        servers.sendEvent(module, SUBSCRIPTION_UP, {username, clientId, subscriptionId})
+        firstValueFrom(userStore.getUser$(username))
+            .then(user => servers.sendEvent(module, SUBSCRIPTION_UP, {user, clientId, subscriptionId}))
+            .catch(error => log.warn(`${userTag(username)} Failed to get user on subscription up`, error))
     }
     
     const subscriptionDown = ({module, username, clientId, subscriptionId}) => {
         log.debug(`${subscriptionTag(username, clientId, subscriptionId)} down`)
-        servers.sendEvent(module, SUBSCRIPTION_DOWN, {username, clientId, subscriptionId})
+        firstValueFrom(userStore.getUser$(username))
+            .then(user => servers.sendEvent(module, SUBSCRIPTION_DOWN, {user, clientId, subscriptionId}))
+            .catch(error => log.warn(`${userTag(username)} Failed to get user on subscription down`, error))
     }
     
     const googleAccesstokenAdded = ({user}) => {
