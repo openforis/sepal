@@ -60,57 +60,62 @@ const createWsHandler = ({config, registry, conversationStore}) => {
             const {sessionHandler, conversationHandler, messageHandler} = createOrchestrator({response, config, registry, conversationStore})
 
             const EVENT_HANDLERS = {
-                subscriptionUp: ({username, clientId, subscriptionId}) => {
+                subscriptionUp: ({user: {username}, clientId, subscriptionId}) => {
                     log.info(`Subscription up: ${clientId}:${subscriptionId} (${username})`)
                     sessionHandler.createSession({username, clientId, subscriptionId})
                         .catch(error => log.error('Create session error:', error))
                 },
-                subscriptionDown: ({username, clientId, subscriptionId}) => {
+                subscriptionDown: ({user: {username}, clientId, subscriptionId}) => {
                     log.info(`Subscription down: ${clientId}:${subscriptionId} (${username})`)
                     sessionHandler.removeSession({clientId, subscriptionId})
                 },
-                clientDown: ({username, clientId}) => {
+                clientDown: ({user: {username}, clientId}) => {
                     log.info(`Client down: ${clientId} (${username})`)
                     sessionHandler.removeClientSessions({clientId})
                 }
             }
 
             const processMessage = message => {
-                const {event, data, hb, username, clientId, subscriptionId} = message
+                const {event, data, hb, user, clientId, subscriptionId} = message
                 if (hb) {
                     out$.next({hb})
                 } else if (event) {
                     const handler = EVENT_HANDLERS[event]
                     if (handler) {
-                        handler({username, clientId, subscriptionId})
+                        handler({user, clientId, subscriptionId})
                     } else {
                         log.trace('Unhandled event (ignored):', event)
                     }
                 } else if (data) {
                     const {type, text, conversationId, requestId} = data
-                    if (type === 'gui-response') {
-                        resolveRequest({requestId, success: data.success, data: data.data, error: data.error})
-                    } else if (type === 'message') {
-                        messageHandler.handleMessage({username, clientId, subscriptionId, text, selection: data.selection})
-                            .catch(error => log.error('Message handling error:', error))
-                    } else if (type === 'context') {
-                        messageHandler.updateContext({clientId, subscriptionId, selection: data.selection})
-                    } else if (type === 'list-conversations') {
-                        conversationHandler.listConversations({username, clientId, subscriptionId})
-                            .catch(error => log.error('List conversations error:', error))
-                    } else if (type === 'create-conversation') {
-                        conversationHandler.createConversation({username, clientId, subscriptionId})
-                    } else if (type === 'select-conversation') {
-                        conversationHandler.selectConversation({username, clientId, subscriptionId, conversationId})
-                            .catch(error => log.error('Select conversation error:', error))
-                    } else if (type === 'delete-conversation') {
-                        conversationHandler.deleteConversation({username, clientId, subscriptionId, conversationId})
-                            .catch(error => log.error('Delete conversation error:', error))
-                    } else if (type === 'delete-all-conversations') {
-                        conversationHandler.deleteAllConversations({username, clientId, subscriptionId})
-                            .catch(error => log.error('Delete all conversations error:', error))
+                    const {username, admin} = user
+                    if (admin) {
+                        if (type === 'gui-response') {
+                            resolveRequest({requestId, success: data.success, data: data.data, error: data.error})
+                        } else if (type === 'message') {
+                            messageHandler.handleMessage({username, clientId, subscriptionId, text, selection: data.selection})
+                                .catch(error => log.error('Message handling error:', error))
+                        } else if (type === 'context') {
+                            messageHandler.updateContext({clientId, subscriptionId, selection: data.selection})
+                        } else if (type === 'list-conversations') {
+                            conversationHandler.listConversations({username, clientId, subscriptionId})
+                                .catch(error => log.error('List conversations error:', error))
+                        } else if (type === 'create-conversation') {
+                            conversationHandler.createConversation({username, clientId, subscriptionId})
+                        } else if (type === 'select-conversation') {
+                            conversationHandler.selectConversation({username, clientId, subscriptionId, conversationId})
+                                .catch(error => log.error('Select conversation error:', error))
+                        } else if (type === 'delete-conversation') {
+                            conversationHandler.deleteConversation({username, clientId, subscriptionId, conversationId})
+                                .catch(error => log.error('Delete conversation error:', error))
+                        } else if (type === 'delete-all-conversations') {
+                            conversationHandler.deleteAllConversations({username, clientId, subscriptionId})
+                                .catch(error => log.error('Delete all conversations error:', error))
+                        } else {
+                            log.warn('Unsupported message type:', type)
+                        }
                     } else {
-                        log.warn('Unsupported message type:', type)
+                        log.warn('Not allowed (non-admin):', username)
                     }
                 } else {
                     log.warn('Unsupported message:', message)

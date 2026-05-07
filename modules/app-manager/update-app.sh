@@ -38,19 +38,59 @@ function clone {
     git fetch
 }
 
-function create_kernel {
+function json_escape {
+    local value=$1
+    value=${value//\\/\\\\}
+    value=${value//\"/\\\"}
+    value=${value//$'\n'/\\n}
+    value=${value//$'\r'/\\r}
+    value=${value//$'\t'/\\t}
+    printf '%s' "$value"
+}
+
+function create_kernel_json {
     echo "Creating kernel: $kernel_path"
-    mkdir -p $kernel_path
-    echo "{\"argv\": [\"$venv_path/bin/python3\", \"-m\", \"ipykernel_launcher\", \"-f\", \"{connection_file}\"], \"display_name\": \" (venv) $app_label\", \"language\": \"python\"}" > "$kernel_path/kernel.json"
+    mkdir -p "$kernel_path"
+    local python_bin=$(json_escape "$venv_path/bin/python3")
+    local display_name=$(json_escape " (venv) $app_label")
+    local proj_data=$(json_escape "$venv_path/share/proj")
+    local gdal_data=$(json_escape "$venv_path/share/gdal")
+    {
+        cat <<EOF
+{
+  "argv": [
+    "$python_bin",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": "$display_name",
+  "language": "python",
+EOF
+        if [[ -f "$app_path/sepal_environment.yml" ]]; then
+            cat <<EOF
+  "env": {
+    "PYTHONNOUSERSITE": "1",
+    "PROJ_LIB": "$proj_data",
+    "PROJ_DATA": "$proj_data",
+    "GDAL_DATA": "$gdal_data"
+  }
+EOF
+        else
+            cat <<EOF
+  "env": {
+    "PYTHONNOUSERSITE": "1"
+  }
+EOF
+        fi
+        cat <<EOF
+}
+EOF
+    } > "$kernel_path/kernel.json"
 }
 
 function update_kernel {
-    if [[ ! -d "$kernel_path" ]]
-    then
-        create_kernel
-    else
-        echo "Have an existing kernel: $kernel_path"
-    fi
     update_venv
 }
 
@@ -87,6 +127,7 @@ function update_venv {
             echo "Moving away current venv: $current_venv_path" >> "$venv_log_file"
             mv -f "$current_venv_path" "$work_kernels"/venv-to-remove >> "$venv_log_file"
         fi
+        mkdir -p "$kernel_path" >> "$venv_log_file"
         echo "Moving new venv into place: "$venv_path" -> $current_venv_path" >> "$venv_log_file"
         mv -f "$venv_path" "$current_venv_path" >> "$venv_log_file"
         echo "Setting venv file permissions: $current_venv_path" >> "$venv_log_file"
@@ -94,6 +135,7 @@ function update_venv {
         echo "Removing old venv" >> "$venv_log_file"
         rm -rf "$work_kernels"/venv-to-remove >> "$venv_log_file"
         touch $current_venv_path/.installed >> "$venv_log_file"
+        create_kernel_json >> "$venv_log_file"
         echo "Completed venv update: $current_venv_path" >> "$venv_log_file"
     else
         echo "Requirements not modified since last build: $app_path"

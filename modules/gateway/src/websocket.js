@@ -50,15 +50,15 @@ const MODULE_PROTOCOL = () => ({
         // user updated
         {event: USER_UPDATED, user: USER},
         // client up
-        {event: CLIENT_UP, username: USERNAME, clientId: CLIENT_ID},
+        {event: CLIENT_UP, user: USER, clientId: CLIENT_ID},
         // client down
-        {event: CLIENT_DOWN, username: USERNAME, clientId: CLIENT_ID},
+        {event: CLIENT_DOWN, user: USER, clientId: CLIENT_ID},
         // subscription up
-        {event: SUBSCRIPTION_UP, username: USERNAME, clientId: CLIENT_ID, subscriptionId: SUBSCRIPTION_ID},
+        {event: SUBSCRIPTION_UP, user: USER, clientId: CLIENT_ID, subscriptionId: SUBSCRIPTION_ID},
         // subscription down
-        {event: SUBSCRIPTION_DOWN, username: USERNAME, clientId: CLIENT_ID, subscriptionId: SUBSCRIPTION_ID},
+        {event: SUBSCRIPTION_DOWN, user: USER, clientId: CLIENT_ID, subscriptionId: SUBSCRIPTION_ID},
         // message from client
-        {username: USERNAME, clientId: CLIENT_ID, subscriptionId: SUBSCRIPTION_ID, data: DATA},
+        {user: USER, clientId: CLIENT_ID, subscriptionId: SUBSCRIPTION_ID, data: DATA},
     ],
     tx: [
         // heartbeat echo response

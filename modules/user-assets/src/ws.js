@@ -37,32 +37,32 @@ const ws$ = in$ => {
         assetManager.googleAccessToken({user, removed: true})
     }
 
-    const onSubscriptionUp = ({username, clientId, subscriptionId}) => {
+    const onSubscriptionUp = ({user: {username}, clientId, subscriptionId}) => {
         log.debug(`${subscriptionTag({username, clientId, subscriptionId})} up`)
         assetManager.subscriptionUp({username, clientId, subscriptionId})
     }
 
-    const onSubscriptionDown = ({username, clientId, subscriptionId}) => {
+    const onSubscriptionDown = ({user: {username}, clientId, subscriptionId}) => {
         log.debug(`${subscriptionTag({username, clientId, subscriptionId})} down`)
         assetManager.subscriptionDown({username, clientId, subscriptionId})
     }
 
-    const onReload = ({username, clientId, subscriptionId}) => {
+    const onReload = ({user: {username}, clientId, subscriptionId}) => {
         log.debug(`${subscriptionTag({username, clientId, subscriptionId})} reload`)
         assetManager.reload({username, clientId, subscriptionId})
     }
 
-    const onCancelReload = ({username, clientId, subscriptionId}) => {
+    const onCancelReload = ({user: {username}, clientId, subscriptionId}) => {
         log.debug(`${subscriptionTag({username, clientId, subscriptionId})} cancel reload`)
         assetManager.cancelReload({username, clientId, subscriptionId})
     }
 
-    const onRemove = ({username, clientId, subscriptionId, paths}) => {
+    const onRemove = ({user: {username}, clientId, subscriptionId, paths}) => {
         log.debug(`${subscriptionTag({username, clientId, subscriptionId})} remove ${paths}`)
         assetManager.remove({username, clientId, subscriptionId, paths})
     }
 
-    const onCreateFolder = ({username, clientId, subscriptionId, path}) => {
+    const onCreateFolder = ({user: {username}, clientId, subscriptionId, path}) => {
         log.debug(`${subscriptionTag({username, clientId, subscriptionId})} create folder ${path}`)
         assetManager.createFolder({username, clientId, subscriptionId, path})
     }
@@ -78,24 +78,24 @@ const ws$ = in$ => {
     }
 
     const processMessage = message => {
-        const {hb, event, username, user, data, clientId, subscriptionId} = message
+        const {hb, event, user, data, clientId, subscriptionId} = message
         if (hb) {
             out$.next({hb})
         } else if (event) {
             const handler = EVENT_HANDLERS[event]
             if (handler) {
-                handler({username, user, clientId, subscriptionId})
+                handler({user, clientId, subscriptionId})
             }
         } else if (data) {
             const {reload, cancelReload, remove, createFolder} = data
             if (reload) {
-                onReload({username, clientId, subscriptionId})
+                onReload({user, clientId, subscriptionId})
             } else if (cancelReload) {
-                onCancelReload({username, clientId, subscriptionId})
+                onCancelReload({user, clientId, subscriptionId})
             } else if (remove) {
-                onRemove({username, clientId, subscriptionId, paths: remove})
+                onRemove({user, clientId, subscriptionId, paths: remove})
             } else if (createFolder) {
-                onCreateFolder({username, clientId, subscriptionId, path: createFolder})
+                onCreateFolder({user, clientId, subscriptionId, path: createFolder})
             } else {
                 log.warn('Unsupported message data:', data)
             }

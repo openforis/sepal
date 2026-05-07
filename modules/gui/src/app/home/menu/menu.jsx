@@ -37,7 +37,7 @@ class _Menu extends React.Component {
                         <SectionLink name='tasks' path='/-/tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'} disabled={budgetExceeded}/>
                         {user.admin ? <SectionLink name='users' path='/-/users' icon='users'/> : null}
                         <Link name='help' icon='question-circle' href='https://docs.sepal.io/'/>
-                        <ToggleLink name='chat' icon='comments' active={chatOpen} onClick={toggleChat}/>
+                        {user.admin ? <ToggleLink name='chat' icon='comments' active={chatOpen} onClick={toggleChat}/> : null}
                     </div>
                 </div>
             </div>
