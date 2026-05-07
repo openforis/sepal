@@ -2,27 +2,6 @@ const {bundleSchema} = require('../../recipes/bundleSchema')
 
 const createIntrospectionTools = ({registry}) => [
     {
-        name: 'recipe_types',
-        description: 'List all available recipe types with the information needed to pick the right one for the user\'s request. Each entry returns a short description, concrete useCases, related terms (synonyms / jargon the user might say), chooseWhen / dontChooseWhen guidance, and a one-line outputs summary. Match the user\'s wording against terms and useCases first; consult chooseWhen / dontChooseWhen to disambiguate against neighbouring recipes.',
-        parameters: {
-            type: 'object',
-            properties: {}
-        },
-        handler: async () => {
-            const types = registry.listSchemas().map(s => ({
-                id: s.id,
-                name: s.name,
-                description: s.description,
-                useCases: s.useCases,
-                terms: s.terms,
-                chooseWhen: s.chooseWhen,
-                dontChooseWhen: s.dontChooseWhen,
-                outputs: s.outputs
-            }))
-            return {success: true, data: types}
-        }
-    },
-    {
         name: 'recipe_schema',
         description: 'Get the full parameter schema for a recipe type, plus the cross-field validation rules. The schema (JSON Schema) describes the structural constraints — types, enums, required fields, conditional requirements via if/then. The rules describe cross-field constraints that JSON Schema cannot express (date ordering, value-relative comparisons, etc.); each rule has a name and a human-readable description of what it enforces.',
         parameters: {

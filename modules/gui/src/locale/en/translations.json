@@ -482,7 +482,6 @@
       "chat.tools.recipe_save.result": "Saved {recipe}",
       "chat.tools.recipe_schema.label": "Recipe schema",
       "chat.tools.recipe_schema.input": "{type}",
-      "chat.tools.recipe_types.label": "Recipe types",
       "chat.tools.recipe_visualizations.label": "Recipe visualizations",
       "chat.tools.recipe_visualizations.input": "{type}",
       "chat.tools.template_apply.label": "Apply template",

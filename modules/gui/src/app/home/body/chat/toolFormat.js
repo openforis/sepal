@@ -145,7 +145,6 @@ const formatters = {
         input: ({countryCode}) => tr('aoi_list_country_areas', 'input', {country: countryCode || ''}),
         result: data => tr('aoi_list_country_areas', 'result', {count: Array.isArray(data) ? data.length : 0})
     },
-    recipe_types: {},
     recipe_schema: {
         input: ({type}) => tr('recipe_schema', 'input', {type: recipeTypeName(type)})
     },
