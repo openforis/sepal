@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {useLocation} from 'react-router'
 
+import {isChatOpen, toggleChat} from '~/app/home/body/chat/chatPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {isPathInLocation} from '~/route'
@@ -16,12 +17,13 @@ import styles from './menu.module.css'
 const mapStateToProps = (state = {}) => ({
     hasActiveTasks: !!(state.tasks && state.tasks.find(task => ['PENDING', 'ACTIVE'].includes(task.status))),
     budgetExceeded: select('user.budgetExceeded'),
+    chatOpen: isChatOpen(),
     user: currentUser()
 })
 
 class _Menu extends React.Component {
     render() {
-        const {className, user, hasActiveTasks, budgetExceeded, chatOpen, onChatToggle} = this.props
+        const {className, user, hasActiveTasks, budgetExceeded, chatOpen} = this.props
         return (
             <div className={className}>
                 <div className={styles.menu}>
@@ -35,7 +37,7 @@ class _Menu extends React.Component {
                         <SectionLink name='tasks' path='/-/tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'} disabled={budgetExceeded}/>
                         {user.admin ? <SectionLink name='users' path='/-/users' icon='users'/> : null}
                         <Link name='help' icon='question-circle' href='https://docs.sepal.io/'/>
-                        <ToggleLink name='chat' icon='comments' active={chatOpen} onClick={onChatToggle}/>
+                        <ToggleLink name='chat' icon='comments' active={chatOpen} onClick={toggleChat}/>
                     </div>
                 </div>
             </div>
@@ -49,9 +51,8 @@ export const Menu = compose(
 )
 
 Menu.propTypes = {
-    className: PropTypes.string,
     chatOpen: PropTypes.bool,
-    onChatToggle: PropTypes.func
+    className: PropTypes.string
 }
 
 const Link = ({name, icon, href}) =>
