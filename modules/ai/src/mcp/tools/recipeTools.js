@@ -132,7 +132,7 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_open',
-        description: 'Open a recipe in the SEPAL interface. Use only for opening recipes the user already has saved — recipe_create and recipe_save open the recipe automatically.',
+        description: 'Open a recipe in the SEPAL interface. **DO NOT call this after recipe_create or recipe_save — they already open the recipe automatically; calling recipe_open again is redundant.** Use this only when the user explicitly references a recipe they already have saved (typically via recipe_list) and asks to open it.',
         parameters: {
             type: 'object',
             properties: {
@@ -141,7 +141,7 @@ const createRecipeTools = ({recipeValidator}) => [
             required: ['recipeId']
         },
         handler: async ({params, send}) => {
-            send({type: 'gui-action', action: 'open', recipeId: params.recipeId})
+            send({type: 'gui-action', action: 'open', params: {recipeId: params.recipeId}})
             return {success: true, data: {action: 'open', recipeId: params.recipeId}}
         }
     },
@@ -156,7 +156,7 @@ const createRecipeTools = ({recipeValidator}) => [
             required: ['recipeId']
         },
         handler: async ({params, send}) => {
-            send({type: 'gui-action', action: 'close', recipeId: params.recipeId})
+            send({type: 'gui-action', action: 'close', params: {recipeId: params.recipeId}})
             return {success: true, data: {action: 'close', recipeId: params.recipeId}}
         }
     }

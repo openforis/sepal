@@ -10,6 +10,7 @@ const createWsHandler = ({config, registry, conversationStore}) => {
     const ws$ = in$ => {
         const out$ = new Subject()
         const pendingRequests = new Map()
+        let disconnected = false
 
         const send = ({username, clientId, subscriptionId, data}) => {
             out$.next({username, clientId, subscriptionId, data})
@@ -21,8 +22,13 @@ const createWsHandler = ({config, registry, conversationStore}) => {
 
         // Send a request to the GUI and await a matching gui-response.
         // The GUI must echo back the requestId on a {type: 'gui-response', requestId, success, data?, error?} message.
+        // After the WS disconnects (browser reload, etc.) the orchestrator's tool-call loop may keep issuing requests; those fail fast here instead of waiting for their full timeout.
         const request = ({username, clientId, subscriptionId, data, timeoutMs = GUI_REQUEST_TIMEOUT_MS}) =>
             new Promise((resolve, reject) => {
+                if (disconnected) {
+                    reject(new Error(`GUI request not sent: WebSocket disconnected (action=${data && data.action})`))
+                    return
+                }
                 const requestId = uuid()
                 const timer = setTimeout(() => {
                     if (pendingRequests.delete(requestId)) {
@@ -114,6 +120,7 @@ const createWsHandler = ({config, registry, conversationStore}) => {
                 error: error => log.error('Connection error (unexpected)', error),
                 complete: () => {
                     log.info('Disconnected')
+                    disconnected = true
                     sessionHandler.shutdown()
                     pendingRequests.forEach(({reject, timer}) => {
                         clearTimeout(timer)

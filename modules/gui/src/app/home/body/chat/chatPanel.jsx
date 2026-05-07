@@ -140,7 +140,7 @@ export const ChatPanel = ({className}) => {
                     break
                 case 'gui-action': {
                     const handled = handleGuiAction(data.action, {
-                        ...data,
+                        ...(data.params || {}),
                         respond: payload => respond(requestId, payload)
                     })
                     if (!handled) {
