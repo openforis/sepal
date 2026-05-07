@@ -28,6 +28,9 @@ const ToolEntry = ({tool}) => {
     )
 }
 
+const visibleTools = tools =>
+    (tools || []).filter(tool => tool.status !== 'error')
+
 const ToolList = ({tools}) => (
     <div className={styles.toolList}>
         {tools.map((tool, i) => (
@@ -38,6 +41,10 @@ const ToolList = ({tools}) => (
 
 export const ChatMessage = ({role, content, tools}) => {
     const isUser = role === 'user'
+    const renderedTools = visibleTools(tools)
+    if (!isUser && !content && renderedTools.length === 0) {
+        return null
+    }
     return (
         <div className={[styles.message, isUser ? styles.user : styles.assistant].join(' ')}>
             <div className={styles.bubble}>
@@ -45,7 +52,7 @@ export const ChatMessage = ({role, content, tools}) => {
                     ? <div className={styles.text}>{content}</div>
                     : <>
                         {content && <Markdown source={content}/>}
-                        {tools && tools.length > 0 && <ToolList tools={tools}/>}
+                        {renderedTools.length > 0 && <ToolList tools={renderedTools}/>}
                     </>
                 }
             </div>

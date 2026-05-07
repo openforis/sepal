@@ -60,11 +60,22 @@ const recipeRefs = ids =>
 const tr = (toolName, slot, args) =>
     msg(`home.sections.chat.tools.${toolName}.${slot}`, args, '')
 
+const maybeProject = projectId => {
+    const project = projectName(projectId)
+    return project ? tr('shared', 'inProject', {project}) : ''
+}
+
+const listRecipeLabel = type =>
+    type
+        ? tr('recipe_list', 'labelWithType', {type: recipeTypeName(type)})
+        : null
+
 const formatters = {
     recipe_create: {
+        label: ({type}) => type ? tr('recipe_create', 'labelWithType', {type: recipeTypeName(type)}) : null,
         input: ({type, name, projectId}) => tr('recipe_create', 'input', {
-            type: recipeTypeName(type), name: name || '', project: projectName(projectId)
-        }),
+            type: recipeTypeName(type), name: name || '', project: maybeProject(projectId)
+        }).trim(),
         result: data => tr('recipe_create', 'result', {
             type: recipeTypeName(data?.type), name: data?.name || '', project: projectName(data?.projectId)
         })
@@ -78,8 +89,9 @@ const formatters = {
         result: data => tr('recipe_load', 'result', {recipe: recipeRef(data?.id) || data?.title || ''})
     },
     recipe_list: {
+        label: ({type}) => listRecipeLabel(type),
         input: ({type, projectId}) => tr('recipe_list', 'input', {
-            type: recipeTypeName(type), project: projectName(projectId)
+            type: recipeTypeName(type), project: maybeProject(projectId)
         }),
         result: data => tr('recipe_list', 'result', {count: Array.isArray(data) ? data.length : 0})
     },
@@ -108,20 +120,17 @@ const formatters = {
         input: ({projectId}) => tr('project_delete', 'input', {project: projectName(projectId)}),
         result: data => tr('project_delete', 'result', {project: data?.deleted ? projectName(data.deleted) : ''})
     },
-    gui_open_recipe: {
-        input: ({recipeId}) => tr('gui_open_recipe', 'input', {recipe: recipeRef(recipeId)})
+    recipe_open: {
+        input: ({recipeId}) => tr('recipe_open', 'input', {recipe: recipeRef(recipeId)})
     },
-    gui_reload_recipe: {
-        input: ({recipeId}) => tr('gui_reload_recipe', 'input', {recipe: recipeRef(recipeId)})
+    recipe_close: {
+        input: ({recipeId}) => tr('recipe_close', 'input', {recipe: recipeRef(recipeId)})
     },
-    gui_close_recipe: {
-        input: ({recipeId}) => tr('gui_close_recipe', 'input', {recipe: recipeRef(recipeId)})
+    recipe_visualizations: {
+        input: ({recipeId}) => tr('recipe_visualizations', 'input', {recipe: recipeRef(recipeId)})
     },
-    gui_list_visualizations: {
-        input: ({recipeId}) => tr('gui_list_visualizations', 'input', {recipe: recipeRef(recipeId)})
-    },
-    gui_set_visualization: {
-        input: ({recipeId}) => tr('gui_set_visualization', 'input', {recipe: recipeRef(recipeId)})
+    recipe_set_visualization: {
+        input: ({recipeId}) => tr('recipe_set_visualization', 'input', {recipe: recipeRef(recipeId)})
     },
     template_list: {
         result: data => tr('template_list', 'result', {count: Array.isArray(data) ? data.length : 0})
@@ -139,23 +148,23 @@ const formatters = {
         result: data => tr('asset_search', 'result', {count: data?.matchingResults ?? 0})
     },
     aoi_list_countries: {
+        label: ({query}) => query ? tr('aoi_list_countries', 'labelForQuery') : null,
+        input: ({query}) => query || null,
         result: data => tr('aoi_list_countries', 'result', {count: Array.isArray(data) ? data.length : 0})
     },
     aoi_list_country_areas: {
-        input: ({countryCode}) => tr('aoi_list_country_areas', 'input', {country: countryCode || ''}),
+        label: ({query}) => query ? tr('aoi_list_country_areas', 'labelForQuery') : null,
+        input: ({query}) => query || null,
         result: data => tr('aoi_list_country_areas', 'result', {count: Array.isArray(data) ? data.length : 0})
     },
-    recipe_schema: {
-        input: ({type}) => tr('recipe_schema', 'input', {type: recipeTypeName(type)})
+    recipe_info: {
+        label: ({type}) => type ? tr('recipe_info', 'label', {type: recipeTypeName(type)}) : null
     },
-    recipe_bands: {
-        input: ({type}) => tr('recipe_bands', 'input', {type: recipeTypeName(type)})
-    },
-    recipe_visualizations: {
-        input: ({type}) => tr('recipe_visualizations', 'input', {type: recipeTypeName(type)})
-    },
-    recipe_defaults: {
-        input: ({type}) => tr('recipe_defaults', 'input', {type: recipeTypeName(type)})
+    recipe_propose_visualization: {
+        input: ({mode, bands}) => tr('recipe_propose_visualization', 'input', {
+            mode: mode || '', bands: (bands || []).join(', ')
+        }),
+        result: () => tr('recipe_propose_visualization', 'result')
     },
     workflow_start: {
         input: ({type}) => tr('workflow_start', 'input', {type: recipeTypeName(type)})
@@ -176,8 +185,10 @@ const safe = fn => {
 }
 
 export const formatToolDisplay = ({name, input, data, error, status}) => {
-    const label = translateToolName(name)
     const formatter = formatters[name] || {}
+    const label = formatter.label
+        ? safe(() => formatter.label(input || {})) || translateToolName(name)
+        : translateToolName(name)
     if (status === 'running') {
         const detail = formatter.input ? safe(() => formatter.input(input || {})) : null
         return {label, detail}
