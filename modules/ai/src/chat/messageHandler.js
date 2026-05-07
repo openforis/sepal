@@ -182,6 +182,8 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
         try {
             let rounds = 0
             let done = false
+            let stallNudge = null
+            let stallCount = 0
 
             while (!done && rounds < MAX_TOOL_CALL_ROUNDS) {
                 rounds++
@@ -192,8 +194,11 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                     data: {type: 'chat-response', conversationId, text}
                 }))
 
+                const promptMessages = stallNudge ? [...messages, stallNudge] : messages
+                stallNudge = null
+
                 const result = await provider.stream({
-                    messages,
+                    messages: promptMessages,
                     tools: formattedTools,
                     systemPrompt,
                     onChunk: chunk => chunkBuffer.append(chunk)
@@ -202,6 +207,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                 chunkBuffer.end()
 
                 if (result.toolCalls && result.toolCalls.length > 0) {
+                    stallCount = 0
                     const assistantMsg = {
                         role: 'assistant',
                         content: result.text,
@@ -223,6 +229,14 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                     messages.push(toolMsg)
                     await persistMessage({username, conversationId, message: toolMsg})
                 } else {
+                    const text = (result.text || '').trim()
+                    if (!text && stallCount === 0) {
+                        stallCount++
+                        log.warn('Empty assistant turn after tool calls; nudging to continue')
+                        stallNudge = {role: 'user', content: 'Continue working on the original request. Either make the next tool call needed, or send a final summary if the request is fulfilled.'}
+                        continue
+                    }
+                    stallCount = 0
                     const assistantMsg = {role: 'assistant', content: result.text}
                     messages.push(assistantMsg)
                     await persistMessage({username, conversationId, message: assistantMsg})
