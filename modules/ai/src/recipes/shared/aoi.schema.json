@@ -43,7 +43,7 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 100,
-                    "description": "Buffer distance in **kilometers** applied around the selected geometry. Default 0 (no buffer). Useful when the AOI boundary is precise (e.g. an administrative boundary) but the user wants to capture features just outside (coastlines, transboundary forest patches, etc.).\n\nLarger buffers proportionally enlarge the area Earth Engine has to process. Any integer in [0, 100] is valid; the GUI presents typical values 0, 1, 2, 5, 10, 20, 50, 100."
+                    "description": "Buffer distance in **kilometers** applied around the selected geometry. **Default 0 (no buffer); leave it at 0 unless the user explicitly asks to extend the AOI past its boundary.** A buffer is **very expensive** — it expands the geometry Earth Engine has to process and rapidly inflates compute cost and runtime; even a few kilometers can multiply the work for a small AOI, and large values can push retrievals into hours of EE time. Do not volunteer a buffer for things like coastline overflow, transboundary features, or general safety margin — those don't justify the cost without a specific user request. Any integer in [0, 100] is valid; the GUI presents typical values 0, 1, 2, 5, 10, 20, 50, 100."
                 }
             },
             "examples": [
