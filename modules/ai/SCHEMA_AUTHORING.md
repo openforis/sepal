@@ -28,6 +28,63 @@ recipes/
 
 `index.js` exports `{id, name, description, useCases, terms, chooseWhen, dontChooseWhen, outputs, parameterSchema, rules, getDefaults, workflowSteps, bands, visualizations}` and is the only entry point — `main.js` requires `./recipes/<recipe>` and the registry handles the rest.
 
+## Reading the GUI
+
+For each recipe to migrate, walk these files in order. Together they specify the per-recipe contract that the schema must mirror.
+
+1. **Recipe entry point** — `modules/gui/src/app/home/body/process/recipe/<recipe>/<recipe>.jsx`
+   - Defines the recipe's `id` (use it verbatim as the schema `id`) and `labels.name`. Imports the baseline model from `<recipe>Recipe.js`.
+
+2. **Recipe baseline** — `modules/gui/src/app/home/body/process/recipe/<recipe>/<recipe>Recipe.js`
+   - Exports `defaultModel` / `getDefaultModel()` — your starting point for `getDefaults()` in `defaults.js`.
+   - Often exports `RecipeActions(id)` (action builders that encode side effects, e.g. classification's `enableBandCalibration` auto-adding `'CALIBRATE'` to corrections on multi-source picks) and helper predicates like `hasError(recipe)` / `hasConfidence(recipe)` whose logic typically encodes cross-field rules.
+
+3. **Toolbar** — `modules/gui/src/app/home/body/process/recipe/<recipe>/panels/<recipe>Toolbar.jsx`
+   - The `<Toolbar placement='bottom-right'>` block lists the **configuration panels**. These define the model's top-level structure. *Other Toolbar blocks (`top-right`) are action buttons — Retrieve, Collect — and don't shape the model; ignore them.*
+   - `<PanelWizard panels={[...]}>` lists the panels that must be filled before the recipe is "initialized" — these are the truly required top-level fields.
+   - Conditional panels (e.g. `{collection ? <Dates/> : null}` in asset's toolbar) reveal cross-field-availability rules that often belong in `rules.js`.
+
+4. **Panel files** — `modules/gui/src/app/home/body/process/recipe/<recipe>/panels/<panel>/<panel>.jsx`
+   - **`const fields = {...}`** — form fields and their per-field validators (`.notBlank()`, `.int().min(1)`, etc.). Source of truth for individual constraints.
+   - **`const valuesToModel = values => ({...})`** — transforms form values into the persisted model. **The schema describes the OUTPUT of this function**, not the form values. If the form has `includedFilters` and the model has `filters: [{type, percentile}]`, the schema describes the latter.
+   - **`const modelToValues = model => ({...})`** — inverse, used on panel mount. Reveals which fields round-trip vs. get re-synthesized (`model.normalize || 'YES'`).
+   - **`componentDidMount() {...}`** — sets implicit defaults for fields missing from `defaultModel` (see "Auditing implicit defaults").
+   - **`renderXxx()` methods** — `Form.Buttons options=[{value, ...}]` lists enum values; `Form.Slider minValue/maxValue/ticks/snap` reveals numeric range vs. discrete (see "Form widgets" below); conditional rendering exposes cross-field availability.
+   - **`const valuesToModel = null`** marks panels that **aren't really forms** (e.g. classification `TrainingData`, remapping `InputImagery`, asset `Filter`/`Mask`). They mutate the model directly via dispatched actions — read the matching `RecipeActions` builder to find the model shape, since `valuesToModel` won't tell you.
+
+5. **Reused panels** — shared across recipes:
+   - **AOI** — `modules/gui/src/app/home/body/process/recipe/mosaic/panels/aoi/`. Flags expose variants: `<Aoi assetBounds/>` enables `ASSET_BOUNDS` (valid only on the asset recipe).
+   - **InputImagery / InputImage** — `modules/gui/src/app/home/body/process/panels/inputImagery/` (classification, remapping, etc.).
+   - **Mapping** — `modules/gui/src/app/home/body/process/panels/mapping/` (remapping).
+
+6. **EE backend** — `lib/js/ee/src/<recipe>/<recipe>.js`
+   - The function-parameter destructuring at the top of the entry function reveals which model fields are actually read. Defaults in destructuring (`= 'OFF'`, `= 100`) reveal lenient backend defaults — useful when the GUI's defaultModel is incomplete.
+   - Switch statements over enum values (`switch (operator) { case '<': ... }`) confirm the supported values. Trust this over GUI option arrays when they disagree (see legacy classification schema's spurious `'Score'` decisionProcedure).
+   - Conditional code paths (`if (hasError) ...`) reveal output bands that are conditionally produced — useful for the schema's `bands` metadata.
+
+### Form-field validator → schema constraint
+
+Common validators in `fields = {...}` and how they translate:
+
+| Validator | Schema equivalent |
+|---|---|
+| `.notBlank()` | `required` + `minLength: 1` |
+| `.notEmpty()` | `required` + `minItems: 1` / `minProperties: 1` |
+| `.int()` / `.number()` | `type: 'integer'` / `type: 'number'` |
+| `.min(n)` / `.max(n)` | `minimum: n` / `maximum: n` (inclusive) |
+| `.greaterThan(n)` | `exclusiveMinimum: n` |
+| `.date(format)` | `pattern: '^\\d{4}-\\d{2}-\\d{2}$'`, `format: 'date'` |
+| `.predicate(fn, ...)` | usually a rule in `rules.js` |
+| `.skip((value, others) => bool, ...)` | when the trigger is another field's value, an `if/then` clause; when it's a UI-mode flag (`{advanced}`), ignore — UI mode isn't a real constraint |
+
+### Form widgets → schema constraint
+
+- **`Form.Buttons options=[{value, ...}]`** — discrete enum. The schema's enum is exactly the `value` strings. `neverSelected` / `disabled` reveal cross-field availability — encode in `rules.js`.
+- **`Form.Slider`** — with `snap`, the ticks are the only allowed values (use enum). Without `snap`, ticks are visual hints; the field accepts any value in `[minValue, maxValue]` (use a range). The schema-as-truth philosophy says: prefer the range over a hard enum if the backend accepts it.
+- **`Form.Combo`** — single-select; same handling as Buttons.
+- **`Form.AssetCombo` / `RecipeInput`** — populate fields like `bands`, `metadata`, `legendEntries` from EE on selection. The LLM has no equivalent loader — design the schema so it doesn't strictly require those auto-hydrated fields (see `ASSET_MOSAIC.assetDetails` for an example).
+- **`ImageConstraints applyOn='bands'|'properties'`** — the constraints widget. `'bands'` produces band-value constraints (`{image, band, operator, value|range fields|selectedClasses}`); `'properties'` produces image-property/metadata constraints (`{property, operator, ...}` — no `class` operator). Constraint operators include the unicode `≤` and `≥` (U+2264/U+2265), not the ASCII `<=`/`>=`.
+
 ## Philosophy: schema-as-truth, not GUI-mirror
 
 The schema captures what's *correct*, not what the GUI happens to allow:
