@@ -11,11 +11,12 @@ import {ButtonGroup} from '~/widget/buttonGroup'
 import {Layout} from '~/widget/layout'
 import {RemoveButton} from '~/widget/removeButton'
 
-import {handleChatGuiAction} from './chatGuiActionRegistry'
 import {ChatInput} from './chatInput'
 import {ChatMessages} from './chatMessages'
 import styles from './chatPanel.module.css'
+import {currentSelection} from './chatSelection'
 import {ConversationList} from './conversationList'
+import {handleGuiAction} from './guiActionRegistry'
 import {useChatWebSocket} from './useChatWebSocket'
 import {useConversation} from './useConversation'
 
@@ -138,7 +139,7 @@ export const ChatPanel = ({className}) => {
                     dispatch({type: 'STATUS_THINKING', conversationId})
                     break
                 case 'gui-action': {
-                    const handled = handleChatGuiAction(data.action, {
+                    const handled = handleGuiAction(data.action, {
                         ...data,
                         respond: payload => respond(requestId, payload)
                     })
@@ -173,7 +174,7 @@ export const ChatPanel = ({className}) => {
     const handleSend = useCallback(text => {
         if (isConnected && activeConversationId) {
             dispatch({type: 'USER_SENT', text})
-            send({type: 'message', text})
+            send({type: 'message', text, selection: currentSelection()})
         }
     }, [dispatch, send, isConnected, activeConversationId])
 
