@@ -27,6 +27,18 @@ const createProjectTools = () => [
             guiRequest(request, 'create-project', params)
     },
     {
+        name: 'project_select',
+        description: 'Set active project (recipe-list filter). Pass `projectId` to switch, omit to clear. Only after user confirms — never silently switch.',
+        parameters: {
+            type: 'object',
+            properties: {
+                projectId: {type: ['string', 'null'], description: 'Project id (from project_list), or null/omit to clear.'}
+            }
+        },
+        handler: async ({params, request}) =>
+            guiRequest(request, 'select-project', {projectId: params.projectId || null})
+    },
+    {
         name: 'project_delete',
         description: 'DESTRUCTIVE: deletes project AND all recipes inside. Always confirm with user, naming project + recipe count (use recipe_list filtered by projectId).',
         parameters: {

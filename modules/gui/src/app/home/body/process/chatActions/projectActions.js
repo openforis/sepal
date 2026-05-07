@@ -40,6 +40,24 @@ const listProjects = ({respond}) => {
     })
 }
 
+const selectProject = ({projectId, respond}) => {
+    if (projectId) {
+        const projects = select('process.projects') || []
+        if (!projects.find(p => p.id === projectId)) {
+            respond({success: false, error: {code: 'NOT_FOUND', message: `No project with id "${projectId}"`}})
+            return
+        }
+        actionBuilder('SELECT_PROJECT', {projectId})
+            .set('process.projectId', projectId)
+            .dispatch()
+    } else {
+        actionBuilder('DESELECT_PROJECT')
+            .del('process.projectId')
+            .dispatch()
+    }
+    respond({success: true, data: {projectId: projectId || null}})
+}
+
 const deleteProject = ({projectId, respond}) => {
     api.project.remove$(projectId).pipe(
         switchMap(projects =>
@@ -62,5 +80,6 @@ const deleteProject = ({projectId, respond}) => {
 export const registerProjectActions = () => {
     registerAction('create-project', createProject)
     registerAction('list-projects', listProjects)
+    registerAction('select-project', selectProject)
     registerAction('delete-project', deleteProject)
 }

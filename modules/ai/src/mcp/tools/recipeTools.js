@@ -45,13 +45,13 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_create',
-        description: 'Create a recipe from a complete model. Workflow: recipe_info → start from its defaults → modify relevant fields → send full model. GUI saves, registers, and opens it — do NOT call recipe_open after.',
+        description: 'Create a recipe from a complete model. Workflow: recipe_info → start from its defaults → modify relevant fields → send full model. GUI saves, registers, and opens it — do NOT call recipe_open after. If recipe\'s project ≠ selected project, ask before calling project_select. Never switch silently.',
         parameters: {
             type: 'object',
             properties: {
                 type: {type: 'string', description: 'Recipe type (e.g. MOSAIC, CLASSIFICATION, TIME_SERIES).'},
                 name: {type: 'string', description: 'REQUIRED. Concise display name derived from the request (e.g. "Bangladesh mangroves 2020 mosaic"). Never omit.'},
-                projectId: {type: 'string', description: 'Optional project id.'},
+                projectId: {type: 'string', description: 'Project id. Always confirm with user (or confirm none) — never silently omit or pick. Use project_list to present options.'},
                 model: {type: 'object', description: 'Complete model. Built from recipe_info.defaults + intentional changes.'}
             },
             required: ['type', 'name', 'model']
@@ -71,7 +71,7 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_save',
-        description: 'Update an existing recipe. Model REPLACES existing in full — no merging. For partial changes: recipe_load → modify → send back. GUI persists + opens — do NOT call recipe_open after.',
+        description: 'Update an existing recipe. Model REPLACES existing in full — no merging. For partial changes: recipe_load → modify → send back. GUI persists + opens — do NOT call recipe_open after. If recipe\'s project ≠ selected project, ask before calling project_select. Never switch silently.',
         parameters: {
             type: 'object',
             properties: {
@@ -114,7 +114,7 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_move',
-        description: 'Move recipes to a different project.',
+        description: 'Move recipes to a different project. If target ≠ selected project, ask before calling project_select. Never switch silently.',
         parameters: {
             type: 'object',
             properties: {
@@ -132,7 +132,7 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_open',
-        description: 'Open an existing recipe in SEPAL. **DO NOT call after recipe_create / recipe_save — they auto-open.** Only use when user asks to open a previously saved recipe (typically from recipe_list).',
+        description: 'Open an existing recipe in SEPAL. **DO NOT call after recipe_create / recipe_save — they auto-open.** Only use when user asks to open a previously saved recipe (typically from recipe_list). If recipe\'s project ≠ selected project, ask before calling project_select. Never switch silently.',
         parameters: {
             type: 'object',
             properties: {
