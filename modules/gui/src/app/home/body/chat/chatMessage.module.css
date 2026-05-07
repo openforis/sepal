@@ -21,6 +21,10 @@
     overflow-wrap: break-word;
 }
 
+.bubble > * {
+    overflow-x: scroll;
+}
+
 .user .bubble {
     background-color: hsla(var(--selected-hue), var(--selected-sat), 50%, 0.3);
     border-bottom-right-radius: 0.2rem;
@@ -66,25 +70,8 @@
 
 .tool {
     font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
     border-radius: 0.4rem;
-    border: 1px solid currentColor;
     opacity: 0.85;
-}
-
-.tool-running {
-    border-color: var(--link-default-color);
-    color: var(--link-default-color);
-}
-
-.tool-success {
-    opacity: 0.65;
-}
-
-.tool-error {
-    border-color: var(--error-color, indianred);
-    color: var(--error-color, indianred);
-    opacity: 0.95;
 }
 
 .toolHeader {

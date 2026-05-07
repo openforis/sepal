@@ -16,11 +16,11 @@ const ToolEntry = ({tool}) => {
         status
     })
     return (
-        <div className={[styles.tool, styles[`tool-${status}`]].join(' ')}>
+        <div className={styles.tool}>
             <div className={styles.toolHeader}>
-                {status === 'running' && <Icon name='circle-notch'/>}
-                {status === 'success' && <Icon name='check'/>}
-                {status === 'error' && <Icon name='xmark'/>}
+                {status === 'running' && <Icon name='circle-notch' variant='info'/>}
+                {status === 'success' && <Icon name='check' variant='success'/>}
+                {status === 'error' && <Icon name='xmark' variant='error'/>}
                 <span className={styles.toolName}>{label}</span>
             </div>
             {detail && <div className={styles.toolDetail}>{detail}</div>}
