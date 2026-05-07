@@ -1,0 +1,165 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://sepal.io/recipes/indexChange/schema.json",
+    "title": "IndexChangeRecipe",
+    "description": "A SEPAL Index Change recipe. Compares the same single-band index between two source images (a 'from' and a 'to' image) and produces difference / ratio / normalized-difference bands plus an optional categorical change map.\n\n**What this recipe is for.** Detect change in any continuous spectral index (NDVI, NBR, NDMI, etc.) between two snapshots of the same area. Typical use cases: deforestation (NDVI drop), burn severity (dNBR), water-body change (NDWI shift), urbanization (built-up index). The recipe is index-agnostic — it operates on whichever single band you choose from the input images.\n\n**Pipeline.** (1) Pull the chosen `band` from each of `fromImage` and `toImage`. (2) Compute three difference bands: `difference = to − from`, `normalized_difference = (to − from) / (to + from)`, `ratio = to / from`. (3) If both images carry an `errorBand`, propagate per-pixel errors as `error = sqrt(fromError² + toError²)` and a `confidence = |difference| / error` band. (4) If `legend.entries` is non-empty, materialize a categorical `change` band: each pixel is assigned the legend value of the FIRST matching entry (entries are evaluated bottom-up — the LAST matching entry wins per `ee.mosaic` semantics). When `confidence ≤ options.minConfidence`, `difference` is forced to 0 in the change-band evaluation, so low-confidence pixels fall into a 'no change' bucket.\n\n**AOI semantics.** No separate AOI field — the AOI is the intersection of the geometries of `fromImage` and `toImage`.\n\nThis schema describes the persisted `model` of an *initialized* recipe. Cross-field constraints that JSON Schema cannot express are enforced by the companion rules.",
+    "type": "object",
+    "additionalProperties": true,
+    "required": ["fromImage", "toImage", "legend", "options"],
+    "properties": {
+        "fromImage": {"$ref": "#/$defs/inputImage"},
+        "toImage": {"$ref": "#/$defs/inputImage"},
+        "legend": {"$ref": "#/$defs/legend"},
+        "options": {"$ref": "#/$defs/options"},
+        "dates": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Optional cosmetic record of the from/to dates the user is mosaicking. The EE backend does NOT read this field — date semantics are entirely captured by the underlying `fromImage` and `toImage` recipes/assets. Included for round-trip compatibility with the GUI's default model. The LLM does not need to set or update it.",
+            "properties": {
+                "fromDate": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "format": "date"},
+                "toDate": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "format": "date"}
+            }
+        }
+    },
+    "$defs": {
+        "inputImage": {
+            "title": "IndexChangeInputImage",
+            "description": "A single source image — either a SEPAL recipe reference or an Earth Engine asset id — together with the band the recipe should treat as the index, and an optional uncertainty band.",
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["type", "id", "band"],
+            "properties": {
+                "type": {
+                    "enum": ["RECIPE_REF", "ASSET"],
+                    "description": "What `id` refers to. `RECIPE_REF` — id of another SEPAL recipe whose image output is consumed. `ASSET` — Earth Engine Image / ImageCollection asset id."
+                },
+                "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "SEPAL recipe id (when type=RECIPE_REF) or Earth Engine asset id (when type=ASSET)."
+                },
+                "bands": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "All bands the source exposes — populated by the GUI on selection. The recipe only uses `band` (and optionally `errorBand`); `bands` is informational."
+                },
+                "band": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Single band of the source to use as the index. Both `fromImage.band` and `toImage.band` must reference comparable values — typically the same band name (e.g. both `ndvi`)."
+                },
+                "errorBand": {
+                    "type": ["string", "null"],
+                    "description": "Optional per-pixel uncertainty band. When present on BOTH `fromImage` and `toImage`, the recipe emits an additional `error` band (`sqrt(fromError² + toError²)`) and a `confidence` band (`|difference| / error`). When absent on either, `error` and `confidence` are not produced and `options.minConfidence` is ignored."
+                },
+                "bandMin": {
+                    "type": ["number", "null"],
+                    "description": "Optional display-time minimum for the chosen band, used for visualization scaling in the GUI. Has no effect on processing."
+                },
+                "bandMax": {
+                    "type": ["number", "null"],
+                    "description": "Optional display-time maximum for the chosen band, used for visualization scaling in the GUI. Has no effect on processing."
+                },
+                "errorBandMax": {
+                    "type": ["number", "null"],
+                    "description": "Optional display-time maximum for the error band. Has no effect on processing."
+                }
+            }
+        },
+        "legend": {
+            "title": "IndexChangeLegend",
+            "description": "Categorical change classes. When `entries` is non-empty, the recipe produces a `change` band whose value at each pixel is the legend value of the LAST entry whose `constraints` are satisfied. (The backend reverses the entries and uses `ee.mosaic`, so later entries override earlier ones.)\n\nLeaving `entries: []` (or omitting `legend`) suppresses the `change` band; the recipe then only produces difference / ratio / normalized_difference (plus error/confidence when error bands are present).\n\nThe defaults define three classes — Decrease (red), Stable (white), Increase (green) — keyed off the sign of `difference`.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["entries"],
+            "properties": {
+                "entries": {
+                    "type": "array",
+                    "items": {"$ref": "#/$defs/legendEntry"}
+                }
+            }
+        },
+        "legendEntry": {
+            "title": "IndexChangeLegendEntry",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "value", "label", "color", "constraints", "booleanOperator"],
+            "properties": {
+                "id": {"type": "string", "description": "UUID for stable React keys; not used by the backend."},
+                "value": {"type": "integer", "description": "Integer class id stored in the output `change` band. Must be unique across entries."},
+                "label": {"type": "string", "description": "Human-readable class name shown in the legend and visualizations."},
+                "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "description": "Hex color (`#RRGGBB`) used for visualizing this class."
+                },
+                "booleanOperator": {
+                    "enum": ["and", "or"],
+                    "description": "How the entry's `constraints` are combined.\n\n- `'and'` (default) — all constraints must be satisfied. The recipe takes the per-pixel min over each constraint mask.\n- `'or'` — any constraint suffices. The recipe takes the per-pixel max over each constraint mask.\n\nIgnored when `constraints` has 0 or 1 entries."
+                },
+                "constraints": {
+                    "type": "array",
+                    "items": {"$ref": "#/$defs/constraint"},
+                    "description": "Constraint clauses combined per `booleanOperator`. An empty array masks the whole image for this entry — typically not what you want."
+                }
+            }
+        },
+        "constraint": {
+            "title": "IndexChangeConstraint",
+            "description": "A single comparison applied to one of the recipe's intermediate bands (`difference`, `normalized_difference`, `ratio`). The shape varies by operator:\n\n- For comparison operators (`<`, `≤`, `>`, `≥`, `=`): use `value`.\n- For `range`: use `from`, `to`, `fromInclusive`, `toInclusive`.\n\nNote the unicode `≤` / `≥` (U+2264 / U+2265) — these are the actual operator strings the backend expects, NOT `<=` / `>=`.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "image", "band", "operator"],
+            "properties": {
+                "id": {"type": "string", "description": "UUID for stable React keys."},
+                "description": {"type": "string", "description": "Human-readable summary of the comparison shown in the GUI; not used by the backend."},
+                "image": {
+                    "const": "this-recipe",
+                    "description": "Constraints in indexChange always refer to bands of this recipe itself. Must be the literal string `'this-recipe'`."
+                },
+                "band": {
+                    "enum": ["difference", "normalized_difference", "ratio"],
+                    "description": "Which intermediate band the constraint compares against."
+                },
+                "operator": {
+                    "enum": ["<", "≤", ">", "≥", "=", "range"],
+                    "description": "Comparison operator. `≤` and `≥` are the unicode characters U+2264 / U+2265 — the JSON form for the LLM is `\\u2264` / `\\u2265`. `range` selects pixels whose value lies between `from` and `to`."
+                },
+                "value": {
+                    "type": "number",
+                    "description": "Right-hand-side value for comparison operators (`<`, `≤`, `>`, `≥`, `=`). Required for those operators; ignored for `range`."
+                },
+                "from": {"type": "number", "description": "Lower bound for `range`. Required for `range` operator only."},
+                "to": {"type": "number", "description": "Upper bound for `range`. Required for `range` operator only."},
+                "fromInclusive": {"type": "boolean", "description": "Whether the lower bound is inclusive. Required for `range` operator only."},
+                "toInclusive": {"type": "boolean", "description": "Whether the upper bound is inclusive. Required for `range` operator only."}
+            },
+            "allOf": [
+                {
+                    "description": "Comparison operators require value.",
+                    "if": {"properties": {"operator": {"enum": ["<", "≤", ">", "≥", "="]}}, "required": ["operator"]},
+                    "then": {"required": ["value"]}
+                },
+                {
+                    "description": "Range operator requires from, to, fromInclusive, toInclusive.",
+                    "if": {"properties": {"operator": {"const": "range"}}, "required": ["operator"]},
+                    "then": {"required": ["from", "to", "fromInclusive", "toInclusive"]}
+                }
+            ]
+        },
+        "options": {
+            "title": "IndexChangeOptions",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["minConfidence"],
+            "properties": {
+                "minConfidence": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 20,
+                    "description": "Minimum `confidence = |difference| / error` for a pixel to be considered changed. Pixels with `confidence ≤ minConfidence` have their `difference` clamped to 0 in the change-band evaluation, which routes them to whichever legend entry matches `difference = 0` (typically a 'Stable' bucket).\n\nDefault `2.5` — roughly equivalent to a 2.5σ change. Higher values are more conservative (fewer change pixels, lower false-positive rate); lower values catch more change at the cost of noise.\n\nValid range [0, 20]; the GUI snaps to typical values 0, 1, 2, 3, 5, 10, 20 on a log slider. **Only meaningful when both `fromImage.errorBand` AND `toImage.errorBand` are set** — otherwise the `confidence` band isn't produced and this field is silently ignored."
+                }
+            }
+        }
+    }
+}

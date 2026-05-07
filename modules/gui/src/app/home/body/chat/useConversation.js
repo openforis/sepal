@@ -2,16 +2,35 @@ import {useReducer} from 'react'
 
 const processLoadedMessages = messages => {
     const result = []
-    for (const m of messages) {
+    for (let i = 0; i < messages.length; i++) {
+        const m = messages[i]
         if (m.role === 'user') {
-            result.push(m)
+            result.push({role: 'user', content: m.content})
         } else if (m.role === 'assistant') {
-            const tools = m.toolCalls && m.toolCalls.length > 0
-                ? m.toolCalls.map(tc => tc.name)
-                : undefined
+            let tools
+            if (m.toolCalls && m.toolCalls.length > 0) {
+                const next = messages[i + 1]
+                const resultsById = {}
+                if (next && next.role === 'tool' && Array.isArray(next.toolResults)) {
+                    for (const tr of next.toolResults) {
+                        resultsById[tr.toolCallId] = tr.result
+                    }
+                }
+                tools = m.toolCalls.map(tc => {
+                    const res = resultsById[tc.id]
+                    const success = res ? res.success !== false : true
+                    return {
+                        id: tc.id,
+                        name: tc.name,
+                        input: tc.input || {},
+                        status: success ? 'success' : 'error',
+                        data: success ? res?.data : undefined,
+                        error: success ? undefined : res?.error
+                    }
+                })
+            }
             result.push({role: 'assistant', content: m.content || '', tools})
         }
-        // tool-role messages are surfaced via the preceding assistant's toolCalls
     }
     return result
 }
@@ -52,6 +71,9 @@ const reducer = (state, action) => {
             let messages = state.messages
             let streaming = state.streaming
             if (text) {
+                if (!streaming && !text.trim()) {
+                    return state
+                }
                 if (!streaming) {
                     messages = [...messages, {role: 'assistant', content: text, streaming: !complete}]
                 } else {
@@ -75,20 +97,46 @@ const reducer = (state, action) => {
                 isLoading: complete ? false : state.isLoading
             }
         }
-        case 'TOOL_USE': {
+        case 'TOOL_START': {
             if (isForeignConversation(state, action.conversationId)) return state
-            const tools = action.tools || []
-            if (state.streaming) {
-                const messages = updateLast(state.messages, last =>
-                    last.role === 'assistant' ? {...last, streaming: false, tools} : last
-                )
+            const entry = {
+                id: action.toolCallId,
+                name: action.name,
+                input: action.input || {},
+                status: 'running'
+            }
+            const last = state.messages[state.messages.length - 1]
+            if (last && last.role === 'assistant') {
+                const messages = updateLast(state.messages, m => ({
+                    ...m,
+                    streaming: false,
+                    tools: [...(m.tools || []), entry]
+                }))
                 return {...state, messages, streaming: false, isThinking: false}
             }
             return {
                 ...state,
-                messages: [...state.messages, {role: 'assistant', content: '', tools}],
+                messages: [...state.messages, {role: 'assistant', content: '', tools: [entry]}],
+                streaming: false,
                 isThinking: false
             }
+        }
+        case 'TOOL_END': {
+            if (isForeignConversation(state, action.conversationId)) return state
+            const messages = state.messages.map(m => {
+                if (!m.tools) return m
+                const idx = m.tools.findIndex(t => t.id === action.toolCallId)
+                if (idx < 0) return m
+                const tools = [...m.tools]
+                tools[idx] = {
+                    ...tools[idx],
+                    status: action.success ? 'success' : 'error',
+                    data: action.data,
+                    error: action.error
+                }
+                return {...m, tools}
+            })
+            return {...state, messages}
         }
         case 'STATUS_THINKING':
             if (isForeignConversation(state, action.conversationId)) return state

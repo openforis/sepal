@@ -41,9 +41,19 @@ const getLLM = ({config, registry}) => {
     }
 }
 
+const formatRecipeType = s => {
+    const lines = [`### ${s.name} (${s.id})`, s.description]
+    if (s.useCases?.length) lines.push(`Use cases:\n${s.useCases.map(u => `- ${u}`).join('\n')}`)
+    if (s.terms?.length) lines.push(`Terms: ${s.terms.join(', ')}`)
+    if (s.chooseWhen) lines.push(`Choose when: ${s.chooseWhen}`)
+    if (s.dontChooseWhen) lines.push(`Don't choose when: ${s.dontChooseWhen}`)
+    if (s.outputs) lines.push(`Outputs: ${s.outputs}`)
+    return lines.join('\n')
+}
+
 const buildSystemPrompt = ({username, registry}) => {
     const recipeTypes = registry
-        ? registry.listSchemas().map(s => `- **${s.name}** (${s.id}): ${s.description}`).join('\n')
+        ? registry.listSchemas().map(formatRecipeType).join('\n\n')
         : 'No recipe schemas loaded yet.'
 
     return SYSTEM_PROMPT_TEMPLATE

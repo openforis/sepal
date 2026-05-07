@@ -10,7 +10,7 @@
         },
         "eeTable": {
             "title": "AoiEeTable",
-            "description": "AOI defined by selecting one or more rows from an Earth Engine FeatureCollection table. The geometry is the union of the selected features. There are two main use cases:\n\n1. **Country / administrative area selection** — set `id` to the SEPAL country table id (`users/wiell/SepalResources/gaul`), `keyColumn` to `'id'`, `key` to the ISO country code (for `level=COUNTRY`) or area code (for `level=AREA`), and `level` to either `'COUNTRY'` or `'AREA'`.\n\n2. **User-supplied table** — set `id` to any Earth Engine FeatureCollection asset the user has access to (e.g. `'projects/my-project/assets/my-table'`), and either filter by a column value (`keyColumn` + `key`) or include every row (`keyColumn: null`, `key: null`).\n\nThe optional `buffer` enlarges the geometry by a number of kilometers — useful when you want to include some surrounding context (e.g. coastline overflow), but increases the AOI area roughly proportionally to buffer distance.",
+            "description": "AOI defined by selecting one or more rows from an Earth Engine FeatureCollection table. The geometry is the union of the selected features. There are two distinct cases, discriminated by `id`:\n\n1. **Country / administrative-area selection** (`id` = `users/wiell/SepalResources/gaul`). Use the `aoi_list_countries` and `aoi_list_country_areas` tools to obtain the integer ADM_CODE that goes into `key`. The country branch additionally requires `level` (`COUNTRY` or `AREA`) and forces `keyColumn = 'id'`.\n\n2. **User-supplied table** (`id` is any other FeatureCollection asset). Filter by a column value (`keyColumn` + `key`, both strings) or include every row (`keyColumn: null`, `key: null`). The `level` field is not allowed in this case.\n\nThe optional `buffer` enlarges the geometry by a number of kilometers — useful for some surrounding context (coastline overflow, transboundary features), but increases the AOI area roughly in proportion.",
             "type": "object",
             "additionalProperties": false,
             "required": ["type", "id", "keyColumn", "key"],
@@ -22,22 +22,22 @@
                 "id": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "Earth Engine asset id of the FeatureCollection. For country/area selection, this MUST be `users/wiell/SepalResources/gaul`. For a user-supplied table, this is any FeatureCollection asset id the user has read access to (typically `projects/<project-id>/assets/<table-name>` or `users/<user>/<asset-path>`).",
+                    "description": "Earth Engine asset id of the FeatureCollection. For country/area selection, this MUST be `users/wiell/SepalResources/gaul`. For a user-supplied table, any FeatureCollection asset id the user has read access to (typically `projects/<project-id>/assets/<table-name>` or `users/<user>/<asset-path>`).",
                     "examples": ["users/wiell/SepalResources/gaul", "projects/my-project/assets/my-aoi-table"]
                 },
                 "keyColumn": {
                     "type": ["string", "null"],
-                    "description": "Name of the column to filter by. When set, only rows where `keyColumn = key` are included. When `null`, every row in the table is included (useful when the entire table represents the AOI).\n\nFor the SEPAL country table, this MUST be `'id'`. For user tables, it can be any string column name in the table's schema.",
+                    "description": "Name of the column to filter by. When set, only rows where `keyColumn = key` are included. When `null`, every row in the table is included.\n\nFor the SEPAL country table, this MUST be `'id'`. For user tables, any string column name in the table's schema.",
                     "examples": ["id", "country_co", "ADM1_CODE", null]
                 },
                 "key": {
-                    "type": ["string", "null"],
-                    "description": "Value to match in `keyColumn`. Must be `null` when `keyColumn` is `null`, and a non-empty string when `keyColumn` is set.\n\nFor the SEPAL country table: when `level='COUNTRY'`, this is the 3-letter ISO 3166-1 alpha-3 country code (e.g. `'KEN'`, `'BRA'`, `'USA'`); when `level='AREA'`, this is the area code from the GAUL hierarchy.",
-                    "examples": ["KEN", "BRA", "USA", null]
+                    "type": ["string", "integer", "null"],
+                    "description": "Value to match in `keyColumn`. The accepted type depends on which case applies:\n\n- **Country/area selection** (`id` is the country table): an **integer** ADM_CODE from FAO GAUL — e.g. `73` for Ecuador, `21` for Brazil. Resolve via `aoi_list_countries` / `aoi_list_country_areas`. Never an ISO alpha-3 string.\n- **User table with `keyColumn` set**: a non-empty string matching that column's values.\n- **User table with `keyColumn = null`**: must also be `null`.",
+                    "examples": [73, 21, "BR", null]
                 },
                 "level": {
                     "enum": ["COUNTRY", "AREA"],
-                    "description": "Distinguishes country-level from sub-national area-level selection in the SEPAL country table. Only valid (and only meaningful) when `id` is the country table id and `keyColumn='id'`. Must be omitted in all other cases.\n\n- `'COUNTRY'` — `key` is a country code, geometry is the entire country.\n- `'AREA'` — `key` is an area (province/state/district) code from the GAUL hierarchy, geometry is that single area."
+                    "description": "Distinguishes country-level from sub-national area-level selection in the SEPAL country table. **Required** when `id` is the country table; **forbidden** in all other cases.\n\n- `'COUNTRY'` — `key` is a country ADM_CODE, geometry is the entire country.\n- `'AREA'` — `key` is an area (province/state/district) ADM_CODE, geometry is that single area."
                 },
                 "buffer": {
                     "type": "integer",
@@ -47,28 +47,37 @@
                 }
             },
             "examples": [
-                {"type": "EE_TABLE", "id": "users/wiell/SepalResources/gaul", "keyColumn": "id", "key": "KEN", "level": "COUNTRY"},
-                {"type": "EE_TABLE", "id": "users/wiell/SepalResources/gaul", "keyColumn": "id", "key": "BRA", "level": "COUNTRY", "buffer": 5},
+                {"type": "EE_TABLE", "id": "users/wiell/SepalResources/gaul", "keyColumn": "id", "key": 73, "level": "COUNTRY"},
+                {"type": "EE_TABLE", "id": "users/wiell/SepalResources/gaul", "keyColumn": "id", "key": 21, "level": "COUNTRY", "buffer": 5},
                 {"type": "EE_TABLE", "id": "projects/my-project/assets/my-aoi-table", "keyColumn": "country_co", "key": "BR"},
                 {"type": "EE_TABLE", "id": "projects/my-project/assets/my-aoi-table", "keyColumn": null, "key": null}
             ],
-            "allOf": [
-                {
-                    "description": "keyColumn and key must both be set or both be null.",
-                    "if": {"properties": {"keyColumn": {"type": "null"}}},
-                    "then": {"properties": {"key": {"type": "null"}}},
-                    "else": {"properties": {"key": {"type": "string", "minLength": 1}}}
+            "if": {
+                "description": "Country/area branch when id is the SEPAL country table.",
+                "properties": {
+                    "id": {"$ref": "#/$defs/countryTableId"}
+                },
+                "required": ["id"]
+            },
+            "then": {
+                "description": "Country/area selection: keyColumn must be 'id', key is the integer GAUL ADM_CODE, level is required.",
+                "required": ["level"],
+                "properties": {
+                    "keyColumn": {"const": "id"},
+                    "key": {"type": "integer"}
                 }
-            ],
-            "dependentSchemas": {
-                "level": {
-                    "description": "`level` is allowed only when id is the built-in country table AND keyColumn is 'id' — the combination that represents a country/area selection.",
-                    "properties": {
-                        "id": {"$ref": "#/$defs/countryTableId"},
-                        "keyColumn": {"const": "id"}
-                    },
-                    "required": ["id", "keyColumn"]
-                }
+            },
+            "else": {
+                "description": "User-supplied table: level is not allowed; keyColumn and key must both be set (strings) or both be null.",
+                "not": {"required": ["level"]},
+                "allOf": [
+                    {
+                        "description": "keyColumn and key must both be set or both be null.",
+                        "if": {"properties": {"keyColumn": {"type": "null"}}},
+                        "then": {"properties": {"key": {"type": "null"}}},
+                        "else": {"properties": {"key": {"type": "string", "minLength": 1}}}
+                    }
+                ]
             }
         },
         "polygon": {
