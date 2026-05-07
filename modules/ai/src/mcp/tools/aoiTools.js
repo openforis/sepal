@@ -1,3 +1,5 @@
+const {guiRequest} = require('./guiRequest')
+
 const filterByLabel = (data, query) => {
     if (!query || !Array.isArray(data)) return data
     const needle = query.toLowerCase()
@@ -15,12 +17,10 @@ const createAoiTools = () => [
             }
         },
         handler: async ({params, request}) => {
-            try {
-                const data = await request({type: 'gui-action', action: 'list-countries'}, {timeoutMs: 30000})
-                return {success: true, data: filterByLabel(data, params.query)}
-            } catch (error) {
-                return {success: false, error: {code: 'GUI_REQUEST_FAILED', message: error.message}}
-            }
+            const result = await guiRequest(request, 'list-countries', {}, {timeoutMs: 30000})
+            return result.success === false
+                ? result
+                : {success: true, data: filterByLabel(result.data, params.query)}
         }
     },
     {
@@ -35,15 +35,15 @@ const createAoiTools = () => [
             required: ['countryId']
         },
         handler: async ({params, request}) => {
-            try {
-                const data = await request(
-                    {type: 'gui-action', action: 'list-country-areas', countryId: params.countryId},
-                    {timeoutMs: 30000}
-                )
-                return {success: true, data: filterByLabel(data, params.query)}
-            } catch (error) {
-                return {success: false, error: {code: 'GUI_REQUEST_FAILED', message: error.message}}
-            }
+            const result = await guiRequest(
+                request,
+                'list-country-areas',
+                {countryId: params.countryId},
+                {timeoutMs: 30000}
+            )
+            return result.success === false
+                ? result
+                : {success: true, data: filterByLabel(result.data, params.query)}
         }
     }
 ]

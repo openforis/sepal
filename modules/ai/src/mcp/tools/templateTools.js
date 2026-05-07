@@ -61,7 +61,6 @@ const createTemplateTools = ({registry, recipeClient, recipeValidator}) => [
 
             let model = _.merge({}, template.model, params.overrides)
             if (recipeValidator) {
-                model = recipeValidator.applyDefaults({type: template.recipeType, model})
                 const errors = recipeValidator.validateModel({type: template.recipeType, model})
                 if (errors) {
                     return {

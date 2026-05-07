@@ -4,9 +4,19 @@ const {getLLM, buildSystemPrompt} = require('./provider')
 
 const log = require('#sepal/log').getLogger('messageHandler')
 
-const MAX_TOOL_CALL_ROUNDS = 10
+const MAX_TOOL_CALL_ROUNDS = 50
+const WARN_ROUND_THRESHOLD = 30
+const MAX_CONSECUTIVE_FAILED_ROUNDS = 4
+const MAX_FAILED_TOOL_ROUNDS = 6
 const CHUNK_BUFFER_MS = 100
 const RETRY_DELAY_MS = 2000
+
+const summarizeToolFailures = toolResults => {
+    const messages = toolResults
+        .map(({result}) => result?.error?.message)
+        .filter(Boolean)
+    return [...new Set(messages)].slice(0, 2).join(' ')
+}
 
 const ajv = new Ajv({allErrors: true, strict: false})
 
@@ -109,7 +119,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
         }
     }
 
-    const handleMessage = async ({username, clientId, subscriptionId, text}) => {
+    const handleMessage = async ({username, clientId, subscriptionId, text, selection}) => {
         const session = sessionStore.get({clientId, subscriptionId})
         if (!session) {
             log.warn(`No session for ${clientId}:${subscriptionId}`)
@@ -174,7 +184,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
             }
         }
 
-        const systemPrompt = buildSystemPrompt({username, registry})
+        const systemPrompt = buildSystemPrompt({username, registry, selection})
         const sendFn = data => response.send({username, clientId, subscriptionId, data})
         const requestFn = (data, options = {}) =>
             response.request({username, clientId, subscriptionId, data, ...options})
@@ -184,9 +194,16 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
             let done = false
             let stallNudge = null
             let stallCount = 0
+            let consecutiveFailedRounds = 0
+            let failedToolRounds = 0
+            let bailMessage = null
+            let lastFailureSummary = null
 
             while (!done && rounds < MAX_TOOL_CALL_ROUNDS) {
                 rounds++
+                if (rounds === WARN_ROUND_THRESHOLD) {
+                    log.warn(`Tool-call loop exceeded ${WARN_ROUND_THRESHOLD} rounds (cap ${MAX_TOOL_CALL_ROUNDS})`)
+                }
                 sendFn({type: 'status', conversationId, status: 'thinking'})
 
                 const chunkBuffer = createChunkBuffer(text => response.send({
@@ -228,6 +245,32 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                     const toolMsg = {role: 'tool', toolResults}
                     messages.push(toolMsg)
                     await persistMessage({username, conversationId, message: toolMsg})
+
+                    const failed = toolResults.filter(({result: r}) => r && r.success === false)
+                    const allFailed = toolResults.length > 0 && failed.length === toolResults.length
+                    if (failed.length) {
+                        failedToolRounds++
+                        lastFailureSummary = summarizeToolFailures(toolResults) || lastFailureSummary
+                    }
+                    if (allFailed) {
+                        consecutiveFailedRounds++
+                        if (consecutiveFailedRounds >= MAX_CONSECUTIVE_FAILED_ROUNDS) {
+                            log.warn(`Bailing after ${consecutiveFailedRounds} consecutive failed rounds`)
+                            bailMessage = lastFailureSummary
+                                ? `I'm hitting persistent errors and could not complete the request. Last error: ${lastFailureSummary}`
+                                : "I'm hitting persistent errors and could not complete the request."
+                            break
+                        }
+                    } else {
+                        consecutiveFailedRounds = 0
+                    }
+                    if (!bailMessage && failedToolRounds >= MAX_FAILED_TOOL_ROUNDS) {
+                        log.warn(`Bailing after ${failedToolRounds} failed tool rounds`)
+                        bailMessage = lastFailureSummary
+                            ? `I'm hitting persistent errors and could not complete the request. Last error: ${lastFailureSummary}`
+                            : "I'm hitting persistent errors and could not complete the request."
+                        break
+                    }
                 } else {
                     const text = (result.text || '').trim()
                     if (!text && stallCount === 0) {
@@ -249,7 +292,8 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
             }
 
             if (!done) {
-                const msg = 'I reached the maximum number of tool call rounds. Here is what I have so far.'
+                const msg = bailMessage
+                    || `I reached the safety cap of ${MAX_TOOL_CALL_ROUNDS} tool-call rounds. Stopping with what I have so far.`
                 response.send({
                     username, clientId, subscriptionId,
                     data: {type: 'chat-response', conversationId, text: msg, complete: true}

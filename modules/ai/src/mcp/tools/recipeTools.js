@@ -1,10 +1,25 @@
-const _ = require('lodash')
-const log = require('#sepal/log').getLogger('tools')
+const {guiRequest} = require('./guiRequest')
 
-const createRecipeTools = ({recipeClient, registry, recipeValidator}) => [
+const GUI_WRITE_TIMEOUT_MS = 60000
+
+const validationError = errors => ({
+    success: false,
+    error: {
+        code: 'VALIDATION_ERROR',
+        message: `Recipe model validation failed:\n${errors.join('\n')}`
+    }
+})
+
+const validateRecipeModel = ({recipeValidator, type, model}) => {
+    if (!recipeValidator) return null
+    const errors = recipeValidator.validateModel({type, model})
+    return errors ? validationError(errors) : null
+}
+
+const createRecipeTools = ({recipeValidator}) => [
     {
         name: 'recipe_list',
-        description: 'List all recipes for the current user, optionally filtered by type or project',
+        description: 'List recipes for the current user, optionally filtered by type or project. Returns the user\'s saved recipes from the GUI\'s state.',
         parameters: {
             type: 'object',
             properties: {
@@ -12,10 +27,8 @@ const createRecipeTools = ({recipeClient, registry, recipeValidator}) => [
                 projectId: {type: 'string', description: 'Filter by project ID'}
             }
         },
-        handler: async ({username, params}) => {
-            const recipes = await recipeClient.listRecipes({username, ...params})
-            return {success: true, data: recipes}
-        }
+        handler: async ({params, request}) =>
+            guiRequest(request, 'list-recipes', params)
     },
     {
         name: 'recipe_load',
@@ -27,84 +40,59 @@ const createRecipeTools = ({recipeClient, registry, recipeValidator}) => [
             },
             required: ['recipeId']
         },
-        handler: async ({username, params}) => {
-            const recipe = await recipeClient.loadRecipe({username, recipeId: params.recipeId})
-            return {success: true, data: recipe}
-        }
+        handler: async ({params, request}) =>
+            guiRequest(request, 'load-recipe', {recipeId: params.recipeId})
     },
     {
         name: 'recipe_create',
-        description: 'Create a new recipe with the given type, name, and model parameters',
+        description: 'Create a new recipe from a complete recipe model. Call recipe_info first, start from its defaults, modify the relevant fields, and send the full resulting model here. The GUI saves it, registers it in the user\'s recipe list, and opens the recipe — no separate recipe_open call is needed.',
         parameters: {
             type: 'object',
             properties: {
                 type: {type: 'string', description: 'Recipe type (e.g. MOSAIC, CLASSIFICATION, TIME_SERIES)'},
                 name: {type: 'string', description: 'Display name for the recipe'},
                 projectId: {type: 'string', description: 'Optional project ID to place the recipe in'},
-                model: {type: 'object', description: 'Recipe model parameters (type-specific configuration)'}
+                model: {type: 'object', description: 'Complete recipe model parameters (type-specific configuration), built from recipe_info.defaults plus intentional changes.'}
             },
             required: ['type', 'name', 'model']
         },
-        handler: async ({username, params}) => {
-            let model = params.model
-            if (recipeValidator) {
-                model = recipeValidator.applyDefaults({type: params.type, model})
-                const errors = recipeValidator.validateModel({type: params.type, model})
-                if (errors) {
-                    return {
-                        success: false,
-                        error: {
-                            code: 'VALIDATION_ERROR',
-                            message: `Recipe model validation failed:\n${errors.join('\n')}`
-                        }
-                    }
-                }
-            }
-            const result = await recipeClient.saveRecipe({
-                username,
+        handler: async ({params, request}) => {
+            const invalid = validateRecipeModel({
+                recipeValidator, type: params.type, model: params.model
+            })
+            if (invalid) return invalid
+            return guiRequest(request, 'create-recipe', {
                 type: params.type,
                 name: params.name,
                 projectId: params.projectId,
-                model
-            })
-            return {success: true, data: result}
+                model: params.model
+            }, {timeoutMs: GUI_WRITE_TIMEOUT_MS})
         }
     },
     {
         name: 'recipe_save',
-        description: 'Update an existing recipe. Merges the provided model with the existing one so partial updates work.',
+        description: 'Update an existing recipe. The provided model REPLACES the existing model in full — there is no merging. To make a partial change, call recipe_load first, modify the returned model, then send it back here. The GUI persists the new model and selects/opens the recipe — no separate recipe_open call is needed.',
         parameters: {
             type: 'object',
             properties: {
                 recipeId: {type: 'string', description: 'The recipe ID to update'},
-                model: {type: 'object', description: 'Model parameters to merge into the existing recipe'}
+                model: {type: 'object', description: 'The full new recipe model. Replaces the existing model entirely.'}
             },
             required: ['recipeId', 'model']
         },
-        handler: async ({username, params}) => {
-            const existing = await recipeClient.loadRecipe({username, recipeId: params.recipeId})
-            const mergedModel = _.merge({}, existing.model, params.model)
-            if (recipeValidator) {
-                const errors = recipeValidator.validateModel({type: existing.type, model: mergedModel})
-                if (errors) {
-                    return {
-                        success: false,
-                        error: {
-                            code: 'VALIDATION_ERROR',
-                            message: `Recipe model validation failed:\n${errors.join('\n')}`
-                        }
-                    }
-                }
-            }
-            const result = await recipeClient.saveRecipe({
-                username,
-                id: params.recipeId,
-                type: existing.type,
-                name: existing.name || existing.title,
-                projectId: existing.projectId,
-                model: mergedModel
+        handler: async ({params, request}) => {
+            const loaded = await guiRequest(request, 'load-recipe', {recipeId: params.recipeId})
+            if (loaded.success === false) return loaded
+            const invalid = validateRecipeModel({
+                recipeValidator, type: loaded.data?.type, model: params.model
             })
-            return {success: true, data: result}
+            if (invalid) return invalid
+            return guiRequest(
+                request,
+                'save-recipe',
+                {recipeId: params.recipeId, model: params.model},
+                {timeoutMs: GUI_WRITE_TIMEOUT_MS}
+            )
         }
     },
     {
@@ -121,10 +109,8 @@ const createRecipeTools = ({recipeClient, registry, recipeValidator}) => [
             },
             required: ['recipeIds']
         },
-        handler: async ({username, params}) => {
-            const result = await recipeClient.deleteRecipes({username, recipeIds: params.recipeIds})
-            return {success: true, data: result}
-        }
+        handler: async ({params, request}) =>
+            guiRequest(request, 'delete-recipes', {recipeIds: params.recipeIds})
     },
     {
         name: 'recipe_move',
@@ -141,57 +127,37 @@ const createRecipeTools = ({recipeClient, registry, recipeValidator}) => [
             },
             required: ['recipeIds', 'projectId']
         },
-        handler: async ({username, params}) => {
-            const result = await recipeClient.moveRecipes({
-                username,
-                recipeIds: params.recipeIds,
-                projectId: params.projectId
-            })
-            return {success: true, data: result}
-        }
+        handler: async ({params, request}) =>
+            guiRequest(request, 'move-recipes', {recipeIds: params.recipeIds, projectId: params.projectId})
     },
     {
-        name: 'project_list',
-        description: 'List all projects for the current user',
-        parameters: {
-            type: 'object',
-            properties: {}
-        },
-        handler: async ({username}) => {
-            const projects = await recipeClient.listProjects({username})
-            return {success: true, data: projects}
-        }
-    },
-    {
-        name: 'project_create',
-        description: 'Create a new project',
+        name: 'recipe_open',
+        description: 'Open a recipe in the SEPAL interface. Use only for opening recipes the user already has saved — recipe_create and recipe_save open the recipe automatically.',
         parameters: {
             type: 'object',
             properties: {
-                name: {type: 'string', description: 'Project name'},
-                defaultAssetFolder: {type: 'string', description: 'Default GEE asset folder path'},
-                defaultWorkspaceFolder: {type: 'string', description: 'Default workspace folder path'}
+                recipeId: {type: 'string', description: 'The recipe ID to open'}
             },
-            required: ['name']
+            required: ['recipeId']
         },
-        handler: async ({username, params}) => {
-            const result = await recipeClient.saveProject({username, ...params})
-            return {success: true, data: result}
+        handler: async ({params, send}) => {
+            send({type: 'gui-action', action: 'open', recipeId: params.recipeId})
+            return {success: true, data: {action: 'open', recipeId: params.recipeId}}
         }
     },
     {
-        name: 'project_delete',
-        description: 'Delete a project and all its recipes',
+        name: 'recipe_close',
+        description: 'Tell the browser to close a recipe tab',
         parameters: {
             type: 'object',
             properties: {
-                projectId: {type: 'string', description: 'Project ID to delete'}
+                recipeId: {type: 'string', description: 'The recipe ID to close'}
             },
-            required: ['projectId']
+            required: ['recipeId']
         },
-        handler: async ({username, params}) => {
-            const result = await recipeClient.deleteProject({username, projectId: params.projectId})
-            return {success: true, data: result}
+        handler: async ({params, send}) => {
+            send({type: 'gui-action', action: 'close', recipeId: params.recipeId})
+            return {success: true, data: {action: 'close', recipeId: params.recipeId}}
         }
     }
 ]

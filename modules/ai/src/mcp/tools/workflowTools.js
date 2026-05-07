@@ -178,7 +178,6 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
             const name = params.name || `${workflow.type} recipe`
             let model = workflow.values
             if (recipeValidator) {
-                model = recipeValidator.applyDefaults({type: workflow.type, model})
                 const errors = recipeValidator.validateModel({type: workflow.type, model})
                 if (errors) {
                     return {
