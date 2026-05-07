@@ -45,6 +45,23 @@ const summarizeResult = result => {
     return `OK ${summarizeValue(result.data, 200)}`
 }
 
+const TITLE_MAX_CHARS = 80
+const TITLE_SYSTEM_PROMPT = 'Generate a 3-7 word title summarizing what this conversation is about. Reply with the title only — no quotes, no trailing punctuation, no preamble. Be specific. Match the language of the user\'s first message.'
+
+const cleanTitle = raw => {
+    if (typeof raw !== 'string') return null
+    let title = raw.trim().split('\n')[0].trim()
+    while (title.length >= 2 && '"\'`'.includes(title[0]) && title[title.length - 1] === title[0]) {
+        title = title.slice(1, -1).trim()
+    }
+    while (title.length && '.?!,:;'.includes(title[title.length - 1])) {
+        title = title.slice(0, -1).trim()
+    }
+    if (!title) return null
+    if (title.length > TITLE_MAX_CHARS) title = title.substring(0, TITLE_MAX_CHARS)
+    return title
+}
+
 const ajv = new Ajv({allErrors: true, strict: false})
 
 const createChunkBuffer = onFlush => {
@@ -220,8 +237,10 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
         messages.push(userMessage)
         await persistMessage({username, conversationId, message: userMessage})
 
-        // Auto-generate title from first user message
-        if (messages.filter(m => m.role === 'user').length === 1 && conversationStore) {
+        const isFirstUserMessage = messages.filter(m => m.role === 'user').length === 1
+        // Auto-generate title from first user message — truncated baseline now,
+        // LLM-refined replacement after the first assistant turn completes.
+        if (isFirstUserMessage && conversationStore) {
             const title = text.length > 80 ? text.substring(0, 80) + '...' : text
             try {
                 await conversationStore.updateTitle({username, conversationId, title})
@@ -229,6 +248,24 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                 response.send({username, clientId, subscriptionId, data: {type: 'conversations', conversations}})
             } catch (error) {
                 log.error('Failed to update conversation title:', error)
+            }
+        }
+
+        const refineTitleAsync = async assistantText => {
+            if (!provider || !conversationStore || !assistantText) return
+            try {
+                const result = await provider.chat({
+                    messages: [{role: 'user', content: `User asked: ${text}\n\nAssistant replied: ${assistantText}`}],
+                    tools: [],
+                    systemPrompt: TITLE_SYSTEM_PROMPT
+                })
+                const title = cleanTitle(result?.text)
+                if (!title) return
+                await conversationStore.updateTitle({username, conversationId, title})
+                const conversations = await conversationStore.listConversations({username})
+                response.send({username, clientId, subscriptionId, data: {type: 'conversations', conversations}})
+            } catch (error) {
+                log.warn(`[conv ${conversationId}] title generation failed:`, error.message)
             }
         }
 
@@ -349,6 +386,9 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                     })
                     log.info(`[conv ${conversationId}] turn complete after ${rounds} round(s)`)
                     done = true
+                    if (isFirstUserMessage) {
+                        refineTitleAsync(rawText.trim()).catch(error => log.warn('Title refinement task failed:', error.message))
+                    }
                 }
             }
 
