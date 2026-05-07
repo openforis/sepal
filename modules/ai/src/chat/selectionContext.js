@@ -12,6 +12,9 @@ const formatSelection = selection => {
     if (!selection) return 'No selection context.'
     const lines = []
     if (selection.section) lines.push(`Section: ${selection.section}`)
+    if (selection.selectedProject?.projectName) {
+        lines.push(`Selected project: "${selection.selectedProject.projectName}"`)
+    }
     if (selection.openRecipes?.length) {
         lines.push(`Open recipes (${selection.openRecipes.length}): ${selection.openRecipes.map(formatRecipeSummary).join(', ')}`)
     }

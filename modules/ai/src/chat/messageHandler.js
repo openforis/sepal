@@ -112,11 +112,11 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                     log.info(`Tool ${tc.name}(${inputSummary}) → ${summarizeResult(toolResult)}`)
                 } else {
                     log.info(`Tool ${tc.name}(${inputSummary}) — executing`)
-                    log.debug(() => ['Tool input (full):', tc.name, tc.input])
+                    log.trace(() => [`Tool input: ${tc.name}`, tc.input])
                     try {
                         toolResult = await tool.handler({username, params: tc.input || {}, send: sendFn, request: requestFn, session})
                         log.info(`Tool ${tc.name} → ${summarizeResult(toolResult)}`)
-                        log.debug(() => ['Tool result (full):', tc.name, toolResult])
+                        log.trace(() => [`Tool result: ${tc.name}`, toolResult])
                     } catch (error) {
                         log.error(`Tool ${tc.name} threw:`, error)
                         toolResult = {success: false, error: {code: 'TOOL_ERROR', message: error.message}}
@@ -150,6 +150,17 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
         }
     }
 
+    // Update the session's selection (open recipes, selected recipe, current
+    // section, etc.) without sending a chat message. Called on every 'context'
+    // event from the browser so the system prompt at the next round reflects
+    // the user's current GUI state.
+    const updateContext = ({clientId, subscriptionId, selection}) => {
+        const session = sessionStore.get({clientId, subscriptionId})
+        if (session) {
+            session.selection = selection || null
+        }
+    }
+
     const handleMessage = async ({username, clientId, subscriptionId, text, selection}) => {
         const session = sessionStore.get({clientId, subscriptionId})
         if (!session) {
@@ -159,6 +170,12 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                 data: {type: 'chat-response', text: 'Session not found. Please close and reopen the chat.', complete: true}
             })
             return
+        }
+        // The 'message' event still carries selection for backwards-compat;
+        // store it as the latest known context. Subsequent 'context' events
+        // overwrite it. Per-round prompts read from session.selection below.
+        if (selection !== undefined) {
+            session.selection = selection
         }
 
         if (!session.conversationId) {
@@ -215,7 +232,6 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
             }
         }
 
-        const systemPrompt = buildSystemPrompt({username, registry, selection})
         const sendFn = data => response.send({username, clientId, subscriptionId, data})
         const requestFn = (data, options = {}) =>
             response.request({username, clientId, subscriptionId, data, ...options})
@@ -247,6 +263,12 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                 const promptMessages = stallNudge ? [...messages, stallNudge] : messages
                 const nudgeApplied = !!stallNudge
                 stallNudge = null
+
+                // Rebuild the system prompt every round so the LLM sees the
+                // latest selection (open recipes, selected recipe, etc.). The
+                // browser pushes 'context' events that update session.selection
+                // outside this loop; reading it here keeps the model in sync.
+                const systemPrompt = buildSystemPrompt({username, registry, selection: session.selection})
 
                 log.info(`[conv ${conversationId}] round ${rounds}: requesting (${promptMessages.length} msgs${nudgeApplied ? ', after nudge' : ''})`)
                 const result = await provider.stream({
@@ -348,7 +370,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                     const retryResult = await provider.stream({
                         messages,
                         tools: formattedTools,
-                        systemPrompt,
+                        systemPrompt: buildSystemPrompt({username, registry, selection: session.selection}),
                         onChunk: chunk => retryChunkBuffer.append(chunk)
                     })
                     retryChunkBuffer.end()
@@ -376,7 +398,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
         }
     }
 
-    return {handleMessage}
+    return {handleMessage, updateContext}
 }
 
 module.exports = {createMessageHandler}

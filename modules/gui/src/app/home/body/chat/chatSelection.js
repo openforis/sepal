@@ -47,11 +47,18 @@ const appSummary = tab => tab ? {
 const selectedFrom = (tabs, selectedId, summary) =>
     summary(tabs.find(tab => tab.id === selectedId))
 
+const projectSummary = projectId => {
+    if (!projectId) return null
+    const name = findProjectName(projectId)
+    return name ? {projectId, projectName: name} : null
+}
+
 export const currentSelection = () => {
     const recipeTabs = select('process.tabs') || []
     const appTabs = select('apps.tabs') || []
     return {
         section: currentSection(),
+        selectedProject: projectSummary(select('process.projectId')),
         openRecipes: recipeTabs.map(recipeSummary).filter(Boolean),
         selectedRecipe: selectedFrom(recipeTabs, select('process.selectedTabId'), recipeSummary),
         openApps: appTabs.map(appSummary).filter(Boolean),

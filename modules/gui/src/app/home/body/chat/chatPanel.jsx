@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import {useCallback, useEffect, useRef} from 'react'
 import {useSelector} from 'react-redux'
+import {useLocation} from 'react-router-dom'
 
 import {actionBuilder} from '~/action-builder'
 import {getLogger} from '~/log'
@@ -118,6 +119,44 @@ export const ChatPanel = ({className}) => {
     // Subscribe so the panel re-renders when the formatter lazy-loads recipes/projects
     useSelector(() => select('process.recipes'))
     useSelector(() => select('process.projects'))
+
+    // Subscribe to selection-relevant slices and the route. Whenever any of
+    // these change, the effect below recomputes currentSelection() and pushes
+    // a {type: 'context'} message to the AI module so the LLM's system prompt
+    // reflects the user's current GUI state at every tool-call round.
+    useSelector(() => select('process.tabs'))
+    useSelector(() => select('process.selectedTabId'))
+    useSelector(() => select('process.projectId'))
+    useSelector(() => select('process.loadedRecipes'))
+    useSelector(() => select('apps.tabs'))
+    useSelector(() => select('apps.selectedTabId'))
+    useLocation()
+
+    const lastContextRef = useRef(null)
+    const contextDebounceRef = useRef(null)
+
+    // When the WS drops, the AI module's session selection is gone (per-conn
+    // state). Clear our last-sent marker so the next time we're connected we
+    // unconditionally re-send the current selection.
+    useEffect(() => {
+        if (!isConnected) lastContextRef.current = null
+    }, [isConnected])
+
+    useEffect(() => {
+        if (!isConnected) return
+        if (contextDebounceRef.current) clearTimeout(contextDebounceRef.current)
+        contextDebounceRef.current = setTimeout(() => {
+            const selection = currentSelection()
+            const key = JSON.stringify(selection)
+            if (key !== lastContextRef.current) {
+                lastContextRef.current = key
+                send({type: 'context', selection})
+            }
+        }, 200)
+        return () => {
+            if (contextDebounceRef.current) clearTimeout(contextDebounceRef.current)
+        }
+    })
 
     const activeConversationIdRef = useRef(activeConversationId)
     activeConversationIdRef.current = activeConversationId
