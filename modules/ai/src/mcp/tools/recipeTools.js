@@ -19,12 +19,12 @@ const validateRecipeModel = ({recipeValidator, type, model}) => {
 const createRecipeTools = ({recipeValidator}) => [
     {
         name: 'recipe_list',
-        description: 'List recipes for the current user, optionally filtered by type or project. Returns the user\'s saved recipes from the GUI\'s state.',
+        description: 'List user\'s saved recipes from GUI state. Optional filter by type / project.',
         parameters: {
             type: 'object',
             properties: {
-                type: {type: 'string', description: 'Filter by recipe type (e.g. MOSAIC, CLASSIFICATION)'},
-                projectId: {type: 'string', description: 'Filter by project ID'}
+                type: {type: 'string', description: 'Filter by recipe type (e.g. MOSAIC, CLASSIFICATION).'},
+                projectId: {type: 'string', description: 'Filter by project id.'}
             }
         },
         handler: async ({params, request}) =>
@@ -32,11 +32,11 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_load',
-        description: 'Load the full contents of a recipe by its ID. Returns the recipe model (configuration) without UI state.',
+        description: 'Load a recipe\'s model (configuration, no UI state) by id.',
         parameters: {
             type: 'object',
             properties: {
-                recipeId: {type: 'string', description: 'The recipe ID to load'}
+                recipeId: {type: 'string', description: 'Recipe id.'}
             },
             required: ['recipeId']
         },
@@ -45,14 +45,14 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_create',
-        description: 'Create a new recipe from a complete recipe model. Call recipe_info first, start from its defaults, modify the relevant fields, and send the full resulting model here. The GUI saves it, registers it in the user\'s recipe list, and opens the recipe — no separate recipe_open call is needed.',
+        description: 'Create a recipe from a complete model. Workflow: recipe_info → start from its defaults → modify relevant fields → send full model. GUI saves, registers, and opens it — do NOT call recipe_open after.',
         parameters: {
             type: 'object',
             properties: {
-                type: {type: 'string', description: 'Recipe type (e.g. MOSAIC, CLASSIFICATION, TIME_SERIES)'},
-                name: {type: 'string', description: 'REQUIRED. Display name for the recipe — derive a clear, concise human-readable name from the user\'s request (e.g. "Bangladesh mangroves 2020 mosaic"). Never omit this parameter.'},
-                projectId: {type: 'string', description: 'Optional project ID to place the recipe in'},
-                model: {type: 'object', description: 'Complete recipe model parameters (type-specific configuration), built from recipe_info.defaults plus intentional changes.'}
+                type: {type: 'string', description: 'Recipe type (e.g. MOSAIC, CLASSIFICATION, TIME_SERIES).'},
+                name: {type: 'string', description: 'REQUIRED. Concise display name derived from the request (e.g. "Bangladesh mangroves 2020 mosaic"). Never omit.'},
+                projectId: {type: 'string', description: 'Optional project id.'},
+                model: {type: 'object', description: 'Complete model. Built from recipe_info.defaults + intentional changes.'}
             },
             required: ['type', 'name', 'model']
         },
@@ -71,12 +71,12 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_save',
-        description: 'Update an existing recipe. The provided model REPLACES the existing model in full — there is no merging. To make a partial change, call recipe_load first, modify the returned model, then send it back here. The GUI persists the new model and selects/opens the recipe — no separate recipe_open call is needed.',
+        description: 'Update an existing recipe. Model REPLACES existing in full — no merging. For partial changes: recipe_load → modify → send back. GUI persists + opens — do NOT call recipe_open after.',
         parameters: {
             type: 'object',
             properties: {
-                recipeId: {type: 'string', description: 'The recipe ID to update'},
-                model: {type: 'object', description: 'The full new recipe model. Replaces the existing model entirely.'}
+                recipeId: {type: 'string', description: 'Recipe id to update.'},
+                model: {type: 'object', description: 'Full new model. Replaces existing entirely.'}
             },
             required: ['recipeId', 'model']
         },
@@ -97,14 +97,14 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_delete',
-        description: 'DESTRUCTIVE: permanently deletes the listed recipes. Always confirm with the user before calling, naming the recipes that will be removed.',
+        description: 'DESTRUCTIVE: permanently deletes the listed recipes. Always confirm with user first, naming each recipe.',
         parameters: {
             type: 'object',
             properties: {
                 recipeIds: {
                     type: 'array',
                     items: {type: 'string'},
-                    description: 'Array of recipe IDs to delete (from recipe_list)'
+                    description: 'Recipe ids to delete (from recipe_list).'
                 }
             },
             required: ['recipeIds']
@@ -114,16 +114,16 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_move',
-        description: 'Move one or more recipes to a different project',
+        description: 'Move recipes to a different project.',
         parameters: {
             type: 'object',
             properties: {
                 recipeIds: {
                     type: 'array',
                     items: {type: 'string'},
-                    description: 'Array of recipe IDs to move'
+                    description: 'Recipe ids to move.'
                 },
-                projectId: {type: 'string', description: 'Target project ID'}
+                projectId: {type: 'string', description: 'Target project id.'}
             },
             required: ['recipeIds', 'projectId']
         },
@@ -132,11 +132,11 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_open',
-        description: 'Open a recipe in the SEPAL interface. **DO NOT call this after recipe_create or recipe_save — they already open the recipe automatically; calling recipe_open again is redundant.** Use this only when the user explicitly references a recipe they already have saved (typically via recipe_list) and asks to open it.',
+        description: 'Open an existing recipe in SEPAL. **DO NOT call after recipe_create / recipe_save — they auto-open.** Only use when user asks to open a previously saved recipe (typically from recipe_list).',
         parameters: {
             type: 'object',
             properties: {
-                recipeId: {type: 'string', description: 'The recipe ID to open'}
+                recipeId: {type: 'string', description: 'Recipe id to open.'}
             },
             required: ['recipeId']
         },
@@ -147,11 +147,11 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_close',
-        description: 'Tell the browser to close a recipe tab',
+        description: 'Close a recipe tab in the browser.',
         parameters: {
             type: 'object',
             properties: {
-                recipeId: {type: 'string', description: 'The recipe ID to close'}
+                recipeId: {type: 'string', description: 'Recipe id to close.'}
             },
             required: ['recipeId']
         },

@@ -2,13 +2,13 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/opticalMosaic/schema.json",
     "title": "OpticalMosaicRecipe",
-    "description": "A SEPAL Optical Mosaic recipe model. Produces a cloud-free composite mosaic from optical satellite imagery (Landsat 4–9, Sentinel-2) over a defined area, season, and processing options.\n\n**What this recipe is for.** Optical sensors record reflected sunlight across the visible/NIR/SWIR spectrum. Unlike radar, they cannot see through clouds — every scene contains some cloudy pixels that must be detected and replaced. The recipe collects all scenes in the configured season, masks clouds/shadows/snow per-pixel, and composites the remaining clear pixels into a single per-pixel best-guess mosaic.\n\n**Bands produced.** Common optical bands across the selected sources (typically `blue, green, red, nir, swir1, swir2`) plus per-sensor extras (Sentinel-2 red-edge bands, Landsat thermal, etc.) and metadata bands (`dayOfYear, daysFromTarget`). Spectral indexes (`ndvi, ndmi, evi, nbr, …`) can be requested as outputs.\n\n**Output values.** With Surface Reflectance correction (`SR` in `corrections`), reflectance values are scaled to [0, 10000] (representing 0–100 % reflectance × 10000); without it, top-of-atmosphere reflectance in the same scaling. Spectral indexes are similarly scaled by 10000 (so NDVI in [-10000, 10000]).\n\nThis schema describes the persisted `model` object of an *initialized* recipe. It does not cover UI state, recipe id, or recipe metadata. Cross-field constraints that JSON Schema cannot express are enforced by the companion rules.",
+    "description": "Cloud-free optical mosaic from Landsat 4–9 and/or Sentinel-2. Optical sensors record reflected sunlight; cannot see through clouds, so cloudy pixels must be detected and replaced. Pipeline: collect scenes in season → mask clouds/shadows/snow per pixel → composite remaining clear pixels.\n\n**Output values.** With `SR` correction, surface reflectance scaled to [0, 10000] (×100 of percent reflectance); without `SR`, top-of-atmosphere at the same scaling. Spectral indexes also ×10000 (NDVI in [-10000, 10000]).\n\nBands: common optical (`blue, green, red, nir, swir1, swir2`) + per-sensor extras (S2 red-edge, Landsat thermal) + metadata (`dayOfYear, daysFromTarget`). Spectral indexes (`ndvi, ndmi, evi, nbr, …`) requestable as outputs.\n\nCross-field constraints (date windows, SR/CALIBRATE exclusivity, cloud-method availability, multi-source-needs-CALIBRATE-and-ALL) live in companion rules.js.",
     "type": "object",
     "additionalProperties": false,
     "required": ["aoi", "dates", "sources", "sceneSelectionOptions", "compositeOptions"],
     "properties": {
         "aoi": {
-            "description": "Area of Interest. Optical mosaic supports an Earth Engine table (country/area selection or user-supplied table) or a hand-drawn polygon. The asset-bounds variant is not valid for this recipe — optical mosaic does not wrap a single asset.\n\nSee the AOI schema definitions for variant details. Required from the user; there is no sensible default.",
+            "description": "Area of Interest. EE table or polygon — `ASSET_BOUNDS` not valid here. User must provide; no default.",
             "oneOf": [
                 {"$ref": "../shared/aoi.schema.json#/$defs/eeTable"},
                 {"$ref": "../shared/aoi.schema.json#/$defs/polygon"}
@@ -20,7 +20,7 @@
         "compositeOptions": {"$ref": "#/$defs/compositeOptions"},
         "scenes": {
             "type": "object",
-            "description": "Manually selected scenes per scene area, used only when `sceneSelectionOptions.type === 'SELECT'`. Keys are scene-area ids (Sentinel-2 MGRS tiles or Landsat WRS-2 path/row strings); values are arrays of selected scene descriptors. Leave as `{}` (or omit) for `ALL` mode.\n\nThe internal scene-descriptor shape is intentionally not constrained here — it is populated by the GUI's manual scene picker and round-tripped opaquely by the recipe pipeline. The LLM should not synthesize scene descriptors; it should choose `sceneSelectionOptions.type='ALL'` instead."
+            "description": "Manual scene picks per scene-area, used only when `sceneSelectionOptions.type='SELECT'`. Keys are MGRS tile / WRS-2 path-row strings; values are scene-descriptor arrays. Leave `{}` for ALL mode. The LLM can't synthesize scene descriptors — choose ALL instead."
         }
     },
     "$defs": {
@@ -28,42 +28,42 @@
             "type": "string",
             "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
             "format": "date",
-            "description": "Date as YYYY-MM-DD."
+            "description": "YYYY-MM-DD."
         },
         "dates": {
             "title": "OpticalMosaicDates",
-            "description": "Time scope for the mosaic. Optical mosaic uses a *seasonal* model: a target date plus a season window that may extend across a year boundary, optionally repeated across multiple years.\n\n- `targetDate` — the date the mosaic represents. Scenes acquired closer to this date receive higher weight in MEDOID compositing and target-date-weighted scene ranking.\n- `seasonStart`, `seasonEnd` — the **half-open** seasonal window `[seasonStart, seasonEnd)`. **`seasonStart` is inclusive; `seasonEnd` is exclusive** — scenes acquired ON `seasonEnd` are NOT included. To capture the full calendar year 2024 set `seasonStart='2024-01-01'` and `seasonEnd='2025-01-01'` (NOT `'2024-12-31'`). Wraparound is allowed: `seasonStart='2024-12-01'`, `seasonEnd='2025-03-01'` selects December–February. `seasonStart` must lie within the year ending at `targetDate`; `seasonEnd` must lie within the year following `targetDate`.\n- `yearsBefore` / `yearsAfter` — number of additional past/future years of the same season to include. `yearsBefore=2, yearsAfter=0` with a 2024 dry-season window pulls 2022, 2023, 2024 dry seasons.\n\n**Coverage.** Earliest valid `targetDate` is **1982-08-22** (Landsat 4 launch — start of useful Landsat-MSS-class coverage). Sentinel-2 imagery is only available from 2015 onward, so a pre-2015 target with a Sentinel-2-only source will silently produce empty mosaics. Future `targetDate` values are accepted (the mosaic represents an aspirational seasonal snapshot — late-season scenes will be missing if they have not yet been acquired).\n\n**Multi-year aggregation tradeoffs.** Adding `yearsBefore` / `yearsAfter` is the easiest way to fill gaps in cloudy regions, but blurs the temporal meaning of the mosaic — pixels may come from any of the included years. Use sparingly when the user wants a snapshot; use freely (5–25 years) when the user wants a long-term composite for stable land cover.",
+            "description": "Seasonal model: target date + season window, optionally repeated across years.\n- `targetDate` — what the mosaic represents. Scenes nearer this date get higher weight in MEDOID compositing and target-date-weighted ranking.\n- `seasonStart` (inclusive), `seasonEnd` (exclusive) — half-open window each year. Full year 2024: `seasonStart='2024-01-01'`, `seasonEnd='2025-01-01'` (NOT `2024-12-31`). Wraparound allowed: `2024-12-01` → `2025-03-01` selects Dec–Feb. `seasonStart` ∈ [targetDate − 1y + 1d, targetDate]; `seasonEnd` ∈ [targetDate + 1d, targetDate + 1y].\n- `yearsBefore` / `yearsAfter` — additional past/future years of same season. `yearsBefore=2, yearsAfter=0` with 2024 dry season → 2022, 2023, 2024.\n\n**Coverage.** Earliest `targetDate` 1982-08-22 (Landsat-4). S2 only from 2015 — pre-2015 target with S2-only source produces empty mosaics silently. Future `targetDate` allowed (aspirational seasonal snapshot; late-season scenes missing if not yet acquired).\n\n**Multi-year tradeoff.** Adding `yearsBefore`/`yearsAfter` fills gaps in cloudy regions but blurs temporal meaning (pixels may come from any included year). Sparingly for snapshots; freely (5–25y) for long-term composites over stable land cover.",
             "type": "object",
             "additionalProperties": false,
             "required": ["targetDate", "seasonStart", "seasonEnd", "yearsBefore", "yearsAfter"],
             "properties": {
                 "type": {
                     "const": "YEARLY_TIME_SCAN",
-                    "description": "Optional mode tag. Only accepted value is `YEARLY_TIME_SCAN`. The EE backend ignores this field, and the GUI's dates panel strips it on every save — so most real-world models do not have it. Provided for backwards compatibility only; the LLM does not need to set it."
+                    "description": "Optional legacy mode tag. EE backend ignores; GUI strips on save. Don't set."
                 },
                 "targetDate": {
                     "$ref": "#/$defs/date",
-                    "description": "Date the mosaic represents. Scenes nearer this date are preferred when ranking. Must be on or after `1982-08-22` (Landsat-4 launch). Future targetDates are allowed."
+                    "description": "Anchor date. ≥ 1982-08-22 (Landsat-4 launch). Future dates allowed."
                 },
                 "seasonStart": {
                     "$ref": "#/$defs/date",
-                    "description": "**Inclusive** start of the eligibility window for scenes (each year of the season). Scenes acquired ON `seasonStart` are included. Must be within `[targetDate − 1 year + 1 day, targetDate]`. For a calendar-year mosaic, set this to January 1 of `targetDate`'s year."
+                    "description": "Inclusive season start. Must be in [targetDate − 1y + 1d, targetDate]. For calendar-year mosaic, set to Jan 1 of `targetDate`'s year."
                 },
                 "seasonEnd": {
                     "$ref": "#/$defs/date",
-                    "description": "**Exclusive** end of the eligibility window (each year of the season). Scenes acquired ON `seasonEnd` are NOT included — set `seasonEnd` to the day AFTER the last day you want covered. For the full calendar year 2024 use `2025-01-01`, NOT `2024-12-31`. Must be within `[targetDate + 1 day, targetDate + 1 year]`."
+                    "description": "Exclusive season end — set to day AFTER last covered day. Full year 2024 → `2025-01-01` (NOT `2024-12-31`). Must be in [targetDate + 1d, targetDate + 1y]."
                 },
                 "yearsBefore": {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 25,
-                    "description": "Additional past years of the same season to include. `0` (default) uses only the season anchored on `targetDate`'s year. Values up to 25 are allowed; the GUI snaps to typical values 0, 1, 2, 3, 5, 10, 25."
+                    "description": "Past years of same season to include. Default 0."
                 },
                 "yearsAfter": {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 25,
-                    "description": "Additional future years of the same season to include. `0` (default) uses only the season anchored on `targetDate`'s year. Values up to 25 are allowed; the GUI snaps to typical values 0, 1, 2, 3, 5, 10, 25. Future years beyond today simply contribute no scenes."
+                    "description": "Future years of same season to include. Default 0. Years beyond today contribute no scenes."
                 }
             },
             "examples": [
@@ -73,7 +73,7 @@
         },
         "sources": {
             "title": "OpticalMosaicSources",
-            "description": "Which satellites to draw scenes from, and the maximum scene-level cloud cover for filtering before per-pixel cloud masking. The recipe groups data sets under their source: `LANDSAT` (Landsat 4-9 missions, Tier 1 by default; Tier 2 variants prefixed `_T2`) and `SENTINEL_2`.\n\n**Choosing sources.** Landsat (30 m) has a 1982-onward archive and is the canonical choice for long-term studies. Sentinel-2 (10 m) starts in 2015, has a 5-day revisit, and produces visibly sharper mosaics where applicable. Combining both increases scene density at the cost of cross-sensor calibration overhead and forces `sceneSelectionOptions.type='ALL'`.\n\n**Tier 2 (`_T2`) variants** include scenes that failed the Tier 1 quality checks (typically due to incomplete metadata or geometric/radiometric anomalies). They add coverage but with lower confidence per scene; use only when Tier 1 leaves gaps you can't fill another way.",
+            "description": "Satellite sources + scene-level cloud-cover prefilter.\n- LANDSAT (30 m, 1982-onward, canonical for long-term studies; Tier 1 default, Tier 2 `_T2` variants are scenes that failed Tier 1 quality — add coverage at lower per-scene confidence).\n- SENTINEL_2 (10 m, 2015+, 5-day revisit, sharper).\n\nCombining both increases scene density at cross-sensor calibration cost: requires `compositeOptions.corrections` to include `CALIBRATE` and forces `sceneSelectionOptions.type='ALL'`.",
             "type": "object",
             "additionalProperties": false,
             "required": ["cloudPercentageThreshold", "dataSets"],
@@ -82,13 +82,13 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 100,
-                    "description": "Maximum scene-level cloud cover (percent) for a scene to be considered. The cloud cover value comes from each scene's metadata (CLOUD_COVER for Landsat, CLOUDY_PIXEL_PERCENTAGE for Sentinel-2) — it is the producer's per-scene estimate, not a per-pixel measurement. Scenes above this threshold are dropped before any per-pixel cloud masking.\n\n- `100` — accept every scene; rely entirely on per-pixel cloud masking.\n- `75` (default) — drop the very cloudiest scenes but keep most. Reasonable middle ground.\n- `25–50` — be selective. Useful when scene density is high (many revisits) and quality matters more than coverage.\n- `0–10` — only nearly-cloud-free scenes. Use only in regions with abundant clear acquisitions.\n\nThe GUI snaps to typical values 0, 10, 25, 50, 75, 90, 100; any integer in [0, 100] is accepted."
+                    "description": "Max scene-level cloud cover (CLOUD_COVER for LS, CLOUDY_PIXEL_PERCENTAGE for S2 — producer's per-scene metadata estimate, not per-pixel). Scenes above are dropped before per-pixel masking.\n- 100 — accept all; rely on per-pixel masking.\n- 75 (default) — drop cloudiest, keep most.\n- 25–50 — selective; for high-revisit regions where quality > coverage.\n- 0–10 — only nearly-cloud-free; only abundant clear-acquisition regions."
                 },
                 "dataSets": {
                     "type": "object",
                     "additionalProperties": false,
                     "minProperties": 1,
-                    "description": "Map of source group → array of dataset ids selected from that group. At least one group must be present, and at least one dataset within it. When BOTH groups are present, cross-sensor band calibration is required (`compositeOptions.corrections` must include `CALIBRATE`) and manual scene selection is disabled (`sceneSelectionOptions.type` is forced to `ALL`).",
+                    "description": "Source group → dataset ids. ≥1 group, ≥1 dataset within. Both groups → cross-sensor calibration required and manual scene selection disabled.",
                     "properties": {
                         "LANDSAT": {
                             "type": "array",
@@ -100,14 +100,14 @@
                                     "LANDSAT_9_T2", "LANDSAT_8_T2", "LANDSAT_7_T2", "LANDSAT_TM_T2"
                                 ]
                             },
-                            "description": "Landsat missions to include. `LANDSAT_9` (2021+), `LANDSAT_8` (2013+), `LANDSAT_7` (1999+), `LANDSAT_TM` (Landsat 4-5, 1982-2012). The `_T2` variants are Tier 2 collections — the same scenes that did not meet Tier 1 quality criteria; lower per-scene confidence but extra coverage. Default `['LANDSAT_9', 'LANDSAT_8']`."
+                            "description": "Landsat missions. `LANDSAT_9` (2021+), `LANDSAT_8` (2013+), `LANDSAT_7` (1999+), `LANDSAT_TM` (4–5, 1982–2012). `_T2` = Tier 2 (lower per-scene confidence; extra coverage). Default `['LANDSAT_9','LANDSAT_8']`."
                         },
                         "SENTINEL_2": {
                             "type": "array",
                             "minItems": 1,
                             "uniqueItems": true,
                             "items": {"enum": ["SENTINEL_2"]},
-                            "description": "Sentinel-2 mission. The only valid entry is `SENTINEL_2` (the constellation is treated as a single dataset; coverage from 2015 onward, 10 m bands)."
+                            "description": "Sentinel-2 (2015+, 10 m). Single-value enum."
                         }
                     }
                 }
@@ -115,24 +115,24 @@
         },
         "sceneSelectionOptions": {
             "title": "OpticalMosaicSceneSelectionOptions",
-            "description": "How scenes from the eligible pool are chosen. Two modes:\n\n- `ALL` — use every eligible scene. The composite is computed from all per-pixel observations; per-scene quality is irrelevant beyond the `cloudPercentageThreshold` filter. This is the default and the only mode usable with multiple source groups.\n- `SELECT` — rank scenes per scene-area (a Sentinel-2 MGRS tile or Landsat WRS-2 path/row) and either auto-pick the top-N or let the user manually choose them via the scene-picker UI. Available only with a single source group; selected scenes are persisted in the top-level `scenes` object.\n\nThe LLM should virtually always choose `ALL`. Manual scene selection is a workflow that depends on the GUI; an LLM has no useful way to populate `scenes`.",
+            "description": "How scenes are chosen from the eligible pool.\n- `ALL` (default) — every eligible scene; per-scene quality only filtered by `cloudPercentageThreshold`. Required when both source groups selected.\n- `SELECT` — rank scenes per scene-area (MGRS tile or WRS-2 path-row), auto top-N or manual GUI pick. Single source group only; selections persisted in top-level `scenes`.\n\n**LLM should virtually always choose ALL** — no useful way to populate `scenes`.",
             "type": "object",
             "additionalProperties": false,
             "required": ["type", "targetDateWeight"],
             "properties": {
                 "type": {
                     "enum": ["ALL", "SELECT"],
-                    "description": "Scene selection mode. `ALL` uses every eligible scene (default and recommended). `SELECT` enables manual scene picking; only valid with a single source group."
+                    "description": "`ALL` (default, recommended) or `SELECT` (single source group only)."
                 },
                 "targetDateWeight": {
                     "enum": [0, 0.5, 1],
-                    "description": "Trade-off between target-date proximity and cloud-free quality when ranking scenes for `SELECT` mode. `0` = pure cloud-free preference (default), `0.5` = balanced, `1` = pure target-date preference. Has no effect when `type='ALL'`."
+                    "description": "Trade-off when ranking scenes for `SELECT`. 0 = pure cloud-free (default), 0.5 = balanced, 1 = pure target-date proximity. No effect when `type='ALL'`."
                 }
             }
         },
         "compositeOptions": {
             "title": "OpticalMosaicCompositeOptions",
-            "description": "Per-scene processing and per-pixel compositing options. Roughly grouped by purpose:\n\n- **Corrections** (`corrections`, `brdfMultiplier`) — apply Surface Reflectance, BRDF, cross-sensor band calibration before compositing.\n- **Sentinel-2 overlap handling** (`orbitOverlap`, `tileOverlap`) — deduplicate redundant Sentinel-2 acquisitions.\n- **Per-pixel cloud masking** (`includedCloudMasking` plus per-method tuning) — multiple methods can run; the masks are unioned. `cloudBuffer` enlarges every cloud detection.\n- **Other masks** (`snowMasking`, `holes`).\n- **Quality filters** (`filters`) — per-scene scoring of shadow/haze/seasonality, used to drop the worst scenes after masking.\n- **Compositing method** (`compose`) — how surviving per-pixel observations are reduced into a single value.\n\nMany fields are conditionally meaningful — read each field's description and the cross-field rules.",
+            "description": "Per-scene processing + per-pixel compositing. Groups: corrections (`corrections`, `brdfMultiplier`); S2 dedup (`orbitOverlap`, `tileOverlap`); per-pixel cloud masking (`includedCloudMasking` + per-method tuning + `cloudBuffer`); other masks (`snowMasking`, `holes`); per-scene quality filters (`filters`); per-pixel reduction (`compose`). Many fields conditional — see per-field and rules.js.",
             "type": "object",
             "additionalProperties": false,
             "required": ["corrections", "filters", "orbitOverlap", "tileOverlap", "includedCloudMasking", "cloudBuffer", "holes", "snowMasking", "compose"],
@@ -141,18 +141,18 @@
                     "type": "array",
                     "uniqueItems": true,
                     "items": {"enum": ["SR", "BRDF", "CALIBRATE"]},
-                    "description": "Pre-compositing corrections applied to every scene.\n\n- `SR` — Surface Reflectance. Atmospheric correction is applied (Landsat: USGS Collection 2 SR; Sentinel-2: ESA L2A). Strongly recommended for any quantitative analysis (indexes, classification, regression). Default includes `SR`.\n- `BRDF` — Bidirectional Reflectance Distribution Function correction. Removes view-angle-dependent reflectance variation across a scene; especially noticeable in Sentinel-2 east-west scene edges. Cheap for Landsat. **Expensive for Sentinel-2** — per-scene c-factor computation scales with scene count and can substantially extend retrieval time on large Sentinel-2 mosaics. Keep it on by default; consider dropping it for Sentinel-2-heavy mosaics if the user is hitting compute limits and accepts visible orbit-edge banding.\n- `CALIBRATE` — cross-sensor band calibration. Required when combining Landsat AND Sentinel-2 sources; uses TOA reflectance to adjust band differences so the composite is internally consistent. **Must NOT be combined with `SR`** (cross-sensor calibration uses TOA values; the SEPAL implementation does not derive calibrated SR). Implies multiple source groups in `sources.dataSets`.\n\nDefault `['SR', 'BRDF']`. When deriving a model from defaults and changing `sources.dataSets`, update this field explicitly: keep `['SR', 'BRDF']` for single-source Landsat or Sentinel-2 mosaics; use `['BRDF', 'CALIBRATE']` for combined Landsat + Sentinel-2 mosaics.",
+                    "description": "Pre-compositing corrections.\n- `SR` — Surface Reflectance (atmospheric correction; LS: USGS Collection 2 SR; S2: ESA L2A). Strongly recommended for any quantitative analysis (indexes, classification, regression). Default includes SR.\n- `BRDF` — Bidirectional Reflectance Distribution Function. Removes view-angle-dependent variation, especially S2 east-west scene edges. Cheap on Landsat. **Expensive on Sentinel-2** — per-scene c-factor scales with scene count; can substantially extend retrieval time on large S2 mosaics. Keep on by default; consider dropping only for S2-heavy mosaics hitting compute limits and accepting visible orbit-edge banding.\n- `CALIBRATE` — cross-sensor band calibration via TOA. Required for combined LS+S2 sources. **Mutually exclusive with `SR`** (CALIBRATE works on TOA; SEPAL doesn't derive calibrated SR).\n\nDefault `['SR','BRDF']` for single-source. Use `['BRDF','CALIBRATE']` for combined LS+S2.",
                     "examples": [["SR", "BRDF"], ["BRDF", "CALIBRATE"], ["SR"]]
                 },
                 "brdfMultiplier": {
                     "type": "number",
                     "exclusiveMinimum": 0,
-                    "description": "Strength multiplier for the BRDF correction. The c-factor adjustment is multiplied by this value before being applied; `1` is the textbook correction, `4` (default) provides a moderately stronger normalization that empirically produces flatter Sentinel-2 mosaics. Used only when `corrections` includes `BRDF`. Must be > 0; very high values (>10) over-correct and produce visible color shifts."
+                    "description": "BRDF c-factor strength. 1 = textbook; 4 (default) = empirically flatter S2 mosaics; >10 over-corrects, visible color shifts. Used only when `corrections` includes `BRDF`."
                 },
                 "filters": {
                     "type": "array",
                     "uniqueItems": true,
-                    "description": "Per-scene quality filters that drop the lowest-percentile scenes by some score. Each filter computes a score per scene (after cloud masking) and keeps scenes above the chosen percentile of the score distribution.\n\nDefault `[]` (no filters). Filters tighten the scene pool at the cost of coverage; use sparingly when the result has too many low-quality contributors.",
+                    "description": "Per-scene quality filters that drop lowest-percentile scenes by score (after cloud masking). Default `[]`. Tightens the scene pool at coverage cost — sparingly, when result has too many low-quality contributors.",
                     "items": {
                         "type": "object",
                         "additionalProperties": false,
@@ -160,30 +160,30 @@
                         "properties": {
                             "type": {
                                 "enum": ["SHADOW", "HAZE", "NDVI", "DAY_OF_YEAR"],
-                                "description": "Score the filter ranks scenes by.\n\n- `SHADOW` — fraction of pixels classified as shadow. Drops the shadowiest scenes.\n- `HAZE` — atmospheric haze score from blue-band brightness. Drops the haziest scenes. **Not available with `corrections` containing `SR`** (the SR correction has already removed atmosphere).\n- `NDVI` — scene-mean NDVI. Drops the lowest-vegetation scenes — useful in vegetated AOIs where low-NDVI scenes typically indicate cloud/haze contamination missed by other masks.\n- `DAY_OF_YEAR` — closeness to `targetDate`. Drops scenes farthest from the target. Useful for sharpening seasonality."
+                                "description": "Scoring axis.\n- `SHADOW` — drop shadowiest scenes.\n- `HAZE` — blue-band brightness. **Incompatible with `SR`** (atmosphere already removed).\n- `NDVI` — drop lowest-vegetation scenes (catches missed cloud/haze in vegetated AOIs).\n- `DAY_OF_YEAR` — drop scenes farthest from `targetDate`. Sharpens seasonality."
                             },
                             "percentile": {
                                 "type": "integer",
                                 "minimum": 0,
                                 "maximum": 100,
-                                "description": "Percentile threshold. `0` is off (no filtering); `100` is most aggressive (keeps only the single best scene). Default when adding a filter via the GUI is `50` (drop the worse half). The GUI snaps to 0, 10, 25, 50, 75, 90, 100."
+                                "description": "Threshold percentile. 0 = off; 50 (GUI default when adding) = drop worse half; 100 = keep only single best scene."
                             }
                         }
                     }
                 },
                 "orbitOverlap": {
                     "enum": ["KEEP", "REMOVE"],
-                    "description": "How to handle Sentinel-2 orbit overlap — adjacent relative orbits cover overlap strips, producing duplicate observations from different look angles.\n\n- `KEEP` (default) — keep both. Maximum scene density; can introduce subtle striping at orbit boundaries due to view-angle differences.\n- `REMOVE` — keep only one observation per overlap. Removes striping at the cost of fewer observations per pixel.\n\nIgnored when `sources.dataSets` does not include `SENTINEL_2`."
+                    "description": "S2 orbit overlap (adjacent relative orbits cover overlap strips at different look angles).\n- `KEEP` (default) — both. Max scene density; subtle striping at orbit boundaries possible.\n- `REMOVE` — one observation per overlap. Removes striping at cost of fewer obs per pixel.\n\nIgnored without S2."
                 },
                 "tileOverlap": {
                     "enum": ["KEEP", "QUICK_REMOVE", "REMOVE"],
-                    "description": "How to handle Sentinel-2 MGRS tile overlap — adjacent tiles share overlap zones with two copies of the same data.\n\n- `KEEP` — keep both. Pixels in overlap zones are processed twice, harmless but wasteful.\n- `QUICK_REMOVE` (default) — fast deduplication using a per-tile geometry test. Cheap; usually sufficient.\n- `REMOVE` — exact per-pixel deduplication. More expensive but more thorough.\n\nIgnored when `sources.dataSets` does not include `SENTINEL_2`."
+                    "description": "S2 MGRS tile overlap dedup.\n- `KEEP` — both (overlap pixels processed twice; harmless, wasteful).\n- `QUICK_REMOVE` (default) — fast geometry-based dedup; usually sufficient.\n- `REMOVE` — exact per-pixel dedup; more expensive, more thorough.\n\nIgnored without S2."
                 },
                 "includedCloudMasking": {
                     "type": "array",
                     "uniqueItems": true,
                     "items": {"enum": ["sepalCloudScore", "landsatCFMask", "sentinel2CloudScorePlus", "sentinel2CloudProbability", "pino26"]},
-                    "description": "Per-pixel cloud-masking methods to apply. The masks from each enabled method are unioned (a pixel is masked if any method flags it). Each method has its own tuning fields below.\n\nAvailability constraints:\n- `sepalCloudScore` — universal; works with all sources.\n- `landsatCFMask` — requires `sources.dataSets.LANDSAT`.\n- `sentinel2CloudScorePlus` — requires `sources.dataSets.SENTINEL_2`.\n- `sentinel2CloudProbability` — requires `sources.dataSets.SENTINEL_2`. Older method, largely superseded by Cloud Score+; included for backwards compatibility.\n- `pino26` — requires Sentinel-2 ONLY (no Landsat) AND `corrections` must NOT include `SR`. Aggressive empirical mask using TOA bands.\n\nDefault `['sepalCloudScore', 'landsatCFMask']`. When deriving a model from defaults and changing `sources.dataSets`, update this field explicitly: use `['sepalCloudScore', 'sentinel2CloudScorePlus']` for Sentinel-2-only mosaics; include both sensor-specific methods for combined Landsat + Sentinel-2 mosaics.",
+                    "description": "Per-pixel cloud-masking methods (masks unioned — pixel masked if any method flags it). Each method has its own tuning fields.\n\nAvailability:\n- `sepalCloudScore` — universal.\n- `landsatCFMask` — requires LANDSAT.\n- `sentinel2CloudScorePlus` — requires S2.\n- `sentinel2CloudProbability` — requires S2. Older; largely superseded by Cloud Score+; kept for backwards compat.\n- `pino26` — requires S2 ONLY (no LS) AND no `SR`. Aggressive empirical TOA mask.\n\nDefault `['sepalCloudScore','landsatCFMask']`. For S2-only mosaics: `['sepalCloudScore','sentinel2CloudScorePlus']`. For LS+S2: include both sensor-specific.",
                     "examples": [
                         ["sepalCloudScore", "landsatCFMask", "sentinel2CloudScorePlus"],
                         ["sepalCloudScore"],
@@ -194,55 +194,55 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 100,
-                    "description": "Threshold for the older Sentinel-2 cloud probability mask: pixels with cloud probability above this are masked. Lower → more aggressive masking, more holes; higher → looser masking, more residual clouds. Default `65`. Used only when `includedCloudMasking` contains `sentinel2CloudProbability`."
+                    "description": "Threshold for older S2 cloud-probability mask. Lower = more aggressive (more holes); higher = looser (more residual clouds). Default 65. Used only with `sentinel2CloudProbability`."
                 },
                 "sentinel2CloudScorePlusBand": {
                     "enum": ["cs", "cs_cdf"],
-                    "description": "Which Cloud Score+ band to threshold on. `cs` is the raw clear-sky score; `cs_cdf` is the CDF-normalized variant — interpretable across regions. `cs_cdf` (default) is recommended; use `cs` only when comparing with prior work that used it. Used only when `includedCloudMasking` contains `sentinel2CloudScorePlus`."
+                    "description": "Cloud Score+ band. `cs` = raw clear-sky score; `cs_cdf` (default) = CDF-normalized, cross-region comparable. Use `cs` only when matching prior work."
                 },
                 "sentinel2CloudScorePlusMaxCloudProbability": {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 100,
-                    "description": "Threshold (in %) for Cloud Score+ masking — pixels whose chosen Cloud Score+ band indicates more than this much cloud are masked. Lower is more aggressive. Default `45`. Used only when `includedCloudMasking` contains `sentinel2CloudScorePlus`."
+                    "description": "Threshold (%) for Cloud Score+. Lower = more aggressive. Default 45. Used only with `sentinel2CloudScorePlus`."
                 },
                 "landsatCFMaskCloudMasking": {
                     "enum": ["OFF", "MODERATE", "AGGRESSIVE"],
-                    "description": "Aggressiveness of CFMask cloud-pixel masking on Landsat. `OFF` keeps everything CFMask flagged as cloud; `MODERATE` (default) masks pixels with high cloud confidence; `AGGRESSIVE` masks any pixel CFMask flagged. Used only when `includedCloudMasking` contains `landsatCFMask`."
+                    "description": "CFMask cloud-pixel aggressiveness. OFF keeps everything CFMask flagged as cloud; MODERATE (default) masks high-confidence cloud; AGGRESSIVE masks any flagged. Used only with `landsatCFMask`."
                 },
                 "landsatCFMaskCloudShadowMasking": {
                     "enum": ["OFF", "MODERATE", "AGGRESSIVE"],
-                    "description": "Aggressiveness of CFMask cloud-shadow masking on Landsat. Same OFF/MODERATE/AGGRESSIVE semantics. Default `MODERATE`. Used only when `includedCloudMasking` contains `landsatCFMask`."
+                    "description": "CFMask cloud-shadow aggressiveness. Default MODERATE. Used only with `landsatCFMask`."
                 },
                 "landsatCFMaskCirrusMasking": {
                     "enum": ["OFF", "MODERATE", "AGGRESSIVE"],
-                    "description": "Aggressiveness of CFMask cirrus masking on Landsat (cirrus = thin high cloud, usually only detectable on the cirrus band). Default `MODERATE`. Used only when `includedCloudMasking` contains `landsatCFMask`."
+                    "description": "CFMask cirrus aggressiveness (thin high cloud, cirrus-band only). Default MODERATE. Used only with `landsatCFMask`."
                 },
                 "landsatCFMaskDilatedCloud": {
                     "enum": ["KEEP", "REMOVE"],
-                    "description": "Whether to also mask CFMask's dilated-cloud pixels — the buffer of edge pixels CFMask flags around clouds. `REMOVE` (default) is conservative; `KEEP` retains the dilated buffer at the cost of more cloud-edge contamination. Used only when `includedCloudMasking` contains `landsatCFMask`."
+                    "description": "CFMask dilated-cloud edge buffer. `REMOVE` (default, conservative) drops it; `KEEP` retains buffer at cost of more cloud-edge contamination. Used only with `landsatCFMask`."
                 },
                 "sepalCloudScoreMaxCloudProbability": {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 100,
-                    "description": "Threshold for the SEPAL cloud-score mask — pixels whose computed score exceeds this are masked. Lower is more aggressive. Default `30`. Used only when `includedCloudMasking` contains `sepalCloudScore`."
+                    "description": "Threshold for SEPAL cloud-score mask. Lower = more aggressive. Default 30. Used only with `sepalCloudScore`."
                 },
                 "cloudBuffer": {
                     "enum": [0, 120, 600],
-                    "description": "Buffer (in meters) added around every detected cloud pixel before masking. The cloud-pixel detectors miss cloud edges; a buffer dilates each detection to catch them.\n\n- `0` (default) — no buffer.\n- `120` — moderate buffer (~4 Sentinel-2 pixels, ~4 Landsat pixels). Reduces cloud-edge contamination.\n- `600` — aggressive buffer. Use only in heavily cloud-affected scenes; produces large holes.\n\n**Cost warning.** Buffering is expensive — every cloud pixel triggers a morphological dilation per scene, and cost grows with both buffer size and cloud fraction; on cloudy AOIs the larger options can dominate retrieval time. **Leave at `0` unless the user explicitly asks to mask cloud edges more aggressively, or you've already tried with no buffer and the user is unhappy with cloud-edge contamination.**\n\nDiscrete enum because the GUI's Form.Buttons exposes only these three values; the implementation accepts only these three."
+                    "description": "Buffer (meters) around detected cloud pixels — cloud-pixel detectors miss edges; buffer dilates each detection.\n- 0 (default) — no buffer.\n- 120 — moderate (~4 S2/LS pixels). Reduces cloud-edge contamination.\n- 600 — aggressive. Heavy cloud-affected scenes only; produces large holes.\n\n**Cost warning.** Buffering is expensive — every cloud pixel triggers a morphological dilation per scene; cost grows with both buffer size and cloud fraction; on cloudy AOIs the larger options can dominate retrieval time. **Leave at 0 unless the user explicitly asks to mask cloud edges more aggressively, or you've already tried with no buffer and the user is unhappy with cloud-edge contamination.**\n\nDiscrete enum because the implementation accepts only these three."
                 },
                 "holes": {
                     "enum": ["PREVENT", "ALLOW"],
-                    "description": "How to handle pixels with no clear observations.\n\n- `ALLOW` (default) — leave such pixels masked (transparent in the output). Visualizations show holes where no cloud-free data was available. The right choice when downstream consumers need to know which pixels are reliable.\n- `PREVENT` — fill holes by relaxing the cloud mask in the holiest places (lowest-quality observations are accepted to keep coverage). Produces a hole-free mosaic at the cost of degraded quality where data was scarce. Useful for visual products and basemaps."
+                    "description": "Pixels with no clear observations.\n- `ALLOW` (default) — leave masked (transparent in output). Right when downstream needs to know which pixels are reliable.\n- `PREVENT` — fill by relaxing cloud mask in worst spots (lowest-quality observations accepted). Hole-free at cost of degraded quality where data scarce. Visual products / basemaps only."
                 },
                 "snowMasking": {
                     "enum": ["ON", "OFF"],
-                    "description": "Whether to mask snow pixels.\n\n- `ON` (default) — snow is masked along with clouds. Right for most thematic mapping (snow is rarely the target signal and confuses cloud detectors).\n- `OFF` — keep snow. Use for snow/ice studies, cryosphere monitoring, or any analysis where snow is the signal."
+                    "description": "`ON` (default) masks snow with clouds — right for most thematic mapping (snow rarely the target signal; confuses cloud detectors). `OFF` for snow/ice studies, cryosphere monitoring, or any analysis where snow is the signal."
                 },
                 "compose": {
                     "enum": ["MEDOID", "MEDIAN"],
-                    "description": "Per-pixel reduction across surviving observations.\n\n- `MEDOID` (default) — pick the single observation per pixel whose multi-band vector is closest to the median across all observations. Preserves spectral integrity (no cross-band averaging artifacts) and per-pixel temporal coherence (the chosen observation is a real scene, not a synthetic blend). Recommended for indexes, classification, regression.\n- `MEDIAN` — per-band median. Smoothes noise but breaks spectral integrity (different bands may come from different scenes' best estimates) and produces no per-pixel acquisition date. Mostly used for visual products where smoothness matters more than fidelity."
+                    "description": "Per-pixel reduction across surviving observations.\n- `MEDOID` (default) — pick observation per pixel whose multi-band vector is closest to the temporal median. Preserves spectral integrity (no cross-band averaging) and per-pixel acquisition date. **Recommended for indexes, classification, regression.**\n- `MEDIAN` — per-band median. Smoothes noise but breaks spectral integrity (different bands may come from different scenes' best estimates) and produces no per-pixel date. Visual products where smoothness > fidelity."
                 }
             },
             "allOf": [

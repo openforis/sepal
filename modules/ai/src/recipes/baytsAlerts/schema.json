@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/baytsAlerts/schema.json",
     "title": "BaytsAlertsRecipe",
-    "description": "A SEPAL BayTS (Bayesian Time Series) Alerts recipe. Generates per-pixel deforestation/disturbance alerts from Sentinel-1 SAR data, comparing recent observations against a `BAYTS_HISTORICAL` reference distribution. Outputs alert pixels with confidence scores.\n\n**Pipeline.** (1) Load `reference` (a BayTS Historical recipe or its exported asset). (2) Pull recent S1 scenes covering the monitoring window ending at `date.monitoringEnd`, going back `date.monitoringDuration` months/years. (3) Compute Bayesian posterior for change at each pixel; emit alerts when probability exceeds thresholds.\n\n**Fields the LLM must populate.** `reference.{type, id}` (no sensible default — the user picks which BayTS Historical to monitor against). `date.monitoringEnd` defaults to today if omitted. All other fields have defaults the LLM can keep or tweak.",
+    "description": "Bayesian Time Series Alerts. Per-pixel S1 SAR disturbance alerts vs a `BAYTS_HISTORICAL` reference distribution. Outputs alert pixels with confidence scores.\n\nPipeline: load `reference` (BAYTS_HISTORICAL recipe/asset) → pull recent S1 covering monitoring window ending at `date.monitoringEnd`, going back `date.monitoringDuration` → Bayesian posterior for change → alerts above threshold.\n\n**LLM must set:** `reference.{type, id}` (which BAYTS_HISTORICAL — no default; user must build one first). `date.monitoringEnd` defaults to today.",
     "type": "object",
     "additionalProperties": true,
     "required": ["reference", "date", "options", "baytsAlertsOptions"],
@@ -11,7 +11,7 @@
         "date": {"$ref": "#/$defs/date"},
         "options": {
             "title": "BaytsAlertsOptions",
-            "description": "Sentinel-1 processing options. Same shape, defaults, and conditional requirements as `BAYTS_HISTORICAL.options` — typically copied verbatim from the historical reference. See that schema for full per-field documentation.",
+            "description": "S1 processing. Same shape + conditionals as `BAYTS_HISTORICAL.options` — typically copied verbatim from the reference.",
             "$ref": "../baytsHistorical/schema.json#/$defs/options"
         },
         "baytsAlertsOptions": {"$ref": "#/$defs/baytsAlertsOptions"}
@@ -19,7 +19,7 @@
     "$defs": {
         "reference": {
             "title": "BaytsAlertsReference",
-            "description": "BayTS Historical reference. Either a SEPAL BayTS Historical recipe or an Earth Engine asset id of an exported one. The user must run BayTS Historical first.",
+            "description": "SEPAL BAYTS_HISTORICAL recipe or EE asset id of an exported one. User must run BAYTS_HISTORICAL first.",
             "type": "object",
             "additionalProperties": true,
             "required": ["type", "id"],
@@ -30,7 +30,7 @@
         },
         "date": {
             "title": "BaytsAlertsDate",
-            "description": "Monitoring window: from `monitoringEnd - monitoringDuration` to `monitoringEnd` (exclusive end).",
+            "description": "Monitoring window: [monitoringEnd − monitoringDuration, monitoringEnd).",
             "type": "object",
             "additionalProperties": false,
             "required": ["monitoringDuration", "monitoringDurationUnit"],
@@ -39,12 +39,12 @@
                     "type": "string",
                     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
                     "format": "date",
-                    "description": "End of monitoring window (exclusive). Defaults to today when absent."
+                    "description": "Exclusive end of monitoring. Default = today."
                 },
-                "monitoringDuration": {"type": "integer", "minimum": 1, "description": "Length of monitoring window."},
+                "monitoringDuration": {"type": "integer", "minimum": 1, "description": "Window length."},
                 "monitoringDurationUnit": {
                     "enum": ["days", "weeks", "months"],
-                    "description": "Unit for monitoringDuration. (Backend accepts `years` too, but the GUI does not expose it.)"
+                    "description": "Unit. (Backend also accepts `years`, but GUI doesn't expose it.)"
                 }
             }
         },
@@ -56,15 +56,15 @@
             "properties": {
                 "wetlandMaskAsset": {
                     "type": "string",
-                    "description": "Optional EE asset id for a wetland mask. Default: `users/wiell/SepalResources/wetlandMask_v1`. Set to empty string to disable."
+                    "description": "Wetland mask EE asset id. Default `users/wiell/SepalResources/wetlandMask_v1`. Empty string = disable."
                 },
-                "normalization": {"enum": ["ENABLED", "DISABLED"], "description": "Whether to normalize per-orbit means to the historical reference."},
-                "sensitivity": {"type": "number", "exclusiveMinimum": 0, "description": "Algorithm sensitivity multiplier. Default `1`."},
-                "maxDays": {"type": "integer", "minimum": 1, "description": "Maximum days to wait for a confirmation observation. Default `90`."},
-                "highConfidenceThreshold": {"type": "number", "minimum": 0, "maximum": 1, "description": "Posterior threshold for HIGH-confidence alerts. Default `0.975`."},
-                "lowConfidenceThreshold": {"type": "number", "minimum": 0, "maximum": 1, "description": "Posterior threshold for LOW-confidence alerts. Default `0.85`."},
-                "minNonForestProbability": {"type": "number", "minimum": 0, "maximum": 1, "description": "Minimum non-forest posterior to consider a pixel disturbed. Default `0.6`."},
-                "minChangeProbability": {"type": "number", "minimum": 0, "maximum": 1, "description": "Minimum change posterior. Default `0.5`."}
+                "normalization": {"enum": ["ENABLED", "DISABLED"], "description": "Normalize per-orbit means to historical reference."},
+                "sensitivity": {"type": "number", "exclusiveMinimum": 0, "description": "Sensitivity multiplier. Default 1."},
+                "maxDays": {"type": "integer", "minimum": 1, "description": "Max days to wait for confirmation obs. Default 90."},
+                "highConfidenceThreshold": {"type": "number", "minimum": 0, "maximum": 1, "description": "Posterior threshold for HIGH alerts. Default 0.975."},
+                "lowConfidenceThreshold": {"type": "number", "minimum": 0, "maximum": 1, "description": "Posterior threshold for LOW alerts. Default 0.85."},
+                "minNonForestProbability": {"type": "number", "minimum": 0, "maximum": 1, "description": "Min non-forest posterior to flag pixel disturbed. Default 0.6."},
+                "minChangeProbability": {"type": "number", "minimum": 0, "maximum": 1, "description": "Min change posterior. Default 0.5."}
             }
         }
     }

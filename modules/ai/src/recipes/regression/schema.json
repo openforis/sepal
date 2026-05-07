@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/regression/schema.json",
     "title": "RegressionRecipe",
-    "description": "A SEPAL Regression recipe. Predict a continuous value per pixel from training points using Random Forest, Gradient Tree Boost, or CART.\n\n**Pipeline.** (1) Stack input images plus optional auxiliary layers. (2) Sample training points. (3) Train the regressor. (4) Apply per-pixel — output is a single `regression` band of float values.\n\n**AOI semantics.** No separate AOI field — implicit in input imagery.",
+    "description": "Predict a continuous per-pixel value from training points using RF, GBT, or CART (only these support regression in EE).\n\nPipeline: stack input images + optional auxiliary → sample training points → train regressor → apply per-pixel. Output: single `regression` band of float values.\n\nAOI implicit in input imagery. See `classification` schema for full per-field semantics — same hyperparameter set, just continuous targets instead of class labels.",
     "type": "object",
     "additionalProperties": true,
     "required": ["inputImagery", "trainingData", "auxiliaryImagery", "classifier"],
@@ -11,11 +11,12 @@
         "trainingData": {"$ref": "#/$defs/trainingData"},
         "auxiliaryImagery": {"$ref": "#/$defs/auxiliaryImagery"},
         "classifier": {"$ref": "#/$defs/classifier"},
-        "scale": {"type": "number", "exclusiveMinimum": 0}
+        "scale": {"type": "number", "exclusiveMinimum": 0, "description": "Per-pixel processing scale (m). Omit to use input's native scale."}
     },
     "$defs": {
         "inputImagery": {
             "title": "RegressionInputImagery",
+            "description": "Source images. Same shape as classification.inputImagery.",
             "type": "object",
             "additionalProperties": true,
             "required": ["images"],
@@ -28,10 +29,10 @@
                         "additionalProperties": true,
                         "required": ["imageId", "type", "id", "bands", "bandSetSpecs"],
                         "properties": {
-                            "imageId": {"type": "string"},
+                            "imageId": {"type": "string", "description": "UUID."},
                             "type": {"enum": ["RECIPE_REF", "ASSET"]},
-                            "id": {"type": "string"},
-                            "bands": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+                            "id": {"type": "string", "description": "SEPAL recipe id or EE asset id."},
+                            "bands": {"type": "array", "minItems": 1, "items": {"type": "string"}, "description": "Bands the source exposes."},
                             "bandSetSpecs": {
                                 "type": "array",
                                 "minItems": 1,
@@ -39,7 +40,8 @@
                                     "type": "object",
                                     "additionalProperties": true,
                                     "required": ["id", "type", "included"]
-                                }
+                                },
+                                "description": "Band selection / derivation specs (IMAGE_BANDS, PAIR_WISE_EXPRESSION, INDEXES). See classification schema."
                             }
                         }
                     }
@@ -48,7 +50,7 @@
         },
         "trainingData": {
             "title": "RegressionTrainingData",
-            "description": "Training points with a continuous target value (the regression target). Same shape as classification but values are real-valued, not class labels.",
+            "description": "Training points with continuous target values (real-valued, not class labels). Same shape as classification.trainingData.",
             "type": "object",
             "additionalProperties": false,
             "required": ["dataSets"],
@@ -61,7 +63,7 @@
                         "additionalProperties": true,
                         "required": ["dataSetId", "name", "type"],
                         "properties": {
-                            "dataSetId": {"type": "string"},
+                            "dataSetId": {"type": "string", "description": "UUID."},
                             "name": {"type": "string"},
                             "type": {"enum": ["COLLECTED", "RECIPE", "EE_TABLE", "CSV_UPLOAD", "SAMPLE_CLASSIFICATION", "CEO"]}
                         }
@@ -72,25 +74,26 @@
         "auxiliaryImagery": {
             "type": "array",
             "uniqueItems": true,
-            "items": {"enum": ["LATITUDE", "TERRAIN", "WATER"]}
+            "items": {"enum": ["LATITUDE", "TERRAIN", "WATER"]},
+            "description": "Optional aux feature layers. LATITUDE / TERRAIN (SRTM 30 m, recommended in mountainous regions) / WATER (JRC GSW). Default `[]`. Each adds compute cost."
         },
         "classifier": {
             "title": "RegressionClassifier",
-            "description": "Regression algorithm and hyperparameters. Only `RANDOM_FOREST`, `GRADIENT_TREE_BOOST`, and `CART` support regression in EE.",
+            "description": "Algorithm + hyperparameters. Only RF, GBT, CART supported (EE constraint). See classification schema for per-parameter semantics.",
             "type": "object",
             "additionalProperties": false,
             "required": ["type"],
             "properties": {
                 "type": {"enum": ["RANDOM_FOREST", "GRADIENT_TREE_BOOST", "CART"]},
-                "numberOfTrees": {"type": "integer", "minimum": 1},
-                "variablesPerSplit": {"type": ["integer", "null"], "minimum": 1},
-                "minLeafPopulation": {"type": "integer", "minimum": 1},
-                "bagFraction": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
-                "maxNodes": {"type": ["integer", "null"], "minimum": 2},
-                "seed": {"type": "integer"},
-                "shrinkage": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
-                "samplingRate": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
-                "loss": {"enum": ["LeastSquares", "LeastAbsoluteDeviation", "Huber"]}
+                "numberOfTrees": {"type": "integer", "minimum": 1, "description": "Trees (RF + GBT). Default 25."},
+                "variablesPerSplit": {"type": ["integer", "null"], "minimum": 1, "description": "mtry (RF). null → √(numFeatures)."},
+                "minLeafPopulation": {"type": "integer", "minimum": 1, "description": "Min training samples per leaf (RF + CART). Default 1."},
+                "bagFraction": {"type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "Bag fraction (RF). Default 0.5."},
+                "maxNodes": {"type": ["integer", "null"], "minimum": 2, "description": "Hard cap on nodes per tree. null = unbounded."},
+                "seed": {"type": "integer", "description": "Random seed (RF + GBT). Default 1."},
+                "shrinkage": {"type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "GBT learning rate. Default 0.005."},
+                "samplingRate": {"type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "GBT per-tree subsample. Default 0.7."},
+                "loss": {"enum": ["LeastSquares", "LeastAbsoluteDeviation", "Huber"], "description": "GBT loss. `LeastAbsoluteDeviation` (default) = robust to outliers."}
             },
             "allOf": [
                 {

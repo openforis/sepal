@@ -5,11 +5,11 @@ const log = require('#sepal/log').getLogger('tools')
 const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
     {
         name: 'workflow_start',
-        description: 'Begin a guided step-by-step recipe creation for a given recipe type. Returns the first step with field descriptions.',
+        description: 'Begin guided step-by-step recipe creation. Returns first step with field descriptions.',
         parameters: {
             type: 'object',
             properties: {
-                type: {type: 'string', description: 'Recipe type to create (e.g. MOSAIC, CLASSIFICATION)'}
+                type: {type: 'string', description: 'Recipe type (e.g. MOSAIC, CLASSIFICATION).'}
             },
             required: ['type']
         },
@@ -60,13 +60,13 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
     },
     {
         name: 'workflow_step',
-        description: 'Submit values for the current workflow step and advance to the next step',
+        description: 'Submit current step values and advance to next.',
         parameters: {
             type: 'object',
             properties: {
-                workflowId: {type: 'string', description: 'Workflow ID'},
-                stepId: {type: 'string', description: 'Step ID being submitted'},
-                values: {type: 'object', description: 'Values for the fields in this step'}
+                workflowId: {type: 'string', description: 'Workflow id.'},
+                stepId: {type: 'string', description: 'Step id being submitted.'},
+                values: {type: 'object', description: 'Field values for this step.'}
             },
             required: ['workflowId', 'stepId', 'values']
         },
@@ -125,11 +125,11 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
     },
     {
         name: 'workflow_status',
-        description: 'Get the current state of a workflow including completed steps and remaining steps',
+        description: 'Get workflow state — completed and remaining steps.',
         parameters: {
             type: 'object',
             properties: {
-                workflowId: {type: 'string', description: 'Workflow ID'}
+                workflowId: {type: 'string', description: 'Workflow id.'}
             },
             required: ['workflowId']
         },
@@ -156,13 +156,13 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
     },
     {
         name: 'workflow_complete',
-        description: 'Finalize a completed workflow and create the recipe',
+        description: 'Finalize a completed workflow; create the recipe.',
         parameters: {
             type: 'object',
             properties: {
-                workflowId: {type: 'string', description: 'Workflow ID'},
-                name: {type: 'string', description: 'Name for the new recipe'},
-                projectId: {type: 'string', description: 'Project to place the recipe in'}
+                workflowId: {type: 'string', description: 'Workflow id.'},
+                name: {type: 'string', description: 'New recipe name.'},
+                projectId: {type: 'string', description: 'Target project id.'}
             },
             required: ['workflowId']
         },
@@ -204,11 +204,11 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
     },
     {
         name: 'workflow_cancel',
-        description: 'Cancel an in-progress workflow',
+        description: 'Cancel an in-progress workflow.',
         parameters: {
             type: 'object',
             properties: {
-                workflowId: {type: 'string', description: 'Workflow ID to cancel'}
+                workflowId: {type: 'string', description: 'Workflow id to cancel.'}
             },
             required: ['workflowId']
         },

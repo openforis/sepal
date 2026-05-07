@@ -3,15 +3,15 @@ const _ = require('lodash')
 const createTemplateTools = ({registry, recipeClient, recipeValidator}) => [
     {
         name: 'template_list',
-        description: 'List available pre-built recipe templates, optionally filtered by type or tags',
+        description: 'List pre-built recipe templates. Optional filter by type or tags.',
         parameters: {
             type: 'object',
             properties: {
-                type: {type: 'string', description: 'Filter by recipe type (e.g. MOSAIC)'},
+                type: {type: 'string', description: 'Filter by recipe type (e.g. MOSAIC).'},
                 tags: {
                     type: 'array',
                     items: {type: 'string'},
-                    description: 'Filter by tags (e.g. ["landsat", "annual"])'
+                    description: 'Filter by tags (e.g. ["landsat", "annual"]).'
                 }
             }
         },
@@ -30,14 +30,14 @@ const createTemplateTools = ({registry, recipeClient, recipeValidator}) => [
     },
     {
         name: 'template_apply',
-        description: 'Create a recipe from a pre-built template with parameter overrides. Required overrides (like AOI) must be provided.',
+        description: 'Create recipe from a template + overrides. Required overrides (e.g. AOI) must be supplied.',
         parameters: {
             type: 'object',
             properties: {
-                templateId: {type: 'string', description: 'Template ID'},
-                overrides: {type: 'object', description: 'Parameter overrides to merge into the template model'},
-                name: {type: 'string', description: 'Name for the new recipe (defaults to template name)'},
-                projectId: {type: 'string', description: 'Project to place the recipe in'}
+                templateId: {type: 'string', description: 'Template id.'},
+                overrides: {type: 'object', description: 'Overrides merged into the template model.'},
+                name: {type: 'string', description: 'New recipe name (defaults to template name).'},
+                projectId: {type: 'string', description: 'Target project id.'}
             },
             required: ['templateId', 'overrides']
         },

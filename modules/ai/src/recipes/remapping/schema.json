@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/remapping/schema.json",
     "title": "RemappingRecipe",
-    "description": "A SEPAL Remapping recipe. Combines one or more input images and produces a single categorical output (`class` band) by assigning each pixel to whichever target class's constraint expression it satisfies. The constraint expressions can reference any band of any input image, so this is a flexible 'map raster pixels to a new categorical scheme' tool — typical uses include reclassifying a land-cover map, deriving a categorical product from continuous inputs (e.g. forest/non-forest from canopy cover), or fusing multiple input layers into a single class label per pixel.\n\n**Pipeline.** (1) Load each entry in `inputImagery.images` and select its `includedBands`. (2) For each `legend.entries[i]`, build a per-pixel mask from its `constraints` combined per `booleanOperator`. (3) Mosaic the entries (in REVERSED order — `ee.mosaic` lets EARLIER entries override later ones, but the recipe reverses first so LATER entries win in the source order). (4) Pixels matching no entry are masked out.\n\n**AOI semantics.** No separate AOI field — the AOI is the geometry of the first input image (`inputImagery.images[0]`).\n\n**`constraint.image` differs from indexChange.** Where the indexChange recipe's constraints use the literal string `'this-recipe'`, remapping's constraints reference an input image by its `imageId`. The mapping panel populates this from the user's image selection.\n\nThis schema describes the persisted `model` of an *initialized* recipe. Cross-field constraints that JSON Schema cannot express are enforced by the companion rules.",
+    "description": "Combine input images and produce a single categorical `class` band by assigning each pixel to the target class whose constraint expression it satisfies. Constraints can reference any band of any input.\n\nUse for: reclassifying a land-cover map, deriving categorical from continuous (forest/non-forest from canopy cover), fusing multiple layers into one class label.\n\nPipeline: (1) load `inputImagery.images`, select `includedBands`; (2) for each `legend.entries[i]` build a per-pixel mask from `constraints` joined by `booleanOperator`; (3) mosaic in REVERSED order — `ee.mosaic` lets earlier entries override later ones, but the recipe reverses first so **later entries in the source order win**; (4) pixels matching no entry are masked out.\n\nAOI = geometry of `inputImagery.images[0]`.\n\n**`constraint.image` differs from indexChange**: here it's the input's `imageId` (not literal `'this-recipe'`).",
     "type": "object",
     "additionalProperties": true,
     "required": ["inputImagery", "legend"],
@@ -13,7 +13,7 @@
     "$defs": {
         "inputImagery": {
             "title": "RemappingInputImagery",
-            "description": "Source images that contribute features. At least one image is required. Constraints in `legend.entries[*].constraints` reference these images by their `imageId`.",
+            "description": "Source images. Constraints reference them via `imageId`.",
             "type": "object",
             "additionalProperties": false,
             "required": ["images"],
@@ -27,7 +27,7 @@
         },
         "inputImage": {
             "title": "RemappingInputImage",
-            "description": "A single source image. The image's `imageId` is the join key referenced from `legend.entries[*].constraints[*].image`.",
+            "description": "Single source image. `imageId` is the join key used by `legend.entries[*].constraints[*].image`.",
             "type": "object",
             "additionalProperties": true,
             "required": ["imageId", "type", "id", "bands", "includedBands"],
@@ -35,31 +35,31 @@
                 "imageId": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "Stable id (UUID) for this input image. Constraints reference the image via this field."
+                    "description": "UUID. Constraints reference this image by it."
                 },
                 "type": {
                     "enum": ["RECIPE_REF", "ASSET"],
-                    "description": "What `id` refers to. `RECIPE_REF` — id of another SEPAL recipe whose image output is consumed. `ASSET` — Earth Engine Image / ImageCollection asset id."
+                    "description": "`RECIPE_REF` = SEPAL recipe id; `ASSET` = EE asset id."
                 },
                 "id": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "SEPAL recipe id (when type=RECIPE_REF) or Earth Engine asset id (when type=ASSET)."
+                    "description": "Recipe id or EE asset id (per `type`)."
                 },
                 "bands": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Per-band metadata, keyed by band name. For categorical bands carries `{values, labels, palette}`; for continuous bands typically empty. Populated by the GUI on image selection — used by the Mapping panel to know which bands have categorical legends and what the class values are. The LLM does not need to synthesize this; pull it from the loaded recipe/asset state."
+                    "description": "Per-band metadata keyed by band name. Categorical: `{values, labels, palette}`; continuous: empty. GUI-populated; used by Mapping panel to know which bands have categorical legends + class values. Pull from loaded source state; LLM doesn't synthesize."
                 },
                 "visualizations": {
                     "type": "array",
-                    "description": "Optional visualization presets cached from the source. Cosmetic; the LLM should leave it absent."
+                    "description": "Visualization presets cached from source. Don't set."
                 },
                 "includedBands": {
                     "type": "array",
                     "minItems": 1,
                     "items": {"$ref": "#/$defs/includedBand"},
-                    "description": "Bands selected to be available to the constraint expressions. Must contain every band that appears in any `legend.entries[*].constraints[*].band` referencing this image."
+                    "description": "Bands available to constraint expressions. Must include every band any constraint references."
                 }
             }
         },
@@ -69,11 +69,11 @@
             "additionalProperties": false,
             "required": ["id", "band", "type"],
             "properties": {
-                "id": {"type": "string", "description": "UUID for stable React keys."},
-                "band": {"type": "string", "minLength": 1, "description": "Band name in the source image."},
+                "id": {"type": "string", "description": "UUID."},
+                "band": {"type": "string", "minLength": 1, "description": "Band name in source image."},
                 "type": {
                     "enum": ["categorical", "continuous"],
-                    "description": "Whether the band is categorical (limited integer values, used with `class` constraint operator) or continuous (numeric, used with `<`, `≤`, `>`, `≥`, `=`, `range` operators)."
+                    "description": "`categorical` = limited integer values, use with `class` operator. `continuous` = numeric, use with `<`/`≤`/`>`/`≥`/`=`/`range`."
                 },
                 "legendEntries": {
                     "type": "array",
@@ -88,13 +88,13 @@
                             "color": {"type": "string"}
                         }
                     },
-                    "description": "Legend of the source band (mirrors the source classification's classes). Only meaningful when `type='categorical'` — the Mapping panel uses these to populate the class-picker UI for `class` constraints. Empty (or absent) for continuous bands."
+                    "description": "Source band's legend (mirrors source classification's classes). Only meaningful when `type='categorical'` — used for `class` constraint class-picker. Empty/absent for continuous."
                 }
             }
         },
         "legend": {
             "title": "RemappingLegend",
-            "description": "Target classes the recipe produces, each with the constraint expression used to assign pixels to that class.",
+            "description": "Target classes with constraint expressions for pixel assignment.",
             "type": "object",
             "additionalProperties": false,
             "required": ["entries"],
@@ -112,62 +112,62 @@
             "additionalProperties": false,
             "required": ["id", "value", "label", "color"],
             "properties": {
-                "id": {"type": "string", "description": "UUID for stable React keys; also used as the path key when the Mapping panel updates the entry's constraints."},
-                "value": {"type": "integer", "description": "Output class value stored in the `class` band. Must be unique across entries."},
-                "label": {"type": "string", "description": "Human-readable class name."},
+                "id": {"type": "string", "description": "UUID. Path key when Mapping panel updates the entry's constraints."},
+                "value": {"type": "integer", "description": "Class value in `class` output band. Unique across entries."},
+                "label": {"type": "string", "description": "Human-readable name."},
                 "color": {
                     "type": "string",
                     "pattern": "^#[0-9A-Fa-f]{6}$",
-                    "description": "Hex color (`#RRGGBB`) used when visualizing this class."
+                    "description": "Hex color `#RRGGBB`."
                 },
                 "booleanOperator": {
                     "enum": ["and", "or"],
-                    "description": "How `constraints` are combined.\n\n- `'and'` — every constraint must be satisfied (the recipe reduces with `sum().eq(constraints.size())`).\n- `'or'` — any constraint suffices (max of constraint masks).\n\nIgnored when `constraints` has 0 or 1 entries. Required only when `constraints` has 2+ entries."
+                    "description": "Combine `constraints`. `and` = all required (`sum().eq(constraints.size())`); `or` = any (max of masks). Ignored when 0 or 1 constraint; required when ≥2."
                 },
                 "constraints": {
                     "type": "array",
                     "items": {"$ref": "#/$defs/constraint"},
-                    "description": "The constraint expression for this class. An empty array (or omitted) masks the entire image for this class — typically not what you want; it produces a class with no pixels."
+                    "description": "Constraint expression for this class. Empty array masks the whole image for this class — usually not what you want (yields a class with no pixels)."
                 }
             }
         },
         "constraint": {
             "title": "RemappingConstraint",
-            "description": "A single comparison applied to a band of one of the input images. The shape varies by operator:\n\n- `class` — categorical comparison: pixel matches if the band's value is in `selectedClasses`.\n- `range` — pixel value lies between `from` and `to`, with `fromInclusive`/`toInclusive` flags.\n- `<`, `≤`, `>`, `≥`, `=` — comparison against `value`.\n\nNote the unicode `≤` / `≥` (U+2264 / U+2265) — these are the actual operator strings the backend expects, NOT `<=` / `>=`.",
+            "description": "Single comparison on a band of one input image. Shape varies by operator:\n- `class` — categorical match; pixel matches if band ∈ `selectedClasses`.\n- `range` — `from`/`to` with `fromInclusive`/`toInclusive`.\n- `<`/`≤`/`>`/`≥`/`=` — against `value`.\n\n`≤`/`≥` are unicode U+2264/U+2265 (NOT `<=`/`>=`).",
             "type": "object",
             "additionalProperties": false,
             "required": ["id", "image", "band", "operator"],
             "properties": {
-                "id": {"type": "string", "description": "UUID for stable React keys."},
-                "description": {"type": "string", "description": "Human-readable summary shown in the GUI; not used by the backend."},
+                "id": {"type": "string", "description": "UUID."},
+                "description": {"type": "string", "description": "GUI summary; not read by backend."},
                 "image": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "The `imageId` of an entry in `inputImagery.images` whose band this constraint reads. NOT the literal string `'this-recipe'` (that's used by indexChange, not remapping)."
+                    "description": "`imageId` of an `inputImagery.images` entry. NOT `'this-recipe'` (that's indexChange, not remapping)."
                 },
                 "band": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "Band name to read from the referenced input image. The band must appear in that image's `includedBands`."
+                    "description": "Band name on the referenced image. Must appear in that image's `includedBands`."
                 },
                 "operator": {
                     "enum": ["class", "range", "<", "≤", ">", "≥", "="],
-                    "description": "Comparison operator. `class` is for categorical bands; the rest are for continuous bands. `≤` and `≥` are unicode U+2264 / U+2265."
+                    "description": "`class` for categorical; rest for continuous. `≤`/`≥` = U+2264/U+2265."
                 },
                 "selectedClasses": {
                     "type": "array",
                     "items": {"type": "integer"},
                     "minItems": 1,
-                    "description": "Class values to match. Required for `class` operator only. Pixel matches if its band value is any one of these. Should reference values from the band's `legendEntries`."
+                    "description": "Class values to match. Required for `class`. Pixel matches if band value is any. Reference values from the band's `legendEntries`."
                 },
                 "value": {
                     "type": "number",
-                    "description": "Right-hand-side value. Required for `<`, `≤`, `>`, `≥`, `=` operators."
+                    "description": "RHS for `<`/`≤`/`>`/`≥`/`=`. Required for those."
                 },
-                "from": {"type": "number", "description": "Lower bound. Required for `range` operator only."},
-                "to": {"type": "number", "description": "Upper bound. Required for `range` operator only."},
-                "fromInclusive": {"type": "boolean", "description": "Whether the lower bound is inclusive. Required for `range` operator only."},
-                "toInclusive": {"type": "boolean", "description": "Whether the upper bound is inclusive. Required for `range` operator only."}
+                "from": {"type": "number", "description": "Range lower bound."},
+                "to": {"type": "number", "description": "Range upper bound."},
+                "fromInclusive": {"type": "boolean", "description": "Lower bound inclusive?"},
+                "toInclusive": {"type": "boolean", "description": "Upper bound inclusive?"}
             },
             "allOf": [
                 {

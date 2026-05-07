@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/ccdc/schema.json",
     "title": "CcdcRecipe",
-    "description": "A SEPAL CCDC (Continuous Change Detection and Classification) recipe. Fits a per-pixel piecewise harmonic regression model over a time series and detects breakpoints where the model fit no longer holds.\n\n**Outputs.** A complex multi-band image carrying per-segment intercept, slope, and harmonic coefficients (annual, biannual, triannual) per breakpoint band, plus break dates. The output is typically consumed via `CCDC_SLICE` to render synthetic imagery at a chosen date.\n\n**Pipeline.** (1) Filter the time series of `sources.breakpointBands` over the AOI and date range. (2) Run EE's `ee.Algorithms.TemporalSegmentation.Ccdc` per pixel with `ccdcOptions`. (3) Persist segment coefficients and breaks.",
+    "description": "Continuous Change Detection and Classification. Per-pixel piecewise harmonic regression on a time series; emits segment coefficients + breakpoints. Output is consumed via `CCDC_SLICE` to render synthetic imagery at a chosen date.\n\nOutputs: multi-band image with per-segment intercept/slope/harmonic coefficients (annual, biannual, triannual) per breakpoint band + break dates.\n\nPipeline: filter `sources.breakpointBands` over AOI + dates → `ee.Algorithms.TemporalSegmentation.Ccdc` per pixel with `ccdcOptions` → persist segments + breaks.",
     "type": "object",
     "additionalProperties": true,
     "required": ["aoi", "dates", "sources", "ccdcOptions"],
@@ -17,7 +17,7 @@
         "sources": {"$ref": "#/$defs/sources"},
         "options": {
             "title": "CcdcOptions",
-            "description": "Optical / radar / Planet processing options. Same shape as `TIME_SERIES.options` — see that schema for full per-field documentation.",
+            "description": "Same shape as `TIME_SERIES.options`. See that schema for per-field semantics.",
             "$ref": "../timeSeries/schema.json#/$defs/options"
         },
         "ccdcOptions": {"$ref": "#/$defs/ccdcOptions"}
@@ -29,8 +29,8 @@
             "additionalProperties": false,
             "required": ["startDate", "endDate"],
             "properties": {
-                "startDate": {"$ref": "#/$defs/date", "description": "**Inclusive** start."},
-                "endDate": {"$ref": "#/$defs/date", "description": "**Exclusive** end."}
+                "startDate": {"$ref": "#/$defs/date", "description": "Inclusive."},
+                "endDate": {"$ref": "#/$defs/date", "description": "Exclusive. Full year 2024 → 2025-01-01."}
             }
         },
         "sources": {
@@ -38,7 +38,7 @@
             "additionalProperties": true,
             "required": ["dataSets", "breakpointBands"],
             "properties": {
-                "cloudPercentageThreshold": {"type": "integer", "minimum": 0, "maximum": 100},
+                "cloudPercentageThreshold": {"type": "integer", "minimum": 0, "maximum": 100, "description": "Drop scenes above this scene-level cloud %. Default 75."},
                 "dataSets": {
                     "type": "object",
                     "additionalProperties": false,
@@ -54,13 +54,13 @@
                     "minItems": 1,
                     "uniqueItems": true,
                     "items": {"type": "string"},
-                    "description": "Bands used for break detection. Common: `ndfi`, `ndvi`, `nbr`, `swir1`, `nir`. Default `['ndfi']`."
+                    "description": "Bands used for break detection. Common: `ndfi` (default), `ndvi`, `nbr`, `swir1`, `nir`. More bands → more breaks but more cost."
                 }
             }
         },
         "ccdcOptions": {
             "title": "CcdcAlgorithmOptions",
-            "description": "Tuning parameters for `ee.Algorithms.TemporalSegmentation.Ccdc`. The GUI exposes 3 presets (conservative, moderate, aggressive) which differ in `minObservations` and `chiSquareProbability`.",
+            "description": "`ee.Algorithms.TemporalSegmentation.Ccdc` tuning. GUI presets vary `minObservations` + `chiSquareProbability`: conservative (6, 0.99) / moderate (6, 0.9) / aggressive (4, 0.75).",
             "type": "object",
             "additionalProperties": false,
             "required": ["dateFormat", "minObservations", "chiSquareProbability", "minNumOfYearsScaler", "lambda", "maxIterations"],
@@ -68,33 +68,33 @@
                 "dateFormat": {
                     "type": "integer",
                     "enum": [0, 1, 2],
-                    "description": "Output date encoding: `0` = jDays, `1` = fractional years, `2` = unix time (ms). Default `1` (fractional years)."
+                    "description": "Output date encoding: 0=jDays, 1=fractional years (default), 2=unix ms."
                 },
                 "minObservations": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Minimum observations required before fitting a segment. Conservative=6, Moderate=6, Aggressive=4."
+                    "description": "Min observations to fit a segment. Default 6."
                 },
                 "chiSquareProbability": {
                     "type": "number",
                     "minimum": 0,
                     "maximum": 1,
-                    "description": "Chi-square probability threshold for break detection. Conservative=0.99, Moderate=0.9, Aggressive=0.75."
+                    "description": "χ² probability threshold for break detection. Higher = fewer false breaks. Default 0.9."
                 },
                 "minNumOfYearsScaler": {
                     "type": "number",
                     "exclusiveMinimum": 0,
-                    "description": "Minimum-years scaler. Default `1.33` for all presets."
+                    "description": "Min-years scaler. Default 1.33."
                 },
                 "lambda": {
                     "type": "number",
                     "exclusiveMinimum": 0,
-                    "description": "L1 regularization weight. Default `20`."
+                    "description": "L1 regularization weight. Default 20."
                 },
                 "maxIterations": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Maximum solver iterations. Default `25000`."
+                    "description": "Max solver iterations. Default 25000."
                 }
             }
         }

@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/unsupervisedClassification/schema.json",
     "title": "UnsupervisedClassificationRecipe",
-    "description": "A SEPAL Unsupervised Classification recipe. Cluster pixels of one or more input images into N classes without training data, using K-means or one of its variants (LVQ, X-means, Cascade-K-means, Cobweb).\n\n**Pipeline.** (1) Stack input images plus optional auxiliary imagery into a feature image. (2) Sample `sampling.numberOfSamples` random pixels at `sampling.sampleScale` meters. (3) Train the configured clusterer on the samples. (4) Apply per-pixel — output is a `class` band.\n\n**Bands produced.** Always `class` (uint8 — cluster id 0..N-1).\n\n**AOI semantics.** No separate AOI field — implicit in the input imagery.",
+    "description": "Cluster pixels into N groups without training data (K-means + variants).\n\nPipeline: stack inputs + aux → sample `numberOfSamples` random pixels at `sampleScale` m → train clusterer → apply per-pixel. Output: `class` band (uint8, cluster id 0..N−1).\n\nAOI implicit in input imagery.",
     "type": "object",
     "additionalProperties": true,
     "required": ["inputImagery", "sampling", "auxiliaryImagery", "clusterer"],
@@ -11,11 +11,12 @@
         "sampling": {"$ref": "#/$defs/sampling"},
         "auxiliaryImagery": {"$ref": "#/$defs/auxiliaryImagery"},
         "clusterer": {"$ref": "#/$defs/clusterer"},
-        "scale": {"type": "number", "exclusiveMinimum": 0}
+        "scale": {"type": "number", "exclusiveMinimum": 0, "description": "Per-pixel processing scale (m). Omit to use input's native scale."}
     },
     "$defs": {
         "inputImagery": {
             "title": "UnsupervisedInputImagery",
+            "description": "Source images. Same shape as classification.inputImagery.",
             "type": "object",
             "additionalProperties": true,
             "required": ["images"],
@@ -28,10 +29,10 @@
                         "additionalProperties": true,
                         "required": ["imageId", "type", "id", "bands", "bandSetSpecs"],
                         "properties": {
-                            "imageId": {"type": "string", "minLength": 1},
+                            "imageId": {"type": "string", "minLength": 1, "description": "UUID."},
                             "type": {"enum": ["RECIPE_REF", "ASSET"]},
-                            "id": {"type": "string", "minLength": 1},
-                            "bands": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+                            "id": {"type": "string", "minLength": 1, "description": "SEPAL recipe id or EE asset id."},
+                            "bands": {"type": "array", "minItems": 1, "items": {"type": "string"}, "description": "Bands the source exposes."},
                             "bandSetSpecs": {
                                 "type": "array",
                                 "minItems": 1,
@@ -51,7 +52,8 @@
                                             "then": {"required": ["operation"]}
                                         }
                                     ]
-                                }
+                                },
+                                "description": "Band selection / derivation specs. See classification schema."
                             }
                         }
                     }
@@ -60,7 +62,7 @@
         },
         "sampling": {
             "title": "UnsupervisedSampling",
-            "description": "Random-pixel sampling configuration for training the clusterer.",
+            "description": "Random-pixel sampling for clusterer training.",
             "type": "object",
             "additionalProperties": false,
             "required": ["numberOfSamples", "sampleScale"],
@@ -69,12 +71,12 @@
                     "type": "integer",
                     "minimum": 2,
                     "maximum": 2147483647,
-                    "description": "How many random pixels to sample. Default `10000`."
+                    "description": "Sample count. Default 10000."
                 },
                 "sampleScale": {
                     "type": "number",
                     "exclusiveMinimum": 0,
-                    "description": "Sampling scale in meters. Default `10`."
+                    "description": "Sampling scale (m). Default 10."
                 }
             }
         },
@@ -83,11 +85,11 @@
             "type": "array",
             "uniqueItems": true,
             "items": {"enum": ["LATITUDE", "TERRAIN", "WATER"]},
-            "description": "Optional auxiliary feature layers. Same as classification: LATITUDE, TERRAIN, WATER."
+            "description": "Optional aux feature layers. LATITUDE / TERRAIN (SRTM 30 m, recommended in mountainous regions) / WATER (JRC GSW). Default `[]`."
         },
         "clusterer": {
             "title": "UnsupervisedClusterer",
-            "description": "Clustering algorithm and hyperparameters. The `type` discriminates among 4 algorithms; each has its own required parameters.\n\n- `KMEANS` — Weka SimpleKMeans. Most common; needs `numberOfClusters`.\n- `LVQ` — Learning Vector Quantization. Needs `numberOfClusters`, `learningRate`, `epochs`.\n- `XMEANS` — Variable-K K-means. Needs `minNumberOfClusters`, `maxNumberOfClusters`.\n- `CASCADE_KMEANS` — Weka cascade simple K-means. Needs `minNumberOfClusters`, `maxNumberOfClusters`, `restarts`.\n\nNote: the legacy schema also listed `COBWEB`, but the EE backend's `createClusterer` throws \"Unsupported clusterer type\" for it.",
+            "description": "Algorithm + hyperparameters. `type` discriminates:\n- `KMEANS` — Weka SimpleKMeans. Default choice. Needs `numberOfClusters`.\n- `LVQ` — Learning Vector Quantization. Needs `numberOfClusters`, `learningRate`, `epochs`.\n- `XMEANS` — variable-K K-means. Needs `minNumberOfClusters`, `maxNumberOfClusters`.\n- `CASCADE_KMEANS` — cascade simple K-means. Needs `minNumberOfClusters`, `maxNumberOfClusters`, `restarts`.\n\nLegacy `COBWEB` is rejected by EE backend — don't use.",
             "type": "object",
             "additionalProperties": false,
             "required": ["type", "tileScale", "normalize"],
@@ -97,42 +99,34 @@
                     "type": "number",
                     "minimum": 0.1,
                     "maximum": 16,
-                    "description": "Tile-scale multiplier passed to EE reducers. Default `1`. Increase (2, 4, 8) to avoid out-of-memory on large AOIs."
+                    "description": "EE reducer tile-scale. Default 1. Bump (2/4/8) on OOM for large AOIs."
                 },
                 "normalize": {
                     "enum": ["YES", "NO"],
-                    "description": "Whether to per-band unit-scale features before clustering. Default `YES`."
+                    "description": "Per-band unit-scale before clustering. Default `YES` (recommended unless features already comparable)."
                 },
-                "numberOfClusters": {
-                    "type": "integer",
-                    "minimum": 2,
-                    "description": "Required for KMEANS / LVQ. The fixed number of clusters."
-                },
-                "minNumberOfClusters": {"type": "integer", "minimum": 1, "description": "Required for XMEANS / CASCADE_KMEANS."},
-                "maxNumberOfClusters": {"type": "integer", "minimum": 2, "description": "Required for XMEANS / CASCADE_KMEANS."},
+                "numberOfClusters": {"type": "integer", "minimum": 2, "description": "KMEANS / LVQ — fixed cluster count."},
+                "minNumberOfClusters": {"type": "integer", "minimum": 1, "description": "XMEANS / CASCADE_KMEANS."},
+                "maxNumberOfClusters": {"type": "integer", "minimum": 2, "description": "XMEANS / CASCADE_KMEANS."},
                 "restarts": {"type": "integer", "minimum": 0, "description": "CASCADE_KMEANS only."},
-                "init": {"type": "integer", "minimum": 0, "maximum": 3, "description": "CASCADE_KMEANS / KMEANS — initialization strategy index."},
-                "distanceFunction": {
-                    "type": "string",
-                    "minLength": 1,
-                    "description": "CASCADE_KMEANS / KMEANS / XMEANS — distance metric."
-                },
-                "maxIterations": {"type": "integer", "minimum": 1, "maximum": 2147483647, "description": "CASCADE_KMEANS / KMEANS."},
-                "canopies": {"description": "KMEANS only — boolean toggle."},
+                "init": {"type": "integer", "minimum": 0, "maximum": 3, "description": "KMEANS / CASCADE_KMEANS init strategy index."},
+                "distanceFunction": {"type": "string", "minLength": 1, "description": "KMEANS / XMEANS / CASCADE_KMEANS distance metric."},
+                "maxIterations": {"type": "integer", "minimum": 1, "maximum": 2147483647, "description": "KMEANS / CASCADE_KMEANS."},
+                "canopies": {"description": "KMEANS — boolean."},
                 "maxCandidates": {"type": "integer", "minimum": 1, "maximum": 2147483647, "description": "KMEANS only."},
                 "periodicPruning": {"type": "integer", "minimum": 0, "maximum": 2147483647, "description": "KMEANS only."},
                 "minDensity": {"type": "integer", "minimum": 0, "maximum": 2147483647, "description": "KMEANS only."},
                 "t1": {"type": "number", "description": "KMEANS canopy threshold."},
                 "t2": {"type": "number", "description": "KMEANS canopy threshold."},
-                "preserveOrder": {"description": "KMEANS only — boolean."},
-                "fast": {"description": "KMEANS only — boolean."},
-                "seed": {"type": "integer", "description": "KMEANS / XMEANS — random seed."},
+                "preserveOrder": {"description": "KMEANS — boolean."},
+                "fast": {"description": "KMEANS — boolean."},
+                "seed": {"type": "integer", "description": "KMEANS / XMEANS random seed."},
                 "learningRate": {"type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "LVQ only."},
                 "epochs": {"type": "integer", "minimum": 1, "maximum": 2147483647, "description": "LVQ only."},
                 "maxIterationsOverall": {"type": "integer", "minimum": 1, "maximum": 2147483647, "description": "XMEANS only."},
                 "maxKMeans": {"type": "integer", "minimum": 1, "maximum": 2147483647, "description": "XMEANS only."},
                 "maxForChildren": {"type": "integer", "minimum": 1, "maximum": 2147483647, "description": "XMEANS only."},
-                "useKD": {"description": "XMEANS only — boolean."},
+                "useKD": {"description": "XMEANS — boolean."},
                 "cutoffFactor": {"type": "number", "description": "XMEANS only."}
             },
             "allOf": [

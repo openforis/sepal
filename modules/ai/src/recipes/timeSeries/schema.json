@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/timeSeries/schema.json",
     "title": "TimeSeriesRecipe",
-    "description": "A SEPAL Time Series recipe. Builds a per-pixel time series of observations across an AOI from optical (Landsat / Sentinel-2 / Planet) and/or radar (Sentinel-1) sources, between `dates.startDate` and `dates.endDate`. Used for further analysis (CCDC, phenology, regression) — the recipe itself produces a multi-band 'count' image and supports time-series visualization through the chartPixel UI.\n\n**Pipeline.** (1) Filter each source's collection by AOI bounds and the date range. (2) Apply per-source preprocessing (optical: SR/BRDF/cloud masks; radar: speckle filter / terrain correction). (3) Stack scenes per pixel into a time series.\n\n**Multi-source `options`.** This recipe combines optical mosaic, radar mosaic, and Planet mosaic options under a single `options` key. The applicable subset depends on which `sources.dataSets` groups are selected. Validation does not enforce per-group conditional applicability — extra fields are tolerated.",
+    "description": "Per-pixel stack of preprocessed scenes between `dates.startDate` and `dates.endDate`, from optical (Landsat / S2 / Planet) and/or radar (S1) sources. Feeds CCDC, phenology, regression; itself outputs a 'count' image and powers chartPixel.\n\nPipeline: filter each source by AOI + dates → per-source preprocess (optical: SR/BRDF/cloud masks; radar: speckle / terrain) → stack scenes per pixel.\n\n`options` is the union of optical + radar + Planet options; the EE backend silently ignores fields that don't apply to the selected source groups. Per-field semantics mirror `opticalMosaic.compositeOptions` / `radarMosaic.options` / `planetMosaic.options`.",
     "type": "object",
     "additionalProperties": true,
     "required": ["aoi", "dates", "sources"],
@@ -25,8 +25,8 @@
             "additionalProperties": false,
             "required": ["startDate", "endDate"],
             "properties": {
-                "startDate": {"$ref": "#/$defs/date", "description": "**Inclusive** start of the time series. Earliest useful values: 1972-07-23 (Landsat MSS), 1984 (TM), 2014-06-15 (Sentinel-1), 2015 (Sentinel-2)."},
-                "endDate": {"$ref": "#/$defs/date", "description": "**Exclusive** end. Scenes acquired ON endDate are NOT included. For the full year 2024 set endDate=2025-01-01."}
+                "startDate": {"$ref": "#/$defs/date", "description": "Inclusive. Earliest useful: 1972-07-23 (LS MSS), 1984 (TM), 2014-06-15 (S1), 2015 (S2)."},
+                "endDate": {"$ref": "#/$defs/date", "description": "Exclusive. Scenes on endDate are NOT included. Full year 2024 → endDate=2025-01-01."}
             }
         },
         "sources": {
@@ -39,7 +39,7 @@
                     "type": "object",
                     "additionalProperties": false,
                     "minProperties": 1,
-                    "description": "Map of source group → datasets. At least one group required.",
+                    "description": "Source group → datasets. ≥1 group required.",
                     "properties": {
                         "LANDSAT": {
                             "type": "array",
@@ -61,12 +61,12 @@
                         }
                     }
                 },
-                "cloudPercentageThreshold": {"type": "integer", "minimum": 0, "maximum": 100}
+                "cloudPercentageThreshold": {"type": "integer", "minimum": 0, "maximum": 100, "description": "Drop scenes with scene-level cloud % above this. Default 75."}
             }
         },
         "options": {
             "title": "TimeSeriesOptions",
-            "description": "Combined optical + radar + Planet processing options. The applicable subset depends on which `sources.dataSets` groups are present: Landsat / Sentinel-2 use the optical fields, Sentinel-1 uses the radar fields, Planet sources use the Planet fields. The EE backend silently ignores fields that don't apply to the selected sources.\n\nField names and semantics mirror the corresponding standalone recipes (`opticalMosaic.compositeOptions`, `radarMosaic.options`, `planetMosaic.options`) — see those schemas for full per-field documentation.",
+            "description": "Combined optical + radar + Planet options. Subset applied per selected source group; EE silently ignores non-applicable fields. See standalone mosaic schemas for per-field semantics.",
             "type": "object",
             "additionalProperties": true,
             "properties": {
@@ -74,14 +74,14 @@
                     "type": "array",
                     "uniqueItems": true,
                     "items": {"enum": ["SR", "BRDF", "CALIBRATE"]},
-                    "description": "Optical: pre-compositing corrections (Surface Reflectance, BRDF, cross-sensor calibration)."
+                    "description": "Optical pre-composite corrections. BRDF on S2 is expensive — leave off unless needed."
                 },
-                "brdfMultiplier": {"type": "number", "exclusiveMinimum": 0, "description": "Optical: strength multiplier for BRDF correction."},
+                "brdfMultiplier": {"type": "number", "exclusiveMinimum": 0, "description": "Optical BRDF strength."},
                 "includedCloudMasking": {
                     "type": "array",
                     "uniqueItems": true,
                     "items": {"enum": ["sepalCloudScore", "landsatCFMask", "sentinel2CloudScorePlus", "sentinel2CloudProbability", "pino26"]},
-                    "description": "Optical: per-pixel cloud-masking methods to apply."
+                    "description": "Optical cloud-masking methods to apply (combined)."
                 },
                 "sentinel2CloudProbabilityMaxCloudProbability": {"type": "integer", "minimum": 0, "maximum": 100},
                 "sentinel2CloudScorePlusBand": {"enum": ["cs", "cs_cdf"]},
@@ -92,54 +92,54 @@
                 "landsatCFMaskDilatedCloud": {"enum": ["KEEP", "REMOVE"]},
                 "sepalCloudScoreMaxCloudProbability": {"type": "integer", "minimum": 0, "maximum": 100},
                 "holes": {"enum": ["PREVENT", "ALLOW"]},
-                "shadowMasking": {"enum": ["OFF", "BACKWARD", "FORWARD", "BOTH"], "description": "Optical: backward/forward shadow detection along sun-azimuth ray."},
+                "shadowMasking": {"enum": ["OFF", "BACKWARD", "FORWARD", "BOTH"], "description": "Optical sun-azimuth shadow detection."},
                 "snowMasking": {"enum": ["ON", "OFF"]},
-                "compose": {"enum": ["MEDOID", "MEDIAN"], "description": "Optical: per-pixel reduction (only meaningful if the time series collapses to a composite)."},
-                "orbitOverlap": {"enum": ["KEEP", "REMOVE"], "description": "Optical (Sentinel-2) and Radar."},
-                "tileOverlap": {"enum": ["KEEP", "QUICK_REMOVE", "REMOVE"], "description": "Optical (Sentinel-2) tile-overlap deduplication."},
+                "compose": {"enum": ["MEDOID", "MEDIAN"], "description": "Optical per-pixel reduction (only when series collapses to a composite)."},
+                "orbitOverlap": {"enum": ["KEEP", "REMOVE"], "description": "S2 + radar."},
+                "tileOverlap": {"enum": ["KEEP", "QUICK_REMOVE", "REMOVE"], "description": "S2 tile-overlap dedup."},
                 "orbits": {
                     "type": "array",
                     "uniqueItems": true,
                     "items": {"enum": ["ASCENDING", "DESCENDING"]},
-                    "description": "Radar: orbit directions to include."
+                    "description": "Radar: orbit directions."
                 },
-                "orbitNumbers": {"enum": ["ALL", "DOMINANT", "ADJACENT"], "description": "Radar: how to handle multiple relative orbit numbers."},
-                "geometricCorrection": {"enum": ["NONE", "ELLIPSOID", "TERRAIN"], "description": "Radar: σ⁰ → γ⁰ correction."},
-                "spatialSpeckleFilter": {"enum": ["NONE", "GAMMA_MAP", "LEE", "REFINED_LEE", "LEE_SIGMA", "SNIC"], "description": "Radar: per-scene spatial speckle filter."},
-                "kernelSize": {"enum": [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25], "description": "Radar: filter kernel side length."},
-                "sigma": {"enum": [0.5, 0.6, 0.7, 0.8, 0.9, 0.95], "description": "Radar: Lee Sigma fraction."},
-                "strongScatterers": {"enum": ["RETAIN", "FILTER"], "description": "Radar: how to handle strong scatterers."},
+                "orbitNumbers": {"enum": ["ALL", "DOMINANT", "ADJACENT"], "description": "Radar relative-orbit handling."},
+                "geometricCorrection": {"enum": ["NONE", "ELLIPSOID", "TERRAIN"], "description": "Radar σ⁰ → γ⁰. TERRAIN recommended in mountainous regions."},
+                "spatialSpeckleFilter": {"enum": ["NONE", "GAMMA_MAP", "LEE", "REFINED_LEE", "LEE_SIGMA", "SNIC"], "description": "Radar per-scene spatial speckle filter."},
+                "kernelSize": {"enum": [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25], "description": "Radar filter kernel side."},
+                "sigma": {"enum": [0.5, 0.6, 0.7, 0.8, 0.9, 0.95], "description": "Radar Lee Sigma fraction."},
+                "strongScatterers": {"enum": ["RETAIN", "FILTER"], "description": "Strong-scatterer handling."},
                 "strongScattererValues": {
                     "type": "array",
                     "minItems": 2,
                     "maxItems": 2,
                     "items": {"type": "number", "minimum": -30, "maximum": 30},
-                    "description": "Radar: [VV-threshold, VH-threshold] in dB."
+                    "description": "[VV, VH] dB thresholds."
                 },
-                "snicSize": {"enum": [3, 5, 7, 9, 11, 13, 15], "description": "Radar: SNIC seed spacing."},
-                "snicCompactness": {"type": "number", "minimum": 0, "maximum": 2, "description": "Radar: SNIC spatial-vs-spectral weighting."},
-                "multitemporalSpeckleFilter": {"enum": ["NONE", "QUEGAN", "RABASAR"], "description": "Radar: multi-temporal speckle filter."},
-                "numberOfImages": {"type": "integer", "minimum": 2, "maximum": 100, "description": "Radar: scenes used by the multi-temporal speckle filter."},
-                "outlierRemoval": {"enum": ["NONE", "MODERATE", "AGGRESSIVE", "CONSERVATIVE"], "description": "Radar: temporal outlier rejection."},
+                "snicSize": {"enum": [3, 5, 7, 9, 11, 13, 15], "description": "SNIC seed spacing."},
+                "snicCompactness": {"type": "number", "minimum": 0, "maximum": 2, "description": "SNIC spatial-vs-spectral weight."},
+                "multitemporalSpeckleFilter": {"enum": ["NONE", "QUEGAN", "RABASAR"], "description": "Radar multi-temporal speckle filter. Very expensive on time series — leave NONE unless explicitly needed."},
+                "numberOfImages": {"type": "integer", "minimum": 2, "maximum": 100, "description": "Scenes used by multi-temporal filter."},
+                "outlierRemoval": {"enum": ["NONE", "MODERATE", "AGGRESSIVE", "CONSERVATIVE"], "description": "Radar temporal outlier rejection."},
                 "mask": {
                     "type": "array",
                     "uniqueItems": true,
                     "items": {"enum": ["SIDES", "FIRST_LAST"]},
-                    "description": "Radar: edge masks per scene."
+                    "description": "Radar per-scene edge masks."
                 },
-                "minAngle": {"type": "number", "minimum": 0, "maximum": 90, "description": "Radar: minimum local incidence angle (°)."},
-                "maxAngle": {"type": "number", "minimum": 0, "maximum": 90, "description": "Radar: maximum local incidence angle (°)."},
-                "minObservations": {"type": "integer", "minimum": 1, "maximum": 50, "description": "Radar: minimum valid scenes per pixel."},
-                "cloudThreshold": {"type": "number", "minimum": 0, "maximum": 1, "description": "Planet: cloud-score threshold (fraction)."},
-                "shadowThreshold": {"type": "number", "minimum": 0, "maximum": 1, "description": "Planet: shadow-score threshold (fraction)."},
+                "minAngle": {"type": "number", "minimum": 0, "maximum": 90, "description": "Min local incidence angle (°). S1 swath ~29°-46°."},
+                "maxAngle": {"type": "number", "minimum": 0, "maximum": 90, "description": "Max local incidence angle (°)."},
+                "minObservations": {"type": "integer", "minimum": 1, "maximum": 50, "description": "Min valid scenes per pixel."},
+                "cloudThreshold": {"type": "number", "minimum": 0, "maximum": 1, "description": "Planet cloud-score threshold."},
+                "shadowThreshold": {"type": "number", "minimum": 0, "maximum": 1, "description": "Planet shadow-score threshold."},
                 "cloudBuffer": {
                     "anyOf": [
-                        {"enum": [0, 120, 600], "description": "Optical / Planet discrete buffer."},
+                        {"enum": [0, 120, 600]},
                         {"type": "integer", "minimum": 0}
                     ],
-                    "description": "Buffer (in meters) added around detected clouds. Optical and Planet expose a discrete enum; the radar pipeline does not use this field."
+                    "description": "Buffer (m) around detected clouds. Optical/Planet only — radar ignores. Bigger buffer = more masking + much higher cost. Default 0; leave at 0 unless residual cloud edges hurt output."
                 },
-                "histogramMatching": {"enum": ["ENABLED", "DISABLED"], "description": "Planet: histogram match scenes to a reference."}
+                "histogramMatching": {"enum": ["ENABLED", "DISABLED"], "description": "Planet: match scenes to a reference."}
             }
         }
     }

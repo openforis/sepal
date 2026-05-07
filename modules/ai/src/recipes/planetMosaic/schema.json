@@ -2,13 +2,13 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/planetMosaic/schema.json",
     "title": "PlanetMosaicRecipe",
-    "description": "A SEPAL Planet Mosaic recipe. Produces a cloud-masked composite from Planet imagery — either Planet's NICFI Basemaps (free for tropical forests, monthly mosaics) or Planet Daily / user-supplied basemap collections.\n\n**Pipeline.** (1) Load the configured Planet ImageCollection (`sources.assets`). (2) Filter to AOI bounds and `dates`. (3) Compute a per-pixel cloud score and mask pixels above `options.cloudThreshold`, optionally buffered. (4) For DAILY: optional histogram matching to a reference image. (5) Composite to a single image and add indices.\n\n**Threshold scaling.** `options.cloudThreshold` and `options.shadowThreshold` are stored as **fractions in [0, 1]** (NOT percentages). The GUI displays them as 0–100 then maps via `1 - slider/100` on save (so a slider value of 85 persists as `0.15`).",
+    "description": "Cloud-masked composite from Planet imagery — NICFI Basemaps (free tropical, monthly), other Planet Basemaps (paid), or Planet Scope daily.\n\nPipeline: load `sources.assets` → filter AOI + dates → cloud-score mask above `options.cloudThreshold` (optionally buffered) → DAILY: optional histogram match → composite + indices.\n\n**Threshold encoding.** `cloudThreshold` and `shadowThreshold` are **fractions in [0, 1]**, NOT percentages. GUI shows 0–100 and persists `1 − slider/100` (slider 85 → 0.15).",
     "type": "object",
     "additionalProperties": false,
     "required": ["aoi", "dates", "sources", "options"],
     "properties": {
         "aoi": {
-            "description": "Area of Interest. Planet Mosaic supports an Earth Engine table or a hand-drawn polygon.",
+            "description": "Area of interest. Supports EE table or polygon.",
             "oneOf": [
                 {"$ref": "../shared/aoi.schema.json#/$defs/eeTable"},
                 {"$ref": "../shared/aoi.schema.json#/$defs/polygon"}
@@ -26,37 +26,37 @@
         },
         "dates": {
             "title": "PlanetMosaicDates",
-            "description": "Half-open date interval `[fromDate, toDate)`. Earliest valid `fromDate` is `2013-04-01` (Planet's earliest imagery).",
+            "description": "Half-open `[fromDate, toDate)`. Earliest valid: 2013-04-01.",
             "type": "object",
             "additionalProperties": false,
             "required": ["fromDate", "toDate"],
             "properties": {
                 "fromDate": {
                     "$ref": "#/$defs/date",
-                    "description": "**Inclusive** start date. Must be on or after `2013-04-01` and strictly before `toDate`."
+                    "description": "Inclusive. ≥ 2013-04-01, < toDate."
                 },
                 "toDate": {
                     "$ref": "#/$defs/date",
-                    "description": "**Exclusive** end date. Scenes acquired ON `toDate` are NOT included — set to the day AFTER the last day you want covered. For the full year 2024 use `2025-01-01`, NOT `2024-12-31`."
+                    "description": "Exclusive. Scenes on toDate are NOT included. Full year 2024 → 2025-01-01 (NOT 2024-12-31)."
                 }
             }
         },
         "sources": {
             "title": "PlanetMosaicSources",
-            "description": "Planet collection selection.\n\n- The GUI exposes 3 user-facing buttons: `NICFI` (free tropical-forest basemaps), `BASEMAPS` (Planet Basemaps, paid), `DAILY` (Planet Scope daily). The GUI maps the `NICFI` button to model `source: 'BASEMAPS'` plus the 3 hard-coded NICFI assets — so the persisted model only ever has `source: 'BASEMAPS'` or `source: 'DAILY'`. Use the LLM-friendly `terms` to disambiguate.\n- For BASEMAPS with NICFI assets, pass the canonical 3-asset NICFI list. For other basemaps, pass the user-supplied `[assetId]`. For DAILY, pass `[<dailyCollectionAssetId>]`.",
+            "description": "Planet collection. GUI has 3 buttons (NICFI / BASEMAPS / DAILY) but persists only 2 source values: NICFI is just `BASEMAPS` + the 3 NICFI asset ids. So model has `BASEMAPS` (NICFI or user basemap) or `DAILY`.",
             "type": "object",
             "additionalProperties": false,
             "required": ["source", "assets"],
             "properties": {
                 "source": {
                     "enum": ["BASEMAPS", "DAILY"],
-                    "description": "Persisted source identifier. `BASEMAPS` covers both NICFI (the GUI's NICFI button) and any user-supplied basemap collection asset. `DAILY` is Planet Daily / Scope."
+                    "description": "BASEMAPS = NICFI or user basemap collection. DAILY = Planet Scope daily."
                 },
                 "assets": {
                     "type": "array",
                     "minItems": 1,
                     "items": {"type": "string", "minLength": 1},
-                    "description": "Earth Engine ImageCollection asset ids. For NICFI use exactly: `['projects/planet-nicfi/assets/basemaps/africa', 'projects/planet-nicfi/assets/basemaps/asia', 'projects/planet-nicfi/assets/basemaps/americas']`. For other basemaps or DAILY, supply the user's asset id(s) as a single-element array."
+                    "description": "EE ImageCollection asset ids. NICFI: `['projects/planet-nicfi/assets/basemaps/africa', '…/asia', '…/americas']` (exact). Other basemaps / DAILY: user's asset id as single-element array."
                 }
             }
         },
@@ -70,21 +70,21 @@
                     "type": "number",
                     "minimum": 0,
                     "maximum": 1,
-                    "description": "Maximum cloud-score (0–1) before a pixel is masked. Pixels with cloud score `> cloudThreshold` are masked. Default `0.15` (a fraction; the GUI's 85% slider maps to this). Lower values are more aggressive."
+                    "description": "Mask pixels with cloud score > this. Fraction in [0, 1]. Default 0.15 (GUI slider 85). Lower = more aggressive."
                 },
                 "shadowThreshold": {
                     "type": "number",
                     "minimum": 0,
                     "maximum": 1,
-                    "description": "Maximum brightness-derived shadow score (0–1). Default `0.4`."
+                    "description": "Brightness-derived shadow score threshold. Default 0.4."
                 },
                 "cloudBuffer": {
                     "enum": [0, 120, 600],
-                    "description": "Buffer around detected clouds in meters (Form.Buttons → discrete: 0 = none, 120 = moderate, 600 = aggressive)."
+                    "description": "Buffer (m) around detected clouds: 0 / 120 / 600. Bigger buffer = much higher cost. Default 0; leave at 0 unless residual cloud edges hurt output."
                 },
                 "histogramMatching": {
                     "enum": ["ENABLED", "DISABLED"],
-                    "description": "Histogram-match scenes to a reference. Only meaningful for `source='DAILY'`; ignored for BASEMAPS. Default `DISABLED`."
+                    "description": "Match scenes to a reference. DAILY only; ignored for BASEMAPS. Default DISABLED."
                 }
             }
         }

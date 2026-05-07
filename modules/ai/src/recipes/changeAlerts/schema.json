@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/changeAlerts/schema.json",
     "title": "ChangeAlertsRecipe",
-    "description": "A SEPAL Change Alerts recipe. CCDC-based per-pixel change detection that compares current observations to a CCDC harmonic-regression reference and emits alert pixels when the model fit fails over a confirmation window.\n\n**Pipeline.** (1) Load `reference` (a CCDC recipe or its exported asset). (2) Build a recent observation collection from `sources` over the calibration + monitoring windows ending at `date.monitoringEnd`. (3) Per pixel, compute residuals against the CCDC model; flag changes where residuals exceed `changeAlertsOptions.minConfidence` σ across `numberOfObservations` consecutive scenes.\n\n**Fields the LLM must populate.** `reference.{type, id}` (no sensible default — the user picks which CCDC source to monitor against), and `sources.dataSets` (which satellite collections to draw monitoring observations from). `date.monitoringEnd` defaults to today if omitted. All other fields have defaults the LLM can keep or tweak.",
+    "description": "CCDC-based per-pixel change alerts. Compares recent observations to a CCDC harmonic-regression reference; flags pixels where residuals exceed σ over a confirmation window.\n\nPipeline: load `reference` (CCDC recipe/asset) → build observation collection from `sources` over calibration + monitoring windows ending at `date.monitoringEnd` → per pixel, residuals vs CCDC model → flag where residuals > `minConfidence` σ across `numberOfObservations` consecutive scenes.\n\n**LLM must set:** `reference.{type, id}` (which CCDC to monitor — no default), `sources.dataSets` (monitoring source). `date.monitoringEnd` defaults to today.",
     "type": "object",
     "additionalProperties": true,
     "required": ["reference", "date", "sources", "changeAlertsOptions"],
@@ -12,7 +12,7 @@
         "sources": {"$ref": "#/$defs/sources"},
         "options": {
             "title": "ChangeAlertsOptions",
-            "description": "Mixed optical / radar / Planet processing options. Same shape as `TIME_SERIES.options` — see that schema for full per-field documentation.",
+            "description": "Same shape as `TIME_SERIES.options`. See that schema for per-field semantics.",
             "$ref": "../timeSeries/schema.json#/$defs/options"
         },
         "changeAlertsOptions": {"$ref": "#/$defs/changeAlertsOptions"}
@@ -20,7 +20,7 @@
     "$defs": {
         "reference": {
             "title": "ChangeAlertsReference",
-            "description": "CCDC reference — either a SEPAL CCDC recipe or an Earth Engine asset id of a CCDC export.",
+            "description": "SEPAL CCDC recipe or EE asset id of a CCDC export.",
             "type": "object",
             "additionalProperties": true,
             "required": ["type", "id"],
@@ -31,12 +31,12 @@
         },
         "date": {
             "title": "ChangeAlertsDate",
-            "description": "Monitoring + calibration windows. Calibration runs from `monitoringEnd - monitoringDuration - calibrationDuration` to `monitoringEnd - monitoringDuration`; monitoring runs from there to `monitoringEnd` (exclusive).",
+            "description": "Calibration: [monitoringEnd − monitoringDuration − calibrationDuration, monitoringEnd − monitoringDuration). Monitoring: [that, monitoringEnd).",
             "type": "object",
             "additionalProperties": false,
             "required": ["monitoringDuration", "monitoringDurationUnit", "calibrationDuration", "calibrationDurationUnit"],
             "properties": {
-                "monitoringEnd": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "format": "date"},
+                "monitoringEnd": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "format": "date", "description": "End of monitoring window. Default = today."},
                 "monitoringDuration": {"type": "integer", "minimum": 1},
                 "monitoringDurationUnit": {"enum": ["days", "weeks", "months"]},
                 "calibrationDuration": {"type": "integer", "minimum": 1},
@@ -49,7 +49,7 @@
             "additionalProperties": true,
             "required": ["dataSets"],
             "properties": {
-                "cloudPercentageThreshold": {"type": "integer", "minimum": 0, "maximum": 100},
+                "cloudPercentageThreshold": {"type": "integer", "minimum": 0, "maximum": 100, "description": "Drop scenes above this scene-level cloud %. Default 75."},
                 "dataSets": {
                     "type": "object",
                     "additionalProperties": false,
@@ -68,12 +68,12 @@
             "additionalProperties": false,
             "required": ["minConfidence", "numberOfObservations", "minNumberOfChanges", "mustBeConfirmedInMonitoring", "mustBeStableBeforeChange", "mustStayChanged"],
             "properties": {
-                "minConfidence": {"type": "number", "exclusiveMinimum": 0, "description": "Minimum residual magnitude (σ) to count as a change. Default `5`."},
-                "numberOfObservations": {"type": "integer", "minimum": 1, "description": "Number of recent observations to evaluate. Default `3`."},
-                "minNumberOfChanges": {"type": "integer", "minimum": 1, "description": "Minimum count of qualifying observations to confirm an alert. Default `3`."},
-                "mustBeConfirmedInMonitoring": {"type": "boolean", "description": "Require the change to be confirmed within the monitoring window. Default `true`."},
-                "mustBeStableBeforeChange": {"type": "boolean", "description": "Require the calibration window to be stable before flagging. Default `true`."},
-                "mustStayChanged": {"type": "boolean", "description": "Require the change to persist (not revert) for confirmation. Default `true`."}
+                "minConfidence": {"type": "number", "exclusiveMinimum": 0, "description": "Min residual magnitude (σ) to count as change. Default 5. Higher = more conservative, fewer false alarms."},
+                "numberOfObservations": {"type": "integer", "minimum": 1, "description": "Recent observations to evaluate. Default 3."},
+                "minNumberOfChanges": {"type": "integer", "minimum": 1, "description": "Min qualifying obs to confirm alert. Default 3."},
+                "mustBeConfirmedInMonitoring": {"type": "boolean", "description": "Require confirmation within monitoring window. Default true."},
+                "mustBeStableBeforeChange": {"type": "boolean", "description": "Require stable calibration window before flagging. Default true."},
+                "mustStayChanged": {"type": "boolean", "description": "Require change persists (not reverts). Default true."}
             }
         }
     }

@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/stack/schema.json",
     "title": "StackRecipe",
-    "description": "A SEPAL Stack recipe. Combine bands from multiple input images into a single multi-band stack with user-controllable band selection and renaming.\n\n**What this recipe is for.** Combine outputs from different recipes/assets into one image — e.g. stack an optical mosaic with a radar mosaic, or with a topography asset, to feed into downstream classification or analysis. Unlike Band Math, no math is performed; bands are passed through with optional rename.\n\n**Pipeline.** (1) Load each input image, selecting only the bands listed in `bandNames.bandNames[*].bands`. (2) Rename via `select(originalNames, outputNames)`. (3) Concatenate all images band-wise. (4) Clip to the union of bounded input geometries.\n\n**AOI semantics.** No separate AOI field — output AOI is the union of bounded input geometries.\n\n**Fields the LLM must populate.** Everything: `inputImagery.images` (≥ 1 image to stack) and `bandNames.bandNames` (one entry per input, listing which `originalName` → `outputName` band mappings to keep). Defaults are empty.",
+    "description": "Combine bands from multiple input images into one multi-band stack with band selection + renaming. Unlike Band Math, no math — bands pass through with optional rename. Use to combine outputs (e.g. stack optical mosaic + radar mosaic + topography) for downstream classification/analysis.\n\nPipeline: (1) load each input, select only bands in `bandNames.bandNames[*].bands`; (2) rename via `select(originalNames, outputNames)`; (3) concatenate band-wise; (4) clip to union of bounded input geometries.\n\nOutput AOI = union of bounded input geometries (no separate AOI field).\n\n**LLM populates everything**: `inputImagery.images` (≥1) and `bandNames.bandNames` (one entry per input with `originalName → outputName` mappings). Defaults empty.",
     "type": "object",
     "additionalProperties": false,
     "required": ["inputImagery", "bandNames"],
@@ -30,19 +30,19 @@
             "additionalProperties": true,
             "required": ["imageId", "type", "id"],
             "properties": {
-                "imageId": {"type": "string", "minLength": 1, "description": "Stable UUID for this image; bandNames entries reference it via `imageId`."},
+                "imageId": {"type": "string", "minLength": 1, "description": "UUID. `bandNames` entries reference via `imageId`."},
                 "type": {"enum": ["RECIPE_REF", "ASSET"]},
                 "id": {"type": "string", "minLength": 1, "description": "SEPAL recipe id or EE asset id."},
                 "bands": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Available bands loaded from the source. Cosmetic; the LLM should leave this absent."
+                    "description": "Bands available from source. GUI-populated. Don't set."
                 }
             }
         },
         "bandNames": {
             "title": "StackBandNames",
-            "description": "Per-image band selection and renaming. Each entry maps an `imageId` to the bands taken from that image, with `originalName` (source-side) and `outputName` (stack-side). Bands not listed are dropped.",
+            "description": "Per-image band selection + rename. Each entry maps an `imageId` to bands taken with `originalName` (source) and `outputName` (stack). Unlisted bands are dropped.",
             "type": "object",
             "additionalProperties": false,
             "required": ["bandNames"],
@@ -72,7 +72,7 @@
                                 "type": "string",
                                 "minLength": 1,
                                 "pattern": "^[a-zA-Z_][a-zA-Z0-9_]{0,29}$",
-                                "description": "Renamed band in the stacked output. Must match `^[a-zA-Z_][a-zA-Z0-9_]{0,29}$` and be unique across the entire stack."
+                                "description": "Renamed band in stacked output. Max 30 chars; must be unique across entire stack."
                             }
                         }
                     }

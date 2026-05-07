@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/phenology/schema.json",
     "title": "PhenologyRecipe",
-    "description": "A SEPAL Phenology recipe. Extracts seasonal vegetation-cycle metrics — start/end of season, peak greenness, amplitude, growing-season length — from a multi-year time series of a vegetation index.\n\n**Bands produced.** Summary: `background`, `amplitude`, `median`. Per-detected-season (1, 2): `dayOfYear_<n>`, `days_<n>`, `median_<n>`, `slope_<n>`, `offset_<n>`. Monthly aggregates: one band per month (january..december).\n\n**Pipeline.** (1) Build a time series of the configured `sources.band` (typically `evi` or `ndvi`) across the years `dates.fromYear..toYear`. (2) Fit a per-pixel seasonal model. (3) Extract phenology metrics.",
+    "description": "Per-pixel seasonal vegetation-cycle metrics — start/end of season, peak greenness, amplitude, length — from a multi-year vegetation-index series.\n\nOutputs:\n- Summary: `background`, `amplitude`, `median`.\n- Per-season (1, 2): `dayOfYear_<n>`, `days_<n>`, `median_<n>`, `slope_<n>`, `offset_<n>`.\n- Monthly: `january`..`december`.\n\nPipeline: build time series of `sources.band` (typically `evi`/`ndvi`) across `dates.fromYear..toYear` → per-pixel seasonal fit → extract metrics. Optical only (LS/S2).",
     "type": "object",
     "additionalProperties": true,
     "required": ["aoi", "dates", "sources"],
@@ -17,20 +17,20 @@
         "sources": {"$ref": "#/$defs/sources"},
         "options": {
             "title": "PhenologyOptions",
-            "description": "Processing options — union of optical / radar / Planet defaults. Same shape as `TIME_SERIES.options` — see that schema for full per-field documentation. The applicable subset depends on which `sources.dataSets` groups are selected.",
+            "description": "Same shape as `TIME_SERIES.options`. See that schema for per-field semantics.",
             "$ref": "../timeSeries/schema.json#/$defs/options"
         }
     },
     "$defs": {
         "dates": {
             "title": "PhenologyDates",
-            "description": "Calendar-year range. Both endpoints are inclusive (`fromYear` and `toYear` ARE both included). The recipe analyzes the seasonal cycle across each year separately.",
+            "description": "Both endpoints inclusive — `fromYear` AND `toYear` included.",
             "type": "object",
             "additionalProperties": false,
             "required": ["fromYear", "toYear"],
             "properties": {
-                "fromYear": {"type": "integer", "minimum": 1972, "description": "First year (inclusive)."},
-                "toYear": {"type": "integer", "minimum": 1972, "description": "Last year (inclusive). Must be ≥ fromYear."}
+                "fromYear": {"type": "integer", "minimum": 1972, "description": "First year."},
+                "toYear": {"type": "integer", "minimum": 1972, "description": "Last year. Must be ≥ fromYear."}
             }
         },
         "sources": {
@@ -39,7 +39,7 @@
             "additionalProperties": true,
             "required": ["cloudPercentageThreshold", "dataSets", "band"],
             "properties": {
-                "cloudPercentageThreshold": {"type": "integer", "minimum": 0, "maximum": 100},
+                "cloudPercentageThreshold": {"type": "integer", "minimum": 0, "maximum": 100, "description": "Drop scenes above this scene-level cloud %. Default 75."},
                 "dataSets": {
                     "type": "object",
                     "additionalProperties": false,
@@ -62,7 +62,7 @@
                 "band": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "Vegetation index band to analyze. Common: `evi`, `evi2`, `ndvi`, `ndmi`, `nbr`, `savi`, `kndvi`."
+                    "description": "Vegetation index band. Common: `evi` (default), `evi2`, `ndvi`, `ndmi`, `nbr`, `savi`, `kndvi`."
                 }
             }
         }

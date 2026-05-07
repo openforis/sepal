@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/baytsHistorical/schema.json",
     "title": "BaytsHistoricalRecipe",
-    "description": "A SEPAL BayTS (Bayesian Time Series) Historical recipe. Builds the per-pixel Sentinel-1 SAR statistics (VV/VH means, std-devs, speckle) used as the historical reference distribution by the BayTS Alerts recipe. Output is per-orbit-number multi-band imagery summarizing the radar history of the AOI over `dates.fromDate..toDate`.",
+    "description": "Bayesian Time Series Historical reference. Builds per-pixel S1 SAR statistics (VV/VH means, std-devs, speckle) used as the prior by BAYTS_ALERTS. Output: per-orbit-number multi-band image summarizing AOI radar history over `dates.fromDate..toDate`.",
     "type": "object",
     "additionalProperties": true,
     "required": ["aoi", "dates", "options"],
@@ -23,13 +23,13 @@
             "additionalProperties": false,
             "required": ["fromDate", "toDate"],
             "properties": {
-                "fromDate": {"$ref": "#/$defs/date", "description": "**Inclusive** start of the historical reference window. Sentinel-1 coverage starts 2014-06-15."},
-                "toDate": {"$ref": "#/$defs/date", "description": "**Exclusive** end. Scenes ON toDate are NOT included."}
+                "fromDate": {"$ref": "#/$defs/date", "description": "Inclusive. S1 starts 2014-06-15. **January 2024 trap:** S1B died 2021-12; until S1C activated 2024-12, gaps from 2024-01-31 onward — extending toDate after that may yield empty AOIs."},
+                "toDate": {"$ref": "#/$defs/date", "description": "Exclusive. Scenes on toDate NOT included. Full year 2024 → 2025-01-01."}
             }
         },
         "options": {
             "title": "BaytsHistoricalOptions",
-            "description": "Radar processing options. Same shape and conditional requirements as radarMosaic options.",
+            "description": "Radar processing. Same shape + conditional requirements as `radarMosaic.options` — see that schema for per-field semantics.",
             "type": "object",
             "additionalProperties": true,
             "required": ["orbits", "orbitNumbers", "geometricCorrection", "spatialSpeckleFilter", "multitemporalSpeckleFilter", "outlierRemoval", "mask", "minObservations"],
@@ -41,7 +41,7 @@
                     "items": {"enum": ["ASCENDING", "DESCENDING"]}
                 },
                 "orbitNumbers": {"enum": ["ALL", "DOMINANT", "ADJACENT"]},
-                "geometricCorrection": {"enum": ["NONE", "ELLIPSOID", "TERRAIN"]},
+                "geometricCorrection": {"enum": ["NONE", "ELLIPSOID", "TERRAIN"], "description": "σ⁰ → γ⁰. TERRAIN recommended in mountainous regions."},
                 "spatialSpeckleFilter": {"enum": ["NONE", "GAMMA_MAP", "LEE", "REFINED_LEE", "LEE_SIGMA", "SNIC"]},
                 "kernelSize": {"enum": [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25]},
                 "sigma": {"enum": [0.5, 0.6, 0.7, 0.8, 0.9, 0.95]},
@@ -50,21 +50,22 @@
                     "type": "array",
                     "minItems": 2,
                     "maxItems": 2,
-                    "items": {"type": "number", "minimum": -30, "maximum": 30}
+                    "items": {"type": "number", "minimum": -30, "maximum": 30},
+                    "description": "[VV, VH] dB thresholds. Defaults [0, -5]."
                 },
                 "snicSize": {"enum": [3, 5, 7, 9, 11, 13, 15]},
                 "snicCompactness": {"type": "number", "minimum": 0, "maximum": 2},
-                "multitemporalSpeckleFilter": {"enum": ["NONE", "QUEGAN", "RABASAR"]},
-                "numberOfImages": {"type": "integer", "minimum": 2, "maximum": 100},
+                "multitemporalSpeckleFilter": {"enum": ["NONE", "QUEGAN", "RABASAR"], "description": "Multi-temporal speckle filter. QUEGAN = ratio-based, fast; RABASAR = log-domain, more aggressive. Very expensive — leave NONE unless needed."},
+                "numberOfImages": {"type": "integer", "minimum": 2, "maximum": 100, "description": "Scenes used by multi-temporal filter."},
                 "outlierRemoval": {"enum": ["NONE", "MODERATE", "AGGRESSIVE", "CONSERVATIVE"]},
                 "mask": {
                     "type": "array",
                     "uniqueItems": true,
                     "items": {"enum": ["SIDES", "FIRST_LAST"]}
                 },
-                "minAngle": {"type": "number", "minimum": 0, "maximum": 90},
+                "minAngle": {"type": "number", "minimum": 0, "maximum": 90, "description": "Min local incidence angle (°). S1 swath ~29°-46°."},
                 "maxAngle": {"type": "number", "minimum": 0, "maximum": 90},
-                "minObservations": {"type": "integer", "minimum": 1, "maximum": 50}
+                "minObservations": {"type": "integer", "minimum": 1, "maximum": 50, "description": "Min valid scenes per pixel."}
             },
             "allOf": [
                 {
