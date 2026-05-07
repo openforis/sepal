@@ -83,27 +83,31 @@ const createWsHandler = ({config, registry, conversationStore}) => {
                 } else if (data) {
                     const {type, text, conversationId, requestId} = data
                     const {username, admin} = user
-                    if (type === 'gui-response') {
-                        resolveRequest({requestId, success: data.success, data: data.data, error: data.error})
-                    } else if (type === 'message') {
-                        messageHandler.handleMessage({username, clientId, subscriptionId, text})
-                            .catch(error => log.error('Message handling error:', error))
-                    } else if (type === 'list-conversations') {
-                        conversationHandler.listConversations({username, clientId, subscriptionId})
-                            .catch(error => log.error('List conversations error:', error))
-                    } else if (type === 'create-conversation') {
-                        conversationHandler.createConversation({username, clientId, subscriptionId})
-                    } else if (type === 'select-conversation') {
-                        conversationHandler.selectConversation({username, clientId, subscriptionId, conversationId})
-                            .catch(error => log.error('Select conversation error:', error))
-                    } else if (type === 'delete-conversation') {
-                        conversationHandler.deleteConversation({username, clientId, subscriptionId, conversationId})
-                            .catch(error => log.error('Delete conversation error:', error))
-                    } else if (type === 'delete-all-conversations') {
-                        conversationHandler.deleteAllConversations({username, clientId, subscriptionId})
-                            .catch(error => log.error('Delete all conversations error:', error))
+                    if (admin) {
+                        if (type === 'gui-response') {
+                            resolveRequest({requestId, success: data.success, data: data.data, error: data.error})
+                        } else if (type === 'message') {
+                            messageHandler.handleMessage({username, clientId, subscriptionId, text})
+                                .catch(error => log.error('Message handling error:', error))
+                        } else if (type === 'list-conversations') {
+                            conversationHandler.listConversations({username, clientId, subscriptionId})
+                                .catch(error => log.error('List conversations error:', error))
+                        } else if (type === 'create-conversation') {
+                            conversationHandler.createConversation({username, clientId, subscriptionId})
+                        } else if (type === 'select-conversation') {
+                            conversationHandler.selectConversation({username, clientId, subscriptionId, conversationId})
+                                .catch(error => log.error('Select conversation error:', error))
+                        } else if (type === 'delete-conversation') {
+                            conversationHandler.deleteConversation({username, clientId, subscriptionId, conversationId})
+                                .catch(error => log.error('Delete conversation error:', error))
+                        } else if (type === 'delete-all-conversations') {
+                            conversationHandler.deleteAllConversations({username, clientId, subscriptionId})
+                                .catch(error => log.error('Delete all conversations error:', error))
+                        } else {
+                            log.warn('Unsupported message type:', type)
+                        }
                     } else {
-                        log.warn('Unsupported message type:', type)
+                        log.warn('Not allowed (non-admin):', username)
                     }
                 } else {
                     log.warn('Unsupported message:', message)
