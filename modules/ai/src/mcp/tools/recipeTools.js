@@ -50,7 +50,7 @@ const createRecipeTools = ({recipeValidator}) => [
             type: 'object',
             properties: {
                 type: {type: 'string', description: 'Recipe type (e.g. MOSAIC, CLASSIFICATION, TIME_SERIES)'},
-                name: {type: 'string', description: 'Display name for the recipe'},
+                name: {type: 'string', description: 'REQUIRED. Display name for the recipe — derive a clear, concise human-readable name from the user\'s request (e.g. "Bangladesh mangroves 2020 mosaic"). Never omit this parameter.'},
                 projectId: {type: 'string', description: 'Optional project ID to place the recipe in'},
                 model: {type: 'object', description: 'Complete recipe model parameters (type-specific configuration), built from recipe_info.defaults plus intentional changes.'}
             },
@@ -97,14 +97,14 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_delete',
-        description: 'Delete one or more recipes by their IDs',
+        description: 'DESTRUCTIVE: permanently deletes the listed recipes. Always confirm with the user before calling, naming the recipes that will be removed.',
         parameters: {
             type: 'object',
             properties: {
                 recipeIds: {
                     type: 'array',
                     items: {type: 'string'},
-                    description: 'Array of recipe IDs to delete'
+                    description: 'Array of recipe IDs to delete (from recipe_list)'
                 }
             },
             required: ['recipeIds']

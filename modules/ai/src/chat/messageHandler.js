@@ -18,6 +18,33 @@ const summarizeToolFailures = toolResults => {
     return [...new Set(messages)].slice(0, 2).join(' ')
 }
 
+const summarizeValue = (value, maxStringLen = 80) => {
+    if (value === null || value === undefined) return String(value)
+    if (typeof value === 'string') return value.length > maxStringLen ? `"${value.slice(0, maxStringLen)}…"` : `"${value}"`
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+    if (Array.isArray(value)) return `[${value.length}]`
+    if (typeof value === 'object') return `{${Object.keys(value).join(',')}}`
+    return typeof value
+}
+
+const summarizeInput = input => {
+    if (!input || typeof input !== 'object') return ''
+    const keys = Object.keys(input)
+    if (keys.length === 0) return '{}'
+    return keys.map(k => `${k}=${summarizeValue(input[k])}`).join(', ')
+}
+
+const summarizeResult = result => {
+    if (!result) return 'no-result'
+    if (result.success === false) {
+        const code = result.error?.code || 'ERROR'
+        const msg = result.error?.message || ''
+        return `FAIL(${code}): ${msg.length > 200 ? msg.slice(0, 200) + '…' : msg}`
+    }
+    if (result.data === undefined) return 'OK'
+    return `OK ${summarizeValue(result.data, 200)}`
+}
+
 const ajv = new Ajv({allErrors: true, strict: false})
 
 const createChunkBuffer = onFlush => {
@@ -76,23 +103,27 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
         for (const tc of toolCalls) {
             sendFn({type: 'tool-start', conversationId, toolCallId: tc.id, name: tc.name, input: tc.input || {}})
             const tool = registry ? registry.getTool(tc.name) : null
+            const inputSummary = summarizeInput(tc.input)
             let toolResult
             if (tool) {
                 const validationError = validateParams(tc.name, tc.input, tool.parameters)
                 if (validationError) {
                     toolResult = {success: false, error: {code: 'VALIDATION_ERROR', message: `Invalid parameters: ${validationError}`}}
+                    log.info(`Tool ${tc.name}(${inputSummary}) → ${summarizeResult(toolResult)}`)
                 } else {
+                    log.info(`Tool ${tc.name}(${inputSummary}) — executing`)
+                    log.debug(() => ['Tool input (full):', tc.name, tc.input])
                     try {
-                        log.debug(`Executing tool: ${tc.name}`, tc.input)
                         toolResult = await tool.handler({username, params: tc.input || {}, send: sendFn, request: requestFn, session})
-                        log.debug(`Tool result:`, {toolCallId: tc.id, result: toolResult})
+                        log.info(`Tool ${tc.name} → ${summarizeResult(toolResult)}`)
+                        log.debug(() => ['Tool result (full):', tc.name, toolResult])
                     } catch (error) {
-                        log.error(`Tool ${tc.name} error:`, error)
+                        log.error(`Tool ${tc.name} threw:`, error)
                         toolResult = {success: false, error: {code: 'TOOL_ERROR', message: error.message}}
                     }
                 }
             } else {
-                log.warn(`Unknown tool: ${tc.name}`)
+                log.warn(`Unknown tool: ${tc.name}(${inputSummary})`)
                 toolResult = {success: false, error: {code: 'UNKNOWN_TOOL', message: `Unknown tool: ${tc.name}`}}
             }
             const success = toolResult.success !== false
@@ -199,6 +230,8 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
             let bailMessage = null
             let lastFailureSummary = null
 
+            log.info(`[conv ${conversationId}] user message (${text.length} chars), ${messages.length} prior messages`)
+
             while (!done && rounds < MAX_TOOL_CALL_ROUNDS) {
                 rounds++
                 if (rounds === WARN_ROUND_THRESHOLD) {
@@ -212,8 +245,10 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                 }))
 
                 const promptMessages = stallNudge ? [...messages, stallNudge] : messages
+                const nudgeApplied = !!stallNudge
                 stallNudge = null
 
+                log.info(`[conv ${conversationId}] round ${rounds}: requesting (${promptMessages.length} msgs${nudgeApplied ? ', after nudge' : ''})`)
                 const result = await provider.stream({
                     messages: promptMessages,
                     tools: formattedTools,
@@ -222,6 +257,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                 })
 
                 chunkBuffer.end()
+                log.info(`[conv ${conversationId}] round ${rounds}: response (${(result.text || '').length} chars text, ${(result.toolCalls || []).length} tool calls, stop=${result.stopReason || 'unknown'})`)
 
                 if (result.toolCalls && result.toolCalls.length > 0) {
                     stallCount = 0
@@ -255,7 +291,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                     if (allFailed) {
                         consecutiveFailedRounds++
                         if (consecutiveFailedRounds >= MAX_CONSECUTIVE_FAILED_ROUNDS) {
-                            log.warn(`Bailing after ${consecutiveFailedRounds} consecutive failed rounds`)
+                            log.warn(`[conv ${conversationId}] Bailing after ${consecutiveFailedRounds} consecutive all-failed rounds (round ${rounds}). Last failure: ${lastFailureSummary || 'unknown'}`)
                             bailMessage = lastFailureSummary
                                 ? `I'm hitting persistent errors and could not complete the request. Last error: ${lastFailureSummary}`
                                 : "I'm hitting persistent errors and could not complete the request."
@@ -265,7 +301,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                         consecutiveFailedRounds = 0
                     }
                     if (!bailMessage && failedToolRounds >= MAX_FAILED_TOOL_ROUNDS) {
-                        log.warn(`Bailing after ${failedToolRounds} failed tool rounds`)
+                        log.warn(`[conv ${conversationId}] Bailing after ${failedToolRounds} rounds with at least one failed tool (round ${rounds}). Last failure: ${lastFailureSummary || 'unknown'}`)
                         bailMessage = lastFailureSummary
                             ? `I'm hitting persistent errors and could not complete the request. Last error: ${lastFailureSummary}`
                             : "I'm hitting persistent errors and could not complete the request."
@@ -275,7 +311,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                     const text = (result.text || '').trim()
                     if (!text && stallCount === 0) {
                         stallCount++
-                        log.warn('Empty assistant turn after tool calls; nudging to continue')
+                        log.warn(`[conv ${conversationId}] Empty assistant turn (round ${rounds}, stop=${result.stopReason || 'unknown'}); nudging to continue`)
                         stallNudge = {role: 'user', content: 'Continue working on the original request. Either make the next tool call needed, or send a final summary if the request is fulfilled.'}
                         continue
                     }
@@ -287,6 +323,7 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                         username, clientId, subscriptionId,
                         data: {type: 'chat-response', conversationId, complete: true}
                     })
+                    log.info(`[conv ${conversationId}] turn complete after ${rounds} round(s)`)
                     done = true
                 }
             }

@@ -97,7 +97,7 @@ class ClaudeProvider extends LLMProvider {
 
         log.debug(`Claude response: ${text.length} chars text, ${toolCalls.length} tool calls, stop=${response.stop_reason}`)
 
-        return {text, toolCalls}
+        return {text, toolCalls, stopReason: response.stop_reason}
     }
 
     async stream({messages, tools, systemPrompt, onChunk}) {
@@ -120,6 +120,7 @@ class ClaudeProvider extends LLMProvider {
         const stream = await client.messages.stream(params)
 
         let text = ''
+        let stopReason = null
         const toolCalls = []
 
         for await (const event of stream) {
@@ -143,6 +144,10 @@ class ClaudeProvider extends LLMProvider {
                         _inputStr: ''
                     })
                 }
+            } else if (event.type === 'message_delta') {
+                if (event.delta?.stop_reason) {
+                    stopReason = event.delta.stop_reason
+                }
             }
         }
 
@@ -157,9 +162,12 @@ class ClaudeProvider extends LLMProvider {
             }
         }
 
-        log.debug(`Claude stream complete: ${text.length} chars text, ${toolCalls.length} tool calls`)
+        if (stopReason === 'max_tokens') {
+            log.warn(`Claude stream truncated by max_tokens (${MAX_TOKENS}); ${text.length} chars text, ${toolCalls.length} tool calls`)
+        }
+        log.debug(`Claude stream complete: ${text.length} chars text, ${toolCalls.length} tool calls, stop=${stopReason}`)
 
-        return {text, toolCalls}
+        return {text, toolCalls, stopReason}
     }
 }
 

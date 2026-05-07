@@ -97,7 +97,7 @@ class OpenAIProvider extends LLMProvider {
 
         log.debug(`OpenAI response: ${text.length} chars text, ${toolCalls.length} tool calls, finish=${choice.finish_reason}`)
 
-        return {text, toolCalls}
+        return {text, toolCalls, stopReason: choice.finish_reason}
     }
 
     async stream({messages, tools, systemPrompt, onChunk}) {
@@ -120,6 +120,7 @@ class OpenAIProvider extends LLMProvider {
         const stream = await client.chat.completions.create(params)
 
         let text = ''
+        let stopReason = null
         const toolCalls = []
         let currentToolCall = null
 
@@ -151,6 +152,10 @@ class OpenAIProvider extends LLMProvider {
                     }
                 }
             }
+
+            if (choice.finish_reason) {
+                stopReason = choice.finish_reason
+            }
         }
 
         for (const tc of toolCalls) {
@@ -164,9 +169,12 @@ class OpenAIProvider extends LLMProvider {
             }
         }
 
-        log.debug(`OpenAI stream complete: ${text.length} chars text, ${toolCalls.length} tool calls`)
+        if (stopReason === 'length') {
+            log.warn(`OpenAI stream truncated by max_tokens (${MAX_TOKENS}); ${text.length} chars text, ${toolCalls.length} tool calls`)
+        }
+        log.debug(`OpenAI stream complete: ${text.length} chars text, ${toolCalls.length} tool calls, finish=${stopReason}`)
 
-        return {text, toolCalls}
+        return {text, toolCalls, stopReason}
     }
 }
 
