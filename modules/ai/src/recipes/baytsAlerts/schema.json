@@ -2,14 +2,18 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/baytsAlerts/schema.json",
     "title": "BaytsAlertsRecipe",
-    "description": "A SEPAL BayTS (Bayesian Time Series) Alerts recipe. Generates per-pixel deforestation/disturbance alerts from Sentinel-1 SAR data, comparing recent observations against a `BAYTS_HISTORICAL` reference distribution. Outputs alert pixels with confidence scores.\n\n**Pipeline.** (1) Load `reference` (a BayTS Historical recipe or its exported asset). (2) Pull recent S1 scenes covering the monitoring window ending at `date.monitoringEnd`, going back `date.monitoringDuration` months/years. (3) Compute Bayesian posterior for change at each pixel; emit alerts when probability exceeds thresholds.",
+    "description": "A SEPAL BayTS (Bayesian Time Series) Alerts recipe. Generates per-pixel deforestation/disturbance alerts from Sentinel-1 SAR data, comparing recent observations against a `BAYTS_HISTORICAL` reference distribution. Outputs alert pixels with confidence scores.\n\n**Pipeline.** (1) Load `reference` (a BayTS Historical recipe or its exported asset). (2) Pull recent S1 scenes covering the monitoring window ending at `date.monitoringEnd`, going back `date.monitoringDuration` months/years. (3) Compute Bayesian posterior for change at each pixel; emit alerts when probability exceeds thresholds.\n\n**Fields the LLM must populate.** `reference.{type, id}` (no sensible default — the user picks which BayTS Historical to monitor against). `date.monitoringEnd` defaults to today if omitted. All other fields have defaults the LLM can keep or tweak.",
     "type": "object",
     "additionalProperties": true,
     "required": ["reference", "date", "options", "baytsAlertsOptions"],
     "properties": {
         "reference": {"$ref": "#/$defs/reference"},
         "date": {"$ref": "#/$defs/date"},
-        "options": {"$ref": "#/$defs/options"},
+        "options": {
+            "title": "BaytsAlertsOptions",
+            "description": "Sentinel-1 processing options. Same shape, defaults, and conditional requirements as `BAYTS_HISTORICAL.options` — typically copied verbatim from the historical reference. See that schema for full per-field documentation.",
+            "$ref": "../baytsHistorical/schema.json#/$defs/options"
+        },
         "baytsAlertsOptions": {"$ref": "#/$defs/baytsAlertsOptions"}
     },
     "$defs": {
@@ -43,12 +47,6 @@
                     "description": "Unit for monitoringDuration. (Backend accepts `years` too, but the GUI does not expose it.)"
                 }
             }
-        },
-        "options": {
-            "title": "BaytsAlertsOptions",
-            "description": "Sentinel-1 processing options. Same shape as BAYTS_HISTORICAL.options — typically copied from the historical reference.",
-            "type": "object",
-            "additionalProperties": true
         },
         "baytsAlertsOptions": {
             "title": "BaytsAlertsAlgorithmOptions",

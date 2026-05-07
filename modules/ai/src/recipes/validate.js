@@ -23,8 +23,9 @@ addFormats(ajv)
 // by $id, so $refs to other schema files resolve correctly regardless of the
 // $ref's relative path string.
 const recipesDir = __dirname
+const isSchemaFile = name => name === 'schema.json' || name.endsWith('.schema.json')
 for (const dirent of fs.readdirSync(recipesDir, {withFileTypes: true, recursive: true})) {
-    if (dirent.isFile() && dirent.name.endsWith('.schema.json')) {
+    if (dirent.isFile() && isSchemaFile(dirent.name)) {
         const filePath = path.join(dirent.parentPath || dirent.path, dirent.name)
         const schema = JSON.parse(fs.readFileSync(filePath, 'utf8'))
         if (schema.$id && !ajv.getSchema(schema.$id)) {
@@ -38,7 +39,8 @@ const compiled = {}
 
 const compile = recipe => {
     if (!compiled[recipe.id]) {
-        compiled[recipe.id] = ajv.compile(recipe.parameterSchema)
+        const $id = recipe.parameterSchema.$id
+        compiled[recipe.id] = ($id && ajv.getSchema($id)) || ajv.compile(recipe.parameterSchema)
     }
     return compiled[recipe.id]
 }

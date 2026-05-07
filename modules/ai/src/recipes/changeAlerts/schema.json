@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/changeAlerts/schema.json",
     "title": "ChangeAlertsRecipe",
-    "description": "A SEPAL Change Alerts recipe. CCDC-based per-pixel change detection that compares current observations to a CCDC harmonic-regression reference and emits alert pixels when the model fit fails over a confirmation window.\n\n**Pipeline.** (1) Load `reference` (a CCDC recipe or its exported asset). (2) Build a recent observation collection from `sources` over the calibration + monitoring windows ending at `date.monitoringEnd`. (3) Per pixel, compute residuals against the CCDC model; flag changes where residuals exceed `changeAlertsOptions.minConfidence` σ across `numberOfObservations` consecutive scenes.",
+    "description": "A SEPAL Change Alerts recipe. CCDC-based per-pixel change detection that compares current observations to a CCDC harmonic-regression reference and emits alert pixels when the model fit fails over a confirmation window.\n\n**Pipeline.** (1) Load `reference` (a CCDC recipe or its exported asset). (2) Build a recent observation collection from `sources` over the calibration + monitoring windows ending at `date.monitoringEnd`. (3) Per pixel, compute residuals against the CCDC model; flag changes where residuals exceed `changeAlertsOptions.minConfidence` σ across `numberOfObservations` consecutive scenes.\n\n**Fields the LLM must populate.** `reference.{type, id}` (no sensible default — the user picks which CCDC source to monitor against), and `sources.dataSets` (which satellite collections to draw monitoring observations from). `date.monitoringEnd` defaults to today if omitted. All other fields have defaults the LLM can keep or tweak.",
     "type": "object",
     "additionalProperties": true,
     "required": ["reference", "date", "sources", "changeAlertsOptions"],
@@ -10,7 +10,11 @@
         "reference": {"$ref": "#/$defs/reference"},
         "date": {"$ref": "#/$defs/date"},
         "sources": {"$ref": "#/$defs/sources"},
-        "options": {"$ref": "#/$defs/options"},
+        "options": {
+            "title": "ChangeAlertsOptions",
+            "description": "Mixed optical / radar / Planet processing options. Same shape as `TIME_SERIES.options` — see that schema for full per-field documentation.",
+            "$ref": "../timeSeries/schema.json#/$defs/options"
+        },
         "changeAlertsOptions": {"$ref": "#/$defs/changeAlertsOptions"}
     },
     "$defs": {
@@ -57,11 +61,6 @@
                     }
                 }
             }
-        },
-        "options": {
-            "type": "object",
-            "additionalProperties": true,
-            "description": "Mixed optical/radar/planet processing options. Loosely structured."
         },
         "changeAlertsOptions": {
             "title": "ChangeAlertsAlgorithmOptions",

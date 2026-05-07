@@ -80,6 +80,23 @@
                     "then": {"required": ["snicSize", "snicCompactness"]}
                 },
                 {
+                    "if": {"not": {"properties": {"spatialSpeckleFilter": {"const": "NONE"}}, "required": ["spatialSpeckleFilter"]}},
+                    "then": {"required": ["strongScatterers"]}
+                },
+                {
+                    "if": {"properties": {"strongScatterers": {"const": "RETAIN"}}, "required": ["strongScatterers"]},
+                    "then": {"required": ["strongScattererValues"]}
+                },
+                {
+                    "if": {
+                        "allOf": [
+                            {"not": {"properties": {"spatialSpeckleFilter": {"const": "NONE"}}, "required": ["spatialSpeckleFilter"]}},
+                            {"not": {"properties": {"multitemporalSpeckleFilter": {"const": "NONE"}}, "required": ["multitemporalSpeckleFilter"]}}
+                        ]
+                    },
+                    "then": {"required": ["numberOfImages"]}
+                },
+                {
                     "if": {"properties": {"mask": {"type": "array", "contains": {"const": "SIDES"}}}, "required": ["mask"]},
                     "then": {"required": ["minAngle", "maxAngle"]}
                 }

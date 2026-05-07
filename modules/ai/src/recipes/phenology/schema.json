@@ -15,7 +15,11 @@
         },
         "dates": {"$ref": "#/$defs/dates"},
         "sources": {"$ref": "#/$defs/sources"},
-        "options": {"$ref": "#/$defs/options"}
+        "options": {
+            "title": "PhenologyOptions",
+            "description": "Processing options — union of optical / radar / Planet defaults. Same shape as `TIME_SERIES.options` — see that schema for full per-field documentation. The applicable subset depends on which `sources.dataSets` groups are selected.",
+            "$ref": "../timeSeries/schema.json#/$defs/options"
+        }
     },
     "$defs": {
         "dates": {
@@ -61,12 +65,6 @@
                     "description": "Vegetation index band to analyze. Common: `evi`, `evi2`, `ndvi`, `ndmi`, `nbr`, `savi`, `kndvi`."
                 }
             }
-        },
-        "options": {
-            "title": "PhenologyOptions",
-            "description": "Processing options — union of optical / radar / planet defaults; loosely structured. The applicable subset depends on which dataSet groups are selected.",
-            "type": "object",
-            "additionalProperties": true
         }
     }
 }

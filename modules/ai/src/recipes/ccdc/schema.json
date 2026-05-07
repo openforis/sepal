@@ -15,7 +15,11 @@
         },
         "dates": {"$ref": "#/$defs/dates"},
         "sources": {"$ref": "#/$defs/sources"},
-        "options": {"$ref": "#/$defs/options"},
+        "options": {
+            "title": "CcdcOptions",
+            "description": "Optical / radar / Planet processing options. Same shape as `TIME_SERIES.options` — see that schema for full per-field documentation.",
+            "$ref": "../timeSeries/schema.json#/$defs/options"
+        },
         "ccdcOptions": {"$ref": "#/$defs/ccdcOptions"}
     },
     "$defs": {
@@ -53,12 +57,6 @@
                     "description": "Bands used for break detection. Common: `ndfi`, `ndvi`, `nbr`, `swir1`, `nir`. Default `['ndfi']`."
                 }
             }
-        },
-        "options": {
-            "title": "CcdcOptions",
-            "description": "Optical / radar / planet processing options. Loosely structured; the applicable subset depends on the selected dataSets.",
-            "type": "object",
-            "additionalProperties": true
         },
         "ccdcOptions": {
             "title": "CcdcAlgorithmOptions",

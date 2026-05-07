@@ -66,7 +66,7 @@
         },
         "options": {
             "title": "TimeSeriesOptions",
-            "description": "Combined optical + radar processing options. Optical fields apply when `sources.dataSets.LANDSAT` or `SENTINEL_2` is present; radar fields apply when `SENTINEL_1` is present. Loosely structured — the EE backend ignores fields that don't apply to the selected sources.",
+            "description": "Combined optical + radar + Planet processing options. The applicable subset depends on which `sources.dataSets` groups are present: Landsat / Sentinel-2 use the optical fields, Sentinel-1 uses the radar fields, Planet sources use the Planet fields. The EE backend silently ignores fields that don't apply to the selected sources.\n\nField names and semantics mirror the corresponding standalone recipes (`opticalMosaic.compositeOptions`, `radarMosaic.options`, `planetMosaic.options`) — see those schemas for full per-field documentation.",
             "type": "object",
             "additionalProperties": true,
             "properties": {
@@ -74,26 +74,72 @@
                     "type": "array",
                     "uniqueItems": true,
                     "items": {"enum": ["SR", "BRDF", "CALIBRATE"]},
-                    "description": "Optical: applied corrections."
+                    "description": "Optical: pre-compositing corrections (Surface Reflectance, BRDF, cross-sensor calibration)."
                 },
-                "brdfMultiplier": {"type": "number", "exclusiveMinimum": 0},
+                "brdfMultiplier": {"type": "number", "exclusiveMinimum": 0, "description": "Optical: strength multiplier for BRDF correction."},
+                "includedCloudMasking": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {"enum": ["sepalCloudScore", "landsatCFMask", "sentinel2CloudScorePlus", "sentinel2CloudProbability", "pino26"]},
+                    "description": "Optical: per-pixel cloud-masking methods to apply."
+                },
+                "sentinel2CloudProbabilityMaxCloudProbability": {"type": "integer", "minimum": 0, "maximum": 100},
+                "sentinel2CloudScorePlusBand": {"enum": ["cs", "cs_cdf"]},
+                "sentinel2CloudScorePlusMaxCloudProbability": {"type": "integer", "minimum": 0, "maximum": 100},
+                "landsatCFMaskCloudMasking": {"enum": ["OFF", "MODERATE", "AGGRESSIVE"]},
+                "landsatCFMaskCloudShadowMasking": {"enum": ["OFF", "MODERATE", "AGGRESSIVE"]},
+                "landsatCFMaskCirrusMasking": {"enum": ["OFF", "MODERATE", "AGGRESSIVE"]},
+                "landsatCFMaskDilatedCloud": {"enum": ["KEEP", "REMOVE"]},
+                "sepalCloudScoreMaxCloudProbability": {"type": "integer", "minimum": 0, "maximum": 100},
+                "holes": {"enum": ["PREVENT", "ALLOW"]},
+                "shadowMasking": {"enum": ["OFF", "BACKWARD", "FORWARD", "BOTH"], "description": "Optical: backward/forward shadow detection along sun-azimuth ray."},
+                "snowMasking": {"enum": ["ON", "OFF"]},
+                "compose": {"enum": ["MEDOID", "MEDIAN"], "description": "Optical: per-pixel reduction (only meaningful if the time series collapses to a composite)."},
+                "orbitOverlap": {"enum": ["KEEP", "REMOVE"], "description": "Optical (Sentinel-2) and Radar."},
+                "tileOverlap": {"enum": ["KEEP", "QUICK_REMOVE", "REMOVE"], "description": "Optical (Sentinel-2) tile-overlap deduplication."},
                 "orbits": {
                     "type": "array",
                     "uniqueItems": true,
                     "items": {"enum": ["ASCENDING", "DESCENDING"]},
-                    "description": "Sentinel-1 orbit directions."
+                    "description": "Radar: orbit directions to include."
                 },
-                "geometricCorrection": {"enum": ["NONE", "ELLIPSOID", "TERRAIN"], "description": "Sentinel-1 geometric correction."},
-                "speckleFilter": {"enum": ["NONE", "BOXCAR", "LEE", "REFINED_LEE", "LEE_SIGMA", "GAMMA_MAP"]},
-                "outlierRemoval": {"enum": ["NONE", "MODERATE", "AGGRESSIVE", "CONSERVATIVE"]},
-                "orbitOverlap": {"enum": ["KEEP", "REMOVE"]},
-                "tileOverlap": {"enum": ["KEEP", "QUICK_REMOVE", "REMOVE"]},
-                "compose": {"enum": ["MEDOID", "MEDIAN"]},
-                "snowMasking": {"enum": ["ON", "OFF"]},
-                "cloudThreshold": {"type": "number", "minimum": 0, "maximum": 1, "description": "Planet cloud-score threshold (fraction)."},
-                "shadowThreshold": {"type": "number", "minimum": 0, "maximum": 1},
-                "cloudBuffer": {"type": "integer", "minimum": 0},
-                "histogramMatching": {"enum": ["ENABLED", "DISABLED"]}
+                "orbitNumbers": {"enum": ["ALL", "DOMINANT", "ADJACENT"], "description": "Radar: how to handle multiple relative orbit numbers."},
+                "geometricCorrection": {"enum": ["NONE", "ELLIPSOID", "TERRAIN"], "description": "Radar: σ⁰ → γ⁰ correction."},
+                "spatialSpeckleFilter": {"enum": ["NONE", "GAMMA_MAP", "LEE", "REFINED_LEE", "LEE_SIGMA", "SNIC"], "description": "Radar: per-scene spatial speckle filter."},
+                "kernelSize": {"enum": [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25], "description": "Radar: filter kernel side length."},
+                "sigma": {"enum": [0.5, 0.6, 0.7, 0.8, 0.9, 0.95], "description": "Radar: Lee Sigma fraction."},
+                "strongScatterers": {"enum": ["RETAIN", "FILTER"], "description": "Radar: how to handle strong scatterers."},
+                "strongScattererValues": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {"type": "number", "minimum": -30, "maximum": 30},
+                    "description": "Radar: [VV-threshold, VH-threshold] in dB."
+                },
+                "snicSize": {"enum": [3, 5, 7, 9, 11, 13, 15], "description": "Radar: SNIC seed spacing."},
+                "snicCompactness": {"type": "number", "minimum": 0, "maximum": 2, "description": "Radar: SNIC spatial-vs-spectral weighting."},
+                "multitemporalSpeckleFilter": {"enum": ["NONE", "QUEGAN", "RABASAR"], "description": "Radar: multi-temporal speckle filter."},
+                "numberOfImages": {"type": "integer", "minimum": 2, "maximum": 100, "description": "Radar: scenes used by the multi-temporal speckle filter."},
+                "outlierRemoval": {"enum": ["NONE", "MODERATE", "AGGRESSIVE", "CONSERVATIVE"], "description": "Radar: temporal outlier rejection."},
+                "mask": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {"enum": ["SIDES", "FIRST_LAST"]},
+                    "description": "Radar: edge masks per scene."
+                },
+                "minAngle": {"type": "number", "minimum": 0, "maximum": 90, "description": "Radar: minimum local incidence angle (°)."},
+                "maxAngle": {"type": "number", "minimum": 0, "maximum": 90, "description": "Radar: maximum local incidence angle (°)."},
+                "minObservations": {"type": "integer", "minimum": 1, "maximum": 50, "description": "Radar: minimum valid scenes per pixel."},
+                "cloudThreshold": {"type": "number", "minimum": 0, "maximum": 1, "description": "Planet: cloud-score threshold (fraction)."},
+                "shadowThreshold": {"type": "number", "minimum": 0, "maximum": 1, "description": "Planet: shadow-score threshold (fraction)."},
+                "cloudBuffer": {
+                    "anyOf": [
+                        {"enum": [0, 120, 600], "description": "Optical / Planet discrete buffer."},
+                        {"type": "integer", "minimum": 0}
+                    ],
+                    "description": "Buffer (in meters) added around detected clouds. Optical and Planet expose a discrete enum; the radar pipeline does not use this field."
+                },
+                "histogramMatching": {"enum": ["ENABLED", "DISABLED"], "description": "Planet: histogram match scenes to a reference."}
             }
         }
     }
