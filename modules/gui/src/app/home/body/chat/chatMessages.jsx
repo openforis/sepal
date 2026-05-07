@@ -16,7 +16,7 @@ export const ChatMessages = ({messages, thinking}) => {
     return (
         <div className={styles.messages}>
             {messages.length === 0 && !thinking
-                ? <div className={styles.empty}>{msg('home.sections.chat.empty')}</div>
+                ? <div className={styles.empty}>{msg('home.chat.empty')}</div>
                 : messages.map((m, i) => (
                     <ChatMessage key={i} role={m.role} content={m.content} tools={m.tools}/>
                 ))

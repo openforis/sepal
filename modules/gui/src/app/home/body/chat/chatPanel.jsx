@@ -227,7 +227,7 @@ export const ChatPanel = ({className}) => {
                 chromeless
                 shape='circle'
                 icon={'arrow-left'}
-                tooltip={msg(view === 'chat' ? 'home.sections.chat.showConversations' : 'home.sections.chat.showChat')}
+                tooltip={msg(view === 'chat' ? 'home.chat.showConversations' : 'home.chat.showChat')}
                 tooltipPlacement='bottom'
                 onClick={handleShowList}
             />
@@ -235,7 +235,7 @@ export const ChatPanel = ({className}) => {
                 chromeless
                 shape='circle'
                 icon='trash'
-                tooltip={msg('home.sections.chat.deleteConversation')}
+                tooltip={msg('home.chat.deleteConversation')}
                 tooltipPlacement='bottom'
                 disabled={!isConnected || isLoading}
                 onRemove={handleDeleteActiveConversation}
@@ -249,7 +249,7 @@ export const ChatPanel = ({className}) => {
                 chromeless
                 shape='circle'
                 icon='plus'
-                tooltip={msg('home.sections.chat.newConversation')}
+                tooltip={msg('home.chat.newConversation')}
                 tooltipPlacement='bottom'
                 disabled={!isConnected || (activeConversationId && messages.length === 0)}
                 onClick={handleNewConversation}
@@ -258,11 +258,11 @@ export const ChatPanel = ({className}) => {
                 chromeless
                 shape='circle'
                 icon='trash'
-                tooltip={msg('home.sections.chat.deleteAllConversations.tooltip')}
+                tooltip={msg('home.chat.deleteAllConversations.tooltip')}
                 tooltipPlacement='bottom'
                 disabled={!isConnected || isLoading}
-                title={msg('home.sections.chat.deleteAllConversations.title')}
-                message={msg('home.sections.chat.deleteAllConversations.message')}
+                title={msg('home.chat.deleteAllConversations.title')}
+                message={msg('home.chat.deleteAllConversations.message')}
                 noClickHold
                 onRemove={handleDeleteAllConversations}
             />
@@ -275,7 +275,7 @@ export const ChatPanel = ({className}) => {
                 chromeless
                 shape='circle'
                 icon={isSplit ? 'thumbtack-slash' : 'thumbtack'}
-                tooltip={msg(isSplit ? 'home.sections.chat.floating' : 'home.sections.chat.sticky')}
+                tooltip={msg(isSplit ? 'home.chat.floating' : 'home.chat.sticky')}
                 tooltipPlacement='bottom'
                 onClick={toggleChatMode}
             />
@@ -283,7 +283,7 @@ export const ChatPanel = ({className}) => {
                 chromeless
                 shape='circle'
                 icon='times'
-                tooltip={msg('home.sections.chat.close')}
+                tooltip={msg('home.chat.close')}
                 tooltipPlacement='bottomRight'
                 onClick={closeChat}
             />
@@ -293,7 +293,7 @@ export const ChatPanel = ({className}) => {
     const renderHeader = () => (
         <Layout className={styles.header} type='horizontal-nowrap'>
             {isConversation ? renderConversationToolbar() : renderConversationListToolbar()}
-            <span className={styles.title}>{msg('home.sections.chat.title')}</span>
+            <span className={styles.title}>{msg('home.chat.title')}</span>
             {renderPanelToolbar()}
         </Layout>
     )

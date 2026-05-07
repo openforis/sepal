@@ -10,7 +10,7 @@ const recipeTypeName = type =>
     type ? msg(`tasks.details.recipeTypeNames.${type}`, {}, type) : ''
 
 const translateToolName = toolName =>
-    msg(`home.sections.chat.tools.${toolName}.label`, {}, humanize(toolName))
+    msg(`home.chat.tools.${toolName}.label`, {}, humanize(toolName))
 
 let recipesLoading = false
 let projectsLoading = false
@@ -58,7 +58,7 @@ const recipeRefs = ids =>
     (ids || []).map(recipeRef).filter(Boolean).join(', ')
 
 const tr = (toolName, slot, args) =>
-    msg(`home.sections.chat.tools.${toolName}.${slot}`, args, '')
+    msg(`home.chat.tools.${toolName}.${slot}`, args, '')
 
 const maybeProject = projectId => {
     const project = projectName(projectId)
@@ -145,17 +145,23 @@ const formatters = {
     },
     asset_search: {
         input: ({query}) => tr('asset_search', 'input', {query: query || ''}),
-        result: data => tr('asset_search', 'result', {count: data?.matchingResults ?? 0})
+        result: (data, {query} = {}) => tr('asset_search', 'result', {
+            count: data?.matchingResults ?? 0, query: query || ''
+        })
     },
     aoi_list_countries: {
         label: ({query}) => query ? tr('aoi_list_countries', 'labelForQuery') : null,
         input: ({query}) => query || null,
-        result: data => tr('aoi_list_countries', 'result', {count: Array.isArray(data) ? data.length : 0})
+        result: (data, {query} = {}) => tr('aoi_list_countries', 'result', {
+            count: Array.isArray(data) ? data.length : 0, query: query || ''
+        })
     },
     aoi_list_country_areas: {
         label: ({query}) => query ? tr('aoi_list_country_areas', 'labelForQuery') : null,
         input: ({query}) => query || null,
-        result: data => tr('aoi_list_country_areas', 'result', {count: Array.isArray(data) ? data.length : 0})
+        result: (data, {query} = {}) => tr('aoi_list_country_areas', 'result', {
+            count: Array.isArray(data) ? data.length : 0, query: query || ''
+        })
     },
     recipe_info: {
         label: ({type}) => type ? tr('recipe_info', 'label', {type: recipeTypeName(type)}) : null
@@ -196,6 +202,6 @@ export const formatToolDisplay = ({name, input, data, error, status}) => {
     if (status === 'error') {
         return {label, detail: error?.message || null}
     }
-    const detail = formatter.result ? safe(() => formatter.result(data)) : null
+    const detail = formatter.result ? safe(() => formatter.result(data, input || {})) : null
     return {label, detail}
 }

@@ -18,12 +18,12 @@ export const ConversationList = ({conversations, activeConversationId, onSelect,
                 key={conversation.id}
                 onClick={() => onSelect(conversation.id)}>
                 <CrudItem
-                    title={conversation.title || msg('home.sections.chat.conversations.untitled')}
+                    title={conversation.title || msg('home.chat.conversations.untitled')}
                     icon='comment'
                     iconSize='xl'
                     iconVariant={isActive ? 'info' : 'normal'}
                     timestamp={conversation.updatedAt}
-                    removeTooltip={msg('home.sections.chat.conversations.delete')}
+                    removeTooltip={msg('home.chat.conversations.delete')}
                     onRemove={() => onRemove(conversation.id)}
                 />
             </ListItem>
@@ -38,7 +38,7 @@ export const ConversationList = ({conversations, activeConversationId, onSelect,
                     shape='pill'
                     size='normal'
                     air='more'>
-                    {msg('home.sections.chat.conversations.empty')}
+                    {msg('home.chat.conversations.empty')}
                 </Shape>
             </div>
         )
