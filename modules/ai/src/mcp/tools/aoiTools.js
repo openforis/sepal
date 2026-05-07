@@ -1,7 +1,7 @@
 const createAoiTools = () => [
     {
         name: 'aoi_list_countries',
-        description: 'List all countries available as AOIs. Returns an array of {label, aoi} where label is the human-readable country name and aoi is a fully-formed EE_TABLE AOI object ready to drop into a recipe model under `model.aoi`. Match the user\'s named country to a label, then use the corresponding aoi verbatim — do not hand-construct the AOI envelope. The browser must be connected; the list is cached in the GUI after the first load. To request the country with a buffer, override the buffer field on the returned aoi.',
+        description: 'List all countries available as AOIs. Returns an array of {label, aoi} where label is the human-readable country name and aoi is a fully-formed EE_TABLE AOI object ready to drop into a recipe model under `model.aoi`. The aoi.key field is the integer FAO GAUL ADM_CODE (e.g. 73 for Ecuador) — not an ISO alpha-3 code. Match the user\'s named country to a label, then use the corresponding aoi verbatim — do not hand-construct the AOI envelope. The browser must be connected; the list is cached in the GUI after the first load. To request the country with a buffer, override the buffer field on the returned aoi.',
         parameters: {
             type: 'object',
             properties: {}
@@ -17,11 +17,11 @@ const createAoiTools = () => [
     },
     {
         name: 'aoi_list_country_areas',
-        description: 'List the sub-national areas (provinces/states/regions) of a country. Returns an array of {label, aoi} where aoi is a fully-formed EE_TABLE AOI for that area, ready to drop into a recipe model under `model.aoi`. Resolve the countryId via aoi_list_countries first (the country aoi.key is the countryId). Match the user\'s named area to a label and use the corresponding aoi verbatim. The browser must be connected; the per-country list is cached in the GUI after the first load.',
+        description: 'List the sub-national areas (provinces/states/regions) of a country. Returns an array of {label, aoi} where aoi is a fully-formed EE_TABLE AOI for that area, ready to drop into a recipe model under `model.aoi`. The aoi.key is the integer GAUL ADM_CODE for the area. Resolve the countryId via aoi_list_countries first (the country aoi.key is the countryId — pass it as a number). Match the user\'s named area to a label and use the corresponding aoi verbatim. The browser must be connected; the per-country list is cached in the GUI after the first load.',
         parameters: {
             type: 'object',
             properties: {
-                countryId: {type: 'string', description: 'Country code from aoi_list_countries (the aoi.key field of the country entry, e.g. "ECU").'}
+                countryId: {type: 'integer', description: 'Country ADM_CODE from aoi_list_countries (the aoi.key field of the country entry, e.g. 73 for Ecuador).'}
             },
             required: ['countryId']
         },
