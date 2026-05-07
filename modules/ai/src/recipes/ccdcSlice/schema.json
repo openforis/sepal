@@ -1,0 +1,72 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://sepal.io/recipes/ccdcSlice/schema.json",
+    "title": "CcdcSliceRecipe",
+    "description": "A SEPAL CCDC Slice recipe. Extract a temporal slice from a CCDC (Continuous Change Detection and Classification) model at a specific date — producing synthetic imagery from the harmonic coefficients of whichever segment is active on that date.\n\n**Pipeline.** (1) Load the source CCDC recipe or asset (its model contains per-pixel break dates and segment coefficients). (2) For the requested `date.date`, select the segment containing that date per-pixel. (3) If no segment covers the date, apply `options.gapStrategy` (INTERPOLATE / EXTRAPOLATE / MASK). (4) Render synthetic band values from segment intercept + slope + harmonics.",
+    "type": "object",
+    "additionalProperties": true,
+    "required": ["date", "source", "options"],
+    "properties": {
+        "date": {"$ref": "#/$defs/date"},
+        "source": {"$ref": "#/$defs/source"},
+        "options": {"$ref": "#/$defs/options"}
+    },
+    "$defs": {
+        "date": {
+            "title": "CcdcSliceDate",
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["date"],
+            "properties": {
+                "date": {
+                    "type": "string",
+                    "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                    "format": "date",
+                    "description": "Target date for the slice. Per-pixel, the recipe finds the CCDC segment containing this date."
+                }
+            }
+        },
+        "source": {
+            "title": "CcdcSliceSource",
+            "description": "The CCDC source — either a SEPAL CCDC recipe id or an Earth Engine asset id of a CCDC export.",
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["type", "id"],
+            "properties": {
+                "type": {"enum": ["RECIPE_REF", "ASSET"]},
+                "id": {"type": "string", "minLength": 1}
+            }
+        },
+        "options": {
+            "title": "CcdcSliceOptions",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["harmonics", "gapStrategy", "extrapolateSegment", "extrapolateMaxDays", "skipBreakInLastSegment"],
+            "properties": {
+                "harmonics": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 3,
+                    "description": "Number of harmonics to render. `0` produces only the linear (intercept + slope) component; up to `3` adds annual/biannual/triannual sinusoids. Default `3`."
+                },
+                "gapStrategy": {
+                    "enum": ["INTERPOLATE", "EXTRAPOLATE", "MASK"],
+                    "description": "What to do at pixels where no segment covers `date.date`. `INTERPOLATE` (default) blends the closest before/after segments; `EXTRAPOLATE` projects from `extrapolateSegment` (out to `extrapolateMaxDays`); `MASK` leaves them unmasked."
+                },
+                "extrapolateSegment": {
+                    "enum": ["CLOSEST", "PREVIOUS", "NEXT"],
+                    "description": "Which neighboring segment to extrapolate from when `gapStrategy='EXTRAPOLATE'`."
+                },
+                "extrapolateMaxDays": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Maximum number of days to extrapolate beyond the closest segment endpoint. Default `30`."
+                },
+                "skipBreakInLastSegment": {
+                    "type": "boolean",
+                    "description": "If true, suppress break detection in the last segment (avoids spurious breaks at the end of the time series)."
+                }
+            }
+        }
+    }
+}

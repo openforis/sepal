@@ -99,7 +99,7 @@
             "properties": {
                 "entries": {
                     "type": "array",
-                    "minItems": 1,
+                    "minItems": 2,
                     "items": {
                         "type": "object",
                         "additionalProperties": false,
@@ -142,8 +142,8 @@
                 "dataSetId": {"type": "string", "description": "UUID of this data set entry."},
                 "name": {"type": "string", "description": "Display name shown in the panel."},
                 "type": {
-                    "enum": ["COLLECTED", "RECIPE", "EE_TABLE", "CSV", "SAMPLE_CLASSIFICATION", "CEO", "CLASSIFICATION"],
-                    "description": "Source type.\n\n- `COLLECTED` — points the user clicks on the map within the GUI's collect panel; stored in `referenceData`. The standard starting point for a fresh recipe.\n- `RECIPE` — reference points come from another SEPAL recipe (typically another classification recipe used as a labeled ground-truth source). Requires a `recipe` id.\n- `EE_TABLE` — reference points come from an Earth Engine FeatureCollection asset. Requires `eeTable`, location columns, and class column mapping.\n- `CSV` — reference points come from an uploaded CSV. Requires column mappings.\n- `SAMPLE_CLASSIFICATION` — sample points generated from an existing classification (asset or recipe). Requires `samplesPerClass` and `sampleScale`.\n- `CEO` — Collect Earth Online project import. Requires institution/project ids.\n- `CLASSIFICATION` — internal type used when the data set is itself a previous classification result; not normally constructed by the user."
+                    "enum": ["COLLECTED", "RECIPE", "EE_TABLE", "CSV_UPLOAD", "SAMPLE_CLASSIFICATION", "CEO"],
+                    "description": "Source type.\n\n- `COLLECTED` — points the user clicks on the map within the GUI's collect panel; stored in `referenceData`. The standard starting point for a fresh recipe.\n- `RECIPE` — reference points come from another SEPAL recipe (typically another classification recipe used as a labeled ground-truth source). Requires a `recipe` id.\n- `EE_TABLE` — reference points come from an Earth Engine FeatureCollection asset. Requires `eeTable`, location columns, and class column mapping.\n- `CSV_UPLOAD` — reference points come from an uploaded CSV. Requires column mappings.\n- `SAMPLE_CLASSIFICATION` — sample points generated from an existing classification (asset or recipe). Requires `samplesPerClass` and `sampleScale`.\n- `CEO` — Collect Earth Online project import. Requires institution/project ids."
                 },
                 "referenceData": {
                     "type": "array",
@@ -274,8 +274,8 @@
                     "description": "Class value identifying the positive class for one-class classification. Used by `SVM` with `svmType='ONE_CLASS'`. Must match one of the two legend entries' `value`. Required only in this mode."
                 },
                 "metric": {
-                    "enum": ["euclidean", "cosine", "mahalanobis", "manhattan"],
-                    "description": "Distance metric for `MINIMUM_DISTANCE`. Default `euclidean`. `cosine` is angle-only; `mahalanobis` accounts for class-internal covariance; `manhattan` (L1) is robust to outliers. Earth Engine implements `euclidean`, `cosine`, and `mahalanobis`; `manhattan` is exposed for forward compatibility but may not be supported on all backends."
+                    "enum": ["euclidean", "cosine", "mahalanobis"],
+                    "description": "Distance metric for `MINIMUM_DISTANCE`. Default `euclidean`. `cosine` is angle-only; `mahalanobis` accounts for class-internal covariance. (Note: the legacy schema also listed `'manhattan'` but the EE backend's `ee.Classifier.minimumDistance` does not support it.)"
                 },
                 "decisionTree": {
                     "type": "string",

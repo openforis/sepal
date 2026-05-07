@@ -1,0 +1,83 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://sepal.io/recipes/stack/schema.json",
+    "title": "StackRecipe",
+    "description": "A SEPAL Stack recipe. Combine bands from multiple input images into a single multi-band stack with user-controllable band selection and renaming.\n\n**What this recipe is for.** Combine outputs from different recipes/assets into one image — e.g. stack an optical mosaic with a radar mosaic, or with a topography asset, to feed into downstream classification or analysis. Unlike Band Math, no math is performed; bands are passed through with optional rename.\n\n**Pipeline.** (1) Load each input image, selecting only the bands listed in `bandNames.bandNames[*].bands`. (2) Rename via `select(originalNames, outputNames)`. (3) Concatenate all images band-wise. (4) Clip to the union of bounded input geometries.\n\n**AOI semantics.** No separate AOI field — output AOI is the union of bounded input geometries.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["inputImagery", "bandNames"],
+    "properties": {
+        "inputImagery": {"$ref": "#/$defs/inputImagery"},
+        "bandNames": {"$ref": "#/$defs/bandNames"}
+    },
+    "$defs": {
+        "inputImagery": {
+            "title": "StackInputImagery",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["images"],
+            "properties": {
+                "images": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {"$ref": "#/$defs/inputImage"}
+                }
+            }
+        },
+        "inputImage": {
+            "title": "StackInputImage",
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["imageId", "type", "id"],
+            "properties": {
+                "imageId": {"type": "string", "minLength": 1, "description": "Stable UUID for this image; bandNames entries reference it via `imageId`."},
+                "type": {"enum": ["RECIPE_REF", "ASSET"]},
+                "id": {"type": "string", "minLength": 1, "description": "SEPAL recipe id or EE asset id."},
+                "bands": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Available bands loaded from the source. Cosmetic; the LLM should leave this absent."
+                }
+            }
+        },
+        "bandNames": {
+            "title": "StackBandNames",
+            "description": "Per-image band selection and renaming. Each entry maps an `imageId` to the bands taken from that image, with `originalName` (source-side) and `outputName` (stack-side). Bands not listed are dropped.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["bandNames"],
+            "properties": {
+                "bandNames": {
+                    "type": "array",
+                    "items": {"$ref": "#/$defs/bandNamesEntry"}
+                }
+            }
+        },
+        "bandNamesEntry": {
+            "title": "StackBandNamesEntry",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["imageId", "bands"],
+            "properties": {
+                "imageId": {"type": "string", "description": "Must match an `inputImagery.images[*].imageId`."},
+                "bands": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": ["originalName", "outputName"],
+                        "properties": {
+                            "originalName": {"type": "string", "minLength": 1, "description": "Band name in the source image."},
+                            "outputName": {
+                                "type": "string",
+                                "minLength": 1,
+                                "pattern": "^[a-zA-Z_][a-zA-Z0-9_]{0,29}$",
+                                "description": "Renamed band in the stacked output. Must match `^[a-zA-Z_][a-zA-Z0-9_]{0,29}$` and be unique across the entire stack."
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -137,10 +137,6 @@
             "additionalProperties": false,
             "required": ["corrections", "filters", "orbitOverlap", "tileOverlap", "includedCloudMasking", "cloudBuffer", "holes", "snowMasking", "compose"],
             "properties": {
-                "advanced": {
-                    "type": "boolean",
-                    "description": "UI hint — was the panel last edited in 'advanced' mode. Has no effect on processing. Safe to omit."
-                },
                 "corrections": {
                     "type": "array",
                     "uniqueItems": true,

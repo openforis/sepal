@@ -1,0 +1,111 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://sepal.io/recipes/regression/schema.json",
+    "title": "RegressionRecipe",
+    "description": "A SEPAL Regression recipe. Predict a continuous value per pixel from training points using Random Forest, Gradient Tree Boost, or CART.\n\n**Pipeline.** (1) Stack input images plus optional auxiliary layers. (2) Sample training points. (3) Train the regressor. (4) Apply per-pixel — output is a single `regression` band of float values.\n\n**AOI semantics.** No separate AOI field — implicit in input imagery.",
+    "type": "object",
+    "additionalProperties": true,
+    "required": ["inputImagery", "trainingData", "auxiliaryImagery", "classifier"],
+    "properties": {
+        "inputImagery": {"$ref": "#/$defs/inputImagery"},
+        "trainingData": {"$ref": "#/$defs/trainingData"},
+        "auxiliaryImagery": {"$ref": "#/$defs/auxiliaryImagery"},
+        "classifier": {"$ref": "#/$defs/classifier"},
+        "scale": {"type": "number", "exclusiveMinimum": 0}
+    },
+    "$defs": {
+        "inputImagery": {
+            "title": "RegressionInputImagery",
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["images"],
+            "properties": {
+                "images": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": ["imageId", "type", "id", "bands", "bandSetSpecs"],
+                        "properties": {
+                            "imageId": {"type": "string"},
+                            "type": {"enum": ["RECIPE_REF", "ASSET"]},
+                            "id": {"type": "string"},
+                            "bands": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+                            "bandSetSpecs": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                    "type": "object",
+                                    "additionalProperties": true,
+                                    "required": ["id", "type", "included"]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "trainingData": {
+            "title": "RegressionTrainingData",
+            "description": "Training points with a continuous target value (the regression target). Same shape as classification but values are real-valued, not class labels.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["dataSets"],
+            "properties": {
+                "dataSets": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": ["dataSetId", "name", "type"],
+                        "properties": {
+                            "dataSetId": {"type": "string"},
+                            "name": {"type": "string"},
+                            "type": {"enum": ["COLLECTED", "RECIPE", "EE_TABLE", "CSV_UPLOAD", "SAMPLE_CLASSIFICATION", "CEO"]}
+                        }
+                    }
+                }
+            }
+        },
+        "auxiliaryImagery": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"enum": ["LATITUDE", "TERRAIN", "WATER"]}
+        },
+        "classifier": {
+            "title": "RegressionClassifier",
+            "description": "Regression algorithm and hyperparameters. Only `RANDOM_FOREST`, `GRADIENT_TREE_BOOST`, and `CART` support regression in EE.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type"],
+            "properties": {
+                "type": {"enum": ["RANDOM_FOREST", "GRADIENT_TREE_BOOST", "CART"]},
+                "numberOfTrees": {"type": "integer", "minimum": 1},
+                "variablesPerSplit": {"type": ["integer", "null"], "minimum": 1},
+                "minLeafPopulation": {"type": "integer", "minimum": 1},
+                "bagFraction": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+                "maxNodes": {"type": ["integer", "null"], "minimum": 2},
+                "seed": {"type": "integer"},
+                "shrinkage": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+                "samplingRate": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+                "loss": {"enum": ["LeastSquares", "LeastAbsoluteDeviation", "Huber"]}
+            },
+            "allOf": [
+                {
+                    "if": {"properties": {"type": {"const": "RANDOM_FOREST"}}, "required": ["type"]},
+                    "then": {"required": ["numberOfTrees", "minLeafPopulation", "bagFraction", "seed"]}
+                },
+                {
+                    "if": {"properties": {"type": {"const": "GRADIENT_TREE_BOOST"}}, "required": ["type"]},
+                    "then": {"required": ["numberOfTrees", "shrinkage", "samplingRate", "loss", "seed"]}
+                },
+                {
+                    "if": {"properties": {"type": {"const": "CART"}}, "required": ["type"]},
+                    "then": {"required": ["minLeafPopulation"]}
+                }
+            ]
+        }
+    }
+}

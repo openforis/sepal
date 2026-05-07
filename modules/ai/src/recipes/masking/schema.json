@@ -1,0 +1,42 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://sepal.io/recipes/masking/schema.json",
+    "title": "MaskingRecipe",
+    "description": "A SEPAL Masking recipe. Apply the first band of `imageMask` as a per-pixel mask to `imageToMask` — pixels where the mask is zero (or masked) become masked in the output, pixels where the mask is non-zero pass through unchanged.\n\n**What this recipe is for.** Combining a binary or fractional mask layer with an image of interest. Typical uses: mask non-forest from a continuous index, mask out water bodies, exclude cloud-contaminated pixels using an external cloud mask.\n\n**Pipeline.** (1) Load `imageToMask` and `imageMask`. (2) Run `imageToMask.updateMask(imageMask.select(0))` — the FIRST band of the mask is what's actually used. (3) Output bands are inherited from `imageToMask`.\n\n**Important: only the first band of `imageMask` is used.** The legacy schema had a `maskOptions` field with `band` / `values` / `negate` — these are NOT read by the EE backend and have been removed. If you need to mask by a specific band or by specific values, prepare the mask image upstream (e.g. via a Band Math recipe that produces a single-band binary mask).\n\n**AOI semantics.** No separate AOI field — the AOI is the geometry of `imageToMask`.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["imageToMask", "imageMask"],
+    "properties": {
+        "imageToMask": {"$ref": "#/$defs/inputImage"},
+        "imageMask": {"$ref": "#/$defs/inputImage"}
+    },
+    "$defs": {
+        "inputImage": {
+            "title": "MaskingInputImage",
+            "description": "A SEPAL recipe reference or Earth Engine asset id, with cached metadata. The GUI's `Form.AssetCombo` (or `RecipeInput`) populates `bands`/`visualizations` on selection — the LLM does not need to set those.",
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["type", "id"],
+            "properties": {
+                "type": {
+                    "enum": ["RECIPE_REF", "ASSET"],
+                    "description": "What `id` refers to. `RECIPE_REF` — id of another SEPAL recipe whose image output is consumed. `ASSET` — Earth Engine Image / ImageCollection asset id."
+                },
+                "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "SEPAL recipe id (when type=RECIPE_REF) or Earth Engine asset id (when type=ASSET)."
+                },
+                "bands": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Band names exposed by the source. Cosmetic — populated by the GUI on selection. The LLM should leave this absent."
+                },
+                "visualizations": {
+                    "type": "array",
+                    "description": "Optional visualization presets cached from the source. Cosmetic; the LLM should leave it absent."
+                }
+            }
+        }
+    }
+}
