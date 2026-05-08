@@ -16,7 +16,7 @@ module.exports = {
     terms: ['change detection', 'two-date', 'before/after', 'dNBR', 'dNDVI', 'NDVI loss', 'NDWI shift', 'difference', 'ratio', 'normalized difference', 'fromImage', 'toImage', 'burn severity', 'deforestation'],
     chooseWhen: 'Wants change between two dates on a continuous spectral index (vegetation, water, burn, built-up).',
     dontChooseWhen: 'Two CLASSIFIED maps → CLASS_CHANGE. Need supervised classification → CLASSIFICATION.',
-    outputs: 'Always: difference, normalized_difference, ratio. Categorical `change` when legend defined. `error` + `confidence` when both inputs have uncertainty bands.',
+    outputs: 'Always: difference, normalized_difference, ratio, change. `error` + `confidence` when both inputs have uncertainty bands.',
     parameterSchema,
     rules,
     getDefaults,
@@ -27,8 +27,7 @@ module.exports = {
         {id: 'options', name: 'Options', description: 'Tune the minimum-confidence threshold for the change band', fields: ['options']}
     ],
     bands: {
-        always: ['difference', 'normalized_difference', 'ratio'],
-        whenLegendDefined: ['change'],
+        always: ['difference', 'normalized_difference', 'ratio', 'change'],
         whenBothErrorBands: ['error', 'confidence']
     },
     visualizations: [
