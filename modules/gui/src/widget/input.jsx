@@ -421,7 +421,7 @@ class _Textarea extends React.Component {
                     placement={inputTooltipPlacement}
                     trigger='focus'>
                     <TextareaAutosize
-                        ref={this.element}
+                        ref={this.ref}
                         className={className}
                         name={name}
                         value={typeof value === 'number' || typeof value === 'boolean' || value
