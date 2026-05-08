@@ -63,12 +63,13 @@ const invokeTool = async ({tool, toolCall, ctx}) => {
     const validationError = validateParams(toolCall.name, toolCall.input, tool.parameters)
     if (validationError) {
         const result = {success: false, error: {code: 'VALIDATION_ERROR', message: `Invalid parameters: ${validationError}`}}
-        log.info(`Tool ${toolCall.name}(${inputSummary}) → ${summarizeResult(result)}`)
+        log.debug(`Tool ${toolCall.name}(${inputSummary}) → ${summarizeResult(result)}`)
         return result
     }
 
-    log.info(`Tool ${toolCall.name}(${inputSummary}) — executing`)
+    log.debug(`Tool ${toolCall.name}(${inputSummary}) — executing`)
     log.trace(() => [`Tool input: ${toolCall.name}`, toolCall.input])
+    const t = Date.now()
     try {
         const result = await tool.handler({
             username: ctx.username,
@@ -77,11 +78,11 @@ const invokeTool = async ({tool, toolCall, ctx}) => {
             request: ctx.request,
             session: ctx.session
         })
-        log.info(`Tool ${toolCall.name} → ${summarizeResult(result)}`)
+        log.debug(`Tool ${toolCall.name} → ${summarizeResult(result)} (${Date.now() - t}ms)`)
         log.trace(() => [`Tool result: ${toolCall.name}`, result])
         return result
     } catch (error) {
-        log.error(`Tool ${toolCall.name} threw:`, error)
+        log.error(`Tool ${toolCall.name} threw after ${Date.now() - t}ms:`, error)
         return {success: false, error: {code: 'TOOL_ERROR', message: error.message}}
     }
 }

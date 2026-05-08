@@ -1,14 +1,18 @@
 {
-    "port": 5000,
-    "categories": {
-        "config": "info",
-        "conversationHandler": "info",
-        "http/server": "info",
-        "main": "info",
-        "messageHandler": "info",
-        "ws": "info",
-        "orchestrator": "info",
-        "session": "info",
-        "tools": "info"
-    }
+  "port": 5000,
+  "categories": {
+    "config": "info",
+    "conversationHandler": "info",
+    "conversationLoop": "debug",
+    "http/server": "info",
+    "main": "info",
+    "messageHandler": "trace",
+    "providers/claude": "debug",
+    "providers/lmstudio": "debug",
+    "providers/openai": "debug",
+    "session": "info",
+    "toolRunner": "debug",
+    "tools": "info",
+    "ws": "info"
+  }
 }

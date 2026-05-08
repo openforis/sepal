@@ -6,8 +6,12 @@ const MAX_TOKENS = 4096
 
 class ClaudeProvider extends LLMProvider {
     constructor({apiKey, model}) {
-        super({apiKey, model: model || DEFAULT_MODEL})
-        this.Anthropic = null
+        super({
+            apiKey,
+            model: model || DEFAULT_MODEL,
+            name: 'Claude',
+            log
+        })
         this.client = null
     }
 
@@ -61,63 +65,41 @@ class ClaudeProvider extends LLMProvider {
         return formatted
     }
 
-    async chat({messages, tools, systemPrompt}) {
-        const client = await this._getClient()
-        const formattedMessages = this._formatMessages(messages)
-
+    _buildParams({messages, tools, systemPrompt}) {
         const params = {
             model: this.model,
             max_tokens: MAX_TOKENS,
             system: systemPrompt,
-            messages: formattedMessages
+            messages: this._formatMessages(messages)
         }
-
         if (tools && tools.length > 0) {
             params.tools = tools
         }
+        return params
+    }
 
-        log.debug(`Calling Claude (${this.model}) with ${formattedMessages.length} messages, ${(tools || []).length} tools`)
-
-        const response = await client.messages.create(params)
+    async _chat(options) {
+        const client = await this._getClient()
+        const response = await client.messages.create(this._buildParams(options))
 
         let text = ''
         const toolCalls = []
-
         for (const block of response.content) {
             if (block.type === 'text') {
                 text += block.text
             } else if (block.type === 'tool_use') {
-                toolCalls.push({
-                    id: block.id,
-                    name: block.name,
-                    input: block.input
-                })
+                toolCalls.push({id: block.id, name: block.name, input: block.input})
             }
         }
-
-        log.debug(`Claude response: ${text.length} chars text, ${toolCalls.length} tool calls, stop=${response.stop_reason}`)
 
         return {text, toolCalls, stopReason: response.stop_reason}
     }
 
-    async stream({messages, tools, systemPrompt, onChunk}) {
+    async _stream({messages, tools, systemPrompt, onChunk}) {
         const client = await this._getClient()
-        const formattedMessages = this._formatMessages(messages)
-
-        const params = {
-            model: this.model,
-            max_tokens: MAX_TOKENS,
-            system: systemPrompt,
-            messages: formattedMessages
-        }
-
-        if (tools && tools.length > 0) {
-            params.tools = tools
-        }
-
-        log.debug(`Streaming from Claude (${this.model}) with ${formattedMessages.length} messages, ${(tools || []).length} tools`)
-
-        const stream = await client.messages.stream(params)
+        const stream = await client.messages.stream(
+            this._buildParams({messages, tools, systemPrompt})
+        )
 
         let text = ''
         let stopReason = null
@@ -156,16 +138,15 @@ class ClaudeProvider extends LLMProvider {
                 try {
                     tc.input = JSON.parse(tc._inputStr)
                 } catch (_error) {
-                    log.warn(`Failed to parse tool call arguments for ${tc.name}: ${tc._inputStr}`)
+                    this.log.warn(`Failed to parse tool call arguments for ${tc.name}: ${tc._inputStr}`)
                 }
                 delete tc._inputStr
             }
         }
 
         if (stopReason === 'max_tokens') {
-            log.warn(`Claude stream truncated by max_tokens (${MAX_TOKENS}); ${text.length} chars text, ${toolCalls.length} tool calls`)
+            this.log.warn(`${this.name} stream truncated by max_tokens (${MAX_TOKENS}); ${text.length} chars text, ${toolCalls.length} tool calls`)
         }
-        log.debug(`Claude stream complete: ${text.length} chars text, ${toolCalls.length} tool calls, stop=${stopReason}`)
 
         return {text, toolCalls, stopReason}
     }
