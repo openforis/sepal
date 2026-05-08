@@ -8,17 +8,7 @@
 }
 
 .textarea {
-    flex: 1;
-    resize: none;
-    border: 1px solid var(--wireframe-color);
-    border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    line-height: 1.4;
-    color: inherit;
-    background-color: var(--section-wireframe-color);
-    outline: none;
-    overflow-y: auto;
-    max-height: 100px;
+    flex-grow: 1;
 }
 
 .textarea:focus {

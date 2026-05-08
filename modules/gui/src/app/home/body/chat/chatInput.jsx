@@ -1,8 +1,9 @@
 import PropTypes from 'prop-types'
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useCallback, useRef, useState} from 'react'
 
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
+import {Textarea} from '~/widget/input'
 
 import styles from './chatInput.module.css'
 
@@ -21,43 +22,22 @@ export const ChatInput = ({onSend, disabled}) => {
         }
     }, [text, disabled, onSend])
 
-    const handleKeyDown = useCallback(e => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault()
-            handleSend()
-        }
-    }, [handleSend])
-
-    useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.focus()
-        }
-    }, [])
-
-    useEffect(() => {
-        if (!disabled && textareaRef.current) {
-            textareaRef.current.focus()
-        }
-    }, [disabled])
-
     const handleChange = useCallback(e => {
         setText(e.target.value)
-        const textarea = e.target
-        textarea.style.height = 'auto'
-        textarea.style.height = `${Math.min(textarea.scrollHeight, 100)}px`
     }, [])
 
     return (
         <div className={styles.inputContainer}>
-            <textarea
+            <Textarea
                 ref={textareaRef}
                 className={styles.textarea}
                 value={text}
+                autoFocus
                 onChange={handleChange}
-                onKeyDown={handleKeyDown}
+                onEnter={handleSend}
                 placeholder={msg('home.chat.placeholder')}
                 disabled={disabled}
-                rows={1}
+                minRows={3}
             />
             <Button
                 chromeless
