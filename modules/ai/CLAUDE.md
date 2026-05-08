@@ -94,6 +94,25 @@ SDK at a custom endpoint (e.g. Azure OpenAI, OpenRouter).
 
 When `LLM_API_KEY` is empty, the server runs in **echo mode** (echoes messages back without LLM processing).
 
+## LLM-facing text style
+
+Any string the LLM reads is for token consumption, not for humans. Write it telegraphically: drop articles where unambiguous, prefer symbols/arrows (`→`, `=`) over prose, use sentence fragments, abbreviate repeated structural words, omit hedges and filler. Existing files set the bar — match their density when editing or adding text. If a string also appears in a UI tooltip or error message, that copy is separate; don't soften the LLM-facing version to read nicely for humans.
+
+LLM-facing text lives in exactly these places — when changing or adding any of them, apply the rule above:
+
+| Location | What's LLM-facing |
+|---|---|
+| `src/chat/system-prompt.md` | The whole file (template + guidelines) |
+| `src/mcp/tools/*.js` | Each tool's `name`, `description`, and every `parameters.properties.*.description` |
+| `src/recipes/<recipe>/schema.json` | Every `description`, `title`, and enum-adjacent prose |
+| `src/recipes/<recipe>/index.js` | `description`, `useCases`, `terms`, `chooseWhen`, `dontChooseWhen`, `outputs`, and each `workflowSteps[].description` |
+| `src/recipes/<recipe>/rules.js` | Each rule's `description` (the LLM reads this via `recipe_schema`) |
+| `src/recipes/shared/*.schema.json` | Shared-fragment descriptions (bundled into every recipe that refs them) |
+
+Anything outside this list is not LLM-facing — code comments, log messages, internal errors, and `name` labels shown in the UI follow normal style.
+
+When reviewing a PR that touches any of the above, push back on prose-y additions even when they read well — every extra clause costs tokens at every turn.
+
 ## Non-Obvious Conventions
 
 - **CommonJS**: Uses `require()` / `module.exports`, matching all other Node.js modules in SEPAL.

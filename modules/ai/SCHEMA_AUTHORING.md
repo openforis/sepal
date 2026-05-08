@@ -131,6 +131,8 @@ Every property gets a description. For non-trivial fields, cover:
 
 The LLM uses these to make decisions when the user gives feedback ("too noisy", "edges look blurry"). Brief property names and ranges are not enough.
 
+Cover the seven points above, but write each point telegraphically — fragments, arrows, symbols, no hedging. See [CLAUDE.md → LLM-facing text style](CLAUDE.md#llm-facing-text-style) for the rule that applies to every description in this file. Density beats readability; the LLM is the reader.
+
 Read the backend code (`lib/js/ee/src/<recipe>/`) before writing descriptions — the implementation tells you what each parameter actually controls, which is sometimes different from the GUI tooltip's framing. When you don't know a domain detail, say so in the PR rather than guessing; domain experts can amend.
 
 ## Defaults
