@@ -62,7 +62,13 @@
 }
 
 .title {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
     font-weight: 600;
     color: var(--link-hover-color);
     letter-spacing: 0.03rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
