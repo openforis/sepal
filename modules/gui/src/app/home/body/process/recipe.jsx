@@ -139,6 +139,15 @@ export const openRecipe = recipe => {
         .dispatch()
 }
 
+export const openRecipeInNewTab = recipe => {
+    publishEvent('load_recipe', {recipe_type: recipe.type})
+    const {id, placeholder, title, type} = recipe
+    actionBuilder('OPEN_RECIPE_IN_NEW_TAB')
+        .push('process.tabs', {id, placeholder, title, type})
+        .set('process.selectedTabId', id)
+        .dispatch()
+}
+
 export const selectRecipe = recipeId =>
     actionBuilder('SELECT_RECIPE')
         .set('process.selectedTabId', recipeId)

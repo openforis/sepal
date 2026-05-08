@@ -15,7 +15,7 @@ import {
     isRecipeOpen,
     loadRecipes$,
     moveRecipes$,
-    openRecipe,
+    openRecipeInNewTab,
     removeRecipes$,
     selectRecipe
 } from '../recipe'
@@ -47,7 +47,7 @@ const ensureRecipeOpenAndSelected = recipe => {
     if (isRecipeOpen(recipe.id)) {
         selectRecipe(recipe.id)
     } else {
-        openRecipe(recipe)
+        openRecipeInNewTab(recipe)
     }
 }
 
@@ -174,7 +174,7 @@ const openExistingRecipe = ({recipeId}) => {
                 .dispatch()
         )
     ).subscribe({
-        next: recipe => openRecipe(recipe),
+        next: recipe => openRecipeInNewTab(recipe),
         error: error => log.error('Failed to open recipe', error)
     })
 }
