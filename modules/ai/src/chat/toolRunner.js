@@ -57,13 +57,18 @@ const validateParams = (toolName, params, schema) => {
     return errors
 }
 
+// Failures (validation, tool errors, anything `success: false`) are expected
+// operational outcomes the LLM recovers from — visible at INFO so patterns can
+// be spotted and addressed in schemas/prompts. Successes stay at DEBUG.
+const logResultLevel = result => result && result.success === false ? 'info' : 'debug'
+
 const invokeTool = async ({tool, toolCall, ctx}) => {
     const inputSummary = summarizeInput(toolCall.input)
 
     const validationError = validateParams(toolCall.name, toolCall.input, tool.parameters)
     if (validationError) {
         const result = {success: false, error: {code: 'VALIDATION_ERROR', message: `Invalid parameters: ${validationError}`}}
-        log.debug(`Tool ${toolCall.name}(${inputSummary}) → ${summarizeResult(result)}`)
+        log[logResultLevel(result)](`Tool ${toolCall.name}(${inputSummary}) → ${summarizeResult(result)}`)
         return result
     }
 
@@ -78,7 +83,7 @@ const invokeTool = async ({tool, toolCall, ctx}) => {
             request: ctx.request,
             session: ctx.session
         })
-        log.debug(`Tool ${toolCall.name} → ${summarizeResult(result)} (${Date.now() - t}ms)`)
+        log[logResultLevel(result)](`Tool ${toolCall.name} → ${summarizeResult(result)} (${Date.now() - t}ms)`)
         log.trace(() => [`Tool result: ${toolCall.name}`, result])
         return result
     } catch (error) {
