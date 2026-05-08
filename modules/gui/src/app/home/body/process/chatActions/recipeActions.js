@@ -5,6 +5,7 @@ import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
 import {registerGuiAction as registerAction} from '~/app/home/body/chat/guiActionRegistry'
 import {gzip$} from '~/gzip'
+import {addHash} from '~/hash'
 import {getLogger} from '~/log'
 import {select} from '~/store'
 import {uuid} from '~/uuid'
@@ -22,6 +23,18 @@ import {
 import {respondError} from './response'
 
 const log = getLogger('chat-recipe-actions')
+
+// Wholesale-set into `process.loadedRecipes` (the actionBuilder.set below)
+// stamps a fresh hash on the recipe top-level via the mutator, but leaves
+// nested fields' hashes alone. Dependent-layer reload detection in
+// `recipe/recipeImageLayer.jsx` and `recipe/aoi.jsx` watches
+// `getHash(recipe.model)`, which only auto-bumps for path-based mutations.
+// Stamp it explicitly so a chat-driven model change is visible to those
+// watchers across tabs.
+const stampedForSave = recipe => {
+    addHash(recipe.model)
+    return recipe
+}
 
 let pendingRecipeSubscription = null
 
@@ -92,7 +105,7 @@ const createRecipe = ({type, name, projectId, model, respond}) => {
                 .assign(['process.recipes', {id}], {
                     id, projectId, name, type
                 })
-                .set(['process.loadedRecipes', id], saved)
+                .set(['process.loadedRecipes', id], stampedForSave(saved))
                 .dispatch()
             ensureRecipeOpenAndSelected(saved)
             respond({success: true, data: recipeSummary(saved)})
@@ -114,7 +127,7 @@ const updateRecipe = ({recipeId, model, respond}) => {
                     name: saved.title || saved.placeholder,
                     type: saved.type
                 })
-                .set(['process.loadedRecipes', saved.id], saved)
+                .set(['process.loadedRecipes', saved.id], stampedForSave(saved))
                 .dispatch()
             ensureRecipeOpenAndSelected(saved)
             respond({success: true, data: recipeSummary(saved)})
@@ -190,7 +203,7 @@ const reloadRecipe = ({recipeId}) => {
                 ui: current.ui || {initialized: true}
             }
             actionBuilder('RELOAD_RECIPE', {recipeId})
-                .set(['process.loadedRecipes', recipeId], merged)
+                .set(['process.loadedRecipes', recipeId], stampedForSave(merged))
                 .dispatch()
         },
         error: error => log.error('Failed to reload recipe', error)

@@ -4,9 +4,15 @@ import React from 'react'
 
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 
 import {withMap} from '../../../map/mapContext'
 import {withRecipe} from '../recipeContext'
+import {collectDependentHashes, dependentHashesChanged} from './dependentHashes'
+
+const mapStateToProps = (state, {recipe}) => ({
+    dependentHashes: recipe ? collectDependentHashes(state, recipe) : {}
+})
 
 class _Aoi extends React.Component {
     render() {
@@ -18,9 +24,9 @@ class _Aoi extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {value: prevValue} = prevProps
-        const {value} = this.props
-        if (!_.isEqual(value, prevValue)) {
+        const {value: prevValue, dependentHashes: prevDependentHashes} = prevProps
+        const {value, dependentHashes} = this.props
+        if (!_.isEqual(value, prevValue) || dependentHashesChanged(prevDependentHashes, dependentHashes)) {
             this.loadBounds()
         }
     }
@@ -48,6 +54,7 @@ class _Aoi extends React.Component {
 export const Aoi = compose(
     _Aoi,
     withRecipe(recipe => ({recipe})),
+    connect(mapStateToProps),
     withMap()
 )
 

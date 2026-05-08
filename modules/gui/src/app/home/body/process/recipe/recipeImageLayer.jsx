@@ -9,18 +9,22 @@ import {withMapArea} from '~/app/home/map/mapAreaContext'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
-import {select} from '~/store'
 import {withSubscriptions} from '~/subscription'
 import {withTab} from '~/widget/tabs/tabContext'
 
 import {getRecipeImageLayer} from '../recipeImageLayerRegistry'
 import {getRecipeType} from '../recipeTypeRegistry'
+import {collectDependentHashes, dependentHashesChanged} from './dependentHashes'
 import {getAllVisualizations, getUserDefinedVisualizations} from './visualizations'
 
-const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => ({
-    sourceId: id,
-    recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
-})
+const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => {
+    const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
+    return {
+        sourceId: id,
+        recipe,
+        dependentHashes: recipe ? collectDependentHashes(state, recipe) : {}
+    }
+}
 
 class _RecipeImageLayer extends React.Component {
     cursorValue$ = new Subject()
@@ -111,17 +115,19 @@ class _RecipeImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$, tab: {busy}} = this.props
-        const recipes = [recipe, ...getDependentRecipes(recipe)]
+        const {recipe, dependentHashes, layerConfig, map, boundsChanged$, dragging$, cursor$, tab: {busy}} = this.props
         const availableBands = getRecipeType(recipe.type).getAvailableBands(recipe)
         const dataTypes = _.mapValues(availableBands, 'dataType')
-        const {watchedProps: prevWatchedProps} = this.layer || {}
         const previewRequest = {
             recipe: _.omit(recipe, ['ui', 'layers']),
             ...layerConfig
         }
-        const watchedProps = {recipes: recipes.map(r => _.omit(r, ['ui', 'layers', 'title'])), layerConfig}
-        if (!_.isEqual(watchedProps, prevWatchedProps)) {
+        const watchedProps = {
+            recipe: _.omit(recipe, ['ui', 'layers', 'title']),
+            dependentHashes,
+            layerConfig
+        }
+        if (this.shouldRecreateLayer(watchedProps)) {
             this.layer && this.layer.removeFromMap()
             this.layer = new EarthEngineImageLayer({
                 previewRequest,
@@ -139,19 +145,19 @@ class _RecipeImageLayer extends React.Component {
         return this.layer
     }
 
+    shouldRecreateLayer(watchedProps) {
+        const prev = this.layer?.watchedProps
+        if (!prev) return true
+        if (!_.isEqual(prev.recipe, watchedProps.recipe)) return true
+        if (!_.isEqual(prev.layerConfig, watchedProps.layerConfig)) return true
+        return dependentHashesChanged(prev.dependentHashes, watchedProps.dependentHashes)
+    }
+
     selectVisualization(visParams) {
         const {layerConfig, mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({...layerConfig, visParams})
     }
 }
-
-const getDependentRecipes = recipe =>
-    getRecipeType(recipe.type)
-        .getDependentRecipeIds(recipe)
-        .map(recipeId => select(['process.loadedRecipes', recipeId]))
-        .filter(r => r)
-        .map(r => getDependentRecipes(r))
-        .flat()
 
 export const RecipeImageLayer = compose(
     _RecipeImageLayer,
