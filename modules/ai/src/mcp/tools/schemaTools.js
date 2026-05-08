@@ -7,7 +7,7 @@ const createSchemaTools = ({registry}) => [
         parameters: {
             type: 'object',
             properties: {
-                type: {type: 'string', description: 'Recipe type id (e.g. RADAR_MOSAIC, MOSAIC, CLASSIFICATION).'}
+                type: {type: 'string', enum: registry.listSchemas().map(s => s.id), description: 'Recipe type id.'}
             },
             required: ['type']
         },
