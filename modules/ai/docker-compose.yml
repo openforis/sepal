@@ -35,7 +35,7 @@ services:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_ENDPOINT: "http://sepal"
       GEE_ENDPOINT: "http://gee"
-      LLM_PROVIDER: "${LLM_PROVIDER:-claude}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-lmstudio}"
       LLM_API_KEY: "${LLM_API_KEY:-}"
       LLM_MODEL: "${LLM_MODEL:-}"
       LLM_BASE_URL: "${LLM_BASE_URL:-}"
