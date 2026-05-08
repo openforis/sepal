@@ -96,7 +96,27 @@ const createConversationHandler = ({response, conversationStore, sessionStore, e
         }
     }
 
-    return {listConversations, createConversation, selectConversation, deleteConversation}
+    const deleteAllConversations = async ({username, clientId, subscriptionId}) => {
+        if (!conversationStore) {
+            return
+        }
+        const session = sessionStore.get({clientId, subscriptionId})
+        ephemeralConversations.clear()
+        if (session) {
+            session.conversationId = null
+            session.messages = []
+            session.workflow = null
+        }
+        try {
+            await conversationStore.deleteAllConversations({username})
+            response.send({username, clientId, subscriptionId, data: {type: 'conversations', conversations: []}})
+        } catch (error) {
+            log.error('Failed to delete all conversations:', error)
+            await listConversations({username, clientId, subscriptionId})
+        }
+    }
+
+    return {listConversations, createConversation, selectConversation, deleteConversation, deleteAllConversations}
 }
 
 module.exports = {createConversationHandler}
