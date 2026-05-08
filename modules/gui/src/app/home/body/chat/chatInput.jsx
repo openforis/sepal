@@ -7,20 +7,20 @@ import {Textarea} from '~/widget/input'
 
 import styles from './chatInput.module.css'
 
-export const ChatInput = ({onSend, disabled}) => {
+export const ChatInput = ({onSend, disabled, sendDisabled}) => {
     const [text, setText] = useState('')
     const textareaRef = useRef(null)
 
     const handleSend = useCallback(() => {
         const trimmed = text.trim()
-        if (trimmed && !disabled) {
+        if (trimmed && !disabled && !sendDisabled) {
             onSend(trimmed)
             setText('')
             if (textareaRef.current) {
                 textareaRef.current.style.height = 'auto'
             }
         }
-    }, [text, disabled, onSend])
+    }, [text, disabled, sendDisabled, onSend])
 
     const handleChange = useCallback(e => {
         setText(e.target.value)
@@ -43,7 +43,7 @@ export const ChatInput = ({onSend, disabled}) => {
                 chromeless
                 shape='circle'
                 icon='paper-plane'
-                disabled={disabled || !text.trim()}
+                disabled={disabled || sendDisabled || !text.trim()}
                 onClick={handleSend}
             />
         </div>
@@ -52,5 +52,6 @@ export const ChatInput = ({onSend, disabled}) => {
 
 ChatInput.propTypes = {
     onSend: PropTypes.func.isRequired,
-    disabled: PropTypes.bool
+    disabled: PropTypes.bool,
+    sendDisabled: PropTypes.bool
 }

@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import {useEffect, useMemo, useRef} from 'react'
+import {useLayoutEffect, useMemo, useRef} from 'react'
 
 import {msg} from '~/translate'
 
@@ -70,11 +70,21 @@ const computeToolDisplay = (messages, isLoading) => {
     return {hidden, statusOverride}
 }
 
-export const ChatMessages = ({messages, thinking, isLoading}) => {
-    const endRef = useRef(null)
+const SCROLL_BOTTOM_THRESHOLD = 5
 
-    useEffect(() => {
-        endRef.current?.scrollIntoView({behavior: 'smooth'})
+export const ChatMessages = ({messages, thinking, isLoading}) => {
+    const containerRef = useRef(null)
+    const endRef = useRef(null)
+    const prevScrollHeightRef = useRef(0)
+
+    useLayoutEffect(() => {
+        const el = containerRef.current
+        if (!el) return
+        const wasAtBottom = el.scrollTop + el.clientHeight >= prevScrollHeightRef.current - SCROLL_BOTTOM_THRESHOLD
+        if (wasAtBottom) {
+            endRef.current?.scrollIntoView()
+        }
+        prevScrollHeightRef.current = el.scrollHeight
     }, [messages, thinking])
 
     const {hidden, statusOverride} = useMemo(
@@ -83,7 +93,7 @@ export const ChatMessages = ({messages, thinking, isLoading}) => {
     )
 
     return (
-        <div className={styles.messages}>
+        <div ref={containerRef} className={styles.messages}>
             {messages.length === 0 && !thinking
                 ? <div className={styles.empty}>{msg('home.chat.empty')}</div>
                 : messages.map((m, i) => (

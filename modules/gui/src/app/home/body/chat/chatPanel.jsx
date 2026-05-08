@@ -349,7 +349,12 @@ export const ChatPanel = ({className}) => {
     const renderConversation = () => (
         <>
             <ChatMessages messages={messages} thinking={isThinking} isLoading={isLoading}/>
-            <ChatInput key={activeConversationId} onSend={handleSend} disabled={isLoading || !isConnected || !activeConversationId}/>
+            <ChatInput
+                key={activeConversationId}
+                onSend={handleSend}
+                disabled={!isConnected || !activeConversationId}
+                sendDisabled={isLoading}
+            />
         </>
     )
 
