@@ -1,19 +1,32 @@
+// User-controlled fields (recipe/project/app names, asset paths) flow into the
+// system prompt. Strip line breaks and `#` so a crafted name can't forge a new
+// markdown section or otherwise restructure the surrounding context. Truncate
+// to keep the prompt bounded.
+const MAX_FIELD_LEN = 120
+const sanitize = s => {
+    if (typeof s !== 'string') return s
+    const cleaned = s.replace(/[\r\n#]/g, ' ').trim()
+    return cleaned.length > MAX_FIELD_LEN ? `${cleaned.slice(0, MAX_FIELD_LEN - 3)}...` : cleaned
+}
+
 const formatRecipeSummary = recipe => {
-    const name = recipe.recipeName || 'Untitled recipe'
+    const name = sanitize(recipe.recipeName) || 'Untitled recipe'
     const type = recipe.recipeType ? ` (${recipe.recipeType})` : ''
-    const project = recipe.projectName ? ` in "${recipe.projectName}"` : ''
-    return `"${name}"${type}${project}`
+    const projectName = sanitize(recipe.projectName)
+    const project = projectName ? ` in "${projectName}"` : ''
+    const id = recipe.recipeId ? ` id=${recipe.recipeId}` : ''
+    return `"${name}"${type}${project}${id}`
 }
 
 const formatAppSummary = app =>
-    `"${app.appName || app.path || 'Untitled app'}"`
+    `"${sanitize(app.appName) || sanitize(app.path) || 'Untitled app'}"`
 
 const formatSelection = selection => {
     if (!selection) return 'No selection context.'
     const lines = []
     if (selection.section) lines.push(`Section: ${selection.section}`)
     if (selection.selectedProject?.projectName) {
-        lines.push(`Selected project: "${selection.selectedProject.projectName}"`)
+        lines.push(`Selected project: "${sanitize(selection.selectedProject.projectName)}"`)
     }
     if (selection.openRecipes?.length) {
         lines.push(`Open recipes (${selection.openRecipes.length}): ${selection.openRecipes.map(formatRecipeSummary).join(', ')}`)
