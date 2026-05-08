@@ -3,11 +3,6 @@ services:
     extends:
       file: ../docker-compose.logger.override.yml
       service: logger
-    environment:
-      LLM_PROVIDER: "lmstudio"
-      LLM_API_KEY: "none"
-      LLM_MODEL: "qwen/qwen3.5-9b"
-      LLM_BASE_URL: "http://llmster:1234/v1"
     volumes:  # To allow dynamic reloading in dev
       # lib/shared
       - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
