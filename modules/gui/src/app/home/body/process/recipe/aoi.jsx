@@ -26,12 +26,18 @@ class _Aoi extends React.Component {
     componentDidUpdate(prevProps) {
         const {value: prevValue, dependentHashes: prevDependentHashes} = prevProps
         const {value, dependentHashes} = this.props
-        if (!_.isEqual(value, prevValue) || dependentHashesChanged(prevDependentHashes, dependentHashes)) {
+        if (!_.isEqual(value, prevValue)) {
             this.loadBounds()
+        } else if (dependentHashesChanged(prevDependentHashes, dependentHashes)) {
+            // Dep AOI changed in another tab. Refresh `ui.bounds` so the
+            // "fit-to-bounds" button centers on the current bounds, but don't
+            // auto-fit the viewport — that would yank the user's view while
+            // they're editing the dep elsewhere.
+            this.loadBounds({fit: false})
         }
     }
 
-    loadBounds() {
+    loadBounds({fit = true} = {}) {
         const {stream, recipe, value, map, recipeActionBuilder} = this.props
         if (value) {
             const {linked: wasLinked} = map.linked$.getValue()
@@ -41,9 +47,11 @@ class _Aoi extends React.Component {
                     recipeActionBuilder('SET_BOUNDS', {bounds})
                         .set('ui.bounds', bounds)
                         .dispatch(0)
-                    const {linked: isLinked, synchronize: {synchronizeOut} = {}} = map.linked$.getValue()
-                    if (!isLinked || wasLinked || synchronizeOut) {
-                        map.fitBounds(bounds)
+                    if (fit) {
+                        const {linked: isLinked, synchronize: {synchronizeOut} = {}} = map.linked$.getValue()
+                        if (!isLinked || wasLinked || synchronizeOut) {
+                            map.fitBounds(bounds)
+                        }
                     }
                 }
             )
@@ -53,8 +61,8 @@ class _Aoi extends React.Component {
 
 export const Aoi = compose(
     _Aoi,
-    withRecipe(recipe => ({recipe})),
     connect(mapStateToProps),
+    withRecipe(recipe => ({recipe})),
     withMap()
 )
 
