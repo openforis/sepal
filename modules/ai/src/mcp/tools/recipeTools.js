@@ -46,7 +46,7 @@ const createRecipeTools = ({recipeValidator, registry}) => {
     },
     {
         name: 'recipe_create',
-        description: 'Create a recipe from a complete model. Workflow: recipe_info → start from its defaults → modify relevant fields → send full model. GUI saves, registers, and opens it — do NOT call recipe_open after. If recipe\'s project ≠ selected project, ask before calling project_select. Never switch silently.',
+        description: 'Create a recipe from a complete model. Workflow: recipe_info → start from its defaults → modify relevant fields → send full model. GUI saves, registers, and opens it — the recipe is open and visible to the user the moment this returns. Do NOT call recipe_open after, and do NOT ask "would you like me to open it?" — it\'s already open.',
         parameters: {
             type: 'object',
             properties: {
@@ -72,7 +72,7 @@ const createRecipeTools = ({recipeValidator, registry}) => {
     },
     {
         name: 'recipe_save',
-        description: 'Update an existing recipe. Model REPLACES existing in full — no merging. For partial changes: recipe_load → modify → send back. GUI persists + opens — do NOT call recipe_open after. If recipe\'s project ≠ selected project, ask before calling project_select. Never switch silently.',
+        description: 'Update an existing recipe. Model REPLACES existing in full — no merging. For partial changes: recipe_load → modify → send back. GUI persists and opens it — the recipe is open and visible to the user the moment this returns. Do NOT call recipe_open after, and do NOT ask "would you like me to open it?" — it\'s already open.',
         parameters: {
             type: 'object',
             properties: {
