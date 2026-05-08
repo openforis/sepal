@@ -412,16 +412,16 @@ class _Textarea extends React.Component {
     }
 
     renderTextArea() {
-        const {className, name, value, placeholder, autoFocus, inputTooltip, inputTooltipPlacement, tabIndex, disabled, minRows, maxRows} = this.props
+        const {className, name, value, placeholder, autoFocus, inputTooltip, inputTooltipPlacement, tabIndex, disabled, minRows, maxRows, onEnter} = this.props
         const {focused} = this.state
         return (
-            <Keybinding keymap={{Enter: null, ' ': null}} disabled={!focused}>
+            <Keybinding keymap={{Enter: onEnter || null, ' ': null}} disabled={!focused}>
                 <Tooltip
                     msg={inputTooltip}
                     placement={inputTooltipPlacement}
                     trigger='focus'>
                     <TextareaAutosize
-                        ref={this.element}
+                        ref={this.ref}
                         className={className}
                         name={name}
                         value={typeof value === 'number' || typeof value === 'boolean' || value
@@ -507,5 +507,6 @@ Textarea.propTypes = {
     onBlur: PropTypes.func,
     onChange: PropTypes.func,
     onChangeDebounced: PropTypes.func,
+    onEnter: PropTypes.func,
     onFocus: PropTypes.func
 }

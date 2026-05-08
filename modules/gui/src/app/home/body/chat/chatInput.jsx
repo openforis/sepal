@@ -1,69 +1,49 @@
 import PropTypes from 'prop-types'
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useCallback, useRef, useState} from 'react'
 
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
+import {Textarea} from '~/widget/input'
 
 import styles from './chatInput.module.css'
 
-export const ChatInput = ({onSend, disabled}) => {
+export const ChatInput = ({onSend, disabled, sendDisabled}) => {
     const [text, setText] = useState('')
     const textareaRef = useRef(null)
 
     const handleSend = useCallback(() => {
         const trimmed = text.trim()
-        if (trimmed && !disabled) {
+        if (trimmed && !disabled && !sendDisabled) {
             onSend(trimmed)
             setText('')
             if (textareaRef.current) {
                 textareaRef.current.style.height = 'auto'
             }
         }
-    }, [text, disabled, onSend])
-
-    const handleKeyDown = useCallback(e => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault()
-            handleSend()
-        }
-    }, [handleSend])
-
-    useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.focus()
-        }
-    }, [])
-
-    useEffect(() => {
-        if (!disabled && textareaRef.current) {
-            textareaRef.current.focus()
-        }
-    }, [disabled])
+    }, [text, disabled, sendDisabled, onSend])
 
     const handleChange = useCallback(e => {
         setText(e.target.value)
-        const textarea = e.target
-        textarea.style.height = 'auto'
-        textarea.style.height = `${Math.min(textarea.scrollHeight, 100)}px`
     }, [])
 
     return (
         <div className={styles.inputContainer}>
-            <textarea
+            <Textarea
                 ref={textareaRef}
                 className={styles.textarea}
                 value={text}
+                autoFocus
                 onChange={handleChange}
-                onKeyDown={handleKeyDown}
+                onEnter={handleSend}
                 placeholder={msg('home.chat.placeholder')}
                 disabled={disabled}
-                rows={1}
+                minRows={3}
             />
             <Button
                 chromeless
                 shape='circle'
                 icon='paper-plane'
-                disabled={disabled || !text.trim()}
+                disabled={disabled || sendDisabled || !text.trim()}
                 onClick={handleSend}
             />
         </div>
@@ -72,5 +52,6 @@ export const ChatInput = ({onSend, disabled}) => {
 
 ChatInput.propTypes = {
     onSend: PropTypes.func.isRequired,
-    disabled: PropTypes.bool
+    disabled: PropTypes.bool,
+    sendDisabled: PropTypes.bool
 }
