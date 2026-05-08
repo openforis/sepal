@@ -55,7 +55,7 @@ export const ChatInput = ({onSend, disabled}) => {
                 value={text}
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
-                placeholder={msg('home.sections.chat.placeholder')}
+                placeholder={msg('home.chat.placeholder')}
                 disabled={disabled}
                 rows={1}
             />

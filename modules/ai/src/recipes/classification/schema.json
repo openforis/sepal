@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/classification/schema.json",
     "title": "ClassificationRecipe",
-    "description": "A SEPAL Classification recipe. Trains a supervised classifier on labeled reference points and applies it pixel-by-pixel to one or more input images, producing a categorical land-cover map (and optionally per-class probabilities and a regression image).\n\n**Pipeline.** (1) Stack input images plus optional auxiliary imagery (latitude, terrain, surface water) into a single multi-band feature image. (2) Sample feature values at each training point. (3) Train the classifier on (features → class) pairs. (4) Apply the trained classifier to every pixel in the AOI.\n\n**Bands produced.** Always `class` (uint8 — pixel's predicted class label). For classifiers that support it (`RANDOM_FOREST`, `GRADIENT_TREE_BOOST`, `CART`, `SVM`, `NAIVE_BAYES`): `class_probability` (probability of the predicted class, 0–100) and `probability_<value>` per class. For `RANDOM_FOREST`, `GRADIENT_TREE_BOOST`, `CART` only: `regression` (continuous prediction, useful when class values are ordinal).\n\n**AOI semantics.** Classification has no separate AOI field — the AOI is implicit in the input image(s) referenced from `inputImagery`. The classification covers whatever geometry those images cover.\n\nThis schema describes the persisted `model` object of an *initialized* recipe. Cross-field constraints that JSON Schema cannot express are enforced by the companion rules.",
+    "description": "Train a supervised classifier on labeled reference points; apply pixel-by-pixel to one or more input images for a categorical land-cover map (+ optional per-class probabilities + regression image).\n\nPipeline: stack input images + optional auxiliary imagery → sample features at training points → train classifier → apply per pixel.\n\nBands: always `class` (uint8). For RANDOM_FOREST/GRADIENT_TREE_BOOST/CART/SVM/NAIVE_BAYES: `class_probability` (0–100) + `probability_<value>` per class. For RF/GBT/CART only: `regression` (continuous; useful when class values ordinal).\n\nAOI implicit (input imagery geometry).",
     "type": "object",
     "additionalProperties": true,
     "required": ["inputImagery", "legend", "trainingData", "auxiliaryImagery", "classifier"],
@@ -15,13 +15,13 @@
         "scale": {
             "type": "number",
             "exclusiveMinimum": 0,
-            "description": "Optional override for the per-pixel processing scale, in meters. When omitted, the recipe uses the input image's native scale (typically 30 m for Landsat-derived recipes, 10 m for Sentinel-2). Setting this changes the spatial unit at which training samples are extracted and predictions are generated. Higher values are coarser/cheaper; lower values approach native resolution."
+            "description": "Optional per-pixel processing scale (m). Omitted → uses input's native scale (Landsat 30, S2 10). Higher = coarser/cheaper; lower → native resolution."
         }
     },
     "$defs": {
         "inputImagery": {
             "title": "ClassificationInputImagery",
-            "description": "Source images that provide the per-pixel features the classifier learns on. At least one image is required. Each image is either a reference to another SEPAL recipe (whose output is used as input) or a direct Earth Engine asset id. Multiple images are allowed and are stacked band-wise; the classifier sees the union of their bands.",
+            "description": "Source images providing per-pixel features. ≥1 required; multiple stack band-wise (classifier sees union; duplicate band names — later overrides earlier).",
             "type": "object",
             "additionalProperties": false,
             "required": ["images"],
@@ -29,55 +29,54 @@
                 "images": {
                     "type": "array",
                     "minItems": 1,
-                    "items": {"$ref": "#/$defs/inputImage"},
-                    "description": "Array of input image specs. Order matters only insofar as duplicate band names from later images override earlier ones."
+                    "items": {"$ref": "#/$defs/inputImage"}
                 }
             }
         },
         "inputImage": {
             "title": "ClassificationInputImage",
-            "description": "A single input image. The `type` discriminates between a SEPAL recipe reference and a raw Earth Engine asset; `id` is interpreted accordingly. `bandSetSpecs` controls which bands (and which derived bands) of this image are exposed to the classifier.",
+            "description": "Single input. `bandSetSpecs` controls which bands (raw + derived) reach the classifier.",
             "type": "object",
             "additionalProperties": true,
             "required": ["imageId", "type", "id", "bands", "bandSetSpecs"],
             "properties": {
                 "imageId": {
                     "type": "string",
-                    "description": "Stable id for this input image entry within the recipe (UUID). Used as the React list key and to address the image in subsequent panel actions; does NOT identify the underlying data source — that's `id`."
+                    "description": "UUID for this entry (React key + panel reference). NOT the data-source id — that's `id`."
                 },
                 "type": {
                     "enum": ["RECIPE_REF", "ASSET"],
-                    "description": "What `id` points to.\n\n- `RECIPE_REF` — `id` is the id of another SEPAL recipe (a mosaic, time-series, etc.). Its image output is used as input here.\n- `ASSET` — `id` is an Earth Engine FeatureCollection / Image / ImageCollection asset id."
+                    "description": "`RECIPE_REF` = SEPAL recipe id (mosaic, time-series, etc.); `ASSET` = EE FeatureCollection/Image/ImageCollection asset id."
                 },
                 "id": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "Either a SEPAL recipe id (when `type='RECIPE_REF'`) or an Earth Engine asset id (when `type='ASSET'`)."
+                    "description": "Recipe id or EE asset id (per `type`)."
                 },
                 "bands": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "All band names that the source image exposes. Populated by the GUI when the image is selected; the classifier's actual feature set is determined by `bandSetSpecs.included` plus derived bands. The LLM should only set this when constructing a recipe from scratch with known bands."
+                    "description": "All bands the source exposes. GUI-populated. Classifier's actual feature set comes from `bandSetSpecs.included` + derived. LLM only sets when constructing from scratch with known bands."
                 },
                 "bandSetSpecs": {
                     "type": "array",
                     "minItems": 1,
-                    "description": "Specifications for which raw bands and which derived bands to expose to the classifier. Each spec is one of:\n\n- `IMAGE_BANDS` — direct selection from the source image's bands. `included` is the list of band names to keep.\n- `PAIR_WISE_EXPRESSION` — pairwise band combinations under one of the operations RATIO, NORMALIZED_DIFFERENCE, DIFFERENCE, DISTANCE (atan2/π), ANGLE (hypot). `included` is the list of source band names; the classifier sees one feature per pair.\n- `INDEXES` — spectral indexes (NDVI, EVI, etc.). `included` is the list of index names to compute.",
+                    "description": "Specs for which bands (raw + derived) to expose to the classifier. Three types:\n- `IMAGE_BANDS` — direct band selection. `included` = band names to keep.\n- `PAIR_WISE_EXPRESSION` — pairwise band combinations under one `operation` (RATIO, NORMALIZED_DIFFERENCE, DIFFERENCE, DISTANCE = atan2/π, ANGLE = hypot). `included` = source band names; classifier sees one feature per pair.\n- `INDEXES` — spectral indexes (NDVI, EVI, etc.). `included` = index names.",
                     "items": {
                         "type": "object",
                         "additionalProperties": true,
                         "required": ["id", "type", "included"],
                         "properties": {
-                            "id": {"type": "string", "description": "UUID of this spec, for stable React keys."},
+                            "id": {"type": "string", "description": "UUID."},
                             "type": {"enum": ["IMAGE_BANDS", "PAIR_WISE_EXPRESSION", "INDEXES"]},
                             "operation": {
                                 "enum": ["RATIO", "NORMALIZED_DIFFERENCE", "DIFFERENCE", "DISTANCE", "ANGLE"],
-                                "description": "Required only when `type='PAIR_WISE_EXPRESSION'`. The operation applied to each ordered pair of `included` bands."
+                                "description": "Required for `PAIR_WISE_EXPRESSION`. Applied to each ordered band pair."
                             },
                             "included": {
                                 "type": "array",
                                 "items": {"type": "string"},
-                                "description": "Source band names (for IMAGE_BANDS / PAIR_WISE_EXPRESSION) or index names (for INDEXES) that this spec contributes to the classifier."
+                                "description": "Source band names (IMAGE_BANDS / PAIR_WISE_EXPRESSION) or index names (INDEXES)."
                             }
                         },
                         "allOf": [
@@ -92,26 +91,26 @@
         },
         "legend": {
             "title": "ClassificationLegend",
-            "description": "The set of class labels the classifier is trained to predict. Every distinct integer in the training data must correspond to one entry; entries are sorted by `value` before training. The legend MUST contain at least one entry; in practice classification needs at least 2 classes to be meaningful.",
+            "description": "Class labels the classifier predicts. Every distinct integer in training data must correspond to one entry; entries sorted by `value` before training. ≥2 entries needed for meaningful classification.",
             "type": "object",
             "additionalProperties": false,
             "required": ["entries"],
             "properties": {
                 "entries": {
                     "type": "array",
-                    "minItems": 1,
+                    "minItems": 2,
                     "items": {
                         "type": "object",
                         "additionalProperties": false,
                         "required": ["id", "value", "label", "color"],
                         "properties": {
-                            "id": {"type": "string", "description": "UUID for stable React keys; not used by the classifier."},
-                            "value": {"type": "integer", "description": "Integer class id stored in the output `class` band. Must be unique across entries."},
-                            "label": {"type": "string", "description": "Human-readable class name shown in the legend and visualizations."},
+                            "id": {"type": "string", "description": "UUID."},
+                            "value": {"type": "integer", "description": "Class id in `class` band. Unique across entries."},
+                            "label": {"type": "string", "description": "Human-readable name."},
                             "color": {
                                 "type": "string",
                                 "pattern": "^#[0-9A-Fa-f]{6}$",
-                                "description": "Hex color (`#RRGGBB`) used for visualizations of this class."
+                                "description": "Hex color `#RRGGBB`."
                             }
                         }
                     }
@@ -120,7 +119,7 @@
         },
         "trainingData": {
             "title": "ClassificationTrainingData",
-            "description": "Sources of labeled `(point, class)` reference data. The recipe samples each data set, joins them, and feeds the result to the classifier. At least one data set is required; multiple are unioned.\n\nEach entry has a `type` discriminator. Most types require additional fields beyond `dataSetId`/`name`/`type` (csv/eeTable references, sampling parameters, column mappings, etc.) — the GUI populates these via a multi-step wizard. The LLM should default to a single `type='COLLECTED'` entry with empty `referenceData` (the user populates it interactively in the GUI).",
+            "description": "Sources of `(point, class)` reference data; recipe samples each, joins, feeds to classifier. ≥1 set; multiple unioned.\n\nEach entry has type-specific fields (CSV/EE-table refs, sampling params, column mappings); GUI populates via wizard. **LLM should default to a single `type='COLLECTED'` entry with empty `referenceData`** — user populates interactively.",
             "type": "object",
             "additionalProperties": false,
             "required": ["dataSets"],
@@ -134,16 +133,16 @@
         },
         "trainingDataSet": {
             "title": "ClassificationTrainingDataSet",
-            "description": "A single source of reference points. The set of fields beyond the discriminator depends on `type`; this schema only constrains the shared shape and leaves the type-specific fields as `additionalProperties: true` because the GUI's wizard model is intricate and changes shape across versions.",
+            "description": "Single reference-data source. Fields beyond the discriminator depend on `type`; `additionalProperties: true` because the GUI wizard model is intricate and version-prone.",
             "type": "object",
             "additionalProperties": true,
             "required": ["dataSetId", "name", "type"],
             "properties": {
-                "dataSetId": {"type": "string", "description": "UUID of this data set entry."},
-                "name": {"type": "string", "description": "Display name shown in the panel."},
+                "dataSetId": {"type": "string", "description": "UUID."},
+                "name": {"type": "string", "description": "Display name."},
                 "type": {
-                    "enum": ["COLLECTED", "RECIPE", "EE_TABLE", "CSV", "SAMPLE_CLASSIFICATION", "CEO", "CLASSIFICATION"],
-                    "description": "Source type.\n\n- `COLLECTED` — points the user clicks on the map within the GUI's collect panel; stored in `referenceData`. The standard starting point for a fresh recipe.\n- `RECIPE` — reference points come from another SEPAL recipe (typically another classification recipe used as a labeled ground-truth source). Requires a `recipe` id.\n- `EE_TABLE` — reference points come from an Earth Engine FeatureCollection asset. Requires `eeTable`, location columns, and class column mapping.\n- `CSV` — reference points come from an uploaded CSV. Requires column mappings.\n- `SAMPLE_CLASSIFICATION` — sample points generated from an existing classification (asset or recipe). Requires `samplesPerClass` and `sampleScale`.\n- `CEO` — Collect Earth Online project import. Requires institution/project ids.\n- `CLASSIFICATION` — internal type used when the data set is itself a previous classification result; not normally constructed by the user."
+                    "enum": ["COLLECTED", "RECIPE", "EE_TABLE", "CSV_UPLOAD", "SAMPLE_CLASSIFICATION", "CEO"],
+                    "description": "Source.\n- `COLLECTED` — points clicked via GUI collect panel; stored in `referenceData`. Default starting point.\n- `RECIPE` — points from another SEPAL recipe (typically another classification used as labeled ground truth). Requires `recipe` id.\n- `EE_TABLE` — points from EE FeatureCollection asset. Requires `eeTable`, location columns, class column mapping.\n- `CSV_UPLOAD` — uploaded CSV. Requires column mappings.\n- `SAMPLE_CLASSIFICATION` — sampled from existing classification (asset/recipe). Requires `samplesPerClass`, `sampleScale`.\n- `CEO` — Collect Earth Online project import. Requires institution/project ids."
                 },
                 "referenceData": {
                     "type": "array",
@@ -151,12 +150,12 @@
                         "type": "object",
                         "required": ["x", "y", "class"],
                         "properties": {
-                            "x": {"type": "number", "description": "Longitude (decimal degrees, WGS84)."},
-                            "y": {"type": "number", "description": "Latitude (decimal degrees, WGS84)."},
+                            "x": {"type": "number", "description": "Longitude (WGS84)."},
+                            "y": {"type": "number", "description": "Latitude (WGS84)."},
                             "class": {"type": "integer", "description": "Class value (must match a `legend.entries[*].value`)."}
                         }
                     },
-                    "description": "Collected reference points (used primarily by `type='COLLECTED'`). Each point has `x`/`y` in WGS84 decimal degrees and an integer `class`."
+                    "description": "Collected reference points (primarily `type='COLLECTED'`). Each point: `x`/`y` in WGS84, integer `class`."
                 }
             }
         },
@@ -165,11 +164,11 @@
             "type": "array",
             "uniqueItems": true,
             "items": {"enum": ["LATITUDE", "TERRAIN", "WATER"]},
-            "description": "Optional auxiliary feature layers added to every input pixel.\n\n- `LATITUDE` — single band of pixel latitude in degrees. Useful when class boundaries vary with latitude (climate zones, biomes).\n- `TERRAIN` — elevation, slope, aspect, eastness (sin(aspect)), northness (cos(aspect)) from SRTM 30 m. Strongly recommended in mountainous regions where terrain drives land-cover patterns.\n- `WATER` — JRC Global Surface Water bands: occurrence, change, seasonality, max-extent, plus per-transition masks. Useful for water-related classifications.\n\nDefault `[]`. Each entry adds compute cost; pick only the layers relevant to the classification."
+            "description": "Optional auxiliary feature layers added to every input pixel.\n- `LATITUDE` — pixel latitude (degrees). Useful when class boundaries vary with latitude (climate zones, biomes).\n- `TERRAIN` — elevation, slope, aspect, eastness/northness from SRTM 30 m. **Strongly recommended in mountainous regions.**\n- `WATER` — JRC Global Surface Water (occurrence, change, seasonality, max-extent, transition masks). For water-related classifications.\n\nDefault `[]`. Each adds compute cost — pick only what's relevant."
         },
         "classifier": {
             "title": "ClassificationClassifier",
-            "description": "The classifier algorithm and its hyperparameters. The `type` field discriminates among 7 algorithms; each has its own required parameters (enforced by the cross-field rules) and ignores the others. Reasonable defaults are provided for every parameter so that switching `type` does not require respecifying all fields.\n\nAlgorithm characteristics:\n- `RANDOM_FOREST` (default) — robust, handles non-linear boundaries, low tuning effort. The default choice for most classifications. Supports class probability and regression outputs.\n- `GRADIENT_TREE_BOOST` — sequential boosting; can outperform Random Forest at the cost of more tuning. Supports the same outputs as RF.\n- `CART` — single decision tree; fast and interpretable but prone to overfitting. Supports probability and regression.\n- `NAIVE_BAYES` — assumes feature independence given class; cheap, often surprisingly competitive baselines. Supports probability but not regression.\n- `SVM` — Support Vector Machine via libsvm. Many sub-modes (C-SVC, nu-SVC, one-class) and kernels (linear/poly/rbf/sigmoid). Sensitive to feature scaling — `normalize='YES'` is highly recommended.\n- `MINIMUM_DISTANCE` — nearest-class-mean classifier. Trivially fast, generally a baseline rather than a final choice. Like SVM, benefits from normalization.\n- `DECISION_TREE` — apply a pre-built decision tree (or ensemble) supplied as a string in the EE format. No training step.",
+            "description": "Algorithm + hyperparameters. `type` discriminates 7 algorithms; each has its own required params (rules.js enforces); ignores others. Defaults provided so switching `type` doesn't require respecifying.\n\n- `RANDOM_FOREST` (default) — robust, non-linear, low tuning. Default for most classifications. Supports class probability + regression.\n- `GRADIENT_TREE_BOOST` — sequential boosting; can outperform RF with more tuning. Same outputs as RF.\n- `CART` — single decision tree; fast, interpretable; prone to overfit. Probability + regression.\n- `NAIVE_BAYES` — feature-independence assumption; cheap, often competitive baseline. Probability only.\n- `SVM` — libsvm. Sub-modes (C-SVC, ν-SVC, one-class) and kernels (linear/poly/rbf/sigmoid). **Sensitive to feature scaling — `normalize='YES'` strongly recommended.**\n- `MINIMUM_DISTANCE` — nearest-class-mean. Trivially fast; usually a baseline. Benefits from normalization.\n- `DECISION_TREE` — apply pre-built EE-format tree (or ensemble JSON). No training step.",
             "type": "object",
             "additionalProperties": false,
             "required": ["type"],
@@ -180,117 +179,117 @@
                 "numberOfTrees": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Number of trees in the forest. Used by `RANDOM_FOREST` and `GRADIENT_TREE_BOOST`. More trees → smoother decision surface, higher cost (linear in N). Default 25; values up to several hundred are common for production maps."
+                    "description": "Trees in forest. Used by RF + GBT. More = smoother surface, linear cost. Default 25; production maps often use several hundred."
                 },
                 "variablesPerSplit": {
                     "type": ["integer", "null"],
                     "minimum": 1,
-                    "description": "Variables sampled per split (mtry). Used by `RANDOM_FOREST` only. `null` (default) lets EE pick √(numFeatures), the standard Random Forest heuristic. Setting it explicitly is unusual; lower values increase tree diversity at the cost of per-tree accuracy."
+                    "description": "Variables sampled per split (mtry). RF only. `null` (default) → EE picks √(numFeatures). Setting explicitly is unusual; lower = more tree diversity, less per-tree accuracy."
                 },
                 "minLeafPopulation": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Minimum number of training samples required to keep a leaf. Used by `RANDOM_FOREST` and `CART`. Higher values regularize (reduce overfitting) at the cost of bias. Default 1 — let the trees grow as deep as the data supports."
+                    "description": "Min training samples per leaf. RF + CART. Higher = more regularization (less overfit, more bias). Default 1."
                 },
                 "bagFraction": {
                     "type": "number",
                     "exclusiveMinimum": 0,
                     "maximum": 1,
-                    "description": "Fraction of training samples to bag for each tree. Used by `RANDOM_FOREST` only. Default 0.5. Lower fractions increase tree diversity (and out-of-bag generalization estimates); higher fractions use more data per tree."
+                    "description": "Bag fraction per tree. RF only. Default 0.5. Lower = more tree diversity (better OOB estimates); higher = more data per tree."
                 },
                 "maxNodes": {
                     "type": ["integer", "null"],
                     "minimum": 2,
-                    "description": "Hard cap on nodes per tree. Used by `RANDOM_FOREST`, `GRADIENT_TREE_BOOST`, `CART`. `null` (default) = unbounded — let the tree grow as deep as `minLeafPopulation` allows. Setting this is a regularization tool when trees overfit."
+                    "description": "Hard cap on nodes per tree. RF + GBT + CART. `null` (default) = unbounded (limited only by `minLeafPopulation`). Regularization tool when trees overfit."
                 },
                 "seed": {
                     "type": "integer",
-                    "description": "Random seed for reproducibility. Used by `RANDOM_FOREST` and `GRADIENT_TREE_BOOST`. Default 1. Change to compare independent training runs; keep fixed for reproducible map outputs."
+                    "description": "Random seed. RF + GBT. Default 1. Change to compare independent runs; keep fixed for reproducible maps."
                 },
                 "shrinkage": {
                     "type": "number",
                     "exclusiveMinimum": 0,
                     "maximum": 1,
-                    "description": "Learning rate for gradient boosting. Used by `GRADIENT_TREE_BOOST` only. Default 0.005. Smaller values are more stable but require more trees; larger values converge faster but risk overshooting. Typical range 0.001–0.1."
+                    "description": "GBT learning rate. Default 0.005. Smaller = more stable, needs more trees; larger = faster, risks overshoot. Typical 0.001–0.1."
                 },
                 "samplingRate": {
                     "type": "number",
                     "exclusiveMinimum": 0,
                     "maximum": 1,
-                    "description": "Per-tree subsample rate for stochastic gradient boosting. Used by `GRADIENT_TREE_BOOST` only. Default 0.7. Values < 1 introduce randomness across trees; 1.0 means deterministic full-data trees."
+                    "description": "GBT per-tree subsample rate. Default 0.7. <1 introduces randomness across trees; 1 = deterministic full-data trees."
                 },
                 "loss": {
                     "enum": ["LeastSquares", "LeastAbsoluteDeviation", "Huber"],
-                    "description": "Loss function for gradient boosting. Used by `GRADIENT_TREE_BOOST` only. `LeastAbsoluteDeviation` (default) is robust to outliers; `LeastSquares` is the textbook choice; `Huber` is in between."
+                    "description": "GBT loss. `LeastAbsoluteDeviation` (default) = robust to outliers. `LeastSquares` textbook. `Huber` between."
                 },
                 "lambda": {
                     "type": "number",
                     "exclusiveMinimum": 0,
-                    "description": "Smoothing parameter for the categorical NB likelihood. Used by `NAIVE_BAYES` only. Default 0.000001 (essentially un-smoothed). Higher values regularize but bias towards the prior."
+                    "description": "Categorical NB likelihood smoothing. Default 0.000001 (essentially un-smoothed). Higher = more regularization, biases toward prior."
                 },
                 "decisionProcedure": {
                     "enum": ["Voting", "Margin"],
-                    "description": "How libsvm aggregates per-class decisions in multiclass problems. Used by `SVM` only. `Voting` (default) is the standard pairwise vote; `Margin` uses the largest decision margin."
+                    "description": "SVM multiclass aggregation. `Voting` (default) = pairwise vote; `Margin` = largest decision margin."
                 },
                 "svmType": {
                     "enum": ["C_SVC", "NU_SVC", "ONE_CLASS"],
-                    "description": "libsvm SVM variant. Used by `SVM` only.\n\n- `C_SVC` (default) — standard C-parameterized soft-margin classification.\n- `NU_SVC` — ν-parameterized variant; ν bounds the fraction of margin errors and support vectors.\n- `ONE_CLASS` — one-class novelty detection; valid only when the legend has exactly two classes (one positive, one negative); requires `oneClass` to identify the positive class."
+                    "description": "libsvm variant.\n- `C_SVC` (default) — C-parameterized soft-margin classification.\n- `NU_SVC` — ν-parameterized; ν bounds margin-error fraction and SV fraction.\n- `ONE_CLASS` — one-class novelty detection. Valid only when legend has exactly 2 classes (one positive, one negative); requires `oneClass` to identify positive."
                 },
                 "kernelType": {
                     "enum": ["LINEAR", "POLY", "RBF", "SIGMOID"],
-                    "description": "SVM kernel function. Used by `SVM` only. `LINEAR` (default) is the simplest and fastest; `RBF` is the typical non-linear choice; `POLY` and `SIGMOID` are specialized."
+                    "description": "SVM kernel. `LINEAR` (default) simplest/fastest; `RBF` typical non-linear choice; `POLY`/`SIGMOID` specialized."
                 },
                 "shrinking": {
                     "type": "boolean",
-                    "description": "Whether libsvm's shrinking heuristic is enabled. Used by `SVM` only. Default `true` — speeds up training without changing the result."
+                    "description": "libsvm shrinking heuristic. Default true (faster training, same result)."
                 },
                 "degree": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Polynomial-kernel degree. Used by `SVM` with `kernelType='POLY'`. Default 3. Higher degrees fit more complex boundaries at the cost of training time and overfit risk."
+                    "description": "POLY kernel degree. Default 3. Higher = more complex boundaries, more training time, overfit risk."
                 },
                 "gamma": {
                     "type": ["number", "null"],
                     "minimum": 0,
-                    "description": "Kernel coefficient for `POLY`, `RBF`, `SIGMOID`. Used by `SVM` only. `null` (default) lets EE pick `1/numFeatures` (the typical heuristic). Setting it explicitly is unusual; smaller γ means smoother decision surface."
+                    "description": "Kernel coefficient (POLY/RBF/SIGMOID). `null` (default) → EE picks `1/numFeatures`. Smaller γ = smoother decision surface."
                 },
                 "coef0": {
                     "type": "number",
-                    "description": "Independent term in the kernel function for `POLY` and `SIGMOID`. Used by `SVM` only. Default 0. Modulates the influence of higher-degree terms in POLY and the SIGMOID activation midpoint."
+                    "description": "Kernel independent term (POLY/SIGMOID). Default 0. Modulates higher-degree terms in POLY and SIGMOID activation midpoint."
                 },
                 "cost": {
                     "type": "number",
                     "exclusiveMinimum": 0,
-                    "description": "Soft-margin penalty C. Used by `SVM` with `svmType='C_SVC'`. Default 1. Higher values penalize misclassification more (less margin slack); lower values allow more slack."
+                    "description": "Soft-margin penalty C (`svmType='C_SVC'`). Default 1. Higher = penalize misclassification more; lower = more slack."
                 },
                 "nu": {
                     "type": "number",
                     "exclusiveMinimum": 0,
                     "maximum": 1,
-                    "description": "Margin/error fraction parameter ν. Used by `SVM` with `svmType='NU_SVC'`. Default 0.5. Acts as an upper bound on the fraction of margin errors and a lower bound on the fraction of support vectors."
+                    "description": "ν parameter (`svmType='NU_SVC'`). Default 0.5. Upper bound on margin-error fraction, lower bound on SV fraction."
                 },
                 "oneClass": {
                     "type": "integer",
-                    "description": "Class value identifying the positive class for one-class classification. Used by `SVM` with `svmType='ONE_CLASS'`. Must match one of the two legend entries' `value`. Required only in this mode."
+                    "description": "Positive class value for `svmType='ONE_CLASS'`. Must match one of the two `legend.entries[*].value`."
                 },
                 "metric": {
-                    "enum": ["euclidean", "cosine", "mahalanobis", "manhattan"],
-                    "description": "Distance metric for `MINIMUM_DISTANCE`. Default `euclidean`. `cosine` is angle-only; `mahalanobis` accounts for class-internal covariance; `manhattan` (L1) is robust to outliers. Earth Engine implements `euclidean`, `cosine`, and `mahalanobis`; `manhattan` is exposed for forward compatibility but may not be supported on all backends."
+                    "enum": ["euclidean", "cosine", "mahalanobis"],
+                    "description": "MINIMUM_DISTANCE metric. Default `euclidean`. `cosine` = angle-only; `mahalanobis` accounts for class-internal covariance. (Legacy schema also listed `manhattan` — EE backend doesn't support it.)"
                 },
                 "decisionTree": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "A decision tree in the EE serialized format, OR a JSON-array string of multiple trees (treated as an ensemble). Used by `DECISION_TREE` only — no training is performed; the tree is applied directly. Typically pasted from another classifier's `.explain()` output or from a hand-authored ruleset."
+                    "description": "EE-serialized decision tree, OR JSON-array of multiple trees (ensemble). DECISION_TREE only — no training; tree applied directly. Typically pasted from `.explain()` output or hand-authored ruleset."
                 },
                 "tileScale": {
                     "type": "number",
                     "minimum": 0.1,
                     "maximum": 16,
-                    "description": "Tile-scale multiplier passed to EE reducers used by the classifier. Used by all training-based classifiers (everything except `DECISION_TREE`); particularly relevant for `SVM` and `MINIMUM_DISTANCE` where normalization runs a `reduceRegion`. Default 1. Increase (2, 4, 8) to avoid out-of-memory errors on large AOIs at the cost of more compute time."
+                    "description": "EE reducer tile-scale multiplier. Used by all training-based classifiers (not DECISION_TREE); especially relevant for SVM + MINIMUM_DISTANCE (normalization runs `reduceRegion`). Default 1. Increase (2/4/8) to avoid OOM on large AOIs (more compute time)."
                 },
                 "normalize": {
                     "enum": ["YES", "NO"],
-                    "description": "Whether to per-band unit-scale the input image before training. Used by `SVM` and `MINIMUM_DISTANCE` only — both are sensitive to feature scale. Default `YES`. `NO` skips normalization (useful only if the inputs are already on a comparable scale)."
+                    "description": "Per-band unit-scale before training. SVM + MINIMUM_DISTANCE only — both feature-scale-sensitive. Default `YES`. `NO` only if inputs already on comparable scale."
                 }
             },
             "allOf": [

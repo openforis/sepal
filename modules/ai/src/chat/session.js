@@ -22,6 +22,10 @@ class SessionStore {
             conversationId: null,
             messages: [],
             workflow: null,
+            // Latest GUI selection (open recipes, selected recipe, etc.) sent
+            // by the browser via 'context' messages; consumed when building
+            // the system prompt for each round so the LLM sees fresh state.
+            selection: null,
             lastActivity: Date.now(),
             messageTimestamps: []
         }

@@ -4,7 +4,7 @@
 //
 // Each rule is an object with:
 //   - name: short identifier
-//   - description: human-readable rule statement, exposed to the LLM via recipe_schema
+//   - description: human-readable rule statement, exposed to the LLM via recipe_info
 //   - validate(model): returns an array of {path, message} errors (empty if model passes)
 
 const SENTINEL_1_START = '2014-06-15'

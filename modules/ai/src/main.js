@@ -5,13 +5,13 @@ const log = require('#sepal/log').getLogger('main')
 const config = require('./config')
 const server = require('#sepal/httpServer')
 const {createRegistry} = require('./mcp/registry')
-const {createRecipeClient} = require('./sepal/recipeClient')
 const {createGeeClient} = require('./sepal/geeClient')
 const {createRecipeTools} = require('./mcp/tools/recipeTools')
-const {createIntrospectionTools} = require('./mcp/tools/introspectionTools')
-const {createGuiTools} = require('./mcp/tools/guiTools')
+const {createProjectTools} = require('./mcp/tools/projectTools')
+const {createSchemaTools} = require('./mcp/tools/schemaTools')
 const {createAoiTools} = require('./mcp/tools/aoiTools')
 const {createAssetTools} = require('./mcp/tools/assetTools')
+const {createVisualizationTools} = require('./mcp/tools/visualizationTools')
 // Templates and workflows are disabled.
 // const {createTemplateTools} = require('./mcp/tools/templateTools')
 // const {createWorkflowTools} = require('./mcp/tools/workflowTools')
@@ -22,7 +22,6 @@ const {createRoutes} = require('./routes')
 
 const main = async () => {
     // Initialize API clients
-    const recipeClient = createRecipeClient({sepalEndpoint: config.sepalEndpoint})
     const geeClient = createGeeClient({geeEndpoint: config.geeEndpoint})
 
     // Initialize registry
@@ -36,6 +35,19 @@ const main = async () => {
         require('./recipes/classChange'),
         require('./recipes/remapping'),
         require('./recipes/asset'),
+        require('./recipes/bandMath'),
+        require('./recipes/masking'),
+        require('./recipes/stack'),
+        require('./recipes/planetMosaic'),
+        require('./recipes/unsupervisedClassification'),
+        require('./recipes/timeSeries'),
+        require('./recipes/phenology'),
+        require('./recipes/regression'),
+        require('./recipes/ccdcSlice'),
+        require('./recipes/ccdc'),
+        require('./recipes/baytsHistorical'),
+        require('./recipes/baytsAlerts'),
+        require('./recipes/changeAlerts'),
     ]
     schemas.forEach(schema => registry.registerSchema(schema))
     log.info(`Registered ${schemas.length} recipe schemas`)
@@ -53,13 +65,14 @@ const main = async () => {
 
     // Register tools. Templates and workflows are disabled.
     const allTools = [
-        ...createRecipeTools({recipeClient, registry, recipeValidator}),
-        ...createIntrospectionTools({registry}),
-        ...createGuiTools(),
+        ...createRecipeTools({recipeValidator}),
+        ...createProjectTools(),
+        ...createSchemaTools({registry}),
         ...createAoiTools(),
         ...createAssetTools({geeClient}),
-        // ...createTemplateTools({registry, recipeClient, recipeValidator}),
-        // ...createWorkflowTools({registry, recipeClient, recipeValidator}),
+        ...createVisualizationTools(),
+        // ...createTemplateTools({registry, recipeValidator}),
+        // ...createWorkflowTools({registry, recipeValidator}),
     ]
     registry.registerTools(allTools)
     log.info(`Registered ${allTools.length} tools`)

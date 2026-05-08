@@ -5,18 +5,18 @@ const {getDefaults} = require('./defaults')
 module.exports = {
     id: 'CLASSIFICATION',
     name: 'Classification',
-    description: 'Supervised pixel classification using Random Forest, Gradient Tree Boost, CART, Naive Bayes, SVM, Minimum Distance, or a hand-supplied decision tree. Trains on labeled reference points and applies the model to one or more SEPAL recipe outputs or Earth Engine assets.',
+    description: 'Supervised pixel classification (RF, GBT, CART, NB, SVM, Min Distance, manual decision tree). Trains on labeled reference points; applies to SEPAL recipes or EE assets.',
     useCases: [
-        'Land-cover or land-use mapping',
+        'Land-cover / land-use mapping',
         'Crop type classification',
-        'Forest / non-forest mapping from training points',
-        'Burnt-area or disturbance mapping with categorical labels',
-        'Producing per-class probability bands for downstream confidence analysis'
+        'Forest/non-forest from training points',
+        'Burnt-area or disturbance with categorical labels',
+        'Per-class probability bands for downstream confidence'
     ],
     terms: ['classification', 'supervised', 'Random Forest', 'RF', 'GTB', 'Gradient Tree Boost', 'CART', 'SVM', 'Naive Bayes', 'Minimum Distance', 'decision tree', 'training data', 'reference data', 'reference points', 'classifier', 'legend', 'class probabilities'],
-    chooseWhen: 'User wants a categorical map produced from training data, mentions reference points or a classifier algorithm, or wants per-pixel class labels and probabilities.',
-    dontChooseWhen: 'User has an existing classified map and wants to relabel or collapse classes — use REMAPPING. Has two classified maps and wants transitions — use CLASS_CHANGE. Wants change on a continuous index — use INDEX_CHANGE.',
-    outputs: 'A `class` band of integer class values, optional `class_probability` (0-100% confidence), and per-class `probability_<value>` bands when configured.',
+    chooseWhen: 'Wants categorical map from training data, mentions reference points or a classifier, or wants class labels + probabilities.',
+    dontChooseWhen: 'Has existing classified map → relabel/collapse: REMAPPING. Two classified maps → transitions: CLASS_CHANGE. Continuous-index change: INDEX_CHANGE.',
+    outputs: '`class` (integer values), optional `class_probability` (0-100%), per-class `probability_<value>` when configured.',
     parameterSchema,
     rules,
     getDefaults,

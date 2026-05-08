@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import {useCallback, useEffect, useRef} from 'react'
 import {useSelector} from 'react-redux'
+import {useLocation} from 'react-router-dom'
 
 import {actionBuilder} from '~/action-builder'
 import {getLogger} from '~/log'
@@ -11,11 +12,12 @@ import {ButtonGroup} from '~/widget/buttonGroup'
 import {Layout} from '~/widget/layout'
 import {RemoveButton} from '~/widget/removeButton'
 
-import {handleChatGuiAction} from './chatGuiActionRegistry'
 import {ChatInput} from './chatInput'
 import {ChatMessages} from './chatMessages'
 import styles from './chatPanel.module.css'
+import {currentSelection} from './chatSelection'
 import {ConversationList} from './conversationList'
+import {handleGuiAction} from './guiActionRegistry'
 import {useChatWebSocket} from './useChatWebSocket'
 import {useConversation} from './useConversation'
 
@@ -118,6 +120,44 @@ export const ChatPanel = ({className}) => {
     useSelector(() => select('process.recipes'))
     useSelector(() => select('process.projects'))
 
+    // Subscribe to selection-relevant slices and the route. Whenever any of
+    // these change, the effect below recomputes currentSelection() and pushes
+    // a {type: 'context'} message to the AI module so the LLM's system prompt
+    // reflects the user's current GUI state at every tool-call round.
+    useSelector(() => select('process.tabs'))
+    useSelector(() => select('process.selectedTabId'))
+    useSelector(() => select('process.projectId'))
+    useSelector(() => select('process.loadedRecipes'))
+    useSelector(() => select('apps.tabs'))
+    useSelector(() => select('apps.selectedTabId'))
+    useLocation()
+
+    const lastContextRef = useRef(null)
+    const contextDebounceRef = useRef(null)
+
+    // When the WS drops, the AI module's session selection is gone (per-conn
+    // state). Clear our last-sent marker so the next time we're connected we
+    // unconditionally re-send the current selection.
+    useEffect(() => {
+        if (!isConnected) lastContextRef.current = null
+    }, [isConnected])
+
+    useEffect(() => {
+        if (!isConnected) return
+        if (contextDebounceRef.current) clearTimeout(contextDebounceRef.current)
+        contextDebounceRef.current = setTimeout(() => {
+            const selection = currentSelection()
+            const key = JSON.stringify(selection)
+            if (key !== lastContextRef.current) {
+                lastContextRef.current = key
+                send({type: 'context', selection})
+            }
+        }, 200)
+        return () => {
+            if (contextDebounceRef.current) clearTimeout(contextDebounceRef.current)
+        }
+    })
+
     const activeConversationIdRef = useRef(activeConversationId)
     activeConversationIdRef.current = activeConversationId
 
@@ -138,8 +178,8 @@ export const ChatPanel = ({className}) => {
                     dispatch({type: 'STATUS_THINKING', conversationId})
                     break
                 case 'gui-action': {
-                    const handled = handleChatGuiAction(data.action, {
-                        ...data,
+                    const handled = handleGuiAction(data.action, {
+                        ...(data.params || {}),
                         respond: payload => respond(requestId, payload)
                     })
                     if (!handled) {
@@ -173,7 +213,7 @@ export const ChatPanel = ({className}) => {
     const handleSend = useCallback(text => {
         if (isConnected && activeConversationId) {
             dispatch({type: 'USER_SENT', text})
-            send({type: 'message', text})
+            send({type: 'message', text, selection: currentSelection()})
         }
     }, [dispatch, send, isConnected, activeConversationId])
 
@@ -226,7 +266,7 @@ export const ChatPanel = ({className}) => {
                 chromeless
                 shape='circle'
                 icon={'arrow-left'}
-                tooltip={msg(view === 'chat' ? 'home.sections.chat.showConversations' : 'home.sections.chat.showChat')}
+                tooltip={msg(view === 'chat' ? 'home.chat.showConversations' : 'home.chat.showChat')}
                 tooltipPlacement='bottom'
                 onClick={handleShowList}
             />
@@ -234,7 +274,7 @@ export const ChatPanel = ({className}) => {
                 chromeless
                 shape='circle'
                 icon='trash'
-                tooltip={msg('home.sections.chat.deleteConversation')}
+                tooltip={msg('home.chat.deleteConversation')}
                 tooltipPlacement='bottom'
                 disabled={!isConnected || isLoading}
                 onRemove={handleDeleteActiveConversation}
@@ -248,7 +288,7 @@ export const ChatPanel = ({className}) => {
                 chromeless
                 shape='circle'
                 icon='plus'
-                tooltip={msg('home.sections.chat.newConversation')}
+                tooltip={msg('home.chat.newConversation')}
                 tooltipPlacement='bottom'
                 disabled={!isConnected || (activeConversationId && messages.length === 0)}
                 onClick={handleNewConversation}
@@ -257,11 +297,11 @@ export const ChatPanel = ({className}) => {
                 chromeless
                 shape='circle'
                 icon='trash'
-                tooltip={msg('home.sections.chat.deleteAllConversations.tooltip')}
+                tooltip={msg('home.chat.deleteAllConversations.tooltip')}
                 tooltipPlacement='bottom'
                 disabled={!isConnected || isLoading}
-                title={msg('home.sections.chat.deleteAllConversations.title')}
-                message={msg('home.sections.chat.deleteAllConversations.message')}
+                title={msg('home.chat.deleteAllConversations.title')}
+                message={msg('home.chat.deleteAllConversations.message')}
                 noClickHold
                 onRemove={handleDeleteAllConversations}
             />
@@ -274,7 +314,7 @@ export const ChatPanel = ({className}) => {
                 chromeless
                 shape='circle'
                 icon={isSplit ? 'thumbtack-slash' : 'thumbtack'}
-                tooltip={msg(isSplit ? 'home.sections.chat.floating' : 'home.sections.chat.sticky')}
+                tooltip={msg(isSplit ? 'home.chat.floating' : 'home.chat.sticky')}
                 tooltipPlacement='bottom'
                 onClick={toggleChatMode}
             />
@@ -282,7 +322,7 @@ export const ChatPanel = ({className}) => {
                 chromeless
                 shape='circle'
                 icon='times'
-                tooltip={msg('home.sections.chat.close')}
+                tooltip={msg('home.chat.close')}
                 tooltipPlacement='bottomRight'
                 onClick={closeChat}
             />
@@ -292,7 +332,7 @@ export const ChatPanel = ({className}) => {
     const renderHeader = () => (
         <Layout className={styles.header} type='horizontal-nowrap'>
             {isConversation ? renderConversationToolbar() : renderConversationListToolbar()}
-            <span className={styles.title}>{msg('home.sections.chat.title')}</span>
+            <span className={styles.title}>{msg('home.chat.title')}</span>
             {renderPanelToolbar()}
         </Layout>
     )
@@ -308,7 +348,7 @@ export const ChatPanel = ({className}) => {
 
     const renderConversation = () => (
         <>
-            <ChatMessages messages={messages} thinking={isThinking}/>
+            <ChatMessages messages={messages} thinking={isThinking} isLoading={isLoading}/>
             <ChatInput key={activeConversationId} onSend={handleSend} disabled={isLoading || !isConnected || !activeConversationId}/>
         </>
     )

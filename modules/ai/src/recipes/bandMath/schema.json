@@ -1,0 +1,201 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://sepal.io/recipes/bandMath/schema.json",
+    "title": "BandMathRecipe",
+    "description": "Apply math expressions or per-pixel reducers across one or more input images to emit derived bands. Wraps `ee.Image.expression()` and `ee.Reducer.<reducer>`.\n\nUses: vegetation indices (NDVI = (nir-red)/(nir+red)), forest masks (`canopy_cover > 30`), composite metrics, ratios.\n\nPipeline: (1) load each `inputImagery.images[*]`, keep `includedBands`; (2) for each `calculations.calculations[*]` evaluate EXPRESSION (math expression by image `name`) or FUNCTION (reducer over `usedBands`); (3) stack as bands and surface via `outputBands.outputImages`.\n\nAOI implicit in input imagery. **LLM populates everything** — input images, calculations, output band selection. Defaults are empty.",
+    "type": "object",
+    "additionalProperties": true,
+    "required": ["inputImagery", "calculations", "outputBands"],
+    "properties": {
+        "inputImagery": {"$ref": "#/$defs/inputImagery"},
+        "calculations": {"$ref": "#/$defs/calculations"},
+        "outputBands": {"$ref": "#/$defs/outputBands"},
+        "bandNames": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "GUI-maintained band-name cache (syncBandNames action). Cosmetic — LLM doesn't set."
+        }
+    },
+    "$defs": {
+        "inputImagery": {
+            "title": "BandMathInputImagery",
+            "description": "Source images calculations can reference. Each gets a stable `imageId` (UUID) and a user-chosen `name` — calculations reference by `name` in expressions or `imageId` in `usedBands`.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["images"],
+            "properties": {
+                "images": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {"$ref": "#/$defs/inputImage"}
+                }
+            }
+        },
+        "inputImage": {
+            "title": "BandMathInputImage",
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["imageId", "name", "type", "id", "includedBands"],
+            "properties": {
+                "imageId": {"type": "string", "minLength": 1, "description": "UUID. Calculations reference via `usedBands[*].imageId`."},
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[a-zA-Z_][a-zA-Z0-9_]{0,29}$",
+                    "description": "Identifier in EXPRESSION calculations (e.g. `i1.nir - i1.red`). Max 30 chars; first char letter/underscore."
+                },
+                "type": {"enum": ["RECIPE_REF", "ASSET"]},
+                "id": {"type": "string", "minLength": 1, "description": "SEPAL recipe id or EE asset id."},
+                "bands": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Per-band metadata from source. LLM doesn't synthesize; pull from loaded source state."
+                },
+                "includedBands": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": ["name"],
+                        "properties": {
+                            "name": {"type": "string", "minLength": 1, "description": "Band name on the source image."},
+                            "type": {"enum": ["categorical", "continuous"]},
+                            "legendEntries": {"type": "array"}
+                        }
+                    },
+                    "description": "Subset of source bands exposed to calculations. Only listed bands are referenceable."
+                }
+            }
+        },
+        "calculations": {
+            "title": "BandMathCalculations",
+            "description": "Math expressions / reducer aggregations producing derived bands.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["calculations"],
+            "properties": {
+                "calculations": {
+                    "type": "array",
+                    "items": {"$ref": "#/$defs/calculation"}
+                }
+            }
+        },
+        "calculation": {
+            "title": "BandMathCalculation",
+            "description": "Single derived-band calculation. Two modes:\n- `EXPRESSION` — `ee.Image().expression(expression, {<imageName>: eeImage, ...})`. Reference bands as `<imageName>.<bandName>`. Math constants `E, LN10, LN2, LOG10E, LOG2E, PI, SQRT1_2, SQRT2` available.\n- `FUNCTION` — apply `ee.Reducer.<reducer>` per pixel across `usedBands` (which may span multiple images).",
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["imageId", "name", "type", "dataType", "usedBands", "includedBands"],
+            "properties": {
+                "imageId": {"type": "string", "minLength": 1, "description": "UUID. Later calculations may reference its output by `name` like an input image."},
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[a-zA-Z_][a-zA-Z0-9_]{0,29}$",
+                    "description": "Identifier. Must NOT collide with any other calculation/input `name`; must NOT match a reserved math function name (sqrt, log, etc.)."
+                },
+                "type": {"enum": ["EXPRESSION", "FUNCTION"]},
+                "dataType": {
+                    "anyOf": [
+                        {"const": "auto"},
+                        {"enum": ["int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "float", "double", "byte"]}
+                    ],
+                    "description": "Output dtype. `auto` (default) keeps EE's inferred type; specific values cast via `ee.Image.cast`."
+                },
+                "usedBands": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": ["imageId", "name"],
+                        "properties": {
+                            "imageId": {"type": "string", "description": "imageId of an input image OR another calculation."},
+                            "name": {"type": "string", "description": "Band name within that image."}
+                        }
+                    },
+                    "description": "Bands available to expression/reducer. Required for EXPRESSION (validates references) and FUNCTION (reducer input stack)."
+                },
+                "expression": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Math expression for EXPRESSION. Required when `type='EXPRESSION'`. EE syntax: arithmetic (`+ - * / %`), comparisons, conditionals, math functions (`sqrt`, `log`, `exp`, `min`, `max`, `pow`, `abs`)."
+                },
+                "reducer": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "EE reducer name (`sum`, `min`, `max`, `mean`, `median`, `mode`, `stdDev`, `variance`, `count`) for FUNCTION. Required when `type='FUNCTION'`."
+                },
+                "includedBands": {
+                    "type": "array",
+                    "minItems": 1,
+                    "description": "Output band(s) produced. Single entry for single-output calculations (e.g. reducer); multiple for expressions producing multiple renamed bands.",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": ["name"],
+                        "properties": {
+                            "name": {"type": "string", "minLength": 1},
+                            "type": {"enum": ["categorical", "continuous"]}
+                        }
+                    }
+                },
+                "bandName": {"type": "string", "description": "Optional output-band-name override (single-band case)."},
+                "bandRenameStrategy": {
+                    "enum": ["PREFIX", "SUFFIX", "REGEX"],
+                    "description": "Multi-band input rename strategy. PREFIX/SUFFIX add `bandRename` before/after each name; REGEX uses `regex` + `bandRename` for search/replace."
+                },
+                "regex": {"type": "string", "description": "Search pattern for REGEX rename."},
+                "bandRename": {"type": "string", "description": "Replacement / prefix / suffix string."}
+            },
+            "allOf": [
+                {
+                    "description": "EXPRESSION calculations require an expression.",
+                    "if": {"properties": {"type": {"const": "EXPRESSION"}}, "required": ["type"]},
+                    "then": {"required": ["expression"]}
+                },
+                {
+                    "description": "FUNCTION calculations require a reducer.",
+                    "if": {"properties": {"type": {"const": "FUNCTION"}}, "required": ["type"]},
+                    "then": {"required": ["reducer"]}
+                }
+            ]
+        },
+        "outputBands": {
+            "title": "BandMathOutputBands",
+            "description": "Selects which calculation outputs (and which of their bands) the recipe exposes, with optional rename. Bands not listed are dropped.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["outputImages"],
+            "properties": {
+                "outputImages": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": ["imageId", "outputBands"],
+                        "properties": {
+                            "imageId": {"type": "string", "description": "Calculation imageId whose output is exposed."},
+                            "outputBands": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                    "type": "object",
+                                    "additionalProperties": true,
+                                    "required": ["name"],
+                                    "properties": {
+                                        "name": {"type": "string", "description": "Source band name within the calculation."},
+                                        "outputName": {"type": "string", "pattern": "^[a-zA-Z_][a-zA-Z0-9_]{0,29}$", "description": "Optional rename for recipe's final output. Must be unique across all output bands."},
+                                        "defaultOutputName": {"type": "string", "pattern": "^[a-zA-Z_][a-zA-Z0-9_]{0,29}$", "description": "Fallback when `outputName` unset; same constraints."}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

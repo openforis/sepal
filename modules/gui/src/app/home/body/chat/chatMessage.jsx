@@ -6,13 +6,11 @@ import {Markdown} from '~/widget/markdown'
 import styles from './chatMessage.module.css'
 import {formatToolDisplay} from './toolFormat'
 
-const ToolEntry = ({tool}) => {
-    const status = tool.status || 'success'
+const ToolEntry = ({tool, status}) => {
     const {label, detail} = formatToolDisplay({
         name: tool.name,
         input: tool.input,
         data: tool.data,
-        error: tool.error,
         status
     })
     return (
@@ -28,24 +26,35 @@ const ToolEntry = ({tool}) => {
     )
 }
 
-const ToolList = ({tools}) => (
+const visibleTools = (tools, hiddenToolIds) =>
+    (tools || []).filter(tool => !(tool.id && hiddenToolIds?.has(tool.id)))
+
+const effectiveStatus = (tool, statusOverride) =>
+    (tool.id && statusOverride?.get(tool.id)) || tool.status || 'success'
+
+const ToolList = ({tools, statusOverride}) => (
     <div className={styles.toolList}>
         {tools.map((tool, i) => (
-            <ToolEntry key={tool.id || i} tool={tool}/>
+            <ToolEntry key={tool.id || i} tool={tool} status={effectiveStatus(tool, statusOverride)}/>
         ))}
     </div>
 )
 
-export const ChatMessage = ({role, content, tools}) => {
+export const ChatMessage = ({role, content, tools, hiddenToolIds, statusOverride}) => {
     const isUser = role === 'user'
+    const renderedTools = visibleTools(tools, hiddenToolIds)
+    const hasContent = !!content && !!content.trim()
+    if (!isUser && !hasContent && renderedTools.length === 0) {
+        return null
+    }
     return (
         <div className={[styles.message, isUser ? styles.user : styles.assistant].join(' ')}>
             <div className={styles.bubble}>
                 {isUser
                     ? <div className={styles.text}>{content}</div>
                     : <>
-                        {content && <Markdown source={content}/>}
-                        {tools && tools.length > 0 && <ToolList tools={tools}/>}
+                        {hasContent && <Markdown source={content}/>}
+                        {renderedTools.length > 0 && <ToolList tools={renderedTools} statusOverride={statusOverride}/>}
                     </>
                 }
             </div>
@@ -67,6 +76,8 @@ export const ThinkingIndicator = () => (
 
 ChatMessage.propTypes = {
     content: PropTypes.string,
+    hiddenToolIds: PropTypes.instanceOf(Set),
     role: PropTypes.oneOf(['user', 'assistant']).isRequired,
+    statusOverride: PropTypes.instanceOf(Map),
     tools: PropTypes.arrayOf(PropTypes.object)
 }

@@ -5,18 +5,18 @@ const {getDefaults} = require('./defaults')
 module.exports = {
     id: 'RADAR_MOSAIC',
     name: 'Radar Mosaic',
-    description: 'Sentinel-1 SAR backscatter mosaic with speckle filtering and terrain correction. Works through cloud cover; the only practical satellite option for cloud-prone regions and time-critical land monitoring.',
+    description: 'S1 SAR backscatter mosaic. Sees through clouds — the only satellite option for cloud-prone regions.',
     useCases: [
-        'Imagery for cloud-prone regions where optical fails (tropics, monsoon seasons, polar winter)',
-        'Flood and surface-water mapping',
-        'Forest / non-forest mapping in the tropics',
+        'Cloud-prone regions where optical fails (tropics, monsoon, polar winter)',
+        'Flood / surface-water mapping',
+        'Forest/non-forest mapping in the tropics',
         'Multi-temporal aggregates (min/max/mean/median/stdDev per polarization) for stable seasonal stats',
-        'Input layer for radar-based classification or change detection'
+        'Input for radar classification or change detection'
     ],
     terms: ['SAR', 'radar', 'Sentinel-1', 'S1', 'time-scan', 'point-in-time', 'VV', 'VH', 'backscatter', 'speckle', 'polarization', 'ASCENDING', 'DESCENDING', 'orbit', 'dB', 'decibel', 'terrain correction', 'gamma0'],
-    chooseWhen: 'User wants imagery that sees through clouds, asks for radar/SAR specifically, names Sentinel-1, or talks about VV/VH/backscatter/speckle.',
-    dontChooseWhen: 'User wants visible/multispectral imagery, natural color, false color, or vegetation indices — use MOSAIC instead.',
-    outputs: 'Point-in-time bands (VV, VH, ratio_VV_VH, orbit) for {targetDate} mode, or time-scan aggregate bands (min/max/mean/median/stdDev per polarization, NDCV) for {fromDate, toDate} mode.',
+    chooseWhen: 'Wants imagery through clouds, asks for radar/SAR, names S1, or talks about VV/VH/backscatter/speckle.',
+    dontChooseWhen: 'Wants visible/multispectral, natural/false color, or vegetation indices — use MOSAIC.',
+    outputs: 'Point-in-time {targetDate}: VV, VH, ratio_VV_VH, orbit. Time-scan {fromDate, toDate}: min/max/mean/median/stdDev per polarization, NDCV.',
     parameterSchema,
     rules,
     getDefaults,

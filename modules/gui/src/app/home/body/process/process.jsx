@@ -10,7 +10,7 @@ import {withLeaveAlert} from '~/widget/leaveAlert'
 import {Notifications} from '~/widget/notifications'
 import {Tabs} from '~/widget/tabs/tabs'
 
-import {registerChatGuiActions} from './chatGuiActions'
+import {registerChatActions} from './chatActions'
 import {CloseRecipe} from './closeRecipe'
 import {registerImageLayerSources} from './imageLayerSources'
 import {ProcessMenu} from './processMenu'
@@ -33,7 +33,7 @@ class _Process extends React.Component {
         registerRecipeImageLayers()
         registerRecipeVisualizations()
         registerImageLayerSources()
-        registerChatGuiActions()
+        registerChatActions()
     }
 
     render() {

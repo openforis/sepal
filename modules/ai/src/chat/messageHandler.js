@@ -1,158 +1,126 @@
-const {Subject, bufferTime, filter} = require('rxjs')
-const Ajv = require('ajv')
 const {getLLM, buildSystemPrompt} = require('./provider')
+const {createRequestContext} = require('./requestContext')
+const {createRateLimiter} = require('./rateLimiter')
+const {createTitleGenerator} = require('./titleGenerator')
+const {createToolRunner} = require('./toolRunner')
+const {runConversation, streamWithChunkBuffer, MAX_TOOL_CALL_ROUNDS} = require('./conversationLoop')
 
 const log = require('#sepal/log').getLogger('messageHandler')
 
-const MAX_TOOL_CALL_ROUNDS = 10
-const CHUNK_BUFFER_MS = 100
 const RETRY_DELAY_MS = 2000
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
-const ajv = new Ajv({allErrors: true, strict: false})
-
-const createChunkBuffer = onFlush => {
-    const chunk$ = new Subject()
-    const subscription = chunk$.pipe(
-        bufferTime(CHUNK_BUFFER_MS),
-        filter(chunks => chunks.length > 0)
-    ).subscribe(chunks => onFlush(chunks.join('')))
-
-    return {
-        append: text => chunk$.next(text),
-        end: () => {
-            chunk$.complete()
-            subscription.unsubscribe()
-        }
-    }
-}
+const sendErrorReply = ({response, username, clientId, subscriptionId, text}) => response.send({
+    username, clientId, subscriptionId,
+    data: {type: 'chat-response', text, complete: true}
+})
 
 const createMessageHandler = ({response, config, registry, conversationStore, sessionStore, ephemeralConversations}) => {
-    const userRateLimits = {} // username -> {timestamps: []}
-
     const {provider, formattedTools} = getLLM({config, registry})
+    const rateLimiter = createRateLimiter({limit: config.rateLimit})
+    const toolRunner = createToolRunner({registry})
+    const titleGenerator = createTitleGenerator({provider, conversationStore})
 
-    const isRateLimited = (username, rateLimit) => {
-        const now = Date.now()
-        const windowMs = 60 * 1000
-        if (!userRateLimits[username]) {
-            userRateLimits[username] = {timestamps: []}
-        }
-        const entry = userRateLimits[username]
-        entry.timestamps = entry.timestamps.filter(t => now - t < windowMs)
-        if (entry.timestamps.length >= rateLimit) {
-            return true
-        }
-        entry.timestamps.push(now)
-        return false
-    }
+    const promptBuilder = ctx => buildSystemPrompt({
+        username: ctx.username,
+        registry,
+        selection: ctx.session.selection
+    })
 
-    const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
-
-    const validateParams = (toolName, params, schema) => {
-        if (!schema || !schema.properties) {
-            return null
-        }
-        const validate = ajv.compile(schema)
-        if (!validate(params || {})) {
-            const errors = validate.errors.map(e => `${e.instancePath || '/'} ${e.message}`).join('; ')
-            log.warn(`Tool ${toolName} parameter validation failed: ${errors}`)
-            return errors
-        }
-        return null
-    }
-
-    const executeToolCalls = async ({toolCalls, conversationId, username, session, sendFn, requestFn}) => {
-        const results = []
-        for (const tc of toolCalls) {
-            sendFn({type: 'tool-start', conversationId, toolCallId: tc.id, name: tc.name, input: tc.input || {}})
-            const tool = registry ? registry.getTool(tc.name) : null
-            let toolResult
-            if (tool) {
-                const validationError = validateParams(tc.name, tc.input, tool.parameters)
-                if (validationError) {
-                    toolResult = {success: false, error: {code: 'VALIDATION_ERROR', message: `Invalid parameters: ${validationError}`}}
-                } else {
-                    try {
-                        log.debug(`Executing tool: ${tc.name}`, tc.input)
-                        toolResult = await tool.handler({username, params: tc.input || {}, send: sendFn, request: requestFn, session})
-                        log.debug(`Tool result:`, {toolCallId: tc.id, result: toolResult})
-                    } catch (error) {
-                        log.error(`Tool ${tc.name} error:`, error)
-                        toolResult = {success: false, error: {code: 'TOOL_ERROR', message: error.message}}
-                    }
-                }
-            } else {
-                log.warn(`Unknown tool: ${tc.name}`)
-                toolResult = {success: false, error: {code: 'UNKNOWN_TOOL', message: `Unknown tool: ${tc.name}`}}
+    const handleConversationResult = (ctx, result, {userText, isFirstUserMessage}) => {
+        if (result.kind === 'done') {
+            if (isFirstUserMessage) {
+                titleGenerator.refine(ctx, userText, result.assistantText)
+                    .catch(error => log.warn('Title refinement task failed:', error.message))
             }
-            const success = toolResult.success !== false
-            sendFn({
-                type: 'tool-end',
-                conversationId,
-                toolCallId: tc.id,
-                success,
-                data: success ? toolResult.data : undefined,
-                error: success ? undefined : toolResult.error
+        } else if (result.kind === 'bailed') {
+            ctx.sendChatResponse({text: result.message, complete: true})
+        } else if (result.kind === 'cap-reached') {
+            ctx.sendChatResponse({
+                text: `I reached the safety cap of ${MAX_TOOL_CALL_ROUNDS} tool-call rounds. Stopping with what I have so far.`,
+                complete: true
             })
-            results.push({toolCallId: tc.id, result: toolResult})
-        }
-        return results
-    }
-
-    const persistMessage = async ({username, conversationId, message}) => {
-        if (conversationStore && conversationId) {
-            try {
-                await conversationStore.appendMessage({username, conversationId, message})
-            } catch (error) {
-                log.error('Failed to persist message:', error)
-            }
+        } else {
+            log.error(`Unexpected conversation result: ${JSON.stringify(result)}`)
         }
     }
 
-    const handleMessage = async ({username, clientId, subscriptionId, text}) => {
+    // Preserves the original 429 behavior: only retries when an exception
+    // escapes the entire loop, with a single non-streaming follow-up that
+    // does not re-enter tool-calling. Move into a provider wrapper if we
+    // ever want mid-loop retries.
+    const handleLoopError = async (ctx, error) => {
+        if (error.status !== 429) {
+            log.error('Orchestrator error:', error)
+            ctx.sendChatResponse({text: 'An error occurred while processing your message. Please try again.', complete: true})
+            return
+        }
+        log.warn('LLM rate limited, retrying once after delay')
+        try {
+            await delay(RETRY_DELAY_MS)
+            const retryResult = await streamWithChunkBuffer({
+                provider, ctx,
+                messages: ctx.messages,
+                formattedTools,
+                systemPrompt: promptBuilder(ctx)
+            })
+            const assistantMsg = {role: 'assistant', content: retryResult.text}
+            ctx.messages.push(assistantMsg)
+            await ctx.persistMessage(assistantMsg)
+            ctx.sendChatResponse({complete: true})
+        } catch (retryError) {
+            log.error('LLM retry also failed:', retryError)
+            ctx.sendChatResponse({text: 'The AI service is rate-limited. Please try again in a moment.', complete: true})
+        }
+    }
+
+    const updateContext = ({clientId, subscriptionId, selection}) => {
+        const session = sessionStore.get({clientId, subscriptionId})
+        if (session) {
+            session.selection = selection || null
+        }
+    }
+
+    const handleMessage = async ({username, clientId, subscriptionId, text, selection}) => {
         const session = sessionStore.get({clientId, subscriptionId})
         if (!session) {
             log.warn(`No session for ${clientId}:${subscriptionId}`)
-            response.send({
-                username, clientId, subscriptionId,
-                data: {type: 'chat-response', text: 'Session not found. Please close and reopen the chat.', complete: true}
-            })
+            sendErrorReply({response, username, clientId, subscriptionId, text: 'Session not found. Please close and reopen the chat.'})
             return
+        }
+
+        // The 'message' event still carries selection for backwards-compat;
+        // store it as the latest known context. Subsequent 'context' events overwrite it.
+        if (selection !== undefined) {
+            session.selection = selection
         }
 
         if (!session.conversationId) {
-            response.send({
-                username, clientId, subscriptionId,
-                data: {type: 'chat-response', text: 'No conversation selected. Please create or select a conversation.', complete: true}
-            })
+            sendErrorReply({response, username, clientId, subscriptionId, text: 'No conversation selected. Please create or select a conversation.'})
             return
         }
 
-        // Snapshot conversation state at message time — isolates this request
-        // from conversation switches that may happen during the async LLM loop.
-        // selectConversation reassigns session.messages to a new array, so the
-        // local reference remains stable for this request's lifetime.
+        // Snapshot conversation state — isolates this request from conversation
+        // switches that may happen during the async LLM loop. selectConversation
+        // reassigns session.messages, so the local reference stays stable.
         const conversationId = session.conversationId
         const messages = session.messages
+        const ctx = createRequestContext({
+            response, conversationStore,
+            username, clientId, subscriptionId,
+            session, conversationId, messages
+        })
 
-        if (isRateLimited(username, config.rateLimit)) {
-            response.send({
-                username, clientId, subscriptionId,
-                data: {type: 'chat-response', conversationId, text: 'You are sending messages too quickly. Please wait a moment.', complete: true}
-            })
+        if (!rateLimiter.check(username)) {
+            ctx.sendChatResponse({text: 'You are sending messages too quickly. Please wait a moment.', complete: true})
             return
         }
 
-        // Echo mode if no provider configured
         if (!provider) {
-            response.send({
-                username, clientId, subscriptionId,
-                data: {type: 'chat-response', conversationId, text: `Echo: ${text}`, complete: true}
-            })
+            ctx.sendChatResponse({text: `Echo: ${text}`, complete: true})
             return
         }
 
-        // Persist ephemeral conversation to Redis on first message
         if (ephemeralConversations.has(conversationId) && conversationStore) {
             ephemeralConversations.delete(conversationId)
             await conversationStore.createConversation({username, id: conversationId})
@@ -160,142 +128,24 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
 
         const userMessage = {role: 'user', content: text}
         messages.push(userMessage)
-        await persistMessage({username, conversationId, message: userMessage})
+        await ctx.persistMessage(userMessage)
 
-        // Auto-generate title from first user message
-        if (messages.filter(m => m.role === 'user').length === 1 && conversationStore) {
-            const title = text.length > 80 ? text.substring(0, 80) + '...' : text
-            try {
-                await conversationStore.updateTitle({username, conversationId, title})
-                const conversations = await conversationStore.listConversations({username})
-                response.send({username, clientId, subscriptionId, data: {type: 'conversations', conversations}})
-            } catch (error) {
-                log.error('Failed to update conversation title:', error)
-            }
+        const isFirstUserMessage = messages.filter(m => m.role === 'user').length === 1
+        if (isFirstUserMessage) {
+            await titleGenerator.setBaseline(ctx, text)
         }
 
-        const systemPrompt = buildSystemPrompt({username, registry})
-        const sendFn = data => response.send({username, clientId, subscriptionId, data})
-        const requestFn = (data, options = {}) =>
-            response.request({username, clientId, subscriptionId, data, ...options})
+        log.info(`[conv ${conversationId}] user message (${text.length} chars), ${messages.length} prior messages`)
 
         try {
-            let rounds = 0
-            let done = false
-            let stallNudge = null
-            let stallCount = 0
-
-            while (!done && rounds < MAX_TOOL_CALL_ROUNDS) {
-                rounds++
-                sendFn({type: 'status', conversationId, status: 'thinking'})
-
-                const chunkBuffer = createChunkBuffer(text => response.send({
-                    username, clientId, subscriptionId,
-                    data: {type: 'chat-response', conversationId, text}
-                }))
-
-                const promptMessages = stallNudge ? [...messages, stallNudge] : messages
-                stallNudge = null
-
-                const result = await provider.stream({
-                    messages: promptMessages,
-                    tools: formattedTools,
-                    systemPrompt,
-                    onChunk: chunk => chunkBuffer.append(chunk)
-                })
-
-                chunkBuffer.end()
-
-                if (result.toolCalls && result.toolCalls.length > 0) {
-                    stallCount = 0
-                    const assistantMsg = {
-                        role: 'assistant',
-                        content: result.text,
-                        toolCalls: result.toolCalls
-                    }
-                    messages.push(assistantMsg)
-                    await persistMessage({username, conversationId, message: assistantMsg})
-
-                    const toolResults = await executeToolCalls({
-                        toolCalls: result.toolCalls,
-                        conversationId,
-                        username,
-                        session,
-                        sendFn,
-                        requestFn
-                    })
-
-                    const toolMsg = {role: 'tool', toolResults}
-                    messages.push(toolMsg)
-                    await persistMessage({username, conversationId, message: toolMsg})
-                } else {
-                    const text = (result.text || '').trim()
-                    if (!text && stallCount === 0) {
-                        stallCount++
-                        log.warn('Empty assistant turn after tool calls; nudging to continue')
-                        stallNudge = {role: 'user', content: 'Continue working on the original request. Either make the next tool call needed, or send a final summary if the request is fulfilled.'}
-                        continue
-                    }
-                    stallCount = 0
-                    const assistantMsg = {role: 'assistant', content: result.text}
-                    messages.push(assistantMsg)
-                    await persistMessage({username, conversationId, message: assistantMsg})
-                    response.send({
-                        username, clientId, subscriptionId,
-                        data: {type: 'chat-response', conversationId, complete: true}
-                    })
-                    done = true
-                }
-            }
-
-            if (!done) {
-                const msg = 'I reached the maximum number of tool call rounds. Here is what I have so far.'
-                response.send({
-                    username, clientId, subscriptionId,
-                    data: {type: 'chat-response', conversationId, text: msg, complete: true}
-                })
-            }
+            const result = await runConversation({ctx, provider, formattedTools, promptBuilder, toolRunner})
+            handleConversationResult(ctx, result, {userText: text, isFirstUserMessage})
         } catch (error) {
-            if (error.status === 429) {
-                log.warn('LLM rate limited, retrying once after delay')
-                try {
-                    await delay(RETRY_DELAY_MS)
-                    const retryChunkBuffer = createChunkBuffer(text => response.send({
-                        username, clientId, subscriptionId,
-                        data: {type: 'chat-response', conversationId, text}
-                    }))
-                    const retryResult = await provider.stream({
-                        messages,
-                        tools: formattedTools,
-                        systemPrompt,
-                        onChunk: chunk => retryChunkBuffer.append(chunk)
-                    })
-                    retryChunkBuffer.end()
-                    const assistantMsg = {role: 'assistant', content: retryResult.text}
-                    messages.push(assistantMsg)
-                    await persistMessage({username, conversationId, message: assistantMsg})
-                    response.send({
-                        username, clientId, subscriptionId,
-                        data: {type: 'chat-response', conversationId, complete: true}
-                    })
-                } catch (retryError) {
-                    log.error('LLM retry also failed:', retryError)
-                    response.send({
-                        username, clientId, subscriptionId,
-                        data: {type: 'chat-response', conversationId, text: 'The AI service is rate-limited. Please try again in a moment.', complete: true}
-                    })
-                }
-            } else {
-                log.error('Orchestrator error:', error)
-                response.send({
-                    username, clientId, subscriptionId,
-                    data: {type: 'chat-response', conversationId, text: 'An error occurred while processing your message. Please try again.', complete: true}
-                })
-            }
+            await handleLoopError(ctx, error)
         }
     }
 
-    return {handleMessage}
+    return {handleMessage, updateContext}
 }
 
 module.exports = {createMessageHandler}

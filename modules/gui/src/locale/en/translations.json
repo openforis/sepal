@@ -401,22 +401,6 @@
       "app-launch-pad": "Apps",
       "browse": "Files",
       "chat": "Chat with Sepalito",
-      "chat.title": "Sepalito is here!",
-      "chat.empty": "Send a message to start chatting about SEPAL recipes.",
-      "chat.placeholder": "Type a message...",
-      "chat.close": "Close",
-      "chat.conversations.delete": "Delete conversation",
-      "chat.deleteAllConversations.tooltip": "Delete all conversations",
-      "chat.deleteAllConversations.title": "Delete all conversations",
-      "chat.deleteAllConversations.message": "Are you sure you want to delete all conversations?",
-      "chat.deleteConversation": "Delete conversation",
-      "chat.conversations.empty": "No conversations yet. Click + to start one.",
-      "chat.conversations.untitled": "New conversation",
-      "chat.newConversation": "New conversation",
-      "chat.floating": "Floating",
-      "chat.showChat": "Show chat",
-      "chat.showConversations": "Show conversations",
-      "chat.sticky": "Sticky",
       "collapse": "Automatically hide and show menu",
       "expand": "Always show menu",
       "help": "Open SEPAL documentation in a new tab/window",
@@ -432,69 +416,144 @@
           "tooltip": "Show user report"
         }
       },
-      "users": "Users",
-      "chat.tools.aoi_list_countries.label": "List countries",
-      "chat.tools.aoi_list_countries.result": "{count, plural, =0 {No countries} one {1 country} other {{count} countries}}",
-      "chat.tools.aoi_list_country_areas.label": "List country areas",
-      "chat.tools.aoi_list_country_areas.input": "{country}",
-      "chat.tools.aoi_list_country_areas.result": "{count, plural, =0 {No areas} one {1 area} other {{count} areas}}",
-      "chat.tools.asset_search.label": "Search assets",
-      "chat.tools.asset_search.input": "{query}",
-      "chat.tools.asset_search.result": "{count, plural, =0 {No matches} one {1 match} other {{count} matches}}",
-      "chat.tools.gui_close_recipe.label": "Close recipe",
-      "chat.tools.gui_close_recipe.input": "{recipe}",
-      "chat.tools.gui_list_visualizations.label": "List visualizations",
-      "chat.tools.gui_list_visualizations.input": "{recipe}",
-      "chat.tools.gui_open_recipe.label": "Open recipe",
-      "chat.tools.gui_open_recipe.input": "{recipe}",
-      "chat.tools.gui_reload_recipe.label": "Reload recipe",
-      "chat.tools.gui_reload_recipe.input": "{recipe}",
-      "chat.tools.gui_set_visualization.label": "Set visualization",
-      "chat.tools.gui_set_visualization.input": "{recipe}",
-      "chat.tools.project_create.label": "Create project",
-      "chat.tools.project_create.input": "{name}",
-      "chat.tools.project_create.result": "Created {name}",
-      "chat.tools.project_delete.label": "Delete project",
-      "chat.tools.project_delete.input": "{project}",
-      "chat.tools.project_delete.result": "Deleted {project}",
-      "chat.tools.project_list.label": "List projects",
-      "chat.tools.project_list.result": "{count, plural, =0 {No projects} one {1 project} other {{count} projects}}",
-      "chat.tools.recipe_bands.label": "Recipe bands",
-      "chat.tools.recipe_bands.input": "{type}",
-      "chat.tools.recipe_create.label": "Create recipe",
-      "chat.tools.recipe_create.input": "{type} “{name}” in {project}",
-      "chat.tools.recipe_create.result": "Created {type} “{name}”",
-      "chat.tools.recipe_defaults.label": "Recipe defaults",
-      "chat.tools.recipe_defaults.input": "{type}",
-      "chat.tools.recipe_delete.label": "Delete recipe",
-      "chat.tools.recipe_delete.input": "{count, plural, one {{recipes}} other {{count} recipes}}",
-      "chat.tools.recipe_delete.result": "{count, plural, =0 {Nothing deleted} one {Deleted 1 recipe} other {Deleted {count} recipes}}",
-      "chat.tools.recipe_list.label": "List recipes",
-      "chat.tools.recipe_list.result": "{count, plural, =0 {No recipes} one {1 recipe} other {{count} recipes}}",
-      "chat.tools.recipe_load.label": "Load recipe",
-      "chat.tools.recipe_load.input": "{recipe}",
-      "chat.tools.recipe_load.result": "Loaded {recipe}",
-      "chat.tools.recipe_move.label": "Move recipes",
-      "chat.tools.recipe_move.input": "{count, plural, one {1 recipe} other {{count} recipes}} → {project}",
-      "chat.tools.recipe_move.result": "{count, plural, one {Moved 1 recipe} other {Moved {count} recipes}} to {project}",
-      "chat.tools.recipe_save.label": "Save recipe",
-      "chat.tools.recipe_save.input": "{recipe}",
-      "chat.tools.recipe_save.result": "Saved {recipe}",
-      "chat.tools.recipe_schema.label": "Recipe schema",
-      "chat.tools.recipe_schema.input": "{type}",
-      "chat.tools.recipe_visualizations.label": "Recipe visualizations",
-      "chat.tools.recipe_visualizations.input": "{type}",
-      "chat.tools.template_apply.label": "Apply template",
-      "chat.tools.template_apply.input": "{template} → “{name}” in {project}",
-      "chat.tools.template_apply.result": "Created {type} “{name}”",
-      "chat.tools.template_list.label": "List templates",
-      "chat.tools.template_list.result": "{count, plural, =0 {No templates} one {1 template} other {{count} templates}}",
-      "chat.tools.workflow_cancel.label": "Cancel workflow",
-      "chat.tools.workflow_complete.label": "Complete workflow",
-      "chat.tools.workflow_start.label": "Start workflow",
-      "chat.tools.workflow_start.input": "{type}",
-      "chat.tools.workflow_status.label": "Workflow status",
-      "chat.tools.workflow_step.label": "Workflow step"
+      "users": "Users"
+    },
+    "chat": {
+      "title": "Sepalito is here!",
+      "empty": "Send a message to start chatting about SEPAL recipes.",
+      "placeholder": "Type a message...",
+      "close": "Close",
+      "deleteConversation": "Delete conversation",
+      "newConversation": "New conversation",
+      "floating": "Floating",
+      "showChat": "Show chat",
+      "showConversations": "Show conversations",
+      "sticky": "Sticky",
+      "conversations": {
+        "delete": "Delete conversation",
+        "empty": "No conversations yet. Click + to start one.",
+        "untitled": "New conversation"
+      },
+      "deleteAllConversations": {
+        "tooltip": "Delete all conversations",
+        "title": "Delete all conversations",
+        "message": "Are you sure you want to delete all conversations?"
+      },
+      "tools": {
+        "shared": {
+          "inProject": "in {project}"
+        },
+        "aoi_list_countries": {
+          "label": "List country AOIs",
+          "labelForQuery": "Find country AOI",
+          "result": "“{query}” — {count, plural, =0 {no countries} one {1 country} other {{count} countries}}"
+        },
+        "aoi_list_country_areas": {
+          "label": "List area AOIs",
+          "labelForQuery": "Find area AOI",
+          "result": "“{query}” — {count, plural, =0 {no areas} one {1 area} other {{count} areas}}"
+        },
+        "asset_search": {
+          "label": "Search datasets",
+          "input": "“{query}”",
+          "result": "“{query}” — {count, plural, =0 {no matches} one {1 match} other {{count} matches}}"
+        },
+        "project_create": {
+          "label": "Create project",
+          "input": "“{name}”",
+          "result": "Created project “{name}”"
+        },
+        "project_delete": {
+          "label": "Delete project",
+          "input": "{project}",
+          "result": "Deleted {project}"
+        },
+        "project_list": {
+          "label": "List projects",
+          "result": "{count, plural, =0 {No projects} one {1 project} other {{count} projects}}"
+        },
+        "recipe_create": {
+          "label": "Create recipe",
+          "labelWithType": "Create {type} recipe",
+          "input": "“{name}” {project}",
+          "result": "Created {type} “{name}”"
+        },
+        "recipe_delete": {
+          "label": "Delete recipe",
+          "input": "{count, plural, one {{recipes}} other {{count} recipes}}",
+          "result": "{count, plural, =0 {Nothing deleted} one {Deleted 1 recipe} other {Deleted {count} recipes}}"
+        },
+        "recipe_list": {
+          "label": "List recipes",
+          "labelWithType": "List {type} recipes",
+          "input": "{project}",
+          "result": "{count, plural, =0 {No recipes} one {1 recipe} other {{count} recipes}}"
+        },
+        "recipe_load": {
+          "label": "Read recipe",
+          "input": "{recipe}",
+          "result": "Loaded {recipe}"
+        },
+        "recipe_move": {
+          "label": "Move recipes",
+          "input": "{count, plural, one {1 recipe} other {{count} recipes}} → {project}",
+          "result": "{count, plural, one {Moved 1 recipe} other {Moved {count} recipes}} to {project}"
+        },
+        "recipe_save": {
+          "label": "Save recipe",
+          "input": "{recipe}",
+          "result": "Saved {recipe}"
+        },
+        "template_apply": {
+          "label": "Apply template",
+          "input": "{template} → “{name}” in {project}",
+          "result": "Created {type} “{name}”"
+        },
+        "template_list": {
+          "label": "List templates",
+          "result": "{count, plural, =0 {No templates} one {1 template} other {{count} templates}}"
+        },
+        "workflow_cancel": {
+          "label": "Cancel workflow"
+        },
+        "workflow_complete": {
+          "label": "Complete workflow"
+        },
+        "workflow_start": {
+          "label": "Start workflow",
+          "input": "{type}"
+        },
+        "workflow_status": {
+          "label": "Workflow status"
+        },
+        "workflow_step": {
+          "label": "Workflow step"
+        },
+        "recipe_open": {
+          "label": "Open recipe",
+          "input": "{recipe}"
+        },
+        "recipe_close": {
+          "label": "Close recipe",
+          "input": "{recipe}"
+        },
+        "recipe_visualizations": {
+          "label": "List visualization options",
+          "input": "{recipe}"
+        },
+        "recipe_set_visualization": {
+          "label": "Apply visualization",
+          "input": "{recipe}"
+        },
+        "recipe_info": {
+          "label": "Load {type} recipe schema"
+        },
+        "recipe_propose_visualization": {
+          "label": "Compute visualization",
+          "input": "{mode}: {bands}",
+          "result": "Visualization ready"
+        }
+      }
     }
   },
   "landing": {

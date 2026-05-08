@@ -1,23 +1,23 @@
 const createAssetTools = ({geeClient}) => [
     {
         name: 'asset_search',
-        description: `Search the Earth Engine STAC catalog and the Awesome GEE Community Datasets list for assets matching a free-text query. Use this to resolve an asset id when the user names a dataset (e.g. "Hansen forest cover", "WorldCover", "Dynamic World"). Returns \`{matchingResults, gee:{matchingResults, moreResults, datasets:[{id, title, type, url}]}, community:{...}}\` — up to 10 results per source. When reporting back to the user, mention the total \`matchingResults\` count (and \`moreResults\` if some were truncated). Some assets (e.g. the global CCDC \`projects/CCDC/v4\`) are not in the catalog and will not appear here — those are documented as use-cases on the ASSET_MOSAIC recipe.
+        description: `Search EE STAC catalog + Awesome GEE Community Datasets by free-text query. Resolves dataset name → asset id (e.g. "Hansen forest cover", "WorldCover", "Dynamic World"). Returns \`{matchingResults, gee:{matchingResults, moreResults, datasets:[{id, title, type, url}]}, community:{…}}\` — up to 10 per source. Report total \`matchingResults\` (+ \`moreResults\` if truncated). Some assets (e.g. global CCDC \`projects/CCDC/v4\`) aren't in the catalog — see ASSET_MOSAIC use cases.
 
-How to construct queries:
-- Use ONLY dataset-identifying nouns from the user's request (sensor, algorithm, product, well-known dataset name). Stick to a single distinctive term where possible.
-- NEVER include year, date, country, region, or any AOI words — those are recipe parameters, not search terms. They will not appear in dataset titles and will reduce results to zero.
-- Matching is a strict whitespace-tokenized substring (case-insensitive) over the title and id. EVERY token must match. There is no stemming or fuzzy matching, so word form matters — "embedding" does not match "embeddings".
-- Prefer the singular root form ("embedding", not "embeddings"; "mangrove", not "mangroves").
-- If a search returns 0 or very few hits, BROADEN — don't guess unrelated dataset names. Try, in parallel: the alternate singular/plural form, dropping a modifier, or a parent category term (e.g. "land cover" instead of "WorldCereal").
-- Prefer firing 2-3 candidate variants as parallel tool calls rather than sequential single guesses; pick the best-matching result by title.`,
+Query construction:
+- Dataset-identifying nouns ONLY (sensor, algorithm, product, dataset name). Single distinctive term preferred.
+- NEVER include year/date/country/region/AOI — those are recipe params, not search terms. They reduce results to 0.
+- Matching = whitespace-tokenized case-insensitive substring on title+id. Every token must match. No stemming — "embedding" ≠ "embeddings".
+- Prefer singular root ("embedding", "mangrove").
+- 0 or few hits → BROADEN, don't guess unrelated names. Try in parallel: alt singular/plural, drop a modifier, parent category (e.g. "land cover" not "WorldCereal").
+- Prefer 2-3 variants as parallel calls over sequential single guesses; pick best title match.`,
         parameters: {
             type: 'object',
             properties: {
-                query: {type: 'string', description: 'Single distinctive dataset-identifying noun, in its root form (singular preferred). No years, regions, or AOI words.'},
+                query: {type: 'string', description: 'Single distinctive dataset-identifying noun, root form (singular). No years/regions/AOI.'},
                 allowedTypes: {
                     type: 'array',
                     items: {type: 'string', enum: ['Image', 'ImageCollection', 'Table']},
-                    description: 'Optional filter on asset type. Defaults to all types.'
+                    description: 'Optional asset-type filter. Default: all.'
                 }
             },
             required: ['query']

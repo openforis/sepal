@@ -2,13 +2,13 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/asset/schema.json",
     "title": "AssetRecipe",
-    "description": "A SEPAL Asset recipe (recipe id `ASSET_MOSAIC`). Wraps an Earth Engine `Image` or `ImageCollection` asset as a SEPAL recipe so it can be visualized, masked, filtered, composited, used as input to other recipes (classification, change detection, etc.), and exported through the standard pipeline.\n\n**Minimum model shape (required for recipe_create).** The asset id is nested under `assetDetails`, NOT at the top level:\n\n```json\n{\n  \"aoi\": {\"type\": \"ASSET_BOUNDS\"},\n  \"assetDetails\": {\"assetId\": \"GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL\"}\n}\n```\n\nA common LLM mistake is to put `assetId` at the top level (`{assetId, aoi}`); that fails validation with `must have required property 'assetDetails'`. Always wrap `assetId` inside `assetDetails`.\n\n**The two asset modes.** The recipe behaves differently depending on `assetDetails.type`:\n\n- `'Image'` — the asset is a single image. The recipe applies `mask` (per-pixel band-value constraints) and clips to the AOI; `dates`, `filter`, and `composite` are ignored.\n- `'ImageCollection'` — the asset is a collection. The recipe filters by AOI bounds, optionally by `dates`, optionally by image-property `filter`, applies `mask` per image, then reduces to a single image via `composite.type`.\n\nThe LLM does not need to set `type` (or `bands`, `visualizations`, `metadata`) — the GUI auto-loads them from EE when the user opens the recipe.\n\n**AOI semantics.** Unlike most recipes, the AOI may be `ASSET_BOUNDS` — meaning 'use the asset's own geometry'. This is the *only* recipe in SEPAL that supports the `ASSET_BOUNDS` AOI variant; for any other recipe, that variant is invalid.\n\nThis schema describes the persisted `model` of an *initialized* recipe. Cross-field constraints that JSON Schema cannot express are enforced by the companion rules.",
+    "description": "Wraps an EE Image or ImageCollection asset as a SEPAL recipe — visualizable, maskable, filterable, compositable, usable as input to other recipes (classification, change detection), exportable through the standard pipeline.\n\n**Minimum model.** Asset id is nested under `assetDetails`, NOT at the top level:\n```json\n{\"aoi\": {\"type\":\"ASSET_BOUNDS\"}, \"assetDetails\": {\"assetId\": \"GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL\"}}\n```\nA common LLM mistake is `{assetId, aoi}` at the top — fails validation with `must have required property 'assetDetails'`. Always wrap.\n\n**Two modes** by `assetDetails.type`:\n- `Image` — single image; applies `mask` + clips to AOI; `dates`, `filter`, `composite` ignored.\n- `ImageCollection` — filters by AOI bounds, optionally `dates`, optionally property `filter`, applies `mask` per image, reduces via `composite.type`.\n\nLLM doesn't need to set `type`/`bands`/`visualizations`/`metadata` — GUI auto-loads from EE on open.\n\n**AOI.** Only recipe that allows the `ASSET_BOUNDS` variant (use the asset's own geometry); EE_TABLE / POLYGON also valid for clipping to a smaller area.",
     "type": "object",
-    "additionalProperties": true,
+    "additionalProperties": false,
     "required": ["aoi", "assetDetails"],
     "properties": {
         "aoi": {
-            "description": "Area of Interest. Asset is the only recipe that allows the `ASSET_BOUNDS` variant — meaning 'use the asset's intrinsic geometry'. EE_TABLE and POLYGON are also allowed for clipping the asset to a smaller area.",
+            "description": "Area of Interest. `ASSET_BOUNDS` (asset's intrinsic geometry, only valid here), or EE_TABLE / POLYGON for clipping.",
             "oneOf": [
                 {"$ref": "../shared/aoi.schema.json#/$defs/eeTable"},
                 {"$ref": "../shared/aoi.schema.json#/$defs/polygon"},
@@ -24,7 +24,7 @@
     "$defs": {
         "assetDetails": {
             "title": "AssetDetails",
-            "description": "The Earth Engine asset and its loaded metadata. **The asset id MUST be set here as `assetDetails.assetId` — NOT at the top level of the model.** A common LLM mistake is to emit `{assetId, aoi}` at the top level of the model; that will fail validation. The correct shape is `{aoi, assetDetails: {assetId}}`.\n\nWhen creating a recipe, the LLM only needs to set `assetId` here. The other fields (`type`, `bands`, `visualizations`, `metadata`) are auto-populated by the GUI from an Earth Engine load when the user opens the recipe in the assetDetails panel — the LLM has no tool to discover them ahead of time. As long as `assetId` is correct, the recipe will save successfully and the GUI will hydrate the rest.\n\nNote: the recipe needs `assetDetails.type` (`'Image'` or `'ImageCollection'`) at retrieve-time to dispatch to the right backend. If the user attempts to retrieve / use the recipe before opening it in the GUI to hydrate metadata, retrieval will fail with `Invalid asset type: undefined`. The GUI handles this transparently when the user opens the recipe.",
+            "description": "EE asset + GUI-hydrated metadata. **Asset id MUST be `assetDetails.assetId` — NOT top-level.** When creating, set only `assetId`; GUI hydrates `type`/`bands`/`visualizations`/`metadata` from EE on open.\n\nNote: retrieval needs `assetDetails.type` ('Image' or 'ImageCollection'). If retrieved before the GUI opens the recipe to hydrate, fails with `Invalid asset type: undefined`. GUI handles this transparently.",
             "type": "object",
             "additionalProperties": false,
             "required": ["assetId"],
@@ -32,16 +32,16 @@
                 "assetId": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "Earth Engine asset path. Common forms: `users/<user>/<asset>`, `projects/<project>/assets/<asset>`, `<provider>/<dataset>/<image>` (catalog asset). Use `asset_search` to resolve an asset id from a dataset name when needed."
+                    "description": "EE asset path. Forms: `users/<u>/<a>`, `projects/<p>/assets/<a>`, or catalog `<provider>/<dataset>/<image>`. Use `asset_search` to resolve from a dataset name."
                 },
                 "type": {
                     "enum": ["Image", "ImageCollection"],
-                    "description": "Asset type. Auto-populated by the GUI from the EE load. `Image` recipes ignore `dates`, `filter`, and `composite`; `ImageCollection` recipes use them. The LLM should generally NOT set this — leave it absent and let the GUI hydrate it. Set explicitly only when you already know the value with certainty."
+                    "description": "GUI-hydrated. Image ignores `dates`/`filter`/`composite`; ImageCollection uses them. Don't set unless you know with certainty."
                 },
                 "bands": {
                     "type": "array",
                     "minItems": 1,
-                    "description": "Per-band metadata loaded from EE. Auto-populated by the GUI; the LLM should NOT set this when creating a recipe.",
+                    "description": "GUI-hydrated. LLM doesn't set when creating.",
                     "items": {
                         "type": "object",
                         "additionalProperties": true,
@@ -53,37 +53,37 @@
                 },
                 "visualizations": {
                     "type": "array",
-                    "description": "Visualization presets cached from the asset (categorical or continuous). Auto-populated by the GUI; the LLM should NOT set this."
+                    "description": "Visualization presets cached from the asset. GUI-hydrated. Don't set."
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Full EE metadata blob. Auto-populated by the GUI; the LLM should NOT set this."
+                    "description": "Full EE metadata blob. GUI-hydrated. Don't set."
                 }
             }
         },
         "dates": {
             "title": "AssetDates",
-            "description": "Date filter applied to ImageCollections. **Ignored when `assetDetails.type='Image'`.** Three modes:\n\n- `'ALL_DATES'` (default) — no date filter; every image in the collection is included.\n- `'YEAR'` — calendar year filter; the GUI persists this as `fromDate=<year>-01-01` and `toDate=<year+1>-01-01` (the start-of-next-year toDate gives a full year inclusive of December via the `[fromDate, toDate)` half-open semantics).\n- `'CUSTOM_DATE_RANGE'` — explicit `fromDate` / `toDate`. Same half-open semantics: scenes acquired ON `toDate` are NOT included.",
+            "description": "ImageCollection date filter (ignored for Image assets).\n- `ALL_DATES` (default) — no filter.\n- `YEAR` — calendar year. GUI persists as `fromDate=<year>-01-01`, `toDate=<year+1>-01-01` (start-of-next-year via half-open `[fromDate, toDate)`).\n- `CUSTOM_DATE_RANGE` — explicit `fromDate`/`toDate`. Same half-open semantics — scenes ON `toDate` NOT included.",
             "type": "object",
             "additionalProperties": false,
             "required": ["type"],
             "properties": {
                 "type": {
                     "enum": ["ALL_DATES", "YEAR", "CUSTOM_DATE_RANGE"],
-                    "description": "Date-filter mode."
+                    "description": "Filter mode."
                 },
                 "fromDate": {
                     "type": "string",
                     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
                     "format": "date",
-                    "description": "**Inclusive** start. Required when `type='YEAR'` or `type='CUSTOM_DATE_RANGE'`. Earliest valid date is `1970-01-01` (the GUI's lower bound on the date picker)."
+                    "description": "Inclusive start. Required for YEAR / CUSTOM_DATE_RANGE. Earliest 1970-01-01 (GUI's lower bound)."
                 },
                 "toDate": {
                     "type": "string",
                     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
                     "format": "date",
-                    "description": "**Exclusive** end. Required when `type='YEAR'` or `type='CUSTOM_DATE_RANGE'`. Scenes acquired ON `toDate` are NOT included — set to the day AFTER the last day you want covered. For the full year 2024 use `2025-01-01`, NOT `2024-12-31`. Latest valid date is today."
+                    "description": "Exclusive end — set to day AFTER last covered day. Full year 2024: `2025-01-01` (NOT `2024-12-31`). Required for YEAR / CUSTOM_DATE_RANGE. Latest today."
                 }
             },
             "allOf": [
@@ -101,20 +101,20 @@
         },
         "composite": {
             "title": "AssetComposite",
-            "description": "How an ImageCollection is reduced to a single image. **Ignored when `assetDetails.type='Image'`.**",
+            "description": "ImageCollection → single image reduction (ignored for Image assets).",
             "type": "object",
             "additionalProperties": false,
             "required": ["type"],
             "properties": {
                 "type": {
                     "enum": ["MOSAIC", "MEDIAN", "MEAN", "MIN", "MAX", "SD", "MODE"],
-                    "description": "Reduction operator.\n\n- `MOSAIC` (default) — last-image-wins per-pixel; preserves a single observation per pixel and keeps original values intact.\n- `MEDIAN` — per-band per-pixel median across the collection. Robust to outliers; standard choice for clean composites.\n- `MEAN` — per-band per-pixel arithmetic mean. Sensitive to outliers; rarely the best choice for noisy data.\n- `MIN` / `MAX` — per-band per-pixel minimum / maximum. Useful for extreme-value compositing (e.g. minimum-cloudiness, maximum-greenness).\n- `SD` — per-band per-pixel standard deviation across the collection. Output is variability rather than a representative value.\n- `MODE` — per-band per-pixel mode (most-frequent value). Suitable for categorical bands (class labels) where averaging is meaningless."
+                    "description": "Reducer.\n- `MOSAIC` (default) — last-image-wins per pixel; preserves a single observation, original values intact.\n- `MEDIAN` — per-band per-pixel median. Robust to outliers; standard for clean composites.\n- `MEAN` — per-band per-pixel mean. Outlier-sensitive.\n- `MIN`/`MAX` — per-band per-pixel extreme. Useful for min-cloudiness, max-greenness.\n- `SD` — per-band stdDev across collection. Output is variability rather than representative value.\n- `MODE` — per-band most-frequent. For categorical bands (class labels) where averaging is meaningless."
                 }
             }
         },
         "filter": {
             "title": "AssetFilter",
-            "description": "Image-collection metadata filter applied per-image *before* compositing. **Ignored when `assetDetails.type='Image'`.** Each `filtersEntry` is a group of `constraints` combined with a `booleanOperator`. Multiple entries are combined with AND.\n\nNote: filter constraints reference image *properties* (metadata fields like `CLOUD_COVER`, `system:time_start`), not image bands. Mask uses bands; filter uses properties — different operands.",
+            "description": "ImageCollection metadata filter applied per-image *before* compositing (ignored for Image). Each `filtersEntry` is a constraint group joined by `booleanOperator`; multiple entries combined with AND. Filter constraints reference image *properties* (`CLOUD_COVER`, `system:time_start`); mask constraints reference *bands*.",
             "type": "object",
             "additionalProperties": false,
             "required": ["filtersEntries"],
@@ -127,7 +127,7 @@
         },
         "mask": {
             "title": "AssetMask",
-            "description": "Per-pixel band-value mask applied to every image (Image asset) or every image in the collection (ImageCollection asset). Each `constraintsEntry` is a group of `constraints` combined with a `booleanOperator`. Multiple entries are combined with AND.\n\nUnlike `filter` (which operates on metadata properties), `mask` operates on band *values*, supporting `class` and `range` operators plus optional bitwise extraction (`bit`, `fromBit`, `toBit`) for QA bitmask bands.",
+            "description": "Per-pixel band-value mask (every image for Image asset; every image in collection for ImageCollection). Each `constraintsEntry` is a constraint group joined by `booleanOperator`; multiple entries combined with AND. Operates on band *values* (vs `filter` on metadata properties); supports `class`, `range`, comparisons, plus optional bitwise extraction (`bit`/`fromBit`/`toBit`/inclusive flags) for QA bitmask bands.",
             "type": "object",
             "additionalProperties": false,
             "required": ["constraintsEntries"],
@@ -140,15 +140,15 @@
         },
         "constraintsEntry": {
             "title": "AssetConstraintsEntry",
-            "description": "A group of constraints combined into a single boolean expression. Both `filter.filtersEntries[*]` and `mask.constraintsEntries[*]` use this shape; the per-constraint shape differs (filter uses `property`, mask uses `band`).",
+            "description": "Constraint group joined by `booleanOperator`. Used by both `filter.filtersEntries[*]` and `mask.constraintsEntries[*]`; per-constraint shape differs (filter uses `property`, mask uses `image`+`band`).",
             "type": "object",
             "additionalProperties": false,
             "required": ["id", "booleanOperator", "constraints"],
             "properties": {
-                "id": {"type": "string", "description": "UUID for stable React keys and as the lookup path when the panel updates the entry."},
+                "id": {"type": "string", "description": "UUID for stable React keys; lookup path when panel updates the entry."},
                 "booleanOperator": {
                     "enum": ["and", "or"],
-                    "description": "How the constraints are combined within this entry. `'and'` requires every constraint; `'or'` requires any."
+                    "description": "Combine constraints within entry. `and` = all required; `or` = any."
                 },
                 "constraints": {
                     "type": "array",
@@ -159,50 +159,50 @@
         },
         "constraint": {
             "title": "AssetConstraint",
-            "description": "A single comparison. The shape varies by operator and by whether this constraint belongs to a `filter` (then it has `property`) or a `mask` (then it has `image` and `band`, and may have bit-extraction fields).\n\n- Filter constraints: `{property, operator, value | range fields}` — `operator` ∈ `<`, `≤`, `>`, `≥`, `=`, `range`. Filters do NOT support `class` (image properties aren't categorical).\n- Mask constraints: `{image, band, operator, value | range fields | selectedClasses}` plus optional `bit`/`fromBit`/`toBit`/`fromBitInclusive`/`toBitInclusive` for bitwise extraction. `operator` ∈ `class`, `<`, `≤`, `>`, `≥`, `=`, `range`.\n\n`≤` and `≥` are unicode U+2264 / U+2265.",
+            "description": "Single comparison.\n- Filter: `{property, operator, value | range fields}`. Operator ∈ {`<`, `≤`, `>`, `≥`, `=`, `range`}. NO `class` (image properties aren't categorical).\n- Mask: `{image, band, operator, value | range fields | selectedClasses}` plus optional bit-extraction. Operator ∈ {`class`, `<`, `≤`, `>`, `≥`, `=`, `range`}.\n\n`≤`/`≥` are unicode U+2264/U+2265.",
             "type": "object",
             "additionalProperties": true,
             "required": ["id", "operator"],
             "properties": {
-                "id": {"type": "string", "description": "UUID for stable React keys."},
-                "description": {"type": "string", "description": "Human-readable summary shown in the GUI; not used by the backend."},
+                "id": {"type": "string", "description": "UUID."},
+                "description": {"type": "string", "description": "GUI-only summary; not read by backend."},
                 "image": {
                     "const": "this-recipe",
-                    "description": "Mask constraints only. Always the literal string `'this-recipe'` — masks reference bands of the asset itself."
+                    "description": "Mask only. Always literal `'this-recipe'` (mask references bands of the asset itself)."
                 },
                 "band": {
                     "type": "string",
-                    "description": "Mask constraints only. Band name to read; must be one of `assetDetails.bands[*].id`."
+                    "description": "Mask only. Band name (must be one of `assetDetails.bands[*].id`)."
                 },
                 "property": {
                     "type": "string",
-                    "description": "Filter constraints only. Image-metadata property name (typically a numeric or string property like `CLOUD_COVER`, `LANDSAT_PRODUCT_ID`, `system:time_start`)."
+                    "description": "Filter only. Image-metadata property name (e.g. `CLOUD_COVER`, `LANDSAT_PRODUCT_ID`, `system:time_start`)."
                 },
                 "operator": {
                     "enum": ["class", "<", "≤", ">", "≥", "=", "range"],
-                    "description": "Comparison operator. `class` is mask-only (categorical band match against `selectedClasses`). `range` selects values between `from` and `to` with inclusive flags. `=` is supported by both filter (string or numeric property equality) and mask (numeric band equality)."
+                    "description": "`class` = mask-only categorical match against `selectedClasses`. `range` = `from`/`to` with inclusive flags. `=` works for both filter (string or numeric property) and mask (numeric band)."
                 },
                 "selectedClasses": {
                     "type": "array",
                     "items": {"type": "integer"},
                     "minItems": 1,
-                    "description": "Required when `operator='class'` (mask only). Pixel matches if its band value is any of these."
+                    "description": "Required for `class` (mask only). Match if band value is any."
                 },
                 "value": {
-                    "description": "Right-hand-side value. Required for `<`, `≤`, `>`, `≥`, `=`. Numeric for mask; numeric or string for filter (depending on the property's type)."
+                    "description": "RHS for `<`/`≤`/`>`/`≥`/`=`. Numeric for mask; numeric or string for filter (depending on property type)."
                 },
-                "from": {"type": "number", "description": "Lower bound for `range`. Required for `range` operator only."},
-                "to": {"type": "number", "description": "Upper bound for `range`. Required for `range` operator only."},
-                "fromInclusive": {"type": "boolean", "description": "Whether the lower bound is inclusive. Required for `range` operator only."},
-                "toInclusive": {"type": "boolean", "description": "Whether the upper bound is inclusive. Required for `range` operator only."},
+                "from": {"type": "number", "description": "Range lower bound."},
+                "to": {"type": "number", "description": "Range upper bound."},
+                "fromInclusive": {"type": "boolean", "description": "Lower bound inclusive?"},
+                "toInclusive": {"type": "boolean", "description": "Upper bound inclusive?"},
                 "bit": {
                     "type": "boolean",
-                    "description": "Mask constraints only. When `true`, the comparison runs on a bitwise extraction of the band value rather than the raw value. Useful for QA bitmask bands (e.g. Landsat `QA_PIXEL`). Requires `fromBit`/`toBit`/`fromBitInclusive`/`toBitInclusive`."
+                    "description": "Mask only. `true` = compare bitwise extraction of band value (for QA bitmask bands like Landsat `QA_PIXEL`); requires `fromBit`/`toBit`/`fromBitInclusive`/`toBitInclusive`."
                 },
-                "fromBit": {"type": "integer", "minimum": 0, "description": "Lowest bit position (0-based). Used when `bit=true`."},
-                "toBit": {"type": "integer", "minimum": 0, "description": "Highest bit position (0-based). Used when `bit=true`."},
-                "fromBitInclusive": {"type": "boolean", "description": "Whether `fromBit` is inclusive in the extracted range. Used when `bit=true`."},
-                "toBitInclusive": {"type": "boolean", "description": "Whether `toBit` is inclusive in the extracted range. Used when `bit=true`."}
+                "fromBit": {"type": "integer", "minimum": 0, "description": "Lowest bit (0-based)."},
+                "toBit": {"type": "integer", "minimum": 0, "description": "Highest bit (0-based)."},
+                "fromBitInclusive": {"type": "boolean"},
+                "toBitInclusive": {"type": "boolean"}
             },
             "allOf": [
                 {

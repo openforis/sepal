@@ -7,33 +7,6 @@
 const log = require('#sepal/log').getLogger('validation')
 const {validate: validateNewRecipe} = require('../../recipes/validate')
 
-/**
- * Deep-merge defaults into a model, only filling in missing keys.
- * User-provided arrays replace defaults entirely (no array merging).
- */
-const deepMergeDefaults = (defaults, overrides) => {
-    if (overrides === undefined || overrides === null) {
-        return defaults
-    }
-    if (typeof defaults !== 'object' || Array.isArray(defaults)) {
-        return overrides
-    }
-    if (typeof overrides !== 'object' || Array.isArray(overrides)) {
-        return overrides
-    }
-    const result = {...defaults}
-    for (const key of Object.keys(overrides)) {
-        if (key in result && typeof result[key] === 'object' && !Array.isArray(result[key])
-            && typeof overrides[key] === 'object' && !Array.isArray(overrides[key])
-            && overrides[key] !== null) {
-            result[key] = deepMergeDefaults(result[key], overrides[key])
-        } else {
-            result[key] = overrides[key]
-        }
-    }
-    return result
-}
-
 const createRecipeValidator = ({registry}) => {
 
     const validateModel = ({type, model}) => {
@@ -50,15 +23,7 @@ const createRecipeValidator = ({registry}) => {
         return null
     }
 
-    const applyDefaults = ({type, model}) => {
-        const schema = registry.getSchema(type)
-        if (schema && schema.getDefaults) {
-            return deepMergeDefaults(schema.getDefaults(), model)
-        }
-        return model
-    }
-
-    return {validateModel, applyDefaults}
+    return {validateModel}
 }
 
-module.exports = {createRecipeValidator, deepMergeDefaults}
+module.exports = {createRecipeValidator}

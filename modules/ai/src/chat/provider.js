@@ -1,6 +1,7 @@
 const {ClaudeProvider} = require('./providers/claude')
 const {OpenAIProvider} = require('./providers/openai')
 const {LMStudioProvider} = require('./providers/lmstudio')
+const {formatSelection} = require('./selectionContext')
 const {readFileSync} = require('fs')
 const {join} = require('path')
 
@@ -51,7 +52,7 @@ const formatRecipeType = s => {
     return lines.join('\n')
 }
 
-const buildSystemPrompt = ({username, registry}) => {
+const buildSystemPrompt = ({username, registry, selection}) => {
     const recipeTypes = registry
         ? registry.listSchemas().map(formatRecipeType).join('\n\n')
         : 'No recipe schemas loaded yet.'
@@ -59,6 +60,7 @@ const buildSystemPrompt = ({username, registry}) => {
     return SYSTEM_PROMPT_TEMPLATE
         .replace('{{username}}', username)
         .replace('{{recipeTypes}}', recipeTypes)
+        .replace('{{currentContext}}', formatSelection(selection))
 }
 
 module.exports = {getLLM, buildSystemPrompt}

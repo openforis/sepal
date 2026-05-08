@@ -2,7 +2,6 @@ const getDefaults = () => {
     const year = new Date().getUTCFullYear()
     return {
         dates: {
-            type: 'YEARLY_TIME_SCAN',
             targetDate: `${year}-07-02`,
             seasonStart: `${year}-01-01`,
             seasonEnd: `${year + 1}-01-01`,

@@ -1,10 +1,10 @@
 const handlers = {}
 
-export const registerChatGuiAction = (action, handler) => {
+export const registerGuiAction = (action, handler) => {
     handlers[action] = handler
 }
 
-export const handleChatGuiAction = (action, params) => {
+export const handleGuiAction = (action, params) => {
     const handler = handlers[action]
     if (!handler) {
         return false

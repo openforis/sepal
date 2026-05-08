@@ -5,18 +5,18 @@ const {getDefaults} = require('./defaults')
 module.exports = {
     id: 'MOSAIC',
     name: 'Optical Mosaic',
-    description: 'Cloud-free composite from optical satellite imagery (Landsat 4-9, Sentinel-2). Applies per-scene corrections and per-pixel cloud/shadow/snow masking, then reduces surviving observations to a single per-pixel value.',
+    description: 'Cloud-free composite from optical satellites (LS 4-9, S2). Per-scene corrections + per-pixel cloud/shadow/snow mask → reduce surviving obs per pixel.',
     useCases: [
-        'Cloud-free seasonal or annual composites for visual inspection',
-        'Natural-color and false-color imagery',
-        'Vegetation, water, burn, urban indices (NDVI, NDWI, NBR, etc.)',
+        'Cloud-free seasonal/annual composites',
+        'Natural and false-color imagery',
+        'Vegetation/water/burn/urban indices (NDVI, NDWI, NBR…)',
         'Baseline imagery for change detection or classification',
-        'Cross-sensor calibrated composites combining Landsat and Sentinel-2'
+        'Cross-sensor calibrated LS+S2 composites'
     ],
     terms: ['optical', 'multispectral', 'Landsat', 'Sentinel-2', 'S2', 'mosaic', 'composite', 'MEDOID', 'MEDIAN', 'surface reflectance', 'SR', 'TOA', 'BRDF', 'cloud masking', 'CFMask', 'Cloud Score+', 'natural color', 'false color', 'NDVI', 'NDWI', 'NBR', 'NDMI', 'EVI', 'SAVI', 'tasseled cap', 'target date', 'season'],
-    chooseWhen: 'User wants visible/multispectral imagery, natural or false color, or vegetation/water/burn indices, or names Landsat or Sentinel-2.',
-    dontChooseWhen: 'User needs imagery through cloud cover or asks for SAR/radar — use RADAR_MOSAIC. User wants to wrap an existing Earth Engine asset — use ASSET_MOSAIC.',
-    outputs: 'Cloud-free composite with optical bands (blue, green, red, nir, swir1, swir2), tasseled-cap (brightness/greenness/wetness), 17+ indices, and metadata (dayOfYear, daysFromTarget). Sentinel-2 adds redEdge and waterVapor; Landsat adds thermal and pan.',
+    chooseWhen: 'Wants visible/multispectral, natural/false color, or vegetation/water/burn indices, or names LS/S2.',
+    dontChooseWhen: 'Needs imagery through clouds / SAR — use RADAR_MOSAIC. Wraps an existing EE asset — use ASSET_MOSAIC.',
+    outputs: 'Optical bands (blue, green, red, nir, swir1, swir2), tasseled-cap (brightness/greenness/wetness), 17+ indices, metadata (dayOfYear, daysFromTarget). S2 adds redEdge + waterVapor; LS adds thermal + pan.',
     parameterSchema,
     rules,
     getDefaults,

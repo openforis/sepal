@@ -1,0 +1,42 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://sepal.io/recipes/masking/schema.json",
+    "title": "MaskingRecipe",
+    "description": "Apply the first band of `imageMask` as a per-pixel mask to `imageToMask` — zero/masked pixels in the mask become masked in output; non-zero pass through unchanged.\n\nUses: mask non-forest from a continuous index, mask out water bodies, exclude cloud-contaminated pixels with an external cloud mask.\n\nPipeline: `imageToMask.updateMask(imageMask.select(0))`. Output bands inherited from `imageToMask`.\n\n**Only the first band of `imageMask` is used.** The legacy `maskOptions.band/values/negate` field is not read by EE and has been removed. To mask by a specific band/values, build a single-band binary mask upstream (Band Math).\n\nAOI implicit (geometry of `imageToMask`). LLM must populate both `imageToMask` and `imageMask`; no defaults.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["imageToMask", "imageMask"],
+    "properties": {
+        "imageToMask": {"$ref": "#/$defs/inputImage"},
+        "imageMask": {"$ref": "#/$defs/inputImage"}
+    },
+    "$defs": {
+        "inputImage": {
+            "title": "MaskingInputImage",
+            "description": "SEPAL recipe ref or EE asset, with GUI-cached metadata. GUI populates `bands`/`visualizations` on selection; LLM doesn't.",
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["type", "id"],
+            "properties": {
+                "type": {
+                    "enum": ["RECIPE_REF", "ASSET"],
+                    "description": "`RECIPE_REF` = SEPAL recipe id; `ASSET` = EE Image/ImageCollection asset id."
+                },
+                "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Recipe id or EE asset id (per `type`)."
+                },
+                "bands": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Band names from source. GUI-populated. Don't set."
+                },
+                "visualizations": {
+                    "type": "array",
+                    "description": "Visualization presets cached from source. Don't set."
+                }
+            }
+        }
+    }
+}

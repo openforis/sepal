@@ -17,8 +17,9 @@ const fs = require('fs')
 
 const recipesDir = __dirname
 const schemasById = {}
+const isSchemaFile = name => name === 'schema.json' || name.endsWith('.schema.json')
 for (const dirent of fs.readdirSync(recipesDir, {withFileTypes: true, recursive: true})) {
-    if (dirent.isFile() && dirent.name.endsWith('.schema.json')) {
+    if (dirent.isFile() && isSchemaFile(dirent.name)) {
         const filePath = path.join(dirent.parentPath || dirent.path, dirent.name)
         const schema = JSON.parse(fs.readFileSync(filePath, 'utf8'))
         if (schema.$id) {
