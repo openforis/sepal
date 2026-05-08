@@ -419,7 +419,7 @@
       "users": "Users"
     },
     "chat": {
-      "title": "Sepalito is here!",
+      "title": "Sepalito",
       "empty": "Send a message to start chatting about SEPAL recipes.",
       "placeholder": "Type a message...",
       "close": "Close",

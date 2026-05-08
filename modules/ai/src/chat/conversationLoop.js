@@ -79,7 +79,7 @@ const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, to
     ctx.send({type: 'status', conversationId: ctx.conversationId, status: 'thinking'})
 
     const promptMessages = stallNudge ? [...ctx.messages, stallNudge] : ctx.messages
-    log.info(`[conv ${ctx.conversationId}] round ${round}: requesting (${promptMessages.length} msgs${stallNudge ? ', after nudge' : ''})`)
+    log.debug(`[conv ${ctx.conversationId}] round ${round}: requesting (${promptMessages.length} msgs${stallNudge ? ', after nudge' : ''})`)
 
     const result = await streamWithChunkBuffer({
         provider, ctx,
@@ -87,7 +87,7 @@ const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, to
         formattedTools,
         systemPrompt: promptBuilder(ctx)
     })
-    log.info(`[conv ${ctx.conversationId}] round ${round}: response (${(result.text || '').length} chars text, ${(result.toolCalls || []).length} tool calls, stop=${result.stopReason || 'unknown'})`)
+    log.debug(`[conv ${ctx.conversationId}] round ${round}: response (${(result.text || '').length} chars text, ${(result.toolCalls || []).length} tool calls, stop=${result.stopReason || 'unknown'})`)
 
     const classification = classifyRound(result, stallCount)
     if (classification.kind === 'tool-calls') {
@@ -102,6 +102,7 @@ const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, to
 
 const runConversation = async ({ctx, provider, formattedTools, promptBuilder, toolRunner}) => {
     const failureTracker = createFailureTracker({conversationId: ctx.conversationId})
+    const t = Date.now()
     let round = 0
     let stallCount = 0
     let stallNudge = null
@@ -117,7 +118,7 @@ const runConversation = async ({ctx, provider, formattedTools, promptBuilder, to
         stallNudge = null
 
         if (outcome.action === 'done') {
-            log.info(`[conv ${ctx.conversationId}] turn complete after ${round} round(s)`)
+            log.info(`[conv ${ctx.conversationId}] turn complete after ${round} round(s) (${Date.now() - t}ms)`)
             return {kind: 'done', assistantText: outcome.assistantText, rounds: round}
         } else if (outcome.action === 'bail') {
             return {kind: 'bailed', message: outcome.message, rounds: round}

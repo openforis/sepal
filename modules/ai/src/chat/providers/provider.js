@@ -1,48 +1,47 @@
-/**
- * Base LLM provider interface.
- *
- * Subclasses must implement:
- * - formatTools(tools) — convert MCP tool defs to provider-specific format
- * - chat({messages, tools, systemPrompt}) — call the LLM and return {text, toolCalls}
- */
 class LLMProvider {
-    constructor({apiKey, model}) {
+    constructor({apiKey, model, name, log}) {
         this.apiKey = apiKey
         this.model = model
+        this.name = name
+        this.log = log
     }
 
-    /**
-     * Convert MCP tool definitions to provider-specific format.
-     * @param {Array<{name, description, parameters}>} tools
-     * @returns {Array} provider-formatted tools
-     */
+    async chat(options) {
+        const t = Date.now()
+        this.log.debug(`Calling ${this.name} (${this.model}) with ${options.messages.length} messages, ${(options.tools || []).length} tools`)
+        try {
+            const result = await this._chat(options)
+            this.log.debug(`${this.name} response: ${result.text.length} chars text, ${result.toolCalls.length} tool calls, stop=${result.stopReason} (${Date.now() - t}ms)`)
+            return result
+        } catch (error) {
+            this.log.debug(`${this.name} chat failed after ${Date.now() - t}ms`)
+            throw error
+        }
+    }
+
+    async stream(options) {
+        const t = Date.now()
+        this.log.debug(`Streaming from ${this.name} (${this.model}) with ${options.messages.length} messages, ${(options.tools || []).length} tools`)
+        try {
+            const result = await this._stream(options)
+            this.log.debug(`${this.name} stream complete: ${result.text.length} chars text, ${result.toolCalls.length} tool calls, stop=${result.stopReason} (${Date.now() - t}ms)`)
+            return result
+        } catch (error) {
+            this.log.debug(`${this.name} stream failed after ${Date.now() - t}ms`)
+            throw error
+        }
+    }
+
     formatTools(_tools) {
         throw new Error('formatTools() must be implemented by subclass')
     }
 
-    /**
-     * Send messages to the LLM and return a response.
-     * @param {Object} options
-     * @param {Array<{role, content, toolCalls?, toolResults?}>} options.messages
-     * @param {Array} options.tools - provider-formatted tools
-     * @param {string} options.systemPrompt
-     * @returns {Promise<{text: string, toolCalls: Array<{id, name, input}>}>}
-     */
-    async chat(_options) {
-        throw new Error('chat() must be implemented by subclass')
+    async _chat(_options) {
+        throw new Error('_chat() must be implemented by subclass')
     }
 
-    /**
-     * Stream messages from the LLM, yielding text chunks.
-     * @param {Object} options
-     * @param {Array<{role, content, toolCalls?, toolResults?}>} options.messages
-     * @param {Array} options.tools - provider-formatted tools
-     * @param {string} options.systemPrompt
-     * @param {Function} options.onChunk - called with each text chunk
-     * @returns {Promise<{text: string, toolCalls: Array<{id, name, input}>}>}
-     */
-    async stream(_options) {
-        throw new Error('stream() must be implemented by subclass')
+    async _stream(_options) {
+        throw new Error('_stream() must be implemented by subclass')
     }
 }
 

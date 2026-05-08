@@ -259,6 +259,10 @@ export const ChatPanel = ({className}) => {
     }, [dispatch, send, isConnected])
 
     const isConversation = view === 'chat' && activeConversationId
+    const activeConversation = isConversation
+        ? conversations.find(c => c.id === activeConversationId)
+        : null
+    const headerTitle = activeConversation?.title || msg('home.chat.title')
 
     const renderConversationToolbar = () => (
         <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
@@ -332,7 +336,7 @@ export const ChatPanel = ({className}) => {
     const renderHeader = () => (
         <Layout className={styles.header} type='horizontal-nowrap'>
             {isConversation ? renderConversationToolbar() : renderConversationListToolbar()}
-            <span className={styles.title}>{msg('home.chat.title')}</span>
+            <span className={styles.title} title={headerTitle}>{headerTitle}</span>
             {renderPanelToolbar()}
         </Layout>
     )
