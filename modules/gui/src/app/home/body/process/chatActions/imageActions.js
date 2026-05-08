@@ -106,7 +106,19 @@ const imageVisualizations = ({type, id, band, respond}) => {
     })
 }
 
+const assetMetadata = ({id, respond}) => {
+    if (!id) {
+        respond({success: false, error: 'id is required'})
+        return
+    }
+    api.gee.assetMetadata$({asset: id, allowedTypes: ALLOWED_ASSET_TYPES}).subscribe({
+        next: metadata => respond({success: true, data: metadata}),
+        error: error => respondError({log, respond, fallback: 'Failed to load asset metadata', error})
+    })
+}
+
 export const registerImageActions = () => {
     registerAction('image-bands', imageBands)
     registerAction('image-visualizations', imageVisualizations)
+    registerAction('asset-metadata', assetMetadata)
 }

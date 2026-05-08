@@ -55,8 +55,9 @@
                 },
                 "bands": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {"type": "string"},
-                    "description": "All bands the source exposes. GUI-populated. Classifier's actual feature set comes from `bandSetSpecs.included` + derived. LLM only sets when constructing from scratch with known bands."
+                    "description": "All bands the source exposes. Use `image_bands({type, id})` to look up; copy verbatim. Classifier's actual feature set comes from `bandSetSpecs.included` + derived."
                 },
                 "bandSetSpecs": {
                     "type": "array",

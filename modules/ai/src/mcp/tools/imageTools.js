@@ -39,6 +39,19 @@ const createImageTools = () => [
                 id: params.id,
                 band: params.band
             })
+    },
+    {
+        name: 'asset_metadata',
+        description: 'Full EE metadata for an Image or ImageCollection asset: `{type: "Image"|"ImageCollection", bands: [{id, ...}], visualizations: [...], properties, ...}`. Use for `asset` recipe `assetDetails` (needs `type` to switch Image vs ImageCollection mode + full `bands`/`visualizations`/`metadata`) and for classChange `fromImage`/`toImage` ASSET inputs (needs the metadata blob the EE backend reads for probability-band detection). Heavier than `image_bands` — only use when the full blob is needed.',
+        parameters: {
+            type: 'object',
+            properties: {
+                id: {type: 'string', description: 'EE asset id.'}
+            },
+            required: ['id']
+        },
+        handler: async ({params, request}) =>
+            guiRequest(request, 'asset-metadata', {id: params.id})
     }
 ]
 

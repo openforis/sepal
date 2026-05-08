@@ -13,10 +13,10 @@
     "$defs": {
         "inputImage": {
             "title": "MaskingInputImage",
-            "description": "SEPAL recipe ref or EE asset, with GUI-cached metadata. GUI populates `bands`/`visualizations` on selection; LLM doesn't.",
+            "description": "SEPAL recipe ref or EE asset.",
             "type": "object",
             "additionalProperties": true,
-            "required": ["type", "id"],
+            "required": ["type", "id", "bands"],
             "properties": {
                 "type": {
                     "enum": ["RECIPE_REF", "ASSET"],
@@ -29,12 +29,13 @@
                 },
                 "bands": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {"type": "string"},
-                    "description": "Band names from source. GUI-populated. Don't set."
+                    "description": "All bands the source exposes. Use `image_bands({type, id})` to look up; copy verbatim. Backend only reads `imageMask`'s first band; output inherits all bands of `imageToMask`."
                 },
                 "visualizations": {
                     "type": "array",
-                    "description": "Visualization presets cached from source. Don't set."
+                    "description": "Optional. Source's preset visualizations; GUI refetches on form open if absent. Use `image_visualizations({type, id})` (no `band` filter) to populate."
                 }
             }
         }

@@ -49,7 +49,7 @@
                 "bands": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Per-band metadata from source. LLM doesn't synthesize; pull from loaded source state."
+                    "description": "Per-band metadata keyed by band name. Categorical entry: `{values, labels, palette}`; continuous entry: `{}`. Build via `image_bands({type, id})` for the names + `image_visualizations({type, id, band})` per band (returns `values`/`labels`/`palette` for categorical, nothing for continuous). Optional — GUI refetches on form open if absent, but providing it avoids that fetch and lets the Mapping panel render immediately."
                 },
                 "includedBands": {
                     "type": "array",

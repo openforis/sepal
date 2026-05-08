@@ -49,11 +49,12 @@
                 "bands": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Per-band metadata keyed by band name. Categorical: `{values, labels, palette}`; continuous: empty. GUI-populated; used by Mapping panel to know which bands have categorical legends + class values. Pull from loaded source state; LLM doesn't synthesize."
+                    "minProperties": 1,
+                    "description": "Per-band metadata keyed by band name. Categorical entry: `{values, labels, palette}`; continuous entry: `{}`. Build via `image_bands({type, id})` for the names + `image_visualizations({type, id, band})` per band (returns `values`/`labels`/`palette` for categorical, nothing for continuous). Used by the Mapping panel to know which source bands have categorical legends + class values."
                 },
                 "visualizations": {
                     "type": "array",
-                    "description": "Visualization presets cached from source. Don't set."
+                    "description": "Optional. Source's preset visualizations. Use `image_visualizations({type, id})` (no `band` filter) to populate; GUI refetches on form open if absent."
                 },
                 "includedBands": {
                     "type": "array",
@@ -88,7 +89,7 @@
                             "color": {"type": "string"}
                         }
                     },
-                    "description": "Source band's legend (mirrors source classification's classes). Only meaningful when `type='categorical'` — used for `class` constraint class-picker. Empty/absent for continuous."
+                    "description": "Source band's legend (mirrors source classification's classes). Required when `type='categorical'` — used for the `class` constraint's class-picker. Build by calling `image_visualizations({type, id, band})` and zipping the returned `values`/`labels`/`palette` arrays into entries `{value, label, color}` (one per index). Empty/absent for continuous."
                 }
             }
         },

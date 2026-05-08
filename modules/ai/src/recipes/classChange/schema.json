@@ -46,23 +46,24 @@
                 "bands": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Per-band visualization metadata keyed by band name (`values`, `labels`, `palette` mirroring source's categorical viz). GUI-populated; used by EE backend to detect `probability_<value>` bands for the optional confidence calc. Pull from loaded source state; LLM doesn't synthesize."
+                    "minProperties": 1,
+                    "description": "Per-band visualization metadata keyed by band name. The class band's entry must carry `{values, labels, palette}` (mirroring the source's categorical viz) — EE backend uses these to detect `probability_<value>` bands for the optional confidence calc. Build via `image_bands({type, id})` for the names + `image_visualizations({type, id, band})` per band (returns `values`/`labels`/`palette` for categorical). Continuous bands map to `{}`."
                 },
                 "legendEntries": {
                     "type": "array",
                     "minItems": 1,
                     "maxItems": 10,
                     "items": {"$ref": "#/$defs/legendEntry"},
-                    "description": "Source classification legend `(value, label, color)`. Hard cap 10 entries — cartesian product `len(from) × len(to)` else produces too many transition classes to label. Mirror source's `legend.entries`."
+                    "description": "Source classification legend `(value, label, color)`, mirroring source's `legend.entries`. Build via `image_visualizations({type, id, band})` for the class band — zip the returned `values`/`labels`/`palette` arrays into entries `{value, label, color}` (one per index). Hard cap 10 entries — cartesian product `len(from) × len(to)` else produces too many transition classes to label."
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "EE asset metadata (band specs, properties). GUI-cached. Don't set."
+                    "description": "Optional. Full EE asset metadata blob (band specs, properties). For ASSET inputs use `asset_metadata({id})`; not applicable to RECIPE_REF. GUI refetches if absent."
                 },
                 "visualizations": {
                     "type": "array",
-                    "description": "Visualization presets cached from source. Don't set."
+                    "description": "Optional. Source's preset visualizations. Use `image_visualizations({type, id})` (no `band` filter) to populate; GUI refetches on form open if absent."
                 }
             }
         },
