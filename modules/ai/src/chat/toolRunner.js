@@ -52,7 +52,12 @@ const validateParams = (toolName, params, schema) => {
     if (!schema || !schema.properties) return null
     const validate = ajv.compile(schema)
     if (validate(params || {})) return null
-    const errors = validate.errors.map(e => `${e.instancePath || '/'} ${e.message}`).join('; ')
+    // Suppress the meta-error Ajv emits for every failed `if/then` branch —
+    // the concrete failures it groups are already in the list.
+    const errors = validate.errors
+        .filter(e => e.keyword !== 'if')
+        .map(e => `${e.instancePath || '/'} ${e.message}`)
+        .join('; ')
     log.warn(`Tool ${toolName} parameter validation failed: ${errors}`)
     return errors
 }
