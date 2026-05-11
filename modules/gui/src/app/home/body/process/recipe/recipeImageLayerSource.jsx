@@ -110,9 +110,10 @@ export const initializeLayers = ({recipeId, savedLayers, additionalFeatureLayerS
         labelsLayerSource,
         ...additionalFeatureLayerSources
     ]
-    const layers = savedLayers && savedLayers.areas
+    const layers = savedLayers?.areas
         ? savedLayers
         : {
+            ...savedLayers,
             areas: {
                 'center': {
                     id: 'default-layer',
@@ -124,7 +125,7 @@ export const initializeLayers = ({recipeId, savedLayers, additionalFeatureLayerS
                     ]
                 }
             },
-            mode: 'grid'
+            mode: savedLayers?.mode || 'grid'
         }
     const actionBuilder = recipeActionBuilder(recipeId)
     actionBuilder('INITIALIZE_LAYER_SOURCES')

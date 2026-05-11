@@ -20,6 +20,7 @@ import {
     removeRecipes$,
     selectRecipe
 } from '../recipe'
+import {getRecipeType} from '../recipeTypeRegistry'
 import {respondError} from './response'
 
 const log = getLogger('chat-recipe-actions')
@@ -34,6 +35,33 @@ const log = getLogger('chat-recipe-actions')
 const stampedForSave = recipe => {
     addHash(recipe.model)
     return recipe
+}
+
+// When a recipe declares `getDependentRecipeIds` (e.g. indexChange.fromImage),
+// chat-driven create/save bypasses the InputImage form that normally registers
+// those deps in `layers.additionalImageLayerSources`. Mirror that registration
+// here so the map's image-source dropdown reflects the model.
+const withDependentSourcesRegistered = recipe => {
+    const recipeType = getRecipeType(recipe.type)
+    const depIds = recipeType?.getDependentRecipeIds?.(recipe) || []
+    if (!depIds.length) return recipe
+    const existing = recipe.layers?.additionalImageLayerSources || []
+    const existingIds = new Set(existing.map(s => s.id))
+    const additions = depIds
+        .filter(id => !existingIds.has(id))
+        .map(id => ({
+            id,
+            type: 'Recipe',
+            sourceConfig: {recipeId: id}
+        }))
+    if (!additions.length) return recipe
+    return {
+        ...recipe,
+        layers: {
+            ...(recipe.layers || {}),
+            additionalImageLayerSources: [...existing, ...additions]
+        }
+    }
 }
 
 let pendingRecipeSubscription = null
@@ -101,14 +129,15 @@ const createRecipe = ({type, name, projectId, model, respond}) => {
     cancelPendingRecipeSubscription()
     pendingRecipeSubscription = persistRecipe$(recipe).subscribe({
         next: saved => {
+            const enriched = withDependentSourcesRegistered(saved)
             actionBuilder('CHAT_CREATE_RECIPE', {id})
                 .assign(['process.recipes', {id}], {
                     id, projectId, name, type
                 })
-                .set(['process.loadedRecipes', id], stampedForSave(saved))
+                .set(['process.loadedRecipes', id], stampedForSave(enriched))
                 .dispatch()
-            ensureRecipeOpenAndSelected(saved)
-            respond({success: true, data: recipeSummary(saved)})
+            ensureRecipeOpenAndSelected(enriched)
+            respond({success: true, data: recipeSummary(enriched)})
         },
         error: error => respondError({log, respond, fallback: 'Failed to create recipe', error})
     })
@@ -120,17 +149,18 @@ const updateRecipe = ({recipeId, model, respond}) => {
         switchMap(existing => persistRecipe$({...existing, model}))
     ).subscribe({
         next: saved => {
-            actionBuilder('CHAT_SAVE_RECIPE', {id: saved.id})
-                .assign(['process.recipes', {id: saved.id}], {
-                    id: saved.id,
-                    projectId: saved.projectId,
-                    name: saved.title || saved.placeholder,
-                    type: saved.type
+            const enriched = withDependentSourcesRegistered(saved)
+            actionBuilder('CHAT_SAVE_RECIPE', {id: enriched.id})
+                .assign(['process.recipes', {id: enriched.id}], {
+                    id: enriched.id,
+                    projectId: enriched.projectId,
+                    name: enriched.title || enriched.placeholder,
+                    type: enriched.type
                 })
-                .set(['process.loadedRecipes', saved.id], stampedForSave(saved))
+                .set(['process.loadedRecipes', enriched.id], stampedForSave(enriched))
                 .dispatch()
-            ensureRecipeOpenAndSelected(saved)
-            respond({success: true, data: recipeSummary(saved)})
+            ensureRecipeOpenAndSelected(enriched)
+            respond({success: true, data: recipeSummary(enriched)})
         },
         error: error => respondError({log, respond, fallback: 'Failed to save recipe', error})
     })
@@ -203,7 +233,7 @@ const reloadRecipe = ({recipeId}) => {
                 ui: current.ui || {initialized: true}
             }
             actionBuilder('RELOAD_RECIPE', {recipeId})
-                .set(['process.loadedRecipes', recipeId], stampedForSave(merged))
+                .set(['process.loadedRecipes', recipeId], stampedForSave(withDependentSourcesRegistered(merged)))
                 .dispatch()
         },
         error: error => log.error('Failed to reload recipe', error)
