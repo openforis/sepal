@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/indexChange/schema.json",
     "title": "IndexChangeRecipe",
-    "description": "Compares the same single-band index between two source images and produces difference / ratio / normalized-difference bands plus an optional categorical change map.\n\nUse for: change in any continuous spectral index between two snapshots — deforestation (NDVI drop), burn severity (dNBR), water-body change (NDWI shift), urbanization (built-up index). Index-agnostic: operates on whichever band you choose.\n\nPipeline: (1) pull `band` from `fromImage` and `toImage`; (2) compute `difference = to − from`, `normalized_difference = (to − from)/(to + from)`, `ratio = to / from`; (3) if both have `errorBand`, propagate `error = sqrt(fromError² + toError²)` and `confidence = |difference|/error`; (4) if `legend.entries` non-empty, materialize categorical `change` band — backend reverses entries and runs `ee.mosaic`, so **first entry in `entries` order whose constraints satisfied** wins. Pixels with `confidence ≤ options.minConfidence` get `difference` clamped to 0 (route to 'no change' bucket).\n\nAOI = intersection of `fromImage` and `toImage` geometries.",
+    "description": "Compares the same single-band index between two source images and produces difference / ratio / normalized-difference bands plus a categorical change map.\n\nUse for: change in any continuous spectral index between two snapshots — deforestation (NDVI drop), burn severity (dNBR), water-body change (NDWI shift), urbanization (built-up index). Index-agnostic: operates on whichever band you choose.\n\nPipeline: (1) pull `band` from `fromImage` and `toImage`; (2) compute `difference = to − from`, `normalized_difference = (to − from)/(to + from)`, `ratio = to / from`; (3) if both have `errorBand`, propagate `error = sqrt(fromError² + toError²)` and `confidence = |difference|/error`; (4) materialize categorical `change` band from `legend.entries` — backend reverses entries and runs `ee.mosaic`, so **first entry in `entries` order whose constraints satisfied** wins. Pixels with `confidence ≤ options.minConfidence` get `difference` clamped to 0 (route to 'no change' bucket).\n\nAOI = intersection of `fromImage` and `toImage` geometries.",
     "type": "object",
     "additionalProperties": true,
     "required": ["fromImage", "toImage", "legend", "options"],
@@ -27,7 +27,7 @@
             "description": "Source image (SEPAL recipe ref or EE asset) + the band to treat as the index + optional uncertainty band.",
             "type": "object",
             "additionalProperties": true,
-            "required": ["type", "id", "band"],
+            "required": ["type", "id", "bands", "band", "bandMin", "bandMax"],
             "properties": {
                 "type": {
                     "enum": ["RECIPE_REF", "ASSET"],
@@ -40,41 +40,43 @@
                 },
                 "bands": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {"type": "string"},
-                    "description": "All bands the source exposes. GUI-populated. Recipe only uses `band` (and optionally `errorBand`); informational only."
+                    "description": "All bands the source exposes. Use `image_bands({type, id})` to look up; copy the returned `bands` verbatim."
                 },
                 "band": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "Index band on the source. `fromImage.band` and `toImage.band` must be comparable — typically same band name (e.g. both `ndvi`)."
+                    "description": "Index band on the source. Must appear in `bands`. `fromImage.band` and `toImage.band` must be comparable — typically same band name (e.g. both `ndvi`)."
                 },
                 "errorBand": {
                     "type": ["string", "null"],
-                    "description": "Per-pixel uncertainty band. When BOTH inputs have it, recipe emits `error` and `confidence` bands; otherwise these aren't produced and `options.minConfidence` is silently ignored."
+                    "description": "Per-pixel uncertainty band on the source (must appear in `bands`). When BOTH inputs have it, recipe emits `error` and `confidence` bands; otherwise these aren't produced and `options.minConfidence` is silently ignored."
                 },
                 "bandMin": {
                     "type": ["number", "null"],
-                    "description": "Display-time min for the band (GUI viz scaling). No processing effect."
+                    "description": "Display-time min for `band` (GUI viz scaling; no processing effect). Use `image_visualizations({type, id, band})` and read `min` from the continuous viz entry; if no preset, fall back to -10000."
                 },
                 "bandMax": {
                     "type": ["number", "null"],
-                    "description": "Display-time max for the band. No processing effect."
+                    "description": "Display-time max for `band`. Use `image_visualizations` like `bandMin`; fallback 10000."
                 },
                 "errorBandMax": {
                     "type": ["number", "null"],
-                    "description": "Display-time max for error band. No processing effect."
+                    "description": "Display-time max for `errorBand`. Set when `errorBand` is set; use `image_visualizations({type, id, band: errorBand})`."
                 }
             }
         },
         "legend": {
             "title": "IndexChangeLegend",
-            "description": "Categorical change classes. Non-empty `entries` produces a `change` band whose value = legend value of FIRST entry (in `entries` order) whose `constraints` are satisfied. Empty `entries: []` suppresses the change band; recipe then only emits `difference`/`ratio`/`normalized_difference` (plus `error`/`confidence` when both inputs have error bands).\n\nDefaults: 3 classes — Decrease (red), Stable (white), Increase (green) — keyed off sign of `difference`.",
+            "description": "Categorical change classes. `entries` (≥1) produces the `change` band; value = legend value of FIRST entry (in `entries` order) whose `constraints` are satisfied.\n\nDefaults: 3 classes — Decrease (red), Stable (white), Increase (green) — keyed off sign of `difference`.",
             "type": "object",
             "additionalProperties": false,
             "required": ["entries"],
             "properties": {
                 "entries": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {"$ref": "#/$defs/legendEntry"}
                 }
             }

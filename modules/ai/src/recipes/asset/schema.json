@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/asset/schema.json",
     "title": "AssetRecipe",
-    "description": "Wraps an EE Image or ImageCollection asset as a SEPAL recipe — visualizable, maskable, filterable, compositable, usable as input to other recipes (classification, change detection), exportable through the standard pipeline.\n\n**Minimum model.** Asset id is nested under `assetDetails`, NOT at the top level:\n```json\n{\"aoi\": {\"type\":\"ASSET_BOUNDS\"}, \"assetDetails\": {\"assetId\": \"GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL\"}}\n```\nA common LLM mistake is `{assetId, aoi}` at the top — fails validation with `must have required property 'assetDetails'`. Always wrap.\n\n**Two modes** by `assetDetails.type`:\n- `Image` — single image; applies `mask` + clips to AOI; `dates`, `filter`, `composite` ignored.\n- `ImageCollection` — filters by AOI bounds, optionally `dates`, optionally property `filter`, applies `mask` per image, reduces via `composite.type`.\n\nLLM doesn't need to set `type`/`bands`/`visualizations`/`metadata` — GUI auto-loads from EE on open.\n\n**AOI.** Only recipe that allows the `ASSET_BOUNDS` variant (use the asset's own geometry); EE_TABLE / POLYGON also valid for clipping to a smaller area.",
+    "description": "Wraps an EE Image or ImageCollection asset as a SEPAL recipe — visualizable, maskable, filterable, compositable, usable as input to other recipes (classification, change detection), exportable through the standard pipeline.\n\n**Minimum model.** Asset id is nested under `assetDetails`, NOT at the top level:\n```json\n{\"aoi\": {\"type\":\"ASSET_BOUNDS\"}, \"assetDetails\": {\"assetId\": \"GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL\"}}\n```\nA common LLM mistake is `{assetId, aoi}` at the top — fails validation with `must have required property 'assetDetails'`. Always wrap.\n\n**Two modes** by `assetDetails.type`:\n- `Image` — single image; applies `mask` + clips to AOI; `dates`, `filter`, `composite` ignored.\n- `ImageCollection` — filters by AOI bounds, optionally `dates`, optionally property `filter`, applies `mask` per image, reduces via `composite.type`.\n\nLLM may omit `type`/`bands`/`visualizations`/`metadata` — GUI hydrates from EE when the recipe opens. To populate them upfront (e.g. before retrieval, or to inspect bands before configuring `mask`/`filter`), call `asset_metadata({id: assetId})` and copy the returned fields verbatim.\n\n**AOI.** Only recipe that allows the `ASSET_BOUNDS` variant (use the asset's own geometry); EE_TABLE / POLYGON also valid for clipping to a smaller area.",
     "type": "object",
     "additionalProperties": false,
     "required": ["aoi", "assetDetails"],
@@ -24,7 +24,7 @@
     "$defs": {
         "assetDetails": {
             "title": "AssetDetails",
-            "description": "EE asset + GUI-hydrated metadata. **Asset id MUST be `assetDetails.assetId` — NOT top-level.** When creating, set only `assetId`; GUI hydrates `type`/`bands`/`visualizations`/`metadata` from EE on open.\n\nNote: retrieval needs `assetDetails.type` ('Image' or 'ImageCollection'). If retrieved before the GUI opens the recipe to hydrate, fails with `Invalid asset type: undefined`. GUI handles this transparently.",
+            "description": "EE asset + cached metadata. **Asset id MUST be `assetDetails.assetId` — NOT top-level.** Minimum is `assetId`; the rest hydrates on form open. To populate ahead of time (avoids `Invalid asset type: undefined` if the recipe is retrieved before the GUI opens it), call `asset_metadata({id: assetId})` and copy `type`/`bands`/`visualizations`/`metadata` verbatim.",
             "type": "object",
             "additionalProperties": false,
             "required": ["assetId"],
@@ -36,12 +36,12 @@
                 },
                 "type": {
                     "enum": ["Image", "ImageCollection"],
-                    "description": "GUI-hydrated. Image ignores `dates`/`filter`/`composite`; ImageCollection uses them. Don't set unless you know with certainty."
+                    "description": "Asset kind. Image ignores `dates`/`filter`/`composite`; ImageCollection uses them. From `asset_metadata({id}).type`. Optional; GUI hydrates if absent."
                 },
                 "bands": {
                     "type": "array",
                     "minItems": 1,
-                    "description": "GUI-hydrated. LLM doesn't set when creating.",
+                    "description": "Asset bands as `[{id, ...}, ...]`. From `asset_metadata({id}).bands`. Optional; GUI hydrates if absent.",
                     "items": {
                         "type": "object",
                         "additionalProperties": true,
@@ -53,12 +53,12 @@
                 },
                 "visualizations": {
                     "type": "array",
-                    "description": "Visualization presets cached from the asset. GUI-hydrated. Don't set."
+                    "description": "Visualization presets. From `asset_metadata({id}).visualizations`. Optional; GUI hydrates if absent."
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Full EE metadata blob. GUI-hydrated. Don't set."
+                    "description": "Full EE metadata blob. From `asset_metadata({id})` (the whole response, sans the projected `bands`/`visualizations`/`type` if you've already split them out). Optional; GUI hydrates if absent."
                 }
             }
         },

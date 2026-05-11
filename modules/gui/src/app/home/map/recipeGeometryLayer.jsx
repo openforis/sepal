@@ -3,10 +3,16 @@ import React from 'react'
 
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {withSubscriptions} from '~/subscription'
 import {withTab} from '~/widget/tabs/tabContext'
 
+import {collectDependentHashes} from '../body/process/recipe/dependentHashes'
 import {EarthEngineTableLayer} from './layer/earthEngineTableLayer'
+
+const mapStateToProps = (state, {recipe}) => ({
+    dependentHashes: recipe ? collectDependentHashes(state, recipe) : {}
+})
 
 class _RecipeGeometryLayer extends React.Component {
     render() {
@@ -35,7 +41,7 @@ class _RecipeGeometryLayer extends React.Component {
     }
 
     createLayer() {
-        const {recipe, color, fillColor, layerIndex, map, tab: {busy}} = this.props
+        const {recipe, dependentHashes, color, fillColor, layerIndex, map, tab: {busy}} = this.props
         return recipe.ui.initialized
             ? new EarthEngineTableLayer({
                 map,
@@ -43,7 +49,7 @@ class _RecipeGeometryLayer extends React.Component {
                     recipe, color, fillColor
                 }),
                 layerIndex,
-                watchedProps: recipe.model,
+                watchedProps: {model: recipe.model, dependentHashes},
                 busy
             })
             : null
@@ -52,6 +58,7 @@ class _RecipeGeometryLayer extends React.Component {
 
 export const RecipeGeometryLayer = compose(
     _RecipeGeometryLayer,
+    connect(mapStateToProps),
     withTab(),
     withSubscriptions()
 )

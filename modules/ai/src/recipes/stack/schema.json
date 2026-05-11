@@ -28,15 +28,16 @@
             "title": "StackInputImage",
             "type": "object",
             "additionalProperties": true,
-            "required": ["imageId", "type", "id"],
+            "required": ["imageId", "type", "id", "bands"],
             "properties": {
                 "imageId": {"type": "string", "minLength": 1, "description": "UUID. `bandNames` entries reference via `imageId`."},
                 "type": {"enum": ["RECIPE_REF", "ASSET"]},
                 "id": {"type": "string", "minLength": 1, "description": "SEPAL recipe id or EE asset id."},
                 "bands": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {"type": "string"},
-                    "description": "Bands available from source. GUI-populated. Don't set."
+                    "description": "All bands the source exposes. Use `image_bands({type, id})` to look up; copy verbatim. `bandNames` entries pick a subset via `originalName` from this list."
                 }
             }
         },

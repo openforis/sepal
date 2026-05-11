@@ -34,8 +34,14 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                     .catch(error => log.warn('Title refinement task failed:', error.message))
             }
         } else if (result.kind === 'bailed') {
+            if (isFirstUserMessage) {
+                log.info(`[conv ${ctx.conversationId}] title refine skipped: conversation bailed (${result.message})`)
+            }
             ctx.sendChatResponse({text: result.message, complete: true})
         } else if (result.kind === 'cap-reached') {
+            if (isFirstUserMessage) {
+                log.info(`[conv ${ctx.conversationId}] title refine skipped: conversation hit ${MAX_TOOL_CALL_ROUNDS}-round cap`)
+            }
             ctx.sendChatResponse({
                 text: `I reached the safety cap of ${MAX_TOOL_CALL_ROUNDS} tool-call rounds. Stopping with what I have so far.`,
                 complete: true

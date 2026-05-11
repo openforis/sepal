@@ -11,6 +11,7 @@
     "providers/lmstudio": "debug",
     "providers/openai": "debug",
     "session": "info",
+    "titleGenerator": "debug",
     "toolRunner": "debug",
     "tools": "info",
     "ws": "info"
