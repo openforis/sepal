@@ -23,12 +23,35 @@ const activePanelIds = recipe =>
         .filter(([_id, activatable]) => activatable?.active)
         .map(([id]) => id)
 
+const resolveSourceLabel = (recipe, sourceId) => {
+    if (!sourceId) return null
+    if (sourceId === 'this-recipe') return 'self'
+    if (sourceId === 'google-satellite') return 'google-satellite'
+    const source = (recipe?.layers?.additionalImageLayerSources || [])
+        .find(s => s.id === sourceId)
+    if (!source) return sourceId
+    if (source.type === 'Recipe') {
+        const refId = source.sourceConfig?.recipeId
+        const refRecipe = (select('process.recipes') || []).find(r => r.id === refId)
+        const name = refRecipe?.name
+        return name ? `recipe:${name}` : refId ? `recipe:${refId}` : 'recipe'
+    }
+    if (source.type === 'Asset') {
+        return source.sourceConfig?.asset
+            ? `asset:${source.sourceConfig.asset}`
+            : 'asset'
+    }
+    return source.type ? source.type.toLowerCase() : sourceId
+}
+
 const mapAreasSummary = recipe => {
     const areas = recipe?.layers?.areas || {}
     const result = {}
     for (const [area, layer] of Object.entries(areas)) {
         const visParams = layer?.imageLayer?.layerConfig?.visParams
         result[area] = {
+            sourceId: layer?.imageLayer?.sourceId || null,
+            sourceLabel: resolveSourceLabel(recipe, layer?.imageLayer?.sourceId),
             bands: visParams?.bands || null,
             type: visParams?.type || null
         }
@@ -76,6 +99,7 @@ export const currentSelection = () => {
         openRecipes: recipeTabs.map(recipeSummary).filter(Boolean),
         selectedRecipe: selectedFrom(recipeTabs, select('process.selectedTabId'), recipeSummary),
         openApps: appTabs.map(appSummary).filter(Boolean),
-        selectedApp: selectedFrom(appTabs, select('apps.selectedTabId'), appSummary)
+        selectedApp: selectedFrom(appTabs, select('apps.selectedTabId'), appSummary),
+        mapView: select('map.view') || null
     }
 }
