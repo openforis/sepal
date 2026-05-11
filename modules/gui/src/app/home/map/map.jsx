@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {BehaviorSubject, combineLatest, concat, distinctUntilChanged, filter, finalize,
+import {BehaviorSubject, combineLatest, concat, debounceTime, distinctUntilChanged, filter, finalize,
     first, last, map, map as rxMap, of, pipe, scan, share, Subject, switchMap, takeUntil, windowTime} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
@@ -29,6 +29,7 @@ import {LegendImport} from './legendImport'
 import styles from './map.module.css'
 import {MapApiKeyContext} from './mapApiKeyContext'
 import {MapAreaContext} from './mapAreaContext'
+import {mapCommand$} from './mapCommands'
 import {MapContext} from './mapContext'
 import {MapInfo} from './mapInfo'
 import {MapRendering} from './mapRendering'
@@ -807,7 +808,7 @@ class _Map extends React.Component {
     }
 
     subscribe({view$, updateView$, linked$}) {
-        const {addSubscription} = this.props
+        const {addSubscription, recipe} = this.props
         addSubscription(
             view$.subscribe(
                 view => this.synchronizeIn(view)
@@ -822,8 +823,44 @@ class _Map extends React.Component {
             ),
             this.renderingProgress$.subscribe(
                 pendingTiles => this.updateRendering(pendingTiles)
+            ),
+            this.viewChanged$.pipe(
+                debounceTime(500)
+            ).subscribe(
+                () => this.persistMapView()
+            ),
+            mapCommand$.pipe(
+                filter(cmd => cmd?.recipeId === recipe?.id)
+            ).subscribe(
+                cmd => this.handleCommand(cmd)
             )
         )
+    }
+
+    handleCommand(cmd) {
+        switch (cmd.type) {
+            case 'setView':
+                this.synchronizeIn(cmd.view)
+                this.viewUpdates$.next(cmd.view)
+                break
+            case 'fitBounds':
+                this.withAllMaps(({map}) => map.fitBounds(cmd.bounds))
+                break
+            case 'setSync':
+                this.setLinked(cmd.linked)
+                break
+        }
+    }
+
+    persistMapView() {
+        const {maps} = this.state
+        const first = Object.values(maps)[0]
+        if (!first) return
+        const {center, zoom} = first.map.getView()
+        const bounds = first.map.getBounds()
+        actionBuilder('UPDATE_MAP_VIEW')
+            .set('map.view', {center, zoom, bounds})
+            .dispatch()
     }
 
     fit() {

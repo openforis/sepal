@@ -4,11 +4,14 @@ import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
 import {registerGuiAction as registerAction} from '~/app/home/body/chat/guiActionRegistry'
 import {histogramStretch} from '~/app/home/map/visParams/histogram'
+import {normalize} from '~/app/home/map/visParams/visParams'
 import {getLogger} from '~/log'
+import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
+import {uuid} from '~/uuid'
 
 import {recipePath} from '../recipe'
-import {getRecipeVisualizationOptions} from '../recipeVisualizationsRegistry'
+import {getRecipeType} from '../recipeTypeRegistry'
 import {respondError} from './response'
 
 const log = getLogger('chat-visualization-actions')
@@ -52,30 +55,68 @@ const selectedVisualizationAreas = recipe => {
     return areas
 }
 
+const LAYOUTS = [
+    {name: 'single', keys: ['center']},
+    {name: 'left-right', keys: ['left', 'right']},
+    {name: 'top-bottom', keys: ['top', 'bottom']},
+    {name: 'top+bottom-split', keys: ['top', 'bottom-left', 'bottom-right']},
+    {name: 'bottom+top-split', keys: ['bottom', 'top-left', 'top-right']},
+    {name: 'left+right-split', keys: ['left', 'top-right', 'bottom-right']},
+    {name: 'right+left-split', keys: ['right', 'top-left', 'bottom-left']},
+    {name: 'quadrants', keys: ['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+]
+
+const deriveLayout = areaKeys => {
+    const sorted = [...areaKeys].sort().join(',')
+    const match = LAYOUTS.find(l => [...l.keys].sort().join(',') === sorted)
+    return match?.name || 'custom'
+}
+
+const visParamsToOption = visParams => {
+    const bandLabel = (visParams.bands || []).join(', ')
+    return {value: visParams.id || bandLabel, label: bandLabel, visParams}
+}
+
+const collectVisualizations = recipe => {
+    const recipeType = getRecipeType(recipe.type)
+    const availableBands = recipeType?.getAvailableBands?.(recipe) || {}
+    const bandKeys = new Set(Object.keys(availableBands))
+    const bandFilter = ({bands}) =>
+        Array.isArray(bands) && bands.every(b => bandKeys.has(b))
+    const userDefined = Object.values(
+        selectFrom(recipe, 'layers.userDefinedVisualizations.this-recipe') || {}
+    ).filter(bandFilter)
+    const presets = (recipeType?.getPreSetVisualizations?.(recipe) || [])
+        .filter(bandFilter)
+    const groups = []
+    if (userDefined.length) {
+        groups.push({label: 'User-defined', options: userDefined.map(visParamsToOption)})
+    }
+    if (presets.length) {
+        groups.push({label: 'Presets', options: presets.map(visParamsToOption)})
+    }
+    return groups
+}
+
 const listVisualizations = ({recipeId, respond}) => {
     const recipe = select(['process.loadedRecipes', recipeId])
     if (!recipe) {
         respond({success: false, error: `Recipe ${recipeId} is not open`})
         return
     }
-    const optionsFn = getRecipeVisualizationOptions(recipe.type)
-    let groups = []
-    try {
-        if (optionsFn) groups = optionsFn(recipe) || []
-    } catch (error) {
-        log.error('Failed to compute visualization options', error)
-    }
+    const groups = collectVisualizations(recipe)
     const areas = selectedVisualizationAreas(recipe)
+    const layout = deriveLayout(Object.keys(areas))
     const hasPresets = groups.some(group => (group.options || []).length > 0)
     if (hasPresets) {
-        respond({success: true, data: {recipeType: recipe.type, groups, areas}})
+        respond({success: true, data: {recipeType: recipe.type, layout, groups, areas}})
         return
     }
     api.gee.bands$({recipe}).subscribe({
-        next: bands => respond({success: true, data: {recipeType: recipe.type, groups, areas, bands}}),
+        next: bands => respond({success: true, data: {recipeType: recipe.type, layout, groups, areas, bands}}),
         error: error => {
             log.error('Failed to load bands for visualization listing', error)
-            respond({success: true, data: {recipeType: recipe.type, groups, areas, bands: []}})
+            respond({success: true, data: {recipeType: recipe.type, layout, groups, areas, bands: []}})
         }
     })
 }
@@ -94,11 +135,10 @@ const toVisParams = ({mode, bands, palette, stretches}) =>
         ? {type: 'continuous', bands, min: [stretches[0].min], max: [stretches[0].max], palette: resolvePalette(palette)}
         : {type: mode, bands, min: stretches.map(s => s.min), max: stretches.map(s => s.max), gamma: bands.map(() => 1)}
 
-const proposeContinuousOrMulti = ({recipe, mode, bands, palette, respond}) => {
+const proposeContinuousOrMulti = ({image, aoi, mapBounds, mode, bands, palette, respond}) => {
     const expected = mode === 'continuous' ? 1 : 3
     if (!validateBandCount({mode, bands, expected, respond})) return
-    const aoi = recipe.model?.aoi
-    forkJoin(bands.map(band => api.gee.histogram$({recipe, band, aoi}))).subscribe({
+    forkJoin(bands.map(band => api.gee.histogram$({recipe: image, band, aoi, mapBounds}))).subscribe({
         next: histograms => {
             const stretches = histograms.map((data, i) => {
                 if (!Array.isArray(data) || data.length === 0) {
@@ -117,17 +157,15 @@ const proposeContinuousOrMulti = ({recipe, mode, bands, palette, respond}) => {
     })
 }
 
-const proposeCategorical = ({recipe, bands, respond}) => {
+const proposeCategorical = ({image, aoi, mapBounds, legend, bands, respond}) => {
     if (!validateBandCount({mode: 'categorical', bands, expected: 1, respond})) return
     const band = bands[0]
-    const aoi = recipe.model?.aoi
-    api.gee.distinctBandValues$({recipe, band, aoi}).subscribe({
+    api.gee.distinctBandValues$({recipe: image, band, aoi, mapBounds}).subscribe({
         next: values => {
             if (!Array.isArray(values) || values.length === 0) {
                 respond({success: false, error: `No distinct values returned for band '${band}'. The AOI may not overlap the image.`})
                 return
             }
-            const legend = recipe.model?.legend?.entries || []
             const labelByValue = Object.fromEntries(legend.map(e => [e.value, e.label]))
             const colorByValue = Object.fromEntries(legend.map(e => [e.value, e.color]))
             const fallbackPalette = PALETTES.viridis
@@ -150,19 +188,82 @@ const proposeCategorical = ({recipe, bands, respond}) => {
     })
 }
 
-const proposeVisualization = ({recipeId, mode, bands, palette, respond}) => {
+const proposeVisualization = ({recipeId, mode, bands, palette, imageSource, respond}) => {
     const recipe = select(['process.loadedRecipes', recipeId])
     if (!recipe) {
         respond({success: false, error: `Recipe ${recipeId} is not open`})
         return
     }
+    // Default = host recipe's own output. When `imageSource` is given, route
+    // the histogram / distinct-values call to that foreign source (asset or
+    // recipe), but still scope to the host recipe's AOI so the stretch
+    // reflects the user's region of interest. Host legend only applies to the
+    // host's own output.
+    const image = imageSource
+        ? {type: imageSource.type, id: imageSource.id}
+        : recipe
+    const aoi = recipe.model?.aoi
+    const legend = imageSource ? [] : (recipe.model?.legend?.entries || [])
+    const mapBounds = select('map.view')?.bounds
+    if (!mapBounds) {
+        respond({success: false, error: 'Map view not ready — wait for the recipe\'s map to finish initializing, then retry.'})
+        return
+    }
+    const availableBands = availableBandsForProposeTarget(recipe, imageSource)
+    if (availableBands && Array.isArray(bands)) {
+        const missing = bands.filter(b => !availableBands.includes(b))
+        if (missing.length) {
+            respond({success: false, error: `Bands not available on source: ${missing.join(', ')}. Available: ${availableBands.join(', ')}.`})
+            return
+        }
+    }
     if (mode === 'continuous' || mode === 'rgb' || mode === 'hsv') {
-        proposeContinuousOrMulti({recipe, mode, bands, palette, respond})
+        proposeContinuousOrMulti({image, aoi, mapBounds, mode, bands, palette, respond})
     } else if (mode === 'categorical') {
-        proposeCategorical({recipe, bands, respond})
+        proposeCategorical({image, aoi, mapBounds, legend, bands, respond})
     } else {
         respond({success: false, error: `Unknown mode '${mode}'. Expected: continuous, rgb, hsv, categorical.`})
     }
+}
+
+const recipeBands = recipe => {
+    const recipeType = getRecipeType(recipe.type)
+    const bands = recipeType?.getAvailableBands?.(recipe)
+    return bands ? Object.keys(bands) : null
+}
+
+const assetBands = source =>
+    (source?.sourceConfig?.metadata?.bands || [])
+        .map(b => b?.id)
+        .filter(Boolean)
+
+const availableBandsForSource = (recipe, sourceId) => {
+    if (!sourceId) return null
+    if (sourceId === 'this-recipe') return recipeBands(recipe)
+    const source = (recipe.layers?.additionalImageLayerSources || [])
+        .find(s => s.id === sourceId)
+    if (!source) return null
+    if (source.type === 'Asset') return assetBands(source)
+    if (source.type === 'Recipe') {
+        const refId = source.sourceConfig?.recipeId
+        const refRecipe = refId && select(['process.loadedRecipes', refId])
+        return refRecipe ? recipeBands(refRecipe) : null
+    }
+    return null
+}
+
+const availableBandsForProposeTarget = (recipe, imageSource) => {
+    if (!imageSource) return recipeBands(recipe)
+    if (imageSource.type === 'ASSET') {
+        const registered = (recipe.layers?.additionalImageLayerSources || [])
+            .find(s => s.type === 'Asset' && s.sourceConfig?.asset === imageSource.id)
+        return registered ? assetBands(registered) : null
+    }
+    if (imageSource.type === 'RECIPE_REF') {
+        const refRecipe = imageSource.id && select(['process.loadedRecipes', imageSource.id])
+        return refRecipe ? recipeBands(refRecipe) : null
+    }
+    return null
 }
 
 const setVisualization = ({recipeId, area, visParams, respond}) => {
@@ -177,14 +278,50 @@ const setVisualization = ({recipeId, area, visParams, respond}) => {
         respond({success: false, error: `Unknown area "${area}". Available areas: ${available}`})
         return
     }
+    const sourceId = layerAreas[area]?.imageLayer?.sourceId
+    if (!sourceId) {
+        respond({success: false, error: `Area "${area}" has no image source assigned. Use map_set_image_layer first.`})
+        return
+    }
+    const available = availableBandsForSource(recipe, sourceId)
+    if (available && Array.isArray(visParams?.bands)) {
+        const missing = visParams.bands.filter(b => !available.includes(b))
+        if (missing.length) {
+            respond({success: false, error: `Bands not available on source: ${missing.join(', ')}. Available: ${available.join(', ')}.`})
+            return
+        }
+    }
+    // Run the same normalizer the form-driven visualization editor uses:
+    // pads min/max/gamma to bands length, resolves color names to hex,
+    // derives min/max from values for categorical, applies palette defaults,
+    // resolves the gamma-vs-palette exclusivity. Returns null if bands is empty.
+    let normalized
+    try {
+        normalized = normalize({
+            ...visParams,
+            id: visParams?.id || uuid(),
+            userDefined: true
+        })
+    } catch (error) {
+        respondError({log, respond, fallback: 'Invalid visParams', error})
+        return
+    }
+    if (!normalized) {
+        respond({success: false, error: 'visParams.bands is empty after normalization'})
+        return
+    }
     try {
         actionBuilder('CHAT_SET_VIS_PARAMS', {recipeId, area})
+            .set(
+                [...recipePath(recipeId, 'layers.userDefinedVisualizations'), sourceId, {id: normalized.id}],
+                normalized
+            )
             .assign(
                 [...recipePath(recipeId, 'layers.areas'), area, 'imageLayer.layerConfig'],
-                {visParams}
+                {visParams: normalized}
             )
             .dispatch()
-        respond({success: true, data: {recipeId, area}})
+        respond({success: true, data: {recipeId, area, visParams: normalized}})
     } catch (error) {
         respondError({log, respond, fallback: 'Failed to set visualization', error})
     }

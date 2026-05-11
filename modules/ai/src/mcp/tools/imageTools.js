@@ -3,7 +3,7 @@ const {guiRequest} = require('./guiRequest')
 const createImageTools = () => [
     {
         name: 'image_bands',
-        description: 'List bands of an input image reference (`RECIPE_REF` or `ASSET`). Use before picking `band` for inputImage / inputImagery.images[] fields (indexChange, masking, classChange, stack, bandMath, remapping, classification). Returns `{bands: string[], assetType?: "Image"|"ImageCollection"}`. `assetType` only when `type=ASSET`. Cheaper than recipe_load when you only need band names.',
+        description: 'List bands of a RECIPE_REF or ASSET. Use before picking `band` for inputImage / inputImagery fields. Returns `{bands: string[], assetType?: "Image"|"ImageCollection"}` (assetType only when `type=ASSET`). Cheaper than recipe_load.',
         parameters: {
             type: 'object',
             properties: {
@@ -20,7 +20,7 @@ const createImageTools = () => [
     },
     {
         name: 'image_visualizations',
-        description: 'Preset visualizations of an input image reference. Pass `band` to get scalars for that band: `bandMin`/`bandMax` (from first continuous entry) and `values`/`labels`/`palette` (from first categorical entry, if any). Returns `{visualizations[], bandMin?, bandMax?, values?, labels?, palette?}`. Missing scalars = no preset for that band; fall back to the schema-documented defaults (e.g. -10000/10000 for indexChange `bandMin`/`bandMax`). Omit `band` to get unfiltered presets.',
+        description: 'Preset visualizations for a RECIPE_REF or ASSET. Pass `band` to get its scalars: `bandMin`/`bandMax` (from first continuous entry) and `values`/`labels`/`palette` (from first categorical, if any). Missing scalars = no preset for that band; use schema-documented defaults. Omit `band` for unfiltered presets.',
         parameters: {
             type: 'object',
             properties: {
@@ -42,7 +42,7 @@ const createImageTools = () => [
     },
     {
         name: 'asset_metadata',
-        description: 'Full EE metadata for an Image or ImageCollection asset: `{type: "Image"|"ImageCollection", bands: [{id, ...}], visualizations: [...], properties, ...}`. Use for `asset` recipe `assetDetails` (needs `type` to switch Image vs ImageCollection mode + full `bands`/`visualizations`/`metadata`) and for classChange `fromImage`/`toImage` ASSET inputs (needs the metadata blob the EE backend reads for probability-band detection). Heavier than `image_bands` — only use when the full blob is needed.',
+        description: 'Full EE metadata for an asset: `{type, bands, visualizations, properties, ...}`. Use for `asset` recipe `assetDetails` (Image vs ImageCollection switch + bands/vis/metadata) and for classChange ASSET inputs (probability-band detection). Heavier than image_bands — only when the full blob is needed.',
         parameters: {
             type: 'object',
             properties: {

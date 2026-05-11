@@ -22,19 +22,40 @@ const formatAppSummary = app =>
     `"${sanitize(app.appName) || sanitize(app.path) || 'Untitled app'}"`
 
 // Surface populated map areas only when there's more than one — single-pane
-// "center" is the default and uninteresting. When split-pane: `area=bands(type)`.
+// "center" is the default and uninteresting. When split-pane:
+// `area=source:bands(type)`.
 const formatMapAreas = mapAreas => {
     if (!mapAreas) return null
     const entries = Object.entries(mapAreas)
     if (entries.length < 2) return null
     const parts = entries.map(([area, info]) => {
+        const source = info?.sourceLabel ? `${sanitize(info.sourceLabel)}:` : ''
         const bands = Array.isArray(info?.bands) && info.bands.length
             ? info.bands.join('+')
             : '∅'
         const type = info?.type ? `(${info.type})` : ''
-        return `${area}=${bands}${type}`
+        return `${area}=${source}${bands}${type}`
     })
     return `Map areas (${entries.length}): ${parts.join(', ')}`
+}
+
+const round = (n, dp = 4) =>
+    typeof n === 'number' && Number.isFinite(n)
+        ? Number(n.toFixed(dp))
+        : null
+
+const formatMapView = mapView => {
+    if (!mapView) return null
+    const bounds = mapView.bounds
+    const boundsStr = Array.isArray(bounds) && bounds.length === 2
+        ? `[${round(bounds[0][0])},${round(bounds[0][1])}]→[${round(bounds[1][0])},${round(bounds[1][1])}]`
+        : '?'
+    const center = mapView.center
+    const centerStr = center && Number.isFinite(center.lat) && Number.isFinite(center.lng)
+        ? `${round(center.lat)},${round(center.lng)}`
+        : '?'
+    const zoom = Number.isFinite(mapView.zoom) ? mapView.zoom : '?'
+    return `Map view: zoom=${zoom} center=${centerStr} bounds=${boundsStr}`
 }
 
 const formatSelection = selection => {
@@ -54,6 +75,8 @@ const formatSelection = selection => {
         lines.push(`Selected recipe: ${formatRecipeSummary(selection.selectedRecipe)}${panels}`)
         const areaLine = formatMapAreas(selection.selectedRecipe.mapAreas)
         if (areaLine) lines.push(areaLine)
+        const viewLine = formatMapView(selection.mapView)
+        if (viewLine) lines.push(viewLine)
     } else if (selection.openRecipes?.length) {
         lines.push('Selected recipe: none')
     }

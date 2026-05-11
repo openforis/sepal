@@ -2,10 +2,10 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/asset/schema.json",
     "title": "AssetRecipe",
-    "description": "Wraps an EE Image or ImageCollection asset as a SEPAL recipe — visualizable, maskable, filterable, compositable, usable as input to other recipes (classification, change detection), exportable through the standard pipeline.\n\n**Minimum model.** Asset id is nested under `assetDetails`, NOT at the top level:\n```json\n{\"aoi\": {\"type\":\"ASSET_BOUNDS\"}, \"assetDetails\": {\"assetId\": \"GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL\"}}\n```\nA common LLM mistake is `{assetId, aoi}` at the top — fails validation with `must have required property 'assetDetails'`. Always wrap.\n\n**Two modes** by `assetDetails.type`:\n- `Image` — single image; applies `mask` + clips to AOI; `dates`, `filter`, `composite` ignored.\n- `ImageCollection` — filters by AOI bounds, optionally `dates`, optionally property `filter`, applies `mask` per image, reduces via `composite.type`.\n\nLLM may omit `type`/`bands`/`visualizations`/`metadata` — GUI hydrates from EE when the recipe opens. To populate them upfront (e.g. before retrieval, or to inspect bands before configuring `mask`/`filter`), call `asset_metadata({id: assetId})` and copy the returned fields verbatim.\n\n**AOI.** Only recipe that allows the `ASSET_BOUNDS` variant (use the asset's own geometry); EE_TABLE / POLYGON also valid for clipping to a smaller area.",
+    "description": "Wraps an EE Image or ImageCollection asset as a SEPAL recipe — visualizable, maskable, filterable, compositable, usable as input to other recipes (classification, change detection), exportable through the standard pipeline.\n\n**Minimum model.** Asset id is nested under `assetDetails`, NOT at the top level:\n```json\n{\"aoi\": {\"type\":\"ASSET_BOUNDS\"}, \"assetDetails\": {\"assetId\": \"GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL\"}, \"dates\": {\"type\": \"ALL_DATES\"}, \"composite\": {\"type\": \"MOSAIC\"}}\n```\n`dates` and `composite` are required even when the asset is an `Image` (they're ignored at compute time but the backend assumes they exist). A common LLM mistake is `{assetId, aoi}` at the top — fails validation with `must have required property 'assetDetails'`. Always wrap.\n\n**Two modes** by `assetDetails.type`:\n- `Image` — single image; applies `mask` + clips to AOI; `dates`, `filter`, `composite` values ignored (objects must still be present).\n- `ImageCollection` — filters by AOI bounds, optionally restricts by `dates`, optionally property `filter`, applies `mask` per image, reduces via `composite.type`.\n\nLLM may omit `type`/`bands`/`visualizations`/`metadata` — GUI hydrates from EE when the recipe opens. To populate them upfront (e.g. before retrieval, or to inspect bands before configuring `mask`/`filter`), call `asset_metadata({id: assetId})` and copy the returned fields verbatim.\n\n**AOI.** Only recipe that allows the `ASSET_BOUNDS` variant (use the asset's own geometry); EE_TABLE / POLYGON also valid for clipping to a smaller area.",
     "type": "object",
     "additionalProperties": false,
-    "required": ["aoi", "assetDetails"],
+    "required": ["aoi", "assetDetails", "dates", "composite"],
     "properties": {
         "aoi": {
             "description": "Area of Interest. `ASSET_BOUNDS` (asset's intrinsic geometry, only valid here), or EE_TABLE / POLYGON for clipping.",
@@ -64,7 +64,7 @@
         },
         "dates": {
             "title": "AssetDates",
-            "description": "ImageCollection date filter (ignored for Image assets).\n- `ALL_DATES` (default) — no filter.\n- `YEAR` — calendar year. GUI persists as `fromDate=<year>-01-01`, `toDate=<year+1>-01-01` (start-of-next-year via half-open `[fromDate, toDate)`).\n- `CUSTOM_DATE_RANGE` — explicit `fromDate`/`toDate`. Same half-open semantics — scenes ON `toDate` NOT included.",
+            "description": "ImageCollection date filter. Object is required at the recipe top level (the backend reads `model.dates.type` unconditionally); for `Image` assets and the no-filter ImageCollection case, use `{type: 'ALL_DATES'}`.\n- `ALL_DATES` (default) — no filter.\n- `YEAR` — calendar year. GUI persists as `fromDate=<year>-01-01`, `toDate=<year+1>-01-01` (start-of-next-year via half-open `[fromDate, toDate)`).\n- `CUSTOM_DATE_RANGE` — explicit `fromDate`/`toDate`. Same half-open semantics — scenes ON `toDate` NOT included.",
             "type": "object",
             "additionalProperties": false,
             "required": ["type"],
@@ -101,7 +101,7 @@
         },
         "composite": {
             "title": "AssetComposite",
-            "description": "ImageCollection → single image reduction (ignored for Image assets).",
+            "description": "ImageCollection → single image reduction. Object is required at the recipe top level (the backend reads `model.composite.type` unconditionally); for `Image` assets, use `{type: 'MOSAIC'}` — it's ignored at compute time but must be present.",
             "type": "object",
             "additionalProperties": false,
             "required": ["type"],

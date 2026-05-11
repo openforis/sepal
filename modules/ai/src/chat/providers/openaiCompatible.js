@@ -91,6 +91,7 @@ class OpenAICompatibleProvider extends LLMProvider {
         )
 
         let text = ''
+        let reasoning = ''
         let stopReason = null
         const toolCalls = []
         let currentToolCall = null
@@ -108,6 +109,13 @@ class OpenAICompatibleProvider extends LLMProvider {
             if (delta.content) {
                 text += delta.content
                 onChunk(delta.content)
+            }
+
+            // LM Studio + Qwen3 routes <think> output here instead of `content`.
+            // Capture for diagnostics so we can see whether an "empty assistant
+            // turn" was actually a reasoning-only response.
+            if (delta.reasoning_content) {
+                reasoning += delta.reasoning_content
             }
 
             if (delta.tool_calls) {
@@ -144,6 +152,11 @@ class OpenAICompatibleProvider extends LLMProvider {
 
         if (stopReason === 'length') {
             this.log.warn(`${this.name} stream truncated by max_tokens (${MAX_TOKENS}); ${text.length} chars text, ${toolCalls.length} tool calls`)
+        }
+
+        if (reasoning) {
+            const empty = !text && toolCalls.length === 0
+            this.log.debug(() => `${this.name} reasoning_content ${reasoning.length} chars${empty ? ' (no content/tool_calls — reasoning-only turn)' : ''}: ${reasoning.slice(0, 500)}${reasoning.length > 500 ? '…' : ''}`)
         }
 
         return {text, toolCalls, stopReason}
