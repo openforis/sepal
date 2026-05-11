@@ -142,10 +142,18 @@ export const openRecipe = recipe => {
 export const openRecipeInNewTab = recipe => {
     publishEvent('load_recipe', {recipe_type: recipe.type})
     const {id, placeholder, title, type} = recipe
-    actionBuilder('OPEN_RECIPE_IN_NEW_TAB')
-        .push('process.tabs', {id, placeholder, title, type})
-        .set('process.selectedTabId', id)
-        .dispatch()
+    const selectedTabId = select('process.selectedTabId')
+    const selectedTab = select(['process.tabs', {id: selectedTabId}])
+    const tabValue = {id, placeholder, title, type}
+    const builder = actionBuilder('OPEN_RECIPE_IN_NEW_TAB')
+    if (selectedTab && !selectedTab.type) {
+        // Selected tab is the empty "New tab" placeholder — consume it,
+        // matching the GUI's "click recipe from home" behavior.
+        builder.set(tabPath(selectedTabId), tabValue)
+    } else {
+        builder.push('process.tabs', tabValue)
+    }
+    builder.set('process.selectedTabId', id).dispatch()
 }
 
 export const selectRecipe = recipeId =>

@@ -16,14 +16,15 @@ const validateRecipeModel = ({recipeValidator, type, model}) => {
     return errors ? validationError(errors) : null
 }
 
-const createRecipeTools = ({recipeValidator}) => [
-    {
+const createRecipeTools = ({recipeValidator, registry}) => {
+    const recipeTypeIds = registry.listSchemas().map(s => s.id)
+    return [{
         name: 'recipe_list',
         description: 'List user\'s saved recipes from GUI state. Optional filter by type / project.',
         parameters: {
             type: 'object',
             properties: {
-                type: {type: 'string', description: 'Filter by recipe type (e.g. MOSAIC, CLASSIFICATION).'},
+                type: {type: 'string', enum: recipeTypeIds, description: 'Filter by recipe type id.'},
                 projectId: {type: 'string', description: 'Filter by project id.'}
             }
         },
@@ -45,11 +46,11 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_create',
-        description: 'Create a recipe from a complete model. Workflow: recipe_info → start from its defaults → modify relevant fields → send full model. GUI saves, registers, and opens it — do NOT call recipe_open after. If recipe\'s project ≠ selected project, ask before calling project_select. Never switch silently.',
+        description: 'Create a recipe from a complete model. Workflow: recipe_info → start from its defaults → modify relevant fields → send full model. GUI saves, registers, and opens it — the recipe is open and visible to the user the moment this returns. Do NOT call recipe_open after, and do NOT ask "would you like me to open it?" — it\'s already open.',
         parameters: {
             type: 'object',
             properties: {
-                type: {type: 'string', description: 'Recipe type (e.g. MOSAIC, CLASSIFICATION, TIME_SERIES).'},
+                type: {type: 'string', enum: recipeTypeIds, description: 'Recipe type id.'},
                 name: {type: 'string', description: 'REQUIRED. Concise display name derived from the request (e.g. "Bangladesh mangroves 2020 mosaic"). Never omit.'},
                 projectId: {type: 'string', description: 'Project id. Always confirm with user (or confirm none) — never silently omit or pick. Use project_list to present options.'},
                 model: {type: 'object', description: 'Complete model. Built from recipe_info.defaults + intentional changes.'}
@@ -71,7 +72,7 @@ const createRecipeTools = ({recipeValidator}) => [
     },
     {
         name: 'recipe_save',
-        description: 'Update an existing recipe. Model REPLACES existing in full — no merging. For partial changes: recipe_load → modify → send back. GUI persists + opens — do NOT call recipe_open after. If recipe\'s project ≠ selected project, ask before calling project_select. Never switch silently.',
+        description: 'Update an existing recipe. Model REPLACES existing in full — no merging. For partial changes: recipe_load → modify → send back. GUI persists and opens it — the recipe is open and visible to the user the moment this returns. Do NOT call recipe_open after, and do NOT ask "would you like me to open it?" — it\'s already open.',
         parameters: {
             type: 'object',
             properties: {
@@ -159,7 +160,7 @@ const createRecipeTools = ({recipeValidator}) => [
             send({type: 'gui-action', action: 'close', params: {recipeId: params.recipeId}})
             return {success: true, data: {action: 'close', recipeId: params.recipeId}}
         }
-    }
-]
+    }]
+}
 
 module.exports = {createRecipeTools}

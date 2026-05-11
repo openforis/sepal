@@ -66,7 +66,7 @@ const main = async () => {
 
     // Register tools. Templates and workflows are disabled.
     const allTools = [
-        ...createRecipeTools({recipeValidator}),
+        ...createRecipeTools({recipeValidator, registry}),
         ...createProjectTools(),
         ...createSchemaTools({registry}),
         ...createAoiTools(),

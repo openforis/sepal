@@ -43,12 +43,15 @@ const getLLM = ({config, registry}) => {
 }
 
 const formatRecipeType = s => {
-    const lines = [`### ${s.name} (${s.id})`, s.description]
+    const lines = [`### ${s.name}`, s.description]
     if (s.useCases?.length) lines.push(`Use cases:\n${s.useCases.map(u => `- ${u}`).join('\n')}`)
     if (s.terms?.length) lines.push(`Terms: ${s.terms.join(', ')}`)
     if (s.chooseWhen) lines.push(`Choose when: ${s.chooseWhen}`)
     if (s.dontChooseWhen) lines.push(`Don't choose when: ${s.dontChooseWhen}`)
     if (s.outputs) lines.push(`Outputs: ${s.outputs}`)
+    // Type id (for tool calls only — never echo in chat). Trailing position +
+    // explicit framing helps small models keep it out of user-facing replies.
+    lines.push(`Type id for tools (internal, never show in chat): \`${s.id}\``)
     return lines.join('\n')
 }
 
