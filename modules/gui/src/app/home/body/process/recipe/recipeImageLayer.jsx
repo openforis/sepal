@@ -73,7 +73,11 @@ class _RecipeImageLayer extends React.Component {
         }
         const {layerConfig: {visParams: prevVisParams}} = prevProps
         const {recipe} = this.props
-        if (!recipe) return
+        if (!recipe) {
+            this.layer && this.layer.removeFromMap()
+            this.layer = null
+            return
+        }
         const allVisualizations = this.toAllVis()
         if (!allVisualizations.length) {
             this.layer && this.layer.removeFromMap()

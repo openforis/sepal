@@ -179,13 +179,25 @@ export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
 
 export const removeRecipes$ = recipeIds =>
     api.recipe.remove$(recipeIds).pipe(
-        map(() =>
-            _.transform(recipeIds, (actionBuilder, recipeId) => {
-                actionBuilder
+        map(() => {
+            const dropped = new Set(recipeIds)
+            const referringToDropped = s =>
+                s?.type === 'Recipe' && dropped.has(s.sourceConfig?.recipeId)
+            const builder = actionBuilder('REMOVE_RECIPES', {recipeIds})
+            recipeIds.forEach(recipeId => {
+                builder
                     .del(['process.recipes', {id: recipeId}])
                     .del(['process.loadedRecipes', recipeId])
-            }, actionBuilder('REMOVE_RECIPES', {recipeIds})).dispatch()
-        )
+            })
+            Object.entries(select('process.loadedRecipes') || {}).forEach(([id, recipe]) => {
+                if (dropped.has(id)) return
+                const cleaned = withoutSources(recipe, referringToDropped)
+                if (cleaned !== recipe) {
+                    builder.set(['process.loadedRecipes', id], cleaned)
+                }
+            })
+            builder.dispatch()
+        })
     )
 
 export const moveRecipes$ = (recipeIds, projectId) => {
@@ -339,7 +351,36 @@ export const initValues = ({getModel, getValues, modelToValues, onInitialized}) 
             }
         }
 
-export const initializeRecipe = recipe => ({
-    ...recipe,
-    ui: {initialized: true}
-})
+export const initializeRecipe = recipe => {
+    const known = select('process.recipes')
+    // Skip when the recipe list isn't loaded yet — without it we'd misread
+    // every recipe-typed source as dangling.
+    const cleaned = known?.length
+        ? withoutSources(recipe, referringToUnknown(known))
+        : recipe
+    return {...cleaned, ui: {initialized: true}}
+}
+
+const referringToUnknown = knownRecipes => {
+    const knownIds = new Set(knownRecipes.map(r => r.id))
+    return s => s?.type === 'Recipe' && !knownIds.has(s.sourceConfig?.recipeId)
+}
+
+function withoutSources(recipe, shouldDrop) {
+    const sources = recipe?.layers?.additionalImageLayerSources
+    if (!sources?.length) return recipe
+    const droppedIds = new Set(sources.filter(shouldDrop).map(s => s.id))
+    if (!droppedIds.size) return recipe
+    return {
+        ...recipe,
+        layers: {
+            ...recipe.layers,
+            additionalImageLayerSources: sources.filter(s => !droppedIds.has(s.id)),
+            areas: _.mapValues(recipe.layers?.areas || {}, area =>
+                droppedIds.has(area?.imageLayer?.sourceId)
+                    ? {...area, imageLayer: {}}
+                    : area
+            )
+        }
+    }
+}
