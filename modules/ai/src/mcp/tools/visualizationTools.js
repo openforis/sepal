@@ -28,7 +28,7 @@ const createVisualizationTools = () => [
             type: 'object',
             properties: {
                 recipeId: {type: 'string', description: 'Recipe id (must be open).'},
-                area: {type: 'string', description: 'Map area key. `"center"` for single-pane; split layouts use area keys from recipe_visualizations.'},
+                area: {type: 'string', description: 'Map area key. Single-pane = `"center"`. Split layouts have multiple areas (left/right, top/bottom, top-left/top-right/bottom-left/bottom-right). Read `Map areas` in `## Current Context` to see populated areas — when present, target the user\'s intended area; do NOT silently default to `"center"`. `recipe_visualizations` also returns the live area-key list.'},
                 visParams: {
                     type: 'object',
                     description: 'Pass an entry from recipe_visualizations.',

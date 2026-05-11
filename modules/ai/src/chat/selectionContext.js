@@ -21,6 +21,22 @@ const formatRecipeSummary = recipe => {
 const formatAppSummary = app =>
     `"${sanitize(app.appName) || sanitize(app.path) || 'Untitled app'}"`
 
+// Surface populated map areas only when there's more than one — single-pane
+// "center" is the default and uninteresting. When split-pane: `area=bands(type)`.
+const formatMapAreas = mapAreas => {
+    if (!mapAreas) return null
+    const entries = Object.entries(mapAreas)
+    if (entries.length < 2) return null
+    const parts = entries.map(([area, info]) => {
+        const bands = Array.isArray(info?.bands) && info.bands.length
+            ? info.bands.join('+')
+            : '∅'
+        const type = info?.type ? `(${info.type})` : ''
+        return `${area}=${bands}${type}`
+    })
+    return `Map areas (${entries.length}): ${parts.join(', ')}`
+}
+
 const formatSelection = selection => {
     if (!selection) return 'No selection context.'
     const lines = []
@@ -36,6 +52,8 @@ const formatSelection = selection => {
             ? `; active panels: ${selection.selectedRecipe.activePanels.join(', ')}`
             : ''
         lines.push(`Selected recipe: ${formatRecipeSummary(selection.selectedRecipe)}${panels}`)
+        const areaLine = formatMapAreas(selection.selectedRecipe.mapAreas)
+        if (areaLine) lines.push(areaLine)
     } else if (selection.openRecipes?.length) {
         lines.push('Selected recipe: none')
     }

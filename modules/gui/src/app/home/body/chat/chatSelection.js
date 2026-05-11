@@ -23,6 +23,19 @@ const activePanelIds = recipe =>
         .filter(([_id, activatable]) => activatable?.active)
         .map(([id]) => id)
 
+const mapAreasSummary = recipe => {
+    const areas = recipe?.layers?.areas || {}
+    const result = {}
+    for (const [area, layer] of Object.entries(areas)) {
+        const visParams = layer?.imageLayer?.layerConfig?.visParams
+        result[area] = {
+            bands: visParams?.bands || null,
+            type: visParams?.type || null
+        }
+    }
+    return result
+}
+
 const recipeSummary = tab => {
     if (!tab) return null
     const savedRecipes = select('process.recipes') || []
@@ -34,7 +47,8 @@ const recipeSummary = tab => {
         recipeType: tab.type,
         projectId: recipe?.projectId || null,
         projectName: findProjectName(recipe?.projectId),
-        activePanels: activePanelIds(recipe)
+        activePanels: activePanelIds(recipe),
+        mapAreas: mapAreasSummary(recipe)
     }
 }
 
