@@ -7,7 +7,7 @@ import {Textarea} from '~/widget/input'
 
 import styles from './chatInput.module.css'
 
-export const ChatInput = ({onSend, disabled, sendDisabled}) => {
+export const ChatInput = ({onSend, onStop, disabled, sendDisabled, busy}) => {
     const [text, setText] = useState('')
     const textareaRef = useRef(null)
 
@@ -36,19 +36,32 @@ export const ChatInput = ({onSend, disabled, sendDisabled}) => {
                 disabled={disabled}
                 minRows={3}
             />
-            <Button
-                chromeless
-                shape='circle'
-                icon='paper-plane'
-                disabled={disabled || sendDisabled || !text.trim()}
-                onClick={handleSend}
-            />
+            {busy ? (
+                <Button
+                    chromeless
+                    shape='circle'
+                    icon='stop'
+                    tooltip={msg('home.chat.stop')}
+                    disabled={!onStop}
+                    onClick={onStop}
+                />
+            ) : (
+                <Button
+                    chromeless
+                    shape='circle'
+                    icon='paper-plane'
+                    disabled={disabled || sendDisabled || !text.trim()}
+                    onClick={handleSend}
+                />
+            )}
         </div>
     )
 }
 
 ChatInput.propTypes = {
     onSend: PropTypes.func.isRequired,
+    busy: PropTypes.bool,
     disabled: PropTypes.bool,
+    onStop: PropTypes.func,
     sendDisabled: PropTypes.bool
 }

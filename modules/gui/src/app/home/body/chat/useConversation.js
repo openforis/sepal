@@ -74,6 +74,11 @@ const reducer = (state, action) => {
                 if (!streaming && !text.trim()) {
                     return state
                 }
+                // Late chunks arriving after a user-initiated abort would
+                // otherwise spawn a fresh assistant message — drop them.
+                if (!streaming && !state.isLoading) {
+                    return state
+                }
                 if (!streaming) {
                     messages = [...messages, {role: 'assistant', content: text, streaming: !complete}]
                 } else {
@@ -141,6 +146,12 @@ const reducer = (state, action) => {
         case 'STATUS_THINKING':
             if (isForeignConversation(state, action.conversationId)) return state
             return {...state, isThinking: true, isLoading: true}
+        case 'ABORTED': {
+            const messages = updateLast(state.messages, last =>
+                last.streaming ? {...last, streaming: false} : last
+            )
+            return {...state, messages, isLoading: false, isThinking: false, streaming: false}
+        }
         case 'CONVERSATIONS_SET':
             return {...state, conversations: action.conversations || []}
         case 'CONVERSATION_CREATED':

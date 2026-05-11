@@ -217,6 +217,13 @@ export const ChatPanel = ({className}) => {
         }
     }, [dispatch, send, isConnected, activeConversationId])
 
+    const handleStop = useCallback(() => {
+        if (isConnected && activeConversationId) {
+            send({type: 'abort', conversationId: activeConversationId})
+        }
+        dispatch({type: 'ABORTED'})
+    }, [dispatch, send, isConnected, activeConversationId])
+
     const handleNewConversation = useCallback(() => {
         if (isConnected) {
             send({type: 'create-conversation'})
@@ -356,6 +363,8 @@ export const ChatPanel = ({className}) => {
             <ChatInput
                 key={activeConversationId}
                 onSend={handleSend}
+                onStop={handleStop}
+                busy={isLoading}
                 disabled={!isConnected || !activeConversationId}
                 sendDisabled={isLoading}
             />

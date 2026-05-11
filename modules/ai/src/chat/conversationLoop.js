@@ -12,7 +12,7 @@ const STALL_NUDGE = {
 
 const trimToContent = text => text.trim() ? text : ''
 
-const streamWithChunkBuffer = async ({provider, ctx, messages, formattedTools, systemPrompt}) => {
+const streamWithChunkBuffer = async ({provider, ctx, messages, formattedTools, systemPrompt, signal}) => {
     const chunkBuffer = createChunkBuffer(text => ctx.send({
         type: 'chat-response',
         conversationId: ctx.conversationId,
@@ -23,10 +23,11 @@ const streamWithChunkBuffer = async ({provider, ctx, messages, formattedTools, s
             messages,
             tools: formattedTools,
             systemPrompt,
+            signal,
             onChunk: chunk => chunkBuffer.append(chunk)
         })
     } finally {
-        chunkBuffer.end()
+        chunkBuffer.end({drop: signal?.aborted})
     }
 }
 
@@ -72,7 +73,7 @@ const handleFinalTextRound = async ({result, ctx}) => {
     return {action: 'done', assistantText: rawText.trim()}
 }
 
-const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, toolRunner, failureTracker, stallCount, stallNudge}) => {
+const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, toolRunner, failureTracker, stallCount, stallNudge, signal}) => {
     if (round === WARN_ROUND_THRESHOLD) {
         log.warn(`Tool-call loop exceeded ${WARN_ROUND_THRESHOLD} rounds (cap ${MAX_TOOL_CALL_ROUNDS})`)
     }
@@ -85,7 +86,8 @@ const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, to
         provider, ctx,
         messages: promptMessages,
         formattedTools,
-        systemPrompt: promptBuilder(ctx)
+        systemPrompt: promptBuilder(ctx),
+        signal
     })
     log.debug(`[conv ${ctx.conversationId}] round ${round}: response (${(result.text || '').length} chars text, ${(result.toolCalls || []).length} tool calls, stop=${result.stopReason || 'unknown'})`)
 
@@ -100,7 +102,7 @@ const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, to
     }
 }
 
-const runConversation = async ({ctx, provider, formattedTools, promptBuilder, toolRunner}) => {
+const runConversation = async ({ctx, provider, formattedTools, promptBuilder, toolRunner, signal}) => {
     const failureTracker = createFailureTracker({conversationId: ctx.conversationId})
     const t = Date.now()
     let round = 0
@@ -110,13 +112,19 @@ const runConversation = async ({ctx, provider, formattedTools, promptBuilder, to
     log.info(`[conv ${ctx.conversationId}] starting loop, ${ctx.messages.length} prior messages`)
 
     while (round < MAX_TOOL_CALL_ROUNDS) {
+        if (signal?.aborted) {
+            return {kind: 'aborted', rounds: round}
+        }
         round++
         const outcome = await runRound({
             round, ctx, provider, formattedTools, promptBuilder, toolRunner, failureTracker,
-            stallCount, stallNudge
+            stallCount, stallNudge, signal
         })
         stallNudge = null
 
+        if (signal?.aborted) {
+            return {kind: 'aborted', rounds: round}
+        }
         if (outcome.action === 'done') {
             log.info(`[conv ${ctx.conversationId}] turn complete after ${round} round(s) (${Date.now() - t}ms)`)
             return {kind: 'done', assistantText: outcome.assistantText, rounds: round}

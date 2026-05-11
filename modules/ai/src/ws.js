@@ -95,6 +95,8 @@ const createWsHandler = ({config, registry, conversationStore}) => {
                         } else if (type === 'message') {
                             messageHandler.handleMessage({username, clientId, subscriptionId, text, selection: data.selection})
                                 .catch(error => log.error('Message handling error:', error))
+                        } else if (type === 'abort') {
+                            messageHandler.abort({clientId, subscriptionId})
                         } else if (type === 'context') {
                             messageHandler.updateContext({clientId, subscriptionId, selection: data.selection})
                         } else if (type === 'list-conversations') {

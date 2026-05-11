@@ -95,10 +95,11 @@ class ClaudeProvider extends LLMProvider {
         return {text, toolCalls, stopReason: response.stop_reason}
     }
 
-    async _stream({messages, tools, systemPrompt, onChunk}) {
+    async _stream({messages, tools, systemPrompt, onChunk, signal}) {
         const client = await this._getClient()
         const stream = await client.messages.stream(
-            this._buildParams({messages, tools, systemPrompt})
+            this._buildParams({messages, tools, systemPrompt}),
+            signal ? {signal} : undefined
         )
 
         let text = ''
@@ -106,6 +107,12 @@ class ClaudeProvider extends LLMProvider {
         const toolCalls = []
 
         for await (const event of stream) {
+            if (signal?.aborted) {
+                stream.abort?.()
+                const err = new Error('Aborted')
+                err.name = 'AbortError'
+                throw err
+            }
             if (event.type === 'content_block_delta') {
                 if (event.delta.type === 'text_delta') {
                     const chunk = event.delta.text

@@ -83,10 +83,11 @@ class OpenAICompatibleProvider extends LLMProvider {
         return {text, toolCalls, stopReason: choice.finish_reason}
     }
 
-    async _stream({messages, tools, systemPrompt, onChunk}) {
+    async _stream({messages, tools, systemPrompt, onChunk, signal}) {
         const client = await this._getClient()
         const stream = await client.chat.completions.create(
-            this._buildParams({messages, tools, systemPrompt, stream: true})
+            this._buildParams({messages, tools, systemPrompt, stream: true}),
+            signal ? {signal} : undefined
         )
 
         let text = ''
@@ -95,6 +96,12 @@ class OpenAICompatibleProvider extends LLMProvider {
         let currentToolCall = null
 
         for await (const chunk of stream) {
+            if (signal?.aborted) {
+                stream.controller?.abort?.()
+                const err = new Error('Aborted')
+                err.name = 'AbortError'
+                throw err
+            }
             const choice = chunk.choices[0]
             const delta = choice.delta
 
