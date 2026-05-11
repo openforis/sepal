@@ -87,7 +87,7 @@
             "additionalProperties": false,
             "required": ["id", "value", "label", "color", "constraints", "booleanOperator"],
             "properties": {
-                "id": {"type": "string", "description": "UUID."},
+                "id": {"type": "string", "description": "UUID — auto-filled if omitted, do not invent."},
                 "value": {"type": "integer", "description": "Class value stored in `change` band. Unique across entries."},
                 "label": {"type": "string", "description": "Human-readable class name."},
                 "color": {
@@ -113,7 +113,7 @@
             "additionalProperties": false,
             "required": ["id", "image", "band", "operator"],
             "properties": {
-                "id": {"type": "string", "description": "UUID."},
+                "id": {"type": "string", "description": "UUID — auto-filled if omitted, do not invent."},
                 "description": {"type": "string", "description": "GUI summary; not read by backend."},
                 "image": {
                     "const": "this-recipe",
