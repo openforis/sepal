@@ -16,9 +16,6 @@ export const ChatInput = ({onSend, disabled, sendDisabled}) => {
         if (trimmed && !disabled && !sendDisabled) {
             onSend(trimmed)
             setText('')
-            if (textareaRef.current) {
-                textareaRef.current.style.height = 'auto'
-            }
         }
     }, [text, disabled, sendDisabled, onSend])
 
