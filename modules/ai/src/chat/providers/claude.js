@@ -92,7 +92,7 @@ class ClaudeProvider extends LLMProvider {
             }
         }
 
-        return {text, toolCalls, stopReason: response.stop_reason}
+        return {text, toolCalls, stopReason: response.stop_reason, usage: response.usage}
     }
 
     async _stream({messages, tools, systemPrompt, onChunk}) {
@@ -103,9 +103,16 @@ class ClaudeProvider extends LLMProvider {
 
         let text = ''
         let stopReason = null
+        let usage = null
         const toolCalls = []
 
         for await (const event of stream) {
+            if (event.type === 'message_start') {
+                usage = event.message?.usage || usage
+            }
+            if (event.type === 'message_delta' && event.usage) {
+                usage = {...usage, ...event.usage}
+            }
             if (event.type === 'content_block_delta') {
                 if (event.delta.type === 'text_delta') {
                     const chunk = event.delta.text
@@ -148,7 +155,7 @@ class ClaudeProvider extends LLMProvider {
             this.log.warn(`${this.name} stream truncated by max_tokens (${MAX_TOKENS}); ${text.length} chars text, ${toolCalls.length} tool calls`)
         }
 
-        return {text, toolCalls, stopReason}
+        return {text, toolCalls, stopReason, usage}
     }
 }
 

@@ -88,7 +88,8 @@ const invokeTool = async ({tool, toolCall, ctx}) => {
             request: ctx.request,
             session: ctx.session
         })
-        log[logResultLevel(result)](`Tool ${toolCall.name} → ${summarizeResult(result)} (${Date.now() - t}ms)`)
+        const resultBytes = result ? JSON.stringify(result).length : 0
+        log[logResultLevel(result)](`Tool ${toolCall.name} → ${summarizeResult(result)} (${Date.now() - t}ms, ${resultBytes} bytes)`)
         log.trace(() => [`Tool result: ${toolCall.name}`, result])
         return result
     } catch (error) {
@@ -134,7 +135,7 @@ const createToolRunner = ({registry}) => ({
             emitToolStart(ctx, toolCall)
             const result = await runOne({toolCall, registry, ctx})
             emitToolEnd(ctx, toolCall, result)
-            results.push({toolCallId: toolCall.id, result})
+            results.push({toolCallId: toolCall.id, toolName: toolCall.name, result})
         }
         return results
     }

@@ -56,7 +56,10 @@ class OpenAICompatibleProvider extends LLMProvider {
             max_tokens: MAX_TOKENS,
             messages: this._formatMessages(messages, systemPrompt)
         }
-        if (stream) params.stream = true
+        if (stream) {
+            params.stream = true
+            params.stream_options = {include_usage: true}
+        }
         if (tools && tools.length > 0) params.tools = tools
         return params
     }
@@ -80,7 +83,7 @@ class OpenAICompatibleProvider extends LLMProvider {
             name: tc.function.name,
             input: this._parseToolCallInput(tc.function.name, tc.function.arguments)
         }))
-        return {text, toolCalls, stopReason: choice.finish_reason}
+        return {text, toolCalls, stopReason: choice.finish_reason, usage: response.usage}
     }
 
     async _stream({messages, tools, systemPrompt, onChunk}) {
@@ -92,11 +95,14 @@ class OpenAICompatibleProvider extends LLMProvider {
         let text = ''
         let reasoning = ''
         let stopReason = null
+        let usage = null
         const toolCalls = []
         let currentToolCall = null
 
         for await (const chunk of stream) {
-            const choice = chunk.choices[0]
+            if (chunk.usage) usage = chunk.usage
+            const choice = chunk.choices?.[0]
+            if (!choice) continue
             const delta = choice.delta
 
             if (delta.content) {
@@ -152,7 +158,7 @@ class OpenAICompatibleProvider extends LLMProvider {
             this.log.debug(() => `${this.name} reasoning_content ${reasoning.length} chars${empty ? ' (no content/tool_calls — reasoning-only turn)' : ''}: ${reasoning.slice(0, 500)}${reasoning.length > 500 ? '…' : ''}`)
         }
 
-        return {text, toolCalls, stopReason}
+        return {text, toolCalls, stopReason, usage}
     }
 
     async _getClient() {
