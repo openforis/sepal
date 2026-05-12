@@ -72,15 +72,27 @@ const handleFinalTextRound = async ({result, ctx}) => {
     return {action: 'done', assistantText: rawText.trim()}
 }
 
-// OpenAI-compatible: prompt_tokens / completion_tokens / total_tokens.
-// Anthropic: input_tokens / output_tokens (+ cache_*_input_tokens).
+// OpenAI-compatible: prompt_tokens / completion_tokens / total_tokens, with optional
+//   prompt_tokens_details.cached_tokens as a subset of prompt_tokens.
+// Anthropic: input_tokens / output_tokens, with cache_read_input_tokens and
+//   cache_creation_input_tokens *in addition to* input_tokens (which is uncached only).
+// Normalize so `prompt` always means total input tokens (cached + uncached).
 const usageSummary = usage => {
     if (!usage) return null
-    const prompt = usage.prompt_tokens ?? usage.input_tokens
+    const cached = usage.prompt_tokens_details?.cached_tokens
+        ?? usage.cache_read_input_tokens
+        ?? 0
+    const cacheWrite = usage.cache_creation_input_tokens ?? 0
+    let prompt
+    if (usage.prompt_tokens !== undefined) {
+        prompt = usage.prompt_tokens
+    } else if (usage.input_tokens !== undefined) {
+        prompt = usage.input_tokens + cached + cacheWrite
+    }
     const completion = usage.completion_tokens ?? usage.output_tokens
     const total = usage.total_tokens
         ?? (prompt !== undefined && completion !== undefined ? prompt + completion : null)
-    return {prompt, completion, total}
+    return {prompt, completion, total, cached, cacheWrite}
 }
 
 // Per-round prompt composition (in characters) so we can see where context
@@ -133,11 +145,18 @@ const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, to
         formattedTools,
         systemPrompt
     })
+    log.debug(() => `[conv ${ctx.conversationId}] round ${round}: raw usage = ${JSON.stringify(result.usage)}`)
     const usage = usageSummary(result.usage)
     if (usage) {
         if (usage.prompt) totals.prompt += usage.prompt
         if (usage.completion) totals.completion += usage.completion
-        log.info(`[conv ${ctx.conversationId}] round ${round}: ${usage.prompt ?? '?'} prompt + ${usage.completion ?? '?'} completion tokens (cumulative: ${totals.prompt} prompt, ${totals.completion} completion)`)
+        if (usage.cached) totals.cached += usage.cached
+        const cacheParts = []
+        if (usage.cached) cacheParts.push(`cached: ${usage.cached}`)
+        if (usage.cacheWrite) cacheParts.push(`wrote: ${usage.cacheWrite}`)
+        const cacheStr = cacheParts.length ? ` (${cacheParts.join(', ')})` : ''
+        const cumulativeCacheStr = totals.cached ? `, ${totals.cached} cached` : ''
+        log.info(`[conv ${ctx.conversationId}] round ${round}: ${usage.prompt ?? '?'} prompt${cacheStr} + ${usage.completion ?? '?'} completion tokens (cumulative: ${totals.prompt} prompt${cumulativeCacheStr}, ${totals.completion} completion)`)
     }
     log.debug(`[conv ${ctx.conversationId}] round ${round}: response (${(result.text || '').length} chars text, ${(result.toolCalls || []).length} tool calls, stop=${result.stopReason || 'unknown'})`)
 
@@ -154,7 +173,7 @@ const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, to
 
 const runConversation = async ({ctx, provider, formattedTools, promptBuilder, toolRunner}) => {
     const failureTracker = createFailureTracker({conversationId: ctx.conversationId})
-    const totals = {prompt: 0, completion: 0}
+    const totals = {prompt: 0, completion: 0, cached: 0}
     const t = Date.now()
     let round = 0
     let stallCount = 0
@@ -162,7 +181,10 @@ const runConversation = async ({ctx, provider, formattedTools, promptBuilder, to
 
     log.info(`[conv ${ctx.conversationId}] starting loop, ${ctx.messages.length} prior messages`)
 
-    const formatTotals = () => `${totals.prompt} prompt + ${totals.completion} completion = ${totals.prompt + totals.completion} tokens`
+    const formatTotals = () => {
+        const cacheStr = totals.cached ? ` (${totals.cached} cached, ${Math.round(100 * totals.cached / totals.prompt)}%)` : ''
+        return `${totals.prompt} prompt${cacheStr} + ${totals.completion} completion = ${totals.prompt + totals.completion} tokens`
+    }
 
     while (round < MAX_TOOL_CALL_ROUNDS) {
         round++
