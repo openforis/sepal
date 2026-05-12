@@ -1,4 +1,6 @@
 const _ = require('lodash')
+const {of, defer, map, catchError} = require('rxjs')
+const {isAbortError} = require('../../chat/abort')
 
 const createTemplateTools = ({registry, recipeClient, recipeValidator}) => [
     {
@@ -15,7 +17,7 @@ const createTemplateTools = ({registry, recipeClient, recipeValidator}) => [
                 }
             }
         },
-        handler: async ({params}) => {
+        handler$: ({params}) => defer(() => {
             const templates = registry.listTemplates(params)
             const summaries = templates.map(t => ({
                 id: t.id,
@@ -25,8 +27,8 @@ const createTemplateTools = ({registry, recipeClient, recipeValidator}) => [
                 tags: t.tags,
                 requiredOverrides: t.requiredOverrides
             }))
-            return {success: true, data: summaries}
-        }
+            return of({success: true, data: summaries})
+        })
     },
     {
         name: 'template_apply',
@@ -41,46 +43,51 @@ const createTemplateTools = ({registry, recipeClient, recipeValidator}) => [
             },
             required: ['templateId', 'overrides']
         },
-        handler: async ({username, params}) => {
+        handler$: ({username, params}) => defer(() => {
             const template = registry.getTemplate(params.templateId)
             if (!template) {
-                return {success: false, error: {code: 'UNKNOWN_TEMPLATE', message: `Unknown template: ${params.templateId}`}}
+                return of({success: false, error: {code: 'UNKNOWN_TEMPLATE', message: `Unknown template: ${params.templateId}`}})
             }
 
             // Check required overrides
             const missing = (template.requiredOverrides || []).filter(key => !params.overrides[key])
             if (missing.length > 0) {
-                return {
+                return of({
                     success: false,
                     error: {
                         code: 'MISSING_OVERRIDES',
                         message: `Required overrides missing: ${missing.join(', ')}`
                     }
-                }
+                })
             }
 
-            let model = _.merge({}, template.model, params.overrides)
+            const model = _.merge({}, template.model, params.overrides)
             if (recipeValidator) {
                 const errors = recipeValidator.validateModel({type: template.recipeType, model})
                 if (errors) {
-                    return {
+                    return of({
                         success: false,
                         error: {
                             code: 'VALIDATION_ERROR',
                             message: `Recipe model validation failed:\n${errors.join('\n')}`
                         }
-                    }
+                    })
                 }
             }
-            const result = await recipeClient.saveRecipe({
+            return recipeClient.saveRecipe$({
                 username,
                 type: template.recipeType,
                 name: params.name || template.name,
                 projectId: params.projectId,
                 model
-            })
-            return {success: true, data: result}
-        }
+            }).pipe(
+                map(data => ({success: true, data})),
+                catchError(error => {
+                    if (isAbortError(error)) throw error
+                    return of({success: false, error: {code: 'TOOL_ERROR', message: error.message}})
+                })
+            )
+        })
     }
 ]
 

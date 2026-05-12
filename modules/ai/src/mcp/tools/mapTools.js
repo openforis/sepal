@@ -1,4 +1,4 @@
-const {guiRequest} = require('./guiRequest')
+const {guiRequest$} = require('./guiRequest')
 
 const SET_VIEW_TIMEOUT_MS = 60000
 
@@ -40,8 +40,8 @@ const createMapTools = () => [
             },
             required: ['recipeId', 'query']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'zoom-to-place', {
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'zoom-to-place', {
                 recipeId: params.recipeId,
                 query: params.query
             }, {timeoutMs: NAV_TIMEOUT_MS})
@@ -66,8 +66,8 @@ const createMapTools = () => [
             },
             required: ['recipeId']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'set-camera', {
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'set-camera', {
                 recipeId: params.recipeId,
                 center: params.center,
                 zoom: params.zoom
@@ -95,8 +95,8 @@ const createMapTools = () => [
             },
             required: ['recipeId', 'bounds']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'fit-bounds', {
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'fit-bounds', {
                 recipeId: params.recipeId,
                 bounds: params.bounds
             })
@@ -112,8 +112,8 @@ const createMapTools = () => [
             },
             required: ['recipeId', 'linked']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'set-sync', {
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'set-sync', {
                 recipeId: params.recipeId,
                 linked: params.linked
             })
@@ -138,9 +138,9 @@ const createMapTools = () => [
             },
             required: ['recipeId', 'areas']
         },
-        handler: async ({params, request}) =>
-            guiRequest(
-                request,
+        handler$: ({params, request$}) =>
+            guiRequest$(
+                request$,
                 'set-view',
                 {recipeId: params.recipeId, areas: params.areas},
                 {timeoutMs: SET_VIEW_TIMEOUT_MS}
@@ -163,8 +163,8 @@ const createMapTools = () => [
             },
             required: ['recipeId', 'area', 'enabled']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'set-feature-layers', {
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'set-feature-layers', {
                 recipeId: params.recipeId,
                 area: params.area,
                 enabled: params.enabled
@@ -182,9 +182,9 @@ const createMapTools = () => [
             },
             required: ['recipeId', 'area', 'source']
         },
-        handler: async ({params, request}) =>
-            guiRequest(
-                request,
+        handler$: ({params, request$}) =>
+            guiRequest$(
+                request$,
                 'set-image-layer',
                 {
                     recipeId: params.recipeId,

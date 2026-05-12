@@ -1,10 +1,16 @@
-const {guiRequest} = require('./guiRequest')
+const {map} = require('rxjs')
+const {guiRequest$} = require('./guiRequest')
 
 const filterByLabel = (data, query) => {
     if (!query || !Array.isArray(data)) return data
     const needle = query.toLowerCase()
     return data.filter(entry => entry?.label?.toLowerCase().includes(needle))
 }
+
+const applyFilter = query => result =>
+    result.success === false
+        ? result
+        : {success: true, data: filterByLabel(result.data, query)}
 
 const createAoiTools = () => [
     {
@@ -16,12 +22,9 @@ const createAoiTools = () => [
                 query: {type: 'string', description: 'Case-insensitive substring filter on label. Use whenever user names a country. Omit only when user explicitly asks for full list.'}
             }
         },
-        handler: async ({params, request}) => {
-            const result = await guiRequest(request, 'list-countries', {}, {timeoutMs: 30000})
-            return result.success === false
-                ? result
-                : {success: true, data: filterByLabel(result.data, params.query)}
-        }
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'list-countries', {}, {timeoutMs: 30000})
+                .pipe(map(applyFilter(params.query)))
     },
     {
         name: 'aoi_list_country_areas',
@@ -34,17 +37,13 @@ const createAoiTools = () => [
             },
             required: ['countryId']
         },
-        handler: async ({params, request}) => {
-            const result = await guiRequest(
-                request,
+        handler$: ({params, request$}) =>
+            guiRequest$(
+                request$,
                 'list-country-areas',
                 {countryId: params.countryId},
                 {timeoutMs: 30000}
-            )
-            return result.success === false
-                ? result
-                : {success: true, data: filterByLabel(result.data, params.query)}
-        }
+            ).pipe(map(applyFilter(params.query)))
     }
 ]
 

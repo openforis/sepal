@@ -1,69 +1,46 @@
-const {firstValueFrom, map} = require('rxjs')
+const {map, defer} = require('rxjs')
 const {get$, postJson$} = require('#sepal/httpClient')
-const log = require('#sepal/log').getLogger('tools')
 
 const sepalUserHeader = username =>
     ({'sepal-user': JSON.stringify({username})})
 
 const createGeeClient = ({geeEndpoint}) => {
 
-    const getRecipeBands = async ({username, recipe}) => {
-        const result = await firstValueFrom(
-            postJson$(`${geeEndpoint}/bands`, {
-                headers: sepalUserHeader(username),
-                body: {recipe}
-            }).pipe(
-                map(({body}) => JSON.parse(body))
-            )
-        )
-        return result
-    }
+    const getRecipeBands$ = ({username, recipe}) =>
+        postJson$(`${geeEndpoint}/bands`, {
+            headers: sepalUserHeader(username),
+            body: {recipe}
+        }).pipe(map(({body}) => JSON.parse(body)))
 
-    const getRecipeGeometry = async ({username, recipe}) => {
-        const result = await firstValueFrom(
-            postJson$(`${geeEndpoint}/recipe/geometry`, {
-                headers: sepalUserHeader(username),
-                body: {recipe}
-            }).pipe(
-                map(({body}) => JSON.parse(body))
-            )
-        )
-        return result
-    }
+    const getRecipeGeometry$ = ({username, recipe}) =>
+        postJson$(`${geeEndpoint}/recipe/geometry`, {
+            headers: sepalUserHeader(username),
+            body: {recipe}
+        }).pipe(map(({body}) => JSON.parse(body)))
 
-    const getRecipeBounds = async ({username, recipe}) => {
-        const result = await firstValueFrom(
-            postJson$(`${geeEndpoint}/recipe/bounds`, {
-                headers: sepalUserHeader(username),
-                body: {recipe}
-            }).pipe(
-                map(({body}) => JSON.parse(body))
-            )
-        )
-        return result
-    }
+    const getRecipeBounds$ = ({username, recipe}) =>
+        postJson$(`${geeEndpoint}/recipe/bounds`, {
+            headers: sepalUserHeader(username),
+            body: {recipe}
+        }).pipe(map(({body}) => JSON.parse(body)))
 
-    const searchDatasets = async ({username, query, allowedTypes}) => {
-        const queryParams = {text: query}
-        if (allowedTypes && allowedTypes.length) {
-            queryParams.allowedTypes = allowedTypes
-        }
-        const result = await firstValueFrom(
-            get$(`${geeEndpoint}/datasets`, {
+    const searchDatasets$ = ({username, query, allowedTypes}) =>
+        defer(() => {
+            const queryParams = {text: query}
+            if (allowedTypes && allowedTypes.length) {
+                queryParams.allowedTypes = allowedTypes
+            }
+            return get$(`${geeEndpoint}/datasets`, {
                 headers: sepalUserHeader(username),
                 query: queryParams
-            }).pipe(
-                map(({body}) => JSON.parse(body))
-            )
-        )
-        return result
-    }
+            }).pipe(map(({body}) => JSON.parse(body)))
+        })
 
     return {
-        getRecipeBands,
-        getRecipeGeometry,
-        getRecipeBounds,
-        searchDatasets
+        getRecipeBands$,
+        getRecipeGeometry$,
+        getRecipeBounds$,
+        searchDatasets$
     }
 }
 

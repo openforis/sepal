@@ -1,4 +1,4 @@
-const {Subject, from, switchMap, startWith} = require('rxjs')
+const {Observable, Subject, from, switchMap, startWith} = require('rxjs')
 const {v4: uuid} = require('uuid')
 const log = require('#sepal/log').getLogger('ws')
 const {createOrchestrator} = require('./chat/orchestrator')
@@ -23,20 +23,36 @@ const createWsHandler = ({config, registry, conversationStore}) => {
         // Send a request to the GUI and await a matching gui-response.
         // The GUI must echo back the requestId on a {type: 'gui-response', requestId, success, data?, error?} message.
         // After the WS disconnects (browser reload, etc.) the orchestrator's tool-call loop may keep issuing requests; those fail fast here instead of waiting for their full timeout.
-        const request = ({username, clientId, subscriptionId, data, timeoutMs = GUI_REQUEST_TIMEOUT_MS}) =>
-            new Promise((resolve, reject) => {
+        // Returned as an Observable: unsubscribing deletes the pending entry,
+        // clears its timeout, and silently drops a late response. This is how
+        // cancellation cascades from the tool runner all the way down.
+        const request$ = ({username, clientId, subscriptionId, data, timeoutMs = GUI_REQUEST_TIMEOUT_MS}) =>
+            new Observable(subscriber => {
+                log.warn('GUI request:', data && data.action, `(timeout ${timeoutMs}ms)`)
                 if (disconnected) {
-                    reject(new Error(`GUI request not sent: WebSocket disconnected (action=${data && data.action})`))
+                    subscriber.error(new Error(`GUI request not sent: WebSocket disconnected (action=${data && data.action})`))
                     return
                 }
                 const requestId = uuid()
                 const timer = setTimeout(() => {
                     if (pendingRequests.delete(requestId)) {
-                        reject(new Error(`GUI request timed out after ${timeoutMs}ms (action=${data && data.action})`))
+                        subscriber.error(new Error(`GUI request timed out after ${timeoutMs}ms (action=${data && data.action})`))
                     }
                 }, timeoutMs)
-                pendingRequests.set(requestId, {resolve, reject, timer})
+                pendingRequests.set(requestId, {
+                    resolve: value => {
+                        subscriber.next(value)
+                        subscriber.complete()
+                    },
+                    reject: error => subscriber.error(error),
+                    timer
+                })
                 out$.next({username, clientId, subscriptionId, data: {...data, requestId}})
+                return () => {
+                    if (pendingRequests.delete(requestId)) {
+                        clearTimeout(timer)
+                    }
+                }
             })
 
         const resolveRequest = ({requestId, success, data, error}) => {
@@ -54,7 +70,7 @@ const createWsHandler = ({config, registry, conversationStore}) => {
             }
         }
 
-        const response = {send, broadcast, request}
+        const response = {send, broadcast, request$}
 
         const init = async () => {
             const {sessionHandler, conversationHandler, messageHandler} = createOrchestrator({response, config, registry, conversationStore})

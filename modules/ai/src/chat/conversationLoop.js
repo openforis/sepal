@@ -1,6 +1,7 @@
 const log = require('#sepal/log').getLogger('conversationLoop')
 const {createChunkBuffer} = require('./chunkBuffer')
 const {createFailureTracker} = require('./failureTracker')
+const {awaitWithAbort} = require('./abort')
 
 const MAX_TOOL_CALL_ROUNDS = 50
 const WARN_ROUND_THRESHOLD = 30
@@ -42,7 +43,7 @@ const classifyRound = (result, stallCount) => {
     }
 }
 
-const handleToolCallsRound = async ({result, ctx, toolRunner, failureTracker, round}) => {
+const handleToolCallsRound = async ({result, ctx, toolRunner, failureTracker, round, signal}) => {
     const rawText = result.text || ''
     const assistantMsg = {
         role: 'assistant',
@@ -52,7 +53,10 @@ const handleToolCallsRound = async ({result, ctx, toolRunner, failureTracker, ro
     ctx.messages.push(assistantMsg)
     await ctx.persistMessage(assistantMsg)
 
-    const toolResults = await toolRunner.runAll({toolCalls: result.toolCalls, ctx})
+    const toolResults = await awaitWithAbort(
+        toolRunner.runAll$({toolCalls: result.toolCalls, ctx}),
+        signal
+    )
     const toolMsg = {role: 'tool', toolResults}
     ctx.messages.push(toolMsg)
     await ctx.persistMessage(toolMsg)
@@ -93,7 +97,7 @@ const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, to
 
     const classification = classifyRound(result, stallCount)
     if (classification.kind === 'tool-calls') {
-        return handleToolCallsRound({result, ctx, toolRunner, failureTracker, round})
+        return handleToolCallsRound({result, ctx, toolRunner, failureTracker, round, signal})
     } else if (classification.kind === 'stall') {
         log.warn(`[conv ${ctx.conversationId}] Empty assistant turn (round ${round}, stop=${result.stopReason || 'unknown'}); nudging to continue`)
         return {action: 'nudge', nudge: STALL_NUDGE}

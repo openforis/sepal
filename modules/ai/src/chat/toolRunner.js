@@ -1,6 +1,8 @@
 const Ajv = require('ajv')
+const {of, defer, from, concatMap, map, tap, catchError, toArray} = require('rxjs')
 
 const log = require('#sepal/log').getLogger('toolRunner')
+const {isAbortError} = require('./abort')
 const ajv = new Ajv({allErrors: true, strict: false})
 
 const MAX_VALUE_STRING = 80
@@ -67,44 +69,46 @@ const validateParams = (toolName, params, schema) => {
 // be spotted and addressed in schemas/prompts. Successes stay at DEBUG.
 const logResultLevel = result => result && result.success === false ? 'info' : 'debug'
 
-const invokeTool = async ({tool, toolCall, ctx}) => {
+const invokeTool$ = ({tool, toolCall, ctx}) => {
     const inputSummary = summarizeInput(toolCall.input)
 
     const validationError = validateParams(toolCall.name, toolCall.input, tool.parameters)
     if (validationError) {
         const result = {success: false, error: {code: 'VALIDATION_ERROR', message: `Invalid parameters: ${validationError}`}}
         log[logResultLevel(result)](`Tool ${toolCall.name}(${inputSummary}) → ${summarizeResult(result)}`)
-        return result
+        return of(result)
     }
 
     log.debug(`Tool ${toolCall.name}(${inputSummary}) — executing`)
     log.trace(() => [`Tool input: ${toolCall.name}`, toolCall.input])
     const t = Date.now()
-    try {
-        const result = await tool.handler({
-            username: ctx.username,
-            params: toolCall.input || {},
-            send: ctx.send,
-            request: ctx.request,
-            session: ctx.session
+    return defer(() => tool.handler$({
+        username: ctx.username,
+        params: toolCall.input || {},
+        send: ctx.send,
+        request$: ctx.request$,
+        session: ctx.session
+    })).pipe(
+        tap(result => {
+            log[logResultLevel(result)](`Tool ${toolCall.name} → ${summarizeResult(result)} (${Date.now() - t}ms)`)
+            log.trace(() => [`Tool result: ${toolCall.name}`, result])
+        }),
+        catchError(error => {
+            // Abort propagates so concatMap stops and the runner errors out.
+            if (isAbortError(error)) throw error
+            log.error(`Tool ${toolCall.name} threw after ${Date.now() - t}ms:`, error)
+            return of({success: false, error: {code: 'TOOL_ERROR', message: error.message}})
         })
-        log[logResultLevel(result)](`Tool ${toolCall.name} → ${summarizeResult(result)} (${Date.now() - t}ms)`)
-        log.trace(() => [`Tool result: ${toolCall.name}`, result])
-        return result
-    } catch (error) {
-        log.error(`Tool ${toolCall.name} threw after ${Date.now() - t}ms:`, error)
-        return {success: false, error: {code: 'TOOL_ERROR', message: error.message}}
-    }
+    )
 }
 
-const runOne = async ({toolCall, registry, ctx}) => {
+const runOne$ = ({toolCall, registry, ctx}) => {
     const tool = registry ? registry.getTool(toolCall.name) : null
     if (!tool) {
         log.warn(`Unknown tool: ${toolCall.name}(${summarizeInput(toolCall.input)})`)
-        return {success: false, error: {code: 'UNKNOWN_TOOL', message: `Unknown tool: ${toolCall.name}`}}
-    } else {
-        return invokeTool({tool, toolCall, ctx})
+        return of({success: false, error: {code: 'UNKNOWN_TOOL', message: `Unknown tool: ${toolCall.name}`}})
     }
+    return invokeTool$({tool, toolCall, ctx})
 }
 
 const emitToolStart = (ctx, toolCall) => ctx.send({
@@ -128,16 +132,20 @@ const emitToolEnd = (ctx, toolCall, result) => {
 }
 
 const createToolRunner = ({registry}) => ({
-    runAll: async ({toolCalls, ctx}) => {
-        const results = []
-        for (const toolCall of toolCalls) {
-            emitToolStart(ctx, toolCall)
-            const result = await runOne({toolCall, registry, ctx})
-            emitToolEnd(ctx, toolCall, result)
-            results.push({toolCallId: toolCall.id, result})
-        }
-        return results
-    }
+    // Returns Observable<results[]>. Subscribers can unsubscribe to cancel
+    // the in-flight tool — that cascades into the handler's chain (HTTP
+    // fetch is aborted; pending GUI request is dropped).
+    runAll$: ({toolCalls, ctx}) =>
+        from(toolCalls).pipe(
+            concatMap(toolCall => defer(() => {
+                emitToolStart(ctx, toolCall)
+                return runOne$({toolCall, registry, ctx}).pipe(
+                    tap(result => emitToolEnd(ctx, toolCall, result)),
+                    map(result => ({toolCallId: toolCall.id, result}))
+                )
+            })),
+            toArray()
+        )
 })
 
 module.exports = {createToolRunner}
