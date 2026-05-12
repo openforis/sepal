@@ -1,4 +1,5 @@
-const {guiRequest} = require('./guiRequest')
+const {of, defer} = require('rxjs')
+const {guiRequest$} = require('./guiRequest')
 const {createVisParamsValidator} = require('../validation/visParamsValidator')
 
 const VISUALIZATION_REQUEST_TIMEOUT_MS = 60000
@@ -24,9 +25,9 @@ const createVisualizationTools = () => [
             },
             required: ['recipeId']
         },
-        handler: async ({params, request}) =>
-            guiRequest(
-                request,
+        handler$: ({params, request$}) =>
+            guiRequest$(
+                request$,
                 'list-visualizations',
                 {recipeId: params.recipeId},
                 {timeoutMs: VISUALIZATION_REQUEST_TIMEOUT_MS}
@@ -59,15 +60,15 @@ const createVisualizationTools = () => [
             },
             required: ['recipeId', 'area', 'visParams']
         },
-        handler: async ({params, request}) => {
+        handler$: ({params, request$}) => defer(() => {
             const errors = visParamsValidator.validate(params.visParams)
-            if (errors.length) return visParamsValidationError(errors)
-            return guiRequest(request, 'set-visualization', {
+            if (errors.length) return of(visParamsValidationError(errors))
+            return guiRequest$(request$, 'set-visualization', {
                 recipeId: params.recipeId,
                 area: params.area,
                 visParams: params.visParams
             })
-        }
+        })
     },
     {
         name: 'recipe_propose_visualization',
@@ -120,8 +121,8 @@ const createVisualizationTools = () => [
                 }
             ]
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'propose-visualization', params, {timeoutMs: VISUALIZATION_REQUEST_TIMEOUT_MS})
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'propose-visualization', params, {timeoutMs: VISUALIZATION_REQUEST_TIMEOUT_MS})
     }
 ]
 

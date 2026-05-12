@@ -6,8 +6,8 @@ const createRequestContext = ({
     session, conversationId, messages
 }) => {
     const send = data => response.send({username, clientId, subscriptionId, data})
-    const request = (data, options = {}) =>
-        response.request({username, clientId, subscriptionId, data, ...options})
+    const request$ = (data, options = {}) =>
+        response.request$({username, clientId, subscriptionId, data, ...options})
 
     const sendChatResponse = ({text, complete} = {}) => {
         const data = {type: 'chat-response'}
@@ -28,7 +28,7 @@ const createRequestContext = ({
 
     return {
         username, clientId, subscriptionId, session, conversationId, messages,
-        send, request, sendChatResponse, persistMessage
+        send, request$, sendChatResponse, persistMessage
     }
 }
 

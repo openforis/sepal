@@ -1,3 +1,4 @@
+const {of, defer} = require('rxjs')
 const {bundleSchema} = require('../../recipes/bundleSchema')
 
 const createSchemaTools = ({registry}) => [
@@ -11,16 +12,16 @@ const createSchemaTools = ({registry}) => [
             },
             required: ['type']
         },
-        handler: async ({params}) => {
+        handler$: ({params}) => defer(() => {
             const schema = registry.getSchema(params.type)
             if (!schema) {
-                return {success: false, error: {code: 'UNKNOWN_TYPE', message: `Unknown recipe type: ${params.type}`}}
+                return of({success: false, error: {code: 'UNKNOWN_TYPE', message: `Unknown recipe type: ${params.type}`}})
             }
             const rules = (schema.rules || []).map(r => ({
                 name: r.name,
                 description: r.description
             }))
-            return {
+            return of({
                 success: true,
                 data: {
                     parameterSchema: bundleSchema(schema.parameterSchema),
@@ -28,8 +29,8 @@ const createSchemaTools = ({registry}) => [
                     defaults: schema.getDefaults ? schema.getDefaults() : null,
                     bands: schema.bands || {}
                 }
-            }
-        }
+            })
+        })
     }
 ]
 

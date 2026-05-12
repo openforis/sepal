@@ -422,6 +422,7 @@
       "title": "Sepalito",
       "empty": "Send a message to start chatting about SEPAL recipes.",
       "placeholder": "Type a message...",
+      "stop": "Stop",
       "close": "Close",
       "deleteConversation": "Delete conversation",
       "newConversation": "New conversation",

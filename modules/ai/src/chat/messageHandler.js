@@ -15,11 +15,18 @@ const sendErrorReply = ({response, username, clientId, subscriptionId, text}) =>
     data: {type: 'chat-response', text, complete: true}
 })
 
+const sessionKey = ({clientId, subscriptionId}) => `${clientId}:${subscriptionId}`
+
 const createMessageHandler = ({response, config, registry, conversationStore, sessionStore, ephemeralConversations}) => {
     const {provider, formattedTools} = getLLM({config, registry})
     const rateLimiter = createRateLimiter({limit: config.rateLimit})
     const toolRunner = createToolRunner({registry})
     const titleGenerator = createTitleGenerator({provider, conversationStore})
+
+    // Per-session AbortController for the in-flight LLM turn. The browser sends
+    // {type: 'abort'} to cancel; we abort the SDK stream and bail the tool-call
+    // loop. Cleared at the end of every handleMessage call.
+    const inflight = new Map()
 
     const promptBuilder = ctx => buildSystemPrompt({
         username: ctx.username,
@@ -33,6 +40,9 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
                 titleGenerator.refine(ctx, userText, result.assistantText)
                     .catch(error => log.warn('Title refinement task failed:', error.message))
             }
+        } else if (result.kind === 'aborted') {
+            log.info(`[conv ${ctx.conversationId}] turn aborted by user`)
+            ctx.sendChatResponse({complete: true})
         } else if (result.kind === 'bailed') {
             if (isFirstUserMessage) {
                 log.info(`[conv ${ctx.conversationId}] title refine skipped: conversation bailed (${result.message})`)
@@ -51,11 +61,21 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
         }
     }
 
+    const isAbortError = error =>
+        error?.name === 'AbortError'
+            || error?.code === 'ABORT_ERR'
+            || error?.message === 'Request was aborted.'
+
     // Preserves the original 429 behavior: only retries when an exception
     // escapes the entire loop, with a single non-streaming follow-up that
     // does not re-enter tool-calling. Move into a provider wrapper if we
     // ever want mid-loop retries.
     const handleLoopError = async (ctx, error) => {
+        if (isAbortError(error)) {
+            log.info(`[conv ${ctx.conversationId}] turn aborted by user (during stream)`)
+            ctx.sendChatResponse({complete: true})
+            return
+        }
         if (error.status !== 429) {
             log.error('Orchestrator error:', error)
             ctx.sendChatResponse({text: 'An error occurred while processing your message. Please try again.', complete: true})
@@ -143,15 +163,35 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
 
         log.info(`[conv ${conversationId}] user message (${text.length} chars), ${messages.length} prior messages`)
 
+        const key = sessionKey({clientId, subscriptionId})
+        const prior = inflight.get(key)
+        if (prior) prior.abort()
+        const controller = new AbortController()
+        inflight.set(key, controller)
+
         try {
-            const result = await runConversation({ctx, provider, formattedTools, promptBuilder, toolRunner})
+            const result = await runConversation({
+                ctx, provider, formattedTools, promptBuilder, toolRunner,
+                signal: controller.signal
+            })
             handleConversationResult(ctx, result, {userText: text, isFirstUserMessage})
         } catch (error) {
             await handleLoopError(ctx, error)
+        } finally {
+            if (inflight.get(key) === controller) inflight.delete(key)
         }
     }
 
-    return {handleMessage, updateContext}
+    const abort = ({clientId, subscriptionId}) => {
+        const key = sessionKey({clientId, subscriptionId})
+        const controller = inflight.get(key)
+        if (controller) {
+            controller.abort()
+            inflight.delete(key)
+        }
+    }
+
+    return {handleMessage, updateContext, abort}
 }
 
 module.exports = {createMessageHandler}

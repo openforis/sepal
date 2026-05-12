@@ -11,8 +11,10 @@ const createChunkBuffer = onFlush => {
 
     return {
         append: text => chunk$.next(text),
-        end: () => {
-            chunk$.complete()
+        // drop=true discards any text still inside the bufferTime window so
+        // that aborted streams don't leak a final partial flush downstream.
+        end: ({drop = false} = {}) => {
+            if (!drop) chunk$.complete()
             subscription.unsubscribe()
         }
     }

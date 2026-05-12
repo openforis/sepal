@@ -1,5 +1,6 @@
 const {randomUUID} = require('crypto')
-const {guiRequest} = require('./guiRequest')
+const {of, defer, switchMap} = require('rxjs')
+const {guiRequest$} = require('./guiRequest')
 
 const GUI_WRITE_TIMEOUT_MS = 60000
 
@@ -78,8 +79,8 @@ const createRecipeTools = ({recipeValidator, registry}) => {
                 projectId: {type: 'string', description: 'Filter by project id.'}
             }
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'list-recipes', params)
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'list-recipes', params)
     },
     {
         name: 'recipe_load',
@@ -91,8 +92,8 @@ const createRecipeTools = ({recipeValidator, registry}) => {
             },
             required: ['recipeId']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'load-recipe', {recipeId: params.recipeId})
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'load-recipe', {recipeId: params.recipeId})
     },
     {
         name: 'recipe_create',
@@ -107,13 +108,13 @@ const createRecipeTools = ({recipeValidator, registry}) => {
             },
             required: ['type', 'name', 'model']
         },
-        handler: async ({params, request}) => {
+        handler$: ({params, request$}) => {
             const model = fillModelIds(params.model)
             const invalid = validateRecipeModel({
                 recipeValidator, type: params.type, model
             })
-            if (invalid) return invalid
-            return guiRequest(request, 'create-recipe', {
+            if (invalid) return of(invalid)
+            return guiRequest$(request$, 'create-recipe', {
                 type: params.type,
                 name: params.name,
                 projectId: params.projectId,
@@ -132,21 +133,23 @@ const createRecipeTools = ({recipeValidator, registry}) => {
             },
             required: ['recipeId', 'model']
         },
-        handler: async ({params, request}) => {
-            const loaded = await guiRequest(request, 'load-recipe', {recipeId: params.recipeId})
-            if (loaded.success === false) return loaded
-            const model = fillModelIds(params.model)
-            const invalid = validateRecipeModel({
-                recipeValidator, type: loaded.data?.type, model
-            })
-            if (invalid) return invalid
-            return guiRequest(
-                request,
-                'save-recipe',
-                {recipeId: params.recipeId, model},
-                {timeoutMs: GUI_WRITE_TIMEOUT_MS}
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'load-recipe', {recipeId: params.recipeId}).pipe(
+                switchMap(loaded => {
+                    if (loaded.success === false) return of(loaded)
+                    const model = fillModelIds(params.model)
+                    const invalid = validateRecipeModel({
+                        recipeValidator, type: loaded.data?.type, model
+                    })
+                    if (invalid) return of(invalid)
+                    return guiRequest$(
+                        request$,
+                        'save-recipe',
+                        {recipeId: params.recipeId, model},
+                        {timeoutMs: GUI_WRITE_TIMEOUT_MS}
+                    )
+                })
             )
-        }
     },
     {
         name: 'recipe_delete',
@@ -162,8 +165,8 @@ const createRecipeTools = ({recipeValidator, registry}) => {
             },
             required: ['recipeIds']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'delete-recipes', {recipeIds: params.recipeIds})
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'delete-recipes', {recipeIds: params.recipeIds})
     },
     {
         name: 'recipe_move',
@@ -180,8 +183,8 @@ const createRecipeTools = ({recipeValidator, registry}) => {
             },
             required: ['recipeIds', 'projectId']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'move-recipes', {recipeIds: params.recipeIds, projectId: params.projectId})
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'move-recipes', {recipeIds: params.recipeIds, projectId: params.projectId})
     },
     {
         name: 'recipe_open',
@@ -193,10 +196,11 @@ const createRecipeTools = ({recipeValidator, registry}) => {
             },
             required: ['recipeId']
         },
-        handler: async ({params, send}) => {
-            send({type: 'gui-action', action: 'open', params: {recipeId: params.recipeId}})
-            return {success: true, data: {action: 'open', recipeId: params.recipeId}}
-        }
+        handler$: ({params, send}) =>
+            defer(() => {
+                send({type: 'gui-action', action: 'open', params: {recipeId: params.recipeId}})
+                return of({success: true, data: {action: 'open', recipeId: params.recipeId}})
+            })
     },
     {
         name: 'recipe_close',
@@ -208,10 +212,11 @@ const createRecipeTools = ({recipeValidator, registry}) => {
             },
             required: ['recipeId']
         },
-        handler: async ({params, send}) => {
-            send({type: 'gui-action', action: 'close', params: {recipeId: params.recipeId}})
-            return {success: true, data: {action: 'close', recipeId: params.recipeId}}
-        }
+        handler$: ({params, send}) =>
+            defer(() => {
+                send({type: 'gui-action', action: 'close', params: {recipeId: params.recipeId}})
+                return of({success: true, data: {action: 'close', recipeId: params.recipeId}})
+            })
     }]
 }
 

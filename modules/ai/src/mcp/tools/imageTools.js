@@ -1,4 +1,4 @@
-const {guiRequest} = require('./guiRequest')
+const {guiRequest$} = require('./guiRequest')
 
 const createImageTools = () => [
     {
@@ -15,8 +15,8 @@ const createImageTools = () => [
             },
             required: ['type', 'id']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'image-bands', {type: params.type, id: params.id})
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'image-bands', {type: params.type, id: params.id})
     },
     {
         name: 'image_visualizations',
@@ -33,8 +33,8 @@ const createImageTools = () => [
             },
             required: ['type', 'id']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'image-visualizations', {
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'image-visualizations', {
                 type: params.type,
                 id: params.id,
                 band: params.band
@@ -50,8 +50,8 @@ const createImageTools = () => [
             },
             required: ['id']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'asset-metadata', {id: params.id})
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'asset-metadata', {id: params.id})
     }
 ]
 

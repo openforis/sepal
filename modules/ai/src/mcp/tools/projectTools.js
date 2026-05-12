@@ -1,4 +1,4 @@
-const {guiRequest} = require('./guiRequest')
+const {guiRequest$} = require('./guiRequest')
 
 const createProjectTools = () => [
     {
@@ -8,8 +8,8 @@ const createProjectTools = () => [
             type: 'object',
             properties: {}
         },
-        handler: async ({request}) =>
-            guiRequest(request, 'list-projects')
+        handler$: ({request$}) =>
+            guiRequest$(request$, 'list-projects')
     },
     {
         name: 'project_create',
@@ -23,8 +23,8 @@ const createProjectTools = () => [
             },
             required: ['name']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'create-project', params)
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'create-project', params)
     },
     {
         name: 'project_select',
@@ -35,8 +35,8 @@ const createProjectTools = () => [
                 projectId: {type: ['string', 'null'], description: 'Project id (from project_list), or null/omit to clear.'}
             }
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'select-project', {projectId: params.projectId || null})
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'select-project', {projectId: params.projectId || null})
     },
     {
         name: 'project_delete',
@@ -48,8 +48,8 @@ const createProjectTools = () => [
             },
             required: ['projectId']
         },
-        handler: async ({params, request}) =>
-            guiRequest(request, 'delete-project', {projectId: params.projectId})
+        handler$: ({params, request$}) =>
+            guiRequest$(request$, 'delete-project', {projectId: params.projectId})
     }
 ]
 

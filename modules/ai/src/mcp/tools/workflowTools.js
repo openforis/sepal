@@ -1,6 +1,6 @@
-const _ = require('lodash')
 const {v4: uuid} = require('uuid')
-const log = require('#sepal/log').getLogger('tools')
+const {of, defer, map, tap, catchError} = require('rxjs')
+const {isAbortError} = require('../../chat/abort')
 
 const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
     {
@@ -13,13 +13,13 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
             },
             required: ['type']
         },
-        handler: async ({params, session}) => {
+        handler$: ({params, session}) => defer(() => {
             const schema = registry.getSchema(params.type)
             if (!schema) {
-                return {success: false, error: {code: 'UNKNOWN_TYPE', message: `Unknown recipe type: ${params.type}`}}
+                return of({success: false, error: {code: 'UNKNOWN_TYPE', message: `Unknown recipe type: ${params.type}`}})
             }
             if (!schema.workflowSteps || schema.workflowSteps.length === 0) {
-                return {success: false, error: {code: 'NO_WORKFLOW', message: `No guided workflow defined for ${params.type}`}}
+                return of({success: false, error: {code: 'NO_WORKFLOW', message: `No guided workflow defined for ${params.type}`}})
             }
 
             const workflowId = uuid()
@@ -42,7 +42,7 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
                 }
             }
 
-            return {
+            return of({
                 success: true,
                 data: {
                     workflowId,
@@ -55,8 +55,8 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
                         totalSteps: schema.workflowSteps.length
                     }
                 }
-            }
-        }
+            })
+        })
     },
     {
         name: 'workflow_step',
@@ -70,15 +70,15 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
             },
             required: ['workflowId', 'stepId', 'values']
         },
-        handler: async ({params, session}) => {
+        handler$: ({params, session}) => defer(() => {
             const workflow = session.workflow
             if (!workflow || workflow.id !== params.workflowId) {
-                return {success: false, error: {code: 'INVALID_WORKFLOW', message: 'Workflow not found or expired'}}
+                return of({success: false, error: {code: 'INVALID_WORKFLOW', message: 'Workflow not found or expired'}})
             }
 
             const currentStep = workflow.steps[workflow.currentStepIndex]
             if (currentStep.id !== params.stepId) {
-                return {success: false, error: {code: 'WRONG_STEP', message: `Expected step "${currentStep.id}", got "${params.stepId}"`}}
+                return of({success: false, error: {code: 'WRONG_STEP', message: `Expected step "${currentStep.id}", got "${params.stepId}"`}})
             }
 
             // Store values
@@ -89,14 +89,14 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
 
             if (workflow.currentStepIndex >= workflow.steps.length) {
                 workflow.completed = true
-                return {
+                return of({
                     success: true,
                     data: {
                         workflowId: workflow.id,
                         completed: true,
                         message: 'All steps completed. Use workflow_complete to create the recipe.'
                     }
-                }
+                })
             }
 
             const nextStep = workflow.steps[workflow.currentStepIndex]
@@ -107,7 +107,7 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
                 }
             }
 
-            return {
+            return of({
                 success: true,
                 data: {
                     workflowId: workflow.id,
@@ -120,8 +120,8 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
                         totalSteps: workflow.steps.length
                     }
                 }
-            }
-        }
+            })
+        })
     },
     {
         name: 'workflow_status',
@@ -133,13 +133,13 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
             },
             required: ['workflowId']
         },
-        handler: async ({params, session}) => {
+        handler$: ({params, session}) => defer(() => {
             const workflow = session.workflow
             if (!workflow || workflow.id !== params.workflowId) {
-                return {success: false, error: {code: 'INVALID_WORKFLOW', message: 'Workflow not found or expired'}}
+                return of({success: false, error: {code: 'INVALID_WORKFLOW', message: 'Workflow not found or expired'}})
             }
 
-            return {
+            return of({
                 success: true,
                 data: {
                     workflowId: workflow.id,
@@ -151,8 +151,8 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
                     remainingSteps: workflow.steps.slice(workflow.currentStepIndex).map(s => ({id: s.id, name: s.name})),
                     collectedValues: workflow.values
                 }
-            }
-        }
+            })
+        })
     },
     {
         name: 'workflow_complete',
@@ -166,41 +166,44 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
             },
             required: ['workflowId']
         },
-        handler: async ({username, params, session}) => {
+        handler$: ({username, params, session}) => defer(() => {
             const workflow = session.workflow
             if (!workflow || workflow.id !== params.workflowId) {
-                return {success: false, error: {code: 'INVALID_WORKFLOW', message: 'Workflow not found or expired'}}
+                return of({success: false, error: {code: 'INVALID_WORKFLOW', message: 'Workflow not found or expired'}})
             }
             if (!workflow.completed) {
-                return {success: false, error: {code: 'INCOMPLETE', message: 'Workflow has not completed all steps yet'}}
+                return of({success: false, error: {code: 'INCOMPLETE', message: 'Workflow has not completed all steps yet'}})
             }
 
             const name = params.name || `${workflow.type} recipe`
-            let model = workflow.values
+            const model = workflow.values
             if (recipeValidator) {
                 const errors = recipeValidator.validateModel({type: workflow.type, model})
                 if (errors) {
-                    return {
+                    return of({
                         success: false,
                         error: {
                             code: 'VALIDATION_ERROR',
                             message: `Recipe model validation failed:\n${errors.join('\n')}`
                         }
-                    }
+                    })
                 }
             }
-            const result = await recipeClient.saveRecipe({
+            return recipeClient.saveRecipe$({
                 username,
                 type: workflow.type,
                 name,
                 projectId: params.projectId,
                 model
-            })
-
-            session.workflow = null
-
-            return {success: true, data: result}
-        }
+            }).pipe(
+                tap(() => { session.workflow = null }),
+                map(data => ({success: true, data})),
+                catchError(error => {
+                    if (isAbortError(error)) throw error
+                    return of({success: false, error: {code: 'TOOL_ERROR', message: error.message}})
+                })
+            )
+        })
     },
     {
         name: 'workflow_cancel',
@@ -212,14 +215,14 @@ const createWorkflowTools = ({registry, recipeClient, recipeValidator}) => [
             },
             required: ['workflowId']
         },
-        handler: async ({params, session}) => {
+        handler$: ({params, session}) => defer(() => {
             const workflow = session.workflow
             if (!workflow || workflow.id !== params.workflowId) {
-                return {success: false, error: {code: 'INVALID_WORKFLOW', message: 'Workflow not found or expired'}}
+                return of({success: false, error: {code: 'INVALID_WORKFLOW', message: 'Workflow not found or expired'}})
             }
             session.workflow = null
-            return {success: true, data: {cancelled: true}}
-        }
+            return of({success: true, data: {cancelled: true}})
+        })
     }
 ]
 

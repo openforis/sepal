@@ -1,6 +1,7 @@
 const log = require('#sepal/log').getLogger('conversationLoop')
 const {createChunkBuffer} = require('./chunkBuffer')
 const {createFailureTracker} = require('./failureTracker')
+const {awaitWithAbort} = require('./abort')
 
 const MAX_TOOL_CALL_ROUNDS = 50
 const WARN_ROUND_THRESHOLD = 30
@@ -12,7 +13,7 @@ const STALL_NUDGE = {
 
 const trimToContent = text => text.trim() ? text : ''
 
-const streamWithChunkBuffer = async ({provider, ctx, messages, formattedTools, systemPrompt}) => {
+const streamWithChunkBuffer = async ({provider, ctx, messages, formattedTools, systemPrompt, signal}) => {
     const chunkBuffer = createChunkBuffer(text => ctx.send({
         type: 'chat-response',
         conversationId: ctx.conversationId,
@@ -23,10 +24,11 @@ const streamWithChunkBuffer = async ({provider, ctx, messages, formattedTools, s
             messages,
             tools: formattedTools,
             systemPrompt,
+            signal,
             onChunk: chunk => chunkBuffer.append(chunk)
         })
     } finally {
-        chunkBuffer.end()
+        chunkBuffer.end({drop: signal?.aborted})
     }
 }
 
@@ -41,7 +43,7 @@ const classifyRound = (result, stallCount) => {
     }
 }
 
-const handleToolCallsRound = async ({result, ctx, toolRunner, failureTracker, round}) => {
+const handleToolCallsRound = async ({result, ctx, toolRunner, failureTracker, round, signal}) => {
     const rawText = result.text || ''
     const assistantMsg = {
         role: 'assistant',
@@ -51,7 +53,10 @@ const handleToolCallsRound = async ({result, ctx, toolRunner, failureTracker, ro
     ctx.messages.push(assistantMsg)
     await ctx.persistMessage(assistantMsg)
 
-    const toolResults = await toolRunner.runAll({toolCalls: result.toolCalls, ctx})
+    const toolResults = await awaitWithAbort(
+        toolRunner.runAll$({toolCalls: result.toolCalls, ctx}),
+        signal
+    )
     const toolMsg = {role: 'tool', toolResults}
     ctx.messages.push(toolMsg)
     await ctx.persistMessage(toolMsg)
@@ -126,7 +131,7 @@ const composePromptBreakdown = ({messages, systemPrompt, formattedTools}) => {
     return {systemBytes, toolsBytes, ...counts, total, largestToolResult}
 }
 
-const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, toolRunner, failureTracker, stallCount, stallNudge, totals}) => {
+const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, toolRunner, failureTracker, stallCount, stallNudge, totals, signal}) => {
     if (round === WARN_ROUND_THRESHOLD) {
         log.warn(`Tool-call loop exceeded ${WARN_ROUND_THRESHOLD} rounds (cap ${MAX_TOOL_CALL_ROUNDS})`)
     }
@@ -143,7 +148,8 @@ const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, to
         provider, ctx,
         messages: promptMessages,
         formattedTools,
-        systemPrompt
+        systemPrompt,
+        signal
     })
     log.debug(() => `[conv ${ctx.conversationId}] round ${round}: raw usage = ${JSON.stringify(result.usage)}`)
     const usage = usageSummary(result.usage)
@@ -162,7 +168,7 @@ const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, to
 
     const classification = classifyRound(result, stallCount)
     if (classification.kind === 'tool-calls') {
-        return handleToolCallsRound({result, ctx, toolRunner, failureTracker, round})
+        return handleToolCallsRound({result, ctx, toolRunner, failureTracker, round, signal})
     } else if (classification.kind === 'stall') {
         log.warn(`[conv ${ctx.conversationId}] Empty assistant turn (round ${round}, stop=${result.stopReason || 'unknown'}); nudging to continue`)
         return {action: 'nudge', nudge: STALL_NUDGE}
@@ -171,7 +177,7 @@ const runRound = async ({round, ctx, provider, formattedTools, promptBuilder, to
     }
 }
 
-const runConversation = async ({ctx, provider, formattedTools, promptBuilder, toolRunner}) => {
+const runConversation = async ({ctx, provider, formattedTools, promptBuilder, toolRunner, signal}) => {
     const failureTracker = createFailureTracker({conversationId: ctx.conversationId})
     const totals = {prompt: 0, completion: 0, cached: 0}
     const t = Date.now()
@@ -187,13 +193,19 @@ const runConversation = async ({ctx, provider, formattedTools, promptBuilder, to
     }
 
     while (round < MAX_TOOL_CALL_ROUNDS) {
+        if (signal?.aborted) {
+            return {kind: 'aborted', rounds: round}
+        }
         round++
         const outcome = await runRound({
             round, ctx, provider, formattedTools, promptBuilder, toolRunner, failureTracker,
-            stallCount, stallNudge, totals
+            stallCount, stallNudge, totals, signal
         })
         stallNudge = null
 
+        if (signal?.aborted) {
+            return {kind: 'aborted', rounds: round}
+        }
         if (outcome.action === 'done') {
             log.info(`[conv ${ctx.conversationId}] turn complete after ${round} round(s) (${Date.now() - t}ms, ${formatTotals()})`)
             return {kind: 'done', assistantText: outcome.assistantText, rounds: round}

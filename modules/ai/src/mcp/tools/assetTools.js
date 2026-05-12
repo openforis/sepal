@@ -1,3 +1,6 @@
+const {map, catchError, of} = require('rxjs')
+const {isAbortError} = require('../../chat/abort')
+
 const createAssetTools = ({geeClient}) => [
     {
         name: 'asset_search',
@@ -24,18 +27,18 @@ Query construction:
             },
             required: ['query']
         },
-        handler: async ({username, params}) => {
-            try {
-                const result = await geeClient.searchDatasets({
-                    username,
-                    query: params.query,
-                    allowedTypes: params.allowedTypes
+        handler$: ({username, params}) =>
+            geeClient.searchDatasets$({
+                username,
+                query: params.query,
+                allowedTypes: params.allowedTypes
+            }).pipe(
+                map(data => ({success: true, data})),
+                catchError(error => {
+                    if (isAbortError(error)) throw error
+                    return of({success: false, error: {code: 'GEE_SEARCH_FAILED', message: error.message}})
                 })
-                return {success: true, data: result}
-            } catch (error) {
-                return {success: false, error: {code: 'GEE_SEARCH_FAILED', message: error.message}}
-            }
-        }
+            )
     }
 ]
 
