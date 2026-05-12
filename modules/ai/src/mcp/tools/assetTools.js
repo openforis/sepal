@@ -1,7 +1,9 @@
 const createAssetTools = ({geeClient}) => [
     {
         name: 'asset_search',
-        description: `Search EE STAC catalog + Awesome GEE Community Datasets by free-text query. Resolves dataset name → asset id (e.g. "Hansen forest cover", "WorldCover", "Dynamic World"). Returns \`{matchingResults, gee:{matchingResults, moreResults, datasets:[{id, title, type, url}]}, community:{…}}\` — up to 10 per source. Report total \`matchingResults\` (+ \`moreResults\` if truncated). Some assets (e.g. global CCDC \`projects/CCDC/v4\`) aren't in the catalog — see ASSET_MOSAIC use cases.
+        description: `Search EE STAC catalog + Awesome GEE Community Datasets for **third-party datasets** (Hansen forest change, WorldCover, Dynamic World, MODIS, etc.) by free-text query. Resolves dataset name → asset id. Returns \`{matchingResults, gee:{matchingResults, moreResults, datasets:[{id, title, type, url}]}, community:{…}}\` — up to 10 per source.
+
+**Do NOT use for:** Landsat / Sentinel-2 / Sentinel-1 / Planet basemaps — these are built-in source enums on the MOSAIC / RADAR_MOSAIC / PLANET_MOSAIC recipes (\`sources.dataSets\`), not assets. Searching for "Landsat" returns 98 unrelated derivatives and wastes a round.
 
 Query construction:
 - Dataset-identifying nouns ONLY (sensor, algorithm, product, dataset name). Single distinctive term preferred.

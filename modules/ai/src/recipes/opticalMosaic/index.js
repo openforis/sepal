@@ -14,7 +14,7 @@ module.exports = {
         'Cross-sensor calibrated LS+S2 composites'
     ],
     terms: ['optical', 'multispectral', 'Landsat', 'Sentinel-2', 'S2', 'mosaic', 'composite', 'MEDOID', 'MEDIAN', 'surface reflectance', 'SR', 'TOA', 'BRDF', 'cloud masking', 'CFMask', 'Cloud Score+', 'natural color', 'false color', 'NDVI', 'NDWI', 'NBR', 'NDMI', 'EVI', 'SAVI', 'tasseled cap', 'target date', 'season'],
-    chooseWhen: 'Wants visible/multispectral, natural/false color, or vegetation/water/burn indices, or names LS/S2.',
+    chooseWhen: 'Wants visible/multispectral, natural/false color, or vegetation/water/burn indices, or names LS/S2. Landsat 4-9 and Sentinel-2 are built-in source enums of `sources.dataSets` — do NOT asset_search for them.',
     dontChooseWhen: 'Needs imagery through clouds / SAR — use RADAR_MOSAIC. Wraps an existing EE asset — use ASSET_MOSAIC.',
     outputs: 'Optical bands (blue, green, red, nir, swir1, swir2), tasseled-cap (brightness/greenness/wetness), 17+ indices, metadata (dayOfYear, daysFromTarget). S2 adds redEdge + waterVapor; LS adds thermal + pan.',
     parameterSchema,
