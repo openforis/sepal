@@ -91,15 +91,16 @@ const getRepoInfo = async appPath => {
 
     let branch = rawBranch.trim()
     if (detached) {
+        branch = commitId.trim().slice(0, 7)
         try {
             const {stdout: containing} = await executeCommand(
-                'git', ['for-each-ref', '--points-at', 'HEAD', '--format=%(refname:short)', 'refs/remotes/origin'],
+                'git', ['for-each-ref', '--points-at', 'HEAD', '--format=%(refname:short)', 'refs/remotes/origin', 'refs/tags'],
                 {cwd: appPath}
             )
             const ref = containing.split('\n').map(s => s.trim()).find(Boolean)
             if (ref) branch = ref.replace(/^origin\//, '')
         } catch (_e) {
-            // leave branch as 'HEAD'
+            // keep short SHA fallback
         }
     }
 
