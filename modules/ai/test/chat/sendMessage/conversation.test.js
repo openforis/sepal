@@ -137,6 +137,45 @@ describe('Conversation', () => {
         })
     })
 
+    describe('with loaded history', () => {
+
+        it('seeds the LLM with the loaded messages before the next user turn', () => {
+            const llm = aFakeLlm()
+            const conversation = aConversation({
+                llm,
+                initialMessages: [
+                    {role: 'user', content: 'first'},
+                    {role: 'assistant', content: 'reply'}
+                ]
+            })
+
+            run(conversation.sendUserMessage$('second'))
+
+            expect(llm.receivedMessages[0]).toEqual([
+                {role: 'user', content: 'first'},
+                {role: 'assistant', content: 'reply'},
+                {role: 'user', content: 'second'}
+            ])
+        })
+
+        it('keeps the system prompt before loaded history', () => {
+            const llm = aFakeLlm()
+            const conversation = aConversation({
+                llm,
+                systemPrompt: 'You are Sepalito.',
+                initialMessages: [{role: 'user', content: 'first'}]
+            })
+
+            run(conversation.sendUserMessage$('second'))
+
+            expect(llm.receivedMessages[0]).toEqual([
+                {role: 'system', content: 'You are Sepalito.'},
+                {role: 'user', content: 'first'},
+                {role: 'user', content: 'second'}
+            ])
+        })
+    })
+
     describe('observability', () => {
 
         it('wraps sendUserMessage in conversation.send and each LLM call in llm.respondTo', () => {

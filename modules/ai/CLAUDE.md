@@ -35,8 +35,8 @@ module.
 ### Active Design
 
 **Chat Rewrite Layer** (`src/chat/`) — Active websocket, conversation, history, and
-LLM-stream handling for the GUI chat. Current conversation storage is in-memory;
-durable persistence and title generation are not yet active.
+LLM-stream handling for the GUI chat. Conversation metadata and message history are
+persisted in Redis; title generation is not yet active.
 
 **Archived Tool/Recipe Layer** (`archive/pre-rewrite-chat/src/mcp/`,
 `archive/pre-rewrite-chat/src/recipes/`, `archive/pre-rewrite-chat/src/sepal/`) —
@@ -76,7 +76,7 @@ src/
   app.js                      # Active rewrite composition
   config.js                   # CLI argument parsing (port, endpoints, LLM config)
   chat/                       # Chat Rewrite Layer
-    io/                        # Active adapters: websocket, OpenAI stream, in-memory stores
+    io/                        # Active adapters: websocket, OpenAI stream, Redis stores
     sendMessage/               # Active conversation/user-chat rewrite slice
     system-prompt.md           # Active system prompt
 ```
@@ -93,16 +93,17 @@ Environment variables mapped to CLI flags in `start.sh`:
 | `LLM_API_KEY` | `--llm-api-key` | API key for the LLM provider |
 | `LLM_MODEL` | `--llm-model` | Model name override |
 | `LLM_BASE_URL` | `--llm-base-url` | Base URL for OpenAI-compatible providers (e.g. `http://localhost:1234/v1`) |
-| `REDIS_HOST` | `--redis-host` | Redis host; parsed for future persistence work |
-| `CONVERSATION_TTL_DAYS` | `--conversation-ttl-days` | Parsed for future persistence work |
+| `REDIS_HOST` | `--redis-host` | Redis host for conversation metadata/history persistence |
+| `CONVERSATION_TTL_DAYS` | `--conversation-ttl-days` | Redis TTL for persisted conversation metadata/history |
 | `RATE_LIMIT` | `--rate-limit` | Parsed for future server-side rate limiting |
 | `SESSION_TTL_MINUTES` | `--session-ttl-minutes` | Parsed for future session expiry work |
 | `SYSTEM_PROMPT` | `--system-prompt` | System prompt prepended to every conversation |
 
 The active rewrite currently uses `HTTP_PORT`, `LLM_API_KEY`, `LLM_MODEL`,
-`LLM_BASE_URL`, and `SYSTEM_PROMPT`. Some legacy/future flags are still parsed by
-`src/config.js` because compose supplies them, but the active app does not yet wire
-Redis, SEPAL/GEE clients, server-side rate limiting, or session expiry.
+`LLM_BASE_URL`, `REDIS_HOST`, `CONVERSATION_TTL_DAYS`, and `SYSTEM_PROMPT`.
+Some legacy/future flags are still parsed by `src/config.js` because compose
+supplies them, but the active app does not yet wire SEPAL/GEE clients,
+server-side rate limiting, or session expiry.
 
 ### Connecting to LM Studio
 
@@ -145,8 +146,9 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
 - **Subscription keying**: Websocket subscriptions are keyed by
   `clientId:subscriptionId` (one per browser tab subscription).
 - **User chat ownership**: `app.js` keeps one in-memory `UserChat` per username.
-  Tabs for the same user share conversation state; active selection remains per tab
-  in the GUI.
+  Tabs for the same user share live conversation state; Redis stores conversation
+  metadata/history so list/select/send can recover after restart. Active selection
+  remains per tab in the GUI.
 - **Tool placeholder**: `app.js` injects `noTools()` until the tool layer is
   reintroduced. Tool calls currently fail through the conversation error path.
 - **OpenAI-compatible adapter**: Active LLM streaming goes through `src/chat/io/openai.js`.

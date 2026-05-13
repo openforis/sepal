@@ -7,9 +7,10 @@ function aConversation({
     tools = aFakeTools(),
     tracer = aFakeTracer(),
     systemPrompt = null,
+    initialMessages = [],
     id = 'conv1'
 } = {}) {
-    return createConversation({llm, history, tools, tracer, systemPrompt, id})
+    return createConversation({llm, history, tools, tracer, systemPrompt, initialMessages, id})
 }
 
 function aFakeTracer() {

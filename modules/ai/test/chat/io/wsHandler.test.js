@@ -1,8 +1,8 @@
-const {Subject} = require('rxjs')
-const {createInMemoryConversationsStore} = require('#mcp/chat/io/conversationsStore')
+const {Subject, of} = require('rxjs')
 const {createWsHandler} = require('#mcp/chat/io/wsHandler')
 const {createConversation} = require('#mcp/chat/sendMessage/conversation')
 const {createUserChat} = require('#mcp/chat/sendMessage/userChat')
+const {createInMemoryConversationsStore} = require('./inMemoryConversationsStore')
 const {aFakeHistory, aFakeLlm, aFakeTools} = require('../sendMessage/builders')
 
 describe('Chat WS handler', () => {
@@ -31,12 +31,13 @@ describe('Chat WS handler', () => {
                 cache.set(username, createUserChat({
                     conversationsStore: createInMemoryConversationsStore(),
                     clock,
-                    newConversation: () => createConversation({
+                    createId,
+                    conversationFor$: id => of(createConversation({
                         llm, tracer, tools,
                         history: aFakeHistory(),
                         systemPrompt: null,
-                        id: createId()
-                    })
+                        id
+                    }))
                 }))
             }
             return cache.get(username)

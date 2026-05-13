@@ -50,15 +50,16 @@ Adding a wire message type is now mechanical: `wsRouter` route + `UserChat` meth
 
 ## Persistence
 
-Ports + in-memory adapters in place now:
-- **History** (per-conversation messages) — `src/chat/io/inMemoryHistory.js`
-- **ConversationsStore** (per-user conversation list) — `src/chat/io/conversationsStore.js`
+Redis-backed adapters are wired into `app.js` now:
+- **History** (per-conversation messages) — `src/chat/io/redisHistory.js`
+- **ConversationsStore** (per-user conversation list) — `src/chat/io/redisConversationsStore.js`
 
-Redis-backed adapters slot in as drop-in replacements. When Redis lands in `src/`, the in-memory adapters move to `test/` for unit testing only.
+The in-memory adapters live under `test/chat/io/` for unit tests only.
 
-What still won't survive a restart even with the two stores in place:
-- The in-memory `Map<id, Conversation>` inside `UserChat`. To rebuild on restart: on first `attach(channel)` for a user, hydrate by listing the store and reconstructing each `Conversation` with `history.load$()` prefilling its `messages` array. Currently `Conversation` doesn't accept prefilled messages — add a constructor param.
-- The module-level `Map<username, UserChat>` in `app.js`. Lazy creation on first access already handles the "rebuild after restart" case provided `UserChat` itself hydrates from its store on first attach.
+Restart behaviour:
+- `list-conversations` reads Redis metadata directly.
+- `select-conversation` and `message` lazily rebuild a `Conversation` from Redis history when the in-memory `UserChat` map does not have it yet.
+- In-flight streams still do not survive restart; clients should see the connection reset and unlock through reconnect/list/select flows.
 
 ## Conversation metadata
 
