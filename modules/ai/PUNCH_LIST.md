@@ -73,6 +73,15 @@ Restart behaviour:
 
 `Conversation.messagesSnapshot()` returns the in-memory array including the leading `{role: 'system'}` entry when a `systemPrompt` is set. The GUI then receives the system message inside `conversation-loaded`. Either filter `role: 'system'` in the GUI, or in `messagesSnapshot()` before serialising. Decide once the GUI re-renders historical conversations.
 
+## In-memory caches grow unbounded
+
+Two Maps in the active code never evict and will grow forever in long-running deployments:
+
+- **`userChats: Map<username, UserChat>` in `src/app.js`** — one UserChat per user that has ever connected. Insertions on first contact; never removed. Each entry retains the user's conversations cache (below). Cap or evict on idle (e.g., no subscription for N minutes).
+- **`conversations: Map<id, Conversation>` in `src/chat/sendMessage/userChat.js`** — one cached Conversation per conv the user has touched. Insertions on create or rebuild-from-Redis; only removed on explicit delete. The cache exists for cross-tab coherence (two tabs sharing one in-memory `messages` array) and to avoid Redis round-trips on every send — so we can't just drop it. LRU with a small cap (~10 most recently used) is the natural fix.
+
+Neither leak is dangerous at SEPAL's user scale today, but both will compound over uptime.
+
 ## Single ai-module instance assumption
 
 Cross-tab sync currently goes through in-memory `UserChat` state. If we deploy multiple ai-module instances behind a load balancer, two tabs of the same user could hit different instances and lose sync. Redis pub/sub (or similar) becomes load-bearing at that point — adds a `broadcast` collaborator that publishes/subscribes to cross-instance events.

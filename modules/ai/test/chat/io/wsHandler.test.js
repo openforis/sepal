@@ -18,13 +18,16 @@ describe('Chat WS handler', () => {
         return {span$: (_name, _attrs, work$) => work$}
     }
 
-    function aHandler({replies = [{text: 'Hi there!'}], conversationIds = ['conv-1']} = {}) {
+    function aHandler({replies = [{text: 'Hi there!'}], conversationIds = ['conv-1'], bus = aNoopBus()} = {}) {
         let i = 0
         const createId = () => conversationIds[Math.min(i++, conversationIds.length - 1)]
         const llm = aFakeLlm({replies})
         const tracer = aPassThroughTracer()
         const tools = aFakeTools()
-        const clock = {now: () => 1700000000000}
+        const clock = {
+            now: () => 1700000000000,
+            nowIso: () => new Date(1700000000000).toISOString()
+        }
         const cache = new Map()
         const userChatFor = username => {
             if (!cache.has(username)) {
@@ -42,7 +45,7 @@ describe('Chat WS handler', () => {
             }
             return cache.get(username)
         }
-        return createWsHandler({bus: aNoopBus(), userChatFor})
+        return createWsHandler({bus, userChatFor})
     }
 
     const ISO_FIXED = new Date(1700000000000).toISOString()
@@ -54,6 +57,20 @@ describe('Chat WS handler', () => {
         onConnection({arg$}).subscribe(message => sent.push(message))
         return {arg$, sent}
     }
+
+    describe('subscriptionUp', () => {
+
+        it('pushes the user\'s conversation list to the new subscription so the tab can populate on connect', () => {
+            const {arg$, sent} = captureSent(aHandler())
+
+            arg$.next({event: 'subscriptionUp', ...alice})
+
+            expect(sent.filter(m => m.data?.type === 'conversations')).toEqual([{
+                ...aliceTargeted,
+                data: {type: 'conversations', conversations: []}
+            }])
+        })
+    })
 
     describe('create-conversation', () => {
 
@@ -165,13 +182,14 @@ describe('Chat WS handler', () => {
             arg$.next({data: {type: 'create-conversation'}, ...alice})
             arg$.next({data: {type: 'list-conversations'}, ...alice})
 
-            expect(sent.filter(m => m.data?.type === 'conversations')).toEqual([{
+            const conversationsEvents = sent.filter(m => m.data?.type === 'conversations')
+            expect(conversationsEvents.at(-1)).toEqual({
                 ...aliceTargeted,
                 data: {
                     type: 'conversations',
                     conversations: [{id: 'conv-1', ...META}, {id: 'conv-2', ...META}]
                 }
-            }])
+            })
         })
     })
 
@@ -243,6 +261,180 @@ describe('Chat WS handler', () => {
                 {username: 'alice', data: {type: 'conversation-deleted', conversationId: 'conv-1'}},
                 {username: 'alice', data: {type: 'conversation-deleted', conversationId: 'conv-2'}}
             ])
+        })
+    })
+
+    describe('publishes ignored messages at trace', () => {
+        let arg$, published
+
+        beforeEach(() => {
+            published = []
+            const bus = {publish: e => published.push(e)}
+            arg$ = new Subject()
+            aHandler({bus})({arg$}).subscribe()
+        })
+
+        it('heartbeat', () => {
+            arg$.next({hb: 12345})
+
+            expect(published[0]).toMatchObject({
+                type: 'wsIn', kind: 'ignored', level: 'trace',
+                reason: 'heartbeat', message: 'WS in heartbeat'
+            })
+        })
+
+        it('gateway lifecycle events (userUp, clientUp, clientDown)', () => {
+            arg$.next({event: 'userUp', user: {username: 'alice'}})
+            arg$.next({event: 'clientUp', user: {username: 'alice'}, clientId: 'c1'})
+
+            expect(published).toHaveLength(2)
+            expect(published[0]).toMatchObject({
+                kind: 'ignored', level: 'trace',
+                reason: 'gatewayEvent', event: 'userUp'
+            })
+            expect(published[1]).toMatchObject({
+                kind: 'ignored', level: 'trace',
+                reason: 'gatewayEvent', event: 'clientUp'
+            })
+        })
+
+        it('empty messages — no event, no data', () => {
+            arg$.next({user: {username: 'alice'}})
+
+            expect(published[0]).toMatchObject({
+                kind: 'ignored', level: 'trace', reason: 'empty'
+            })
+        })
+    })
+
+    describe('publishes a self-describing wsIn event', () => {
+        const aliceLabel = 'c1:s1 (alice)'
+        let arg$, published
+
+        beforeEach(() => {
+            published = []
+            const bus = {publish: e => published.push(e)}
+            arg$ = new Subject()
+            aHandler({bus, conversationIds: ['conv-9']})({arg$}).subscribe()
+        })
+
+        it('subscriptionUp', () => {
+            arg$.next({event: 'subscriptionUp', ...alice})
+
+            expect(published[0]).toMatchObject({
+                type: 'wsIn', kind: 'subscriptionUp', ...aliceTargeted,
+                level: 'info', message: `WS in ${aliceLabel} subscriptionUp`
+            })
+        })
+
+        it('subscriptionDown', () => {
+            arg$.next({event: 'subscriptionUp', ...alice})
+            published.length = 0
+            arg$.next({event: 'subscriptionDown', ...alice})
+
+            expect(published[0]).toMatchObject({
+                kind: 'subscriptionDown', level: 'info',
+                message: `WS in ${aliceLabel} subscriptionDown`
+            })
+        })
+
+        it('create-conversation', () => {
+            arg$.next({event: 'subscriptionUp', ...alice})
+            published.length = 0
+            arg$.next({data: {type: 'create-conversation'}, ...alice})
+
+            expect(published[0]).toMatchObject({
+                kind: 'create-conversation', level: 'info',
+                message: `WS in ${aliceLabel} create-conversation`
+            })
+        })
+
+        it('select-conversation with the conversationId', () => {
+            arg$.next({event: 'subscriptionUp', ...alice})
+            published.length = 0
+            arg$.next({data: {type: 'select-conversation', conversationId: 'conv-9'}, ...alice})
+
+            expect(published[0]).toMatchObject({
+                kind: 'select-conversation', conversationId: 'conv-9',
+                level: 'info', message: `WS in ${aliceLabel} select-conversation conv-9`
+            })
+        })
+
+        it('delete-conversation with the conversationId', () => {
+            arg$.next({event: 'subscriptionUp', ...alice})
+            published.length = 0
+            arg$.next({data: {type: 'delete-conversation', conversationId: 'conv-9'}, ...alice})
+
+            expect(published[0]).toMatchObject({
+                kind: 'delete-conversation', conversationId: 'conv-9',
+                level: 'info', message: `WS in ${aliceLabel} delete-conversation conv-9`
+            })
+        })
+
+        it('delete-all-conversations', () => {
+            arg$.next({event: 'subscriptionUp', ...alice})
+            published.length = 0
+            arg$.next({data: {type: 'delete-all-conversations'}, ...alice})
+
+            expect(published[0]).toMatchObject({
+                kind: 'delete-all-conversations', level: 'info',
+                message: `WS in ${aliceLabel} delete-all-conversations`
+            })
+        })
+
+        it('list-conversations', () => {
+            arg$.next({event: 'subscriptionUp', ...alice})
+            published.length = 0
+            arg$.next({data: {type: 'list-conversations'}, ...alice})
+
+            expect(published[0]).toMatchObject({
+                kind: 'list-conversations', level: 'info',
+                message: `WS in ${aliceLabel} list-conversations`
+            })
+        })
+
+        it('abort with the conversationId', () => {
+            arg$.next({event: 'subscriptionUp', ...alice})
+            published.length = 0
+            arg$.next({data: {type: 'abort', conversationId: 'conv-9'}, ...alice})
+
+            expect(published[0]).toMatchObject({
+                kind: 'abort', conversationId: 'conv-9',
+                level: 'info', message: `WS in ${aliceLabel} abort conv-9`
+            })
+        })
+
+        it('message with the conversationId and text', () => {
+            arg$.next({event: 'subscriptionUp', ...alice})
+            published.length = 0
+            arg$.next({data: {type: 'message', conversationId: 'conv-9', text: 'Hello'}, ...alice})
+
+            expect(published[0]).toMatchObject({
+                kind: 'message', conversationId: 'conv-9', text: 'Hello',
+                level: 'info', message: `WS in ${aliceLabel} message conv-9: "Hello"`
+            })
+        })
+
+        it('context at debug (recognised, fires on every GUI selection change)', () => {
+            arg$.next({event: 'subscriptionUp', ...alice})
+            published.length = 0
+            arg$.next({data: {type: 'context', selection: {section: 'process'}}, ...alice})
+
+            expect(published[0]).toMatchObject({
+                kind: 'context', level: 'debug',
+                message: `WS in ${aliceLabel} context`
+            })
+        })
+
+        it('unknown data type at warn level', () => {
+            arg$.next({event: 'subscriptionUp', ...alice})
+            published.length = 0
+            arg$.next({data: {type: 'something-else'}, ...alice})
+
+            expect(published[0]).toMatchObject({
+                kind: 'unknown', dataType: 'something-else',
+                level: 'warn', message: `WS in ${aliceLabel} unknown data type: something-else (ignored)`
+            })
         })
     })
 })

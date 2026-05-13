@@ -23,7 +23,18 @@ function createApp({config}) {
     const redis = new Redis({host: config.redisHost})
     const ttlMs = config.conversationTtlMs
 
-    bus.events$.subscribe(createLogListener({log: logViaLog4js}).onEvent)
+    const logListener = createLogListener({log: logViaLog4js})
+    bus.events$.subscribe({
+        next: event => {
+            try {
+                logListener.onEvent(event)
+            } catch (error) {
+                log.error('Log listener threw while handling event:', error)
+            }
+        },
+        error: error => fatal('Event bus errored', error),
+        complete: () => fatal('Event bus completed unexpectedly')
+    })
 
     const llm = createOpenAI({
         baseURL: config.llmBaseUrl,
@@ -68,7 +79,10 @@ function createApp({config}) {
 }
 
 function systemClock() {
-    return {now: () => Date.now()}
+    return {
+        now: () => Date.now(),
+        nowIso: () => new Date().toISOString()
+    }
 }
 
 function noTools() {
@@ -77,6 +91,13 @@ function noTools() {
 
 function logViaLog4js(level, line) {
     log[level](line)
+}
+
+function fatal(reason, error) {
+    log.error(`FATAL: ${reason}`, error)
+    // eslint-disable-next-line no-console
+    console.error(`FATAL: ${reason}`, error)
+    process.exit(1)
 }
 
 module.exports = {createApp}
