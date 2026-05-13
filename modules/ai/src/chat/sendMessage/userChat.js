@@ -33,7 +33,10 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock})
 
     function selectConversation(channel, id) {
         run$(conversation$(id).pipe(
-            tap(conversation => channel.conversationLoaded(id, conversation.messagesSnapshot()))
+            tap(conversation => {
+                channel.conversationLoaded(id, conversation.messagesSnapshot())
+                if (inFlight.has(id)) channel.status(id)
+            })
         ))
     }
 
@@ -74,14 +77,16 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock})
     function send(channel, conversation, conversationId, text) {
         channel.status(conversationId)
         channel.userMessage(conversationId, text)
+        let active = true
         const subscription = conversation.sendUserMessage$(text).subscribe({
             next: event => channel.chatResponse({conversationId, ...event}),
             complete: () => {
+                active = false
                 inFlight.delete(conversationId)
                 channel.chatResponse({conversationId, complete: true})
             }
         })
-        inFlight.set(conversationId, subscription)
+        if (active) inFlight.set(conversationId, subscription)
     }
 
     function abort(channel, conversationId) {

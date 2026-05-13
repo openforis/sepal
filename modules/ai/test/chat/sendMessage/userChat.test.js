@@ -189,6 +189,27 @@ describe('UserChat', () => {
             expect(channel.loaded).toEqual([])
         })
 
+        it('signals status when re-entering a conversation whose stream is still in flight', () => {
+            const replies$ = new Subject()
+            const llm = {respondTo$: () => replies$, receivedMessages: []}
+            userChat = aUserChat({llm})
+            userChat.createConversation(channel)
+            userChat.sendUserMessage(channel, 'conv-1', 'hello')
+
+            userChat.selectConversation(channel, 'conv-1')
+
+            expect(channel.statuses).toEqual(['conv-1', 'conv-1'])
+        })
+
+        it('does not signal status when re-entering a conversation whose stream has completed', () => {
+            userChat.createConversation(channel)
+            userChat.sendUserMessage(channel, 'conv-1', 'hello')
+
+            userChat.selectConversation(channel, 'conv-1')
+
+            expect(channel.statuses).toEqual(['conv-1'])
+        })
+
         it('rebuilds a persisted conversation before loading it', () => {
             const persisted = {id: 'conv-1', title: '', createdAt: ISO_T1, updatedAt: ISO_T1}
             userChat = aUserChat({

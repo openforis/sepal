@@ -21,6 +21,10 @@ Known cases deferred to future iterations. Don't lose them.
 
 - **Abort wire path is in place.** `UserChat` tracks the in-flight `Subscription` per conversation and `unsubscribe()`s it on abort, then broadcasts a `chat-response` with `complete: true` to unlock all the user's tabs. PUNCH_LIST follow-up: a distinguishing flag (`aborted: true`?) so the GUI can show "cancelled" vs natural completion. Today they look identical.
 
+## Mid-stream re-entry
+
+- **Partial assistant text is not replayed on re-entry.** `selectConversation` emits a `status` after `conversation-loaded` when `inFlight.has(id)`, so the GUI re-locks into the loading state and future chunks render. But the chunks streamed *before* re-entry are lost — the in-flight `acc.text` accumulator lives inside `step$` and is not part of `messagesSnapshot()`. If users complain, lift the accumulator into the `Conversation` and include partial text in the snapshot (or stream it back on re-select).
+
 ## Observability
 
 - **wsRouter silently ignores unknown messages** — publishes `{type: 'wsIn', kind: 'unknown'}` at `warn`. Could be elaborated with the data shape, but only once we hit an unknown-message debugging session.
