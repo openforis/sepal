@@ -1,4 +1,4 @@
-const {of, from, defer, throwError} = require('rxjs')
+const {EMPTY, of, from, defer, throwError} = require('rxjs')
 const {createConversation} = require('#mcp/chat/sendMessage/conversation')
 
 function aConversation({
@@ -67,6 +67,7 @@ function aFakeChannel() {
     const lists = []
     const statuses = []
     const userMessages = []
+    const metaUpdates = []
     return {
         chatResponse(payload) { sent.push(payload) },
         status(conversationId) { statuses.push(conversationId) },
@@ -74,9 +75,10 @@ function aFakeChannel() {
         conversationCreated(meta) { created.push(meta) },
         conversationLoaded(conversationId, messages) { loaded.push({conversationId, messages}) },
         conversationClaimed(meta) { claimed.push(meta) },
+        conversationUpdated(meta) { metaUpdates.push(meta) },
         conversationDeleted(conversationId) { deleted.push(conversationId) },
         conversationsList(metas) { lists.push(metas) },
-        sent, created, loaded, claimed, deleted, lists, statuses, userMessages
+        sent, created, loaded, claimed, deleted, lists, statuses, userMessages, metaUpdates
     }
 }
 
@@ -93,6 +95,17 @@ function aFakeTools(implementations = {}) {
     }
 }
 
+function aFakeTitleGenerator() {
+    const afterTurns = []
+    return {
+        afterTurn$(args) {
+            afterTurns.push(args)
+            return EMPTY
+        },
+        afterTurns
+    }
+}
+
 function run(observable) {
     const events = []
     let completed = false
@@ -104,4 +117,13 @@ function run(observable) {
     return {events, completed}
 }
 
-module.exports = {aFakeLlm, aFakeHistory, aFakeChannel, aFakeTools, aFakeTracer, aConversation, run}
+function read(observable) {
+    let value
+    observable.subscribe({
+        next: v => { value = v },
+        error: e => { throw e }
+    })
+    return value
+}
+
+module.exports = {aFakeLlm, aFakeHistory, aFakeChannel, aFakeTools, aFakeTracer, aFakeTitleGenerator, aConversation, run, read}

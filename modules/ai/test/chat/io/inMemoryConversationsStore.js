@@ -2,7 +2,7 @@ const {defer, of} = require('rxjs')
 
 function createInMemoryConversationsStore(initial = []) {
     const conversations = new Map(initial.map(meta => [meta.id, meta]))
-    return {add$, get$, touch$, delete$, list$}
+    return {add$, get$, touch$, updateTitle$, delete$, list$}
 
     function add$(meta) {
         return defer(() => {
@@ -20,6 +20,15 @@ function createInMemoryConversationsStore(initial = []) {
             const meta = conversations.get(id)
             if (!meta) return of(false)
             conversations.set(id, {...meta, updatedAt})
+            return of(true)
+        })
+    }
+
+    function updateTitle$(id, title) {
+        return defer(() => {
+            const meta = conversations.get(id)
+            if (!meta) return of(false)
+            conversations.set(id, {...meta, title})
             return of(true)
         })
     }

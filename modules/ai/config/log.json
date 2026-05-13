@@ -1,6 +1,7 @@
 {
     "port": 5000,
     "categories": {
+        "ai": "info",
         "config": "trace",
         "conversationHandler": "trace",
         "conversationLoop": "trace",

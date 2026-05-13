@@ -10,6 +10,7 @@ const {createRedisConversationsStore} = require('./chat/io/redisConversationsSto
 const {createRedisHistory} = require('./chat/io/redisHistory')
 const {createWsHandler} = require('./chat/io/wsHandler')
 const {createConversation} = require('./chat/sendMessage/conversation')
+const {createTitleGenerator} = require('./chat/sendMessage/titleGenerator')
 const {createUserChat} = require('./chat/sendMessage/userChat')
 const {createEventBus} = require('./eventBus')
 const {createLogListener} = require('./logListener')
@@ -40,6 +41,7 @@ function createApp({config}) {
         baseURL: config.llmBaseUrl,
         apiKey: config.llmApiKey,
         model: config.llmModel,
+        provider: config.llmProvider,
         bus
     })
     const tools = noTools()
@@ -57,10 +59,13 @@ function createApp({config}) {
     }
 
     function buildUserChat(username) {
+        const conversationsStore = createRedisConversationsStore({redis, username, ttlMs})
+        const titleGenerator = createTitleGenerator({llm, conversationsStore, tracer, bus})
         return createUserChat({
-            conversationsStore: createRedisConversationsStore({redis, username, ttlMs}),
+            conversationsStore,
             clock,
             createId: uuid,
+            titleGenerator,
             conversationFor$: id => buildConversation$(username, id)
         })
     }

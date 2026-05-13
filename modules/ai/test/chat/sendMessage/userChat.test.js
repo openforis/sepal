@@ -2,7 +2,7 @@ const {Subject, of} = require('rxjs')
 const {createConversation} = require('#mcp/chat/sendMessage/conversation')
 const {createUserChat} = require('#mcp/chat/sendMessage/userChat')
 const {createInMemoryConversationsStore} = require('../io/inMemoryConversationsStore')
-const {aFakeChannel, aFakeHistory, aFakeLlm, aFakeTools, aFakeTracer, run} = require('./builders')
+const {aFakeChannel, aFakeHistory, aFakeLlm, aFakeTools, aFakeTitleGenerator, aFakeTracer, run} = require('./builders')
 
 describe('UserChat', () => {
 
@@ -30,12 +30,14 @@ describe('UserChat', () => {
             initialMessagesById: {},
             createHistory: aFakeHistory,
             clock: aFixedClock(T1),
+            titleGenerator: aFakeTitleGenerator(),
             ...overrides
         }
         return createUserChat({
             conversationsStore: opts.conversationsStore,
             clock: opts.clock,
             createId: opts.createId,
+            titleGenerator: opts.titleGenerator,
             conversationFor$: id => of(createConversation({
                 llm: opts.llm,
                 tracer: opts.tracer,
@@ -79,14 +81,21 @@ describe('UserChat', () => {
             expect(channel.claimed).toEqual([expected])
         })
 
-        it('persists the meta in the ConversationsStore', () => {
+        it('does not persist a conversation until the user sends a message', () => {
             run(userChat.createConversation$({channel}))
             run(userChat.createConversation$({channel}))
             run(userChat.listConversations$({channel}))
 
+            expect(channel.lists).toEqual([[]])
+        })
+
+        it('persists the meta to the ConversationsStore on the first user message', () => {
+            run(userChat.createConversation$({channel}))
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'hi'}))
+            run(userChat.listConversations$({channel}))
+
             expect(channel.lists).toEqual([[
-                {id: 'conv-1', title: '', createdAt: ISO_T1, updatedAt: ISO_T1},
-                {id: 'conv-2', title: '', createdAt: ISO_T1, updatedAt: ISO_T1}
+                {id: 'conv-1', title: '', createdAt: ISO_T1, updatedAt: ISO_T1}
             ]])
         })
     })
@@ -137,6 +146,29 @@ describe('UserChat', () => {
             expect(channel.sent).toEqual([])
             expect(channel.statuses).toEqual([])
             expect(channel.userMessages).toEqual([])
+        })
+
+        it('invokes the titleGenerator after the turn with the user text', () => {
+            const titleGenerator = aFakeTitleGenerator()
+            userChat = aUserChat({titleGenerator})
+            run(userChat.createConversation$({channel}))
+
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'hello'}))
+
+            expect(titleGenerator.afterTurns).toHaveLength(1)
+            expect(titleGenerator.afterTurns[0]).toMatchObject({
+                conversationId: 'conv-1',
+                userText: 'hello'
+            })
+        })
+
+        it('does not invoke the titleGenerator when the conversation is unknown', () => {
+            const titleGenerator = aFakeTitleGenerator()
+            userChat = aUserChat({titleGenerator})
+
+            run(userChat.sendUserMessage$({channel, conversationId: 'nope', text: 'hello'}))
+
+            expect(titleGenerator.afterTurns).toEqual([])
         })
 
         it('rebuilds a persisted conversation before sending to it', () => {
@@ -288,9 +320,11 @@ describe('UserChat', () => {
 
     describe('listConversations$', () => {
 
-        it('reads meta records from the store and notifies the channel', () => {
+        it('reads persisted meta records from the store and notifies the channel', () => {
             run(userChat.createConversation$({channel}))
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'hi'}))
             run(userChat.createConversation$({channel}))
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-2', text: 'hi'}))
 
             run(userChat.listConversations$({channel}))
 

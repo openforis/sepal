@@ -198,6 +198,7 @@ export const conversationReducer = (state, action) => {
                 view: 'chat'
             }
         case 'CONVERSATION_CLAIMED':
+        case 'CONVERSATION_UPDATED':
             return {
                 ...state,
                 conversations: addOrUpdate(state.conversations, action.meta || {id: action.conversationId})

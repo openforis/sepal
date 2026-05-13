@@ -42,6 +42,14 @@ describe('Redis ConversationsStore adapter', () => {
         expect(await firstValueFrom(store.touch$('nope', '2024-01-01T00:02:00.000Z'))).toBe(false)
     })
 
+    it('updates the title on existing records and reports whether it existed', async () => {
+        await firstValueFrom(store.add$(metaA))
+
+        expect(await firstValueFrom(store.updateTitle$('a', 'NDVI change Kenya'))).toBe(true)
+        expect(await firstValueFrom(store.get$('a'))).toEqual({...metaA, title: 'NDVI change Kenya'})
+        expect(await firstValueFrom(store.updateTitle$('nope', 'anything'))).toBe(false)
+    })
+
     it('removes metadata and conversation history on delete', async () => {
         await firstValueFrom(store.add$(metaA))
         await redis.rpush(historyKeyA, JSON.stringify({role: 'user', content: 'hello'}))

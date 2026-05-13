@@ -1,9 +1,9 @@
-const {Subject, of} = require('rxjs')
+const {Subject, of, throwError} = require('rxjs')
 const {createWsHandler} = require('#mcp/chat/io/wsHandler')
 const {createConversation} = require('#mcp/chat/sendMessage/conversation')
 const {createUserChat} = require('#mcp/chat/sendMessage/userChat')
 const {createInMemoryConversationsStore} = require('./inMemoryConversationsStore')
-const {aFakeHistory, aFakeLlm, aFakeTools} = require('../sendMessage/builders')
+const {aFakeHistory, aFakeLlm, aFakeTools, aFakeTitleGenerator} = require('../sendMessage/builders')
 
 describe('Chat WS handler', () => {
 
@@ -35,6 +35,7 @@ describe('Chat WS handler', () => {
                     conversationsStore: createInMemoryConversationsStore(),
                     clock,
                     createId,
+                    titleGenerator: aFakeTitleGenerator(),
                     conversationFor$: id => of(createConversation({
                         llm, tracer, tools,
                         history: aFakeHistory(),
@@ -179,7 +180,9 @@ describe('Chat WS handler', () => {
 
             arg$.next({event: 'subscriptionUp', ...alice})
             arg$.next({data: {type: 'create-conversation'}, ...alice})
+            arg$.next({data: {type: 'message', conversationId: 'conv-1', text: 'hi'}, ...alice})
             arg$.next({data: {type: 'create-conversation'}, ...alice})
+            arg$.next({data: {type: 'message', conversationId: 'conv-2', text: 'hi'}, ...alice})
             arg$.next({data: {type: 'list-conversations'}, ...alice})
 
             const conversationsEvents = sent.filter(m => m.data?.type === 'conversations')
@@ -434,6 +437,66 @@ describe('Chat WS handler', () => {
             expect(published[0]).toMatchObject({
                 kind: 'unknown', dataType: 'something-else',
                 level: 'warn', message: `WS in ${aliceLabel} unknown data type: something-else (ignored)`
+            })
+        })
+    })
+
+    describe('error reporting', () => {
+
+        it('publishes wsConnectionError when the inbound stream errors', () => {
+            const published = []
+            const bus = {publish: e => published.push(e)}
+            const arg$ = new Subject()
+            aHandler({bus})({arg$}).subscribe()
+
+            arg$.error(new Error('socket closed badly'))
+
+            expect(published.at(-1)).toMatchObject({
+                type: 'wsConnectionError',
+                level: 'error',
+                message: 'WS connection errored: socket closed badly'
+            })
+        })
+
+        it('publishes wsRouteError when routing a message throws', () => {
+            const published = []
+            const bus = {publish: e => published.push(e)}
+            const handler = createWsHandler({
+                bus,
+                userChatFor: () => {
+                    throw new Error('user chat unavailable')
+                }
+            })
+            const arg$ = new Subject()
+            handler({arg$}).subscribe()
+
+            arg$.next({event: 'subscriptionUp', ...alice})
+
+            expect(published.at(-1)).toMatchObject({
+                type: 'wsRouteError',
+                level: 'error',
+                message: 'WS handler threw on message: user chat unavailable'
+            })
+        })
+
+        it('publishes workFailed when dispatched command work errors', () => {
+            const published = []
+            const bus = {publish: e => published.push(e)}
+            const userChat = {
+                listConversations$: () => of(undefined),
+                sendUserMessage$: () => throwError(() => new Error('redis unavailable'))
+            }
+            const handler = createWsHandler({bus, userChatFor: () => userChat})
+            const arg$ = new Subject()
+            handler({arg$}).subscribe()
+
+            arg$.next({event: 'subscriptionUp', ...alice})
+            arg$.next({data: {type: 'message', conversationId: 'conv-1', text: 'hello'}, ...alice})
+
+            expect(published.at(-1)).toMatchObject({
+                type: 'workFailed',
+                level: 'error',
+                message: 'WS work failed: redis unavailable'
             })
         })
     })

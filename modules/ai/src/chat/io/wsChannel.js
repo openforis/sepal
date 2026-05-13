@@ -1,5 +1,5 @@
 function createWsChannel({out$, bus, username, clientId, subscriptionId}) {
-    return {chatResponse, status, userMessage, conversationCreated, conversationClaimed, conversationLoaded, conversationDeleted, conversationsList}
+    return {chatResponse, status, userMessage, conversationCreated, conversationClaimed, conversationUpdated, conversationLoaded, conversationDeleted, conversationsList}
 
     function chatResponse({conversationId, textDelta, complete}) {
         if (complete) {
@@ -40,6 +40,13 @@ function createWsChannel({out$, bus, username, clientId, subscriptionId}) {
         broadcastExcept(
             {type: 'conversation-claimed', conversationId: id, ...meta},
             `conversation-claimed ${id}`
+        )
+    }
+
+    function conversationUpdated({id, ...meta}) {
+        broadcast(
+            {type: 'conversation-updated', conversationId: id, ...meta},
+            `conversation-updated ${id}`
         )
     }
 

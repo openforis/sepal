@@ -207,6 +207,9 @@ export const ChatPanel = ({className}) => {
                 case 'conversation-claimed':
                     dispatch({type: 'CONVERSATION_CLAIMED', meta: metaFrom(data)})
                     break
+                case 'conversation-updated':
+                    dispatch({type: 'CONVERSATION_UPDATED', meta: metaFrom(data)})
+                    break
                 case 'conversation-deleted':
                     dispatch({type: 'CONVERSATION_DELETED', conversationId})
                     break

@@ -1,4 +1,4 @@
-const {EMPTY, Subject, concatMap, defer, filter, finalize, from, ignoreElements, map, of, takeUntil, tap} = require('rxjs')
+const {EMPTY, Subject, concat, concatMap, defer, filter, finalize, from, ignoreElements, map, of, takeUntil, tap} = require('rxjs')
 
 const COMMANDS = {
     'create-conversation': 'createConversation$',
@@ -10,8 +10,9 @@ const COMMANDS = {
     'abort': 'abort$'
 }
 
-function createUserChat({conversationsStore, conversationFor$, createId, clock}) {
+function createUserChat({conversationsStore, conversationFor$, createId, clock, titleGenerator}) {
     const conversations = new Map()
+    const pendingMetas = new Map()
     const streaming = new Set()
     const abortRequests$ = new Subject()
 
@@ -30,10 +31,8 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock})
             const id = createId()
             const now = clock.nowIso()
             const meta = {id, title: '', createdAt: now, updatedAt: now}
+            pendingMetas.set(id, meta)
             return conversationFor$(id).pipe(
-                concatMap(conversation =>
-                    conversationsStore.add$(meta).pipe(map(() => conversation))
-                ),
                 tap(conversation => {
                     conversations.set(id, conversation)
                     channel.conversationCreated(meta)
@@ -58,6 +57,10 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock})
         return defer(() => {
             abortRequests$.next(conversationId)
             conversations.delete(conversationId)
+            if (pendingMetas.delete(conversationId)) {
+                channel.conversationDeleted(conversationId)
+                return EMPTY
+            }
             return conversationsStore.delete$(conversationId).pipe(
                 tap(deleted => {
                     if (deleted) channel.conversationDeleted(conversationId)
@@ -69,8 +72,11 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock})
 
     function deleteAllConversations$({channel}) {
         return conversationsStore.list$().pipe(
-            concatMap(metas => from(metas)),
-            concatMap(meta => deleteConversation$({channel, conversationId: meta.id}))
+            concatMap(metas => from([
+                ...metas.map(meta => meta.id),
+                ...pendingMetas.keys()
+            ])),
+            concatMap(id => deleteConversation$({channel, conversationId: id}))
         )
     }
 
@@ -84,12 +90,24 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock})
     function sendUserMessage$({channel, conversationId, text}) {
         return conversation$(conversationId).pipe(
             concatMap(conversation =>
-                conversationsStore.touch$(conversationId, clock.nowIso()).pipe(
-                    filter(touched => touched),
-                    map(() => conversation)
-                )
+                persistOrTouch$(conversationId).pipe(map(() => conversation))
             ),
-            concatMap(conversation => streamReply$(channel, conversation, conversationId, text))
+            concatMap(conversation => concat(
+                streamReply$(channel, conversation, conversationId, text),
+                titleGenerator.afterTurn$({channel, conversation, conversationId, userText: text})
+            ))
+        )
+    }
+
+    function persistOrTouch$(conversationId) {
+        const now = clock.nowIso()
+        const pending = pendingMetas.get(conversationId)
+        if (pending) {
+            pendingMetas.delete(conversationId)
+            return conversationsStore.add$({...pending, updatedAt: now})
+        }
+        return conversationsStore.touch$(conversationId, now).pipe(
+            filter(touched => touched)
         )
     }
 

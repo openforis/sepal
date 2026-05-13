@@ -140,6 +140,28 @@ describe('WS channel adapter', () => {
         })
     })
 
+    describe('conversationUpdated — broadcast to all tabs (e.g., title changes)', () => {
+
+        const meta = {id: 'conv-1', title: 'NDVI change Kenya'}
+
+        it('emits the meta record so every tab merges the update into its sidebar', () => {
+            channel.conversationUpdated(meta)
+
+            expect(sent).toEqual([{
+                username: 'alice',
+                data: {
+                    type: 'conversation-updated',
+                    conversationId: 'conv-1',
+                    title: 'NDVI change Kenya'
+                }
+            }])
+            expect(published[0]).toMatchObject({
+                level: 'debug',
+                message: 'WS out (alice broadcast) conversation-updated conv-1'
+            })
+        })
+    })
+
     describe('conversationLoaded — targeted to the requester', () => {
 
         const messages = [{role: 'user', content: 'first'}, {role: 'assistant', content: 'reply'}]

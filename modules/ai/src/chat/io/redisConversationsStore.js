@@ -5,7 +5,7 @@ function createRedisConversationsStore({redis, username, ttlMs}) {
     const key = conversationsKey(username)
     const seconds = ttlSeconds(ttlMs)
 
-    return {add$, get$, touch$, delete$, list$}
+    return {add$, get$, touch$, updateTitle$, delete$, list$}
 
     function add$(meta) {
         return defer(() => from(redis.hset(key, meta.id, JSON.stringify(meta)))).pipe(
@@ -25,6 +25,15 @@ function createRedisConversationsStore({redis, username, ttlMs}) {
             concatMap(meta => {
                 if (!meta) return of(false)
                 return add$({...meta, updatedAt}).pipe(map(() => true))
+            })
+        )
+    }
+
+    function updateTitle$(id, title) {
+        return get$(id).pipe(
+            concatMap(meta => {
+                if (!meta) return of(false)
+                return add$({...meta, title}).pipe(map(() => true))
             })
         )
     }

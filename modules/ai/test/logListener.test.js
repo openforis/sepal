@@ -22,6 +22,14 @@ describe('Log listener', () => {
         expect(lines).toEqual([{level: 'warn', line: 'WS in c1:s1 (alice) unknown data type: foo (ignored)'}])
     })
 
+    it('passes lazy message functions through to the logger', () => {
+        const message = () => 'expensive log line'
+
+        listener.onEvent({type: 'debug.payload', level: 'trace', message})
+
+        expect(lines).toEqual([{level: 'trace', line: message}])
+    })
+
     it('logs error-level events at error', () => {
         listener.onEvent({type: 'something.failed', level: 'error', message: 'something failed: boom'})
 
