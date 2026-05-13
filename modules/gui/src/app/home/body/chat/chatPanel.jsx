@@ -32,6 +32,13 @@ const DEFAULT_CHAT_WIDTH = 400
 const MIN_CHAT_WIDTH = 280
 const MAX_CHAT_WIDTH_RATIO = 0.8
 
+const metaFrom = data => ({
+    id: data.conversationId,
+    title: data.title,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt
+})
+
 const loadStoredChatMode = () => {
     const stored = localStorage.getItem(CHAT_MODE_STORAGE_KEY)
     return stored === CHAT_MODE_SPLIT || stored === CHAT_MODE_OVERLAY ? stored : CHAT_MODE_OVERLAY
@@ -158,9 +165,6 @@ export const ChatPanel = ({className}) => {
         }
     })
 
-    const activeConversationIdRef = useRef(activeConversationId)
-    activeConversationIdRef.current = activeConversationId
-
     useEffect(() => {
         const subscription = message$.subscribe(data => {
             const {type, requestId, conversationId} = data
@@ -192,28 +196,28 @@ export const ChatPanel = ({className}) => {
                     dispatch({type: 'CONVERSATIONS_SET', conversations: data.conversations})
                     break
                 case 'conversation-created':
-                    dispatch({type: 'CONVERSATION_CREATED', conversationId})
+                    dispatch({type: 'CONVERSATION_CREATED', meta: metaFrom(data)})
                     break
                 case 'conversation-loaded':
                     dispatch({type: 'CONVERSATION_LOADED', conversationId, messages: data.messages})
                     break
                 case 'conversation-claimed':
-                    if (conversationId === activeConversationIdRef.current) {
-                        dispatch({type: 'CONVERSATION_CLAIMED', conversationId})
-                        send({type: 'list-conversations'})
-                    }
+                    dispatch({type: 'CONVERSATION_CLAIMED', meta: metaFrom(data)})
+                    break
+                case 'conversation-deleted':
+                    dispatch({type: 'CONVERSATION_DELETED', conversationId})
                     break
                 default:
                     log.trace('Unhandled chat message type:', type)
             }
         })
         return () => subscription.unsubscribe()
-    }, [message$, dispatch, respond, send])
+    }, [message$, dispatch, respond])
 
     const handleSend = useCallback(text => {
         if (isConnected && activeConversationId) {
             dispatch({type: 'USER_SENT', text})
-            send({type: 'message', text, selection: currentSelection()})
+            send({type: 'message', conversationId: activeConversationId, text, selection: currentSelection()})
         }
     }, [dispatch, send, isConnected, activeConversationId])
 

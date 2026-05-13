@@ -1,19 +1,19 @@
 {
-  "port": 5000,
-  "categories": {
-    "config": "info",
-    "conversationHandler": "info",
-    "conversationLoop": "debug",
-    "http/server": "info",
-    "main": "info",
-    "messageHandler": "trace",
-    "providers/claude": "debug",
-    "providers/lmstudio": "debug",
-    "providers/openai": "debug",
-    "session": "info",
-    "titleGenerator": "debug",
-    "toolRunner": "debug",
-    "tools": "info",
-    "ws": "info"
-  }
+    "port": 5000,
+    "categories": {
+        "config": "trace",
+        "conversationHandler": "trace",
+        "conversationLoop": "trace",
+        "http/server": "info",
+        "main": "trace",
+        "messageHandler": "trace",
+        "providers/claude": "trace",
+        "providers/lmstudio": "trace",
+        "providers/openai": "trace",
+        "session": "trace",
+        "titleGenerator": "trace",
+        "toolRunner": "trace",
+        "tools": "trace",
+        "ws": "trace"
+    }
 }

@@ -5,7 +5,24 @@
     "main": "main.js",
     "scripts": {
         "test": "jest",
-        "testWatch": "jest --watchAll"
+        "testWatch": "jest --watchAll",
+        "coverage": "jest --coverage",
+        "test:manual": "jest --testPathPattern=\\.manual\\.test\\.js$ --testPathIgnorePatterns=/node_modules/ --forceExit"
+    },
+    "jest": {
+        "collectCoverageFrom": [
+            "src/chat/sendMessage/**/*.js",
+            "src/chat/io/**/*.js",
+            "!src/chat/io/openai.js",
+            "src/server.js",
+            "src/eventBus.js",
+            "src/tracer.js",
+            "src/logListener.js"
+        ],
+        "testPathIgnorePatterns": [
+            "/node_modules/",
+            "\\.manual\\.test\\.js$"
+        ]
     },
     "author": "",
     "license": "ISC",
@@ -13,11 +30,11 @@
         "@anthropic-ai/sdk": "^0.95.1",
         "ajv": "^8.20.0",
         "ajv-formats": "^3.0.1",
-        "moment": "^2.30.1",
         "commander": "^14.0.3",
         "ioredis": "^5.10.1",
         "lodash": "^4.18.1",
         "log4js": "^6.9.1",
+        "moment": "^2.30.1",
         "openai": "^6.37.0",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
@@ -29,5 +46,8 @@
         "#mcp/*": "./src/*.js",
         "#mcp/*.json": "./src/*.json",
         "#config/*.json": "./config/*.json"
+    },
+    "devDependencies": {
+        "jest": "^29.7.0"
     }
 }

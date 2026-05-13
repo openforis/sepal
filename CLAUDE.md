@@ -89,6 +89,26 @@ sepal eslint <module> -f             # Run ESLint with autofix
 
 Module groups can be used with `:` prefix: `:default`, `:node`, `:process`, `:apps`.
 
+### Codex / Agent Container Notes
+
+Codex sessions usually run on the host checkout, while the project tooling and correct
+module dependencies live in containers. Prefer running project commands through
+`sepal-dev`:
+
+```bash
+docker exec sepal-dev bash -lc 'sepal status'
+docker exec sepal-dev bash -lc 'sepal npm-test gui useConversation.test.js --run'
+docker exec sepal-dev bash -lc 'sepal npm-test ai --runInBand'
+```
+
+`sepal npm-test <module>` forwards extra args to the module test runner, so focused
+tests work without opening a shell first.
+
+Avoid relying on host-side `node_modules` for frontend tests. The mounted
+`modules/gui/node_modules` can contain platform-specific optional packages from a
+different container/libc and fail with native binding errors. Use `sepal npm-test gui ...`
+or run inside the `gui` container.
+
 ### Module Dependencies
 
 Module dependencies are defined in `dev-env/config/deps.json`. Each module specifies:

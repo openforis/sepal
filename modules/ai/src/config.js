@@ -73,6 +73,11 @@ try {
                 .argParser(v => parseInt(v))
                 .default(DEFAULT_HTTP_PORT)
         )
+        .addOption(
+            new Option('--system-prompt <value>', 'System prompt prepended to every conversation')
+                .env('SYSTEM_PROMPT')
+                .default('You are Sepalito, a brief assistant for the SEPAL platform. Reply concisely.')
+        )
         .parse(process.argv)
 } catch (error) {
     fatalError(error)
@@ -89,7 +94,8 @@ const {
     llmModel,
     llmBaseUrl,
     rateLimit,
-    sessionTtlMinutes
+    sessionTtlMinutes,
+    systemPrompt
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -105,5 +111,6 @@ module.exports = {
     llmModel,
     llmBaseUrl,
     rateLimit,
-    sessionTtlMs: sessionTtlMinutes * 60 * 1000
+    sessionTtlMs: sessionTtlMinutes * 60 * 1000,
+    systemPrompt
 }

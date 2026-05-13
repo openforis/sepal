@@ -35,7 +35,7 @@ const processLoadedMessages = messages => {
     return result
 }
 
-const initialState = {
+export const initialConversationState = {
     messages: [],
     isLoading: false,
     isThinking: false,
@@ -56,7 +56,19 @@ const updateLast = (messages, transform) => {
     return updated
 }
 
-const reducer = (state, action) => {
+const addOrUpdate = (conversations, meta) => {
+    if (!meta?.id) return conversations
+    const nextMeta = Object.fromEntries(
+        Object.entries(meta).filter(([, value]) => value !== undefined)
+    )
+    const idx = conversations.findIndex(c => c.id === meta.id)
+    if (idx < 0) return [nextMeta, ...conversations]
+    const updated = [...conversations]
+    updated[idx] = {...updated[idx], ...nextMeta}
+    return updated
+}
+
+export const conversationReducer = (state, action) => {
     switch (action.type) {
         case 'USER_SENT':
             return {
@@ -154,16 +166,19 @@ const reducer = (state, action) => {
         }
         case 'CONVERSATIONS_SET':
             return {...state, conversations: action.conversations || []}
-        case 'CONVERSATION_CREATED':
+        case 'CONVERSATION_CREATED': {
+            const meta = action.meta || {id: action.conversationId}
             return {
                 ...state,
-                activeConversationId: action.conversationId,
+                activeConversationId: meta.id,
+                conversations: addOrUpdate(state.conversations, meta),
                 messages: [],
                 streaming: false,
                 isLoading: false,
                 isThinking: false,
                 view: 'chat'
             }
+        }
         case 'CONVERSATION_LOADED':
             return {
                 ...state,
@@ -175,9 +190,19 @@ const reducer = (state, action) => {
                 view: 'chat'
             }
         case 'CONVERSATION_CLAIMED':
-            if (action.conversationId !== state.activeConversationId) return state
             return {
                 ...state,
+                conversations: addOrUpdate(state.conversations, action.meta || {id: action.conversationId})
+            }
+        case 'CONVERSATION_DELETED': {
+            const id = action.conversationId
+            const conversations = state.conversations.filter(c => c.id !== id)
+            if (state.activeConversationId !== id) {
+                return {...state, conversations}
+            }
+            return {
+                ...state,
+                conversations,
                 activeConversationId: null,
                 messages: [],
                 streaming: false,
@@ -185,6 +210,7 @@ const reducer = (state, action) => {
                 isThinking: false,
                 view: 'list'
             }
+        }
         case 'SHOW_LIST':
             return {
                 ...state,
@@ -215,4 +241,4 @@ const reducer = (state, action) => {
     }
 }
 
-export const useConversation = () => useReducer(reducer, initialState)
+export const useConversation = () => useReducer(conversationReducer, initialConversationState)

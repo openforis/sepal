@@ -2,29 +2,49 @@
 
 MCP (Model Context Protocol) server for AI-powered SEPAL recipe interaction via chat.
 
+## Practices
+
+See [PRACTICES.md](./PRACTICES.md) for architecture, TDD, test layout, injection, and code-quality rules used in this module. Read it before changing code under `src/chat/`.
+
+Deferred items (cases consciously skipped for now) are tracked in [PUNCH_LIST.md](./PUNCH_LIST.md).
+
 ## Commands
 
 ```bash
-npm test              # Jest
-npm run testWatch     # Jest watch mode
+sepal npm-test ai --runInBand            # Normal test path from sepal-dev
+sepal npm-test ai <pattern> --runInBand  # Focused Jest test from sepal-dev
+npm test                                 # Direct Jest, when already in modules/ai with deps installed
+npm run testWatch                        # Jest watch mode
 ```
 
+The `ai` compose-run container has module-local Jest installed. Use the `sepal npm-test`
+form for Codex/session work so tests run in the same container context as the module.
+
 ## Key Architecture
+
+### Rewrite Status
+
+The active AI chat path is a rewrite, not a refactor of the old orchestrator. The active
+entry is `src/main.js` → `src/app.js`, which wires `src/chat/io/` and
+`src/chat/sendMessage/`.
+
+The pre-rewrite chat implementation is archived under `archive/pre-rewrite-chat/` for
+temporary reference. It is not imported by the active module.
 
 ### Two-Layer Design
 
 **MCP Tool Layer** (`src/mcp/`) — Stateless, testable tool definitions and recipe schema registry. No LLM dependency. Communicates with sepal-server (recipe CRUD) and gee module (recipe execution) via HTTP.
 
-**Chat Orchestrator Layer** (`src/chat/`) — Manages chat sessions, LLM provider abstraction, conversation history, and websocket communication with the GUI. Calls MCP tools internally based on LLM tool-calling decisions.
+**Chat Rewrite Layer** (`src/chat/`) — Active websocket, conversation, history, and LLM-stream handling for the GUI chat. Current conversation storage is in-memory; durable persistence and title generation are not yet active.
 
 ### Entry Point
-`src/main.js` — Koa HTTP server with WebSocket support via `#sepal/httpServer` `wsStream()`. Initializes registry, API clients, tools, schemas, templates, and the websocket handler.
+`src/main.js` — starts `createApp()` from `src/app.js`, wiring the HTTP server, event bus, tracer, websocket handler, in-memory conversation stores, and LLM adapter.
 
 ### WebSocket Protocol
 Uses the gateway's subscription-based websocket routing. The browser subscribes to `ai` module, and messages flow as `{module, subscriptionId, data}`.
 
 - **Lifecycle events**: `subscriptionUp/Down`, `clientUp/Down`, `userUp/Down` — handled for session management
-- **Chat messages**: `{type: 'message', text}` from client → LLM processing → `{type: 'chat-response', text, complete}` back (final chunk includes `complete: true`)
+- **Chat messages**: `{type: 'message', conversationId, text}` from client → LLM processing → `{type: 'chat-response', conversationId, text, complete}` back (final chunk includes `complete: true`)
 - **GUI actions**: `{type: 'gui-action', action: 'open'|'reload'|'close', recipeId}` sent to client
 
 ### REST API
@@ -33,19 +53,16 @@ Uses the gateway's subscription-based websocket routing. The browser subscribes 
 ## Source Structure
 
 ```
+archive/
+  pre-rewrite-chat/           # Old chat implementation, inactive
 src/
-  main.js                     # Entry point, wires everything together
+  main.js                     # Entry point
+  app.js                      # Active rewrite composition
   config.js                   # CLI argument parsing (port, endpoints, LLM config)
-  routes.js                   # HTTP + WebSocket route definitions
-  ws.js                       # WebSocket handler (lifecycle events, message routing)
-  chat/                       # Chat Orchestrator Layer
-    orchestrator.js            # Session mgmt, LLM conversation loop, tool execution
-    session.js                 # In-memory session store with TTL cleanup
-    providers/
-      provider.js              # Base LLM provider interface
-      claude.js                # Claude API (Anthropic SDK, tool_use)
-      openai.js                # OpenAI API (function_calling, optional baseURL)
-      lmstudio.js              # OpenAI-compatible (LM Studio, Ollama, etc.) with configurable base URL
+  chat/                       # Chat Rewrite Layer
+    io/                        # Active adapters: websocket, OpenAI stream, in-memory stores
+    sendMessage/               # Active conversation/user-chat rewrite slice
+    system-prompt.md           # Active system prompt
   mcp/                        # MCP Tool Layer
     registry.js                # Central tool/schema/template registry
     tools/
