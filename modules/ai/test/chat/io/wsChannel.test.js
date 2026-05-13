@@ -49,6 +49,13 @@ describe('WS channel adapter', () => {
                 message: 'WS out (alice broadcast) chat-response conv-1 complete'
             })
         })
+
+        it('ignores empty payloads', () => {
+            channel.chatResponse({conversationId: 'conv-1'})
+
+            expect(sent).toEqual([])
+            expect(published).toEqual([])
+        })
     })
 
     describe('status — broadcast', () => {

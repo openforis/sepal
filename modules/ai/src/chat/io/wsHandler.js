@@ -33,6 +33,11 @@ function createWsHandler({bus, userChatFor}) {
                     userChat.deleteConversation(channel, id)
                 )
             },
+            deleteAllConversations(subscription) {
+                withSubscription(subscription, ({channel, userChat}) =>
+                    userChat.deleteAllConversations(channel)
+                )
+            },
             listConversations(subscription) {
                 withSubscription(subscription, ({channel, userChat}) =>
                     userChat.listConversations(channel)

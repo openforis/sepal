@@ -12,6 +12,7 @@ const ROUTES = {
         attrs: m => ({conversationId: m.data.conversationId}),
         handle: (h, s, m) => h.deleteConversation(s, m.data.conversationId)
     },
+    'data:delete-all-conversations': {kind: 'deleteAllConversations', handle: (h, s) => h.deleteAllConversations(s)},
     'data:list-conversations': {kind: 'listConversations', handle: (h, s) => h.listConversations(s)},
     'data:context': {kind: 'context', level: 'debug', handle: () => {}},
     'data:abort': {

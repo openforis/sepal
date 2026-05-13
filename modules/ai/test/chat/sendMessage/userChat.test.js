@@ -182,6 +182,39 @@ describe('UserChat', () => {
 
             expect(channel.deleted).toEqual([])
         })
+
+        it('unsubscribes any in-flight stream so deleted conversations stop emitting', () => {
+            const replies$ = new Subject()
+            const llm = {respondTo$: () => replies$, receivedMessages: []}
+            userChat = aUserChat({llm})
+            userChat.createConversation(channel)
+            userChat.sendUserMessage(channel, 'conv-1', 'hello')
+
+            userChat.deleteConversation(channel, 'conv-1')
+            replies$.next({textDelta: 'too late'})
+
+            expect(channel.sent.filter(p => p.textDelta)).toEqual([])
+        })
+    })
+
+    describe('deleteAllConversations', () => {
+
+        it('notifies the channel for each conversation and removes all from the store', () => {
+            userChat.createConversation(channel)
+            userChat.createConversation(channel)
+
+            userChat.deleteAllConversations(channel)
+            userChat.listConversations(channel)
+
+            expect(channel.deleted).toEqual(['conv-1', 'conv-2'])
+            expect(channel.lists).toEqual([[]])
+        })
+
+        it('is a no-op when there are no conversations', () => {
+            userChat.deleteAllConversations(channel)
+
+            expect(channel.deleted).toEqual([])
+        })
     })
 
     describe('listConversations', () => {

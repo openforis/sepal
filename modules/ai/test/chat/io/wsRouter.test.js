@@ -16,7 +16,7 @@ describe('WS router', () => {
     function aSpyHandlers() {
         const calls = {
             subscribe: [], unsubscribe: [], createConversation: [],
-            selectConversation: [], deleteConversation: [], listConversations: [],
+            selectConversation: [], deleteConversation: [], deleteAllConversations: [], listConversations: [],
             sendUserMessage: [], abort: []
         }
         return {
@@ -25,6 +25,7 @@ describe('WS router', () => {
             createConversation: s => calls.createConversation.push(s),
             selectConversation: (s, id) => calls.selectConversation.push({s, id}),
             deleteConversation: (s, id) => calls.deleteConversation.push({s, id}),
+            deleteAllConversations: s => calls.deleteAllConversations.push(s),
             listConversations: s => calls.listConversations.push(s),
             sendUserMessage: (s, id, text) => calls.sendUserMessage.push({s, id, text}),
             abort: (s, id) => calls.abort.push({s, id}),
@@ -69,6 +70,13 @@ describe('WS router', () => {
             expect(handlers.calls.deleteConversation).toEqual([{s: aliceSub, id: 'conv-9'}])
         })
 
+        it('delete-all-conversations → deleteAllConversations', () => {
+            const handlers = aSpyHandlers()
+            createWsRouter({bus, handlers}).receive({data: {type: 'delete-all-conversations'}, ...aliceWire})
+
+            expect(handlers.calls.deleteAllConversations).toEqual([aliceSub])
+        })
+
         it('list-conversations → listConversations', () => {
             const handlers = aSpyHandlers()
             createWsRouter({bus, handlers}).receive({data: {type: 'list-conversations'}, ...aliceWire})
@@ -98,7 +106,7 @@ describe('WS router', () => {
 
             expect(handlers.calls).toEqual({
                 subscribe: [], unsubscribe: [], createConversation: [],
-                selectConversation: [], deleteConversation: [], listConversations: [],
+                selectConversation: [], deleteConversation: [], deleteAllConversations: [], listConversations: [],
                 sendUserMessage: [], abort: []
             })
         })
@@ -181,6 +189,16 @@ describe('WS router', () => {
                 kind: 'deleteConversation',
                 level: 'info',
                 message: `WS in ${aliceLabel} deleteConversation conv-9`
+            })
+        })
+
+        it('deleteAllConversations', () => {
+            createWsRouter({bus, handlers: aSpyHandlers()}).receive({data: {type: 'delete-all-conversations'}, ...aliceWire})
+
+            expect(published[0]).toMatchObject({
+                kind: 'deleteAllConversations',
+                level: 'info',
+                message: `WS in ${aliceLabel} deleteAllConversations`
             })
         })
 

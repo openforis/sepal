@@ -6,6 +6,7 @@ function createUserChat({conversationsStore, newConversation, clock}) {
         createConversation,
         selectConversation,
         deleteConversation,
+        deleteAllConversations,
         listConversations,
         sendUserMessage,
         abort
@@ -31,8 +32,13 @@ function createUserChat({conversationsStore, newConversation, clock}) {
 
     function deleteConversation(channel, id) {
         if (!conversations.delete(id)) return
+        stop(id)
         conversationsStore.delete(id)
         channel.conversationDeleted(id)
+    }
+
+    function deleteAllConversations(channel) {
+        [...conversations.keys()].forEach(id => deleteConversation(channel, id))
     }
 
     function listConversations(channel) {
@@ -56,11 +62,16 @@ function createUserChat({conversationsStore, newConversation, clock}) {
     }
 
     function abort(channel, conversationId) {
+        if (!stop(conversationId)) return
+        channel.chatResponse({conversationId, complete: true})
+    }
+
+    function stop(conversationId) {
         const subscription = inFlight.get(conversationId)
-        if (!subscription) return
+        if (!subscription) return false
         inFlight.delete(conversationId)
         subscription.unsubscribe()
-        channel.chatResponse({conversationId, complete: true})
+        return true
     }
 
     function nowIso() {

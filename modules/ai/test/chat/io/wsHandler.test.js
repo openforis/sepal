@@ -227,4 +227,21 @@ describe('Chat WS handler', () => {
             }])
         })
     })
+
+    describe('delete-all-conversations', () => {
+
+        it('emits conversation-deleted as a broadcast for each conversation', () => {
+            const {arg$, sent} = captureSent(aHandler({conversationIds: ['conv-1', 'conv-2']}))
+
+            arg$.next({event: 'subscriptionUp', ...alice})
+            arg$.next({data: {type: 'create-conversation'}, ...alice})
+            arg$.next({data: {type: 'create-conversation'}, ...alice})
+            arg$.next({data: {type: 'delete-all-conversations'}, ...alice})
+
+            expect(sent.filter(m => m.data?.type === 'conversation-deleted')).toEqual([
+                {username: 'alice', data: {type: 'conversation-deleted', conversationId: 'conv-1'}},
+                {username: 'alice', data: {type: 'conversation-deleted', conversationId: 'conv-2'}}
+            ])
+        })
+    })
 })

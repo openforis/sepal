@@ -36,6 +36,7 @@ Supported now:
 - `select-conversation` → `conversation-loaded` (requesting tab only)
 - `list-conversations` → `conversations`
 - `delete-conversation` → `conversation-deleted` (broadcast to all tabs of same user)
+- `delete-all-conversations` → `conversation-deleted` for each conversation (broadcast to all tabs of same user)
 - `message` with `conversationId` → `chat-response` (broadcast to all tabs of same user)
 - `user-message` → GUI appends user input in other tabs that are viewing the same conversation
 - `abort` → in-flight subscription cancellation + final `chat-response complete`
@@ -43,7 +44,6 @@ Supported now:
 
 Still deferred:
 
-- `delete-all-conversations` — trivial Session method + ROUTES row + UserChat method that iterates `conversations`
 - `gui-response` (for tool-driven GUI actions like open/reload/close recipe)
 
 Adding a wire message type is now mechanical: `wsRouter` route + `UserChat` method + (if outbound) `wsChannel` method.
