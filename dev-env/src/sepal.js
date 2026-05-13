@@ -152,6 +152,8 @@ const main = async () => {
     program.command('npm-test')
         .description('Run npm interactive tests')
         .argument('module', 'Module to test')
+        .argument('[testArgs...]', 'Arguments to pass to npm test')
+        .allowUnknownOption(true)
         .action(npmTest)
 
     program.command('eslint')

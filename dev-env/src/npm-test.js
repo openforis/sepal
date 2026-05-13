@@ -6,7 +6,7 @@ import {compose} from './compose.js'
 import {SEPAL_SRC, USER_GID, USER_UID} from './config.js'
 import {isNodeModule, MESSAGE, showModuleStatus} from './utils.js'
 
-const runTests = async (module, modulePath, _options) => {
+const runTests = async (module, modulePath, testArgs) => {
     showModuleStatus(module, MESSAGE.TESTING_PACKAGES)
     await access(`${modulePath}/package.json`)
     await compose({
@@ -18,7 +18,8 @@ const runTests = async (module, modulePath, _options) => {
             module,
             'npm',
             'run',
-            'test'
+            'test',
+            ...(_.isEmpty(testArgs) ? [] : ['--', ...testArgs])
         ],
         showStdOut: true,
         showStdErr: true
@@ -26,13 +27,13 @@ const runTests = async (module, modulePath, _options) => {
     showModuleStatus(module, MESSAGE.TESTED_PACKAGES)
 }
 
-const testModule = async (module, path, options) => {
+const testModule = async (module, path, testArgs) => {
     const modulePath = Path.join(SEPAL_SRC, path)
     if (await isNodeModule(modulePath)) {
-        await runTests(module, modulePath, options)
+        await runTests(module, modulePath, testArgs)
     }
 }
 
-export const npmTest = async (module, options) => {
-    await testModule(module, `modules/${module}`, options)
+export const npmTest = async (module, testArgs = []) => {
+    await testModule(module, `modules/${module}`, testArgs)
 }
