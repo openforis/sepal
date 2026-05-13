@@ -1,7 +1,10 @@
-const {concat, concatMap, defer, filter, from, map, of, tap, toArray, catchError} = require('rxjs')
+const {catchError, concat, concatMap, defer, filter, from, ignoreElements, map, of, tap, toArray} = require('rxjs')
 
-function createConversation({llm, history, tools, tracer, systemPrompt, id}) {
-    const messages = systemPrompt ? [{role: 'system', content: systemPrompt}] : [] // Mutable
+function createConversation({llm, history, tools, tracer, systemPrompt, initialMessages = [], id}) {
+    const messages = [
+        ...(systemPrompt ? [{role: 'system', content: systemPrompt}] : []),
+        ...initialMessages
+    ] // Mutable
 
     return {id, sendUserMessage$, messagesSnapshot}
 
@@ -46,7 +49,7 @@ function createConversation({llm, history, tools, tracer, systemPrompt, id}) {
 
     function reply$(text) {
         return append$({role: 'assistant', content: text}).pipe(
-            filter(() => false)
+            ignoreElements()
         )
     }
 

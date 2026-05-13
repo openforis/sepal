@@ -1,7 +1,7 @@
-const {Subject} = require('rxjs')
+const {Subject, of} = require('rxjs')
 const {createConversation} = require('#mcp/chat/sendMessage/conversation')
 const {createUserChat} = require('#mcp/chat/sendMessage/userChat')
-const {createInMemoryConversationsStore} = require('#mcp/chat/io/conversationsStore')
+const {createInMemoryConversationsStore} = require('../io/inMemoryConversationsStore')
 const {aFakeChannel, aFakeHistory, aFakeLlm, aFakeTools, aFakeTracer} = require('./builders')
 
 describe('UserChat', () => {
@@ -26,21 +26,25 @@ describe('UserChat', () => {
             tools: aFakeTools(),
             createId: sequentialIds(['conv-1', 'conv-2', 'conv-3']),
             systemPrompt: null,
+            conversationsStore: createInMemoryConversationsStore(),
+            initialMessagesById: {},
             createHistory: aFakeHistory,
             clock: aFixedClock(T1),
             ...overrides
         }
         return createUserChat({
-            conversationsStore: createInMemoryConversationsStore(),
+            conversationsStore: opts.conversationsStore,
             clock: opts.clock,
-            newConversation: () => createConversation({
+            createId: opts.createId,
+            conversationFor$: id => of(createConversation({
                 llm: opts.llm,
                 tracer: opts.tracer,
                 tools: opts.tools,
-                history: opts.createHistory(),
+                history: opts.createHistory(id),
                 systemPrompt: opts.systemPrompt,
-                id: opts.createId()
-            })
+                initialMessages: opts.initialMessagesById[id] || [],
+                id
+            }))
         })
     }
 
@@ -133,6 +137,33 @@ describe('UserChat', () => {
             expect(channel.statuses).toEqual([])
             expect(channel.userMessages).toEqual([])
         })
+
+        it('rebuilds a persisted conversation before sending to it', () => {
+            const persisted = {id: 'conv-1', title: '', createdAt: ISO_T1, updatedAt: ISO_T1}
+            llm = aFakeLlm({replies: [{text: 'Again!'}]})
+            userChat = aUserChat({
+                llm,
+                conversationsStore: createInMemoryConversationsStore([persisted]),
+                initialMessagesById: {
+                    'conv-1': [
+                        {role: 'user', content: 'first'},
+                        {role: 'assistant', content: 'reply'}
+                    ]
+                }
+            })
+
+            userChat.sendUserMessage(channel, 'conv-1', 'again')
+
+            expect(llm.receivedMessages[0]).toEqual([
+                {role: 'user', content: 'first'},
+                {role: 'assistant', content: 'reply'},
+                {role: 'user', content: 'again'}
+            ])
+            expect(channel.sent).toEqual([
+                {conversationId: 'conv-1', textDelta: 'Again!'},
+                {conversationId: 'conv-1', complete: true}
+            ])
+        })
     })
 
     describe('selectConversation', () => {
@@ -152,17 +183,33 @@ describe('UserChat', () => {
             }])
         })
 
-        it('returns the id when found, undefined when not', () => {
-            userChat.createConversation(channel)
-
-            expect(userChat.selectConversation(channel, 'conv-1')).toBe('conv-1')
-            expect(userChat.selectConversation(channel, 'nope')).toBeUndefined()
-        })
-
         it('does not notify the channel for an unknown id', () => {
             userChat.selectConversation(channel, 'nope')
 
             expect(channel.loaded).toEqual([])
+        })
+
+        it('rebuilds a persisted conversation before loading it', () => {
+            const persisted = {id: 'conv-1', title: '', createdAt: ISO_T1, updatedAt: ISO_T1}
+            userChat = aUserChat({
+                conversationsStore: createInMemoryConversationsStore([persisted]),
+                initialMessagesById: {
+                    'conv-1': [
+                        {role: 'user', content: 'first'},
+                        {role: 'assistant', content: 'reply'}
+                    ]
+                }
+            })
+
+            userChat.selectConversation(channel, 'conv-1')
+
+            expect(channel.loaded).toEqual([{
+                conversationId: 'conv-1',
+                messages: [
+                    {role: 'user', content: 'first'},
+                    {role: 'assistant', content: 'reply'}
+                ]
+            }])
         })
     })
 
@@ -230,6 +277,7 @@ describe('UserChat', () => {
                 {id: 'conv-2', title: '', createdAt: ISO_T1, updatedAt: ISO_T1}
             ]])
         })
+
     })
 
     describe('abort', () => {

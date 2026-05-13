@@ -1,4 +1,6 @@
-function createUserChat({conversationsStore, newConversation, clock}) {
+const {concatMap, filter, map, of, tap} = require('rxjs')
+
+function createUserChat({conversationsStore, conversationFor$, createId, clock}) {
     const conversations = new Map()
     const inFlight = new Map()
 
@@ -13,42 +15,63 @@ function createUserChat({conversationsStore, newConversation, clock}) {
     }
 
     function createConversation(channel) {
-        const conversation = newConversation()
+        const id = createId()
         const now = nowIso()
-        const meta = {id: conversation.id, title: '', createdAt: now, updatedAt: now}
-        conversations.set(conversation.id, conversation)
-        conversationsStore.add(meta)
-        channel.conversationCreated(meta)
-        channel.conversationClaimed(meta)
-        return conversation.id
-    }
-
-    function selectConversation(channel, id) {
-        const conversation = conversations.get(id)
-        if (!conversation) return
-        channel.conversationLoaded(id, conversation.messagesSnapshot())
+        const meta = {id, title: '', createdAt: now, updatedAt: now}
+        run$(conversationFor$(id).pipe(
+            concatMap(conversation =>
+                conversationsStore.add$(meta).pipe(map(() => conversation))
+            ),
+            tap(conversation => {
+                conversations.set(id, conversation)
+                channel.conversationCreated(meta)
+                channel.conversationClaimed(meta)
+            })
+        ))
         return id
     }
 
+    function selectConversation(channel, id) {
+        run$(conversation$(id).pipe(
+            tap(conversation => channel.conversationLoaded(id, conversation.messagesSnapshot()))
+        ))
+    }
+
     function deleteConversation(channel, id) {
-        if (!conversations.delete(id)) return
         stop(id)
-        conversationsStore.delete(id)
-        channel.conversationDeleted(id)
+        conversations.delete(id)
+        run$(conversationsStore.delete$(id).pipe(
+            tap(deleted => {
+                if (deleted) channel.conversationDeleted(id)
+            })
+        ))
     }
 
     function deleteAllConversations(channel) {
-        [...conversations.keys()].forEach(id => deleteConversation(channel, id))
+        run$(conversationsStore.list$().pipe(
+            tap(metas => metas.forEach(meta => deleteConversation(channel, meta.id)))
+        ))
     }
 
     function listConversations(channel) {
-        channel.conversationsList(conversationsStore.list())
+        run$(conversationsStore.list$().pipe(
+            tap(metas => channel.conversationsList(metas))
+        ))
     }
 
     function sendUserMessage(channel, conversationId, text) {
-        const conversation = conversations.get(conversationId)
-        if (!conversation) return
-        conversationsStore.touch(conversationId, nowIso())
+        run$(conversation$(conversationId).pipe(
+            concatMap(conversation =>
+                conversationsStore.touch$(conversationId, nowIso()).pipe(
+                    filter(touched => touched),
+                    map(() => conversation)
+                )
+            ),
+            tap(conversation => send(channel, conversation, conversationId, text))
+        ))
+    }
+
+    function send(channel, conversation, conversationId, text) {
         channel.status(conversationId)
         channel.userMessage(conversationId, text)
         const subscription = conversation.sendUserMessage$(text).subscribe({
@@ -72,6 +95,21 @@ function createUserChat({conversationsStore, newConversation, clock}) {
         inFlight.delete(conversationId)
         subscription.unsubscribe()
         return true
+    }
+
+    function conversation$(id) {
+        const cached = conversations.get(id)
+        if (cached) return of(cached)
+        return conversationsStore.get$(id).pipe(
+            filter(Boolean),
+            concatMap(() => conversationFor$(id).pipe(
+                tap(conversation => conversations.set(id, conversation))
+            ))
+        )
+    }
+
+    function run$(work$) {
+        work$.subscribe()
     }
 
     function nowIso() {
