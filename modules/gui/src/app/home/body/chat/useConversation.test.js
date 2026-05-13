@@ -60,6 +60,42 @@ it('updates existing conversation metadata from a claim', () => {
     }).conversations).toEqual([updated])
 })
 
+it('appends a user-message broadcast for the active conversation', () => {
+    expect(conversationReducer({
+        ...initialConversationState,
+        activeConversationId: firstMeta.id,
+        conversations: [firstMeta],
+        view: 'chat'
+    }, {
+        type: 'USER_MESSAGE_RECEIVED',
+        conversationId: firstMeta.id,
+        text: 'hello from another tab'
+    })).toEqual({
+        ...initialConversationState,
+        activeConversationId: firstMeta.id,
+        conversations: [firstMeta],
+        messages: [{role: 'user', content: 'hello from another tab'}],
+        isLoading: true,
+        view: 'chat'
+    })
+})
+
+it('ignores a user-message broadcast for an inactive conversation', () => {
+    const state = {
+        ...initialConversationState,
+        activeConversationId: secondMeta.id,
+        conversations: [firstMeta, secondMeta],
+        messages: [{role: 'user', content: 'current conversation'}],
+        view: 'chat'
+    }
+
+    expect(conversationReducer(state, {
+        type: 'USER_MESSAGE_RECEIVED',
+        conversationId: firstMeta.id,
+        text: 'hello from another tab'
+    })).toBe(state)
+})
+
 it('removes a deleted active conversation and returns to the list', () => {
     expect(conversationReducer({
         ...initialConversationState,

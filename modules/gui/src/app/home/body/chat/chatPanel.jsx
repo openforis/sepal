@@ -172,6 +172,9 @@ export const ChatPanel = ({className}) => {
                 case 'chat-response':
                     dispatch({type: 'ASSISTANT_CHUNK', conversationId, text: data.text, complete: data.complete})
                     break
+                case 'user-message':
+                    dispatch({type: 'USER_MESSAGE_RECEIVED', conversationId, text: data.text})
+                    break
                 case 'tool-start':
                     dispatch({type: 'TOOL_START', conversationId, toolCallId: data.toolCallId, name: data.name, input: data.input})
                     break

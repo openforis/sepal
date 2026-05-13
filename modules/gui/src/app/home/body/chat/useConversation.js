@@ -46,7 +46,7 @@ export const initialConversationState = {
 }
 
 const isForeignConversation = (state, conversationId) =>
-    conversationId && state.activeConversationId && conversationId !== state.activeConversationId
+    conversationId && conversationId !== state.activeConversationId
 
 const updateLast = (messages, transform) => {
     const last = messages[messages.length - 1]
@@ -71,6 +71,14 @@ const addOrUpdate = (conversations, meta) => {
 export const conversationReducer = (state, action) => {
     switch (action.type) {
         case 'USER_SENT':
+            return {
+                ...state,
+                messages: [...state.messages, {role: 'user', content: action.text}],
+                isLoading: true,
+                streaming: false
+            }
+        case 'USER_MESSAGE_RECEIVED':
+            if (isForeignConversation(state, action.conversationId)) return state
             return {
                 ...state,
                 messages: [...state.messages, {role: 'user', content: action.text}],
