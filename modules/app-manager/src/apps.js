@@ -1,8 +1,14 @@
-const {EMPTY, from, interval, catchError, delay, exhaustMap, filter, map, concatMap, switchMap} = require('rxjs')
+const {EMPTY, defer, from, interval, catchError, defaultIfEmpty, delay, exhaustMap, filter, map, concatMap, switchMap, of} = require('rxjs')
 const log = require('#sepal/log').getLogger('apps')
 const {fileToJson$} = require('./file')
+const {fetchCatalog$} = require('./apiService')
 const {exec$} = require('./terminal')
 const {basename} = require('path')
+const {appsCatalogUrl} = require('./config')
+
+const APPS_FILE = '/var/lib/sepal/app-manager/apps.json'
+
+const MANAGED_ENDPOINTS = ['shiny', 'jupyter', 'rstudio']
 
 const monitorApps = () =>
     interval(5000).pipe(
@@ -16,10 +22,21 @@ const monitorApps = () =>
         complete: () => log.fatal('Monitor unexpectedly completed')
     })
 
+const diskSource$ = () => fileToJson$(APPS_FILE)
+
+const source$ = () => defer(() => {
+    if (!appsCatalogUrl) return diskSource$()
+    return fetchCatalog$(appsCatalogUrl).pipe(
+        defaultIfEmpty(null),
+        switchMap(payload => payload ? of(payload) : diskSource$())
+    )
+})
+
 const apps$ = () =>
-    fileToJson$('/var/lib/sepal/app-manager/apps.json').pipe(
+    source$().pipe(
         switchMap(({apps}) => from(apps)),
         filter(({repository}) => repository),
+        filter(({endpoint}) => MANAGED_ENDPOINTS.includes(endpoint)),
         map(({endpoint = 'shiny', label, repository, branch}) => {
             const name = basename(repository)
             return {
@@ -53,4 +70,6 @@ const updateApp$ = app => {
     )
 }
 
-module.exports = {monitorApps}
+const catalog$ = () => source$()
+
+module.exports = {monitorApps, apps$, source$, catalog$}
