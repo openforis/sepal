@@ -129,8 +129,9 @@ export const ChatPanel = ({className}) => {
 
     // Subscribe to selection-relevant slices and the route. Whenever any of
     // these change, the effect below recomputes currentSelection() and pushes
-    // a {type: 'context'} message to the AI module so the LLM's system prompt
-    // reflects the user's current GUI state at every tool-call round.
+    // a {type: 'context'} message to the AI module, which stores it per
+    // tab/subscription and attaches it to the first LLM call of the next user
+    // turn — it does not modify the static system prompt.
     useSelector(() => select('process.tabs'))
     useSelector(() => select('process.selectedTabId'))
     useSelector(() => select('process.projectId'))

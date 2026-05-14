@@ -14,6 +14,7 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock, 
     const conversations = new Map()
     const pendingMetas = new Map()
     const streaming = new Set()
+    const contexts = new Map()
     const abortRequests$ = new Subject()
 
     return {
@@ -23,6 +24,8 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock, 
         deleteAllConversations$,
         listConversations$,
         sendUserMessage$,
+        updateContext$,
+        clearContext$,
         abort$
     }
 
@@ -87,16 +90,31 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock, 
         )
     }
 
-    function sendUserMessage$({channel, conversationId, text}) {
+    function sendUserMessage$({channel, conversationId, text, clientId, subscriptionId}) {
+        const selection = contexts.get(contextKey({clientId, subscriptionId}))
         return conversation$(conversationId).pipe(
             concatMap(conversation =>
                 persistOrTouch$(conversationId).pipe(map(() => conversation))
             ),
             concatMap(conversation => concat(
-                streamReply$(channel, conversation, conversationId, text),
+                streamReply$(channel, conversation, conversationId, text, selection),
                 titleGenerator.afterTurn$({channel, conversation, conversationId, userText: text})
             ))
         )
+    }
+
+    function updateContext$({clientId, subscriptionId, selection}) {
+        return defer(() => {
+            contexts.set(contextKey({clientId, subscriptionId}), selection)
+            return EMPTY
+        })
+    }
+
+    function clearContext$({clientId, subscriptionId}) {
+        return defer(() => {
+            contexts.delete(contextKey({clientId, subscriptionId}))
+            return EMPTY
+        })
     }
 
     function persistOrTouch$(conversationId) {
@@ -111,12 +129,12 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock, 
         )
     }
 
-    function streamReply$(channel, conversation, conversationId, text) {
+    function streamReply$(channel, conversation, conversationId, text, selection) {
         return defer(() => {
             streaming.add(conversationId)
             channel.status(conversationId)
             channel.userMessage(conversationId, text)
-            return conversation.sendUserMessage$(text).pipe(
+            return conversation.sendUserMessage$(text, {selection}).pipe(
                 tap(event => channel.chatResponse({conversationId, ...event})),
                 takeUntil(abortRequests$.pipe(filter(id => id === conversationId))),
                 finalize(() => {
@@ -145,6 +163,10 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock, 
             ))
         )
     }
+}
+
+function contextKey({clientId, subscriptionId}) {
+    return `${clientId}:${subscriptionId}`
 }
 
 module.exports = {createUserChat, COMMANDS}

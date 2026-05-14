@@ -1,4 +1,5 @@
 const {catchError, concat, concatMap, defer, filter, from, ignoreElements, map, of, tap, toArray} = require('rxjs')
+const {turnContextMessage} = require('./turnContext')
 
 function createConversation({llm, history, tools, tracer, systemPrompt, initialMessages = [], id}) {
     const messages = [
@@ -12,18 +13,19 @@ function createConversation({llm, history, tools, tracer, systemPrompt, initialM
         return [...messages]
     }
 
-    function sendUserMessage$(text) {
+    function sendUserMessage$(text, {selection} = {}) {
         return tracer.span$('conversation.send', {conversationId: id},
             append$({role: 'user', content: text}).pipe(
-                concatMap(() => step$())
+                concatMap(() => step$({selection, includeTurnContext: true}))
             )
         )
     }
 
-    function step$() {
+    function step$({selection, includeTurnContext} = {}) {
         const acc = {text: '', toolCalls: []}
-        const stream$ = tracer.span$('llm.respondTo', {messageCount: messages.length},
-            llm.respondTo$({messages}).pipe(
+        const llmMessages = messagesForLlm({selection, includeTurnContext})
+        const stream$ = tracer.span$('llm.respondTo', {messageCount: llmMessages.length},
+            llm.respondTo$({messages: llmMessages}).pipe(
                 tap(event => {
                     if (event.textDelta) acc.text += event.textDelta
                     if (event.toolCall) acc.toolCalls = [...acc.toolCalls, event.toolCall]
@@ -37,6 +39,14 @@ function createConversation({llm, history, tools, tracer, systemPrompt, initialM
                 : reply$(acc.text)
         )
         return concat(stream$, after$)
+    }
+
+    function messagesForLlm({selection, includeTurnContext}) {
+        if (!includeTurnContext) return messages
+        const contextMessage = turnContextMessage(selection)
+        if (!contextMessage) return messages
+        const lastIndex = messages.length - 1
+        return [...messages.slice(0, lastIndex), contextMessage, messages[lastIndex]]
     }
 
     function handleToolCalls$(text, toolCalls) {

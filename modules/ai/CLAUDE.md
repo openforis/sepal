@@ -14,6 +14,7 @@ Deferred items (cases consciously skipped for now) are tracked in [PUNCH_LIST.md
 sepal npm-test ai --runInBand            # Normal test path from sepal-dev
 sepal npm-test ai <pattern> --runInBand  # Focused Jest test from sepal-dev
 npm test                                 # Direct Jest, when already in modules/ai with deps installed
+npm run coverage -- --runInBand          # Direct coverage, when already in modules/ai
 npm run testWatch                        # Jest watch mode
 ```
 
@@ -36,7 +37,7 @@ module.
 
 **Chat Rewrite Layer** (`src/chat/`) — Active websocket, conversation, history, and
 LLM-stream handling for the GUI chat. Conversation metadata and message history are
-persisted in Redis; title generation is not yet active.
+persisted in Redis; dynamic title generation runs after successful assistant turns.
 
 **Archived Tool/Recipe Layer** (`archive/pre-rewrite-chat/src/mcp/`,
 `archive/pre-rewrite-chat/src/recipes/`, `archive/pre-rewrite-chat/src/sepal/`) —
@@ -56,7 +57,8 @@ Uses the gateway's subscription-based websocket routing. The browser subscribes 
   processing → `{type: 'chat-response', conversationId, text, complete}` broadcast
   back to the user's tabs
 - **Cancellation/context**: `abort` cancels an in-flight stream; `context` is
-  recognised and logged but not yet used in prompt construction
+  stored per tab/subscription in `UserChat` and injected as ephemeral turn
+  context on the first LLM call of the next user turn (never persisted to Redis)
 
 ### REST API
 - `GET /healthcheck` — Returns `{status: 'ok'}`
@@ -77,7 +79,7 @@ src/
   config.js                   # CLI argument parsing (port, endpoints, LLM config)
   chat/                       # Chat Rewrite Layer
     io/                        # Active adapters: websocket, OpenAI stream, Redis stores
-    sendMessage/               # Active conversation/user-chat rewrite slice
+    sendMessage/               # Active conversation/user-chat/title-generation slice
     system-prompt.md           # Active system prompt
 ```
 
@@ -99,8 +101,9 @@ Environment variables mapped to CLI flags in `start.sh`:
 | `SESSION_TTL_MINUTES` | `--session-ttl-minutes` | Parsed for future session expiry work |
 | `SYSTEM_PROMPT` | `--system-prompt` | System prompt prepended to every conversation |
 
-The active rewrite currently uses `HTTP_PORT`, `LLM_API_KEY`, `LLM_MODEL`,
-`LLM_BASE_URL`, `REDIS_HOST`, `CONVERSATION_TTL_DAYS`, and `SYSTEM_PROMPT`.
+The active rewrite currently uses `HTTP_PORT`, `LLM_PROVIDER`, `LLM_API_KEY`,
+`LLM_MODEL`, `LLM_BASE_URL`, `REDIS_HOST`, `CONVERSATION_TTL_DAYS`, and
+`SYSTEM_PROMPT`.
 Some legacy/future flags are still parsed by `src/config.js` because compose
 supplies them, but the active app does not yet wire SEPAL/GEE clients,
 server-side rate limiting, or session expiry.
@@ -116,11 +119,9 @@ LLM_MODEL=<model-identifier-as-shown-in-lmstudio>
 LLM_API_KEY=lm-studio   # any non-empty string
 ```
 
-The `lmstudio` provider is also usable for Ollama (`/v1`), vLLM, LocalAI, and any other
-server that implements the OpenAI chat completions API.
-
-The active adapter is OpenAI-compatible. `LLM_PROVIDER` is parsed for compatibility
-with the old configuration shape but is not currently used for provider selection.
+The active chat adapter is OpenAI-compatible. `LLM_PROVIDER=lmstudio` also
+enables a native LM Studio `/api/v1/chat` path for requests that explicitly
+disable reasoning, currently used by dynamic title generation.
 
 ## LLM-facing text style
 
@@ -131,7 +132,9 @@ of them, apply the rule above:
 
 | Location | What's LLM-facing |
 |---|---|
-| `src/chat/system-prompt.md` | The whole file (template + guidelines) |
+| `src/chat/system-prompt.md` | The whole file (static system prompt) |
+| `src/chat/sendMessage/turnContext.js` | Runtime turn-context message wrapper text |
+| `src/chat/sendMessage/titleGenerator.js` | Title-generation prompt messages |
 
 Old tool and recipe-schema LLM text lives under `archive/pre-rewrite-chat/` now.
 Treat it as reference, not active prompt/tool surface.

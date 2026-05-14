@@ -49,14 +49,17 @@ function createWsHandler({bus, userChatFor}) {
 
         function handleCommand(message) {
             const subscription = subscriptionOf(message)
+            const {clientId, subscriptionId} = subscription
             const {type, ...args} = message.data
             const method = COMMANDS[type]
             if (method) {
                 publish(type, subscription, args)
                 dispatchTo(subscription, ({userChat, channel}) =>
-                    userChat[method]({channel, ...args}))
+                    userChat[method]({channel, clientId, subscriptionId, ...args}))
             } else if (type === 'context') {
                 publish('context', subscription, args, 'debug')
+                dispatchTo(subscription, ({userChat}) =>
+                    userChat.updateContext$({clientId, subscriptionId, selection: args.selection}))
             } else {
                 publish('unknown', subscription, {dataType: type}, 'warn')
             }
@@ -72,6 +75,9 @@ function createWsHandler({bus, userChatFor}) {
 
         function subscribeDown(subscription) {
             publish('subscriptionDown', subscription)
+            const {clientId, subscriptionId} = subscription
+            dispatchTo(subscription, ({userChat}) =>
+                userChat.clearContext$({clientId, subscriptionId}))
             subscriptions.delete(keyOf(subscription))
         }
 

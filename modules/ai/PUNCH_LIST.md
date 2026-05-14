@@ -1,91 +1,57 @@
 # Punch list — modules/ai
 
-Known cases deferred to future iterations. Don't lose them.
+Lean list of active-code gaps. Broader specialist/tool architecture lives in
+`DESIGN_chat_specialists_v2.md`.
 
-## Concurrency
+## Concurrency And Cancellation
 
-- **Concurrent `sendUserMessage$` calls** — `Conversation` has no internal serialization; two simultaneous calls would race on the messages array. Current assumption: caller serializes (UI prevents the double-send). Server-side defense (busy flag with explicit error) deferred until a test forces it.
+- **Concurrent `sendUserMessage$` calls** — `Conversation` has no internal
+  serialization; two simultaneous sends for the same conversation can race on
+  the mutable messages array. Current assumption: the caller/UI serializes.
+  Add a server-side busy guard when needed.
+- **No `aborted: true` flag on final completion** — abort and natural
+  completion both emit `chat-response complete`. Add a flag so the GUI can
+  distinguish "cancelled" from "finished."
+- **Partial assistant text is not replayed on re-entry** — selecting an
+  in-flight conversation re-emits `status`, but chunks sent before re-entry are
+  not replayed because the partial accumulator lives inside `Conversation.step$`.
 
-## Tool handling
+## Tool And GUI Bridge
 
-- **Multi-tool-call test coverage** — production accumulates multiple `{toolCall}` events into an array via the LLM stream's reduce; no test pins it yet.
-- **Empty toolCalls array** — `{toolCalls: []}` in a reply takes the text-reply path. Reasonable, untested.
-- **Tools port is stubbed** — `app.js` injects a `noTools()` placeholder that throws on `invoke$`. A real MCP tool layer slots in here when re-introduced.
-- **GUI tool-response wire is not reintroduced** — old `gui-response` support lives only in `archive/pre-rewrite-chat/`. Bring it back with the tool layer.
+- **Real tool transport is still not wired** — `app.js` injects `noTools()`,
+  the OpenAI adapter does not send tool schemas or parse provider tool-call
+  deltas, and server-side `gui-response` handling is still absent.
+- **Multi-tool-call coverage is thin** — `Conversation` accumulates multiple
+  individual `{toolCall}` events, but tests only pin the single-tool path.
 
-## LLM response shapes
+## Context
 
-- **Mixed text + tool calls in one response** — `handleToolCalls$` records the assistant text alongside `toolCalls`, but the text is not separately emitted to the user channel during a tool step. Possibly intentional; verify.
-
-## Cancellation
-
-- **Abort wire path is in place.** `UserChat` tracks the in-flight `Subscription` per conversation and `unsubscribe()`s it on abort, then broadcasts a `chat-response` with `complete: true` to unlock all the user's tabs. PUNCH_LIST follow-up: a distinguishing flag (`aborted: true`?) so the GUI can show "cancelled" vs natural completion. Today they look identical.
-
-## Mid-stream re-entry
-
-- **Partial assistant text is not replayed on re-entry.** `selectConversation` emits a `status` after `conversation-loaded` when `inFlight.has(id)`, so the GUI re-locks into the loading state and future chunks render. But the chunks streamed *before* re-entry are lost — the in-flight `acc.text` accumulator lives inside `step$` and is not part of `messagesSnapshot()`. If users complain, lift the accumulator into the `Conversation` and include partial text in the snapshot (or stream it back on re-select).
+- **`get_context()` tool is not wired** — GUI context is stored per
+  tab/subscription in `UserChat` and injected as ephemeral turn context on the
+  first LLM call of a user turn, but it is not yet exposed to the orchestrator
+  through tool transport.
 
 ## Observability
 
-- **wsRouter silently ignores unknown messages** — publishes `{type: 'wsIn', kind: 'unknown'}` at `warn`. Could be elaborated with the data shape, but only once we hit an unknown-message debugging session.
-- **More spans** — currently `server.start`, `conversation.send`, `llm.respondTo` have spans. `tool.invoke` is the natural next one once tools come back.
-- **Late-bound span completion attrs** — `tracer.span$(name, attrs, work$)` fixes attrs at construction. For `llm.respondTo` we want to include `chunks` + `text` + `usage` (tokens) in the `completed` event, but those are only known once the stream finishes. Today we emit those as a separate `llm.response` bus event. Cleaner: extend tracer to accept a context (`(name, attrs, ctx => work$)`), with `ctx.addAttrs({...})` callable during the run; the completed event merges them in.
-- **Token / cache / thinking tracking** — once the OpenAI streams expose `usage` (LM Studio gives partial info; needs `stream_options: {include_usage: true}` and a model that respects it), emit a domain `{usage}` event from the LLM adapter, accumulate per-Conversation, surface in `conversation.send` completed attrs. Same emission path will carry `{thinkingDelta}` for models that stream reasoning separately.
+- **Event log categories** — event-bus logs are flattened through
+  `getLogger('ai')`, so `log.json` cannot enable trace/debug for one boundary
+  such as `llm`, `tools`, `specialists`, or `ws` without affecting all AI
+  events.
+- **Late-bound span completion attrs** — `tracer.span$(name, attrs, work$)`
+  fixes attrs at construction. For LLM/tool spans we want completion attrs such
+  as chunks, token usage, cache hits, result size, and status once they are
+  known.
+- **Usage accounting events are not emitted** — active adapters log response
+  summaries, but they do not emit normalized `llm.usage` events or per-turn
+  rollups.
 
-## GUI wire protocol deferred cases
+## Persistence And Runtime State
 
-Supported now:
-- `subscriptionUp` / `subscriptionDown`
-- `create-conversation` → `conversation-created` (originator) + `conversation-claimed` (other tabs of same user)
-- `select-conversation` → `conversation-loaded` (requesting tab only)
-- `list-conversations` → `conversations`
-- `delete-conversation` → `conversation-deleted` (broadcast to all tabs of same user)
-- `delete-all-conversations` → `conversation-deleted` for each conversation (broadcast to all tabs of same user)
-- `message` with `conversationId` → `chat-response` (broadcast to all tabs of same user)
-- `user-message` → GUI appends user input in other tabs that are viewing the same conversation
-- `abort` → in-flight subscription cancellation + final `chat-response complete`
-- `context` → recognised and logged at debug, but ignored until system-prompt templating returns
-
-Still deferred:
-
-- `gui-response` (for tool-driven GUI actions like open/reload/close recipe)
-
-Adding a wire message type is now mechanical: `wsRouter` route + `UserChat` method + (if outbound) `wsChannel` method.
-
-## Persistence
-
-Redis-backed adapters are wired into `app.js` now:
-- **History** (per-conversation messages) — `src/chat/io/redisHistory.js`
-- **ConversationsStore** (per-user conversation list) — `src/chat/io/redisConversationsStore.js`
-
-The in-memory adapters live under `test/chat/io/` for unit tests only.
-
-Restart behaviour:
-- `list-conversations` reads Redis metadata directly.
-- `select-conversation` and `message` lazily rebuild a `Conversation` from Redis history when the in-memory `UserChat` map does not have it yet.
-- In-flight streams still do not survive restart; clients should see the connection reset and unlock through reconnect/list/select flows.
-
-## Conversation metadata
-
-`ConversationsStore` stores `{id, title, createdAt, updatedAt}` records now, but title is still always `''`. Next useful step: deterministic baseline title from the first user message, then optional LLM refinement later.
-
-## Conversation snapshot includes the system message
-
-`Conversation.messagesSnapshot()` returns the in-memory array including the leading `{role: 'system'}` entry when a `systemPrompt` is set. The GUI then receives the system message inside `conversation-loaded`. Either filter `role: 'system'` in the GUI, or in `messagesSnapshot()` before serialising. Decide once the GUI re-renders historical conversations.
-
-## In-memory caches grow unbounded
-
-Two Maps in the active code never evict and will grow forever in long-running deployments:
-
-- **`userChats: Map<username, UserChat>` in `src/app.js`** — one UserChat per user that has ever connected. Insertions on first contact; never removed. Each entry retains the user's conversations cache (below). Cap or evict on idle (e.g., no subscription for N minutes).
-- **`conversations: Map<id, Conversation>` in `src/chat/sendMessage/userChat.js`** — one cached Conversation per conv the user has touched. Insertions on create or rebuild-from-Redis; only removed on explicit delete. The cache exists for cross-tab coherence (two tabs sharing one in-memory `messages` array) and to avoid Redis round-trips on every send — so we can't just drop it. LRU with a small cap (~10 most recently used) is the natural fix.
-
-Neither leak is dangerous at SEPAL's user scale today, but both will compound over uptime.
-
-## Single ai-module instance assumption
-
-Cross-tab sync currently goes through in-memory `UserChat` state. If we deploy multiple ai-module instances behind a load balancer, two tabs of the same user could hit different instances and lose sync. Redis pub/sub (or similar) becomes load-bearing at that point — adds a `broadcast` collaborator that publishes/subscribes to cross-instance events.
-
----
-
-Larger spec migration items (round classification, failure bail, cap-reached, 429 retry, stall nudge) are tracked in [the design spec §8](../../docs/superpowers/specs/2026-05-12-ai-module-goose-refactor-design.md), not duplicated here.
+- **In-flight streams do not survive restart** — conversation metadata and
+  history are persisted in Redis, but an active LLM stream is in-memory only.
+- **In-memory caches grow unbounded** — `userChats` in `src/app.js` and
+  `conversations` in `src/chat/sendMessage/userChat.js` never evict. Add idle
+  eviction or an LRU cap if uptime/user count makes this matter.
+- **Single ai-module instance assumption** — cross-tab sync goes through
+  in-memory `UserChat` state. Multiple ai-module instances behind a load
+  balancer would need Redis pub/sub or an equivalent broadcast layer.

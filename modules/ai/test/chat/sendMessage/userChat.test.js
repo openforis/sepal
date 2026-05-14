@@ -199,6 +199,66 @@ describe('UserChat', () => {
         })
     })
 
+    describe('GUI context', () => {
+        const sub = {clientId: 'c1', subscriptionId: 's1'}
+
+        it('attaches a subscription\'s stored context to a message from that same subscription', () => {
+            run(userChat.createConversation$({channel}))
+            run(userChat.updateContext$({...sub, selection: {section: 'process'}}))
+
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'hello', ...sub}))
+
+            expect(llm.receivedMessages[0]).toContainEqual({
+                role: 'system', content: expect.stringContaining('"section":"process"')
+            })
+        })
+
+        it('does not attach one subscription\'s context to another subscription\'s message', () => {
+            run(userChat.createConversation$({channel}))
+            run(userChat.updateContext$({clientId: 'c1', subscriptionId: 's1', selection: {section: 'process'}}))
+
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'hello', clientId: 'c1', subscriptionId: 's2'}))
+
+            expect(llm.receivedMessages[0]).toEqual([{role: 'user', content: 'hello'}])
+        })
+
+        it('uses the sending tab context when multiple tabs share the same conversation', () => {
+            const tabA = {clientId: 'c1', subscriptionId: 's1'}
+            const tabB = {clientId: 'c2', subscriptionId: 's1'}
+            run(userChat.createConversation$({channel}))
+            run(userChat.updateContext$({
+                ...tabA,
+                selection: {selectedRecipe: {recipeId: 'r-mosaic', recipeName: 'Mosaic'}}
+            }))
+            run(userChat.updateContext$({
+                ...tabB,
+                selection: {selectedRecipe: {recipeId: 'r-classification', recipeName: 'Classification'}}
+            }))
+
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'change this', ...tabA}))
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'change this too', ...tabB}))
+
+            expect(runtimeContextContent(llm.receivedMessages[0])).toContain('"recipeName":"Mosaic"')
+            expect(runtimeContextContent(llm.receivedMessages[0])).not.toContain('Classification')
+            expect(runtimeContextContent(llm.receivedMessages[1])).toContain('"recipeName":"Classification"')
+            expect(runtimeContextContent(llm.receivedMessages[1])).not.toContain('Mosaic')
+        })
+
+        it('drops a subscription\'s context when it is cleared', () => {
+            run(userChat.createConversation$({channel}))
+            run(userChat.updateContext$({...sub, selection: {section: 'process'}}))
+            run(userChat.clearContext$({...sub}))
+
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'hello', ...sub}))
+
+            expect(llm.receivedMessages[0]).toEqual([{role: 'user', content: 'hello'}])
+        })
+    })
+
+    function runtimeContextContent(messages) {
+        return messages.find(message => message.content?.includes('<runtime-context>'))?.content
+    }
+
     describe('selectConversation$', () => {
 
         it('sends the conversation\'s messages on the channel', () => {

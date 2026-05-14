@@ -176,6 +176,74 @@ describe('Conversation', () => {
         })
     })
 
+    describe('with runtime turn context', () => {
+        const selection = {section: 'process', selectedRecipe: {recipeId: 'r1', recipeName: 'Mosaic'}}
+
+        it('passes the runtime context to the LLM after the history, before the current user message', () => {
+            const llm = aFakeLlm()
+            const conversation = aConversation({
+                llm,
+                systemPrompt: 'You are Sepalito.',
+                initialMessages: [
+                    {role: 'user', content: 'first'},
+                    {role: 'assistant', content: 'reply'}
+                ]
+            })
+
+            run(conversation.sendUserMessage$('second', {selection}))
+
+            expect(llm.receivedMessages[0]).toEqual([
+                {role: 'system', content: 'You are Sepalito.'},
+                {role: 'user', content: 'first'},
+                {role: 'assistant', content: 'reply'},
+                {role: 'system', content: expect.stringContaining('"section":"process"')},
+                {role: 'user', content: 'second'}
+            ])
+        })
+
+        it('does not persist the runtime context to history', () => {
+            const history = aFakeHistory()
+            const conversation = aConversation({history})
+
+            run(conversation.sendUserMessage$('Hello', {selection}))
+
+            expect(history.appended).toEqual([
+                {role: 'user', content: 'Hello'},
+                {role: 'assistant', content: 'response'}
+            ])
+        })
+
+        it('does not include the runtime context in the messages snapshot', () => {
+            const conversation = aConversation()
+
+            run(conversation.sendUserMessage$('Hello', {selection}))
+
+            expect(conversation.messagesSnapshot()).toEqual([
+                {role: 'user', content: 'Hello'},
+                {role: 'assistant', content: 'response'}
+            ])
+        })
+
+        it('includes the runtime context only on the first LLM call of the turn', () => {
+            const toolCall = {id: 'recipe-list', name: 'recipe_list', input: {}}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [toolCall]},
+                {text: 'done'}
+            ]})
+            const tools = aFakeTools({recipe_list: () => of({recipes: []})})
+            const conversation = aConversation({llm, tools})
+
+            run(conversation.sendUserMessage$('list my recipes', {selection}))
+
+            expect(llm.receivedMessages[0]).toContainEqual({
+                role: 'system', content: expect.stringContaining('<runtime-context>')
+            })
+            expect(llm.receivedMessages[1]).not.toContainEqual(
+                expect.objectContaining({content: expect.stringContaining('<runtime-context>')})
+            )
+        })
+    })
+
     describe('observability', () => {
 
         it('wraps sendUserMessage in conversation.send and each LLM call in llm.respondTo', () => {
