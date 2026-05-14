@@ -15,6 +15,11 @@ describe('GUI request bridge', () => {
         return {guiAction: message => guiActions.push(message), guiActions}
     }
 
+    function aFakeBus() {
+        const events = []
+        return {publish: event => events.push(event), events}
+    }
+
     function sequentialIds(ids) {
         let i = 0
         return () => ids[Math.min(i++, ids.length - 1)]
@@ -32,14 +37,15 @@ describe('GUI request bridge', () => {
         return {events, get completed() { return completed }, get error() { return error }}
     }
 
-    let channel, clock, fireTimeout, guiRequests
+    let channel, clock, fireTimeout, guiRequests, bus
 
     beforeEach(() => {
         channel = aFakeChannel()
+        bus = aFakeBus()
         const controlled = aControlledClock()
         clock = controlled.clock
         fireTimeout = controlled.fireTimeout
-        guiRequests = createGuiRequests({clock, createId: sequentialIds(['req-1', 'req-2']), timeoutMs: 30000})
+        guiRequests = createGuiRequests({clock, createId: sequentialIds(['req-1', 'req-2']), timeoutMs: 30000, bus})
     })
 
     function request(overrides = {}) {
@@ -137,5 +143,55 @@ describe('GUI request bridge', () => {
 
         expect(result.error).toBeNull()
         expect(result.completed).toBe(false)
+    })
+
+    describe('routing diagnostics', () => {
+
+        it('publishes a gui.request event when a request is sent', () => {
+            capture(request())
+
+            expect(bus.events).toContainEqual(expect.objectContaining({
+                type: 'gui.request', level: 'debug',
+                requestId: 'req-1', action: 'echo', subscriptionKey: 'c1:s1'
+            }))
+        })
+
+        it('publishes a gui.response event marking a matching response as found and matched', () => {
+            capture(request())
+
+            respond({success: true, data: {}})
+
+            expect(bus.events).toContainEqual(expect.objectContaining({
+                type: 'gui.response', level: 'debug',
+                requestId: 'req-1', action: 'echo',
+                owningSubscriptionKey: 'c1:s1', incomingSubscriptionKey: 'c1:s1',
+                pendingFound: true, matched: true
+            }))
+        })
+
+        it('publishes a gui.response event marking a subscription mismatch as found-but-unmatched', () => {
+            capture(request())
+
+            respond({subscriptionId: 's2', success: true, data: {}})
+
+            expect(bus.events).toContainEqual(expect.objectContaining({
+                type: 'gui.response',
+                requestId: 'req-1',
+                owningSubscriptionKey: 'c1:s1', incomingSubscriptionKey: 'c1:s2',
+                pendingFound: true, matched: false
+            }))
+        })
+
+        it('publishes a gui.response event marking an unknown requestId as not found', () => {
+            capture(request())
+
+            respond({requestId: 'other', success: true, data: {}})
+
+            expect(bus.events).toContainEqual(expect.objectContaining({
+                type: 'gui.response',
+                requestId: 'other',
+                pendingFound: false, matched: false
+            }))
+        })
     })
 })

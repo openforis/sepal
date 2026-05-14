@@ -12,8 +12,10 @@ import {respondError} from './response'
 
 const log = getLogger('chat-project-actions')
 
+// Treat missing OR empty as not-yet-loaded: an empty `process.projects` can mean
+// "never loaded in this context", and chat list tools must still fetch.
 const ensureProjectsLoaded$ = () =>
-    select('process.projects') ? of(null) : loadProjects$()
+    select('process.projects')?.length ? of(null) : loadProjects$()
 
 const createProject = ({name, defaultAssetFolder, defaultWorkspaceFolder, respond}) => {
     const id = uuid()

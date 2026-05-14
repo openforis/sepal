@@ -136,4 +136,92 @@ describe('product tools', () => {
             expect(error.message).toBe('GUI request failed')
         })
     })
+
+    describe('recipe_load', () => {
+        const context = {channel: 'CH', conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
+
+        const loadedRecipe = {
+            id: 'r1',
+            type: 'CLASSIFICATION',
+            title: 'Kenya land cover',
+            projectId: 'p1',
+            modelHash: 'hash-abc',
+            model: {
+                trainingData: {dataSets: [
+                    {dataSetId: 'd1', type: 'COLLECTED', referenceData: [{x: 1, y: 2, class: 'forest'}]}
+                ]},
+                classifier: {type: 'RANDOM_FOREST', numberOfTrees: 25}
+            }
+        }
+
+        it('exposes a recipeId + optional path schema', () => {
+            expect(toolNamed('recipe_load').parameters).toEqual({
+                type: 'object',
+                properties: {recipeId: {type: 'string'}, path: {type: 'string'}},
+                required: ['recipeId'],
+                additionalProperties: false
+            })
+        })
+
+        it('asks the GUI to load the recipe by id, without forwarding the model path', () => {
+            const guiRequests = aFakeGuiRequests(() => of(loadedRecipe))
+
+            read(toolNamed('recipe_load', guiRequests).invoke$({recipeId: 'r1', path: '/classifier'}, context))
+
+            expect(guiRequests.requests).toEqual([{
+                channel: 'CH', clientId: 'c1', subscriptionId: 's1',
+                action: 'load-recipe', params: {recipeId: 'r1'}
+            }])
+        })
+
+        it('returns the projected recipe for a root load, with heavy training data omitted', () => {
+            const guiRequests = aFakeGuiRequests(() => of(loadedRecipe))
+
+            const result = read(toolNamed('recipe_load', guiRequests).invoke$({recipeId: 'r1'}, context))
+
+            expect(result).toEqual({
+                id: 'r1', type: 'CLASSIFICATION', name: 'Kenya land cover', projectId: 'p1', modelHash: 'hash-abc',
+                model: {
+                    trainingData: {dataSets: [{
+                        dataSetId: 'd1', type: 'COLLECTED',
+                        referenceData: {_omitted: 1, _kind: 'referenceData', _path: '/trainingData/dataSets/0/referenceData'}
+                    }]},
+                    classifier: {type: 'RANDOM_FOREST', numberOfTrees: 25}
+                }
+            })
+        })
+
+        it('returns the requested model fragment under value for a path-scoped load', () => {
+            const guiRequests = aFakeGuiRequests(() => of(loadedRecipe))
+
+            const result = read(toolNamed('recipe_load', guiRequests).invoke$({recipeId: 'r1', path: '/classifier'}, context))
+
+            expect(result).toMatchObject({id: 'r1', value: {type: 'RANDOM_FOREST', numberOfTrees: 25}})
+        })
+
+        it('errors on an invalid model path so the registry reports a tool failure', () => {
+            const guiRequests = aFakeGuiRequests(() => of(loadedRecipe))
+
+            const error = readError(toolNamed('recipe_load', guiRequests).invoke$({recipeId: 'r1', path: '/missing'}, context))
+
+            expect(error.message).toMatch(/not found/)
+        })
+
+        it('lets a GUI failure propagate', () => {
+            const guiRequests = aFakeGuiRequests(() => throwError(() => new Error('GUI request timed out')))
+
+            const error = readError(toolNamed('recipe_load', guiRequests).invoke$({recipeId: 'r1'}, context))
+
+            expect(error.message).toBe('GUI request timed out')
+        })
+
+        it('fails when the GUI response carries no modelHash, rather than returning an unusable token', () => {
+            const {modelHash: _modelHash, ...withoutHash} = loadedRecipe
+            const guiRequests = aFakeGuiRequests(() => of(withoutHash))
+
+            const error = readError(toolNamed('recipe_load', guiRequests).invoke$({recipeId: 'r1'}, context))
+
+            expect(error.message).toMatch(/modelHash/)
+        })
+    })
 })

@@ -163,9 +163,16 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
   Tabs for the same user share live conversation state; Redis stores conversation
   metadata/history so list/select/send can recover after restart. Active selection
   remains per tab in the GUI.
+- **Turn serialization**: `Conversation` mutates a shared messages array and has
+  no internal serialization. `UserChat` serializes turns per conversation — each
+  turn's stream chains onto the previous turn's stream completion, so concurrent
+  `sendUserMessage$` calls can't interleave. Title generation runs after the
+  stream but off the queue tail. New callers must drive `Conversation` through
+  `UserChat`, not invoke it directly.
 - **Tool registry**: `app.js` wires `createToolRegistry`. The production tool
   surface holds the read-only product tools (`get_context`, `recipe_list`,
-  `project_list`) from `src/chat/sendMessage/productTools.js`; transport
+  `project_list`, `recipe_load`) from `src/chat/sendMessage/productTools.js`;
+  transport
   smoke-test tools (`echo`) register only
   when `ENABLE_AI_TRANSPORT_SMOKE_TOOLS=true`, and are never visible to the
   production model. `ask_gui_echo` stays unregistered until a matching GUI

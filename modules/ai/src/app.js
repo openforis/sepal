@@ -49,7 +49,7 @@ function createApp({config}) {
         provider: config.llmProvider,
         bus
     })
-    const guiRequests = createGuiRequests({clock, createId: uuid, timeoutMs: GUI_REQUEST_TIMEOUT_MS})
+    const guiRequests = createGuiRequests({clock, createId: uuid, timeoutMs: GUI_REQUEST_TIMEOUT_MS, bus})
     const tools = createToolRegistry({tools: registeredTools(config, guiRequests)})
 
     const userChats = new Map()

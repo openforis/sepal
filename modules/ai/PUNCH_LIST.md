@@ -5,10 +5,6 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Concurrency And Cancellation
 
-- **Concurrent `sendUserMessage$` calls** — `Conversation` has no internal
-  serialization; two simultaneous sends for the same conversation can race on
-  the mutable messages array. Current assumption: the caller/UI serializes.
-  Add a server-side busy guard when needed.
 - **No `aborted: true` flag on final completion** — abort and natural
   completion both emit `chat-response complete`. Add a flag so the GUI can
   distinguish "cancelled" from "finished."
@@ -18,14 +14,14 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Tool And GUI Bridge
 
-- **Read tools only — no write tools or specialists** — Phase 1A wired the
-  read-only product tools (`get_context`, `recipe_list`, `project_list`).
-  Recipe create/update/delete/move/save tools, map tools, and specialists are
-  not implemented yet.
-- **Projected `recipe_load` is deferred** — existing GUI `load-recipe` returns
-  the full model; AI-facing load needs compact projection, `path?` semantics,
-  omitted-heavy-field markers, and `baseModelHash` alignment before
-  `recipe_patch`.
+- **Read tools only — no write tools or specialists** — Phase 1A/1B wired the
+  read-only product tools (`get_context`, `recipe_list`, `project_list`,
+  `recipe_load`). Recipe create/update/delete/move/save tools, `recipe_patch`,
+  map tools, and specialists are not implemented yet.
+- **`recipe_patch` write path is not implemented** — `recipe_load` returns a
+  `modelHash` (stamped GUI-side) ready to serve as the `baseModelHash`
+  optimistic-concurrency token, but the patch tool, its validation, and the
+  GUI write path that checks `baseModelHash` are not built yet.
 - **`ask_gui_echo` has no GUI handler** — the GUI-backed smoke-test tool stays
   unregistered (even under the dev flag) because the real GUI has no `echo`
   `gui-action` handler. The server-side GUI request/response bridge is complete

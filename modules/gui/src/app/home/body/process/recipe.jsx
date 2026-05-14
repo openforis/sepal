@@ -8,6 +8,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {publishEvent} from '~/eventPublisher'
 import {gzip$} from '~/gzip'
+import {addHash, getHash} from '~/hash'
 import {serialize} from '~/serialize'
 import {selectFrom} from '~/stateUtils'
 import {select, subscribe} from '~/store'
@@ -358,6 +359,12 @@ export const initializeRecipe = recipe => {
     const cleaned = known?.length
         ? withoutSources(recipe, referringToUnknown(known))
         : recipe
+    // Stamp the model hash before the recipe enters Redux state, so a loaded
+    // model is never unhashed — otherwise dependent-layer reload detection
+    // would fire on the first stamp.
+    if (!getHash(cleaned.model)) {
+        addHash(cleaned.model)
+    }
     return {...cleaned, ui: {initialized: true}}
 }
 

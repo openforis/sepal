@@ -374,6 +374,38 @@ describe('Conversation', () => {
         })
     })
 
+    describe('with the recipe_load product tool', () => {
+
+        it('lets the LLM call recipe_load and feeds the projected recipe back', () => {
+            const toolCall = {id: 'rl1', name: 'recipe_load', input: {recipeId: 'r1'}}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [toolCall]},
+                {text: 'It is a random forest classification.'}
+            ]})
+            const recipe = {
+                id: 'r1', type: 'CLASSIFICATION', title: 'Kenya land cover', modelHash: 'hash-abc',
+                model: {classifier: {type: 'RANDOM_FOREST'}}
+            }
+            const tools = createToolRegistry({tools: productTools({guiRequests: aFakeGuiRequests(() => of(recipe))})})
+            const conversation = aConversation({llm, tools})
+            const toolContext = {channel: {}, conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
+
+            run(conversation.sendUserMessage$('describe recipe r1', {toolContext}))
+
+            expect(llm.receivedMessages[1]).toContainEqual({
+                role: 'tool',
+                toolResults: [{
+                    toolCallId: 'rl1',
+                    toolName: 'recipe_load',
+                    result: {ok: true, data: {
+                        id: 'r1', type: 'CLASSIFICATION', name: 'Kenya land cover', modelHash: 'hash-abc',
+                        model: {classifier: {type: 'RANDOM_FOREST'}}
+                    }}
+                }]
+            })
+        })
+    })
+
     describe('observability', () => {
 
         it('wraps sendUserMessage in conversation.send and each LLM call in llm.respondTo', () => {

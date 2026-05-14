@@ -1,8 +1,14 @@
 const {map, of} = require('rxjs')
 const {shapeTurnContext} = require('./turnContext')
+const {projectLoadedRecipe} = require('./recipeProjection')
 
 function productTools({guiRequests}) {
-    return [getContextTool(), recipeListTool(guiRequests), projectListTool(guiRequests)]
+    return [
+        getContextTool(),
+        recipeListTool(guiRequests),
+        projectListTool(guiRequests),
+        recipeLoadTool(guiRequests)
+    ]
 }
 
 function getContextTool() {
@@ -31,7 +37,7 @@ function recipeListTool(guiRequests) {
             additionalProperties: false
         },
         invoke$: (input, context) =>
-            guiList$(guiRequests, context, 'list-recipes', recipeFilters(input)).pipe(
+            guiRequest$(guiRequests, context, 'list-recipes', recipeFilters(input)).pipe(
                 map(recipes => recipes.map(recipeSummary))
             )
     }
@@ -56,7 +62,7 @@ function projectListTool(guiRequests) {
         description: 'List projects → id, name.',
         parameters: {type: 'object', properties: {}, additionalProperties: false},
         invoke$: (_input, context) =>
-            guiList$(guiRequests, context, 'list-projects', {}).pipe(
+            guiRequest$(guiRequests, context, 'list-projects', {}).pipe(
                 map(projects => projects.map(projectSummary))
             )
     }
@@ -66,7 +72,24 @@ function projectSummary(project) {
     return {id: project.id, name: project.name}
 }
 
-function guiList$(guiRequests, context, action, params) {
+function recipeLoadTool(guiRequests) {
+    return {
+        name: 'recipe_load',
+        description: 'Load recipe → identity + projected model. path = JSON Pointer into model (optional); heavy arrays return omitted markers.',
+        parameters: {
+            type: 'object',
+            properties: {recipeId: {type: 'string'}, path: {type: 'string'}},
+            required: ['recipeId'],
+            additionalProperties: false
+        },
+        invoke$: (input, context) =>
+            guiRequest$(guiRequests, context, 'load-recipe', {recipeId: input.recipeId}).pipe(
+                map(recipe => projectLoadedRecipe(recipe, input.path))
+            )
+    }
+}
+
+function guiRequest$(guiRequests, context, action, params) {
     return guiRequests.request$({
         channel: context.channel,
         clientId: context.clientId,

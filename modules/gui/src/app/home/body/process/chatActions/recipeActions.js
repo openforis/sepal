@@ -5,7 +5,7 @@ import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
 import {registerGuiAction as registerAction} from '~/app/home/body/chat/guiActionRegistry'
 import {gzip$} from '~/gzip'
-import {addHash} from '~/hash'
+import {addHash, getHash} from '~/hash'
 import {getLogger} from '~/log'
 import {select} from '~/store'
 import {uuid} from '~/uuid'
@@ -80,8 +80,10 @@ const recipeSummary = recipe => ({
     projectId: recipe.projectId
 })
 
+// Treat missing OR empty as not-yet-loaded: an empty `process.recipes` can mean
+// "never loaded in this context", and chat list tools must still fetch.
 const ensureRecipesLoaded$ = () =>
-    select('process.recipes') ? of(null) : loadRecipes$()
+    select('process.recipes')?.length ? of(null) : loadRecipes$()
 
 const ensureRecipeOpenAndSelected = recipe => {
     if (select('process.selectedTabId') === recipe.id) return
@@ -166,11 +168,13 @@ const updateRecipe = ({recipeId, model, respond}) => {
     })
 }
 
+// modelHash feeds the later recipe_patch concurrency contract. The model is
+// hash-stamped at load time (initializeRecipe), so this stays a pure read.
 const loadRecipe = ({recipeId, respond}) => {
     loadRecipeFromCacheOrServer$(recipeId).subscribe({
         next: recipe => {
             const {ui: _ui, layers: _layers, ...rest} = recipe
-            respond({success: true, data: rest})
+            respond({success: true, data: {...rest, modelHash: getHash(recipe.model)}})
         },
         error: error => respondError({log, respond, fallback: 'Failed to load recipe', error})
     })

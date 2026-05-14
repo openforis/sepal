@@ -1,6 +1,6 @@
 const {Subject, defer, finalize, map, merge, take} = require('rxjs')
 
-function createGuiRequests({clock, createId, timeoutMs}) {
+function createGuiRequests({clock, createId, timeoutMs, bus}) {
     const pending = new Map()
 
     return {request$, respond, cancelForSubscription}
@@ -8,9 +8,11 @@ function createGuiRequests({clock, createId, timeoutMs}) {
     function request$({channel, clientId, subscriptionId, action, params}) {
         return defer(() => {
             const requestId = createId()
+            const subscriptionKey = keyOf({clientId, subscriptionId})
             const outcome$ = new Subject()
-            pending.set(requestId, {outcome$, subscriptionKey: keyOf({clientId, subscriptionId})})
+            pending.set(requestId, {outcome$, subscriptionKey, action})
             channel.guiAction({requestId, action, params})
+            publishRequestSent({requestId, action, subscriptionKey})
             return merge(
                 outcome$,
                 clock.delay$(timeoutMs).pipe(map(() => {
@@ -25,8 +27,18 @@ function createGuiRequests({clock, createId, timeoutMs}) {
 
     function respond({requestId, clientId, subscriptionId, success, data, error}) {
         const entry = pending.get(requestId)
-        const fromOwningSubscription = entry?.subscriptionKey === keyOf({clientId, subscriptionId})
-        if (fromOwningSubscription) {
+        const incomingSubscriptionKey = keyOf({clientId, subscriptionId})
+        const pendingFound = Boolean(entry)
+        const matched = pendingFound && entry.subscriptionKey === incomingSubscriptionKey
+        publishResponseRouting({
+            requestId,
+            action: entry?.action,
+            owningSubscriptionKey: entry?.subscriptionKey,
+            incomingSubscriptionKey,
+            pendingFound,
+            matched
+        })
+        if (matched) {
             if (success) {
                 entry.outcome$.next(data)
             } else {
@@ -42,6 +54,32 @@ function createGuiRequests({clock, createId, timeoutMs}) {
                 entry.outcome$.error(new Error('GUI request cancelled'))
             }
         }
+    }
+
+    // Metadata only — no request/response payloads at debug level.
+    function publishRequestSent({requestId, action, subscriptionKey}) {
+        bus.publish({
+            type: 'gui.request',
+            level: 'debug',
+            message: `GUI request ${action} (${requestId}) → ${subscriptionKey}`,
+            requestId,
+            action,
+            subscriptionKey
+        })
+    }
+
+    function publishResponseRouting({requestId, action, owningSubscriptionKey, incomingSubscriptionKey, pendingFound, matched}) {
+        bus.publish({
+            type: 'gui.response',
+            level: 'debug',
+            message: `GUI response ${requestId} action=${action} pendingFound=${pendingFound} matched=${matched} owner=${owningSubscriptionKey} incoming=${incomingSubscriptionKey}`,
+            requestId,
+            action,
+            owningSubscriptionKey,
+            incomingSubscriptionKey,
+            pendingFound,
+            matched
+        })
     }
 }
 

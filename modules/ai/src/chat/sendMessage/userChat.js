@@ -1,4 +1,4 @@
-const {EMPTY, Subject, concat, concatMap, defer, filter, finalize, from, ignoreElements, map, of, takeUntil, tap} = require('rxjs')
+const {EMPTY, Subject, catchError, concat, concatMap, defer, filter, finalize, from, ignoreElements, map, of, shareReplay, takeUntil, tap} = require('rxjs')
 
 const COMMANDS = {
     'create-conversation': 'createConversation$',
@@ -15,6 +15,7 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock, 
     const pendingMetas = new Map()
     const streaming = new Set()
     const contexts = new Map()
+    const turnTails = new Map()
     const abortRequests$ = new Subject()
 
     return {
@@ -92,15 +93,51 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock, 
 
     function sendUserMessage$({channel, conversationId, text, clientId, subscriptionId, selection: messageSelection}) {
         const selection = messageSelection ?? contexts.get(contextKey({clientId, subscriptionId}))
-        const toolContext = {channel, conversationId, clientId, subscriptionId, selection}
+        const turn = {
+            channel, conversationId, text, selection,
+            toolContext: {channel, conversationId, clientId, subscriptionId, selection}
+        }
+        return defer(() => enqueueTurn$(turn))
+    }
+
+    // Serialize turns per conversation: each turn's stream chains onto the
+    // previous turn's stream completion, so sends can't interleave on the
+    // shared message history. Title generation runs after, but off the queue
+    // tail — a slow title must not delay the next turn.
+    function enqueueTurn$(turn) {
+        const {conversationId} = turn
+        const previousStream$ = turnTails.get(conversationId) ?? EMPTY
+        const stream$ = concat(
+            previousStream$.pipe(ignoreElements(), catchError(() => EMPTY)),
+            defer(() => streamTurn$(turn))
+        ).pipe(
+            finalize(() => {
+                if (turnTails.get(conversationId) === stream$) {
+                    turnTails.delete(conversationId)
+                }
+            }),
+            shareReplay({bufferSize: 1, refCount: false})
+        )
+        turnTails.set(conversationId, stream$)
+        return concat(stream$, defer(() => generateTitle$(turn)))
+    }
+
+    function streamTurn$({channel, conversationId, text, selection, toolContext}) {
         return conversation$(conversationId).pipe(
             concatMap(conversation =>
                 persistOrTouch$(conversationId).pipe(map(() => conversation))
             ),
-            concatMap(conversation => concat(
-                streamReply$(channel, conversation, conversationId, text, {selection, toolContext}),
+            concatMap(conversation =>
+                streamReply$(channel, conversation, conversationId, text, {selection, toolContext})
+            )
+        )
+    }
+
+    function generateTitle$({channel, conversationId, text}) {
+        return conversation$(conversationId).pipe(
+            concatMap(conversation =>
                 titleGenerator.afterTurn$({channel, conversation, conversationId, userText: text})
-            ))
+            )
         )
     }
 

@@ -2,7 +2,7 @@ const {Subject, of} = require('rxjs')
 const {createConversation} = require('#mcp/chat/sendMessage/conversation')
 const {createUserChat} = require('#mcp/chat/sendMessage/userChat')
 const {createInMemoryConversationsStore} = require('../io/inMemoryConversationsStore')
-const {aFakeChannel, aFakeHistory, aFakeLlm, aFakeTools, aFakeTitleGenerator, aFakeTracer, run} = require('./builders')
+const {aControllableLlm, aFakeChannel, aFakeHistory, aFakeLlm, aFakeTools, aFakeTitleGenerator, aControllableTitleGenerator, aFakeTracer, run} = require('./builders')
 
 describe('UserChat', () => {
 
@@ -328,6 +328,70 @@ describe('UserChat', () => {
 
             expect(channel.toolStarts).toEqual([{conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo'}])
             expect(channel.toolEnds).toEqual([{conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: true}])
+        })
+    })
+
+    describe('serializing turns', () => {
+
+        it('does not start a second turn for the same conversation until the first finishes', () => {
+            const llm = aControllableLlm()
+            userChat = aUserChat({llm})
+            run(userChat.createConversation$({channel}))
+
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'first'}))
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'second'}))
+
+            expect(llm.calls).toHaveLength(1)
+
+            llm.calls[0].subject.next({textDelta: 'reply one'})
+            llm.calls[0].subject.complete()
+
+            expect(llm.calls).toHaveLength(2)
+        })
+
+        it('feeds the second turn the first turn\'s completed history, not an interleaved one', () => {
+            const llm = aControllableLlm()
+            userChat = aUserChat({llm})
+            run(userChat.createConversation$({channel}))
+
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'first'}))
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'second'}))
+            llm.calls[0].subject.next({textDelta: 'reply one'})
+            llm.calls[0].subject.complete()
+
+            expect(llm.calls[1].messages).toEqual([
+                {role: 'user', content: 'first'},
+                {role: 'assistant', content: 'reply one'},
+                {role: 'user', content: 'second'}
+            ])
+        })
+
+        it('runs turns for different conversations independently', () => {
+            const llm = aControllableLlm()
+            userChat = aUserChat({llm})
+            run(userChat.createConversation$({channel}))
+            run(userChat.createConversation$({channel}))
+
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'to one'}))
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-2', text: 'to two'}))
+
+            expect(llm.calls).toHaveLength(2)
+        })
+
+        it('does not hold the next turn behind the previous turn\'s title generation', () => {
+            const llm = aControllableLlm()
+            const titleGenerator = aControllableTitleGenerator()
+            userChat = aUserChat({llm, titleGenerator})
+            run(userChat.createConversation$({channel}))
+
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'first'}))
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'second'}))
+
+            llm.calls[0].subject.next({textDelta: 'reply one'})
+            llm.calls[0].subject.complete()
+
+            expect(titleGenerator.calls).toHaveLength(1)
+            expect(llm.calls).toHaveLength(2)
         })
     })
 

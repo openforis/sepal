@@ -1,4 +1,4 @@
-const {EMPTY, of, from, defer, throwError, catchError, map} = require('rxjs')
+const {EMPTY, Subject, of, from, defer, throwError, catchError, map} = require('rxjs')
 const {createConversation} = require('#mcp/chat/sendMessage/conversation')
 
 function aConversation({
@@ -37,6 +37,19 @@ function aFakeLlm({replies = [{text: 'response'}]} = {}) {
         },
         receivedMessages,
         receivedTools
+    }
+}
+
+// An LLM whose calls return Subjects the test drives by hand — to hold a turn mid-flight.
+function aControllableLlm() {
+    const calls = []
+    return {
+        respondTo$({messages} = {}) {
+            const subject = new Subject()
+            calls.push({messages: messages ? [...messages] : null, subject})
+            return subject
+        },
+        calls
     }
 }
 
@@ -121,6 +134,19 @@ function aFakeTitleGenerator() {
     }
 }
 
+// A title generator whose afterTurn$ stays pending until the test completes its Subject.
+function aControllableTitleGenerator() {
+    const calls = []
+    return {
+        afterTurn$(args) {
+            const subject = new Subject()
+            calls.push({...args, subject})
+            return subject
+        },
+        calls
+    }
+}
+
 function aFakeGuiRequests(handler = () => of(undefined)) {
     const requests = []
     return {
@@ -161,4 +187,4 @@ function readError(observable) {
     return error
 }
 
-module.exports = {aFakeLlm, aFakeHistory, aFakeChannel, aFakeTools, aFakeTracer, aFakeTitleGenerator, aFakeGuiRequests, aConversation, run, read, readError}
+module.exports = {aFakeLlm, aControllableLlm, aFakeHistory, aFakeChannel, aFakeTools, aFakeTracer, aFakeTitleGenerator, aControllableTitleGenerator, aFakeGuiRequests, aConversation, run, read, readError}
