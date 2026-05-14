@@ -456,7 +456,9 @@ Example profile:
 {
   "id": "recipe.mosaic.default",
   "provider": "lmstudio",
+  "adapter": "openai-chat-completions",
   "model": "qwen/qwen3.5-9b",
+  "capabilities": ["tool_calls", "json_schema"],
   "options": {
     "temperature": 0,
     "maxTokens": 4096,
@@ -528,6 +530,90 @@ workflowSpecialist
 mapLayoutSpecialist
 recipeSpecialist.<TYPE>
 ```
+
+## 10. Provider-neutral LLM/tool contract
+
+Conversation and specialist code should use provider-neutral chat semantics.
+Provider adapters own wire-format conversion.
+
+Internal message shapes:
+
+```js
+{role: 'system', content}
+{role: 'user', content}
+{role: 'assistant', content, toolCalls}
+{role: 'tool', toolResults}
+```
+
+Internal tool call shape:
+
+```js
+{
+  id: 'call-1',
+  name: 'recipe_list',
+  input: {}
+}
+```
+
+Internal tool result shape:
+
+```js
+{
+  toolCallId: 'call-1',
+  toolName: 'recipe_list',
+  result: {
+    ok: true,
+    data: {}
+  }
+}
+```
+
+Structured errors use the same envelope:
+
+```js
+{
+  ok: false,
+  error: {
+    code: 'TOOL_FAILED',
+    message: '...'
+  }
+}
+```
+
+Adapter responsibilities:
+
+- Convert internal tool schemas to provider request format.
+- Convert internal messages to provider message/content-block format.
+- Convert provider streamed deltas into internal `{textDelta}` and `{toolCall}`
+  events.
+- Convert provider usage/cache metadata into normalized `llm.usage` events.
+- Keep provider-specific fields out of `Conversation` and specialist tests.
+
+Provider mapping examples:
+
+- OpenAI chat completions: `tools: [{type: 'function', function: ...}]`,
+  assistant `tool_calls`, one `role: 'tool'` message per tool result.
+- Anthropic/Claude messages: `tools: [...]`, assistant `tool_use` content
+  blocks, user `tool_result` content blocks.
+- OpenAI-compatible local servers: use the OpenAI adapter when they support the
+  same tool-call contract.
+- LM Studio native no-reasoning path: title-generation only in V1; no tools.
+
+The OpenAI adapter may expand one internal `{role: 'tool', toolResults: [...]}`
+message into multiple provider messages. This is expected. The internal domain
+shape is not required to be a one-to-one provider message shape.
+
+Add a reusable provider conformance fixture for tool turns in Phase 0. The first
+consumer is `openai.test.js`; a future `claude.test.js` should reuse the same
+internal fixture and assert Anthropic-specific formatting/parsing. This prevents
+OpenAI message shape from leaking into domain behavior.
+
+Specialist runtime resolves a model profile; the LLM client factory chooses the
+adapter from that profile. Specialists should express requirements as
+capabilities such as `tool_calls`, `json_schema`, `large_context`, or
+`prompt_cache`, not as provider/model IDs.
+
+## 11. Usage accounting
 
 Every LLM adapter should emit normalized usage data when the provider supplies
 it, and approximate what it can when the provider does not.
@@ -603,7 +689,7 @@ per-conversation aggregates. The orchestrator and specialists should pass
 `usageContext` into LLM calls, but they should not manually count or aggregate
 tokens.
 
-## 10. Recipe patch model
+## 12. Recipe patch model
 
 Recipe updates should use JSON Patch rather than full-model replacement for
 incremental changes.
@@ -667,7 +753,7 @@ Projected paths:
 - The LLM may not replace/remove a specific omitted index without deep-reading
   that path first.
 
-## 11. Schema and validation
+## 13. Schema and validation
 
 The previous design said "canonical-on-GUI", but the current GUI does not have
 JSON Schemas as a canonical registry. It has recipe modules, defaults, actions,
@@ -694,7 +780,7 @@ Recommended V1:
 This split avoids duplicate validation authority while preserving GUI ownership
 of client state and persistence.
 
-## 12. Specialist prompt builder
+## 14. Specialist prompt builder
 
 Recipe specialist prompts should be assembled mechanically from active recipe
 knowledge, not hand-authored from scratch per type.
@@ -714,7 +800,7 @@ but active code must not import from `archive/pre-rewrite-chat/`.
 Schema-driven params plus rule prose is intentional. JSON Schema cannot express
 all recipe semantics clearly enough for the LLM.
 
-## 13. Context injection
+## 15. Context injection
 
 Current GUI already sends compact selection context. The server needs to store
 and expose it.
@@ -781,7 +867,7 @@ content now. Until Phase 1 context injection lands, runtime prompt text should
 say that no live GUI context is available rather than shipping literal template
 placeholders.
 
-## 14. GUI request/response and confirmations
+## 16. GUI request/response and confirmations
 
 Server-side tools need a request/response bridge to GUI actions:
 
@@ -834,7 +920,7 @@ Initial hard-confirmation set:
 Chat plan confirmation still applies before non-trivial constructive work.
 Data loss and shared-state mutations use GUI dialogs.
 
-## 15. Tool-loop safety
+## 17. Tool-loop safety
 
 Tool-loop safety is not a single later phase. Blockers by milestone:
 
@@ -850,7 +936,7 @@ Tool-loop safety is not a single later phase. Blockers by milestone:
 The archived loop had several of these ideas. Reintroduce them by test, not by
 copying archive code.
 
-## 16. Phasing
+## 18. Phasing
 
 ### Phase 0: real tool transport
 
@@ -859,7 +945,8 @@ Goal: one trivial tool round trip works end to end.
 Scope:
 
 - Extend LLM port to accept tool schemas.
-- Update OpenAI-compatible adapter to send tools and parse streamed tool calls.
+- Update OpenAI-compatible adapter to send tools and parse streamed tool calls,
+  through the provider-neutral LLM/tool contract.
 - Add tool registry/dispatcher in active code.
 - Emit `tool-start` and `tool-end`.
 - Reintroduce `gui-response` handling server-side.
@@ -873,11 +960,14 @@ Scope:
   inputs.
 - Emit basic `llm.usage` events with provider/model/profile and byte fallbacks.
 - Add tests at `Conversation`, `UserChat`, `wsHandler`, and adapter boundaries.
+- Add reusable provider conformance fixtures for internal tool-turn messages.
 
 Acceptance:
 
 - Fake LLM calls one fake tool.
 - Tool result is fed back to LLM.
+- OpenAI-specific tool formatting/parsing is covered in adapter tests, while
+  `Conversation` tests assert only provider-neutral message/tool shapes.
 - GUI request/response can complete a tool.
 - Unknown or failing tool returns structured error to the LLM.
 - Each LLM call logs its resolved provider/model/profile and whatever usage
@@ -1010,7 +1100,7 @@ Metrics:
 Stop expanding if Phase 2/3 gives enough value or if per-type authoring cost
 exceeds observed benefit.
 
-## 17. Decision gates
+## 19. Decision gates
 
 1. End of Phase 0: provider tool parsing and GUI request/response are stable,
    model-profile resolution works, usage events are emitted, boundary
@@ -1026,7 +1116,7 @@ exceeds observed benefit.
    dominates observed benefit, stop expansion and keep generic/direct fallback
    behavior for remaining types.
 
-## 18. File layout target
+## 20. File layout target
 
 ```text
 modules/ai/src/chat/
@@ -1069,7 +1159,7 @@ modules/gui/src/app/home/body/process/chatActions/
   visualizationActions.js
 ```
 
-## 19. Open questions
+## 21. Open questions
 
 - Where should canonical recipe schemas live after the first active recipe slice?
 - Should `get_context()` be sufficient, or should every user turn also get a
@@ -1089,7 +1179,7 @@ modules/gui/src/app/home/body/process/chatActions/
 - How much recent conversation history should the orchestrator pass in a
   specialist brief?
 
-## 20. Non-goals for V1
+## 22. Non-goals for V1
 
 - Specialists calling other specialists.
 - Persistent specialist sessions.
@@ -1103,7 +1193,7 @@ modules/gui/src/app/home/body/process/chatActions/
   usage/cache fields.
 - Always-on full prompt/tool/recipe payload logging in normal deployments.
 
-## 21. References
+## 23. References
 
 - `modules/ai/PRACTICES.md`: TDD, slices, ports/adapters, observables, event bus.
 - `modules/ai/PUNCH_LIST.md`: deferred AI module cases.
