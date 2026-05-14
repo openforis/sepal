@@ -922,8 +922,12 @@ Gateway/session routing notes:
 - `subscriptionDown` is the primary cleanup signal for tab-scoped state.
   `clientDown`, if reintroduced, should only be a safety-net cleanup for missed
   subscriptions.
-- Outbound GUI requests must target the relevant subscription when the result
-  depends on the sending tab's state.
+- Outbound GUI requests are subscription-scoped in V1. They target the
+  subscription that initiated the turn and are not rebound to another tab.
+- On `subscriptionDown`, pending GUI requests for that subscription are
+  cancelled and late responses are ignored.
+- Tab-independent operations should be implemented as server/direct tools, not
+  as rebindable GUI actions.
 
 Request lifecycle:
 
@@ -931,8 +935,9 @@ Request lifecycle:
 - AI sends targeted `{type: "gui-action", requestId, action, params}`.
 - GUI handler runs and responds with matching `{type: "gui-response",
   requestId, success, data?, error?}`.
-- Success resolves the pending request; `success: false`, timeout, websocket
-  disconnect, or turn cancellation rejects it with a structured tool error.
+- Success resolves the pending request; `success: false`, timeout,
+  `subscriptionDown`, websocket disconnect, or turn cancellation rejects it with
+  a structured tool error.
 - Cancellation unsubscribes the pending request and ignores late responses.
 
 `tool-start`/`tool-end` wrap the logical tool invocation. A tool may make zero,
