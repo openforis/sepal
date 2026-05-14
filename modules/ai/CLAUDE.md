@@ -59,6 +59,14 @@ Uses the gateway's subscription-based websocket routing. The browser subscribes 
 - **Cancellation/context**: `abort` cancels an in-flight stream; `context` is
   stored per tab/subscription in `UserChat` and injected as ephemeral turn
   context on the first LLM call of the next user turn (never persisted to Redis)
+- **Tools**: the LLM may emit tool calls; `Conversation` invokes them through a
+  tool registry and feeds structured `{ok, data?, error?}` results back, capped
+  at `MAX_TOOL_ROUNDS`. `tool-start` / `tool-end` broadcast to the user's tabs
+- **GUI request/response**: a tool can send `{type: 'gui-action', requestId,
+  action, params}` to the requesting tab; the GUI replies `{type:
+  'gui-response', requestId, success, data?, error?}`, routed back through
+  `guiRequests` to resolve the pending request (timeout + per-subscription
+  cancellation apply)
 
 ### REST API
 - `GET /healthcheck` — Returns `{status: 'ok'}`
@@ -78,8 +86,8 @@ src/
   app.js                      # Active rewrite composition
   config.js                   # CLI argument parsing (port, endpoints, LLM config)
   chat/                       # Chat Rewrite Layer
-    io/                        # Active adapters: websocket, OpenAI stream, Redis stores
-    sendMessage/               # Active conversation/user-chat/title-generation slice
+    io/                        # Active adapters: websocket, OpenAI stream, Redis stores, GUI request bridge
+    sendMessage/               # Active conversation/user-chat/title-generation/tool-registry slice
     system-prompt.md           # Active system prompt
 ```
 
@@ -100,10 +108,11 @@ Environment variables mapped to CLI flags in `start.sh`:
 | `RATE_LIMIT` | `--rate-limit` | Parsed for future server-side rate limiting |
 | `SESSION_TTL_MINUTES` | `--session-ttl-minutes` | Parsed for future session expiry work |
 | `SYSTEM_PROMPT` | `--system-prompt` | System prompt prepended to every conversation |
+| `ENABLE_AI_TRANSPORT_SMOKE_TOOLS` | `--enable-ai-transport-smoke-tools` | Register transport smoke-test tools (`echo`); dev/test only, default `false` |
 
 The active rewrite currently uses `HTTP_PORT`, `LLM_PROVIDER`, `LLM_API_KEY`,
-`LLM_MODEL`, `LLM_BASE_URL`, `REDIS_HOST`, `CONVERSATION_TTL_DAYS`, and
-`SYSTEM_PROMPT`.
+`LLM_MODEL`, `LLM_BASE_URL`, `REDIS_HOST`, `CONVERSATION_TTL_DAYS`,
+`SYSTEM_PROMPT`, and `ENABLE_AI_TRANSPORT_SMOKE_TOOLS`.
 Some legacy/future flags are still parsed by `src/config.js` because compose
 supplies them, but the active app does not yet wire SEPAL/GEE clients,
 server-side rate limiting, or session expiry.
@@ -135,6 +144,7 @@ of them, apply the rule above:
 | `src/chat/system-prompt.md` | The whole file (static system prompt) |
 | `src/chat/sendMessage/turnContext.js` | Runtime turn-context message wrapper text |
 | `src/chat/sendMessage/titleGenerator.js` | Title-generation prompt messages |
+| Tool `name` / `description` / `parameters` | Sent to the LLM as tool schemas — currently only the dev/test smoke tools in `src/app.js` |
 
 Old tool and recipe-schema LLM text lives under `archive/pre-rewrite-chat/` now.
 Treat it as reference, not active prompt/tool surface.
@@ -152,6 +162,11 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
   Tabs for the same user share live conversation state; Redis stores conversation
   metadata/history so list/select/send can recover after restart. Active selection
   remains per tab in the GUI.
-- **Tool placeholder**: `app.js` injects `noTools()` until the tool layer is
-  reintroduced. Tool calls currently fail through the conversation error path.
+- **Tool registry**: `app.js` wires `createToolRegistry`. The production tool
+  surface is empty for now; transport smoke-test tools (`echo`) register only
+  when `ENABLE_AI_TRANSPORT_SMOKE_TOOLS=true`, and are never visible to the
+  production model. `ask_gui_echo` stays unregistered until a matching GUI
+  `echo` action exists. The registry owns the structured tool-error envelope
+  (`UNKNOWN_TOOL`, `INVALID_TOOL_ARGS` via ajv, `TOOL_FAILED`); provider
+  wire-format conversion lives in the adapters, not the domain.
 - **OpenAI-compatible adapter**: Active LLM streaming goes through `src/chat/io/openai.js`.

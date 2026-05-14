@@ -92,12 +92,13 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock, 
 
     function sendUserMessage$({channel, conversationId, text, clientId, subscriptionId}) {
         const selection = contexts.get(contextKey({clientId, subscriptionId}))
+        const toolContext = {channel, conversationId, clientId, subscriptionId}
         return conversation$(conversationId).pipe(
             concatMap(conversation =>
                 persistOrTouch$(conversationId).pipe(map(() => conversation))
             ),
             concatMap(conversation => concat(
-                streamReply$(channel, conversation, conversationId, text, selection),
+                streamReply$(channel, conversation, conversationId, text, {selection, toolContext}),
                 titleGenerator.afterTurn$({channel, conversation, conversationId, userText: text})
             ))
         )
@@ -129,13 +130,13 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock, 
         )
     }
 
-    function streamReply$(channel, conversation, conversationId, text, selection) {
+    function streamReply$(channel, conversation, conversationId, text, {selection, toolContext}) {
         return defer(() => {
             streaming.add(conversationId)
             channel.status(conversationId)
             channel.userMessage(conversationId, text)
-            return conversation.sendUserMessage$(text, {selection}).pipe(
-                tap(event => channel.chatResponse({conversationId, ...event})),
+            return conversation.sendUserMessage$(text, {selection, toolContext}).pipe(
+                tap(event => routeTurnEvent(channel, conversationId, event)),
                 takeUntil(abortRequests$.pipe(filter(id => id === conversationId))),
                 finalize(() => {
                     streaming.delete(conversationId)
@@ -162,6 +163,16 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock, 
                 tap(conversation => conversations.set(id, conversation))
             ))
         )
+    }
+}
+
+function routeTurnEvent(channel, conversationId, event) {
+    if (event.toolStart) {
+        channel.toolStart({conversationId, ...event.toolStart})
+    } else if (event.toolEnd) {
+        channel.toolEnd({conversationId, ...event.toolEnd})
+    } else {
+        channel.chatResponse({conversationId, ...event})
     }
 }
 

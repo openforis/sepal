@@ -14,11 +14,15 @@ describe('Chat WS handler', () => {
         return {publish: () => {}}
     }
 
+    function aNoopGuiRequests() {
+        return {respond: () => {}, cancelForSubscription: () => {}}
+    }
+
     function aPassThroughTracer() {
         return {span$: (_name, _attrs, work$) => work$}
     }
 
-    function aHandler({replies = [{text: 'Hi there!'}], conversationIds = ['conv-1'], bus = aNoopBus()} = {}) {
+    function aHandler({replies = [{text: 'Hi there!'}], conversationIds = ['conv-1'], bus = aNoopBus(), guiRequests = aNoopGuiRequests()} = {}) {
         let i = 0
         const createId = () => conversationIds[Math.min(i++, conversationIds.length - 1)]
         const llm = aFakeLlm({replies})
@@ -46,7 +50,7 @@ describe('Chat WS handler', () => {
             }
             return cache.get(username)
         }
-        return createWsHandler({bus, userChatFor})
+        return createWsHandler({bus, userChatFor, guiRequests})
     }
 
     const ISO_FIXED = new Date(1700000000000).toISOString()
@@ -478,6 +482,34 @@ describe('Chat WS handler', () => {
         })
     })
 
+    describe('GUI request/response bridge', () => {
+
+        it('routes a gui-response to the request bridge, scoped to the responding subscription', () => {
+            const responses = []
+            const guiRequests = {respond: response => responses.push(response), cancelForSubscription: () => {}}
+            const {arg$} = captureSent(aHandler({guiRequests}))
+
+            arg$.next({event: 'subscriptionUp', ...alice})
+            arg$.next({data: {type: 'gui-response', requestId: 'req-1', success: true, data: {echoed: 'hi'}}, ...alice})
+
+            expect(responses).toEqual([{
+                clientId: 'c1', subscriptionId: 's1',
+                requestId: 'req-1', success: true, data: {echoed: 'hi'}
+            }])
+        })
+
+        it('cancels pending GUI requests for a subscription on subscriptionDown', () => {
+            const cancels = []
+            const guiRequests = {respond: () => {}, cancelForSubscription: subscription => cancels.push(subscription)}
+            const {arg$} = captureSent(aHandler({guiRequests}))
+
+            arg$.next({event: 'subscriptionUp', ...alice})
+            arg$.next({event: 'subscriptionDown', ...alice})
+
+            expect(cancels).toEqual([{clientId: 'c1', subscriptionId: 's1'}])
+        })
+    })
+
     describe('error reporting', () => {
 
         it('publishes wsConnectionError when the inbound stream errors', () => {
@@ -500,6 +532,7 @@ describe('Chat WS handler', () => {
             const bus = {publish: e => published.push(e)}
             const handler = createWsHandler({
                 bus,
+                guiRequests: aNoopGuiRequests(),
                 userChatFor: () => {
                     throw new Error('user chat unavailable')
                 }
@@ -523,7 +556,7 @@ describe('Chat WS handler', () => {
                 listConversations$: () => of(undefined),
                 sendUserMessage$: () => throwError(() => new Error('redis unavailable'))
             }
-            const handler = createWsHandler({bus, userChatFor: () => userChat})
+            const handler = createWsHandler({bus, guiRequests: aNoopGuiRequests(), userChatFor: () => userChat})
             const arg$ = new Subject()
             handler({arg$}).subscribe()
 

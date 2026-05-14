@@ -96,6 +96,56 @@ it('ignores a user-message broadcast for an inactive conversation', () => {
     })).toBe(state)
 })
 
+it('records a started tool from its wire toolName', () => {
+    const state = {...initialConversationState, activeConversationId: 'conv-1', view: 'chat'}
+
+    const next = conversationReducer(state, {
+        type: 'TOOL_START', conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', input: {text: 'hi'}
+    })
+
+    expect(next.messages.at(-1).tools).toEqual([
+        {id: 't1', name: 'echo', input: {text: 'hi'}, status: 'running'}
+    ])
+})
+
+it('marks a tool succeeded or failed from the wire ok flag', () => {
+    const started = conversationReducer(
+        {...initialConversationState, activeConversationId: 'conv-1', view: 'chat'},
+        {type: 'TOOL_START', conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', input: {}}
+    )
+
+    const failed = conversationReducer(started, {
+        type: 'TOOL_END', conversationId: 'conv-1', toolCallId: 't1', ok: false
+    })
+    expect(failed.messages.at(-1).tools[0].status).toBe('error')
+
+    const succeeded = conversationReducer(started, {
+        type: 'TOOL_END', conversationId: 'conv-1', toolCallId: 't1', ok: true
+    })
+    expect(succeeded.messages.at(-1).tools[0].status).toBe('success')
+})
+
+it('rebuilds tool status from the {ok} envelope of loaded history', () => {
+    const next = conversationReducer(initialConversationState, {
+        type: 'CONVERSATION_LOADED',
+        conversationId: 'conv-1',
+        messages: [
+            {role: 'assistant', content: '', toolCalls: [
+                {id: 'ok-call', name: 'echo', input: {}},
+                {id: 'fail-call', name: 'echo', input: {}}
+            ]},
+            {role: 'tool', toolResults: [
+                {toolCallId: 'ok-call', result: {ok: true, data: {echoed: 'hi'}}},
+                {toolCallId: 'fail-call', result: {ok: false, error: {code: 'TOOL_FAILED'}}}
+            ]}
+        ]
+    })
+
+    const tools = next.messages[0].tools
+    expect(tools.find(t => t.id === 'ok-call').status).toBe('success')
+    expect(tools.find(t => t.id === 'fail-call').status).toBe('error')
+})
+
 it('removes a deleted active conversation and returns to the list', () => {
     expect(conversationReducer({
         ...initialConversationState,

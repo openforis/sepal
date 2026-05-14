@@ -78,6 +78,12 @@ try {
                 .env('SYSTEM_PROMPT')
                 .default('You are Sepalito, a brief assistant for the SEPAL platform. Reply concisely.')
         )
+        .addOption(
+            new Option('--enable-ai-transport-smoke-tools <value>', 'Register transport smoke-test tools (dev/test only)')
+                .env('ENABLE_AI_TRANSPORT_SMOKE_TOOLS')
+                .argParser(v => v === 'true')
+                .default(false)
+        )
         .parse(process.argv)
 } catch (error) {
     fatalError(error)
@@ -95,7 +101,8 @@ const {
     llmBaseUrl,
     rateLimit,
     sessionTtlMinutes,
-    systemPrompt
+    systemPrompt,
+    enableAiTransportSmokeTools
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -112,5 +119,6 @@ module.exports = {
     llmBaseUrl,
     rateLimit,
     sessionTtlMs: sessionTtlMinutes * 60 * 1000,
-    systemPrompt
+    systemPrompt,
+    enableAiTransportSmokeTools
 }

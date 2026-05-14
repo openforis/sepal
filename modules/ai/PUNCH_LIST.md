@@ -18,11 +18,25 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Tool And GUI Bridge
 
-- **Real tool transport is still not wired** — `app.js` injects `noTools()`,
-  the OpenAI adapter does not send tool schemas or parse provider tool-call
-  deltas, and server-side `gui-response` handling is still absent.
-- **Multi-tool-call coverage is thin** — `Conversation` accumulates multiple
-  individual `{toolCall}` events, but tests only pin the single-tool path.
+- **No real product tools yet** — the production tool surface is empty; only
+  the `echo` transport smoke-test tool registers, and only under
+  `ENABLE_AI_TRANSPORT_SMOKE_TOOLS=true`. Real recipe/project/map tools and
+  specialists are not implemented yet.
+- **`ask_gui_echo` has no GUI handler** — the GUI-backed smoke-test tool stays
+  unregistered (even under the dev flag) because the real GUI has no `echo`
+  `gui-action` handler. The server-side GUI request/response bridge is complete
+  and tested; a diagnostic GUI `echo` handler would be needed to exercise a
+  successful end-to-end round trip in a running app.
+- **Tool-loop safety is partial** — there is a `MAX_TOOL_ROUNDS` cap and a
+  structured tool-error envelope, but no repeated-failure bail-out, no
+  validation-error retry limit, and no no-repeat handling for identical failing
+  tool calls (DESIGN §15 "before writable tools").
+- **No model-profile resolution or `llm.usage` events** — every LLM call still
+  goes through one hard-wired adapter; provider/model/profile resolution and
+  normalized usage accounting (DESIGN §9) are not wired.
+- **Boundary events are not lazy** — tool/LLM events publish eager `message`
+  strings; the `message: () => ...` / `payload: () => ...` split from DESIGN §8
+  is only partially applied.
 
 ## Context
 

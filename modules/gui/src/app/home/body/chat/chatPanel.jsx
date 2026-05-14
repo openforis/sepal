@@ -177,10 +177,10 @@ export const ChatPanel = ({className}) => {
                     dispatch({type: 'USER_MESSAGE_RECEIVED', conversationId, text: data.text})
                     break
                 case 'tool-start':
-                    dispatch({type: 'TOOL_START', conversationId, toolCallId: data.toolCallId, name: data.name, input: data.input})
+                    dispatch({type: 'TOOL_START', conversationId, toolCallId: data.toolCallId, toolName: data.toolName, input: data.input})
                     break
                 case 'tool-end':
-                    dispatch({type: 'TOOL_END', conversationId, toolCallId: data.toolCallId, success: data.success, data: data.data, error: data.error})
+                    dispatch({type: 'TOOL_END', conversationId, toolCallId: data.toolCallId, ok: data.ok, data: data.data, error: data.error})
                     break
                 case 'status':
                     dispatch({type: 'STATUS_THINKING', conversationId})

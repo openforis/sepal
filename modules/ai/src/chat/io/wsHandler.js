@@ -2,7 +2,7 @@ const {Subject, startWith} = require('rxjs')
 const {createWsChannel} = require('./wsChannel')
 const {COMMANDS} = require('../sendMessage/userChat')
 
-function createWsHandler({bus, userChatFor}) {
+function createWsHandler({bus, userChatFor, guiRequests}) {
     return onConnection
 
     function onConnection(ctx) {
@@ -60,6 +60,9 @@ function createWsHandler({bus, userChatFor}) {
                 publish('context', subscription, args, 'debug')
                 dispatchTo(subscription, ({userChat}) =>
                     userChat.updateContext$({clientId, subscriptionId, selection: args.selection}))
+            } else if (type === 'gui-response') {
+                publish('gui-response', subscription, args, 'debug')
+                guiRequests.respond({clientId, subscriptionId, ...args})
             } else {
                 publish('unknown', subscription, {dataType: type}, 'warn')
             }
@@ -78,6 +81,7 @@ function createWsHandler({bus, userChatFor}) {
             const {clientId, subscriptionId} = subscription
             dispatchTo(subscription, ({userChat}) =>
                 userChat.clearContext$({clientId, subscriptionId}))
+            guiRequests.cancelForSubscription({clientId, subscriptionId})
             subscriptions.delete(keyOf(subscription))
         }
 

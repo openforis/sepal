@@ -259,6 +259,39 @@ describe('UserChat', () => {
         return messages.find(message => message.content?.includes('<runtime-context>'))?.content
     }
 
+    describe('tool turns', () => {
+        const echoCall = {id: 't1', name: 'echo', input: {}}
+
+        it('passes a toolContext identifying channel, conversation and subscription to tools', () => {
+            const seen = []
+            const llm = aFakeLlm({replies: [{toolCalls: [echoCall]}, {text: 'done'}]})
+            const tools = aFakeTools({echo: (_input, context) => {
+                seen.push(context)
+                return of({})
+            }})
+            userChat = aUserChat({llm, tools})
+            run(userChat.createConversation$({channel}))
+
+            run(userChat.sendUserMessage$({
+                channel, conversationId: 'conv-1', text: 'echo it', clientId: 'c1', subscriptionId: 's1'
+            }))
+
+            expect(seen).toEqual([{channel, conversationId: 'conv-1', clientId: 'c1', subscriptionId: 's1'}])
+        })
+
+        it('routes tool-start and tool-end events to the channel', () => {
+            const llm = aFakeLlm({replies: [{toolCalls: [echoCall]}, {text: 'done'}]})
+            const tools = aFakeTools({echo: () => of({})})
+            userChat = aUserChat({llm, tools})
+            run(userChat.createConversation$({channel}))
+
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'echo it'}))
+
+            expect(channel.toolStarts).toEqual([{conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo'}])
+            expect(channel.toolEnds).toEqual([{conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: true}])
+        })
+    })
+
     describe('selectConversation$', () => {
 
         it('sends the conversation\'s messages on the channel', () => {

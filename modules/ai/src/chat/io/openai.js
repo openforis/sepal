@@ -1,4 +1,4 @@
-const {EMPTY, defer, from, filter, finalize, map, mergeMap, tap, timeout} = require('rxjs')
+const {EMPTY, concat, defer, from, filter, finalize, map, mergeMap, tap, timeout} = require('rxjs')
 const OpenAI = require('openai').default
 
 const MAX_LOG_TEXT = 300
@@ -11,21 +11,24 @@ function createOpenAI({baseURL, apiKey, model, provider, bus}) {
 
     return {respondTo$}
 
-    function respondTo$({messages, maxTokens, temperature, debugLabel, extraParams = {}, disableReasoning = false}) {
-        if (provider === 'lmstudio' && disableReasoning) {
+    function respondTo$({messages, tools, maxTokens, temperature, debugLabel, extraParams = {}, disableReasoning = false}) {
+        const useLmStudioNativePath = provider === 'lmstudio' && disableReasoning
+        if (useLmStudioNativePath) {
             return respondToLmStudioNative$({messages, maxTokens, temperature, debugLabel})
         }
 
-        const acc = {text: '', chunkCount: 0}
+        const acc = {text: '', chunkCount: 0, toolCalls: new Map()}
+        const hasTools = tools?.length > 0
         const params = {
             model,
-            messages,
+            messages: toProviderMessages(messages),
             stream: true,
+            ...(hasTools ? {tools: toProviderTools(tools), tool_choice: 'auto'} : {}),
             ...extraParams,
             ...(maxTokens !== undefined ? {max_tokens: maxTokens} : {}),
             ...(temperature !== undefined ? {temperature} : {})
         }
-        return defer(() => {
+        const text$ = defer(() => {
             if (debugLabel) {
                 bus.publish({
                     type: 'llm.request',
@@ -38,7 +41,7 @@ function createOpenAI({baseURL, apiKey, model, provider, bus}) {
             mergeMap(stream => from(stream)),
             timeout({first: FIRST_CHUNK_TIMEOUT_MS, each: BETWEEN_CHUNKS_TIMEOUT_MS}),
             tap(chunk => {
-                acc.chunkCount++
+                accumulateChunk(acc, chunk)
                 bus.publish({
                     type: 'llm.chunk',
                     level: 'trace',
@@ -51,20 +54,13 @@ function createOpenAI({baseURL, apiKey, model, provider, bus}) {
                         message: () => `LLM ${debugLabel} raw chunk ${acc.chunkCount}: ${truncateTo(JSON.stringify(chunk), MAX_DEBUG_TEXT)}`
                     })
                 }
-                const delta = chunk.choices?.[0]?.delta?.content
-                if (delta) acc.text += delta
             }),
             map(chunk => chunk.choices?.[0]?.delta?.content),
             filter(Boolean),
-            map(textDelta => ({textDelta})),
-            finalize(() => {
-                bus.publish({
-                    type: 'llm.response',
-                    level: 'debug',
-                    message: () => `LLM response: model=${model} chunks=${acc.chunkCount} text=${JSON.stringify(truncate(acc.text))}`
-                })
-            })
+            map(textDelta => ({textDelta}))
         )
+        const toolCalls$ = defer(() => from(toolCallEvents(acc.toolCalls)))
+        return concat(text$, toolCalls$).pipe(withResponseEvent(acc))
     }
 
     function respondToLmStudioNative$({messages, maxTokens, temperature, debugLabel}) {
@@ -103,15 +99,92 @@ function createOpenAI({baseURL, apiKey, model, provider, bus}) {
                 acc.chunkCount = text ? 1 : 0
                 return text ? from([{textDelta: text}]) : EMPTY
             }),
-            finalize(() => {
-                bus.publish({
-                    type: 'llm.response',
-                    level: 'debug',
-                    message: () => `LLM response: model=${model} chunks=${acc.chunkCount} text=${JSON.stringify(truncate(acc.text))}`
-                })
-            })
+            withResponseEvent(acc)
         )
     }
+
+    function withResponseEvent(acc) {
+        return finalize(() => {
+            bus.publish({
+                type: 'llm.response',
+                level: 'debug',
+                message: () => `LLM response: model=${model} chunks=${acc.chunkCount} text=${JSON.stringify(truncate(acc.text))}`
+            })
+        })
+    }
+}
+
+function toProviderTools(tools) {
+    return tools.map(({name, description, parameters}) => ({
+        type: 'function',
+        function: {name, description, parameters}
+    }))
+}
+
+function toProviderMessages(messages) {
+    return messages.flatMap(toProviderMessage)
+}
+
+function toProviderMessage(message) {
+    const isToolCallMessage = message.role === 'assistant' && message.toolCalls
+    const isToolResultMessage = message.role === 'tool'
+    if (isToolCallMessage) {
+        return [toProviderToolCallMessage(message)]
+    } else if (isToolResultMessage) {
+        return toProviderToolResultMessages(message)
+    } else {
+        return [message]
+    }
+}
+
+function toProviderToolCallMessage({content, toolCalls}) {
+    return {
+        role: 'assistant',
+        content: content || null,
+        tool_calls: toolCalls.map(toolCall => ({
+            id: toolCall.id,
+            type: 'function',
+            function: {name: toolCall.name, arguments: JSON.stringify(toolCall.input ?? {})}
+        }))
+    }
+}
+
+// One internal tool-result message carries every result; OpenAI wants one
+// role:'tool' message per result, hence the 1-to-N expansion.
+function toProviderToolResultMessages({toolResults}) {
+    return toolResults.map(toolResult => ({
+        role: 'tool',
+        tool_call_id: toolResult.toolCallId,
+        content: JSON.stringify(toolResult.result)
+    }))
+}
+
+function accumulateChunk(acc, chunk) {
+    acc.chunkCount++
+    const delta = chunk.choices?.[0]?.delta
+    if (delta?.content) acc.text += delta.content
+    accumulateToolCalls(acc.toolCalls, delta?.tool_calls)
+}
+
+function accumulateToolCalls(toolCalls, deltas) {
+    if (!deltas) return
+    for (const delta of deltas) {
+        const entry = toolCalls.get(delta.index) || {id: undefined, name: undefined, args: ''}
+        if (delta.id) entry.id = delta.id
+        if (delta.function?.name) entry.name = delta.function.name
+        if (delta.function?.arguments) entry.args += delta.function.arguments
+        toolCalls.set(delta.index, entry)
+    }
+}
+
+function toolCallEvents(toolCalls) {
+    return [...toolCalls.values()].map(entry => {
+        try {
+            return {toolCall: {id: entry.id, name: entry.name, input: JSON.parse(entry.args || '{}')}}
+        } catch (error) {
+            return {toolCall: {id: entry.id, name: entry.name, input: null, argsError: error.message}}
+        }
+    })
 }
 
 function nativeSystemPrompt(messages) {

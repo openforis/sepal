@@ -1,21 +1,25 @@
-const {map, of, throwError} = require('rxjs')
+const {map, of, timer} = require('rxjs')
 const {v4: uuid} = require('uuid')
 const Redis = require('ioredis')
 const httpServer = require('#sepal/httpServer')
 const {stream} = require('#sepal/httpServer')
 const log = require('#sepal/log').getLogger('ai')
 
+const {createGuiRequests} = require('./chat/io/guiRequests')
 const {createOpenAI} = require('./chat/io/openai')
 const {createRedisConversationsStore} = require('./chat/io/redisConversationsStore')
 const {createRedisHistory} = require('./chat/io/redisHistory')
 const {createWsHandler} = require('./chat/io/wsHandler')
 const {createConversation} = require('./chat/sendMessage/conversation')
 const {createTitleGenerator} = require('./chat/sendMessage/titleGenerator')
+const {createToolRegistry} = require('./chat/sendMessage/tools')
 const {createUserChat} = require('./chat/sendMessage/userChat')
 const {createEventBus} = require('./eventBus')
 const {createLogListener} = require('./logListener')
 const {createTracer} = require('./tracer')
 const {createServer} = require('./server')
+
+const GUI_REQUEST_TIMEOUT_MS = 30_000
 
 function createApp({config}) {
     const bus = createEventBus()
@@ -44,10 +48,11 @@ function createApp({config}) {
         provider: config.llmProvider,
         bus
     })
-    const tools = noTools()
+    const guiRequests = createGuiRequests({clock, createId: uuid, timeoutMs: GUI_REQUEST_TIMEOUT_MS})
+    const tools = createToolRegistry({tools: registeredTools(config, guiRequests)})
 
     const userChats = new Map()
-    const wsHandler = createWsHandler({bus, userChatFor})
+    const wsHandler = createWsHandler({bus, userChatFor, guiRequests})
 
     const routes = router => router.get('/healthcheck', stream(() => of({status: 'ok'})))
 
@@ -86,12 +91,52 @@ function createApp({config}) {
 function systemClock() {
     return {
         now: () => Date.now(),
-        nowIso: () => new Date().toISOString()
+        nowIso: () => new Date().toISOString(),
+        delay$: ms => timer(ms)
     }
 }
 
-function noTools() {
-    return {invoke$: name => throwError(() => new Error(`Tools not configured (asked for ${name})`))}
+// The production tool surface holds only real product tools — none yet.
+// Transport smoke-test tools are dev/test diagnostics: registered only when
+// explicitly enabled, never visible to the production model.
+function registeredTools(config, guiRequests) {
+    if (config.enableAiTransportSmokeTools) {
+        // ask_gui_echo is held back until a matching GUI echo action exists.
+        return transportSmokeTestTools(guiRequests).filter(tool => tool.name !== 'ask_gui_echo')
+    } else {
+        return []
+    }
+}
+
+// Transport smoke-test tools: one direct tool and one GUI-backed tool, enough
+// to exercise the full tool round trip. Dev/test only — see registeredTools.
+function transportSmokeTestTools(guiRequests) {
+    const textParameter = {
+        type: 'object',
+        properties: {text: {type: 'string'}},
+        required: ['text'],
+        additionalProperties: false
+    }
+    return [
+        {
+            name: 'echo',
+            description: 'Echo input text back.',
+            parameters: textParameter,
+            invoke$: input => of({echoed: input.text})
+        },
+        {
+            name: 'ask_gui_echo',
+            description: 'Ask the GUI to echo input text.',
+            parameters: textParameter,
+            invoke$: (input, context) => guiRequests.request$({
+                channel: context.channel,
+                clientId: context.clientId,
+                subscriptionId: context.subscriptionId,
+                action: 'echo',
+                params: input
+            })
+        }
+    ]
 }
 
 function logViaLog4js(level, line) {

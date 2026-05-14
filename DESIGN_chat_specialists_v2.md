@@ -72,18 +72,31 @@ Active AI code is a rewrite, not a refactor of the archived orchestrator.
 
 Current state:
 
-- `modules/ai/src/app.js` still injects `noTools()`.
-- `Conversation` has a tool-call loop placeholder, but the real LLM adapter does
-  not yet send tool schemas or parse streamed tool calls.
-- `wsHandler` logs `context` but does not store or use it.
-- `gui-response` is not handled server-side.
-- GUI already has partial support for `context`, `tool-start`, `tool-end`, and
+- Static prompt placeholders are removed. Compact GUI selection context is
+  stored per tab/subscription and injected as ephemeral turn context on the first
+  LLM call of a user turn.
+- `Conversation` can pass tool schemas to the LLM, consume provider-normalized
+  tool calls, invoke the tool registry, feed structured tool results back, cap
+  tool rounds, and emit `tool-start`/`tool-end`.
+- The OpenAI-compatible adapter sends tool schemas and parses streamed tool
+  calls. The LM Studio native no-reasoning path is title-generation only in V1
+  and does not support tools.
+- `app.js` wires a tool registry. The production tool surface is empty for now;
+  the direct `echo` smoke tool is registered only when explicitly enabled for
+  dev/test, and `ask_gui_echo` remains unregistered until a GUI `echo` action
+  exists.
+- `wsHandler` handles `gui-response`; GUI request resolution is scoped to the
+  initiating `clientId:subscriptionId`, and `subscriptionDown` cancels pending
+  GUI requests for that subscription.
+- GUI chat supports `context`, `tool-start`/`tool-end` using `toolName`/`ok`, and
   `gui-action` responses.
 - Existing GUI chat actions can create, save, load, list, move, delete, open,
-  close, map, and visualize, but they are not reachable from active AI tools.
+  close, map, and visualize, but they are not exposed as real product AI tools
+  yet.
 
-Implication: Phase 0 must reintroduce the actual tool protocol, not just add
-new specialist files.
+Implication: before recipe/product tools land, finish hardening the provider
+boundary, observability, usage accounting, and tool-loop safety. Do not start by
+adding specialist files on top of provider-specific adapter code.
 
 ## 4. Main actors
 
@@ -276,6 +289,10 @@ small. Use both counts and bytes:
 Measure the actual provider-formatted byte size in Phase 0. If the surface
 drifts past the budget, collapse related direct tools behind a specialist or a
 single dispatcher tool.
+
+Diagnostic/smoke tools are not product tools. They must be excluded from the
+default production tool surface and enabled only through explicit dev/test
+configuration.
 
 ## 6. Specialist session protocol
 
@@ -838,8 +855,9 @@ all recipe semantics clearly enough for the LLM.
 
 ## 15. Context injection
 
-Current GUI already sends compact selection context. The server needs to store
-and expose it.
+Current GUI already sends compact selection context. The server stores it per
+tab/subscription and injects a capped ephemeral turn-context block. On-demand
+context read tools are still pending.
 
 V1 should separate context into four tiers:
 
@@ -872,7 +890,7 @@ V1 should separate context into four tiers:
 
 Preferred V1 implementation:
 
-- Store latest context per tab/subscription in `UserChat` or a nearby
+- Continue storing latest context per tab/subscription in `UserChat` or a nearby
   collaborator.
 - Expose `get_context()` as a tool.
 - Attach a small turn context block outside the system prompt only when there is
@@ -897,22 +915,19 @@ Reasoning:
 - Username is usually infrastructure data, not reasoning context. Giving it to
   the model by default adds privacy exposure and tokens with little benefit.
 
-The system prompt should be static. Delete `{{username}}`,
-`{{currentContext}}`, and `{{recipeTypes}}` placeholders from runtime prompt
-content now. Until Phase 1 context injection lands, runtime prompt text should
-say that no live GUI context is available rather than shipping literal template
-placeholders.
+The system prompt should stay static. Do not reintroduce `{{username}}`,
+`{{currentContext}}`, or `{{recipeTypes}}` placeholders into runtime prompt
+content. Runtime context belongs in ephemeral turn context or explicit tool
+results, not in the cacheable system prompt.
 
 ## 16. GUI request/response and confirmations
 
-Server-side tools need a request/response bridge to GUI actions:
+Server-side tools use a request/response bridge to GUI actions:
 
 ```text
 AI -> GUI: {type: "gui-action", requestId, action, params}
 GUI -> AI: {type: "gui-response", requestId, success, data?, error?}
 ```
-
-The GUI already sends `gui-response`; the active AI server needs to handle it.
 
 Gateway/session routing notes:
 
@@ -926,22 +941,28 @@ Gateway/session routing notes:
   subscription that initiated the turn and are not rebound to another tab.
 - On `subscriptionDown`, pending GUI requests for that subscription are
   cancelled and late responses are ignored.
+- A `gui-response` resolves a pending request only when both `requestId` and the
+  authenticated `clientId:subscriptionId` match the owning pending request.
+  Unknown or wrong-subscription responses are ignored.
 - Tab-independent operations should be implemented as server/direct tools, not
   as rebindable GUI actions.
 
 Request lifecycle:
 
-- AI side generates `requestId` and stores a pending request with timeout.
+- AI side generates `requestId` and stores a pending request with timeout and
+  owning `clientId:subscriptionId`.
 - AI sends targeted `{type: "gui-action", requestId, action, params}`.
 - GUI handler runs and responds with matching `{type: "gui-response",
   requestId, success, data?, error?}`.
-- Success resolves the pending request; `success: false`, timeout,
+- Server verifies the response came from the owning subscription. Success
+  resolves the pending request; `success: false`, timeout,
   `subscriptionDown`, websocket disconnect, or turn cancellation rejects it with
   a structured tool error.
 - Cancellation unsubscribes the pending request and ignores late responses.
 
-`tool-start`/`tool-end` wrap the logical tool invocation. A tool may make zero,
-one, or multiple GUI requests internally.
+`tool-start`/`tool-end` wrap the logical tool invocation and use the canonical
+wire fields `toolName` and `ok`. A tool may make zero, one, or multiple GUI
+requests internally.
 
 Hard confirmations are part of tool execution, not orchestrator reasoning.
 The tool implementation declares when confirmation is required, sends the GUI
@@ -979,37 +1000,53 @@ copying archive code.
 
 ## 18. Phasing
 
-### Phase 0: real tool transport
+### Phase 0: tool transport foundation
 
-Goal: one trivial tool round trip works end to end.
+Goal: provider-neutral tool transport is stable enough for product tools and
+specialists, while diagnostic tools stay out of the production model surface.
 
-Scope:
+Implemented foundation:
 
-- Extend LLM port to accept tool schemas.
-- Update OpenAI-compatible adapter to send tools and parse streamed tool calls,
-  through the provider-neutral LLM/tool contract.
-- Add tool registry/dispatcher in active code.
-- Emit `tool-start` and `tool-end`.
-- Reintroduce `gui-response` handling server-side.
-- Add request timeout and cancellation behavior.
-- Add max tool round cap.
-- Add structured tool-error envelope.
-- Add `tool.invoke` tracing.
-- Add structured boundary events with lazy `message`/`payload`.
-- Log provider-formatted tool schema byte size.
+- LLM port accepts tool schemas.
+- OpenAI-compatible adapter sends tools and parses streamed tool calls through
+  the provider-neutral LLM/tool contract.
+- Tool registry/dispatcher exists in active code.
+- Production tool surface is empty; the direct `echo` smoke tool is dev/test
+  flagged, and `ask_gui_echo` is unregistered until a GUI `echo` action exists.
+- `Conversation` invokes tools, feeds `{ok, data?, error?}` results back to the
+  LLM, emits `tool-start`/`tool-end`, and enforces a max tool-round cap.
+- Structured tool-error envelope exists for unknown, invalid, and failing tools.
+- Server handles targeted GUI request/response, timeout, wrong-subscription
+  responses, and `subscriptionDown` cancellation.
+- Tests cover `Conversation`, `UserChat`, `wsHandler`, GUI request bridge,
+  OpenAI-compatible adapter formatting/parsing, GUI reducer tool rendering, and
+  provider-conformance fixtures for internal tool-turn messages.
+
+Remaining Phase 0C work before product tools/specialists:
+
+- Split the current OpenAI-compatible adapter into provider-neutral LLM
+  contract/common code and provider adapters.
+- Keep LM Studio native no-reasoning title generation isolated from normal
+  OpenAI-compatible chat/tool transport.
 - Add model-profile resolution for orchestrator calls and specialist policy
   inputs.
-- Emit basic `llm.usage` events with provider/model/profile and byte fallbacks.
-- Add tests at `Conversation`, `UserChat`, `wsHandler`, and adapter boundaries.
-- Add reusable provider conformance fixtures for internal tool-turn messages.
+- Emit basic `llm.usage` events with provider/model/profile and byte/count
+  fallbacks.
+- Add structured boundary events with lazy `message`/`payload` where still
+  missing.
+- Log provider-formatted tool schema byte size.
+- Ensure `tool.invoke` tracing remains covered after the adapter refactor.
+- Run a successful browser GUI request/response E2E only when a real GUI action
+  or explicit dev-only diagnostic GUI handler exists.
 
 Acceptance:
 
-- Fake LLM calls one fake tool.
-- Tool result is fed back to LLM.
+- Fake/direct smoke LLM calls one fake tool and receives the tool result.
 - OpenAI-specific tool formatting/parsing is covered in adapter tests, while
   `Conversation` tests assert only provider-neutral message/tool shapes.
-- GUI request/response can complete a tool.
+- Diagnostic tools are not visible to the production model by default.
+- Server-side GUI request/response resolves only for the owning subscription and
+  cancels on `subscriptionDown`.
 - Unknown or failing tool returns structured error to the LLM.
 - Each LLM call logs its resolved provider/model/profile and whatever usage
   fields are available.
@@ -1023,8 +1060,8 @@ tool bloat.
 
 Scope:
 
-- Static system prompt.
-- Store latest GUI context.
+- Keep the static system prompt placeholder-free.
+- Continue storing latest GUI context per tab/subscription.
 - Add `get_context()`.
 - Add `recipe_list`.
 - Add projected `recipe_load({recipeId, path?})`.
@@ -1143,10 +1180,11 @@ exceeds observed benefit.
 
 ## 19. Decision gates
 
-1. End of Phase 0: provider tool parsing and GUI request/response are stable,
-   model-profile resolution works, usage events are emitted, boundary
-   request/response inspection is available, and dispatcher tool schema bytes
-   fit the budget. If not, shrink the direct surface before adding recipe work.
+1. End of Phase 0: provider adapter boundary is split, provider tool parsing and
+   GUI request/response are stable, model-profile resolution works, usage events
+   are emitted, boundary request/response inspection is available, and
+   dispatcher tool schema bytes fit the budget. If not, shrink the direct
+   surface before adding recipe work.
 2. End of Phase 2: measure prompt tokens, cache behavior where available, patch
    payload size, and tool failure rate. If projection plus patches solve the
    user-visible cost/quality problem at current recipe count, defer Phase 3+.
@@ -1162,6 +1200,15 @@ exceeds observed benefit.
 ```text
 modules/ai/src/chat/
   system-prompt.md
+  llm/
+    index.js
+    common/
+      logging.js
+      timeouts.js
+      text.js
+    providers/
+      openaiChatCompletions.js
+      lmStudioNativeChat.js
   sendMessage/
     conversation.js
     modelProfiles.js
@@ -1178,7 +1225,7 @@ modules/ai/src/chat/
       specialistSessions.js
       promptBuilder.js
   io/
-    openai.js
+    guiRequests.js
     wsHandler.js
     wsChannel.js
 
@@ -1200,11 +1247,14 @@ modules/gui/src/app/home/body/process/chatActions/
   visualizationActions.js
 ```
 
+Future providers such as Claude should add sibling adapters under
+`chat/llm/providers/` without changing `Conversation` or specialist loops.
+
 ## 21. Open questions
 
 - Where should canonical recipe schemas live after the first active recipe slice?
-- Should `get_context()` be sufficient, or should every user turn also get a
-  small context block?
+- What should `get_context()` return beyond the compact turn context already
+  injected into the first LLM call of a user turn?
 - Which provider schemas are accepted unchanged, and which need an
   LLM-compatible projection?
 - Which model profiles and specialist policies should be configurable globally,

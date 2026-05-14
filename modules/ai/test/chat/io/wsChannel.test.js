@@ -211,4 +211,49 @@ describe('WS channel adapter', () => {
             })
         })
     })
+
+    describe('guiAction — targeted to the requesting tab', () => {
+
+        it('emits a gui-action routed to clientId + subscriptionId so only that tab runs it', () => {
+            channel.guiAction({requestId: 'req-1', action: 'echo', params: {text: 'hi'}})
+
+            expect(sent).toEqual([{
+                ...alice,
+                data: {type: 'gui-action', requestId: 'req-1', action: 'echo', params: {text: 'hi'}}
+            }])
+            expect(published[0]).toMatchObject({
+                level: 'debug',
+                message: 'WS out c1:s1 (alice) gui-action echo (req-1)'
+            })
+        })
+    })
+
+    describe('toolStart / toolEnd — broadcast to all the user\'s tabs', () => {
+
+        it('emits a tool-start', () => {
+            channel.toolStart({conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo'})
+
+            expect(sent).toEqual([{
+                username: 'alice',
+                data: {type: 'tool-start', conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo'}
+            }])
+            expect(published[0]).toMatchObject({
+                level: 'debug',
+                message: 'WS out (alice broadcast) tool-start echo conv-1'
+            })
+        })
+
+        it('emits a tool-end with the ok flag', () => {
+            channel.toolEnd({conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: false})
+
+            expect(sent).toEqual([{
+                username: 'alice',
+                data: {type: 'tool-end', conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: false}
+            }])
+            expect(published[0]).toMatchObject({
+                level: 'debug',
+                message: 'WS out (alice broadcast) tool-end echo conv-1 ok=false'
+            })
+        })
+    })
 })

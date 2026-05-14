@@ -18,14 +18,14 @@ const processLoadedMessages = messages => {
                 }
                 tools = m.toolCalls.map(tc => {
                     const res = resultsById[tc.id]
-                    const success = res ? res.success !== false : true
+                    const ok = res ? res.ok !== false : true
                     return {
                         id: tc.id,
                         name: tc.name,
                         input: tc.input || {},
-                        status: success ? 'success' : 'error',
-                        data: success ? res?.data : undefined,
-                        error: success ? undefined : res?.error
+                        status: ok ? 'success' : 'error',
+                        data: ok ? res?.data : undefined,
+                        error: ok ? undefined : res?.error
                     }
                 })
             }
@@ -126,7 +126,7 @@ export const conversationReducer = (state, action) => {
             if (isForeignConversation(state, action.conversationId)) return state
             const entry = {
                 id: action.toolCallId,
-                name: action.name,
+                name: action.toolName,
                 input: action.input || {},
                 status: 'running'
             }
@@ -155,7 +155,7 @@ export const conversationReducer = (state, action) => {
                 const tools = [...m.tools]
                 tools[idx] = {
                     ...tools[idx],
-                    status: action.success ? 'success' : 'error',
+                    status: action.ok ? 'success' : 'error',
                     data: action.data,
                     error: action.error
                 }

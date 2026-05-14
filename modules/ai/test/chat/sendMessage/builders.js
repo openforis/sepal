@@ -1,4 +1,4 @@
-const {EMPTY, of, from, defer, throwError} = require('rxjs')
+const {EMPTY, of, from, defer, throwError, catchError, map} = require('rxjs')
 const {createConversation} = require('#mcp/chat/sendMessage/conversation')
 
 function aConversation({
@@ -26,14 +26,17 @@ function aFakeTracer() {
 
 function aFakeLlm({replies = [{text: 'response'}]} = {}) {
     const receivedMessages = []
+    const receivedTools = []
     let i = 0
     return {
-        respondTo$({messages} = {}) {
+        respondTo$({messages, tools} = {}) {
             receivedMessages.push(messages ? [...messages] : null)
+            receivedTools.push(tools)
             const reply = replies[Math.min(i++, replies.length - 1)]
             return from(replyToEvents(reply))
         },
-        receivedMessages
+        receivedMessages,
+        receivedTools
     }
 }
 
@@ -68,6 +71,8 @@ function aFakeChannel() {
     const statuses = []
     const userMessages = []
     const metaUpdates = []
+    const toolStarts = []
+    const toolEnds = []
     return {
         chatResponse(payload) { sent.push(payload) },
         status(conversationId) { statuses.push(conversationId) },
@@ -78,18 +83,28 @@ function aFakeChannel() {
         conversationUpdated(meta) { metaUpdates.push(meta) },
         conversationDeleted(conversationId) { deleted.push(conversationId) },
         conversationsList(metas) { lists.push(metas) },
-        sent, created, loaded, claimed, deleted, lists, statuses, userMessages, metaUpdates
+        toolStart(payload) { toolStarts.push(payload) },
+        toolEnd(payload) { toolEnds.push(payload) },
+        sent, created, loaded, claimed, deleted, lists, statuses, userMessages, metaUpdates, toolStarts, toolEnds
     }
 }
 
-function aFakeTools(implementations = {}) {
+function aFakeTools(implementations = {}, schemas = []) {
     const invocations = []
     return {
-        invoke$(toolCall) {
+        schemas() {
+            return schemas
+        },
+        invoke$(toolCall, context) {
             invocations.push(toolCall)
             const impl = implementations[toolCall.name]
-            if (!impl) return throwError(() => new Error(`Unknown tool: ${toolCall.name}`))
-            return impl(toolCall.input)
+            if (!impl) {
+                return of({ok: false, error: {code: 'UNKNOWN_TOOL', message: `Tool not found: ${toolCall.name}`}})
+            }
+            return impl(toolCall.input, context).pipe(
+                map(data => ({ok: true, data})),
+                catchError(error => of({ok: false, error: {code: 'TOOL_FAILED', message: error.message}}))
+            )
         },
         invocations
     }
