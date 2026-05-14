@@ -142,5 +142,5 @@ const getError = (channels, factor) =>
 const getWeightedMeanFactor = channels => {
     const numerator = _.sum(channels.map(({range, factor}) => Math.abs(range) * factor))
     const denominator = _.sum(channels.map(({range}) => Math.abs(range)))
-    return numerator / denominator
+    return denominator === 0 ? 0 : numerator / denominator
 }
