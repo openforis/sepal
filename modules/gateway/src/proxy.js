@@ -27,10 +27,24 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
 
     const proxy = app =>
         ({path, target, proxyTimeout = 60 * 1000, timeout = 61 * 1000, authenticate, cache, noCache, rewrite, _ws = false}) => {
+            // http-proxy-middleware v4 (httpxy) re-injects '/' when the request URL has no path
+            // component, producing a stray slash when target.pathname is joined with a query-only
+            // request. Compose the upstream path here and send only target.origin so httpxy has
+            // nothing to join.
+            const targetUrl = new URL(target)
+            const targetPath = targetUrl.pathname === '/' ? '' : targetUrl.pathname
             const proxyMiddleware = createProxyMiddleware({
                 selfHandleResponse: false,
-                target,
-                pathRewrite: {'/': ''},
+                target: targetUrl.origin,
+                pathRewrite: (_p, req) => {
+                    const rest = req.originalUrl.slice(path.length)
+                    const joinedPath = targetPath.endsWith('/') && rest.startsWith('/')
+                        ? targetPath + rest.slice(1)
+                        : targetPath + rest
+                    return joinedPath.startsWith('/')
+                        ? joinedPath
+                        : '/' + joinedPath
+                },
                 proxyTimeout,
                 timeout,
                 logger: log,
