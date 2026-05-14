@@ -107,4 +107,20 @@ test('toBandValues(${rgb}, ${visParams}) === ${result}')
             visParams: {type: 'categorical', bands: ['index'], values: [1, 30, 40, 50], min: [1], max: [50], palette: ['#000000', '#d3d3d3', '#006400', '#90ee90']},
             result: [40]
         },
+        {
+            // Cursor exactly on a real palette entry (#d3d3d3) in a sparse palette
+            // must still resolve to its own value (30), not to a neighbour.
+            rgb: [211, 211, 211],
+            visParams: {type: 'categorical', bands: ['index'], values: [1, 30, 40, 50], min: [1], max: [50], palette: ['#000000', '#d3d3d3', '#006400', '#90ee90']},
+            result: [30]
+        },
+        {
+            // Adjacent palette entries that are identical leave every channel with
+            // range 0, so getWeightedMeanFactor divides 0/0. Without the NaN -> 0
+            // guard, every segment's error becomes NaN, _.minBy returns undefined,
+            // and the destructure throws.
+            rgb: [0, 0, 0],
+            visParams: {type: 'continuous', bands: ['b'], min: [1], max: [3], palette: ['#000000', '#000000', '#000000']},
+            result: [1]
+        },
     )
