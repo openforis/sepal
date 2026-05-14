@@ -763,6 +763,12 @@ Recommended V1:
 
 - Create an active recipe knowledge package under `modules/ai/src/recipes` by
   deliberately resurrecting one recipe type from archive through tests.
+- Treat archived recipe schemas/rules as source material, not runtime
+  dependencies. Do not import active code from `archive/pre-rewrite-chat`.
+- Reuse archive ideas selectively: schema properties, defaults, cross-field rule
+  descriptions, gotchas, cost notes, output bands, and visualization hints.
+- Verify archived assumptions against current recipe models and GUI save
+  behavior before promoting them into active validators.
 - Treat that active AI recipe package as canonical for JSON Schema and
   cross-field rules in V1.
 - `recipe_patch` validates the post-patch candidate model against that canonical
@@ -779,6 +785,36 @@ Recommended V1:
 
 This split avoids duplicate validation authority while preserving GUI ownership
 of client state and persistence.
+
+Expected active package shape for the first resurrected recipe:
+
+```text
+modules/ai/src/recipes/mosaic/
+  index.js
+  schema.json
+  defaults.js
+  rules.js
+  promptFacts.js
+  validate.js
+```
+
+Expected export shape:
+
+```js
+{
+  id: 'MOSAIC',
+  name: 'Optical Mosaic',
+  schema,
+  defaults,
+  validate(model),
+  promptFacts()
+}
+```
+
+Do not bulk-migrate every archived recipe schema. Bring recipe packages back one
+at a time, starting with the Phase 3 recipe type. Each resurrected package must
+land with focused tests for defaults, schema acceptance, validation rules, and
+prompt facts.
 
 ## 14. Specialist prompt builder
 
