@@ -145,7 +145,7 @@ of them, apply the rule above:
 | `src/chat/system-prompt.md` | The whole file (static system prompt) |
 | `src/chat/sendMessage/turnContext.js` | Runtime turn-context message wrapper text |
 | `src/chat/sendMessage/titleGenerator.js` | Title-generation prompt messages |
-| Tool `name` / `description` / `parameters` | Sent to the LLM as tool schemas — currently only the dev/test smoke tools in `src/app.js` |
+| Tool `name` / `description` / `parameters` | Sent to the LLM as tool schemas — the read-only product tools in `src/chat/sendMessage/productTools.js` and the dev/test smoke tools in `src/app.js` |
 
 Old tool and recipe-schema LLM text lives under `archive/pre-rewrite-chat/` now.
 Treat it as reference, not active prompt/tool surface.
@@ -164,7 +164,9 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
   metadata/history so list/select/send can recover after restart. Active selection
   remains per tab in the GUI.
 - **Tool registry**: `app.js` wires `createToolRegistry`. The production tool
-  surface is empty for now; transport smoke-test tools (`echo`) register only
+  surface holds the read-only product tools (`get_context`, `recipe_list`,
+  `project_list`) from `src/chat/sendMessage/productTools.js`; transport
+  smoke-test tools (`echo`) register only
   when `ENABLE_AI_TRANSPORT_SMOKE_TOOLS=true`, and are never visible to the
   production model. `ask_gui_echo` stays unregistered until a matching GUI
   `echo` action exists. The registry owns the structured tool-error envelope

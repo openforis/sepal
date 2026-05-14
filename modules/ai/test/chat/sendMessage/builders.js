@@ -121,6 +121,17 @@ function aFakeTitleGenerator() {
     }
 }
 
+function aFakeGuiRequests(handler = () => of(undefined)) {
+    const requests = []
+    return {
+        request$(request) {
+            requests.push(request)
+            return handler(request)
+        },
+        requests
+    }
+}
+
 function run(observable) {
     const events = []
     let completed = false
@@ -141,4 +152,13 @@ function read(observable) {
     return value
 }
 
-module.exports = {aFakeLlm, aFakeHistory, aFakeChannel, aFakeTools, aFakeTracer, aFakeTitleGenerator, aConversation, run, read}
+function readError(observable) {
+    let error
+    observable.subscribe({
+        next: () => {},
+        error: e => { error = e }
+    })
+    return error
+}
+
+module.exports = {aFakeLlm, aFakeHistory, aFakeChannel, aFakeTools, aFakeTracer, aFakeTitleGenerator, aFakeGuiRequests, aConversation, run, read, readError}

@@ -279,6 +279,45 @@ describe('UserChat', () => {
             expect(seen).toEqual([{channel, conversationId: 'conv-1', clientId: 'c1', subscriptionId: 's1'}])
         })
 
+        it('threads the sending tab\'s cached context into the toolContext when the message carries none', () => {
+            const seen = []
+            const llm = aFakeLlm({replies: [{toolCalls: [echoCall]}, {text: 'done'}]})
+            const tools = aFakeTools({echo: (_input, context) => {
+                seen.push(context)
+                return of({})
+            }})
+            userChat = aUserChat({llm, tools})
+            run(userChat.createConversation$({channel}))
+            run(userChat.updateContext$({clientId: 'c1', subscriptionId: 's1', selection: {section: 'process'}}))
+
+            run(userChat.sendUserMessage$({
+                channel, conversationId: 'conv-1', text: 'echo it', clientId: 'c1', subscriptionId: 's1'
+            }))
+
+            expect(seen[0].selection).toEqual({section: 'process'})
+        })
+
+        it('prefers the selection sent with the message over a stale cached context, for both runtime context and toolContext', () => {
+            const seen = []
+            const llm = aFakeLlm({replies: [{toolCalls: [echoCall]}, {text: 'done'}]})
+            const tools = aFakeTools({echo: (_input, context) => {
+                seen.push(context)
+                return of({})
+            }})
+            userChat = aUserChat({llm, tools})
+            run(userChat.createConversation$({channel}))
+            run(userChat.updateContext$({clientId: 'c1', subscriptionId: 's1', selection: {section: 'browse'}}))
+
+            run(userChat.sendUserMessage$({
+                channel, conversationId: 'conv-1', text: 'echo it', clientId: 'c1', subscriptionId: 's1',
+                selection: {section: 'process'}
+            }))
+
+            expect(seen[0].selection).toEqual({section: 'process'})
+            expect(runtimeContextContent(llm.receivedMessages[0])).toContain('"section":"process"')
+            expect(runtimeContextContent(llm.receivedMessages[0])).not.toContain('browse')
+        })
+
         it('routes tool-start and tool-end events to the channel', () => {
             const llm = aFakeLlm({replies: [{toolCalls: [echoCall]}, {text: 'done'}]})
             const tools = aFakeTools({echo: () => of({})})

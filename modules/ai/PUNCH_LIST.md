@@ -18,10 +18,14 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Tool And GUI Bridge
 
-- **No real product tools yet** — the production tool surface is empty; only
-  the `echo` transport smoke-test tool registers, and only under
-  `ENABLE_AI_TRANSPORT_SMOKE_TOOLS=true`. Real recipe/project/map tools and
-  specialists are not implemented yet.
+- **Read tools only — no write tools or specialists** — Phase 1A wired the
+  read-only product tools (`get_context`, `recipe_list`, `project_list`).
+  Recipe create/update/delete/move/save tools, map tools, and specialists are
+  not implemented yet.
+- **Projected `recipe_load` is deferred** — existing GUI `load-recipe` returns
+  the full model; AI-facing load needs compact projection, `path?` semantics,
+  omitted-heavy-field markers, and `baseModelHash` alignment before
+  `recipe_patch`.
 - **`ask_gui_echo` has no GUI handler** — the GUI-backed smoke-test tool stays
   unregistered (even under the dev flag) because the real GUI has no `echo`
   `gui-action` handler. The server-side GUI request/response bridge is complete
@@ -37,13 +41,6 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 - **Boundary events are not lazy** — tool/LLM events publish eager `message`
   strings; the `message: () => ...` / `payload: () => ...` split from DESIGN §8
   is only partially applied.
-
-## Context
-
-- **`get_context()` tool is not wired** — GUI context is stored per
-  tab/subscription in `UserChat` and injected as ephemeral turn context on the
-  first LLM call of a user turn, but it is not yet exposed to the orchestrator
-  through tool transport.
 
 ## Observability
 

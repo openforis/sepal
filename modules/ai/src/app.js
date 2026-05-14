@@ -11,6 +11,7 @@ const {createRedisHistory} = require('./chat/io/redisHistory')
 const {createWsHandler} = require('./chat/io/wsHandler')
 const {createLlm} = require('./chat/llm')
 const {createConversation} = require('./chat/sendMessage/conversation')
+const {productTools} = require('./chat/sendMessage/productTools')
 const {createTitleGenerator} = require('./chat/sendMessage/titleGenerator')
 const {createToolRegistry} = require('./chat/sendMessage/tools')
 const {createUserChat} = require('./chat/sendMessage/userChat')
@@ -96,10 +97,17 @@ function systemClock() {
     }
 }
 
-// The production tool surface holds only real product tools — none yet.
-// Transport smoke-test tools are dev/test diagnostics: registered only when
-// explicitly enabled, never visible to the production model.
+// The production tool surface holds the read-only product tools. Transport
+// smoke-test tools are dev/test diagnostics: registered only when explicitly
+// enabled, never visible to the production model.
 function registeredTools(config, guiRequests) {
+    return [
+        ...productTools({guiRequests}),
+        ...enabledSmokeTools(config, guiRequests)
+    ]
+}
+
+function enabledSmokeTools(config, guiRequests) {
     if (config.enableAiTransportSmokeTools) {
         // ask_gui_echo is held back until a matching GUI echo action exists.
         return transportSmokeTestTools(guiRequests).filter(tool => tool.name !== 'ask_gui_echo')

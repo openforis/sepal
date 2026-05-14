@@ -1,6 +1,8 @@
 const {of, throwError} = require('rxjs')
 const {MAX_TOOL_ROUNDS} = require('#mcp/chat/sendMessage/conversation')
-const {aConversation, aFakeHistory, aFakeLlm, aFakeTools, aFakeTracer, run} = require('./builders')
+const {createToolRegistry} = require('#mcp/chat/sendMessage/tools')
+const {productTools} = require('#mcp/chat/sendMessage/productTools')
+const {aConversation, aFakeGuiRequests, aFakeHistory, aFakeLlm, aFakeTools, aFakeTracer, run} = require('./builders')
 
 describe('Conversation', () => {
 
@@ -341,6 +343,34 @@ describe('Conversation', () => {
             expect(llm.receivedMessages[1]).not.toContainEqual(
                 expect.objectContaining({content: expect.stringContaining('<runtime-context>')})
             )
+        })
+    })
+
+    describe('with the get_context product tool', () => {
+
+        it('lets the LLM call get_context and feeds the turn snapshot back', () => {
+            const toolCall = {id: 'gc1', name: 'get_context', input: {}}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [toolCall]},
+                {text: 'You are in the process section.'}
+            ]})
+            const tools = createToolRegistry({tools: productTools({guiRequests: aFakeGuiRequests()})})
+            const conversation = aConversation({llm, tools})
+            const toolContext = {
+                channel: {}, conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1',
+                selection: {section: 'process'}
+            }
+
+            run(conversation.sendUserMessage$('where am i?', {toolContext}))
+
+            expect(llm.receivedMessages[1]).toContainEqual({
+                role: 'tool',
+                toolResults: [{
+                    toolCallId: 'gc1',
+                    toolName: 'get_context',
+                    result: {ok: true, data: {source: 'turn_snapshot', available: true, selection: {section: 'process'}}}
+                }]
+            })
         })
     })
 

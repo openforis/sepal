@@ -90,9 +90,9 @@ function createUserChat({conversationsStore, conversationFor$, createId, clock, 
         )
     }
 
-    function sendUserMessage$({channel, conversationId, text, clientId, subscriptionId}) {
-        const selection = contexts.get(contextKey({clientId, subscriptionId}))
-        const toolContext = {channel, conversationId, clientId, subscriptionId}
+    function sendUserMessage$({channel, conversationId, text, clientId, subscriptionId, selection: messageSelection}) {
+        const selection = messageSelection ?? contexts.get(contextKey({clientId, subscriptionId}))
+        const toolContext = {channel, conversationId, clientId, subscriptionId, selection}
         return conversation$(conversationId).pipe(
             concatMap(conversation =>
                 persistOrTouch$(conversationId).pipe(map(() => conversation))
