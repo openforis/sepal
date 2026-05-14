@@ -93,9 +93,18 @@ test('toBandValues(${rgb}, ${visParams}) === ${result}')
             visParams: {type: 'categorical', bands: ['index'], values: [1, 2, 3], min: [1], max: [3], palette: ['black', 'green', 'white']},
             result: [2]
         },
-        // {
-        //     rgb: [177, 95, 131],
-        //     visParams: {type: 'categorical', bands: ['index'], values: [5, 200, 1000], min: [5], max: [1000], palette: ['#042333', '#b15f82', '#e8fa5b']},
-        //     result: [200]
-        // },
+        {
+            rgb: [177, 95, 131],
+            visParams: {type: 'categorical', bands: ['index'], values: [5, 200, 1000], min: [5], max: [1000], palette: ['#042333', '#b15f82', '#e8fa5b']},
+            result: [200]
+        },
+        {
+            // Reproduces the gfc_classification mismatch: cursor (0,100,0) is exactly
+            // #006400 (value 40), but its R and B channels lie inside the bounding
+            // box of the padded #d3d3d3 -> #000000 segment near value 30, which
+            // produces a spurious zero error when each channel uses its own factor.
+            rgb: [0, 100, 0],
+            visParams: {type: 'categorical', bands: ['index'], values: [1, 30, 40, 50], min: [1], max: [50], palette: ['#000000', '#d3d3d3', '#006400', '#90ee90']},
+            result: [40]
+        },
     )
