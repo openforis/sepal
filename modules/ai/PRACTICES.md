@@ -387,6 +387,7 @@ Run coverage **after the refactor step**, not after green. Green confirms behavi
 
 Questions to ask while green:
 
+- **Scope includes what you touched** — refactor pre-existing smells in the code you're already editing, not just your own additions. Leave each file better than you found it. (Don't expand into unrelated rewrites — "the area you touched," not "the whole file.")
 - **Cohesion** — the top question. Function / file / slice / module each have one job. See the Cohesion section.
 - **Top-down reading**: outer function = few named calls at one abstraction level. Details one level deeper. No mixed abstraction levels in one function — extract.
 - **Short functions, few args, descriptive names**. Rename until the code self-explains.
