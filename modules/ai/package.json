@@ -13,7 +13,7 @@
         "collectCoverageFrom": [
             "src/chat/sendMessage/**/*.js",
             "src/chat/io/**/*.js",
-            "!src/chat/io/openai.js",
+            "src/chat/llm/**/*.js",
             "src/server.js",
             "src/eventBus.js",
             "src/tracer.js",

@@ -1,24 +1,24 @@
 const {firstValueFrom, toArray} = require('rxjs')
-const {createOpenAI} = require('#mcp/chat/io/openai')
+const {createOpenAiChatCompletions} = require('#mcp/chat/llm/providers/openaiChatCompletions')
 
 const BASE_URL = process.env.LLM_BASE_URL ?? 'http://host.docker.internal:1234/v1'
 const API_KEY = process.env.LLM_API_KEY ?? 'lm-studio'
 const MODEL = process.env.LLM_MODEL
 
-describe('OpenAI-compatible adapter [manual]', () => {
+describe('OpenAI-compatible chat-completions adapter [manual]', () => {
 
     it('streams text deltas from a real LLM', async () => {
         if (!MODEL) {
             throw new Error('Set LLM_MODEL to the model identifier loaded in LM Studio (e.g. LLM_MODEL=meta-llama-3-8b-instruct)')
         }
 
-        const openai = createOpenAI({
+        const openAiChat = createOpenAiChatCompletions({
             baseURL: BASE_URL, apiKey: API_KEY, model: MODEL,
             bus: {publish: () => {}}
         })
 
         const events = await firstValueFrom(
-            openai.respondTo$({
+            openAiChat.respondTo$({
                 messages: [{role: 'user', content: 'Say hello in one word.'}]
             }).pipe(toArray())
         )

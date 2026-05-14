@@ -12,25 +12,17 @@ jest.mock('openai', () => ({
     }))
 }))
 
-const {createOpenAI} = require('#mcp/chat/io/openai')
-const {toolSchemas, conversationWithToolRoundTrip} = require('./providerConformance')
+const {createOpenAiChatCompletions} = require('#mcp/chat/llm/providers/openaiChatCompletions')
+const {toolSchemas, conversationWithToolRoundTrip} = require('../providerConformance')
 
-describe('OpenAI-compatible adapter', () => {
-
-    let originalFetch
+describe('OpenAI-compatible chat-completions adapter', () => {
 
     beforeEach(() => {
         mockCreate.mockReset()
-        originalFetch = global.fetch
-        global.fetch = jest.fn()
     })
 
-    afterEach(() => {
-        global.fetch = originalFetch
-    })
-
-    function anOpenAI(overrides = {}) {
-        return createOpenAI({
+    function anOpenAiChat(overrides = {}) {
+        return createOpenAiChatCompletions({
             baseURL: 'http://example.test/v1',
             apiKey: 'test-key',
             model: 'test-model',
@@ -46,7 +38,7 @@ describe('OpenAI-compatible adapter', () => {
     it('passes bounded generation and provider-specific extra params', async () => {
         mockCreate.mockResolvedValue([{choices: [{delta: {content: 'Title'}}]}])
 
-        const events = await collect(anOpenAI().respondTo$({
+        const events = await collect(anOpenAiChat().respondTo$({
             messages: [{role: 'user', content: 'hello'}],
             maxTokens: 32,
             temperature: 0,
@@ -67,7 +59,7 @@ describe('OpenAI-compatible adapter', () => {
     it('sends tool schemas in provider function format and lets the model choose', async () => {
         mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])
 
-        await collect(anOpenAI().respondTo$({
+        await collect(anOpenAiChat().respondTo$({
             messages: [{role: 'user', content: 'hi'}], tools: toolSchemas
         }))
 
@@ -82,7 +74,7 @@ describe('OpenAI-compatible adapter', () => {
     it('does not send a tools param when no tools are provided', async () => {
         mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])
 
-        await collect(anOpenAI().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
+        await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
 
         expect(mockCreate.mock.calls[0][0]).not.toHaveProperty('tools')
         expect(mockCreate.mock.calls[0][0]).not.toHaveProperty('tool_choice')
@@ -91,7 +83,7 @@ describe('OpenAI-compatible adapter', () => {
     it('formats internal tool-call and tool-result messages into the provider message shape', async () => {
         mockCreate.mockResolvedValue([{choices: [{delta: {content: 'done'}}]}])
 
-        await collect(anOpenAI().respondTo$({messages: conversationWithToolRoundTrip}))
+        await collect(anOpenAiChat().respondTo$({messages: conversationWithToolRoundTrip}))
 
         expect(mockCreate.mock.calls[0][0].messages).toEqual([
             {role: 'user', content: 'list'},
@@ -110,7 +102,7 @@ describe('OpenAI-compatible adapter', () => {
             ]}}]}
         ])
 
-        const events = await collect(anOpenAI().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
+        const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
 
         expect(events).toEqual([{toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}])
     })
@@ -121,7 +113,7 @@ describe('OpenAI-compatible adapter', () => {
             {choices: [{delta: {tool_calls: [{index: 0, function: {arguments: 'xt":"hi"}'}}]}}]}
         ])
 
-        const events = await collect(anOpenAI().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
+        const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
 
         expect(events).toEqual([{toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}])
     })
@@ -134,7 +126,7 @@ describe('OpenAI-compatible adapter', () => {
             ]}}]}
         ])
 
-        const events = await collect(anOpenAI().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
+        const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
 
         expect(events).toEqual([
             {toolCall: {id: 'call_1', name: 'echo', input: {text: 'a'}}},
@@ -147,7 +139,7 @@ describe('OpenAI-compatible adapter', () => {
             {choices: [{delta: {tool_calls: [{index: 0, id: 'call_1', function: {name: 'echo', arguments: '{"text":'}}]}}]}
         ])
 
-        const events = await collect(anOpenAI().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
+        const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
 
         expect(events).toHaveLength(1)
         expect(events[0].toolCall).toMatchObject({id: 'call_1', name: 'echo', input: null})
@@ -160,62 +152,11 @@ describe('OpenAI-compatible adapter', () => {
             {choices: [{delta: {tool_calls: [{index: 0, id: 'call_1', function: {name: 'echo', arguments: '{"text":"hi"}'}}]}}]}
         ])
 
-        const events = await collect(anOpenAI().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
+        const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
 
         expect(events).toEqual([
             {textDelta: 'Let me check. '},
             {toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}
         ])
-    })
-
-    it('uses LM Studio native chat with reasoning off for non-reasoning requests', async () => {
-        global.fetch.mockResolvedValue({
-            ok: true,
-            text: async () => JSON.stringify({
-                output: [
-                    {type: 'reasoning', content: 'ignored'},
-                    {type: 'message', content: 'Greeting'}
-                ],
-                stats: {reasoning_output_tokens: 0}
-            })
-        })
-        const openai = anOpenAI({
-            baseURL: 'http://host.docker.internal:1234/v1',
-            model: 'qwen/qwen3.5-9b',
-            provider: 'lmstudio'
-        })
-
-        const events = await collect(openai.respondTo$({
-            messages: [
-                {role: 'system', content: 'Title only'},
-                {role: 'user', content: 'User asked: Hi'}
-            ],
-            maxTokens: 32,
-            temperature: 0,
-            disableReasoning: true
-        }))
-
-        expect(events).toEqual([{textDelta: 'Greeting'}])
-        expect(mockCreate).not.toHaveBeenCalled()
-        expect(global.fetch).toHaveBeenCalledWith(
-            'http://host.docker.internal:1234/api/v1/chat',
-            expect.objectContaining({
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: 'Bearer test-key'
-                }
-            })
-        )
-        expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
-            model: 'qwen/qwen3.5-9b',
-            input: 'User asked: Hi',
-            system_prompt: 'Title only',
-            stream: false,
-            store: false,
-            reasoning: 'off',
-            max_output_tokens: 32,
-            temperature: 0
-        })
     })
 })

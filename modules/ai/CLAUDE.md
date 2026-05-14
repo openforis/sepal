@@ -86,7 +86,8 @@ src/
   app.js                      # Active rewrite composition
   config.js                   # CLI argument parsing (port, endpoints, LLM config)
   chat/                       # Chat Rewrite Layer
-    io/                        # Active adapters: websocket, OpenAI stream, Redis stores, GUI request bridge
+    io/                        # Active adapters: websocket, Redis stores, GUI request bridge
+    llm/                       # LLM provider boundary: provider-neutral selector + per-provider adapters
     sendMessage/               # Active conversation/user-chat/title-generation/tool-registry slice
     system-prompt.md           # Active system prompt
 ```
@@ -169,4 +170,8 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
   `echo` action exists. The registry owns the structured tool-error envelope
   (`UNKNOWN_TOOL`, `INVALID_TOOL_ARGS` via ajv, `TOOL_FAILED`); provider
   wire-format conversion lives in the adapters, not the domain.
-- **OpenAI-compatible adapter**: Active LLM streaming goes through `src/chat/io/openai.js`.
+- **LLM provider boundary**: `conversation.js` / `titleGenerator.js` depend only
+  on the provider-neutral `respondTo$` port from `src/chat/llm/index.js`
+  (`createLlm`). It builds the per-provider adapters under
+  `src/chat/llm/providers/` (`openaiChatCompletions.js`, `lmStudioNativeChat.js`)
+  and routes to them; provider wire-format names stay confined to the adapters.

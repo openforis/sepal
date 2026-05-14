@@ -6,10 +6,10 @@ const {stream} = require('#sepal/httpServer')
 const log = require('#sepal/log').getLogger('ai')
 
 const {createGuiRequests} = require('./chat/io/guiRequests')
-const {createOpenAI} = require('./chat/io/openai')
 const {createRedisConversationsStore} = require('./chat/io/redisConversationsStore')
 const {createRedisHistory} = require('./chat/io/redisHistory')
 const {createWsHandler} = require('./chat/io/wsHandler')
+const {createLlm} = require('./chat/llm')
 const {createConversation} = require('./chat/sendMessage/conversation')
 const {createTitleGenerator} = require('./chat/sendMessage/titleGenerator')
 const {createToolRegistry} = require('./chat/sendMessage/tools')
@@ -41,7 +41,7 @@ function createApp({config}) {
         complete: () => fatal('Event bus completed unexpectedly')
     })
 
-    const llm = createOpenAI({
+    const llm = createLlm({
         baseURL: config.llmBaseUrl,
         apiKey: config.llmApiKey,
         model: config.llmModel,

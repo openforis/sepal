@@ -1203,8 +1203,7 @@ modules/ai/src/chat/
   llm/
     index.js
     common/
-      logging.js
-      timeouts.js
+      events.js
       text.js
     providers/
       openaiChatCompletions.js

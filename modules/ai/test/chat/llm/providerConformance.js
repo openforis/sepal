@@ -1,9 +1,9 @@
 // Provider-neutral internal fixtures shared by provider adapter tests
-// (openai.test.js now, claude.test.js later). Each adapter feeds these through
-// its own respondTo$ and asserts its provider-specific wire conversion. The
-// internal shape — {role, content, toolCalls}, {id, name, input},
-// {toolCallId, toolName, result: {ok, data?, error?}} — is the contract every
-// adapter must consume.
+// (openaiChatCompletions.test.js, lmStudioNativeChat.test.js, claude.test.js
+// later). Each adapter feeds these through its own respondTo$ and asserts its
+// provider-specific wire conversion. The internal shape — {role, content,
+// toolCalls}, {id, name, input}, {toolCallId, toolName, result: {ok, data?,
+// error?}} — is the contract every adapter must consume.
 
 const toolSchemas = [{
     name: 'echo',
