@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const {defaultSystemPrompt} = require('#mcp/chat/systemPrompt')
 
 describe('system prompt', () => {
     const prompt = fs.readFileSync(
@@ -12,5 +13,16 @@ describe('system prompt', () => {
         expect(prompt).not.toContain('{{currentContext}}')
         expect(prompt).not.toContain('{{recipeTypes}}')
         expect(prompt).not.toMatch(/\{\{.*?\}\}/)
+    })
+
+    describe('defaultSystemPrompt', () => {
+
+        it('reads the active system prompt from src/chat/system-prompt.md', () => {
+            expect(defaultSystemPrompt()).toBe(prompt)
+        })
+
+        it('returns the real prompt, not a short placeholder', () => {
+            expect(defaultSystemPrompt()).toContain('Sepalito')
+        })
     })
 })

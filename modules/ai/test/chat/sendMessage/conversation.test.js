@@ -2,7 +2,7 @@ const {of, throwError} = require('rxjs')
 const {MAX_TOOL_ROUNDS} = require('#mcp/chat/sendMessage/conversation')
 const {createToolRegistry} = require('#mcp/chat/sendMessage/tools')
 const {productTools} = require('#mcp/chat/sendMessage/productTools')
-const {aConversation, aFakeGuiRequests, aFakeHistory, aFakeLlm, aFakeTools, aFakeTracer, run} = require('./builders')
+const {aConversation, aFakeBus, aFakeGuiRequests, aFakeHistory, aFakeLlm, aFakeTools, aFakeTracer, run} = require('./builders')
 
 describe('Conversation', () => {
 
@@ -125,12 +125,12 @@ describe('Conversation', () => {
             ])
         })
 
-        it('emits tool-start and tool-end events around the assistant text', () => {
+        it('emits tool-start with the tool input and tool-end with the result data', () => {
             const {events, completed} = run(conversation.sendUserMessage$('list my recipes'))
 
             expect(events).toEqual([
-                {toolStart: {toolCallId: toolCall.id, toolName: toolCall.name}},
-                {toolEnd: {toolCallId: toolCall.id, toolName: toolCall.name, ok: true}},
+                {toolStart: {toolCallId: toolCall.id, toolName: toolCall.name, input: toolCall.input}},
+                {toolEnd: {toolCallId: toolCall.id, toolName: toolCall.name, ok: true, data: toolResult, error: undefined}},
                 {textDelta: 'You have 1 recipe: Mosaic.'}
             ])
             expect(completed).toBe(true)
@@ -173,6 +173,135 @@ describe('Conversation', () => {
                     {toolCallId: 'b', toolName: 'project_list', result: {ok: true, data: {projects: 1}}}
                 ]
             })
+        })
+    })
+
+    describe('projecting completed history', () => {
+
+        it('drops a completed assistant tool-call message whose content is whitespace-only', () => {
+            const llm = aFakeLlm()
+            const conversation = aConversation({
+                llm,
+                initialMessages: [
+                    {role: 'user', content: 'earlier question'},
+                    {role: 'assistant', content: '  ', toolCalls: [{id: 't0', name: 'recipe_list', input: {}}]},
+                    {role: 'tool', toolResults: [{toolCallId: 't0', toolName: 'recipe_list', result: {ok: true, data: []}}]},
+                    {role: 'assistant', content: 'earlier answer'}
+                ]
+            })
+
+            run(conversation.sendUserMessage$('next question'))
+
+            expect(llm.receivedMessages[0]).toEqual([
+                {role: 'user', content: 'earlier question'},
+                {role: 'assistant', content: 'earlier answer'},
+                {role: 'user', content: 'next question'}
+            ])
+        })
+    })
+
+    describe('post-tool LLM rounds', () => {
+
+        it('isolates the round after a tool call from previous completed turns', () => {
+            const toolCall = {id: 't1', name: 'recipe_list', input: {}}
+            const llm = aFakeLlm({replies: [{toolCalls: [toolCall]}, {text: 'done'}]})
+            const tools = aFakeTools({recipe_list: () => of({recipes: []})})
+            const conversation = aConversation({
+                llm, tools,
+                systemPrompt: 'You are Sepalito.',
+                initialMessages: [
+                    {role: 'user', content: 'earlier question'},
+                    {role: 'assistant', content: 'earlier answer'}
+                ]
+            })
+
+            run(conversation.sendUserMessage$('list my recipes'))
+
+            expect(llm.receivedMessages[1]).toEqual([
+                {role: 'system', content: 'You are Sepalito.'},
+                {role: 'user', content: 'list my recipes'},
+                {role: 'assistant', content: '', toolCalls: [toolCall]},
+                {role: 'tool', toolResults: [{toolCallId: toolCall.id, toolName: toolCall.name, result: {ok: true, data: {recipes: []}}}]}
+            ])
+        })
+    })
+
+    describe('list recipes after a completed list projects turn (drift regression)', () => {
+        const projectCall = {id: 'pc', name: 'project_list', input: {}}
+        const recipeCall = {id: 'rc', name: 'recipe_list', input: {}}
+        const recipeResult = {ok: true, data: {recipes: [{id: 'r1', name: 'Mosaic'}]}}
+        const listSchemas = [
+            {name: 'recipe_list', description: 'r', parameters: {type: 'object'}},
+            {name: 'project_list', description: 'p', parameters: {type: 'object'}}
+        ]
+
+        let llm, tools, history, conversation
+
+        beforeEach(() => {
+            llm = aFakeLlm({replies: [
+                {toolCalls: [projectCall]},
+                {text: 'You have 1 project.'},
+                {toolCalls: [recipeCall]},
+                {text: 'You have 1 recipe.'}
+            ]})
+            tools = aFakeTools({
+                project_list: () => of({projects: [{id: 'p1', name: 'Kenya'}]}),
+                recipe_list: () => of({recipes: [{id: 'r1', name: 'Mosaic'}]})
+            }, listSchemas)
+            history = aFakeHistory()
+            conversation = aConversation({llm, tools, history})
+        })
+
+        it('still replays the completed project_list turn as plain chat on the next turn\'s first round', () => {
+            run(conversation.sendUserMessage$('list my projects'))
+            run(conversation.sendUserMessage$('list my recipes'))
+
+            expect(llm.receivedMessages[2]).toEqual([
+                {role: 'user', content: 'list my projects'},
+                {role: 'assistant', content: 'You have 1 project.'},
+                {role: 'user', content: 'list my recipes'}
+            ])
+        })
+
+        it('isolates the post-recipe_list round from the previous list projects turn', () => {
+            run(conversation.sendUserMessage$('list my projects'))
+            run(conversation.sendUserMessage$('list my recipes'))
+
+            expect(llm.receivedMessages[3]).toEqual([
+                {role: 'user', content: 'list my recipes'},
+                {role: 'assistant', content: '', toolCalls: [recipeCall]},
+                {role: 'tool', toolResults: [{toolCallId: recipeCall.id, toolName: recipeCall.name, result: recipeResult}]}
+            ])
+        })
+
+        it('keeps the full tool set available while isolating the post-recipe_list prompt', () => {
+            run(conversation.sendUserMessage$('list my projects'))
+            run(conversation.sendUserMessage$('list my recipes'))
+
+            expect(llm.receivedTools[3].map(schema => schema.name)).toEqual(['recipe_list', 'project_list'])
+        })
+
+        it('invokes only the tool requested by each turn', () => {
+            run(conversation.sendUserMessage$('list my projects'))
+            run(conversation.sendUserMessage$('list my recipes'))
+
+            expect(tools.invocations).toEqual([projectCall, recipeCall])
+        })
+
+        it('persists the full tool-call and tool-result messages for both turns', () => {
+            run(conversation.sendUserMessage$('list my projects'))
+            run(conversation.sendUserMessage$('list my recipes'))
+
+            expect(history.appended).toEqual([
+                {role: 'user', content: 'list my projects'},
+                {role: 'assistant', content: '', toolCalls: [projectCall]},
+                {role: 'tool', toolResults: [{toolCallId: projectCall.id, toolName: projectCall.name, result: {ok: true, data: {projects: [{id: 'p1', name: 'Kenya'}]}}}]},
+                {role: 'assistant', content: 'You have 1 project.'},
+                {role: 'user', content: 'list my recipes'},
+                {role: 'assistant', content: '', toolCalls: [recipeCall]},
+                {role: 'tool', toolResults: [{toolCallId: recipeCall.id, toolName: recipeCall.name, result: recipeResult}]},
+                {role: 'assistant', content: 'You have 1 recipe.'}
+            ])
         })
     })
 
@@ -354,7 +483,7 @@ describe('Conversation', () => {
                 {toolCalls: [toolCall]},
                 {text: 'You are in the process section.'}
             ]})
-            const tools = createToolRegistry({tools: productTools({guiRequests: aFakeGuiRequests()})})
+            const tools = createToolRegistry({tools: productTools({guiRequests: aFakeGuiRequests()}), bus: aFakeBus()})
             const conversation = aConversation({llm, tools})
             const toolContext = {
                 channel: {}, conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1',
@@ -386,7 +515,7 @@ describe('Conversation', () => {
                 id: 'r1', type: 'CLASSIFICATION', title: 'Kenya land cover', modelHash: 'hash-abc',
                 model: {classifier: {type: 'RANDOM_FOREST'}}
             }
-            const tools = createToolRegistry({tools: productTools({guiRequests: aFakeGuiRequests(() => of(recipe))})})
+            const tools = createToolRegistry({tools: productTools({guiRequests: aFakeGuiRequests(() => of(recipe))}), bus: aFakeBus()})
             const conversation = aConversation({llm, tools})
             const toolContext = {channel: {}, conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
 
@@ -454,8 +583,11 @@ describe('Conversation', () => {
             const {events} = run(conversation.sendUserMessage$('list my recipes'))
 
             expect(events).toEqual([
-                {toolStart: {toolCallId: toolCall.id, toolName: toolCall.name}},
-                {toolEnd: {toolCallId: toolCall.id, toolName: toolCall.name, ok: false}},
+                {toolStart: {toolCallId: toolCall.id, toolName: toolCall.name, input: toolCall.input}},
+                {toolEnd: {
+                    toolCallId: toolCall.id, toolName: toolCall.name, ok: false,
+                    data: undefined, error: {code: 'TOOL_FAILED', message: 'database unreachable'}
+                }},
                 {textDelta: 'Sorry, I could not list your recipes.'}
             ])
         })

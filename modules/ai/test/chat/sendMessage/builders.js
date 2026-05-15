@@ -8,9 +8,10 @@ function aConversation({
     tracer = aFakeTracer(),
     systemPrompt = null,
     initialMessages = [],
-    id = 'conv1'
+    id = 'conv1',
+    bus = aFakeBus()
 } = {}) {
-    return createConversation({llm, history, tools, tracer, systemPrompt, initialMessages, id})
+    return createConversation({llm, history, tools, tracer, systemPrompt, initialMessages, id, bus})
 }
 
 function aFakeTracer() {
@@ -147,6 +148,14 @@ function aControllableTitleGenerator() {
     }
 }
 
+function aFakeBus() {
+    const published = []
+    return {
+        publish(event) { published.push(event) },
+        published
+    }
+}
+
 function aFakeGuiRequests(handler = () => of(undefined)) {
     const requests = []
     return {
@@ -187,4 +196,4 @@ function readError(observable) {
     return error
 }
 
-module.exports = {aFakeLlm, aControllableLlm, aFakeHistory, aFakeChannel, aFakeTools, aFakeTracer, aFakeTitleGenerator, aControllableTitleGenerator, aFakeGuiRequests, aConversation, run, read, readError}
+module.exports = {aFakeLlm, aControllableLlm, aFakeHistory, aFakeChannel, aFakeTools, aFakeTracer, aFakeTitleGenerator, aControllableTitleGenerator, aFakeBus, aFakeGuiRequests, aConversation, run, read, readError}

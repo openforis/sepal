@@ -50,7 +50,7 @@ function createApp({config}) {
         bus
     })
     const guiRequests = createGuiRequests({clock, createId: uuid, timeoutMs: GUI_REQUEST_TIMEOUT_MS, bus})
-    const tools = createToolRegistry({tools: registeredTools(config, guiRequests)})
+    const tools = createToolRegistry({tools: registeredTools(config, guiRequests), bus})
 
     const userChats = new Map()
     const wsHandler = createWsHandler({bus, userChatFor, guiRequests})
@@ -83,7 +83,8 @@ function createApp({config}) {
                 llm, tracer, tools, history,
                 initialMessages,
                 systemPrompt: config.systemPrompt,
-                id
+                id,
+                bus
             }))
         )
     }

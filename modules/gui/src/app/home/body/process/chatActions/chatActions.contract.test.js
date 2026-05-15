@@ -100,10 +100,36 @@ it('loads recipes before listing when process.recipes is empty', () => {
     expect(loadRecipes$).toHaveBeenCalled()
 })
 
+it('responds with the recipes the lazy load populated when process.recipes started empty', () => {
+    store.recipes = []
+    loadRecipes$.mockImplementation(() => {
+        store.recipes = recipeState
+        return of(null)
+    })
+
+    let response
+    handleGuiAction('list-recipes', {respond: r => { response = r }})
+
+    expect(response).toEqual({success: true, data: recipeState})
+})
+
 it('loads projects before listing when process.projects is empty', () => {
     store.projects = []
 
     handleGuiAction('list-projects', {respond: () => {}})
 
     expect(loadProjects$).toHaveBeenCalled()
+})
+
+it('responds with the projects the lazy load populated when process.projects started empty', () => {
+    store.projects = []
+    loadProjects$.mockImplementation(() => {
+        store.projects = projectState
+        return of(null)
+    })
+
+    let response
+    handleGuiAction('list-projects', {respond: r => { response = r }})
+
+    expect(response).toEqual({success: true, data: projectState})
 })

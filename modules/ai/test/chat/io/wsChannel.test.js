@@ -230,12 +230,12 @@ describe('WS channel adapter', () => {
 
     describe('toolStart / toolEnd — broadcast to all the user\'s tabs', () => {
 
-        it('emits a tool-start', () => {
-            channel.toolStart({conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo'})
+        it('emits a tool-start carrying the tool input for live display', () => {
+            channel.toolStart({conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', input: {text: 'hi'}})
 
             expect(sent).toEqual([{
                 username: 'alice',
-                data: {type: 'tool-start', conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo'}
+                data: {type: 'tool-start', conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', input: {text: 'hi'}}
             }])
             expect(published[0]).toMatchObject({
                 level: 'debug',
@@ -243,12 +243,31 @@ describe('WS channel adapter', () => {
             })
         })
 
-        it('emits a tool-end with the ok flag', () => {
-            channel.toolEnd({conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: false})
+        it('emits a tool-end carrying the ok flag and result data for live display', () => {
+            channel.toolEnd({conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: true, data: {echoed: 'hi'}})
 
             expect(sent).toEqual([{
                 username: 'alice',
-                data: {type: 'tool-end', conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: false}
+                data: {type: 'tool-end', conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: true, data: {echoed: 'hi'}}
+            }])
+            expect(published[0]).toMatchObject({
+                level: 'debug',
+                message: 'WS out (alice broadcast) tool-end echo conv-1 ok=true'
+            })
+        })
+
+        it('emits a tool-end carrying the error envelope when the tool failed', () => {
+            channel.toolEnd({
+                conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: false,
+                error: {code: 'TOOL_FAILED', message: 'boom'}
+            })
+
+            expect(sent).toEqual([{
+                username: 'alice',
+                data: {
+                    type: 'tool-end', conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: false,
+                    error: {code: 'TOOL_FAILED', message: 'boom'}
+                }
             }])
             expect(published[0]).toMatchObject({
                 level: 'debug',

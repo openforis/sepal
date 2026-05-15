@@ -1,5 +1,6 @@
 const {Command, Option} = require('commander')
 const log = require('#sepal/log').getLogger('config')
+const {defaultSystemPrompt} = require('./chat/systemPrompt')
 
 const DEFAULT_PORT = 80
 
@@ -76,7 +77,7 @@ try {
         .addOption(
             new Option('--system-prompt <value>', 'System prompt prepended to every conversation')
                 .env('SYSTEM_PROMPT')
-                .default('You are Sepalito, a brief assistant for the SEPAL platform. Reply concisely.')
+                .default(defaultSystemPrompt())
         )
         .addOption(
             new Option('--enable-ai-transport-smoke-tools <value>', 'Register transport smoke-test tools (dev/test only)')

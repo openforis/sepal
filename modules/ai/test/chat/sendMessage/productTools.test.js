@@ -71,7 +71,7 @@ describe('product tools', () => {
             expect(guiRequests.requests[0].params).toEqual({})
         })
 
-        it('projects each recipe to a compact summary, dropping unknown fields', () => {
+        it('projects each recipe to a compact summary, keeping projectId as an internal handle and dropping unknown fields', () => {
             const guiRequests = aFakeGuiRequests(() => of([
                 {id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: 'p1', creationTime: 1, updateTime: 2, model: {big: 'blob'}}
             ]))
@@ -87,6 +87,46 @@ describe('product tools', () => {
             const result = read(toolNamed('recipe_list', guiRequests).invoke$({}, context))
 
             expect(result).toEqual([{id: 'r1', type: 'MOSAIC', name: 'Kenya'}])
+        })
+
+        it('omits projectId when a recipe has a JS no-value projectId', () => {
+            const guiRequests = aFakeGuiRequests(() => of([
+                {id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: ''},
+                {id: 'r2', type: 'MOSAIC', name: 'Sudan', projectId: null}
+            ]))
+
+            const result = read(toolNamed('recipe_list', guiRequests).invoke$({}, context))
+
+            expect(result).toEqual([
+                {id: 'r1', type: 'MOSAIC', name: 'Kenya'},
+                {id: 'r2', type: 'MOSAIC', name: 'Sudan'}
+            ])
+        })
+
+        it('falls back to the recipe title when it has no name', () => {
+            const guiRequests = aFakeGuiRequests(() => of([{id: 'r1', type: 'MOSAIC', title: 'Kenya mosaic'}]))
+
+            const result = read(toolNamed('recipe_list', guiRequests).invoke$({}, context))
+
+            expect(result).toEqual([{id: 'r1', type: 'MOSAIC', name: 'Kenya mosaic'}])
+        })
+
+        it('falls back to the recipe title when the name is blank', () => {
+            const guiRequests = aFakeGuiRequests(() => of([
+                {id: 'r1', type: 'MOSAIC', name: '', title: 'Kenya mosaic'}
+            ]))
+
+            const result = read(toolNamed('recipe_list', guiRequests).invoke$({}, context))
+
+            expect(result).toEqual([{id: 'r1', type: 'MOSAIC', name: 'Kenya mosaic'}])
+        })
+
+        it('falls back to the recipe placeholder when it has neither name nor title', () => {
+            const guiRequests = aFakeGuiRequests(() => of([{id: 'r1', type: 'MOSAIC', placeholder: 'Untitled mosaic'}]))
+
+            const result = read(toolNamed('recipe_list', guiRequests).invoke$({}, context))
+
+            expect(result).toEqual([{id: 'r1', type: 'MOSAIC', name: 'Untitled mosaic'}])
         })
 
         it('lets a GUI failure propagate instead of returning an empty list', () => {

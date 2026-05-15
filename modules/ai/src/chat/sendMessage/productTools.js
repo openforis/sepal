@@ -30,7 +30,7 @@ function contextSnapshot(selection) {
 function recipeListTool(guiRequests) {
     return {
         name: 'recipe_list',
-        description: 'List saved recipes → id, type, name, projectId. Optional filters: type, projectId.',
+        description: 'List saved recipes -> id, type, name, projectId. Use for "list/show recipes" requests; these summaries answer such requests directly. Optional filters: type, projectId. id & projectId are internal handles for later tool calls; don\'t display ids unless user explicitly asks. After a recipe_list for a plain list request, answer from this result. Don\'t call project_list unless user explicitly asks for projects/project names, grouping/filtering by project, or a project-changing op needs project resolution.',
         parameters: {
             type: 'object',
             properties: {type: {type: 'string'}, projectId: {type: 'string'}},
@@ -51,15 +51,24 @@ function recipeFilters(input) {
 }
 
 function recipeSummary(recipe) {
-    const summary = {id: recipe.id, type: recipe.type, name: recipe.name}
-    if (recipe.projectId !== undefined) summary.projectId = recipe.projectId
+    const summary = {id: recipe.id, type: recipe.type, name: recipeName(recipe)}
+    const projectId = projectHandle(recipe.projectId)
+    if (projectId) summary.projectId = projectId
     return summary
+}
+
+function recipeName(recipe) {
+    return recipe.name || recipe.title || recipe.placeholder
+}
+
+function projectHandle(projectId) {
+    return projectId || null
 }
 
 function projectListTool(guiRequests) {
     return {
         name: 'project_list',
-        description: 'List projects → id, name.',
+        description: 'List projects -> id, name. Use when user asks to list/show projects, or to resolve a project for a project-specific operation. Don\'t call after recipe_list for a plain recipe-list request.',
         parameters: {type: 'object', properties: {}, additionalProperties: false},
         invoke$: (_input, context) =>
             guiRequest$(guiRequests, context, 'list-projects', {}).pipe(
@@ -75,7 +84,7 @@ function projectSummary(project) {
 function recipeLoadTool(guiRequests) {
     return {
         name: 'recipe_load',
-        description: 'Load recipe → identity + projected model. path = JSON Pointer into model (optional); heavy arrays return omitted markers.',
+        description: 'Load ONE recipe for inspection/editing -> identity + projected model. Not for listing recipes; use recipe_list. path = JSON Pointer into model (optional); heavy arrays return omitted markers.',
         parameters: {
             type: 'object',
             properties: {recipeId: {type: 'string'}, path: {type: 'string'}},

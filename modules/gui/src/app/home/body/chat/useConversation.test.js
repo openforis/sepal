@@ -125,6 +125,32 @@ it('marks a tool succeeded or failed from the wire ok flag', () => {
     expect(succeeded.messages.at(-1).tools[0].status).toBe('success')
 })
 
+it('shows the thinking indicator after a tool completes mid-turn', () => {
+    const loading = {...initialConversationState, activeConversationId: 'conv-1', view: 'chat', isLoading: true}
+    const started = conversationReducer(loading, {
+        type: 'TOOL_START', conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', input: {}
+    })
+
+    const ended = conversationReducer(started, {
+        type: 'TOOL_END', conversationId: 'conv-1', toolCallId: 't1', ok: true
+    })
+
+    expect(ended.isThinking).toBe(true)
+})
+
+it('clears the thinking indicator once the assistant resumes streaming after a tool', () => {
+    const thinking = {
+        ...initialConversationState, activeConversationId: 'conv-1', view: 'chat',
+        isLoading: true, isThinking: true
+    }
+
+    const next = conversationReducer(thinking, {
+        type: 'ASSISTANT_CHUNK', conversationId: 'conv-1', text: 'Here'
+    })
+
+    expect(next.isThinking).toBe(false)
+})
+
 it('rebuilds tool status from the {ok} envelope of loaded history', () => {
     const next = conversationReducer(initialConversationState, {
         type: 'CONVERSATION_LOADED',

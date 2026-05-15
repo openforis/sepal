@@ -22,15 +22,18 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   `modelHash` (stamped GUI-side) ready to serve as the `baseModelHash`
   optimistic-concurrency token, but the patch tool, its validation, and the
   GUI write path that checks `baseModelHash` are not built yet.
-- **`ask_gui_echo` has no GUI handler** — the GUI-backed smoke-test tool stays
-  unregistered (even under the dev flag) because the real GUI has no `echo`
-  `gui-action` handler. The server-side GUI request/response bridge is complete
-  and tested; a diagnostic GUI `echo` handler would be needed to exercise a
-  successful end-to-end round trip in a running app.
+- **Remove transport smoke-test tools from production code** — `echo` and
+  `ask_gui_echo` were useful before real tools existed, but they now add
+  confusing production surface area even behind a dev flag. Move any remaining
+  coverage to test fixtures or a clearly isolated dev-only module.
 - **Tool-loop safety is partial** — there is a `MAX_TOOL_ROUNDS` cap and a
   structured tool-error envelope, but no repeated-failure bail-out, no
   validation-error retry limit, and no no-repeat handling for identical failing
   tool calls (DESIGN §15 "before writable tools").
+- **Localized deterministic chat notices** — backend fallback assistant strings
+  such as the tool-round cap message are still English. Do not import GUI
+  translations into the AI module; add an explicit message-descriptor/fallback
+  path or shared i18n boundary before adding more deterministic notices.
 - **No model-profile resolution or `llm.usage` events** — every LLM call still
   goes through one hard-wired adapter; provider/model/profile resolution and
   normalized usage accounting (DESIGN §9) are not wired.

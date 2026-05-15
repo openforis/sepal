@@ -61,7 +61,7 @@ function createGuiRequests({clock, createId, timeoutMs, bus}) {
         bus.publish({
             type: 'gui.request',
             level: 'debug',
-            message: `GUI request ${action} (${requestId}) → ${subscriptionKey}`,
+            message: `GUI request ${action} (${requestId}) -> ${subscriptionKey}`,
             requestId,
             action,
             subscriptionKey

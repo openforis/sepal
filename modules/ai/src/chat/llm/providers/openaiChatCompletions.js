@@ -95,12 +95,13 @@ function toProviderToolCallMessage({content, toolCalls}) {
 }
 
 // One internal tool-result message carries every result; OpenAI wants one
-// role:'tool' message per result, hence the 1-to-N expansion.
+// role:'tool' message per result, hence the 1-to-N expansion. toolName is
+// folded into the content so the model can tell which tool produced it.
 function toProviderToolResultMessages({toolResults}) {
     return toolResults.map(toolResult => ({
         role: 'tool',
         tool_call_id: toolResult.toolCallId,
-        content: JSON.stringify(toolResult.result)
+        content: JSON.stringify({toolName: toolResult.toolName, ...toolResult.result})
     }))
 }
 

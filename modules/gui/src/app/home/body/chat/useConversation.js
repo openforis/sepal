@@ -161,7 +161,9 @@ export const conversationReducer = (state, action) => {
                 }
                 return {...m, tools}
             })
-            return {...state, messages}
+            // A tool finishing mid-turn means the follow-up LLM call is next;
+            // show the thinking indicator until its first chunk arrives.
+            return {...state, messages, isThinking: state.isLoading}
         }
         case 'STATUS_THINKING':
             if (isForeignConversation(state, action.conversationId)) return state

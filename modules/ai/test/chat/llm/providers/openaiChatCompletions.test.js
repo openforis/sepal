@@ -80,7 +80,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
         expect(mockCreate.mock.calls[0][0]).not.toHaveProperty('tool_choice')
     })
 
-    it('formats internal tool-call and tool-result messages into the provider message shape', async () => {
+    it('formats internal tool-call and tool-result messages into the provider message shape, naming the originating tool in the result content', async () => {
         mockCreate.mockResolvedValue([{choices: [{delta: {content: 'done'}}]}])
 
         await collect(anOpenAiChat().respondTo$({messages: conversationWithToolRoundTrip}))
@@ -90,8 +90,8 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             {role: 'assistant', content: null, tool_calls: [
                 {id: 'call_1', type: 'function', function: {name: 'echo', arguments: '{"text":"hi"}'}}
             ]},
-            {role: 'tool', tool_call_id: 'call_1', content: '{"ok":true,"data":{"echoed":"hi"}}'},
-            {role: 'tool', tool_call_id: 'call_2', content: '{"ok":false,"error":{"code":"TOOL_FAILED"}}'}
+            {role: 'tool', tool_call_id: 'call_1', content: '{"toolName":"echo","ok":true,"data":{"echoed":"hi"}}'},
+            {role: 'tool', tool_call_id: 'call_2', content: '{"toolName":"echo","ok":false,"error":{"code":"TOOL_FAILED"}}'}
         ])
     })
 

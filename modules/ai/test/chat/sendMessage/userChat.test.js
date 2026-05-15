@@ -326,8 +326,12 @@ describe('UserChat', () => {
 
             run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'echo it'}))
 
-            expect(channel.toolStarts).toEqual([{conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo'}])
-            expect(channel.toolEnds).toEqual([{conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: true}])
+            expect(channel.toolStarts).toEqual([
+                {conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', input: {}}
+            ])
+            expect(channel.toolEnds).toEqual([
+                {conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: true, data: {}, error: undefined}
+            ])
         })
     })
 

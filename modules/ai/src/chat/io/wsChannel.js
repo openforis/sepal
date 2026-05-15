@@ -78,16 +78,16 @@ function createWsChannel({out$, bus, username, clientId, subscriptionId}) {
         )
     }
 
-    function toolStart({conversationId, toolCallId, toolName}) {
+    function toolStart({conversationId, toolCallId, toolName, input}) {
         broadcast(
-            {type: 'tool-start', conversationId, toolCallId, toolName},
+            {type: 'tool-start', conversationId, toolCallId, toolName, input},
             `tool-start ${toolName} ${conversationId}`
         )
     }
 
-    function toolEnd({conversationId, toolCallId, toolName, ok}) {
+    function toolEnd({conversationId, toolCallId, toolName, ok, data, error}) {
         broadcast(
-            {type: 'tool-end', conversationId, toolCallId, toolName, ok},
+            {type: 'tool-end', conversationId, toolCallId, toolName, ok, data, error},
             `tool-end ${toolName} ${conversationId} ok=${ok}`
         )
     }

@@ -1,8 +1,11 @@
-const {catchError, defer, map, of} = require('rxjs')
+const {catchError, defer, map, of, tap} = require('rxjs')
 const Ajv = require('ajv')
 const addFormats = require('ajv-formats')
+const {truncateTo, MAX_DEBUG_TEXT} = require('../llm/common/text')
 
-function createToolRegistry({tools}) {
+const NOOP_BUS = {publish() {}}
+
+function createToolRegistry({tools, bus = NOOP_BUS}) {
     const byName = new Map(tools.map(tool => [tool.name, tool]))
     const validators = compileValidators(tools)
 
@@ -13,6 +16,15 @@ function createToolRegistry({tools}) {
     }
 
     function invoke$(toolCall, context) {
+        return envelope$(toolCall, context).pipe(
+            tap(envelope => {
+                bus.publish(toolResultEvent(toolCall, context, envelope))
+                bus.publish(toolResultPayloadEvent(toolCall, context, envelope))
+            })
+        )
+    }
+
+    function envelope$(toolCall, context) {
         const tool = byName.get(toolCall.name)
         if (!tool) {
             return of(failure('UNKNOWN_TOOL', `Tool not found: ${toolCall.name}`))
@@ -55,6 +67,49 @@ function compileValidators(tools) {
 function failure(code, message, details) {
     const error = details ? {code, message, details} : {code, message}
     return {ok: false, error}
+}
+
+// Metadata only: result shape, counts, and item keys, never the payload itself.
+function toolResultEvent(toolCall, context, {ok, data, error}) {
+    const base = {type: 'tool.result', level: 'debug', conversationId: context?.conversationId, toolName: toolCall.name}
+    if (!ok) {
+        return {...base, message: `tool ${toolCall.name} -> failed code=${error.code}`, ok: false, errorCode: error.code}
+    }
+    return {...base, ok: true, ...resultShape(toolCall.name, data)}
+}
+
+function toolResultPayloadEvent(toolCall, context, envelope) {
+    return {
+        type: 'tool.resultPayload',
+        level: 'trace',
+        conversationId: context?.conversationId,
+        toolName: toolCall.name,
+        message: () => `tool ${toolCall.name} result payload: ${truncateTo(JSON.stringify(envelope), MAX_DEBUG_TEXT)}`
+    }
+}
+
+function resultShape(toolName, data) {
+    if (Array.isArray(data)) {
+        const count = data.length
+        const firstItemKeys = count > 0 && isPlainObject(data[0]) ? Object.keys(data[0]) : undefined
+        const namedCount = data.filter(item => isPlainObject(item) && item.name).length
+        return {
+            message: `tool ${toolName} -> ok kind=array count=${count} named=${namedCount}`,
+            kind: 'array', count, firstItemKeys, namedCount
+        }
+    }
+    const kind = resultKind(data)
+    return {message: `tool ${toolName} -> ok kind=${kind}`, kind}
+}
+
+function resultKind(data) {
+    if (data == null) return 'null'
+    if (typeof data === 'object') return 'object'
+    return 'scalar'
+}
+
+function isPlainObject(value) {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 module.exports = {createToolRegistry}
