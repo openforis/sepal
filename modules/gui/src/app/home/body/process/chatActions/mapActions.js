@@ -2,6 +2,7 @@ import {forkJoin, map, of} from 'rxjs'
 
 import api from '~/apiRegistry'
 import {registerGuiAction as registerAction} from '~/app/home/body/chat/guiActionRegistry'
+import {resolveSourceLabel} from '~/app/home/body/chat/sourceLabel'
 import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 import {mapCommand$} from '~/app/home/map/mapCommands'
 import {getLogger} from '~/log'
@@ -331,6 +332,71 @@ const setSync = ({recipeId, linked, respond}) => {
     respond({success: true, data: {recipeId, linked: !!linked}})
 }
 
+const activeRecipe = () => {
+    const recipeId = select('process.selectedTabId')
+    if (!recipeId) return null
+    return select(['process.loadedRecipes', recipeId]) || null
+}
+
+const unavailable = () => ({available: false, reason: 'no_active_recipe'})
+
+const listMapAreas = ({respond}) => {
+    const recipe = activeRecipe()
+    if (!recipe) {
+        respond({success: true, data: unavailable()})
+        return
+    }
+    const tab = (select('process.tabs') || []).find(t => t.id === recipe.id)
+    const layerAreas = recipe.layers?.areas || {}
+    const areaKeys = Object.keys(layerAreas)
+    const layout = layoutNameOf(areaKeys) || (areaKeys.length ? 'custom' : null)
+    const areas = areaKeys.map(area => {
+        const sourceId = layerAreas[area]?.imageLayer?.sourceId || null
+        return {
+            area,
+            ...summarizeSource(recipe, sourceId),
+            sourceLabel: resolveSourceLabel(recipe, sourceId)
+        }
+    })
+    respond({success: true, data: {
+        recipeId: recipe.id,
+        recipeName: tab?.title || tab?.placeholder || null,
+        recipeType: recipe.type || tab?.type || null,
+        layout,
+        areas,
+        aoi: recipe.model?.aoi || null,
+        view: select('map.view') || null
+    }})
+}
+
+const imageLayerSummary = (recipe, imageLayer) => {
+    if (!imageLayer?.sourceId) return null
+    const visParams = imageLayer.layerConfig?.visParams
+    return {
+        ...summarizeSource(recipe, imageLayer.sourceId),
+        sourceLabel: resolveSourceLabel(recipe, imageLayer.sourceId),
+        ...(visParams ? {visualization: {type: visParams.type || null, bands: visParams.bands || null}} : {})
+    }
+}
+
+const featureLayerSummaries = featureLayers =>
+    (featureLayers || []).map(fl => ({sourceId: fl.sourceId, enabled: !fl.disabled}))
+
+const listLayers = ({respond}) => {
+    const recipe = activeRecipe()
+    if (!recipe) {
+        respond({success: true, data: unavailable()})
+        return
+    }
+    const layerAreas = recipe.layers?.areas || {}
+    const areas = Object.entries(layerAreas).map(([area, layer]) => ({
+        area,
+        imageLayer: imageLayerSummary(recipe, layer?.imageLayer),
+        featureLayers: featureLayerSummaries(layer?.featureLayers)
+    }))
+    respond({success: true, data: {recipeId: recipe.id, areas}})
+}
+
 export const registerMapActions = () => {
     registerAction('set-view', setView)
     registerAction('set-image-layer', setImageLayer)
@@ -339,4 +405,6 @@ export const registerMapActions = () => {
     registerAction('set-camera', setCamera)
     registerAction('fit-bounds', fitBounds)
     registerAction('set-sync', setSync)
+    registerAction('list-map-areas', listMapAreas)
+    registerAction('list-layers', listLayers)
 }

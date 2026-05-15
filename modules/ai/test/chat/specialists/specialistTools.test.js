@@ -6,13 +6,19 @@ describe('specialistTools', () => {
 
     const productSchemas = [
         {name: 'get_context', description: 'GUI context.', parameters: {type: 'object', properties: {}}},
-        {name: 'recipe_list', description: 'Saved recipes.', parameters: {type: 'object', properties: {}}}
+        {name: 'recipe_list', description: 'Saved recipes.', parameters: {type: 'object', properties: {}}},
+        {name: 'map_area_list', description: 'Map areas.', parameters: {type: 'object', properties: {}}},
+        {name: 'layer_list', description: 'Layers per area.', parameters: {type: 'object', properties: {}}}
     ]
 
     function aMapSpecialist(overrides = {}) {
         const llm = overrides.llm ?? aFakeLlm({replies: [{text: 'Map looks empty.'}]})
         const innerTools = overrides.innerTools ?? aFakeTools(
-            {get_context: () => of({section: 'process'})},
+            {
+                get_context: () => of({section: 'process'}),
+                map_area_list: () => of({recipeId: 'r1', layout: 'single', areas: []}),
+                layer_list: () => of({recipeId: 'r1', areas: []})
+            },
             productSchemas
         )
         const tools = specialistTools({
@@ -73,7 +79,30 @@ describe('specialistTools', () => {
 
         read(consultMap.invoke$({question: 'q'}, {channel: {}, conversationId: 'c1'}))
 
-        expect(llm.receivedTools[0].map(schema => schema.name)).toEqual(['get_context'])
+        expect(llm.receivedTools[0].map(schema => schema.name).sort())
+            .toEqual(['get_context', 'layer_list', 'map_area_list'])
+    })
+
+    it('lets the inner LLM call map_area_list through the inner registry', () => {
+        const innerToolCall = {id: 'ma1', name: 'map_area_list', input: {}}
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [innerToolCall]},
+            {text: 'Single area, this-recipe.'}
+        ]})
+        const innerTools = aFakeTools(
+            {
+                get_context: () => of({}),
+                map_area_list: () => of({recipeId: 'r1', layout: 'single', areas: []}),
+                layer_list: () => of({recipeId: 'r1', areas: []})
+            },
+            productSchemas
+        )
+        const {tools} = aMapSpecialist({llm, innerTools})
+        const consultMap = tools.find(tool => tool.name === 'consult_map')
+
+        read(consultMap.invoke$({question: 'which areas?'}, {channel: {}, conversationId: 'c1'}))
+
+        expect(innerTools.invocations).toEqual([innerToolCall])
     })
 
     it('returns the specialist answer as the tool result data', () => {

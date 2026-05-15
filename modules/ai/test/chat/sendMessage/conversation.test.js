@@ -2,6 +2,7 @@ const {of, throwError} = require('rxjs')
 const {MAX_TOOL_ROUNDS} = require('#mcp/chat/sendMessage/conversation')
 const {createToolRegistry} = require('#mcp/chat/sendMessage/tools')
 const {productTools} = require('#mcp/chat/sendMessage/productTools')
+const {specialistTools} = require('#mcp/chat/specialists/specialistTools')
 const {aConversation, aFakeBus, aFakeGuiRequests, aFakeHistory, aFakeLlm, aFakeTools, aFakeTracer, run} = require('./builders')
 
 describe('Conversation', () => {
@@ -657,6 +658,42 @@ describe('Conversation', () => {
 
             const textEvents = events.filter(event => event.textDelta)
             expect(textEvents).toEqual([{textDelta: specialistAnswer}])
+        })
+    })
+
+    describe('when the map specialist calls a map inspection tool before answering', () => {
+        const consultCall = {id: 'sm1', name: 'consult_map', input: {question: 'which areas?'}}
+        const mapAreaCall = {id: 'ma1', name: 'map_area_list', input: {}}
+        const mapAreaSummary = {
+            recipeId: 'r1', recipeName: 'Mosaic', recipeType: 'MOSAIC',
+            layout: 'single',
+            areas: [{area: 'center', sourceId: 'this-recipe', sourceType: 'Recipe', sourceLabel: 'self'}]
+        }
+
+        function buildTools(llm, guiRequests) {
+            const innerToolList = productTools({guiRequests})
+            const innerTools = createToolRegistry({tools: innerToolList, bus: aFakeBus()})
+            const specialistList = specialistTools({llm, tracer: aFakeTracer(), bus: aFakeBus(), innerTools})
+            return createToolRegistry({tools: [...innerToolList, ...specialistList], bus: aFakeBus()})
+        }
+
+        it('runs the specialist inner loop, lets it call map_area_list, and surfaces the answer to the main LLM', () => {
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [consultCall]},
+                {toolCalls: [mapAreaCall]},
+                {text: 'Single area, this-recipe.'},
+                {text: 'You have one map area showing this recipe.'}
+            ]})
+            const guiRequests = aFakeGuiRequests(() => of(mapAreaSummary))
+            const tools = buildTools(llm, guiRequests)
+            const conversation = aConversation({llm, tools})
+            const toolContext = {channel: {}, conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
+
+            const {events} = run(conversation.sendUserMessage$('which areas?', {toolContext}))
+
+            expect(guiRequests.requests.map(r => r.action)).toEqual(['list-map-areas'])
+            const textEvents = events.filter(event => event.textDelta)
+            expect(textEvents).toEqual([{textDelta: 'You have one map area showing this recipe.'}])
         })
     })
 })

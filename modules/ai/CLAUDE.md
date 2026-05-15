@@ -181,8 +181,8 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
   `UserChat`, not invoke it directly.
 - **Tool registry**: `app.js` wires `createToolRegistry`. The production tool
   surface holds the read-only product tools (`get_context`, `recipe_list`,
-  `project_list`, `recipe_load`) from `src/chat/sendMessage/productTools.js`;
-  transport
+  `project_list`, `recipe_load`, `map_area_list`, `layer_list`) from
+  `src/chat/sendMessage/productTools.js`; transport
   smoke-test tools (`echo`) register only
   when `ENABLE_AI_TRANSPORT_SMOKE_TOOLS=true`, and are never visible to the
   production model. `ask_gui_echo` stays unregistered until a matching GUI
@@ -201,7 +201,7 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
   `createToolRegistry` holds product tools only (so specialists can't recurse
   into other specialists), and the outer registry adds the specialist tools on
   top of it. Specialist prompts live in `src/chat/llmText/specialists/<name>.md`
-  and are loaded via `specialistPrompt(name)`, validated at construction. POC
-  specialist: `consult_map` (read-only, allowed: `get_context`). Specialist
-  results return as ordinary tool-result envelopes; the main model integrates
-  them into its final reply.
+  and are loaded via `specialistPrompt(name)`, validated at construction.
+  Current specialist: `consult_map` (read-only, allowed: `get_context`,
+  `map_area_list`, `layer_list`). Specialist results return as ordinary
+  tool-result envelopes; the main model integrates them into its final reply.

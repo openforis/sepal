@@ -7,7 +7,7 @@ const MAP_SPECIALIST = {
     consultToolName: 'consult_map',
     consultToolDescription: 'Delegate to the map specialist for questions about the user\'s current map context: which area/view/AOI is selected, which recipe or layers are active, why the map looks empty. The specialist sees the same runtime GUI context and answers from it.',
     promptAsset: 'map',
-    allowed: ['get_context']
+    allowed: ['get_context', 'map_area_list', 'layer_list']
 }
 
 const SPECIALISTS = [MAP_SPECIALIST]

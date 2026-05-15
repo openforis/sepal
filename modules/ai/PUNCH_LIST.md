@@ -18,11 +18,12 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   (`get_context`, `recipe_list`, `project_list`, `recipe_load`). Recipe
   create/update/delete/move/save tools and `recipe_patch` are not implemented
   yet.
-- **Map specialist is a POC scaffold only** — `consult_map` is wired
-  end-to-end (`src/chat/specialists/`, prompt at `llmText/specialists/map.md`,
-  allowed: `get_context`). It can answer from runtime context but has no
-  real map tools yet. Add `map_view_status`, `layer_list`, AOI/visualization
-  inspection before treating it as production-grade.
+- **Map specialist read tools are minimal** — `consult_map` exposes
+  `get_context`, `map_area_list` (layout + areas + AOI + view), and
+  `layer_list` (per-area imageLayer + featureLayers). Still missing:
+  per-layer loading/error state, dynamic-vis legend/palette inspection, and
+  any live per-area viewport beyond `map.view` (per-area viewports under
+  `mapCommand$` are not in Redux).
 - **`recipe_patch` write path is not implemented** — `recipe_load` returns a
   `modelHash` (stamped GUI-side) ready to serve as the `baseModelHash`
   optimistic-concurrency token, but the patch tool, its validation, and the

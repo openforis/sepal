@@ -4,6 +4,7 @@ import {vi} from 'vitest'
 import {handleGuiAction} from '~/app/home/body/chat/guiActionRegistry'
 import {addHash, getHash} from '~/hash'
 
+import {registerMapActions} from './mapActions'
 import {registerProjectActions} from './projectActions'
 import {registerRecipeActions} from './recipeActions'
 
@@ -19,7 +20,10 @@ const {recipeState, projectState, loadedRecipe, store, loadRecipes$, loadProject
         ui: {initialized: true},
         layers: {areas: {}}
     },
-    store: {recipes: undefined, projects: undefined, loadedRecipes: {}},
+    store: {
+        recipes: undefined, projects: undefined, loadedRecipes: {},
+        selectedTabId: undefined, tabs: undefined, mapView: undefined
+    },
     loadRecipes$: vi.fn(),
     loadProjects$: vi.fn()
 }))
@@ -28,6 +32,9 @@ vi.mock('~/store', () => ({
     select: vi.fn(path => {
         if (path === 'process.recipes') return store.recipes
         if (path === 'process.projects') return store.projects
+        if (path === 'process.selectedTabId') return store.selectedTabId
+        if (path === 'process.tabs') return store.tabs
+        if (path === 'map.view') return store.mapView
         if (Array.isArray(path) && path[0] === 'process.loadedRecipes') return store.loadedRecipes[path[1]]
         return undefined
     }),
@@ -47,11 +54,15 @@ addHash(loadedRecipe.model)
 
 registerRecipeActions()
 registerProjectActions()
+registerMapActions()
 
 beforeEach(() => {
     store.recipes = recipeState
     store.projects = projectState
     store.loadedRecipes = {r1: loadedRecipe}
+    store.selectedTabId = undefined
+    store.tabs = undefined
+    store.mapView = undefined
     loadRecipes$.mockReset().mockReturnValue(of(null))
     loadProjects$.mockReset().mockReturnValue(of(null))
 })
@@ -132,4 +143,176 @@ it('responds with the projects the lazy load populated when process.projects sta
     handleGuiAction('list-projects', {respond: r => { response = r }})
 
     expect(response).toEqual({success: true, data: projectState})
+})
+
+describe('list-map-areas', () => {
+    const mapRecipe = {
+        id: 'r1', type: 'MOSAIC',
+        model: {aoi: {type: 'EE_TABLE', id: 'FAO/GAUL/2015/level0', key: 73}},
+        layers: {
+            areas: {
+                center: {imageLayer: {sourceId: 'this-recipe'}, featureLayers: []}
+            },
+            additionalImageLayerSources: []
+        }
+    }
+    const mapView = {center: {lat: 1, lng: 36}, zoom: 7, bounds: [[34, -2], [42, 5]]}
+
+    it('returns {available: false, reason: no_active_recipe} when no recipe is selected', () => {
+        store.selectedTabId = null
+
+        let response
+        const handled = handleGuiAction('list-map-areas', {respond: r => { response = r }})
+
+        expect(handled).toBe(true)
+        expect(response).toEqual({success: true, data: {available: false, reason: 'no_active_recipe'}})
+    })
+
+    it('returns {available: false, reason: no_active_recipe} when the selected tab has no loaded recipe', () => {
+        store.selectedTabId = 'r-missing'
+        store.loadedRecipes = {}
+
+        let response
+        handleGuiAction('list-map-areas', {respond: r => { response = r }})
+
+        expect(response).toEqual({success: true, data: {available: false, reason: 'no_active_recipe'}})
+    })
+
+    it('returns recipe identity, layout, areas, aoi and view for the active recipe', () => {
+        store.selectedTabId = 'r1'
+        store.loadedRecipes = {r1: mapRecipe}
+        store.tabs = [{id: 'r1', title: 'Kenya', type: 'MOSAIC'}]
+        store.mapView = mapView
+
+        let response
+        handleGuiAction('list-map-areas', {respond: r => { response = r }})
+
+        expect(response).toEqual({
+            success: true,
+            data: {
+                recipeId: 'r1', recipeName: 'Kenya', recipeType: 'MOSAIC',
+                layout: 'single',
+                areas: [{
+                    area: 'center',
+                    sourceId: 'this-recipe', sourceType: 'Recipe', isHost: true,
+                    sourceLabel: 'self'
+                }],
+                aoi: {type: 'EE_TABLE', id: 'FAO/GAUL/2015/level0', key: 73},
+                view: mapView
+            }
+        })
+    })
+
+    it('names the layout for a split-pane recipe', () => {
+        store.selectedTabId = 'r1'
+        store.loadedRecipes = {r1: {
+            ...mapRecipe,
+            layers: {
+                areas: {
+                    left: {imageLayer: {sourceId: 'this-recipe'}},
+                    right: {imageLayer: {sourceId: 'google-satellite'}}
+                },
+                additionalImageLayerSources: []
+            }
+        }}
+        store.tabs = [{id: 'r1', title: 'Kenya', type: 'MOSAIC'}]
+
+        let response
+        handleGuiAction('list-map-areas', {respond: r => { response = r }})
+
+        expect(response.data.layout).toBe('left-right')
+        expect(response.data.areas.map(a => a.area).sort()).toEqual(['left', 'right'])
+    })
+})
+
+describe('list-layers', () => {
+    const layerRecipe = {
+        id: 'r1', type: 'MOSAIC',
+        model: {},
+        layers: {
+            areas: {
+                center: {
+                    imageLayer: {
+                        sourceId: 'this-recipe',
+                        layerConfig: {visParams: {type: 'rgb', bands: ['red', 'green', 'blue']}}
+                    },
+                    featureLayers: [
+                        {sourceId: 'aoi', disabled: false},
+                        {sourceId: 'labels', disabled: true}
+                    ]
+                }
+            },
+            additionalImageLayerSources: []
+        }
+    }
+
+    it('returns {available: false, reason: no_active_recipe} when no recipe is selected', () => {
+        store.selectedTabId = null
+
+        let response
+        const handled = handleGuiAction('list-layers', {respond: r => { response = r }})
+
+        expect(handled).toBe(true)
+        expect(response).toEqual({success: true, data: {available: false, reason: 'no_active_recipe'}})
+    })
+
+    it('returns per-area imageLayer + featureLayers for the active recipe', () => {
+        store.selectedTabId = 'r1'
+        store.loadedRecipes = {r1: layerRecipe}
+        store.tabs = [{id: 'r1', title: 'Kenya', type: 'MOSAIC'}]
+
+        let response
+        handleGuiAction('list-layers', {respond: r => { response = r }})
+
+        expect(response).toEqual({
+            success: true,
+            data: {
+                recipeId: 'r1',
+                areas: [{
+                    area: 'center',
+                    imageLayer: {
+                        sourceId: 'this-recipe', sourceType: 'Recipe', isHost: true,
+                        sourceLabel: 'self',
+                        visualization: {type: 'rgb', bands: ['red', 'green', 'blue']}
+                    },
+                    featureLayers: [
+                        {sourceId: 'aoi', enabled: true},
+                        {sourceId: 'labels', enabled: false}
+                    ]
+                }]
+            }
+        })
+    })
+
+    it('returns a null imageLayer when the area has no source set', () => {
+        store.selectedTabId = 'r1'
+        store.loadedRecipes = {r1: {
+            ...layerRecipe,
+            layers: {
+                areas: {center: {imageLayer: {}, featureLayers: []}},
+                additionalImageLayerSources: []
+            }
+        }}
+
+        let response
+        handleGuiAction('list-layers', {respond: r => { response = r }})
+
+        expect(response.data.areas[0].imageLayer).toBeNull()
+    })
+
+    it('omits visualization when the image layer has no visParams', () => {
+        store.selectedTabId = 'r1'
+        store.loadedRecipes = {r1: {
+            ...layerRecipe,
+            layers: {
+                areas: {center: {imageLayer: {sourceId: 'this-recipe'}, featureLayers: []}},
+                additionalImageLayerSources: []
+            }
+        }}
+
+        let response
+        handleGuiAction('list-layers', {respond: r => { response = r }})
+
+        expect(response.data.areas[0].imageLayer).not.toHaveProperty('visualization')
+    })
 })
