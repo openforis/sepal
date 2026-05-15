@@ -89,11 +89,13 @@ src/
     io/                        # Active adapters: websocket, Redis stores, GUI request bridge
     llm/                       # LLM provider boundary: provider-neutral selector + per-provider adapters
     llmText/                   # LLM-facing prompt assets + loader
-      prompts.js                # Loader: mainSystemPrompt(), titleSystemPrompt(); fails fast on empty/missing
-      assistants/               # One markdown file per assistant role
-        main.md                  # Main Sepalito system prompt
-        title.md                 # Title-generator system prompt
+      prompts.js                # Loader: mainSystemPrompt(), titleSystemPrompt(), specialistPrompt(name); fails fast on empty/missing
+      main.md                   # Main Sepalito system prompt
+      title.md                  # Title-generator system prompt
+      specialists/              # One markdown file per specialist (mirrors src/chat/specialists/)
+        map.md                   # Read-only map specialist system prompt
     sendMessage/               # Active conversation/user-chat/title-generation/tool-registry slice
+    specialists/               # Specialist slice — runSpecialist$ (inner LLM loop) + specialistTools registry
 ```
 
 ## Configuration
@@ -115,8 +117,8 @@ Environment variables mapped to CLI flags in `start.sh`:
 | `ENABLE_AI_TRANSPORT_SMOKE_TOOLS` | `--enable-ai-transport-smoke-tools` | Register transport smoke-test tools (`echo`); dev/test only, default `false` |
 
 The system prompt is project source, not configuration: `src/app.js` loads
-`src/chat/llmText/assistants/main.md` via `mainSystemPrompt()` and aborts boot
-if the asset is missing or empty. Smoke/manual tests can still pass a
+`src/chat/llmText/main.md` via `mainSystemPrompt()` and aborts boot if the
+asset is missing or empty. Smoke/manual tests can still pass a
 `config.systemPrompt` override directly to `createApp({config})`.
 
 The active rewrite currently uses `HTTP_PORT`, `LLM_PROVIDER`, `LLM_API_KEY`,
@@ -150,9 +152,9 @@ of them, apply the rule above:
 
 | Location | What's LLM-facing |
 |---|---|
-| `src/chat/llmText/assistants/*.md` | One file per assistant role — `main.md` (Sepalito system prompt), `title.md` (title-generator system prompt). Loaded via `src/chat/llmText/prompts.js`. New assistant roles add a sibling `.md` here. |
+| `src/chat/llmText/*.md` + `src/chat/llmText/specialists/*.md` | Top-level role prompts (`main.md`, `title.md`) and specialist prompts (`specialists/map.md`, etc.). Loaded via `src/chat/llmText/prompts.js` — `mainSystemPrompt()`, `titleSystemPrompt()`, `specialistPrompt(name)`. New specialists add a `.md` under `specialists/` here matching the code at `src/chat/specialists/`. |
 | `src/chat/sendMessage/turnContext.js` | Runtime turn-context message wrapper text |
-| `src/chat/sendMessage/titleGenerator.js` | Title-generator user/wrapper message (the `User asked: ... Assistant replied: ...` shape and the `/no_think` suffix); the title role prompt itself now lives in `llmText/assistants/title.md`. |
+| `src/chat/sendMessage/titleGenerator.js` | Title-generator user/wrapper message (the `User asked: ... Assistant replied: ...` shape and the `/no_think` suffix); the title role prompt itself lives in `llmText/title.md`. |
 | Tool `name` / `description` / `parameters` | Sent to the LLM as tool schemas — the read-only product tools in `src/chat/sendMessage/productTools.js` and the dev/test smoke tools in `src/app.js` |
 
 Old tool and recipe-schema LLM text lives under `archive/pre-rewrite-chat/` now.
@@ -192,3 +194,14 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
   (`createLlm`). It builds the per-provider adapters under
   `src/chat/llm/providers/` (`openaiChatCompletions.js`, `lmStudioNativeChat.js`)
   and routes to them; provider wire-format names stay confined to the adapters.
+- **Specialists**: a specialist is exposed to the main model as a normal tool
+  (`consult_<name>`) whose `invoke$` runs an inner LLM loop under
+  `src/chat/specialists/runSpecialist.js` with its own system prompt + a
+  filtered tool set. Two-layer composition in `app.js`: the inner
+  `createToolRegistry` holds product tools only (so specialists can't recurse
+  into other specialists), and the outer registry adds the specialist tools on
+  top of it. Specialist prompts live in `src/chat/llmText/specialists/<name>.md`
+  and are loaded via `specialistPrompt(name)`, validated at construction. POC
+  specialist: `consult_map` (read-only, allowed: `get_context`). Specialist
+  results return as ordinary tool-result envelopes; the main model integrates
+  them into its final reply.

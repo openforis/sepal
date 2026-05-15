@@ -14,10 +14,15 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Tool And GUI Bridge
 
-- **Read tools only — no write tools or specialists** — Phase 1A/1B wired the
-  read-only product tools (`get_context`, `recipe_list`, `project_list`,
-  `recipe_load`). Recipe create/update/delete/move/save tools, `recipe_patch`,
-  map tools, and specialists are not implemented yet.
+- **Read tools only** — Phase 1A/1B wired the read-only product tools
+  (`get_context`, `recipe_list`, `project_list`, `recipe_load`). Recipe
+  create/update/delete/move/save tools and `recipe_patch` are not implemented
+  yet.
+- **Map specialist is a POC scaffold only** — `consult_map` is wired
+  end-to-end (`src/chat/specialists/`, prompt at `llmText/specialists/map.md`,
+  allowed: `get_context`). It can answer from runtime context but has no
+  real map tools yet. Add `map_view_status`, `layer_list`, AOI/visualization
+  inspection before treating it as production-grade.
 - **`recipe_patch` write path is not implemented** — `recipe_load` returns a
   `modelHash` (stamped GUI-side) ready to serve as the `baseModelHash`
   optimistic-concurrency token, but the patch tool, its validation, and the
@@ -30,6 +35,13 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   structured tool-error envelope, but no repeated-failure bail-out, no
   validation-error retry limit, and no no-repeat handling for identical failing
   tool calls (DESIGN §15 "before writable tools").
+- **Specialist safety/observability is minimal** — `runSpecialist$` has a
+  `SPECIALIST_MAX_ROUNDS` cap and a tracer span, but no recursion guard
+  beyond the two-layer registry (specialists can't call specialists today
+  only because the inner registry doesn't hold them), no per-specialist token
+  budget, no `specialist.invoked` / `specialist.completed` bus events for
+  per-specialist accounting, and the cap-exceeded fallback is a flat English
+  string with no descriptor path.
 - **UI language is not in turn context** — the GUI knows the selected locale,
   but AI turns only receive selection/runtime state. Include the UI language as
   runtime data so the model can reply in the active interface language without

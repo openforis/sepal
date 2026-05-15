@@ -2,7 +2,7 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 
-const {loadPromptFile, mainSystemPrompt, titleSystemPrompt} = require('#mcp/chat/llmText/prompts')
+const {loadPromptFile, mainSystemPrompt, specialistPrompt, titleSystemPrompt} = require('#mcp/chat/llmText/prompts')
 
 describe('llmText prompts', () => {
 
@@ -38,9 +38,9 @@ describe('llmText prompts', () => {
     })
 
     describe('mainSystemPrompt', () => {
-        const mainAsset = path.join(__dirname, '../../../src/chat/llmText/assistants/main.md')
+        const mainAsset = path.join(__dirname, '../../../src/chat/llmText/main.md')
 
-        it('loads the main assistant prompt from llmText/assistants/main.md', () => {
+        it('loads the main agent prompt from llmText/main.md', () => {
             expect(mainSystemPrompt()).toBe(fs.readFileSync(mainAsset, 'utf8'))
         })
 
@@ -55,14 +55,26 @@ describe('llmText prompts', () => {
     })
 
     describe('titleSystemPrompt', () => {
-        const titleAsset = path.join(__dirname, '../../../src/chat/llmText/assistants/title.md')
+        const titleAsset = path.join(__dirname, '../../../src/chat/llmText/title.md')
 
-        it('loads the title-generator prompt from llmText/assistants/title.md', () => {
+        it('loads the title-generator prompt from llmText/title.md', () => {
             expect(titleSystemPrompt()).toBe(fs.readFileSync(titleAsset, 'utf8'))
         })
 
         it('carries the bare-title instruction so callers do not need to know its content', () => {
             expect(titleSystemPrompt()).toMatch(/3-7 word title/i)
+        })
+    })
+
+    describe('specialistPrompt', () => {
+        const mapAsset = path.join(__dirname, '../../../src/chat/llmText/specialists/map.md')
+
+        it('loads a specialist prompt by name from llmText/specialists/${name}.md', () => {
+            expect(specialistPrompt('map')).toBe(fs.readFileSync(mapAsset, 'utf8'))
+        })
+
+        it('throws when the named specialist asset does not exist', () => {
+            expect(() => specialistPrompt('nonexistent-specialist')).toThrow()
         })
     })
 })

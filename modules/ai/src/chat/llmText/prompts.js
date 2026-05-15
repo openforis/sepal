@@ -10,7 +10,11 @@ function loadPromptFile(filePath) {
 }
 
 function loadPrompt(name) {
-    return loadPromptFile(path.join(__dirname, 'assistants', `${name}.md`))
+    return loadPromptFile(path.join(__dirname, `${name}.md`))
+}
+
+function specialistPrompt(name) {
+    return loadPromptFile(path.join(__dirname, 'specialists', `${name}.md`))
 }
 
 function mainSystemPrompt() {
@@ -21,4 +25,4 @@ function titleSystemPrompt() {
     return loadPrompt('title')
 }
 
-module.exports = {loadPromptFile, loadPrompt, mainSystemPrompt, titleSystemPrompt}
+module.exports = {loadPromptFile, loadPrompt, specialistPrompt, mainSystemPrompt, titleSystemPrompt}

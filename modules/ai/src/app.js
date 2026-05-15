@@ -16,6 +16,7 @@ const {productTools} = require('./chat/sendMessage/productTools')
 const {createTitleGenerator} = require('./chat/sendMessage/titleGenerator')
 const {createToolRegistry} = require('./chat/sendMessage/tools')
 const {createUserChat} = require('./chat/sendMessage/userChat')
+const {specialistTools} = require('./chat/specialists/specialistTools')
 const {createEventBus} = require('./eventBus')
 const {createLogListener} = require('./logListener')
 const {createTracer} = require('./tracer')
@@ -54,7 +55,8 @@ function createApp({config}) {
         bus
     })
     const guiRequests = createGuiRequests({clock, createId: uuid, timeoutMs: GUI_REQUEST_TIMEOUT_MS, bus})
-    const tools = createToolRegistry({tools: registeredTools(config, guiRequests), bus})
+
+    const tools = conversationTools({config, guiRequests, llm, tracer, bus})
 
     const userChats = new Map()
     const wsHandler = createWsHandler({bus, userChatFor, guiRequests})
@@ -102,14 +104,16 @@ function systemClock() {
     }
 }
 
-// The production tool surface holds the read-only product tools. Transport
-// smoke-test tools are dev/test diagnostics: registered only when explicitly
-// enabled, never visible to the production model.
-function registeredTools(config, guiRequests) {
-    return [
-        ...productTools({guiRequests}),
-        ...enabledSmokeTools(config, guiRequests)
-    ]
+function conversationTools({config, guiRequests, llm, tracer, bus}) {
+    const productToolList = productTools({guiRequests})
+    // Specialists may call only the inner product-tool registry. The outer
+    // registry is the main conversation surface and includes specialists.
+    const innerTools = createToolRegistry({tools: productToolList, bus})
+    const specialistToolList = specialistTools({llm, tracer, bus, innerTools})
+    return createToolRegistry({
+        tools: [...productToolList, ...specialistToolList, ...enabledSmokeTools(config, guiRequests)],
+        bus
+    })
 }
 
 function enabledSmokeTools(config, guiRequests) {
@@ -122,7 +126,7 @@ function enabledSmokeTools(config, guiRequests) {
 }
 
 // Transport smoke-test tools: one direct tool and one GUI-backed tool, enough
-// to exercise the full tool round trip. Dev/test only — see registeredTools.
+// to exercise the full tool round trip. Dev/test only.
 function transportSmokeTestTools(guiRequests) {
     const textParameter = {
         type: 'object',

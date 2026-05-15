@@ -1200,10 +1200,14 @@ exceeds observed benefit.
 ```text
 modules/ai/src/chat/
   llmText/
-    prompts.js
-    assistants/
-      main.md
-      title.md
+    prompts.js                # mainSystemPrompt(), titleSystemPrompt(), specialistPrompt(name)
+    main.md                   # main user-facing agent
+    title.md                  # title-generator utility
+    specialists/              # mirrors src/chat/specialists/
+      map.md                   # POC map specialist prompt (read-only)
+  specialists/                # POC implementation (sibling of sendMessage/)
+    runSpecialist.js          # Inner LLM loop with filtered tools
+    specialistTools.js        # Specialist-as-LLM-tool registry (consult_map etc.)
   llm/
     index.js
     common/
@@ -1221,12 +1225,6 @@ modules/ai/src/chat/
     specialistModelPolicies.js
     recipePatch.js
     toolLoopSafety.js
-    specialists/
-      recipeSpecialist.js
-      workflowSpecialist.js
-      mapLayoutSpecialist.js
-      specialistSessions.js
-      promptBuilder.js
   io/
     guiRequests.js
     wsHandler.js

@@ -617,4 +617,46 @@ describe('Conversation', () => {
             ])
         })
     })
+
+    describe('when the LLM delegates a map question to the map specialist', () => {
+        const consultCall = {id: 'sm1', name: 'consult_map', input: {question: 'why is my map empty?'}}
+        const specialistAnswer = 'No recipe is selected, so the map has no layers.'
+
+        let llm, tools, conversation
+        beforeEach(() => {
+            llm = aFakeLlm({replies: [
+                {toolCalls: [consultCall]},
+                {text: specialistAnswer}
+            ]})
+            tools = aFakeTools({
+                consult_map: ({question}) => of({answer: `[map] ${question}`})
+            })
+            conversation = aConversation({llm, tools})
+        })
+
+        it('invokes consult_map with the user question', () => {
+            run(conversation.sendUserMessage$('why is my map empty?'))
+
+            expect(tools.invocations).toEqual([consultCall])
+        })
+
+        it('feeds the specialist answer back to the main LLM as a tool result', () => {
+            run(conversation.sendUserMessage$('why is my map empty?'))
+
+            expect(llm.receivedMessages[1]).toContainEqual({
+                role: 'tool',
+                toolResults: [{
+                    toolCallId: consultCall.id, toolName: consultCall.name,
+                    result: {ok: true, data: {answer: '[map] why is my map empty?'}}
+                }]
+            })
+        })
+
+        it('integrates the specialist answer into the final assistant text without exposing the delegation as visible text', () => {
+            const {events} = run(conversation.sendUserMessage$('why is my map empty?'))
+
+            const textEvents = events.filter(event => event.textDelta)
+            expect(textEvents).toEqual([{textDelta: specialistAnswer}])
+        })
+    })
 })
