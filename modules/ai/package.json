@@ -16,6 +16,7 @@
             "src/chat/specialists/**/*.js",
             "src/chat/llm/**/*.js",
             "src/chat/llmText/**/*.js",
+            "src/chat/toolCallGuard.js",
             "src/server.js",
             "src/eventBus.js",
             "src/tracer.js",

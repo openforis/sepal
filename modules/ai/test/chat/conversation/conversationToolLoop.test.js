@@ -131,6 +131,106 @@ describe('Conversation tool loop', () => {
         ])
     })
 
+    it('blocks an identical tool call after a prior failure without invoking the tool again', () => {
+        const failingCall = {id: 't1', name: 'recipe_list', input: {filter: 'mine'}}
+        const repeatCall = {id: 't2', name: 'recipe_list', input: {filter: 'mine'}}
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [failingCall]},
+            {toolCalls: [repeatCall]},
+            {text: 'Giving up.'}
+        ]})
+        const tools = aFakeTools({recipe_list: () => throwError(() => new Error('boom'))})
+        const conversation = aConversation({llm, tools})
+
+        run(conversation.sendUserMessage$('list my recipes'))
+
+        expect(tools.invocations).toEqual([failingCall])
+        expect(llm.receivedMessages[2]).toContainEqual({
+            role: 'tool',
+            toolResults: [{
+                toolCallId: 't2',
+                toolName: 'recipe_list',
+                result: {ok: false, error: {code: 'TOOL_REPEAT_BLOCKED', message: expect.stringMatching(/repeat/i)}}
+            }]
+        })
+    })
+
+    it('bails out of the loop after consecutive failures for the same tool name', () => {
+        const aFailingCall = (id, input) => ({id, name: 'recipe_list', input})
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [aFailingCall('a', {filter: 1})]},
+            {toolCalls: [aFailingCall('b', {filter: 2})]},
+            {toolCalls: [aFailingCall('c', {filter: 3})]},
+            {text: 'should not be reached'}
+        ]})
+        const tools = aFakeTools({recipe_list: () => throwError(() => new Error('boom'))})
+        const history = aFakeHistory()
+        const conversation = aConversation({llm, history, tools})
+
+        const {events} = run(conversation.sendUserMessage$('list'))
+
+        expect(tools.invocations).toHaveLength(3)
+        expect(llm.receivedMessages).toHaveLength(3)
+        const expectedDisplay = {
+            key: 'home.chat.notices.toolConsecutiveFailures',
+            args: {tool: 'recipe_list', max: 3},
+            fallback: expect.any(String)
+        }
+        expect(events.find(event => event.notice)?.notice.display).toEqual(expectedDisplay)
+        expect(history.appended.at(-1)).toEqual({
+            role: 'assistant',
+            content: expect.any(String),
+            display: expectedDisplay
+        })
+    })
+
+    it('does not count a TOOL_REPEAT_BLOCKED short-circuit toward the consecutive-failure cap', () => {
+        const identicalCall = (id) => ({id, name: 'recipe_list', input: {filter: 'mine'}})
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [identicalCall('a')]},
+            {toolCalls: [identicalCall('b')]},
+            {toolCalls: [identicalCall('c')]},
+            {text: 'I gave up the same call.'}
+        ]})
+        const tools = aFakeTools({recipe_list: () => throwError(() => new Error('boom'))})
+        const conversation = aConversation({llm, tools})
+
+        const {events} = run(conversation.sendUserMessage$('list'))
+
+        expect(tools.invocations).toHaveLength(1)
+        expect(events.find(event => event.notice)).toBeUndefined()
+        expect(events.at(-1)).toEqual({textDelta: 'I gave up the same call.'})
+    })
+
+    it('bails out of the loop after repeated INVALID_TOOL_ARGS for the same tool name', () => {
+        const invalidArgs = () => of({ok: false, error: {code: 'INVALID_TOOL_ARGS', message: 'Bad args'}})
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [{id: 'a', name: 'recipe_load', input: {x: 1}}]},
+            {toolCalls: [{id: 'b', name: 'recipe_load', input: {x: 2}}]},
+            {toolCalls: [{id: 'c', name: 'recipe_load', input: {x: 3}}]},
+            {text: 'should not be reached'}
+        ]})
+        const tools = aFakeTools({recipe_load: invalidArgs})
+        const history = aFakeHistory()
+        const conversation = aConversation({llm, history, tools})
+
+        const {events} = run(conversation.sendUserMessage$('load'))
+
+        expect(tools.invocations).toHaveLength(3)
+        expect(llm.receivedMessages).toHaveLength(3)
+        const expectedDisplay = {
+            key: 'home.chat.notices.toolInvalidArgs',
+            args: {tool: 'recipe_load', max: 3},
+            fallback: expect.any(String)
+        }
+        expect(events.find(event => event.notice)?.notice.display).toEqual(expectedDisplay)
+        expect(history.appended.at(-1)).toEqual({
+            role: 'assistant',
+            content: expect.any(String),
+            display: expectedDisplay
+        })
+    })
+
     it('stops a runaway tool loop at the round cap and persists a translatable notice', () => {
         const toolCall = {id: 't', name: 'recipe_list', input: {}}
         const llm = aFakeLlm({replies: [{toolCalls: [toolCall]}]})

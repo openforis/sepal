@@ -1,9 +1,12 @@
 const {concat, concatMap, defer, filter, from, ignoreElements, map, of, tap} = require('rxjs')
 const {messagesForLlm} = require('./llmMessages')
 const {publishHistoryProjection, publishLlmRequest, publishToolCall} = require('./conversationEvents')
+const {createToolCallGuard} = require('../toolCallGuard')
 
 const MAX_TOOL_ROUNDS = 8
 const TOOL_ROUND_CAP_MESSAGE = 'This is taking more steps than expected, so I\'ve stopped here. Please try rephrasing your request.'
+const TOOL_CONSECUTIVE_FAILURES_MESSAGE = 'Having repeated trouble with that tool. Please try a different approach.'
+const TOOL_INVALID_ARGS_MESSAGE = 'Could not work out the right inputs for that tool. Please try a different approach.'
 const NOOP_BUS = {publish() {}}
 
 function createConversation({llm, history, tools, tracer, systemPrompt, initialMessages = [], id, bus = NOOP_BUS}) {
@@ -19,14 +22,15 @@ function createConversation({llm, history, tools, tracer, systemPrompt, initialM
     }
 
     function sendUserMessage$(text, {selection, toolContext} = {}) {
+        const guard = createToolCallGuard({consecutiveFailureBail, invalidArgsBail})
         return tracer.span$('conversation.send', {conversationId: id},
             append$({role: 'user', content: text}).pipe(
-                concatMap(() => step$({selection, includeTurnContext: true, toolContext, round: 0}))
+                concatMap(() => step$({selection, includeTurnContext: true, toolContext, round: 0, guard}))
             )
         )
     }
 
-    function step$({selection, includeTurnContext, toolContext, round}) {
+    function step$({selection, includeTurnContext, toolContext, round, guard}) {
         const acc = {text: '', toolCalls: []}
         const {llmMessages, projection} = messagesForLlm({
             messages, selection, includeTurnContext, isolateHistory: round > 0
@@ -37,7 +41,7 @@ function createConversation({llm, history, tools, tracer, systemPrompt, initialM
         const after$ = defer(() => {
             const llmRequestedTools = acc.toolCalls.length > 0
             return llmRequestedTools
-                ? handleToolCalls$(acc.text, acc.toolCalls, {toolContext, round})
+                ? handleToolCalls$(acc.text, acc.toolCalls, {toolContext, round, guard})
                 : reply$(acc.text)
         })
         return concat(llmStream$(llmMessages, toolSchemas, acc, round), after$)
@@ -58,31 +62,37 @@ function createConversation({llm, history, tools, tracer, systemPrompt, initialM
         )
     }
 
-    function handleToolCalls$(text, toolCalls, {toolContext, round}) {
+    function handleToolCalls$(text, toolCalls, {toolContext, round, guard}) {
         const collected = {results: []}
         return concat(
             append$({role: 'assistant', content: text || '', toolCalls}).pipe(ignoreElements()),
-            from(toolCalls).pipe(concatMap(toolCall => invokeTool$(toolCall, toolContext, collected))),
+            from(toolCalls).pipe(concatMap(toolCall => invokeTool$(toolCall, {toolContext, collected, guard}))),
             defer(() => append$({role: 'tool', toolResults: collected.results}).pipe(ignoreElements())),
             defer(() => {
+                const bailDisplay = guard.bail()
+                if (bailDisplay) return terminalNotice$('conversation.toolBail', bailDisplay, {conversationId: id, displayKey: bailDisplay.key})
                 const capReached = round + 1 >= MAX_TOOL_ROUNDS
                 return capReached
                     ? toolRoundCapReached$()
-                    : step$({toolContext, round: round + 1})
+                    : step$({toolContext, round: round + 1, guard})
             })
         )
     }
 
-    function invokeTool$(toolCall, toolContext, collected) {
+    function invokeTool$(toolCall, {toolContext, collected, guard}) {
         const ref = {toolCallId: toolCall.id, toolName: toolCall.name}
+        const blocked = guard.blockedRepeat(toolCall)
+        const result$ = blocked
+            ? of(blocked)
+            : tracer.span$('tool.invoke', {toolName: toolCall.name}, tools.invoke$(toolCall, toolContext)).pipe(
+                tap(result => guard.record(toolCall, result))
+            )
         return concat(
             of({toolStart: {...ref, input: toolCall.input}}),
-            tracer.span$('tool.invoke', {toolName: toolCall.name}, tools.invoke$(toolCall, toolContext)).pipe(
+            result$.pipe(
                 // collected.results is the persisted shape; the load path rebuilds from it.
                 // toolStart/toolEnd carry input/data/error for live display only.
-                tap(result => {
-                    collected.results.push({...ref, result})
-                }),
+                tap(result => collected.results.push({...ref, result})),
                 map(result => ({toolEnd: {...ref, ok: result.ok, data: result.data, error: result.error}}))
             )
         )
@@ -94,10 +104,14 @@ function createConversation({llm, history, tools, tracer, systemPrompt, initialM
             args: {max: MAX_TOOL_ROUNDS},
             fallback: TOOL_ROUND_CAP_MESSAGE
         }
-        const message = {role: 'assistant', content: TOOL_ROUND_CAP_MESSAGE, display}
-        return tracer.span$('conversation.toolRoundCapReached', {conversationId: id, maxRounds: MAX_TOOL_ROUNDS},
+        return terminalNotice$('conversation.toolRoundCapReached', display, {conversationId: id, maxRounds: MAX_TOOL_ROUNDS})
+    }
+
+    function terminalNotice$(spanName, display, spanAttrs) {
+        const message = {role: 'assistant', content: display.fallback, display}
+        return tracer.span$(spanName, spanAttrs,
             concat(
-                of({notice: {content: TOOL_ROUND_CAP_MESSAGE, display}}),
+                of({notice: {content: display.fallback, display}}),
                 append$(message).pipe(ignoreElements())
             )
         )
@@ -116,6 +130,24 @@ function createConversation({llm, history, tools, tracer, systemPrompt, initialM
         })
     }
 
+}
+
+// args.tool is available to translators and to history/debug inspection;
+// the current English copy interpolates only {max}.
+function consecutiveFailureBail(tool, max) {
+    return {
+        key: 'home.chat.notices.toolConsecutiveFailures',
+        args: {tool, max},
+        fallback: TOOL_CONSECUTIVE_FAILURES_MESSAGE
+    }
+}
+
+function invalidArgsBail(tool, max) {
+    return {
+        key: 'home.chat.notices.toolInvalidArgs',
+        args: {tool, max},
+        fallback: TOOL_INVALID_ARGS_MESSAGE
+    }
 }
 
 module.exports = {createConversation, MAX_TOOL_ROUNDS}

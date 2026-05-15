@@ -32,17 +32,15 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   `ask_gui_echo` were useful before real tools existed, but they now add
   confusing production surface area even behind a dev flag. Move any remaining
   coverage to test fixtures or a clearly isolated dev-only module.
-- **Tool-loop safety is partial** — there is a `MAX_TOOL_ROUNDS` cap and a
-  structured tool-error envelope, but no repeated-failure bail-out, no
-  validation-error retry limit, and no no-repeat handling for identical failing
-  tool calls (DESIGN §15 "before writable tools").
 - **Specialist safety/observability is minimal** — `runSpecialist$` has a
-  `SPECIALIST_MAX_ROUNDS` cap and a tracer span, but no recursion guard
-  beyond the two-layer registry (specialists can't call specialists today
-  only because the inner registry doesn't hold them), no per-specialist token
-  budget, no `specialist.invoked` / `specialist.completed` bus events for
-  per-specialist accounting, and the cap-exceeded fallback is a flat English
-  string with no descriptor path.
+  `SPECIALIST_MAX_ROUNDS` cap, per-turn tool-loop safety (no-repeat,
+  consecutive-failure bail-out, invalid-args retry limit via the shared
+  `toolCallGuard`), and a tracer span, but no recursion guard beyond the
+  two-layer registry (specialists can't call specialists today only because
+  the inner registry doesn't hold them), no per-specialist token budget, no
+  `specialist.invoked` / `specialist.completed` bus events for per-specialist
+  accounting, and the cap-exceeded / bail-out fallbacks are flat English
+  strings with no descriptor path back to the GUI.
 - **UI language is not in turn context** — the GUI knows the selected locale,
   but AI turns only receive selection/runtime state. Include the UI language as
   runtime data so the model can reply in the active interface language without

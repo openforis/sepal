@@ -149,6 +149,71 @@ describe('runSpecialist$', () => {
         })
     })
 
+    describe('tool-loop safety', () => {
+
+        it('blocks an identical inner tool call after a prior failure without invoking it again', () => {
+            const failingCall = (id) => ({id, name: 'get_context', input: {filter: 'mine'}})
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [failingCall('a')]},
+                {toolCalls: [failingCall('b')]},
+                {text: 'Cannot answer.'}
+            ]})
+            const invocations = []
+            const invokeTool$ = call => {
+                invocations.push(call)
+                return of({ok: false, error: {code: 'TOOL_FAILED', message: 'boom'}})
+            }
+
+            const result = read(runSpecialist$({
+                llm, tracer: aFakeTracer(), name: 'map',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$, context: {}
+            }))
+
+            expect(invocations).toHaveLength(1)
+            expect(result).toEqual({answer: 'Cannot answer.'})
+        })
+
+        it('bails out of the inner loop after consecutive failures for the same tool name', () => {
+            const failingCall = (id, x) => ({id, name: 'get_context', input: {x}})
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [failingCall('a', 1)]},
+                {toolCalls: [failingCall('b', 2)]},
+                {toolCalls: [failingCall('c', 3)]},
+                {text: 'should not reach'}
+            ]})
+            const invokeTool$ = () => of({ok: false, error: {code: 'TOOL_FAILED', message: 'boom'}})
+
+            const result = read(runSpecialist$({
+                llm, tracer: aFakeTracer(), name: 'map',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$, context: {}
+            }))
+
+            expect(llm.receivedMessages).toHaveLength(3)
+            expect(result.answer).toMatch(/repeated failures/i)
+        })
+
+        it('bails out of the inner loop after repeated INVALID_TOOL_ARGS for the same tool name', () => {
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [{id: 'a', name: 'get_context', input: {x: 1}}]},
+                {toolCalls: [{id: 'b', name: 'get_context', input: {x: 2}}]},
+                {toolCalls: [{id: 'c', name: 'get_context', input: {x: 3}}]},
+                {text: 'should not reach'}
+            ]})
+            const invokeTool$ = () => of({ok: false, error: {code: 'INVALID_TOOL_ARGS', message: 'bad'}})
+
+            const result = read(runSpecialist$({
+                llm, tracer: aFakeTracer(), name: 'map',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$, context: {}
+            }))
+
+            expect(llm.receivedMessages).toHaveLength(3)
+            expect(result.answer).toMatch(/invalid args/i)
+        })
+    })
+
     describe('observability', () => {
 
         it('wraps the specialist run in a tracer span identified by specialist name', () => {

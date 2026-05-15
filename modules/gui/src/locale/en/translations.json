@@ -556,6 +556,8 @@
         }
       },
       "notices": {
+        "toolConsecutiveFailures": "After {max} attempts, that tool isn't working. Please try a different approach.",
+        "toolInvalidArgs": "After {max} attempts with invalid inputs, that tool isn't working. Please try a different approach.",
         "toolRoundCap": "I have stopped after {max} steps. Please try rephrasing your request."
       }
     }

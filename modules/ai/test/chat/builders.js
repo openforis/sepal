@@ -118,12 +118,16 @@ function aFakeTools(implementations = {}, schemas = []) {
                 return of({ok: false, error: {code: 'UNKNOWN_TOOL', message: `Tool not found: ${toolCall.name}`}})
             }
             return impl(toolCall.input, context).pipe(
-                map(data => ({ok: true, data})),
+                map(value => isEnvelope(value) ? value : {ok: true, data: value}),
                 catchError(error => of({ok: false, error: {code: 'TOOL_FAILED', message: error.message}}))
             )
         },
         invocations
     }
+}
+
+function isEnvelope(value) {
+    return value != null && typeof value === 'object' && typeof value.ok === 'boolean'
 }
 
 function aFakeTitleGenerator() {
