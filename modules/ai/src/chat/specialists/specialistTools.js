@@ -1,7 +1,14 @@
-const {of} = require('rxjs')
 const {specialistPrompt} = require('../llmText/prompts')
 const {runSpecialist$} = require('./runSpecialist')
+const {scopeInnerTools} = require('./specialistScope')
 
+// This module is ONLY for free-form `consult_*` specialist dispatcher tools
+// (one tool per specialist). Recipe-type specialists are NOT registered here;
+// they are reached through operation tools (`describe_recipe`, future
+// `update_recipe`, `create_recipe`) that live in productTools.js and route to a
+// recipe-type specialist via `recipeSpecialists.js`. That split keeps the
+// orchestrator surface proportional to operations, not recipe-type count
+// (DESIGN §5).
 const MAP_SPECIALIST = {
     name: 'map',
     consultToolName: 'consult_map',
@@ -12,20 +19,17 @@ const MAP_SPECIALIST = {
 
 const SPECIALISTS = [MAP_SPECIALIST]
 
-function specialistTools({llm, tracer, bus, innerTools}) {
-    return SPECIALISTS.map(definition => buildSpecialistTool({definition, llm, tracer, bus, innerTools}))
+function specialistTools({llm, tracer, innerTools}) {
+    return SPECIALISTS.map(definition => buildSpecialistTool({definition, llm, tracer, innerTools}))
 }
 
-function buildSpecialistTool({definition, llm, tracer, bus, innerTools}) {
+function buildSpecialistTool({definition, llm, tracer, innerTools}) {
     const systemPrompt = specialistPrompt(definition.promptAsset)
-    const innerSchemas = innerTools.schemas()
-    const innerNames = new Set(innerSchemas.map(schema => schema.name))
-    const missing = definition.allowed.filter(name => !innerNames.has(name))
-    if (missing.length) {
-        throw new Error(`Specialist ${definition.name}: allowed tool(s) not registered: ${missing.join(', ')}`)
-    }
-    const allowedSet = new Set(definition.allowed)
-    const allowedSchemas = innerSchemas.filter(schema => allowedSet.has(schema.name))
+    const {allowedSchemas, invokeTool$} = scopeInnerTools({
+        innerTools,
+        allowed: definition.allowed,
+        label: `Specialist ${definition.name}`
+    })
 
     return {
         name: definition.consultToolName,
@@ -37,23 +41,15 @@ function buildSpecialistTool({definition, llm, tracer, bus, innerTools}) {
             additionalProperties: false
         },
         invoke$: ({question}, context) => runSpecialist$({
-            llm, tracer, bus,
+            llm, tracer,
             name: definition.name,
             systemPrompt,
             userText: question,
             allowedSchemas,
-            invokeTool$: scopedInvokeTool$(allowedSet, innerTools),
+            invokeTool$,
             context
         })
     }
-}
-
-// Defence in depth: even if the inner LLM ignores the schema list and tries to
-// call something outside the allowed set, we don't let it reach the registry.
-function scopedInvokeTool$(allowedSet, innerTools) {
-    return (toolCall, context) => allowedSet.has(toolCall.name)
-        ? innerTools.invoke$(toolCall, context)
-        : of({ok: false, error: {code: 'TOOL_NOT_ALLOWED', message: `Tool ${toolCall.name} not allowed for this specialist`}})
 }
 
 module.exports = {specialistTools}

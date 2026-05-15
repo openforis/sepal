@@ -1,6 +1,6 @@
 const {of} = require('rxjs')
 const {specialistTools} = require('#mcp/chat/specialists/specialistTools')
-const {aFakeBus, aFakeLlm, aFakeTools, aFakeTracer, read} = require('../builders')
+const {aFakeLlm, aFakeTools, aFakeTracer, read} = require('../builders')
 
 describe('specialistTools', () => {
 
@@ -24,7 +24,6 @@ describe('specialistTools', () => {
         const tools = specialistTools({
             llm,
             tracer: overrides.tracer ?? aFakeTracer(),
-            bus: overrides.bus ?? aFakeBus(),
             innerTools
         })
         return {tools, llm, innerTools}
@@ -48,7 +47,7 @@ describe('specialistTools', () => {
         const innerTools = aFakeTools({}, [{name: 'recipe_list', description: 'r', parameters: {type: 'object'}}])
 
         expect(() => specialistTools({
-            llm: aFakeLlm(), tracer: aFakeTracer(), bus: aFakeBus(), innerTools
+            llm: aFakeLlm(), tracer: aFakeTracer(), innerTools
         })).toThrow(/get_context/)
     })
 

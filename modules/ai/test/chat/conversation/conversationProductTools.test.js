@@ -1,9 +1,17 @@
 const {of} = require('rxjs')
 const {createToolRegistry} = require('#mcp/chat/tools/registry')
-const {productTools} = require('#mcp/chat/tools/productTools')
-const {aConversation, aFakeBus, aFakeGuiRequests, aFakeLlm, run} = require('../builders')
+const {productTools, specialistInnerTools} = require('#mcp/chat/tools/productTools')
+const {aConversation, aFakeBus, aFakeGuiRequests, aFakeLlm, aFakeTracer, run} = require('../builders')
 
 describe('Conversation with product tools', () => {
+
+    function buildOrchestratorTools({llm, guiRequests}) {
+        const innerTools = createToolRegistry({tools: specialistInnerTools({guiRequests}), bus: aFakeBus()})
+        return createToolRegistry({
+            tools: productTools({guiRequests, llm, tracer: aFakeTracer(), innerTools}),
+            bus: aFakeBus()
+        })
+    }
 
     it('lets the LLM ask for the current GUI context', () => {
         const toolCall = {id: 'gc1', name: 'get_context', input: {}}
@@ -11,7 +19,7 @@ describe('Conversation with product tools', () => {
             {toolCalls: [toolCall]},
             {text: 'You are in the process section.'}
         ]})
-        const tools = createToolRegistry({tools: productTools({guiRequests: aFakeGuiRequests()}), bus: aFakeBus()})
+        const tools = buildOrchestratorTools({llm, guiRequests: aFakeGuiRequests()})
         const conversation = aConversation({llm, tools})
         const toolContext = {
             channel: {}, conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1',
@@ -30,32 +38,41 @@ describe('Conversation with product tools', () => {
         })
     })
 
-    it('lets the LLM load a projected recipe model', () => {
-        const toolCall = {id: 'rl1', name: 'recipe_load', input: {recipeId: 'r1'}}
-        const llm = aFakeLlm({replies: [
-            {toolCalls: [toolCall]},
-            {text: 'It is a random forest classification.'}
-        ]})
-        const recipe = {
+    it('lets the orchestrator describe a recipe through describe_recipe without seeing the raw recipe model', () => {
+        const describeCall = {id: 'd1', name: 'describe_recipe', input: {recipeId: 'r1'}}
+        const recipeLoadCall = {id: 'rl1', name: 'recipe_load', input: {recipeId: 'r1'}}
+        const rawRecipe = {
             id: 'r1', type: 'CLASSIFICATION', title: 'Kenya land cover', modelHash: 'hash-abc',
             model: {classifier: {type: 'RANDOM_FOREST'}}
         }
-        const tools = createToolRegistry({tools: productTools({guiRequests: aFakeGuiRequests(() => of(recipe))}), bus: aFakeBus()})
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [describeCall]},                   // orchestrator decides to call describe_recipe
+            {toolCalls: [recipeLoadCall]},                 // specialist's inner LLM loads the recipe
+            {text: 'CLASSIFICATION recipe using a random forest.'}, // specialist's final answer
+            {text: 'It is a CLASSIFICATION using random forest.'}   // orchestrator's user-facing reply
+        ]})
+        const tools = buildOrchestratorTools({llm, guiRequests: aFakeGuiRequests(() => of(rawRecipe))})
         const conversation = aConversation({llm, tools})
         const toolContext = {channel: {}, conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
 
         run(conversation.sendUserMessage$('describe recipe r1', {toolContext}))
 
-        expect(llm.receivedMessages[1]).toContainEqual({
-            role: 'tool',
-            toolResults: [{
-                toolCallId: 'rl1',
-                toolName: 'recipe_load',
-                result: {ok: true, data: {
-                    id: 'r1', type: 'CLASSIFICATION', name: 'Kenya land cover', modelHash: 'hash-abc',
-                    model: {classifier: {type: 'RANDOM_FOREST'}}
-                }}
-            }]
+        // The orchestrator and the specialist share the fake LLM, so receivedMessages[]
+        // mixes both turn-level conversations. Find the orchestrator's tool turn by
+        // tool name rather than by index.
+        const describeResult = llm.receivedMessages
+            .flatMap(messages => messages.filter(m => m.role === 'tool').flatMap(m => m.toolResults))
+            .find(r => r.toolName === 'describe_recipe')
+
+        expect(describeResult).toEqual({
+            toolCallId: 'd1', toolName: 'describe_recipe',
+            result: {ok: true, data: {answer: 'CLASSIFICATION recipe using a random forest.'}}
         })
+    })
+
+    it('does not expose recipe_load directly to the orchestrator', () => {
+        const tools = buildOrchestratorTools({llm: aFakeLlm(), guiRequests: aFakeGuiRequests()})
+
+        expect(tools.schemas().map(s => s.name)).not.toContain('recipe_load')
     })
 })

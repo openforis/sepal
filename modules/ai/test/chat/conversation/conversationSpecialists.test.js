@@ -1,6 +1,6 @@
 const {of} = require('rxjs')
 const {createToolRegistry} = require('#mcp/chat/tools/registry')
-const {productTools} = require('#mcp/chat/tools/productTools')
+const {productTools, specialistInnerTools} = require('#mcp/chat/tools/productTools')
 const {specialistTools} = require('#mcp/chat/specialists/specialistTools')
 const {aConversation, aFakeBus, aFakeGuiRequests, aFakeLlm, aFakeTools, aFakeTracer, run} = require('../builders')
 
@@ -59,9 +59,9 @@ describe('Conversation with specialists', () => {
     })
 
     function buildTools(llm, guiRequests) {
-        const innerToolList = productTools({guiRequests})
-        const innerTools = createToolRegistry({tools: innerToolList, bus: aFakeBus()})
-        const specialistList = specialistTools({llm, tracer: aFakeTracer(), bus: aFakeBus(), innerTools})
-        return createToolRegistry({tools: [...innerToolList, ...specialistList], bus: aFakeBus()})
+        const innerTools = createToolRegistry({tools: specialistInnerTools({guiRequests}), bus: aFakeBus()})
+        const orchestratorList = productTools({guiRequests, llm, tracer: aFakeTracer(), innerTools})
+        const specialistList = specialistTools({llm, tracer: aFakeTracer(), innerTools})
+        return createToolRegistry({tools: [...orchestratorList, ...specialistList], bus: aFakeBus()})
     }
 })

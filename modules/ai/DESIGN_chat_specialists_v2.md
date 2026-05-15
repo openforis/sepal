@@ -304,6 +304,11 @@ For existing recipes, `describe_recipe` and `update_recipe` should resolve
 `recipeType` from `recipeId`; the orchestrator should not guess it. For
 creation, `create_recipe` requires `recipeType` because no recipe exists yet.
 
+`describe_recipe` is an inquiry operation and must be stateless. Its tool
+description should tell the orchestrator to call it again for follow-ups with
+the follow-up question plus relevant prior derived context. The recipe
+specialist does not own a conversational thread for descriptions.
+
 Raw `recipe_load` and `recipe_patch` are intentionally not always-visible
 orchestrator tools in V1. They are specialist-internal tools used only after the
 orchestrator has routed the request to a recipe specialist. Other specialists
@@ -344,14 +349,30 @@ result:
 
 V1 session policy:
 
-- Create a session only when a specialist returns `need_info`.
-- Keep the session only until resume, timeout, or cancellation.
-- Drop the session on `done` or `failed`.
-- Store sessions in memory only.
-- Use clock-driven TTL.
+- Specialist operations are stateless by default. Each call answers or acts from
+  the supplied arguments and context only.
+- Inquiry operations such as `describe_recipe`, inspect/explain map state, and
+  workflow advice must stay stateless. Follow-up continuity is owned by the
+  orchestrator, which calls the specialist again with the follow-up question and
+  relevant prior derived context.
+- Action operations such as `create_recipe` and `update_recipe` can also be
+  stateless. If a specialist needs more information, it returns `need_info`
+  with questions plus a compact continuation summary. The orchestrator asks the
+  user and then calls the same operation again with the original instruction,
+  additional information, and continuation summary.
+- Stateful action sessions are a later optimization only. They may be useful
+  when repeated fragment loading, prompt setup, or partial planning becomes
+  expensive. A stateful specialist would return `need_info` with a `sessionId`;
+  the orchestrator would call `resume_specialist({sessionId, additionalInfo})`,
+  and the session would live only until resume, timeout, cancellation, `done`,
+  or `failed`.
+- If stateful sessions are added, store them in memory only and use clock-driven
+  TTL.
 
 Do not keep successful specialist history around by default. It is likely to be
 stale after recipe edits and can make later routing harder to reason about.
+Do not turn inquiry specialists into conversational agents; the orchestrator is
+the only user-facing conversation owner.
 
 If follow-up reuse becomes important, add explicit `continueSpecialistSession`
 behavior later instead of making hidden persistence the default.
@@ -376,15 +397,106 @@ Specialists:
 
 - each specialist has a static per-kind/per-type prompt
 - each specialist has a small stable tool subset
-- recipe specialists carry only one recipe type's schema/rules/guidance
+- recipe specialists inline one recipe type's schema/rules/guidance directly
+  in the system prompt; tool input schemas stay minimal
 
 In-process specialist sessions buy hidden message-history reuse only while the
 session is alive. Provider prefix caches, where available, work across fresh
 specialist invocations because the static prompt and tools remain byte-identical.
 
-Cache support is provider-specific. Anthropic exposes cache behavior directly;
-the active adapter is OpenAI-compatible. Treat cache-hit metrics as an
-optimization and rollout signal, not as a correctness dependency.
+### Provider support
+
+Cache support is provider-specific. The Bedrock Converse API is the primary
+cache-aware path for production. Exact model IDs live in model-profile config;
+the examples below describe the behavior the profile should declare.
+
+- Amazon Nova Lite-family profiles, including any configured Nova 2 Lite
+  profile: cache `system` and `messages`; do not accept cache markers in
+  `tools`. 5-min sliding TTL only. 1K min tokens per checkpoint, max 4
+  checkpoints per request. Implicit caching (latency only, no cost discount) is
+  on by default; explicit markers are needed for the cost discount.
+- Anthropic Claude 4.5 family on Bedrock (`anthropic.claude-opus-4-5`,
+  `anthropic.claude-sonnet-4-5`, `anthropic.claude-haiku-4-5`): caches
+  `system`, `messages`, and `tools`. 5-min and 1-hour TTL options. 4K min
+  tokens per checkpoint, max 4 checkpoints per request. Fully opt-in via cache
+  markers.
+- OpenAI direct: auto-caches stable prefixes without markers. Treat as a free
+  latency/cost win when present.
+- OpenAI-compatible local servers (LM Studio): no caching. Larger system
+  prompts cost full price every turn; tune accordingly.
+
+The 4-checkpoint cap is shared across `system`, `messages`, and `tools`. The
+5-min TTL is sliding (resets on every hit), so an active session keeps the
+cache warm continuously.
+
+### Cache point placement
+
+Three rules cover the relevant cases. The adapter applies them based on the
+resolved model profile's cache capabilities.
+
+1. **After the static system content.** Unconditional on any cache-aware
+   provider. Caches across users and conversations within the AWS
+   account/region.
+2. **At the boundary between stable history and the new turn.** For the
+   orchestrator on cache-aware providers; the marker advances forward each
+   turn so the just-finished history joins the cached prefix on the next
+   request. Specialists do not benefit under V1's drop-session-on-done policy
+   (§6); they have no growing history to mark.
+3. **After the tools array.** Only when the model exposes `cache_in_tools`
+   capability (Claude 4.5 family). Omitted for Nova 2 Lite and any other
+   model that does not accept cache markers in `tools`.
+
+Markers must not sit after per-turn ephemeral content (turn context block, GUI
+selection state, current map view, anything injected for one turn). Those
+bytes do not repeat and would only incur write cost.
+
+### Adapter responsibility
+
+The Bedrock Converse adapter owns marker emission. Specialist and orchestrator
+code does not know about `cachePoint` syntax or per-model cache rules.
+
+- Model profiles declare behavior capabilities: `prompt_cache`, optionally
+  `cache_in_tools`, optionally `cache_ttl_1h`. These names mean "this profile
+  can request caching", "this profile can place a marker after tools", and
+  "this profile can request a 1-hour TTL"; they are not provider wire fields.
+- The adapter inspects the resolved profile and applies rules 1, 2, 3 as
+  capabilities allow.
+- The adapter advances rule 2's marker as conversation history accumulates.
+- The adapter omits rule 3 for models without `cache_in_tools`.
+- Profiles for non-cache-aware providers leave `prompt_cache` off; the
+  adapter emits no markers in that case.
+
+Cache-hit metrics from `llm.usage` events (§11 `cachedInputTokens`,
+`cacheWriteTokens`) validate marker placement. Consistently zero
+`cachedInputTokens` under expected reuse patterns indicates a marker placement
+bug or unexpected byte drift in the prefix.
+
+### Implications for prompt structure
+
+- Push detailed task descriptions and routing prose into the system prompt
+  where it caches, not into per-tool descriptions in the `tools` field. This
+  matters most for the orchestrator, where the dispatcher tool surface hits
+  the wire every turn on Nova (rule 3 unavailable) and the orchestrator is
+  the highest-frequency LLM call in the system.
+- Recipe specialists inline schemas, defaults, cross-field rule prose, and
+  gotchas directly in the system prompt. Tool input schemas (for example
+  JSON Patch operations for `recipe_patch`) stay minimal; semantic guidance
+  about when and how to construct them lives in the system prompt.
+- The orchestrator captures two cache wins simultaneously: static prefix
+  (rule 1) and growing history (rule 2). Specialists capture only the static
+  prefix. The orchestrator is the highest-value cache target in the system.
+- Rule 1's cross-user reuse depends on byte-identical system prompts across
+  users. Do not interpolate `username`, current date, or per-user feature
+  flags into system text. §15 already requires this; it is what preserves
+  rule 1's value.
+- Caching is enabled everywhere by default. The penalty for a cache-miss
+  invocation is bounded by invocation count and stays small for slow
+  specialists; the gain when calls cluster within TTL is real. Provider-side
+  minimum-token filtering (Nova 1K, Claude 4.5 family 4K) silently drops
+  too-small prompts from caching with no penalty.
+
+Treat cache-hit metrics as an optimization and rollout signal, not as a
+correctness dependency.
 
 ## 8. Observability and inspection
 
@@ -525,6 +637,10 @@ Example profile:
 Profiles describe concrete runtime choices. Specialist policy describes when a
 specialist is allowed to use them.
 
+Cache-aware profiles add behavior capabilities such as `prompt_cache`,
+`cache_in_tools`, and `cache_ttl_1h`; adapters translate those capabilities
+into provider-specific cache markers.
+
 Example specialist model policy:
 
 ```json
@@ -646,6 +762,11 @@ Provider mapping examples:
   assistant `tool_calls`, one `role: 'tool'` message per tool result.
 - Anthropic/Claude messages: `tools: [...]`, assistant `tool_use` content
   blocks, user `tool_result` content blocks.
+- AWS Bedrock Converse: unified API across Amazon Nova and Anthropic Claude
+  models; `toolConfig.tools` for tool schemas, assistant `toolUse` content
+  blocks, user `toolResult` content blocks; optional cache markers in
+  `system`/`messages`/`tools` per model capability (§7). The adapter maps the
+  internal placement rules to Bedrock's `cachePoint` blocks.
 - OpenAI-compatible local servers: use the OpenAI adapter when they support the
   same tool-call contract.
 - LM Studio native no-reasoning path: title-generation only in V1; no tools.
@@ -1171,7 +1292,8 @@ keeping raw recipe JSON private to recipe specialists.
 Scope:
 
 - Add public operation tools:
-  - `describe_recipe({recipeId, question?})`
+  - `describe_recipe({recipeId, question?})`, stateless; follow-ups are new
+    calls with relevant prior derived context
   - `update_recipe({recipeId, instruction})`
   - `create_recipe({recipeType, instruction, projectId?, name?})`
 - Route each operation to the appropriate recipe-type specialist.
@@ -1192,6 +1314,42 @@ Acceptance:
 - Workflow specialist can receive a recipe-specialist description rather than a
   recipe model.
 - Raw recipe load is not in the always-visible orchestrator tool surface.
+
+### Phase 2.5: Bedrock Converse and prompt caching
+
+Goal: add the production cache-aware provider path before recipe specialists
+grow large schemas/rules and before specialist-private recipe writes increase
+LLM prompt size.
+
+Scope:
+
+- Add a Bedrock Converse provider adapter beside the existing provider
+  adapters.
+- Add model-profile resolution sufficient to choose Bedrock Converse vs
+  OpenAI-compatible adapters from runtime policy.
+- Support Bedrock Converse tool calls and tool results through the same
+  provider-neutral LLM/tool contract as §10.
+- Implement the cache placement rules from §7 inside the Bedrock adapter:
+  after static system content, at the stable-history/new-turn boundary, and
+  after tools only for profiles with `cache_in_tools`.
+- Add profile cache capabilities (`prompt_cache`, `cache_in_tools`,
+  `cache_ttl_1h`) as behavior flags consumed by adapters, not by conversation
+  or specialist code.
+- Normalize Bedrock usage/cache metadata into `llm.usage`, including cache
+  read/write token fields where the provider reports them.
+- Add provider conformance tests for Bedrock tool turns and cache marker
+  placement.
+
+Acceptance:
+
+- `Conversation` and specialist tests remain provider-neutral; no Bedrock wire
+  shape leaks into domain tests.
+- Bedrock adapter formats tool schemas, tool calls, and tool results from the
+  shared conformance fixture.
+- Cache markers are emitted only when the resolved profile declares cache
+  support, and the tools marker is omitted unless `cache_in_tools` is present.
+- `llm.usage` events include normalized provider/model/profile and cache
+  read/write fields when available.
 
 ### Phase 3: specialist-private recipe patch
 
@@ -1310,14 +1468,17 @@ exceeds observed benefit.
    whether operation-level recipe tools keep raw recipe JSON out of the
    orchestrator. If this boundary is too expensive or too vague, revise before
    adding writes.
-3. Start of Phase 3: run provider-acceptance checks for the chosen recipe
+3. End of Phase 2.5: Bedrock Converse tool turns pass the shared provider
+   conformance fixture, cache marker placement is profile-driven, and
+   normalized usage events expose cache read/write fields where available.
+4. Start of Phase 3: run provider-acceptance checks for the chosen recipe
    specialist prompt and private tool schemas. If the provider rejects the
    context size or schema shape, choose between summary/projection and a smaller
    first specialist.
-4. End of Phase 3: measure patch payload size, stale-write rate, and tool
+5. End of Phase 3: measure patch payload size, stale-write rate, and tool
    failure rate. If specialist-private patching solves the user-visible
    cost/quality problem at current recipe count, defer broader roster expansion.
-5. Mid roster expansion: if per-type gotchas authoring or schema projection cost
+6. Mid roster expansion: if per-type gotchas authoring or schema projection cost
    dominates observed benefit, stop expansion and keep generic/direct fallback
    behavior for remaining types.
 
@@ -1355,6 +1516,7 @@ modules/ai/src/chat/
     providers/
       openaiChatCompletions.js
       lmStudioNativeChat.js
+      bedrockConverse.js        # AWS Bedrock Converse adapter; emits cachePoint markers per §7
   conversation/
     conversation.js
     llmMessages.js

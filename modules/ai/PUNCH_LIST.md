@@ -14,17 +14,20 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Tool And GUI Bridge
 
-- **Recipe tool visibility is too broad** — current product tools still expose
-  raw/projected recipe loading to the orchestrator. The design now wants public
-  operation-level tools (`describe_recipe`, `update_recipe`, `create_recipe`)
-  that route to recipe-type specialists, with raw recipe JSON and detailed
-  fragments private to those specialists.
-- **Recipe operation dispatchers are not implemented** — add
-  `describe_recipe({recipeId, question?})`,
-  `update_recipe({recipeId, instruction})`, and
-  `create_recipe({recipeType, instruction, projectId?, name?})` as the public
-  recipe surface. Existing recipes should resolve recipe type from `recipeId`;
-  the orchestrator should not guess it.
+- **Recipe operation dispatchers are partial** — `describe_recipe({recipeId,
+  question?})` is implemented and routes to a single generic recipe specialist
+  that holds raw `recipe_load` privately. Still missing:
+  `update_recipe({recipeId, instruction})` and
+  `create_recipe({recipeType, instruction, projectId?, name?})`. Existing
+  recipes should resolve recipe type from `recipeId` (the orchestrator should
+  not guess it); the type-resolution seam is not built yet.
+- **Recipe specialist routing is generic, not type-aware** —
+  `describeRecipeTool` loads a single hard-coded `specialistPrompt('recipe')`.
+  Per-type specialist selection (different prompt asset + allowed tools per
+  recipe type) needs a `recipeId -> recipeType` lookup plus per-type prompt
+  files under `llmText/specialists/recipe/<TYPE>.md`. Lands naturally with the
+  first `lib/js/recipes` package since that's the source of truth for
+  per-type knowledge.
 - **Map specialist read tools are minimal** — `consult_map` exposes
   `get_context`, `map_area_list` (layout + areas + AOI + view), and
   `layer_list` (per-area imageLayer + featureLayers). Still missing:
@@ -80,7 +83,7 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 - **In-flight streams do not survive restart** — conversation metadata and
   history are persisted in Redis, but an active LLM stream is in-memory only.
 - **In-memory caches grow unbounded** — `userChats` in `src/app.js` and
-  `conversations` in `src/chat/sendMessage/userChat.js` never evict. Add idle
+  `conversations` in `src/chat/conversation/userChat.js` never evict. Add idle
   eviction or an LRU cap if uptime/user count makes this matter.
 - **Single ai-module instance assumption** — cross-tab sync goes through
   in-memory `UserChat` state. Multiple ai-module instances behind a load

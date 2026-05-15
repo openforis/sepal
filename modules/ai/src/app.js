@@ -12,7 +12,7 @@ const {createWsHandler} = require('./chat/conversation/wsHandler')
 const {createLlm} = require('./chat/llm')
 const {mainSystemPrompt} = require('./chat/llmText/prompts')
 const {createConversation} = require('./chat/conversation/conversation')
-const {productTools} = require('./chat/tools/productTools')
+const {productTools, specialistInnerTools} = require('./chat/tools/productTools')
 const {createTitleGenerator} = require('./chat/conversation/titleGenerator')
 const {createToolRegistry} = require('./chat/tools/registry')
 const {createUserChat} = require('./chat/conversation/userChat')
@@ -94,11 +94,12 @@ function systemClock() {
 }
 
 function buildConversationTools({guiRequests, llm, tracer, bus}) {
-    const productToolList = productTools({guiRequests})
-    // Specialists may call only the inner product-tool registry. The outer
-    // registry is the main conversation surface and includes specialists.
-    const innerTools = createToolRegistry({tools: productToolList, bus})
-    const specialistToolList = specialistTools({llm, tracer, bus, innerTools})
+    // Inner registry holds specialist-visible tools (recipe_load lives here).
+    // The outer registry is the orchestrator's surface and substitutes
+    // describe_recipe for raw recipe_load.
+    const innerTools = createToolRegistry({tools: specialistInnerTools({guiRequests}), bus})
+    const productToolList = productTools({guiRequests, llm, tracer, innerTools})
+    const specialistToolList = specialistTools({llm, tracer, innerTools})
     return createToolRegistry({
         tools: [...productToolList, ...specialistToolList],
         bus
