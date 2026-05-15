@@ -26,8 +26,8 @@ form for Codex/session work so tests run in the same container context as the mo
 ### Rewrite Status
 
 The active AI chat path is a rewrite, not a refactor of the old orchestrator. The active
-entry is `src/main.js` → `src/app.js`, which wires `src/chat/io/` and
-`src/chat/sendMessage/`.
+entry is `src/main.js` → `src/app.js`, which wires `src/chat/conversation/`,
+`src/chat/tools/`, and `src/chat/specialists/`.
 
 The pre-rewrite chat/tool/recipe implementation is archived under
 `archive/pre-rewrite-chat/` for temporary reference. It is not imported by the active
@@ -86,7 +86,16 @@ src/
   app.js                      # Active rewrite composition
   config.js                   # CLI argument parsing (port, endpoints, LLM config)
   chat/                       # Chat Rewrite Layer
-    io/                        # Active adapters: websocket, Redis stores, GUI request bridge
+    conversation/              # User-facing conversation/session flow + owned WS/Redis adapters
+      conversation.js           # Per-conversation turn loop
+      llmMessages.js            # LLM-visible history/turn projection
+      conversationEvents.js     # Conversation debug/trace event formatting
+    tools/                     # LLM product tools + tool registry + GUI request bridge
+      productTools.js           # Composition of product tool families
+      contextTool.js            # get_context
+      recipeTools.js            # recipe_list, recipe_load
+      projectTools.js           # project_list
+      mapTools.js               # map_area_list, layer_list
     llm/                       # LLM provider boundary: provider-neutral selector + per-provider adapters
     llmText/                   # LLM-facing prompt assets + loader
       prompts.js                # Loader: mainSystemPrompt(), titleSystemPrompt(), specialistPrompt(name); fails fast on empty/missing
@@ -94,7 +103,6 @@ src/
       title.md                  # Title-generator system prompt
       specialists/              # One markdown file per specialist (mirrors src/chat/specialists/)
         map.md                   # Read-only map specialist system prompt
-    sendMessage/               # Active conversation/user-chat/title-generation/tool-registry slice
     specialists/               # Specialist slice — runSpecialist$ (inner LLM loop) + specialistTools registry
 ```
 
@@ -153,9 +161,9 @@ of them, apply the rule above:
 | Location | What's LLM-facing |
 |---|---|
 | `src/chat/llmText/*.md` + `src/chat/llmText/specialists/*.md` | Top-level role prompts (`main.md`, `title.md`) and specialist prompts (`specialists/map.md`, etc.). Loaded via `src/chat/llmText/prompts.js` — `mainSystemPrompt()`, `titleSystemPrompt()`, `specialistPrompt(name)`. New specialists add a `.md` under `specialists/` here matching the code at `src/chat/specialists/`. |
-| `src/chat/sendMessage/turnContext.js` | Runtime turn-context message wrapper text |
-| `src/chat/sendMessage/titleGenerator.js` | Title-generator user/wrapper message (the `User asked: ... Assistant replied: ...` shape and the `/no_think` suffix); the title role prompt itself lives in `llmText/title.md`. |
-| Tool `name` / `description` / `parameters` | Sent to the LLM as tool schemas — the read-only product tools in `src/chat/sendMessage/productTools.js` and the dev/test smoke tools in `src/app.js` |
+| `src/chat/conversation/turnContext.js` | Runtime turn-context message wrapper text |
+| `src/chat/conversation/titleGenerator.js` | Title-generator user/wrapper message (the `User asked: ... Assistant replied: ...` shape and the `/no_think` suffix); the title role prompt itself lives in `llmText/title.md`. |
+| Tool `name` / `description` / `parameters` | Sent to the LLM as tool schemas — the read-only product tool files in `src/chat/tools/` and the dev/test smoke tools in `src/app.js` |
 
 Old tool and recipe-schema LLM text lives under `archive/pre-rewrite-chat/` now.
 Treat it as reference, not active prompt/tool surface.
@@ -182,7 +190,7 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
 - **Tool registry**: `app.js` wires `createToolRegistry`. The production tool
   surface holds the read-only product tools (`get_context`, `recipe_list`,
   `project_list`, `recipe_load`, `map_area_list`, `layer_list`) from
-  `src/chat/sendMessage/productTools.js`; transport
+  `src/chat/tools/`; transport
   smoke-test tools (`echo`) register only
   when `ENABLE_AI_TRANSPORT_SMOKE_TOOLS=true`, and are never visible to the
   production model. `ask_gui_echo` stays unregistered until a matching GUI

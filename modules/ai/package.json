@@ -11,9 +11,11 @@
     },
     "jest": {
         "collectCoverageFrom": [
-            "src/chat/sendMessage/**/*.js",
-            "src/chat/io/**/*.js",
+            "src/chat/conversation/**/*.js",
+            "src/chat/tools/**/*.js",
+            "src/chat/specialists/**/*.js",
             "src/chat/llm/**/*.js",
+            "src/chat/llmText/**/*.js",
             "src/server.js",
             "src/eventBus.js",
             "src/tracer.js",

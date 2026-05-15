@@ -1,0 +1,163 @@
+const {of, throwError} = require('rxjs')
+const {MAX_TOOL_ROUNDS} = require('#mcp/chat/conversation/conversation')
+const {aConversation, aFakeHistory, aFakeLlm, aFakeTools, run} = require('../builders')
+
+describe('Conversation tool loop', () => {
+
+    it('passes the available tool schemas to the LLM', () => {
+        const llm = aFakeLlm()
+        const schemas = [{name: 'echo', description: 'Echo.', parameters: {type: 'object'}}]
+        const conversation = aConversation({llm, tools: aFakeTools({}, schemas)})
+
+        run(conversation.sendUserMessage$('hi'))
+
+        expect(llm.receivedTools[0]).toEqual(schemas)
+    })
+
+    it('invokes a requested tool, feeds the result back, emits tool events, and persists the full turn', () => {
+        const toolCall = {id: 'recipe-list', name: 'recipe_list', input: {}}
+        const toolResult = {recipes: [{id: 'r1', name: 'Mosaic'}]}
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [toolCall]},
+            {text: 'You have 1 recipe: Mosaic.'}
+        ]})
+        const history = aFakeHistory()
+        const tools = aFakeTools({recipe_list: () => of(toolResult)})
+        const conversation = aConversation({llm, tools, history})
+
+        const {events} = run(conversation.sendUserMessage$('list my recipes'))
+
+        const enveloped = {ok: true, data: toolResult}
+        expect(tools.invocations).toEqual([toolCall])
+        expect(llm.receivedMessages[1]).toEqual([
+            {role: 'user', content: 'list my recipes'},
+            {role: 'assistant', content: '', toolCalls: [toolCall]},
+            {role: 'tool', toolResults: [{toolCallId: toolCall.id, toolName: toolCall.name, result: enveloped}]}
+        ])
+        expect(events).toEqual([
+            {toolStart: {toolCallId: toolCall.id, toolName: toolCall.name, input: toolCall.input}},
+            {toolEnd: {toolCallId: toolCall.id, toolName: toolCall.name, ok: true, data: toolResult, error: undefined}},
+            {textDelta: 'You have 1 recipe: Mosaic.'}
+        ])
+        expect(history.appended).toEqual([
+            {role: 'user', content: 'list my recipes'},
+            {role: 'assistant', content: '', toolCalls: [toolCall]},
+            {role: 'tool', toolResults: [{toolCallId: toolCall.id, toolName: toolCall.name, result: enveloped}]},
+            {role: 'assistant', content: 'You have 1 recipe: Mosaic.'}
+        ])
+    })
+
+    it('passes the turn toolContext to the invoked tool', () => {
+        const toolCall = {id: 'recipe-list', name: 'recipe_list', input: {}}
+        const llm = aFakeLlm({replies: [{toolCalls: [toolCall]}, {text: 'done'}]})
+        const seen = []
+        const tools = aFakeTools({recipe_list: (_input, context) => {
+            seen.push(context)
+            return of({recipes: []})
+        }})
+        const conversation = aConversation({llm, tools})
+        const toolContext = {channel: {}, conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
+
+        run(conversation.sendUserMessage$('list my recipes', {toolContext}))
+
+        expect(seen).toEqual([toolContext])
+    })
+
+    it('invokes every tool call in one assistant response and feeds all results back together', () => {
+        const callA = {id: 'a', name: 'recipe_list', input: {}}
+        const callB = {id: 'b', name: 'project_list', input: {}}
+        const llm = aFakeLlm({replies: [{toolCalls: [callA, callB]}, {text: 'done'}]})
+        const tools = aFakeTools({
+            recipe_list: () => of({recipes: 1}),
+            project_list: () => of({projects: 1})
+        })
+        const conversation = aConversation({llm, tools})
+
+        run(conversation.sendUserMessage$('list everything'))
+
+        expect(tools.invocations).toEqual([callA, callB])
+        expect(llm.receivedMessages[1]).toContainEqual({
+            role: 'tool',
+            toolResults: [
+                {toolCallId: 'a', toolName: 'recipe_list', result: {ok: true, data: {recipes: 1}}},
+                {toolCallId: 'b', toolName: 'project_list', result: {ok: true, data: {projects: 1}}}
+            ]
+        })
+    })
+
+    it('returns a structured error when the LLM asks for an unknown tool', () => {
+        const unknownCall = {id: 'u', name: 'nonexistent', input: {}}
+        const llm = aFakeLlm({replies: [{toolCalls: [unknownCall]}, {text: 'sorry'}]})
+        const conversation = aConversation({llm, tools: aFakeTools({})})
+
+        run(conversation.sendUserMessage$('do something'))
+
+        expect(llm.receivedMessages[1]).toContainEqual({
+            role: 'tool',
+            toolResults: [{
+                toolCallId: 'u',
+                toolName: 'nonexistent',
+                result: {ok: false, error: {code: 'UNKNOWN_TOOL', message: 'Tool not found: nonexistent'}}
+            }]
+        })
+    })
+
+    it('returns a structured error when a tool fails and still lets the LLM answer', () => {
+        const toolCall = {id: 'recipe-list', name: 'recipe_list', input: {}}
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [toolCall]},
+            {text: 'Sorry, I could not list your recipes.'}
+        ]})
+        const tools = aFakeTools({recipe_list: () => throwError(() => new Error('database unreachable'))})
+        const conversation = aConversation({llm, tools})
+
+        const {events} = run(conversation.sendUserMessage$('list my recipes'))
+
+        expect(llm.receivedMessages[1]).toContainEqual({
+            role: 'tool',
+            toolResults: [{
+                toolCallId: toolCall.id,
+                toolName: toolCall.name,
+                result: {ok: false, error: {code: 'TOOL_FAILED', message: 'database unreachable'}}
+            }]
+        })
+        expect(events).toEqual([
+            {toolStart: {toolCallId: toolCall.id, toolName: toolCall.name, input: toolCall.input}},
+            {toolEnd: {
+                toolCallId: toolCall.id, toolName: toolCall.name, ok: false,
+                data: undefined, error: {code: 'TOOL_FAILED', message: 'database unreachable'}
+            }},
+            {textDelta: 'Sorry, I could not list your recipes.'}
+        ])
+    })
+
+    it('stops a runaway tool loop at the round cap and persists a translatable notice', () => {
+        const toolCall = {id: 't', name: 'recipe_list', input: {}}
+        const llm = aFakeLlm({replies: [{toolCalls: [toolCall]}]})
+        const history = aFakeHistory()
+        const conversation = aConversation({
+            llm,
+            history,
+            tools: aFakeTools({recipe_list: () => of({})})
+        })
+
+        const {events, completed} = run(conversation.sendUserMessage$('loop forever'))
+
+        const capDisplay = {
+            key: 'home.chat.notices.toolRoundCap',
+            args: {max: MAX_TOOL_ROUNDS},
+            fallback: expect.stringContaining('rephrasing')
+        }
+        expect(completed).toBe(true)
+        expect(llm.receivedMessages).toHaveLength(MAX_TOOL_ROUNDS)
+        expect(events.find(event => event.notice).notice).toEqual({
+            content: expect.stringContaining('rephrasing'),
+            display: capDisplay
+        })
+        expect(history.appended.at(-1)).toEqual({
+            role: 'assistant',
+            content: expect.stringContaining('rephrasing'),
+            display: capDisplay
+        })
+    })
+})

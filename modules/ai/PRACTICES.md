@@ -23,7 +23,9 @@ protocol / SDK    →   domain object    →    SDK / driver / DB / queue / cach
 
 Adapter ≈ 10–50 lines. Growing adapter = domain logic leaked in → pull back.
 
-Adapters live in a single `io/` folder, one file per external dep.
+Adapters belong to the vertical slice that owns the use case. Put an adapter next
+to the domain code it serves unless it is genuinely shared by multiple slices;
+promote shared adapters deliberately, not by default.
 
 ## Vertical slicing
 
@@ -34,13 +36,16 @@ src/<area>/
   <featureA>/
   <featureB>/
   ...
-  io/                  adapters — the only horizontal grouping, at the edge
   composition.<ext>    wires adapters to feature entries
 ```
 
-No `domain/`, `ports/`, `adapters/` folder per slice. A slice's domain = its files. A slice's ports = constructor-injected collaborator shapes. Adapters live in `io/`.
+No generic `domain/`, `ports/`, `adapters/`, `utils/`, or catch-all `io/`
+layers. A slice's domain = its files. A slice's ports = constructor-injected
+collaborator shapes. Edge adapters live with the slice they adapt for.
 
-Slices don't import slices. Cross-slice wiring goes through the composition layer. A slice imports from `io/` only when composition can't supply the collaborator.
+Slices don't import sibling slices for hidden implementation details. Cross-slice
+wiring goes through composition, exported entry points, or an explicitly shared
+module with a name that describes the shared domain concept.
 
 ## Async style
 
@@ -394,7 +399,7 @@ Questions to ask while green:
 - **DRY vs coupling**: dedupe when it's *the same idea*, not just code that looks alike. Different ideas that look alike → leave.
 - **No premature abstractions**. Two or three real uses, or a concrete reason (test seam, pluggable strategy). Inline duplication beats a wrong abstraction. **Single-use helpers earn extraction only when the name reveals something the inlined code obscures** — not when they merely shrink the parent function. Cosmetic extraction fragments the flow and forces readers to jump between functions to follow a single chain.
 - **Comments only when code can't say it** — constraint, workaround, non-obvious invariant. No "what" comments. Reaching for one → extract & name.
-- **No circular deps**, file or slice. Slices depend on `io/` and the composition layer; never each other.
+- **No circular deps**, file or slice. Slices collaborate through constructor-injected ports, exported entry points, and composition; never through hidden internals.
 - **Importance first**: most relevant at top of file / function. Helpers below callers.
 - **Cyclomatic complexity** climbing → extraction signal.
 - **Prefer immutability**: rebind variables, copy via spread, return new values rather than mutating in place. Mutation acceptable when encapsulated *and* the functional alternative would be purely cosmetic — when the state has to exist somewhere, rebinding for its own sake is dressing, not honesty. Default is functional; reach for mutation when functional buys nothing.

@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {useLocation} from 'react-router'
 
-import {isChatOpen, toggleChat} from '~/app/home/body/chat/chatPanel'
+import {isChatOpen, toggleChat} from '~/app/home/body/chat/chatLayout'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {isPathInLocation} from '~/route'

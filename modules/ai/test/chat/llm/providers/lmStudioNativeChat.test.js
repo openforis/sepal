@@ -92,4 +92,45 @@ describe('LM Studio native chat adapter', () => {
         expect(body).not.toHaveProperty('tools')
         expect(body).not.toHaveProperty('tool_choice')
     })
+
+    it('errors the response observable when the native chat endpoint returns a non-OK status', async () => {
+        global.fetch.mockResolvedValue({
+            ok: false,
+            status: 500,
+            text: async () => '{"error":"upstream burst"}'
+        })
+
+        await expect(
+            collect(aNativeChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
+        ).rejects.toThrow(/500/)
+    })
+
+    describe('with a debugLabel', () => {
+        const debugLabel = 'title conv-9'
+
+        function aRecordingBus() {
+            const published = []
+            return {publish: event => published.push(event), published}
+        }
+
+        it('publishes a debug llm.request and a trace llm.debugResponse so debug logs can correlate request and response', async () => {
+            const bus = aRecordingBus()
+            global.fetch.mockResolvedValue({
+                ok: true,
+                text: async () => JSON.stringify({output: [{type: 'message', content: 'Title'}]})
+            })
+
+            await collect(aNativeChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'hi'}],
+                debugLabel
+            }))
+
+            const request = bus.published.find(event => event.type === 'llm.request')
+            const response = bus.published.find(event => event.type === 'llm.debugResponse')
+            expect(request).toMatchObject({level: 'debug'})
+            expect(request.message()).toContain(debugLabel)
+            expect(response).toMatchObject({level: 'trace'})
+            expect(response.message()).toContain(debugLabel)
+        })
+    })
 })

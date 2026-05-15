@@ -1,6 +1,6 @@
 const {of} = require('rxjs')
 const {specialistTools} = require('#mcp/chat/specialists/specialistTools')
-const {aFakeBus, aFakeLlm, aFakeTools, aFakeTracer, read} = require('../sendMessage/builders')
+const {aFakeBus, aFakeLlm, aFakeTools, aFakeTracer, read} = require('../builders')
 
 describe('specialistTools', () => {
 

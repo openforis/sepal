@@ -177,4 +177,30 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             {toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}
         ])
     })
+
+    describe('with a debugLabel', () => {
+        const debugLabel = 'title conv-9'
+
+        function aRecordingBus() {
+            const published = []
+            return {publish: event => published.push(event), published}
+        }
+
+        it('publishes a debug llm.request and a trace llm.debugChunk so debug logs can correlate prompt and chunks', async () => {
+            const bus = aRecordingBus()
+            mockCreate.mockResolvedValue([{choices: [{delta: {content: 'Title'}}]}])
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'hi'}],
+                debugLabel
+            }))
+
+            const request = bus.published.find(event => event.type === 'llm.request')
+            const debugChunk = bus.published.find(event => event.type === 'llm.debugChunk')
+            expect(request).toMatchObject({level: 'debug'})
+            expect(request.message()).toContain(debugLabel)
+            expect(debugChunk).toMatchObject({level: 'trace'})
+            expect(debugChunk.message()).toContain(debugLabel)
+        })
+    })
 })

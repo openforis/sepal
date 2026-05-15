@@ -1,6 +1,6 @@
 const {of} = require('rxjs')
 const {runSpecialist$, SPECIALIST_MAX_ROUNDS} = require('#mcp/chat/specialists/runSpecialist')
-const {aFakeLlm, aFakeTracer, read} = require('../sendMessage/builders')
+const {aFakeLlm, aFakeTracer, read} = require('../builders')
 
 describe('runSpecialist$', () => {
 
@@ -133,6 +133,19 @@ describe('runSpecialist$', () => {
 
             expect(llm.receivedMessages).toHaveLength(SPECIALIST_MAX_ROUNDS)
             expect(result.answer).toMatch(/specialist/i)
+        })
+
+        it('keeps the partial assistant text accumulated in the cap-reaching round instead of replacing it with the sentinel', () => {
+            const llm = aFakeLlm({replies: [{textChunks: ['Partial progress.'], toolCalls: [toolCall]}]})
+            const invokeTool$ = () => of({ok: true, data: {}})
+
+            const result = read(runSpecialist$({
+                llm, tracer: aFakeTracer(), name: 'map',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$, context: {}
+            }))
+
+            expect(result).toEqual({answer: 'Partial progress.'})
         })
     })
 

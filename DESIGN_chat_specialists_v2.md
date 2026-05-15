@@ -1205,9 +1205,20 @@ modules/ai/src/chat/
     title.md                  # title-generator utility
     specialists/              # mirrors src/chat/specialists/
       map.md                   # POC map specialist prompt (read-only)
-  specialists/                # POC implementation (sibling of sendMessage/)
+  specialists/                # POC implementation (sibling of conversation/)
     runSpecialist.js          # Inner LLM loop with filtered tools
     specialistTools.js        # Specialist-as-LLM-tool registry (consult_map etc.)
+  tools/
+    registry.js               # LLM tool schema/invocation registry
+    productTools.js           # Product tool composition
+    contextTool.js             # get_context
+    recipeTools.js             # recipe_list, recipe_load
+    projectTools.js            # project_list
+    mapTools.js                # map_area_list, layer_list
+    guiProductRequest.js       # Product-tool GUI request helper
+    guiRequests.js            # GUI request/response bridge for tools
+    recipeProjection.js
+    jsonPointer.js
   llm/
     index.js
     common/
@@ -1216,19 +1227,24 @@ modules/ai/src/chat/
     providers/
       openaiChatCompletions.js
       lmStudioNativeChat.js
-  sendMessage/
+  conversation/
     conversation.js
+    llmMessages.js
+    conversationEvents.js
+    userChat.js
+    titleGenerator.js
+    turnContext.js
+    wsHandler.js
+    wsChannel.js
+    redisHistory.js
+    redisConversationsStore.js
+    redisKeys.js
     modelProfiles.js
     usageAccounting.js
     eventInspection.js
-    tools.js
     specialistModelPolicies.js
     recipePatch.js
     toolLoopSafety.js
-  io/
-    guiRequests.js
-    wsHandler.js
-    wsChannel.js
 
 modules/ai/src/recipes/
   mosaic/

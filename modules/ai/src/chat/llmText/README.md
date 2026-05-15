@@ -10,7 +10,7 @@ Project source for prompts fed to LLM roles in this module. Loaded at runtime by
 
 ## What does not live here
 
-- **Tool descriptions/schemas** — stay next to the tool definition (`chat/sendMessage/productTools.js` etc.) so the description and JSON schema are reviewed together.
+- **Tool descriptions/schemas** — stay next to the tool definition (`chat/tools/recipeTools.js`, `chat/tools/mapTools.js`, etc.) so the description and JSON schema are reviewed together.
 - **Runtime context wrappers** (e.g. turn-context message text) — stay next to the code that builds them.
 - **Provider-specific transforms** (no-think suffix, message preambles, etc.) — stay in the adapter or in the generator that consumes the prompt.
 
