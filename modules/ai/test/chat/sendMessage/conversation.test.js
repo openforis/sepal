@@ -330,17 +330,42 @@ describe('Conversation', () => {
 
     describe('when the LLM never stops asking for tools', () => {
         const toolCall = {id: 't', name: 'recipe_list', input: {}}
+        const capDisplay = {
+            key: 'home.chat.notices.toolRoundCap',
+            args: {max: MAX_TOOL_ROUNDS},
+            fallback: expect.stringContaining('rephrasing')
+        }
 
-        it('stops the tool loop at the round cap and still completes with a final message', () => {
-            const llm = aFakeLlm({replies: [{toolCalls: [toolCall]}]})
-            const tools = aFakeTools({recipe_list: () => of({})})
-            const conversation = aConversation({llm, tools})
+        let llm, tools, history, conversation
+        beforeEach(() => {
+            llm = aFakeLlm({replies: [{toolCalls: [toolCall]}]})
+            tools = aFakeTools({recipe_list: () => of({})})
+            history = aFakeHistory()
+            conversation = aConversation({llm, tools, history})
+        })
 
+        it('stops the tool loop at the round cap and emits a notice event with content + display', () => {
             const {events, completed} = run(conversation.sendUserMessage$('loop forever'))
 
             expect(completed).toBe(true)
             expect(llm.receivedMessages).toHaveLength(MAX_TOOL_ROUNDS)
-            expect(events.some(event => event.textDelta)).toBe(true)
+            const notice = events.find(event => event.notice)
+            expect(notice).toBeDefined()
+            expect(notice.notice).toEqual({
+                content: expect.stringContaining('rephrasing'),
+                display: capDisplay
+            })
+        })
+
+        it('persists the cap notice as an assistant message carrying the display descriptor', () => {
+            run(conversation.sendUserMessage$('loop forever'))
+
+            const lastAppended = history.appended.at(-1)
+            expect(lastAppended).toEqual({
+                role: 'assistant',
+                content: expect.stringContaining('rephrasing'),
+                display: capDisplay
+            })
         })
     })
 

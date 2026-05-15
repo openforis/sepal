@@ -554,6 +554,9 @@
           "input": "{mode}: {bands}",
           "result": "Visualization ready"
         }
+      },
+      "notices": {
+        "toolRoundCap": "I have stopped after {max} steps. Please try rephrasing your request."
       }
     }
   },

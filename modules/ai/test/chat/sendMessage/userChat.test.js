@@ -333,6 +333,25 @@ describe('UserChat', () => {
                 {conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: true, data: {}, error: undefined}
             ])
         })
+
+        it('routes the tool-round cap notice to the channel as an assistant notice', () => {
+            const llm = aFakeLlm({replies: [{toolCalls: [echoCall]}]})
+            const tools = aFakeTools({echo: () => of({})})
+            userChat = aUserChat({llm, tools})
+            run(userChat.createConversation$({channel}))
+
+            run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'spin'}))
+
+            expect(channel.notices).toEqual([{
+                conversationId: 'conv-1',
+                content: expect.stringContaining('rephrasing'),
+                display: {
+                    key: 'home.chat.notices.toolRoundCap',
+                    args: {max: 8},
+                    fallback: expect.stringContaining('rephrasing')
+                }
+            }])
+        })
     })
 
     describe('serializing turns', () => {

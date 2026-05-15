@@ -29,7 +29,9 @@ const processLoadedMessages = messages => {
                     }
                 })
             }
-            result.push({role: 'assistant', content: m.content || '', tools})
+            const loaded = {role: 'assistant', content: m.content || '', tools}
+            if (m.display) loaded.display = m.display
+            result.push(loaded)
         }
     }
     return result
@@ -164,6 +166,18 @@ export const conversationReducer = (state, action) => {
             // A tool finishing mid-turn means the follow-up LLM call is next;
             // show the thinking indicator until its first chunk arrives.
             return {...state, messages, isThinking: state.isLoading}
+        }
+        case 'ASSISTANT_NOTICE': {
+            if (isForeignConversation(state, action.conversationId)) return state
+            const message = {role: 'assistant', content: action.content}
+            if (action.display) message.display = action.display
+            return {
+                ...state,
+                messages: [...state.messages, message],
+                streaming: false,
+                isLoading: false,
+                isThinking: false
+            }
         }
         case 'STATUS_THINKING':
             if (isForeignConversation(state, action.conversationId)) return state

@@ -95,6 +95,24 @@ describe('OpenAI-compatible chat-completions adapter', () => {
         ])
     })
 
+    it('strips the GUI display descriptor from assistant messages before sending them to the provider', async () => {
+        mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])
+
+        await collect(anOpenAiChat().respondTo$({messages: [
+            {role: 'user', content: 'q'},
+            {
+                role: 'assistant',
+                content: 'Step cap reached.',
+                display: {key: 'home.chat.notices.toolRoundCap', args: {max: 8}, fallback: 'Step cap reached.'}
+            }
+        ]}))
+
+        expect(mockCreate.mock.calls[0][0].messages).toEqual([
+            {role: 'user', content: 'q'},
+            {role: 'assistant', content: 'Step cap reached.'}
+        ])
+    })
+
     it('parses a streamed tool call into a normalized toolCall event', async () => {
         mockCreate.mockResolvedValue([
             {choices: [{delta: {tool_calls: [

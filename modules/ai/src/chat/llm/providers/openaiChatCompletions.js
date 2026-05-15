@@ -78,7 +78,9 @@ function toProviderMessage(message) {
     } else if (isToolResultMessage) {
         return toProviderToolResultMessages(message)
     } else {
-        return [message]
+        // Strip GUI-only fields (e.g. display descriptor) — the provider
+        // schema rejects extras, and the LLM only needs {role, content}.
+        return [{role: message.role, content: message.content}]
     }
 }
 

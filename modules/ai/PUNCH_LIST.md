@@ -30,10 +30,10 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   structured tool-error envelope, but no repeated-failure bail-out, no
   validation-error retry limit, and no no-repeat handling for identical failing
   tool calls (DESIGN §15 "before writable tools").
-- **Localized deterministic chat notices** — backend fallback assistant strings
-  such as the tool-round cap message are still English. Do not import GUI
-  translations into the AI module; add an explicit message-descriptor/fallback
-  path or shared i18n boundary before adding more deterministic notices.
+- **UI language is not in turn context** — the GUI knows the selected locale,
+  but AI turns only receive selection/runtime state. Include the UI language as
+  runtime data so the model can reply in the active interface language without
+  guessing from the user's text.
 - **No model-profile resolution or `llm.usage` events** — every LLM call still
   goes through one hard-wired adapter; provider/model/profile resolution and
   normalized usage accounting (DESIGN §9) are not wired.

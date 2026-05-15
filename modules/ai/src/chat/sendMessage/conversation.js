@@ -116,10 +116,16 @@ function createConversation({llm, history, tools, tracer, systemPrompt, initialM
     }
 
     function toolRoundCapReached$() {
+        const display = {
+            key: 'home.chat.notices.toolRoundCap',
+            args: {max: MAX_TOOL_ROUNDS},
+            fallback: TOOL_ROUND_CAP_MESSAGE
+        }
+        const message = {role: 'assistant', content: TOOL_ROUND_CAP_MESSAGE, display}
         return tracer.span$('conversation.toolRoundCapReached', {conversationId: id, maxRounds: MAX_TOOL_ROUNDS},
             concat(
-                of({textDelta: TOOL_ROUND_CAP_MESSAGE}),
-                append$({role: 'assistant', content: TOOL_ROUND_CAP_MESSAGE}).pipe(ignoreElements())
+                of({notice: {content: TOOL_ROUND_CAP_MESSAGE, display}}),
+                append$(message).pipe(ignoreElements())
             )
         )
     }

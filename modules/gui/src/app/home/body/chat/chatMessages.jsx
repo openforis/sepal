@@ -5,6 +5,7 @@ import {msg} from '~/translate'
 
 import {ChatMessage, ThinkingIndicator} from './chatMessage'
 import styles from './chatMessages.module.css'
+import {displayedContent} from './messageDisplay'
 
 // Compute display info for tool bubbles. A tool bubble represents one logical
 // tool call across the LLM's internal retry attempts, not each round-trip.
@@ -100,7 +101,7 @@ export const ChatMessages = ({messages, thinking, isLoading}) => {
                     <ChatMessage
                         key={i}
                         role={m.role}
-                        content={m.content}
+                        content={displayedContent(m, msg)}
                         tools={m.tools}
                         hiddenToolIds={hidden}
                         statusOverride={statusOverride}

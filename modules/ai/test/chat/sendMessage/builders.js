@@ -87,6 +87,7 @@ function aFakeChannel() {
     const metaUpdates = []
     const toolStarts = []
     const toolEnds = []
+    const notices = []
     return {
         chatResponse(payload) { sent.push(payload) },
         status(conversationId) { statuses.push(conversationId) },
@@ -99,7 +100,8 @@ function aFakeChannel() {
         conversationsList(metas) { lists.push(metas) },
         toolStart(payload) { toolStarts.push(payload) },
         toolEnd(payload) { toolEnds.push(payload) },
-        sent, created, loaded, claimed, deleted, lists, statuses, userMessages, metaUpdates, toolStarts, toolEnds
+        assistantNotice(payload) { notices.push(payload) },
+        sent, created, loaded, claimed, deleted, lists, statuses, userMessages, metaUpdates, toolStarts, toolEnds, notices
     }
 }
 

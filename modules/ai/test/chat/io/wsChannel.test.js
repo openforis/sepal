@@ -275,4 +275,29 @@ describe('WS channel adapter', () => {
             })
         })
     })
+
+    describe('assistantNotice — broadcast to all the user\'s tabs', () => {
+
+        it('emits an assistant-notice carrying content + display descriptor', () => {
+            channel.assistantNotice({
+                conversationId: 'conv-1',
+                content: 'Step cap reached.',
+                display: {key: 'home.chat.notices.toolRoundCap', args: {max: 8}, fallback: 'Step cap reached.'}
+            })
+
+            expect(sent).toEqual([{
+                username: 'alice',
+                data: {
+                    type: 'assistant-notice',
+                    conversationId: 'conv-1',
+                    content: 'Step cap reached.',
+                    display: {key: 'home.chat.notices.toolRoundCap', args: {max: 8}, fallback: 'Step cap reached.'}
+                }
+            }])
+            expect(published[0]).toMatchObject({
+                level: 'debug',
+                message: 'WS out (alice broadcast) assistant-notice conv-1 key=home.chat.notices.toolRoundCap'
+            })
+        })
+    })
 })

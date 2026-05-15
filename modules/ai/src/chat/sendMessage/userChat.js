@@ -208,6 +208,8 @@ function routeTurnEvent(channel, conversationId, event) {
         channel.toolStart({conversationId, ...event.toolStart})
     } else if (event.toolEnd) {
         channel.toolEnd({conversationId, ...event.toolEnd})
+    } else if (event.notice) {
+        channel.assistantNotice({conversationId, ...event.notice})
     } else {
         channel.chatResponse({conversationId, ...event})
     }

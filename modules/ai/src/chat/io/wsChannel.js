@@ -1,5 +1,5 @@
 function createWsChannel({out$, bus, username, clientId, subscriptionId}) {
-    return {chatResponse, status, userMessage, conversationCreated, conversationClaimed, conversationUpdated, conversationLoaded, conversationDeleted, conversationsList, guiAction, toolStart, toolEnd}
+    return {chatResponse, status, userMessage, conversationCreated, conversationClaimed, conversationUpdated, conversationLoaded, conversationDeleted, conversationsList, guiAction, toolStart, toolEnd, assistantNotice}
 
     function chatResponse({conversationId, textDelta, complete}) {
         if (complete) {
@@ -89,6 +89,13 @@ function createWsChannel({out$, bus, username, clientId, subscriptionId}) {
         broadcast(
             {type: 'tool-end', conversationId, toolCallId, toolName, ok, data, error},
             `tool-end ${toolName} ${conversationId} ok=${ok}`
+        )
+    }
+
+    function assistantNotice({conversationId, content, display}) {
+        broadcast(
+            {type: 'assistant-notice', conversationId, content, display},
+            `assistant-notice ${conversationId} key=${display?.key ?? '-'}`
         )
     }
 

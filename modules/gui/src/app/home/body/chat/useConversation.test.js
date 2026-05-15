@@ -172,6 +172,56 @@ it('rebuilds tool status from the {ok} envelope of loaded history', () => {
     expect(tools.find(t => t.id === 'fail-call').status).toBe('error')
 })
 
+it('appends an assistant notice with its display descriptor and clears loading', () => {
+    const state = {
+        ...initialConversationState,
+        activeConversationId: 'conv-1',
+        view: 'chat',
+        isLoading: true,
+        isThinking: true
+    }
+
+    const next = conversationReducer(state, {
+        type: 'ASSISTANT_NOTICE',
+        conversationId: 'conv-1',
+        content: 'Step cap reached.',
+        display: {key: 'home.chat.notices.toolRoundCap', args: {max: 8}, fallback: 'Step cap reached.'}
+    })
+
+    expect(next.messages).toEqual([{
+        role: 'assistant',
+        content: 'Step cap reached.',
+        display: {key: 'home.chat.notices.toolRoundCap', args: {max: 8}, fallback: 'Step cap reached.'}
+    }])
+    expect(next.isLoading).toBe(false)
+    expect(next.isThinking).toBe(false)
+    expect(next.streaming).toBe(false)
+})
+
+it('preserves the display descriptor on a loaded assistant notice', () => {
+    const next = conversationReducer(initialConversationState, {
+        type: 'CONVERSATION_LOADED',
+        conversationId: 'conv-1',
+        messages: [
+            {role: 'user', content: 'loop forever'},
+            {
+                role: 'assistant',
+                content: 'Step cap reached.',
+                display: {key: 'home.chat.notices.toolRoundCap', args: {max: 8}, fallback: 'Step cap reached.'}
+            }
+        ]
+    })
+
+    expect(next.messages).toEqual([
+        {role: 'user', content: 'loop forever'},
+        {
+            role: 'assistant',
+            content: 'Step cap reached.',
+            display: {key: 'home.chat.notices.toolRoundCap', args: {max: 8}, fallback: 'Step cap reached.'}
+        }
+    ])
+})
+
 it('removes a deleted active conversation and returns to the list', () => {
     expect(conversationReducer({
         ...initialConversationState,
