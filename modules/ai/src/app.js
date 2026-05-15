@@ -34,18 +34,7 @@ function createApp({config}) {
     // config.systemPrompt directly to swap in a short prompt.
     const systemPrompt = config.systemPrompt ?? mainSystemPrompt()
 
-    const logListener = createLogListener({log: logViaLog4js})
-    bus.events$.subscribe({
-        next: event => {
-            try {
-                logListener.onEvent(event)
-            } catch (error) {
-                log.error('Log listener threw while handling event:', error)
-            }
-        },
-        error: error => fatal('Event bus errored', error),
-        complete: () => fatal('Event bus completed unexpectedly')
-    })
+    subscribeLogListener(bus)
 
     const llm = createLlm({
         baseURL: config.llmBaseUrl,
@@ -56,7 +45,7 @@ function createApp({config}) {
     })
     const guiRequests = createGuiRequests({clock, createId: uuid, timeoutMs: GUI_REQUEST_TIMEOUT_MS, bus})
 
-    const tools = conversationTools({config, guiRequests, llm, tracer, bus})
+    const tools = buildConversationTools({guiRequests, llm, tracer, bus})
 
     const userChats = new Map()
     const wsHandler = createWsHandler({bus, userChatFor, guiRequests})
@@ -104,56 +93,31 @@ function systemClock() {
     }
 }
 
-function conversationTools({config, guiRequests, llm, tracer, bus}) {
+function buildConversationTools({guiRequests, llm, tracer, bus}) {
     const productToolList = productTools({guiRequests})
     // Specialists may call only the inner product-tool registry. The outer
     // registry is the main conversation surface and includes specialists.
     const innerTools = createToolRegistry({tools: productToolList, bus})
     const specialistToolList = specialistTools({llm, tracer, bus, innerTools})
     return createToolRegistry({
-        tools: [...productToolList, ...specialistToolList, ...enabledSmokeTools(config, guiRequests)],
+        tools: [...productToolList, ...specialistToolList],
         bus
     })
 }
 
-function enabledSmokeTools(config, guiRequests) {
-    if (config.enableAiTransportSmokeTools) {
-        // ask_gui_echo is held back until a matching GUI echo action exists.
-        return transportSmokeTestTools(guiRequests).filter(tool => tool.name !== 'ask_gui_echo')
-    } else {
-        return []
-    }
-}
-
-// Transport smoke-test tools: one direct tool and one GUI-backed tool, enough
-// to exercise the full tool round trip. Dev/test only.
-function transportSmokeTestTools(guiRequests) {
-    const textParameter = {
-        type: 'object',
-        properties: {text: {type: 'string'}},
-        required: ['text'],
-        additionalProperties: false
-    }
-    return [
-        {
-            name: 'echo',
-            description: 'Echo input text back.',
-            parameters: textParameter,
-            invoke$: input => of({echoed: input.text})
+function subscribeLogListener(bus) {
+    const logListener = createLogListener({log: logViaLog4js})
+    bus.events$.subscribe({
+        next: event => {
+            try {
+                logListener.onEvent(event)
+            } catch (error) {
+                log.error('Log listener threw while handling event:', error)
+            }
         },
-        {
-            name: 'ask_gui_echo',
-            description: 'Ask the GUI to echo input text.',
-            parameters: textParameter,
-            invoke$: (input, context) => guiRequests.request$({
-                channel: context.channel,
-                clientId: context.clientId,
-                subscriptionId: context.subscriptionId,
-                action: 'echo',
-                params: input
-            })
-        }
-    ]
+        error: error => fatal('Event bus errored', error),
+        complete: () => fatal('Event bus completed unexpectedly')
+    })
 }
 
 function logViaLog4js(level, line) {

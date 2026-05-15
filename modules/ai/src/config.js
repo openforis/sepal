@@ -73,12 +73,6 @@ try {
                 .argParser(v => parseInt(v))
                 .default(DEFAULT_HTTP_PORT)
         )
-        .addOption(
-            new Option('--enable-ai-transport-smoke-tools <value>', 'Register transport smoke-test tools (dev/test only)')
-                .env('ENABLE_AI_TRANSPORT_SMOKE_TOOLS')
-                .argParser(v => v === 'true')
-                .default(false)
-        )
         .parse(process.argv)
 } catch (error) {
     fatalError(error)
@@ -95,8 +89,7 @@ const {
     llmModel,
     llmBaseUrl,
     rateLimit,
-    sessionTtlMinutes,
-    enableAiTransportSmokeTools
+    sessionTtlMinutes
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -112,6 +105,5 @@ module.exports = {
     llmModel,
     llmBaseUrl,
     rateLimit,
-    sessionTtlMs: sessionTtlMinutes * 60 * 1000,
-    enableAiTransportSmokeTools
+    sessionTtlMs: sessionTtlMinutes * 60 * 1000
 }
