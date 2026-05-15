@@ -93,7 +93,7 @@ src/
     tools/                     # LLM product tools + tool registry + GUI request bridge
       productTools.js           # Composition of product tool families
       contextTool.js            # get_context
-      recipeTools.js            # recipe_list, recipe_load
+      recipeTools.js            # recipe_list and recipe operation tools
       projectTools.js           # project_list
       mapTools.js               # map_area_list, layer_list
     llm/                       # LLM provider boundary: provider-neutral selector + per-provider adapters
@@ -122,16 +122,15 @@ Environment variables mapped to CLI flags in `start.sh`:
 | `CONVERSATION_TTL_DAYS` | `--conversation-ttl-days` | Redis TTL for persisted conversation metadata/history |
 | `RATE_LIMIT` | `--rate-limit` | Parsed for future server-side rate limiting |
 | `SESSION_TTL_MINUTES` | `--session-ttl-minutes` | Parsed for future session expiry work |
-| `ENABLE_AI_TRANSPORT_SMOKE_TOOLS` | `--enable-ai-transport-smoke-tools` | Register transport smoke-test tools (`echo`); dev/test only, default `false` |
 
 The system prompt is project source, not configuration: `src/app.js` loads
 `src/chat/llmText/main.md` via `mainSystemPrompt()` and aborts boot if the
-asset is missing or empty. Smoke/manual tests can still pass a
-`config.systemPrompt` override directly to `createApp({config})`.
+asset is missing or empty. Manual tests can still pass a `config.systemPrompt`
+override directly to `createApp({config})`.
 
 The active rewrite currently uses `HTTP_PORT`, `LLM_PROVIDER`, `LLM_API_KEY`,
 `LLM_MODEL`, `LLM_BASE_URL`, `REDIS_HOST`, `CONVERSATION_TTL_DAYS`, and
-`ENABLE_AI_TRANSPORT_SMOKE_TOOLS`.
+`SESSION_TTL_MINUTES`.
 Some legacy/future flags are still parsed by `src/config.js` because compose
 supplies them, but the active app does not yet wire SEPAL/GEE clients,
 server-side rate limiting, or session expiry.
@@ -163,7 +162,7 @@ of them, apply the rule above:
 | `src/chat/llmText/*.md` + `src/chat/llmText/specialists/*.md` | Top-level role prompts (`main.md`, `title.md`) and specialist prompts (`specialists/map.md`, etc.). Loaded via `src/chat/llmText/prompts.js` — `mainSystemPrompt()`, `titleSystemPrompt()`, `specialistPrompt(name)`. New specialists add a `.md` under `specialists/` here matching the code at `src/chat/specialists/`. |
 | `src/chat/conversation/turnContext.js` | Runtime turn-context message wrapper text |
 | `src/chat/conversation/titleGenerator.js` | Title-generator user/wrapper message (the `User asked: ... Assistant replied: ...` shape and the `/no_think` suffix); the title role prompt itself lives in `llmText/title.md`. |
-| Tool `name` / `description` / `parameters` | Sent to the LLM as tool schemas — the read-only product tool files in `src/chat/tools/` and the dev/test smoke tools in `src/app.js` |
+| Tool `name` / `description` / `parameters` | Sent to the LLM as tool schemas — product tools in `src/chat/tools/` and specialist tools in `src/chat/specialists/` |
 
 Old tool and recipe-schema LLM text lives under `archive/pre-rewrite-chat/` now.
 Treat it as reference, not active prompt/tool surface.
@@ -188,15 +187,13 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
   stream but off the queue tail. New callers must drive `Conversation` through
   `UserChat`, not invoke it directly.
 - **Tool registry**: `app.js` wires `createToolRegistry`. The production tool
-  surface holds the read-only product tools (`get_context`, `recipe_list`,
-  `project_list`, `recipe_load`, `map_area_list`, `layer_list`) from
-  `src/chat/tools/`; transport
-  smoke-test tools (`echo`) register only
-  when `ENABLE_AI_TRANSPORT_SMOKE_TOOLS=true`, and are never visible to the
-  production model. `ask_gui_echo` stays unregistered until a matching GUI
-  `echo` action exists. The registry owns the structured tool-error envelope
-  (`UNKNOWN_TOOL`, `INVALID_TOOL_ARGS` via ajv, `TOOL_FAILED`); provider
-  wire-format conversion lives in the adapters, not the domain.
+  surface holds product tools (`get_context`, `recipe_list`, `project_list`,
+  map inspection tools, and any public recipe operation tools) plus specialist
+  dispatcher tools. Raw recipe load/patch tools should be specialist-private,
+  not always visible to the orchestrator. Diagnostic/smoke tools stay out of
+  the runtime product surface. The registry owns the structured tool-error
+  envelope (`UNKNOWN_TOOL`, `INVALID_TOOL_ARGS` via ajv, `TOOL_FAILED`);
+  provider wire-format conversion lives in the adapters, not the domain.
 - **LLM provider boundary**: `conversation.js` / `titleGenerator.js` depend only
   on the provider-neutral `respondTo$` port from `src/chat/llm/index.js`
   (`createLlm`). It builds the per-provider adapters under

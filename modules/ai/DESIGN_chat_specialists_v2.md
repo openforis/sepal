@@ -1,8 +1,9 @@
 # Updated design proposal: orchestrated specialists + recipe patches
 
 Successor to `DESIGN_chat_specialists.md`. This version incorporates the current
-active AI rewrite state and the design decision that specialists do not call
-other specialists in V1.
+active AI rewrite state, the design decision that specialists do not call other
+specialists in V1, and the newer boundary that raw recipe JSON belongs only to
+recipe specialists.
 
 ## 1. Core stance
 
@@ -40,10 +41,10 @@ bypass the confirmation dialog.
 
 Specialists own bounded expertise:
 
-- recipe specialists create/update one recipe type
+- recipe specialists describe/create/update one recipe type
 - workflow specialist recommends a workflow plan
 - map layout specialist plans/applies map layout and visualization changes
-- browse/direct tools list/open/move/delete projects and recipes
+- browse/direct tools list/open/move/delete projects and recipe metadata
 
 ## 2. Why specialists exist
 
@@ -52,19 +53,20 @@ turn. Recipe schemas, recipe rules, map tools, visualization tools, and workflow
 examples compete with normal conversation context even when the user asks a
 simple question.
 
-Recipe-specific agents solve this by moving heavy knowledge behind one typed
-tool call. The orchestrator sees compact dispatcher tools; a recipe specialist
-sees only the schema/rules/guidance for one recipe type.
+Recipe-specific agents solve this by moving heavy knowledge and raw recipe JSON
+behind typed operation tools. The orchestrator sees compact dispatcher tools; a
+recipe specialist sees only the schema/rules/guidance and recipe fragments for
+one recipe type.
 
 This should reduce:
 
 - per-turn token cost
 - tool-selection confusion
 - irrelevant recipe-schema exposure
-- whole-recipe model round trips
+- raw recipe JSON exposure outside recipe specialists
 
-It also keeps mutation logic narrow: a recipe specialist can be judged against
-one recipe schema and one set of validation rules.
+It also keeps read/write logic narrow: a recipe specialist can be judged against
+one recipe schema, one set of validation rules, and the patches it emits.
 
 ## 3. Current implementation constraints
 
@@ -81,22 +83,24 @@ Current state:
 - The OpenAI-compatible adapter sends tool schemas and parses streamed tool
   calls. The LM Studio native no-reasoning path is title-generation only in V1
   and does not support tools.
-- `app.js` wires a tool registry. The production tool surface is empty for now;
-  the direct `echo` smoke tool is registered only when explicitly enabled for
-  dev/test, and `ask_gui_echo` remains unregistered until a GUI `echo` action
-  exists.
+- `app.js` wires product tools and specialist tools into the conversation
+  registry. Product read tools currently include context, recipe metadata/load,
+  project reads, and map inspection helpers. Diagnostic smoke tools are not part
+  of the production surface.
 - `wsHandler` handles `gui-response`; GUI request resolution is scoped to the
   initiating `clientId:subscriptionId`, and `subscriptionDown` cancels pending
   GUI requests for that subscription.
 - GUI chat supports `context`, `tool-start`/`tool-end` using `toolName`/`ok`, and
   `gui-action` responses.
 - Existing GUI chat actions can create, save, load, list, move, delete, open,
-  close, map, and visualize, but they are not exposed as real product AI tools
-  yet.
+  close, map, and visualize. The AI product surface should expose only the
+  narrow subset appropriate for the orchestrator; raw recipe load/write actions
+  should move behind recipe specialists as that boundary lands.
 
-Implication: before recipe/product tools land, finish hardening the provider
-boundary, observability, usage accounting, and tool-loop safety. Do not start by
-adding specialist files on top of provider-specific adapter code.
+Implication: direct read tools and the first map specialist POC are no longer
+the blocker. The next architectural pressure is tool visibility: the
+orchestrator should keep metadata/routing tools, while raw recipe inspection and
+patching move behind recipe specialists.
 
 ## 4. Main actors
 
@@ -120,14 +124,15 @@ The orchestrator should not carry all recipe schemas.
 
 ### Recipe specialist
 
-One logical specialist per recipe type. It creates or updates recipes for that
-type only.
+One logical specialist per recipe type. It describes, creates, or updates
+recipes for that type only. It is the only actor that should see raw recipe
+JSON or detailed recipe fragments.
 
 Inputs:
 
-- `type`
-- `mode`: `create` or `update`
-- `brief`
+- `operation`: `describe`, `create`, or `update`
+- resolved `recipeType`
+- user instruction or question
 - optional `recipeId`
 - optional workflow context from the orchestrator
 - optional recent user/orchestrator context selected by the orchestrator
@@ -137,16 +142,26 @@ Knowledge:
 - recipe description/use cases
 - choose/dont-choose guidance
 - defaults
-- JSON Schema or LLM-compatible schema projection
+- JSON Schema/rule summaries or LLM-compatible schema projection
 - cross-field rule prose
 - gotchas and cost notes
 
 Allowed writes:
 
-- recipe creation through a GUI-backed create action
-- recipe updates through `recipe_patch`
+- recipe creation by patching the recipe type's GUI/default model
+- recipe updates through JSON Patch against the current GUI model
 
-The recipe specialist does not call workflow/map/browse specialists.
+Private read/write tools:
+
+- recipe fragment load
+- recipe create-from-patches
+- recipe update-from-patches
+- recipe-type schema/rule helpers for planning, not authoritative validation
+
+The recipe specialist does not call workflow/map/browse specialists. It returns
+derived descriptions, edit summaries, missing-information requests, or failure
+reasons to the orchestrator; it should not pass raw recipe JSON back unless a
+specific later design requires it.
 
 ### Workflow specialist
 
@@ -198,8 +213,13 @@ will ask avoidable "do you already have X?" questions. Pass:
 - user brief
 - compact current GUI context
 - selected project and open recipe summaries
+- recipe-specialist descriptions when workflow reasoning needs recipe internals
 - compact recipe inventory when relevant
 - workflow capability summaries and examples
+
+The workflow specialist should not inspect raw recipe JSON. If it needs to know
+what a recipe does or produces, the orchestrator asks the appropriate recipe
+specialist for a derived description and passes that description along.
 
 ### Map bounds tools
 
@@ -248,15 +268,16 @@ Target orchestrator tools:
 
 ```text
 get_context()
-recipe_load({recipeId, path?})
-call_recipe_specialist({type, mode, brief, recipeId?, workflowContext?})
+recipe_list(...)
+describe_recipe({recipeId, question?})
+update_recipe({recipeId, instruction})
+create_recipe({recipeType, instruction, projectId?, name?})
 call_workflow_specialist({brief, context?, recipeSummaries?})
 call_map_layout_specialist({brief})
 map_get_view()
 map_set_camera(...)
 map_fit_bounds(...)
 map_zoom_to_place(...)
-recipe_list(...)
 project_list(...)
 recipe_open(...)
 recipe_move(...)
@@ -272,10 +293,23 @@ This is intentionally mixed:
 Do not force every action through an agent. The point is context isolation, not
 agent purity.
 
-`recipe_patch` is intentionally not an always-visible orchestrator tool in V1.
-It is a specialist-internal write tool used by recipe specialists after the
-orchestrator has routed the request. Any hard confirmation required by the
-write operation is enforced by the tool implementation and GUI bridge.
+Recipe operation tools are public dispatcher tools, not per-type tools. They
+route to the appropriate recipe-type specialist internally. This keeps the
+orchestrator surface proportional to operations, not the number of recipe types.
+With roughly twenty recipe types, public tools such as
+`update_mosaic_recipe`, `update_classification_recipe`, and so on would bloat
+the tool list and force type-specific guidance back into the orchestrator.
+
+For existing recipes, `describe_recipe` and `update_recipe` should resolve
+`recipeType` from `recipeId`; the orchestrator should not guess it. For
+creation, `create_recipe` requires `recipeType` because no recipe exists yet.
+
+Raw `recipe_load` and `recipe_patch` are intentionally not always-visible
+orchestrator tools in V1. They are specialist-internal tools used only after the
+orchestrator has routed the request to a recipe specialist. Other specialists
+receive recipe-specialist descriptions, not raw recipe JSON. Any hard
+confirmation required by a write operation is enforced by the tool
+implementation and GUI bridge.
 
 Budget: low double-digit dispatcher tools are acceptable if their schemas stay
 small. Use both counts and bytes:
@@ -290,9 +324,9 @@ Measure the actual provider-formatted byte size in Phase 0. If the surface
 drifts past the budget, collapse related direct tools behind a specialist or a
 single dispatcher tool.
 
-Diagnostic/smoke tools are not product tools. They must be excluded from the
-default production tool surface and enabled only through explicit dev/test
-configuration.
+Diagnostic/smoke tools are not product tools. They must stay out of the default
+production tool surface; prefer test fixtures or clearly isolated development
+harnesses over runtime flags.
 
 ## 6. Specialist session protocol
 
@@ -706,26 +740,38 @@ per-conversation aggregates. The orchestrator and specialists should pass
 `usageContext` into LLM calls, but they should not manually count or aggregate
 tokens.
 
-## 12. Recipe patch model
+## 12. Recipe create/update model
 
-Recipe updates should use JSON Patch rather than full-model replacement for
-incremental changes.
+Recipe specialists should express changes as JSON Patch operations, not full
+recipe documents. The GUI applies those operations to the authoritative complete
+model, validates the full candidate locally, and persists through the existing
+recipe save path.
 
 Contract:
 
 - operations: `add`, `remove`, `replace`, `move`, `copy`, and optional `test`
 - atomic apply: all operations apply or none do
-- validate post-apply using schema plus cross-field rules
+- validate post-apply in the GUI using schema plus cross-field rules
 - persist through GUI as the source of truth
 - return concise summary and invalidated paths
 
+Creation uses the same patch discipline. The specialist emits operations against
+the recipe type's default model. The GUI loads the default model, applies the
+operations, validates, creates/persists the recipe, and returns the new
+`recipeId` and `modelHash`. Specialist-authored complete recipe JSON is a
+fallback for small/immature recipe types, not the preferred path.
+
+Update uses operations against the current model snapshot. The specialist may
+generate obvious patches from schema/rule knowledge alone, or first load the
+fragments needed to reason about the requested change.
+
 V1 optimistic concurrency token: `baseModelHash`.
 
-`recipe_load` returns the current `modelHash`, read from
-`getHash(recipe.model)` in the GUI. If a loaded model has no hash, the load path
-must stamp one before returning it. This is a volatile GUI-side revision token,
-not a durable content hash; it protects against concurrent edits to the loaded
-model. `recipe_patch` requires:
+The specialist-private recipe load path returns the current `modelHash`, read
+from `getHash(recipe.model)` in the GUI. If a loaded model has no hash, the load
+path must stamp one before returning it. This is a volatile GUI-side revision
+token, not a durable content hash; it protects against concurrent edits to the
+loaded model. `recipe_patch` requires:
 
 ```json
 {
@@ -737,9 +783,9 @@ model. `recipe_patch` requires:
 
 Before persistence, the GUI write path compares `baseModelHash` with the current
 `getHash(recipe.model)`. Mismatch returns a structured stale-write error; the
-orchestrator or specialist must reload and retry from the new model. This is
-required because index-addressed JSON Patch is unsafe when the user edits the
-same recipe while the LLM is thinking.
+recipe specialist must reload and retry from the new model or report the
+conflict. This is required because index-addressed JSON Patch is unsafe when the
+user edits the same recipe while the specialist is thinking.
 
 `test` operations are still useful for semantic assertions ("this field still
 has value X"), but they are not the primary concurrency mechanism.
@@ -751,18 +797,24 @@ SEPAL recipe API notes for tool implementations:
 - The server-side recipe save API stores a gzip-compressed UTF-8 JSON contents
   envelope, not just the recipe model.
 - The contents envelope includes recipe identity/type/project plus `model`,
-  UI state, and map-layer state. AI-facing `recipe_load` should expose a
+  UI state, and map-layer state. Specialist-private recipe load should expose a
   projected model view, not the full browser/UI envelope by default.
 - Recipe list endpoints return metadata only, not full contents.
 - Delete has both single-recipe and bulk endpoints; destructive tools must
   enforce GUI hard confirmation before calling either path.
-- In V1 the GUI remains persistence authority, so the AI-side tool contract
-  should avoid duplicating gzip/envelope details unless a later server-side
-  persistence path is deliberately introduced.
+- In V1 the GUI remains state, validation, and persistence authority. The
+  specialist proposes JSON Patch operations; the GUI applies them against the
+  complete current/default model, validates the full candidate, enriches the
+  recipe state, stamps a new model hash, updates Redux, and persists through the
+  existing gzip/envelope save path.
+- The AI side should not assemble or ship complete recipes for normal
+  create/update flows. That would duplicate GUI authority, move heavy
+  `CLASSIFICATION` training data over the wire unnecessarily, and force the AI
+  to reconstruct fields omitted from projections.
 
 Projected paths:
 
-- `recipe_load` may omit heavy fields with markers such as
+- Specialist-private recipe loads may omit heavy fields with markers such as
   `{ "_omitted": 5234, "_kind": "referencePoints" }`.
 - The LLM may replace a whole omitted region.
 - The LLM may append to an omitted array with `/-` only if the handler can do so
@@ -770,49 +822,76 @@ Projected paths:
 - The LLM may not replace/remove a specific omitted index without deep-reading
   that path first.
 
+Future fragment tools:
+
+- A specialist may use `recipe_fragments_load({recipeId, paths})` to inspect
+  explicit model fragments before emitting a patch.
+- Relevance inference should live in the recipe knowledge package, not the GUI
+  bridge. For example, `fragmentsForEdit({recipeType, intent, targetPaths})`
+  can deterministically expand target paths to dependent fragments using the
+  specialist's schema/rules.
+- Avoid a public `recipe_relevant_fragment_load` tool until the deterministic
+  rule layer exists. It would mix two responsibilities: deciding what matters
+  and loading current GUI state.
+
 ## 13. Schema and validation
 
-The previous design said "canonical-on-GUI", but the current GUI does not have
-JSON Schemas as a canonical registry. It has recipe modules, defaults, actions,
-available-bands functions, visualizations, and UI-derived constraints.
+Validation authority belongs with the GUI write path. The GUI has the complete
+current/default model, owns browser recipe state, and already persists through
+the correct gzip/envelope flow. This is especially important for heavy
+`CLASSIFICATION` recipes: changing an SVM parameter should not require sending
+training data through the AI module just so a server-side validator can rebuild
+the full model.
+
+The schema/rule code should be shared, not duplicated:
+
+- GUI imports and runs the authoritative validators against full candidate
+  models before create/update persistence.
+- Recipe specialists import summaries, projections, defaults, and deterministic
+  helper metadata from the same source where practical.
+- The specialist uses that knowledge to choose fragments, ask questions, and
+  propose likely-valid patches; it is not the final validation authority.
+- Patch envelope validation still happens at the AI tool boundary: operation
+  shape, required fields, JSON Pointer strings, and non-empty operation lists.
 
 Recommended V1:
 
-- Create an active recipe knowledge package under `modules/ai/src/recipes` by
-  deliberately resurrecting one recipe type from archive through tests.
+- Create a shared active recipe knowledge package under `lib/js/recipes` by deliberately resurrecting
+  one recipe type from archive through tests. It must be usable by the GUI
+  validator and by AI prompt/fragment-planning code without importing
+  browser-only modules into the AI runtime.
 - Treat archived recipe schemas/rules as source material, not runtime
   dependencies. Do not import active code from `archive/pre-rewrite-chat`.
 - Reuse archive ideas selectively: schema properties, defaults, cross-field rule
   descriptions, gotchas, cost notes, output bands, and visualization hints.
 - Verify archived assumptions against current recipe models and GUI save
   behavior before promoting them into active validators.
-- Treat that active AI recipe package as canonical for JSON Schema and
-  cross-field rules in V1.
-- `recipe_patch` validates the post-patch candidate model against that canonical
-  validator before asking the GUI to persist.
-- The GUI remains write authority: it checks `baseModelHash`, applies the exact
-  patch against the current model, enriches dependent sources, stamps a new
-  model hash, updates `process.loadedRecipes`, and persists.
-- The GUI should not maintain a second schema/rule validator for the same
-  recipe type. UI-derived constraints that matter for chat writes must be
-  promoted into the canonical schema/rules or exposed as explicit write
-  preconditions.
-- Reconcile canonical schema home after the first recipe-patch slice proves the
-  contract.
+- Keep default-model construction close to the validator. `create_recipe`
+  applies specialist patches to that default model and validates the full
+  candidate in the GUI.
+- Keep deterministic fragment expansion close to the recipe knowledge:
+  `fragmentsForEdit({recipeType, intent, targetPaths})` can tell a specialist
+  which paths to inspect before patching.
+- Keep this as library code, not a deployable module. `lib/js/recipes` is the
+  intended home because SEPAL `modules/*` conventionally represent containerized
+  runtime modules.
 
 This split avoids duplicate validation authority while preserving GUI ownership
-of client state and persistence.
+of client state and persistence. The first patch-wire slice may validate only
+the JSON Patch envelope and operation syntax; domain validation belongs in the
+GUI/shared recipe validation package and should land by recipe type.
 
-Expected active package shape for the first resurrected recipe:
+Possible active package shape for the first resurrected recipe:
 
 ```text
-modules/ai/src/recipes/mosaic/
+lib/js/recipes/src/mosaic/
   index.js
   schema.json
   defaults.js
   rules.js
   promptFacts.js
   validate.js
+  fragments.js
 ```
 
 Expected export shape:
@@ -823,15 +902,18 @@ Expected export shape:
   name: 'Optical Mosaic',
   schema,
   defaults,
+  defaultModel(),
   validate(model),
-  promptFacts()
+  promptFacts(),
+  fragmentsForEdit({intent, targetPaths})
 }
 ```
 
 Do not bulk-migrate every archived recipe schema. Bring recipe packages back one
 at a time, starting with the Phase 3 recipe type. Each resurrected package must
-land with focused tests for defaults, schema acceptance, validation rules, and
-prompt facts.
+land with focused tests for defaults, schema acceptance, validation rules,
+fragment expansion, and prompt facts. GUI validation tests must prove that
+create/update reject invalid full candidates before persistence.
 
 ## 14. Specialist prompt builder
 
@@ -846,9 +928,9 @@ Per recipe type, build the prompt from:
 - output bands/visualization notes where present
 - a short hand-written gotchas/cost section
 
-The source is active code under `modules/ai/src/recipes/<type>/`, resurrected
-deliberately through tests. Archive files can guide the first implementation,
-but active code must not import from `archive/pre-rewrite-chat/`.
+The source is active shared recipe knowledge code, resurrected deliberately
+through tests. Archive files can guide the first implementation, but active code
+must not import from `archive/pre-rewrite-chat/`.
 
 Schema-driven params plus rule prose is intentional. JSON Schema cannot express
 all recipe semantics clearly enough for the LLM.
@@ -884,9 +966,9 @@ V1 should separate context into four tiers:
      map" without forcing an extra tool round.
 4. On-demand tools.
    - Used for larger, less common, or volatile facts.
-   - Examples: `get_context()`, `recipe_list`, projected `recipe_load`,
+   - Examples: `get_context()`, `recipe_list`, `describe_recipe`,
      `map_get_view`, `recipe_capabilities_search`, and workflow capability
-     lookup.
+     lookup. Raw/projected recipe JSON load tools are specialist-private.
 
 Preferred V1 implementation:
 
@@ -903,6 +985,9 @@ Preferred V1 implementation:
   specialists get exactly one recipe type's schema/rules. The orchestrator can
   route obvious requests through compact tool descriptions and use
   `recipe_capabilities_search({brief})` for ambiguous cases.
+- Keep raw recipe JSON out of orchestrator context. When another specialist
+  needs recipe internals, the orchestrator asks a recipe specialist for a
+  derived description and passes that derived text/structure onward.
 
 Reasoning:
 
@@ -1011,18 +1096,19 @@ Implemented foundation:
 - OpenAI-compatible adapter sends tools and parses streamed tool calls through
   the provider-neutral LLM/tool contract.
 - Tool registry/dispatcher exists in active code.
-- Production tool surface is empty; the direct `echo` smoke tool is dev/test
-  flagged, and `ask_gui_echo` is unregistered until a GUI `echo` action exists.
+- Production tool surface includes real product read tools and the first
+  specialist POC; diagnostic smoke tools are not part of the runtime surface.
 - `Conversation` invokes tools, feeds `{ok, data?, error?}` results back to the
   LLM, emits `tool-start`/`tool-end`, and enforces a max tool-round cap.
-- Structured tool-error envelope exists for unknown, invalid, and failing tools.
+- Structured tool-error envelope exists for unknown, invalid, failing, and
+  repeated failing tool calls.
 - Server handles targeted GUI request/response, timeout, wrong-subscription
   responses, and `subscriptionDown` cancellation.
 - Tests cover `Conversation`, `UserChat`, `wsHandler`, GUI request bridge,
   OpenAI-compatible adapter formatting/parsing, GUI reducer tool rendering, and
   provider-conformance fixtures for internal tool-turn messages.
 
-Remaining Phase 0C work before product tools/specialists:
+Remaining foundation work:
 
 - Split the current OpenAI-compatible adapter into provider-neutral LLM
   contract/common code and provider adapters.
@@ -1041,7 +1127,8 @@ Remaining Phase 0C work before product tools/specialists:
 
 Acceptance:
 
-- Fake/direct smoke LLM calls one fake tool and receives the tool result.
+- Tool-loop tests can use fake tools and still feed the provider-neutral result
+  back to the LLM.
 - OpenAI-specific tool formatting/parsing is covered in adapter tests, while
   `Conversation` tests assert only provider-neutral message/tool shapes.
 - Diagnostic tools are not visible to the production model by default.
@@ -1055,7 +1142,7 @@ Acceptance:
 
 ### Phase 1: context and direct reads
 
-Goal: orchestrator can resolve current GUI state and read recipes without full
+Goal: orchestrator can resolve current GUI state and read metadata without full
 tool bloat.
 
 Scope:
@@ -1064,47 +1151,69 @@ Scope:
 - Continue storing latest GUI context per tab/subscription.
 - Add `get_context()`.
 - Add `recipe_list`.
-- Add projected `recipe_load({recipeId, path?})`.
-- Add projection for heavy known fields in `CLASSIFICATION` first.
+- Keep any raw/projected `recipe_load({recipeId, path?})` private to recipe
+  specialists once the recipe-specialist boundary lands.
+- Add projection for heavy known fields in `CLASSIFICATION` first for the
+  specialist-private load path.
 
 Acceptance:
 
 - "this recipe" resolves through context.
-- Loading a classification recipe with many reference points returns an omitted
-  marker unless path-scoped.
+- Specialist-private loading of a classification recipe with many reference
+  points returns an omitted marker unless path-scoped.
 - Runtime prompt contains no literal `{{...}}` template placeholders.
 
-### Phase 2: recipe patch
+### Phase 2: recipe specialist boundary
 
-Goal: incremental recipe updates without full-model round trip.
+Goal: route recipe-specific work through operation-level public tools while
+keeping raw recipe JSON private to recipe specialists.
 
 Scope:
 
-- Add `baseModelHash` to `recipe_load` and require it in `recipe_patch`.
-- Add JSON Patch apply path with GUI base-hash enforcement.
-- Add canonical AI-side schema/rule validation path for one recipe type.
-- Add `recipe_patch`.
-- Keep full `recipe_save` only for full rewrite cases.
+- Add public operation tools:
+  - `describe_recipe({recipeId, question?})`
+  - `update_recipe({recipeId, instruction})`
+  - `create_recipe({recipeType, instruction, projectId?, name?})`
+- Route each operation to the appropriate recipe-type specialist.
+- Resolve `recipeType` from `recipeId` for existing recipes; do not trust the
+  orchestrator to guess it.
+- Move raw/projected recipe load behind the recipe specialist's private tool
+  registry.
+- Implement one recipe specialist enough to describe a recipe from private
+  recipe fragments.
+- Define private create/update tool contracts as patch-oriented operations:
+  create patches a default model; update patches the current GUI model. Full
+  recipe JSON is not LLM-visible.
 
 Acceptance:
 
-- Single-field recipe update applies atomically.
-- Invalid patch rolls back and returns path-specific error.
-- Stale `baseModelHash` is rejected.
+- The orchestrator can describe a selected recipe without seeing raw recipe
+  JSON.
+- Workflow specialist can receive a recipe-specialist description rather than a
+  recipe model.
+- Raw recipe load is not in the always-visible orchestrator tool surface.
 
-### Phase 3: one recipe specialist
+### Phase 3: specialist-private recipe patch
 
-Goal: prove agents-as-tools with one recipe type.
+Goal: incremental recipe updates without full-model round trip, through the
+recipe specialist boundary.
 
 Scope:
 
-- Add `call_recipe_specialist`.
 - Add recipe-specialist model policy by recipe type and operation.
-- Implement one recipe specialist.
 - Recommended first type: `MOSAIC`, because it is common and domain-rich.
   This is representative rather than minimal; it trades fast shipping for a
   meaningful schema/rule acceptance gate.
-- Specialist can create/update using create/patch tools only.
+- Add `baseModelHash` to specialist-private `recipe_load` and require it in
+  `recipe_patch`.
+- Add JSON Patch apply path with GUI base-hash enforcement and GUI-side full
+  candidate validation.
+- Add `recipe_patch` to the recipe specialist's private tools, not the
+  orchestrator surface.
+- Add shared schema/rule validation for one recipe type, executed
+  authoritatively in the GUI write path. AI uses the same package for prompt
+  facts and deterministic fragment planning.
+- Specialist can update using patch tools only.
 - Specialist returns `done`, `need_info`, or `failed`.
 - Specialist sessions exist only for `need_info`.
 - Usage events identify orchestrator vs recipe specialist and include
@@ -1114,12 +1223,24 @@ Scope:
 
 Decision gate:
 
-- Can provider accept the chosen recipe schema/tool params?
-- If not, build an LLM-compatible schema projection rather than weakening
+- Can the chosen provider handle the recipe specialist prompt, schema/rule
+  summaries, and private tool schemas for the chosen type?
+- If not, build an LLM-compatible summary/projection rather than weakening GUI
   validation.
 - If `MOSAIC` blocks progress for non-representative reasons, use a smaller
   fallback such as `MASKING` or `CCDC_SLICE` to prove the specialist loop first,
   then return to `MOSAIC`.
+
+Acceptance:
+
+- Single-field recipe update applies atomically through `update_recipe`.
+- Invalid patch rolls back and returns path-specific error to the specialist.
+- Domain validation failure rolls back and returns a structured validation error
+  to the specialist.
+- Stale `baseModelHash` is rejected and reaches the specialist as a structured
+  error.
+- The orchestrator never receives raw recipe JSON or direct `recipe_patch`
+  access.
 
 ### Phase 4: workflow specialist
 
@@ -1185,13 +1306,18 @@ exceeds observed benefit.
    are emitted, boundary request/response inspection is available, and
    dispatcher tool schema bytes fit the budget. If not, shrink the direct
    surface before adding recipe work.
-2. End of Phase 2: measure prompt tokens, cache behavior where available, patch
-   payload size, and tool failure rate. If projection plus patches solve the
-   user-visible cost/quality problem at current recipe count, defer Phase 3+.
-3. Start of Phase 3: run schema-as-tool-param acceptance for the chosen recipe
-   type. If provider rejects the schema, choose between schema projection and a
-   smaller first specialist.
-4. Mid roster expansion: if per-type gotchas authoring or schema projection cost
+2. End of Phase 2: measure prompt tokens, cache behavior where available, and
+   whether operation-level recipe tools keep raw recipe JSON out of the
+   orchestrator. If this boundary is too expensive or too vague, revise before
+   adding writes.
+3. Start of Phase 3: run provider-acceptance checks for the chosen recipe
+   specialist prompt and private tool schemas. If the provider rejects the
+   context size or schema shape, choose between summary/projection and a smaller
+   first specialist.
+4. End of Phase 3: measure patch payload size, stale-write rate, and tool
+   failure rate. If specialist-private patching solves the user-visible
+   cost/quality problem at current recipe count, defer broader roster expansion.
+5. Mid roster expansion: if per-type gotchas authoring or schema projection cost
    dominates observed benefit, stop expansion and keep generic/direct fallback
    behavior for remaining types.
 
@@ -1208,11 +1334,13 @@ modules/ai/src/chat/
   specialists/                # POC implementation (sibling of conversation/)
     runSpecialist.js          # Inner LLM loop with filtered tools
     specialistTools.js        # Specialist-as-LLM-tool registry (consult_map etc.)
+    recipeSpecialists.js       # describe_recipe/update_recipe/create_recipe routing
   tools/
     registry.js               # LLM tool schema/invocation registry
     productTools.js           # Product tool composition
     contextTool.js             # get_context
-    recipeTools.js             # recipe_list, recipe_load
+    recipeTools.js             # recipe_list plus public recipe operation tools
+    recipePrivateTools.js      # specialist-private recipe_load/recipe_patch
     projectTools.js            # project_list
     mapTools.js                # map_area_list, layer_list
     guiProductRequest.js       # Product-tool GUI request helper
@@ -1243,15 +1371,18 @@ modules/ai/src/chat/
     usageAccounting.js
     eventInspection.js
     specialistModelPolicies.js
-    recipePatch.js
     toolLoopSafety.js
 
-modules/ai/src/recipes/
-  mosaic/
-    index.js
+lib/js/recipes/
+  package.json
+  src/
+   mosaic/
+    index.js                  # shared recipe knowledge exports
     schema.json
     rules.js
     defaults.js
+    validate.js
+    fragments.js
 
 modules/gui/src/app/home/body/chat/
   chatPanel.jsx
@@ -1269,7 +1400,8 @@ Future providers such as Claude should add sibling adapters under
 
 ## 21. Open questions
 
-- Where should canonical recipe schemas live after the first active recipe slice?
+- What should the `lib/js/recipes` package boundary expose publicly vs keep as
+  per-recipe internals?
 - What should `get_context()` return beyond the compact turn context already
   injected into the first LLM call of a user turn?
 - Which provider schemas are accepted unchanged, and which need an

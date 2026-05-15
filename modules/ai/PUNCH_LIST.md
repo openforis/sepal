@@ -14,24 +14,33 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Tool And GUI Bridge
 
-- **Read tools only** — Phase 1A/1B wired the read-only product tools
-  (`get_context`, `recipe_list`, `project_list`, `recipe_load`). Recipe
-  create/update/delete/move/save tools and `recipe_patch` are not implemented
-  yet.
+- **Recipe tool visibility is too broad** — current product tools still expose
+  raw/projected recipe loading to the orchestrator. The design now wants public
+  operation-level tools (`describe_recipe`, `update_recipe`, `create_recipe`)
+  that route to recipe-type specialists, with raw recipe JSON and detailed
+  fragments private to those specialists.
+- **Recipe operation dispatchers are not implemented** — add
+  `describe_recipe({recipeId, question?})`,
+  `update_recipe({recipeId, instruction})`, and
+  `create_recipe({recipeType, instruction, projectId?, name?})` as the public
+  recipe surface. Existing recipes should resolve recipe type from `recipeId`;
+  the orchestrator should not guess it.
 - **Map specialist read tools are minimal** — `consult_map` exposes
   `get_context`, `map_area_list` (layout + areas + AOI + view), and
   `layer_list` (per-area imageLayer + featureLayers). Still missing:
   per-layer loading/error state, dynamic-vis legend/palette inspection, and
   any live per-area viewport beyond `map.view` (per-area viewports under
   `mapCommand$` are not in Redux).
-- **`recipe_patch` write path is not implemented** — `recipe_load` returns a
-  `modelHash` (stamped GUI-side) ready to serve as the `baseModelHash`
-  optimistic-concurrency token, but the patch tool, its validation, and the
-  GUI write path that checks `baseModelHash` are not built yet.
-- **Remove transport smoke-test tools from production code** — `echo` and
-  `ask_gui_echo` were useful before real tools existed, but they now add
-  confusing production surface area even behind a dev flag. Move any remaining
-  coverage to test fixtures or a clearly isolated dev-only module.
+- **`recipe_patch` must be specialist-private** — the patch wire contract needs
+  GUI-side `baseModelHash` enforcement, atomic JSON Patch application, and
+  structured stale/apply errors, but it should not remain on the always-visible
+  orchestrator tool surface. Recipe specialists should call it after inspecting
+  the needed recipe fragments.
+- **Recipe-domain validation is deferred** — JSON Patch envelope validation is
+  not enough for safe recipe edits. Add shared recipe knowledge/validation under
+  `lib/js/recipes` and use it from the GUI write path for authoritative
+  validation and from recipe specialists for dependent-fragment planning and
+  prompt facts.
 - **Specialist safety/observability is minimal** — `runSpecialist$` has a
   `SPECIALIST_MAX_ROUNDS` cap, per-turn tool-loop safety (no-repeat,
   consecutive-failure bail-out, invalid-args retry limit via the shared
