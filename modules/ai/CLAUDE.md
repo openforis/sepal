@@ -88,8 +88,12 @@ src/
   chat/                       # Chat Rewrite Layer
     io/                        # Active adapters: websocket, Redis stores, GUI request bridge
     llm/                       # LLM provider boundary: provider-neutral selector + per-provider adapters
+    llmText/                   # LLM-facing prompt assets + loader
+      prompts.js                # Loader: mainSystemPrompt(), titleSystemPrompt(); fails fast on empty/missing
+      assistants/               # One markdown file per assistant role
+        main.md                  # Main Sepalito system prompt
+        title.md                 # Title-generator system prompt
     sendMessage/               # Active conversation/user-chat/title-generation/tool-registry slice
-    system-prompt.md           # Active system prompt
 ```
 
 ## Configuration
@@ -108,12 +112,16 @@ Environment variables mapped to CLI flags in `start.sh`:
 | `CONVERSATION_TTL_DAYS` | `--conversation-ttl-days` | Redis TTL for persisted conversation metadata/history |
 | `RATE_LIMIT` | `--rate-limit` | Parsed for future server-side rate limiting |
 | `SESSION_TTL_MINUTES` | `--session-ttl-minutes` | Parsed for future session expiry work |
-| `SYSTEM_PROMPT` | `--system-prompt` | System prompt prepended to every conversation |
 | `ENABLE_AI_TRANSPORT_SMOKE_TOOLS` | `--enable-ai-transport-smoke-tools` | Register transport smoke-test tools (`echo`); dev/test only, default `false` |
 
+The system prompt is project source, not configuration: `src/app.js` loads
+`src/chat/llmText/assistants/main.md` via `mainSystemPrompt()` and aborts boot
+if the asset is missing or empty. Smoke/manual tests can still pass a
+`config.systemPrompt` override directly to `createApp({config})`.
+
 The active rewrite currently uses `HTTP_PORT`, `LLM_PROVIDER`, `LLM_API_KEY`,
-`LLM_MODEL`, `LLM_BASE_URL`, `REDIS_HOST`, `CONVERSATION_TTL_DAYS`,
-`SYSTEM_PROMPT`, and `ENABLE_AI_TRANSPORT_SMOKE_TOOLS`.
+`LLM_MODEL`, `LLM_BASE_URL`, `REDIS_HOST`, `CONVERSATION_TTL_DAYS`, and
+`ENABLE_AI_TRANSPORT_SMOKE_TOOLS`.
 Some legacy/future flags are still parsed by `src/config.js` because compose
 supplies them, but the active app does not yet wire SEPAL/GEE clients,
 server-side rate limiting, or session expiry.
@@ -142,9 +150,9 @@ of them, apply the rule above:
 
 | Location | What's LLM-facing |
 |---|---|
-| `src/chat/system-prompt.md` | The whole file (static system prompt) |
+| `src/chat/llmText/assistants/*.md` | One file per assistant role — `main.md` (Sepalito system prompt), `title.md` (title-generator system prompt). Loaded via `src/chat/llmText/prompts.js`. New assistant roles add a sibling `.md` here. |
 | `src/chat/sendMessage/turnContext.js` | Runtime turn-context message wrapper text |
-| `src/chat/sendMessage/titleGenerator.js` | Title-generation prompt messages |
+| `src/chat/sendMessage/titleGenerator.js` | Title-generator user/wrapper message (the `User asked: ... Assistant replied: ...` shape and the `/no_think` suffix); the title role prompt itself now lives in `llmText/assistants/title.md`. |
 | Tool `name` / `description` / `parameters` | Sent to the LLM as tool schemas — the read-only product tools in `src/chat/sendMessage/productTools.js` and the dev/test smoke tools in `src/app.js` |
 
 Old tool and recipe-schema LLM text lives under `archive/pre-rewrite-chat/` now.

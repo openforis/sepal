@@ -1,4 +1,5 @@
 const {EMPTY, catchError, concatMap, defaultIfEmpty, defer, finalize, ignoreElements, last, map, of, scan, tap, timeout} = require('rxjs')
+const {titleSystemPrompt} = require('../llmText/prompts')
 
 const TITLE_MAX_CHARS = 80
 const TITLE_MAX_TOKENS = 32
@@ -7,16 +8,7 @@ const TITLE_FIRST_TEXT_TIMEOUT_MS = 10_000
 const TITLE_BETWEEN_TEXT_TIMEOUT_MS = 3_000
 const MAX_DEBUG_TEXT = 8000
 
-const TITLE_SYSTEM_PROMPT = `Output a 3-7 word title summarizing the conversation. Title only — no quotes, no preamble (e.g. "Title:", "Conversation:", "Topic:"), no numbering ("1. ..."), no trailing punctuation. Be specific to what was discussed. Match the user's language.
-
-Examples:
-User asked: How do I detect NDVI change in Kenya between 2020 and 2024?
-Assistant replied: [explains index change recipe]
-→ NDVI change Kenya 2020-2024
-
-User asked: ¿Cómo enmascaro las nubes en el mosaico óptico?
-Assistant replied: [explains cloud masking]
-→ Enmascarar nubes en mosaico óptico`
+const TITLE_SYSTEM_PROMPT = titleSystemPrompt()
 
 // Qwen3-family models default to a thinking phase that can burn the entire
 // title budget before producing visible content. The LLM adapter can disable

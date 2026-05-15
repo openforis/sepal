@@ -1,6 +1,5 @@
 const {Command, Option} = require('commander')
 const log = require('#sepal/log').getLogger('config')
-const {defaultSystemPrompt} = require('./chat/systemPrompt')
 
 const DEFAULT_PORT = 80
 
@@ -75,11 +74,6 @@ try {
                 .default(DEFAULT_HTTP_PORT)
         )
         .addOption(
-            new Option('--system-prompt <value>', 'System prompt prepended to every conversation')
-                .env('SYSTEM_PROMPT')
-                .default(defaultSystemPrompt())
-        )
-        .addOption(
             new Option('--enable-ai-transport-smoke-tools <value>', 'Register transport smoke-test tools (dev/test only)')
                 .env('ENABLE_AI_TRANSPORT_SMOKE_TOOLS')
                 .argParser(v => v === 'true')
@@ -102,7 +96,6 @@ const {
     llmBaseUrl,
     rateLimit,
     sessionTtlMinutes,
-    systemPrompt,
     enableAiTransportSmokeTools
 } = program.opts()
 
@@ -120,6 +113,5 @@ module.exports = {
     llmBaseUrl,
     rateLimit,
     sessionTtlMs: sessionTtlMinutes * 60 * 1000,
-    systemPrompt,
     enableAiTransportSmokeTools
 }

@@ -10,6 +10,7 @@ const {createRedisConversationsStore} = require('./chat/io/redisConversationsSto
 const {createRedisHistory} = require('./chat/io/redisHistory')
 const {createWsHandler} = require('./chat/io/wsHandler')
 const {createLlm} = require('./chat/llm')
+const {mainSystemPrompt} = require('./chat/llmText/prompts')
 const {createConversation} = require('./chat/sendMessage/conversation')
 const {productTools} = require('./chat/sendMessage/productTools')
 const {createTitleGenerator} = require('./chat/sendMessage/titleGenerator')
@@ -28,6 +29,9 @@ function createApp({config}) {
     const tracer = createTracer({bus, clock, createId: uuid})
     const redis = new Redis({host: config.redisHost})
     const ttlMs = config.conversationTtlMs
+    // Production loads the project prompt asset; tests/smoke runs may pass
+    // config.systemPrompt directly to swap in a short prompt.
+    const systemPrompt = config.systemPrompt ?? mainSystemPrompt()
 
     const logListener = createLogListener({log: logViaLog4js})
     bus.events$.subscribe({
@@ -82,7 +86,7 @@ function createApp({config}) {
             map(initialMessages => createConversation({
                 llm, tracer, tools, history,
                 initialMessages,
-                systemPrompt: config.systemPrompt,
+                systemPrompt,
                 id,
                 bus
             }))

@@ -1199,7 +1199,11 @@ exceeds observed benefit.
 
 ```text
 modules/ai/src/chat/
-  system-prompt.md
+  llmText/
+    prompts.js
+    assistants/
+      main.md
+      title.md
   llm/
     index.js
     common/
