@@ -1,6 +1,6 @@
-const {of} = require('rxjs')
-const {describeRecipeTool} = require('#mcp/chat/specialists/recipeSpecialists')
-const {aFakeBus, aFakeLlm, aFakeTools, read} = require('../builders')
+const {of, throwError} = require('rxjs')
+const {describeRecipeTool, PREFLIGHT_TOOL_CALL_ID} = require('#mcp/chat/specialists/recipeSpecialists')
+const {aFakeBus, aFakeLlm, aFakeTools, read, readError} = require('../builders')
 
 describe('describeRecipeTool', () => {
 
@@ -9,6 +9,11 @@ describe('describeRecipeTool', () => {
         description: 'Load ONE recipe.',
         parameters: {type: 'object', properties: {recipeId: {type: 'string'}}}
     }
+
+    // describe_recipe runs a preflight recipe_load to resolve recipeType before
+    // assembling the specialist prompt — invocations from the inner LLM are
+    // anything after that first call.
+    const innerLlmInvocations = invocations => invocations.filter(call => call.id !== PREFLIGHT_TOOL_CALL_ID)
 
     function aTool(overrides = {}) {
         const llm = overrides.llm ?? aFakeLlm({replies: [{text: 'A 25-tree random-forest classifier.'}]})
@@ -106,7 +111,7 @@ describe('describeRecipeTool', () => {
 
         read(tool.invoke$({recipeId: 'r1'}, {channel: {}, conversationId: 'c1'}))
 
-        expect(innerTools.invocations).toEqual([recipeLoadCall])
+        expect(innerLlmInvocations(innerTools.invocations)).toEqual([recipeLoadCall])
     })
 
     it('returns a derived description from the specialist as the tool result, not the raw loaded recipe', () => {
@@ -148,14 +153,14 @@ describe('describeRecipeTool', () => {
             {text: 'cannot load.'}
         ]})
         const innerTools = aFakeTools(
-            {recipe_load: () => of({id: 'r999'})},
+            {recipe_load: () => of({id: 'r1', type: 'CLASSIFICATION'})},
             [recipeLoadSchema]
         )
         const {tool} = aTool({llm, innerTools})
 
         read(tool.invoke$({recipeId: 'r1'}, {channel: {}, conversationId: 'c1'}))
 
-        expect(innerTools.invocations).toEqual([])
+        expect(innerLlmInvocations(innerTools.invocations)).toEqual([])
         const toolMessage = llm.receivedMessages[1].find(m => m.role === 'tool')
         expect(toolMessage.toolResults[0].result).toEqual({
             ok: false,
@@ -173,15 +178,83 @@ describe('describeRecipeTool', () => {
             {text: 'blocked.'}
         ]})
         const innerTools = aFakeTools(
-            {recipe_load: () => of({id: 'r1'}), recipe_list: () => of([])},
+            {recipe_load: () => of({id: 'r1', type: 'CLASSIFICATION'}), recipe_list: () => of([])},
             [recipeLoadSchema, {name: 'recipe_list', description: 'List.', parameters: {type: 'object'}}]
         )
         const {tool} = aTool({llm, innerTools})
 
         read(tool.invoke$({recipeId: 'r1'}, {channel: {}, conversationId: 'c1'}))
 
-        expect(innerTools.invocations).toEqual([])
+        expect(innerLlmInvocations(innerTools.invocations)).toEqual([])
         const toolMessage = llm.receivedMessages[1].find(m => m.role === 'tool')
         expect(toolMessage.toolResults[0].result.error.code).toBe('TOOL_NOT_ALLOWED')
+    })
+
+    describe('per-type system prompt assembly', () => {
+
+        it('on a MOSAIC recipe, the inner LLM system prompt carries MOSAIC-specific promptFacts content', () => {
+            const innerTools = aFakeTools(
+                {recipe_load: () => of({id: 'r-mosaic', type: 'MOSAIC', modelHash: 'h', model: {}})},
+                [recipeLoadSchema]
+            )
+            const {tool, llm} = aTool({innerTools})
+
+            read(tool.invoke$({recipeId: 'r-mosaic'}, {channel: {}, conversationId: 'c1'}))
+
+            const systemMessage = llm.receivedMessages[0][0]
+            expect(systemMessage.role).toBe('system')
+            // Base frame is still present.
+            expect(systemMessage.content).toContain('recipe specialist')
+            // MOSAIC-specific content from promptFacts() is appended.
+            expect(systemMessage.content).toContain('MOSAIC')
+            expect(systemMessage.content).toContain('Optical Mosaic')
+            expect(systemMessage.content).toMatch(/Choose when:/)
+            expect(systemMessage.content).toMatch(/Use cases:/)
+        })
+
+        it('on an unknown recipe type, the inner LLM system prompt is the unmodified base frame', () => {
+            const innerTools = aFakeTools(
+                {recipe_load: () => of({id: 'r-other', type: 'NOT_IN_REGISTRY', modelHash: 'h', model: {}})},
+                [recipeLoadSchema]
+            )
+            const {tool, llm} = aTool({innerTools})
+
+            read(tool.invoke$({recipeId: 'r-other'}, {channel: {}, conversationId: 'c1'}))
+
+            const systemMessage = llm.receivedMessages[0][0]
+            expect(systemMessage.content).toContain('recipe specialist')
+            expect(systemMessage.content).not.toMatch(/Choose when:/)
+            expect(systemMessage.content).not.toMatch(/Use cases:/)
+        })
+
+        it('when the preflight recipe_load fails, the orchestrator gets the failure envelope and the inner specialist is not invoked', () => {
+            const innerTools = aFakeTools(
+                {recipe_load: () => throwError(() => new Error('GUI gone'))},
+                [recipeLoadSchema]
+            )
+            const {tool, llm} = aTool({innerTools})
+
+            const result = read(tool.invoke$({recipeId: 'r1'}, {channel: {}, conversationId: 'c1'}))
+
+            expect(result).toEqual({
+                ok: false,
+                error: expect.objectContaining({code: 'TOOL_FAILED', message: 'GUI gone'})
+            })
+            expect(llm.receivedMessages).toEqual([])
+        })
+
+        it('surfaces a failure envelope synchronously when the preflight returns one (recipe not found, etc.)', () => {
+            const failEnvelope = {ok: false, error: {code: 'NOT_FOUND', message: 'no such recipe'}}
+            const innerTools = aFakeTools(
+                {recipe_load: () => of(failEnvelope)},
+                [recipeLoadSchema]
+            )
+            const {tool, llm} = aTool({innerTools})
+
+            const result = read(tool.invoke$({recipeId: 'missing'}, {channel: {}, conversationId: 'c1'}))
+
+            expect(result).toEqual(failEnvelope)
+            expect(llm.receivedMessages).toEqual([])
+        })
     })
 })

@@ -21,13 +21,13 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   `create_recipe({recipeType, instruction, projectId?, name?})`. Existing
   recipes should resolve recipe type from `recipeId` (the orchestrator should
   not guess it); the type-resolution seam is not built yet.
-- **Recipe specialist routing is generic, not type-aware** —
-  `describeRecipeTool` loads a single hard-coded `specialistPrompt('recipe')`.
-  Per-type specialist selection (different prompt asset + allowed tools per
-  recipe type) needs a `recipeId -> recipeType` lookup plus per-type prompt
-  files under `llmText/specialists/recipe/<TYPE>.md`. Lands naturally with the
-  first `lib/js/recipes` package since that's the source of truth for
-  per-type knowledge.
+- **Recipe specialist routing is partially type-aware** —
+  `describeRecipeTool` now resolves `recipeId -> recipeType` via a preflight
+  `recipe_load` and assembles a per-type system prompt from the shared
+  `spec.promptFacts()` (MOSAIC today; other types fall back to the generic
+  base frame). Still missing: per-type allowed-tool sets, per-type
+  `update_recipe` / `create_recipe` dispatcher routing, and per-type prompt
+  file overrides (if a recipe ever needs more than `promptFacts()` can express).
 - **Map specialist read tools are minimal** — `consult_map` exposes
   `get_gui_context`, `map_area_list` (layout + areas + AOI + view), and
   `layer_list` (per-area imageLayer + featureLayers). Still missing:
@@ -44,12 +44,18 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   (`lib/js/shared/src/recipe`, currently MOSAIC only) from the GUI write path
   for authoritative validation and from recipe specialists for dependent-fragment
   planning and prompt facts.
-- **Shared recipe spec lacks `promptFacts()`** — DESIGN §7/§8 require a
-  mechanically-assembled prompt-facts surface (description, use cases,
-  defaults/projection summary, rule prose, output bands, gotchas). The current
-  shared spec exposes `schema` / `rules` / `defaultModel()` / `validate()` only.
-  Land with the first recipe specialist that wants to consume it; the previously
-  stubbed `getRecipeRulesText` was removed because it covered only a slice.
+- ~~**Shared recipe spec lacks `promptFacts()`**~~ — closed. MOSAIC spec exposes
+  `promptFacts()` returning `{description, useCases, chooseWhen, dontChooseWhen,
+  outputs}`. Consumed by `describe_recipe` via `assembleSpecialistPrompt`
+  (per-type prompt assembled with the base frame first for cache stability).
+  Additional fields from DESIGN §8 (defaults/projection summary, rule prose,
+  output bands, gotchas) land when a consumer needs them.
+- **`describe_recipe` preflight `recipe_load` is wasteful** — to resolve
+  `recipeId -> recipeType` for prompt assembly, the tool loads + projects the
+  full recipe once at the boundary; the specialist then loads it again inside
+  its own loop. Replace with a lightweight server-side `recipe_metadata`
+  lookup when a second dispatcher (e.g. `update_recipe`) needs the same
+  resolution.
 - **Shared recipe spec lacks `fragmentsForEdit({intent, targetPaths})`** —
   DESIGN §6/§7. Needed by the patch specialist to plan dependent-fragment
   reads/writes deterministically. Land alongside `recipe_patch` and the recipe

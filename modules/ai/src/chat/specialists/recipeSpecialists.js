@@ -1,15 +1,19 @@
 // Recipe-operation tools backed by a specialist runtime. Today:
 // describe_recipe.
 
-const {of} = require('rxjs')
+const {defer, mergeMap, of} = require('rxjs')
+const {getRecipeSpec} = require('#sepal/recipe')
 const {specialistPrompt} = require('../llmText/prompts')
 const {runSpecialist$} = require('./runSpecialist')
 const {scopeInnerTools} = require('./specialistScope')
+const {assembleSpecialistPrompt} = require('./assembleSpecialistPrompt')
+const {isChannelEmission} = require('../channelEvents')
 
 const DESCRIBE_RECIPE_ALLOWED = ['recipe_load']
+const PREFLIGHT_TOOL_CALL_ID = 'describe-recipe-preflight'
 
 function describeRecipeTool({llm, bus, innerTools}) {
-    const systemPrompt = specialistPrompt('recipe')
+    const basePrompt = specialistPrompt('recipe')
     const {allowedSchemas, invokeTool$: scopedInvokeTool$} = scopeInnerTools({
         innerTools,
         allowed: DESCRIBE_RECIPE_ALLOWED,
@@ -28,16 +32,36 @@ function describeRecipeTool({llm, bus, innerTools}) {
             required: ['recipeId'],
             additionalProperties: false
         },
-        invoke$: ({recipeId, question}, context) => runSpecialist$({
-            llm, bus,
-            name: 'recipe.describe',
-            systemPrompt,
-            userText: buildUserText({recipeId, question}),
-            allowedSchemas,
-            invokeTool$: restrictToRecipe(scopedInvokeTool$, recipeId),
-            context
-        })
+        invoke$: ({recipeId, question}, context) =>
+            preflight$(scopedInvokeTool$, recipeId, context).pipe(
+                mergeMap(envelope => {
+                    if (envelope.ok === false) return of(envelope)
+                    const spec = getRecipeSpec(envelope.data?.type)
+                    return runSpecialist$({
+                        llm, bus,
+                        name: 'recipe.describe',
+                        systemPrompt: assembleSpecialistPrompt(basePrompt, spec),
+                        userText: buildUserText({recipeId, question}),
+                        allowedSchemas,
+                        invokeTool$: restrictToRecipe(scopedInvokeTool$, recipeId),
+                        context
+                    })
+                })
+            )
     }
+}
+
+// Loads the recipe once up-front so we can resolve recipeId -> recipeType
+// before constructing the specialist's system prompt. The result is
+// discarded — the specialist re-loads inside its own loop. Wasteful; tracked
+// in PUNCH_LIST until a lightweight recipe_metadata lookup exists.
+function preflight$(scopedInvokeTool$, recipeId, context) {
+    return defer(() => scopedInvokeTool$(
+        {id: PREFLIGHT_TOOL_CALL_ID, name: 'recipe_load', input: {recipeId}},
+        context
+    )).pipe(
+        mergeMap(value => isChannelEmission(value) ? of() : of(value))
+    )
 }
 
 // recipe_load can in principle accept any recipeId. The orchestrator has
@@ -64,4 +88,4 @@ function buildUserText({recipeId, question}) {
     return `${head}\nquestion: ${question}`
 }
 
-module.exports = {describeRecipeTool}
+module.exports = {describeRecipeTool, PREFLIGHT_TOOL_CALL_ID}
