@@ -10,6 +10,11 @@ ADD modules/${MODULE_NAME}/package.json .
 ADD modules/${MODULE_NAME}/package-lock.json .
 RUN npm install
 
+# Shared library, resolved at build time via Vite's #sepal/* alias
+# (see vite.config.js). Same import path as the ai/* Node services.
+ADD lib/js/shared /usr/local/src/sepal/lib/js/shared
+RUN cd /usr/local/src/sepal/lib/js/shared && npm install --omit=dev --no-audit --no-fund
+
 ADD modules/${MODULE_NAME}/src ./src
 ADD modules/${MODULE_NAME}/public ./public
 ADD modules/${MODULE_NAME}/.env ./.env
