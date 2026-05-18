@@ -1,5 +1,5 @@
 const {Subject} = require('rxjs')
-const {createGuiRequests} = require('#mcp/chat/tools/guiRequests')
+const {createGuiRequests} = require('#mcp/chat/guiRequests')
 
 describe('GUI request bridge — routing diagnostics', () => {
 

@@ -1,7 +1,8 @@
 const {EMPTY, catchError, concatMap, defaultIfEmpty, defer, finalize, ignoreElements, last, map, of, scan, tap, timeout} = require('rxjs')
 const {titleSystemPrompt} = require('../llmText/prompts')
+const {cleanTitle} = require('./cleanTitle')
+const {fallbackTitle} = require('./fallbackTitle')
 
-const TITLE_MAX_CHARS = 80
 const TITLE_MAX_TOKENS = 32
 const TITLE_TEMPERATURE = 0
 const TITLE_FIRST_TEXT_TIMEOUT_MS = 10_000
@@ -15,16 +16,6 @@ const TITLE_SYSTEM_PROMPT = titleSystemPrompt()
 // reasoning per provider; /no_think remains as a harmless soft switch for
 // servers/models that honor prompt-level mode changes.
 const NO_THINK_SUFFIX = ' /no_think'
-
-const QUOTE_CHARS = '"\'`'
-const TRAILING_PUNCT = '.?!,:;'
-const PREAMBLE_RE = /^(?:title|subject|conversation|topic|summary|chat|name)\s*[:\-–]\s*/i
-const LIST_MARKER_RE = /^(?:\d+[.)]\s+|[-*]\s+)/
-const THINK_TAGS_RE = /<think>[\s\S]*?<\/think>/gi
-const LEADING_FILLER_RE = /^(?:please\s+)?(?:(?:can|could|would)\s+you\s+|how\s+(?:do|can)\s+i\s+|i\s+(?:want|need|would like)\s+to\s+|tell\s+me\s+(?:about\s+)?)/i
-const GREETING_RE = /^(hi|hello|hey|good\s+(morning|afternoon|evening))\b/i
-const THANKS_RE = /^(thanks|thank\s+you)\b/i
-const MAX_FALLBACK_WORDS = 6
 
 function createTitleGenerator({llm, conversationsStore, tracer, bus}) {
     const generating = new Set()
@@ -207,65 +198,9 @@ function lastAssistantText(messages) {
     return null
 }
 
-function cleanTitle(raw) {
-    if (typeof raw !== 'string') return null
-    const withoutThinking = raw.replace(THINK_TAGS_RE, '').trim()
-    const firstLine = withoutThinking.split('\n')[0].trim()
-    const stripped = stripTrailingPunctuation(stripWrappingQuotes(stripPreamble(firstLine)))
-    if (!stripped) return null
-    return stripped.length > TITLE_MAX_CHARS ? stripped.substring(0, TITLE_MAX_CHARS) : stripped
-}
-
-function fallbackTitle({userText, assistantText}) {
-    return titleFromText(userText) || titleFromText(assistantText)
-}
-
-function titleFromText(text) {
-    if (typeof text !== 'string') return null
-    const oneLine = text.split('\n')[0].trim()
-    if (!oneLine) return null
-    if (GREETING_RE.test(oneLine)) return 'Greeting'
-    if (THANKS_RE.test(oneLine)) return 'Thanks'
-    const cleaned = oneLine
-        .replace(LEADING_FILLER_RE, '')
-        .replace(/https?:\/\/\S+/g, '')
-        .replace(/[^\w\s-]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-    if (!cleaned) return null
-    const words = cleaned.split(' ').filter(Boolean).slice(0, MAX_FALLBACK_WORDS)
-    return cleanTitle(words.join(' '))
-}
-
 function truncateDebug(text) {
     if (text.length <= MAX_DEBUG_TEXT) return text
     return `${text.slice(0, MAX_DEBUG_TEXT)}...`
 }
 
-function stripWrappingQuotes(title) {
-    let result = title
-    while (result.length >= 2 && QUOTE_CHARS.includes(result[0]) && result[result.length - 1] === result[0]) {
-        result = result.slice(1, -1).trim()
-    }
-    return result
-}
-
-function stripTrailingPunctuation(title) {
-    let result = title
-    while (result.length && TRAILING_PUNCT.includes(result[result.length - 1])) {
-        result = result.slice(0, -1).trim()
-    }
-    return result
-}
-
-function stripPreamble(title) {
-    let result = title
-    let prev = null
-    while (prev !== result) {
-        prev = result
-        result = result.replace(PREAMBLE_RE, '').replace(LIST_MARKER_RE, '').trim()
-    }
-    return result
-}
-
-module.exports = {createTitleGenerator, cleanTitle}
+module.exports = {createTitleGenerator}

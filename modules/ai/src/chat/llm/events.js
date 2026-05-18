@@ -1,5 +1,7 @@
 const {finalize} = require('rxjs')
-const {truncateTo, MAX_LOG_TEXT} = require('./text')
+const {truncateTo} = require('../debugText')
+
+const MAX_LOG_TEXT = 300
 
 function publishResponseSummary({bus, model, acc}) {
     return finalize(() => bus.publish({

@@ -1,4 +1,4 @@
-const {turnContextMessage} = require('./turnContext')
+const {turnContextMessage} = require('../turnContext')
 
 function messagesForLlm({messages, selection, includeTurnContext, isolateHistory}) {
     const latestUserIndex = Math.max(messages.findLastIndex(message => message.role === 'user'), 0)

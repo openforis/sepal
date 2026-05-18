@@ -1,16 +1,11 @@
 const {of} = require('rxjs')
-const {createToolRegistry} = require('#mcp/chat/tools/registry')
-const {productTools, specialistInnerTools} = require('#mcp/chat/tools/productTools')
+const {createOrchestratorToolRegistry} = require('#mcp/chat/orchestratorToolRegistry')
 const {aConversation, aFakeBus, aFakeGuiRequests, aFakeLlm, aFakeTracer, run} = require('../builders')
 
-describe('Conversation with product tools', () => {
+describe('Conversation with the orchestrator tool surface', () => {
 
     function buildOrchestratorTools({llm, guiRequests}) {
-        const innerTools = createToolRegistry({tools: specialistInnerTools({guiRequests}), bus: aFakeBus()})
-        return createToolRegistry({
-            tools: productTools({guiRequests, llm, tracer: aFakeTracer(), innerTools}),
-            bus: aFakeBus()
-        })
+        return createOrchestratorToolRegistry({guiRequests, llm, tracer: aFakeTracer(), bus: aFakeBus()})
     }
 
     it('lets the LLM ask for the current GUI context', () => {

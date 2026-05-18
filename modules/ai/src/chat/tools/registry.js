@@ -1,7 +1,7 @@
 const {catchError, defer, map, of, tap} = require('rxjs')
 const Ajv = require('ajv')
 const addFormats = require('ajv-formats')
-const {truncateTo, MAX_DEBUG_TEXT} = require('../llm/common/text')
+const {truncateTo, MAX_DEBUG_TEXT} = require('../debugText')
 
 const NOOP_BUS = {publish() {}}
 

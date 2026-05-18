@@ -82,9 +82,18 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 - **In-flight streams do not survive restart** — conversation metadata and
   history are persisted in Redis, but an active LLM stream is in-memory only.
-- **In-memory caches grow unbounded** — `userChats` in `src/app.js` and
-  `conversations` in `src/chat/conversation/userChat.js` never evict. Add idle
-  eviction or an LRU cap if uptime/user count makes this matter.
+- **In-memory caches grow unbounded** — `chats` in
+  `src/chat/conversation/userChats.js` and `conversations` in
+  `src/chat/conversation/userChat.js` never evict. Add idle eviction or an LRU
+  cap if uptime/user count makes this matter.
 - **Single ai-module instance assumption** — cross-tab sync goes through
   in-memory `UserChat` state. Multiple ai-module instances behind a load
   balancer would need Redis pub/sub or an equivalent broadcast layer.
+
+## Configuration
+
+- **`src/config.js` parses unused legacy fields** — `sepalEndpoint`,
+  `geeEndpoint`, `rateLimit`, and `sessionTtlMinutes` are still required CLI
+  options because compose passes them, but the active app does not wire SEPAL
+  or GEE clients, server-side rate limiting, or session expiry. Drop the
+  options or actually wire them.

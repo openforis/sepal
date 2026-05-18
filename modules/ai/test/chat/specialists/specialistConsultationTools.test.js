@@ -1,8 +1,8 @@
 const {of} = require('rxjs')
-const {specialistTools} = require('#mcp/chat/specialists/specialistTools')
+const {specialistConsultationTools} = require('#mcp/chat/specialists/specialistConsultationTools')
 const {aFakeLlm, aFakeTools, aFakeTracer, read} = require('../builders')
 
-describe('specialistTools', () => {
+describe('specialistConsultationTools', () => {
 
     const productSchemas = [
         {name: 'get_context', description: 'GUI context.', parameters: {type: 'object', properties: {}}},
@@ -21,7 +21,7 @@ describe('specialistTools', () => {
             },
             productSchemas
         )
-        const tools = specialistTools({
+        const tools = specialistConsultationTools({
             llm,
             tracer: overrides.tracer ?? aFakeTracer(),
             innerTools
@@ -46,7 +46,7 @@ describe('specialistTools', () => {
     it('throws at construction when an allowed tool is not registered in the inner tool set', () => {
         const innerTools = aFakeTools({}, [{name: 'recipe_list', description: 'r', parameters: {type: 'object'}}])
 
-        expect(() => specialistTools({
+        expect(() => specialistConsultationTools({
             llm: aFakeLlm(), tracer: aFakeTracer(), innerTools
         })).toThrow(/get_context/)
     })

@@ -1,7 +1,7 @@
 const {concat, defer, filter, from, map, mergeMap, tap, timeout} = require('rxjs')
 const OpenAI = require('openai').default
-const {truncateTo, MAX_DEBUG_TEXT} = require('../common/text')
-const {publishResponseSummary} = require('../common/events')
+const {truncateTo, MAX_DEBUG_TEXT} = require('../../debugText')
+const {publishResponseSummary} = require('../events')
 
 const FIRST_CHUNK_TIMEOUT_MS = 60_000
 const BETWEEN_CHUNKS_TIMEOUT_MS = 30_000

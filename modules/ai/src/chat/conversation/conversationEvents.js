@@ -1,4 +1,4 @@
-const {truncateTo, MAX_DEBUG_TEXT} = require('../llm/common/text')
+const {truncateTo, MAX_DEBUG_TEXT} = require('../debugText')
 
 function publishLlmRequest({bus, conversationId, round, llmMessages, toolSchemas}) {
     const offeredTools = toolSchemas.map(tool => tool.name)

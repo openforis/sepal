@@ -1,4 +1,3 @@
-const MAX_LOG_TEXT = 300
 const MAX_DEBUG_TEXT = 4000
 
 function truncateTo(text, maxLength) {
@@ -6,4 +5,4 @@ function truncateTo(text, maxLength) {
     return `${text.slice(0, maxLength)}...`
 }
 
-module.exports = {truncateTo, MAX_LOG_TEXT, MAX_DEBUG_TEXT}
+module.exports = {truncateTo, MAX_DEBUG_TEXT}

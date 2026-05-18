@@ -1,5 +1,5 @@
 const {of} = require('rxjs')
-const {shapeTurnContext} = require('../conversation/turnContext')
+const {shapeTurnContext} = require('../turnContext')
 
 function contextTool() {
     return {

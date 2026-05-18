@@ -1,6 +1,6 @@
 const {EMPTY, defer, from, mergeMap} = require('rxjs')
-const {truncateTo, MAX_DEBUG_TEXT} = require('../common/text')
-const {publishResponseSummary} = require('../common/events')
+const {truncateTo, MAX_DEBUG_TEXT} = require('../../debugText')
+const {publishResponseSummary} = require('../events')
 
 function createLmStudioNativeChat({baseURL, apiKey, model, bus}) {
 
