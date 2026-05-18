@@ -16,11 +16,12 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 - **Recipe operation dispatchers are partial** — `describe_recipe({recipeId,
   question?})` is implemented and routes to a single generic recipe specialist
-  that holds raw `recipe_load` privately. Still missing:
+  that holds raw `recipe_load` privately. The `recipe_patch` wire (tool +
+  stubbed GUI handler) now exists in the specialist inner registry but has no
+  specialist consumer yet. Still missing:
   `update_recipe({recipeId, instruction})` and
-  `create_recipe({recipeType, instruction, projectId?, name?})`. Existing
-  recipes should resolve recipe type from `recipeId` (the orchestrator should
-  not guess it); the type-resolution seam is not built yet.
+  `create_recipe({recipeType, instruction, projectId?, name?})` dispatchers
+  that wire `recipe_patch` into a per-type write-capable specialist.
 - **Recipe specialist routing is partially type-aware** —
   `describeRecipeTool` now resolves `recipeId -> recipeType` via a preflight
   `recipe_load` and assembles a per-type system prompt from the shared
@@ -34,11 +35,18 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   per-layer loading/error state, dynamic-vis legend/palette inspection, and
   any live per-area viewport beyond `map.view` (per-area viewports under
   `mapCommand$` are not in Redux).
-- **`recipe_patch` must be specialist-private** — the patch wire contract needs
-  GUI-side `baseModelHash` enforcement, atomic JSON Patch application, and
-  structured stale/apply errors, but it should not remain on the always-visible
-  orchestrator tool surface. Recipe specialists should call it after inspecting
-  the needed recipe fragments.
+- **`recipe_patch` GUI handler is stubbed — applies + validates but does not
+  persist.** The wire contract is complete (specialist-private tool in
+  `modules/ai/src/chat/tools/recipePatchTool.js`; GUI handler in
+  `modules/gui/src/app/home/body/process/chatActions/recipeActions.js`
+  enforces `baseModelHash`, applies the patch atomically against the
+  effective model, validates via the shared recipe spec, and returns
+  `{summary, modelHash, invalidatedPaths}` or structured `STALE_WRITE`,
+  `INVALID_PATCH`, `PATCH_APPLY_FAILED`, `VALIDATION_FAILED`,
+  `RECIPE_NOT_FOUND` envelopes). The handler does not yet replace
+  `process.loadedRecipes[recipeId].model` or call `api.recipe.save$` — the
+  next slice flips the stub by routing the post-apply effective model
+  through the same write path `createRecipe` / `updateRecipe` use.
 - **Recipe-domain validation is deferred** — JSON Patch envelope validation is
   not enough for safe recipe edits. Use the shared recipe spec/validation API
   (`lib/js/shared/src/recipe`, currently MOSAIC only) from the GUI write path

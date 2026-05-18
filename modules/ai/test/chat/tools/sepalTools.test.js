@@ -28,4 +28,16 @@ describe('sepal tools', () => {
 
         expect(names).toContain('recipe_load')
     })
+
+    it('keeps recipe_patch in the specialist inner-registry so the patch specialist can write recipes', () => {
+        const names = specialistInnerTools({guiRequests: aFakeGuiRequests(() => of({}))}).map(tool => tool.name)
+
+        expect(names).toContain('recipe_patch')
+    })
+
+    it('does not expose recipe_patch on the orchestrator surface — it is specialist-private', () => {
+        const names = sepalTools({guiRequests: aFakeGuiRequests()}).map(tool => tool.name)
+
+        expect(names).not.toContain('recipe_patch')
+    })
 })

@@ -95,15 +95,16 @@ function keyOf({clientId, subscriptionId}) {
 }
 
 // GUI handlers respond with either a string ("Recipe not found: r1") or an
-// object ({code, message}). Surface both as an Error so the AI side gets a
-// meaningful .message, and attach .code when present so callers can map it
-// to a structured tool-result envelope.
+// object ({code, message, ...extras}). Surface both as an Error so the AI
+// side gets a meaningful .message; copy code + any extra fields onto the
+// Error so callers can map code-specific detail (e.g. STALE_WRITE
+// currentModelHash, VALIDATION_FAILED per-path errors) into tool-result
+// envelopes.
 function buildGuiError(error) {
     if (typeof error === 'string') return new Error(error)
     if (error && typeof error === 'object') {
-        const e = new Error(error.message || 'GUI request failed')
-        if (error.code) e.code = error.code
-        return e
+        const {message, ...extras} = error
+        return Object.assign(new Error(message || 'GUI request failed'), extras)
     }
     return new Error('GUI request failed')
 }

@@ -10,7 +10,7 @@ import {registerRecipeActions} from './recipeActions'
 
 const {
     recipeState, projectState, loadedRecipe, store, loadRecipes$, loadProjects$,
-    isRecipeOpen, openRecipeInNewTab, selectRecipe
+    isRecipeOpen, openRecipeInNewTab, selectRecipe, apiRecipeSave$, apiRecipeLoad$
 } = vi.hoisted(() => ({
     recipeState: [{id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: 'p1'}],
     projectState: [{id: 'p1', name: 'Kenya'}],
@@ -31,7 +31,13 @@ const {
     loadProjects$: vi.fn(),
     isRecipeOpen: vi.fn(),
     openRecipeInNewTab: vi.fn(),
-    selectRecipe: vi.fn()
+    selectRecipe: vi.fn(),
+    apiRecipeSave$: vi.fn(),
+    apiRecipeLoad$: vi.fn()
+}))
+
+vi.mock('~/apiRegistry', () => ({
+    default: {recipe: {save$: apiRecipeSave$, load$: apiRecipeLoad$}}
 }))
 
 vi.mock('~/store', () => ({
@@ -78,6 +84,8 @@ beforeEach(() => {
     isRecipeOpen.mockReset().mockReturnValue(false)
     openRecipeInNewTab.mockReset()
     selectRecipe.mockReset()
+    apiRecipeSave$.mockReset()
+    apiRecipeLoad$.mockReset()
 })
 
 it('handles the list-recipes action and responds with a {success, data} envelope carrying the recipe list', () => {
@@ -162,6 +170,139 @@ describe('recipe-metadata', () => {
         handleGuiAction('recipe-metadata', {respond: r => { response = r }})
 
         expect(response).toEqual({success: false, error: expect.stringMatching(/recipeId/i)})
+    })
+})
+
+describe('recipe-patch', () => {
+
+    let mosaicRecipe, baseHash
+
+    beforeEach(async () => {
+        const {getRecipeDefaults} = await import('#sepal/recipe')
+        const mosaicModel = {
+            ...getRecipeDefaults('MOSAIC'),
+            aoi: {type: 'POLYGON', path: [[36.7, -1.4], [37.0, -1.4], [37.0, -1.1]]}
+        }
+        mosaicRecipe = {
+            id: 'mosaic1',
+            type: 'MOSAIC',
+            title: 'Kenya mosaic',
+            projectId: 'p1',
+            model: mosaicModel,
+            ui: {initialized: true},
+            layers: {areas: {}}
+        }
+        addHash(mosaicRecipe.model)
+        baseHash = getHash(mosaicRecipe.model)
+        store.loadedRecipes = {mosaic1: mosaicRecipe}
+    })
+
+    const replaceSeasonEnd = {op: 'replace', path: '/dates/seasonEnd', value: '2026-09-01'}
+
+    function patch(overrides) {
+        let response
+        const handled = handleGuiAction('recipe-patch', {
+            recipeId: 'mosaic1',
+            baseModelHash: baseHash,
+            operations: [replaceSeasonEnd],
+            respond: r => { response = r },
+            ...overrides
+        })
+        return {handled, response}
+    }
+
+    it('responds with {summary, modelHash, invalidatedPaths} for a valid MOSAIC patch on a known recipe', () => {
+        const {handled, response} = patch({})
+
+        expect(handled).toBe(true)
+        expect(response.success).toBe(true)
+        expect(response.data).toEqual({
+            summary: expect.any(String),
+            modelHash: expect.any(String),
+            invalidatedPaths: ['/dates/seasonEnd']
+        })
+    })
+
+    it('returns a new modelHash when the patch actually changes the model', () => {
+        const {response} = patch({})
+
+        expect(response.data.modelHash).not.toBe(baseHash)
+    })
+
+    it('reuses baseModelHash when the patch is a no-op (test op only)', () => {
+        const {response} = patch({operations: [{op: 'test', path: '/dates/type', value: 'YEARLY_TIME_SCAN'}]})
+
+        expect(response.success).toBe(true)
+        expect(response.data.modelHash).toBe(baseHash)
+    })
+
+    it('returns STALE_WRITE with currentModelHash when baseModelHash does not match', () => {
+        const {response} = patch({baseModelHash: 'h-stale'})
+
+        expect(response.success).toBe(false)
+        expect(response.error).toMatchObject({
+            code: 'STALE_WRITE',
+            message: expect.any(String),
+            currentModelHash: baseHash
+        })
+    })
+
+    it('returns VALIDATION_FAILED with structured per-path errors when the post-apply model is invalid', () => {
+        const {response} = patch({operations: [{op: 'remove', path: '/dates'}]})
+
+        expect(response.success).toBe(false)
+        expect(response.error.code).toBe('VALIDATION_FAILED')
+        expect(Array.isArray(response.error.errors)).toBe(true)
+        expect(response.error.errors.length).toBeGreaterThan(0)
+        response.error.errors.forEach(error => {
+            expect(error).toMatchObject({path: expect.any(String), message: expect.any(String), rule: expect.any(String)})
+        })
+    })
+
+    it('returns INVALID_PATCH for an empty operations array', () => {
+        const {response} = patch({operations: []})
+
+        expect(response.error.code).toBe('INVALID_PATCH')
+    })
+
+    it('returns INVALID_PATCH for a malformed JSON Pointer', () => {
+        const {response} = patch({operations: [{op: 'replace', path: 'dates', value: {}}]})
+
+        expect(response.error.code).toBe('INVALID_PATCH')
+    })
+
+    it('returns INVALID_PATCH for an unknown op', () => {
+        const {response} = patch({operations: [{op: 'frobnicate', path: '/dates'}]})
+
+        expect(response.error.code).toBe('INVALID_PATCH')
+    })
+
+    it('returns PATCH_APPLY_FAILED for a remove on a non-existent path', () => {
+        const {response} = patch({operations: [{op: 'remove', path: '/doesNotExist'}]})
+
+        expect(response.error.code).toBe('PATCH_APPLY_FAILED')
+    })
+
+    it('returns RECIPE_NOT_FOUND for an unknown recipeId', () => {
+        const {response} = patch({recipeId: 'r-missing'})
+
+        expect(response.error.code).toBe('RECIPE_NOT_FOUND')
+    })
+
+    it('does not mutate the loaded recipe model on a successful patch (stub: this assertion flips when persistence lands)', () => {
+        const modelRefBefore = mosaicRecipe.model
+        const hashBefore = getHash(mosaicRecipe.model)
+
+        patch({})
+
+        expect(mosaicRecipe.model).toBe(modelRefBefore)
+        expect(getHash(mosaicRecipe.model)).toBe(hashBefore)
+    })
+
+    it('does not call api.recipe.save$ (stub)', () => {
+        patch({})
+
+        expect(apiRecipeSave$).not.toHaveBeenCalled()
     })
 })
 

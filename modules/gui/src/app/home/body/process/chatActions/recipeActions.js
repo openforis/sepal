@@ -1,3 +1,4 @@
+import {getRecipeSpec, toEffectiveModel} from '#sepal/recipe'
 import _ from 'lodash'
 import {map, of, switchMap, tap} from 'rxjs'
 
@@ -21,6 +22,7 @@ import {
     selectRecipe
 } from '../recipe'
 import {getRecipeType} from '../recipeTypeRegistry'
+import {applyJsonPatch, JsonPatchApplyError, JsonPatchInvalidError} from './jsonPatch'
 import {respondError} from './response'
 
 const log = getLogger('chat-recipe-actions')
@@ -180,6 +182,85 @@ const loadRecipe = ({recipeId, respond}) => {
     })
 }
 
+// Stubbed: applies + validates a JSON Patch against the effective recipe
+// model, but does not persist or mutate loadedRecipes. The next slice flips
+// the stub by replacing recipe.model with the post-apply effective model and
+// routing through the same write path createRecipe/updateRecipe use.
+const recipePatch = ({recipeId, baseModelHash, operations, respond}) => {
+    if (typeof recipeId !== 'string' || typeof baseModelHash !== 'string' || !Array.isArray(operations)) {
+        respond({success: false, error: {code: 'INVALID_PATCH', message: 'recipeId, baseModelHash and operations are required'}})
+        return
+    }
+    const recipe = select(['process.loadedRecipes', recipeId])
+    if (!recipe) {
+        respond({success: false, error: {code: 'RECIPE_NOT_FOUND', message: `Recipe not found: ${recipeId}`}})
+        return
+    }
+    const currentModelHash = getHash(recipe.model)
+    if (currentModelHash !== baseModelHash) {
+        log.info(`recipe-patch r=${recipeId} stale base=${baseModelHash} current=${currentModelHash}`)
+        respond({success: false, error: {
+            code: 'STALE_WRITE',
+            message: `baseModelHash mismatch: base=${baseModelHash} current=${currentModelHash}`,
+            currentModelHash
+        }})
+        return
+    }
+    const effective = toEffectiveModel(recipe.type, recipe.model)
+    let after
+    try {
+        after = applyJsonPatch(effective, operations)
+    } catch (error) {
+        if (error instanceof JsonPatchInvalidError) {
+            log.info(`recipe-patch r=${recipeId} invalid ops=${operations.length} reason=${error.message}`)
+            respond({success: false, error: {code: 'INVALID_PATCH', message: error.message}})
+            return
+        }
+        if (error instanceof JsonPatchApplyError) {
+            log.info(`recipe-patch r=${recipeId} apply-failed ops=${operations.length} reason=${error.message}`)
+            respond({success: false, error: {code: 'PATCH_APPLY_FAILED', message: error.message}})
+            return
+        }
+        throw error
+    }
+    const spec = getRecipeSpec(recipe.type)
+    if (spec) {
+        const errors = spec.validate(after)
+        if (errors.length > 0) {
+            log.info(`recipe-patch r=${recipeId} validation-failed ops=${operations.length} errors=${errors.length}`)
+            respond({success: false, error: {
+                code: 'VALIDATION_FAILED',
+                message: `${errors.length} validation error${errors.length === 1 ? '' : 's'}`,
+                errors
+            }})
+            return
+        }
+    }
+    const invalidatedPaths = patchInvalidatedPaths(operations)
+    let newModelHash
+    if (_.isEqual(after, effective)) {
+        newModelHash = baseModelHash
+    } else {
+        addHash(after)
+        newModelHash = getHash(after)
+    }
+    log.info(`recipe-patch r=${recipeId} ok ops=${operations.length} paths=${invalidatedPaths.join(',')}`)
+    respond({success: true, data: {
+        summary: `Applied ${operations.length} operation${operations.length === 1 ? '' : 's'} to recipe ${recipeId}.`,
+        modelHash: newModelHash,
+        invalidatedPaths
+    }})
+}
+
+const patchInvalidatedPaths = operations => {
+    const set = new Set()
+    operations.forEach(op => {
+        if (typeof op.path === 'string') set.add(op.path)
+        if (typeof op.from === 'string') set.add(op.from)
+    })
+    return [...set]
+}
+
 // Cheap identity-only lookup for dispatcher-side type resolution (the AI
 // module's recipe-specialist routing). Reuses the same `process.recipes`
 // list-recipes draws on — no model fetch, no gzip envelope. Never exposed
@@ -286,6 +367,7 @@ export const registerRecipeActions = () => {
     registerAction('create-recipe', createRecipe)
     registerAction('save-recipe', updateRecipe)
     registerAction('load-recipe', loadRecipe)
+    registerAction('recipe-patch', recipePatch)
     registerAction('recipe-metadata', recipeMetadata)
     registerAction('list-recipes', listRecipes)
     registerAction('delete-recipes', deleteRecipes)

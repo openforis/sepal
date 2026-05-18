@@ -98,6 +98,33 @@ describe('GUI request bridge — request lifecycle', () => {
         expect(result.error.code).toBe('RECIPE_NOT_FOUND')
     })
 
+    it('preserves extra fields on a structured error so callers can surface code-specific detail (e.g. STALE_WRITE currentModelHash)', () => {
+        const result = capture(request())
+
+        respond({success: false, error: {
+            code: 'STALE_WRITE',
+            message: 'base hash mismatch',
+            currentModelHash: 'h-current'
+        }})
+
+        expect(result.error.code).toBe('STALE_WRITE')
+        expect(result.error.message).toBe('base hash mismatch')
+        expect(result.error.currentModelHash).toBe('h-current')
+    })
+
+    it('preserves a nested errors array on a structured error (e.g. VALIDATION_FAILED per-path errors)', () => {
+        const result = capture(request())
+
+        respond({success: false, error: {
+            code: 'VALIDATION_FAILED',
+            message: 'invalid',
+            errors: [{path: '/dates/seasonEnd', message: 'must be in window', rule: 'seasonEndWindow'}]
+        }})
+
+        expect(result.error.code).toBe('VALIDATION_FAILED')
+        expect(result.error.errors).toEqual([{path: '/dates/seasonEnd', message: 'must be in window', rule: 'seasonEndWindow'}])
+    })
+
     it('ignores a response with an unknown requestId', () => {
         const result = capture(request())
 
