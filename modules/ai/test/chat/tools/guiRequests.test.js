@@ -81,6 +81,23 @@ describe('GUI request bridge — request lifecycle', () => {
         expect(result.error.message).toMatch(/panel not found/i)
     })
 
+    it('preserves a plain-string error message from the GUI (not just object-shaped errors)', () => {
+        const result = capture(request())
+
+        respond({success: false, error: 'Recipe not found: r1'})
+
+        expect(result.error.message).toBe('Recipe not found: r1')
+    })
+
+    it('preserves a structured error code from the GUI so callers can map to specific tool-result envelopes', () => {
+        const result = capture(request())
+
+        respond({success: false, error: {code: 'RECIPE_NOT_FOUND', message: 'Recipe not found: r1'}})
+
+        expect(result.error.message).toBe('Recipe not found: r1')
+        expect(result.error.code).toBe('RECIPE_NOT_FOUND')
+    })
+
     it('ignores a response with an unknown requestId', () => {
         const result = capture(request())
 

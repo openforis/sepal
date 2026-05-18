@@ -10,7 +10,7 @@ function createOrchestratorToolRegistry({guiRequests, llm, bus, diagnostics}) {
     const innerTools = createToolRegistry({tools: specialistInnerTools({guiRequests}), bus, diagnostics})
     const orchestratorToolList = [
         ...sepalTools({guiRequests}),
-        describeRecipeTool({llm, bus, innerTools}),
+        describeRecipeTool({llm, bus, innerTools, guiRequests}),
         ...specialistConsultationTools({llm, bus, innerTools})
     ]
     return createToolRegistry({tools: orchestratorToolList, bus, diagnostics})

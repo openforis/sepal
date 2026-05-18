@@ -116,6 +116,55 @@ it('does not mutate the loaded recipe model when reading it (load-recipe is a pu
     expect(getHash(loadedRecipe.model)).toBe(hashBefore)
 })
 
+describe('recipe-metadata', () => {
+
+    it('responds with the four identity fields for a known recipe id', () => {
+        let response
+        const handled = handleGuiAction('recipe-metadata', {recipeId: 'r1', respond: r => { response = r }})
+
+        expect(handled).toBe(true)
+        expect(response).toEqual({
+            success: true,
+            data: {id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: 'p1'}
+        })
+    })
+
+    it('does not return the model or any heavy field', () => {
+        let response
+        handleGuiAction('recipe-metadata', {recipeId: 'r1', respond: r => { response = r }})
+
+        expect(response.data).not.toHaveProperty('model')
+        expect(response.data).not.toHaveProperty('ui')
+        expect(response.data).not.toHaveProperty('layers')
+        expect(response.data).not.toHaveProperty('modelHash')
+    })
+
+    it('responds with a structured not-found envelope for an unknown recipe id', () => {
+        let response
+        handleGuiAction('recipe-metadata', {recipeId: 'r-missing', respond: r => { response = r }})
+
+        expect(response).toEqual({
+            success: false,
+            error: {code: 'RECIPE_NOT_FOUND', message: expect.stringContaining('r-missing')}
+        })
+    })
+
+    it('loads recipes before resolving when process.recipes is empty', () => {
+        store.recipes = []
+
+        handleGuiAction('recipe-metadata', {recipeId: 'r1', respond: () => {}})
+
+        expect(loadRecipes$).toHaveBeenCalled()
+    })
+
+    it('rejects a call with no recipeId', () => {
+        let response
+        handleGuiAction('recipe-metadata', {respond: r => { response = r }})
+
+        expect(response).toEqual({success: false, error: expect.stringMatching(/recipeId/i)})
+    })
+})
+
 it('handles the open action, opens the recipe, and responds with a summary', () => {
     let response
     const handled = handleGuiAction('open', {recipeId: 'r1', respond: r => { response = r }})

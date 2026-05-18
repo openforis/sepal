@@ -180,6 +180,29 @@ const loadRecipe = ({recipeId, respond}) => {
     })
 }
 
+// Cheap identity-only lookup for dispatcher-side type resolution (the AI
+// module's recipe-specialist routing). Reuses the same `process.recipes`
+// list-recipes draws on — no model fetch, no gzip envelope. Never exposed
+// as an LLM-callable tool.
+const recipeMetadata = ({recipeId, respond}) => {
+    if (!recipeId) {
+        respond({success: false, error: 'recipeId is required'})
+        return
+    }
+    ensureRecipesLoaded$().subscribe({
+        next: () => {
+            const recipes = select('process.recipes') || []
+            const recipe = recipes.find(r => r.id === recipeId)
+            if (!recipe) {
+                respond({success: false, error: {code: 'RECIPE_NOT_FOUND', message: `Recipe not found: ${recipeId}`}})
+                return
+            }
+            respond({success: true, data: recipeSummary(recipe)})
+        },
+        error: error => respondError({log, respond, fallback: 'Failed to look up recipe metadata', error})
+    })
+}
+
 const listRecipes = ({type, projectId, respond}) => {
     ensureRecipesLoaded$().subscribe({
         next: () => {
@@ -263,6 +286,7 @@ export const registerRecipeActions = () => {
     registerAction('create-recipe', createRecipe)
     registerAction('save-recipe', updateRecipe)
     registerAction('load-recipe', loadRecipe)
+    registerAction('recipe-metadata', recipeMetadata)
     registerAction('list-recipes', listRecipes)
     registerAction('delete-recipes', deleteRecipes)
     registerAction('move-recipes', moveRecipes)

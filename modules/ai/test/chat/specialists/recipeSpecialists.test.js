@@ -1,6 +1,6 @@
 const {of, throwError} = require('rxjs')
-const {describeRecipeTool, PREFLIGHT_TOOL_CALL_ID} = require('#mcp/chat/specialists/recipeSpecialists')
-const {aFakeBus, aFakeLlm, aFakeTools, read, readError} = require('../builders')
+const {describeRecipeTool} = require('#mcp/chat/specialists/recipeSpecialists')
+const {aFakeBus, aFakeGuiRequests, aFakeLlm, aFakeTools, read} = require('../builders')
 
 describe('describeRecipeTool', () => {
 
@@ -10,10 +10,9 @@ describe('describeRecipeTool', () => {
         parameters: {type: 'object', properties: {recipeId: {type: 'string'}}}
     }
 
-    // describe_recipe runs a preflight recipe_load to resolve recipeType before
-    // assembling the specialist prompt — invocations from the inner LLM are
-    // anything after that first call.
-    const innerLlmInvocations = invocations => invocations.filter(call => call.id !== PREFLIGHT_TOOL_CALL_ID)
+    function metadataReplyingWith(metadata) {
+        return aFakeGuiRequests(() => of(metadata))
+    }
 
     function aTool(overrides = {}) {
         const llm = overrides.llm ?? aFakeLlm({replies: [{text: 'A 25-tree random-forest classifier.'}]})
@@ -21,12 +20,14 @@ describe('describeRecipeTool', () => {
             {recipe_load: () => of({id: 'r1', type: 'CLASSIFICATION', model: {classifier: {numberOfTrees: 25}}, modelHash: 'h1'})},
             [recipeLoadSchema]
         )
+        const guiRequests = overrides.guiRequests ?? metadataReplyingWith({id: 'r1', type: 'CLASSIFICATION', name: 'Kenya', projectId: 'p1'})
         const tool = describeRecipeTool({
             llm,
             bus: overrides.bus ?? aFakeBus(),
-            innerTools
+            innerTools,
+            guiRequests
         })
-        return {tool, llm, innerTools}
+        return {tool, llm, innerTools, guiRequests}
     }
 
     it('exposes a describe_recipe tool with recipeId required and question optional', () => {
@@ -49,7 +50,7 @@ describe('describeRecipeTool', () => {
         const innerTools = aFakeTools({}, [])
 
         expect(() => describeRecipeTool({
-            llm: aFakeLlm(), bus: aFakeBus(), innerTools
+            llm: aFakeLlm(), bus: aFakeBus(), innerTools, guiRequests: aFakeGuiRequests()
         })).toThrow(/recipe_load/)
     })
 
@@ -111,7 +112,7 @@ describe('describeRecipeTool', () => {
 
         read(tool.invoke$({recipeId: 'r1'}, {channel: {}, conversationId: 'c1'}))
 
-        expect(innerLlmInvocations(innerTools.invocations)).toEqual([recipeLoadCall])
+        expect(innerTools.invocations).toEqual([recipeLoadCall])
     })
 
     it('returns a derived description from the specialist as the tool result, not the raw loaded recipe', () => {
@@ -160,7 +161,7 @@ describe('describeRecipeTool', () => {
 
         read(tool.invoke$({recipeId: 'r1'}, {channel: {}, conversationId: 'c1'}))
 
-        expect(innerLlmInvocations(innerTools.invocations)).toEqual([])
+        expect(innerTools.invocations).toEqual([])
         const toolMessage = llm.receivedMessages[1].find(m => m.role === 'tool')
         expect(toolMessage.toolResults[0].result).toEqual({
             ok: false,
@@ -185,7 +186,7 @@ describe('describeRecipeTool', () => {
 
         read(tool.invoke$({recipeId: 'r1'}, {channel: {}, conversationId: 'c1'}))
 
-        expect(innerLlmInvocations(innerTools.invocations)).toEqual([])
+        expect(innerTools.invocations).toEqual([])
         const toolMessage = llm.receivedMessages[1].find(m => m.role === 'tool')
         expect(toolMessage.toolResults[0].result.error.code).toBe('TOOL_NOT_ALLOWED')
     })
@@ -193,19 +194,14 @@ describe('describeRecipeTool', () => {
     describe('per-type system prompt assembly', () => {
 
         it('on a MOSAIC recipe, the inner LLM system prompt carries MOSAIC-specific promptFacts content', () => {
-            const innerTools = aFakeTools(
-                {recipe_load: () => of({id: 'r-mosaic', type: 'MOSAIC', modelHash: 'h', model: {}})},
-                [recipeLoadSchema]
-            )
-            const {tool, llm} = aTool({innerTools})
+            const guiRequests = metadataReplyingWith({id: 'r-mosaic', type: 'MOSAIC', name: 'Kenya mosaic', projectId: 'p1'})
+            const {tool, llm} = aTool({guiRequests})
 
             read(tool.invoke$({recipeId: 'r-mosaic'}, {channel: {}, conversationId: 'c1'}))
 
             const systemMessage = llm.receivedMessages[0][0]
             expect(systemMessage.role).toBe('system')
-            // Base frame is still present.
             expect(systemMessage.content).toContain('recipe specialist')
-            // MOSAIC-specific content from promptFacts() is appended.
             expect(systemMessage.content).toContain('MOSAIC')
             expect(systemMessage.content).toContain('Optical Mosaic')
             expect(systemMessage.content).toMatch(/Choose when:/)
@@ -213,11 +209,8 @@ describe('describeRecipeTool', () => {
         })
 
         it('on an unknown recipe type, the inner LLM system prompt is the unmodified base frame', () => {
-            const innerTools = aFakeTools(
-                {recipe_load: () => of({id: 'r-other', type: 'NOT_IN_REGISTRY', modelHash: 'h', model: {}})},
-                [recipeLoadSchema]
-            )
-            const {tool, llm} = aTool({innerTools})
+            const guiRequests = metadataReplyingWith({id: 'r-other', type: 'NOT_IN_REGISTRY', name: 'Other', projectId: 'p1'})
+            const {tool, llm} = aTool({guiRequests})
 
             read(tool.invoke$({recipeId: 'r-other'}, {channel: {}, conversationId: 'c1'}))
 
@@ -227,12 +220,9 @@ describe('describeRecipeTool', () => {
             expect(systemMessage.content).not.toMatch(/Use cases:/)
         })
 
-        it('when the preflight recipe_load fails, the orchestrator gets the failure envelope and the inner specialist is not invoked', () => {
-            const innerTools = aFakeTools(
-                {recipe_load: () => throwError(() => new Error('GUI gone'))},
-                [recipeLoadSchema]
-            )
-            const {tool, llm} = aTool({innerTools})
+        it('when the metadata lookup fails, the orchestrator gets the failure envelope and the inner specialist is not invoked', () => {
+            const guiRequests = aFakeGuiRequests(() => throwError(() => new Error('GUI gone')))
+            const {tool, llm} = aTool({guiRequests})
 
             const result = read(tool.invoke$({recipeId: 'r1'}, {channel: {}, conversationId: 'c1'}))
 
@@ -243,18 +233,40 @@ describe('describeRecipeTool', () => {
             expect(llm.receivedMessages).toEqual([])
         })
 
-        it('surfaces a failure envelope synchronously when the preflight returns one (recipe not found, etc.)', () => {
-            const failEnvelope = {ok: false, error: {code: 'NOT_FOUND', message: 'no such recipe'}}
+        it('issues a recipe-metadata GUI request (not a recipe_load) for type resolution', () => {
+            const guiRequests = metadataReplyingWith({id: 'r1', type: 'CLASSIFICATION', name: 'Kenya', projectId: 'p1'})
             const innerTools = aFakeTools(
-                {recipe_load: () => of(failEnvelope)},
+                {recipe_load: () => of({id: 'r1', type: 'CLASSIFICATION'})},
                 [recipeLoadSchema]
             )
-            const {tool, llm} = aTool({innerTools})
+            const {tool} = aTool({guiRequests, innerTools})
 
-            const result = read(tool.invoke$({recipeId: 'missing'}, {channel: {}, conversationId: 'c1'}))
+            read(tool.invoke$({recipeId: 'r1'}, {channel: {}, conversationId: 'c1'}))
 
-            expect(result).toEqual(failEnvelope)
-            expect(llm.receivedMessages).toEqual([])
+            expect(guiRequests.requests.map(r => r.action)).toEqual(['recipe-metadata'])
+            // No preflight recipe_load — the inner LLM in this fixture doesn't ask for one either.
+            expect(innerTools.invocations).toEqual([])
+        })
+
+        it('issues exactly one load-recipe-side GUI request when the inner LLM calls recipe_load (no preflight load)', () => {
+            const recipeLoadCall = {id: 'rl1', name: 'recipe_load', input: {recipeId: 'r1'}}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [recipeLoadCall]},
+                {text: 'A 25-tree random forest classifier.'}
+            ]})
+            const loadCalls = []
+            const innerTools = aFakeTools(
+                {recipe_load: input => {
+                    loadCalls.push(input)
+                    return of({id: 'r1', type: 'CLASSIFICATION', model: {classifier: {numberOfTrees: 25}}, modelHash: 'h'})
+                }},
+                [recipeLoadSchema]
+            )
+            const {tool} = aTool({llm, innerTools})
+
+            read(tool.invoke$({recipeId: 'r1'}, {channel: {}, conversationId: 'c1'}))
+
+            expect(loadCalls).toHaveLength(1)
         })
     })
 })

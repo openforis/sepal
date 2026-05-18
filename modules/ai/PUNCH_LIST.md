@@ -50,12 +50,13 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   (per-type prompt assembled with the base frame first for cache stability).
   Additional fields from DESIGN §8 (defaults/projection summary, rule prose,
   output bands, gotchas) land when a consumer needs them.
-- **`describe_recipe` preflight `recipe_load` is wasteful** — to resolve
-  `recipeId -> recipeType` for prompt assembly, the tool loads + projects the
-  full recipe once at the boundary; the specialist then loads it again inside
-  its own loop. Replace with a lightweight server-side `recipe_metadata`
-  lookup when a second dispatcher (e.g. `update_recipe`) needs the same
-  resolution.
+- ~~**`describe_recipe` preflight `recipe_load` is wasteful**~~ — closed.
+  Type resolution now goes through `lookupRecipeMetadata$` (see
+  `modules/ai/src/chat/tools/recipeMetadata.js`) which hits the GUI's
+  `recipe-metadata` bridge handler in
+  `modules/gui/src/app/home/body/process/chatActions/recipeActions.js` —
+  identity-only response, no model fetch, no gzip envelope. Reusable by
+  the future `update_recipe` / `create_recipe` dispatchers.
 - **Shared recipe spec lacks `fragmentsForEdit({intent, targetPaths})`** —
   DESIGN §6/§7. Needed by the patch specialist to plan dependent-fragment
   reads/writes deterministically. Land alongside `recipe_patch` and the recipe

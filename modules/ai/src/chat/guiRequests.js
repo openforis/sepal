@@ -49,7 +49,7 @@ function createGuiRequests({clock, createId, timeoutMs, bus}) {
             if (success) {
                 entry.outcome$.next(data)
             } else {
-                entry.outcome$.error(new Error(error?.message || 'GUI request failed'))
+                entry.outcome$.error(buildGuiError(error))
             }
         }
     }
@@ -92,6 +92,20 @@ function createGuiRequests({clock, createId, timeoutMs, bus}) {
 
 function keyOf({clientId, subscriptionId}) {
     return `${clientId}:${subscriptionId}`
+}
+
+// GUI handlers respond with either a string ("Recipe not found: r1") or an
+// object ({code, message}). Surface both as an Error so the AI side gets a
+// meaningful .message, and attach .code when present so callers can map it
+// to a structured tool-result envelope.
+function buildGuiError(error) {
+    if (typeof error === 'string') return new Error(error)
+    if (error && typeof error === 'object') {
+        const e = new Error(error.message || 'GUI request failed')
+        if (error.code) e.code = error.code
+        return e
+    }
+    return new Error('GUI request failed')
 }
 
 module.exports = {createGuiRequests}
