@@ -148,10 +148,10 @@ describe('Chat WS handler — inbound event publishing', () => {
             })
         })
 
-        it('context at debug (recognised, fires on every GUI selection change)', () => {
+        it('context at debug (recognised, fires on every GUI context change)', () => {
             arg$.next({event: 'subscriptionUp', ...alice})
             bus.published.length = 0
-            arg$.next({data: {type: 'context', selection: {section: 'process'}}, ...alice})
+            arg$.next({data: {type: 'context', guiContext: {section: 'process'}}, ...alice})
 
             expect(bus.published[0]).toMatchObject({
                 kind: 'context', level: 'debug',

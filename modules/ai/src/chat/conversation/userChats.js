@@ -1,14 +1,13 @@
-// Registry of UserChat keyed by username. Lazy-builds a UserChat on
-// first touch and reuses it for the user's lifetime in the process.
-// Loads the main system prompt once at construction and prepends it to
-// each Conversation's initial messages.
+// Registry of UserChat keyed by username, lazy-built on first touch.
+// Loads the main system prompt once and prepends it to each new
+// Conversation's initial messages.
 
 const {map} = require('rxjs')
 const {createConversation} = require('./conversation')
 const {createConversations} = require('./conversations')
-const {createTabContexts} = require('./tabContexts')
+const {createGuiContexts} = require('./guiContexts')
 const {createTitleGenerator} = require('./titleGenerator')
-const {createTurnFlow} = require('./turnFlow')
+const {createMessageHandler} = require('./messageHandler')
 const {createUserChat} = require('./userChat')
 const {mainSystemPrompt} = require('../llmText/prompts')
 
@@ -32,9 +31,9 @@ function createUserChats({chatStorage, llm, tools, tracer, bus, clock, createId}
             createId,
             clock
         })
-        const tabContexts = createTabContexts()
-        const turnFlow = createTurnFlow({conversations, tabContexts, titleGenerator, clock})
-        return createUserChat({conversations, tabContexts, turnFlow, tracer, bus})
+        const guiContexts = createGuiContexts()
+        const messageHandler = createMessageHandler({conversations, guiContexts, titleGenerator, clock})
+        return createUserChat({conversations, guiContexts, messageHandler, tracer, bus})
     }
 
     function buildConversation$(username, id) {

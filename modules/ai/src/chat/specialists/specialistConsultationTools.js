@@ -1,8 +1,5 @@
 // Free-form consult_* tools the orchestrator uses to delegate to a
-// specialist (one tool per specialist). Recipe-operation tools
-// (describe_recipe, future update_recipe / create_recipe) are NOT here —
-// they sit on the orchestrator surface and route via recipeSpecialists.js
-// (DESIGN §5).
+// specialist (one tool per specialist).
 
 const {specialistPrompt} = require('../llmText/prompts')
 const {runSpecialist$} = require('./runSpecialist')
@@ -13,7 +10,7 @@ const MAP_SPECIALIST = {
     consultToolName: 'consult_map',
     consultToolDescription: 'Delegate to the map specialist for questions about the user\'s current map context: which area/view/AOI is selected, which recipe or layers are active, why the map looks empty. The specialist sees the same runtime GUI context and answers from it.',
     promptAsset: 'map',
-    allowed: ['get_context', 'map_area_list', 'layer_list']
+    allowed: ['get_gui_context', 'map_area_list', 'layer_list']
 }
 
 const SPECIALISTS = [MAP_SPECIALIST]

@@ -71,7 +71,7 @@ const projectSummary = projectId => {
     return name ? {projectId, projectName: name} : null
 }
 
-export const currentSelection = () => {
+export const currentGuiContext = () => {
     const recipeTabs = select('process.tabs') || []
     const appTabs = select('apps.tabs') || []
     return {

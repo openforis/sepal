@@ -1,6 +1,5 @@
-// Wraps the shared inner tool registry so a single specialist only sees
-// its allowed tool subset — both in schemas() and via a blocked-call
-// envelope on invocations of disallowed tools.
+// Restricts the inner tool registry to one specialist's allowed
+// subset (in both schemas() and invoke$).
 
 const {of} = require('rxjs')
 

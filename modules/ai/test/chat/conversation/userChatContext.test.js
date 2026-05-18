@@ -8,7 +8,7 @@ describe('UserChat GUI context', () => {
     it('attaches the sending subscription context to the LLM turn', () => {
         const {channel, llm, userChat} = aUserChatFixture()
         run(userChat.createConversation$({channel}))
-        run(userChat.updateContext$({...sub, selection: {section: 'process'}}))
+        run(userChat.updateContext$({...sub, guiContext: {section: 'process'}}))
 
         run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'hello', ...sub}))
 
@@ -18,7 +18,7 @@ describe('UserChat GUI context', () => {
     it('does not leak one subscription context into another subscription', () => {
         const {channel, llm, userChat} = aUserChatFixture()
         run(userChat.createConversation$({channel}))
-        run(userChat.updateContext$({...sub, selection: {section: 'process'}}))
+        run(userChat.updateContext$({...sub, guiContext: {section: 'process'}}))
 
         run(userChat.sendUserMessage$({
             channel, conversationId: 'conv-1', text: 'hello', clientId: 'c1', subscriptionId: 's2'
@@ -27,16 +27,16 @@ describe('UserChat GUI context', () => {
         expect(llm.receivedMessages[0]).toEqual([{role: 'user', content: 'hello'}])
     })
 
-    it('uses the context from the tab that sent the message', () => {
-        const tabA = {clientId: 'c1', subscriptionId: 's1'}
-        const tabB = {clientId: 'c2', subscriptionId: 's1'}
+    it('uses the context from the subscription that sent the message', () => {
+        const subscriptionA = {clientId: 'c1', subscriptionId: 's1'}
+        const subscriptionB = {clientId: 'c2', subscriptionId: 's1'}
         const {channel, llm, userChat} = aUserChatFixture()
         run(userChat.createConversation$({channel}))
-        run(userChat.updateContext$({...tabA, selection: {selectedRecipe: {recipeName: 'Mosaic'}}}))
-        run(userChat.updateContext$({...tabB, selection: {selectedRecipe: {recipeName: 'Classification'}}}))
+        run(userChat.updateContext$({...subscriptionA, guiContext: {selectedRecipe: {recipeName: 'Mosaic'}}}))
+        run(userChat.updateContext$({...subscriptionB, guiContext: {selectedRecipe: {recipeName: 'Classification'}}}))
 
-        run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'change this', ...tabA}))
-        run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'change this too', ...tabB}))
+        run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'change this', ...subscriptionA}))
+        run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'change this too', ...subscriptionB}))
 
         expect(runtimeContextContent(llm.receivedMessages[0])).toContain('"recipeName":"Mosaic"')
         expect(runtimeContextContent(llm.receivedMessages[0])).not.toContain('Classification')
@@ -47,7 +47,7 @@ describe('UserChat GUI context', () => {
     it('drops context after the subscription clears it', () => {
         const {channel, llm, userChat} = aUserChatFixture()
         run(userChat.createConversation$({channel}))
-        run(userChat.updateContext$({...sub, selection: {section: 'process'}}))
+        run(userChat.updateContext$({...sub, guiContext: {section: 'process'}}))
         run(userChat.clearContext$({...sub}))
 
         run(userChat.sendUserMessage$({channel, conversationId: 'conv-1', text: 'hello', ...sub}))
@@ -59,7 +59,7 @@ describe('UserChat GUI context', () => {
 describe('UserChat tool context', () => {
     const echoCall = {id: 't1', name: 'echo', input: {}}
 
-    it('passes conversation, subscription, and cached selection to tools', () => {
+    it('passes conversation, subscription, and cached GUI context to tools', () => {
         const seen = []
         const llm = aFakeLlm({replies: [{toolCalls: [echoCall]}, {text: 'done'}]})
         const tools = aFakeTools({echo: (_input, context) => {
@@ -68,7 +68,7 @@ describe('UserChat tool context', () => {
         }})
         const {channel, userChat} = aUserChatFixture({llm, tools})
         run(userChat.createConversation$({channel}))
-        run(userChat.updateContext$({clientId: 'c1', subscriptionId: 's1', selection: {section: 'process'}}))
+        run(userChat.updateContext$({clientId: 'c1', subscriptionId: 's1', guiContext: {section: 'process'}}))
 
         run(userChat.sendUserMessage$({
             channel, conversationId: 'conv-1', text: 'echo it', clientId: 'c1', subscriptionId: 's1'
@@ -76,11 +76,11 @@ describe('UserChat tool context', () => {
 
         expect(seen).toEqual([{
             conversationId: 'conv-1', clientId: 'c1', subscriptionId: 's1',
-            selection: {section: 'process'}
+            guiContext: {section: 'process'}
         }])
     })
 
-    it('prefers message selection over stale cached context for both LLM and tool context', () => {
+    it('prefers message GUI context over stale cached context for both LLM and tool context', () => {
         const seen = []
         const llm = aFakeLlm({replies: [{toolCalls: [echoCall]}, {text: 'done'}]})
         const tools = aFakeTools({echo: (_input, context) => {
@@ -89,14 +89,14 @@ describe('UserChat tool context', () => {
         }})
         const {channel, userChat} = aUserChatFixture({llm, tools})
         run(userChat.createConversation$({channel}))
-        run(userChat.updateContext$({clientId: 'c1', subscriptionId: 's1', selection: {section: 'browse'}}))
+        run(userChat.updateContext$({clientId: 'c1', subscriptionId: 's1', guiContext: {section: 'browse'}}))
 
         run(userChat.sendUserMessage$({
             channel, conversationId: 'conv-1', text: 'echo it', clientId: 'c1', subscriptionId: 's1',
-            selection: {section: 'process'}
+            guiContext: {section: 'process'}
         }))
 
-        expect(seen[0].selection).toEqual({section: 'process'})
+        expect(seen[0].guiContext).toEqual({section: 'process'})
         expect(runtimeContextContent(llm.receivedMessages[0])).toContain('"section":"process"')
         expect(runtimeContextContent(llm.receivedMessages[0])).not.toContain('browse')
     })

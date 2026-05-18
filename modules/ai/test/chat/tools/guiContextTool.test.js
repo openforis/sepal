@@ -1,10 +1,10 @@
-const {contextTool} = require('#mcp/chat/tools/contextTool')
+const {guiContextTool} = require('#mcp/chat/tools/guiContextTool')
 const {read} = require('../builders')
 
-describe('get_context tool', () => {
+describe('get_gui_context tool', () => {
 
     function tool() {
-        return contextTool()
+        return guiContextTool()
     }
 
     it('exposes a no-argument schema', () => {
@@ -13,19 +13,19 @@ describe('get_context tool', () => {
         })
     })
 
-    it('returns a turn snapshot of the shaped selection when context is present', () => {
+    it('returns a turn snapshot of the shaped context when context is present', () => {
         const result = read(tool().invoke$({}, {
-            selection: {section: 'process', selectedRecipe: {recipeId: 'r1', recipeName: 'Mosaic'}}
+            guiContext: {section: 'process', selectedRecipe: {recipeId: 'r1', recipeName: 'Mosaic'}}
         }))
 
         expect(result).toEqual({
             source: 'turn_snapshot',
             available: true,
-            selection: {section: 'process', selectedRecipe: {recipeId: 'r1', recipeName: 'Mosaic'}}
+            guiContext: {section: 'process', selectedRecipe: {recipeId: 'r1', recipeName: 'Mosaic'}}
         })
     })
 
-    it('reports unavailable when the turn context carries no selection', () => {
+    it('reports unavailable when the turn context carries no GUI context', () => {
         const result = read(tool().invoke$({}, {}))
 
         expect(result).toEqual({source: 'turn_snapshot', available: false})

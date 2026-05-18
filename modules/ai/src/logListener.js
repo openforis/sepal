@@ -1,8 +1,5 @@
-// log4js adapter for the event bus. Subscribes once at boot and routes
-// each bus event to a log4js category derived from the event's type
-// prefix — so subsystems can be tuned independently in config/log.json
-// without per-publisher coupling. Tears the process down if the bus
-// errors or completes.
+// log4js adapter for the event bus. Routes each bus event to a
+// log4js category derived from the event's type prefix.
 
 const {getLogger} = require('#sepal/log')
 

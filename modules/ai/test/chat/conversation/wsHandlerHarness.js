@@ -2,8 +2,8 @@ const {Subject, of} = require('rxjs')
 const {createWsHandler} = require('#mcp/chat/conversation/wsHandler')
 const {createConversation} = require('#mcp/chat/conversation/conversation')
 const {createConversations} = require('#mcp/chat/conversation/conversations')
-const {createTabContexts} = require('#mcp/chat/conversation/tabContexts')
-const {createTurnFlow} = require('#mcp/chat/conversation/turnFlow')
+const {createGuiContexts} = require('#mcp/chat/conversation/guiContexts')
+const {createMessageHandler} = require('#mcp/chat/conversation/messageHandler')
 const {createUserChat} = require('#mcp/chat/conversation/userChat')
 const {createInMemoryConversationsStore} = require('./inMemoryConversationsStore')
 const {aFakeBus, aFakeHistory, aFakeLlm, aFakeTools, aFakeTitleGenerator} = require('../builders')
@@ -54,18 +54,19 @@ function aHandler({
                 conversationFor$: id => of(createConversation({
                     llm, tracer, tools,
                     history: aFakeHistory(),
-                    id
+                    id,
+                    bus: aNoopBus()
                 })),
                 createId,
                 clock
             })
-            const tabContexts = createTabContexts()
-            const turnFlow = createTurnFlow({
-                conversations, tabContexts,
+            const guiContexts = createGuiContexts()
+            const messageHandler = createMessageHandler({
+                conversations, guiContexts,
                 titleGenerator: aFakeTitleGenerator(),
                 clock
             })
-            cache.set(username, createUserChat({conversations, tabContexts, turnFlow, tracer, bus: aNoopBus()}))
+            cache.set(username, createUserChat({conversations, guiContexts, messageHandler, tracer, bus: aNoopBus()}))
         }
         return cache.get(username)
     }

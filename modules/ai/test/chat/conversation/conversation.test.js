@@ -87,9 +87,9 @@ describe('Conversation', () => {
         const history = aFakeHistory()
         const llm = aFakeLlm()
         const conversation = aConversation({llm, history})
-        const selection = {section: 'process', selectedRecipe: {recipeId: 'r1', recipeName: 'Mosaic'}}
+        const guiContext = {section: 'process', selectedRecipe: {recipeId: 'r1', recipeName: 'Mosaic'}}
 
-        run(conversation.sendUserMessage$('Hello', {selection}))
+        run(conversation.sendUserMessage$('Hello', {guiContext}))
 
         expect(llm.receivedMessages[0]).toContainEqual({
             role: 'system',

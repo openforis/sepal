@@ -1,6 +1,5 @@
-// Projects a loaded recipe down to a smaller, JSON-Pointer-addressable
-// shape for the recipe specialist's inner LLM. Strips model-specific
-// noise so the inner prompt context stays small.
+// Projects a loaded recipe to a smaller, JSON-Pointer-addressable
+// shape for the recipe specialist's inner LLM.
 
 const {parsePointer, resolvePointer, formatPointer} = require('./jsonPointer')
 

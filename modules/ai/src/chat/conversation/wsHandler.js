@@ -1,8 +1,7 @@
-// Inbound WS protocol adapter. Decodes the WS envelope (heartbeat /
-// gateway event / data), tracks the live subscriptions on one
-// connection, hands chat-data messages to the subscription's UserChat,
-// routes gui-response messages back to guiRequests, and publishes
-// message-level observability to the bus.
+// Inbound WS protocol adapter. Decodes the WS envelope, tracks live
+// subscriptions on one connection, dispatches chat-data messages to
+// the subscription's UserChat, and routes gui-response messages back
+// to guiRequests.
 
 const {Subject, startWith} = require('rxjs')
 const {createWsChannel} = require('./wsChannel')

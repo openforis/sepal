@@ -1,17 +1,15 @@
-// SEPAL product-domain tools. sepalTools() is the pure list (no
-// specialist-backed tools); specialist-backed tools are added at
-// chat-level composition in orchestratorToolRegistry.js.
-// specialistInnerTools() is the list specialists see inside their inner
-// loop — adds recipe_load (specialist-private) on top.
+// SEPAL product-domain tools. sepalTools() — orchestrator-facing list.
+// specialistInnerTools() — list specialists see inside their inner loop
+// (adds recipe_load).
 
-const {contextTool} = require('./contextTool')
+const {guiContextTool} = require('./guiContextTool')
 const {mapTools} = require('./mapTools')
 const {projectTools} = require('./projectTools')
 const {recipeListTool, recipeOpenTool, recipeLoadTool} = require('./recipeTools')
 
 function sepalTools({guiRequests}) {
     return [
-        contextTool(),
+        guiContextTool(),
         recipeListTool(guiRequests),
         recipeOpenTool(guiRequests),
         ...projectTools(guiRequests),
@@ -23,7 +21,7 @@ function sepalTools({guiRequests}) {
 // recipe; it's deliberately not on the orchestrator surface.
 function specialistInnerTools({guiRequests}) {
     return [
-        contextTool(),
+        guiContextTool(),
         recipeListTool(guiRequests),
         ...projectTools(guiRequests),
         recipeLoadTool(guiRequests),

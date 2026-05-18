@@ -9,7 +9,7 @@ describe('Conversation with the orchestrator tool surface', () => {
     }
 
     it('lets the LLM ask for the current GUI context', () => {
-        const toolCall = {id: 'gc1', name: 'get_context', input: {}}
+        const toolCall = {id: 'gc1', name: 'get_gui_context', input: {}}
         const llm = aFakeLlm({replies: [
             {toolCalls: [toolCall]},
             {text: 'You are in the process section.'}
@@ -18,7 +18,7 @@ describe('Conversation with the orchestrator tool surface', () => {
         const conversation = aConversation({llm, tools})
         const toolContext = {
             channel: {}, conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1',
-            selection: {section: 'process'}
+            guiContext: {section: 'process'}
         }
 
         run(conversation.sendUserMessage$('where am i?', {toolContext}))
@@ -27,8 +27,8 @@ describe('Conversation with the orchestrator tool surface', () => {
             role: 'tool',
             toolResults: [{
                 toolCallId: 'gc1',
-                toolName: 'get_context',
-                result: {ok: true, data: {source: 'turn_snapshot', available: true, selection: {section: 'process'}}}
+                toolName: 'get_gui_context',
+                result: {ok: true, data: {source: 'turn_snapshot', available: true, guiContext: {section: 'process'}}}
             }]
         })
     })

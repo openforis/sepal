@@ -1,8 +1,8 @@
 const {of, tap} = require('rxjs')
 const {createConversation} = require('#mcp/chat/conversation/conversation')
 const {createConversations} = require('#mcp/chat/conversation/conversations')
-const {createTabContexts} = require('#mcp/chat/conversation/tabContexts')
-const {createTurnFlow} = require('#mcp/chat/conversation/turnFlow')
+const {createGuiContexts} = require('#mcp/chat/conversation/guiContexts')
+const {createMessageHandler} = require('#mcp/chat/conversation/messageHandler')
 const {createUserChat} = require('#mcp/chat/conversation/userChat')
 const {createInMemoryConversationsStore} = require('./inMemoryConversationsStore')
 const {
@@ -46,6 +46,7 @@ function aUserChat(overrides = {}) {
         titleGenerator: aFakeTitleGenerator(),
         ...overrides
     }
+    const bus = opts.bus ?? aFakeBus()
     const conversations = opts.conversations ?? createConversations({
         conversationsStore: opts.conversationsStore,
         conversationFor$: id => of(createConversation({
@@ -54,21 +55,22 @@ function aUserChat(overrides = {}) {
             tools: opts.tools,
             history: opts.createHistory(id),
             initialMessages: opts.initialMessagesById[id] || [],
-            id
+            id,
+            bus
         })),
         createId: opts.createId,
         clock: opts.clock
     })
-    const tabContexts = opts.tabContexts ?? createTabContexts()
-    const turnFlow = createTurnFlow({
-        conversations, tabContexts,
+    const guiContexts = opts.guiContexts ?? createGuiContexts()
+    const messageHandler = createMessageHandler({
+        conversations, guiContexts,
         titleGenerator: opts.titleGenerator,
         clock: opts.clock
     })
     return withCommandMethods(createUserChat({
-        conversations, tabContexts, turnFlow,
+        conversations, guiContexts, messageHandler,
         tracer: opts.tracer,
-        bus: opts.bus ?? aFakeBus()
+        bus
     }))
 }
 

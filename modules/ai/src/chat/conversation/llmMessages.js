@@ -1,16 +1,12 @@
-// Projection of a Conversation's mutable messages array into the shape
-// the LLM sees: assistant text from completed tool turns is kept, the
-// executable tool calls themselves are dropped, and the active turn can
-// be isolated from prior history for post-tool rounds.
+// Projects the conversation's messages array into the shape the LLM
+// sees. Optionally splices in a caller-supplied context message; can
+// isolate the active turn from prior history for post-tool rounds.
 
-const {turnContextMessage} = require('../turnContext')
-
-function messagesForLlm({messages, selection, includeTurnContext, isolateHistory}) {
+function messagesForLlm({messages, contextMessage, isolateHistory}) {
     const latestUserIndex = Math.max(messages.findLastIndex(message => message.role === 'user'), 0)
     const completed = messages.slice(0, latestUserIndex)
     const {history, projection} = historyForLlm({completed, isolateHistory})
     const activeTurn = messages.slice(latestUserIndex)
-    const contextMessage = includeTurnContext ? turnContextMessage(selection) : null
     return {
         llmMessages: contextMessage
             ? [...history, contextMessage, ...activeTurn]

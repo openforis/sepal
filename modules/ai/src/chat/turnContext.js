@@ -1,15 +1,14 @@
-// Runtime GUI selection shaped for the LLM: which section, recipe,
-// project, map view the user is currently on. shapeTurnContext() is the
-// structured value; turnContextMessage() wraps it as the per-turn system
-// message injected before the user's text.
+// Runtime GUI context shaped for the LLM. shapeTurnContext() is the
+// structured value; turnContextMessage() wraps it as the per-turn
+// system message.
 
 const MAX_STRING_LENGTH = 512
 const MAX_ARRAY_ITEMS = 10
 const MAX_CONTEXT_BYTES = 12 * 1024
 const FIELDS = ['section', 'selectedProject', 'selectedRecipe', 'openRecipes', 'openApps', 'selectedApp', 'mapView']
 
-function turnContextMessage(selection) {
-    const fitted = fitToBudget(shapeTurnContext(selection))
+function turnContextMessage(guiContext) {
+    const fitted = fitToBudget(shapeTurnContext(guiContext))
     if (fitted) {
         return {
             role: 'system',
@@ -20,11 +19,11 @@ function turnContextMessage(selection) {
     }
 }
 
-function shapeTurnContext(selection) {
-    if (!selection) return null
+function shapeTurnContext(guiContext) {
+    if (!guiContext) return null
     const shaped = {}
     for (const field of FIELDS) {
-        const value = selection[field]
+        const value = guiContext[field]
         if (!isEmpty(value)) {
             shaped[field] = sanitize(value)
         }

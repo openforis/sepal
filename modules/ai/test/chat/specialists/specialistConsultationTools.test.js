@@ -5,7 +5,7 @@ const {aFakeLlm, aFakeTools, aFakeTracer, read} = require('../builders')
 describe('specialistConsultationTools', () => {
 
     const productSchemas = [
-        {name: 'get_context', description: 'GUI context.', parameters: {type: 'object', properties: {}}},
+        {name: 'get_gui_context', description: 'GUI context.', parameters: {type: 'object', properties: {}}},
         {name: 'recipe_list', description: 'Saved recipes.', parameters: {type: 'object', properties: {}}},
         {name: 'map_area_list', description: 'Map areas.', parameters: {type: 'object', properties: {}}},
         {name: 'layer_list', description: 'Layers per area.', parameters: {type: 'object', properties: {}}}
@@ -15,7 +15,7 @@ describe('specialistConsultationTools', () => {
         const llm = overrides.llm ?? aFakeLlm({replies: [{text: 'Map looks empty.'}]})
         const innerTools = overrides.innerTools ?? aFakeTools(
             {
-                get_context: () => of({section: 'process'}),
+                get_gui_context: () => of({section: 'process'}),
                 map_area_list: () => of({recipeId: 'r1', layout: 'single', areas: []}),
                 layer_list: () => of({recipeId: 'r1', areas: []})
             },
@@ -48,7 +48,7 @@ describe('specialistConsultationTools', () => {
 
         expect(() => specialistConsultationTools({
             llm: aFakeLlm(), tracer: aFakeTracer(), innerTools
-        })).toThrow(/get_context/)
+        })).toThrow(/get_gui_context/)
     })
 
     it('seeds the inner LLM with the prompt loaded from llmText/specialists/map.md', () => {
@@ -79,7 +79,7 @@ describe('specialistConsultationTools', () => {
         read(consultMap.invoke$({question: 'q'}, {channel: {}, conversationId: 'c1'}))
 
         expect(llm.receivedTools[0].map(schema => schema.name).sort())
-            .toEqual(['get_context', 'layer_list', 'map_area_list'])
+            .toEqual(['get_gui_context', 'layer_list', 'map_area_list'])
     })
 
     it('lets the inner LLM call map_area_list through the inner registry', () => {
@@ -90,7 +90,7 @@ describe('specialistConsultationTools', () => {
         ]})
         const innerTools = aFakeTools(
             {
-                get_context: () => of({}),
+                get_gui_context: () => of({}),
                 map_area_list: () => of({recipeId: 'r1', layout: 'single', areas: []}),
                 layer_list: () => of({recipeId: 'r1', areas: []})
             },
@@ -122,7 +122,7 @@ describe('specialistConsultationTools', () => {
             {text: 'Tool blocked.'}
         ]})
         const innerTools = aFakeTools(
-            {get_context: () => of({}), recipe_list: () => of({recipes: []})},
+            {get_gui_context: () => of({}), recipe_list: () => of({recipes: []})},
             productSchemas
         )
         const {tools} = aMapSpecialist({llm, innerTools})

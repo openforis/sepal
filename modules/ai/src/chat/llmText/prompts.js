@@ -1,7 +1,5 @@
-// Loader for project prompt assets (main.md, title.md, specialists/*.md).
-// Fails fast on missing or empty files so a stale rename or an
-// accidentally-empty asset aborts boot rather than silently shipping a
-// blank system prompt.
+// Loader for project prompt assets. Fails fast on missing or empty
+// files.
 
 const fs = require('fs')
 const path = require('path')

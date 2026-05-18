@@ -5,7 +5,7 @@ const {aFakeLlm, aFakeTracer, read, run} = require('../builders')
 
 describe('runSpecialist$', () => {
 
-    const allowedSchemas = [{name: 'get_context', description: 'GUI context.', parameters: {type: 'object'}}]
+    const allowedSchemas = [{name: 'get_gui_context', description: 'GUI context.', parameters: {type: 'object'}}]
 
     function noopInvokeTool$() {
         return of({ok: true, data: {}})
@@ -49,7 +49,7 @@ describe('runSpecialist$', () => {
     })
 
     describe('with one tool round', () => {
-        const toolCall = {id: 'gc1', name: 'get_context', input: {}}
+        const toolCall = {id: 'gc1', name: 'get_gui_context', input: {}}
 
         it('invokes the requested tool, feeds the result back, and emits the final answer', () => {
             const llm = aFakeLlm({replies: [
@@ -78,7 +78,7 @@ describe('runSpecialist$', () => {
                 {role: 'user', content: 'Why is the map empty?'},
                 {role: 'assistant', content: '', toolCalls: [toolCall]},
                 {role: 'tool', toolResults: [{
-                    toolCallId: 'gc1', toolName: 'get_context',
+                    toolCallId: 'gc1', toolName: 'get_gui_context',
                     result: {ok: true, data: {section: 'process'}}
                 }]}
             ])
@@ -107,7 +107,7 @@ describe('runSpecialist$', () => {
     })
 
     describe('when the inner LLM never stops asking for tools', () => {
-        const toolCall = {id: 'gc1', name: 'get_context', input: {}}
+        const toolCall = {id: 'gc1', name: 'get_gui_context', input: {}}
 
         it('falls back to the cap sentinel when the inner LLM accumulated only whitespace text before each tool call', () => {
             const llm = aFakeLlm({replies: [{textChunks: ['\n\n'], toolCalls: [toolCall]}]})
@@ -153,7 +153,7 @@ describe('runSpecialist$', () => {
     describe('tool-loop safety', () => {
 
         it('blocks an identical inner tool call after a prior failure without invoking it again', () => {
-            const failingCall = (id) => ({id, name: 'get_context', input: {filter: 'mine'}})
+            const failingCall = (id) => ({id, name: 'get_gui_context', input: {filter: 'mine'}})
             const llm = aFakeLlm({replies: [
                 {toolCalls: [failingCall('a')]},
                 {toolCalls: [failingCall('b')]},
@@ -176,7 +176,7 @@ describe('runSpecialist$', () => {
         })
 
         it('bails out of the inner loop after consecutive failures for the same tool name', () => {
-            const failingCall = (id, x) => ({id, name: 'get_context', input: {x}})
+            const failingCall = (id, x) => ({id, name: 'get_gui_context', input: {x}})
             const llm = aFakeLlm({replies: [
                 {toolCalls: [failingCall('a', 1)]},
                 {toolCalls: [failingCall('b', 2)]},
@@ -197,9 +197,9 @@ describe('runSpecialist$', () => {
 
         it('bails out of the inner loop after repeated INVALID_TOOL_ARGS for the same tool name', () => {
             const llm = aFakeLlm({replies: [
-                {toolCalls: [{id: 'a', name: 'get_context', input: {x: 1}}]},
-                {toolCalls: [{id: 'b', name: 'get_context', input: {x: 2}}]},
-                {toolCalls: [{id: 'c', name: 'get_context', input: {x: 3}}]},
+                {toolCalls: [{id: 'a', name: 'get_gui_context', input: {x: 1}}]},
+                {toolCalls: [{id: 'b', name: 'get_gui_context', input: {x: 2}}]},
+                {toolCalls: [{id: 'c', name: 'get_gui_context', input: {x: 3}}]},
                 {text: 'should not reach'}
             ]})
             const invokeTool$ = () => of({ok: false, error: {code: 'INVALID_TOOL_ARGS', message: 'bad'}})
@@ -216,7 +216,7 @@ describe('runSpecialist$', () => {
     })
 
     describe('when an inner tool emits channel events', () => {
-        const toolCall = {id: 'gc1', name: 'get_context', input: {}}
+        const toolCall = {id: 'gc1', name: 'get_gui_context', input: {}}
 
         it('forwards channel emissions to the outer stream and feeds only the tool result to the inner LLM', () => {
             const guiActionEmission = emitChannel(guiAction({requestId: 'req-1', action: 'echo', params: {}}))
@@ -235,15 +235,15 @@ describe('runSpecialist$', () => {
             expect(events).toContainEqual(guiActionEmission)
             expect(events.at(-1)).toEqual({answer: 'done'})
             expect(llm.receivedMessages[1].find(m => m.role === 'tool').toolResults).toEqual([
-                {toolCallId: 'gc1', toolName: 'get_context', result: {ok: true, data: {section: 'process'}}}
+                {toolCallId: 'gc1', toolName: 'get_gui_context', result: {ok: true, data: {section: 'process'}}}
             ])
         })
 
         it('does not let a passed-through channel emission count toward the consecutive-failure cap', () => {
             const guiActionEmission = emitChannel(guiAction({requestId: 'req-1', action: 'echo', params: {}}))
             const llm = aFakeLlm({replies: [
-                {toolCalls: [{id: 'a', name: 'get_context', input: {x: 1}}]},
-                {toolCalls: [{id: 'b', name: 'get_context', input: {x: 2}}]},
+                {toolCalls: [{id: 'a', name: 'get_gui_context', input: {x: 1}}]},
+                {toolCalls: [{id: 'b', name: 'get_gui_context', input: {x: 2}}]},
                 {text: 'reached'}
             ]})
             // Each invocation emits a channel emission followed by a TOOL_FAILED envelope. Without the
@@ -264,7 +264,7 @@ describe('runSpecialist$', () => {
     })
 
     describe('channel-emission collision safety', () => {
-        const toolCall = {id: 'gc1', name: 'get_context', input: {}}
+        const toolCall = {id: 'gc1', name: 'get_gui_context', input: {}}
 
         it('treats a tool result envelope whose data has {kind, targeting} as data, not a channel emission', () => {
             const lookalikeData = {kind: 'mosaic', targeting: 'whatever'}
@@ -281,7 +281,7 @@ describe('runSpecialist$', () => {
             expect(events.filter(e => e.answer == null)).toEqual([])
             expect(events.at(-1)).toEqual({answer: 'done'})
             expect(llm.receivedMessages[1].find(m => m.role === 'tool').toolResults).toEqual([
-                {toolCallId: 'gc1', toolName: 'get_context', result: {ok: true, data: lookalikeData}}
+                {toolCallId: 'gc1', toolName: 'get_gui_context', result: {ok: true, data: lookalikeData}}
             ])
         })
 
@@ -301,7 +301,7 @@ describe('runSpecialist$', () => {
             expect(events.filter(e => e.answer == null)).toEqual([])
             expect(events.at(-1)).toEqual({answer: 'done'})
             expect(llm.receivedMessages[1].find(m => m.role === 'tool').toolResults).toEqual([
-                {toolCallId: 'gc1', toolName: 'get_context', result: fakeMarker}
+                {toolCallId: 'gc1', toolName: 'get_gui_context', result: fakeMarker}
             ])
         })
     })

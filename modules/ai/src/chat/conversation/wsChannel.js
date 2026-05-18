@@ -1,8 +1,5 @@
 // Outbound WS channel for one subscription. dispatch takes a typed
-// channel event ({kind, targeting, payload}) and delivers it the right
-// way — to all of the user's tabs, to other tabs but not this one, or
-// only to the requesting tab — while publishing a bus debug event for
-// observability.
+// channel event and routes it to the right audience.
 
 function createWsChannel({out$, bus, username, clientId, subscriptionId}) {
     return {dispatch}

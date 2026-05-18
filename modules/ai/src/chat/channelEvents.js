@@ -1,18 +1,8 @@
-// The 14 wire events the chat slice can emit to a subscription.
-// Factories produce bare events of shape {kind, targeting, payload}:
-//
-//   kind       — the wire-protocol type the browser dispatches on
-//   targeting  — broadcast | broadcastExcept | targeted
-//   payload    — the wire data, minus the type field (kind supplies it)
-//
-// In streams that mix channel events with arbitrary tool data (tool
-// outputs, the conversation event stream), an event travels wrapped in
-// a channel emission marked by a private Symbol so the discrimination
-// at each demux point can't collide with any value a tool returns —
-// JSON-shaped data can't carry an unforgeable Symbol key. Wrap with
-// emitChannel, detect with isChannelEmission, unwrap with .event.
-// Pure-event streams (conversations.X$, titleGenerator, turnFlow.send$
-// output upward) carry bare events.
+// Wire-event vocabulary the chat slice emits to a subscription.
+// Factories produce bare {kind, targeting, payload} events. In streams
+// that mix channel events with arbitrary tool data, emitChannel wraps
+// an event with an unforgeable Symbol marker; isChannelEmission
+// detects the wrap. Pure-event streams carry bare events.
 
 const {map} = require('rxjs')
 

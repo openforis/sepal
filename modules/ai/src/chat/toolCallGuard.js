@@ -1,7 +1,6 @@
-// Per-turn anti-loop guard for tool calls. Blocks identical failing
-// repeats, bails out after consecutive failures of the same tool, and
-// bails out after repeated invalid-args attempts. Used by the main
-// conversation turn and by specialist inner loops.
+// Per-turn anti-loop guard for tool calls: blocks identical failing
+// repeats and bails out after consecutive failures or repeated
+// invalid-args attempts on the same tool.
 
 const CONSECUTIVE_FAILURE_LIMIT = 3
 const INVALID_ARGS_LIMIT = 3

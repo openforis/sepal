@@ -1,10 +1,5 @@
-// Emits `value` exactly once when the source completes or errors, after
-// any upstream values. Built-in endWith(v) only fires on completion;
-// this also fires on error (before re-throwing).
-//
-// Used by TurnFlow so the channel always sees chat-response complete —
-// whether the turn finishes naturally, errors, or is aborted via
-// takeUntil (which surfaces as a normal completion upstream).
+// Emits `value` exactly once when the source completes or errors
+// (built-in endWith only fires on completion).
 
 const {Observable} = require('rxjs')
 

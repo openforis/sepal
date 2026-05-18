@@ -1,7 +1,4 @@
-// Bus event publishers for conversation telemetry: the projected LLM
-// message history for a turn, the LLM request being sent, and each tool
-// call before invocation. Separated from conversation.js to keep the
-// turn loop readable.
+// Bus event publishers for conversation telemetry.
 
 const {truncateTo, MAX_DEBUG_TEXT} = require('../debugText')
 

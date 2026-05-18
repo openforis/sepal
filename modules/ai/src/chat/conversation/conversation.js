@@ -1,27 +1,12 @@
-// Per-conversation turn loop, queue, and abort. Owns the messages array,
-// feeds the LLM, dispatches tool calls (capped at MAX_TOOL_ROUNDS,
-// guarded by toolCallGuard), and persists each new message through the
-// injected history collaborator. send$ serializes turns for this
-// conversation so concurrent sends can't interleave on the shared
-// messages array; abort() cancels the in-flight turn.
+// Single conversation entity: identity, turn queue, abort. Wraps a
+// conversationLoop with serialization so concurrent sends can't
+// interleave.
 
-const {EMPTY, Subject, catchError, concat, concatMap, defer, filter, finalize, from, ignoreElements, mergeMap, of, shareReplay, takeUntil, tap} = require('rxjs')
-const {messagesForLlm} = require('./llmMessages')
-const {publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection, publishLlmRequest, publishRetryToolCallsDropped, publishToolCall} = require('./conversationEvents')
-const {createToolCallGuard} = require('../toolCallGuard')
-const {isChannelEmission} = require('../channelEvents')
-const {emptyAfterToolHint} = require('../llmText/prompts')
+const {EMPTY, Subject, catchError, concat, defer, finalize, ignoreElements, shareReplay, takeUntil} = require('rxjs')
+const {createConversationLoop} = require('./conversationLoop')
 
-const EMPTY_AFTER_TOOL_HINT = emptyAfterToolHint()
-
-const MAX_TOOL_ROUNDS = 8
-const TOOL_ROUND_CAP_MESSAGE = 'This is taking more steps than expected, so I\'ve stopped here. Please try rephrasing your request.'
-const TOOL_CONSECUTIVE_FAILURES_MESSAGE = 'Having repeated trouble with that tool. Please try a different approach.'
-const TOOL_INVALID_ARGS_MESSAGE = 'Could not work out the right inputs for that tool. Please try a different approach.'
-const NOOP_BUS = {publish() {}}
-
-function createConversation({llm, history, tools, tracer, initialMessages = [], id, bus = NOOP_BUS}) {
-    const messages = [...initialMessages] // Mutable
+function createConversation({id, initialMessages = [], llm, history, tools, tracer, bus}) {
+    const loop = createConversationLoop({id, initialMessages, llm, history, tools, tracer, bus})
     const abortRequests$ = new Subject()
     let tail$ = EMPTY
     let streaming = false
@@ -30,26 +15,22 @@ function createConversation({llm, history, tools, tracer, initialMessages = [], 
         id,
         sendUserMessage$,
         abort,
-        messagesSnapshot,
+        messagesSnapshot: loop.messagesSnapshot,
         get isStreaming() { return streaming }
     }
 
-    function messagesSnapshot() {
-        return [...messages]
-    }
-
     // Serialize turns: chain onto the previous turn's tail so concurrent
-    // sends can't interleave on the shared messages array. takeUntil is
-    // inside the per-turn defer so abort fires for the currently-running
+    // sends can't interleave on the loop's shared messages array. takeUntil
+    // is inside the per-turn defer so abort fires for the currently-running
     // turn only — queued turns subscribe to a fresh takeUntil when they
     // start.
-    function sendUserMessage$(text, {selection, toolContext} = {}) {
+    function sendUserMessage$(text, opts = {}) {
         const previousTail$ = tail$
         const turn$ = concat(
             previousTail$.pipe(ignoreElements(), catchError(() => EMPTY)),
             defer(() => {
                 streaming = true
-                return runTurn$(text, {selection, toolContext}).pipe(
+                return loop.runTurn$(text, opts).pipe(
                     takeUntil(abortRequests$),
                     finalize(() => { streaming = false })
                 )
@@ -67,171 +48,6 @@ function createConversation({llm, history, tools, tracer, initialMessages = [], 
     function abort() {
         if (streaming) abortRequests$.next()
     }
-
-    function runTurn$(text, {selection, toolContext}) {
-        const guard = createToolCallGuard({consecutiveFailureBail, invalidArgsBail})
-        return tracer.span$('conversation.send', {conversationId: id},
-            append$({role: 'user', content: text}).pipe(
-                concatMap(() => step$({selection, includeTurnContext: true, toolContext, round: 0, guard}))
-            )
-        )
-    }
-
-    function step$({selection, includeTurnContext, toolContext, round, guard, retried, retryHint}) {
-        const acc = {text: '', toolCalls: []}
-        const {llmMessages: baseMessages, projection} = messagesForLlm({
-            messages, selection, includeTurnContext, isolateHistory: round > 0
-        })
-        const llmMessages = retryHint
-            ? [...baseMessages, {role: 'system', content: retryHint}]
-            : baseMessages
-        // Retry rounds are final-answer-only: the empty-after-tool signal is itself
-        // evidence the model isn't planning more tool work, and the failure mode the
-        // hint addresses is "fall back to a read-only tool to look busy". Removing
-        // the tool surface mechanically forces either text or an admitted gap.
-        const toolSchemas = retried ? [] : tools.schemas()
-        publishHistoryProjection({bus, conversationId: id, projection})
-        publishLlmRequest({bus, conversationId: id, round, llmMessages, toolSchemas})
-        const after$ = defer(() => {
-            // Retry rounds are text-only: ignore any toolCalls the model emits despite
-            // tools:[] (the provider may not enforce it). Recording the dropped calls
-            // surfaces model misbehavior without re-entering the tool loop.
-            if (retried && acc.toolCalls.length > 0) {
-                publishRetryToolCallsDropped({bus, conversationId: id, round, toolCalls: acc.toolCalls})
-            } else if (acc.toolCalls.length > 0) {
-                return handleToolCalls$(acc.text, acc.toolCalls, {toolContext, round, guard})
-            }
-            // Empty after a tool result usually means the model gave up without explanation.
-            // Retry once with a hint; if even that produces nothing, reply$ will publish the
-            // final llmEmptyReply so the metric counts only user-visible failures.
-            if (!hasVisibleText(acc.text) && isPostToolRound() && !retried) {
-                publishEmptyLlmRetry({bus, conversationId: id, round})
-                return step$({toolContext, round: round + 1, guard, retried: true, retryHint: EMPTY_AFTER_TOOL_HINT})
-            }
-            return reply$(acc.text, {round})
-        })
-        return concat(llmStream$(llmMessages, toolSchemas, acc, round), after$)
-    }
-
-    function isPostToolRound() {
-        return messages.at(-1)?.role === 'tool'
-    }
-
-    function llmStream$(llmMessages, toolSchemas, acc, round) {
-        return tracer.span$('llm.respondTo', {messageCount: llmMessages.length},
-            llm.respondTo$({
-                messages: llmMessages,
-                tools: toolSchemas,
-                debugLabel: `conversation ${id} round ${round}`
-            }).pipe(
-                tap(event => {
-                    if (event.textDelta) acc.text += event.textDelta
-                    if (event.toolCall) {
-                        acc.toolCalls = [...acc.toolCalls, event.toolCall]
-                        publishToolCall({bus, conversationId: id, round, toolCall: event.toolCall})
-                    }
-                }),
-                filter(event => event.textDelta != null)
-            )
-        )
-    }
-
-    function handleToolCalls$(text, toolCalls, {toolContext, round, guard}) {
-        const collected = {results: []}
-        return concat(
-            append$({role: 'assistant', content: text || '', toolCalls}).pipe(ignoreElements()),
-            from(toolCalls).pipe(concatMap(toolCall => invokeTool$(toolCall, {toolContext, collected, guard}))),
-            defer(() => append$({role: 'tool', toolResults: collected.results}).pipe(ignoreElements())),
-            defer(() => {
-                const bailDisplay = guard.bail()
-                if (bailDisplay) return terminalNotice$('conversation.toolBail', bailDisplay, {conversationId: id, displayKey: bailDisplay.key})
-                const capReached = round + 1 >= MAX_TOOL_ROUNDS
-                return capReached
-                    ? toolRoundCapReached$()
-                    : step$({toolContext, round: round + 1, guard})
-            })
-        )
-    }
-
-    function invokeTool$(toolCall, {toolContext, collected, guard}) {
-        const ref = {toolCallId: toolCall.id, toolName: toolCall.name}
-        const blocked = guard.blockedRepeat(toolCall)
-        const stream$ = blocked
-            ? of(blocked)
-            : tracer.span$('tool.invoke', {toolName: toolCall.name}, tools.invoke$(toolCall, toolContext)).pipe(
-                tap(value => { if (!isChannelEmission(value)) guard.record(toolCall, value) })
-            )
-        return concat(
-            of({toolStart: {...ref, input: toolCall.input}}),
-            stream$.pipe(
-                mergeMap(value => {
-                    if (isChannelEmission(value)) return of(value)
-                    // collected.results is the persisted shape; the load path rebuilds from it.
-                    // toolStart/toolEnd carry input/data/error for live display only.
-                    collected.results.push({...ref, result: value})
-                    return of({toolEnd: {...ref, ok: value.ok, data: value.data, error: value.error}})
-                })
-            )
-        )
-    }
-
-    function toolRoundCapReached$() {
-        const display = {
-            key: 'home.chat.notices.toolRoundCap',
-            args: {max: MAX_TOOL_ROUNDS},
-            fallback: TOOL_ROUND_CAP_MESSAGE
-        }
-        return terminalNotice$('conversation.toolRoundCapReached', display, {conversationId: id, maxRounds: MAX_TOOL_ROUNDS})
-    }
-
-    function terminalNotice$(spanName, display, spanAttrs) {
-        const message = {role: 'assistant', content: display.fallback, display}
-        return tracer.span$(spanName, spanAttrs,
-            concat(
-                of({notice: {content: display.fallback, display}}),
-                append$(message).pipe(ignoreElements())
-            )
-        )
-    }
-
-    function reply$(text, {round}) {
-        if (!hasVisibleText(text)) {
-            publishEmptyLlmReply({bus, conversationId: id, round, messages})
-        }
-        return append$({role: 'assistant', content: text}).pipe(
-            ignoreElements()
-        )
-    }
-
-    function append$(message) {
-        return defer(() => {
-            messages.push(message)
-            return history.append$(message)
-        })
-    }
-
 }
 
-function hasVisibleText(text) {
-    return typeof text === 'string' && text.trim().length > 0
-}
-
-// args.tool is available to translators and to history/debug inspection;
-// the current English copy interpolates only {max}.
-function consecutiveFailureBail(tool, max) {
-    return {
-        key: 'home.chat.notices.toolConsecutiveFailures',
-        args: {tool, max},
-        fallback: TOOL_CONSECUTIVE_FAILURES_MESSAGE
-    }
-}
-
-function invalidArgsBail(tool, max) {
-    return {
-        key: 'home.chat.notices.toolInvalidArgs',
-        args: {tool, max},
-        fallback: TOOL_INVALID_ARGS_MESSAGE
-    }
-}
-
-module.exports = {createConversation, MAX_TOOL_ROUNDS}
+module.exports = {createConversation}

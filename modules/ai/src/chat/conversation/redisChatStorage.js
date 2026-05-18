@@ -1,7 +1,5 @@
-// Redis port for chat persistence. Wraps the per-user conversations
-// store and the per-conversation history under one named port so the
-// domain doesn't see "redis" or "ttlMs" — just conversationsFor /
-// historyFor.
+// Redis port for chat persistence. Exposes conversationsFor(username)
+// and historyFor(username, conversationId).
 
 const {createRedisConversationsStore} = require('./redisConversationsStore')
 const {createRedisHistory} = require('./redisHistory')

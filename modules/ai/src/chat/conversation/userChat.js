@@ -1,23 +1,20 @@
-// Per-user chat dispatcher. Maps wire-typed commands to the right
-// collaborator (conversations, tabContexts, turnFlow), wraps the
-// resulting work in a tracing span so command lifecycle (started /
-// completed / failed) is visible on the bus, and publishes a warn
-// event for unrecognised types. Holds no state and no orchestration
-// of its own.
+// Per-user chat dispatcher. Maps each wire-typed command to its
+// handler observable, wraps the work in a tracing span, and warns on
+// unrecognised types.
 
 const {EMPTY} = require('rxjs')
 
-function createUserChat({conversations, tabContexts, turnFlow, tracer, bus}) {
+function createUserChat({conversations, guiContexts, messageHandler, tracer, bus}) {
     const dispatch = {
         'create-conversation':      conversations.create$,
         'select-conversation':      conversations.select$,
         'delete-conversation':      conversations.delete$,
         'delete-all-conversations': conversations.deleteAll$,
         'list-conversations':       conversations.list$,
-        'message':                  turnFlow.send$,
+        'message':                  messageHandler.handle$,
         'abort':                    conversations.abort$,
-        'context':                  tabContexts.update$,
-        'clear-context':            tabContexts.clear$
+        'context':                  guiContexts.update$,
+        'clear-context':            guiContexts.clear$
     }
 
     return {handle$}

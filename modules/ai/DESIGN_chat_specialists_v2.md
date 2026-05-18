@@ -38,7 +38,7 @@ the always-visible orchestrator prompt.
 Current AI/chat code already has:
 
 - static system prompt with no runtime placeholders
-- compact GUI selection context stored per tab/subscription and injected as
+- compact GUI context stored per subscription and injected as
   ephemeral turn context on the first LLM call of a user turn
 - `Conversation` support for tool schemas, provider-normalized tool calls,
   tool results, max tool rounds, and `tool-start`/`tool-end`
@@ -58,7 +58,7 @@ recipe specialists.
 Target always-visible orchestrator tools:
 
 ```text
-get_context()
+get_gui_context()
 recipe_list(...)
 describe_recipe({recipeId, question?})
 update_recipe({recipeId, instruction})
@@ -313,9 +313,10 @@ Context tiers:
    live GUI state, selected recipe, map view, or recipe inventory.
 2. Runtime metadata: username, client/subscription IDs, conversation/turn IDs,
    permissions, routing data. Used by infrastructure, not shown by default.
-3. Small ephemeral turn context: compact selection/open recipe/map/app state,
+3. Small ephemeral turn context: compact GUI state (section, open/selected
+   recipe/app, map view),
    injected outside the system prompt and not persisted in Redis history.
-4. On-demand tools: `get_context()`, `recipe_list`, `describe_recipe`,
+4. On-demand tools: `get_gui_context()`, `recipe_list`, `describe_recipe`,
    `map_get_view`, recipe capability lookup, and specialist-private recipe
    loads.
 
@@ -334,13 +335,13 @@ Routing rules:
 
 - inbound websocket messages include authenticated `username`, `clientId`, and
   `subscriptionId`
-- tab-local chat context is keyed by `clientId:subscriptionId`
+- subscription-local GUI context is keyed by `clientId:subscriptionId`
 - outbound GUI requests target the subscription that initiated the turn
 - `subscriptionDown` cancels pending requests for that subscription
 - responses resolve only when both `requestId` and authenticated
   `clientId:subscriptionId` match
 - late, unknown, or wrong-subscription responses are ignored
-- tab-independent work should be server/direct tools, not rebindable GUI
+- subscription-independent work should be server/direct tools, not rebindable GUI
   actions
 
 `tool-start`/`tool-end` wrap logical tool invocation and use canonical
@@ -529,7 +530,7 @@ events, boundary events, schema byte logging, and a real GUI request E2E when a
 real action exists.
 
 Phase 1: context and direct reads.
-Add/finish `get_context()`, `recipe_list`, placeholder-free prompt handling,
+Add/finish `get_gui_context()`, `recipe_list`, placeholder-free prompt handling,
 and specialist-private projection for heavy `CLASSIFICATION` fields.
 
 Phase 2: recipe specialist boundary.
@@ -617,7 +618,7 @@ Claude must not change `Conversation` or specialist loops.
 ## 18. Open questions
 
 - What is the stable public API of `lib/js/recipes`?
-- What should `get_context()` return beyond compact turn context?
+- What should `get_gui_context()` return beyond compact turn context?
 - Which provider schemas need LLM-compatible projection?
 - Which model profile/policy settings are global, environment-specific,
   specialist-specific, recipe-type-specific, or operation-specific?

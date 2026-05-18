@@ -14,14 +14,14 @@ describe('Chat WS handler — GUI context state', () => {
         handler({arg$}).subscribe()
 
         arg$.next({event: 'subscriptionUp', ...alice})
-        arg$.next({data: {type: 'context', selection: {section: 'process'}}, ...alice})
+        arg$.next({data: {type: 'context', guiContext: {section: 'process'}}, ...alice})
 
         expect(handled).toContainEqual(
             expect.objectContaining({
                 type: 'context',
                 clientId: 'c1',
                 subscriptionId: 's1',
-                selection: {section: 'process'}
+                guiContext: {section: 'process'}
             })
         )
     })

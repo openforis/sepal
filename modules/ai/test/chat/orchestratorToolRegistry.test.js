@@ -16,7 +16,7 @@ describe('orchestrator tool registry', () => {
         const names = anOrchestratorSurface().schemas().map(schema => schema.name)
 
         expect(names).toEqual([
-            'get_context',
+            'get_gui_context',
             'recipe_list',
             'recipe_open',
             'project_list',

@@ -46,8 +46,8 @@ describe('tool registry — schemas and invoke envelopes', () => {
 
         it('passes the turn context through to the tool', () => {
             const seen = []
-            const contextTool = {
-                name: 'context_tool',
+            const guiContextTool = {
+                name: 'gui_context_tool',
                 description: 'x',
                 parameters: {type: 'object', properties: {}, additionalProperties: true},
                 invoke$: (_input, context) => {
@@ -55,10 +55,10 @@ describe('tool registry — schemas and invoke envelopes', () => {
                     return of('ok')
                 }
             }
-            const registry = createToolRegistry({tools: [contextTool], bus})
+            const registry = createToolRegistry({tools: [guiContextTool], bus})
             const context = {conversationId: 'conv-1', channel: {}}
 
-            read(registry.invoke$({id: 'c1', name: 'context_tool', input: {}}, context))
+            read(registry.invoke$({id: 'c1', name: 'gui_context_tool', input: {}}, context))
 
             expect(seen).toEqual([context])
         })

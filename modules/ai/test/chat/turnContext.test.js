@@ -4,7 +4,7 @@ describe('turn context', () => {
 
     describe('shapeTurnContext', () => {
 
-        it('keeps whitelisted selection fields', () => {
+        it('keeps whitelisted GUI context fields', () => {
             const shaped = shapeTurnContext({
                 section: 'process',
                 selectedProject: {projectId: 'p1', projectName: 'Demo'},
@@ -67,12 +67,12 @@ describe('turn context', () => {
             expect(shaped).toEqual({section: 'process'})
         })
 
-        it('returns null when there is no selection', () => {
+        it('returns null when there is no GUI context', () => {
             expect(shapeTurnContext(null)).toBeNull()
             expect(shapeTurnContext(undefined)).toBeNull()
         })
 
-        it('returns null when the selection has no useful content', () => {
+        it('returns null when the GUI context has no useful content', () => {
             expect(shapeTurnContext({selectedProject: null, openRecipes: [], openApps: []})).toBeNull()
         })
     })

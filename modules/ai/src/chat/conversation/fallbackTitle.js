@@ -1,7 +1,5 @@
 // Heuristic fallback title from the user/assistant text when the LLM
-// produced nothing usable. Detects greetings/thanks, strips filler
-// ("can you", "I want to"), collapses whitespace, and clips to a small
-// word budget before running through cleanTitle.
+// produces nothing usable.
 
 const {cleanTitle} = require('./cleanTitle')
 

@@ -1,6 +1,5 @@
-// OpenAI-compatible Chat Completions provider adapter. Wraps the openai
-// SDK, translates {messages, tools, ...} into the wire shape, and unrolls
-// the streamed response into {textDelta, toolCall} events for the domain.
+// OpenAI-compatible Chat Completions provider adapter. Unrolls the
+// streamed response into {textDelta, toolCall} events for the domain.
 
 const {concat, defer, filter, from, map, mergeMap, tap, timeout} = require('rxjs')
 const OpenAI = require('openai').default

@@ -1,13 +1,7 @@
 // Generates a conversation title after a successful assistant turn.
-// Runs the LLM with a small token budget and short timeouts, scans the
-// streamed response for a usable title, falls back to a heuristic from
-// the user/assistant text on empty/timeout, and persists the result
-// through conversationsStore. Locks per conversation so a rapid second
-// turn doesn't kick off a second generation.
-//
-// Emits conversation-updated channel events as the title progresses
-// (per streamed chunk that produces a new partial title, plus the
-// fallback if the LLM yields nothing usable).
+// Locks per conversation; emits conversation-updated channel events as
+// the title progresses; persists the final title through
+// conversationsStore.
 
 const {EMPTY, Subject, catchError, concatMap, defaultIfEmpty, defer, finalize, ignoreElements, last, map, merge, of, scan, tap, timeout} = require('rxjs')
 const {titleSystemPrompt} = require('../llmText/prompts')

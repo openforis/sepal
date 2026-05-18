@@ -1,6 +1,5 @@
-// Recipe tools. recipe_list returns the user's saved recipes; recipe_open
-// selects one in the GUI; recipe_load returns one full recipe and is
-// specialist-private (kept off the orchestrator surface).
+// Recipe tools: recipe_list (saved recipes summary), recipe_open
+// (select one in the GUI), recipe_load (full recipe, specialist-private).
 
 const {projectLoadedRecipe} = require('./recipeProjection')
 const {guiProductRequest$} = require('./guiProductRequest')

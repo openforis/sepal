@@ -1,8 +1,7 @@
-// User's conversation collection. Knows which conversations exist
-// (metadata in Redis), caches their runtime instances in memory, tracks
-// the pending→persisted lifecycle (created in memory, only written to
-// Redis on first turn), and emits a channel event per CRUD operation
-// so the subscription's wsChannel can route them.
+// User's conversation collection: which conversations exist, their
+// cached runtime instances, the pending→persisted lifecycle (created
+// in memory, only written to Redis on first turn), and CRUD channel
+// events.
 
 const {EMPTY, concat, concatMap, defer, filter, from, of} = require('rxjs')
 const {

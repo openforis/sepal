@@ -1,10 +1,7 @@
-// Orchestrates one user-turn end to end: resolves the per-tab selection
-// fallback, gets/loads the Conversation, drains pending → persisted (or
-// touches updatedAt), emits the turn-start channel events, runs the
-// Conversation's turn loop translating its domain events into channel
-// events, always emits chat-response complete at the end, then runs
-// the title generator off-tail so a slow title doesn't delay the next
-// turn.
+// Handler for the 'message' command. Runs each user message turn
+// end-to-end: GUI context resolution, conversation lookup,
+// persistOrTouch, turn-boundary channel events, conversation loop,
+// title generation off-tail.
 
 const {concat, concatMap, defer, from, of} = require('rxjs')
 const {emitOnEnd} = require('../emitOnEnd')
@@ -13,23 +10,23 @@ const {
     isChannelEmission, status, toolEnd, toolStart, userMessage
 } = require('../channelEvents')
 
-function createTurnFlow({conversations, tabContexts, titleGenerator, clock}) {
-    return {send$}
+function createMessageHandler({conversations, guiContexts, titleGenerator, clock}) {
+    return {handle$}
 
-    function send$({conversationId, text, clientId, subscriptionId, selection: messageSelection}) {
-        const selection = messageSelection ?? tabContexts.get(clientId, subscriptionId)
-        const toolContext = {conversationId, clientId, subscriptionId, selection}
+    function handle$({conversationId, text, clientId, subscriptionId, guiContext: messageGuiContext}) {
+        const guiContext = messageGuiContext ?? guiContexts.get(clientId, subscriptionId)
+        const toolContext = {conversationId, clientId, subscriptionId, guiContext}
         return conversations.get$(conversationId).pipe(
             concatMap(conversation => conversations.persistOrTouch$(conversationId, clock.nowIso()).pipe(
-                concatMap(() => runTurn$({conversation, conversationId, text, selection, toolContext}))
+                concatMap(() => runTurn$({conversation, conversationId, text, guiContext, toolContext}))
             ))
         )
     }
 
-    function runTurn$({conversation, conversationId, text, selection, toolContext}) {
+    function runTurn$({conversation, conversationId, text, guiContext, toolContext}) {
         return concat(
             from([status(conversationId), userMessage(conversationId, text)]),
-            conversation.sendUserMessage$(text, {selection, toolContext}).pipe(
+            conversation.sendUserMessage$(text, {guiContext, toolContext}).pipe(
                 concatMap(event => of(routeTurnEvent(conversationId, event))),
                 emitOnEnd(chatResponseComplete(conversationId))
             ),
@@ -46,4 +43,4 @@ function routeTurnEvent(conversationId, value) {
     return chatResponseDelta(conversationId, value.textDelta)
 }
 
-module.exports = {createTurnFlow}
+module.exports = {createMessageHandler}

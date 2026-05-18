@@ -1,12 +1,12 @@
 import {useCallback} from 'react'
 
-import {currentSelection} from './chatSelection'
+import {currentGuiContext} from './chatGuiContext'
 
 export const useChatCommands = ({isConnected, activeConversationId, send, dispatch}) => {
     const handleSend = useCallback(text => {
         if (isConnected && activeConversationId) {
             dispatch({type: 'USER_SENT', text})
-            send({type: 'message', conversationId: activeConversationId, text, selection: currentSelection()})
+            send({type: 'message', conversationId: activeConversationId, text, guiContext: currentGuiContext()})
         }
     }, [dispatch, send, isConnected, activeConversationId])
 

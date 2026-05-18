@@ -1,9 +1,9 @@
 const {from, of} = require('rxjs')
-const {createTurnFlow} = require('#mcp/chat/conversation/turnFlow')
+const {createMessageHandler} = require('#mcp/chat/conversation/messageHandler')
 const {emitChannel, guiAction} = require('#mcp/chat/channelEvents')
 const {aFakeTitleGenerator, run} = require('../builders')
 
-describe('TurnFlow', () => {
+describe('MessageHandler', () => {
 
     function aFakeConversation({events = [{textDelta: 'hi'}]} = {}) {
         const sends = []
@@ -32,9 +32,9 @@ describe('TurnFlow', () => {
         }
     }
 
-    function aFakeTabContexts(selectionByKey = {}) {
+    function aFakeGuiContexts(contextByKey = {}) {
         return {
-            get: (clientId, subscriptionId) => selectionByKey[`${clientId}:${subscriptionId}`]
+            get: (clientId, subscriptionId) => contextByKey[`${clientId}:${subscriptionId}`]
         }
     }
 
@@ -42,10 +42,10 @@ describe('TurnFlow', () => {
         return {nowIso: () => iso}
     }
 
-    function aTurnFlow({conversations, tabContexts, titleGenerator, clock} = {}) {
-        return createTurnFlow({
+    function aMessageHandler({conversations, guiContexts, titleGenerator, clock} = {}) {
+        return createMessageHandler({
             conversations: conversations ?? aFakeConversations(),
-            tabContexts: tabContexts ?? aFakeTabContexts(),
+            guiContexts: guiContexts ?? aFakeGuiContexts(),
             titleGenerator: titleGenerator ?? aFakeTitleGenerator(),
             clock: clock ?? aFixedClock()
         })
@@ -54,41 +54,41 @@ describe('TurnFlow', () => {
     const aliceId = 'c1'
     const aliceSub = 's1'
 
-    describe('selection', () => {
-        it('uses the message-supplied selection when present', () => {
+    describe('GUI context resolution', () => {
+        it('uses the message-supplied GUI context when present', () => {
             const conv = aFakeConversation()
-            const turnFlow = aTurnFlow({conversations: aFakeConversations({conversation: conv})})
+            const messageHandler = aMessageHandler({conversations: aFakeConversations({conversation: conv})})
 
-            run(turnFlow.send$({
+            run(messageHandler.handle$({
                 conversationId: 'conv-1', text: 'hi',
                 clientId: aliceId, subscriptionId: aliceSub,
-                selection: {section: 'inline'}
+                guiContext: {section: 'inline'}
             }))
 
-            expect(conv.sends[0].options.selection).toEqual({section: 'inline'})
+            expect(conv.sends[0].options.guiContext).toEqual({section: 'inline'})
         })
 
-        it('falls back to the tab context selection when the message has none', () => {
+        it('falls back to the cached GUI context when the message has none', () => {
             const conv = aFakeConversation()
-            const turnFlow = aTurnFlow({
+            const messageHandler = aMessageHandler({
                 conversations: aFakeConversations({conversation: conv}),
-                tabContexts: aFakeTabContexts({[`${aliceId}:${aliceSub}`]: {section: 'stored'}})
+                guiContexts: aFakeGuiContexts({[`${aliceId}:${aliceSub}`]: {section: 'stored'}})
             })
 
-            run(turnFlow.send$({
+            run(messageHandler.handle$({
                 conversationId: 'conv-1', text: 'hi',
                 clientId: aliceId, subscriptionId: aliceSub
             }))
 
-            expect(conv.sends[0].options.selection).toEqual({section: 'stored'})
+            expect(conv.sends[0].options.guiContext).toEqual({section: 'stored'})
         })
     })
 
     describe('turn-boundary notifications', () => {
         it('emits status + user-message at the start and chat-response complete at the end', () => {
-            const turnFlow = aTurnFlow()
+            const messageHandler = aMessageHandler()
 
-            const {events} = run(turnFlow.send$({
+            const {events} = run(messageHandler.handle$({
                 conversationId: 'conv-1', text: 'hello',
                 clientId: aliceId, subscriptionId: aliceSub
             }))
@@ -109,9 +109,9 @@ describe('TurnFlow', () => {
                     {notice: {content: 'note', display: {key: 'k'}}}
                 ]
             })
-            const turnFlow = aTurnFlow({conversations: aFakeConversations({conversation: conv})})
+            const messageHandler = aMessageHandler({conversations: aFakeConversations({conversation: conv})})
 
-            const {events} = run(turnFlow.send$({
+            const {events} = run(messageHandler.handle$({
                 conversationId: 'conv-1', text: 'hi',
                 clientId: aliceId, subscriptionId: aliceSub
             }))
@@ -125,9 +125,9 @@ describe('TurnFlow', () => {
         it('unwraps channel emissions from the conversation stream and forwards the bare event', () => {
             const bareEvent = guiAction({requestId: 'req-1', action: 'echo', params: {}})
             const conv = aFakeConversation({events: [emitChannel(bareEvent)]})
-            const turnFlow = aTurnFlow({conversations: aFakeConversations({conversation: conv})})
+            const messageHandler = aMessageHandler({conversations: aFakeConversations({conversation: conv})})
 
-            const {events} = run(turnFlow.send$({
+            const {events} = run(messageHandler.handle$({
                 conversationId: 'conv-1', text: 'hi',
                 clientId: aliceId, subscriptionId: aliceSub
             }))
@@ -140,13 +140,13 @@ describe('TurnFlow', () => {
         it('persists (or touches) before kicking off the turn, then runs the title generator after', () => {
             const persistOrTouchCalls = []
             const titleGenerator = aFakeTitleGenerator()
-            const turnFlow = aTurnFlow({
+            const messageHandler = aMessageHandler({
                 conversations: aFakeConversations({persistOrTouchCalls}),
                 titleGenerator,
                 clock: aFixedClock('2024-05-01T00:00:00.000Z')
             })
 
-            run(turnFlow.send$({
+            run(messageHandler.handle$({
                 conversationId: 'conv-1', text: 'hi',
                 clientId: aliceId, subscriptionId: aliceSub
             }))

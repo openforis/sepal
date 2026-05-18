@@ -56,7 +56,7 @@ describe('Chat WS handler — command routing', () => {
             ])
         })
 
-        it('uses the supplied conversationId instead of server-side active selection', () => {
+        it('uses the supplied conversationId instead of server-side active conversation', () => {
             const {arg$, sent} = captureSent(aHandler({
                 replies: [{text: 'First reply'}, {text: 'Second reply'}],
                 conversationIds: ['conv-1', 'conv-2']

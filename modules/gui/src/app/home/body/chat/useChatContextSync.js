@@ -4,7 +4,7 @@ import {useLocation} from 'react-router-dom'
 
 import {select} from '~/store'
 
-import {currentSelection} from './chatSelection'
+import {currentGuiContext} from './chatGuiContext'
 
 export const useChatContextSync = ({isConnected, send}) => {
     useSelectionSubscriptions()
@@ -20,11 +20,11 @@ export const useChatContextSync = ({isConnected, send}) => {
         if (!isConnected) return
         if (contextDebounceRef.current) clearTimeout(contextDebounceRef.current)
         contextDebounceRef.current = setTimeout(() => {
-            const selection = currentSelection()
-            const key = JSON.stringify(selection)
+            const guiContext = currentGuiContext()
+            const key = JSON.stringify(guiContext)
             if (key !== lastContextRef.current) {
                 lastContextRef.current = key
-                send({type: 'context', selection})
+                send({type: 'context', guiContext})
             }
         }, 200)
         return () => {

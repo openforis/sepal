@@ -47,23 +47,24 @@ the rewrite reintroduces those capabilities deliberately.
 ### Entry Point
 `src/main.js` — starts `createApp()` from `src/app.js`, which wires the
 event bus, tracer, LLM adapter, GUI request bridge, orchestrator tool
-registry, Redis-backed chat storage, per-user chat coordinator, websocket
-handler, and HTTP server.
+registry, Redis-backed chat storage, per-user `UserChats` registry,
+websocket handler, and HTTP server.
 
 ### WebSocket Protocol
 Uses the gateway's subscription-based websocket routing. The browser subscribes to `ai` module, and messages flow as `{module, subscriptionId, data}`.
 
-- **Lifecycle events**: `subscriptionUp/Down` attach/detach a tab subscription
+- **Lifecycle events**: `subscriptionUp/Down` attach/detach a browser subscription
 - **Conversation list**: `create-conversation`, `list-conversations`,
   `select-conversation`, `delete-conversation`, `delete-all-conversations`
 - **Chat messages**: `{type: 'message', conversationId, text}` from client → LLM
   processing → `{type: 'chat-response', conversationId, text, complete}` broadcast
   back to the user's tabs
-- **Cancellation/context**: `abort` cancels an in-flight stream; `context` is
-  stored per tab/subscription in `UserChat` and injected as ephemeral turn
-  context on the first LLM call of the next user turn (never persisted to Redis)
-- **Tools**: the LLM may emit tool calls; `Conversation` invokes them through a
-  tool registry and feeds structured `{ok, data?, error?}` results back, capped
+- **Cancellation/context**: `abort` cancels an in-flight stream; GUI context is
+  cached per browser subscription in `guiContexts` and injected as ephemeral
+  turn context on the first LLM call of the next user turn (never persisted to
+  Redis)
+- **Tools**: the LLM may emit tool calls; `ConversationLoop` invokes them through
+  a tool registry and feeds structured `{ok, data?, error?}` results back, capped
   at `MAX_TOOL_ROUNDS`. `tool-start` / `tool-end` broadcast to the user's tabs
 - **GUI request/response**: a tool can send `{type: 'gui-action', requestId,
   action, params}` to the requesting tab; the GUI replies `{type:
@@ -94,15 +95,20 @@ src/
   logListener.js              # log4js adapter for the event bus
   chat/                       # Chat slice
     orchestratorToolRegistry.js   # Composes the orchestrator's tool surface
-    turnContext.js                # Runtime GUI selection → LLM context message
+    turnContext.js                # Runtime GUI context → LLM context message
     guiRequests.js                # Server→browser request/response bridge
     toolCallGuard.js              # Per-turn anti-loop guard for tool calls
     debugText.js                  # Truncation helper for debug-log payloads
-    conversation/              # Per-conversation flow + Redis persistence + WS adapters
-      conversation.js               # Per-conversation turn loop
-      userChat.js                   # Per-user coordinator (turn queue, contexts)
+    conversation/              # Per-conversation slice + Redis persistence + WS adapters
+      userChat.js                   # Pure dispatcher: wire command type → handler observable
       userChats.js                  # Per-username UserChat registry
-      titleGenerator.js             # Title-generation orchestration
+      messageHandler.js             # Handler for the 'message' command: orchestrates one turn end-to-end
+      conversations.js              # Per-user conversation collection: CRUD + pending lifecycle
+      conversation.js               # Single conversation entity: identity + turn queue + abort
+      conversationLoop.js           # Per-conversation LLM/tool loop (called by conversation)
+      guiContexts.js                # Runtime GUI context cache keyed by subscription
+      titleGenerator.js             # Title-generation orchestration (called by messageHandler)
+      terminalNotices.js            # Translatable notice vocabulary (round cap, guard bail)
       cleanTitle.js                 # LLM-title cleaning helpers
       fallbackTitle.js              # Heuristic-title fallback helpers
       llmMessages.js                # LLM-visible history projection
@@ -116,7 +122,7 @@ src/
     tools/                     # Individual tool families + registry + GUI bridge wrapper
       sepalTools.js                 # Pure SEPAL product list + specialistInner list
       registry.js                   # Tool registry contract (validation, envelopes)
-      contextTool.js                # get_context
+      guiContextTool.js             # get_gui_context
       recipeTools.js                # recipe_list, recipe_load
       recipeProjection.js           # Recipe → small inner-LLM-addressable shape
       projectTools.js               # project_list
@@ -134,9 +140,10 @@ src/
       providers/openaiChatCompletions.js
       providers/lmStudioNativeChat.js
     llmText/                   # LLM-facing prompt assets + loader
-      prompts.js                # Loader: mainSystemPrompt(), titleSystemPrompt(), specialistPrompt(name); fails fast on empty/missing
+      prompts.js                # Loader; fails fast on empty/missing
       main.md                   # Main Sepalito system prompt
       title.md                  # Title-generator system prompt
+      emptyAfterToolHint.md     # Hint injected on the empty-after-tool retry
       specialists/              # One markdown file per specialist (mirrors src/chat/specialists/)
         map.md                   # Read-only map specialist system prompt
         recipe.md                # Recipe specialist system prompt
@@ -196,7 +203,7 @@ of them, apply the rule above:
 
 | Location | What's LLM-facing |
 |---|---|
-| `src/chat/llmText/*.md` + `src/chat/llmText/specialists/*.md` | Top-level role prompts (`main.md`, `title.md`) and specialist prompts (`specialists/map.md`, etc.). Loaded via `src/chat/llmText/prompts.js` — `mainSystemPrompt()`, `titleSystemPrompt()`, `specialistPrompt(name)`. New specialists add a `.md` under `specialists/` here matching the code at `src/chat/specialists/`. |
+| `src/chat/llmText/*.md` + `src/chat/llmText/specialists/*.md` | Top-level role prompts (`main.md`, `title.md`), the empty-after-tool retry hint (`emptyAfterToolHint.md`), and specialist prompts (`specialists/map.md`, etc.). Loaded via `src/chat/llmText/prompts.js` — `mainSystemPrompt()`, `titleSystemPrompt()`, `emptyAfterToolHint()`, `specialistPrompt(name)`. New specialists add a `.md` under `specialists/` here matching the code at `src/chat/specialists/`. |
 | `src/chat/turnContext.js` | Runtime turn-context message wrapper text |
 | `src/chat/conversation/titleGenerator.js` | Title-generator user/wrapper message (the `User asked: ... Assistant replied: ...` shape and the `/no_think` suffix); the title role prompt itself lives in `llmText/title.md`. |
 | Tool `name` / `description` / `parameters` | Sent to the LLM as tool schemas — SEPAL product tools in `src/chat/tools/` and specialist consultation tools in `src/chat/specialists/` |
@@ -216,16 +223,17 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
 - **User chat ownership**: `src/chat/conversation/userChats.js` keeps one
   in-memory `UserChat` per username. Tabs for the same user share live
   conversation state; Redis stores conversation metadata/history so
-  list/select/send can recover after restart. Active selection remains per
-  tab in the GUI.
-- **Turn serialization**: `Conversation` mutates a shared messages array and has
-  no internal serialization. `UserChat` serializes turns per conversation — each
-  turn's stream chains onto the previous turn's stream completion, so concurrent
-  `sendUserMessage$` calls can't interleave. Title generation runs after the
-  stream but off the queue tail. New callers must drive `Conversation` through
-  `UserChat`, not invoke it directly.
+  list/select/send can recover after restart. Runtime GUI context is cached
+  per websocket subscription.
+- **Turn serialization**: `ConversationLoop` mutates a shared messages array
+  and has no internal serialization. The `Conversation` entity wraps the loop
+  with the per-conversation turn queue, so concurrent `sendUserMessage$` calls
+  chain onto the previous turn's completion and can't interleave. Title
+  generation runs off the queue tail, driven by `MessageHandler`. New callers
+  drive a turn through `UserChat` → `MessageHandler` → `Conversation` → loop —
+  never invoke `ConversationLoop` directly.
 - **Tool registry**: `src/chat/orchestratorToolRegistry.js` composes the
-  orchestrator's tool surface — SEPAL product tools (`get_context`,
+  orchestrator's tool surface — SEPAL product tools (`get_gui_context`,
   `recipe_list`, `project_list`, map inspection tools), specialist-backed
   recipe operation tools (`describe_recipe`, and future
   `update_recipe`/`create_recipe`), and specialist consultation tools
@@ -236,8 +244,8 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
   owns the structured tool-error envelope (`UNKNOWN_TOOL`,
   `INVALID_TOOL_ARGS` via ajv, `TOOL_FAILED`); provider wire-format
   conversion lives in the adapters, not the domain.
-- **LLM provider boundary**: `conversation.js` / `titleGenerator.js` depend only
-  on the provider-neutral `respondTo$` port from `src/chat/llm/index.js`
+- **LLM provider boundary**: `conversationLoop.js` / `titleGenerator.js` depend
+  only on the provider-neutral `respondTo$` port from `src/chat/llm/index.js`
   (`createLlm`). It builds the per-provider adapters under
   `src/chat/llm/providers/` (`openaiChatCompletions.js`, `lmStudioNativeChat.js`)
   and routes to them; provider wire-format names stay confined to the adapters.
@@ -251,6 +259,6 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
   tools on top of it. Specialist prompts live in
   `src/chat/llmText/specialists/<name>.md` and are loaded via
   `specialistPrompt(name)`, validated at construction. Current specialist:
-  `consult_map` (read-only, allowed: `get_context`, `map_area_list`,
+  `consult_map` (read-only, allowed: `get_gui_context`, `map_area_list`,
   `layer_list`). Specialist results return as ordinary tool-result
   envelopes; the main model integrates them into its final reply.

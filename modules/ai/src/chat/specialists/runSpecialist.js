@@ -1,12 +1,7 @@
 // Inner-loop runtime for a single specialist consultation. Runs an
-// isolated LLM loop with the specialist's system prompt and scoped tool
-// set, capped by SPECIALIST_MAX_ROUNDS and guarded by toolCallGuard —
-// same anti-loop failure modes as the main turn.
-//
-// Inner tools may emit channel events (e.g. gui-action from
-// guiProductRequest$); those flow up the returned observable so the
-// outer turn's wsChannel can dispatch them. Only the non-channel-event
-// emission is the tool result the guard records and the inner LLM sees.
+// isolated LLM loop with the specialist's prompt and scoped tool set;
+// passes channel emissions from inner tools through to the outer
+// turn's wsChannel.
 
 const {EMPTY, concat, concatMap, defer, from, ignoreElements, mergeMap, of, tap} = require('rxjs')
 const {createToolCallGuard} = require('../toolCallGuard')

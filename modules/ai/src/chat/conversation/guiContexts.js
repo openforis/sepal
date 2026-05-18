@@ -1,17 +1,15 @@
-// Per-tab GUI selection memory, keyed by (clientId, subscriptionId).
-// Stored when a 'context' command arrives and read as the fallback
-// selection on subsequent 'message' commands from the same tab.
+// Runtime GUI context cache, keyed by (clientId, subscriptionId).
 
 const {EMPTY, defer} = require('rxjs')
 
-function createTabContexts() {
+function createGuiContexts() {
     const contexts = new Map()
 
     return {update$, clear$, get}
 
-    function update$({clientId, subscriptionId, selection}) {
+    function update$({clientId, subscriptionId, guiContext}) {
         return defer(() => {
-            contexts.set(keyOf({clientId, subscriptionId}), selection)
+            contexts.set(keyOf({clientId, subscriptionId}), guiContext)
             return EMPTY
         })
     }
@@ -32,4 +30,4 @@ function keyOf({clientId, subscriptionId}) {
     return `${clientId}:${subscriptionId}`
 }
 
-module.exports = {createTabContexts}
+module.exports = {createGuiContexts}

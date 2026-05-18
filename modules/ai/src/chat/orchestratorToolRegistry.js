@@ -1,7 +1,5 @@
-// Composes the orchestrator's tool surface — SEPAL product tools, the
-// specialist-backed describe_recipe (substituting for raw recipe_load),
-// and specialist consultation tools — and builds the inner registry that
-// specialists see during their inner-loop calls.
+// Composes the orchestrator's tool surface and the inner registry
+// specialists see.
 
 const {createToolRegistry} = require('./tools/registry')
 const {sepalTools, specialistInnerTools} = require('./tools/sepalTools')

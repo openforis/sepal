@@ -1,8 +1,6 @@
-// Server→browser request/response bridge. request$ is an observable
-// that first emits a gui-action channel event (which flows up to the
-// requesting tab's wsChannel via the turn/tool stream), then emits the
-// matching gui-response data once the GUI replies. Subscription
-// teardown cancels outstanding requests for that tab.
+// Server→browser request/response bridge. request$ emits a gui-action
+// channel event, then yields the matching gui-response when the GUI
+// replies. Subscription teardown cancels outstanding requests.
 
 const {Subject, concat, defer, finalize, map, merge, of, take} = require('rxjs')
 const {emitChannel, guiAction} = require('./channelEvents')

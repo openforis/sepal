@@ -1,5 +1,5 @@
 const {of, throwError} = require('rxjs')
-const {MAX_TOOL_ROUNDS} = require('#mcp/chat/conversation/conversation')
+const {MAX_TOOL_ROUNDS} = require('#mcp/chat/conversation/conversationLoop')
 const {aConversation, aFakeBus, aFakeHistory, aFakeLlm, aFakeTools, run} = require('../builders')
 
 describe('Conversation tool loop', () => {

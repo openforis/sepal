@@ -10,7 +10,7 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   distinguish "cancelled" from "finished."
 - **Partial assistant text is not replayed on re-entry** — selecting an
   in-flight conversation re-emits `status`, but chunks sent before re-entry are
-  not replayed because the partial accumulator lives inside `Conversation.step$`.
+  not replayed because the partial accumulator lives inside `ConversationLoop.step$`.
 
 ## Tool And GUI Bridge
 
@@ -29,7 +29,7 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   first `lib/js/recipes` package since that's the source of truth for
   per-type knowledge.
 - **Map specialist read tools are minimal** — `consult_map` exposes
-  `get_context`, `map_area_list` (layout + areas + AOI + view), and
+  `get_gui_context`, `map_area_list` (layout + areas + AOI + view), and
   `layer_list` (per-area imageLayer + featureLayers). Still missing:
   per-layer loading/error state, dynamic-vis legend/palette inspection, and
   any live per-area viewport beyond `map.view` (per-area viewports under
@@ -54,7 +54,7 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   accounting, and the cap-exceeded / bail-out fallbacks are flat English
   strings with no descriptor path back to the GUI.
 - **UI language is not in turn context** — the GUI knows the selected locale,
-  but AI turns only receive selection/runtime state. Include the UI language as
+  but AI turns only receive GUI/runtime state. Include the UI language as
   runtime data so the model can reply in the active interface language without
   guessing from the user's text.
 - **No model-profile resolution or `llm.usage` events** — every LLM call still
@@ -66,10 +66,6 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Observability
 
-- **Event log categories** — event-bus logs are flattened through
-  `getLogger('ai')`, so `log.json` cannot enable trace/debug for one boundary
-  such as `llm`, `tools`, `specialists`, or `ws` without affecting all AI
-  events.
 - **Late-bound span completion attrs** — `tracer.span$(name, attrs, work$)`
   fixes attrs at construction. For LLM/tool spans we want completion attrs such
   as chunks, token usage, cache hits, result size, and status once they are
@@ -82,13 +78,23 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 - **In-flight streams do not survive restart** — conversation metadata and
   history are persisted in Redis, but an active LLM stream is in-memory only.
-- **In-memory caches grow unbounded** — `chats` in
-  `src/chat/conversation/userChats.js` and `conversations` in
-  `src/chat/conversation/userChat.js` never evict. Add idle eviction or an LRU
-  cap if uptime/user count makes this matter.
+- **In-memory caches grow unbounded** — the per-username `chats` map in
+  `src/chat/conversation/userChats.js` and the per-user `instances`/`pendingMetas`
+  maps in `src/chat/conversation/conversations.js` never evict. Add idle
+  eviction or an LRU cap if uptime/user count makes this matter.
 - **Single ai-module instance assumption** — cross-tab sync goes through
-  in-memory `UserChat` state. Multiple ai-module instances behind a load
-  balancer would need Redis pub/sub or an equivalent broadcast layer.
+  the in-memory `UserChats` / `Conversations` state. Multiple ai-module
+  instances behind a load balancer would need Redis pub/sub or an
+  equivalent broadcast layer.
+
+## Naming
+
+- **`runTurn$` and the `turn` vocabulary are under-qualified** — both
+  `conversationLoop.runTurn$` and the local helper in `messageHandler.js`
+  share the name; the bare word "turn" doesn't say *of what*. Renaming to
+  `respond$` / `runMessageTurn$` / `bookendedTurn$` / etc. was considered
+  but no candidate landed. Park the smell; revisit when a better domain
+  word surfaces.
 
 ## Configuration
 

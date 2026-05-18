@@ -24,8 +24,8 @@ describe('LLM message projection', () => {
     it('keeps assistant text from a completed tool-call message and drops only the executable tool call', () => {
         const messages = [
             {role: 'user', content: 'do work'},
-            {role: 'assistant', content: 'I will check that.', toolCalls: [{id: 't1', name: 'get_context', input: {}}]},
-            {role: 'tool', toolResults: [{toolCallId: 't1', toolName: 'get_context', result: {ok: true, data: {}}}]},
+            {role: 'assistant', content: 'I will check that.', toolCalls: [{id: 't1', name: 'get_gui_context', input: {}}]},
+            {role: 'tool', toolResults: [{toolCallId: 't1', toolName: 'get_gui_context', result: {ok: true, data: {}}}]},
             {role: 'assistant', content: 'Done.'},
             {role: 'user', content: 'what happened?'}
         ]
@@ -61,20 +61,36 @@ describe('LLM message projection', () => {
         ])
     })
 
-    it('adds runtime context between completed history and the current user message', () => {
+    it('splices the supplied context message between completed history and the current user message', () => {
         const messages = [
             {role: 'user', content: 'first'},
             {role: 'assistant', content: 'reply'},
             {role: 'user', content: 'second'}
         ]
-        const selection = {section: 'process'}
+        const contextMessage = {role: 'system', content: 'runtime: section=process'}
 
-        const {llmMessages} = messagesForLlm({messages, selection, includeTurnContext: true})
+        const {llmMessages} = messagesForLlm({messages, contextMessage})
 
         expect(llmMessages).toEqual([
             {role: 'user', content: 'first'},
             {role: 'assistant', content: 'reply'},
-            {role: 'system', content: expect.stringContaining('"section":"process"')},
+            contextMessage,
+            {role: 'user', content: 'second'}
+        ])
+    })
+
+    it('omits the context-message slot entirely when contextMessage is null', () => {
+        const messages = [
+            {role: 'user', content: 'first'},
+            {role: 'assistant', content: 'reply'},
+            {role: 'user', content: 'second'}
+        ]
+
+        const {llmMessages} = messagesForLlm({messages, contextMessage: null})
+
+        expect(llmMessages).toEqual([
+            {role: 'user', content: 'first'},
+            {role: 'assistant', content: 'reply'},
             {role: 'user', content: 'second'}
         ])
     })

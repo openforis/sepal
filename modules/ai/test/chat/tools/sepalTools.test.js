@@ -8,7 +8,7 @@ describe('sepal tools', () => {
         const names = sepalTools({guiRequests: aFakeGuiRequests()}).map(tool => tool.name)
 
         expect(names).toEqual([
-            'get_context',
+            'get_gui_context',
             'recipe_list',
             'recipe_open',
             'project_list',
