@@ -47,7 +47,7 @@ function recipeOpenTool(guiRequests) {
 function recipeLoadTool(guiRequests) {
     return {
         name: 'recipe_load',
-        description: 'Load ONE recipe for inspection/editing -> identity + projected model. Not for listing recipes; use recipe_list. path = JSON Pointer into model (optional); heavy arrays return omitted markers.',
+        description: 'Load ONE recipe for inspection/editing -> identity + effective model (dormant sub-config fields stripped per recipe spec). Not for listing recipes; use recipe_list. path = JSON Pointer into the effective model (optional); paths into dormant/stripped fields return no value; heavy CLASSIFICATION arrays return omitted markers.',
         parameters: {
             type: 'object',
             properties: {recipeId: {type: 'string'}, path: {type: 'string'}},

@@ -1,5 +1,7 @@
 // RFC 6901 JSON Pointer.
 
+class PointerNotFound extends Error {}
+
 function parsePointer(pointer) {
     if (pointer === '') return []
     if (!pointer.startsWith('/')) {
@@ -15,14 +17,14 @@ function resolvePointer(document, tokens) {
         if (Array.isArray(node)) {
             const index = arrayIndex(token)
             if (index === null || index >= node.length) {
-                throw new Error(`JSON Pointer path not found: array index ${JSON.stringify(token)}`)
+                throw new PointerNotFound(`JSON Pointer path not found: array index ${JSON.stringify(token)}`)
             }
             return node[index]
         }
         if (isObject(node) && Object.prototype.hasOwnProperty.call(node, token)) {
             return node[token]
         }
-        throw new Error(`JSON Pointer path not found: ${JSON.stringify(token)}`)
+        throw new PointerNotFound(`JSON Pointer path not found: ${JSON.stringify(token)}`)
     }
 }
 
@@ -46,4 +48,4 @@ function isObject(value) {
     return value !== null && typeof value === 'object'
 }
 
-module.exports = {parsePointer, resolvePointer, formatPointer}
+module.exports = {parsePointer, resolvePointer, formatPointer, PointerNotFound}

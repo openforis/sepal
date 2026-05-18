@@ -62,6 +62,17 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 - **AI `create_recipe` starting point** — use `spec.defaultModel()` (already
   in effective shape) as the LLM's seed; AI-created recipes persist in
   effective shape, never expanded into the GUI's stored shape.
+- **Heavy-field omission belongs on the recipe spec, not in AI tools** —
+  `omitReferenceData` / `isReferenceDataPath` in
+  `modules/ai/src/chat/tools/recipeProjection.js` hardcode CLASSIFICATION's
+  `/trainingData/dataSets/<n>/referenceData` path so a `recipe_load` doesn't
+  blow the LLM context with thousands of reference points. The pattern is the
+  right contract (marker + path-addressable items), but the *what's heavy*
+  knowledge belongs next to the recipe's schema. When CLASSIFICATION is ported
+  to `lib/js/shared/src/recipe/`, move the omission there — likely as a
+  declarative schema annotation (`x-llmOmit: 'count'` etc.) walked by a
+  generic engine, with a per-spec method as an escape hatch for cases that
+  need summarization/sampling. AI tools should go back to being type-agnostic.
 - **GUI `defaultModel` ships an internally inconsistent default** — for the
   MOSAIC recipe, the GUI's committed `defaultModel.compositeOptions.includedCloudMasking`
   pre-lists `sentinel2CloudScorePlus` while `sources.dataSets` defaults to

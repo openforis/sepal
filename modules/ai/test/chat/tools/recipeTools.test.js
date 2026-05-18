@@ -192,12 +192,13 @@ describe('recipe tools', () => {
             expect(result).toMatchObject({id: 'r1', value: {type: 'RANDOM_FOREST', numberOfTrees: 25}})
         })
 
-        it('errors on an invalid model path so the registry reports a tool failure', () => {
+        it('returns no value for a missing path so the LLM sees a clean absent signal, not a tool failure', () => {
             const guiRequests = aFakeGuiRequests(() => of(loadedRecipe))
 
-            const error = readError(toolNamed('recipe_load', guiRequests).invoke$({recipeId: 'r1', path: '/missing'}, context))
+            const result = read(toolNamed('recipe_load', guiRequests).invoke$({recipeId: 'r1', path: '/missing'}, context))
 
-            expect(error.message).toMatch(/not found/)
+            expect(result).toMatchObject({id: 'r1'})
+            expect(result.value).toBeUndefined()
         })
 
         it('lets a GUI failure propagate', () => {

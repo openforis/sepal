@@ -82,8 +82,10 @@ describe('recipe projection', () => {
         expect(() => projectLoadedRecipe(classificationRecipe, 'classifier')).toThrow(/Invalid JSON Pointer/)
     })
 
-    it('throws on a missing path', () => {
-        expect(() => projectLoadedRecipe(classificationRecipe, '/missing')).toThrow(/not found/)
+    it('returns no value for a missing path (the LLM gets a clean absent signal, not an error)', () => {
+        const result = projectLoadedRecipe(classificationRecipe, '/missing')
+
+        expect(result.value).toBeUndefined()
     })
 
     it('throws when the loaded recipe has no modelHash', () => {
@@ -103,15 +105,90 @@ describe('recipe projection', () => {
         expect(result.model.trainingData.dataSets[0].referenceData).toBeNull()
     })
 
-    it('returns a non-CLASSIFICATION model unprojected', () => {
-        const mosaicRecipe = {
-            id: 'r2', type: 'MOSAIC', title: 'Optical mosaic', modelHash: 'hash-xyz',
-            model: {dates: {targetDate: '2024-06-01'}, sources: {LANDSAT: ['LANDSAT_8']}}
+    it('passes the model through byte-for-byte for a recipe type with no spec in the registry (silent-passthrough branch)', () => {
+        const unspeccedRecipe = {
+            id: 'r2', type: 'UNKNOWN_TYPE', title: 'No spec yet', modelHash: 'hash-xyz',
+            model: {
+                someField: {nested: 'value'},
+                dormantLooking: 'still-here',
+                arr: [1, 2, 3]
+            }
         }
 
-        expect(projectLoadedRecipe(mosaicRecipe)).toEqual({
-            id: 'r2', type: 'MOSAIC', name: 'Optical mosaic', modelHash: 'hash-xyz',
-            model: {dates: {targetDate: '2024-06-01'}, sources: {LANDSAT: ['LANDSAT_8']}}
+        const result = projectLoadedRecipe(unspeccedRecipe)
+
+        expect(result.model).toEqual(unspeccedRecipe.model)
+    })
+
+    describe('MOSAIC recipe_load — effective-shape projection', () => {
+
+        // Mirrors the GUI's persisted shape: LANDSAT-only sources with a dormant
+        // sentinel2CloudScorePlus method + its tuning fields. Inline so the
+        // assertions are unambiguous (no shared-lib defaultModel() import).
+        const mosaicStored = {
+            id: 'r-mosaic',
+            type: 'MOSAIC',
+            title: 'Kenya mosaic',
+            projectId: 'p1',
+            modelHash: 'hash-mosaic',
+            model: {
+                aoi: {type: 'POLYGON', path: [[36.7, -1.4], [37.0, -1.4], [37.0, -1.1]]},
+                dates: {
+                    type: 'YEARLY_TIME_SCAN',
+                    targetDate: '2024-07-02',
+                    seasonStart: '2024-01-01',
+                    seasonEnd: '2025-01-01',
+                    yearsBefore: 0, yearsAfter: 0
+                },
+                sources: {cloudPercentageThreshold: 75, dataSets: {LANDSAT: ['LANDSAT_9', 'LANDSAT_8']}},
+                sceneSelectionOptions: {type: 'ALL', targetDateWeight: 0},
+                compositeOptions: {
+                    corrections: ['SR', 'BRDF'],
+                    brdfMultiplier: 4,
+                    filters: [],
+                    orbitOverlap: 'KEEP',
+                    tileOverlap: 'QUICK_REMOVE',
+                    includedCloudMasking: ['sepalCloudScore', 'landsatCFMask', 'sentinel2CloudScorePlus'],
+                    sentinel2CloudScorePlusBand: 'cs_cdf',
+                    sentinel2CloudScorePlusMaxCloudProbability: 45,
+                    sentinel2CloudProbabilityMaxCloudProbability: 65,
+                    landsatCFMaskCloudMasking: 'MODERATE',
+                    landsatCFMaskCloudShadowMasking: 'MODERATE',
+                    landsatCFMaskCirrusMasking: 'MODERATE',
+                    landsatCFMaskDilatedCloud: 'REMOVE',
+                    sepalCloudScoreMaxCloudProbability: 30,
+                    cloudBuffering: 0,
+                    holes: 'ALLOW',
+                    snowMasking: 'ON',
+                    compose: 'MEDOID'
+                }
+            }
+        }
+
+        it('returns the effective shape on a root load (dormant fields stripped)', () => {
+            const result = projectLoadedRecipe(mosaicStored)
+
+            expect(result.model.compositeOptions.includedCloudMasking).toEqual(['sepalCloudScore', 'landsatCFMask'])
+            expect(result.model.compositeOptions).not.toHaveProperty('sentinel2CloudScorePlusBand')
+            expect(result.model.compositeOptions).not.toHaveProperty('sentinel2CloudScorePlusMaxCloudProbability')
+            expect(result.model.compositeOptions).not.toHaveProperty('sentinel2CloudProbabilityMaxCloudProbability')
+        })
+
+        it('returns no value for a path that targets a dormant-only field (the LLM cannot query stripped fields)', () => {
+            const result = projectLoadedRecipe(mosaicStored, '/compositeOptions/sentinel2CloudScorePlusBand')
+
+            expect(result.value).toBeUndefined()
+        })
+
+        it('returns the value for a path that targets an effective field', () => {
+            const result = projectLoadedRecipe(mosaicStored, '/compositeOptions/landsatCFMaskCloudMasking')
+
+            expect(result.value).toBe('MODERATE')
+        })
+
+        it('echoes the GUI-computed modelHash unchanged through projection', () => {
+            expect(projectLoadedRecipe(mosaicStored).modelHash).toBe('hash-mosaic')
+            expect(projectLoadedRecipe(mosaicStored, '/compositeOptions/compose').modelHash).toBe('hash-mosaic')
         })
     })
 })
