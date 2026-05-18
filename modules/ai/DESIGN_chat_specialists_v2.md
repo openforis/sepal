@@ -99,6 +99,12 @@ Raw `recipe_load`, recipe fragment load, `recipe_patch`, and create/update
 primitives are specialist-private. Other specialists receive derived
 descriptions from recipe specialists, not raw recipe JSON.
 
+Dispatcher-only bridge calls (not exposed to any LLM): `recipe-metadata`
+returns identity-only `{id, type, name, projectId}` from `process.recipes`,
+used by `describe_recipe` / `update_recipe` / `create_recipe` to resolve
+`recipeId -> recipeType` for per-type prompt assembly without paying a
+full `recipe_load` projection.
+
 Budget:
 
 - keep always-visible orchestrator tools in the low double digits
@@ -165,15 +171,27 @@ JSON back unless a later design explicitly requires it.
 ## 6. Recipe create/update model
 
 Recipe specialists should express create/update as JSON Patch operations, not
-full recipe documents. The GUI applies patches to the authoritative complete
-model, validates the full candidate locally, updates GUI state, and persists
-through the existing recipe save path.
+full recipe documents. A whole-model rewrite is expressible as a single root
+`replace` op when the specialist wants it; the wire shape stays the same.
+
+Validation is layered:
+
+- **Server (AI tool)** does schema-local pre-validation per op: walks the
+  schema along each op's JSON Pointer, runs a subschema check against the
+  value (type, enum, format, range, required-when conditions). Stateless —
+  no recipe model required. Catches the bulk of LLM mistakes (wrong type,
+  typo'd enum, malformed value, nonexistent path) without a GUI round trip.
+- **GUI (recipe-patch handler)** is the authoritative validator on every
+  call: applies the patch to the effective model, runs full
+  `spec.validate(toEffectiveModel(applied))` (schema **plus** cross-field
+  rules), then persists. Server pre-validation does not authorize the GUI
+  to skip its own check.
 
 Patch contract:
 
 - allowed ops: `add`, `remove`, `replace`, `move`, `copy`, optional `test`
 - all-or-nothing apply
-- post-apply validation in GUI using schema plus cross-field rules
+- server schema-local pre-validation; GUI authoritative post-apply validation
 - persistence through GUI as source of truth
 - structured result with concise summary, invalidated paths, and new
   `modelHash` on success
@@ -217,69 +235,145 @@ paths})`. Relevance inference belongs in shared recipe knowledge, for example
 `fragmentsForEdit({recipeType, intent, targetPaths})`; avoid a public
 `recipe_relevant_fragment_load` until that deterministic rule layer exists.
 
+Fragment lookups are NOT pre-validated against the schema. The actual model
+is authoritative — paths may legitimately exist in the model without being
+schema-declared (loosely-typed regions like `scenes`, optional fields, legacy
+fields a newer schema doesn't formally describe). A path lookup that hits
+nothing returns no value; the LLM gets a clean absent signal and decides.
+Schema-pre-checking fragments would risk false-negative rejections for no
+correctness gain.
+
 ## 7. Shared recipe validation
 
 Validation authority belongs with the GUI write path. The GUI has the complete
 current/default model, owns browser recipe state, and persists through the
-correct gzip/envelope flow. Shared schema/rule code should live in
-`lib/js/recipes`, not in a deployable `modules/*` package.
+correct gzip/envelope flow. Shared schema/rule code lives in
+`lib/js/recipes/`, consumed via the `#recipes` import alias by both the AI
+Node services (Node imports map) and the GUI Vite build (Vite resolve alias)
+— byte-identical across both runtimes.
 
 Split of responsibility:
 
-- GUI imports validators and runs them against full candidate models before
-  create/update persistence.
+- GUI imports validators and runs them against the post-apply effective
+  model on every create/update — authoritative.
+- AI server runs schema-local pre-validation of patches (see §6) for fast
+  feedback to the LLM; not authoritative.
 - Recipe specialists import prompt facts, projections, defaults, and
   deterministic fragment metadata where practical.
 - Specialists use that knowledge to choose fragments, ask questions, and
   propose likely-valid patches; they are not final validation authority.
-- AI tool boundary validates patch envelope shape: required fields, non-empty
-  operation list, JSON Pointer strings, and operation-specific fields.
+- AI tool boundary additionally validates patch envelope shape: required
+  fields, non-empty operation list, JSON Pointer strings, and
+  operation-specific fields.
 
 Start by resurrecting one recipe type into active shared code through tests.
 Archived schemas/rules are source material, not runtime dependencies. Verify
 assumptions against current recipe models and GUI save behavior before
 promoting them.
 
-Expected package shape:
+Package shape:
 
 ```text
-lib/js/recipes/src/<type>/
-  index.js
-  schema.json
-  defaults.js
-  rules.js
-  promptFacts.js
-  validate.js
-  fragments.js
+lib/js/recipes/
+  package.json       # ajv + ajv-formats only
+  src/
+    index.js         # registry + top-level conveniences
+    validate.js      # createRecipeValidator
+    <type>/
+      index.js       # composes the spec
+      schema.json
+      defaults.js
+      rules.js
+      toEffectiveModel.js
+      promptFacts.js
+      (fragments.js) # lands with fragmentsForEdit
 ```
 
-Expected exports:
+Per-spec exports (current MOSAIC shape):
 
 ```js
 {
   id,
   name,
+  description,
   schema,
-  defaults,
-  defaultModel(),
-  validate(model),
-  promptFacts(),
-  fragmentsForEdit({intent, targetPaths})
+  rules,
+  defaultModel(),                  // returns effective shape
+  toEffectiveModel(storedModel),   // pure, idempotent
+  promptFacts(),                   // see §8
+  validate(model)                  // schema + rules; assumes effective input
+  // fragmentsForEdit({intent, targetPaths})  // future
 }
 ```
+
+Registry-level conveniences in `lib/js/recipes/src/index.js`:
+`listRecipeSpecs()`, `getRecipeSpec(id)`, `getRecipeSchema(id)`,
+`getRecipeDefaults(id)`, `getRecipePromptFacts(id)`, `validateRecipe(id, model)`,
+`toEffectiveModel(id, model)`.
 
 Bring recipe packages back one at a time. Each package needs focused tests for
 defaults, schema acceptance, validation rules, fragment expansion, prompt facts,
 and GUI rejection before persistence.
 
+### LLM-facing model contract
+
+The GUI persists a **stored** form of each recipe model that may carry
+**dormant preferences** — sub-configuration fields the user previously set
+but isn't currently using (tuning fields for cloud-masking methods not in
+`includedCloudMasking`, `scenes` when `sceneSelectionOptions.type !== 'SELECT'`,
+etc.).
+
+LLM-facing code only ever sees the **effective shape**: dormant fields
+projected out by `toEffectiveModel(model)`. Anything the LLM produces is
+persisted as-is — no merge-back of dormant fields.
+
+| Direction | Behavior |
+|---|---|
+| Recipe → LLM (load tools) | `toEffectiveModel(stored)` projects out dormant fields |
+| LLM → Recipe (patch-apply) | LLM's effective output persisted directly; no re-merge |
+| Normal GUI user flows | Untouched |
+| Persisted recipes at rest | Untouched until an AI write touches them |
+
+Invariants:
+
+- `defaultModel()` returns an **effective** shape — the LLM's seed for
+  `create_recipe`.
+- `validate(model)` assumes the model is already in effective shape; stored
+  models must be projected first.
+- `toEffectiveModel` is **pure** (deep-clones) and **idempotent**
+  (`proj(proj(m))` deep-equals `proj(m)`).
+
+Trade-off: AI edits drop the user's previously-parked dormant preferences.
+This is the deliberate choice over merging dormant fields back — the merge-
+back path has scenarios where the LLM's explicit intent
+(`includedCloudMasking: []`, "remove method X") gets silently undone, which
+is worse than predictable cleanup.
+
 ## 8. Specialist prompts
 
-Recipe specialist prompts should be assembled mechanically from active recipe
+Recipe specialist prompts are assembled mechanically from active recipe
 knowledge, not hand-authored from scratch per type.
 
-Prompt inputs:
+Current shape (`spec.promptFacts()` on the shared recipe package):
 
-- recipe description, use cases, choose/dont-choose guidance
+```js
+{
+  description,       // one-sentence what the recipe does
+  useCases,          // string[] — when the LLM should pick this recipe
+  chooseWhen,        // telegraphic routing hint
+  dontChooseWhen,    // counter-routing
+  outputs            // bands/values produced
+}
+```
+
+The AI module composes prompts via `assembleSpecialistPrompt(basePrompt, spec)`:
+the static base frame (from `llmText/specialists/recipe.md`) comes first for
+prompt-cache stability, then a delimited type-specific section assembled from
+`promptFacts()`. Recipe types without a spec entry fall through to the base
+frame unchanged.
+
+Future additions (deferred until a real consumer drives them):
+
 - defaults and schema/projection summary
 - cross-field `rule.description` prose
 - output bands and visualization notes
@@ -604,6 +698,7 @@ modules/ai/src/chat/
   tools/                     # product tools, private recipe tools, GUI bridge
 
 lib/js/recipes/              # shared recipe knowledge/validation library
+                             # (imported via #recipes from both AI + GUI)
 
 modules/gui/src/app/home/body/chat/
   ...                        # chat panel/hooks/reducer-facing UI
@@ -617,7 +712,8 @@ Claude must not change `Conversation` or specialist loops.
 
 ## 18. Open questions
 
-- What is the stable public API of `lib/js/recipes`?
+- What `promptFacts()` additions (defaults summary, rule prose, output bands,
+  gotchas) prove load-bearing once `update_recipe` / `create_recipe` lands?
 - What should `get_gui_context()` return beyond compact turn context?
 - Which provider schemas need LLM-compatible projection?
 - Which model profile/policy settings are global, environment-specific,

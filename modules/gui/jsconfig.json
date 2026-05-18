@@ -5,8 +5,8 @@
             "~/*": [
                 "./*"
             ],
-            "#sepal/*": [
-                "../../../lib/js/shared/src/*"
+            "#recipes": [
+                "../../../lib/js/recipes/src/index.js"
             ],
         }
     }

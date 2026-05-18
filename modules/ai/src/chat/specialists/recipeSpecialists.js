@@ -2,7 +2,7 @@
 // describe_recipe.
 
 const {mergeMap, of} = require('rxjs')
-const {getRecipeSpec} = require('#sepal/recipe')
+const {getRecipeSpec} = require('#recipes')
 const {specialistPrompt} = require('../llmText/prompts')
 const {runSpecialist$} = require('./runSpecialist')
 const {scopeInnerTools} = require('./specialistScope')

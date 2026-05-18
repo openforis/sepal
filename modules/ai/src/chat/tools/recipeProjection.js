@@ -1,12 +1,12 @@
 // Projects a loaded recipe to the LLM-facing shape:
 //   1. toEffectiveModel — strips dormant fields per the recipe spec (silent
-//      passthrough for types without a spec). See lib/js/shared/src/recipe/README.md.
+//      passthrough for types without a spec). See lib/js/recipes/README.md.
 //   2. Path resolution against the effective model. Missing paths return
 //      value: undefined so the LLM sees a clean absent signal.
 //   3. CLASSIFICATION reference-data omission on the result.
 
 const {parsePointer, resolvePointer, formatPointer, PointerNotFound} = require('./jsonPointer')
-const {toEffectiveModel} = require('#sepal/recipe')
+const {toEffectiveModel} = require('#recipes')
 
 function projectLoadedRecipe(recipe, pathString) {
     // modelHash is the optimistic-concurrency token a later recipe_patch needs;

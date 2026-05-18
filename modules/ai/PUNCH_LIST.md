@@ -49,7 +49,7 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   through the same write path `createRecipe` / `updateRecipe` use.
 - **Recipe-domain validation is deferred** — JSON Patch envelope validation is
   not enough for safe recipe edits. Use the shared recipe spec/validation API
-  (`lib/js/shared/src/recipe`, currently MOSAIC only) from the GUI write path
+  (`lib/js/recipes`, currently MOSAIC only) from the GUI write path
   for authoritative validation and from recipe specialists for dependent-fragment
   planning and prompt facts.
 - ~~**Shared recipe spec lacks `promptFacts()`**~~ — closed. MOSAIC spec exposes
@@ -72,7 +72,7 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 - **AI patch-apply path (future GUI slice)** — apply the LLM's effective
   output directly; no re-merge of dormant fields. Validation runs on the
   effective shape via `spec.validate(model)`. Contract is fixed in
-  `lib/js/shared/src/recipe/README.md` (LLM-facing model contract); do not
+  `lib/js/recipes/README.md` (LLM-facing model contract); do not
   relitigate at apply time.
 - **AI `create_recipe` starting point** — use `spec.defaultModel()` (already
   in effective shape) as the LLM's seed; AI-created recipes persist in
@@ -84,7 +84,7 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   blow the LLM context with thousands of reference points. The pattern is the
   right contract (marker + path-addressable items), but the *what's heavy*
   knowledge belongs next to the recipe's schema. When CLASSIFICATION is ported
-  to `lib/js/shared/src/recipe/`, move the omission there — likely as a
+  to `lib/js/recipes/`, move the omission there — likely as a
   declarative schema annotation (`x-llmOmit: 'count'` etc.) walked by a
   generic engine, with a per-spec method as an escape hatch for cases that
   need summarization/sampling. AI tools should go back to being type-agnostic.

@@ -11,8 +11,6 @@
     "dependencies": {
         "@google/earthengine": "^1.7.25",
         "@koa/router": "^15.5.0",
-        "ajv": "^8.20.0",
-        "ajv-formats": "^3.0.1",
         "amqplib": "^2.0.1",
         "base-64": "^1.0.0",
         "koa": "^3.2.0",

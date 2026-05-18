@@ -1,4 +1,4 @@
-import {getRecipeSpec, toEffectiveModel} from '#sepal/recipe'
+import {getRecipeSpec, toEffectiveModel} from '#recipes'
 import _ from 'lodash'
 import {map, of, switchMap, tap} from 'rxjs'
 

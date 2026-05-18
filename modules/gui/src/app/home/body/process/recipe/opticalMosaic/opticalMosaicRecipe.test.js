@@ -1,8 +1,8 @@
-import {getRecipeSpec, validateRecipe} from '#sepal/recipe'
+import {getRecipeSpec, validateRecipe} from '#recipes'
 
-describe('GUI -> #sepal/recipe shared import', () => {
+describe('GUI -> #recipes shared import', () => {
 
-    it('resolves the MOSAIC spec through the #sepal/* alias', () => {
+    it('resolves the MOSAIC spec through the #recipes alias', () => {
         expect(getRecipeSpec('MOSAIC')).toMatchObject({id: 'MOSAIC'})
     })
 
