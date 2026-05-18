@@ -2,9 +2,15 @@
 // isolated LLM loop with the specialist's system prompt and scoped tool
 // set, capped by SPECIALIST_MAX_ROUNDS and guarded by toolCallGuard —
 // same anti-loop failure modes as the main turn.
+//
+// Inner tools may emit channel events (e.g. gui-action from
+// guiProductRequest$); those flow up the returned observable so the
+// outer turn's wsChannel can dispatch them. Only the non-channel-event
+// emission is the tool result the guard records and the inner LLM sees.
 
-const {concat, concatMap, defer, from, ignoreElements, map, of, tap, toArray} = require('rxjs')
+const {EMPTY, concat, concatMap, defer, from, ignoreElements, mergeMap, of, tap} = require('rxjs')
 const {createToolCallGuard} = require('../toolCallGuard')
+const {isChannelEmission} = require('../channelEvents')
 
 const SPECIALIST_MAX_ROUNDS = 4
 const SPECIALIST_CAP_ANSWER = 'Specialist step cap exceeded; partial information only.'
@@ -37,12 +43,18 @@ function runSpecialist$({llm, tracer, name, systemPrompt, userText, allowedSchem
 
     function runToolsAndContinue$(messages, acc, round) {
         const assistantMessage = {role: 'assistant', content: acc.text || '', toolCalls: acc.toolCalls}
-        return from(acc.toolCalls).pipe(
-            concatMap(toolCall => callTool$(toolCall).pipe(
-                map(result => ({toolCallId: toolCall.id, toolName: toolCall.name, result}))
-            )),
-            toArray(),
-            concatMap(toolResults => {
+        const toolResults = []
+        return concat(
+            from(acc.toolCalls).pipe(
+                concatMap(toolCall => callTool$(toolCall).pipe(
+                    mergeMap(value => {
+                        if (isChannelEmission(value)) return of(value)
+                        toolResults.push({toolCallId: toolCall.id, toolName: toolCall.name, result: value})
+                        return EMPTY
+                    })
+                ))
+            ),
+            defer(() => {
                 const bailAnswer = guard.bail()
                 if (bailAnswer) return of({answer: bailAnswer})
                 return step$(
@@ -57,7 +69,7 @@ function runSpecialist$({llm, tracer, name, systemPrompt, userText, allowedSchem
         const blocked = guard.blockedRepeat(toolCall)
         if (blocked) return of(blocked)
         return invokeTool$(toolCall, context).pipe(
-            tap(result => guard.record(toolCall, result))
+            tap(value => { if (!isChannelEmission(value)) guard.record(toolCall, value) })
         )
     }
 }

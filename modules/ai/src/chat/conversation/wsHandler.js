@@ -68,10 +68,10 @@ function createWsHandler({bus, userChatFor, guiRequests}) {
             if (!entry) return
             publish(type, subscription, args, levelFor(type))
             runWork$(entry.userChat.handle$({
-                type, channel: entry.channel,
+                type,
                 clientId: subscription.clientId, subscriptionId: subscription.subscriptionId,
                 ...args
-            }))
+            }), entry.channel)
         }
 
         function subscribeUp(subscription) {
@@ -79,14 +79,14 @@ function createWsHandler({bus, userChatFor, guiRequests}) {
             const channel = createWsChannel({out$, bus, ...subscription})
             const userChat = userChatFor(subscription.username)
             subscriptions.set(keyOf(subscription), {channel, userChat})
-            runWork$(userChat.handle$({type: 'list-conversations', channel}))
+            runWork$(userChat.handle$({type: 'list-conversations'}), channel)
         }
 
         function subscribeDown(subscription) {
             publish('subscriptionDown', subscription)
             const {clientId, subscriptionId} = subscription
             const entry = subscriptions.get(keyOf(subscription))
-            if (entry) runWork$(entry.userChat.handle$({type: 'clear-context', clientId, subscriptionId}))
+            if (entry) runWork$(entry.userChat.handle$({type: 'clear-context', clientId, subscriptionId}), entry.channel)
             guiRequests.cancelForSubscription({clientId, subscriptionId})
             subscriptions.delete(keyOf(subscription))
         }
@@ -102,13 +102,9 @@ function createWsHandler({bus, userChatFor, guiRequests}) {
             })
         }
 
-        function dispatchTo(subscription, work$For) {
-            const entry = subscriptions.get(keyOf(subscription))
-            if (entry) runWork$(work$For(entry))
-        }
-
-        function runWork$(work$) {
+        function runWork$(work$, channel) {
             work$.subscribe({
+                next: event => channel.dispatch(event),
                 error: error => bus.publish({
                     type: 'workFailed',
                     level: 'error',

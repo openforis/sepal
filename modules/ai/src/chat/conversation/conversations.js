@@ -1,10 +1,14 @@
 // User's conversation collection. Knows which conversations exist
 // (metadata in Redis), caches their runtime instances in memory, tracks
 // the pending→persisted lifecycle (created in memory, only written to
-// Redis on first turn), and notifies the channel about each CRUD
-// operation as part of completing it.
+// Redis on first turn), and emits a channel event per CRUD operation
+// so the subscription's wsChannel can route them.
 
-const {EMPTY, concat, concatMap, defer, filter, from, ignoreElements, map, of, tap} = require('rxjs')
+const {EMPTY, concat, concatMap, defer, filter, from, of} = require('rxjs')
+const {
+    conversationCreated, conversationClaimed, conversationLoaded,
+    conversationDeleted, conversationsList, status
+} = require('../channelEvents')
 
 function createConversations({conversationsStore, conversationFor$, createId, clock}) {
     const instances = new Map()
@@ -15,63 +19,57 @@ function createConversations({conversationsStore, conversationFor$, createId, cl
         get$, peek, persistOrTouch$
     }
 
-    function create$({channel}) {
+    function create$() {
         return defer(() => {
             const id = createId()
             const now = clock.nowIso()
             const meta = {id, title: '', createdAt: now, updatedAt: now}
             pendingMetas.set(id, meta)
             return conversationFor$(id).pipe(
-                tap(conversation => {
+                concatMap(conversation => {
                     instances.set(id, conversation)
-                    channel.conversationCreated(meta)
-                    channel.conversationClaimed(meta)
-                }),
-                ignoreElements()
+                    return from([conversationCreated(meta), conversationClaimed(meta)])
+                })
             )
         })
     }
 
-    function select$({channel, conversationId}) {
+    function select$({conversationId}) {
         return get$(conversationId).pipe(
-            tap(conversation => {
-                channel.conversationLoaded(conversationId, conversation.messagesSnapshot())
-                if (conversation.isStreaming) channel.status(conversationId)
-            }),
-            ignoreElements()
+            concatMap(conversation => {
+                const loaded = conversationLoaded(conversationId, conversation.messagesSnapshot())
+                return conversation.isStreaming
+                    ? from([loaded, status(conversationId)])
+                    : of(loaded)
+            })
         )
     }
 
-    function delete$({channel, conversationId}) {
+    function delete$({conversationId}) {
         return defer(() => {
             instances.get(conversationId)?.abort()
             instances.delete(conversationId)
             if (pendingMetas.delete(conversationId)) {
-                channel.conversationDeleted(conversationId)
-                return EMPTY
+                return of(conversationDeleted(conversationId))
             }
             return conversationsStore.delete$(conversationId).pipe(
-                tap(deleted => {
-                    if (deleted) channel.conversationDeleted(conversationId)
-                }),
-                ignoreElements()
+                concatMap(deleted => deleted ? of(conversationDeleted(conversationId)) : EMPTY)
             )
         })
     }
 
-    function deleteAll$({channel}) {
+    function deleteAll$() {
         return concat(
             conversationsStore.list$().pipe(concatMap(metas => from(metas.map(meta => meta.id)))),
             defer(() => from([...pendingMetas.keys()]))
         ).pipe(
-            concatMap(conversationId => delete$({channel, conversationId}))
+            concatMap(conversationId => delete$({conversationId}))
         )
     }
 
-    function list$({channel}) {
+    function list$() {
         return conversationsStore.list$().pipe(
-            tap(metas => channel.conversationsList(metas)),
-            ignoreElements()
+            concatMap(metas => of(conversationsList(metas)))
         )
     }
 
@@ -88,7 +86,10 @@ function createConversations({conversationsStore, conversationFor$, createId, cl
         return conversationsStore.get$(id).pipe(
             filter(Boolean),
             concatMap(() => conversationFor$(id).pipe(
-                tap(conversation => instances.set(id, conversation))
+                concatMap(conversation => {
+                    instances.set(id, conversation)
+                    return of(conversation)
+                })
             ))
         )
     }

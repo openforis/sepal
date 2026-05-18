@@ -1,7 +1,12 @@
 const {Subject} = require('rxjs')
 const {createWsChannel} = require('#mcp/chat/conversation/wsChannel')
+const {
+    assistantNotice, chatResponseComplete, chatResponseDelta,
+    conversationClaimed, conversationCreated, conversationDeleted, conversationLoaded,
+    conversationUpdated, conversationsList, guiAction, status, toolEnd, toolStart, userMessage
+} = require('#mcp/chat/channelEvents')
 
-describe('WS channel adapter', () => {
+describe('WS channel adapter — dispatch', () => {
 
     const alice = {username: 'alice', clientId: 'c1', subscriptionId: 's1'}
 
@@ -16,10 +21,10 @@ describe('WS channel adapter', () => {
         channel = createWsChannel({out$, bus, ...alice})
     })
 
-    describe('chatResponse — broadcast to all the user\'s tabs', () => {
+    describe('chat-response — broadcast to all the user\'s tabs', () => {
 
-        it('emits a text chunk on the wire (textDelta → wire field "text")', () => {
-            channel.chatResponse({conversationId: 'conv-1', textDelta: 'Hello'})
+        it('emits a text chunk on the wire (text payload)', () => {
+            channel.dispatch(chatResponseDelta('conv-1', 'Hello'))
 
             expect(sent).toEqual([{
                 username: 'alice',
@@ -28,7 +33,7 @@ describe('WS channel adapter', () => {
         })
 
         it('publishes a debug-level wsOut for text chunks (one per token — too verbose for info)', () => {
-            channel.chatResponse({conversationId: 'conv-1', textDelta: 'Hello'})
+            channel.dispatch(chatResponseDelta('conv-1', 'Hello'))
 
             expect(published[0]).toMatchObject({
                 type: 'wsOut',
@@ -38,7 +43,7 @@ describe('WS channel adapter', () => {
         })
 
         it('emits complete: true and publishes an info-level wsOut', () => {
-            channel.chatResponse({conversationId: 'conv-1', complete: true})
+            channel.dispatch(chatResponseComplete('conv-1'))
 
             expect(sent).toEqual([{
                 username: 'alice',
@@ -49,19 +54,12 @@ describe('WS channel adapter', () => {
                 message: 'WS out (alice broadcast) chat-response conv-1 complete'
             })
         })
-
-        it('ignores empty payloads', () => {
-            channel.chatResponse({conversationId: 'conv-1'})
-
-            expect(sent).toEqual([])
-            expect(published).toEqual([])
-        })
     })
 
     describe('status — broadcast', () => {
 
-        it('emits a status and publishes an info wsOut', () => {
-            channel.status('conv-1')
+        it('emits a status and publishes a debug wsOut', () => {
+            channel.dispatch(status('conv-1'))
 
             expect(sent).toEqual([{
                 username: 'alice',
@@ -74,10 +72,10 @@ describe('WS channel adapter', () => {
         })
     })
 
-    describe('userMessage — broadcast except the originator', () => {
+    describe('user-message — broadcast except the originator', () => {
 
         it('emits a user-message excluding the originator clientId', () => {
-            channel.userMessage('conv-1', 'hello')
+            channel.dispatch(userMessage('conv-1', 'hello'))
 
             expect(sent).toEqual([{
                 username: 'alice',
@@ -91,12 +89,12 @@ describe('WS channel adapter', () => {
         })
     })
 
-    describe('conversationCreated — targeted to the originator', () => {
+    describe('conversation-created — targeted to the originator', () => {
 
         const meta = {id: 'conv-1', title: '', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z'}
 
         it('emits the meta record (id flattened to conversationId) routed to clientId + subscriptionId', () => {
-            channel.conversationCreated(meta)
+            channel.dispatch(conversationCreated(meta))
 
             expect(sent).toEqual([{
                 ...alice,
@@ -115,12 +113,12 @@ describe('WS channel adapter', () => {
         })
     })
 
-    describe('conversationClaimed — broadcast except originator', () => {
+    describe('conversation-claimed — broadcast except originator', () => {
 
         const meta = {id: 'conv-1', title: '', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z'}
 
         it('emits the meta record with excludeClientId so other tabs add to their sidebar', () => {
-            channel.conversationClaimed(meta)
+            channel.dispatch(conversationClaimed(meta))
 
             expect(sent).toEqual([{
                 username: 'alice',
@@ -140,12 +138,12 @@ describe('WS channel adapter', () => {
         })
     })
 
-    describe('conversationUpdated — broadcast to all tabs (e.g., title changes)', () => {
+    describe('conversation-updated — broadcast to all tabs (e.g., title changes)', () => {
 
         const meta = {id: 'conv-1', title: 'NDVI change Kenya'}
 
         it('emits the meta record so every tab merges the update into its sidebar', () => {
-            channel.conversationUpdated(meta)
+            channel.dispatch(conversationUpdated(meta))
 
             expect(sent).toEqual([{
                 username: 'alice',
@@ -162,12 +160,12 @@ describe('WS channel adapter', () => {
         })
     })
 
-    describe('conversationLoaded — targeted to the requester', () => {
+    describe('conversation-loaded — targeted to the requester', () => {
 
         const messages = [{role: 'user', content: 'first'}, {role: 'assistant', content: 'reply'}]
 
         it('emits routed to clientId + subscriptionId with the messages', () => {
-            channel.conversationLoaded('conv-1', messages)
+            channel.dispatch(conversationLoaded('conv-1', messages))
 
             expect(sent).toEqual([{
                 ...alice,
@@ -180,10 +178,10 @@ describe('WS channel adapter', () => {
         })
     })
 
-    describe('conversationDeleted — broadcast', () => {
+    describe('conversation-deleted — broadcast', () => {
 
         it('emits keyed by username only', () => {
-            channel.conversationDeleted('conv-1')
+            channel.dispatch(conversationDeleted('conv-1'))
 
             expect(sent).toEqual([{
                 username: 'alice',
@@ -196,10 +194,10 @@ describe('WS channel adapter', () => {
         })
     })
 
-    describe('conversationsList — targeted', () => {
+    describe('conversations — targeted', () => {
 
         it('emits to the requester with the ids', () => {
-            channel.conversationsList(['conv-1', 'conv-2'])
+            channel.dispatch(conversationsList(['conv-1', 'conv-2']))
 
             expect(sent).toEqual([{
                 ...alice,
@@ -212,10 +210,10 @@ describe('WS channel adapter', () => {
         })
     })
 
-    describe('guiAction — targeted to the requesting tab', () => {
+    describe('gui-action — targeted to the requesting tab', () => {
 
         it('emits a gui-action routed to clientId + subscriptionId so only that tab runs it', () => {
-            channel.guiAction({requestId: 'req-1', action: 'echo', params: {text: 'hi'}})
+            channel.dispatch(guiAction({requestId: 'req-1', action: 'echo', params: {text: 'hi'}}))
 
             expect(sent).toEqual([{
                 ...alice,
@@ -228,10 +226,10 @@ describe('WS channel adapter', () => {
         })
     })
 
-    describe('toolStart / toolEnd — broadcast to all the user\'s tabs', () => {
+    describe('tool-start / tool-end — broadcast to all the user\'s tabs', () => {
 
         it('emits a tool-start carrying the tool input for live display', () => {
-            channel.toolStart({conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', input: {text: 'hi'}})
+            channel.dispatch(toolStart({conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', input: {text: 'hi'}}))
 
             expect(sent).toEqual([{
                 username: 'alice',
@@ -244,7 +242,7 @@ describe('WS channel adapter', () => {
         })
 
         it('emits a tool-end carrying the ok flag and result data for live display', () => {
-            channel.toolEnd({conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: true, data: {echoed: 'hi'}})
+            channel.dispatch(toolEnd({conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: true, data: {echoed: 'hi'}}))
 
             expect(sent).toEqual([{
                 username: 'alice',
@@ -257,10 +255,10 @@ describe('WS channel adapter', () => {
         })
 
         it('emits a tool-end carrying the error envelope when the tool failed', () => {
-            channel.toolEnd({
+            channel.dispatch(toolEnd({
                 conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: false,
                 error: {code: 'TOOL_FAILED', message: 'boom'}
-            })
+            }))
 
             expect(sent).toEqual([{
                 username: 'alice',
@@ -276,14 +274,14 @@ describe('WS channel adapter', () => {
         })
     })
 
-    describe('assistantNotice — broadcast to all the user\'s tabs', () => {
+    describe('assistant-notice — broadcast to all the user\'s tabs', () => {
 
         it('emits an assistant-notice carrying content + display descriptor', () => {
-            channel.assistantNotice({
+            channel.dispatch(assistantNotice({
                 conversationId: 'conv-1',
                 content: 'Step cap reached.',
                 display: {key: 'home.chat.notices.toolRoundCap', args: {max: 8}, fallback: 'Step cap reached.'}
-            })
+            }))
 
             expect(sent).toEqual([{
                 username: 'alice',

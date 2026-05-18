@@ -4,11 +4,16 @@
 // the user/assistant text on empty/timeout, and persists the result
 // through conversationsStore. Locks per conversation so a rapid second
 // turn doesn't kick off a second generation.
+//
+// Emits conversation-updated channel events as the title progresses
+// (per streamed chunk that produces a new partial title, plus the
+// fallback if the LLM yields nothing usable).
 
-const {EMPTY, catchError, concatMap, defaultIfEmpty, defer, finalize, ignoreElements, last, map, of, scan, tap, timeout} = require('rxjs')
+const {EMPTY, Subject, catchError, concatMap, defaultIfEmpty, defer, finalize, ignoreElements, last, map, merge, of, scan, tap, timeout} = require('rxjs')
 const {titleSystemPrompt} = require('../llmText/prompts')
 const {cleanTitle} = require('./cleanTitle')
 const {fallbackTitle} = require('./fallbackTitle')
+const {conversationUpdated} = require('../channelEvents')
 
 const TITLE_MAX_TOKENS = 32
 const TITLE_TEMPERATURE = 0
@@ -29,7 +34,7 @@ function createTitleGenerator({llm, conversationsStore, tracer, bus}) {
 
     return {afterTurn$}
 
-    function afterTurn$({channel, conversation, conversationId, userText}) {
+    function afterTurn$({conversation, conversationId, userText}) {
         return defer(() => {
             if (generating.has(conversationId)) return EMPTY
             const assistantText = lastAssistantText(conversation.messagesSnapshot())
@@ -37,7 +42,7 @@ function createTitleGenerator({llm, conversationsStore, tracer, bus}) {
             return conversationsStore.get$(conversationId).pipe(
                 concatMap(meta => meta?.title
                     ? EMPTY
-                    : generate$({channel, conversationId, userText, assistantText}))
+                    : generate$({conversationId, userText, assistantText}))
             )
         })
     }
@@ -52,25 +57,35 @@ function createTitleGenerator({llm, conversationsStore, tracer, bus}) {
 
     function titleGeneration$(context, messages) {
         return tracer.span$('title.generate', {conversationId: context.conversationId},
-            titleResult$(context, messages).pipe(
-                tap(result => publishRawTitle(context.conversationId, result.raw)),
-                tap(result => publishFallbackUpdate(context, result)),
-                concatMap(result => persistTitle$(context, result)),
-                catchError(error => {
-                    publishFailure(context.conversationId, error)
-                    return of(emptyTitleResult())
-                }),
-                tap(result => publishFinished(context.conversationId, result)),
-                ignoreElements()
-            )
+            defer(() => {
+                const events$ = new Subject()
+                const work$ = titleWork$(context, messages, events$).pipe(
+                    finalize(() => events$.complete()),
+                    ignoreElements()
+                )
+                return merge(events$, work$)
+            })
         )
     }
 
-    function titleResult$(context, messages) {
+    function titleWork$(context, messages, events$) {
+        return titleResult$(context, messages, events$).pipe(
+            tap(result => publishRawTitle(context.conversationId, result.raw)),
+            tap(result => emitFallbackUpdate(context, result, events$)),
+            concatMap(result => persistTitle$(context, result)),
+            catchError(error => {
+                publishFailure(context.conversationId, error)
+                return of(emptyTitleResult())
+            }),
+            tap(result => publishFinished(context.conversationId, result))
+        )
+    }
+
+    function titleResult$(context, messages, events$) {
         return titleResponse$(context.conversationId, messages).pipe(
             scan(nextLlmTitleState, emptyLlmTitleState()),
             defaultIfEmpty(emptyLlmTitleState()),
-            tap(state => publishLlmUpdate(context, state)),
+            tap(state => emitLlmUpdate(context, state, events$)),
             last(),
             map(state => titleResultFromState(context, state))
         )
@@ -99,12 +114,16 @@ function createTitleGenerator({llm, conversationsStore, tracer, bus}) {
             : of(result)
     }
 
-    function publishLlmUpdate(context, state) {
-        if (state.changed) publishTitleUpdate(context, state.title)
+    function emitLlmUpdate(context, state, events$) {
+        if (state.changed) emitTitleUpdate(context.conversationId, state.title, events$)
     }
 
-    function publishFallbackUpdate(context, result) {
-        if (result.source === 'fallback') publishTitleUpdate(context, result.title)
+    function emitFallbackUpdate(context, result, events$) {
+        if (result.source === 'fallback') emitTitleUpdate(context.conversationId, result.title, events$)
+    }
+
+    function emitTitleUpdate(conversationId, title, events$) {
+        if (title) events$.next(conversationUpdated({id: conversationId, title}))
     }
 
     function publishTitlePrompt(conversationId, messages) {
@@ -140,10 +159,6 @@ function createTitleGenerator({llm, conversationsStore, tracer, bus}) {
                 ? `Title generated for ${conversationId} (${result.source}): ${JSON.stringify(result.title)}`
                 : `Title generation produced no usable title for ${conversationId}`
         })
-    }
-
-    function publishTitleUpdate({channel, conversationId}, title) {
-        if (title) channel.conversationUpdated({id: conversationId, title})
     }
 
     function withGenerationLock$(conversationId, work$) {

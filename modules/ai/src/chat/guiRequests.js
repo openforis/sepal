@@ -1,32 +1,35 @@
-// Server→browser request/response bridge. Tools (and other chat-side
-// code) call request$ to send a {gui-action, requestId, ...} to the
-// requesting tab; respond routes the matching {gui-response} back to
-// the pending request. Subscription teardown cancels outstanding
-// requests for that tab.
+// Server→browser request/response bridge. request$ is an observable
+// that first emits a gui-action channel event (which flows up to the
+// requesting tab's wsChannel via the turn/tool stream), then emits the
+// matching gui-response data once the GUI replies. Subscription
+// teardown cancels outstanding requests for that tab.
 
-const {Subject, defer, finalize, map, merge, take} = require('rxjs')
+const {Subject, concat, defer, finalize, map, merge, of, take} = require('rxjs')
+const {emitChannel, guiAction} = require('./channelEvents')
 
 function createGuiRequests({clock, createId, timeoutMs, bus}) {
     const pending = new Map()
 
     return {request$, respond, cancelForSubscription}
 
-    function request$({channel, clientId, subscriptionId, action, params}) {
+    function request$({clientId, subscriptionId, action, params}) {
         return defer(() => {
             const requestId = createId()
             const subscriptionKey = keyOf({clientId, subscriptionId})
             const outcome$ = new Subject()
             pending.set(requestId, {outcome$, subscriptionKey, action})
-            channel.guiAction({requestId, action, params})
             publishRequestSent({requestId, action, subscriptionKey})
-            return merge(
-                outcome$,
-                clock.delay$(timeoutMs).pipe(map(() => {
-                    throw new Error(`GUI request '${action}' timed out`)
-                }))
-            ).pipe(
-                take(1),
-                finalize(() => pending.delete(requestId))
+            return concat(
+                of(emitChannel(guiAction({requestId, action, params}))),
+                merge(
+                    outcome$,
+                    clock.delay$(timeoutMs).pipe(map(() => {
+                        throw new Error(`GUI request '${action}' timed out`)
+                    }))
+                ).pipe(
+                    take(1),
+                    finalize(() => pending.delete(requestId))
+                )
             )
         })
     }

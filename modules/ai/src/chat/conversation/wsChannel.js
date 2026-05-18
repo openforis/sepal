@@ -1,108 +1,18 @@
-// Outbound WS channel for one subscription. Methods correspond to
-// domain events (chatResponse, conversationCreated, toolStart, ...);
-// each picks the right targeting — to the requesting tab, to all of
-// the user's tabs, or to other tabs but not this one — and emits the
-// wire message plus a bus debug event.
+// Outbound WS channel for one subscription. dispatch takes a typed
+// channel event ({kind, targeting, payload}) and delivers it the right
+// way — to all of the user's tabs, to other tabs but not this one, or
+// only to the requesting tab — while publishing a bus debug event for
+// observability.
 
 function createWsChannel({out$, bus, username, clientId, subscriptionId}) {
-    return {chatResponse, status, userMessage, conversationCreated, conversationClaimed, conversationUpdated, conversationLoaded, conversationDeleted, conversationsList, guiAction, toolStart, toolEnd, assistantNotice}
+    return {dispatch}
 
-    function chatResponse({conversationId, textDelta, complete}) {
-        if (complete) {
-            broadcast(
-                {type: 'chat-response', conversationId, complete: true},
-                `chat-response ${conversationId} complete`
-            )
-        } else if (textDelta !== undefined) {
-            broadcast(
-                {type: 'chat-response', conversationId, text: textDelta},
-                `chat-response ${conversationId} text: ${JSON.stringify(textDelta)}`
-            )
-        }
-    }
-
-    function status(conversationId) {
-        broadcast(
-            {type: 'status', conversationId},
-            `status ${conversationId}`
-        )
-    }
-
-    function userMessage(conversationId, text) {
-        broadcastExcept(
-            {type: 'user-message', conversationId, text},
-            `user-message ${conversationId}: ${JSON.stringify(text)}`
-        )
-    }
-
-    function conversationCreated({id, ...meta}) {
-        targeted(
-            {type: 'conversation-created', conversationId: id, ...meta},
-            `conversation-created ${id}`
-        )
-    }
-
-    function conversationClaimed({id, ...meta}) {
-        broadcastExcept(
-            {type: 'conversation-claimed', conversationId: id, ...meta},
-            `conversation-claimed ${id}`
-        )
-    }
-
-    function conversationUpdated({id, ...meta}) {
-        broadcast(
-            {type: 'conversation-updated', conversationId: id, ...meta},
-            `conversation-updated ${id}`
-        )
-    }
-
-    function conversationLoaded(conversationId, messages) {
-        targeted(
-            {type: 'conversation-loaded', conversationId, messages},
-            `conversation-loaded ${conversationId} (${messages.length} messages)`
-        )
-    }
-
-    function conversationDeleted(conversationId) {
-        broadcast(
-            {type: 'conversation-deleted', conversationId},
-            `conversation-deleted ${conversationId}`
-        )
-    }
-
-    function conversationsList(conversations) {
-        targeted(
-            {type: 'conversations', conversations},
-            `conversations (${conversations.length})`
-        )
-    }
-
-    function guiAction({requestId, action, params}) {
-        targeted(
-            {type: 'gui-action', requestId, action, params},
-            `gui-action ${action} (${requestId})`
-        )
-    }
-
-    function toolStart({conversationId, toolCallId, toolName, input}) {
-        broadcast(
-            {type: 'tool-start', conversationId, toolCallId, toolName, input},
-            `tool-start ${toolName} ${conversationId}`
-        )
-    }
-
-    function toolEnd({conversationId, toolCallId, toolName, ok, data, error}) {
-        broadcast(
-            {type: 'tool-end', conversationId, toolCallId, toolName, ok, data, error},
-            `tool-end ${toolName} ${conversationId} ok=${ok}`
-        )
-    }
-
-    function assistantNotice({conversationId, content, display}) {
-        broadcast(
-            {type: 'assistant-notice', conversationId, content, display},
-            `assistant-notice ${conversationId} key=${display?.key ?? '-'}`
-        )
+    function dispatch({kind, targeting, payload}) {
+        const wireMessage = {type: kind, ...payload}
+        const summary = formatSummary(kind, payload)
+        if (targeting === 'broadcast') broadcast(wireMessage, summary)
+        else if (targeting === 'broadcastExcept') broadcastExcept(wireMessage, summary)
+        else if (targeting === 'targeted') targeted(wireMessage, summary)
     }
 
     function broadcast(data, summary) {
@@ -121,6 +31,26 @@ function createWsChannel({out$, bus, username, clientId, subscriptionId}) {
         out$.next(wireMessage)
         bus.publish({type: 'wsOut', level: 'debug', message, ...wireMessage})
     }
+}
+
+function formatSummary(kind, payload) {
+    if (kind === 'chat-response') {
+        if (payload.complete) return `chat-response ${payload.conversationId} complete`
+        return `chat-response ${payload.conversationId} text: ${JSON.stringify(payload.text)}`
+    }
+    if (kind === 'status') return `status ${payload.conversationId}`
+    if (kind === 'user-message') return `user-message ${payload.conversationId}: ${JSON.stringify(payload.text)}`
+    if (kind === 'conversation-created') return `conversation-created ${payload.conversationId}`
+    if (kind === 'conversation-claimed') return `conversation-claimed ${payload.conversationId}`
+    if (kind === 'conversation-updated') return `conversation-updated ${payload.conversationId}`
+    if (kind === 'conversation-loaded') return `conversation-loaded ${payload.conversationId} (${payload.messages.length} messages)`
+    if (kind === 'conversation-deleted') return `conversation-deleted ${payload.conversationId}`
+    if (kind === 'conversations') return `conversations (${payload.conversations.length})`
+    if (kind === 'gui-action') return `gui-action ${payload.action} (${payload.requestId})`
+    if (kind === 'tool-start') return `tool-start ${payload.toolName} ${payload.conversationId}`
+    if (kind === 'tool-end') return `tool-end ${payload.toolName} ${payload.conversationId} ok=${payload.ok}`
+    if (kind === 'assistant-notice') return `assistant-notice ${payload.conversationId} key=${payload.display?.key ?? '-'}`
+    return kind
 }
 
 module.exports = {createWsChannel}

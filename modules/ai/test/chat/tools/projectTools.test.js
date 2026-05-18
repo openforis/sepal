@@ -3,7 +3,7 @@ const {projectTools} = require('#mcp/chat/tools/projectTools')
 const {aFakeGuiRequests, read, readError} = require('../builders')
 
 describe('project tools', () => {
-    const context = {channel: 'CH', conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
+    const context = {conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
 
     function toolNamed(name, guiRequests = aFakeGuiRequests()) {
         return projectTools(guiRequests).find(tool => tool.name === name)
@@ -23,7 +23,7 @@ describe('project tools', () => {
             read(toolNamed('project_list', guiRequests).invoke$({}, context))
 
             expect(guiRequests.requests).toEqual([{
-                channel: 'CH', clientId: 'c1', subscriptionId: 's1',
+                clientId: 'c1', subscriptionId: 's1',
                 action: 'list-projects', params: {}
             }])
         })

@@ -56,7 +56,7 @@ describe('Conversation tool loop', () => {
             return of({recipes: []})
         }})
         const conversation = aConversation({llm, tools})
-        const toolContext = {channel: {}, conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
+        const toolContext = {conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
 
         run(conversation.sendUserMessage$('list my recipes', {toolContext}))
 
@@ -258,6 +258,53 @@ describe('Conversation tool loop', () => {
             role: 'assistant',
             content: expect.stringContaining('rephrasing'),
             display: capDisplay
+        })
+    })
+
+    describe('channel-emission collision safety', () => {
+
+        it('treats a tool result that happens to have {kind, targeting} fields as data, not a channel emission', () => {
+            const toolCall = {id: 'x', name: 'lookalike', input: {}}
+            const lookalikeData = {kind: 'mosaic', targeting: 'whatever', payload: {foo: 1}}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [toolCall]},
+                {text: 'used the data.'}
+            ]})
+            const tools = aFakeTools({lookalike: () => of(lookalikeData)})
+            const conversation = aConversation({llm, tools})
+
+            const {events} = run(conversation.sendUserMessage$('use it'))
+
+            // tool-end carries the data through as the result envelope; no channel emission slipped past the demux.
+            expect(events).toContainEqual({
+                toolEnd: {toolCallId: 'x', toolName: 'lookalike', ok: true, data: lookalikeData, error: undefined}
+            })
+            expect(llm.receivedMessages[1].find(m => m.role === 'tool').toolResults).toEqual([
+                {toolCallId: 'x', toolName: 'lookalike', result: {ok: true, data: lookalikeData}}
+            ])
+        })
+
+        it('treats a tool result that fakes the streamType marker as data, not a channel emission', () => {
+            // The Symbol marker is unforgeable from outside channelEvents.js, so a JSON-shaped object
+            // with a string streamType field is plain data — it must NOT be promoted to a channel
+            // emission and lost from the tool result.
+            const toolCall = {id: 'x', name: 'lookalike', input: {}}
+            const lookalikeData = {streamType: 'channel-event', event: {kind: 'gui-action'}}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [toolCall]},
+                {text: 'used the data.'}
+            ]})
+            const tools = aFakeTools({lookalike: () => of(lookalikeData)})
+            const conversation = aConversation({llm, tools})
+
+            const {events} = run(conversation.sendUserMessage$('use it'))
+
+            expect(events).toContainEqual({
+                toolEnd: {toolCallId: 'x', toolName: 'lookalike', ok: true, data: lookalikeData, error: undefined}
+            })
+            expect(llm.receivedMessages[1].find(m => m.role === 'tool').toolResults).toEqual([
+                {toolCallId: 'x', toolName: 'lookalike', result: {ok: true, data: lookalikeData}}
+            ])
         })
     })
 })

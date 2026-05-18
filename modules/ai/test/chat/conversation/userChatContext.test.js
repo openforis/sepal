@@ -59,7 +59,7 @@ describe('UserChat GUI context', () => {
 describe('UserChat tool context', () => {
     const echoCall = {id: 't1', name: 'echo', input: {}}
 
-    it('passes channel, conversation, subscription, and cached selection to tools', () => {
+    it('passes conversation, subscription, and cached selection to tools', () => {
         const seen = []
         const llm = aFakeLlm({replies: [{toolCalls: [echoCall]}, {text: 'done'}]})
         const tools = aFakeTools({echo: (_input, context) => {
@@ -75,7 +75,7 @@ describe('UserChat tool context', () => {
         }))
 
         expect(seen).toEqual([{
-            channel, conversationId: 'conv-1', clientId: 'c1', subscriptionId: 's1',
+            conversationId: 'conv-1', clientId: 'c1', subscriptionId: 's1',
             selection: {section: 'process'}
         }])
     })

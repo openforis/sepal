@@ -1,18 +1,15 @@
 const {Subject} = require('rxjs')
 const {createGuiRequests} = require('#mcp/chat/guiRequests')
+const {emitChannel, guiAction} = require('#mcp/chat/channelEvents')
 
 describe('GUI request bridge — request lifecycle', () => {
 
     const fromC1S1 = {clientId: 'c1', subscriptionId: 's1'}
+    const guiActionEmission = emitChannel(guiAction({requestId: 'req-1', action: 'echo', params: {text: 'hi'}}))
 
     function aControlledClock() {
         const timeout$ = new Subject()
         return {clock: {delay$: () => timeout$}, fireTimeout: () => timeout$.next(0)}
-    }
-
-    function aFakeChannel() {
-        const guiActions = []
-        return {guiAction: message => guiActions.push(message), guiActions}
     }
 
     function aFakeBus() {
@@ -37,10 +34,9 @@ describe('GUI request bridge — request lifecycle', () => {
         return {events, get completed() { return completed }, get error() { return error }}
     }
 
-    let channel, fireTimeout, guiRequests
+    let fireTimeout, guiRequests
 
     beforeEach(() => {
-        channel = aFakeChannel()
         const controlled = aControlledClock()
         fireTimeout = controlled.fireTimeout
         guiRequests = createGuiRequests({
@@ -53,7 +49,7 @@ describe('GUI request bridge — request lifecycle', () => {
 
     function request(overrides = {}) {
         return guiRequests.request$({
-            channel, ...fromC1S1, action: 'echo', params: {text: 'hi'}, ...overrides
+            ...fromC1S1, action: 'echo', params: {text: 'hi'}, ...overrides
         })
     }
 
@@ -61,18 +57,18 @@ describe('GUI request bridge — request lifecycle', () => {
         guiRequests.respond({...fromC1S1, requestId: 'req-1', ...overrides})
     }
 
-    it('sends a targeted gui-action with a generated requestId', () => {
-        capture(request())
+    it('emits a targeted gui-action channel event as the first emission', () => {
+        const result = capture(request())
 
-        expect(channel.guiActions).toEqual([{requestId: 'req-1', action: 'echo', params: {text: 'hi'}}])
+        expect(result.events).toEqual([guiActionEmission])
     })
 
-    it('resolves the request with the data from the matching gui-response', () => {
+    it('emits the response data after the gui-action event when the matching gui-response arrives', () => {
         const result = capture(request())
 
         respond({success: true, data: {echoed: 'hi'}})
 
-        expect(result.events).toEqual([{echoed: 'hi'}])
+        expect(result.events).toEqual([guiActionEmission, {echoed: 'hi'}])
         expect(result.completed).toBe(true)
     })
 
@@ -90,7 +86,7 @@ describe('GUI request bridge — request lifecycle', () => {
 
         respond({requestId: 'other', success: true, data: {}})
 
-        expect(result.events).toEqual([])
+        expect(result.events).toEqual([guiActionEmission])
         expect(result.completed).toBe(false)
     })
 
@@ -99,7 +95,7 @@ describe('GUI request bridge — request lifecycle', () => {
 
         respond({subscriptionId: 's2', success: true, data: {echoed: 'hi'}})
 
-        expect(result.events).toEqual([])
+        expect(result.events).toEqual([guiActionEmission])
         expect(result.completed).toBe(false)
     })
 
@@ -108,7 +104,7 @@ describe('GUI request bridge — request lifecycle', () => {
 
         respond({clientId: 'c2', success: true, data: {echoed: 'hi'}})
 
-        expect(result.events).toEqual([])
+        expect(result.events).toEqual([guiActionEmission])
         expect(result.completed).toBe(false)
     })
 
@@ -118,7 +114,7 @@ describe('GUI request bridge — request lifecycle', () => {
         respond({success: true, data: {first: true}})
         respond({success: true, data: {second: true}})
 
-        expect(result.events).toEqual([{first: true}])
+        expect(result.events).toEqual([guiActionEmission, {first: true}])
     })
 
     it('errors the request when it times out', () => {

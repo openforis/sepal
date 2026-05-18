@@ -5,10 +5,11 @@
 // conversation so concurrent sends can't interleave on the shared
 // messages array; abort() cancels the in-flight turn.
 
-const {EMPTY, Subject, catchError, concat, concatMap, defer, filter, finalize, from, ignoreElements, map, of, shareReplay, takeUntil, tap} = require('rxjs')
+const {EMPTY, Subject, catchError, concat, concatMap, defer, filter, finalize, from, ignoreElements, mergeMap, of, shareReplay, takeUntil, tap} = require('rxjs')
 const {messagesForLlm} = require('./llmMessages')
 const {publishHistoryProjection, publishLlmRequest, publishToolCall} = require('./conversationEvents')
 const {createToolCallGuard} = require('../toolCallGuard')
+const {isChannelEmission} = require('../channelEvents')
 
 const MAX_TOOL_ROUNDS = 8
 const TOOL_ROUND_CAP_MESSAGE = 'This is taking more steps than expected, so I\'ve stopped here. Please try rephrasing your request.'
@@ -125,18 +126,21 @@ function createConversation({llm, history, tools, tracer, initialMessages = [], 
     function invokeTool$(toolCall, {toolContext, collected, guard}) {
         const ref = {toolCallId: toolCall.id, toolName: toolCall.name}
         const blocked = guard.blockedRepeat(toolCall)
-        const result$ = blocked
+        const stream$ = blocked
             ? of(blocked)
             : tracer.span$('tool.invoke', {toolName: toolCall.name}, tools.invoke$(toolCall, toolContext)).pipe(
-                tap(result => guard.record(toolCall, result))
+                tap(value => { if (!isChannelEmission(value)) guard.record(toolCall, value) })
             )
         return concat(
             of({toolStart: {...ref, input: toolCall.input}}),
-            result$.pipe(
-                // collected.results is the persisted shape; the load path rebuilds from it.
-                // toolStart/toolEnd carry input/data/error for live display only.
-                tap(result => collected.results.push({...ref, result})),
-                map(result => ({toolEnd: {...ref, ok: result.ok, data: result.data, error: result.error}}))
+            stream$.pipe(
+                mergeMap(value => {
+                    if (isChannelEmission(value)) return of(value)
+                    // collected.results is the persisted shape; the load path rebuilds from it.
+                    // toolStart/toolEnd carry input/data/error for live display only.
+                    collected.results.push({...ref, result: value})
+                    return of({toolEnd: {...ref, ok: value.ok, data: value.data, error: value.error}})
+                })
             )
         )
     }

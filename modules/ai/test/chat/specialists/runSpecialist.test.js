@@ -1,6 +1,7 @@
-const {of} = require('rxjs')
+const {concat, of} = require('rxjs')
 const {runSpecialist$, SPECIALIST_MAX_ROUNDS} = require('#mcp/chat/specialists/runSpecialist')
-const {aFakeLlm, aFakeTracer, read} = require('../builders')
+const {emitChannel, guiAction} = require('#mcp/chat/channelEvents')
+const {aFakeLlm, aFakeTracer, read, run} = require('../builders')
 
 describe('runSpecialist$', () => {
 
@@ -211,6 +212,97 @@ describe('runSpecialist$', () => {
 
             expect(llm.receivedMessages).toHaveLength(3)
             expect(result.answer).toMatch(/invalid args/i)
+        })
+    })
+
+    describe('when an inner tool emits channel events', () => {
+        const toolCall = {id: 'gc1', name: 'get_context', input: {}}
+
+        it('forwards channel emissions to the outer stream and feeds only the tool result to the inner LLM', () => {
+            const guiActionEmission = emitChannel(guiAction({requestId: 'req-1', action: 'echo', params: {}}))
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [toolCall]},
+                {text: 'done'}
+            ]})
+            const invokeTool$ = () => concat(of(guiActionEmission), of({ok: true, data: {section: 'process'}}))
+
+            const {events} = run(runSpecialist$({
+                llm, tracer: aFakeTracer(), name: 'map',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$, context: {}
+            }))
+
+            expect(events).toContainEqual(guiActionEmission)
+            expect(events.at(-1)).toEqual({answer: 'done'})
+            expect(llm.receivedMessages[1].find(m => m.role === 'tool').toolResults).toEqual([
+                {toolCallId: 'gc1', toolName: 'get_context', result: {ok: true, data: {section: 'process'}}}
+            ])
+        })
+
+        it('does not let a passed-through channel emission count toward the consecutive-failure cap', () => {
+            const guiActionEmission = emitChannel(guiAction({requestId: 'req-1', action: 'echo', params: {}}))
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [{id: 'a', name: 'get_context', input: {x: 1}}]},
+                {toolCalls: [{id: 'b', name: 'get_context', input: {x: 2}}]},
+                {text: 'reached'}
+            ]})
+            // Each invocation emits a channel emission followed by a TOOL_FAILED envelope. Without the
+            // isChannelEmission guard, guard.record would log two failures per call and bail on call 2.
+            const invokeTool$ = () => concat(
+                of(guiActionEmission),
+                of({ok: false, error: {code: 'TOOL_FAILED', message: 'boom'}})
+            )
+
+            const result = read(runSpecialist$({
+                llm, tracer: aFakeTracer(), name: 'map',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$, context: {}
+            }))
+
+            expect(result).toEqual({answer: 'reached'})
+        })
+    })
+
+    describe('channel-emission collision safety', () => {
+        const toolCall = {id: 'gc1', name: 'get_context', input: {}}
+
+        it('treats a tool result envelope whose data has {kind, targeting} as data, not a channel emission', () => {
+            const lookalikeData = {kind: 'mosaic', targeting: 'whatever'}
+            const llm = aFakeLlm({replies: [{toolCalls: [toolCall]}, {text: 'done'}]})
+            const invokeTool$ = () => of({ok: true, data: lookalikeData})
+
+            const {events} = run(runSpecialist$({
+                llm, tracer: aFakeTracer(), name: 'map',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$, context: {}
+            }))
+
+            // Only the final answer reaches the outer stream — the lookalike never gets dispatched.
+            expect(events.filter(e => e.answer == null)).toEqual([])
+            expect(events.at(-1)).toEqual({answer: 'done'})
+            expect(llm.receivedMessages[1].find(m => m.role === 'tool').toolResults).toEqual([
+                {toolCallId: 'gc1', toolName: 'get_context', result: {ok: true, data: lookalikeData}}
+            ])
+        })
+
+        it('treats a tool result that fakes the streamType marker as data, not a channel emission', () => {
+            // The Symbol marker is unforgeable, so a JSON-shaped object with streamType: 'channel-event'
+            // is plain tool data that must reach the inner LLM as a tool result.
+            const fakeMarker = {streamType: 'channel-event', event: {kind: 'gui-action'}}
+            const llm = aFakeLlm({replies: [{toolCalls: [toolCall]}, {text: 'done'}]})
+            const invokeTool$ = () => of(fakeMarker)
+
+            const {events} = run(runSpecialist$({
+                llm, tracer: aFakeTracer(), name: 'map',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$, context: {}
+            }))
+
+            expect(events.filter(e => e.answer == null)).toEqual([])
+            expect(events.at(-1)).toEqual({answer: 'done'})
+            expect(llm.receivedMessages[1].find(m => m.role === 'tool').toolResults).toEqual([
+                {toolCallId: 'gc1', toolName: 'get_context', result: fakeMarker}
+            ])
         })
     })
 

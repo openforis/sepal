@@ -74,7 +74,11 @@ function aFakeHistory() {
     }
 }
 
+// Records every channel event the subject dispatched, exposing both the
+// raw events list and convenience per-kind arrays so existing assertions
+// keep reading naturally.
 function aFakeChannel() {
+    const events = []
     const sent = []
     const created = []
     const loaded = []
@@ -87,21 +91,50 @@ function aFakeChannel() {
     const toolStarts = []
     const toolEnds = []
     const notices = []
+    const guiActions = []
     return {
-        chatResponse(payload) { sent.push(payload) },
-        status(conversationId) { statuses.push(conversationId) },
-        userMessage(conversationId, text) { userMessages.push({conversationId, text}) },
-        conversationCreated(meta) { created.push(meta) },
-        conversationLoaded(conversationId, messages) { loaded.push({conversationId, messages}) },
-        conversationClaimed(meta) { claimed.push(meta) },
-        conversationUpdated(meta) { metaUpdates.push(meta) },
-        conversationDeleted(conversationId) { deleted.push(conversationId) },
-        conversationsList(metas) { lists.push(metas) },
-        toolStart(payload) { toolStarts.push(payload) },
-        toolEnd(payload) { toolEnds.push(payload) },
-        assistantNotice(payload) { notices.push(payload) },
-        sent, created, loaded, claimed, deleted, lists, statuses, userMessages, metaUpdates, toolStarts, toolEnds, notices
+        dispatch(event) {
+            events.push(event)
+            record(event)
+        },
+        events, sent, created, loaded, claimed, deleted, lists, statuses, userMessages, metaUpdates, toolStarts, toolEnds, notices, guiActions
     }
+
+    function record({kind, payload}) {
+        if (kind === 'chat-response') {
+            sent.push(payload.complete
+                ? {conversationId: payload.conversationId, complete: true}
+                : {conversationId: payload.conversationId, textDelta: payload.text})
+        } else if (kind === 'status') {
+            statuses.push(payload.conversationId)
+        } else if (kind === 'user-message') {
+            userMessages.push({conversationId: payload.conversationId, text: payload.text})
+        } else if (kind === 'conversation-created') {
+            created.push(metaFromPayload(payload))
+        } else if (kind === 'conversation-claimed') {
+            claimed.push(metaFromPayload(payload))
+        } else if (kind === 'conversation-updated') {
+            metaUpdates.push(metaFromPayload(payload))
+        } else if (kind === 'conversation-loaded') {
+            loaded.push({conversationId: payload.conversationId, messages: payload.messages})
+        } else if (kind === 'conversation-deleted') {
+            deleted.push(payload.conversationId)
+        } else if (kind === 'conversations') {
+            lists.push(payload.conversations)
+        } else if (kind === 'gui-action') {
+            guiActions.push({requestId: payload.requestId, action: payload.action, params: payload.params})
+        } else if (kind === 'tool-start') {
+            toolStarts.push(payload)
+        } else if (kind === 'tool-end') {
+            toolEnds.push(payload)
+        } else if (kind === 'assistant-notice') {
+            notices.push(payload)
+        }
+    }
+}
+
+function metaFromPayload({conversationId, ...rest}) {
+    return {id: conversationId, ...rest}
 }
 
 function aFakeTools(implementations = {}, schemas = []) {

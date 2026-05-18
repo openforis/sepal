@@ -5,10 +5,6 @@ describe('GUI request bridge — routing diagnostics', () => {
 
     const fromC1S1 = {clientId: 'c1', subscriptionId: 's1'}
 
-    function aFakeChannel() {
-        return {guiAction: () => {}}
-    }
-
     function aFakeBus() {
         const events = []
         return {publish: event => events.push(event), events}
@@ -19,10 +15,9 @@ describe('GUI request bridge — routing diagnostics', () => {
         return () => ids[Math.min(i++, ids.length - 1)]
     }
 
-    let channel, bus, guiRequests
+    let bus, guiRequests
 
     beforeEach(() => {
-        channel = aFakeChannel()
         bus = aFakeBus()
         guiRequests = createGuiRequests({
             clock: {delay$: () => new Subject()},
@@ -33,7 +28,7 @@ describe('GUI request bridge — routing diagnostics', () => {
     })
 
     function request() {
-        return guiRequests.request$({channel, ...fromC1S1, action: 'echo', params: {text: 'hi'}})
+        return guiRequests.request$({...fromC1S1, action: 'echo', params: {text: 'hi'}})
     }
 
     function respond(overrides = {}) {

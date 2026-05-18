@@ -3,7 +3,7 @@ const {recipeTools} = require('#mcp/chat/tools/recipeTools')
 const {aFakeGuiRequests, read, readError} = require('../builders')
 
 describe('recipe tools', () => {
-    const context = {channel: 'CH', conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
+    const context = {conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
 
     function toolNamed(name, guiRequests = aFakeGuiRequests()) {
         return recipeTools(guiRequests).find(tool => tool.name === name)
@@ -25,7 +25,7 @@ describe('recipe tools', () => {
             read(toolNamed('recipe_list', guiRequests).invoke$({type: 'MOSAIC', projectId: 'p1'}, context))
 
             expect(guiRequests.requests).toEqual([{
-                channel: 'CH', clientId: 'c1', subscriptionId: 's1',
+                clientId: 'c1', subscriptionId: 's1',
                 action: 'list-recipes', params: {type: 'MOSAIC', projectId: 'p1'}
             }])
         })
@@ -135,7 +135,7 @@ describe('recipe tools', () => {
             read(toolNamed('recipe_load', guiRequests).invoke$({recipeId: 'r1', path: '/classifier'}, context))
 
             expect(guiRequests.requests).toEqual([{
-                channel: 'CH', clientId: 'c1', subscriptionId: 's1',
+                clientId: 'c1', subscriptionId: 's1',
                 action: 'load-recipe', params: {recipeId: 'r1'}
             }])
         })

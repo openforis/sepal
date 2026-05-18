@@ -2,9 +2,9 @@
 // saved recipes; recipe_load returns one full recipe and is
 // specialist-private (kept off the orchestrator surface).
 
-const {map} = require('rxjs')
 const {projectLoadedRecipe} = require('./recipeProjection')
 const {guiProductRequest$} = require('./guiProductRequest')
+const {mapData} = require('../channelEvents')
 
 function recipeTools(guiRequests) {
     return [
@@ -24,7 +24,7 @@ function recipeListTool(guiRequests) {
         },
         invoke$: (input, context) =>
             guiProductRequest$(guiRequests, context, 'list-recipes', recipeFilters(input)).pipe(
-                map(recipes => recipes.map(recipeSummary))
+                mapData(recipes => recipes.map(recipeSummary))
             )
     }
 }
@@ -41,7 +41,7 @@ function recipeLoadTool(guiRequests) {
         },
         invoke$: (input, context) =>
             guiProductRequest$(guiRequests, context, 'load-recipe', {recipeId: input.recipeId}).pipe(
-                map(recipe => projectLoadedRecipe(recipe, input.path))
+                mapData(recipe => projectLoadedRecipe(recipe, input.path))
             )
     }
 }

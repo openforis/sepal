@@ -1,6 +1,7 @@
 const {from, of} = require('rxjs')
 const {createTurnFlow} = require('#mcp/chat/conversation/turnFlow')
-const {aFakeChannel, aFakeTitleGenerator, run} = require('../builders')
+const {emitChannel, guiAction} = require('#mcp/chat/channelEvents')
+const {aFakeTitleGenerator, run} = require('../builders')
 
 describe('TurnFlow', () => {
 
@@ -59,7 +60,7 @@ describe('TurnFlow', () => {
             const turnFlow = aTurnFlow({conversations: aFakeConversations({conversation: conv})})
 
             run(turnFlow.send$({
-                channel: aFakeChannel(), conversationId: 'conv-1', text: 'hi',
+                conversationId: 'conv-1', text: 'hi',
                 clientId: aliceId, subscriptionId: aliceSub,
                 selection: {section: 'inline'}
             }))
@@ -75,7 +76,7 @@ describe('TurnFlow', () => {
             })
 
             run(turnFlow.send$({
-                channel: aFakeChannel(), conversationId: 'conv-1', text: 'hi',
+                conversationId: 'conv-1', text: 'hi',
                 clientId: aliceId, subscriptionId: aliceSub
             }))
 
@@ -84,24 +85,22 @@ describe('TurnFlow', () => {
     })
 
     describe('turn-boundary notifications', () => {
-        it('emits status + userMessage at the start and chatResponse(complete) at the end', () => {
-            const channel = aFakeChannel()
+        it('emits status + user-message at the start and chat-response complete at the end', () => {
             const turnFlow = aTurnFlow()
 
-            run(turnFlow.send$({
-                channel, conversationId: 'conv-1', text: 'hello',
+            const {events} = run(turnFlow.send$({
+                conversationId: 'conv-1', text: 'hello',
                 clientId: aliceId, subscriptionId: aliceSub
             }))
 
-            expect(channel.statuses).toEqual(['conv-1'])
-            expect(channel.userMessages).toEqual([{conversationId: 'conv-1', text: 'hello'}])
-            expect(channel.sent).toContainEqual({conversationId: 'conv-1', complete: true})
+            expect(events[0]).toEqual({kind: 'status', targeting: 'broadcast', payload: {conversationId: 'conv-1'}})
+            expect(events[1]).toEqual({kind: 'user-message', targeting: 'broadcastExcept', payload: {conversationId: 'conv-1', text: 'hello'}})
+            expect(events.at(-1)).toEqual({kind: 'chat-response', targeting: 'broadcast', payload: {conversationId: 'conv-1', complete: true}})
         })
     })
 
     describe('event routing', () => {
-        it('routes textDelta, toolStart, toolEnd, and notice events to channel methods', () => {
-            const channel = aFakeChannel()
+        it('translates textDelta, toolStart, toolEnd, and notice events into channel events', () => {
             const conv = aFakeConversation({
                 events: [
                     {textDelta: 'one'},
@@ -112,15 +111,28 @@ describe('TurnFlow', () => {
             })
             const turnFlow = aTurnFlow({conversations: aFakeConversations({conversation: conv})})
 
-            run(turnFlow.send$({
-                channel, conversationId: 'conv-1', text: 'hi',
+            const {events} = run(turnFlow.send$({
+                conversationId: 'conv-1', text: 'hi',
                 clientId: aliceId, subscriptionId: aliceSub
             }))
 
-            expect(channel.sent).toContainEqual({conversationId: 'conv-1', textDelta: 'one'})
-            expect(channel.toolStarts).toEqual([{conversationId: 'conv-1', toolCallId: 't1', toolName: 'recipe_list', input: {}}])
-            expect(channel.toolEnds).toEqual([{conversationId: 'conv-1', toolCallId: 't1', toolName: 'recipe_list', ok: true, data: []}])
-            expect(channel.notices).toEqual([{conversationId: 'conv-1', content: 'note', display: {key: 'k'}}])
+            expect(events).toContainEqual({kind: 'chat-response', targeting: 'broadcast', payload: {conversationId: 'conv-1', text: 'one'}})
+            expect(events).toContainEqual({kind: 'tool-start', targeting: 'broadcast', payload: {conversationId: 'conv-1', toolCallId: 't1', toolName: 'recipe_list', input: {}}})
+            expect(events).toContainEqual({kind: 'tool-end', targeting: 'broadcast', payload: {conversationId: 'conv-1', toolCallId: 't1', toolName: 'recipe_list', ok: true, data: []}})
+            expect(events).toContainEqual({kind: 'assistant-notice', targeting: 'broadcast', payload: {conversationId: 'conv-1', content: 'note', display: {key: 'k'}}})
+        })
+
+        it('unwraps channel emissions from the conversation stream and forwards the bare event', () => {
+            const bareEvent = guiAction({requestId: 'req-1', action: 'echo', params: {}})
+            const conv = aFakeConversation({events: [emitChannel(bareEvent)]})
+            const turnFlow = aTurnFlow({conversations: aFakeConversations({conversation: conv})})
+
+            const {events} = run(turnFlow.send$({
+                conversationId: 'conv-1', text: 'hi',
+                clientId: aliceId, subscriptionId: aliceSub
+            }))
+
+            expect(events).toContainEqual(bareEvent)
         })
     })
 
@@ -133,10 +145,9 @@ describe('TurnFlow', () => {
                 titleGenerator,
                 clock: aFixedClock('2024-05-01T00:00:00.000Z')
             })
-            const channel = aFakeChannel()
 
             run(turnFlow.send$({
-                channel, conversationId: 'conv-1', text: 'hi',
+                conversationId: 'conv-1', text: 'hi',
                 clientId: aliceId, subscriptionId: aliceSub
             }))
 
@@ -149,4 +160,3 @@ describe('TurnFlow', () => {
         })
     })
 })
-

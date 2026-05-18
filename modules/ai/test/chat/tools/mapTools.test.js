@@ -3,7 +3,7 @@ const {mapTools} = require('#mcp/chat/tools/mapTools')
 const {aFakeGuiRequests, read, readError} = require('../builders')
 
 describe('map tools', () => {
-    const context = {channel: 'CH', conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
+    const context = {conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
 
     function toolNamed(name, guiRequests = aFakeGuiRequests()) {
         return mapTools(guiRequests).find(tool => tool.name === name)
@@ -35,7 +35,7 @@ describe('map tools', () => {
             read(toolNamed('map_area_list', guiRequests).invoke$({}, context))
 
             expect(guiRequests.requests).toEqual([{
-                channel: 'CH', clientId: 'c1', subscriptionId: 's1',
+                clientId: 'c1', subscriptionId: 's1',
                 action: 'list-map-areas', params: {}
             }])
         })
@@ -93,7 +93,7 @@ describe('map tools', () => {
             read(toolNamed('layer_list', guiRequests).invoke$({}, context))
 
             expect(guiRequests.requests).toEqual([{
-                channel: 'CH', clientId: 'c1', subscriptionId: 's1',
+                clientId: 'c1', subscriptionId: 's1',
                 action: 'list-layers', params: {}
             }])
         })

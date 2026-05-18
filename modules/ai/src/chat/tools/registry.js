@@ -8,6 +8,7 @@ const {catchError, defer, map, of, tap} = require('rxjs')
 const Ajv = require('ajv')
 const addFormats = require('ajv-formats')
 const {truncateTo, MAX_DEBUG_TEXT} = require('../debugText')
+const {isChannelEmission} = require('../channelEvents')
 
 const NOOP_BUS = {publish() {}}
 
@@ -23,9 +24,10 @@ function createToolRegistry({tools, bus = NOOP_BUS}) {
 
     function invoke$(toolCall, context) {
         return envelope$(toolCall, context).pipe(
-            tap(envelope => {
-                bus.publish(toolResultEvent(toolCall, context, envelope))
-                bus.publish(toolResultPayloadEvent(toolCall, context, envelope))
+            tap(value => {
+                if (isChannelEmission(value)) return
+                bus.publish(toolResultEvent(toolCall, context, value))
+                bus.publish(toolResultPayloadEvent(toolCall, context, value))
             })
         )
     }
@@ -55,7 +57,7 @@ function createToolRegistry({tools, bus = NOOP_BUS}) {
 
     function runTool$(tool, toolCall, context) {
         return defer(() => tool.invoke$(toolCall.input, context)).pipe(
-            map(data => ({ok: true, data})),
+            map(value => isChannelEmission(value) ? value : {ok: true, data: value}),
             catchError(error => of(failure('TOOL_FAILED', error.message)))
         )
     }

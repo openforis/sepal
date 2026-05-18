@@ -1,7 +1,7 @@
 // project_list tool: returns the user's saved projects via a GUI request.
 
-const {map} = require('rxjs')
 const {guiProductRequest$} = require('./guiProductRequest')
+const {mapData} = require('../channelEvents')
 
 function projectTools(guiRequests) {
     return [
@@ -16,7 +16,7 @@ function projectListTool(guiRequests) {
         parameters: {type: 'object', properties: {}, additionalProperties: false},
         invoke$: (_input, context) =>
             guiProductRequest$(guiRequests, context, 'list-projects', {}).pipe(
-                map(projects => projects.map(projectSummary))
+                mapData(projects => projects.map(projectSummary))
             )
     }
 }

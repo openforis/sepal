@@ -1,4 +1,4 @@
-const {of} = require('rxjs')
+const {of, tap} = require('rxjs')
 const {createConversation} = require('#mcp/chat/conversation/conversation')
 const {createConversations} = require('#mcp/chat/conversation/conversations')
 const {createTabContexts} = require('#mcp/chat/conversation/tabContexts')
@@ -74,12 +74,16 @@ function aUserChat(overrides = {}) {
 
 // Tests pre-date the pure-dispatch UserChat and call methods like
 // userChat.createConversation$({channel}) directly. This wrapper routes
-// each of those through handle$ so the existing tests keep working
-// without per-test rewrites.
+// each call through handle$ and, if the caller supplied a channel,
+// dispatches the channel events handle$ emits onto it — so existing
+// channel.X assertions keep working.
 function withCommandMethods(userChat) {
     const wrapped = {handle$: userChat.handle$}
     for (const [method, type] of Object.entries(COMMAND_BY_METHOD)) {
-        wrapped[method] = args => userChat.handle$({type, ...args})
+        wrapped[method] = ({channel, ...args} = {}) => {
+            const work$ = userChat.handle$({type, ...args})
+            return channel ? work$.pipe(tap(event => channel.dispatch(event))) : work$
+        }
     }
     return wrapped
 }
