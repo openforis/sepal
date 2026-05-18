@@ -2,19 +2,15 @@
     "port": 5000,
     "categories": {
         "ai": "info",
-        "config": "trace",
-        "conversationHandler": "trace",
-        "conversationLoop": "trace",
-        "http/server": "info",
-        "main": "trace",
-        "messageHandler": "trace",
-        "providers/claude": "trace",
-        "providers/lmstudio": "trace",
-        "providers/openai": "trace",
-        "session": "trace",
-        "titleGenerator": "trace",
-        "toolRunner": "trace",
-        "tools": "trace",
-        "ws": "trace"
+        "main": "info",
+        "config": "info",
+        "ws": "info",
+        "userChat": "info",
+        "conversation": "info",
+        "llm": "info",
+        "tool": "info",
+        "gui": "info",
+        "title": "info",
+        "specialist": "info"
     }
 }
