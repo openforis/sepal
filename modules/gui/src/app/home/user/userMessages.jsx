@@ -48,7 +48,7 @@ const unreadMessagesCount = userMessages =>
 
 class _UserMessages extends React.Component {
     state = {
-        selectedMessage: null
+        editMessage: null
     }
 
     constructor(props) {
@@ -146,7 +146,7 @@ class _UserMessages extends React.Component {
 
     editMessage(userMessage) {
         this.setState({
-            selectedMessage: userMessage
+            editMessage: userMessage
         })
     }
 
@@ -262,10 +262,10 @@ class _UserMessages extends React.Component {
 
     render() {
         const {userMessages} = this.props
-        const {selectedMessage} = this.state
+        const {editMessage} = this.state
         if (userMessages) {
-            return selectedMessage
-                ? this.renderMessagePanel(selectedMessage)
+            return editMessage
+                ? this.renderMessagePanel(editMessage)
                 : this.renderMessagesPanel()
         } else {
             return null
