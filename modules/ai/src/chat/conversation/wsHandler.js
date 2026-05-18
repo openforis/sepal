@@ -13,6 +13,7 @@ function createWsHandler({bus, userChatFor, guiRequests}) {
     function onConnection(ctx) {
         const out$ = new Subject()
         const subscriptions = new Map()
+        const closedSubscriptions = new Set()
 
         ctx.arg$.subscribe({
             next: receive,
@@ -64,7 +65,7 @@ function createWsHandler({bus, userChatFor, guiRequests}) {
         }
 
         function dispatchChatCommand(subscription, type, args) {
-            const entry = subscriptions.get(keyOf(subscription))
+            const entry = ensureSubscription(subscription)
             if (!entry) return
             publish(type, subscription, args, levelFor(type))
             runWork$(entry.userChat.handle$({
@@ -76,10 +77,9 @@ function createWsHandler({bus, userChatFor, guiRequests}) {
 
         function subscribeUp(subscription) {
             publish('subscriptionUp', subscription)
-            const channel = createWsChannel({out$, bus, ...subscription})
-            const userChat = userChatFor(subscription.username)
-            subscriptions.set(keyOf(subscription), {channel, userChat})
-            runWork$(userChat.handle$({type: 'list-conversations'}), channel)
+            closedSubscriptions.delete(keyOf(subscription))
+            const entry = createSubscription(subscription)
+            runWork$(entry.userChat.handle$({type: 'list-conversations'}), entry.channel)
         }
 
         function subscribeDown(subscription) {
@@ -88,7 +88,32 @@ function createWsHandler({bus, userChatFor, guiRequests}) {
             const entry = subscriptions.get(keyOf(subscription))
             if (entry) runWork$(entry.userChat.handle$({type: 'clear-context', clientId, subscriptionId}), entry.channel)
             guiRequests.cancelForSubscription({clientId, subscriptionId})
-            subscriptions.delete(keyOf(subscription))
+            const key = keyOf(subscription)
+            subscriptions.delete(key)
+            closedSubscriptions.add(key)
+        }
+
+        function ensureSubscription(subscription) {
+            const key = keyOf(subscription)
+            if (closedSubscriptions.has(key)) return null
+            const existing = subscriptions.get(key)
+            if (existing) return existing
+            const entry = createSubscription(subscription)
+            bus.publish({
+                type: 'wsSubscriptionRecovered',
+                level: 'warn',
+                message: `Recovered missing WS subscription ${subscriptionLabel(subscription)}`,
+                ...subscription
+            })
+            return entry
+        }
+
+        function createSubscription(subscription) {
+            const channel = createWsChannel({out$, bus, ...subscription})
+            const userChat = userChatFor(subscription.username)
+            const entry = {channel, userChat}
+            subscriptions.set(keyOf(subscription), entry)
+            return entry
         }
 
         function publish(kind, subscription, attrs = {}, level = 'info') {

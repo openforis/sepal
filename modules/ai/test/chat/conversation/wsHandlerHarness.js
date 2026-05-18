@@ -30,7 +30,13 @@ function aPassThroughTracer() {
     return {span$: (_name, _attrs, work$) => work$}
 }
 
-function aHandler({replies = [{text: 'Hi there!'}], conversationIds = ['conv-1'], bus = aNoopBus(), guiRequests = aNoopGuiRequests()} = {}) {
+function aHandler({
+    replies = [{text: 'Hi there!'}],
+    conversationIds = ['conv-1'],
+    bus = aNoopBus(),
+    guiRequests = aNoopGuiRequests(),
+    conversationsStore = createInMemoryConversationsStore()
+} = {}) {
     let i = 0
     const createId = () => conversationIds[Math.min(i++, conversationIds.length - 1)]
     const llm = aFakeLlm({replies})
@@ -44,7 +50,7 @@ function aHandler({replies = [{text: 'Hi there!'}], conversationIds = ['conv-1']
     const userChatFor = username => {
         if (!cache.has(username)) {
             const conversations = createConversations({
-                conversationsStore: createInMemoryConversationsStore(),
+                conversationsStore,
                 conversationFor$: id => of(createConversation({
                     llm, tracer, tools,
                     history: aFakeHistory(),
@@ -83,5 +89,6 @@ module.exports = {
     alice, aliceTargeted, aliceLabel,
     ISO_FIXED, META,
     aHandler, captureSent, subscribeHandler,
-    aNoopBus, aRecordingBus, aNoopGuiRequests, aPassThroughTracer
+    aNoopBus, aRecordingBus, aNoopGuiRequests, aPassThroughTracer,
+    createInMemoryConversationsStore
 }

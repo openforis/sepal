@@ -1,11 +1,15 @@
-const {alice, aliceTargeted, META, aHandler, captureSent} = require('./wsHandlerHarness')
+const {
+    alice, aliceTargeted, META,
+    aHandler, captureSent, aRecordingBus, createInMemoryConversationsStore
+} = require('./wsHandlerHarness')
 
 describe('Chat WS handler — command routing', () => {
 
     describe('subscriptionUp', () => {
 
         it('pushes the user\'s conversation list to the new subscription so the tab can populate on connect', () => {
-            const {arg$, sent} = captureSent(aHandler())
+            const bus = aRecordingBus()
+            const {arg$, sent} = captureSent(aHandler({bus}))
 
             arg$.next({event: 'subscriptionUp', ...alice})
 
@@ -13,6 +17,7 @@ describe('Chat WS handler — command routing', () => {
                 ...aliceTargeted,
                 data: {type: 'conversations', conversations: []}
             }])
+            expect(recoveredSubscriptions(bus)).toEqual([])
         })
     })
 
@@ -87,6 +92,34 @@ describe('Chat WS handler — command routing', () => {
 
             expect(sent.filter(m => m.data?.type === 'chat-response')).toEqual([])
         })
+
+        it('recovers a missing subscription and routes a message after reconnect when the conversation is persisted', () => {
+            const conversationsStore = createInMemoryConversationsStore()
+            const first = captureSent(aHandler({
+                conversationsStore,
+                replies: [{text: 'First reply'}]
+            }))
+            first.arg$.next({event: 'subscriptionUp', ...alice})
+            first.arg$.next({data: {type: 'create-conversation'}, ...alice})
+            first.arg$.next({data: {type: 'message', conversationId: 'conv-1', text: 'Hello'}, ...alice})
+            expect(first.sent.filter(m => m.data?.type === 'chat-response')).toHaveLength(2)
+
+            const bus = aRecordingBus()
+            const recovered = captureSent(aHandler({
+                conversationsStore,
+                bus,
+                replies: [{text: 'Recovered reply'}]
+            }))
+            recovered.arg$.next({data: {type: 'message', conversationId: 'conv-1', text: 'Again'}, ...alice})
+
+            expect(recovered.sent.filter(m => m.data?.type === 'chat-response')).toEqual([
+                {username: 'alice', data: {type: 'chat-response', conversationId: 'conv-1', text: 'Recovered reply'}},
+                {username: 'alice', data: {type: 'chat-response', conversationId: 'conv-1', complete: true}}
+            ])
+            expect(recoveredSubscriptions(bus)).toEqual([{
+                username: 'alice', clientId: 'c1', subscriptionId: 's1'
+            }])
+        })
     })
 
     describe('select-conversation', () => {
@@ -136,6 +169,40 @@ describe('Chat WS handler — command routing', () => {
                     conversations: [{id: 'conv-1', ...META}, {id: 'conv-2', ...META}]
                 }
             })
+        })
+
+        it('recovers a missing subscription for data messages and emits the targeted list', () => {
+            const bus = aRecordingBus()
+            const {arg$, sent} = captureSent(aHandler({bus}))
+
+            arg$.next({data: {type: 'list-conversations'}, ...alice})
+
+            expect(sent.filter(m => m.data?.type === 'conversations')).toEqual([{
+                ...aliceTargeted,
+                data: {type: 'conversations', conversations: []}
+            }])
+            expect(recoveredSubscriptions(bus)).toEqual([{
+                username: 'alice', clientId: 'c1', subscriptionId: 's1'
+            }])
+        })
+    })
+
+    describe('subscriptionDown', () => {
+
+        it('does not create a missing subscription but still cancels pending GUI requests', () => {
+            const bus = aRecordingBus()
+            const cancellations = []
+            const guiRequests = {
+                respond: () => {},
+                cancelForSubscription: subscription => cancellations.push(subscription)
+            }
+            const {arg$, sent} = captureSent(aHandler({bus, guiRequests}))
+
+            arg$.next({event: 'subscriptionDown', ...alice})
+
+            expect(cancellations).toEqual([{clientId: 'c1', subscriptionId: 's1'}])
+            expect(recoveredSubscriptions(bus)).toEqual([])
+            expect(sent.filter(m => m.data?.type === 'conversations')).toEqual([])
         })
     })
 
@@ -209,4 +276,10 @@ describe('Chat WS handler — command routing', () => {
             ])
         })
     })
+
+    function recoveredSubscriptions(bus) {
+        return bus.published
+            .filter(event => event.type === 'wsSubscriptionRecovered')
+            .map(({username, clientId, subscriptionId}) => ({username, clientId, subscriptionId}))
+    }
 })
