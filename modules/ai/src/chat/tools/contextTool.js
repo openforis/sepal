@@ -1,3 +1,7 @@
+// get_context tool: returns the runtime GUI selection shaped by
+// turnContext.shapeTurnContext, so the LLM can answer "what am I
+// looking at?" without inferring from turn-context messages.
+
 const {of} = require('rxjs')
 const {shapeTurnContext} = require('../turnContext')
 

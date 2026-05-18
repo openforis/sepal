@@ -1,3 +1,5 @@
+// project_list tool: returns the user's saved projects via a GUI request.
+
 const {map} = require('rxjs')
 const {guiProductRequest$} = require('./guiProductRequest')
 

@@ -1,3 +1,9 @@
+// Outbound WS channel for one subscription. Methods correspond to
+// domain events (chatResponse, conversationCreated, toolStart, ...);
+// each picks the right targeting — to the requesting tab, to all of
+// the user's tabs, or to other tabs but not this one — and emits the
+// wire message plus a bus debug event.
+
 function createWsChannel({out$, bus, username, clientId, subscriptionId}) {
     return {chatResponse, status, userMessage, conversationCreated, conversationClaimed, conversationUpdated, conversationLoaded, conversationDeleted, conversationsList, guiAction, toolStart, toolEnd, assistantNotice}
 

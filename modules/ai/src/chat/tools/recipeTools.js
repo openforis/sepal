@@ -1,3 +1,7 @@
+// recipe_list and recipe_load tools. recipe_list returns the user's
+// saved recipes; recipe_load returns one full recipe and is
+// specialist-private (kept off the orchestrator surface).
+
 const {map} = require('rxjs')
 const {projectLoadedRecipe} = require('./recipeProjection')
 const {guiProductRequest$} = require('./guiProductRequest')

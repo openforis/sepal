@@ -1,3 +1,7 @@
+// Title-cleaning helpers for an LLM-generated title: strips <think>
+// blocks, list markers, "Title:" preambles, wrapping quotes, and
+// trailing punctuation. Caps to TITLE_MAX_CHARS.
+
 const TITLE_MAX_CHARS = 80
 const QUOTE_CHARS = '"\'`'
 const TRAILING_PUNCT = '.?!,:;'

@@ -1,3 +1,7 @@
+// Map-inspection tools: map_area_list (per-recipe area layout) and
+// layer_list (per-area image and feature layers). Read-only; both
+// delegate to the GUI via guiProductRequest.
+
 const {guiProductRequest$} = require('./guiProductRequest')
 
 function mapTools(guiRequests) {

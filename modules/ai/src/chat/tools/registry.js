@@ -1,3 +1,9 @@
+// The runtime contract every tool consumer needs: name→tool lookup,
+// ajv arg validation, structured {ok, data?, error?} envelopes
+// (UNKNOWN_TOOL / INVALID_TOOL_ARGS / TOOL_FAILED), and observability
+// publishing. Composers wrap an array of tool definitions; consumers
+// (Conversation, specialist scope) invoke through it.
+
 const {catchError, defer, map, of, tap} = require('rxjs')
 const Ajv = require('ajv')
 const addFormats = require('ajv-formats')

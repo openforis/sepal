@@ -1,3 +1,7 @@
+// log4js adapter for the event bus. Subscribes once at boot, turns each
+// event's level + message into a log line, and tears the process down if
+// the bus errors or completes.
+
 const log = require('#sepal/log').getLogger('ai')
 
 function subscribeLogListener({bus}) {

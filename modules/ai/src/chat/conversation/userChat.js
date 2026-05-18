@@ -1,3 +1,10 @@
+// Per-user chat coordinator. Owns the in-memory list of one user's
+// conversations, serializes turns within each conversation, routes turn
+// events out through the WS channel, and holds per-tab context that gets
+// injected as ephemeral runtime context on the next turn. WS commands
+// and the user-facing flow go through here; Conversation is never
+// invoked directly.
+
 const {EMPTY, Subject, catchError, concat, concatMap, defer, filter, finalize, from, ignoreElements, map, of, shareReplay, takeUntil, tap} = require('rxjs')
 
 const COMMANDS = {

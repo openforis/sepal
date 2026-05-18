@@ -1,3 +1,9 @@
+// Server→browser request/response bridge. Tools (and other chat-side
+// code) call request$ to send a {gui-action, requestId, ...} to the
+// requesting tab; respond routes the matching {gui-response} back to
+// the pending request. Subscription teardown cancels outstanding
+// requests for that tab.
+
 const {Subject, defer, finalize, map, merge, take} = require('rxjs')
 
 function createGuiRequests({clock, createId, timeoutMs, bus}) {

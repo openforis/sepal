@@ -1,3 +1,7 @@
+// Wraps the shared inner tool registry so a single specialist only sees
+// its allowed tool subset — both in schemas() and via a blocked-call
+// envelope on invocations of disallowed tools.
+
 const {of} = require('rxjs')
 
 // Builds the schema list and the defence-in-depth scoped invokeTool$ a

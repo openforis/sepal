@@ -1,3 +1,8 @@
+// Projection of a Conversation's mutable messages array into the shape
+// the LLM sees: assistant text from completed tool turns is kept, the
+// executable tool calls themselves are dropped, and the active turn can
+// be isolated from prior history for post-tool rounds.
+
 const {turnContextMessage} = require('../turnContext')
 
 function messagesForLlm({messages, selection, includeTurnContext, isolateHistory}) {

@@ -1,3 +1,6 @@
+// Redis adapter for one conversation's message history, stored as a
+// list and expiring as a whole via ttlMs.
+
 const {defer, from, map, concatMap} = require('rxjs')
 const {historyKey, ttlSeconds} = require('./redisKeys')
 

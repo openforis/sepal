@@ -1,3 +1,8 @@
+// Inbound WS protocol adapter. Tracks the live subscriptions on one
+// connection, dispatches commands to the right UserChat, routes
+// gui-response messages back to guiRequests, and publishes
+// message-level observability to the bus.
+
 const {Subject, startWith} = require('rxjs')
 const {createWsChannel} = require('./wsChannel')
 const {COMMANDS} = require('./userChat')

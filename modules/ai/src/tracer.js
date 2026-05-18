@@ -1,3 +1,7 @@
+// Span lifecycle for cross-cutting timing. Wraps work (promise or
+// observable) in begin/end events that the log listener turns into info
+// lines and durations.
+
 const {defer, tap, catchError, throwError} = require('rxjs')
 
 function createTracer({bus, clock, createId}) {

@@ -1,3 +1,7 @@
+// LLM port for the rest of chat. createLlm() picks a provider adapter
+// from config.provider and exposes a single respondTo$ method so
+// Conversation and titleGenerator don't see provider differences.
+
 const {createOpenAiChatCompletions} = require('./providers/openaiChatCompletions')
 const {createLmStudioNativeChat} = require('./providers/lmStudioNativeChat')
 

@@ -1,3 +1,7 @@
+// Projects a loaded recipe down to a smaller, JSON-Pointer-addressable
+// shape for the recipe specialist's inner LLM. Strips model-specific
+// noise so the inner prompt context stays small.
+
 const {parsePointer, resolvePointer, formatPointer} = require('./jsonPointer')
 
 // Heavy CLASSIFICATION training data is replaced with omitted markers so the LLM

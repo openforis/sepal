@@ -1,3 +1,7 @@
+// LM Studio's native /api/v1/chat provider adapter. Used when the caller
+// explicitly disables reasoning (currently only title generation); the
+// regular path stays on the OpenAI-compatible surface.
+
 const {EMPTY, defer, from, mergeMap} = require('rxjs')
 const {truncateTo, MAX_DEBUG_TEXT} = require('../../debugText')
 const {publishResponseSummary} = require('../events')

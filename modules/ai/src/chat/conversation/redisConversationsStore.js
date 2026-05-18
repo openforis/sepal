@@ -1,3 +1,6 @@
+// Redis adapter for one user's conversation metadata (id, title,
+// timestamps), stored as a hash and expiring as a whole via ttlMs.
+
 const {defer, from, map, concatMap, of} = require('rxjs')
 const {conversationsKey, historyKey, ttlSeconds} = require('./redisKeys')
 

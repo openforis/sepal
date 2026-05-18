@@ -1,3 +1,8 @@
+// Runtime GUI selection shaped for the LLM: which section, recipe,
+// project, map view the user is currently on. shapeTurnContext() is the
+// structured value; turnContextMessage() wraps it as the per-turn system
+// message injected before the user's text.
+
 const MAX_STRING_LENGTH = 512
 const MAX_ARRAY_ITEMS = 10
 const MAX_CONTEXT_BYTES = 12 * 1024

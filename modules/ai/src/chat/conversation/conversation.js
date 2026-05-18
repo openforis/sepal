@@ -1,3 +1,9 @@
+// Per-conversation turn loop. Owns the messages array, feeds the LLM,
+// dispatches tool calls (capped at MAX_TOOL_ROUNDS, guarded by
+// toolCallGuard), and persists each new message through the injected
+// history collaborator. Not invoked directly — UserChat owns the turn
+// queue that drives it.
+
 const {concat, concatMap, defer, filter, from, ignoreElements, map, of, tap} = require('rxjs')
 const {messagesForLlm} = require('./llmMessages')
 const {publishHistoryProjection, publishLlmRequest, publishToolCall} = require('./conversationEvents')

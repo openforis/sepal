@@ -1,3 +1,8 @@
+// Heuristic fallback title from the user/assistant text when the LLM
+// produced nothing usable. Detects greetings/thanks, strips filler
+// ("can you", "I want to"), collapses whitespace, and clips to a small
+// word budget before running through cleanTitle.
+
 const {cleanTitle} = require('./cleanTitle')
 
 const LEADING_FILLER_RE = /^(?:please\s+)?(?:(?:can|could|would)\s+you\s+|how\s+(?:do|can)\s+i\s+|i\s+(?:want|need|would like)\s+to\s+|tell\s+me\s+(?:about\s+)?)/i

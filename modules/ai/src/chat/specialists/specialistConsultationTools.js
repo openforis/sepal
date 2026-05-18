@@ -1,14 +1,13 @@
+// Free-form consult_* tools the orchestrator uses to delegate to a
+// specialist (one tool per specialist). Recipe-operation tools
+// (describe_recipe, future update_recipe / create_recipe) are NOT here —
+// they sit on the orchestrator surface and route via recipeSpecialists.js
+// (DESIGN §5).
+
 const {specialistPrompt} = require('../llmText/prompts')
 const {runSpecialist$} = require('./runSpecialist')
 const {scopeInnerTools} = require('./specialistScope')
 
-// This module is ONLY for free-form `consult_*` specialist dispatcher tools
-// (one tool per specialist). Recipe-type specialists are NOT registered here;
-// they are reached through operation tools (`describe_recipe`, future
-// `update_recipe`, `create_recipe`) added at chat-level composition in
-// orchestratorToolRegistry.js and routed via `recipeSpecialists.js`. That
-// split keeps the orchestrator surface proportional to operations, not
-// recipe-type count (DESIGN §5).
 const MAP_SPECIALIST = {
     name: 'map',
     consultToolName: 'consult_map',

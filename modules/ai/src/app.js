@@ -1,3 +1,6 @@
+// Composition root. Builds and wires every chat collaborator, then hands
+// the result to createServer. No domain logic lives here.
+
 const {of, timer} = require('rxjs')
 const {v4: uuid} = require('uuid')
 const Redis = require('ioredis')

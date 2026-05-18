@@ -1,3 +1,8 @@
+// Registry of UserChat keyed by username. Lazy-builds a UserChat on
+// first touch and reuses it for the user's lifetime in the process.
+// Loads the main system prompt once at construction and prepends it to
+// each Conversation's initial messages.
+
 const {map} = require('rxjs')
 const {createConversation} = require('./conversation')
 const {createTitleGenerator} = require('./titleGenerator')

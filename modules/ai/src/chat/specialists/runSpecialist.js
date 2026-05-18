@@ -1,3 +1,8 @@
+// Inner-loop runtime for a single specialist consultation. Runs an
+// isolated LLM loop with the specialist's system prompt and scoped tool
+// set, capped by SPECIALIST_MAX_ROUNDS and guarded by toolCallGuard —
+// same anti-loop failure modes as the main turn.
+
 const {concat, concatMap, defer, from, ignoreElements, map, of, tap, toArray} = require('rxjs')
 const {createToolCallGuard} = require('../toolCallGuard')
 

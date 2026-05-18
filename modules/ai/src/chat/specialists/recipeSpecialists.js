@@ -1,3 +1,8 @@
+// Recipe-operation tools whose implementation is a specialist runtime.
+// Today: describe_recipe. The orchestrator sees describe_recipe; the
+// recipe specialist's inner LLM gets recipe_load plus the projected
+// recipe.
+
 const {of} = require('rxjs')
 const {specialistPrompt} = require('../llmText/prompts')
 const {runSpecialist$} = require('./runSpecialist')
