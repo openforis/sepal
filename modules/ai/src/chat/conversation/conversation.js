@@ -7,9 +7,12 @@
 
 const {EMPTY, Subject, catchError, concat, concatMap, defer, filter, finalize, from, ignoreElements, mergeMap, of, shareReplay, takeUntil, tap} = require('rxjs')
 const {messagesForLlm} = require('./llmMessages')
-const {publishEmptyLlmReply, publishHistoryProjection, publishLlmRequest, publishToolCall} = require('./conversationEvents')
+const {publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection, publishLlmRequest, publishRetryToolCallsDropped, publishToolCall} = require('./conversationEvents')
 const {createToolCallGuard} = require('../toolCallGuard')
 const {isChannelEmission} = require('../channelEvents')
+const {emptyAfterToolHint} = require('../llmText/prompts')
+
+const EMPTY_AFTER_TOOL_HINT = emptyAfterToolHint()
 
 const MAX_TOOL_ROUNDS = 8
 const TOOL_ROUND_CAP_MESSAGE = 'This is taking more steps than expected, so I\'ve stopped here. Please try rephrasing your request.'
@@ -74,21 +77,44 @@ function createConversation({llm, history, tools, tracer, initialMessages = [], 
         )
     }
 
-    function step$({selection, includeTurnContext, toolContext, round, guard}) {
+    function step$({selection, includeTurnContext, toolContext, round, guard, retried, retryHint}) {
         const acc = {text: '', toolCalls: []}
-        const {llmMessages, projection} = messagesForLlm({
+        const {llmMessages: baseMessages, projection} = messagesForLlm({
             messages, selection, includeTurnContext, isolateHistory: round > 0
         })
-        const toolSchemas = tools.schemas()
+        const llmMessages = retryHint
+            ? [...baseMessages, {role: 'system', content: retryHint}]
+            : baseMessages
+        // Retry rounds are final-answer-only: the empty-after-tool signal is itself
+        // evidence the model isn't planning more tool work, and the failure mode the
+        // hint addresses is "fall back to a read-only tool to look busy". Removing
+        // the tool surface mechanically forces either text or an admitted gap.
+        const toolSchemas = retried ? [] : tools.schemas()
         publishHistoryProjection({bus, conversationId: id, projection})
         publishLlmRequest({bus, conversationId: id, round, llmMessages, toolSchemas})
         const after$ = defer(() => {
-            const llmRequestedTools = acc.toolCalls.length > 0
-            return llmRequestedTools
-                ? handleToolCalls$(acc.text, acc.toolCalls, {toolContext, round, guard})
-                : reply$(acc.text, {round})
+            // Retry rounds are text-only: ignore any toolCalls the model emits despite
+            // tools:[] (the provider may not enforce it). Recording the dropped calls
+            // surfaces model misbehavior without re-entering the tool loop.
+            if (retried && acc.toolCalls.length > 0) {
+                publishRetryToolCallsDropped({bus, conversationId: id, round, toolCalls: acc.toolCalls})
+            } else if (acc.toolCalls.length > 0) {
+                return handleToolCalls$(acc.text, acc.toolCalls, {toolContext, round, guard})
+            }
+            // Empty after a tool result usually means the model gave up without explanation.
+            // Retry once with a hint; if even that produces nothing, reply$ will publish the
+            // final llmEmptyReply so the metric counts only user-visible failures.
+            if (!hasVisibleText(acc.text) && isPostToolRound() && !retried) {
+                publishEmptyLlmRetry({bus, conversationId: id, round})
+                return step$({toolContext, round: round + 1, guard, retried: true, retryHint: EMPTY_AFTER_TOOL_HINT})
+            }
+            return reply$(acc.text, {round})
         })
         return concat(llmStream$(llmMessages, toolSchemas, acc, round), after$)
+    }
+
+    function isPostToolRound() {
+        return messages.at(-1)?.role === 'tool'
     }
 
     function llmStream$(llmMessages, toolSchemas, acc, round) {

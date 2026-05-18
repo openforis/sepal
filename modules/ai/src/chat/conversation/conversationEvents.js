@@ -53,6 +53,28 @@ function publishToolCall({bus, conversationId, round, toolCall}) {
     })
 }
 
+function publishEmptyLlmRetry({bus, conversationId, round}) {
+    bus.publish({
+        type: 'conversation.llmEmptyRetry',
+        level: 'info',
+        conversationId,
+        round,
+        message: `LLM turn ${conversationId} round=${round} retrying with hint after empty post-tool reply`
+    })
+}
+
+function publishRetryToolCallsDropped({bus, conversationId, round, toolCalls}) {
+    const names = toolCalls.map(toolCall => toolCall.name).join('|')
+    bus.publish({
+        type: 'conversation.llmRetryToolCallsDropped',
+        level: 'warn',
+        conversationId,
+        round,
+        toolNames: toolCalls.map(toolCall => toolCall.name),
+        message: `LLM turn ${conversationId} round=${round} dropped tool calls on retry (text-only contract): [${names}]`
+    })
+}
+
 function publishEmptyLlmReply({bus, conversationId, round, messages}) {
     const afterToolRound = messages.at(-1)?.role === 'tool'
     const toolResults = afterToolRound ? messages.at(-1).toolResults || [] : []
@@ -126,4 +148,4 @@ function truncateJson(value) {
     return truncateTo(JSON.stringify(value), MAX_DEBUG_TEXT)
 }
 
-module.exports = {publishLlmRequest, publishToolCall, publishEmptyLlmReply, publishHistoryProjection}
+module.exports = {publishLlmRequest, publishToolCall, publishEmptyLlmReply, publishEmptyLlmRetry, publishRetryToolCallsDropped, publishHistoryProjection}

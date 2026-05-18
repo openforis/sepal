@@ -30,4 +30,8 @@ function titleSystemPrompt() {
     return loadPrompt('title')
 }
 
-module.exports = {loadPromptFile, loadPrompt, specialistPrompt, mainSystemPrompt, titleSystemPrompt}
+function emptyAfterToolHint() {
+    return loadPrompt('emptyAfterToolHint')
+}
+
+module.exports = {loadPromptFile, loadPrompt, specialistPrompt, mainSystemPrompt, titleSystemPrompt, emptyAfterToolHint}
