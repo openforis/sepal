@@ -20,6 +20,7 @@ export default defineConfig({
     resolve: {
         alias: [
             {find: '~', replacement: fileURLToPath(new URL('./src', import.meta.url))},
+            {find: /^#sepal\/(.*)$/, replacement: fileURLToPath(new URL('../../lib/js/shared/src/$1', import.meta.url))},
         ]
     },
     plugins: [react()],

@@ -9,3 +9,4 @@ services:
     user: "1000:1000"
     volumes:
       - ${SEPAL_PROJECT_DIR}/modules/gui:/usr/local/src/sepal/modules/gui # To allow dynamic reloading in dev
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared:/usr/local/src/sepal/lib/js/shared:ro # #sepal/* alias source + its node_modules (read-only)

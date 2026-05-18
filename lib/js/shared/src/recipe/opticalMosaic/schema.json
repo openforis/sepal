@@ -1,0 +1,219 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://sepal.io/recipes/opticalMosaic/schema.json",
+    "title": "OpticalMosaicRecipe",
+    "description": "Cloud-free optical mosaic from Landsat 4-9 and/or Sentinel-2.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["aoi", "dates", "sources", "sceneSelectionOptions", "compositeOptions"],
+    "properties": {
+        "aoi": {
+            "description": "Area of Interest. EE table or polygon.",
+            "oneOf": [
+                {"$ref": "#/$defs/aoiEeTable"},
+                {"$ref": "#/$defs/aoiPolygon"}
+            ]
+        },
+        "dates": {"$ref": "#/$defs/dates"},
+        "sources": {"$ref": "#/$defs/sources"},
+        "sceneSelectionOptions": {"$ref": "#/$defs/sceneSelectionOptions"},
+        "compositeOptions": {"$ref": "#/$defs/compositeOptions"},
+        "scenes": {
+            "type": "object",
+            "description": "Manual scene picks per scene-area, used only when sceneSelectionOptions.type='SELECT'."
+        }
+    },
+    "$defs": {
+        "date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "format": "date",
+            "description": "YYYY-MM-DD."
+        },
+        "countryTableId": {
+            "const": "users/wiell/SepalResources/gaul"
+        },
+        "aoiEeTable": {
+            "title": "AoiEeTable",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "id", "keyColumn", "key"],
+            "properties": {
+                "type": {"const": "EE_TABLE"},
+                "id": {"type": "string", "minLength": 1},
+                "keyColumn": {"type": ["string", "null"]},
+                "key": {"type": ["string", "integer", "null"]},
+                "level": {"enum": ["COUNTRY", "AREA"]},
+                "buffer": {"type": "integer", "minimum": 0, "maximum": 100}
+            },
+            "if": {
+                "properties": {"id": {"$ref": "#/$defs/countryTableId"}},
+                "required": ["id"]
+            },
+            "then": {
+                "required": ["level"],
+                "properties": {
+                    "keyColumn": {"const": "id"},
+                    "key": {"type": "integer"}
+                }
+            },
+            "else": {
+                "not": {"required": ["level"]},
+                "allOf": [
+                    {
+                        "if": {"properties": {"keyColumn": {"type": "null"}}},
+                        "then": {"properties": {"key": {"type": "null"}}},
+                        "else": {"properties": {"key": {"type": "string", "minLength": 1}}}
+                    }
+                ]
+            }
+        },
+        "aoiPolygon": {
+            "title": "AoiPolygon",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "path"],
+            "properties": {
+                "type": {"const": "POLYGON"},
+                "path": {
+                    "type": "array",
+                    "minItems": 3,
+                    "items": {
+                        "type": "array",
+                        "prefixItems": [
+                            {"type": "number", "minimum": -180, "maximum": 180},
+                            {"type": "number", "minimum": -90, "maximum": 90}
+                        ],
+                        "minItems": 2,
+                        "maxItems": 2
+                    }
+                }
+            }
+        },
+        "dates": {
+            "title": "OpticalMosaicDates",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["targetDate", "seasonStart", "seasonEnd", "yearsBefore", "yearsAfter"],
+            "properties": {
+                "type": {"const": "YEARLY_TIME_SCAN"},
+                "targetDate": {"$ref": "#/$defs/date"},
+                "seasonStart": {"$ref": "#/$defs/date"},
+                "seasonEnd": {"$ref": "#/$defs/date"},
+                "yearsBefore": {"type": "integer", "minimum": 0, "maximum": 25},
+                "yearsAfter": {"type": "integer", "minimum": 0, "maximum": 25}
+            }
+        },
+        "sources": {
+            "title": "OpticalMosaicSources",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["cloudPercentageThreshold", "dataSets"],
+            "properties": {
+                "cloudPercentageThreshold": {"type": "integer", "minimum": 0, "maximum": 100},
+                "dataSets": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "minProperties": 1,
+                    "properties": {
+                        "LANDSAT": {
+                            "type": "array",
+                            "minItems": 1,
+                            "uniqueItems": true,
+                            "items": {
+                                "enum": [
+                                    "LANDSAT_9", "LANDSAT_8", "LANDSAT_7", "LANDSAT_TM",
+                                    "LANDSAT_9_T2", "LANDSAT_8_T2", "LANDSAT_7_T2", "LANDSAT_TM_T2"
+                                ]
+                            }
+                        },
+                        "SENTINEL_2": {
+                            "type": "array",
+                            "minItems": 1,
+                            "uniqueItems": true,
+                            "items": {"enum": ["SENTINEL_2"]}
+                        }
+                    }
+                }
+            }
+        },
+        "sceneSelectionOptions": {
+            "title": "OpticalMosaicSceneSelectionOptions",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "targetDateWeight"],
+            "properties": {
+                "type": {"enum": ["ALL", "SELECT"]},
+                "targetDateWeight": {"enum": [0, 0.5, 1]}
+            }
+        },
+        "compositeOptions": {
+            "title": "OpticalMosaicCompositeOptions",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["corrections", "filters", "orbitOverlap", "tileOverlap", "includedCloudMasking", "cloudBuffering", "holes", "snowMasking", "compose"],
+            "properties": {
+                "corrections": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {"enum": ["SR", "BRDF", "CALIBRATE"]}
+                },
+                "brdfMultiplier": {"type": "number", "exclusiveMinimum": 0},
+                "filters": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["type", "percentile"],
+                        "properties": {
+                            "type": {"enum": ["SHADOW", "HAZE", "NDVI", "DAY_OF_YEAR"]},
+                            "percentile": {"type": "integer", "minimum": 0, "maximum": 100}
+                        }
+                    }
+                },
+                "orbitOverlap": {"enum": ["KEEP", "REMOVE"]},
+                "tileOverlap": {"enum": ["KEEP", "QUICK_REMOVE", "REMOVE"]},
+                "includedCloudMasking": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {"enum": ["sepalCloudScore", "landsatCFMask", "sentinel2CloudScorePlus", "sentinel2CloudProbability", "pino26"]}
+                },
+                "sentinel2CloudProbabilityMaxCloudProbability": {"type": "integer", "minimum": 0, "maximum": 100},
+                "sentinel2CloudScorePlusBand": {"enum": ["cs", "cs_cdf"]},
+                "sentinel2CloudScorePlusMaxCloudProbability": {"type": "integer", "minimum": 0, "maximum": 100},
+                "landsatCFMaskCloudMasking": {"enum": ["OFF", "MODERATE", "AGGRESSIVE"]},
+                "landsatCFMaskCloudShadowMasking": {"enum": ["OFF", "MODERATE", "AGGRESSIVE"]},
+                "landsatCFMaskCirrusMasking": {"enum": ["OFF", "MODERATE", "AGGRESSIVE"]},
+                "landsatCFMaskDilatedCloud": {"enum": ["KEEP", "REMOVE"]},
+                "sepalCloudScoreMaxCloudProbability": {"type": "integer", "minimum": 0, "maximum": 100},
+                "cloudBuffering": {"enum": [0, 120, 600]},
+                "holes": {"enum": ["PREVENT", "ALLOW"]},
+                "snowMasking": {"enum": ["ON", "OFF"]},
+                "compose": {"enum": ["MEDOID", "MEDIAN"]}
+            },
+            "allOf": [
+                {
+                    "if": {"properties": {"corrections": {"type": "array", "contains": {"const": "BRDF"}}}, "required": ["corrections"]},
+                    "then": {"required": ["brdfMultiplier"]}
+                },
+                {
+                    "if": {"properties": {"includedCloudMasking": {"type": "array", "contains": {"const": "sentinel2CloudProbability"}}}, "required": ["includedCloudMasking"]},
+                    "then": {"required": ["sentinel2CloudProbabilityMaxCloudProbability"]}
+                },
+                {
+                    "if": {"properties": {"includedCloudMasking": {"type": "array", "contains": {"const": "sentinel2CloudScorePlus"}}}, "required": ["includedCloudMasking"]},
+                    "then": {"required": ["sentinel2CloudScorePlusBand", "sentinel2CloudScorePlusMaxCloudProbability"]}
+                },
+                {
+                    "if": {"properties": {"includedCloudMasking": {"type": "array", "contains": {"const": "landsatCFMask"}}}, "required": ["includedCloudMasking"]},
+                    "then": {"required": ["landsatCFMaskCloudMasking", "landsatCFMaskCloudShadowMasking", "landsatCFMaskCirrusMasking", "landsatCFMaskDilatedCloud"]}
+                },
+                {
+                    "if": {"properties": {"includedCloudMasking": {"type": "array", "contains": {"const": "sepalCloudScore"}}}, "required": ["includedCloudMasking"]},
+                    "then": {"required": ["sepalCloudScoreMaxCloudProbability"]}
+                }
+            ]
+        }
+    }
+}

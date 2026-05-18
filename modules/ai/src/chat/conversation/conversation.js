@@ -4,8 +4,11 @@
 
 const {EMPTY, Subject, catchError, concat, defer, finalize, ignoreElements, shareReplay, takeUntil} = require('rxjs')
 const {createConversationLoop} = require('./conversationLoop')
+const {createDiagnostics} = require('../diagnostics')
 
-function createConversation({id, initialMessages = [], llm, history, tools, bus, diagnostics}) {
+const DEFAULT_DIAGNOSTICS = createDiagnostics()
+
+function createConversation({id, initialMessages = [], llm, history, tools, bus, diagnostics = DEFAULT_DIAGNOSTICS}) {
     const loop = createConversationLoop({id, initialMessages, llm, history, tools, bus, diagnostics})
     const abortRequests$ = new Subject()
     let tail$ = EMPTY

@@ -44,6 +44,8 @@
         "uuid": "^14.0.0"
     },
     "imports": {
+        "#sepal/recipe": "sepal/src/recipe/index.js",
+        "_comment_sepal_recipe": "Specific entry: Node imports map needs an explicit key when the target is a directory (recipe/index.js), since #sepal/* would otherwise resolve to recipe.js.",
         "#sepal/*": "sepal/src/*.js",
         "#sepal/*.json": "sepal/src/*.json",
         "#mcp/*": "./src/*.js",

@@ -40,10 +40,27 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   orchestrator tool surface. Recipe specialists should call it after inspecting
   the needed recipe fragments.
 - **Recipe-domain validation is deferred** — JSON Patch envelope validation is
-  not enough for safe recipe edits. Add shared recipe knowledge/validation under
-  `lib/js/recipes` and use it from the GUI write path for authoritative
-  validation and from recipe specialists for dependent-fragment planning and
-  prompt facts.
+  not enough for safe recipe edits. Use the shared recipe spec/validation API
+  (`lib/js/shared/src/recipe`, currently MOSAIC only) from the GUI write path
+  for authoritative validation and from recipe specialists for dependent-fragment
+  planning and prompt facts.
+- **Shared recipe spec lacks `promptFacts()`** — DESIGN §7/§8 require a
+  mechanically-assembled prompt-facts surface (description, use cases,
+  defaults/projection summary, rule prose, output bands, gotchas). The current
+  shared spec exposes `schema` / `rules` / `defaultModel()` / `validate()` only.
+  Land with the first recipe specialist that wants to consume it; the previously
+  stubbed `getRecipeRulesText` was removed because it covered only a slice.
+- **Shared recipe spec lacks `fragmentsForEdit({intent, targetPaths})`** —
+  DESIGN §6/§7. Needed by the patch specialist to plan dependent-fragment
+  reads/writes deterministically. Land alongside `recipe_patch` and the recipe
+  create/update tools.
+- **GUI `defaultModel` ships an internally inconsistent default** — for the
+  MOSAIC recipe, the GUI's committed `defaultModel.compositeOptions.includedCloudMasking`
+  pre-lists `sentinel2CloudScorePlus` while `sources.dataSets` defaults to
+  LANDSAT only. The shared `cloudMaskingMethodAvailability` rule correctly
+  rejects the combination. Touching the GUI default is regression risk;
+  reconcile when the patch specialist lands and there's a real recipe-write
+  path that needs the default to round-trip through `validate()`.
 - **Specialist safety/observability is minimal** — `runSpecialist$` has a
   `SPECIALIST_MAX_ROUNDS` cap, per-turn tool-loop safety (no-repeat,
   consecutive-failure bail-out, invalid-args retry limit via the shared
