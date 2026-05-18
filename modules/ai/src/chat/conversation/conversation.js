@@ -23,10 +23,10 @@ function createConversation({id, initialMessages = [], llm, history, tools, bus,
     }
 
     // Serialize turns: chain onto the previous turn's tail so concurrent
-    // sends can't interleave on the loop's shared messages array. takeUntil
-    // is inside the per-turn defer so abort fires for the currently-running
-    // turn only — queued turns subscribe to a fresh takeUntil when they
-    // start.
+    // sends can't interleave on the loop's shared messages array. The
+    // abort signal only reaches the currently-running turn because
+    // abortRequests$ is a non-replaying Subject and queued turns don't
+    // subscribe to takeUntil until concat advances to them.
     function sendUserMessage$(text, opts = {}) {
         const previousTail$ = tail$
         const turn$ = concat(

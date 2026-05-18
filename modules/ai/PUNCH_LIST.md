@@ -119,7 +119,7 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Observability
 
-- **Late-bound span completion attrs** — `tracer.span$(name, attrs, work$)`
+- **Late-bound span completion attrs** — `bus.track$(name, attrs, work$)`
   fixes attrs at construction. For LLM/tool spans we want completion attrs such
   as chunks, token usage, cache hits, result size, and status once they are
   known.

@@ -1,6 +1,6 @@
 // Per-user chat dispatcher. Maps each wire-typed command to its
-// handler observable, wraps the work in a tracing span, and warns on
-// unrecognised types.
+// handler observable, wraps the work in a bus.track$ span, and warns
+// on unrecognised types.
 
 const {EMPTY} = require('rxjs')
 

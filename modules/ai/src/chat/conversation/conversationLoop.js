@@ -18,7 +18,7 @@ const DEFAULT_DIAGNOSTICS = createDiagnostics()
 const MAX_TOOL_ROUNDS = 8
 
 function createConversationLoop({id, initialMessages = [], llm, history, tools, bus, diagnostics = DEFAULT_DIAGNOSTICS}) {
-    const messages = [...initialMessages] // Mutable
+    const messages = [...initialMessages]
     const notices = createTerminalNotices({bus, conversationId: id, append$})
 
     return {runTurn$, messagesSnapshot}
