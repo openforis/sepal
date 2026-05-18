@@ -2,10 +2,10 @@
 
 Shared recipe specs + validation. Browser-safe (no `fs`, no `path`).
 
-Each spec exposes `{id, name, schema, rules, defaultModel(), toEffectiveModel(model), validate(model)}`.
+Each spec exposes `{id, name, schema, rules, defaultModel(), toEffectiveModel(model), promptFacts(), validate(model)}`.
 Registry-level conveniences: `listRecipeSpecs()`, `getRecipeSpec(id)`,
-`getRecipeSchema(id)`, `getRecipeDefaults(id)`, `validateRecipe(id, model)`,
-`toEffectiveModel(id, model)`.
+`getRecipeSchema(id)`, `getRecipeDefaults(id)`, `getRecipePromptFacts(id)`,
+`validateRecipe(id, model)`, `toEffectiveModel(id, model)`.
 
 ## LLM-facing model contract
 
@@ -43,6 +43,16 @@ deliberate choice over the alternative — merging dormant fields back — becau
 the merge-back path has scenarios where the LLM's explicit intent (e.g.
 `includedCloudMasking: []`, "remove method X") gets silently undone, and that's
 worse than predictable cleanup.
+
+## Specialist prompt assembly
+
+`promptFacts()` returns the structured inputs from which a recipe specialist's
+system prompt is mechanically assembled per DESIGN §8: `description`,
+`useCases`, `chooseWhen`, `dontChooseWhen`, `outputs`. The point is to keep
+LLM-facing knowledge co-located with the spec it describes, so adding a recipe
+type means adding facts in one place rather than editing a prompt asset in
+another. Fields are returned fresh on each call; consumers may mutate without
+corrupting the next caller.
 
 ## AOI subschema
 
