@@ -18,6 +18,7 @@ describe('orchestrator tool registry', () => {
         expect(names).toEqual([
             'get_context',
             'recipe_list',
+            'recipe_open',
             'project_list',
             'map_area_list',
             'layer_list',

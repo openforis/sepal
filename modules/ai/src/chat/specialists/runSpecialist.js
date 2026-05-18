@@ -26,7 +26,11 @@ function runSpecialist$({llm, tracer, name, systemPrompt, userText, allowedSchem
     function step$(messages, round) {
         const acc = {text: '', toolCalls: []}
         return concat(
-            llm.respondTo$({messages, tools: allowedSchemas}).pipe(
+            llm.respondTo$({
+                messages,
+                tools: allowedSchemas,
+                debugLabel: `specialist ${name} round ${round}`
+            }).pipe(
                 tap(event => {
                     if (event.textDelta) acc.text += event.textDelta
                     if (event.toolCall) acc.toolCalls = [...acc.toolCalls, event.toolCall]

@@ -121,7 +121,8 @@ const formatters = {
         result: data => tr('project_delete', 'result', {project: data?.deleted ? projectName(data.deleted) : ''})
     },
     recipe_open: {
-        input: ({recipeId}) => tr('recipe_open', 'input', {recipe: recipeRef(recipeId)})
+        input: ({recipeId}) => tr('recipe_open', 'input', {recipe: recipeRef(recipeId)}),
+        result: data => tr('recipe_open', 'result', {recipe: recipeRef(data?.id) || data?.name || ''})
     },
     recipe_close: {
         input: ({recipeId}) => tr('recipe_close', 'input', {recipe: recipeRef(recipeId)})

@@ -532,7 +532,8 @@
         },
         "recipe_open": {
           "label": "Open recipe",
-          "input": "{recipe}"
+          "input": "{recipe}",
+          "result": "Opened {recipe}"
         },
         "recipe_close": {
           "label": "Close recipe",

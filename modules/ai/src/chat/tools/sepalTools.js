@@ -7,12 +7,13 @@
 const {contextTool} = require('./contextTool')
 const {mapTools} = require('./mapTools')
 const {projectTools} = require('./projectTools')
-const {recipeListTool, recipeLoadTool} = require('./recipeTools')
+const {recipeListTool, recipeOpenTool, recipeLoadTool} = require('./recipeTools')
 
 function sepalTools({guiRequests}) {
     return [
         contextTool(),
         recipeListTool(guiRequests),
+        recipeOpenTool(guiRequests),
         ...projectTools(guiRequests),
         ...mapTools(guiRequests)
     ]

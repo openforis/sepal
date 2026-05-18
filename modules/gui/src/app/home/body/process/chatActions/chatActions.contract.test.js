@@ -8,7 +8,10 @@ import {registerMapActions} from './mapActions'
 import {registerProjectActions} from './projectActions'
 import {registerRecipeActions} from './recipeActions'
 
-const {recipeState, projectState, loadedRecipe, store, loadRecipes$, loadProjects$} = vi.hoisted(() => ({
+const {
+    recipeState, projectState, loadedRecipe, store, loadRecipes$, loadProjects$,
+    isRecipeOpen, openRecipeInNewTab, selectRecipe
+} = vi.hoisted(() => ({
     recipeState: [{id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: 'p1'}],
     projectState: [{id: 'p1', name: 'Kenya'}],
     loadedRecipe: {
@@ -25,10 +28,14 @@ const {recipeState, projectState, loadedRecipe, store, loadRecipes$, loadProject
         selectedTabId: undefined, tabs: undefined, mapView: undefined
     },
     loadRecipes$: vi.fn(),
-    loadProjects$: vi.fn()
+    loadProjects$: vi.fn(),
+    isRecipeOpen: vi.fn(),
+    openRecipeInNewTab: vi.fn(),
+    selectRecipe: vi.fn()
 }))
 
 vi.mock('~/store', () => ({
+    dispatch: vi.fn(),
     select: vi.fn(path => {
         if (path === 'process.recipes') return store.recipes
         if (path === 'process.projects') return store.projects
@@ -45,7 +52,10 @@ vi.mock('~/store', () => ({
 vi.mock('../recipe', async importOriginal => ({
     ...await importOriginal(),
     loadRecipes$,
-    loadProjects$
+    loadProjects$,
+    isRecipeOpen,
+    openRecipeInNewTab,
+    selectRecipe
 }))
 
 // A recipe in process.loadedRecipes has already been through initializeRecipe,
@@ -65,6 +75,9 @@ beforeEach(() => {
     store.mapView = undefined
     loadRecipes$.mockReset().mockReturnValue(of(null))
     loadProjects$.mockReset().mockReturnValue(of(null))
+    isRecipeOpen.mockReset().mockReturnValue(false)
+    openRecipeInNewTab.mockReset()
+    selectRecipe.mockReset()
 })
 
 it('handles the list-recipes action and responds with a {success, data} envelope carrying the recipe list', () => {
@@ -101,6 +114,29 @@ it('does not mutate the loaded recipe model when reading it (load-recipe is a pu
     handleGuiAction('load-recipe', {recipeId: 'r1', respond: () => {}})
 
     expect(getHash(loadedRecipe.model)).toBe(hashBefore)
+})
+
+it('handles the open action, opens the recipe, and responds with a summary', () => {
+    let response
+    const handled = handleGuiAction('open', {recipeId: 'r1', respond: r => { response = r }})
+
+    expect(handled).toBe(true)
+    expect(openRecipeInNewTab).toHaveBeenCalledWith(loadedRecipe)
+    expect(response).toEqual({
+        success: true,
+        data: {id: 'r1', type: 'CLASSIFICATION', name: 'Kenya land cover', projectId: 'p1'}
+    })
+})
+
+it('handles the open action for an already open recipe by selecting it', () => {
+    isRecipeOpen.mockReturnValue(true)
+    let response
+
+    handleGuiAction('open', {recipeId: 'r1', respond: r => { response = r }})
+
+    expect(selectRecipe).toHaveBeenCalledWith('r1')
+    expect(openRecipeInNewTab).not.toHaveBeenCalled()
+    expect(response.success).toBe(true)
 })
 
 it('loads recipes before listing when process.recipes is empty', () => {

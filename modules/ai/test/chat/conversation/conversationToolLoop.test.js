@@ -1,6 +1,6 @@
 const {of, throwError} = require('rxjs')
 const {MAX_TOOL_ROUNDS} = require('#mcp/chat/conversation/conversation')
-const {aConversation, aFakeHistory, aFakeLlm, aFakeTools, run} = require('../builders')
+const {aConversation, aFakeBus, aFakeHistory, aFakeLlm, aFakeTools, run} = require('../builders')
 
 describe('Conversation tool loop', () => {
 
@@ -129,6 +129,34 @@ describe('Conversation tool loop', () => {
             }},
             {textDelta: 'Sorry, I could not list your recipes.'}
         ])
+    })
+
+    it('logs an empty post-tool LLM reply with the preceding tool result summary', () => {
+        const toolCall = {id: 'describe', name: 'describe_recipe', input: {recipeId: 'r1'}}
+        const specialistAnswer = 'I could not load the recipe details.'
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [toolCall]},
+            {}
+        ]})
+        const bus = aFakeBus()
+        const history = aFakeHistory()
+        const tools = aFakeTools({describe_recipe: () => of({answer: specialistAnswer})})
+        const conversation = aConversation({llm, tools, history, bus})
+
+        const {events} = run(conversation.sendUserMessage$('open latest recipe'))
+
+        expect(events).toEqual([
+            {toolStart: {toolCallId: toolCall.id, toolName: toolCall.name, input: toolCall.input}},
+            {toolEnd: {toolCallId: toolCall.id, toolName: toolCall.name, ok: true, data: {answer: specialistAnswer}, error: undefined}}
+        ])
+        expect(history.appended.at(-1)).toEqual({role: 'assistant', content: ''})
+        expect(bus.published).toContainEqual(expect.objectContaining({
+            type: 'conversation.llmEmptyReply',
+            level: 'warn',
+            round: 1,
+            afterToolRound: true,
+            toolSummary: 'describe_recipe:ok:answer(36)'
+        }))
     })
 
     it('blocks an identical tool call after a prior failure without invoking the tool again', () => {

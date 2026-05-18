@@ -186,7 +186,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             return {publish: event => published.push(event), published}
         }
 
-        it('publishes a debug llm.request and a trace llm.debugChunk so debug logs can correlate prompt and chunks', async () => {
+        it('publishes compact debug request and response summaries without raw chunk logs', async () => {
             const bus = aRecordingBus()
             mockCreate.mockResolvedValue([{choices: [{delta: {content: 'Title'}}]}])
 
@@ -196,11 +196,14 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             }))
 
             const request = bus.published.find(event => event.type === 'llm.request')
-            const debugChunk = bus.published.find(event => event.type === 'llm.debugChunk')
+            const response = bus.published.find(event => event.type === 'llm.response')
             expect(request).toMatchObject({level: 'debug'})
             expect(request.message()).toContain(debugLabel)
-            expect(debugChunk).toMatchObject({level: 'trace'})
-            expect(debugChunk.message()).toContain(debugLabel)
+            expect(response).toMatchObject({level: 'debug'})
+            expect(response.message()).toContain(debugLabel)
+            expect(response.message()).toContain('contentChunks=1')
+            expect(bus.published).not.toContainEqual(expect.objectContaining({type: 'llm.chunk'}))
+            expect(bus.published).not.toContainEqual(expect.objectContaining({type: 'llm.debugChunk'}))
         })
     })
 })

@@ -16,7 +16,15 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus}) {
     return {respondTo$}
 
     function respondTo$({messages, tools, maxTokens, temperature, debugLabel, extraParams = {}}) {
-        const acc = {text: '', chunkCount: 0, toolCalls: new Map()}
+        const acc = {
+            text: '',
+            chunkCount: 0,
+            contentChunkCount: 0,
+            toolCallChunkCount: 0,
+            toolCalls: new Map(),
+            finishReasons: new Set(),
+            deltaKeys: new Set()
+        }
         const hasTools = tools?.length > 0
         const params = {
             model,
@@ -34,32 +42,23 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus}) {
                     level: 'debug',
                     message: () => `LLM ${debugLabel} request params: ${JSON.stringify({...params, messages: `[${messages.length} messages]`})}`
                 })
+                bus.publish({
+                    type: 'llm.requestPayload',
+                    level: 'trace',
+                    message: () => `LLM ${debugLabel} request payload: ${truncateTo(JSON.stringify(params), MAX_DEBUG_TEXT)}`
+                })
             }
             return from(client.chat.completions.create(params))
         }).pipe(
             mergeMap(stream => from(stream)),
             timeout({first: FIRST_CHUNK_TIMEOUT_MS, each: BETWEEN_CHUNKS_TIMEOUT_MS}),
-            tap(chunk => {
-                accumulateChunk(acc, chunk)
-                bus.publish({
-                    type: 'llm.chunk',
-                    level: 'trace',
-                    message: () => `LLM chunk ${acc.chunkCount}: ${JSON.stringify(chunk)}`
-                })
-                if (debugLabel) {
-                    bus.publish({
-                        type: 'llm.debugChunk',
-                        level: 'trace',
-                        message: () => `LLM ${debugLabel} raw chunk ${acc.chunkCount}: ${truncateTo(JSON.stringify(chunk), MAX_DEBUG_TEXT)}`
-                    })
-                }
-            }),
+            tap(chunk => accumulateChunk(acc, chunk)),
             map(chunk => chunk.choices?.[0]?.delta?.content),
             filter(Boolean),
             map(textDelta => ({textDelta}))
         )
         const toolCalls$ = defer(() => from(toolCallEvents(acc.toolCalls)))
-        return concat(text$, toolCalls$).pipe(publishResponseSummary({bus, model, acc}))
+        return concat(text$, toolCalls$).pipe(publishResponseSummary({bus, model, acc, debugLabel}))
     }
 }
 
@@ -113,8 +112,15 @@ function toProviderToolResultMessages({toolResults}) {
 
 function accumulateChunk(acc, chunk) {
     acc.chunkCount++
-    const delta = chunk.choices?.[0]?.delta
-    if (delta?.content) acc.text += delta.content
+    const choice = chunk.choices?.[0]
+    const delta = choice?.delta
+    if (choice?.finish_reason) acc.finishReasons.add(choice.finish_reason)
+    Object.keys(delta || {}).forEach(key => acc.deltaKeys.add(key))
+    if (typeof delta?.content === 'string') {
+        acc.contentChunkCount++
+        if (delta.content) acc.text += delta.content
+    }
+    if (delta?.tool_calls?.length) acc.toolCallChunkCount++
     accumulateToolCalls(acc.toolCalls, delta?.tool_calls)
 }
 

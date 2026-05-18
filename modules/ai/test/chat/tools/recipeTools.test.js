@@ -38,14 +38,17 @@ describe('recipe tools', () => {
             expect(guiRequests.requests[0].params).toEqual({})
         })
 
-        it('projects each recipe to a compact summary, keeping projectId as an internal handle and dropping unknown fields', () => {
+        it('projects each recipe to a compact summary, keeping handles and timestamps but dropping unknown fields', () => {
             const guiRequests = aFakeGuiRequests(() => of([
                 {id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: 'p1', creationTime: 1, updateTime: 2, model: {big: 'blob'}}
             ]))
 
             const result = read(toolNamed('recipe_list', guiRequests).invoke$({}, context))
 
-            expect(result).toEqual([{id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: 'p1'}])
+            expect(result).toEqual([{
+                id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: 'p1',
+                creationTime: 1, updateTime: 2
+            }])
         })
 
         it('omits projectId when a recipe has none', () => {
@@ -102,6 +105,30 @@ describe('recipe tools', () => {
             const error = readError(toolNamed('recipe_list', guiRequests).invoke$({}, context))
 
             expect(error.message).toBe('GUI request timed out')
+        })
+    })
+
+    describe('recipe_open', () => {
+
+        it('exposes a required recipeId schema', () => {
+            expect(toolNamed('recipe_open').parameters).toEqual({
+                type: 'object',
+                properties: {recipeId: {type: 'string'}},
+                required: ['recipeId'],
+                additionalProperties: false
+            })
+        })
+
+        it('asks the GUI to open the recipe by id', () => {
+            const guiRequests = aFakeGuiRequests(() => of({id: 'r1', name: 'Kenya'}))
+
+            const result = read(toolNamed('recipe_open', guiRequests).invoke$({recipeId: 'r1'}, context))
+
+            expect(guiRequests.requests).toEqual([{
+                clientId: 'c1', subscriptionId: 's1',
+                action: 'open', params: {recipeId: 'r1'}
+            }])
+            expect(result).toEqual({id: 'r1', name: 'Kenya'})
         })
     })
 

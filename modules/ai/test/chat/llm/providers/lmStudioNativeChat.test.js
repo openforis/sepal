@@ -113,7 +113,7 @@ describe('LM Studio native chat adapter', () => {
             return {publish: event => published.push(event), published}
         }
 
-        it('publishes a debug llm.request and a trace llm.debugResponse so debug logs can correlate request and response', async () => {
+        it('publishes compact debug request and response summaries without raw response logs', async () => {
             const bus = aRecordingBus()
             global.fetch.mockResolvedValue({
                 ok: true,
@@ -126,11 +126,13 @@ describe('LM Studio native chat adapter', () => {
             }))
 
             const request = bus.published.find(event => event.type === 'llm.request')
-            const response = bus.published.find(event => event.type === 'llm.debugResponse')
+            const response = bus.published.find(event => event.type === 'llm.response')
             expect(request).toMatchObject({level: 'debug'})
             expect(request.message()).toContain(debugLabel)
-            expect(response).toMatchObject({level: 'trace'})
+            expect(response).toMatchObject({level: 'debug'})
             expect(response.message()).toContain(debugLabel)
+            expect(response.message()).toContain('contentChunks=1')
+            expect(bus.published).not.toContainEqual(expect.objectContaining({type: 'llm.debugResponse'}))
         })
     })
 })

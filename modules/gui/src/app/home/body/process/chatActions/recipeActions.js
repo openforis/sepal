@@ -209,9 +209,16 @@ const moveRecipes = ({recipeIds, projectId, respond}) => {
     })
 }
 
-const openExistingRecipe = ({recipeId}) => {
+const openExistingRecipe = ({recipeId, respond}) => {
+    if (!recipeId) {
+        respond?.({success: false, error: 'recipeId is required'})
+        return
+    }
+    const respondOpened = recipe =>
+        respond?.({success: true, data: recipeSummary(recipe || {id: recipeId})})
     if (isRecipeOpen(recipeId)) {
         selectRecipe(recipeId)
+        respondOpened(select(['process.loadedRecipes', recipeId]) || (select('process.recipes') || []).find(recipe => recipe.id === recipeId))
         return
     }
     loadRecipeFromCacheOrServer$(recipeId).pipe(
@@ -221,8 +228,13 @@ const openExistingRecipe = ({recipeId}) => {
                 .dispatch()
         )
     ).subscribe({
-        next: recipe => openRecipeInNewTab(recipe),
-        error: error => log.error('Failed to open recipe', error)
+        next: recipe => {
+            openRecipeInNewTab(recipe)
+            respondOpened(recipe)
+        },
+        error: error => respond
+            ? respondError({log, respond, fallback: 'Failed to open recipe', error})
+            : log.error('Failed to open recipe', error)
     })
 }
 

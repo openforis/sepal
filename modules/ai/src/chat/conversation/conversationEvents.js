@@ -53,6 +53,28 @@ function publishToolCall({bus, conversationId, round, toolCall}) {
     })
 }
 
+function publishEmptyLlmReply({bus, conversationId, round, messages}) {
+    const afterToolRound = messages.at(-1)?.role === 'tool'
+    const toolResults = afterToolRound ? messages.at(-1).toolResults || [] : []
+    const toolSummary = toolResults.map(toolResultSummary).join(',') || '-'
+    bus.publish({
+        type: 'conversation.llmEmptyReply',
+        level: 'warn',
+        conversationId,
+        round,
+        afterToolRound,
+        toolSummary,
+        message: `LLM turn ${conversationId} round=${round} produced no visible assistant text afterToolRound=${afterToolRound} toolResults=[${toolSummary}]`
+    })
+    bus.publish({
+        type: 'conversation.llmEmptyReplyContext',
+        level: 'trace',
+        conversationId,
+        round,
+        message: () => `LLM empty reply ${conversationId} round=${round} recent messages: ${truncateJson(messages.slice(-4))}`
+    })
+}
+
 function publishHistoryProjection({bus, conversationId, projection}) {
     if (!projection) return
     const {before, after} = projection
@@ -85,8 +107,23 @@ function messageSummary(messages) {
     }).join(' -> ')
 }
 
+function toolResultSummary({toolName, result}) {
+    if (!result) return `${toolName}:missing`
+    if (result.ok === false) return `${toolName}:failed:${result.error?.code || 'unknown'}`
+    const data = result.data
+    const answerLength = typeof data?.answer === 'string' ? data.answer.length : null
+    if (answerLength !== null) return `${toolName}:ok:answer(${answerLength})`
+    if (Array.isArray(data)) return `${toolName}:ok:array(${data.length})`
+    if (isPlainObject(data)) return `${toolName}:ok:keys(${Object.keys(data).join('|')})`
+    return `${toolName}:ok:${data == null ? 'null' : typeof data}`
+}
+
+function isPlainObject(value) {
+    return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
 function truncateJson(value) {
     return truncateTo(JSON.stringify(value), MAX_DEBUG_TEXT)
 }
 
-module.exports = {publishLlmRequest, publishToolCall, publishHistoryProjection}
+module.exports = {publishLlmRequest, publishToolCall, publishEmptyLlmReply, publishHistoryProjection}

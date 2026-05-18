@@ -7,7 +7,7 @@
 
 const {EMPTY, Subject, catchError, concat, concatMap, defer, filter, finalize, from, ignoreElements, mergeMap, of, shareReplay, takeUntil, tap} = require('rxjs')
 const {messagesForLlm} = require('./llmMessages')
-const {publishHistoryProjection, publishLlmRequest, publishToolCall} = require('./conversationEvents')
+const {publishEmptyLlmReply, publishHistoryProjection, publishLlmRequest, publishToolCall} = require('./conversationEvents')
 const {createToolCallGuard} = require('../toolCallGuard')
 const {isChannelEmission} = require('../channelEvents')
 
@@ -86,14 +86,18 @@ function createConversation({llm, history, tools, tracer, initialMessages = [], 
             const llmRequestedTools = acc.toolCalls.length > 0
             return llmRequestedTools
                 ? handleToolCalls$(acc.text, acc.toolCalls, {toolContext, round, guard})
-                : reply$(acc.text)
+                : reply$(acc.text, {round})
         })
         return concat(llmStream$(llmMessages, toolSchemas, acc, round), after$)
     }
 
     function llmStream$(llmMessages, toolSchemas, acc, round) {
         return tracer.span$('llm.respondTo', {messageCount: llmMessages.length},
-            llm.respondTo$({messages: llmMessages, tools: toolSchemas}).pipe(
+            llm.respondTo$({
+                messages: llmMessages,
+                tools: toolSchemas,
+                debugLabel: `conversation ${id} round ${round}`
+            }).pipe(
                 tap(event => {
                     if (event.textDelta) acc.text += event.textDelta
                     if (event.toolCall) {
@@ -164,7 +168,10 @@ function createConversation({llm, history, tools, tracer, initialMessages = [], 
         )
     }
 
-    function reply$(text) {
+    function reply$(text, {round}) {
+        if (!hasVisibleText(text)) {
+            publishEmptyLlmReply({bus, conversationId: id, round, messages})
+        }
         return append$({role: 'assistant', content: text}).pipe(
             ignoreElements()
         )
@@ -177,6 +184,10 @@ function createConversation({llm, history, tools, tracer, initialMessages = [], 
         })
     }
 
+}
+
+function hasVisibleText(text) {
+    return typeof text === 'string' && text.trim().length > 0
 }
 
 // args.tool is available to translators and to history/debug inspection;

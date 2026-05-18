@@ -12,7 +12,7 @@ function createLmStudioNativeChat({baseURL, apiKey, model, bus}) {
 
     function respondTo$({messages, maxTokens, temperature, debugLabel}) {
         const url = nativeChatUrl(baseURL)
-        const acc = {text: '', chunkCount: 0}
+        const acc = {text: '', chunkCount: 0, contentChunkCount: 0}
         const params = {
             model,
             input: nativeInput(messages),
@@ -34,19 +34,13 @@ function createLmStudioNativeChat({baseURL, apiKey, model, bus}) {
             return from(postJson({url, apiKey, params}))
         }).pipe(
             mergeMap(response => {
-                if (debugLabel) {
-                    bus.publish({
-                        type: 'llm.debugResponse',
-                        level: 'trace',
-                        message: () => `LLM ${debugLabel} native LM Studio raw response: ${truncateTo(JSON.stringify(response), MAX_DEBUG_TEXT)}`
-                    })
-                }
                 const text = textFromResponse(response)
                 acc.text = text
                 acc.chunkCount = text ? 1 : 0
+                acc.contentChunkCount = text ? 1 : 0
                 return text ? from([{textDelta: text}]) : EMPTY
             }),
-            publishResponseSummary({bus, model, acc})
+            publishResponseSummary({bus, model, acc, debugLabel})
         )
     }
 }
