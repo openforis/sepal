@@ -54,6 +54,14 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   DESIGN §6/§7. Needed by the patch specialist to plan dependent-fragment
   reads/writes deterministically. Land alongside `recipe_patch` and the recipe
   create/update tools.
+- **AI patch-apply path (future GUI slice)** — apply the LLM's effective
+  output directly; no re-merge of dormant fields. Validation runs on the
+  effective shape via `spec.validate(model)`. Contract is fixed in
+  `lib/js/shared/src/recipe/README.md` (LLM-facing model contract); do not
+  relitigate at apply time.
+- **AI `create_recipe` starting point** — use `spec.defaultModel()` (already
+  in effective shape) as the LLM's seed; AI-created recipes persist in
+  effective shape, never expanded into the GUI's stored shape.
 - **GUI `defaultModel` ships an internally inconsistent default** — for the
   MOSAIC recipe, the GUI's committed `defaultModel.compositeOptions.includedCloudMasking`
   pre-lists `sentinel2CloudScorePlus` while `sources.dataSets` defaults to
