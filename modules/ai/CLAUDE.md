@@ -45,7 +45,10 @@ old MCP tools, recipe schemas, and SEPAL/GEE clients. Kept only as reference unt
 the rewrite reintroduces those capabilities deliberately.
 
 ### Entry Point
-`src/main.js` — starts `createApp()` from `src/app.js`, wiring the HTTP server, event bus, tracer, websocket handler, in-memory conversation stores, and LLM adapter.
+`src/main.js` — starts `createApp()` from `src/app.js`, which wires the
+event bus, tracer, LLM adapter, GUI request bridge, orchestrator tool
+registry, Redis-backed chat storage, per-user chat coordinator, websocket
+handler, and HTTP server.
 
 ### WebSocket Protocol
 Uses the gateway's subscription-based websocket routing. The browser subscribes to `ai` module, and messages flow as `{module, subscriptionId, data}`.
@@ -83,27 +86,60 @@ archive/
     src/sepal/                # Old SEPAL/GEE HTTP clients
 src/
   main.js                     # Entry point
-  app.js                      # Active rewrite composition
+  app.js                      # Composition root: wires every chat collaborator
   config.js                   # CLI argument parsing (port, endpoints, LLM config)
-  chat/                       # Chat Rewrite Layer
-    conversation/              # User-facing conversation/session flow + owned WS/Redis adapters
-      conversation.js           # Per-conversation turn loop
-      llmMessages.js            # LLM-visible history/turn projection
-      conversationEvents.js     # Conversation debug/trace event formatting
-    tools/                     # LLM product tools + tool registry + GUI request bridge
-      productTools.js           # Composition of product tool families
-      contextTool.js            # get_context
-      recipeTools.js            # recipe_list and recipe operation tools
-      projectTools.js           # project_list
-      mapTools.js               # map_area_list, layer_list
-    llm/                       # LLM provider boundary: provider-neutral selector + per-provider adapters
+  server.js                   # HTTP + WS server adapter
+  eventBus.js                 # RxJS Subject port for observability
+  tracer.js                   # Span lifecycle (per-turn, per-tool, per-LLM call)
+  logListener.js              # log4js adapter for the event bus
+  chat/                       # Chat slice
+    orchestratorToolRegistry.js   # Composes the orchestrator's tool surface
+    turnContext.js                # Runtime GUI selection → LLM context message
+    guiRequests.js                # Server→browser request/response bridge
+    toolCallGuard.js              # Per-turn anti-loop guard for tool calls
+    debugText.js                  # Truncation helper for debug-log payloads
+    conversation/              # Per-conversation flow + Redis persistence + WS adapters
+      conversation.js               # Per-conversation turn loop
+      userChat.js                   # Per-user coordinator (turn queue, contexts)
+      userChats.js                  # Per-username UserChat registry
+      titleGenerator.js             # Title-generation orchestration
+      cleanTitle.js                 # LLM-title cleaning helpers
+      fallbackTitle.js              # Heuristic-title fallback helpers
+      llmMessages.js                # LLM-visible history projection
+      conversationEvents.js         # Conversation debug/trace event formatting
+      redisChatStorage.js           # Port: per-user conversations + per-conversation history
+      redisConversationsStore.js    # Redis adapter for conversation metadata
+      redisHistory.js               # Redis adapter for one conversation's history
+      redisKeys.js                  # Redis key shape helpers
+      wsHandler.js                  # Inbound WS protocol adapter
+      wsChannel.js                  # Outbound WS channel per subscription
+    tools/                     # Individual tool families + registry + GUI bridge wrapper
+      sepalTools.js                 # Pure SEPAL product list + specialistInner list
+      registry.js                   # Tool registry contract (validation, envelopes)
+      contextTool.js                # get_context
+      recipeTools.js                # recipe_list, recipe_load
+      recipeProjection.js           # Recipe → small inner-LLM-addressable shape
+      projectTools.js               # project_list
+      mapTools.js                   # map_area_list, layer_list
+      guiProductRequest.js          # Thin wrapper for tools calling guiRequests
+      jsonPointer.js                # RFC 6901 helper (used by recipeProjection)
+    specialists/               # Specialist runtime + dispatchers + recipe ops
+      runSpecialist.js              # Inner-loop runtime for one consultation
+      specialistConsultationTools.js # consult_* dispatcher tools (orchestrator-facing)
+      recipeSpecialists.js          # Recipe-op tools (describe_recipe) routed via runtime
+      specialistScope.js            # Per-specialist allowed-tool scoping
+    llm/                       # LLM provider boundary
+      index.js                      # createLlm() — provider selector
+      events.js                     # Provider-shared bus event publisher
+      providers/openaiChatCompletions.js
+      providers/lmStudioNativeChat.js
     llmText/                   # LLM-facing prompt assets + loader
       prompts.js                # Loader: mainSystemPrompt(), titleSystemPrompt(), specialistPrompt(name); fails fast on empty/missing
       main.md                   # Main Sepalito system prompt
       title.md                  # Title-generator system prompt
       specialists/              # One markdown file per specialist (mirrors src/chat/specialists/)
         map.md                   # Read-only map specialist system prompt
-    specialists/               # Specialist slice — runSpecialist$ (inner LLM loop) + specialistTools registry
+        recipe.md                # Recipe specialist system prompt
 ```
 
 ## Configuration
@@ -161,9 +197,9 @@ of them, apply the rule above:
 | Location | What's LLM-facing |
 |---|---|
 | `src/chat/llmText/*.md` + `src/chat/llmText/specialists/*.md` | Top-level role prompts (`main.md`, `title.md`) and specialist prompts (`specialists/map.md`, etc.). Loaded via `src/chat/llmText/prompts.js` — `mainSystemPrompt()`, `titleSystemPrompt()`, `specialistPrompt(name)`. New specialists add a `.md` under `specialists/` here matching the code at `src/chat/specialists/`. |
-| `src/chat/conversation/turnContext.js` | Runtime turn-context message wrapper text |
+| `src/chat/turnContext.js` | Runtime turn-context message wrapper text |
 | `src/chat/conversation/titleGenerator.js` | Title-generator user/wrapper message (the `User asked: ... Assistant replied: ...` shape and the `/no_think` suffix); the title role prompt itself lives in `llmText/title.md`. |
-| Tool `name` / `description` / `parameters` | Sent to the LLM as tool schemas — product tools in `src/chat/tools/` and specialist tools in `src/chat/specialists/` |
+| Tool `name` / `description` / `parameters` | Sent to the LLM as tool schemas — SEPAL product tools in `src/chat/tools/` and specialist consultation tools in `src/chat/specialists/` |
 
 Old tool and recipe-schema LLM text lives under `archive/pre-rewrite-chat/` now.
 Treat it as reference, not active prompt/tool surface.
@@ -177,24 +213,29 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
 - **CommonJS**: Uses `require()` / `module.exports`, matching all other Node.js modules in SEPAL.
 - **Subscription keying**: Websocket subscriptions are keyed by
   `clientId:subscriptionId` (one per browser tab subscription).
-- **User chat ownership**: `app.js` keeps one in-memory `UserChat` per username.
-  Tabs for the same user share live conversation state; Redis stores conversation
-  metadata/history so list/select/send can recover after restart. Active selection
-  remains per tab in the GUI.
+- **User chat ownership**: `src/chat/conversation/userChats.js` keeps one
+  in-memory `UserChat` per username. Tabs for the same user share live
+  conversation state; Redis stores conversation metadata/history so
+  list/select/send can recover after restart. Active selection remains per
+  tab in the GUI.
 - **Turn serialization**: `Conversation` mutates a shared messages array and has
   no internal serialization. `UserChat` serializes turns per conversation — each
   turn's stream chains onto the previous turn's stream completion, so concurrent
   `sendUserMessage$` calls can't interleave. Title generation runs after the
   stream but off the queue tail. New callers must drive `Conversation` through
   `UserChat`, not invoke it directly.
-- **Tool registry**: `app.js` wires `createToolRegistry`. The production tool
-  surface holds product tools (`get_context`, `recipe_list`, `project_list`,
-  map inspection tools, and any public recipe operation tools) plus specialist
-  dispatcher tools. Raw recipe load/patch tools should be specialist-private,
-  not always visible to the orchestrator. Diagnostic/smoke tools stay out of
-  the runtime product surface. The registry owns the structured tool-error
-  envelope (`UNKNOWN_TOOL`, `INVALID_TOOL_ARGS` via ajv, `TOOL_FAILED`);
-  provider wire-format conversion lives in the adapters, not the domain.
+- **Tool registry**: `src/chat/orchestratorToolRegistry.js` composes the
+  orchestrator's tool surface — SEPAL product tools (`get_context`,
+  `recipe_list`, `project_list`, map inspection tools), specialist-backed
+  recipe operation tools (`describe_recipe`, and future
+  `update_recipe`/`create_recipe`), and specialist consultation tools
+  (`consult_*`). Raw recipe load/patch tools stay specialist-private (only
+  in the inner registry that specialists see, not on the orchestrator
+  surface). Diagnostic/smoke tools stay out of the runtime product surface.
+  The registry contract itself lives in `src/chat/tools/registry.js` and
+  owns the structured tool-error envelope (`UNKNOWN_TOOL`,
+  `INVALID_TOOL_ARGS` via ajv, `TOOL_FAILED`); provider wire-format
+  conversion lives in the adapters, not the domain.
 - **LLM provider boundary**: `conversation.js` / `titleGenerator.js` depend only
   on the provider-neutral `respondTo$` port from `src/chat/llm/index.js`
   (`createLlm`). It builds the per-provider adapters under
@@ -203,11 +244,13 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
 - **Specialists**: a specialist is exposed to the main model as a normal tool
   (`consult_<name>`) whose `invoke$` runs an inner LLM loop under
   `src/chat/specialists/runSpecialist.js` with its own system prompt + a
-  filtered tool set. Two-layer composition in `app.js`: the inner
-  `createToolRegistry` holds product tools only (so specialists can't recurse
-  into other specialists), and the outer registry adds the specialist tools on
-  top of it. Specialist prompts live in `src/chat/llmText/specialists/<name>.md`
-  and are loaded via `specialistPrompt(name)`, validated at construction.
-  Current specialist: `consult_map` (read-only, allowed: `get_context`,
-  `map_area_list`, `layer_list`). Specialist results return as ordinary
-  tool-result envelopes; the main model integrates them into its final reply.
+  filtered tool set. Two-layer composition in
+  `src/chat/orchestratorToolRegistry.js`: the inner `createToolRegistry`
+  holds product tools only (so specialists can't recurse into other
+  specialists), and the outer registry adds the specialist consultation
+  tools on top of it. Specialist prompts live in
+  `src/chat/llmText/specialists/<name>.md` and are loaded via
+  `specialistPrompt(name)`, validated at construction. Current specialist:
+  `consult_map` (read-only, allowed: `get_context`, `map_area_list`,
+  `layer_list`). Specialist results return as ordinary tool-result
+  envelopes; the main model integrates them into its final reply.
