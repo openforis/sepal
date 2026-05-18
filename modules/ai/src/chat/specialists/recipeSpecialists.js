@@ -1,5 +1,5 @@
 // Recipe-operation tools backed by a specialist runtime. Today:
-// describe_recipe.
+// describe_recipe (read-only) and update_recipe (read + patch).
 
 const {mergeMap, of} = require('rxjs')
 const {getRecipeSpec} = require('#recipes')
@@ -10,6 +10,12 @@ const {assembleSpecialistPrompt} = require('./assembleSpecialistPrompt')
 const {lookupRecipeMetadata$} = require('../tools/recipeMetadata')
 
 const DESCRIBE_RECIPE_ALLOWED = ['recipe_load']
+const UPDATE_RECIPE_ALLOWED = ['recipe_load', 'recipe_patch']
+
+// Tool names whose recipeId arg must equal the recipeId the outer dispatcher
+// was asked about. The orchestrator has already chosen the recipe; binding
+// at the tool-call boundary makes the scope deterministic rather than prompt-only.
+const RECIPE_BOUND_TOOLS = new Set(['recipe_load', 'recipe_patch'])
 
 function describeRecipeTool({llm, bus, innerTools, guiRequests}) {
     const basePrompt = specialistPrompt('recipe')
@@ -40,7 +46,7 @@ function describeRecipeTool({llm, bus, innerTools, guiRequests}) {
                         llm, bus,
                         name: 'recipe.describe',
                         systemPrompt: assembleSpecialistPrompt(basePrompt, spec),
-                        userText: buildUserText({recipeId, question}),
+                        userText: buildDescribeUserText({recipeId, question}),
                         allowedSchemas,
                         invokeTool$: restrictToRecipe(scopedInvokeTool$, recipeId),
                         context
@@ -50,17 +56,53 @@ function describeRecipeTool({llm, bus, innerTools, guiRequests}) {
     }
 }
 
-// recipe_load can in principle accept any recipeId. The orchestrator has
-// already chosen the recipe; binding the specialist to that recipeId at the
-// tool-call boundary makes the scope deterministic rather than prompt-only.
+function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
+    const basePrompt = specialistPrompt('update')
+    const {allowedSchemas, invokeTool$: scopedInvokeTool$} = scopeInnerTools({
+        innerTools,
+        allowed: UPDATE_RECIPE_ALLOWED,
+        label: 'update_recipe'
+    })
+
+    return {
+        name: 'update_recipe',
+        description: 'Update ONE recipe by natural-language instruction -> specialist plans + applies JSON Patch atomically against effective model. Stateless. Use for change/edit/modify requests on a saved recipe.',
+        parameters: {
+            type: 'object',
+            properties: {
+                recipeId: {type: 'string'},
+                instruction: {type: 'string'}
+            },
+            required: ['recipeId', 'instruction'],
+            additionalProperties: false
+        },
+        invoke$: ({recipeId, instruction}, context) =>
+            lookupRecipeMetadata$(guiRequests, context, recipeId).pipe(
+                mergeMap(envelope => {
+                    if (envelope.ok === false) return of(envelope)
+                    const spec = getRecipeSpec(envelope.data?.type)
+                    return runSpecialist$({
+                        llm, bus,
+                        name: 'recipe.update',
+                        systemPrompt: assembleSpecialistPrompt(basePrompt, spec, {includeSchema: true}),
+                        userText: buildUpdateUserText({recipeId, instruction}),
+                        allowedSchemas,
+                        invokeTool$: restrictToRecipe(scopedInvokeTool$, recipeId),
+                        context
+                    })
+                })
+            )
+    }
+}
+
 function restrictToRecipe(invokeTool$, recipeId) {
     return (toolCall, context) => {
-        if (toolCall.name === 'recipe_load' && toolCall.input?.recipeId !== recipeId) {
+        if (RECIPE_BOUND_TOOLS.has(toolCall.name) && toolCall.input?.recipeId !== recipeId) {
             return of({
                 ok: false,
                 error: {
                     code: 'RECIPE_SCOPE_VIOLATION',
-                    message: `recipe_load restricted to recipeId=${recipeId}; got ${toolCall.input?.recipeId}`
+                    message: `${toolCall.name} restricted to recipeId=${recipeId}; got ${toolCall.input?.recipeId}`
                 }
             })
         }
@@ -68,10 +110,14 @@ function restrictToRecipe(invokeTool$, recipeId) {
     }
 }
 
-function buildUserText({recipeId, question}) {
+function buildDescribeUserText({recipeId, question}) {
     const head = `recipeId: ${recipeId}`
     if (!question) return head
     return `${head}\nquestion: ${question}`
 }
 
-module.exports = {describeRecipeTool}
+function buildUpdateUserText({recipeId, instruction}) {
+    return `recipeId: ${recipeId}\ninstruction: ${instruction}`
+}
+
+module.exports = {describeRecipeTool, updateRecipeTool}

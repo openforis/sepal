@@ -1,12 +1,13 @@
 // Composes a recipe specialist's system prompt: base frame first (cache-stable
 // across recipe types), then a type-specific section assembled from the spec's
 // promptFacts(). Returns the base unchanged when no spec / no promptFacts is
-// available.
+// available. With {includeSchema: true} (used by write-capable specialists),
+// the spec's JSON Schema is appended as a fenced json block after the facts.
 
-function assembleSpecialistPrompt(basePrompt, spec) {
+function assembleSpecialistPrompt(basePrompt, spec, {includeSchema = false} = {}) {
     if (!spec?.promptFacts) return basePrompt
     const facts = spec.promptFacts()
-    return [
+    const sections = [
         basePrompt,
         '',
         '---',
@@ -21,7 +22,11 @@ function assembleSpecialistPrompt(basePrompt, spec) {
         '',
         'Use cases:',
         ...facts.useCases.map(useCase => `- ${useCase}`)
-    ].join('\n')
+    ]
+    if (includeSchema && spec.schema) {
+        sections.push('', 'Schema:', '```json', JSON.stringify(spec.schema), '```')
+    }
+    return sections.join('\n')
 }
 
 module.exports = {assembleSpecialistPrompt}

@@ -60,4 +60,44 @@ describe('assembleSpecialistPrompt', () => {
         expect(out).toContain('MOSAIC')
         expect(out).toContain('Optical Mosaic')
     })
+
+    describe('{includeSchema}', () => {
+
+        const spec = aSpecWithFacts({
+            schema: {type: 'object', properties: {compositeOptions: {type: 'object'}}}
+        })
+
+        it('omits the schema when includeSchema is false (default — describe path)', () => {
+            const out = assembleSpecialistPrompt(BASE, spec)
+
+            expect(out).not.toContain('compositeOptions')
+            expect(out).not.toMatch(/```/)
+        })
+
+        it('appends the spec schema in a fenced json block when includeSchema is true', () => {
+            const out = assembleSpecialistPrompt(BASE, spec, {includeSchema: true})
+
+            expect(out).toContain('compositeOptions')
+            expect(out).toMatch(/```json/)
+            expect(out).toContain(JSON.stringify(spec.schema))
+        })
+
+        it('serializes the schema compactly (no pretty-print) to stay within the §3 byte budget', () => {
+            const out = assembleSpecialistPrompt(BASE, spec, {includeSchema: true})
+
+            expect(out).not.toContain('  "type"')
+        })
+
+        it('places the schema after the facts section (still base-first for cache stability)', () => {
+            const out = assembleSpecialistPrompt(BASE, spec, {includeSchema: true})
+
+            expect(out.indexOf(BASE)).toBe(0)
+            expect(out.indexOf('Use cases:')).toBeLessThan(out.indexOf('compositeOptions'))
+        })
+
+        it('still returns the base prompt unchanged when spec has no promptFacts even if includeSchema is true', () => {
+            expect(assembleSpecialistPrompt(BASE, {id: 'X', name: 'X', schema: {type: 'object'}}, {includeSchema: true}))
+                .toBe(BASE)
+        })
+    })
 })

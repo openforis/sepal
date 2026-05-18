@@ -11,7 +11,7 @@ describe('orchestrator tool registry', () => {
         })
     }
 
-    it('exposes the orchestrator-visible tool surface in stable order, with describe_recipe in place of recipe_load', () => {
+    it('exposes the orchestrator-visible tool surface in stable order, with describe_recipe + update_recipe in place of raw recipe_load / recipe_patch', () => {
         const names = anOrchestratorSurface().schemas().map(schema => schema.name)
 
         expect(names).toEqual([
@@ -22,6 +22,7 @@ describe('orchestrator tool registry', () => {
             'map_area_list',
             'layer_list',
             'describe_recipe',
+            'update_recipe',
             'consult_map'
         ])
     })

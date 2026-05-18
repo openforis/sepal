@@ -15,20 +15,19 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 ## Tool And GUI Bridge
 
 - **Recipe operation dispatchers are partial** — `describe_recipe({recipeId,
-  question?})` is implemented and routes to a single generic recipe specialist
-  that holds raw `recipe_load` privately. The `recipe_patch` wire (tool +
-  stubbed GUI handler) now exists in the specialist inner registry but has no
-  specialist consumer yet. Still missing:
-  `update_recipe({recipeId, instruction})` and
-  `create_recipe({recipeType, instruction, projectId?, name?})` dispatchers
-  that wire `recipe_patch` into a per-type write-capable specialist.
-- **Recipe specialist routing is partially type-aware** —
-  `describeRecipeTool` now resolves `recipeId -> recipeType` via a preflight
-  `recipe_load` and assembles a per-type system prompt from the shared
+  question?})` and `update_recipe({recipeId, instruction})` are both on the
+  orchestrator surface, each backed by its own per-type specialist
+  (`recipe_load` only for describe; `recipe_load` + `recipe_patch` for update,
+  with the schema injected into the system prompt). Still missing:
+  `create_recipe({recipeType, instruction, projectId?, name?})` dispatcher
+  seeded with `spec.defaultModel()`.
+- **Recipe specialist routing is partially type-aware** — `describeRecipeTool`
+  and `updateRecipeTool` both resolve `recipeId -> recipeType` via
+  `lookupRecipeMetadata$` and assemble a per-type system prompt from
   `spec.promptFacts()` (MOSAIC today; other types fall back to the generic
-  base frame). Still missing: per-type allowed-tool sets, per-type
-  `update_recipe` / `create_recipe` dispatcher routing, and per-type prompt
-  file overrides (if a recipe ever needs more than `promptFacts()` can express).
+  base frame). Still missing: per-type allowed-tool sets, per-type prompt
+  file overrides (if a recipe ever needs more than `promptFacts()` can
+  express), and `create_recipe` dispatcher routing.
 - **Map specialist read tools are minimal** — `consult_map` exposes
   `get_gui_context`, `map_area_list` (layout + areas + AOI + view), and
   `layer_list` (per-area imageLayer + featureLayers). Still missing:
@@ -95,6 +94,13 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   rejects the combination. Touching the GUI default is regression risk;
   reconcile when the patch specialist lands and there's a real recipe-write
   path that needs the default to round-trip through `validate()`.
+- **`update_recipe` STALE_WRITE retry cap is prose-only** — `llmText/specialists/update.md`
+  tells the specialist to retry once after STALE_WRITE; `toolCallGuard` catches
+  exact-repeat tool calls but not reload-replan-retry cycles where each new
+  patch differs. Acceptable for the spike (we want to observe real behavior),
+  but production should add a per-`update_recipe`-invocation counter on
+  `recipe_patch` calls to stop genuine loops without constraining a single
+  LLM "thinking out loud."
 - **Specialist safety/observability is minimal** — `runSpecialist$` has a
   `SPECIALIST_MAX_ROUNDS` cap, per-turn tool-loop safety (no-repeat,
   consecutive-failure bail-out, invalid-args retry limit via the shared
