@@ -1,4 +1,4 @@
-const {Subject, of, throwError} = require('rxjs')
+const {Subject, throwError} = require('rxjs')
 const {createWsHandler} = require('#mcp/chat/conversation/wsHandler')
 const {alice, aHandler, aRecordingBus, aNoopGuiRequests, subscribeHandler} = require('./wsHandlerHarness')
 
@@ -41,8 +41,7 @@ describe('Chat WS handler — error reporting', () => {
     it('publishes workFailed when dispatched command work errors', () => {
         const bus = aRecordingBus()
         const userChat = {
-            listConversations$: () => of(undefined),
-            sendUserMessage$: () => throwError(() => new Error('redis unavailable'))
+            handle$: () => throwError(() => new Error('redis unavailable'))
         }
         const handler = createWsHandler({bus, guiRequests: aNoopGuiRequests(), userChatFor: () => userChat})
         const arg$ = new Subject()

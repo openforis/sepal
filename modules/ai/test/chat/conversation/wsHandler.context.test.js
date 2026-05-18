@@ -4,11 +4,10 @@ const {alice, aNoopBus} = require('./wsHandlerHarness')
 
 describe('Chat WS handler — GUI context state', () => {
 
-    it('routes a context message to updateContext$ with the subscription identity', () => {
-        const updates = []
+    it('forwards a context message to userChat.handle$ with the subscription identity', () => {
+        const handled = []
         const userChat = {
-            listConversations$: () => of(undefined),
-            updateContext$: args => { updates.push(args); return EMPTY }
+            handle$: args => { handled.push(args); return EMPTY }
         }
         const handler = createWsHandler({bus: aNoopBus(), userChatFor: () => userChat})
         const arg$ = new Subject()
@@ -17,16 +16,20 @@ describe('Chat WS handler — GUI context state', () => {
         arg$.next({event: 'subscriptionUp', ...alice})
         arg$.next({data: {type: 'context', selection: {section: 'process'}}, ...alice})
 
-        expect(updates).toEqual([
-            {clientId: 'c1', subscriptionId: 's1', selection: {section: 'process'}}
-        ])
+        expect(handled).toContainEqual(
+            expect.objectContaining({
+                type: 'context',
+                clientId: 'c1',
+                subscriptionId: 's1',
+                selection: {section: 'process'}
+            })
+        )
     })
 
-    it('clears the stored context on subscriptionDown', () => {
-        const clears = []
+    it('routes a clear-context command to userChat.handle$ on subscriptionDown', () => {
+        const handled = []
         const userChat = {
-            listConversations$: () => of(undefined),
-            clearContext$: args => { clears.push(args); return EMPTY }
+            handle$: args => { handled.push(args); return EMPTY }
         }
         const handler = createWsHandler({bus: aNoopBus(), userChatFor: () => userChat})
         const arg$ = new Subject()
@@ -35,6 +38,8 @@ describe('Chat WS handler — GUI context state', () => {
         arg$.next({event: 'subscriptionUp', ...alice})
         arg$.next({event: 'subscriptionDown', ...alice})
 
-        expect(clears).toEqual([{clientId: 'c1', subscriptionId: 's1'}])
+        expect(handled).toContainEqual(
+            expect.objectContaining({type: 'clear-context', clientId: 'c1', subscriptionId: 's1'})
+        )
     })
 })

@@ -159,14 +159,13 @@ describe('Chat WS handler — inbound event publishing', () => {
             })
         })
 
-        it('unknown data type at warn level', () => {
+        it('an unrecognised type still publishes the wire arrival at the wsIn layer (the unknown-command publish itself is UserChat\'s concern)', () => {
             arg$.next({event: 'subscriptionUp', ...alice})
             bus.published.length = 0
             arg$.next({data: {type: 'something-else'}, ...alice})
 
             expect(bus.published[0]).toMatchObject({
-                kind: 'unknown', dataType: 'something-else',
-                level: 'warn', message: `WS in ${aliceLabel} unknown data type: something-else (ignored)`
+                type: 'wsIn', kind: 'something-else', level: 'info'
             })
         })
     })

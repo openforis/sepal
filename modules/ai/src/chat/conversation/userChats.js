@@ -5,7 +5,10 @@
 
 const {map} = require('rxjs')
 const {createConversation} = require('./conversation')
+const {createConversations} = require('./conversations')
+const {createTabContexts} = require('./tabContexts')
 const {createTitleGenerator} = require('./titleGenerator')
+const {createTurnFlow} = require('./turnFlow')
 const {createUserChat} = require('./userChat')
 const {mainSystemPrompt} = require('../llmText/prompts')
 
@@ -23,13 +26,15 @@ function createUserChats({chatStorage, llm, tools, tracer, bus, clock, createId}
     function buildChat(username) {
         const conversationsStore = chatStorage.conversationsFor(username)
         const titleGenerator = createTitleGenerator({llm, conversationsStore, tracer, bus})
-        return createUserChat({
+        const conversations = createConversations({
             conversationsStore,
-            clock,
+            conversationFor$: id => buildConversation$(username, id),
             createId,
-            titleGenerator,
-            conversationFor$: id => buildConversation$(username, id)
+            clock
         })
+        const tabContexts = createTabContexts()
+        const turnFlow = createTurnFlow({conversations, tabContexts, titleGenerator, clock})
+        return createUserChat({conversations, tabContexts, turnFlow, tracer, bus})
     }
 
     function buildConversation$(username, id) {

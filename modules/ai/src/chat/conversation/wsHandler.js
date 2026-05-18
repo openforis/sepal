@@ -1,11 +1,11 @@
-// Inbound WS protocol adapter. Tracks the live subscriptions on one
-// connection, dispatches commands to the right UserChat, routes
-// gui-response messages back to guiRequests, and publishes
+// Inbound WS protocol adapter. Decodes the WS envelope (heartbeat /
+// gateway event / data), tracks the live subscriptions on one
+// connection, hands chat-data messages to the subscription's UserChat,
+// routes gui-response messages back to guiRequests, and publishes
 // message-level observability to the bus.
 
 const {Subject, startWith} = require('rxjs')
 const {createWsChannel} = require('./wsChannel')
-const {COMMANDS} = require('./userChat')
 
 function createWsHandler({bus, userChatFor, guiRequests}) {
     return onConnection
@@ -30,7 +30,7 @@ function createWsHandler({bus, userChatFor, guiRequests}) {
             try {
                 if (isIgnored(message)) handleIgnored(message)
                 else if (message.event) handleSubscriptionEvent(message)
-                else handleCommand(message)
+                else handleData(message)
             } catch (error) {
                 bus.publish({
                     type: 'wsRouteError',
@@ -52,25 +52,26 @@ function createWsHandler({bus, userChatFor, guiRequests}) {
             else subscribeDown(subscription)
         }
 
-        function handleCommand(message) {
+        function handleData(message) {
             const subscription = subscriptionOf(message)
-            const {clientId, subscriptionId} = subscription
             const {type, ...args} = message.data
-            const method = COMMANDS[type]
-            if (method) {
-                publish(type, subscription, args)
-                dispatchTo(subscription, ({userChat, channel}) =>
-                    userChat[method]({channel, clientId, subscriptionId, ...args}))
-            } else if (type === 'context') {
-                publish('context', subscription, args, 'debug')
-                dispatchTo(subscription, ({userChat}) =>
-                    userChat.updateContext$({clientId, subscriptionId, selection: args.selection}))
-            } else if (type === 'gui-response') {
+            if (type === 'gui-response') {
                 publish('gui-response', subscription, args, 'debug')
-                guiRequests.respond({clientId, subscriptionId, ...args})
+                guiRequests.respond({clientId: subscription.clientId, subscriptionId: subscription.subscriptionId, ...args})
             } else {
-                publish('unknown', subscription, {dataType: type}, 'warn')
+                dispatchChatCommand(subscription, type, args)
             }
+        }
+
+        function dispatchChatCommand(subscription, type, args) {
+            const entry = subscriptions.get(keyOf(subscription))
+            if (!entry) return
+            publish(type, subscription, args, levelFor(type))
+            runWork$(entry.userChat.handle$({
+                type, channel: entry.channel,
+                clientId: subscription.clientId, subscriptionId: subscription.subscriptionId,
+                ...args
+            }))
         }
 
         function subscribeUp(subscription) {
@@ -78,14 +79,14 @@ function createWsHandler({bus, userChatFor, guiRequests}) {
             const channel = createWsChannel({out$, bus, ...subscription})
             const userChat = userChatFor(subscription.username)
             subscriptions.set(keyOf(subscription), {channel, userChat})
-            runWork$(userChat.listConversations$({channel}))
+            runWork$(userChat.handle$({type: 'list-conversations', channel}))
         }
 
         function subscribeDown(subscription) {
             publish('subscriptionDown', subscription)
             const {clientId, subscriptionId} = subscription
-            dispatchTo(subscription, ({userChat}) =>
-                userChat.clearContext$({clientId, subscriptionId}))
+            const entry = subscriptions.get(keyOf(subscription))
+            if (entry) runWork$(entry.userChat.handle$({type: 'clear-context', clientId, subscriptionId}))
             guiRequests.cancelForSubscription({clientId, subscriptionId})
             subscriptions.delete(keyOf(subscription))
         }
@@ -119,6 +120,10 @@ function createWsHandler({bus, userChatFor, guiRequests}) {
     }
 }
 
+function levelFor(type) {
+    return type === 'context' ? 'debug' : 'info'
+}
+
 function isIgnored(message) {
     return message.hb !== undefined
         || (message.event && message.event !== 'subscriptionUp' && message.event !== 'subscriptionDown')
@@ -137,7 +142,6 @@ function format(kind, subscription, attrs) {
     if (kind === 'ignored' && attrs.reason === 'gatewayEvent') return `WS in ${label} ignored event: ${attrs.event}`
     if (kind === 'ignored') return `WS in ${label} ignored (empty)`
     if (kind === 'message') return `WS in ${label} message ${attrs.conversationId}: ${JSON.stringify(attrs.text)}`
-    if (kind === 'unknown') return `WS in ${label} unknown data type: ${attrs.dataType} (ignored)`
     if (attrs.conversationId) return `WS in ${label} ${kind} ${attrs.conversationId}`
     return `WS in ${label} ${kind}`
 }

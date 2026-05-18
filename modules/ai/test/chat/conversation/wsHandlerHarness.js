@@ -1,6 +1,9 @@
 const {Subject, of} = require('rxjs')
 const {createWsHandler} = require('#mcp/chat/conversation/wsHandler')
 const {createConversation} = require('#mcp/chat/conversation/conversation')
+const {createConversations} = require('#mcp/chat/conversation/conversations')
+const {createTabContexts} = require('#mcp/chat/conversation/tabContexts')
+const {createTurnFlow} = require('#mcp/chat/conversation/turnFlow')
 const {createUserChat} = require('#mcp/chat/conversation/userChat')
 const {createInMemoryConversationsStore} = require('./inMemoryConversationsStore')
 const {aFakeBus, aFakeHistory, aFakeLlm, aFakeTools, aFakeTitleGenerator} = require('../builders')
@@ -40,17 +43,23 @@ function aHandler({replies = [{text: 'Hi there!'}], conversationIds = ['conv-1']
     const cache = new Map()
     const userChatFor = username => {
         if (!cache.has(username)) {
-            cache.set(username, createUserChat({
+            const conversations = createConversations({
                 conversationsStore: createInMemoryConversationsStore(),
-                clock,
-                createId,
-                titleGenerator: aFakeTitleGenerator(),
                 conversationFor$: id => of(createConversation({
                     llm, tracer, tools,
                     history: aFakeHistory(),
                     id
-                }))
-            }))
+                })),
+                createId,
+                clock
+            })
+            const tabContexts = createTabContexts()
+            const turnFlow = createTurnFlow({
+                conversations, tabContexts,
+                titleGenerator: aFakeTitleGenerator(),
+                clock
+            })
+            cache.set(username, createUserChat({conversations, tabContexts, turnFlow, tracer, bus: aNoopBus()}))
         }
         return cache.get(username)
     }

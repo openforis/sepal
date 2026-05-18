@@ -1,10 +1,25 @@
 const {of} = require('rxjs')
 const {createConversation} = require('#mcp/chat/conversation/conversation')
+const {createConversations} = require('#mcp/chat/conversation/conversations')
+const {createTabContexts} = require('#mcp/chat/conversation/tabContexts')
+const {createTurnFlow} = require('#mcp/chat/conversation/turnFlow')
 const {createUserChat} = require('#mcp/chat/conversation/userChat')
 const {createInMemoryConversationsStore} = require('./inMemoryConversationsStore')
 const {
-    aFakeChannel, aFakeHistory, aFakeLlm, aFakeTools, aFakeTitleGenerator, aFakeTracer
+    aFakeBus, aFakeChannel, aFakeHistory, aFakeLlm, aFakeTools, aFakeTitleGenerator, aFakeTracer
 } = require('../builders')
+
+const COMMAND_BY_METHOD = {
+    createConversation$: 'create-conversation',
+    selectConversation$: 'select-conversation',
+    deleteConversation$: 'delete-conversation',
+    deleteAllConversations$: 'delete-all-conversations',
+    listConversations$: 'list-conversations',
+    sendUserMessage$: 'message',
+    abort$: 'abort',
+    updateContext$: 'context',
+    clearContext$: 'clear-context'
+}
 
 const T1 = 1700000000000
 const T2 = T1 + 60000
@@ -31,11 +46,8 @@ function aUserChat(overrides = {}) {
         titleGenerator: aFakeTitleGenerator(),
         ...overrides
     }
-    return createUserChat({
+    const conversations = opts.conversations ?? createConversations({
         conversationsStore: opts.conversationsStore,
-        clock: opts.clock,
-        createId: opts.createId,
-        titleGenerator: opts.titleGenerator,
         conversationFor$: id => of(createConversation({
             llm: opts.llm,
             tracer: opts.tracer,
@@ -43,8 +55,33 @@ function aUserChat(overrides = {}) {
             history: opts.createHistory(id),
             initialMessages: opts.initialMessagesById[id] || [],
             id
-        }))
+        })),
+        createId: opts.createId,
+        clock: opts.clock
     })
+    const tabContexts = opts.tabContexts ?? createTabContexts()
+    const turnFlow = createTurnFlow({
+        conversations, tabContexts,
+        titleGenerator: opts.titleGenerator,
+        clock: opts.clock
+    })
+    return withCommandMethods(createUserChat({
+        conversations, tabContexts, turnFlow,
+        tracer: opts.tracer,
+        bus: opts.bus ?? aFakeBus()
+    }))
+}
+
+// Tests pre-date the pure-dispatch UserChat and call methods like
+// userChat.createConversation$({channel}) directly. This wrapper routes
+// each of those through handle$ so the existing tests keep working
+// without per-test rewrites.
+function withCommandMethods(userChat) {
+    const wrapped = {handle$: userChat.handle$}
+    for (const [method, type] of Object.entries(COMMAND_BY_METHOD)) {
+        wrapped[method] = args => userChat.handle$({type, ...args})
+    }
+    return wrapped
 }
 
 function sequentialIds(ids) {

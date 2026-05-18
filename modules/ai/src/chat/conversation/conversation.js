@@ -1,10 +1,11 @@
-// Per-conversation turn loop. Owns the messages array, feeds the LLM,
-// dispatches tool calls (capped at MAX_TOOL_ROUNDS, guarded by
-// toolCallGuard), and persists each new message through the injected
-// history collaborator. Not invoked directly — UserChat owns the turn
-// queue that drives it.
+// Per-conversation turn loop, queue, and abort. Owns the messages array,
+// feeds the LLM, dispatches tool calls (capped at MAX_TOOL_ROUNDS,
+// guarded by toolCallGuard), and persists each new message through the
+// injected history collaborator. send$ serializes turns for this
+// conversation so concurrent sends can't interleave on the shared
+// messages array; abort() cancels the in-flight turn.
 
-const {concat, concatMap, defer, filter, from, ignoreElements, map, of, tap} = require('rxjs')
+const {EMPTY, Subject, catchError, concat, concatMap, defer, filter, finalize, from, ignoreElements, map, of, shareReplay, takeUntil, tap} = require('rxjs')
 const {messagesForLlm} = require('./llmMessages')
 const {publishHistoryProjection, publishLlmRequest, publishToolCall} = require('./conversationEvents')
 const {createToolCallGuard} = require('../toolCallGuard')
@@ -17,14 +18,53 @@ const NOOP_BUS = {publish() {}}
 
 function createConversation({llm, history, tools, tracer, initialMessages = [], id, bus = NOOP_BUS}) {
     const messages = [...initialMessages] // Mutable
+    const abortRequests$ = new Subject()
+    let tail$ = EMPTY
+    let streaming = false
 
-    return {id, sendUserMessage$, messagesSnapshot}
+    return {
+        id,
+        sendUserMessage$,
+        abort,
+        messagesSnapshot,
+        get isStreaming() { return streaming }
+    }
 
     function messagesSnapshot() {
         return [...messages]
     }
 
+    // Serialize turns: chain onto the previous turn's tail so concurrent
+    // sends can't interleave on the shared messages array. takeUntil is
+    // inside the per-turn defer so abort fires for the currently-running
+    // turn only — queued turns subscribe to a fresh takeUntil when they
+    // start.
     function sendUserMessage$(text, {selection, toolContext} = {}) {
+        const previousTail$ = tail$
+        const turn$ = concat(
+            previousTail$.pipe(ignoreElements(), catchError(() => EMPTY)),
+            defer(() => {
+                streaming = true
+                return runTurn$(text, {selection, toolContext}).pipe(
+                    takeUntil(abortRequests$),
+                    finalize(() => { streaming = false })
+                )
+            })
+        ).pipe(
+            finalize(() => {
+                if (tail$ === turn$) tail$ = EMPTY
+            }),
+            shareReplay({bufferSize: 1, refCount: false})
+        )
+        tail$ = turn$
+        return turn$
+    }
+
+    function abort() {
+        if (streaming) abortRequests$.next()
+    }
+
+    function runTurn$(text, {selection, toolContext}) {
         const guard = createToolCallGuard({consecutiveFailureBail, invalidArgsBail})
         return tracer.span$('conversation.send', {conversationId: id},
             append$({role: 'user', content: text}).pipe(
