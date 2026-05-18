@@ -7,17 +7,19 @@ const {messagesForLlm} = require('./llmMessages')
 const {publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection, publishLlmRequest, publishRetryToolCallsDropped, publishToolCall} = require('./conversationEvents')
 const {createTerminalNotices, consecutiveFailureBail, invalidArgsBail} = require('./terminalNotices')
 const {createToolCallGuard} = require('../toolCallGuard')
+const {createDiagnostics} = require('../diagnostics')
 const {isChannelEmission} = require('../channelEvents')
 const {turnContextMessage} = require('../turnContext')
 const {emptyAfterToolHint} = require('../llmText/prompts')
 
 const EMPTY_AFTER_TOOL_HINT = emptyAfterToolHint()
+const DEFAULT_DIAGNOSTICS = createDiagnostics()
 
 const MAX_TOOL_ROUNDS = 8
 
-function createConversationLoop({id, initialMessages = [], llm, history, tools, tracer, bus}) {
+function createConversationLoop({id, initialMessages = [], llm, history, tools, bus, diagnostics = DEFAULT_DIAGNOSTICS}) {
     const messages = [...initialMessages] // Mutable
-    const notices = createTerminalNotices({tracer, conversationId: id, append$})
+    const notices = createTerminalNotices({bus, conversationId: id, append$})
 
     return {runTurn$, messagesSnapshot}
 
@@ -31,7 +33,7 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
             guard: createToolCallGuard({consecutiveFailureBail, invalidArgsBail}),
             contextMessage: turnContextMessage(guiContext)
         }
-        return tracer.span$('conversation.send', {conversationId: id},
+        return bus.track$('conversation.send', {conversationId: id},
             append$({role: 'user', content: text}).pipe(
                 concatMap(() => step$(turn, {round: 0}))
             )
@@ -47,8 +49,9 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         })
         const llmMessages = messagesWithHint(baseMessages, retryHint)
         const toolSchemas = toolsFor(retried)
-        publishHistoryProjection({bus, conversationId: id, projection})
-        publishLlmRequest({bus, conversationId: id, round, llmMessages, toolSchemas})
+        turn.lastExposedTools = toolSchemas.map(schema => schema.name)
+        publishHistoryProjection({bus, diagnostics, conversationId: id, projection})
+        publishLlmRequest({bus, diagnostics, conversationId: id, round, llmMessages, toolSchemas})
         return concat(
             llmStream$(llmMessages, toolSchemas, acc, round),
             defer(() => decideAfterStream$(acc, turn, {round, retried}))
@@ -82,10 +85,12 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         // Retry once with a hint; if even that produces nothing, reply$ will publish the
         // final llmEmptyReply so the metric counts only user-visible failures.
         if (!hasVisibleText(acc.text) && isPostToolRound() && !retried) {
-            publishEmptyLlmRetry({bus, conversationId: id, round})
+            publishEmptyLlmRetry({
+                bus, conversationId: id, round, messages, exposedTools: turn.lastExposedTools
+            })
             return step$(turn, {round: round + 1, retried: true, retryHint: EMPTY_AFTER_TOOL_HINT})
         }
-        return reply$(acc.text, {round})
+        return reply$(acc.text, {round, turn})
     }
 
     function isPostToolRound() {
@@ -93,7 +98,7 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
     }
 
     function llmStream$(llmMessages, toolSchemas, acc, round) {
-        return tracer.span$('llm.respondTo', {messageCount: llmMessages.length},
+        return bus.track$('llm.respondTo', {messageCount: llmMessages.length},
             llm.respondTo$({
                 messages: llmMessages,
                 tools: toolSchemas,
@@ -103,7 +108,7 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
                     if (event.textDelta) acc.text += event.textDelta
                     if (event.toolCall) {
                         acc.toolCalls = [...acc.toolCalls, event.toolCall]
-                        publishToolCall({bus, conversationId: id, round, toolCall: event.toolCall})
+                        publishToolCall({bus, diagnostics, conversationId: id, round, toolCall: event.toolCall})
                     }
                 }),
                 filter(event => event.textDelta != null)
@@ -132,7 +137,7 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         const blocked = turn.guard.blockedRepeat(toolCall)
         const stream$ = blocked
             ? of(blocked)
-            : tracer.span$('tool.invoke', {toolName: toolCall.name}, tools.invoke$(toolCall, turn.toolContext)).pipe(
+            : bus.track$('tool.invoke', {toolName: toolCall.name}, tools.invoke$(toolCall, turn.toolContext)).pipe(
                 tap(value => { if (!isChannelEmission(value)) turn.guard.record(toolCall, value) })
             )
         return concat(
@@ -149,9 +154,11 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         )
     }
 
-    function reply$(text, {round}) {
+    function reply$(text, {round, turn}) {
         if (!hasVisibleText(text)) {
-            publishEmptyLlmReply({bus, conversationId: id, round, messages})
+            publishEmptyLlmReply({
+                bus, conversationId: id, round, messages, exposedTools: turn.lastExposedTools
+            })
         }
         return append$({role: 'assistant', content: text}).pipe(
             ignoreElements()

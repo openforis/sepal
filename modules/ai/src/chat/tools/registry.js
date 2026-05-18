@@ -5,12 +5,13 @@
 const {catchError, defer, map, of, tap} = require('rxjs')
 const Ajv = require('ajv')
 const addFormats = require('ajv-formats')
-const {truncateTo, MAX_DEBUG_TEXT} = require('../debugText')
+const {createDiagnostics} = require('../diagnostics')
 const {isChannelEmission} = require('../channelEvents')
 
 const NOOP_BUS = {publish() {}}
+const DEFAULT_DIAGNOSTICS = createDiagnostics()
 
-function createToolRegistry({tools, bus = NOOP_BUS}) {
+function createToolRegistry({tools, bus = NOOP_BUS, diagnostics = DEFAULT_DIAGNOSTICS}) {
     const byName = new Map(tools.map(tool => [tool.name, tool]))
     const validators = compileValidators(tools)
 
@@ -25,7 +26,7 @@ function createToolRegistry({tools, bus = NOOP_BUS}) {
             tap(value => {
                 if (isChannelEmission(value)) return
                 bus.publish(toolResultEvent(toolCall, context, value))
-                bus.publish(toolResultPayloadEvent(toolCall, context, value))
+                bus.publish(toolResultPayloadEvent(toolCall, context, value, diagnostics))
             })
         )
     }
@@ -84,13 +85,13 @@ function toolResultEvent(toolCall, context, {ok, data, error}) {
     return {...base, ok: true, ...resultShape(toolCall.name, data)}
 }
 
-function toolResultPayloadEvent(toolCall, context, envelope) {
+function toolResultPayloadEvent(toolCall, context, envelope, diagnostics) {
     return {
         type: 'tool.resultPayload',
         level: 'trace',
         conversationId: context?.conversationId,
         toolName: toolCall.name,
-        message: () => `tool ${toolCall.name} result payload: ${truncateTo(JSON.stringify(envelope), MAX_DEBUG_TEXT)}`
+        message: () => `tool ${toolCall.name} result payload: ${diagnostics.summarizeObject(envelope)}`
     }
 }
 

@@ -1,7 +1,7 @@
 const {concat, of} = require('rxjs')
 const {runSpecialist$, SPECIALIST_MAX_ROUNDS} = require('#mcp/chat/specialists/runSpecialist')
 const {emitChannel, guiAction} = require('#mcp/chat/channelEvents')
-const {aFakeLlm, aFakeTracer, read, run} = require('../builders')
+const {aFakeLlm, aFakeBus, read, run} = require('../builders')
 
 describe('runSpecialist$', () => {
 
@@ -17,7 +17,7 @@ describe('runSpecialist$', () => {
             const llm = aFakeLlm({replies: [{text: 'Map is empty.'}]})
 
             const result = read(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'You are the map specialist.',
                 userText: 'What is on the map?',
                 allowedSchemas,
@@ -32,7 +32,7 @@ describe('runSpecialist$', () => {
             const llm = aFakeLlm({replies: [{text: 'ok'}]})
 
             read(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'You are the map specialist.',
                 userText: 'What is on the map?',
                 allowedSchemas,
@@ -63,7 +63,7 @@ describe('runSpecialist$', () => {
             }
 
             const result = read(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'You are the map specialist.',
                 userText: 'Why is the map empty?',
                 allowedSchemas,
@@ -97,7 +97,7 @@ describe('runSpecialist$', () => {
             const context = {channel: 'CH', conversationId: 'c1', clientId: 'tab', subscriptionId: 's1'}
 
             read(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'p', userText: 'q',
                 allowedSchemas, invokeTool$, context
             }))
@@ -114,7 +114,7 @@ describe('runSpecialist$', () => {
             const invokeTool$ = () => of({ok: true, data: {}})
 
             const result = read(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'p', userText: 'q',
                 allowedSchemas, invokeTool$, context: {}
             }))
@@ -127,7 +127,7 @@ describe('runSpecialist$', () => {
             const invokeTool$ = () => of({ok: true, data: {}})
 
             const result = read(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'p', userText: 'q',
                 allowedSchemas, invokeTool$, context: {}
             }))
@@ -141,7 +141,7 @@ describe('runSpecialist$', () => {
             const invokeTool$ = () => of({ok: true, data: {}})
 
             const result = read(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'p', userText: 'q',
                 allowedSchemas, invokeTool$, context: {}
             }))
@@ -166,7 +166,7 @@ describe('runSpecialist$', () => {
             }
 
             const result = read(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'p', userText: 'q',
                 allowedSchemas, invokeTool$, context: {}
             }))
@@ -186,7 +186,7 @@ describe('runSpecialist$', () => {
             const invokeTool$ = () => of({ok: false, error: {code: 'TOOL_FAILED', message: 'boom'}})
 
             const result = read(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'p', userText: 'q',
                 allowedSchemas, invokeTool$, context: {}
             }))
@@ -205,7 +205,7 @@ describe('runSpecialist$', () => {
             const invokeTool$ = () => of({ok: false, error: {code: 'INVALID_TOOL_ARGS', message: 'bad'}})
 
             const result = read(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'p', userText: 'q',
                 allowedSchemas, invokeTool$, context: {}
             }))
@@ -227,7 +227,7 @@ describe('runSpecialist$', () => {
             const invokeTool$ = () => concat(of(guiActionEmission), of({ok: true, data: {section: 'process'}}))
 
             const {events} = run(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'p', userText: 'q',
                 allowedSchemas, invokeTool$, context: {}
             }))
@@ -254,7 +254,7 @@ describe('runSpecialist$', () => {
             )
 
             const result = read(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'p', userText: 'q',
                 allowedSchemas, invokeTool$, context: {}
             }))
@@ -272,7 +272,7 @@ describe('runSpecialist$', () => {
             const invokeTool$ = () => of({ok: true, data: lookalikeData})
 
             const {events} = run(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'p', userText: 'q',
                 allowedSchemas, invokeTool$, context: {}
             }))
@@ -293,7 +293,7 @@ describe('runSpecialist$', () => {
             const invokeTool$ = () => of(fakeMarker)
 
             const {events} = run(runSpecialist$({
-                llm, tracer: aFakeTracer(), name: 'map',
+                llm, bus: aFakeBus(), name: 'map',
                 systemPrompt: 'p', userText: 'q',
                 allowedSchemas, invokeTool$, context: {}
             }))
@@ -308,17 +308,17 @@ describe('runSpecialist$', () => {
 
     describe('observability', () => {
 
-        it('wraps the specialist run in a tracer span identified by specialist name', () => {
-            const tracer = aFakeTracer()
+        it('wraps the specialist run in a bus.track$ span identified by specialist name', () => {
+            const bus = aFakeBus()
             const llm = aFakeLlm({replies: [{text: 'done'}]})
 
             read(runSpecialist$({
-                llm, tracer, name: 'map',
+                llm, bus, name: 'map',
                 systemPrompt: 'p', userText: 'q',
                 allowedSchemas, invokeTool$: noopInvokeTool$, context: {}
             }))
 
-            expect(tracer.spans).toEqual(expect.arrayContaining([
+            expect(bus.spans).toEqual(expect.arrayContaining([
                 {name: 'specialist.run', attrs: {name: 'map'}}
             ]))
         })

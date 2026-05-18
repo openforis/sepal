@@ -60,9 +60,11 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 - **No model-profile resolution or `llm.usage` events** — every LLM call still
   goes through one hard-wired adapter; provider/model/profile resolution and
   normalized usage accounting (DESIGN §9) are not wired.
-- **Boundary events are not lazy** — tool/LLM events publish eager `message`
-  strings; the `message: () => ...` / `payload: () => ...` split from DESIGN §8
-  is only partially applied.
+- ~~**Boundary events are not lazy**~~ — closed. Trace/debug bus events go through
+  `src/chat/diagnostics.js` (`summarizeMessages` / `summarizeTools` /
+  `summarizeObject` / `truncateString`); messages and tools/payload events use
+  `message: () => ...` lazy strings throughout. Bounded by default; opt-in full
+  payloads via `AI_FULL_TRACE_PAYLOADS=true`.
 
 ## Observability
 

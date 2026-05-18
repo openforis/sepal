@@ -6,7 +6,7 @@ const {createMessageHandler} = require('#mcp/chat/conversation/messageHandler')
 const {createUserChat} = require('#mcp/chat/conversation/userChat')
 const {createInMemoryConversationsStore} = require('./inMemoryConversationsStore')
 const {
-    aFakeBus, aFakeChannel, aFakeHistory, aFakeLlm, aFakeTools, aFakeTitleGenerator, aFakeTracer
+    aFakeBus, aFakeChannel, aFakeHistory, aFakeLlm, aFakeTools, aFakeTitleGenerator
 } = require('../builders')
 
 const COMMAND_BY_METHOD = {
@@ -36,7 +36,6 @@ function aUserChatFixture(overrides = {}) {
 function aUserChat(overrides = {}) {
     const opts = {
         llm: aFakeLlm({replies: [{text: 'Hi!'}]}),
-        tracer: aFakeTracer(),
         tools: aFakeTools(),
         createId: sequentialIds(['conv-1', 'conv-2', 'conv-3']),
         conversationsStore: createInMemoryConversationsStore(),
@@ -51,7 +50,6 @@ function aUserChat(overrides = {}) {
         conversationsStore: opts.conversationsStore,
         conversationFor$: id => of(createConversation({
             llm: opts.llm,
-            tracer: opts.tracer,
             tools: opts.tools,
             history: opts.createHistory(id),
             initialMessages: opts.initialMessagesById[id] || [],
@@ -68,9 +66,7 @@ function aUserChat(overrides = {}) {
         clock: opts.clock
     })
     return withCommandMethods(createUserChat({
-        conversations, guiContexts, messageHandler,
-        tracer: opts.tracer,
-        bus
+        conversations, guiContexts, messageHandler, bus
     }))
 }
 

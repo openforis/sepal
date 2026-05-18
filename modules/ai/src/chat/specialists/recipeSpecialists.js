@@ -8,7 +8,7 @@ const {scopeInnerTools} = require('./specialistScope')
 
 const DESCRIBE_RECIPE_ALLOWED = ['recipe_load']
 
-function describeRecipeTool({llm, tracer, innerTools}) {
+function describeRecipeTool({llm, bus, innerTools}) {
     const systemPrompt = specialistPrompt('recipe')
     const {allowedSchemas, invokeTool$: scopedInvokeTool$} = scopeInnerTools({
         innerTools,
@@ -29,7 +29,7 @@ function describeRecipeTool({llm, tracer, innerTools}) {
             additionalProperties: false
         },
         invoke$: ({recipeId, question}, context) => runSpecialist$({
-            llm, tracer,
+            llm, bus,
             name: 'recipe.describe',
             systemPrompt,
             userText: buildUserText({recipeId, question}),

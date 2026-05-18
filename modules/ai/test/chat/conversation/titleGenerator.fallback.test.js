@@ -1,13 +1,13 @@
 const {from, throwError} = require('rxjs')
 const {createInMemoryConversationsStore} = require('./inMemoryConversationsStore')
 const {aFakeLlm, run} = require('../builders')
-const {UNTITLED_META, aTitleGenFixture, aConversation} = require('./titleGeneratorHarness')
+const {UNTITLED_META, aTitleGenFixture, aConversation, titleUpdates} = require('./titleGeneratorHarness')
 
 describe('TitleGenerator — fallback and error paths', () => {
 
     describe('when the conversation already has a title', () => {
 
-        it('does not call the LLM and does not update the channel', () => {
+        it('does not call the LLM and emits no title updates', () => {
             const titled = {...UNTITLED_META, title: 'Existing title'}
             const conversationsStore = createInMemoryConversationsStore([titled])
             const fixture = aTitleGenFixture({conversationsStore})
@@ -16,12 +16,11 @@ describe('TitleGenerator — fallback and error paths', () => {
                 {role: 'assistant', content: 'follow-up reply'}
             ])
 
-            run(fixture.titleGen.afterTurn$({
-                channel: fixture.channel, conversation,
-                conversationId: 'conv-1', userText: 'follow-up'
+            const {events} = run(fixture.titleGen.afterTurn$({
+                conversation, conversationId: 'conv-1', userText: 'follow-up'
             }))
 
-            expect(fixture.channel.metaUpdates).toEqual([])
+            expect(titleUpdates(events)).toEqual([])
             expect(fixture.llm.receivedMessages).toEqual([])
         })
     })
@@ -34,13 +33,13 @@ describe('TitleGenerator — fallback and error paths', () => {
                 {role: 'user', content: 'How do I detect NDVI change?'}
             ])
 
-            run(fixture.titleGen.afterTurn$({
-                channel: fixture.channel, conversation,
+            const {events} = run(fixture.titleGen.afterTurn$({
+                conversation,
                 conversationId: 'conv-1',
                 userText: 'How do I detect NDVI change?'
             }))
 
-            expect(fixture.channel.metaUpdates).toEqual([])
+            expect(titleUpdates(events)).toEqual([])
             expect(fixture.llm.receivedMessages).toEqual([])
         })
     })
@@ -58,12 +57,11 @@ describe('TitleGenerator — fallback and error paths', () => {
                 {role: 'assistant', content: 'hi'}
             ])
 
-            run(fixture.titleGen.afterTurn$({
-                channel: fixture.channel, conversation,
-                conversationId: 'conv-1', userText: 'hello'
+            const {events} = run(fixture.titleGen.afterTurn$({
+                conversation, conversationId: 'conv-1', userText: 'hello'
             }))
 
-            expect(fixture.channel.metaUpdates).toEqual([])
+            expect(titleUpdates(events)).toEqual([])
         })
     })
 
@@ -77,12 +75,11 @@ describe('TitleGenerator — fallback and error paths', () => {
                 {role: 'assistant', content: 'hi'}
             ])
 
-            run(fixture.titleGen.afterTurn$({
-                channel: fixture.channel, conversation,
-                conversationId: 'conv-1', userText: 'hello'
+            const {events} = run(fixture.titleGen.afterTurn$({
+                conversation, conversationId: 'conv-1', userText: 'hello'
             }))
 
-            expect(fixture.channel.metaUpdates).toEqual([{id: 'conv-1', title: 'Greeting'}])
+            expect(titleUpdates(events)).toEqual([{id: 'conv-1', title: 'Greeting'}])
             let stored
             fixture.conversationsStore.get$('conv-1').subscribe(meta => { stored = meta })
             expect(stored.title).toBe('Greeting')
@@ -98,12 +95,11 @@ describe('TitleGenerator — fallback and error paths', () => {
                 {role: 'assistant', content: 'hi'}
             ])
 
-            run(fixture.titleGen.afterTurn$({
-                channel: fixture.channel, conversation,
-                conversationId: 'conv-1', userText: 'hello'
+            const {events} = run(fixture.titleGen.afterTurn$({
+                conversation, conversationId: 'conv-1', userText: 'hello'
             }))
 
-            expect(fixture.channel.metaUpdates).toEqual([{id: 'conv-1', title: 'Greeting'}])
+            expect(titleUpdates(events)).toEqual([{id: 'conv-1', title: 'Greeting'}])
             const types = fixture.bus.published.map(event => event.type)
             expect(types).toContain('title.generated')
             expect(types).not.toContain('title.failed')
@@ -117,13 +113,13 @@ describe('TitleGenerator — fallback and error paths', () => {
                 {role: 'assistant', content: 'Use the change-detection recipe.'}
             ])
 
-            run(fixture.titleGen.afterTurn$({
-                channel: fixture.channel, conversation,
+            const {events} = run(fixture.titleGen.afterTurn$({
+                conversation,
                 conversationId: 'conv-1',
                 userText: 'How do I detect NDVI change in Kenya?'
             }))
 
-            expect(fixture.channel.metaUpdates).toEqual([{id: 'conv-1', title: 'detect NDVI change in Kenya'}])
+            expect(titleUpdates(events)).toEqual([{id: 'conv-1', title: 'detect NDVI change in Kenya'}])
         })
 
         it('uses a deterministic fallback title for a thank-you message', () => {
@@ -134,12 +130,11 @@ describe('TitleGenerator — fallback and error paths', () => {
                 {role: 'assistant', content: 'You are welcome.'}
             ])
 
-            run(fixture.titleGen.afterTurn$({
-                channel: fixture.channel, conversation,
-                conversationId: 'conv-1', userText: 'thanks'
+            const {events} = run(fixture.titleGen.afterTurn$({
+                conversation, conversationId: 'conv-1', userText: 'thanks'
             }))
 
-            expect(fixture.channel.metaUpdates).toEqual([{id: 'conv-1', title: 'Thanks'}])
+            expect(titleUpdates(events)).toEqual([{id: 'conv-1', title: 'Thanks'}])
         })
 
         it('falls back to a cleaned summary of the assistant reply when the user message has no summarisable content', () => {
@@ -150,12 +145,11 @@ describe('TitleGenerator — fallback and error paths', () => {
                 {role: 'assistant', content: 'Use the change-detection recipe to compare NDVI.'}
             ])
 
-            run(fixture.titleGen.afterTurn$({
-                channel: fixture.channel, conversation,
-                conversationId: 'conv-1', userText: '!!!'
+            const {events} = run(fixture.titleGen.afterTurn$({
+                conversation, conversationId: 'conv-1', userText: '!!!'
             }))
 
-            expect(fixture.channel.metaUpdates[0].title).toMatch(/change-detection/i)
+            expect(titleUpdates(events)[0].title).toMatch(/change-detection/i)
         })
 
         it('leaves the title empty when neither the user message nor the assistant reply has summarisable content', () => {
@@ -166,12 +160,11 @@ describe('TitleGenerator — fallback and error paths', () => {
                 {role: 'assistant', content: '...'}
             ])
 
-            run(fixture.titleGen.afterTurn$({
-                channel: fixture.channel, conversation,
-                conversationId: 'conv-1', userText: '!!!'
+            const {events} = run(fixture.titleGen.afterTurn$({
+                conversation, conversationId: 'conv-1', userText: '!!!'
             }))
 
-            expect(fixture.channel.metaUpdates).toEqual([])
+            expect(titleUpdates(events)).toEqual([])
             expect(fixture.bus.published.map(event => event.type)).toContain('title.empty')
         })
     })

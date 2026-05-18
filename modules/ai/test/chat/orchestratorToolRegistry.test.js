@@ -1,5 +1,5 @@
 const {createOrchestratorToolRegistry} = require('#mcp/chat/orchestratorToolRegistry')
-const {aFakeBus, aFakeGuiRequests, aFakeLlm, aFakeTracer} = require('./builders')
+const {aFakeBus, aFakeGuiRequests, aFakeLlm} = require('./builders')
 
 describe('orchestrator tool registry', () => {
 
@@ -7,7 +7,6 @@ describe('orchestrator tool registry', () => {
         return createOrchestratorToolRegistry({
             guiRequests: aFakeGuiRequests(),
             llm: aFakeLlm(),
-            tracer: aFakeTracer(),
             bus: aFakeBus()
         })
     }

@@ -14,8 +14,8 @@ const {createLmStudioNativeChat} = require('./providers/lmStudioNativeChat')
 // LM Studio's native /api/v1/chat path is the only way to fully suppress a
 // reasoning phase, so non-reasoning requests against an lmstudio provider route
 // there; every other request goes through the OpenAI-compatible path.
-function createLlm({baseURL, apiKey, model, provider, bus}) {
-    const providerConfig = {baseURL, apiKey, model, bus}
+function createLlm({baseURL, apiKey, model, provider, bus, diagnostics}) {
+    const providerConfig = {baseURL, apiKey, model, bus, diagnostics}
     const openAiChat = createOpenAiChatCompletions(providerConfig)
     const lmStudioNativeChat = createLmStudioNativeChat(providerConfig)
 

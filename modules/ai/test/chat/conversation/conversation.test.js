@@ -1,4 +1,4 @@
-const {aConversation, aFakeHistory, aFakeLlm, aFakeTracer, run} = require('../builders')
+const {aConversation, aFakeBus, aFakeHistory, aFakeLlm, run} = require('../builders')
 
 describe('Conversation', () => {
 
@@ -103,12 +103,12 @@ describe('Conversation', () => {
     })
 
     it('wraps the user turn and LLM call in trace spans', () => {
-        const tracer = aFakeTracer()
-        const conversation = aConversation({tracer})
+        const bus = aFakeBus()
+        const conversation = aConversation({bus})
 
         run(conversation.sendUserMessage$('Hello'))
 
-        expect(tracer.spans).toEqual([
+        expect(bus.spans).toEqual([
             {name: 'conversation.send', attrs: {conversationId: 'conv1'}},
             {name: 'llm.respondTo', attrs: {messageCount: 1}}
         ])

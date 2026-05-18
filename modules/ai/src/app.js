@@ -8,6 +8,7 @@ const httpServer = require('#sepal/httpServer')
 const {stream} = require('#sepal/httpServer')
 
 const {createGuiRequests} = require('./chat/guiRequests')
+const {createDiagnostics} = require('./chat/diagnostics')
 const {createRedisChatStorage} = require('./chat/conversation/redisChatStorage')
 const {createUserChats} = require('./chat/conversation/userChats')
 const {createWsHandler} = require('./chat/conversation/wsHandler')
@@ -15,15 +16,14 @@ const {createOrchestratorToolRegistry} = require('./chat/orchestratorToolRegistr
 const {createLlm} = require('./chat/llm')
 const {createEventBus} = require('./eventBus')
 const {subscribeLogListener} = require('./logListener')
-const {createTracer} = require('./tracer')
 const {createServer} = require('./server')
 
 const GUI_REQUEST_TIMEOUT_MS = 30_000
 
 function createApp({config}) {
-    const bus = createEventBus()
     const clock = systemClock()
-    const tracer = createTracer({bus, clock, createId: uuid})
+    const bus = createEventBus({clock, createId: uuid})
+    const diagnostics = createDiagnostics({fullPayloads: config.fullTracePayloads})
 
     subscribeLogListener({bus})
 
@@ -32,22 +32,23 @@ function createApp({config}) {
         apiKey: config.llmApiKey,
         model: config.llmModel,
         provider: config.llmProvider,
-        bus
+        bus,
+        diagnostics
     })
     const guiRequests = createGuiRequests({clock, createId: uuid, timeoutMs: GUI_REQUEST_TIMEOUT_MS, bus})
-    const tools = createOrchestratorToolRegistry({guiRequests, llm, tracer, bus})
+    const tools = createOrchestratorToolRegistry({guiRequests, llm, bus, diagnostics})
     const chatStorage = createRedisChatStorage({
         redis: new Redis({host: config.redisHost}),
         ttlMs: config.conversationTtlMs
     })
     const userChats = createUserChats({
-        chatStorage, llm, tools, tracer, bus, clock, createId: uuid
+        chatStorage, llm, tools, bus, clock, createId: uuid, diagnostics
     })
     const wsHandler = createWsHandler({bus, userChatFor: userChats.chatFor, guiRequests})
 
     const routes = router => router.get('/healthcheck', stream(() => of({status: 'ok'})))
 
-    return createServer({httpServer, tracer, port: config.port, routes, wsHandler})
+    return createServer({httpServer, bus, port: config.port, routes, wsHandler})
 }
 
 function systemClock() {

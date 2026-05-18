@@ -8,7 +8,7 @@ describe('Server adapter', () => {
         const wsHandler = ctx => { receivedCtx = ctx }
         const server = createServer({
             httpServer,
-            tracer: passthroughTracer(),
+            bus: passthroughBus(),
             port: 8080,
             routes: () => {},
             wsHandler
@@ -24,10 +24,10 @@ describe('Server adapter', () => {
 
     it('wraps the start in a server.start span', async () => {
         const httpServer = aFakeHttpServer()
-        const tracer = aSpyTracer()
+        const bus = aSpyBus()
         const server = createServer({
             httpServer,
-            tracer,
+            bus,
             port: 8080,
             routes: () => {},
             wsHandler: () => null
@@ -35,7 +35,7 @@ describe('Server adapter', () => {
 
         await server.start()
 
-        expect(tracer.spans).toEqual([
+        expect(bus.spans).toEqual([
             {name: 'server.start', attrs: {port: 8080}}
         ])
     })
@@ -59,14 +59,14 @@ function aFakeHttpServer() {
     }
 }
 
-function passthroughTracer() {
-    return {span: (_name, _attrs, work) => work()}
+function passthroughBus() {
+    return {track: (_name, _attrs, work) => work()}
 }
 
-function aSpyTracer() {
+function aSpyBus() {
     const spans = []
     return {
-        async span(name, attrs, work) {
+        async track(name, attrs, work) {
             spans.push({name, attrs})
             return work()
         },

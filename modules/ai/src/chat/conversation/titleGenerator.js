@@ -5,6 +5,7 @@
 
 const {EMPTY, Subject, catchError, concatMap, defaultIfEmpty, defer, finalize, ignoreElements, last, map, merge, of, scan, tap, timeout} = require('rxjs')
 const {titleSystemPrompt} = require('../llmText/prompts')
+const {createDiagnostics, truncateString} = require('../diagnostics')
 const {cleanTitle} = require('./cleanTitle')
 const {fallbackTitle} = require('./fallbackTitle')
 const {conversationUpdated} = require('../channelEvents')
@@ -13,9 +14,10 @@ const TITLE_MAX_TOKENS = 32
 const TITLE_TEMPERATURE = 0
 const TITLE_FIRST_TEXT_TIMEOUT_MS = 10_000
 const TITLE_BETWEEN_TEXT_TIMEOUT_MS = 3_000
-const MAX_DEBUG_TEXT = 8000
+const TITLE_RAW_RESPONSE_MAX = 300
 
 const TITLE_SYSTEM_PROMPT = titleSystemPrompt()
+const DEFAULT_DIAGNOSTICS = createDiagnostics()
 
 // Qwen3-family models default to a thinking phase that can burn the entire
 // title budget before producing visible content. The LLM adapter can disable
@@ -23,7 +25,7 @@ const TITLE_SYSTEM_PROMPT = titleSystemPrompt()
 // servers/models that honor prompt-level mode changes.
 const NO_THINK_SUFFIX = ' /no_think'
 
-function createTitleGenerator({llm, conversationsStore, tracer, bus}) {
+function createTitleGenerator({llm, conversationsStore, bus, diagnostics = DEFAULT_DIAGNOSTICS}) {
     const generating = new Set()
 
     return {afterTurn$}
@@ -50,7 +52,7 @@ function createTitleGenerator({llm, conversationsStore, tracer, bus}) {
     }
 
     function titleGeneration$(context, messages) {
-        return tracer.span$('title.generate', {conversationId: context.conversationId},
+        return bus.track$('title.generate', {conversationId: context.conversationId},
             defer(() => {
                 const events$ = new Subject()
                 const work$ = titleWork$(context, messages, events$).pipe(
@@ -86,7 +88,7 @@ function createTitleGenerator({llm, conversationsStore, tracer, bus}) {
     }
 
     function titleResponse$(conversationId, messages) {
-        return tracer.span$('title.llmRespondTo', {conversationId},
+        return bus.track$('title.llmRespondTo', {conversationId},
             llm.respondTo$({
                 messages,
                 maxTokens: TITLE_MAX_TOKENS,
@@ -124,7 +126,7 @@ function createTitleGenerator({llm, conversationsStore, tracer, bus}) {
         bus.publish({
             type: 'title.prompt',
             level: 'trace',
-            message: () => `Title prompt for ${conversationId}: ${truncateDebug(JSON.stringify(messages))}`
+            message: () => `Title prompt for ${conversationId}: ${diagnostics.summarizeMessages(messages)}`
         })
     }
 
@@ -132,7 +134,7 @@ function createTitleGenerator({llm, conversationsStore, tracer, bus}) {
         bus.publish({
             type: 'title.rawResponse',
             level: 'debug',
-            message: () => `Title visible response for ${conversationId}: ${JSON.stringify(truncateDebug(raw))}`
+            message: () => `Title visible response for ${conversationId}: ${JSON.stringify(truncateString(raw, TITLE_RAW_RESPONSE_MAX))}`
         })
     }
 
@@ -212,11 +214,6 @@ function lastAssistantText(messages) {
         if (messages[i].role === 'assistant' && messages[i].content) return messages[i].content
     }
     return null
-}
-
-function truncateDebug(text) {
-    if (text.length <= MAX_DEBUG_TEXT) return text
-    return `${text.slice(0, MAX_DEBUG_TEXT)}...`
 }
 
 module.exports = {createTitleGenerator}

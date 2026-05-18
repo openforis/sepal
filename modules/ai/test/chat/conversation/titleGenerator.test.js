@@ -1,6 +1,6 @@
 const {Subject, from} = require('rxjs')
 const {aFakeLlm, run} = require('../builders')
-const {aTitleGenFixture, aConversation} = require('./titleGeneratorHarness')
+const {aTitleGenFixture, aConversation, titleUpdates} = require('./titleGeneratorHarness')
 
 describe('TitleGenerator — first turn (title still empty)', () => {
 
@@ -10,20 +10,19 @@ describe('TitleGenerator — first turn (title still empty)', () => {
     ])
 
     function generateTitle(fixture) {
-        run(fixture.titleGen.afterTurn$({
-            channel: fixture.channel,
+        return run(fixture.titleGen.afterTurn$({
             conversation,
             conversationId: 'conv-1',
             userText: 'How do I detect NDVI change in Kenya?'
         }))
     }
 
-    it('generates a title via the LLM and pushes it to the channel', () => {
+    it('generates a title via the LLM and emits a conversation-updated event', () => {
         const fixture = aTitleGenFixture()
 
-        generateTitle(fixture)
+        const {events} = generateTitle(fixture)
 
-        expect(fixture.channel.metaUpdates).toEqual([{id: 'conv-1', title: 'NDVI change Kenya'}])
+        expect(titleUpdates(events)).toEqual([{id: 'conv-1', title: 'NDVI change Kenya'}])
     })
 
     it('passes the user/assistant exchange to the LLM with a title system prompt', () => {
@@ -60,7 +59,7 @@ describe('TitleGenerator — first turn (title still empty)', () => {
         })
     })
 
-    it('publishes debug prompt and visible response events', () => {
+    it('publishes a bounded debug prompt event and a visible response event', () => {
         const fixture = aTitleGenFixture()
 
         generateTitle(fixture)
@@ -79,7 +78,8 @@ describe('TitleGenerator — first turn (title still empty)', () => {
         ]))
         const promptEvent = fixture.bus.published.find(event => event.type === 'title.prompt')
         const responseEvent = fixture.bus.published.find(event => event.type === 'title.rawResponse')
-        expect(promptEvent.message()).toContain('User asked: How do I detect NDVI change in Kenya?')
+        expect(promptEvent.message()).toMatch(/contentChars/)
+        expect(promptEvent.message()).not.toContain('User asked:')
         expect(responseEvent.message()).toContain('NDVI change Kenya')
     })
 
@@ -93,13 +93,13 @@ describe('TitleGenerator — first turn (title still empty)', () => {
         expect(stored.title).toBe('NDVI change Kenya')
     })
 
-    it('streams partial titles to the channel as the LLM emits chunks', () => {
+    it('streams partial titles as the LLM emits chunks', () => {
         const streamingLlm = aFakeLlm({replies: [{textChunks: ['NDVI ', 'change ', 'Kenya']}]})
         const fixture = aTitleGenFixture({llm: streamingLlm})
 
-        generateTitle(fixture)
+        const {events} = generateTitle(fixture)
 
-        expect(fixture.channel.metaUpdates).toEqual([
+        expect(titleUpdates(events)).toEqual([
             {id: 'conv-1', title: 'NDVI'},
             {id: 'conv-1', title: 'NDVI change'},
             {id: 'conv-1', title: 'NDVI change Kenya'}
@@ -116,9 +116,9 @@ describe('TitleGenerator — first turn (title still empty)', () => {
         }
         const fixture = aTitleGenFixture({llm: mixedLlm})
 
-        generateTitle(fixture)
+        const {events} = generateTitle(fixture)
 
-        expect(fixture.channel.metaUpdates).toEqual([{id: 'conv-1', title: 'NDVI change Kenya'}])
+        expect(titleUpdates(events)).toEqual([{id: 'conv-1', title: 'NDVI change Kenya'}])
     })
 })
 
@@ -134,16 +134,14 @@ describe('TitleGenerator — re-entrancy', () => {
         const held = new Subject()
         const heldLlm = {respondTo$: () => { llmCalls++; return held }}
         const fixture = aTitleGenFixture({llm: heldLlm})
-        const turn = {
-            channel: fixture.channel, conversation,
-            conversationId: 'conv-1', userText: 'hello'
-        }
+        const turn = {conversation, conversationId: 'conv-1', userText: 'hello'}
 
-        run(fixture.titleGen.afterTurn$(turn))
-        run(fixture.titleGen.afterTurn$(turn))
+        const first = run(fixture.titleGen.afterTurn$(turn))
+        const second = run(fixture.titleGen.afterTurn$(turn))
 
         expect(llmCalls).toBe(1)
-        expect(fixture.channel.metaUpdates).toEqual([])
+        expect(titleUpdates(first.events)).toEqual([])
+        expect(titleUpdates(second.events)).toEqual([])
         held.complete()
     })
 })

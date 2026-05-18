@@ -1,8 +1,8 @@
-function createServer({httpServer, tracer, port, routes, wsHandler}) {
+function createServer({httpServer, bus, port, routes, wsHandler}) {
     return {start}
 
     function start() {
-        return tracer.span('server.start', {port}, () =>
+        return bus.track('server.start', {port}, () =>
             httpServer.start({
                 port,
                 routes,

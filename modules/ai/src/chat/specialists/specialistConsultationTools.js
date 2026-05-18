@@ -15,11 +15,11 @@ const MAP_SPECIALIST = {
 
 const SPECIALISTS = [MAP_SPECIALIST]
 
-function specialistConsultationTools({llm, tracer, innerTools}) {
-    return SPECIALISTS.map(definition => buildSpecialistTool({definition, llm, tracer, innerTools}))
+function specialistConsultationTools({llm, bus, innerTools}) {
+    return SPECIALISTS.map(definition => buildSpecialistTool({definition, llm, bus, innerTools}))
 }
 
-function buildSpecialistTool({definition, llm, tracer, innerTools}) {
+function buildSpecialistTool({definition, llm, bus, innerTools}) {
     const systemPrompt = specialistPrompt(definition.promptAsset)
     const {allowedSchemas, invokeTool$} = scopeInnerTools({
         innerTools,
@@ -37,7 +37,7 @@ function buildSpecialistTool({definition, llm, tracer, innerTools}) {
             additionalProperties: false
         },
         invoke$: ({question}, context) => runSpecialist$({
-            llm, tracer,
+            llm, bus,
             name: definition.name,
             systemPrompt,
             userText: question,

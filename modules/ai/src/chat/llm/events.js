@@ -1,9 +1,10 @@
 const {finalize} = require('rxjs')
-const {truncateTo} = require('../debugText')
+const {truncateString, createDiagnostics} = require('../diagnostics')
 
 const MAX_LOG_TEXT = 300
+const DEFAULT_DIAGNOSTICS = createDiagnostics()
 
-function publishResponseSummary({bus, model, acc, debugLabel}) {
+function publishResponseSummary({bus, model, acc, debugLabel, diagnostics = DEFAULT_DIAGNOSTICS}) {
     return finalize(() => bus.publish({
         type: 'llm.response',
         level: 'debug',
@@ -15,9 +16,14 @@ function publishResponseSummary({bus, model, acc, debugLabel}) {
             `toolCalls=${acc.toolCalls?.size ?? '-'}`,
             `finishReasons=[${[...(acc.finishReasons || [])].join(',') || '-'}]`,
             `deltaKeys=[${[...(acc.deltaKeys || [])].join(',') || '-'}]`,
-            `text=${JSON.stringify(truncateTo(acc.text, MAX_LOG_TEXT))}`
+            `text=${JSON.stringify(responseText(acc.text, diagnostics))}`
         ].join(' ')
     }))
+}
+
+function responseText(text, diagnostics) {
+    if (diagnostics.fullPayloads) return truncateString(text)
+    return truncateString(text, MAX_LOG_TEXT)
 }
 
 module.exports = {publishResponseSummary}

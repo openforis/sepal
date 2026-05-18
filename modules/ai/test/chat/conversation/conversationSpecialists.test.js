@@ -1,6 +1,6 @@
 const {of} = require('rxjs')
 const {createOrchestratorToolRegistry} = require('#mcp/chat/orchestratorToolRegistry')
-const {aConversation, aFakeBus, aFakeGuiRequests, aFakeLlm, aFakeTools, aFakeTracer, run} = require('../builders')
+const {aConversation, aFakeBus, aFakeGuiRequests, aFakeLlm, aFakeTools, run} = require('../builders')
 
 describe('Conversation with specialists', () => {
 
@@ -57,6 +57,6 @@ describe('Conversation with specialists', () => {
     })
 
     function buildTools(llm, guiRequests) {
-        return createOrchestratorToolRegistry({guiRequests, llm, tracer: aFakeTracer(), bus: aFakeBus()})
+        return createOrchestratorToolRegistry({guiRequests, llm, bus: aFakeBus()})
     }
 })

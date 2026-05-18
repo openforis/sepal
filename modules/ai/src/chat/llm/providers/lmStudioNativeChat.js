@@ -2,10 +2,12 @@
 // caller disables reasoning (currently only title generation).
 
 const {EMPTY, defer, from, mergeMap} = require('rxjs')
-const {truncateTo, MAX_DEBUG_TEXT} = require('../../debugText')
+const {createDiagnostics, truncateString, MAX_DEBUG_TEXT} = require('../../diagnostics')
 const {publishResponseSummary} = require('../events')
 
-function createLmStudioNativeChat({baseURL, apiKey, model, bus}) {
+const DEFAULT_DIAGNOSTICS = createDiagnostics()
+
+function createLmStudioNativeChat({baseURL, apiKey, model, bus, diagnostics = DEFAULT_DIAGNOSTICS}) {
 
     return {respondTo$}
 
@@ -27,7 +29,7 @@ function createLmStudioNativeChat({baseURL, apiKey, model, bus}) {
                 bus.publish({
                     type: 'llm.request',
                     level: 'debug',
-                    message: () => `LLM ${debugLabel} native LM Studio request params: ${JSON.stringify(requestSummary(params))}`
+                    message: () => `LLM ${debugLabel} native LM Studio request: model=${params.model} input=${diagnostics.summarizeObject(params.input)} systemPrompt=${diagnostics.summarizeObject(params.system_prompt)}`
                 })
             }
             return from(postJson({url, apiKey, params}))
@@ -39,7 +41,7 @@ function createLmStudioNativeChat({baseURL, apiKey, model, bus}) {
                 acc.contentChunkCount = text ? 1 : 0
                 return text ? from([{textDelta: text}]) : EMPTY
             }),
-            publishResponseSummary({bus, model, acc, debugLabel})
+            publishResponseSummary({bus, diagnostics, model, acc, debugLabel})
         )
     }
 }
@@ -65,14 +67,6 @@ function nativeChatUrl(baseURL) {
     return url.toString()
 }
 
-function requestSummary(params) {
-    return {
-        ...params,
-        input: `[${params.input?.length || 0} chars]`,
-        system_prompt: params.system_prompt ? `[${params.system_prompt.length} chars]` : undefined
-    }
-}
-
 async function postJson({url, apiKey, params}) {
     const response = await fetch(url, {
         method: 'POST',
@@ -81,7 +75,7 @@ async function postJson({url, apiKey, params}) {
     })
     const text = await response.text()
     if (!response.ok) {
-        throw new Error(`LM Studio native chat failed with ${response.status}: ${truncateTo(text, MAX_DEBUG_TEXT)}`)
+        throw new Error(`LM Studio native chat failed with ${response.status}: ${truncateString(text, MAX_DEBUG_TEXT)}`)
     }
     return text ? JSON.parse(text) : {}
 }

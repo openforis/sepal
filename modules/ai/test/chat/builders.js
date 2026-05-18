@@ -1,27 +1,17 @@
 const {EMPTY, Subject, of, from, defer, throwError, catchError, map} = require('rxjs')
 const {createConversation} = require('#mcp/chat/conversation/conversation')
+const {createDiagnostics} = require('#mcp/chat/diagnostics')
 
 function aConversation({
     llm = aFakeLlm(),
     history = aFakeHistory(),
     tools = aFakeTools(),
-    tracer = aFakeTracer(),
     initialMessages = [],
     id = 'conv1',
-    bus = aFakeBus()
+    bus = aFakeBus(),
+    diagnostics = createDiagnostics()
 } = {}) {
-    return createConversation({llm, history, tools, tracer, initialMessages, id, bus})
-}
-
-function aFakeTracer() {
-    const spans = []
-    return {
-        span$(name, attrs, work$) {
-            spans.push({name, attrs})
-            return work$
-        },
-        spans
-    }
+    return createConversation({llm, history, tools, initialMessages, id, bus, diagnostics})
 }
 
 function aFakeLlm({replies = [{text: 'response'}]} = {}) {
@@ -188,9 +178,19 @@ function aControllableTitleGenerator() {
 
 function aFakeBus() {
     const published = []
+    const spans = []
     return {
         publish(event) { published.push(event) },
-        published
+        track$(name, attrs, work$) {
+            spans.push({name, attrs})
+            return work$
+        },
+        async track(name, attrs, work) {
+            spans.push({name, attrs})
+            return work()
+        },
+        published,
+        spans
     }
 }
 
@@ -234,18 +234,22 @@ function readError(observable) {
     return error
 }
 
+function aFakeDiagnostics(opts) {
+    return createDiagnostics(opts)
+}
+
 module.exports = {
     aConversation,
     aControllableLlm,
     aControllableTitleGenerator,
     aFakeBus,
     aFakeChannel,
+    aFakeDiagnostics,
     aFakeGuiRequests,
     aFakeHistory,
     aFakeLlm,
     aFakeTitleGenerator,
     aFakeTools,
-    aFakeTracer,
     read,
     readError,
     run

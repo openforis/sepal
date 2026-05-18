@@ -1,8 +1,6 @@
 // Bus event publishers for conversation telemetry.
 
-const {truncateTo, MAX_DEBUG_TEXT} = require('../debugText')
-
-function publishLlmRequest({bus, conversationId, round, llmMessages, toolSchemas}) {
+function publishLlmRequest({bus, diagnostics, conversationId, round, llmMessages, toolSchemas}) {
     const offeredTools = toolSchemas.map(tool => tool.name)
     bus.publish({
         type: 'conversation.llmRequest',
@@ -18,18 +16,18 @@ function publishLlmRequest({bus, conversationId, round, llmMessages, toolSchemas
         level: 'trace',
         conversationId,
         round,
-        message: () => `LLM turn ${conversationId} round=${round} messages payload: ${truncateJson(llmMessages)}`
+        message: () => `LLM turn ${conversationId} round=${round} messages payload: ${diagnostics.summarizeMessages(llmMessages)}`
     })
     bus.publish({
         type: 'conversation.llmTools',
         level: 'trace',
         conversationId,
         round,
-        message: () => `LLM turn ${conversationId} round=${round} tools payload: ${truncateJson(toolSchemas)}`
+        message: () => `LLM turn ${conversationId} round=${round} tools payload: ${diagnostics.summarizeTools(toolSchemas)}`
     })
 }
 
-function publishToolCall({bus, conversationId, round, toolCall}) {
+function publishToolCall({bus, diagnostics, conversationId, round, toolCall}) {
     bus.publish({
         type: 'conversation.llmToolCall',
         level: 'debug',
@@ -46,17 +44,21 @@ function publishToolCall({bus, conversationId, round, toolCall}) {
         round,
         toolName: toolCall.name,
         toolCallId: toolCall.id,
-        message: () => `LLM turn ${conversationId} round=${round} tool call payload: ${truncateJson(toolCall)}`
+        message: () => `LLM turn ${conversationId} round=${round} tool call payload: ${diagnostics.summarizeObject(toolCall)}`
     })
 }
 
-function publishEmptyLlmRetry({bus, conversationId, round}) {
+function publishEmptyLlmRetry({bus, conversationId, round, messages, exposedTools}) {
+    const roleSummary = roleSummaryOf(messages)
     bus.publish({
         type: 'conversation.llmEmptyRetry',
         level: 'info',
         conversationId,
         round,
-        message: `LLM turn ${conversationId} round=${round} retrying with hint after empty post-tool reply`
+        afterToolRound: isAfterToolRound(messages),
+        roleSummary,
+        exposedTools,
+        message: `LLM turn ${conversationId} round=${round} retrying with hint after empty post-tool reply roles=[${roleSummary}] tools=[${exposedTools.join(',') || '-'}]`
     })
 }
 
@@ -72,10 +74,12 @@ function publishRetryToolCallsDropped({bus, conversationId, round, toolCalls}) {
     })
 }
 
-function publishEmptyLlmReply({bus, conversationId, round, messages}) {
-    const afterToolRound = messages.at(-1)?.role === 'tool'
+function publishEmptyLlmReply({bus, conversationId, round, messages, exposedTools}) {
+    const afterToolRound = isAfterToolRound(messages)
     const toolResults = afterToolRound ? messages.at(-1).toolResults || [] : []
     const toolSummary = toolResults.map(toolResultSummary).join(',') || '-'
+    const roleSummary = roleSummaryOf(messages)
+    const requestedToolCalls = lastAssistantToolCallNames(messages)
     bus.publish({
         type: 'conversation.llmEmptyReply',
         level: 'warn',
@@ -83,18 +87,14 @@ function publishEmptyLlmReply({bus, conversationId, round, messages}) {
         round,
         afterToolRound,
         toolSummary,
-        message: `LLM turn ${conversationId} round=${round} produced no visible assistant text afterToolRound=${afterToolRound} toolResults=[${toolSummary}]`
-    })
-    bus.publish({
-        type: 'conversation.llmEmptyReplyContext',
-        level: 'trace',
-        conversationId,
-        round,
-        message: () => `LLM empty reply ${conversationId} round=${round} recent messages: ${truncateJson(messages.slice(-4))}`
+        roleSummary,
+        exposedTools,
+        requestedToolCalls,
+        message: `LLM turn ${conversationId} round=${round} produced no visible assistant text afterToolRound=${afterToolRound} toolResults=[${toolSummary}] roles=[${roleSummary}] tools=[${exposedTools.join(',') || '-'}] requested=[${requestedToolCalls.join(',') || '-'}]`
     })
 }
 
-function publishHistoryProjection({bus, conversationId, projection}) {
+function publishHistoryProjection({bus, diagnostics, conversationId, projection}) {
     if (!projection) return
     const {before, after} = projection
     bus.publish({
@@ -109,7 +109,7 @@ function publishHistoryProjection({bus, conversationId, projection}) {
         type: 'conversation.historyProjectionPayload',
         level: 'trace',
         conversationId,
-        message: () => `LLM history projection ${conversationId} before=${truncateJson(before)} after=${truncateJson(after)}`
+        message: () => `LLM history projection ${conversationId} before=${diagnostics.summarizeMessages(before)} after=${diagnostics.summarizeMessages(after)}`
     })
 }
 
@@ -126,6 +126,35 @@ function messageSummary(messages) {
     }).join(' -> ')
 }
 
+function roleSummaryOf(messages) {
+    return messages.map(roleToken).join('|')
+}
+
+function roleToken(message) {
+    if (message.role === 'assistant' && message.toolCalls) {
+        return `assistant.toolCalls(${message.toolCalls.map(toolCall => toolCall.name).join('|')})`
+    }
+    if (message.role === 'tool') {
+        return `tool(${(message.toolResults || []).map(toolResultSummary).join('|') || '-'})`
+    }
+    const length = typeof message.content === 'string' ? message.content.length : 0
+    return `${message.role}(${length})`
+}
+
+function lastAssistantToolCallNames(messages) {
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const message = messages[i]
+        if (message.role === 'assistant' && message.toolCalls) {
+            return message.toolCalls.map(toolCall => toolCall.name)
+        }
+    }
+    return []
+}
+
+function isAfterToolRound(messages) {
+    return messages.at(-1)?.role === 'tool'
+}
+
 function toolResultSummary({toolName, result}) {
     if (!result) return `${toolName}:missing`
     if (result.ok === false) return `${toolName}:failed:${result.error?.code || 'unknown'}`
@@ -139,10 +168,6 @@ function toolResultSummary({toolName, result}) {
 
 function isPlainObject(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value)
-}
-
-function truncateJson(value) {
-    return truncateTo(JSON.stringify(value), MAX_DEBUG_TEXT)
 }
 
 module.exports = {publishLlmRequest, publishToolCall, publishEmptyLlmReply, publishEmptyLlmRetry, publishRetryToolCallsDropped, publishHistoryProjection}

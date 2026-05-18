@@ -5,8 +5,8 @@
 const {EMPTY, Subject, catchError, concat, defer, finalize, ignoreElements, shareReplay, takeUntil} = require('rxjs')
 const {createConversationLoop} = require('./conversationLoop')
 
-function createConversation({id, initialMessages = [], llm, history, tools, tracer, bus}) {
-    const loop = createConversationLoop({id, initialMessages, llm, history, tools, tracer, bus})
+function createConversation({id, initialMessages = [], llm, history, tools, bus, diagnostics}) {
+    const loop = createConversationLoop({id, initialMessages, llm, history, tools, bus, diagnostics})
     const abortRequests$ = new Subject()
     let tail$ = EMPTY
     let streaming = false

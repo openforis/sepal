@@ -1,11 +1,11 @@
 const {of} = require('rxjs')
 const {createOrchestratorToolRegistry} = require('#mcp/chat/orchestratorToolRegistry')
-const {aConversation, aFakeBus, aFakeGuiRequests, aFakeLlm, aFakeTracer, run} = require('../builders')
+const {aConversation, aFakeBus, aFakeGuiRequests, aFakeLlm, run} = require('../builders')
 
 describe('Conversation with the orchestrator tool surface', () => {
 
     function buildOrchestratorTools({llm, guiRequests}) {
-        return createOrchestratorToolRegistry({guiRequests, llm, tracer: aFakeTracer(), bus: aFakeBus()})
+        return createOrchestratorToolRegistry({guiRequests, llm, bus: aFakeBus()})
     }
 
     it('lets the LLM ask for the current GUI context', () => {

@@ -10,13 +10,13 @@ const {isChannelEmission} = require('../channelEvents')
 const SPECIALIST_MAX_ROUNDS = 4
 const SPECIALIST_CAP_ANSWER = 'Specialist step cap exceeded; partial information only.'
 
-function runSpecialist$({llm, tracer, name, systemPrompt, userText, allowedSchemas, invokeTool$, context}) {
+function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas, invokeTool$, context}) {
     const guard = createToolCallGuard({consecutiveFailureBail, invalidArgsBail})
     const initial = [
         {role: 'system', content: systemPrompt},
         {role: 'user', content: userText}
     ]
-    return tracer.span$('specialist.run', {name}, step$(initial, 0))
+    return bus.track$('specialist.run', {name}, step$(initial, 0))
 
     function step$(messages, round) {
         const acc = {text: '', toolCalls: []}

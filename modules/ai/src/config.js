@@ -73,6 +73,12 @@ try {
                 .argParser(v => parseInt(v))
                 .default(DEFAULT_HTTP_PORT)
         )
+        .addOption(
+            new Option('--ai-full-trace-payloads <bool>', 'Disable trace-event payload summarization (default: false)')
+                .env('AI_FULL_TRACE_PAYLOADS')
+                .argParser(v => v === 'true' || v === '1')
+                .default(false)
+        )
         .parse(process.argv)
 } catch (error) {
     fatalError(error)
@@ -89,7 +95,8 @@ const {
     llmModel,
     llmBaseUrl,
     rateLimit,
-    sessionTtlMinutes
+    sessionTtlMinutes,
+    aiFullTracePayloads
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -105,5 +112,6 @@ module.exports = {
     llmModel,
     llmBaseUrl,
     rateLimit,
-    sessionTtlMs: sessionTtlMinutes * 60 * 1000
+    sessionTtlMs: sessionTtlMinutes * 60 * 1000,
+    fullTracePayloads: aiFullTracePayloads
 }

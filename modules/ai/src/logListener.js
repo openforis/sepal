@@ -38,8 +38,8 @@ function onEvent(loggerFor, event) {
 function categoryOf({type}) {
     if (!type) return FALLBACK_CATEGORY
     if (UNPREFIXED_CATEGORY[type]) return UNPREFIXED_CATEGORY[type]
-    // Dotted types route by their first segment — this naturally handles tracer
-    // span events (kind.subkind.started → kind) and domain events alike. Un-prefixed
+    // Dotted types route by their first segment — this naturally handles span
+    // events (kind.subkind.started → kind) and domain events alike. Un-prefixed
     // types not in the explicit map are unclassified by convention and surface in
     // the fallback logger rather than silently creating an undeclared category.
     // Adding a new dotted subsystem is a config-side change in log.json, not a

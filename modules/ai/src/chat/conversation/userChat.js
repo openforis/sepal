@@ -4,7 +4,7 @@
 
 const {EMPTY} = require('rxjs')
 
-function createUserChat({conversations, guiContexts, messageHandler, tracer, bus}) {
+function createUserChat({conversations, guiContexts, messageHandler, bus}) {
     const dispatch = {
         'create-conversation':      conversations.create$,
         'select-conversation':      conversations.select$,
@@ -30,7 +30,7 @@ function createUserChat({conversations, guiContexts, messageHandler, tracer, bus
             })
             return EMPTY
         }
-        return tracer.span$('userChat.handle', {commandType: type}, handler(args))
+        return bus.track$('userChat.handle', {commandType: type}, handler(args))
     }
 }
 

@@ -60,7 +60,7 @@ describe('Log listener', () => {
             expect(categoryOf({type: 'userChat.unknownCommand'})).toBe('userChat')
         })
 
-        it('routes tracer span events to their first segment (kind.subkind.started → kind)', () => {
+        it('routes span events to their first segment (kind.subkind.started → kind)', () => {
             expect(categoryOf({type: 'conversation.send.started'})).toBe('conversation')
             expect(categoryOf({type: 'llm.respondTo.completed'})).toBe('llm')
             expect(categoryOf({type: 'tool.invoke.failed'})).toBe('tool')

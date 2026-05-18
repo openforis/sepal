@@ -3,13 +3,15 @@
 
 const {concat, defer, filter, from, map, mergeMap, tap, timeout} = require('rxjs')
 const OpenAI = require('openai').default
-const {truncateTo, MAX_DEBUG_TEXT} = require('../../debugText')
+const {createDiagnostics} = require('../../diagnostics')
 const {publishResponseSummary} = require('../events')
 
 const FIRST_CHUNK_TIMEOUT_MS = 60_000
 const BETWEEN_CHUNKS_TIMEOUT_MS = 30_000
 
-function createOpenAiChatCompletions({baseURL, apiKey, model, bus}) {
+const DEFAULT_DIAGNOSTICS = createDiagnostics()
+
+function createOpenAiChatCompletions({baseURL, apiKey, model, bus, diagnostics = DEFAULT_DIAGNOSTICS}) {
     const client = new OpenAI({baseURL, apiKey})
 
     return {respondTo$}
@@ -39,12 +41,12 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus}) {
                 bus.publish({
                     type: 'llm.request',
                     level: 'debug',
-                    message: () => `LLM ${debugLabel} request params: ${JSON.stringify({...params, messages: `[${messages.length} messages]`})}`
+                    message: () => `LLM ${debugLabel} request: model=${model} messages=${messages.length} tools=${tools?.length || 0}`
                 })
                 bus.publish({
                     type: 'llm.requestPayload',
                     level: 'trace',
-                    message: () => `LLM ${debugLabel} request payload: ${truncateTo(JSON.stringify(params), MAX_DEBUG_TEXT)}`
+                    message: () => `LLM ${debugLabel} request payload: messages=${diagnostics.summarizeMessages(messages)} tools=${diagnostics.summarizeTools(tools || [])}`
                 })
             }
             return from(client.chat.completions.create(params))
@@ -57,7 +59,7 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus}) {
             map(textDelta => ({textDelta}))
         )
         const toolCalls$ = defer(() => from(toolCallEvents(acc.toolCalls)))
-        return concat(text$, toolCalls$).pipe(publishResponseSummary({bus, model, acc, debugLabel}))
+        return concat(text$, toolCalls$).pipe(publishResponseSummary({bus, diagnostics, model, acc, debugLabel}))
     }
 }
 

@@ -34,7 +34,7 @@ function toolRoundCapDisplay(max) {
     }
 }
 
-function createTerminalNotices({tracer, conversationId, append$}) {
+function createTerminalNotices({bus, conversationId, append$}) {
     return {toolRoundCapReached$, guardBail$}
 
     function toolRoundCapReached$(maxRounds) {
@@ -48,7 +48,7 @@ function createTerminalNotices({tracer, conversationId, append$}) {
 
     function emit$(spanName, display, spanAttrs) {
         const message = {role: 'assistant', content: display.fallback, display}
-        return tracer.span$(spanName, spanAttrs,
+        return bus.track$(spanName, spanAttrs,
             concat(
                 of({notice: {content: display.fallback, display}}),
                 append$(message).pipe(ignoreElements())

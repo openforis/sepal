@@ -11,7 +11,7 @@ const {createMessageHandler} = require('./messageHandler')
 const {createUserChat} = require('./userChat')
 const {mainSystemPrompt} = require('../llmText/prompts')
 
-function createUserChats({chatStorage, llm, tools, tracer, bus, clock, createId}) {
+function createUserChats({chatStorage, llm, tools, bus, clock, createId, diagnostics}) {
     const chats = new Map()
     const systemMessage = {role: 'system', content: mainSystemPrompt()}
 
@@ -24,7 +24,7 @@ function createUserChats({chatStorage, llm, tools, tracer, bus, clock, createId}
 
     function buildChat(username) {
         const conversationsStore = chatStorage.conversationsFor(username)
-        const titleGenerator = createTitleGenerator({llm, conversationsStore, tracer, bus})
+        const titleGenerator = createTitleGenerator({llm, conversationsStore, bus, diagnostics})
         const conversations = createConversations({
             conversationsStore,
             conversationFor$: id => buildConversation$(username, id),
@@ -33,17 +33,18 @@ function createUserChats({chatStorage, llm, tools, tracer, bus, clock, createId}
         })
         const guiContexts = createGuiContexts()
         const messageHandler = createMessageHandler({conversations, guiContexts, titleGenerator, clock})
-        return createUserChat({conversations, guiContexts, messageHandler, tracer, bus})
+        return createUserChat({conversations, guiContexts, messageHandler, bus})
     }
 
     function buildConversation$(username, id) {
         const history = chatStorage.historyFor(username, id)
         return history.load$().pipe(
             map(persistedMessages => createConversation({
-                llm, tracer, tools, history,
+                llm, tools, history,
                 initialMessages: [systemMessage, ...persistedMessages],
                 id,
-                bus
+                bus,
+                diagnostics
             }))
         )
     }

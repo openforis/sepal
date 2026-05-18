@@ -17,17 +17,17 @@ const ISO_FIXED = new Date(FIXED_TIME).toISOString()
 const META = {title: '', createdAt: ISO_FIXED, updatedAt: ISO_FIXED}
 
 function aNoopBus() {
-    return {publish: () => {}}
+    return {
+        publish: () => {},
+        track$: (_name, _attrs, work$) => work$,
+        track: (_name, _attrs, work) => work()
+    }
 }
 
 const aRecordingBus = aFakeBus
 
 function aNoopGuiRequests() {
     return {respond: () => {}, cancelForSubscription: () => {}}
-}
-
-function aPassThroughTracer() {
-    return {span$: (_name, _attrs, work$) => work$}
 }
 
 function aHandler({
@@ -40,7 +40,6 @@ function aHandler({
     let i = 0
     const createId = () => conversationIds[Math.min(i++, conversationIds.length - 1)]
     const llm = aFakeLlm({replies})
-    const tracer = aPassThroughTracer()
     const tools = aFakeTools()
     const clock = {
         now: () => FIXED_TIME,
@@ -52,7 +51,7 @@ function aHandler({
             const conversations = createConversations({
                 conversationsStore,
                 conversationFor$: id => of(createConversation({
-                    llm, tracer, tools,
+                    llm, tools,
                     history: aFakeHistory(),
                     id,
                     bus: aNoopBus()
@@ -66,7 +65,7 @@ function aHandler({
                 titleGenerator: aFakeTitleGenerator(),
                 clock
             })
-            cache.set(username, createUserChat({conversations, guiContexts, messageHandler, tracer, bus: aNoopBus()}))
+            cache.set(username, createUserChat({conversations, guiContexts, messageHandler, bus: aNoopBus()}))
         }
         return cache.get(username)
     }
@@ -90,6 +89,6 @@ module.exports = {
     alice, aliceTargeted, aliceLabel,
     ISO_FIXED, META,
     aHandler, captureSent, subscribeHandler,
-    aNoopBus, aRecordingBus, aNoopGuiRequests, aPassThroughTracer,
+    aNoopBus, aRecordingBus, aNoopGuiRequests,
     createInMemoryConversationsStore
 }
