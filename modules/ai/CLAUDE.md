@@ -123,10 +123,11 @@ Environment variables mapped to CLI flags in `start.sh`:
 | `RATE_LIMIT` | `--rate-limit` | Parsed for future server-side rate limiting |
 | `SESSION_TTL_MINUTES` | `--session-ttl-minutes` | Parsed for future session expiry work |
 
-The system prompt is project source, not configuration: `src/app.js` loads
-`src/chat/llmText/main.md` via `mainSystemPrompt()` and aborts boot if the
-asset is missing or empty. Manual tests can still pass a `config.systemPrompt`
-override directly to `createApp({config})`.
+The system prompt is project source, not configuration:
+`src/chat/conversation/userChats.js` loads `src/chat/llmText/main.md` via
+`mainSystemPrompt()` at startup and aborts boot if the asset is missing or
+empty. There is no override path; tests that need a different prompt
+construct `createConversation` directly with their own `initialMessages`.
 
 The active rewrite currently uses `HTTP_PORT`, `LLM_PROVIDER`, `LLM_API_KEY`,
 `LLM_MODEL`, `LLM_BASE_URL`, `REDIS_HOST`, `CONVERSATION_TTL_DAYS`, and

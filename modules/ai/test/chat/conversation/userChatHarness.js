@@ -24,7 +24,6 @@ function aUserChat(overrides = {}) {
         tracer: aFakeTracer(),
         tools: aFakeTools(),
         createId: sequentialIds(['conv-1', 'conv-2', 'conv-3']),
-        systemPrompt: null,
         conversationsStore: createInMemoryConversationsStore(),
         initialMessagesById: {},
         createHistory: aFakeHistory,
@@ -42,7 +41,6 @@ function aUserChat(overrides = {}) {
             tracer: opts.tracer,
             tools: opts.tools,
             history: opts.createHistory(id),
-            systemPrompt: opts.systemPrompt,
             initialMessages: opts.initialMessagesById[id] || [],
             id
         }))

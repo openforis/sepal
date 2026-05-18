@@ -6,12 +6,11 @@ function aConversation({
     history = aFakeHistory(),
     tools = aFakeTools(),
     tracer = aFakeTracer(),
-    systemPrompt = null,
     initialMessages = [],
     id = 'conv1',
     bus = aFakeBus()
 } = {}) {
-    return createConversation({llm, history, tools, tracer, systemPrompt, initialMessages, id, bus})
+    return createConversation({llm, history, tools, tracer, initialMessages, id, bus})
 }
 
 function aFakeTracer() {

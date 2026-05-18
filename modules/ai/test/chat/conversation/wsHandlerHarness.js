@@ -48,7 +48,6 @@ function aHandler({replies = [{text: 'Hi there!'}], conversationIds = ['conv-1']
                 conversationFor$: id => of(createConversation({
                     llm, tracer, tools,
                     history: aFakeHistory(),
-                    systemPrompt: null,
                     id
                 }))
             }))

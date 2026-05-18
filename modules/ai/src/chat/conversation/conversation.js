@@ -9,11 +9,8 @@ const TOOL_CONSECUTIVE_FAILURES_MESSAGE = 'Having repeated trouble with that too
 const TOOL_INVALID_ARGS_MESSAGE = 'Could not work out the right inputs for that tool. Please try a different approach.'
 const NOOP_BUS = {publish() {}}
 
-function createConversation({llm, history, tools, tracer, systemPrompt, initialMessages = [], id, bus = NOOP_BUS}) {
-    const messages = [
-        ...(systemPrompt ? [{role: 'system', content: systemPrompt}] : []),
-        ...initialMessages
-    ] // Mutable
+function createConversation({llm, history, tools, tracer, initialMessages = [], id, bus = NOOP_BUS}) {
+    const messages = [...initialMessages] // Mutable
 
     return {id, sendUserMessage$, messagesSnapshot}
 

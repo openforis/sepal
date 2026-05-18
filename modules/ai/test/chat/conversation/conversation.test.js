@@ -46,10 +46,14 @@ describe('Conversation', () => {
         ])
     })
 
-    it('uses the system prompt without persisting it as chat history', () => {
+    it('keeps initial messages in the LLM view without persisting them as chat history', () => {
         const history = aFakeHistory()
         const llm = aFakeLlm()
-        const conversation = aConversation({llm, history, systemPrompt: 'You are Sepalito.'})
+        const conversation = aConversation({
+            llm,
+            history,
+            initialMessages: [{role: 'system', content: 'You are Sepalito.'}]
+        })
 
         run(conversation.sendUserMessage$('Hello'))
 

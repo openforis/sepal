@@ -4,7 +4,6 @@ const PORT = 8080
 const BASE_URL = process.env.LLM_BASE_URL ?? 'http://host.docker.internal:1234/v1'
 const API_KEY = process.env.LLM_API_KEY ?? 'lm-studio'
 const MODEL = process.env.LLM_MODEL
-const SYSTEM_PROMPT = 'You are a brief assistant. Always reply in one short sentence.'
 
 describe('App smoke test [manual]', () => {
 
@@ -18,8 +17,7 @@ describe('App smoke test [manual]', () => {
                 port: PORT,
                 llmBaseUrl: BASE_URL,
                 llmApiKey: API_KEY,
-                llmModel: MODEL,
-                systemPrompt: SYSTEM_PROMPT
+                llmModel: MODEL
             }
         })
         await app.start()
