@@ -71,6 +71,12 @@ describe('updateRecipeTool', () => {
         })
     })
 
+    it('description steers the orchestrator off the describe_recipe pre-inspection chain (specialist loads current state internally)', () => {
+        const {tool} = aTool()
+
+        expect(tool.description).toMatch(/don't.*describe_recipe.*first/i)
+    })
+
     it('throws at construction when the inner registry is missing load_for_update', () => {
         const innerTools = aFakeTools({recipe_patch: () => of({})}, [recipePatchSchema])
 

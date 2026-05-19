@@ -93,7 +93,7 @@ function toProviderMessage(message) {
 function toProviderToolCallMessage({content, toolCalls}) {
     return {
         role: 'assistant',
-        content: content || null,
+        content: content?.trim() ? content : null,
         tool_calls: toolCalls.map(toolCall => ({
             id: toolCall.id,
             type: 'function',

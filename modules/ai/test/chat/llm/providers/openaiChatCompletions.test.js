@@ -95,6 +95,22 @@ describe('OpenAI-compatible chat-completions adapter', () => {
         ])
     })
 
+    it('treats whitespace-only assistant content on a tool-call message as null (OpenAI spec wants null or substantive content alongside tool_calls)', async () => {
+        mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])
+
+        await collect(anOpenAiChat().respondTo$({messages: [
+            {role: 'user', content: 'list'},
+            {
+                role: 'assistant',
+                content: '\n\n',
+                toolCalls: [{id: 'call_1', name: 'echo', input: {text: 'hi'}}]
+            }
+        ]}))
+
+        const assistantMessage = mockCreate.mock.calls[0][0].messages[1]
+        expect(assistantMessage.content).toBeNull()
+    })
+
     it('strips the GUI display descriptor from assistant messages before sending them to the provider', async () => {
         mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])
 

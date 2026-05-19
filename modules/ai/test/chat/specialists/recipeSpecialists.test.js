@@ -30,6 +30,12 @@ describe('describeRecipeTool', () => {
         return {tool, llm, innerTools, guiRequests}
     }
 
+    it('description steers the orchestrator away from chaining describe_recipe before update_recipe (read-only signal + explicit no-chain)', () => {
+        const {tool} = aTool()
+
+        expect(tool.description).toMatch(/don't chain.*describe.*update/i)
+    })
+
     it('exposes a describe_recipe tool with recipeId required and question optional', () => {
         const {tool} = aTool()
 
