@@ -71,6 +71,22 @@ describe('OpenAI-compatible chat-completions adapter', () => {
         }))
     })
 
+    it('defaults max_tokens to 4096 when the caller does not specify one (so LM Studio defaults don\'t silently length-cap normal chat/tool calls)', async () => {
+        mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])
+
+        await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
+
+        expect(mockCreate.mock.calls[0][0].max_tokens).toBe(4096)
+    })
+
+    it('an explicit caller maxTokens overrides the default (title generation passes 32 — it must still win)', async () => {
+        mockCreate.mockResolvedValue([{choices: [{delta: {content: 'Title'}}]}])
+
+        await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}], maxTokens: 32}))
+
+        expect(mockCreate.mock.calls[0][0].max_tokens).toBe(32)
+    })
+
     it('does not send a tools param when no tools are provided', async () => {
         mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])
 
@@ -192,6 +208,185 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             {textDelta: 'Let me check. '},
             {toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}
         ])
+    })
+
+    describe('length-cap retry — empty length-finished response retried once with a compact hint', () => {
+
+        function aRecordingBus() {
+            const published = []
+            return {publish: event => published.push(event), published}
+        }
+
+        const reasoningOnlyLengthChunks = [
+            {choices: [{delta: {reasoning_content: 'planning...'}}]},
+            {choices: [{delta: {reasoning_content: 'more planning...'}}]},
+            {choices: [{finish_reason: 'length', delta: {}}]}
+        ]
+
+        it('retries once when finish_reason=length with no content and no tool calls, and the retry output streams normally', async () => {
+            mockCreate
+                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
+                .mockResolvedValueOnce([{choices: [{delta: {content: 'patched.'}}]}])
+
+            const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'edit'}]}))
+
+            expect(mockCreate).toHaveBeenCalledTimes(2)
+            expect(events).toEqual([{textDelta: 'patched.'}])
+        })
+
+        it('appends the compact retry hint as a trailing system message on the retry request only', async () => {
+            mockCreate
+                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
+                .mockResolvedValueOnce([{choices: [{delta: {content: 'patched.'}}]}])
+
+            await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'edit'}]}))
+
+            const firstAttemptMessages = mockCreate.mock.calls[0][0].messages
+            const retryMessages = mockCreate.mock.calls[1][0].messages
+            expect(firstAttemptMessages).toEqual([{role: 'user', content: 'edit'}])
+            expect(retryMessages).toEqual([
+                {role: 'user', content: 'edit'},
+                {role: 'system', content: expect.stringMatching(/RETRY.*reasoning token budget.*compactly.*promptly/i)}
+            ])
+        })
+
+        it('publishes llm.lengthCap (warn) with empty=true and willRetry=true on the first attempt when retry is going to fire', async () => {
+            const bus = aRecordingBus()
+            mockCreate
+                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
+                .mockResolvedValueOnce([{choices: [{delta: {content: 'patched.'}}]}])
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'edit'}],
+                debugLabel: 'recipe.update conv-1'
+            }))
+
+            const lengthCaps = bus.published.filter(event => event.type === 'llm.lengthCap')
+            expect(lengthCaps).toHaveLength(1)
+            expect(lengthCaps[0]).toMatchObject({
+                level: 'warn',
+                debugLabel: 'recipe.update conv-1',
+                model: 'test-model',
+                attempt: 0,
+                empty: true,
+                willRetry: true,
+                finishReasons: ['length'],
+                contentChunkCount: 0,
+                toolCallChunkCount: 0,
+                reasoningChunkCount: 2
+            })
+        })
+
+        it('does not retry when partial content was streamed before the length cap (subscribers already saw partial output)', async () => {
+            mockCreate.mockResolvedValueOnce([
+                {choices: [{delta: {content: 'partial '}}]},
+                {choices: [{delta: {content: 'answer'}}]},
+                {choices: [{finish_reason: 'length', delta: {}}]}
+            ])
+            const bus = aRecordingBus()
+
+            const events = await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'long'}],
+                debugLabel: 'recipe.update conv-1'
+            }))
+
+            expect(mockCreate).toHaveBeenCalledTimes(1)
+            expect(events).toEqual([{textDelta: 'partial '}, {textDelta: 'answer'}])
+            expect(bus.published.find(event => event.type === 'llm.lengthCap')).toMatchObject({
+                empty: false,
+                willRetry: false
+            })
+        })
+
+        it('does not retry when a tool call was emitted alongside the length cap', async () => {
+            mockCreate.mockResolvedValueOnce([
+                {choices: [{delta: {tool_calls: [
+                    {index: 0, id: 'call_1', function: {name: 'echo', arguments: '{"text":"hi"}'}}
+                ]}}]},
+                {choices: [{finish_reason: 'length', delta: {}}]}
+            ])
+            const bus = aRecordingBus()
+
+            const events = await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'tool'}],
+                debugLabel: 'recipe.update conv-1'
+            }))
+
+            expect(mockCreate).toHaveBeenCalledTimes(1)
+            expect(events).toEqual([{toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}])
+            expect(bus.published.find(event => event.type === 'llm.lengthCap')).toMatchObject({
+                empty: false,
+                willRetry: false
+            })
+        })
+
+        it('does not retry a second time when the retry itself also length-caps empty', async () => {
+            mockCreate
+                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
+                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
+
+            const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'edit'}]}))
+
+            expect(mockCreate).toHaveBeenCalledTimes(2)
+            expect(events).toEqual([])
+        })
+
+        it('does not fire llm.lengthCap when the response finishes for non-length reasons (e.g. stop)', async () => {
+            mockCreate.mockResolvedValueOnce([
+                {choices: [{delta: {content: 'done.'}}]},
+                {choices: [{finish_reason: 'stop', delta: {}}]}
+            ])
+            const bus = aRecordingBus()
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'hi'}],
+                debugLabel: 'recipe.update conv-1'
+            }))
+
+            expect(bus.published.find(event => event.type === 'llm.lengthCap')).toBeUndefined()
+        })
+    })
+
+    describe('request option logging — safe fields surfaced for observability', () => {
+
+        function aRecordingBus() {
+            const published = []
+            return {publish: event => published.push(event), published}
+        }
+
+        it('includes max_tokens, temperature, tool_choice, and chat_template_kwargs.enable_thinking in the llm.request message', async () => {
+            const bus = aRecordingBus()
+            mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'hi'}],
+                maxTokens: 64,
+                temperature: 0.2,
+                tools: toolSchemas,
+                extraParams: {chat_template_kwargs: {enable_thinking: false}},
+                debugLabel: 'specialist.update conv-1'
+            }))
+
+            const request = bus.published.find(event => event.type === 'llm.request')
+            const text = request.message()
+            expect(text).toMatch(/max_tokens=64/)
+            expect(text).toMatch(/temperature=0\.2/)
+            expect(text).toMatch(/tool_choice=auto/)
+            expect(text).toMatch(/enable_thinking=false/)
+        })
+
+        it('omits enable_thinking from the log when extraParams does not set it', async () => {
+            const bus = aRecordingBus()
+            mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'hi'}],
+                debugLabel: 'specialist.update conv-1'
+            }))
+
+            const request = bus.published.find(event => event.type === 'llm.request')
+            expect(request.message()).not.toMatch(/enable_thinking/)
+        })
     })
 
     describe('with a debugLabel', () => {

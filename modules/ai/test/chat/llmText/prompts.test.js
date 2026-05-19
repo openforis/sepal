@@ -82,5 +82,11 @@ describe('llmText prompts', () => {
         it('throws when the named specialist asset does not exist', () => {
             expect(() => specialistPrompt('nonexistent-specialist')).toThrow()
         })
+
+        it('the update specialist prompt carries a reasoning/emission shared-budget rule so thinking-mode models pace their planning', () => {
+            const prompt = specialistPrompt('update')
+            expect(prompt).toMatch(/reasoning.*emission.*share.*token budget/i)
+            expect(prompt).toMatch(/plan compactly/i)
+        })
     })
 })
