@@ -3,24 +3,11 @@
 // summarisers stay narrow — load_for_update and recipe_patch get bespoke
 // strings; everything else falls back to a generic kind label so new tools
 // still publish a usable event without code changes here.
-//
-// specialist.prompt is a TRACE event with a lazy message that renders the
-// full prompt + tool schemas the specialist sent to the LLM. The lazy form
-// keeps the cost off normal log paths.
 
-const {renderPromptSnapshot} = require('../promptSnapshot')
+const {publishLoopPrompt} = require('../loopEvents')
 
 function publishSpecialistPrompt({bus, name, round, conversationId, messages, toolSchemas}) {
-    bus.publish({
-        type: 'specialist.prompt',
-        level: 'trace',
-        conversationId,
-        name,
-        round,
-        messageCount: messages.length,
-        toolNames: toolSchemas.map(schema => schema.name),
-        message: () => `specialist.prompt name=${name} conversationId=${conversationId} round=${round}\n${renderPromptSnapshot({messages, tools: toolSchemas})}`
-    })
+    publishLoopPrompt({bus, prefix: 'specialist', name, conversationId, round, messages, toolSchemas})
 }
 
 function publishSpecialistRequest({bus, name, round, conversationId, messages, toolSchemas}) {

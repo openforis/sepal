@@ -1,17 +1,9 @@
 // Bus event publishers for conversation telemetry.
 
-const {renderPromptSnapshot} = require('../promptSnapshot')
+const {publishLoopPrompt} = require('../loopEvents')
 
 function publishOrchestratorPrompt({bus, conversationId, round, llmMessages, toolSchemas}) {
-    bus.publish({
-        type: 'orchestrator.prompt',
-        level: 'trace',
-        conversationId,
-        round,
-        messageCount: llmMessages.length,
-        toolNames: toolSchemas.map(schema => schema.name),
-        message: () => `orchestrator.prompt conversationId=${conversationId} round=${round}\n${renderPromptSnapshot({messages: llmMessages, tools: toolSchemas})}`
-    })
+    publishLoopPrompt({bus, prefix: 'orchestrator', conversationId, round, messages: llmMessages, toolSchemas})
 }
 
 function publishLlmRequest({bus, diagnostics, conversationId, round, llmMessages, toolSchemas}) {
