@@ -178,7 +178,7 @@ describe('recipe-patch', () => {
     let mosaicRecipe, baseHash
 
     beforeEach(async () => {
-        const {getRecipeDefaults} = await import('#recipes')
+        const {getRecipeDefaults} = await import('recipes')
         const mosaicModel = {
             ...getRecipeDefaults('MOSAIC'),
             aoi: {type: 'POLYGON', path: [[36.7, -1.4], [37.0, -1.4], [37.0, -1.1]]}

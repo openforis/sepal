@@ -151,7 +151,7 @@
             "title": "OpticalMosaicCompositeOptions",
             "type": "object",
             "additionalProperties": false,
-            "required": ["corrections", "filters", "orbitOverlap", "tileOverlap", "includedCloudMasking", "cloudBuffering", "holes", "snowMasking", "compose"],
+            "required": ["corrections", "filters", "orbitOverlap", "tileOverlap", "includedCloudMasking", "cloudBuffer", "holes", "snowMasking", "compose"],
             "properties": {
                 "corrections": {
                     "type": "array",
@@ -187,7 +187,7 @@
                 "landsatCFMaskCirrusMasking": {"enum": ["OFF", "MODERATE", "AGGRESSIVE"]},
                 "landsatCFMaskDilatedCloud": {"enum": ["KEEP", "REMOVE"]},
                 "sepalCloudScoreMaxCloudProbability": {"type": "integer", "minimum": 0, "maximum": 100},
-                "cloudBuffering": {"enum": [0, 120, 600]},
+                "cloudBuffer": {"enum": [0, 120, 600]},
                 "holes": {"enum": ["PREVENT", "ALLOW"]},
                 "snowMasking": {"enum": ["ON", "OFF"]},
                 "compose": {"enum": ["MEDOID", "MEDIAN"]}

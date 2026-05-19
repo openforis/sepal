@@ -1,4 +1,4 @@
-import {getRecipeSpec, toEffectiveModel} from '#recipes'
+import {getRecipeSpec, toEffectiveModel} from 'recipes'
 import _ from 'lodash'
 import {map, of, switchMap, tap} from 'rxjs'
 
@@ -26,6 +26,9 @@ import {applyJsonPatch, JsonPatchApplyError, JsonPatchInvalidError} from './json
 import {respondError} from './response'
 
 const log = getLogger('chat-recipe-actions')
+const MAX_PATCH_OP_VALUE_CHARS = 300
+const MAX_PATCH_OPS_CHARS = 1200
+const MAX_VALIDATION_ERRORS_CHARS = 1200
 
 // Wholesale-set into `process.loadedRecipes` (the actionBuilder.set below)
 // stamps a fresh hash on the recipe top-level via the mutator, but leaves
@@ -206,6 +209,7 @@ const recipePatch = ({recipeId, baseModelHash, operations, respond}) => {
         }})
         return
     }
+    log.info(() => `recipe-patch r=${recipeId} ops=${patchOperationsLog(operations)}`)
     const effective = toEffectiveModel(recipe.type, recipe.model)
     let after
     try {
@@ -227,7 +231,7 @@ const recipePatch = ({recipeId, baseModelHash, operations, respond}) => {
     if (spec) {
         const errors = spec.validate(after)
         if (errors.length > 0) {
-            log.info(`recipe-patch r=${recipeId} validation-failed ops=${operations.length} errors=${errors.length}`)
+            log.info(() => `recipe-patch r=${recipeId} validation-failed ops=${operations.length} errors=${errors.length} details=${validationErrorsLog(errors)}`)
             respond({success: false, error: {
                 code: 'VALIDATION_FAILED',
                 message: `${errors.length} validation error${errors.length === 1 ? '' : 's'}`,
@@ -260,6 +264,32 @@ const patchInvalidatedPaths = operations => {
     })
     return [...set]
 }
+
+const patchOperationsLog = operations =>
+    truncate(JSON.stringify(operations.map(patchOperationLog)), MAX_PATCH_OPS_CHARS)
+
+const patchOperationLog = op => ({
+    op: op.op,
+    ...(op.path !== undefined ? {path: op.path} : {}),
+    ...(op.from !== undefined ? {from: op.from} : {}),
+    ...(Object.prototype.hasOwnProperty.call(op, 'value') ? {value: patchValueLog(op.value)} : {})
+})
+
+const patchValueLog = value => {
+    if (typeof value === 'string')
+        return truncate(value, MAX_PATCH_OP_VALUE_CHARS)
+    if (value === null || typeof value !== 'object')
+        return value
+    if (Array.isArray(value))
+        return {type: 'array', length: value.length}
+    return {type: 'object', keys: Object.keys(value).sort()}
+}
+
+const truncate = (value, maxChars) =>
+    value.length <= maxChars ? value : `${value.slice(0, maxChars)}...`
+
+const validationErrorsLog = errors =>
+    truncate(JSON.stringify(errors.map(({path, rule, message}) => ({path, rule, message}))), MAX_VALIDATION_ERRORS_CHARS)
 
 // Cheap identity-only lookup for dispatcher-side type resolution (the AI
 // module's recipe-specialist routing). Reuses the same `process.recipes`

@@ -20,8 +20,20 @@ export default defineConfig({
     resolve: {
         alias: [
             {find: '~', replacement: fileURLToPath(new URL('./src', import.meta.url))},
-            {find: '#recipes', replacement: fileURLToPath(new URL('../../lib/js/recipes/src/index.js', import.meta.url))},
         ]
+    },
+    optimizeDeps: {
+        // `recipes` is a file: dep linked into node_modules via a symlink.
+        // Vite skips pre-bundling of linked packages by default (to keep HMR
+        // working on the linked source), but the recipes package is CJS, so
+        // without pre-bundling the browser sees raw `module.exports = {...}`
+        // and named imports fail. Force it through esbuild's CJS->ESM.
+        //
+        // Changes in linked dependencies do not reliably invalidate Vite's
+        // optimized-deps cache. Rebuild on dev-server start so GUI validation
+        // uses the current shared recipe schema/projection code.
+        include: ['recipes'],
+        force: true
     },
     plugins: [react()],
     test: {
