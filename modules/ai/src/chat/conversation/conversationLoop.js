@@ -44,7 +44,7 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         const acc = {text: '', toolCalls: []}
         const {llmMessages: baseMessages, projection} = messagesForLlm({
             messages,
-            contextMessage: round === 0 ? turn.contextMessage : null,
+            contextMessage: turn.contextMessage,
             isolateHistory: round > 0
         })
         const llmMessages = messagesWithHint(baseMessages, retryHint)

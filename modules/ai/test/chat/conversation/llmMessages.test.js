@@ -79,6 +79,29 @@ describe('LLM message projection', () => {
         ])
     })
 
+    it('splices the runtime context message between system history and the active turn even when post-tool rounds isolate history (context is for the whole turn, not just round 0)', () => {
+        const recipeCall = {id: 'r1', name: 'recipe_list', input: {}}
+        const messages = [
+            {role: 'system', content: 'You are Sepalito.'},
+            {role: 'user', content: 'earlier'},
+            {role: 'assistant', content: 'earlier reply'},
+            {role: 'user', content: 'list recipes'},
+            {role: 'assistant', content: '', toolCalls: [recipeCall]},
+            {role: 'tool', toolResults: [{toolCallId: 'r1', toolName: 'recipe_list', result: {ok: true, data: []}}]}
+        ]
+        const contextMessage = {role: 'system', content: 'runtime: selectedRecipe=r1'}
+
+        const {llmMessages} = messagesForLlm({messages, contextMessage, isolateHistory: true})
+
+        expect(llmMessages).toEqual([
+            {role: 'system', content: 'You are Sepalito.'},
+            contextMessage,
+            {role: 'user', content: 'list recipes'},
+            {role: 'assistant', content: '', toolCalls: [recipeCall]},
+            {role: 'tool', toolResults: [{toolCallId: 'r1', toolName: 'recipe_list', result: {ok: true, data: []}}]}
+        ])
+    })
+
     it('omits the context-message slot entirely when contextMessage is null', () => {
         const messages = [
             {role: 'user', content: 'first'},

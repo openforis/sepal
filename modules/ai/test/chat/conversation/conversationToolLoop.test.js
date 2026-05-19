@@ -291,6 +291,68 @@ describe('Conversation tool loop', () => {
         })
     })
 
+    describe('runtime context retention across same-turn rounds', () => {
+
+        function runtimeContextOf(messages) {
+            return messages.find(m => m.role === 'system' && /<runtime-context>/.test(m.content || ''))
+        }
+
+        it('round 0 sees the runtime context', () => {
+            const llm = aFakeLlm({replies: [{text: 'ok'}]})
+            const conversation = aConversation({llm})
+
+            run(conversation.sendUserMessage$('hi', {guiContext: {selectedRecipe: {recipeId: 'r1', recipeType: 'MOSAIC'}}}))
+
+            expect(runtimeContextOf(llm.receivedMessages[0])?.content).toContain('"recipeId":"r1"')
+        })
+
+        it('post-tool round still sees the runtime context (it was only in round 0 before this slice)', () => {
+            const toolCall = {id: 't1', name: 'recipe_list', input: {}}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [toolCall]},
+                {text: 'done.'}
+            ]})
+            const tools = aFakeTools({recipe_list: () => of([])})
+            const conversation = aConversation({llm, tools})
+
+            run(conversation.sendUserMessage$('list', {guiContext: {selectedRecipe: {recipeId: 'r1', recipeType: 'MOSAIC'}}}))
+
+            expect(runtimeContextOf(llm.receivedMessages[1])?.content).toContain('"recipeId":"r1"')
+        })
+
+        it('empty-after-tool retry round sees the runtime context AND the retry hint', () => {
+            const toolCall = {id: 't1', name: 'recipe_list', input: {}}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [toolCall]},
+                {text: ''},
+                {text: 'No tool here can do that.'}
+            ]})
+            const tools = aFakeTools({recipe_list: () => of({ok: false, error: {code: 'NO_MATCH', message: 'nf'}})})
+            const conversation = aConversation({llm, tools})
+
+            run(conversation.sendUserMessage$('open', {guiContext: {selectedRecipe: {recipeId: 'r1', recipeType: 'MOSAIC'}}}))
+
+            const retryMessages = llm.receivedMessages[2]
+            expect(runtimeContextOf(retryMessages)?.content).toContain('"recipeId":"r1"')
+            expect(retryMessages.find(m => m.role === 'system' && /empty/i.test(m.content || ''))).toBeDefined()
+        })
+
+        it('runtime context is not persisted to conversation history (still per-turn-only)', () => {
+            const toolCall = {id: 't1', name: 'recipe_list', input: {}}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [toolCall]},
+                {text: 'done.'}
+            ]})
+            const tools = aFakeTools({recipe_list: () => of([])})
+            const history = aFakeHistory()
+            const conversation = aConversation({llm, tools, history})
+
+            run(conversation.sendUserMessage$('list', {guiContext: {selectedRecipe: {recipeId: 'r1', recipeType: 'MOSAIC'}}}))
+
+            expect(history.appended.find(m => /<runtime-context>/.test(m.content || ''))).toBeUndefined()
+        })
+    })
+
     describe('channel-emission collision safety', () => {
 
         it('treats a tool result that happens to have {kind, targeting} fields as data, not a channel emission', () => {

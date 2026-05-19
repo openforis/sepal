@@ -52,6 +52,12 @@ describe('llmText prompts', () => {
             const prompt = mainSystemPrompt()
             expect(prompt).not.toMatch(/\{\{.*?\}\}/)
         })
+
+        it('carries the direct-update routing rule so the orchestrator goes to update_recipe without pre-inspecting via describe_recipe', () => {
+            const prompt = mainSystemPrompt()
+            expect(prompt).toMatch(/update_recipe/)
+            expect(prompt).toMatch(/don't.*describe_recipe/i)
+        })
     })
 
     describe('titleSystemPrompt', () => {
