@@ -9,5 +9,11 @@ services:
       - ${SEPAL_PROJECT_DIR}/lib/js/shared/package.json:/usr/local/src/sepal/lib/js/shared/package.json
       - ${SEPAL_PROJECT_DIR}/modules/ai/lib/shared/package-lock.json:/usr/local/src/sepal/lib/js/shared/package-lock.json
       - ${SEPAL_PROJECT_DIR}/modules/ai/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
+      # lib/recipes — src + package.json overlay the image's baked copy so
+      # shared-spec changes propagate without a `sepal build ai` rebuild.
+      # node_modules stays image-baked (Dockerfile `RUN npm install`) so the
+      # container keeps its platform-correct installs.
+      - ${SEPAL_PROJECT_DIR}/lib/js/recipes/src:/usr/local/src/sepal/lib/js/recipes/src
+      - ${SEPAL_PROJECT_DIR}/lib/js/recipes/package.json:/usr/local/src/sepal/lib/js/recipes/package.json
       # module
       - ${SEPAL_PROJECT_DIR}/modules/ai:/usr/local/src/sepal/modules/ai

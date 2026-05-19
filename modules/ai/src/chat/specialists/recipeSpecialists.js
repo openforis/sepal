@@ -47,7 +47,7 @@ function describeRecipeTool({llm, bus, innerTools, guiRequests}) {
                     return runSpecialist$({
                         llm, bus,
                         name: 'recipe.describe',
-                        systemPrompt: assembleSpecialistPrompt(basePrompt, spec),
+                        systemPrompt: assembleSpecialistPrompt(basePrompt, spec, {purpose: 'describe'}),
                         userText: buildDescribeUserText({recipeId, question}),
                         allowedSchemas,
                         invokeTool$: restrictToRecipe(scopedInvokeTool$, recipeId),
@@ -88,7 +88,7 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
                     return runSpecialist$({
                         llm, bus,
                         name: 'recipe.update',
-                        systemPrompt: assembleSpecialistPrompt(basePrompt, spec, {includeSchema: true}),
+                        systemPrompt: assembleSpecialistPrompt(basePrompt, spec, {purpose: 'update', includeSchema: true}),
                         userText: buildUpdateUserText({recipeId, instruction}),
                         allowedSchemas,
                         invokeTool$: tracker.wrap(restrictToRecipe(scopedInvokeTool$, recipeId)),

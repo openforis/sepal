@@ -193,7 +193,7 @@ describe('describeRecipeTool', () => {
 
     describe('per-type system prompt assembly', () => {
 
-        it('on a MOSAIC recipe, the inner LLM system prompt carries MOSAIC-specific promptFacts content', () => {
+        it('on a MOSAIC recipe, the inner LLM system prompt carries MOSAIC-specific describeFacts content (description + outputs)', () => {
             const guiRequests = metadataReplyingWith({id: 'r-mosaic', type: 'MOSAIC', name: 'Kenya mosaic', projectId: 'p1'})
             const {tool, llm} = aTool({guiRequests})
 
@@ -204,8 +204,28 @@ describe('describeRecipeTool', () => {
             expect(systemMessage.content).toContain('recipe specialist')
             expect(systemMessage.content).toContain('MOSAIC')
             expect(systemMessage.content).toContain('Optical Mosaic')
-            expect(systemMessage.content).toMatch(/Choose when:/)
-            expect(systemMessage.content).toMatch(/Use cases:/)
+            expect(systemMessage.content).toMatch(/Outputs:/)
+        })
+
+        it('describe prompt does not leak selection facts (chooseWhen / useCases) — they belong to the orchestrator selection step', () => {
+            const guiRequests = metadataReplyingWith({id: 'r-mosaic', type: 'MOSAIC', name: 'Kenya mosaic', projectId: 'p1'})
+            const {tool, llm} = aTool({guiRequests})
+
+            read(tool.invoke$({recipeId: 'r-mosaic'}, {channel: {}, conversationId: 'c1'}))
+
+            const systemMessage = llm.receivedMessages[0][0]
+            expect(systemMessage.content).not.toMatch(/Choose when:/)
+            expect(systemMessage.content).not.toMatch(/Use cases:/)
+        })
+
+        it('describe prompt does not leak edit guidance (that belongs to update_recipe)', () => {
+            const guiRequests = metadataReplyingWith({id: 'r-mosaic', type: 'MOSAIC', name: 'Kenya mosaic', projectId: 'p1'})
+            const {tool, llm} = aTool({guiRequests})
+
+            read(tool.invoke$({recipeId: 'r-mosaic'}, {channel: {}, conversationId: 'c1'}))
+
+            const systemMessage = llm.receivedMessages[0][0]
+            expect(systemMessage.content).not.toMatch(/Edit guidance:/)
         })
 
         it('on an unknown recipe type, the inner LLM system prompt is the unmodified base frame', () => {
@@ -216,6 +236,7 @@ describe('describeRecipeTool', () => {
 
             const systemMessage = llm.receivedMessages[0][0]
             expect(systemMessage.content).toContain('recipe specialist')
+            expect(systemMessage.content).not.toMatch(/Outputs:/)
             expect(systemMessage.content).not.toMatch(/Choose when:/)
             expect(systemMessage.content).not.toMatch(/Use cases:/)
         })

@@ -8,9 +8,10 @@ prefix is a Node imports-map convention that doesn't carry to Vite, so the GUI
 uses the bare package name. Same package, byte-identical at both runtimes.
 Deps are limited to `ajv` + `ajv-formats`.
 
-Each spec exposes `{id, name, schema, rules, defaultModel(), toEffectiveModel(model), promptFacts(), validate(model)}`.
+Each spec exposes `{id, name, schema, rules, defaultModel(), toEffectiveModel(model), selectionFacts(), describeFacts(), editFacts(), validate(model)}`.
 Registry-level conveniences: `listRecipeSpecs()`, `getRecipeSpec(id)`,
-`getRecipeSchema(id)`, `getRecipeDefaults(id)`, `getRecipePromptFacts(id)`,
+`getRecipeSchema(id)`, `getRecipeDefaults(id)`, `getRecipeSelectionFacts(id)`,
+`getRecipeDescribeFacts(id)`, `getRecipeEditFacts(id)`,
 `validateRecipe(id, model)`, `toEffectiveModel(id, model)`.
 
 ## LLM-facing model contract
@@ -52,13 +53,29 @@ worse than predictable cleanup.
 
 ## Specialist prompt assembly
 
-`promptFacts()` returns the structured inputs from which a recipe specialist's
-system prompt is mechanically assembled per DESIGN §8: `description`,
-`useCases`, `chooseWhen`, `dontChooseWhen`, `outputs`. The point is to keep
-LLM-facing knowledge co-located with the spec it describes, so adding a recipe
-type means adding facts in one place rather than editing a prompt asset in
-another. Fields are returned fresh on each call; consumers may mutate without
-corrupting the next caller.
+LLM-facing facts are split into three purpose-specific buckets so each consumer
+sees only what it needs. Adding a recipe type means filling the relevant
+buckets here rather than editing prompt assets elsewhere. Fields are returned
+fresh on each call; consumers may mutate without corrupting the next caller.
+
+| Method | Consumer | Fields |
+|---|---|---|
+| `selectionFacts()` | Orchestrator deciding which recipe type fits a request | `description`, `useCases`, `chooseWhen`, `dontChooseWhen`, `outputs` |
+| `describeFacts()` | `describe_recipe` specialist (read-only) | `description`, `outputs` |
+| `editFacts()` | `update_recipe` / future `create_recipe` specialists (write) | `guidance` (array of edit-time rules, validation closures, path aliases) |
+
+`assembleSpecialistPrompt(basePrompt, spec, {purpose, includeSchema})` in the
+AI module reads the bucket for the requested `purpose`:
+
+- `{purpose: 'describe'}` reads `describeFacts()`. Selection facts and edit
+  guidance are deliberately excluded — the recipe has already been chosen and
+  the specialist is read-only.
+- `{purpose: 'update', includeSchema: true}` reads `editFacts()` and appends
+  the JSON Schema as a compact fenced `json` block. Selection facts and
+  describe-only prose are excluded for the same reason and to stay under the
+  §3 prompt-byte budget.
+- The base prompt is placed first so cache-stable prefixes hold across recipe
+  types.
 
 ## AOI subschema
 

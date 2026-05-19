@@ -327,7 +327,7 @@ describe('updateRecipeTool', () => {
 
     describe('per-type system prompt assembly', () => {
 
-        it('on a MOSAIC recipe, the inner LLM system prompt carries facts AND the JSON Schema (write specialist needs it to plan patches)', () => {
+        it('on a MOSAIC recipe, the inner LLM system prompt carries MOSAIC edit guidance AND the JSON Schema (write specialist needs both to plan patches)', () => {
             const guiRequests = metadataReplyingWith({id: 'r-mosaic', type: 'MOSAIC', name: 'Kenya mosaic', projectId: 'p1'})
             const {tool, llm} = aTool({guiRequests})
 
@@ -337,9 +337,21 @@ describe('updateRecipeTool', () => {
             expect(systemMessage.role).toBe('system')
             expect(systemMessage.content).toContain('update specialist')
             expect(systemMessage.content).toContain('MOSAIC')
-            expect(systemMessage.content).toMatch(/Choose when:/)
+            expect(systemMessage.content).toMatch(/Edit guidance:/)
+            expect(systemMessage.content).toMatch(/seasonStart/)
             expect(systemMessage.content).toMatch(/```json/)
             expect(systemMessage.content).toContain('compositeOptions')
+        })
+
+        it('update prompt does not leak selection facts (chooseWhen / useCases) — they belong to the orchestrator selection step', () => {
+            const guiRequests = metadataReplyingWith({id: 'r-mosaic', type: 'MOSAIC', name: 'Kenya mosaic', projectId: 'p1'})
+            const {tool, llm} = aTool({guiRequests})
+
+            read(tool.invoke$({recipeId: 'r-mosaic', instruction: 'edit'}, aContext()))
+
+            const systemMessage = llm.receivedMessages[0][0]
+            expect(systemMessage.content).not.toMatch(/Choose when:/)
+            expect(systemMessage.content).not.toMatch(/Use cases:/)
         })
 
         it('on an unknown recipe type, the inner LLM system prompt is the unmodified base frame (no facts, no schema)', () => {
@@ -350,7 +362,7 @@ describe('updateRecipeTool', () => {
 
             const systemMessage = llm.receivedMessages[0][0]
             expect(systemMessage.content).toContain('update specialist')
-            expect(systemMessage.content).not.toMatch(/Choose when:/)
+            expect(systemMessage.content).not.toMatch(/Edit guidance:/)
             expect(systemMessage.content).not.toMatch(/```json/)
         })
 

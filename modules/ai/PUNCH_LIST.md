@@ -24,10 +24,13 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 - **Recipe specialist routing is partially type-aware** — `describeRecipeTool`
   and `updateRecipeTool` both resolve `recipeId -> recipeType` via
   `lookupRecipeMetadata$` and assemble a per-type system prompt from
-  `spec.promptFacts()` (MOSAIC today; other types fall back to the generic
+  per-purpose fact buckets (`spec.describeFacts()` /
+  `spec.editFacts()` — MOSAIC today; other types fall back to the generic
   base frame). Still missing: per-type allowed-tool sets, per-type prompt
-  file overrides (if a recipe ever needs more than `promptFacts()` can
-  express), and `create_recipe` dispatcher routing.
+  file overrides (if a recipe ever needs more than per-purpose facts can
+  express), structured `editFacts` fields beyond `guidance` (e.g.
+  `pathAliases`, `validationDependencies` once a future `load_for_update`
+  / closure planner consumes them), and `create_recipe` dispatcher routing.
 - **Map specialist read tools are minimal** — `consult_map` exposes
   `get_gui_context`, `map_area_list` (layout + areas + AOI + view), and
   `layer_list` (per-area imageLayer + featureLayers). Still missing:
@@ -51,12 +54,9 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   (`lib/js/recipes`, currently MOSAIC only) from the GUI write path
   for authoritative validation and from recipe specialists for dependent-fragment
   planning and prompt facts.
-- ~~**Shared recipe spec lacks `promptFacts()`**~~ — closed. MOSAIC spec exposes
-  `promptFacts()` returning `{description, useCases, chooseWhen, dontChooseWhen,
-  outputs}`. Consumed by `describe_recipe` via `assembleSpecialistPrompt`
-  (per-type prompt assembled with the base frame first for cache stability).
-  Additional fields from DESIGN §8 (defaults/projection summary, rule prose,
-  output bands, gotchas) land when a consumer needs them.
+- ~~**Shared recipe spec lacks `promptFacts()`**~~ — closed, then split into
+  per-purpose buckets. See the "Recipe specialist routing is partially
+  type-aware" entry above and `lib/js/recipes/README.md` for the current API.
 - ~~**`describe_recipe` preflight `recipe_load` is wasteful**~~ — closed.
   Type resolution now goes through `lookupRecipeMetadata$` (see
   `modules/ai/src/chat/tools/recipeMetadata.js`) which hits the GUI's
