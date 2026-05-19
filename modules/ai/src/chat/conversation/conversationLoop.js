@@ -4,7 +4,7 @@
 
 const {concat, concatMap, defer, filter, from, ignoreElements, mergeMap, of, tap} = require('rxjs')
 const {messagesForLlm} = require('./llmMessages')
-const {publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection, publishLlmRequest, publishOrchestratorPrompt, publishRetryToolCallsDropped, publishToolCall} = require('./conversationEvents')
+const {publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection, publishLlmRequest, publishOrchestratorPrompt, publishToolCall} = require('./conversationEvents')
 const {createTerminalNotices, consecutiveFailureBail, invalidArgsBail} = require('./terminalNotices')
 const {createToolCallGuard} = require('../toolCallGuard')
 const {createDiagnostics} = require('../diagnostics')
@@ -14,6 +14,7 @@ const {emptyAfterToolHint} = require('../llmText/prompts')
 
 const EMPTY_AFTER_TOOL_HINT = emptyAfterToolHint()
 const DEFAULT_DIAGNOSTICS = createDiagnostics()
+const DIRECT_ANSWER_TOOLS = new Set(['update_recipe'])
 
 const MAX_TOOL_ROUNDS = 8
 
@@ -40,7 +41,7 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         )
     }
 
-    function step$(turn, {round, retryMode, retryHint}) {
+    function step$(turn, {round, retried, retryHint}) {
         const acc = {text: '', toolCalls: []}
         const {llmMessages: baseMessages, projection} = messagesForLlm({
             messages,
@@ -48,14 +49,14 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
             isolateHistory: round > 0
         })
         const llmMessages = messagesWithHint(baseMessages, retryHint)
-        const toolSchemas = toolsFor(retryMode)
+        const toolSchemas = tools.schemas()
         turn.lastExposedTools = toolSchemas.map(schema => schema.name)
         publishHistoryProjection({bus, diagnostics, conversationId: id, projection})
         publishLlmRequest({bus, diagnostics, conversationId: id, round, llmMessages, toolSchemas})
         publishOrchestratorPrompt({bus, conversationId: id, round, llmMessages, toolSchemas})
         return concat(
             llmStream$(llmMessages, toolSchemas, acc, round),
-            defer(() => decideAfterStream$(acc, turn, {round, retryMode}))
+            defer(() => decideAfterStream$(acc, turn, {round, retried}))
         )
     }
 
@@ -65,46 +66,24 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
             : baseMessages
     }
 
-    // Failed-tool retries are final-answer-only, so the model explains the
-    // failure instead of substituting another read-only tool. Successful-tool
-    // retries keep tools available: local thinking models may plan the next
-    // action in reasoning but fail to emit a structured tool call on the first
-    // post-tool pass.
-    function toolsFor(retryMode) {
-        return retryMode === 'text' ? [] : tools.schemas()
-    }
-
-    function decideAfterStream$(acc, turn, {round, retryMode}) {
-        // Text retries are text-only: ignore any toolCalls the model emits despite
-        // tools:[] (the provider may not enforce it). Recording the dropped calls
-        // surfaces model misbehavior without re-entering the tool loop.
-        if (retryMode === 'text' && acc.toolCalls.length > 0) {
-            publishRetryToolCallsDropped({bus, conversationId: id, round, toolCalls: acc.toolCalls})
-        } else if (acc.toolCalls.length > 0) {
+    function decideAfterStream$(acc, turn, {round, retried}) {
+        if (acc.toolCalls.length > 0) {
             return handleToolCalls$(acc.text, acc.toolCalls, turn, {round})
         }
         // Empty after a tool result usually means the model gave up without explanation.
-        // Retry once with a hint; if even that produces nothing, reply$ will publish the
-        // final llmEmptyReply so the metric counts only user-visible failures.
-        if (!hasVisibleText(acc.text) && isPostToolRound() && !retryMode) {
-            const nextRetryMode = retryModeForPostToolRound()
+        // Retry once with a hint, tools still available — the guard blocks exact repeats so
+        // the model gets one structured chance to correct args or retry after validation.
+        if (!hasVisibleText(acc.text) && isPostToolRound() && !retried) {
             publishEmptyLlmRetry({
-                bus, conversationId: id, round, messages, exposedTools: turn.lastExposedTools, retryMode: nextRetryMode
+                bus, conversationId: id, round, messages, exposedTools: turn.lastExposedTools
             })
-            return step$(turn, {round: round + 1, retryMode: nextRetryMode, retryHint: EMPTY_AFTER_TOOL_HINT})
+            return step$(turn, {round: round + 1, retried: true, retryHint: EMPTY_AFTER_TOOL_HINT})
         }
         return reply$(acc.text, {round, turn})
     }
 
     function isPostToolRound() {
         return messages.at(-1)?.role === 'tool'
-    }
-
-    function retryModeForPostToolRound() {
-        const toolResults = messages.at(-1)?.toolResults || []
-        return toolResults.length > 0 && toolResults.every(result => result.result?.ok === true)
-            ? 'tool'
-            : 'text'
     }
 
     function llmStream$(llmMessages, toolSchemas, acc, round) {
@@ -133,6 +112,8 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
             from(toolCalls).pipe(concatMap(toolCall => invokeTool$(toolCall, turn, collected))),
             defer(() => append$({role: 'tool', toolResults: collected.results}).pipe(ignoreElements())),
             defer(() => {
+                const directAnswer = directToolAnswer(collected.results)
+                if (directAnswer) return directReply$(directAnswer)
                 const bailDisplay = turn.guard.bail()
                 if (bailDisplay) return notices.guardBail$(bailDisplay)
                 return round + 1 >= MAX_TOOL_ROUNDS
@@ -164,6 +145,13 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         )
     }
 
+    function directReply$(text) {
+        return concat(
+            of({textDelta: text}),
+            append$({role: 'assistant', content: text}).pipe(ignoreElements())
+        )
+    }
+
     function reply$(text, {round, turn}) {
         if (!hasVisibleText(text)) {
             publishEmptyLlmReply({
@@ -186,6 +174,14 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
 
 function hasVisibleText(text) {
     return typeof text === 'string' && text.trim().length > 0
+}
+
+function directToolAnswer(toolResults) {
+    if (toolResults.length !== 1) return null
+    const [result] = toolResults
+    if (!DIRECT_ANSWER_TOOLS.has(result.toolName)) return null
+    const answer = result.result?.ok === true ? result.result?.data?.answer : null
+    return hasVisibleText(answer) ? answer.trim() : null
 }
 
 module.exports = {createConversationLoop, MAX_TOOL_ROUNDS}

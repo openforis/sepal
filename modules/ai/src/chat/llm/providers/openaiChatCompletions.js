@@ -8,6 +8,8 @@ const {publishResponseSummary} = require('../events')
 
 const FIRST_CHUNK_TIMEOUT_MS = 60_000
 const BETWEEN_CHUNKS_TIMEOUT_MS = 30_000
+const MAX_LENGTH_CAP_RETRIES = 1
+const LENGTH_CAP_RETRY_HINT = 'RETRY: previous attempt exceeded reasoning token budget before producing an actionable response. Plan compactly; emit a complete tool call / response promptly.'
 // Default output cap matches the archived openai-compatible provider's
 // MAX_TOKENS=4096. Without it, LM Studio's much lower default silently
 // length-caps normal chat/tool calls and the model returns reasoning-only.
@@ -20,12 +22,18 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus, diagnostics =
 
     return {respondTo$}
 
-    function respondTo$({messages, tools, maxTokens, temperature, debugLabel, extraParams = {}}) {
+    function respondTo$(request) {
+        return attempt$(request, 0)
+    }
+
+    function attempt$({messages, tools, maxTokens, temperature, debugLabel, extraParams = {}}, attempt) {
         const acc = freshAcc()
+        let retryAfterAttempt = false
+        const requestMessages = attempt > 0 ? withRetryHint(messages) : messages
         const hasTools = tools?.length > 0
         const params = {
             model,
-            messages: toProviderMessages(messages),
+            messages: toProviderMessages(requestMessages),
             stream: true,
             ...(hasTools ? {tools: toProviderTools(tools), tool_choice: 'auto'} : {}),
             ...extraParams,
@@ -37,12 +45,12 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus, diagnostics =
                 bus.publish({
                     type: 'llm.request',
                     level: 'debug',
-                    message: () => `LLM ${debugLabel} request: model=${model} messages=${messages.length} tools=${tools?.length || 0} ${describeRequestParams(params)}`
+                    message: () => `LLM ${debugLabel} request: model=${model} attempt=${attempt} messages=${requestMessages.length} tools=${tools?.length || 0} ${describeRequestParams(params)}`
                 })
                 bus.publish({
                     type: 'llm.requestPayload',
                     level: 'trace',
-                    message: () => `LLM ${debugLabel} request payload: messages=${diagnostics.summarizeMessages(messages)} tools=${diagnostics.summarizeTools(tools || [])}`
+                    message: () => `LLM ${debugLabel} request payload: attempt=${attempt} messages=${diagnostics.summarizeMessages(requestMessages)} tools=${diagnostics.summarizeTools(tools || [])}`
                 })
             }
             return from(client.chat.completions.create(params))
@@ -54,15 +62,22 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus, diagnostics =
             filter(Boolean),
             map(textDelta => ({textDelta}))
         )
-        const toolCalls$ = defer(() => from(toolCallEvents(acc.toolCalls)))
+        const toolCalls$ = defer(() => {
+            const events = toolCallEvents(acc.toolCalls, tools || [])
+            retryAfterAttempt = shouldRetryLengthCap({acc, toolCallEvents: events, attempt})
+            return retryAfterAttempt ? EMPTY : from(events)
+        })
         const summary$ = concat(text$, toolCalls$).pipe(publishResponseSummary({bus, diagnostics, model, acc, debugLabel}))
         return concat(
             summary$,
-            defer(() => publishLengthCap$(acc, {debugLabel}))
+            defer(() => concat(
+                publishLengthCap$(acc, {debugLabel, attempt, willRetry: retryAfterAttempt}),
+                retryAfterAttempt ? attempt$({messages, tools, maxTokens, temperature, debugLabel, extraParams}, attempt + 1) : EMPTY
+            ))
         )
     }
 
-    function publishLengthCap$(acc, {debugLabel}) {
+    function publishLengthCap$(acc, {debugLabel, attempt, willRetry}) {
         if (!acc.finishReasons.has('length')) return EMPTY
         const empty = isRuntimeEmpty(acc)
         bus.publish({
@@ -70,24 +85,39 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus, diagnostics =
             level: 'warn',
             ...(debugLabel ? {debugLabel} : {}),
             model,
-            attempt: 0,
+            attempt,
             empty,
-            willRetry: false,
+            willRetry,
             finishReasons: [...acc.finishReasons],
             contentChunkCount: acc.contentChunkCount,
             toolCallChunkCount: acc.toolCallChunkCount,
             reasoningChunkCount: acc.reasoningChunkCount,
-            message: () => `LLM length-cap${debugLabel ? ` (${debugLabel})` : ''}: empty=${empty} willRetry=false content=${acc.contentChunkCount} toolCall=${acc.toolCallChunkCount} reasoning=${acc.reasoningChunkCount}`
+            message: () => `LLM length-cap${debugLabel ? ` (${debugLabel})` : ''}: attempt=${attempt} empty=${empty} willRetry=${willRetry} content=${acc.contentChunkCount} toolCall=${acc.toolCallChunkCount} reasoning=${acc.reasoningChunkCount}`
         })
         return EMPTY
     }
 }
 
 // Reasoning-only output counts as empty for runtime purposes — the runtime
-// never sees reasoning_content. If no text emitted AND no tool calls captured,
-// the response delivered nothing the orchestrator/specialist can act on.
+// never sees reasoning_content. Whitespace-only text is also not actionable.
 function isRuntimeEmpty(acc) {
-    return acc.text.length === 0 && acc.toolCalls.size === 0
+    return !acc.text.trim() && acc.toolCalls.size === 0
+}
+
+function shouldRetryLengthCap({acc, toolCallEvents, attempt}) {
+    if (!acc.finishReasons.has('length')) return false
+    if (attempt >= MAX_LENGTH_CAP_RETRIES) return false
+    if (acc.text.trim()) return false
+    return !toolCallEvents.some(isActionableToolCallEvent)
+}
+
+function isActionableToolCallEvent(event) {
+    const toolCall = event.toolCall
+    return toolCall && !toolCall.argsError && toolCall.input && typeof toolCall.input === 'object'
+}
+
+function withRetryHint(messages) {
+    return [...messages, {role: 'system', content: LENGTH_CAP_RETRY_HINT}]
 }
 
 function freshAcc() {
@@ -198,14 +228,34 @@ function accumulateToolCalls(toolCalls, deltas) {
     }
 }
 
-function toolCallEvents(toolCalls) {
+function toolCallEvents(toolCalls, tools = []) {
+    const schemasByName = new Map(tools.map(tool => [tool.name, tool.parameters]))
     return [...toolCalls.values()].map(entry => {
         try {
-            return {toolCall: {id: entry.id, name: entry.name, input: JSON.parse(entry.args || '{}')}}
+            const input = parseToolInput(entry)
+            const missing = missingRequiredArgs(input, schemasByName.get(entry.name))
+            if (missing.length) {
+                return {toolCall: {
+                    id: entry.id,
+                    name: entry.name,
+                    input: null,
+                    argsError: `Missing required tool arguments: ${missing.join(', ')}`
+                }}
+            }
+            return {toolCall: {id: entry.id, name: entry.name, input}}
         } catch (error) {
             return {toolCall: {id: entry.id, name: entry.name, input: null, argsError: error.message}}
         }
     })
+}
+
+function parseToolInput(entry) {
+    return entry.args?.trim() ? JSON.parse(entry.args) : {}
+}
+
+function missingRequiredArgs(input, parameters) {
+    if (!parameters?.required?.length || !input || typeof input !== 'object') return []
+    return parameters.required.filter(key => !Object.prototype.hasOwnProperty.call(input, key))
 }
 
 module.exports = {createOpenAiChatCompletions}

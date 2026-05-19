@@ -62,7 +62,7 @@ function publishToolCall({bus, diagnostics, conversationId, round, toolCall}) {
     })
 }
 
-function publishEmptyLlmRetry({bus, conversationId, round, messages, exposedTools, retryMode}) {
+function publishEmptyLlmRetry({bus, conversationId, round, messages, exposedTools}) {
     const roleSummary = roleSummaryOf(messages)
     bus.publish({
         type: 'conversation.llmEmptyRetry',
@@ -72,20 +72,7 @@ function publishEmptyLlmRetry({bus, conversationId, round, messages, exposedTool
         afterToolRound: isAfterToolRound(messages),
         roleSummary,
         exposedTools,
-        retryMode,
-        message: `LLM orchestrator ${conversationId} round=${round} retrying with hint mode=${retryMode} after empty post-tool reply roles=[${roleSummary}] tools=[${exposedTools.join(',') || '-'}]`
-    })
-}
-
-function publishRetryToolCallsDropped({bus, conversationId, round, toolCalls}) {
-    const names = toolCalls.map(toolCall => toolCall.name).join('|')
-    bus.publish({
-        type: 'conversation.llmRetryToolCallsDropped',
-        level: 'warn',
-        conversationId,
-        round,
-        toolNames: toolCalls.map(toolCall => toolCall.name),
-        message: `LLM orchestrator ${conversationId} round=${round} dropped tool calls on retry (text-only contract): [${names}]`
+        message: `LLM orchestrator ${conversationId} round=${round} retrying with hint after empty post-tool reply roles=[${roleSummary}] tools=[${exposedTools.join(',') || '-'}]`
     })
 }
 
@@ -185,4 +172,4 @@ function isPlainObject(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
-module.exports = {publishOrchestratorPrompt, publishLlmRequest, publishToolCall, publishEmptyLlmReply, publishEmptyLlmRetry, publishRetryToolCallsDropped, publishHistoryProjection}
+module.exports = {publishOrchestratorPrompt, publishLlmRequest, publishToolCall, publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection}

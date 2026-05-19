@@ -70,7 +70,6 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
                     return step$(messages, round + 1, stallCount + 1)
                 }
                 if (acc.toolCalls.length === 0) return of({answer: acc.text})
-                if (round + 1 >= SPECIALIST_MAX_ROUNDS) return of({answer: acc.text.trim() ? acc.text : SPECIALIST_CAP_ANSWER})
                 return runToolsAndContinue$(messages, acc, round)
             })
         )
@@ -92,6 +91,9 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
             defer(() => {
                 const bailAnswer = guard.bail()
                 if (bailAnswer) return of({answer: bailAnswer})
+                if (round + 1 >= SPECIALIST_MAX_ROUNDS) {
+                    return of({answer: acc.text.trim() ? acc.text : SPECIALIST_CAP_ANSWER})
+                }
                 return step$(
                     [...messages, assistantMessage, {role: 'tool', toolResults}],
                     round + 1,
@@ -127,4 +129,4 @@ function invalidArgsBail(tool) {
     return `Specialist halted: invalid args on ${tool}.`
 }
 
-module.exports = {runSpecialist$, SPECIALIST_MAX_ROUNDS}
+module.exports = {runSpecialist$, SPECIALIST_MAX_ROUNDS, SPECIALIST_CAP_ANSWER}

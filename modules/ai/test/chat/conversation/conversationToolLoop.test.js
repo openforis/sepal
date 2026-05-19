@@ -491,32 +491,29 @@ describe('Conversation tool loop', () => {
             expect(llm.receivedMessages).toHaveLength(1)
         })
 
-        it('ignores tool calls the model emits on the retry even though tools:[] was sent, and records the drop', () => {
-            // Defends against providers that don't enforce tools:[] — the retry contract
-            // after a failed tool result is text-only end-to-end, not just
-            // "ask politely for text-only".
-            const retryToolCall = {id: 't2', name: 'recipe_list', input: {}}
+        it('invokes tool calls the model emits on the retry after a failed tool result', () => {
+            const retryToolCall = {id: 't2', name: 'recipe_list', input: {type: 'MOSAIC'}}
+            const schemas = [{name: 'recipe_list', description: 'd', parameters: {type: 'object'}}]
             const bus = aFakeBus()
             const llm = aFakeLlm({replies: [
                 {toolCalls: [toolCall]},
                 emptyReply,
-                {text: 'Trying anyway: ', toolCalls: [retryToolCall]}
+                {toolCalls: [retryToolCall]},
+                {text: 'Done.'}
             ]})
-            const tools = aFakeTools({recipe_list: () => of({ok: false, error: {code: 'NO_MATCH', message: 'not found'}})})
+            let calls = 0
+            const tools = aFakeTools({
+                recipe_list: () => of(++calls === 1
+                    ? {ok: false, error: {code: 'NO_MATCH', message: 'not found'}}
+                    : {ok: true, data: []})
+            }, schemas)
             const conversation = aConversation({llm, tools, bus})
 
             run(conversation.sendUserMessage$('open it'))
 
-            // Initial tool call was invoked; the retry's tool call was not.
-            expect(tools.invocations).toEqual([toolCall])
-            // No further LLM round was triggered by the dropped tool call.
-            expect(llm.receivedMessages).toHaveLength(3)
-            // Diagnostic event recorded the drop.
-            expect(bus.published).toContainEqual(expect.objectContaining({
-                type: 'conversation.llmRetryToolCallsDropped',
-                level: 'warn',
-                toolNames: ['recipe_list']
-            }))
+            expect(tools.invocations).toEqual([toolCall, retryToolCall])
+            expect(llm.receivedTools[2]).toEqual(schemas)
+            expect(bus.published.map(event => event.type)).not.toContain('conversation.llmRetryToolCallsDropped')
         })
 
         it('keeps tools on the retry call after a successful tool result so the model can emit the intended next action', () => {
@@ -542,10 +539,10 @@ describe('Conversation tool loop', () => {
 
             expect(tools.invocations).toEqual([describeCall, updateCall])
             expect(llm.receivedTools[2]).toEqual(schemas)
-            expect(events.at(-1)).toEqual({textDelta: 'Updated.'})
+            expect(events.at(-1)).toEqual({textDelta: 'Updated target date.'})
         })
 
-        it('omits tools from the retry call after a failed tool result so the model explains instead of substituting another read-only tool', () => {
+        it('keeps tools on the retry call after a failed tool result so the model can correct the failed action', () => {
             const schemas = [{name: 'recipe_list', description: 'd', parameters: {type: 'object'}}]
             const llm = aFakeLlm({replies: [
                 {toolCalls: [toolCall]},
@@ -561,7 +558,7 @@ describe('Conversation tool loop', () => {
 
             expect(llm.receivedTools[0]).toEqual(schemas)   // initial call: full tool surface
             expect(llm.receivedTools[1]).toEqual(schemas)   // post-tool empty: still full surface
-            expect(llm.receivedTools[2]).toEqual([])        // retry: text-only
+            expect(llm.receivedTools[2]).toEqual(schemas)   // retry: tools remain available
         })
 
         it('does not inject the hint on the first call after a tool round when text is present', () => {

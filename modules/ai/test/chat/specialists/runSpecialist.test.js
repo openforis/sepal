@@ -136,6 +136,25 @@ describe('runSpecialist$', () => {
             expect(result.answer).toMatch(/specialist/i)
         })
 
+        it('still executes a tool call emitted in the cap-reaching round before returning the cap answer', () => {
+            const llm = aFakeLlm({replies: [{toolCalls: [toolCall]}]})
+            const invocations = []
+            const invokeTool$ = call => {
+                invocations.push(call)
+                return of({ok: true, data: {}})
+            }
+
+            const result = read(runSpecialist$({
+                llm, bus: aFakeBus(), name: 'map',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$, context: {}
+            }))
+
+            expect(llm.receivedMessages).toHaveLength(SPECIALIST_MAX_ROUNDS)
+            expect(invocations).toHaveLength(SPECIALIST_MAX_ROUNDS)
+            expect(result.answer).toMatch(/specialist/i)
+        })
+
         it('keeps the partial assistant text accumulated in the cap-reaching round instead of replacing it with the sentinel', () => {
             const llm = aFakeLlm({replies: [{textChunks: ['Partial progress.'], toolCalls: [toolCall]}]})
             const invokeTool$ = () => of({ok: true, data: {}})

@@ -71,10 +71,10 @@ AI module reads the bucket for the requested `purpose`:
 - `{purpose: 'describe'}` reads `describeFacts()`. Selection facts and edit
   guidance are deliberately excluded — the recipe has already been chosen and
   the specialist is read-only.
-- `{purpose: 'update', includeSchema: true}` reads `editFacts()` and appends
-  the JSON Schema as a compact fenced `json` block. Selection facts and
-  describe-only prose are excluded for the same reason and to stay under the
-  §3 prompt-byte budget.
+- `{purpose: 'update'}` reads `editFacts()`. The update specialist normally
+  receives scoped schema/rule details through `load_for_update`, not the full
+  recipe schema in its static prompt. Selection facts and describe-only prose
+  are excluded for the same reason and to stay under the §3 prompt-byte budget.
 - The base prompt is placed first so cache-stable prefixes hold across recipe
   types.
 

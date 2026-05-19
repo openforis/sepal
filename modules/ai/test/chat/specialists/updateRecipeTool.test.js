@@ -367,11 +367,46 @@ describe('updateRecipeTool', () => {
 
             expect(result).toEqual({ok: true, data: {answer: 'Got it on the third try.'}})
         })
+
+        it('returns success when a corrective patch is emitted in the final specialist round and uses the patch summary as fallback answer', () => {
+            const removeS2 = {op: 'remove', path: '/sources/dataSets/SENTINEL_2'}
+            const medoid = {op: 'replace', path: '/compositeOptions/compose', value: 'MEDOID'}
+            const removeCalibrate = {op: 'remove', path: '/compositeOptions/corrections'}
+            const removeS2CloudScore = {op: 'remove', path: '/compositeOptions/includedCloudMasking/sentinel2CloudScorePlus'}
+            const patchError = {code: 'VALIDATION_FAILED', message: 'bad', errors: [
+                {path: '/compositeOptions/corrections', message: 'CALIBRATE requires both LANDSAT and SENTINEL_2 source groups'},
+                {path: '/compositeOptions/includedCloudMasking', message: 'sentinel2CloudScorePlus requires SENTINEL_2'}
+            ]}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [{id: 'tl1', name: 'load_for_update', input: {recipeId: 'r1', instruction: 'edit'}}]},
+                {text: ''},
+                {toolCalls: [{id: 'tp0', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [removeS2, medoid]}}]},
+                {text: ''},
+                {toolCalls: [{id: 'tp1', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [removeS2, medoid, removeCalibrate, removeS2CloudScore]}}]}
+            ]})
+            const bus = aFakeBus()
+            const {tool} = aTool({llm, bus, innerTools: aTools([
+                {ok: false, error: patchError},
+                {ok: true, data: {summary: 'Recipe updated.', modelHash: 'h3', invalidatedPaths: ['/sources', '/compositeOptions']}}
+            ])})
+
+            const result = read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+            expect(result).toEqual({ok: true, data: {answer: 'Recipe updated.'}})
+            const outcomes = bus.published.filter(e => e.type === 'update_recipe.outcome')
+            expect(outcomes).toHaveLength(1)
+            expect(outcomes[0]).toMatchObject({
+                patchAttempted: true,
+                patchSucceeded: true,
+                code: 'ok',
+                answerChars: 'Recipe updated.'.length
+            })
+        })
     })
 
     describe('per-type system prompt assembly', () => {
 
-        it('on a MOSAIC recipe, the inner LLM system prompt carries MOSAIC edit guidance AND the JSON Schema (write specialist needs both to plan patches)', () => {
+        it('on a MOSAIC recipe, the inner LLM system prompt carries MOSAIC edit guidance but not the full JSON Schema (load_for_update supplies the scoped closure)', () => {
             const guiRequests = metadataReplyingWith({id: 'r-mosaic', type: 'MOSAIC', name: 'Kenya mosaic', projectId: 'p1'})
             const {tool, llm} = aTool({guiRequests})
 
@@ -383,8 +418,8 @@ describe('updateRecipeTool', () => {
             expect(systemMessage.content).toContain('MOSAIC')
             expect(systemMessage.content).toMatch(/Edit guidance:/)
             expect(systemMessage.content).toMatch(/seasonStart/)
-            expect(systemMessage.content).toMatch(/```json/)
-            expect(systemMessage.content).toContain('compositeOptions')
+            expect(systemMessage.content).not.toMatch(/```json/)
+            expect(systemMessage.content).not.toContain('"compositeOptions"')
         })
 
         it('the update-specialist prompt names load_for_update (not raw recipe_load) so the LLM uses the closure path', () => {

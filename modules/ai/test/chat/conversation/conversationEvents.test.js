@@ -278,8 +278,7 @@ describe('empty-reply diagnostic enrichment', () => {
             type: 'conversation.llmEmptyRetry',
             level: 'info',
             afterToolRound: true,
-            exposedTools: ['recipe_list'],
-            retryMode: 'tool'
+            exposedTools: ['recipe_list']
         })
         expect(retry.roleSummary).toMatch(/assistant\.toolCalls\(recipe_list\)/)
     })

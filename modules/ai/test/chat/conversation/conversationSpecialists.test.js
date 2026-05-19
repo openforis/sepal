@@ -29,6 +29,27 @@ describe('Conversation with specialists', () => {
         expect(events.filter(event => event.textDelta)).toEqual([{textDelta: specialistAnswer}])
     })
 
+    it('streams a successful update_recipe specialist answer directly instead of asking the orchestrator to restate it', () => {
+        const updateCall = {id: 'ur1', name: 'update_recipe', input: {recipeId: 'r1', instruction: 'set target date'}}
+        const specialistAnswer = '\n\nSuccessfully updated the target date.'
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [updateCall]},
+            {text: 'This should not be needed.'}
+        ]})
+        const tools = aFakeTools({
+            update_recipe: () => of({ok: true, data: {answer: specialistAnswer}})
+        })
+        const conversation = aConversation({llm, tools})
+
+        const {events} = run(conversation.sendUserMessage$('set target date'))
+
+        expect(tools.invocations).toEqual([updateCall])
+        expect(llm.receivedMessages).toHaveLength(1)
+        expect(events.filter(event => event.textDelta)).toEqual([
+            {textDelta: 'Successfully updated the target date.'}
+        ])
+    })
+
     it('runs the map specialist inner loop with its scoped map inspection tools', () => {
         const consultCall = {id: 'sm1', name: 'consult_map', input: {question: 'which areas?'}}
         const mapAreaCall = {id: 'ma1', name: 'map_area_list', input: {}}

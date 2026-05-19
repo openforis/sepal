@@ -223,17 +223,23 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             {choices: [{finish_reason: 'length', delta: {}}]}
         ]
 
-        it('publishes llm.lengthCap without retrying when finish_reason=length with no content and no tool calls', async () => {
+        it('retries once when finish_reason=length produced no actionable content or tool call', async () => {
             const bus = aRecordingBus()
-            mockCreate.mockResolvedValueOnce(reasoningOnlyLengthChunks)
+            mockCreate
+                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
+                .mockResolvedValueOnce([{choices: [{delta: {content: 'patched.'}}]}])
 
             const events = await collect(anOpenAiChat({bus}).respondTo$({
                 messages: [{role: 'user', content: 'edit'}],
                 debugLabel: 'recipe.update conv-1'
             }))
 
-            expect(mockCreate).toHaveBeenCalledTimes(1)
-            expect(events).toEqual([])
+            expect(mockCreate).toHaveBeenCalledTimes(2)
+            expect(events).toEqual([{textDelta: 'patched.'}])
+            expect(mockCreate.mock.calls[1][0].messages).toEqual([
+                {role: 'user', content: 'edit'},
+                {role: 'system', content: expect.stringMatching(/RETRY.*reasoning token budget.*complete tool call.*promptly/i)}
+            ])
             const lengthCaps = bus.published.filter(event => event.type === 'llm.lengthCap')
             expect(lengthCaps).toHaveLength(1)
             expect(lengthCaps[0]).toMatchObject({
@@ -242,12 +248,62 @@ describe('OpenAI-compatible chat-completions adapter', () => {
                 model: 'test-model',
                 attempt: 0,
                 empty: true,
-                willRetry: false,
+                willRetry: true,
                 finishReasons: ['length'],
                 contentChunkCount: 0,
                 toolCallChunkCount: 0,
                 reasoningChunkCount: 2
             })
+        })
+
+        it('retries instead of emitting a length-capped partial tool call whose required args are missing', async () => {
+            mockCreate
+                .mockResolvedValueOnce([
+                    {choices: [{delta: {reasoning_content: 'planning...'}}]},
+                    {choices: [{delta: {tool_calls: [
+                        {index: 0, id: 'call_1', function: {name: 'echo', arguments: '{}'}}
+                    ]}}]},
+                    {choices: [{finish_reason: 'length', delta: {}}]}
+                ])
+                .mockResolvedValueOnce([
+                    {choices: [{delta: {tool_calls: [
+                        {index: 0, id: 'call_2', function: {name: 'echo', arguments: '{"text":"hi"}'}}
+                    ]}}]}
+                ])
+            const bus = aRecordingBus()
+
+            const events = await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'tool'}],
+                tools: toolSchemas,
+                debugLabel: 'recipe.update conv-1'
+            }))
+
+            expect(mockCreate).toHaveBeenCalledTimes(2)
+            expect(events).toEqual([{toolCall: {id: 'call_2', name: 'echo', input: {text: 'hi'}}}])
+            expect(bus.published.find(event => event.type === 'llm.lengthCap')).toMatchObject({
+                empty: false,
+                willRetry: true,
+                toolCallChunkCount: 1
+            })
+        })
+
+        it('does not retry a second time when the retry itself also length-caps without an actionable response; both attempts warn, second carries willRetry=false', async () => {
+            const bus = aRecordingBus()
+            mockCreate
+                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
+                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
+
+            const events = await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'edit'}],
+                debugLabel: 'recipe.update conv-1'
+            }))
+
+            expect(mockCreate).toHaveBeenCalledTimes(2)
+            expect(events).toEqual([])
+            const lengthCaps = bus.published.filter(event => event.type === 'llm.lengthCap')
+            expect(lengthCaps).toHaveLength(2)
+            expect(lengthCaps[0]).toMatchObject({attempt: 0, empty: true, willRetry: true})
+            expect(lengthCaps[1]).toMatchObject({attempt: 1, empty: true, willRetry: false})
         })
 
         it('publishes llm.lengthCap with empty=false when partial content was streamed before the length cap', async () => {

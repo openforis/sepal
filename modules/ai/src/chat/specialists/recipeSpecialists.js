@@ -4,7 +4,7 @@
 const {map, mergeMap, of, tap} = require('rxjs')
 const {getRecipeSpec} = require('#recipes')
 const {specialistPrompt} = require('../llmText/prompts')
-const {runSpecialist$} = require('./runSpecialist')
+const {runSpecialist$, SPECIALIST_CAP_ANSWER} = require('./runSpecialist')
 const {scopeInnerTools} = require('./specialistScope')
 const {assembleSpecialistPrompt} = require('./assembleSpecialistPrompt')
 const {publishUpdateRecipeOutcome} = require('./specialistEvents')
@@ -103,7 +103,7 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
                     return runSpecialist$({
                         llm, bus,
                         name: 'recipe.update',
-                        systemPrompt: assembleSpecialistPrompt(basePrompt, spec, {purpose: 'update', includeSchema: true}),
+                        systemPrompt: assembleSpecialistPrompt(basePrompt, spec, {purpose: 'update'}),
                         userText: buildUpdateUserText({recipeId, instruction}),
                         allowedSchemas,
                         invokeTool$: tracker.wrap(restrictToRecipe(scopedInvokeTool$, recipeId)),
@@ -125,6 +125,7 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
     let attempted = false
     let succeeded = false
     let lastError = null
+    let successSummary = ''
     return {
         wrap: invokeTool$ => (toolCall, context) =>
             invokeTool$(toolCall, context).pipe(
@@ -135,13 +136,14 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
                     if (value?.ok === true) {
                         succeeded = true
                         lastError = null
+                        successSummary = value.data?.summary || ''
                     } else if (value?.ok === false) {
                         lastError = value.error
                     }
                 })
             ),
         envelopeFor: specialistResult => {
-            const answer = specialistResult?.answer || ''
+            const answer = answerFor(specialistResult)
             const envelope = buildEnvelope(answer)
             publishUpdateRecipeOutcome({
                 bus,
@@ -155,6 +157,13 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
             })
             return envelope
         }
+    }
+
+    function answerFor(specialistResult) {
+        const answer = specialistResult?.answer || ''
+        if (!succeeded) return answer
+        if (!answer || answer === SPECIALIST_CAP_ANSWER) return successSummary
+        return answer
     }
 
     function buildEnvelope(answer) {
