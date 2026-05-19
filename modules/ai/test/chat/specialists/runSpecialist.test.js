@@ -150,6 +150,166 @@ describe('runSpecialist$', () => {
         })
     })
 
+    describe('stall recovery — archive-style nudge on empty inner response', () => {
+
+        it('retries once with a transient user-role nudge appended to the prompt when the inner LLM produced no text and no tool calls', () => {
+            const llm = aFakeLlm({replies: [
+                {text: ''},
+                {text: 'Recovered.'}
+            ]})
+
+            const result = read(runSpecialist$({
+                llm, bus: aFakeBus(), name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas,
+                invokeTool$: noopInvokeTool$,
+                context: {conversationId: 'c1'}
+            }))
+
+            expect(result).toEqual({answer: 'Recovered.'})
+            expect(llm.receivedMessages[0]).toEqual([
+                {role: 'system', content: 'p'},
+                {role: 'user', content: 'q'}
+            ])
+            expect(llm.receivedMessages[1]).toEqual([
+                {role: 'system', content: 'p'},
+                {role: 'user', content: 'q'},
+                {role: 'user', content: expect.stringMatching(/Continue working on the original request.*next tool call.*final summary.*fulfilled/i)}
+            ])
+        })
+
+        it('keeps the scoped tools available on the recovery round so the LLM can emit a tool call instead of more text', () => {
+            const toolCall = {id: 'gc1', name: 'get_gui_context', input: {}}
+            const llm = aFakeLlm({replies: [
+                {text: ''},
+                {toolCalls: [toolCall]},
+                {text: 'Done.'}
+            ]})
+            const invocations = []
+            const invokeTool$ = call => {
+                invocations.push(call)
+                return of({ok: true, data: {section: 'process'}})
+            }
+
+            const result = read(runSpecialist$({
+                llm, bus: aFakeBus(), name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$, context: {conversationId: 'c1'}
+            }))
+
+            expect(invocations).toEqual([toolCall])
+            expect(result).toEqual({answer: 'Done.'})
+            expect(llm.receivedTools[1]).toEqual(allowedSchemas)
+        })
+
+        it('terminates the inner loop with empty answer when the recovery round is also empty (no infinite nudge loop)', () => {
+            const llm = aFakeLlm({replies: [
+                {text: ''},
+                {text: ''}
+            ]})
+
+            const result = read(runSpecialist$({
+                llm, bus: aFakeBus(), name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$: noopInvokeTool$,
+                context: {conversationId: 'c1'}
+            }))
+
+            expect(result).toEqual({answer: ''})
+            expect(llm.receivedMessages).toHaveLength(2)
+        })
+
+        it('does not persist the nudge into post-tool-round message history (it is transient for the recovery round only)', () => {
+            const toolCall = {id: 'gc1', name: 'get_gui_context', input: {}}
+            const llm = aFakeLlm({replies: [
+                {text: ''},                  // round 0: stall
+                {toolCalls: [toolCall]},     // round 1 (recovery): tool call emitted
+                {text: 'Done.'}              // round 2: final
+            ]})
+
+            read(runSpecialist$({
+                llm, bus: aFakeBus(), name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas,
+                invokeTool$: () => of({ok: true, data: {section: 'process'}}),
+                context: {conversationId: 'c1'}
+            }))
+
+            const postToolMessages = llm.receivedMessages[2]
+            expect(postToolMessages.filter(m => /Continue working/.test(m.content || ''))).toEqual([])
+            expect(postToolMessages).toEqual([
+                {role: 'system', content: 'p'},
+                {role: 'user', content: 'q'},
+                {role: 'assistant', content: '', toolCalls: [toolCall]},
+                {role: 'tool', toolResults: [{toolCallId: 'gc1', toolName: 'get_gui_context', result: {ok: true, data: {section: 'process'}}}]}
+            ])
+        })
+
+        it('publishes specialist.stall (warn) carrying name, round, conversationId, stallCount, messageCount, toolNames', () => {
+            const bus = aFakeBus()
+            const llm = aFakeLlm({replies: [
+                {text: ''},
+                {text: 'Recovered.'}
+            ]})
+
+            read(runSpecialist$({
+                llm, bus, name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$: noopInvokeTool$,
+                context: {conversationId: 'c1'}
+            }))
+
+            const stalls = bus.published.filter(e => e.type === 'specialist.stall')
+            expect(stalls).toHaveLength(1)
+            expect(stalls[0]).toMatchObject({
+                type: 'specialist.stall',
+                level: 'warn',
+                conversationId: 'c1',
+                name: 'recipe.update',
+                round: 0,
+                stallCount: 1,
+                messageCount: 2,
+                toolNames: ['get_gui_context']
+            })
+        })
+
+        it('the specialist.prompt event for the recovery round shows the appended user nudge in the rendered snapshot', () => {
+            const bus = aFakeBus()
+            const llm = aFakeLlm({replies: [
+                {text: ''},
+                {text: 'Recovered.'}
+            ]})
+
+            read(runSpecialist$({
+                llm, bus, name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$: noopInvokeTool$,
+                context: {conversationId: 'c1'}
+            }))
+
+            const prompts = bus.published.filter(e => e.type === 'specialist.prompt')
+            expect(prompts).toHaveLength(2)
+            expect(prompts[1].messageCount).toBe(3)
+            expect(prompts[1].message()).toMatch(/Continue working on the original request/)
+        })
+
+        it('does not emit user-facing toolStart/toolEnd events during stall recovery (the nudge is inner-loop only)', () => {
+            const llm = aFakeLlm({replies: [
+                {text: ''},
+                {text: 'Recovered.'}
+            ]})
+
+            const {events} = run(runSpecialist$({
+                llm, bus: aFakeBus(), name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$: noopInvokeTool$,
+                context: {conversationId: 'c1'}
+            }))
+
+            expect(events.filter(e => e && (e.toolStart || e.toolEnd))).toEqual([])
+        })
+    })
+
     describe('tool-loop safety', () => {
 
         it('blocks an identical inner tool call after a prior failure without invoking it again', () => {
@@ -370,9 +530,9 @@ describe('runSpecialist$', () => {
             }])
         })
 
-        it("publishes specialist.response with empty=true when the LLM produced no text and no tool calls (UPDATE_NOT_ATTEMPTED signal)", () => {
+        it("publishes specialist.response with empty=true on each empty round; a second empty after stall recovery is what terminates with UPDATE_NOT_ATTEMPTED", () => {
             const bus = aFakeBus()
-            const llm = aFakeLlm({replies: [{text: ''}]})
+            const llm = aFakeLlm({replies: [{text: ''}, {text: ''}]})
 
             read(runSpecialist$({
                 llm, bus, name: 'recipe.update',
@@ -381,9 +541,9 @@ describe('runSpecialist$', () => {
             }))
 
             const responses = bus.published.filter(e => e.type === 'specialist.response')
-            expect(responses[0].empty).toBe(true)
-            expect(responses[0].textChars).toBe(0)
-            expect(responses[0].toolCallNames).toEqual([])
+            expect(responses).toHaveLength(2)
+            expect(responses[0]).toMatchObject({empty: true, textChars: 0, toolCallNames: []})
+            expect(responses[1]).toMatchObject({empty: true, textChars: 0, toolCallNames: []})
         })
 
         it('publishes specialist.tool.request and specialist.tool.response around each inner tool call', () => {

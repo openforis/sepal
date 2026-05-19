@@ -15,12 +15,20 @@ const {
     publishSpecialistPrompt,
     publishSpecialistRequest,
     publishSpecialistResponse,
+    publishSpecialistStall,
     publishSpecialistToolRequest,
     publishSpecialistToolResponse
 } = require('./specialistEvents')
 
 const SPECIALIST_MAX_ROUNDS = 5
 const SPECIALIST_CAP_ANSWER = 'Specialist step cap exceeded; partial information only.'
+// Transient user-role nudge appended once after an empty inner response.
+// Matches the archived conversationLoop's STALL_NUDGE wording; never persisted
+// into the loop's messages array so it can't leak into post-tool rounds.
+const STALL_NUDGE = {
+    role: 'user',
+    content: 'Continue working on the original request. Either make the next tool call needed, or send a final summary if the request is fulfilled.'
+}
 
 function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas, invokeTool$, context}) {
     const guard = createToolCallGuard({consecutiveFailureBail, invalidArgsBail})
@@ -29,15 +37,16 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
         {role: 'system', content: systemPrompt},
         {role: 'user', content: userText}
     ]
-    return bus.track$('specialist.run', {name}, step$(initial, 0))
+    return bus.track$('specialist.run', {name}, step$(initial, 0, 0))
 
-    function step$(messages, round) {
+    function step$(messages, round, stallCount) {
         const acc = {text: '', toolCalls: []}
-        publishSpecialistRequest({bus, name, round, conversationId, messages, toolSchemas: allowedSchemas})
-        publishSpecialistPrompt({bus, name, round, conversationId, messages, toolSchemas: allowedSchemas})
+        const promptMessages = stallCount > 0 ? [...messages, STALL_NUDGE] : messages
+        publishSpecialistRequest({bus, name, round, conversationId, messages: promptMessages, toolSchemas: allowedSchemas})
+        publishSpecialistPrompt({bus, name, round, conversationId, messages: promptMessages, toolSchemas: allowedSchemas})
         return concat(
             llm.respondTo$({
-                messages,
+                messages: promptMessages,
                 tools: allowedSchemas,
                 debugLabel: `specialist ${name} round ${round}`
             }).pipe(
@@ -49,6 +58,17 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
             ),
             defer(() => {
                 publishSpecialistResponse({bus, name, round, conversationId, text: acc.text, toolCalls: acc.toolCalls})
+                const empty = !acc.text.trim() && acc.toolCalls.length === 0
+                const canRetry = stallCount === 0 && round + 1 < SPECIALIST_MAX_ROUNDS
+                if (empty && canRetry) {
+                    publishSpecialistStall({
+                        bus, name, round, conversationId,
+                        stallCount: stallCount + 1,
+                        messageCount: promptMessages.length,
+                        toolNames: allowedSchemas.map(schema => schema.name)
+                    })
+                    return step$(messages, round + 1, stallCount + 1)
+                }
                 if (acc.toolCalls.length === 0) return of({answer: acc.text})
                 if (round + 1 >= SPECIALIST_MAX_ROUNDS) return of({answer: acc.text.trim() ? acc.text : SPECIALIST_CAP_ANSWER})
                 return runToolsAndContinue$(messages, acc, round)
@@ -74,7 +94,8 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
                 if (bailAnswer) return of({answer: bailAnswer})
                 return step$(
                     [...messages, assistantMessage, {role: 'tool', toolResults}],
-                    round + 1
+                    round + 1,
+                    0
                 )
             })
         )

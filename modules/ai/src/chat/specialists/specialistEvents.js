@@ -38,6 +38,20 @@ function publishSpecialistRequest({bus, name, round, conversationId, messages, t
     })
 }
 
+function publishSpecialistStall({bus, name, round, conversationId, stallCount, messageCount, toolNames}) {
+    bus.publish({
+        type: 'specialist.stall',
+        level: 'warn',
+        conversationId,
+        name,
+        round,
+        stallCount,
+        messageCount,
+        toolNames,
+        message: `specialist.stall name=${name} round=${round} stallCount=${stallCount} messages=${messageCount} tools=[${toolNames.join(',') || '-'}]`
+    })
+}
+
 function publishSpecialistResponse({bus, name, round, conversationId, text, toolCalls}) {
     const textChars = (text || '').length
     const toolCallNames = (toolCalls || []).map(toolCall => toolCall.name)
@@ -144,6 +158,7 @@ module.exports = {
     publishSpecialistPrompt,
     publishSpecialistRequest,
     publishSpecialistResponse,
+    publishSpecialistStall,
     publishSpecialistToolRequest,
     publishSpecialistToolResponse,
     publishUpdateRecipeOutcome

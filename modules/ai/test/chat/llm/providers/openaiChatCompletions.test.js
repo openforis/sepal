@@ -210,7 +210,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
         ])
     })
 
-    describe('length-cap retry — empty length-finished response retried once with a compact hint', () => {
+    describe('length-cap observability', () => {
 
         function aRecordingBus() {
             const published = []
@@ -223,44 +223,17 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             {choices: [{finish_reason: 'length', delta: {}}]}
         ]
 
-        it('retries once when finish_reason=length with no content and no tool calls, and the retry output streams normally', async () => {
-            mockCreate
-                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
-                .mockResolvedValueOnce([{choices: [{delta: {content: 'patched.'}}]}])
-
-            const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'edit'}]}))
-
-            expect(mockCreate).toHaveBeenCalledTimes(2)
-            expect(events).toEqual([{textDelta: 'patched.'}])
-        })
-
-        it('appends the compact retry hint as a trailing system message on the retry request only', async () => {
-            mockCreate
-                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
-                .mockResolvedValueOnce([{choices: [{delta: {content: 'patched.'}}]}])
-
-            await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'edit'}]}))
-
-            const firstAttemptMessages = mockCreate.mock.calls[0][0].messages
-            const retryMessages = mockCreate.mock.calls[1][0].messages
-            expect(firstAttemptMessages).toEqual([{role: 'user', content: 'edit'}])
-            expect(retryMessages).toEqual([
-                {role: 'user', content: 'edit'},
-                {role: 'system', content: expect.stringMatching(/RETRY.*reasoning token budget.*compactly.*promptly/i)}
-            ])
-        })
-
-        it('publishes llm.lengthCap (warn) with empty=true and willRetry=true on the first attempt when retry is going to fire', async () => {
+        it('publishes llm.lengthCap without retrying when finish_reason=length with no content and no tool calls', async () => {
             const bus = aRecordingBus()
-            mockCreate
-                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
-                .mockResolvedValueOnce([{choices: [{delta: {content: 'patched.'}}]}])
+            mockCreate.mockResolvedValueOnce(reasoningOnlyLengthChunks)
 
-            await collect(anOpenAiChat({bus}).respondTo$({
+            const events = await collect(anOpenAiChat({bus}).respondTo$({
                 messages: [{role: 'user', content: 'edit'}],
                 debugLabel: 'recipe.update conv-1'
             }))
 
+            expect(mockCreate).toHaveBeenCalledTimes(1)
+            expect(events).toEqual([])
             const lengthCaps = bus.published.filter(event => event.type === 'llm.lengthCap')
             expect(lengthCaps).toHaveLength(1)
             expect(lengthCaps[0]).toMatchObject({
@@ -269,7 +242,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
                 model: 'test-model',
                 attempt: 0,
                 empty: true,
-                willRetry: true,
+                willRetry: false,
                 finishReasons: ['length'],
                 contentChunkCount: 0,
                 toolCallChunkCount: 0,
@@ -277,7 +250,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             })
         })
 
-        it('does not retry when partial content was streamed before the length cap (subscribers already saw partial output)', async () => {
+        it('publishes llm.lengthCap with empty=false when partial content was streamed before the length cap', async () => {
             mockCreate.mockResolvedValueOnce([
                 {choices: [{delta: {content: 'partial '}}]},
                 {choices: [{delta: {content: 'answer'}}]},
@@ -298,7 +271,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             })
         })
 
-        it('does not retry when a tool call was emitted alongside the length cap', async () => {
+        it('publishes llm.lengthCap with empty=false when a tool call was emitted alongside the length cap', async () => {
             mockCreate.mockResolvedValueOnce([
                 {choices: [{delta: {tool_calls: [
                     {index: 0, id: 'call_1', function: {name: 'echo', arguments: '{"text":"hi"}'}}
@@ -318,17 +291,6 @@ describe('OpenAI-compatible chat-completions adapter', () => {
                 empty: false,
                 willRetry: false
             })
-        })
-
-        it('does not retry a second time when the retry itself also length-caps empty', async () => {
-            mockCreate
-                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
-                .mockResolvedValueOnce(reasoningOnlyLengthChunks)
-
-            const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'edit'}]}))
-
-            expect(mockCreate).toHaveBeenCalledTimes(2)
-            expect(events).toEqual([])
         })
 
         it('does not fire llm.lengthCap when the response finishes for non-length reasons (e.g. stop)', async () => {
