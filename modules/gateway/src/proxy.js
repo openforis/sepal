@@ -37,7 +37,9 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                 selfHandleResponse: false,
                 target: targetUrl.origin,
                 pathRewrite: (_p, req) => {
-                    const rest = req.originalUrl.slice(path.length)
+                    // WebSocket upgrades bypass Express, so req.originalUrl is undefined; req.url is set by the raw HTTP parser.
+                    const originalUrl = req.originalUrl || req.url
+                    const rest = originalUrl.slice(path.length)
                     const joinedPath = targetPath.endsWith('/') && rest.startsWith('/')
                         ? targetPath + rest.slice(1)
                         : targetPath + rest
