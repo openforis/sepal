@@ -43,6 +43,13 @@ describe('specialistConsultationTools', () => {
         })
     })
 
+    it('opts into directAnswer so the specialist prose streams directly to the user without an orchestrator restate round (applies to every consult_* tool)', () => {
+        const {tools} = aMapSpecialist()
+        const consultMap = tools.find(tool => tool.name === 'consult_map')
+
+        expect(consultMap.directAnswer).toBe(true)
+    })
+
     it('throws at construction when an allowed tool is not registered in the inner tool set', () => {
         const innerTools = aFakeTools({}, [{name: 'recipe_list', description: 'r', parameters: {type: 'object'}}])
 

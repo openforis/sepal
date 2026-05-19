@@ -415,6 +415,37 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             return {publish: event => published.push(event), published}
         }
 
+        it('publishes llm.response with attempt=0 on a normal stream so trace consumers can tell first-pass responses apart from retries', async () => {
+            const bus = aRecordingBus()
+            mockCreate.mockResolvedValue([{choices: [{delta: {content: 'Title'}}]}])
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'hi'}],
+                debugLabel
+            }))
+
+            const response = bus.published.find(event => event.type === 'llm.response')
+            expect(response.attempt).toBe(0)
+        })
+
+        it('publishes llm.response with attempt=1 on the length-cap retry response', async () => {
+            const bus = aRecordingBus()
+            mockCreate
+                .mockResolvedValueOnce([
+                    {choices: [{delta: {reasoning_content: 'planning...'}}]},
+                    {choices: [{finish_reason: 'length', delta: {}}]}
+                ])
+                .mockResolvedValueOnce([{choices: [{delta: {content: 'recovered.'}}]}])
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'edit'}],
+                debugLabel
+            }))
+
+            const responses = bus.published.filter(event => event.type === 'llm.response')
+            expect(responses.map(event => event.attempt)).toEqual([0, 1])
+        })
+
         it('publishes compact debug request and response summaries without raw chunk logs', async () => {
             const bus = aRecordingBus()
             mockCreate.mockResolvedValue([{choices: [{delta: {content: 'Title'}}]}])

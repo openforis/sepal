@@ -32,6 +32,37 @@ describe('tool registry — schemas and invoke envelopes', () => {
                 parameters: echoTool.parameters
             }])
         })
+
+        it('does not include the directAnswer flag in schemas() output (would leak to the LLM wire format)', () => {
+            const directTool = {...echoTool, name: 'direct', directAnswer: true}
+            const registry = createToolRegistry({tools: [directTool], bus})
+
+            const schema = registry.schemas()[0]
+            expect(schema).not.toHaveProperty('directAnswer')
+            expect(Object.keys(schema).sort()).toEqual(['description', 'name', 'parameters'])
+        })
+    })
+
+    describe('flag', () => {
+
+        it('returns true when the tool descriptor carries the named flag set to true', () => {
+            const directTool = {...echoTool, name: 'direct', directAnswer: true}
+            const registry = createToolRegistry({tools: [directTool], bus})
+
+            expect(registry.flag('direct', 'directAnswer')).toBe(true)
+        })
+
+        it('returns false when the tool exists but does not carry the named flag', () => {
+            const registry = createToolRegistry({tools: [echoTool], bus})
+
+            expect(registry.flag('echo', 'directAnswer')).toBe(false)
+        })
+
+        it('returns false for an unknown tool name', () => {
+            const registry = createToolRegistry({tools: [echoTool], bus})
+
+            expect(registry.flag('nonexistent', 'directAnswer')).toBe(false)
+        })
     })
 
     describe('invoke$', () => {

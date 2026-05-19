@@ -30,6 +30,7 @@ function describeRecipeTool({llm, bus, innerTools, guiRequests}) {
     return {
         name: 'describe_recipe',
         description: 'Describe ONE recipe -> concise prose, not raw model. Optional question narrows. Stateless; call again for follow-ups with the new question plus relevant prior context. Read-only: for edits call update_recipe directly, don\'t chain describe_recipe -> update_recipe.',
+        directAnswer: true,
         parameters: {
             type: 'object',
             properties: {
@@ -70,6 +71,7 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
     return {
         name: 'update_recipe',
         description: 'Update ONE recipe by natural-language instruction -> specialist plans + applies JSON Patch atomically against effective model. Stateless. Use for change/edit/modify requests on a saved recipe. Don\'t describe_recipe first -- specialist loads current state + plans internally.',
+        directAnswer: true,
         parameters: {
             type: 'object',
             properties: {

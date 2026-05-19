@@ -131,7 +131,10 @@ function aFakeTools(implementations = {}, schemas = []) {
     const invocations = []
     return {
         schemas() {
-            return schemas
+            return schemas.map(({name, description, parameters}) => ({name, description, parameters}))
+        },
+        flag(name, flagName) {
+            return schemas.find(schema => schema.name === name)?.[flagName] === true
         },
         invoke$(toolCall, context) {
             invocations.push(toolCall)

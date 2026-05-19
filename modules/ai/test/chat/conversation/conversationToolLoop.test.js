@@ -521,13 +521,12 @@ describe('Conversation tool loop', () => {
             const updateCall = {id: 't2', name: 'update_recipe', input: {recipeId: 'r1', instruction: 'set date'}}
             const schemas = [
                 {name: 'describe_recipe', description: 'd', parameters: {type: 'object'}},
-                {name: 'update_recipe', description: 'u', parameters: {type: 'object'}}
+                {name: 'update_recipe', description: 'u', parameters: {type: 'object'}, directAnswer: true}
             ]
             const llm = aFakeLlm({replies: [
                 {toolCalls: [describeCall]},
                 emptyReply,
-                {toolCalls: [updateCall]},
-                {text: 'Updated.'}
+                {toolCalls: [updateCall]}
             ]})
             const tools = aFakeTools({
                 describe_recipe: () => of({answer: 'Target date is currently 2025-07-02.'}),
@@ -537,8 +536,10 @@ describe('Conversation tool loop', () => {
 
             const {events} = run(conversation.sendUserMessage$('set target date'))
 
+            // describe_recipe restates via orchestrator → empty reply → retry → update_recipe (directAnswer) streams.
             expect(tools.invocations).toEqual([describeCall, updateCall])
-            expect(llm.receivedTools[2]).toEqual(schemas)
+            const expectedSchemas = schemas.map(({directAnswer: _d, ...rest}) => rest)
+            expect(llm.receivedTools[2]).toEqual(expectedSchemas)
             expect(events.at(-1)).toEqual({textDelta: 'Updated target date.'})
         })
 

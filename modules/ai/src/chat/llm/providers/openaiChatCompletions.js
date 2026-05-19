@@ -28,6 +28,9 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus, diagnostics =
 
     function attempt$({messages, tools, maxTokens, temperature, debugLabel, extraParams = {}}, attempt) {
         const acc = freshAcc()
+        // Mutated inside the toolCalls$ defer and read by the retry defer below.
+        // The mutation order is implicit in RxJS's sequential evaluation of
+        // concat'd defers — don't reorder this pipeline.
         let retryAfterAttempt = false
         const requestMessages = attempt > 0 ? withRetryHint(messages) : messages
         const hasTools = tools?.length > 0
@@ -67,7 +70,7 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus, diagnostics =
             retryAfterAttempt = shouldRetryLengthCap({acc, toolCallEvents: events, attempt})
             return retryAfterAttempt ? EMPTY : from(events)
         })
-        const summary$ = concat(text$, toolCalls$).pipe(publishResponseSummary({bus, diagnostics, model, acc, debugLabel}))
+        const summary$ = concat(text$, toolCalls$).pipe(publishResponseSummary({bus, diagnostics, model, acc, debugLabel, attempt}))
         return concat(
             summary$,
             defer(() => concat(

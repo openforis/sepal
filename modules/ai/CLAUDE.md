@@ -249,6 +249,7 @@ When reviewing a PR that touches any of the above, push back on prose-y addition
   (`createLlm`). It builds the per-provider adapters under
   `src/chat/llm/providers/` (`openaiChatCompletions.js`, `lmStudioNativeChat.js`)
   and routes to them; provider wire-format names stay confined to the adapters.
+- **Direct-answer tools**: a tool descriptor with `directAnswer: true` opts the tool out of the orchestrator's post-tool restate round — its `{ok: true, data: {answer}}` envelope streams to the user verbatim. Used for specialist-backed tools (`describe_recipe`, `update_recipe`, `consult_*`) whose output is already user-facing prose. The flag is descriptor-only; the tool registry exposes it via `flag(name, 'directAnswer')` and does NOT include it in `schemas()` (would leak to the LLM wire format).
 - **Specialists**: a specialist is exposed to the main model as a normal tool
   (`consult_<name>`) whose `invoke$` runs an inner LLM loop under
   `src/chat/specialists/runSpecialist.js` with its own system prompt + a

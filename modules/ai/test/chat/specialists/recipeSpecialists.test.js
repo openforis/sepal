@@ -36,6 +36,12 @@ describe('describeRecipeTool', () => {
         expect(tool.description).toMatch(/don't chain.*describe.*update/i)
     })
 
+    it('opts into directAnswer so the orchestrator streams the specialist prose verbatim instead of round-tripping for a restate', () => {
+        const {tool} = aTool()
+
+        expect(tool.directAnswer).toBe(true)
+    })
+
     it('exposes a describe_recipe tool with recipeId required and question optional', () => {
         const {tool} = aTool()
 

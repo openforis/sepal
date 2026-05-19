@@ -14,7 +14,6 @@ const {emptyAfterToolHint} = require('../llmText/prompts')
 
 const EMPTY_AFTER_TOOL_HINT = emptyAfterToolHint()
 const DEFAULT_DIAGNOSTICS = createDiagnostics()
-const DIRECT_ANSWER_TOOLS = new Set(['update_recipe'])
 
 const MAX_TOOL_ROUNDS = 8
 
@@ -112,7 +111,7 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
             from(toolCalls).pipe(concatMap(toolCall => invokeTool$(toolCall, turn, collected))),
             defer(() => append$({role: 'tool', toolResults: collected.results}).pipe(ignoreElements())),
             defer(() => {
-                const directAnswer = directToolAnswer(collected.results)
+                const directAnswer = directToolAnswer(collected.results, tools)
                 if (directAnswer) return directReply$(directAnswer)
                 const bailDisplay = turn.guard.bail()
                 if (bailDisplay) return notices.guardBail$(bailDisplay)
@@ -176,10 +175,10 @@ function hasVisibleText(text) {
     return typeof text === 'string' && text.trim().length > 0
 }
 
-function directToolAnswer(toolResults) {
+function directToolAnswer(toolResults, tools) {
     if (toolResults.length !== 1) return null
     const [result] = toolResults
-    if (!DIRECT_ANSWER_TOOLS.has(result.toolName)) return null
+    if (!tools.flag(result.toolName, 'directAnswer')) return null
     const answer = result.result?.ok === true ? result.result?.data?.answer : null
     return hasVisibleText(answer) ? answer.trim() : null
 }

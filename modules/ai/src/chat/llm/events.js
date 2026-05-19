@@ -4,12 +4,14 @@ const {truncateString, createDiagnostics} = require('../diagnostics')
 const MAX_LOG_TEXT = 300
 const DEFAULT_DIAGNOSTICS = createDiagnostics()
 
-function publishResponseSummary({bus, model, acc, debugLabel, diagnostics = DEFAULT_DIAGNOSTICS}) {
+function publishResponseSummary({bus, model, acc, debugLabel, attempt = 0, diagnostics = DEFAULT_DIAGNOSTICS}) {
     return finalize(() => bus.publish({
         type: 'llm.response',
         level: 'debug',
+        attempt,
         message: () => [
             `LLM response${debugLabel ? ` (${debugLabel})` : ''}: model=${model}`,
+            `attempt=${attempt}`,
             `chunks=${acc.chunkCount}`,
             `contentChunks=${acc.contentChunkCount ?? '-'}`,
             `reasoningChunks=${acc.reasoningChunkCount ?? '-'}`,

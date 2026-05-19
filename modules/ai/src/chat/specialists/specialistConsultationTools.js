@@ -30,6 +30,7 @@ function buildSpecialistTool({definition, llm, bus, innerTools}) {
     return {
         name: definition.consultToolName,
         description: definition.consultToolDescription,
+        directAnswer: true,
         parameters: {
             type: 'object',
             properties: {question: {type: 'string'}},

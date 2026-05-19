@@ -33,7 +33,7 @@ describe('Conversation with the orchestrator tool surface', () => {
         })
     })
 
-    it('lets the orchestrator describe a recipe through describe_recipe without seeing the raw recipe model', () => {
+    it('lets the orchestrator describe a recipe through describe_recipe — specialist prose streams directly to the user (directAnswer bypass; no orchestrator restate round)', () => {
         const describeCall = {id: 'd1', name: 'describe_recipe', input: {recipeId: 'r1'}}
         const recipeLoadCall = {id: 'rl1', name: 'recipe_load', input: {recipeId: 'r1'}}
         const rawRecipe = {
@@ -43,26 +43,19 @@ describe('Conversation with the orchestrator tool surface', () => {
         const llm = aFakeLlm({replies: [
             {toolCalls: [describeCall]},                   // orchestrator decides to call describe_recipe
             {toolCalls: [recipeLoadCall]},                 // specialist's inner LLM loads the recipe
-            {text: 'CLASSIFICATION recipe using a random forest.'}, // specialist's final answer
-            {text: 'It is a CLASSIFICATION using random forest.'}   // orchestrator's user-facing reply
+            {text: 'CLASSIFICATION recipe using a random forest.'} // specialist's final answer streams directly
         ]})
         const tools = buildOrchestratorTools({llm, guiRequests: aFakeGuiRequests(() => of(rawRecipe))})
         const conversation = aConversation({llm, tools})
         const toolContext = {channel: {}, conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
 
-        run(conversation.sendUserMessage$('describe recipe r1', {toolContext}))
+        const {events} = run(conversation.sendUserMessage$('describe recipe r1', {toolContext}))
 
-        // The orchestrator and the specialist share the fake LLM, so receivedMessages[]
-        // mixes both turn-level conversations. Find the orchestrator's tool turn by
-        // tool name rather than by index.
-        const describeResult = llm.receivedMessages
-            .flatMap(messages => messages.filter(m => m.role === 'tool').flatMap(m => m.toolResults))
-            .find(r => r.toolName === 'describe_recipe')
-
-        expect(describeResult).toEqual({
-            toolCallId: 'd1', toolName: 'describe_recipe',
-            result: {ok: true, data: {answer: 'CLASSIFICATION recipe using a random forest.'}}
-        })
+        // describe_recipe has directAnswer: true, so the specialist's answer streams verbatim
+        // and the orchestrator never sees the raw recipe model — the bypass is the whole point.
+        expect(events.filter(event => event.textDelta)).toEqual([
+            {textDelta: 'CLASSIFICATION recipe using a random forest.'}
+        ])
     })
 
     it('does not expose recipe_load directly to the orchestrator', () => {

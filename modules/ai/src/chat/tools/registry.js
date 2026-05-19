@@ -16,10 +16,16 @@ function createToolRegistry({tools, bus = NOOP_BUS, diagnostics = DEFAULT_DIAGNO
     const byName = new Map(tools.map(tool => [tool.name, tool]))
     const validators = compileValidators(tools)
 
-    return {schemas, invoke$}
+    return {schemas, flag, invoke$}
 
     function schemas() {
         return tools.map(({name, description, parameters}) => ({name, description, parameters}))
+    }
+
+    // Descriptor flag accessor. Keep flags off the wire (schemas() strips them);
+    // the loop reads them here to drive behavior without coupling to tool names.
+    function flag(name, flagName) {
+        return byName.get(name)?.[flagName] === true
     }
 
     function invoke$(toolCall, context) {

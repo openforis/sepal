@@ -23,6 +23,14 @@ describe('sepal tools', () => {
         expect(names).not.toContain('describe_recipe')
     })
 
+    it('does not flag pure SEPAL product tools with directAnswer (the orchestrator restates their structured results — only specialist-backed tools bypass)', () => {
+        const tools = sepalTools({guiRequests: aFakeGuiRequests()})
+
+        for (const tool of tools) {
+            expect(tool.directAnswer).toBeUndefined()
+        }
+    })
+
     it('keeps recipe_load in the specialist inner-registry tool list so specialists can inspect a recipe', () => {
         const names = specialistInnerTools({guiRequests: aFakeGuiRequests(() => of({}))}).map(tool => tool.name)
 

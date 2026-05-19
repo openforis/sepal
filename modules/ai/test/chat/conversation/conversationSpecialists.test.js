@@ -4,29 +4,23 @@ const {aConversation, aFakeBus, aFakeGuiRequests, aFakeLlm, aFakeTools, run} = r
 
 describe('Conversation with specialists', () => {
 
-    it('lets the LLM delegate a map question and answer from the specialist result', () => {
+    it('streams a successful consult_map specialist answer directly to the user (directAnswer bypass — orchestrator does not restate)', () => {
         const consultCall = {id: 'sm1', name: 'consult_map', input: {question: 'why is my map empty?'}}
-        const specialistAnswer = 'No recipe is selected, so the map has no layers.'
         const llm = aFakeLlm({replies: [
             {toolCalls: [consultCall]},
-            {text: specialistAnswer}
+            {text: 'orchestrator would restate here but should never be called'}
         ]})
-        const tools = aFakeTools({
-            consult_map: ({question}) => of({answer: `[map] ${question}`})
-        })
+        const tools = aFakeTools(
+            {consult_map: ({question}) => of({answer: `[map] ${question}`})},
+            [{name: 'consult_map', description: 'd', parameters: {type: 'object'}, directAnswer: true}]
+        )
         const conversation = aConversation({llm, tools})
 
         const {events} = run(conversation.sendUserMessage$('why is my map empty?'))
 
         expect(tools.invocations).toEqual([consultCall])
-        expect(llm.receivedMessages[1]).toContainEqual({
-            role: 'tool',
-            toolResults: [{
-                toolCallId: consultCall.id, toolName: consultCall.name,
-                result: {ok: true, data: {answer: '[map] why is my map empty?'}}
-            }]
-        })
-        expect(events.filter(event => event.textDelta)).toEqual([{textDelta: specialistAnswer}])
+        expect(llm.receivedMessages).toHaveLength(1)
+        expect(events.filter(event => event.textDelta)).toEqual([{textDelta: '[map] why is my map empty?'}])
     })
 
     it('streams a successful update_recipe specialist answer directly instead of asking the orchestrator to restate it', () => {
@@ -36,9 +30,10 @@ describe('Conversation with specialists', () => {
             {toolCalls: [updateCall]},
             {text: 'This should not be needed.'}
         ]})
-        const tools = aFakeTools({
-            update_recipe: () => of({ok: true, data: {answer: specialistAnswer}})
-        })
+        const tools = aFakeTools(
+            {update_recipe: () => of({ok: true, data: {answer: specialistAnswer}})},
+            [{name: 'update_recipe', description: 'd', parameters: {type: 'object'}, directAnswer: true}]
+        )
         const conversation = aConversation({llm, tools})
 
         const {events} = run(conversation.sendUserMessage$('set target date'))
@@ -48,6 +43,44 @@ describe('Conversation with specialists', () => {
         expect(events.filter(event => event.textDelta)).toEqual([
             {textDelta: 'Successfully updated the target date.'}
         ])
+    })
+
+    it('streams a successful describe_recipe specialist answer directly (describe_recipe also opts into directAnswer)', () => {
+        const describeCall = {id: 'dr1', name: 'describe_recipe', input: {recipeId: 'r1'}}
+        const specialistAnswer = 'MOSAIC recipe with target date 2025-07-02.'
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [describeCall]},
+            {text: 'orchestrator would restate here but should never be called'}
+        ]})
+        const tools = aFakeTools(
+            {describe_recipe: () => of({ok: true, data: {answer: specialistAnswer}})},
+            [{name: 'describe_recipe', description: 'd', parameters: {type: 'object'}, directAnswer: true}]
+        )
+        const conversation = aConversation({llm, tools})
+
+        const {events} = run(conversation.sendUserMessage$('describe my recipe'))
+
+        expect(tools.invocations).toEqual([describeCall])
+        expect(llm.receivedMessages).toHaveLength(1)
+        expect(events.filter(event => event.textDelta)).toEqual([{textDelta: specialistAnswer}])
+    })
+
+    it('does NOT bypass for tools without the directAnswer flag — orchestrator gets a restate round even if data has an answer field', () => {
+        const listCall = {id: 'rl1', name: 'recipe_list', input: {}}
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [listCall]},
+            {text: 'You have 2 recipes.'}
+        ]})
+        const tools = aFakeTools(
+            {recipe_list: () => of({ok: true, data: {answer: 'specialist-style prose that should NOT stream verbatim'}})},
+            [{name: 'recipe_list', description: 'd', parameters: {type: 'object'}}]
+        )
+        const conversation = aConversation({llm, tools})
+
+        const {events} = run(conversation.sendUserMessage$('list'))
+
+        expect(llm.receivedMessages).toHaveLength(2)
+        expect(events.filter(event => event.textDelta)).toEqual([{textDelta: 'You have 2 recipes.'}])
     })
 
     it('runs the map specialist inner loop with its scoped map inspection tools', () => {
@@ -61,8 +94,7 @@ describe('Conversation with specialists', () => {
         const llm = aFakeLlm({replies: [
             {toolCalls: [consultCall]},
             {toolCalls: [mapAreaCall]},
-            {text: 'Single area, this-recipe.'},
-            {text: 'You have one map area showing this recipe.'}
+            {text: 'Single area, this-recipe.'}
         ]})
         const guiRequests = aFakeGuiRequests(() => of(mapAreaSummary))
         const tools = buildTools(llm, guiRequests)
@@ -72,8 +104,9 @@ describe('Conversation with specialists', () => {
         const {events} = run(conversation.sendUserMessage$('which areas?', {toolContext}))
 
         expect(guiRequests.requests.map(r => r.action)).toEqual(['list-map-areas'])
+        // consult_map has directAnswer: true, so the specialist's prose streams verbatim — no orchestrator restate round.
         expect(events.filter(event => event.textDelta)).toEqual([
-            {textDelta: 'You have one map area showing this recipe.'}
+            {textDelta: 'Single area, this-recipe.'}
         ])
     })
 
