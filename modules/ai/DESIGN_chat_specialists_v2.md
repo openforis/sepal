@@ -20,8 +20,9 @@ copy or bypass GUI confirmation.
 
 Specialist roles:
 
-- Recipe specialists describe/create/update one recipe type and are the only
-  actors that may see raw recipe JSON or detailed recipe fragments.
+- Recipe operation specialists describe, create, or update one recipe type.
+  They are the only actors that may see raw/effective recipe JSON or detailed
+  recipe fragments.
 - Workflow specialist recommends a structured workflow plan. It does not make
   side effects.
 - Map layout/visualization specialist handles layout/source/visualization
@@ -42,12 +43,18 @@ Current AI/chat code already has:
   ephemeral turn context on the first LLM call of a user turn
 - `Conversation` support for tool schemas, provider-normalized tool calls,
   tool results, max tool rounds, and `tool-start`/`tool-end`
-- OpenAI-compatible tool-call adapter; LM Studio native path is title-only
+- OpenAI-compatible tool-call adapter for structured tool traffic, including
+  LM Studio-compatible chat completions; LM Studio native no-reasoning path is
+  title-only
 - product and specialist tools wired in `app.js`
 - subscription-scoped GUI request/response with timeout, wrong-subscription
   rejection, and `subscriptionDown` cancellation
 - GUI chat support for `context`, `tool-start`/`tool-end`, and `gui-action`
   responses
+- shared recipe validation/projection in `lib/js/recipes`, consumed by both
+  AI and GUI
+- `describe_recipe` and `update_recipe` operation tools routed through
+  recipe-type specialist prompts; `create_recipe` is still target design
 
 The main architectural pressure is tool visibility: keep routing/metadata tools
 at the orchestrator level, and move raw recipe inspection and mutation behind
@@ -55,7 +62,8 @@ recipe specialists.
 
 ## 3. Tool surface
 
-Target always-visible orchestrator tools:
+Target always-visible orchestrator tools. Some are implemented, some remain
+design targets:
 
 ```text
 get_gui_context()
@@ -95,9 +103,11 @@ types. Existing recipes resolve `recipeType` from `recipeId`; creation requires
 to call again for follow-ups with the new question plus relevant prior derived
 context. The recipe specialist does not own a conversation for descriptions.
 
-Raw `recipe_load`, recipe fragment load, `recipe_patch`, and create/update
-primitives are specialist-private. Other specialists receive derived
-descriptions from recipe specialists, not raw recipe JSON.
+Raw/path-scoped `recipe_load`, `recipe_patch`, and create/update
+primitives are specialist-private. The target update surface is even narrower:
+the update specialist should see `load_for_update` plus `recipe_patch`, not an
+open-ended raw load tool. Other specialists receive derived descriptions from
+recipe specialists, not raw recipe JSON.
 
 Dispatcher-only bridge calls (not exposed to any LLM): `recipe-metadata`
 returns identity-only `{id, type, name, projectId}` from `process.recipes`,
@@ -115,23 +125,47 @@ Budget:
 
 ## 4. Specialist lifecycle
 
-Default policy: specialist operations are stateless. Each call answers or acts
-from supplied arguments and context only.
-
 Inquiry operations, including `describe_recipe`, map explanation, and workflow
-advice, must stay stateless. Follow-up continuity belongs to the orchestrator.
+advice, are stateless. Follow-up continuity belongs to the orchestrator.
 
-Action operations such as `create_recipe` and `update_recipe` can also be
-stateless. If more information is needed, return `need_info` with questions and
-a compact continuation summary. The orchestrator asks the user, then calls the
-same operation again with the original instruction, additional information, and
-continuation summary.
+Action operations (`create_recipe`, `update_recipe`) may be short-lived
+stateful sessions. The state is scoped to one user task, one selected recipe
+or new recipe draft, one recipe type, and one operation. It exists so a
+specialist can load a closure, plan a patch/create draft, hit missing
+information or validation feedback, and continue after the orchestrator fetches
+only the additional information needed.
 
-Stateful action sessions are a later optimization, useful only if repeated
-fragment loading, prompt setup, or partial planning becomes expensive. A
-stateful specialist would return `need_info` with `sessionId`, then live only
-until resume, timeout, cancellation, `done`, or `failed`. Store such sessions in
-memory with clock-driven TTL.
+The specialist never talks to the user directly. It returns structured
+outcomes:
+
+```js
+{status: 'patched', summary}
+{status: 'created', recipeId, summary}
+{status: 'needs_info', question, missingFields, continuation}
+{status: 'failed', reason, details}
+```
+
+The orchestrator owns the user conversation. On `needs_info`, it decides
+whether to ask the user, call another direct tool, or abort. If it gets the
+missing information, it resumes the same action session with the new data
+instead of replaying the whole chat or asking a fresh specialist to infer the
+same closure again.
+
+Stateful action sessions are bounded: close on success, failure, user cancel,
+subscription cancel, or TTL. Keep state compact and structured:
+
+```js
+{
+  purpose: 'update',
+  recipeType,
+  recipeId,
+  pendingGoal,
+  loadedClosure,
+  attemptedOperations,
+  validationErrors,
+  missingInformation
+}
+```
 
 Do not keep successful specialist history by default. It is likely stale after
 recipe edits and makes routing harder to reason about. Prompt-prefix caching
@@ -140,31 +174,43 @@ byte-identical across fresh invocations.
 
 ## 5. Recipe specialists
 
-One logical recipe specialist exists per recipe type. Inputs:
+Recipe specialists are scoped by recipe type and purpose. This can share one
+runner, but the prompt facts and private tools differ by operation:
 
-- operation: `describe`, `create`, or `update`
-- resolved `recipeType`
-- user instruction or question
-- optional `recipeId`
-- optional workflow context
-- optional recent user/orchestrator context selected by the orchestrator
+```js
+{purpose: 'describe' | 'update' | 'create', recipeType}
+```
 
-Knowledge:
+The orchestrator and workflow specialist choose the operation and recipe type
+before entering a recipe specialist. An update specialist should not decide
+whether MOSAIC is the right recipe type; it should update the already selected
+MOSAIC recipe. A create specialist may ask for missing inputs needed to create
+the chosen type, but recipe-type routing still belongs outside it.
 
-- recipe description, use cases, choose/dont-choose guidance
-- defaults
-- JSON Schema/rule summaries or LLM-compatible schema projection
-- cross-field rule prose
-- gotchas, cost notes, output bands, and visualization hints
+Purpose-specific recipe facts:
 
-Private tools:
+- `selectionFacts`: for orchestrator/workflow recipe-type choice. Includes
+  description, use cases, choose/dont-choose guidance, and outputs.
+- `describeFacts`: for `describe_recipe`. Includes explanation/output facts
+  needed to answer questions about a chosen recipe.
+- `editFacts`: for `update_recipe`. Includes schema/rule/edit guidance,
+  dependent fields, and patch-path gotchas. It must not include routing prose.
+- `createFacts`: future equivalent for `create_recipe`, covering required
+  inputs, defaults, and creation-time dependencies.
 
-- recipe fragment load
-- create recipe from patches against the default model
-- update recipe from patches against the current GUI model
-- schema/rule helpers for planning, not authoritative validation
+Private tools by purpose:
 
-The specialist returns derived descriptions, edit summaries,
+- describe: `recipe_load` with optional JSON Pointer path, returning an
+  effective projected model fragment plus `baseModelHash`.
+- update target: `load_for_update` plus `recipe_patch`. `load_for_update`
+  returns the current effective closure, base hash, and deterministic rule
+  guidance for the requested edit. The current transitional implementation may
+  still expose raw/path-scoped `recipe_load`.
+- create target: load defaults/create closure plus a create primitive. Creation
+  patches the recipe type's effective default model or submits an equivalent
+  complete effective draft.
+
+The specialist returns derived descriptions, edit/create summaries,
 missing-information requests, or failure reasons. It should not pass raw recipe
 JSON back unless a later design explicitly requires it.
 
@@ -176,22 +222,20 @@ full recipe documents. A whole-model rewrite is expressible as a single root
 
 Validation is layered:
 
-- **Server (AI tool)** does schema-local pre-validation per op: walks the
-  schema along each op's JSON Pointer, runs a subschema check against the
-  value (type, enum, format, range, required-when conditions). Stateless —
-  no recipe model required. Catches the bulk of LLM mistakes (wrong type,
-  typo'd enum, malformed value, nonexistent path) without a GUI round trip.
-- **GUI (recipe-patch handler)** is the authoritative validator on every
-  call: applies the patch to the effective model, runs full
+- **AI tool boundary** validates the patch envelope: required fields,
+  non-empty operation list, operation shape, and JSON Pointer strings. It maps
+  GUI failures into structured tool errors with validation details intact.
+- **GUI (recipe-patch handler)** is the authoritative validator on every call:
+  applies the patch atomically to the effective model, runs full
   `spec.validate(toEffectiveModel(applied))` (schema **plus** cross-field
-  rules), then persists. Server pre-validation does not authorize the GUI
-  to skip its own check.
+  rules), then persists. Server-side checks must never authorize the GUI to
+  skip its own validation.
 
 Patch contract:
 
 - allowed ops: `add`, `remove`, `replace`, `move`, `copy`, optional `test`
 - all-or-nothing apply
-- server schema-local pre-validation; GUI authoritative post-apply validation
+- GUI authoritative post-apply validation
 - persistence through GUI as source of truth
 - structured result with concise summary, invalidated paths, and new
   `modelHash` on success
@@ -201,12 +245,31 @@ model snapshot. Specialist-authored complete recipe JSON is only a fallback for
 small/immature recipe types.
 
 Optimistic concurrency uses `baseModelHash`. Specialist-private load returns
-the current `modelHash` from `getHash(recipe.model)` and stamps the model first
-if needed. `recipe_patch` requires `{recipeId, baseModelHash, operations}`.
-Before persistence, GUI compares `baseModelHash` to the current
-`getHash(recipe.model)`. Mismatch returns a structured stale-write error; the
-specialist reloads/retries or reports the conflict. JSON Patch `test` ops are
-semantic guards, not the primary concurrency mechanism.
+the current GUI `modelHash` as `baseModelHash`. `recipe_patch` requires
+`{recipeId, baseModelHash, operations}`. Before persistence, GUI compares
+`baseModelHash` to the current model hash. Mismatch returns a structured
+`STALE_WRITE` error with `currentModelHash`; the specialist reloads/retries or
+reports the conflict. JSON Patch `test` ops are semantic guards, not the
+primary concurrency mechanism.
+
+`recipe_patch.operations` is an array because dependent changes must land in
+one atomic patch. For example, changing a MOSAIC target date may require
+changing `dates.targetDate`, `dates.seasonStart`, and `dates.seasonEnd`
+together so the post-apply model validates. The specialist should prefer one
+multi-operation patch over several sequential patches for one logical edit.
+
+`load_for_update` target contract:
+
+- Input: `{recipeId, instruction}` plus optional continuation/session state.
+- Internally loads the current stored recipe, projects it through
+  `toEffectiveModel`, calculates the deterministic validation closure for the
+  requested edit, and returns only what the specialist needs.
+- Output includes `baseModelHash`, relevant current values, candidate/dependent
+  paths, applicable rule guidance, and any known normalized/effective path
+  names.
+- It is the only load tool exposed to update specialists once implemented.
+  General raw/path `recipe_load` remains available to describe specialists and
+  transitional update implementations.
 
 SEPAL recipe implementation rules:
 
@@ -230,46 +293,38 @@ Projected/heavy fields:
   stale indices
 - no replace/remove of a specific omitted index without deep-reading that path
 
-Fragment loading should stay explicit: `recipe_fragments_load({recipeId,
-paths})`. Relevance inference belongs in shared recipe knowledge, for example
-`fragmentsForEdit({recipeType, intent, targetPaths})`; avoid a public
-`recipe_relevant_fragment_load` until that deterministic rule layer exists.
-
-Fragment lookups are NOT pre-validated against the schema. The actual model
-is authoritative — paths may legitimately exist in the model without being
-schema-declared (loosely-typed regions like `scenes`, optional fields, legacy
-fields a newer schema doesn't formally describe). A path lookup that hits
-nothing returns no value; the LLM gets a clean absent signal and decides.
-Schema-pre-checking fragments would risk false-negative rejections for no
-correctness gain.
+Describe-time path loading should stay explicit: `recipe_load({recipeId,
+path})`. Update-time relevance inference belongs in shared recipe knowledge and
+`load_for_update`, not in the LLM prompt. Path lookups are not pre-validated
+against the schema. The actual effective model is authoritative: paths may
+legitimately exist in the model without being schema-declared (loosely typed
+regions, optional fields, or legacy fields a newer schema does not formally
+describe). A path lookup that hits nothing returns a clean absent signal.
 
 ## 7. Shared recipe validation
 
 Validation authority belongs with the GUI write path. The GUI has the complete
 current/default model, owns browser recipe state, and persists through the
 correct gzip/envelope flow. Shared schema/rule code lives in
-`lib/js/recipes/`, consumed via the `#recipes` import alias by both the AI
-Node services (Node imports map) and the GUI Vite build (Vite resolve alias)
-— byte-identical across both runtimes.
+`lib/js/recipes/`, consumed via the `#recipes` import alias by AI Node services
+and as the `recipes` package in the GUI Vite build — byte-identical across both
+runtimes.
 
 Split of responsibility:
 
 - GUI imports validators and runs them against the post-apply effective
   model on every create/update — authoritative.
-- AI server runs schema-local pre-validation of patches (see §6) for fast
-  feedback to the LLM; not authoritative.
-- Recipe specialists import prompt facts, projections, defaults, and
-  deterministic fragment metadata where practical.
-- Specialists use that knowledge to choose fragments, ask questions, and
-  propose likely-valid patches; they are not final validation authority.
-- AI tool boundary additionally validates patch envelope shape: required
+- AI tool boundary validates patch envelope shape: required
   fields, non-empty operation list, JSON Pointer strings, and
   operation-specific fields.
+- Recipe specialists import purpose-specific facts, projections, defaults, and
+  deterministic update/create closure metadata where practical.
+- Specialists use that knowledge to ask questions and propose likely-valid
+  patches; they are not final validation authority.
 
-Start by resurrecting one recipe type into active shared code through tests.
-Archived schemas/rules are source material, not runtime dependencies. Verify
-assumptions against current recipe models and GUI save behavior before
-promoting them.
+Archived schemas/rules are source material, not runtime dependencies. Bring
+recipe packages back one at a time, through tests, and verify assumptions
+against current recipe models and GUI save behavior before promoting them.
 
 Package shape:
 
@@ -285,8 +340,8 @@ lib/js/recipes/
       defaults.js
       rules.js
       toEffectiveModel.js
-      promptFacts.js
-      (fragments.js) # lands with fragmentsForEdit
+      facts.js
+      (updateClosure.js) # lands with load_for_update support
 ```
 
 Per-spec exports (current MOSAIC shape):
@@ -300,20 +355,24 @@ Per-spec exports (current MOSAIC shape):
   rules,
   defaultModel(),                  // returns effective shape
   toEffectiveModel(storedModel),   // pure, idempotent
-  promptFacts(),                   // see §8
+  selectionFacts(),                // routing/workflow facts
+  describeFacts(),                 // describe_recipe facts
+  editFacts(),                     // update_recipe facts
   validate(model)                  // schema + rules; assumes effective input
-  // fragmentsForEdit({intent, targetPaths})  // future
+  // updateClosure({instruction, model})       // future load_for_update core
+  // createFacts()                            // future create_recipe facts
 }
 ```
 
 Registry-level conveniences in `lib/js/recipes/src/index.js`:
 `listRecipeSpecs()`, `getRecipeSpec(id)`, `getRecipeSchema(id)`,
-`getRecipeDefaults(id)`, `getRecipePromptFacts(id)`, `validateRecipe(id, model)`,
-`toEffectiveModel(id, model)`.
+`getRecipeDefaults(id)`, `getRecipeSelectionFacts(id)`,
+`getRecipeDescribeFacts(id)`, `getRecipeEditFacts(id)`,
+`validateRecipe(id, model)`, `toEffectiveModel(id, model)`.
 
 Bring recipe packages back one at a time. Each package needs focused tests for
-defaults, schema acceptance, validation rules, fragment expansion, prompt facts,
-and GUI rejection before persistence.
+defaults, schema acceptance, validation rules, effective projection, prompt
+facts, closure metadata, and GUI rejection before persistence.
 
 ### LLM-facing model contract
 
@@ -352,32 +411,32 @@ is worse than predictable cleanup.
 ## 8. Specialist prompts
 
 Recipe specialist prompts are assembled mechanically from active recipe
-knowledge, not hand-authored from scratch per type.
+knowledge, not hand-authored from scratch per type. Facts are split by
+consumer purpose so routing prose does not leak into update prompts, and edit
+guidance does not leak into describe prompts.
 
-Current shape (`spec.promptFacts()` on the shared recipe package):
+Current fact shape:
 
 ```js
-{
-  description,       // one-sentence what the recipe does
-  useCases,          // string[] — when the LLM should pick this recipe
-  chooseWhen,        // telegraphic routing hint
-  dontChooseWhen,    // counter-routing
-  outputs            // bands/values produced
-}
+selectionFacts() -> {description, useCases, chooseWhen, dontChooseWhen, outputs}
+describeFacts()  -> {description, outputs, ...explanationFacts}
+editFacts()      -> {guidance, ...updateDependencies}
 ```
 
-The AI module composes prompts via `assembleSpecialistPrompt(basePrompt, spec)`:
-the static base frame (from `llmText/specialists/recipe.md`) comes first for
-prompt-cache stability, then a delimited type-specific section assembled from
-`promptFacts()`. Recipe types without a spec entry fall through to the base
-frame unchanged.
+The AI module composes prompts via
+`assembleSpecialistPrompt(basePrompt, spec, {purpose, includeSchema})`: the
+static base frame comes first for prompt-cache stability, then a delimited
+type-specific section assembled from the purpose-specific facts. `purpose:
+'describe'` includes describe facts only. `purpose: 'update'` includes edit
+facts and, when requested, schema. Selection facts are consumed by the
+orchestrator/workflow layer before a recipe specialist is chosen.
 
-Future additions (deferred until a real consumer drives them):
+Future additions should be purpose-specific:
 
-- defaults and schema/projection summary
-- cross-field `rule.description` prose
-- output bands and visualization notes
-- short hand-written gotchas/cost section
+- `createFacts()` for create specialists
+- deterministic closure summaries returned by `load_for_update`
+- schema/projection summaries only where a write-capable specialist needs them
+- rule prose where JSON Schema alone does not communicate recipe semantics
 
 JSON Schema alone cannot express all recipe semantics clearly enough for the
 LLM. Rule prose is intentional.
@@ -387,9 +446,9 @@ LLM. Rule prose is intentional.
 Workflow specialist is planner/advisor only. It returns a structured plan with
 assumptions, missing inputs, and steps. It receives user brief, compact GUI
 context, selected project, open recipe summaries, relevant recipe inventory,
-workflow capability summaries, examples, and recipe-specialist descriptions
-when workflow reasoning needs recipe internals. It never inspects raw recipe
-JSON and never calls recipe specialists itself.
+workflow capability summaries, examples, and recipe `selectionFacts` or
+derived descriptions when workflow reasoning needs recipe-type awareness. It
+never inspects raw recipe JSON and never calls recipe specialists itself.
 
 Map bounds remain direct deterministic tools: get view, set camera, fit bounds,
 geocode place, pan/zoom, and sync. Map layout/visualization may use a specialist
@@ -500,8 +559,8 @@ Provider notes:
 - Anthropic/Claude messages: `tool_use` and `tool_result` content blocks.
 - AWS Bedrock Converse: `toolConfig.tools`, assistant `toolUse`, user
   `toolResult`, optional `cachePoint` blocks.
-- OpenAI-compatible local servers use the OpenAI adapter when they support the
-  same contract.
+- OpenAI-compatible local servers, including LM Studio for structured chat
+  completions, use the OpenAI adapter when they support the same contract.
 - LM Studio native no-reasoning path remains title-only.
 
 Add/reuse provider conformance fixtures so every adapter proves the same
@@ -537,7 +596,8 @@ Prompt-structure implications:
 
 - put routing/task prose in cacheable system prompts, not long tool
   descriptions
-- inline recipe schemas/rules/guidance in recipe specialist system prompts
+- inline purpose-specific recipe schemas/rules/guidance in recipe specialist
+  system prompts
 - keep system prompts byte-identical across users
 - use `llm.usage.cachedInputTokens` and `cacheWriteTokens` to validate cache
   placement
@@ -598,13 +658,13 @@ Foundation requirements:
 - boundary request/response events
 - `tool.invoke` tracing
 
-Before writable tools/specialists:
+Writable tool safety requirements:
 
 - repeated failure bail-out
 - validation-error retry limits
 - no-repeat handling for identical failing tool calls
 
-Before rollout/tuning:
+Rollout/tuning requirements:
 
 - normalized token/cache usage logging
 - byte/count fallbacks for providers without usage metadata
@@ -613,79 +673,30 @@ Before rollout/tuning:
 Add safety behavior by test and keep the same event/error contracts as the
 active tool loop.
 
-## 15. Phases
+## 15. Active design work
 
-Phase 0: tool transport foundation.
-Keep provider-neutral tool transport stable, product tools real, diagnostic
-tools out of the production surface, GUI request/response scoped, structured
-errors emitted, and provider-specific wire handling in adapter tests. Remaining
-work includes adapter/common split, model-profile resolution, basic usage
-events, boundary events, schema byte logging, and a real GUI request E2E when a
-real action exists.
+This document now tracks architecture and contracts, not a completed
+implementation checklist. Current unresolved design work:
 
-Phase 1: context and direct reads.
-Add/finish `get_gui_context()`, `recipe_list`, placeholder-free prompt handling,
-and specialist-private projection for heavy `CLASSIFICATION` fields.
+- Implement `load_for_update` as the update specialist's only load tool. It
+  should calculate the effective-model closure from shared schema/rules and
+  return `baseModelHash`, relevant current values, dependent paths, and rule
+  guidance.
+- Add short-lived action-session support for create/update so `needs_info`
+  can resume the same specialist task with only the new information.
+- Add `create_recipe` with a separate create specialist prompt/tool surface and
+  purpose-specific create facts.
+- Keep broad workflow planning separate from recipe update/create execution;
+  workflow uses selection facts and derived summaries, not raw recipe JSON.
+- Expand recipe types only when the shared schema/rules/effective projection
+  and prompt facts are tested for that type.
 
-Phase 2: recipe specialist boundary.
-Expose operation-level `describe_recipe`, `update_recipe`, `create_recipe`;
-route internally by recipe type; move raw/projected recipe load behind private
-recipe-specialist tools; prove `describe_recipe` without raw JSON reaching the
-orchestrator.
+Measure prompt tokens, specialist tokens, orchestrator vs specialist cost,
+reasoning/cache tokens, context utilization, provider/profile usage, round
+trips, tool failure rate, `needs_info` rate, patch size vs full save, and
+user-visible retries.
 
-Phase 3: specialist-private recipe patch.
-Add per-type/operation model policy, private `recipe_load` with `modelHash`,
-private `recipe_patch` with `baseModelHash`, GUI atomic apply, GUI-side full
-candidate validation, shared `lib/js/recipes` validation for one recipe type,
-usage attribution, and safe debug/trace events. Start with `MOSAIC` unless it
-blocks for non-representative reasons; fallback candidates include `MASKING` or
-`CCDC_SLICE`.
-
-Phase 4: workflow specialist.
-Return structured plans from broad user goals using workflow capability
-summaries, examples, GUI context, selected project, open recipe summaries,
-inventory, and recipe-specialist descriptions. Orchestrator executes the plan by
-calling recipe specialists and direct tools.
-
-Phase 4.5: Bedrock Converse and prompt caching.
-After recipe mutation and workflow orchestration prove the architecture, add
-Bedrock Converse adapter support, model-profile provider selection, tool
-turn/result support, cache marker placement, cache capability flags, normalized
-cache usage, and provider conformance tests. Do not pull this forward unless
-provider support becomes a hard blocker.
-
-Phase 5: map layout/visualization specialist.
-Keep map bounds direct; add scoped layout/visualization reasoning, medium model
-policy, and GUI hard confirmation for destructive layout changes.
-
-Phase 6: roster expansion and tuning.
-Expand recipe specialists only while measurements justify it. Track prompt
-tokens, specialist tokens, orchestrator vs specialist cost, reasoning/cache
-tokens, context utilization, provider/profile usage, round trips, tool failure
-rate, `need_info` rate, patch size vs full save, and user-visible retries.
-
-## 16. Decision gates
-
-1. End Phase 0: provider boundary, tool parsing, GUI request/response, model
-   profiles, usage events, boundary inspection, and tool-schema byte budget are
-   stable.
-2. End Phase 2: operation-level recipe tools keep raw recipe JSON out of the
-   orchestrator at acceptable prompt cost.
-3. Start Phase 3: chosen provider accepts the first recipe specialist prompt and
-   private tool schemas; otherwise build projection/summary or choose a smaller
-   first recipe type.
-4. End Phase 3: atomic patching works, stale writes are rejected, validation
-   failures are structured, and patch payload/tool failure rates justify
-   continuing.
-5. End Phase 4: workflow orchestration composes recipe operation tools, direct
-   tools, and derived recipe descriptions without raw JSON leakage.
-6. End Phase 4.5: Bedrock Converse passes shared provider conformance; cache
-   placement is profile-driven; normalized usage exposes cache fields when
-   available.
-7. Roster expansion: stop when per-type gotchas/schema/projection cost exceeds
-   observed user value.
-
-## 17. Target file layout
+## 16. Target file layout
 
 Keep vertical ownership clear:
 
@@ -710,10 +721,13 @@ modules/gui/src/app/home/body/process/chatActions/
 Provider adapters are siblings under `chat/llm/providers/`; adding Bedrock or
 Claude must not change `Conversation` or specialist loops.
 
-## 18. Open questions
+## 17. Open questions
 
-- What `promptFacts()` additions (defaults summary, rule prose, output bands,
-  gotchas) prove load-bearing once `update_recipe` / `create_recipe` lands?
+- What exact closure API should each recipe spec expose to power
+  `load_for_update`?
+- Which update closures can be derived mechanically from schema/rules, and
+  which need hand-authored recipe knowledge?
+- What `createFacts()` shape is needed before `create_recipe` lands?
 - What should `get_gui_context()` return beyond compact turn context?
 - Which provider schemas need LLM-compatible projection?
 - Which model profile/policy settings are global, environment-specific,
@@ -725,10 +739,10 @@ Claude must not change `Conversation` or specialist loops.
 - How much recent conversation history should the orchestrator pass to a
   specialist?
 
-## 19. Non-goals
+## 18. Non-goals
 
 - Specialists calling other specialists.
-- Persistent specialist sessions by default.
+- Durable specialist sessions that outlive one user task.
 - Arbitrary Redux `get_state(slice)` access.
 - Full MCP-over-WS protocol.
 - Rewriting every recipe schema at once.
@@ -738,7 +752,7 @@ Claude must not change `Conversation` or specialist loops.
 - Exact cross-provider cost accounting when providers expose different fields.
 - Always-on full prompt/tool/recipe payload logging in normal deployments.
 
-## 20. References
+## 19. References
 
 - `modules/ai/PRACTICES.md`
 - `modules/ai/PUNCH_LIST.md`
