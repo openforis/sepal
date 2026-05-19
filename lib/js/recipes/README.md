@@ -8,10 +8,11 @@ prefix is a Node imports-map convention that doesn't carry to Vite, so the GUI
 uses the bare package name. Same package, byte-identical at both runtimes.
 Deps are limited to `ajv` + `ajv-formats`.
 
-Each spec exposes `{id, name, schema, rules, defaultModel(), toEffectiveModel(model), selectionFacts(), describeFacts(), editFacts(), validate(model)}`.
+Each spec exposes `{id, name, schema, rules, defaultModel(), toEffectiveModel(model), selectionFacts(), describeFacts(), editFacts(), updateClosure({instruction, effectiveModel}), validate(model)}`.
 Registry-level conveniences: `listRecipeSpecs()`, `getRecipeSpec(id)`,
 `getRecipeSchema(id)`, `getRecipeDefaults(id)`, `getRecipeSelectionFacts(id)`,
 `getRecipeDescribeFacts(id)`, `getRecipeEditFacts(id)`,
+`getRecipeUpdateClosure(id, args)`,
 `validateRecipe(id, model)`, `toEffectiveModel(id, model)`.
 
 ## LLM-facing model contract
@@ -76,6 +77,35 @@ AI module reads the bucket for the requested `purpose`:
   §3 prompt-byte budget.
 - The base prompt is placed first so cache-stable prefixes hold across recipe
   types.
+
+## Update closure (`updateClosure({instruction, effectiveModel})`)
+
+The AI `load_for_update` tool calls this to return a **bounded** edit scope
+rather than handing the whole effective model + full `editFacts` to the
+update specialist every turn. The closure shape:
+
+```
+{
+  intent,                 // 'dateWindow' | 'broad' | ... (per-spec)
+  currentValues,          // {jsonPointer: value} — only the paths the specialist needs
+  dependentPaths,         // [jsonPointer]      — paths the patch may write; empty == broad scope (any path)
+  guidance                // [string]           — rules relevant to this intent
+}
+```
+
+`load_for_update` adds `baseModelHash` from the GUI load response so the
+specialist can call `recipe_patch` with the right concurrency token without a
+second round-trip.
+
+Intent classification is the spec's responsibility (lives next to its facts +
+rules). Detection is deliberately narrow — keyword-match on the instruction
+against a small set of known intent labels per spec, falling back to a `broad`
+closure (top-level effective sections + full `editFacts.guidance`) when no
+intent matches. No NL parsing of values; the LLM extracts target values from
+the user's instruction.
+
+MOSAIC intents today: `dateWindow` (target-date / season-window edits) +
+`broad`.
 
 ## AOI subschema
 

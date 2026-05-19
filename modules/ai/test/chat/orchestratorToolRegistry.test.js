@@ -38,4 +38,10 @@ describe('orchestrator tool registry', () => {
 
         expect(names).not.toContain('recipe_patch')
     })
+
+    it('does not expose load_for_update on the orchestrator surface — it is specialist-private', () => {
+        const names = anOrchestratorSurface().schemas().map(schema => schema.name)
+
+        expect(names).not.toContain('load_for_update')
+    })
 })

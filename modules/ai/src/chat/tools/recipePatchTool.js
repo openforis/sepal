@@ -12,12 +12,12 @@ const PATCH_ERROR_FIELDS = ['currentModelHash', 'errors', 'details']
 function recipePatchTool(guiRequests) {
     return {
         name: 'recipe_patch',
-        description: 'Apply JSON Patch (RFC 6902) to ONE recipe. Put every related field edit in one operations array; operations are applied atomically, in order, to the effective model. Requires baseModelHash from prior recipe_load -> mismatch returns STALE_WRITE {currentModelHash} -> reload + retry. VALIDATION_FAILED returns {errors:[{path,message,rule}]}. INVALID_PATCH / PATCH_APPLY_FAILED for envelope or apply failure. ok -> {summary, modelHash, invalidatedPaths}; modelHash is next call\'s baseModelHash.',
+        description: 'Apply JSON Patch (RFC 6902) to ONE recipe. Put every related field edit in one operations array; operations are applied atomically, in order, to the effective model. Requires baseModelHash from prior load_for_update -> mismatch returns STALE_WRITE {currentModelHash} -> reload + retry. VALIDATION_FAILED returns {errors:[{path,message,rule}]}. INVALID_PATCH / PATCH_APPLY_FAILED for envelope or apply failure. ok -> {summary, modelHash, invalidatedPaths}; modelHash is next call\'s baseModelHash.',
         parameters: {
             type: 'object',
             properties: {
                 recipeId: {type: 'string', description: 'The one recipe being patched.'},
-                baseModelHash: {type: 'string', description: 'baseModelHash returned by the preceding recipe_load.'},
+                baseModelHash: {type: 'string', description: 'baseModelHash returned by the preceding load_for_update.'},
                 operations: {
                     type: 'array',
                     minItems: 1,

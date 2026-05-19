@@ -17,20 +17,23 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 - **Recipe operation dispatchers are partial** — `describe_recipe({recipeId,
   question?})` and `update_recipe({recipeId, instruction})` are both on the
   orchestrator surface, each backed by its own per-type specialist
-  (`recipe_load` only for describe; `recipe_load` + `recipe_patch` for update,
-  with the schema injected into the system prompt). Still missing:
+  (`recipe_load` only for describe; `load_for_update` + `recipe_patch` for
+  update, with the schema injected into the update prompt). Still missing:
   `create_recipe({recipeType, instruction, projectId?, name?})` dispatcher
   seeded with `spec.defaultModel()`.
 - **Recipe specialist routing is partially type-aware** — `describeRecipeTool`
   and `updateRecipeTool` both resolve `recipeId -> recipeType` via
   `lookupRecipeMetadata$` and assemble a per-type system prompt from
-  per-purpose fact buckets (`spec.describeFacts()` /
-  `spec.editFacts()` — MOSAIC today; other types fall back to the generic
-  base frame). Still missing: per-type allowed-tool sets, per-type prompt
-  file overrides (if a recipe ever needs more than per-purpose facts can
-  express), structured `editFacts` fields beyond `guidance` (e.g.
-  `pathAliases`, `validationDependencies` once a future `load_for_update`
-  / closure planner consumes them), and `create_recipe` dispatcher routing.
+  per-purpose fact buckets (`spec.describeFacts()` / `spec.editFacts()` —
+  MOSAIC today; other types fall back to the generic base frame).
+  `updateRecipeTool` additionally sees only `load_for_update` + `recipe_patch`
+  in scope, and `load_for_update` returns a `spec.updateClosure()`-derived
+  scope per instruction. Still missing: per-type allowed-tool sets beyond the
+  describe/update split, per-type prompt file overrides (if a recipe ever
+  needs more than per-purpose facts can express), structured `editFacts`
+  fields beyond `guidance` (e.g. `pathAliases`, `validationDependencies`),
+  more recipe-spec intents on `updateClosure` (today MOSAIC has `dateWindow`
+  + `broad`), and `create_recipe` dispatcher routing.
 - **Map specialist read tools are minimal** — `consult_map` exposes
   `get_gui_context`, `map_area_list` (layout + areas + AOI + view), and
   `layer_list` (per-area imageLayer + featureLayers). Still missing:
@@ -64,10 +67,15 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   `modules/gui/src/app/home/body/process/chatActions/recipeActions.js` —
   identity-only response, no model fetch, no gzip envelope. Reusable by
   the future `update_recipe` / `create_recipe` dispatchers.
-- **Shared recipe spec lacks `fragmentsForEdit({intent, targetPaths})`** —
-  DESIGN §6/§7. Needed by the patch specialist to plan dependent-fragment
-  reads/writes deterministically. Land alongside `recipe_patch` and the recipe
-  create/update tools.
+- ~~**Shared recipe spec lacks `fragmentsForEdit({intent, targetPaths})`**~~ —
+  closed under a different shape. `spec.updateClosure({instruction,
+  effectiveModel})` returns `{intent, currentValues, dependentPaths,
+  guidance}` and is consumed by the specialist-private `load_for_update`
+  tool (`modules/ai/src/chat/tools/loadForUpdateTool.js`). Update specialists
+  see `load_for_update` + `recipe_patch` only; the closure narrows the LLM's
+  read-set + writable paths instead of handing over the whole effective
+  model. MOSAIC intents today: `dateWindow` + `broad`. Adding intents per
+  spec is the unit of growth.
 - **AI patch-apply path (future GUI slice)** — apply the LLM's effective
   output directly; no re-merge of dormant fields. Validation runs on the
   effective shape via `spec.validate(model)`. Contract is fixed in

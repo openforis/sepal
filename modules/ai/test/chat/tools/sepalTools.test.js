@@ -40,4 +40,16 @@ describe('sepal tools', () => {
 
         expect(names).not.toContain('recipe_patch')
     })
+
+    it('keeps load_for_update in the specialist inner-registry so the update specialist can plan patches', () => {
+        const names = specialistInnerTools({guiRequests: aFakeGuiRequests(() => of({}))}).map(tool => tool.name)
+
+        expect(names).toContain('load_for_update')
+    })
+
+    it('does not expose load_for_update on the orchestrator surface — it is specialist-private', () => {
+        const names = sepalTools({guiRequests: aFakeGuiRequests()}).map(tool => tool.name)
+
+        expect(names).not.toContain('load_for_update')
+    })
 })

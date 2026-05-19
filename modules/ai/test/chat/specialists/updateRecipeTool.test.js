@@ -5,10 +5,13 @@ const {aFakeBus, aFakeGuiRequests, aFakeLlm, aFakeTools, read} = require('../bui
 
 describe('updateRecipeTool', () => {
 
-    const recipeLoadSchema = {
-        name: 'recipe_load',
-        description: 'Load ONE recipe.',
-        parameters: {type: 'object', properties: {recipeId: {type: 'string'}}}
+    const loadForUpdateSchema = {
+        name: 'load_for_update',
+        description: 'Load + closure for ONE recipe.',
+        parameters: {
+            type: 'object',
+            properties: {recipeId: {type: 'string'}, instruction: {type: 'string'}}
+        }
     }
     const recipePatchSchema = {
         name: 'recipe_patch',
@@ -22,6 +25,8 @@ describe('updateRecipeTool', () => {
             }
         }
     }
+    const recipeListSchema = {name: 'recipe_list', description: 'List.', parameters: {type: 'object'}}
+    const recipeLoadSchema = {name: 'recipe_load', description: 'Load ONE recipe.', parameters: {type: 'object'}}
 
     function metadataReplyingWith(metadata) {
         return aFakeGuiRequests(() => of(metadata))
@@ -31,10 +36,10 @@ describe('updateRecipeTool', () => {
         const llm = overrides.llm ?? aFakeLlm({replies: [{text: 'Done.'}]})
         const innerTools = overrides.innerTools ?? aFakeTools(
             {
-                recipe_load: () => of({id: 'r1', type: 'MOSAIC', model: {dates: {seasonEnd: '2025-01-01'}}, modelHash: 'h1'}),
+                load_for_update: () => of({baseModelHash: 'h1', intent: 'broad', currentValues: {}, dependentPaths: ['/'], guidance: []}),
                 recipe_patch: () => of({summary: 'patched', modelHash: 'h2', invalidatedPaths: ['/dates/seasonEnd']})
             },
-            [recipeLoadSchema, recipePatchSchema]
+            [loadForUpdateSchema, recipePatchSchema]
         )
         const guiRequests = overrides.guiRequests ?? metadataReplyingWith({id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: 'p1'})
         const tool = updateRecipeTool({
@@ -66,16 +71,16 @@ describe('updateRecipeTool', () => {
         })
     })
 
-    it('throws at construction when the inner registry is missing recipe_load', () => {
+    it('throws at construction when the inner registry is missing load_for_update', () => {
         const innerTools = aFakeTools({recipe_patch: () => of({})}, [recipePatchSchema])
 
         expect(() => updateRecipeTool({
             llm: aFakeLlm(), bus: aFakeBus(), innerTools, guiRequests: aFakeGuiRequests()
-        })).toThrow(/recipe_load/)
+        })).toThrow(/load_for_update/)
     })
 
     it('throws at construction when the inner registry is missing recipe_patch', () => {
-        const innerTools = aFakeTools({recipe_load: () => of({})}, [recipeLoadSchema])
+        const innerTools = aFakeTools({load_for_update: () => of({})}, [loadForUpdateSchema])
 
         expect(() => updateRecipeTool({
             llm: aFakeLlm(), bus: aFakeBus(), innerTools, guiRequests: aFakeGuiRequests()
@@ -102,20 +107,21 @@ describe('updateRecipeTool', () => {
         expect(userMessage.content).toMatch(/change season end to 2026-06-01/)
     })
 
-    it('offers the specialist both recipe_load and recipe_patch (and nothing else from the inner registry)', () => {
+    it('offers the specialist load_for_update and recipe_patch only (no raw recipe_load, no recipe_list)', () => {
         const innerTools = aFakeTools(
             {
+                load_for_update: () => of({}),
                 recipe_load: () => of({}),
                 recipe_patch: () => of({}),
                 recipe_list: () => of([])
             },
-            [recipeLoadSchema, recipePatchSchema, {name: 'recipe_list', description: 'List.', parameters: {type: 'object'}}]
+            [loadForUpdateSchema, recipeLoadSchema, recipePatchSchema, recipeListSchema]
         )
         const {tool, llm} = aTool({innerTools})
 
         read(tool.invoke$({recipeId: 'r1', instruction: 'do thing'}, aContext()))
 
-        expect(llm.receivedTools[0].map(s => s.name).sort()).toEqual(['recipe_load', 'recipe_patch'])
+        expect(llm.receivedTools[0].map(s => s.name).sort()).toEqual(['load_for_update', 'recipe_patch'])
     })
 
     it('lets the inner LLM call recipe_patch through the inner registry', () => {
@@ -135,7 +141,20 @@ describe('updateRecipeTool', () => {
         expect(innerTools.invocations).toEqual([patchCall])
     })
 
-    it("refuses recipe_patch calls for a recipeId other than the one update_recipe was asked about", () => {
+    it('lets the inner LLM call load_for_update through the inner registry', () => {
+        const loadCall = {id: 'tl1', name: 'load_for_update', input: {recipeId: 'r1', instruction: 'change target date'}}
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [loadCall]},
+            {text: 'noted.'}
+        ]})
+        const {tool, innerTools} = aTool({llm})
+
+        read(tool.invoke$({recipeId: 'r1', instruction: 'change target date'}, aContext()))
+
+        expect(innerTools.invocations).toEqual([loadCall])
+    })
+
+    it('refuses recipe_patch calls for a recipeId other than the one update_recipe was asked about', () => {
         const wrongCall = {id: 'tp1', name: 'recipe_patch', input: {
             recipeId: 'r999', baseModelHash: 'h1', operations: [{op: 'replace', path: '/x', value: 1}]
         }}
@@ -158,8 +177,8 @@ describe('updateRecipeTool', () => {
         })
     })
 
-    it('refuses recipe_load calls for a recipeId other than the one update_recipe was asked about (same scope rule)', () => {
-        const wrongCall = {id: 'rl1', name: 'recipe_load', input: {recipeId: 'r999'}}
+    it('refuses load_for_update calls for a recipeId other than the one update_recipe was asked about (same scope rule)', () => {
+        const wrongCall = {id: 'tl1', name: 'load_for_update', input: {recipeId: 'r999', instruction: 'edit'}}
         const llm = aFakeLlm({replies: [
             {toolCalls: [wrongCall]},
             {text: 'cannot load.'}
@@ -173,6 +192,29 @@ describe('updateRecipeTool', () => {
         expect(toolMessage.toolResults[0].result.error.code).toBe('RECIPE_SCOPE_VIOLATION')
     })
 
+    it('refuses raw recipe_load entirely — update specialists must use load_for_update, not the read-side tool', () => {
+        const recipeLoadCall = {id: 'tl1', name: 'recipe_load', input: {recipeId: 'r1'}}
+        const llm = aFakeLlm({replies: [
+            {toolCalls: [recipeLoadCall]},
+            {text: 'blocked.'}
+        ]})
+        const innerTools = aFakeTools(
+            {
+                load_for_update: () => of({}),
+                recipe_load: () => of({}),
+                recipe_patch: () => of({})
+            },
+            [loadForUpdateSchema, recipeLoadSchema, recipePatchSchema]
+        )
+        const {tool} = aTool({llm, innerTools})
+
+        read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+        expect(innerTools.invocations).toEqual([])
+        const toolMessage = llm.receivedMessages[1].find(m => m.role === 'tool')
+        expect(toolMessage.toolResults[0].result.error.code).toBe('TOOL_NOT_ALLOWED')
+    })
+
     it('refuses non-allowed tool calls so the specialist cannot escape its scope', () => {
         const escapeCall = {id: 'tx', name: 'recipe_list', input: {}}
         const llm = aFakeLlm({replies: [
@@ -181,11 +223,11 @@ describe('updateRecipeTool', () => {
         ]})
         const innerTools = aFakeTools(
             {
-                recipe_load: () => of({}),
+                load_for_update: () => of({}),
                 recipe_patch: () => of({}),
                 recipe_list: () => of([])
             },
-            [recipeLoadSchema, recipePatchSchema, {name: 'recipe_list', description: 'List.', parameters: {type: 'object'}}]
+            [loadForUpdateSchema, recipePatchSchema, recipeListSchema]
         )
         const {tool} = aTool({llm, innerTools})
 
@@ -199,16 +241,15 @@ describe('updateRecipeTool', () => {
     describe('outer envelope reflects whether the patch actually applied', () => {
 
         const patchOp = {op: 'replace', path: '/dates/seasonEnd', value: '2026-06-01'}
-        const loadedRecipe = {id: 'r1', type: 'MOSAIC', model: {}, modelHash: 'h1'}
+        const closureResult = {baseModelHash: 'h1', intent: 'dateWindow', currentValues: {}, dependentPaths: ['/dates/seasonEnd'], guidance: []}
 
         function aSpecialistThatCalls(patchCalls, finalText) {
-            const calls = patchCalls.map((_, i) => ({id: `tp${i}`, name: 'recipe_patch', input: {
-                recipeId: 'r1', baseModelHash: 'h1', operations: [patchOp]
-            }}))
-            const replies = calls.map(call => ({toolCalls: [call]}))
+            const replies = patchCalls.map((op, i) => ({toolCalls: [{id: `tp${i}`, name: 'recipe_patch', input: {
+                recipeId: 'r1', baseModelHash: 'h1', operations: [op]
+            }}]}))
             replies.push({text: finalText})
             return aFakeLlm({replies: [
-                {toolCalls: [{id: 'tl1', name: 'recipe_load', input: {recipeId: 'r1'}}]},
+                {toolCalls: [{id: 'tl1', name: 'load_for_update', input: {recipeId: 'r1', instruction: 'edit'}}]},
                 ...replies
             ]})
         }
@@ -217,10 +258,10 @@ describe('updateRecipeTool', () => {
             let i = 0
             return aFakeTools(
                 {
-                    recipe_load: () => of(loadedRecipe),
+                    load_for_update: () => of(closureResult),
                     recipe_patch: () => of(patchResults[i++])
                 },
-                [recipeLoadSchema, recipePatchSchema]
+                [loadForUpdateSchema, recipePatchSchema]
             )
         }
 
@@ -257,12 +298,12 @@ describe('updateRecipeTool', () => {
 
         it('returns {ok: false, error: UPDATE_NOT_ATTEMPTED} when the specialist never called recipe_patch', () => {
             const llm = aFakeLlm({replies: [
-                {toolCalls: [{id: 'tl1', name: 'recipe_load', input: {recipeId: 'r1'}}]},
+                {toolCalls: [{id: 'tl1', name: 'load_for_update', input: {recipeId: 'r1', instruction: 'edit'}}]},
                 {text: 'I looked at the recipe but did not patch anything.'}
             ]})
             const innerTools = aFakeTools(
-                {recipe_load: () => of(loadedRecipe)},
-                [recipeLoadSchema, recipePatchSchema]
+                {load_for_update: () => of(closureResult)},
+                [loadForUpdateSchema, recipePatchSchema]
             )
             const {tool} = aTool({llm, innerTools})
 
@@ -279,14 +320,11 @@ describe('updateRecipeTool', () => {
         })
 
         it('returns success when a later patch succeeds even if an earlier one failed (the user got the update)', () => {
-            // Two different patches — the no-repeat tool-call guard would block
-            // an exact-repeat, which isn't what we're modelling here. The LLM in
-            // reality adjusts the patch on failure and retries.
             const badPatch = {op: 'replace', path: '/dates/seasonEnd', value: 'not-a-date'}
             const goodPatch = {op: 'replace', path: '/dates/seasonEnd', value: '2026-06-01'}
             const patchError = {code: 'VALIDATION_FAILED', message: 'bad', errors: []}
             const llm = aFakeLlm({replies: [
-                {toolCalls: [{id: 'tl1', name: 'recipe_load', input: {recipeId: 'r1'}}]},
+                {toolCalls: [{id: 'tl1', name: 'load_for_update', input: {recipeId: 'r1', instruction: 'edit'}}]},
                 {toolCalls: [{id: 'tp0', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [badPatch]}}]},
                 {toolCalls: [{id: 'tp1', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [goodPatch]}}]},
                 {text: 'Got it on the second try.'}
@@ -301,13 +339,13 @@ describe('updateRecipeTool', () => {
             expect(result).toEqual({ok: true, data: {answer: 'Got it on the second try.'}})
         })
 
-        it('leaves enough specialist rounds for three patch attempts after the initial load', () => {
+        it('leaves enough specialist rounds for three patch attempts after the initial load_for_update', () => {
             const badPatch1 = {op: 'replace', path: '/dates/seasonEnd', value: 'not-a-date'}
             const badPatch2 = {op: 'replace', path: '/dates/seasonEnd', value: '2020-01-01'}
             const goodPatch = {op: 'replace', path: '/dates/seasonEnd', value: '2026-06-01'}
             const patchError = {code: 'VALIDATION_FAILED', message: 'bad', errors: []}
             const llm = aFakeLlm({replies: [
-                {toolCalls: [{id: 'tl1', name: 'recipe_load', input: {recipeId: 'r1'}}]},
+                {toolCalls: [{id: 'tl1', name: 'load_for_update', input: {recipeId: 'r1', instruction: 'edit'}}]},
                 {toolCalls: [{id: 'tp0', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [badPatch1]}}]},
                 {toolCalls: [{id: 'tp1', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [badPatch2]}}]},
                 {toolCalls: [{id: 'tp2', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [goodPatch]}}]},
@@ -341,6 +379,16 @@ describe('updateRecipeTool', () => {
             expect(systemMessage.content).toMatch(/seasonStart/)
             expect(systemMessage.content).toMatch(/```json/)
             expect(systemMessage.content).toContain('compositeOptions')
+        })
+
+        it('the update-specialist prompt names load_for_update (not raw recipe_load) so the LLM uses the closure path', () => {
+            const {tool, llm} = aTool()
+
+            read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+            const systemMessage = llm.receivedMessages[0][0]
+            expect(systemMessage.content).toContain('load_for_update')
+            expect(systemMessage.content).not.toContain('recipe_load')
         })
 
         it('update prompt does not leak selection facts (chooseWhen / useCases) — they belong to the orchestrator selection step', () => {
