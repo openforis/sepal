@@ -47,7 +47,7 @@
         "react-dom": "^19.2.6",
         "react-dropzone": "^15.0.0",
         "react-highlighter": "^0.4.3",
-        "react-intl": "10.1.7",
+        "react-intl": "10.1.8",
         "react-markdown": "^10.1.0",
         "react-number-format": "^5.4.5",
         "react-redux": "9.3.0",
