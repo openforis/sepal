@@ -1,5 +1,6 @@
-const {of, throwError} = require('rxjs')
+const {concat, of, throwError, toArray} = require('rxjs')
 const {lookupRecipeMetadata$} = require('#mcp/chat/tools/recipeMetadata')
+const {emitChannel, guiAction, isChannelEmission} = require('#mcp/chat/channelEvents')
 const {aFakeGuiRequests, read} = require('../builders')
 
 describe('lookupRecipeMetadata$', () => {
@@ -46,5 +47,21 @@ describe('lookupRecipeMetadata$', () => {
             ok: false,
             error: {code: 'RECIPE_NOT_FOUND', message: 'Recipe not found: r1'}
         })
+    })
+
+    it('passes channel emissions through unchanged — only the actual data is wrapped as an envelope (regression: double tool-result)', async () => {
+        const metadata = {id: 'r1', type: 'MOSAIC', name: 'k', projectId: 'p1'}
+        // Mirror what the real guiRequests.request$ emits: channel event (gui-action) then the outcome.
+        const guiRequests = aFakeGuiRequests(() => concat(
+            of(emitChannel(guiAction({requestId: 'req-1', action: 'recipe-metadata', params: {recipeId: 'r1'}}))),
+            of(metadata)
+        ))
+
+        const emissions = await lookupRecipeMetadata$(guiRequests, context, 'r1').pipe(toArray()).toPromise()
+
+        // Exactly two emissions: one channel event passed through, one envelope.
+        expect(emissions).toHaveLength(2)
+        expect(isChannelEmission(emissions[0])).toBe(true)
+        expect(emissions[1]).toEqual({ok: true, data: metadata})
     })
 })

@@ -44,6 +44,47 @@ describe('tool registry — schemas and invoke envelopes', () => {
             expect(result).toEqual({ok: true, data: {echoed: 'hi'}})
         })
 
+        it('passes through an envelope-shaped tool result unchanged (no double-wrap)', () => {
+            // Tools may explicitly return an envelope to carry structured success/failure
+            // (e.g. recipe_patch, update_recipe). Double-wrapping would hide the outcome
+            // from tool-end events and from the LLM behind data.ok.
+            const envelopeTool = {
+                name: 'envelope_tool',
+                description: 'x',
+                parameters: {type: 'object', properties: {}, additionalProperties: true},
+                invoke$: () => of({ok: false, error: {code: 'STALE_WRITE', message: 'hash mismatch'}})
+            }
+            const registry = createToolRegistry({tools: [envelopeTool], bus})
+
+            const result = read(registry.invoke$({id: 'c1', name: 'envelope_tool', input: {}}))
+
+            expect(result).toEqual({ok: false, error: {code: 'STALE_WRITE', message: 'hash mismatch'}})
+        })
+
+        it('logs structured validation error details for failed tool results', () => {
+            const envelopeTool = {
+                name: 'envelope_tool',
+                description: 'x',
+                parameters: {type: 'object', properties: {}, additionalProperties: true},
+                invoke$: () => of({
+                    ok: false,
+                    error: {
+                        code: 'VALIDATION_FAILED',
+                        message: 'validation failed',
+                        errors: [{path: '/dates/seasonStart', rule: 'seasonStartWindow', message: 'must be in window'}]
+                    }
+                })
+            }
+            const registry = createToolRegistry({tools: [envelopeTool], bus})
+
+            read(registry.invoke$({id: 'c1', name: 'envelope_tool', input: {}}))
+
+            const resultEvent = bus.published.find(event => event.type === 'tool.result')
+            expect(resultEvent.message).toContain('/dates/seasonStart')
+            expect(resultEvent.message).toContain('seasonStartWindow')
+            expect(resultEvent.errorSummary).toContain('must be in window')
+        })
+
         it('passes the turn context through to the tool', () => {
             const seen = []
             const guiContextTool = {

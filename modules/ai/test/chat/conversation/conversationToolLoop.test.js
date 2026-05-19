@@ -431,7 +431,8 @@ describe('Conversation tool loop', () => {
 
         it('ignores tool calls the model emits on the retry even though tools:[] was sent, and records the drop', () => {
             // Defends against providers that don't enforce tools:[] — the retry contract
-            // is text-only end-to-end, not just "ask politely for text-only".
+            // after a failed tool result is text-only end-to-end, not just
+            // "ask politely for text-only".
             const retryToolCall = {id: 't2', name: 'recipe_list', input: {}}
             const bus = aFakeBus()
             const llm = aFakeLlm({replies: [
@@ -439,7 +440,7 @@ describe('Conversation tool loop', () => {
                 emptyReply,
                 {text: 'Trying anyway: ', toolCalls: [retryToolCall]}
             ]})
-            const tools = aFakeTools({recipe_list: () => of([])})
+            const tools = aFakeTools({recipe_list: () => of({ok: false, error: {code: 'NO_MATCH', message: 'not found'}})})
             const conversation = aConversation({llm, tools, bus})
 
             run(conversation.sendUserMessage$('open it'))
@@ -456,14 +457,42 @@ describe('Conversation tool loop', () => {
             }))
         })
 
-        it('omits tools from the retry call so the model is forced to emit text instead of substituting another read-only tool', () => {
+        it('keeps tools on the retry call after a successful tool result so the model can emit the intended next action', () => {
+            const describeCall = {id: 't1', name: 'describe_recipe', input: {recipeId: 'r1'}}
+            const updateCall = {id: 't2', name: 'update_recipe', input: {recipeId: 'r1', instruction: 'set date'}}
+            const schemas = [
+                {name: 'describe_recipe', description: 'd', parameters: {type: 'object'}},
+                {name: 'update_recipe', description: 'u', parameters: {type: 'object'}}
+            ]
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [describeCall]},
+                emptyReply,
+                {toolCalls: [updateCall]},
+                {text: 'Updated.'}
+            ]})
+            const tools = aFakeTools({
+                describe_recipe: () => of({answer: 'Target date is currently 2025-07-02.'}),
+                update_recipe: () => of({answer: 'Updated target date.'})
+            }, schemas)
+            const conversation = aConversation({llm, tools})
+
+            const {events} = run(conversation.sendUserMessage$('set target date'))
+
+            expect(tools.invocations).toEqual([describeCall, updateCall])
+            expect(llm.receivedTools[2]).toEqual(schemas)
+            expect(events.at(-1)).toEqual({textDelta: 'Updated.'})
+        })
+
+        it('omits tools from the retry call after a failed tool result so the model explains instead of substituting another read-only tool', () => {
             const schemas = [{name: 'recipe_list', description: 'd', parameters: {type: 'object'}}]
             const llm = aFakeLlm({replies: [
                 {toolCalls: [toolCall]},
                 emptyReply,
                 {text: 'No tool here can do that.'}
             ]})
-            const tools = aFakeTools({recipe_list: () => of([])}, schemas)
+            const tools = aFakeTools({
+                recipe_list: () => of({ok: false, error: {code: 'NO_MATCH', message: 'not found'}})
+            }, schemas)
             const conversation = aConversation({llm, tools})
 
             run(conversation.sendUserMessage$('open it'))

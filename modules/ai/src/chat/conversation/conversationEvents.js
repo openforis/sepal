@@ -9,21 +9,21 @@ function publishLlmRequest({bus, diagnostics, conversationId, round, llmMessages
         round,
         messageCount: llmMessages.length,
         offeredTools,
-        message: `LLM turn ${conversationId} round=${round} messages=${messageSummary(llmMessages)} tools=[${offeredTools.join(',')}]`
+        message: `LLM orchestrator ${conversationId} round=${round} messages=${messageSummary(llmMessages)} tools=[${offeredTools.join(',')}]`
     })
     bus.publish({
         type: 'conversation.llmMessages',
         level: 'trace',
         conversationId,
         round,
-        message: () => `LLM turn ${conversationId} round=${round} messages payload: ${diagnostics.summarizeMessages(llmMessages)}`
+        message: () => `LLM orchestrator ${conversationId} round=${round} messages payload: ${diagnostics.summarizeMessages(llmMessages)}`
     })
     bus.publish({
         type: 'conversation.llmTools',
         level: 'trace',
         conversationId,
         round,
-        message: () => `LLM turn ${conversationId} round=${round} tools payload: ${diagnostics.summarizeTools(toolSchemas)}`
+        message: () => `LLM orchestrator ${conversationId} round=${round} tools payload: ${diagnostics.summarizeTools(toolSchemas)}`
     })
 }
 
@@ -35,7 +35,7 @@ function publishToolCall({bus, diagnostics, conversationId, round, toolCall}) {
         round,
         toolName: toolCall.name,
         toolCallId: toolCall.id,
-        message: `LLM turn ${conversationId} round=${round} requested tool ${toolCall.name} (${toolCall.id})`
+        message: `LLM orchestrator ${conversationId} round=${round} requested tool ${toolCall.name} (${toolCall.id})`
     })
     bus.publish({
         type: 'conversation.llmToolCallPayload',
@@ -44,11 +44,11 @@ function publishToolCall({bus, diagnostics, conversationId, round, toolCall}) {
         round,
         toolName: toolCall.name,
         toolCallId: toolCall.id,
-        message: () => `LLM turn ${conversationId} round=${round} tool call payload: ${diagnostics.summarizeObject(toolCall)}`
+        message: () => `LLM orchestrator ${conversationId} round=${round} tool call payload: ${diagnostics.summarizeObject(toolCall)}`
     })
 }
 
-function publishEmptyLlmRetry({bus, conversationId, round, messages, exposedTools}) {
+function publishEmptyLlmRetry({bus, conversationId, round, messages, exposedTools, retryMode}) {
     const roleSummary = roleSummaryOf(messages)
     bus.publish({
         type: 'conversation.llmEmptyRetry',
@@ -58,7 +58,8 @@ function publishEmptyLlmRetry({bus, conversationId, round, messages, exposedTool
         afterToolRound: isAfterToolRound(messages),
         roleSummary,
         exposedTools,
-        message: `LLM turn ${conversationId} round=${round} retrying with hint after empty post-tool reply roles=[${roleSummary}] tools=[${exposedTools.join(',') || '-'}]`
+        retryMode,
+        message: `LLM orchestrator ${conversationId} round=${round} retrying with hint mode=${retryMode} after empty post-tool reply roles=[${roleSummary}] tools=[${exposedTools.join(',') || '-'}]`
     })
 }
 
@@ -70,7 +71,7 @@ function publishRetryToolCallsDropped({bus, conversationId, round, toolCalls}) {
         conversationId,
         round,
         toolNames: toolCalls.map(toolCall => toolCall.name),
-        message: `LLM turn ${conversationId} round=${round} dropped tool calls on retry (text-only contract): [${names}]`
+        message: `LLM orchestrator ${conversationId} round=${round} dropped tool calls on retry (text-only contract): [${names}]`
     })
 }
 
@@ -90,7 +91,7 @@ function publishEmptyLlmReply({bus, conversationId, round, messages, exposedTool
         roleSummary,
         exposedTools,
         requestedToolCalls,
-        message: `LLM turn ${conversationId} round=${round} produced no visible assistant text afterToolRound=${afterToolRound} toolResults=[${toolSummary}] roles=[${roleSummary}] tools=[${exposedTools.join(',') || '-'}] requested=[${requestedToolCalls.join(',') || '-'}]`
+        message: `LLM orchestrator ${conversationId} round=${round} produced no visible assistant text afterToolRound=${afterToolRound} toolResults=[${toolSummary}] roles=[${roleSummary}] tools=[${exposedTools.join(',') || '-'}] requested=[${requestedToolCalls.join(',') || '-'}]`
     })
 }
 

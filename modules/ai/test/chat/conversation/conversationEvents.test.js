@@ -2,6 +2,50 @@ const {of} = require('rxjs')
 const {createConversation} = require('#mcp/chat/conversation/conversation')
 const {aConversation, aFakeBus, aFakeDiagnostics, aFakeHistory, aFakeLlm, aFakeTools, run} = require('../builders')
 
+describe('orchestrator log attribution', () => {
+
+    function lazyMessage(event) {
+        return typeof event.message === 'function' ? event.message() : event.message
+    }
+
+    function eventsOfType(bus, type) {
+        return bus.published.filter(event => event.type === type)
+    }
+
+    // Orchestrator-loop events should clearly identify themselves as "orchestrator"
+    // — not "turn" or "conversation" — so logs are grep-friendly alongside
+    // "specialist <name>" and "title" lines from the other LLM callers.
+    it('publishes orchestrator-loop messages prefixed with "LLM orchestrator", not "LLM turn"', () => {
+        const bus = aFakeBus()
+        const conversation = aConversation({
+            llm: aFakeLlm({replies: [{text: 'ok'}]}),
+            bus
+        })
+
+        run(conversation.sendUserMessage$('hi'))
+
+        const requestEvent = eventsOfType(bus, 'conversation.llmRequest')[0]
+        expect(lazyMessage(requestEvent)).toMatch(/^LLM orchestrator /)
+        expect(lazyMessage(requestEvent)).not.toMatch(/^LLM turn /)
+    })
+
+    it('passes "orchestrator <id> round <N>" as the debugLabel to llm.respondTo$ (so the adapter\'s llm.request/response logs match)', () => {
+        const receivedDebugLabels = []
+        const recordingLlm = {
+            respondTo$({debugLabel}) {
+                receivedDebugLabels.push(debugLabel)
+                return of({textDelta: 'ok'})
+            }
+        }
+        const conversation = aConversation({llm: recordingLlm})
+
+        run(conversation.sendUserMessage$('hi'))
+
+        expect(receivedDebugLabels[0]).toMatch(/^orchestrator /)
+        expect(receivedDebugLabels[0]).not.toMatch(/^conversation /)
+    })
+})
+
 describe('conversation event publishers — bounded by default', () => {
 
     const userText = 'tell me about my recipes in detail'
@@ -166,7 +210,7 @@ describe('empty-reply diagnostic enrichment', () => {
         })
         expect(emptyReply.roleSummary).toMatch(/assistant\.toolCalls\(recipe_list\)/)
         expect(emptyReply.roleSummary).toMatch(/tool\(recipe_list:ok:array\(0\)\)/)
-        expect(emptyReply.exposedTools).toEqual([])
+        expect(emptyReply.exposedTools).toEqual(['recipe_list'])
     })
 
     it('enriches conversation.llmEmptyRetry with the role summary and exposed tool surface', () => {
@@ -187,7 +231,8 @@ describe('empty-reply diagnostic enrichment', () => {
             type: 'conversation.llmEmptyRetry',
             level: 'info',
             afterToolRound: true,
-            exposedTools: ['recipe_list']
+            exposedTools: ['recipe_list'],
+            retryMode: 'tool'
         })
         expect(retry.roleSummary).toMatch(/assistant\.toolCalls\(recipe_list\)/)
     })

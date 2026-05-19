@@ -60,6 +60,66 @@ describe('LLM provider selector', () => {
         expect(mockNativeRespondTo).not.toHaveBeenCalled()
     })
 
+    it('routes lmstudio tool requests through OpenAI-compatible chat with thinking disabled', () => {
+        const openAiResponse$ = of({toolCall: {id: 't1', name: 'echo', input: {text: 'hi'}}})
+        mockOpenAiRespondTo.mockReturnValue(openAiResponse$)
+        const request = {
+            messages: [{role: 'user', content: 'hi'}],
+            tools: [{name: 'echo', description: 'Echo.', parameters: {type: 'object'}}]
+        }
+
+        const response$ = aLlm('lmstudio').respondTo$(request)
+
+        expect(response$).toBe(openAiResponse$)
+        expect(mockOpenAiRespondTo).toHaveBeenCalledWith({
+            ...request,
+            extraParams: {chat_template_kwargs: {enable_thinking: false}}
+        })
+        expect(mockNativeRespondTo).not.toHaveBeenCalled()
+    })
+
+    it('does not send structured tool history to the native lmstudio path', () => {
+        const openAiResponse$ = of({textDelta: 'done'})
+        mockOpenAiRespondTo.mockReturnValue(openAiResponse$)
+        const request = {
+            messages: [
+                {role: 'assistant', content: '', toolCalls: [{id: 't1', name: 'echo', input: {text: 'hi'}}]},
+                {role: 'tool', toolResults: [{toolCallId: 't1', toolName: 'echo', result: {ok: true, data: {text: 'hi'}}}]}
+            ],
+            disableReasoning: true
+        }
+
+        aLlm('lmstudio').respondTo$(request)
+
+        expect(mockOpenAiRespondTo).toHaveBeenCalledWith({
+            ...request,
+            extraParams: {chat_template_kwargs: {enable_thinking: false}}
+        })
+        expect(mockNativeRespondTo).not.toHaveBeenCalled()
+    })
+
+    it('preserves lmstudio caller extra params when disabling thinking for tool requests', () => {
+        mockOpenAiRespondTo.mockReturnValue(of({textDelta: 'done'}))
+        const request = {
+            messages: [{role: 'user', content: 'hi'}],
+            tools: [{name: 'echo', description: 'Echo.', parameters: {type: 'object'}}],
+            extraParams: {
+                foo: 'bar',
+                chat_template_kwargs: {temperature: 0.2, enable_thinking: true}
+            }
+        }
+
+        aLlm('lmstudio').respondTo$(request)
+
+        expect(mockOpenAiRespondTo).toHaveBeenCalledWith({
+            ...request,
+            extraParams: {
+                foo: 'bar',
+                chat_template_kwargs: {temperature: 0.2, enable_thinking: false}
+            }
+        })
+    })
+
     it('routes non-lmstudio providers to the OpenAI-compatible path even when reasoning is disabled', () => {
         mockOpenAiRespondTo.mockReturnValue(of({textDelta: 'openai'}))
         const request = {messages: [{role: 'user', content: 'hi'}], disableReasoning: true}

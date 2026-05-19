@@ -12,11 +12,13 @@ function publishResponseSummary({bus, model, acc, debugLabel, diagnostics = DEFA
             `LLM response${debugLabel ? ` (${debugLabel})` : ''}: model=${model}`,
             `chunks=${acc.chunkCount}`,
             `contentChunks=${acc.contentChunkCount ?? '-'}`,
+            `reasoningChunks=${acc.reasoningChunkCount ?? '-'}`,
             `toolCallChunks=${acc.toolCallChunkCount ?? '-'}`,
             `toolCalls=${acc.toolCalls?.size ?? '-'}`,
             `finishReasons=[${[...(acc.finishReasons || [])].join(',') || '-'}]`,
             `deltaKeys=[${[...(acc.deltaKeys || [])].join(',') || '-'}]`,
-            `text=${JSON.stringify(responseText(acc.text, diagnostics))}`
+            `text=${JSON.stringify(responseText(acc.text, diagnostics))}`,
+            ...(acc.reasoningChunkCount ? [`reasoning=${JSON.stringify(responseText(acc.reasoning, diagnostics))}`] : [])
         ].join(' ')
     }))
 }

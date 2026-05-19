@@ -23,6 +23,9 @@ function assembleSpecialistPrompt(basePrompt, spec, {includeSchema = false} = {}
         'Use cases:',
         ...facts.useCases.map(useCase => `- ${useCase}`)
     ]
+    if (facts.editGuidance?.length) {
+        sections.push('', 'Edit guidance:', ...facts.editGuidance.map(guidance => `- ${guidance}`))
+    }
     if (includeSchema && spec.schema) {
         sections.push('', 'Schema:', '```json', JSON.stringify(spec.schema), '```')
     }

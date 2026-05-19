@@ -205,5 +205,27 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             expect(bus.published).not.toContainEqual(expect.objectContaining({type: 'llm.chunk'}))
             expect(bus.published).not.toContainEqual(expect.objectContaining({type: 'llm.debugChunk'}))
         })
+
+        it('captures reasoning_content deltas and surfaces them in the response summary (for visibility into thinking-mode models like qwen3)', async () => {
+            const bus = aRecordingBus()
+            mockCreate.mockResolvedValue([
+                {choices: [{delta: {reasoning_content: 'The user wants '}}]},
+                {choices: [{delta: {reasoning_content: 'to set the target date. '}}]},
+                {choices: [{delta: {reasoning_content: 'I should call recipe_patch.'}}]},
+                {choices: [{delta: {content: 'Setting target date.'}}]}
+            ])
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'set the date'}],
+                debugLabel
+            }))
+
+            const response = bus.published.find(event => event.type === 'llm.response')
+            const summary = response.message()
+            // The chunk count for reasoning is visible in the summary.
+            expect(summary).toContain('reasoningChunks=3')
+            // The actual reasoning text is surfaced (may be truncated, but the head is present).
+            expect(summary).toContain('The user wants')
+        })
     })
 })

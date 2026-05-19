@@ -4,12 +4,13 @@
 // describe_recipe / update_recipe / create_recipe to pick a per-type
 // specialist prompt before invoking the inner LLM.
 
-const {catchError, map, of} = require('rxjs')
+const {catchError, of} = require('rxjs')
 const {guiProductRequest$} = require('./guiProductRequest')
+const {mapData} = require('../channelEvents')
 
 function lookupRecipeMetadata$(guiRequests, context, recipeId) {
     return guiProductRequest$(guiRequests, context, 'recipe-metadata', {recipeId}).pipe(
-        map(data => ({ok: true, data})),
+        mapData(data => ({ok: true, data})),
         catchError(error => of({ok: false, error: {code: error.code || 'TOOL_FAILED', message: error.message}}))
     )
 }

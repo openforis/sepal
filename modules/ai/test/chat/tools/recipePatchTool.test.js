@@ -1,5 +1,6 @@
-const {of, throwError} = require('rxjs')
+const {concat, of, throwError, toArray} = require('rxjs')
 const {recipePatchTool} = require('#mcp/chat/tools/recipePatchTool')
+const {emitChannel, guiAction, isChannelEmission} = require('#mcp/chat/channelEvents')
 const {aFakeGuiRequests, read} = require('../builders')
 
 describe('recipe_patch tool', () => {
@@ -18,12 +19,29 @@ describe('recipe_patch tool', () => {
 
             expect(tool.name).toBe('recipe_patch')
             expect(typeof tool.description).toBe('string')
+            expect(tool.description).toContain('one operations array')
             expect(tool.parameters).toEqual({
                 type: 'object',
                 properties: {
-                    recipeId: {type: 'string'},
-                    baseModelHash: {type: 'string'},
-                    operations: {type: 'array', minItems: 1, items: {type: 'object'}}
+                    recipeId: {type: 'string', description: 'The one recipe being patched.'},
+                    baseModelHash: {type: 'string', description: 'baseModelHash returned by the preceding recipe_load.'},
+                    operations: {
+                        type: 'array',
+                        minItems: 1,
+                        description: 'One or more RFC 6902 operations. Group related changes here, e.g. targetDate plus seasonStart plus seasonEnd in the same array.',
+                        items: {
+                            type: 'object',
+                            description: 'A single RFC 6902 operation. Paths are model-relative JSON Pointers such as /dates/targetDate.',
+                            properties: {
+                                op: {type: 'string', enum: ['add', 'remove', 'replace', 'move', 'copy', 'test']},
+                                path: {type: 'string', description: 'Model-relative JSON Pointer path.'},
+                                value: {description: 'Value for add, replace, and test operations.'},
+                                from: {type: 'string', description: 'Source JSON Pointer for move and copy operations.'}
+                            },
+                            required: ['op', 'path'],
+                            additionalProperties: false
+                        }
+                    }
                 },
                 required: ['recipeId', 'baseModelHash', 'operations'],
                 additionalProperties: false
@@ -110,6 +128,22 @@ describe('recipe_patch tool', () => {
             const result = patchFailingWith(Object.assign(new Error('Recipe not found: r1'), {code: 'RECIPE_NOT_FOUND'}))
 
             expect(result).toEqual({ok: false, error: {code: 'RECIPE_NOT_FOUND', message: 'Recipe not found: r1'}})
+        })
+
+        it('passes channel emissions through unchanged — only the actual data is wrapped as an envelope (regression: double tool-result)', async () => {
+            const data = {summary: 'applied', modelHash: 'h-new', invalidatedPaths: ['/dates/seasonEnd']}
+            // Mirror real guiRequests.request$ behavior: channel event first, then the outcome.
+            const guiRequests = aFakeGuiRequests(() => concat(
+                of(emitChannel(guiAction({requestId: 'req-1', action: 'recipe-patch', params: validInput}))),
+                of(data)
+            ))
+            const tool = recipePatchTool(guiRequests)
+
+            const emissions = await tool.invoke$(validInput, context).pipe(toArray()).toPromise()
+
+            expect(emissions).toHaveLength(2)
+            expect(isChannelEmission(emissions[0])).toBe(true)
+            expect(emissions[1]).toEqual({ok: true, data})
         })
     })
 })

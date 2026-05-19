@@ -1,4 +1,12 @@
-// Projects a loaded recipe to the LLM-facing shape:
+// Projects a loaded recipe to the LLM-facing shape: model fields at the root
+// plus a `baseModelHash` sibling. Identity (id/type/name/projectId) is NOT
+// included — the LLM already has the recipeId from its tool args, and recipe
+// type was resolved by the dispatcher's recipe-metadata preflight. Returning
+// fields the LLM doesn't need would only invite confusion; in particular,
+// having a `model` wrapper caused the LLM to patch /model/dates/... instead
+// of /dates/... (recipe_patch operates on the model, not the load envelope).
+//
+// Pipeline:
 //   1. toEffectiveModel — strips dormant fields per the recipe spec (silent
 //      passthrough for types without a spec). See lib/js/recipes/README.md.
 //   2. Path resolution against the effective model. Missing paths return
@@ -14,17 +22,16 @@ function projectLoadedRecipe(recipe, pathString) {
     if (!recipe.modelHash) {
         throw new Error('recipe_load: GUI load-recipe response is missing modelHash')
     }
-    const identity = recipeIdentity(recipe)
     const effectiveModel = toEffectiveModel(recipe.type, recipe.model)
     if (pathString === undefined) {
-        return {...identity, model: projectModelValue(effectiveModel, [], recipe.type)}
+        return {baseModelHash: recipe.modelHash, ...projectModelValue(effectiveModel, [], recipe.type)}
     }
     const tokens = parsePointer(pathString)
     const fragment = resolveOrUndefined(effectiveModel, tokens)
     if (fragment === undefined) {
-        return {...identity, value: undefined}
+        return {baseModelHash: recipe.modelHash, value: undefined}
     }
-    return {...identity, value: projectModelValue(fragment, tokens, recipe.type)}
+    return {baseModelHash: recipe.modelHash, value: projectModelValue(fragment, tokens, recipe.type)}
 }
 
 function resolveOrUndefined(document, tokens) {
@@ -34,13 +41,6 @@ function resolveOrUndefined(document, tokens) {
         if (error instanceof PointerNotFound) return undefined
         throw error
     }
-}
-
-function recipeIdentity(recipe) {
-    const identity = {id: recipe.id, type: recipe.type, name: recipe.name ?? recipe.title}
-    if (recipe.projectId !== undefined) identity.projectId = recipe.projectId
-    identity.modelHash = recipe.modelHash
-    return identity
 }
 
 function projectModelValue(value, tokens, type) {

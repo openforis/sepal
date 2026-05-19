@@ -1,13 +1,14 @@
 // Recipe-operation tools backed by a specialist runtime. Today:
 // describe_recipe (read-only) and update_recipe (read + patch).
 
-const {mergeMap, of} = require('rxjs')
+const {map, mergeMap, of, tap} = require('rxjs')
 const {getRecipeSpec} = require('#recipes')
 const {specialistPrompt} = require('../llmText/prompts')
 const {runSpecialist$} = require('./runSpecialist')
 const {scopeInnerTools} = require('./specialistScope')
 const {assembleSpecialistPrompt} = require('./assembleSpecialistPrompt')
 const {lookupRecipeMetadata$} = require('../tools/recipeMetadata')
+const {isChannelEmission} = require('../channelEvents')
 
 const DESCRIBE_RECIPE_ALLOWED = ['recipe_load']
 const UPDATE_RECIPE_ALLOWED = ['recipe_load', 'recipe_patch']
@@ -40,6 +41,7 @@ function describeRecipeTool({llm, bus, innerTools, guiRequests}) {
         invoke$: ({recipeId, question}, context) =>
             lookupRecipeMetadata$(guiRequests, context, recipeId).pipe(
                 mergeMap(envelope => {
+                    if (isChannelEmission(envelope)) return of(envelope)
                     if (envelope.ok === false) return of(envelope)
                     const spec = getRecipeSpec(envelope.data?.type)
                     return runSpecialist$({
@@ -79,19 +81,69 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
         invoke$: ({recipeId, instruction}, context) =>
             lookupRecipeMetadata$(guiRequests, context, recipeId).pipe(
                 mergeMap(envelope => {
+                    if (isChannelEmission(envelope)) return of(envelope)
                     if (envelope.ok === false) return of(envelope)
                     const spec = getRecipeSpec(envelope.data?.type)
+                    const tracker = createPatchOutcomeTracker()
                     return runSpecialist$({
                         llm, bus,
                         name: 'recipe.update',
                         systemPrompt: assembleSpecialistPrompt(basePrompt, spec, {includeSchema: true}),
                         userText: buildUpdateUserText({recipeId, instruction}),
                         allowedSchemas,
-                        invokeTool$: restrictToRecipe(scopedInvokeTool$, recipeId),
+                        invokeTool$: tracker.wrap(restrictToRecipe(scopedInvokeTool$, recipeId)),
                         context
-                    })
+                    }).pipe(
+                        map(value => isChannelEmission(value) ? value : tracker.envelopeFor(value))
+                    )
                 })
             )
+    }
+}
+
+// Tracks recipe_patch outcomes across the specialist's inner loop so the
+// outer update_recipe envelope reflects what actually persisted — rather than
+// "specialist exited cleanly" being conflated with "user's update applied."
+function createPatchOutcomeTracker() {
+    let attempted = false
+    let succeeded = false
+    let lastError = null
+    return {
+        wrap: invokeTool$ => (toolCall, context) =>
+            invokeTool$(toolCall, context).pipe(
+                tap(value => {
+                    if (isChannelEmission(value)) return
+                    if (toolCall.name !== 'recipe_patch') return
+                    attempted = true
+                    if (value?.ok === true) {
+                        succeeded = true
+                        lastError = null
+                    } else if (value?.ok === false) {
+                        lastError = value.error
+                    }
+                })
+            ),
+        envelopeFor: specialistResult => {
+            const answer = specialistResult?.answer || ''
+            if (succeeded) return {ok: true, data: {answer}}
+            if (attempted) return {
+                ok: false,
+                error: {
+                    code: 'UPDATE_FAILED',
+                    message: lastError?.message || 'Recipe patch did not succeed.',
+                    patchError: lastError,
+                    specialistAnswer: answer
+                }
+            }
+            return {
+                ok: false,
+                error: {
+                    code: 'UPDATE_NOT_ATTEMPTED',
+                    message: 'The update specialist did not call recipe_patch.',
+                    specialistAnswer: answer
+                }
+            }
+        }
     }
 }
 

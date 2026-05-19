@@ -1,5 +1,6 @@
-const {of, throwError} = require('rxjs')
+const {concat, of, throwError} = require('rxjs')
 const {updateRecipeTool} = require('#mcp/chat/specialists/recipeSpecialists')
+const {emitChannel, guiAction} = require('#mcp/chat/channelEvents')
 const {aFakeBus, aFakeGuiRequests, aFakeLlm, aFakeTools, read} = require('../builders')
 
 describe('updateRecipeTool', () => {
@@ -93,12 +94,12 @@ describe('updateRecipeTool', () => {
     it('passes recipeId and instruction to the inner LLM in the user message', () => {
         const {tool, llm} = aTool()
 
-        read(tool.invoke$({recipeId: 'r1', instruction: 'change the target date to 2026-06-01'}, aContext()))
+        read(tool.invoke$({recipeId: 'r1', instruction: 'change season end to 2026-06-01'}, aContext()))
 
         const userMessage = llm.receivedMessages[0][1]
         expect(userMessage.role).toBe('user')
         expect(userMessage.content).toContain('r1')
-        expect(userMessage.content).toMatch(/change the target date to 2026-06-01/)
+        expect(userMessage.content).toMatch(/change season end to 2026-06-01/)
     })
 
     it('offers the specialist both recipe_load and recipe_patch (and nothing else from the inner registry)', () => {
@@ -195,27 +196,133 @@ describe('updateRecipeTool', () => {
         expect(toolMessage.toolResults[0].result.error.code).toBe('TOOL_NOT_ALLOWED')
     })
 
-    it('returns the specialist final reply as the tool result, not the raw patch result', () => {
-        const patchResult = {summary: 'patched', modelHash: 'h2', invalidatedPaths: ['/dates/seasonEnd']}
-        const llm = aFakeLlm({replies: [
-            {toolCalls: [{id: 'tp1', name: 'recipe_patch', input: {
-                recipeId: 'r1', baseModelHash: 'h1', operations: [{op: 'replace', path: '/dates/seasonEnd', value: '2026-06-01'}]
-            }}]},
-            {text: 'Season end set to 2026-06-01.'}
-        ]})
-        const innerTools = aFakeTools(
-            {
-                recipe_load: () => of({id: 'r1', type: 'MOSAIC', model: {}, modelHash: 'h1'}),
-                recipe_patch: () => of(patchResult)
-            },
-            [recipeLoadSchema, recipePatchSchema]
-        )
-        const {tool} = aTool({llm, innerTools})
+    describe('outer envelope reflects whether the patch actually applied', () => {
 
-        const result = read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+        const patchOp = {op: 'replace', path: '/dates/seasonEnd', value: '2026-06-01'}
+        const loadedRecipe = {id: 'r1', type: 'MOSAIC', model: {}, modelHash: 'h1'}
 
-        expect(result).toEqual({answer: 'Season end set to 2026-06-01.'})
-        expect(result).not.toMatchObject(patchResult)
+        function aSpecialistThatCalls(patchCalls, finalText) {
+            const calls = patchCalls.map((_, i) => ({id: `tp${i}`, name: 'recipe_patch', input: {
+                recipeId: 'r1', baseModelHash: 'h1', operations: [patchOp]
+            }}))
+            const replies = calls.map(call => ({toolCalls: [call]}))
+            replies.push({text: finalText})
+            return aFakeLlm({replies: [
+                {toolCalls: [{id: 'tl1', name: 'recipe_load', input: {recipeId: 'r1'}}]},
+                ...replies
+            ]})
+        }
+
+        function aTools(patchResults) {
+            let i = 0
+            return aFakeTools(
+                {
+                    recipe_load: () => of(loadedRecipe),
+                    recipe_patch: () => of(patchResults[i++])
+                },
+                [recipeLoadSchema, recipePatchSchema]
+            )
+        }
+
+        it('returns {ok: true, data: {answer}} when recipe_patch succeeded', () => {
+            const {tool} = aTool({
+                llm: aSpecialistThatCalls([patchOp], 'Season end set to 2026-06-01.'),
+                innerTools: aTools([{ok: true, data: {summary: 'patched', modelHash: 'h2', invalidatedPaths: ['/dates/seasonEnd']}}])
+            })
+
+            const result = read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+            expect(result).toEqual({ok: true, data: {answer: 'Season end set to 2026-06-01.'}})
+        })
+
+        it('returns {ok: false, error: UPDATE_FAILED} carrying the patch error when recipe_patch returned ok:false', () => {
+            const patchError = {code: 'PATCH_APPLY_FAILED', message: 'path not found: /dates/seasonEnd'}
+            const {tool} = aTool({
+                llm: aSpecialistThatCalls([patchOp], 'I tried but the patch failed.'),
+                innerTools: aTools([{ok: false, error: patchError}])
+            })
+
+            const result = read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+            expect(result).toEqual({
+                ok: false,
+                error: {
+                    code: 'UPDATE_FAILED',
+                    message: 'path not found: /dates/seasonEnd',
+                    patchError,
+                    specialistAnswer: 'I tried but the patch failed.'
+                }
+            })
+        })
+
+        it('returns {ok: false, error: UPDATE_NOT_ATTEMPTED} when the specialist never called recipe_patch', () => {
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [{id: 'tl1', name: 'recipe_load', input: {recipeId: 'r1'}}]},
+                {text: 'I looked at the recipe but did not patch anything.'}
+            ]})
+            const innerTools = aFakeTools(
+                {recipe_load: () => of(loadedRecipe)},
+                [recipeLoadSchema, recipePatchSchema]
+            )
+            const {tool} = aTool({llm, innerTools})
+
+            const result = read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+            expect(result).toEqual({
+                ok: false,
+                error: {
+                    code: 'UPDATE_NOT_ATTEMPTED',
+                    message: 'The update specialist did not call recipe_patch.',
+                    specialistAnswer: 'I looked at the recipe but did not patch anything.'
+                }
+            })
+        })
+
+        it('returns success when a later patch succeeds even if an earlier one failed (the user got the update)', () => {
+            // Two different patches — the no-repeat tool-call guard would block
+            // an exact-repeat, which isn't what we're modelling here. The LLM in
+            // reality adjusts the patch on failure and retries.
+            const badPatch = {op: 'replace', path: '/dates/seasonEnd', value: 'not-a-date'}
+            const goodPatch = {op: 'replace', path: '/dates/seasonEnd', value: '2026-06-01'}
+            const patchError = {code: 'VALIDATION_FAILED', message: 'bad', errors: []}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [{id: 'tl1', name: 'recipe_load', input: {recipeId: 'r1'}}]},
+                {toolCalls: [{id: 'tp0', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [badPatch]}}]},
+                {toolCalls: [{id: 'tp1', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [goodPatch]}}]},
+                {text: 'Got it on the second try.'}
+            ]})
+            const {tool} = aTool({llm, innerTools: aTools([
+                {ok: false, error: patchError},
+                {ok: true, data: {summary: 'patched', modelHash: 'h3', invalidatedPaths: ['/dates/seasonEnd']}}
+            ])})
+
+            const result = read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+            expect(result).toEqual({ok: true, data: {answer: 'Got it on the second try.'}})
+        })
+
+        it('leaves enough specialist rounds for three patch attempts after the initial load', () => {
+            const badPatch1 = {op: 'replace', path: '/dates/seasonEnd', value: 'not-a-date'}
+            const badPatch2 = {op: 'replace', path: '/dates/seasonEnd', value: '2020-01-01'}
+            const goodPatch = {op: 'replace', path: '/dates/seasonEnd', value: '2026-06-01'}
+            const patchError = {code: 'VALIDATION_FAILED', message: 'bad', errors: []}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [{id: 'tl1', name: 'recipe_load', input: {recipeId: 'r1'}}]},
+                {toolCalls: [{id: 'tp0', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [badPatch1]}}]},
+                {toolCalls: [{id: 'tp1', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [badPatch2]}}]},
+                {toolCalls: [{id: 'tp2', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [goodPatch]}}]},
+                {text: 'Got it on the third try.'}
+            ]})
+            const {tool} = aTool({llm, innerTools: aTools([
+                {ok: false, error: patchError},
+                {ok: false, error: patchError},
+                {ok: true, data: {summary: 'patched', modelHash: 'h3', invalidatedPaths: ['/dates/seasonEnd']}}
+            ])})
+
+            const result = read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+            expect(result).toEqual({ok: true, data: {answer: 'Got it on the third try.'}})
+        })
     })
 
     describe('per-type system prompt assembly', () => {
@@ -259,6 +366,22 @@ describe('updateRecipeTool', () => {
             })
             expect(llm.receivedMessages).toEqual([])
         })
+    })
+
+    it('runs the specialist exactly once when the metadata lookup emits a channel event before the data (regression: dispatcher firing on channel emissions)', () => {
+        const metadata = {id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: 'p1'}
+        // Mirror real guiRequests behaviour: channel event first, then the outcome.
+        const guiRequests = aFakeGuiRequests(() => concat(
+            of(emitChannel(guiAction({requestId: 'req-1', action: 'recipe-metadata', params: {recipeId: 'r1'}}))),
+            of(metadata)
+        ))
+        const {tool, llm} = aTool({guiRequests})
+
+        read(tool.invoke$({recipeId: 'r1', instruction: 'change'}, aContext()))
+
+        // One specialist invocation = one system+user pair sent to the inner LLM.
+        // Pre-fix the channel emission also triggered a specialist run, producing two.
+        expect(llm.receivedMessages.length).toBe(1)
     })
 
     // Visibility only — no assertion. Lets us watch the §3 budget as schema/facts evolve.

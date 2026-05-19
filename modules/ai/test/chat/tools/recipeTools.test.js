@@ -167,29 +167,27 @@ describe('recipe tools', () => {
             }])
         })
 
-        it('returns the projected recipe for a root load, with heavy training data omitted', () => {
+        it('returns the projected model fields at the root plus baseModelHash, with heavy training data omitted', () => {
             const guiRequests = aFakeGuiRequests(() => of(loadedRecipe))
 
             const result = read(toolNamed('recipe_load', guiRequests).invoke$({recipeId: 'r1'}, context))
 
             expect(result).toEqual({
-                id: 'r1', type: 'CLASSIFICATION', name: 'Kenya land cover', projectId: 'p1', modelHash: 'hash-abc',
-                model: {
-                    trainingData: {dataSets: [{
-                        dataSetId: 'd1', type: 'COLLECTED',
-                        referenceData: {_omitted: 1, _kind: 'referenceData', _path: '/trainingData/dataSets/0/referenceData'}
-                    }]},
-                    classifier: {type: 'RANDOM_FOREST', numberOfTrees: 25}
-                }
+                baseModelHash: 'hash-abc',
+                trainingData: {dataSets: [{
+                    dataSetId: 'd1', type: 'COLLECTED',
+                    referenceData: {_omitted: 1, _kind: 'referenceData', _path: '/trainingData/dataSets/0/referenceData'}
+                }]},
+                classifier: {type: 'RANDOM_FOREST', numberOfTrees: 25}
             })
         })
 
-        it('returns the requested model fragment under value for a path-scoped load', () => {
+        it('returns the requested model fragment under value plus baseModelHash for a path-scoped load', () => {
             const guiRequests = aFakeGuiRequests(() => of(loadedRecipe))
 
             const result = read(toolNamed('recipe_load', guiRequests).invoke$({recipeId: 'r1', path: '/classifier'}, context))
 
-            expect(result).toMatchObject({id: 'r1', value: {type: 'RANDOM_FOREST', numberOfTrees: 25}})
+            expect(result).toEqual({baseModelHash: 'hash-abc', value: {type: 'RANDOM_FOREST', numberOfTrees: 25}})
         })
 
         it('returns no value for a missing path so the LLM sees a clean absent signal, not a tool failure', () => {
@@ -197,7 +195,7 @@ describe('recipe tools', () => {
 
             const result = read(toolNamed('recipe_load', guiRequests).invoke$({recipeId: 'r1', path: '/missing'}, context))
 
-            expect(result).toMatchObject({id: 'r1'})
+            expect(result.baseModelHash).toBe('hash-abc')
             expect(result.value).toBeUndefined()
         })
 

@@ -40,7 +40,7 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         )
     }
 
-    function step$(turn, {round, retried, retryHint}) {
+    function step$(turn, {round, retryMode, retryHint}) {
         const acc = {text: '', toolCalls: []}
         const {llmMessages: baseMessages, projection} = messagesForLlm({
             messages,
@@ -48,13 +48,13 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
             isolateHistory: round > 0
         })
         const llmMessages = messagesWithHint(baseMessages, retryHint)
-        const toolSchemas = toolsFor(retried)
+        const toolSchemas = toolsFor(retryMode)
         turn.lastExposedTools = toolSchemas.map(schema => schema.name)
         publishHistoryProjection({bus, diagnostics, conversationId: id, projection})
         publishLlmRequest({bus, diagnostics, conversationId: id, round, llmMessages, toolSchemas})
         return concat(
             llmStream$(llmMessages, toolSchemas, acc, round),
-            defer(() => decideAfterStream$(acc, turn, {round, retried}))
+            defer(() => decideAfterStream$(acc, turn, {round, retryMode}))
         )
     }
 
@@ -64,19 +64,20 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
             : baseMessages
     }
 
-    // Retry rounds are final-answer-only: the empty-after-tool signal is itself
-    // evidence the model isn't planning more tool work, and the failure mode the
-    // hint addresses is "fall back to a read-only tool to look busy". Removing
-    // the tool surface mechanically forces either text or an admitted gap.
-    function toolsFor(retried) {
-        return retried ? [] : tools.schemas()
+    // Failed-tool retries are final-answer-only, so the model explains the
+    // failure instead of substituting another read-only tool. Successful-tool
+    // retries keep tools available: local thinking models may plan the next
+    // action in reasoning but fail to emit a structured tool call on the first
+    // post-tool pass.
+    function toolsFor(retryMode) {
+        return retryMode === 'text' ? [] : tools.schemas()
     }
 
-    function decideAfterStream$(acc, turn, {round, retried}) {
-        // Retry rounds are text-only: ignore any toolCalls the model emits despite
+    function decideAfterStream$(acc, turn, {round, retryMode}) {
+        // Text retries are text-only: ignore any toolCalls the model emits despite
         // tools:[] (the provider may not enforce it). Recording the dropped calls
         // surfaces model misbehavior without re-entering the tool loop.
-        if (retried && acc.toolCalls.length > 0) {
+        if (retryMode === 'text' && acc.toolCalls.length > 0) {
             publishRetryToolCallsDropped({bus, conversationId: id, round, toolCalls: acc.toolCalls})
         } else if (acc.toolCalls.length > 0) {
             return handleToolCalls$(acc.text, acc.toolCalls, turn, {round})
@@ -84,11 +85,12 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         // Empty after a tool result usually means the model gave up without explanation.
         // Retry once with a hint; if even that produces nothing, reply$ will publish the
         // final llmEmptyReply so the metric counts only user-visible failures.
-        if (!hasVisibleText(acc.text) && isPostToolRound() && !retried) {
+        if (!hasVisibleText(acc.text) && isPostToolRound() && !retryMode) {
+            const nextRetryMode = retryModeForPostToolRound()
             publishEmptyLlmRetry({
-                bus, conversationId: id, round, messages, exposedTools: turn.lastExposedTools
+                bus, conversationId: id, round, messages, exposedTools: turn.lastExposedTools, retryMode: nextRetryMode
             })
-            return step$(turn, {round: round + 1, retried: true, retryHint: EMPTY_AFTER_TOOL_HINT})
+            return step$(turn, {round: round + 1, retryMode: nextRetryMode, retryHint: EMPTY_AFTER_TOOL_HINT})
         }
         return reply$(acc.text, {round, turn})
     }
@@ -97,12 +99,19 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         return messages.at(-1)?.role === 'tool'
     }
 
+    function retryModeForPostToolRound() {
+        const toolResults = messages.at(-1)?.toolResults || []
+        return toolResults.length > 0 && toolResults.every(result => result.result?.ok === true)
+            ? 'tool'
+            : 'text'
+    }
+
     function llmStream$(llmMessages, toolSchemas, acc, round) {
         return bus.track$('llm.respondTo', {messageCount: llmMessages.length},
             llm.respondTo$({
                 messages: llmMessages,
                 tools: toolSchemas,
-                debugLabel: `conversation ${id} round ${round}`
+                debugLabel: `orchestrator ${id} round ${round}`
             }).pipe(
                 tap(event => {
                     if (event.textDelta) acc.text += event.textDelta

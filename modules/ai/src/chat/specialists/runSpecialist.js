@@ -7,7 +7,7 @@ const {EMPTY, concat, concatMap, defer, from, ignoreElements, mergeMap, of, tap}
 const {createToolCallGuard} = require('../toolCallGuard')
 const {isChannelEmission} = require('../channelEvents')
 
-const SPECIALIST_MAX_ROUNDS = 4
+const SPECIALIST_MAX_ROUNDS = 5
 const SPECIALIST_CAP_ANSWER = 'Specialist step cap exceeded; partial information only.'
 
 function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas, invokeTool$, context}) {

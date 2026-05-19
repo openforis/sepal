@@ -19,8 +19,10 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus, diagnostics =
     function respondTo$({messages, tools, maxTokens, temperature, debugLabel, extraParams = {}}) {
         const acc = {
             text: '',
+            reasoning: '',
             chunkCount: 0,
             contentChunkCount: 0,
+            reasoningChunkCount: 0,
             toolCallChunkCount: 0,
             toolCalls: new Map(),
             finishReasons: new Set(),
@@ -120,6 +122,12 @@ function accumulateChunk(acc, chunk) {
     if (typeof delta?.content === 'string') {
         acc.contentChunkCount++
         if (delta.content) acc.text += delta.content
+    }
+    // Thinking-mode models (qwen3, etc.) emit reasoning as a separate field.
+    // Capture it for log visibility — never re-emitted to the runtime.
+    if (typeof delta?.reasoning_content === 'string') {
+        acc.reasoningChunkCount++
+        if (delta.reasoning_content) acc.reasoning += delta.reasoning_content
     }
     if (delta?.tool_calls?.length) acc.toolCallChunkCount++
     accumulateToolCalls(acc.toolCalls, delta?.tool_calls)

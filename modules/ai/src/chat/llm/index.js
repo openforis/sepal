@@ -13,14 +13,45 @@ function createLlm({baseURL, apiKey, model, provider, bus, diagnostics}) {
     return {respondTo$}
 
     function respondTo$(request) {
-        // LM Studio's native /api/v1/chat is the only path that fully
-        // suppresses a reasoning phase; everything else goes through the
-        // OpenAI-compatible path.
-        const useLmStudioNativePath = provider === 'lmstudio' && request.disableReasoning
+        // LM Studio's native /api/v1/chat is the strongest no-reasoning path,
+        // but it cannot preserve OpenAI-style tool calls/results.
+        const useLmStudioNativePath = provider === 'lmstudio'
+            && request.disableReasoning
+            && !hasStructuredToolTraffic(request)
         return useLmStudioNativePath
             ? lmStudioNativeChat.respondTo$(request)
-            : openAiChat.respondTo$(request)
+            : openAiChat.respondTo$(requestForOpenAiChat(request))
     }
+
+    function requestForOpenAiChat(request) {
+        return provider === 'lmstudio' && hasStructuredToolTraffic(request)
+            ? withLmStudioThinkingDisabled(request)
+            : request
+    }
+}
+
+function hasStructuredToolTraffic({messages = [], tools = []} = {}) {
+    return tools.length > 0 || messages.some(message =>
+        message.role === 'tool' || Boolean(message.toolCalls)
+    )
+}
+
+function withLmStudioThinkingDisabled(request) {
+    const extraParams = request.extraParams || {}
+    return {
+        ...request,
+        extraParams: {
+            ...extraParams,
+            chat_template_kwargs: {
+                ...objectOrEmpty(extraParams.chat_template_kwargs),
+                enable_thinking: false
+            }
+        }
+    }
+}
+
+function objectOrEmpty(value) {
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
 }
 
 module.exports = {createLlm}

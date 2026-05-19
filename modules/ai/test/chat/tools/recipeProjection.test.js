@@ -28,34 +28,30 @@ describe('recipe projection', () => {
         _path: '/trainingData/dataSets/0/referenceData'
     }
 
-    it('projects a root load to compact identity fields plus the projected model', () => {
+    it('projects a root load to model fields at the root plus baseModelHash', () => {
         expect(projectLoadedRecipe(classificationRecipe)).toEqual({
-            id: 'r1',
-            type: 'CLASSIFICATION',
-            name: 'Kenya land cover',
-            projectId: 'p1',
-            modelHash: 'hash-abc',
-            model: {
-                trainingData: {dataSets: [{dataSetId: 'd1', type: 'COLLECTED', referenceData: referenceDataMarker}]},
-                classifier: {type: 'RANDOM_FOREST', numberOfTrees: 25},
-                legend: {entries: [{value: 1, label: 'forest'}]}
-            }
+            baseModelHash: 'hash-abc',
+            trainingData: {dataSets: [{dataSetId: 'd1', type: 'COLLECTED', referenceData: referenceDataMarker}]},
+            classifier: {type: 'RANDOM_FOREST', numberOfTrees: 25},
+            legend: {entries: [{value: 1, label: 'forest'}]}
         })
     })
 
-    it('omits projectId when the recipe has none', () => {
-        const {projectId: _projectId, ...withoutProject} = classificationRecipe
+    it('does not leak identity fields (id, type, name, projectId) — the LLM already has the recipeId and type was resolved by the dispatcher', () => {
+        const result = projectLoadedRecipe(classificationRecipe)
 
-        const result = projectLoadedRecipe(withoutProject)
-
+        expect(result).not.toHaveProperty('id')
+        expect(result).not.toHaveProperty('type')
+        expect(result).not.toHaveProperty('name')
         expect(result).not.toHaveProperty('projectId')
+        expect(result).not.toHaveProperty('model')
     })
 
-    it('returns the requested fragment under value for a path-scoped load', () => {
+    it('returns the requested fragment under value plus baseModelHash for a path-scoped load', () => {
         const result = projectLoadedRecipe(classificationRecipe, '/classifier')
 
         expect(result).toEqual({
-            id: 'r1', type: 'CLASSIFICATION', name: 'Kenya land cover', projectId: 'p1', modelHash: 'hash-abc',
+            baseModelHash: 'hash-abc',
             value: {type: 'RANDOM_FOREST', numberOfTrees: 25}
         })
     })
@@ -102,7 +98,7 @@ describe('recipe projection', () => {
 
         const result = projectLoadedRecipe(malformed)
 
-        expect(result.model.trainingData.dataSets[0].referenceData).toBeNull()
+        expect(result.trainingData.dataSets[0].referenceData).toBeNull()
     })
 
     it('passes the model through byte-for-byte for a recipe type with no spec in the registry (silent-passthrough branch)', () => {
@@ -117,7 +113,12 @@ describe('recipe projection', () => {
 
         const result = projectLoadedRecipe(unspeccedRecipe)
 
-        expect(result.model).toEqual(unspeccedRecipe.model)
+        expect(result).toEqual({
+            baseModelHash: 'hash-xyz',
+            someField: {nested: 'value'},
+            dormantLooking: 'still-here',
+            arr: [1, 2, 3]
+        })
     })
 
     describe('MOSAIC recipe_load — effective-shape projection', () => {
@@ -165,13 +166,13 @@ describe('recipe projection', () => {
             }
         }
 
-        it('returns the effective shape on a root load (dormant fields stripped)', () => {
+        it('returns the effective shape on a root load (model fields at root, dormant stripped)', () => {
             const result = projectLoadedRecipe(mosaicStored)
 
-            expect(result.model.compositeOptions.includedCloudMasking).toEqual(['sepalCloudScore', 'landsatCFMask'])
-            expect(result.model.compositeOptions).not.toHaveProperty('sentinel2CloudScorePlusBand')
-            expect(result.model.compositeOptions).not.toHaveProperty('sentinel2CloudScorePlusMaxCloudProbability')
-            expect(result.model.compositeOptions).not.toHaveProperty('sentinel2CloudProbabilityMaxCloudProbability')
+            expect(result.compositeOptions.includedCloudMasking).toEqual(['sepalCloudScore', 'landsatCFMask'])
+            expect(result.compositeOptions).not.toHaveProperty('sentinel2CloudScorePlusBand')
+            expect(result.compositeOptions).not.toHaveProperty('sentinel2CloudScorePlusMaxCloudProbability')
+            expect(result.compositeOptions).not.toHaveProperty('sentinel2CloudProbabilityMaxCloudProbability')
         })
 
         it('returns no value for a path that targets a dormant-only field (the LLM cannot query stripped fields)', () => {
@@ -186,9 +187,9 @@ describe('recipe projection', () => {
             expect(result.value).toBe('MODERATE')
         })
 
-        it('echoes the GUI-computed modelHash unchanged through projection', () => {
-            expect(projectLoadedRecipe(mosaicStored).modelHash).toBe('hash-mosaic')
-            expect(projectLoadedRecipe(mosaicStored, '/compositeOptions/compose').modelHash).toBe('hash-mosaic')
+        it('echoes the GUI-computed modelHash unchanged through projection as baseModelHash', () => {
+            expect(projectLoadedRecipe(mosaicStored).baseModelHash).toBe('hash-mosaic')
+            expect(projectLoadedRecipe(mosaicStored, '/compositeOptions/compose').baseModelHash).toBe('hash-mosaic')
         })
     })
 })
