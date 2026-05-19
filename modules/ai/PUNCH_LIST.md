@@ -117,6 +117,16 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 - **No model-profile resolution or `llm.usage` events** — every LLM call still
   goes through one hard-wired adapter; provider/model/profile resolution and
   normalized usage accounting (DESIGN §9) are not wired.
+- **Recipes-in-prod-GUI fails silently** — `sepal start gui -p` fails without
+  visible errors. Dev server works (`recipes` resolves via `optimizeDeps.include`
+  + node_modules symlink). Production goes through Rollup with different module
+  resolution and probably needs explicit handling — possibilities to investigate:
+  the `recipes` workspace dep + the Vite `optimizeDeps` interaction at build
+  time vs serve time, the GUI Dockerfile's npm install order, or the nginx
+  static serve config for the bundle. Need to (1) reproduce with build logs
+  captured, (2) confirm the `recipes` source is in the production bundle
+  (minified + tree-shaken), and (3) verify chat-driven recipe ops work through
+  the production nginx reverse proxy.
 - ~~**Boundary events are not lazy**~~ — closed. Trace/debug bus events go through
   `src/chat/diagnostics.js` (`summarizeMessages` / `summarizeTools` /
   `summarizeObject` / `truncateString`); messages and tools/payload events use
