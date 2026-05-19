@@ -10,7 +10,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@anthropic-ai/sdk": "^0.96.0",
+        "@anthropic-ai/sdk": "^0.97.1",
         "ajv": "^8.20.0",
         "ajv-formats": "^3.0.1",
         "moment": "^2.30.1",
