@@ -260,6 +260,27 @@ When testing an adapter, fake the *other side* — the part we don't own:
 
 Don't re-test SDKs.
 
+## Stable seams
+
+Test at the seam closest to the behaviour that resists refactor. File-shaped seams break on reshuffles that preserve behaviour — tax on every change.
+
+Seams in this module, top-down. Pick the lowest that exercises the behaviour:
+
+| Seam | When | What it pins |
+|---|---|---|
+| WS protocol (`wsHandler`) | End-to-end including protocol concerns | Wire frame in → wire frames out |
+| `userChat` | Multi-turn, abort, title-gen timing, lifecycle | Command → channel events + history |
+| `messageHandler` / `conversation.sendUserMessage$` | Single turn end-to-end | One user message → reply events + persisted shape |
+| Tool factory `invoke$` | Specialist-internal — validation retry, closure interpretation, envelope shape | Args + fake LLM + fake bridge → envelope + bridge calls |
+| Tool registry `invoke$` | Envelope contract — validation, error codes, unknown tool | Tool call → envelope |
+| LLM port (`llm.respondTo$`) | Provider swap, cross-provider contract | Request → events |
+| Pure algorithm | Single-responsibility, fast | Input → output |
+| Adapter wire boundary | Translation only | Domain call → SDK / wire receives X |
+
+Higher = setup tax. Lower = brittle to internals.
+
+Internals are **not** seams: `runSpecialist`, `conversationLoop`'s `step$`, event publishers, formatters, dispatchers. Their behaviour surfaces through the seams above; verify there.
+
 ## Test doubles
 
 Simplest that does the job:
@@ -270,6 +291,26 @@ Simplest that does the job:
 
 GOOSE leans on mocks for behaviour verification ("tell, don't ask"). Use when the object's job is to coordinate collaborators, not compute a value.
 
+## Write-then-read over call-spying
+
+Verify outcomes by observable side effect, not by asserting which internal collaborator was called.
+
+| Brittle | Stable |
+|---|---|
+| `expect(store.set).toHaveBeenCalledWith(k, v)` | `await store.append$(m); expect(await store.load$()).toContain(m)` |
+| `expect(tools.invoke$).toHaveBeenCalledWith(c)` | `await send$('hi'); expect(bridge.requests).toContainEqual(...)` |
+| `expect(publishX).toHaveBeenCalled` | `await send$('hi'); expect(channel.events).toMatchObject([...])` |
+
+Brittle pins HOW. Stable pins THAT.
+
+For every behaviour, ask: **what side-effect surface lets me observe it?** Channel events. Persisted history. Bridge requests captured by a fake. State after the action. Returned envelope. Use those.
+
+In-memory fakes implementing real port shapes make this cheap (e.g. an in-memory `history` supporting both `append$` and `load$` in the same test).
+
+`jest.spyOn` / `jest.fn().mock.calls` are smells unless the test is an adapter test pinning a wire call. At every other seam: don't.
+
+If no side-effect surface exists for a behaviour, that's design feedback — the behaviour is unobservable from outside, and either it shouldn't matter or the design must expose it.
+
 ## Tests as specifications
 
 Test body says **what behaviour matters**. Wiring → builders, drivers, helpers in adjacent files.
@@ -279,6 +320,41 @@ Reads like a script → extract until reads like English.
 **Listen.** Hard-to-write test = wrong design. Refactor production until the test is simple. Hard to test = hard to use.
 
 **Refactor tests with the same rigor as production code.** Different priorities, same discipline: readability wins over brevity, and the main extraction tools are builders / drivers / helpers (not generic factorings). The threshold for "right abstraction" is how the test reads aloud, not how much code is removed.
+
+## Quality bar
+
+Stable test:
+
+- **Every visible detail in the test relates to the behaviour being pinned.** Unrelated detail is refactor signal — extract a named builder that hides it. The bar isn't line count; it's whether each line earns its place by speaking about the behaviour.
+- The `when` action lives in the `it` body — typically one call, sometimes a small sequence when the scenario genuinely needs it; never hidden in `beforeEach`.
+- Assertion is on an observable side effect (channel events, persisted state, captured calls in a port-fake, returned value, written-then-read state).
+- **Each assertion pins one facet of the behaviour.** Multiple assertions are fine when each speaks to a different facet; piling them on one call to hedge is noise.
+- **Matcher fits the scope.** `toMatchObject` / `toContain` / `toContainEqual` for partial pins; whole-shape equality only when the whole shape **is** the contract. Whole-blob `toEqual` on a rich object pins incidental fields and breaks on unrelated changes.
+- **Assertions read like domain statements.** Custom matchers (e.g. `toBeAToolCall(name)`) earn their place when the same shape recurs across tests; otherwise inline matchers are fine.
+- Name reads "when X, system does Y" — outcome-shaped, not "calls X with Y."
+
+Marker-style assertions on text content are fine — regex matching a phrase that pins **intent** without pinning **wording** (e.g. `expect(prompt).toMatch(/don't chain.*describe.*update/i)`). Verbatim string equality on the same content is a smell.
+
+Red flags that fail review:
+
+| Red flag | Diagnosis | Fix |
+|---|---|---|
+| Visible setup detail unrelated to the behaviour | Noise leaking into the test | Extract a named builder that hides it |
+| Many disparate but relevant details all needed for one test | Scope too broad, or seam wrong | Split the scope; or move to a different seam where fewer details are load-bearing |
+| Assertion on a value the test doesn't set or expose (harness default, production default) | Coupling to hidden state — reader can't tell what's pinned without diving into the harness/src | Surface via explicit setup, drop the assertion, or `expect.objectContaining` for the load-bearing fields only |
+| `jest.fn()` / `toHaveBeenCalledWith` in a domain test | Call-spying instead of outcome assertion | Find the side-effect surface; assert on it |
+| Whole-object `toEqual` on a rich shape when only a few fields are the contract | Pins too much; breaks on unrelated changes | `toMatchObject` for the fields that matter; or a custom matcher |
+| Pins ordering, internal IDs, generated timestamps | Incidental detail, not contract | Sort / normalize before assertion; strip generated fields; assert on the relevant shape only |
+| `not.toHaveBeenCalled` or other negative assertions on internal calls | Fragile — passes for wrong reasons | Assert on the positive observable surface |
+| Test re-derives state in the body to compare against | Asserting implementation, not outcome | Assert on the captured side-effect surface directly |
+| Pins event ordering, exact log strings, internal field counts | Coupled to observability detail, not contract | Reframe at the real outcome; drop the pin |
+| Verbatim assertion on a log message or prompt body | Tuning surface, not contract — wording changes routinely | Assert the behaviour the log/prompt enables, not its text; or use a marker regex for intent |
+| Reading the body doesn't say what behaviour is pinned | Unclear intent | Refactor the body, or move to a clearer seam |
+| Same setup or same assertion shape repeated across many tests | Missing harness builder or custom matcher | Extract |
+| Mocks something deep that's reachable by real collaborator | Over-mocking | Use the real collaborator; mock only at port boundaries |
+| Asserts implementation constant (`MAX_TOOL_ROUNDS`, retry-mode names, etc.) | Pinning internals | Reframe at the user-observable consequence |
+
+A test failing this bar with no fix — seam is right, no obvious refactor available — is a system-level signal. Log to `issues.md` with the rejected test, the red flag, and the alternative seams tried. Move on; don't grind.
 
 ## Nested describes for shared scenarios
 
@@ -364,9 +440,34 @@ src/<area>/<slice>/<file>.<ext>
 test/<area>/<slice>/<file>.test.<ext>
 ```
 
+**Exception: scenario tests organize by behaviour, not source file.** When several source files cooperate to deliver one user-facing capability, the scenario tests live in `test/<area>/scenarios/<scenario>/...` — a directory named for what the user does, not which file implements it. Each top-level sub-scenario inside the directory is its own file; the file's outermost `describe` names that sub-scenario.
+
+```
+test/chat/scenarios/
+  conversationLifecycle/
+    creating.test.js
+    selecting.test.js
+    deleting.test.js
+    ...
+  wsProtocol/
+    frameRouting.test.js
+    subscriptionLifecycle.test.js
+    contextRouting.test.js
+    guiBridge.test.js
+    errors.test.js
+  recipeEdits/
+    ...
+```
+
+The scenario directory groups files under one capability; the file split keeps each file focused on one sub-area. Single-file scenarios are acceptable while a capability has only one sub-area, or as a transitional state during a structured migration — promote to a directory during scheduled cleanup when files outgrow digestible size or when a second sub-area lands.
+
+Natural correlation between a scenario and one source surface is expected — when source is cohesive, the mapping is roughly 1:1. Don't force separation; don't force merger. Organize by what's being verified.
+
+Adapter tests, pure-algorithm tests, and unit tests for genuinely-orthogonal contracts keep mirroring `src/`.
+
 Top-level `test/` keeps tests out of production builds. Configure the build (Docker `COPY`, npm `files`, etc.) to ship `src/` only.
 
-Per-slice test infrastructure (drivers, builders, matchers) → `test/<area>/<slice>/`. Start collapsed (one `builders.<ext>`). Split when files grow or cohesion suffers.
+Per-slice test infrastructure (drivers, builders, harnesses) → `test/<area>/`. Start collapsed (one `harness.<ext>`). Split when files grow or cohesion suffers.
 
 ## Manual tests
 
