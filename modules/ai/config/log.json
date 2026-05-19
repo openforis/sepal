@@ -11,6 +11,8 @@
         "tool": "info",
         "gui": "info",
         "title": "info",
-        "specialist": "info"
+        "specialist": "info",
+        "orchestrator": "info",
+        "update_recipe": "info"
     }
 }

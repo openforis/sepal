@@ -7,6 +7,7 @@ const {specialistPrompt} = require('../llmText/prompts')
 const {runSpecialist$} = require('./runSpecialist')
 const {scopeInnerTools} = require('./specialistScope')
 const {assembleSpecialistPrompt} = require('./assembleSpecialistPrompt')
+const {publishUpdateRecipeOutcome} = require('./specialistEvents')
 const {lookupRecipeMetadata$} = require('../tools/recipeMetadata')
 const {isChannelEmission} = require('../channelEvents')
 
@@ -82,9 +83,23 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
             lookupRecipeMetadata$(guiRequests, context, recipeId).pipe(
                 mergeMap(envelope => {
                     if (isChannelEmission(envelope)) return of(envelope)
-                    if (envelope.ok === false) return of(envelope)
+                    if (envelope.ok === false) {
+                        // Preflight failure path: leave the same diagnostic signal
+                        // the specialist path emits at envelope-build time, so
+                        // "presence of update_recipe.outcome" reliably proves
+                        // the orchestrator called update_recipe regardless of
+                        // where it failed.
+                        publishUpdateRecipeOutcome({
+                            bus, conversationId: context?.conversationId, recipeId,
+                            attempted: false, succeeded: false,
+                            code: envelope.error.code,
+                            lastPatchErrorCode: null,
+                            answerChars: 0
+                        })
+                        return of(envelope)
+                    }
                     const spec = getRecipeSpec(envelope.data?.type)
-                    const tracker = createPatchOutcomeTracker()
+                    const tracker = createPatchOutcomeTracker({bus, conversationId: context?.conversationId, recipeId})
                     return runSpecialist$({
                         llm, bus,
                         name: 'recipe.update',
@@ -104,7 +119,9 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
 // Tracks recipe_patch outcomes across the specialist's inner loop so the
 // outer update_recipe envelope reflects what actually persisted — rather than
 // "specialist exited cleanly" being conflated with "user's update applied."
-function createPatchOutcomeTracker() {
+// Also publishes a single update_recipe.outcome bus event when the envelope
+// is built so live conversations leave a load-bearing diagnostic signal.
+function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
     let attempted = false
     let succeeded = false
     let lastError = null
@@ -125,23 +142,38 @@ function createPatchOutcomeTracker() {
             ),
         envelopeFor: specialistResult => {
             const answer = specialistResult?.answer || ''
-            if (succeeded) return {ok: true, data: {answer}}
-            if (attempted) return {
-                ok: false,
-                error: {
-                    code: 'UPDATE_FAILED',
-                    message: lastError?.message || 'Recipe patch did not succeed.',
-                    patchError: lastError,
-                    specialistAnswer: answer
-                }
+            const envelope = buildEnvelope(answer)
+            publishUpdateRecipeOutcome({
+                bus,
+                conversationId,
+                recipeId,
+                attempted,
+                succeeded,
+                code: succeeded ? 'ok' : envelope.error.code,
+                lastPatchErrorCode: lastError?.code || null,
+                answerChars: answer.length
+            })
+            return envelope
+        }
+    }
+
+    function buildEnvelope(answer) {
+        if (succeeded) return {ok: true, data: {answer}}
+        if (attempted) return {
+            ok: false,
+            error: {
+                code: 'UPDATE_FAILED',
+                message: lastError?.message || 'Recipe patch did not succeed.',
+                patchError: lastError,
+                specialistAnswer: answer
             }
-            return {
-                ok: false,
-                error: {
-                    code: 'UPDATE_NOT_ATTEMPTED',
-                    message: 'The update specialist did not call recipe_patch.',
-                    specialistAnswer: answer
-                }
+        }
+        return {
+            ok: false,
+            error: {
+                code: 'UPDATE_NOT_ATTEMPTED',
+                message: 'The update specialist did not call recipe_patch.',
+                specialistAnswer: answer
             }
         }
     }

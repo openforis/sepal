@@ -62,6 +62,53 @@ describe('conversation event publishers — bounded by default', () => {
         return bus.published.filter(event => event.type === type)
     }
 
+    describe('orchestrator.prompt — trace-level lazy snapshot of the final prompt', () => {
+
+        it('publishes orchestrator.prompt before each orchestrator LLM call with round, messageCount, toolNames', () => {
+            const bus = aFakeBus()
+            const conversation = aConversation({llm: aFakeLlm({replies: [{text: 'ok'}]}), bus})
+
+            run(conversation.sendUserMessage$(userText))
+
+            const prompt = eventOfType(bus, 'orchestrator.prompt')
+            expect(prompt).toBeDefined()
+            expect(prompt.level).toBe('trace')
+            expect(prompt.round).toBe(0)
+            expect(typeof prompt.messageCount).toBe('number')
+            expect(Array.isArray(prompt.toolNames)).toBe(true)
+        })
+
+        it('renders the user text in the lazy snapshot so a trace excerpt is enough to inspect a bad instruction', () => {
+            const bus = aFakeBus()
+            const conversation = aConversation({llm: aFakeLlm({replies: [{text: 'ok'}]}), bus})
+
+            run(conversation.sendUserMessage$(userText))
+
+            const prompt = eventOfType(bus, 'orchestrator.prompt')
+            expect(lazyMessage(prompt)).toContain(userText)
+        })
+
+        it('attaches the message as a lazy function so trace rendering only happens when the appender logs', () => {
+            const bus = aFakeBus()
+            const conversation = aConversation({llm: aFakeLlm({replies: [{text: 'ok'}]}), bus})
+
+            run(conversation.sendUserMessage$(userText))
+
+            const prompt = eventOfType(bus, 'orchestrator.prompt')
+            expect(typeof prompt.message).toBe('function')
+        })
+
+        it('routes by type prefix to the orchestrator category (logListener splits on first dot — type=orchestrator.prompt -> category=orchestrator)', () => {
+            const bus = aFakeBus()
+            const conversation = aConversation({llm: aFakeLlm({replies: [{text: 'ok'}]}), bus})
+
+            run(conversation.sendUserMessage$(userText))
+
+            const prompt = eventOfType(bus, 'orchestrator.prompt')
+            expect(prompt.type.split('.')[0]).toBe('orchestrator')
+        })
+    })
+
     it('publishes conversation.llmMessages with bounded message summary, not raw history JSON', () => {
         const bus = aFakeBus()
         const conversation = aConversation({

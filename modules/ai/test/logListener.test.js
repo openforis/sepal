@@ -69,6 +69,22 @@ describe('Log listener', () => {
             expect(categoryOf({type: 'specialist.run.completed'})).toBe('specialist')
         })
 
+        it('routes orchestrator.prompt to the orchestrator category', () => {
+            expect(categoryOf({type: 'orchestrator.prompt'})).toBe('orchestrator')
+        })
+
+        it('routes specialist.prompt and the per-round/per-tool specialist events to the specialist category', () => {
+            expect(categoryOf({type: 'specialist.prompt'})).toBe('specialist')
+            expect(categoryOf({type: 'specialist.request'})).toBe('specialist')
+            expect(categoryOf({type: 'specialist.response'})).toBe('specialist')
+            expect(categoryOf({type: 'specialist.tool.request'})).toBe('specialist')
+            expect(categoryOf({type: 'specialist.tool.response'})).toBe('specialist')
+        })
+
+        it('routes update_recipe.outcome to the update_recipe category', () => {
+            expect(categoryOf({type: 'update_recipe.outcome'})).toBe('update_recipe')
+        })
+
         it('routes a two-segment domain event whose second segment looks like a span suffix to its prefix', () => {
             // Regression: 'title.failed' is a domain event from titleGenerator, not a span.
             // It must still bucket to the title category, not get its tail stripped away.
@@ -91,6 +107,19 @@ describe('Log listener', () => {
         it('still uses the dotted prefix for unknown dotted types — declaring a new subsystem is a log.json concern', () => {
             expect(categoryOf({type: 'redis.connected'})).toBe('redis')
             expect(categoryOf({type: 'newSubsystem.event.completed'})).toBe('newSubsystem')
+        })
+    })
+
+    describe('log.json declares categories for every routed subsystem (so log level can be opted-into cleanly)', () => {
+
+        const logConfig = require('#config/log.json')
+
+        it('declares orchestrator — orchestrator.prompt routes here and must be settable independently of conversation', () => {
+            expect(logConfig.categories).toHaveProperty('orchestrator')
+        })
+
+        it('declares update_recipe — update_recipe.outcome routes here and must be settable independently of specialist', () => {
+            expect(logConfig.categories).toHaveProperty('update_recipe')
         })
     })
 

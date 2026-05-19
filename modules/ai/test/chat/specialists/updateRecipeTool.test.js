@@ -444,6 +444,132 @@ describe('updateRecipeTool', () => {
         expect(llm.receivedMessages.length).toBe(1)
     })
 
+    describe('update_recipe.outcome bus event', () => {
+
+        const patchOp = {op: 'replace', path: '/dates/seasonEnd', value: '2026-06-01'}
+        const closureResult = {baseModelHash: 'h1', intent: 'dateWindow', currentValues: {}, dependentPaths: ['/dates/seasonEnd'], guidance: []}
+
+        function aSpecialist({patchResults, finalText, omitLoad = false, omitPatch = false}) {
+            const llmReplies = []
+            if (!omitLoad) llmReplies.push({toolCalls: [{id: 'tl1', name: 'load_for_update', input: {recipeId: 'r1', instruction: 'edit'}}]})
+            patchResults.forEach((_, i) => llmReplies.push({toolCalls: [{id: `tp${i}`, name: 'recipe_patch', input: {
+                recipeId: 'r1', baseModelHash: 'h1', operations: [patchOp]
+            }}]}))
+            llmReplies.push({text: finalText})
+            const llm = aFakeLlm({replies: llmReplies})
+            const innerToolMap = omitPatch
+                ? {load_for_update: () => of(closureResult)}
+                : {
+                    load_for_update: () => of(closureResult),
+                    recipe_patch: (() => {
+                        let i = 0
+                        return () => of(patchResults[i++])
+                    })()
+                }
+            const innerTools = aFakeTools(innerToolMap, [loadForUpdateSchema, recipePatchSchema])
+            return {llm, innerTools}
+        }
+
+        it('publishes patchAttempted=true, patchSucceeded=true, code=ok, answerChars when the patch applied', () => {
+            const bus = aFakeBus()
+            const {llm, innerTools} = aSpecialist({
+                patchResults: [{ok: true, data: {summary: 'patched', modelHash: 'h2', invalidatedPaths: ['/dates/seasonEnd']}}],
+                finalText: 'Season end set.'
+            })
+            const {tool} = aTool({llm, innerTools, bus})
+
+            read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+            const outcomes = bus.published.filter(e => e.type === 'update_recipe.outcome')
+            expect(outcomes).toHaveLength(1)
+            expect(outcomes[0]).toMatchObject({
+                recipeId: 'r1',
+                patchAttempted: true,
+                patchSucceeded: true,
+                code: 'ok',
+                answerChars: 'Season end set.'.length
+            })
+        })
+
+        it('publishes UPDATE_NOT_ATTEMPTED with patchAttempted=false when the specialist never called recipe_patch', () => {
+            const bus = aFakeBus()
+            const {llm, innerTools} = aSpecialist({
+                patchResults: [],
+                finalText: 'I looked but did not edit.',
+                omitPatch: true
+            })
+            const {tool} = aTool({llm, innerTools, bus})
+
+            read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+            const outcomes = bus.published.filter(e => e.type === 'update_recipe.outcome')
+            expect(outcomes).toHaveLength(1)
+            expect(outcomes[0]).toMatchObject({
+                recipeId: 'r1',
+                patchAttempted: false,
+                patchSucceeded: false,
+                code: 'UPDATE_NOT_ATTEMPTED',
+                answerChars: 'I looked but did not edit.'.length
+            })
+        })
+
+        it('publishes a preflight-failure outcome when recipe-metadata lookup fails (so every update_recipe dispatch leaves an outcome event)', () => {
+            const bus = aFakeBus()
+            const codedError = Object.assign(new Error('Recipe not found: r1'), {code: 'RECIPE_NOT_FOUND'})
+            const guiRequests = aFakeGuiRequests(() => throwError(() => codedError))
+            const {tool} = aTool({guiRequests, bus})
+
+            read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+            const outcomes = bus.published.filter(e => e.type === 'update_recipe.outcome')
+            expect(outcomes).toHaveLength(1)
+            expect(outcomes[0]).toMatchObject({
+                recipeId: 'r1',
+                patchAttempted: false,
+                patchSucceeded: false,
+                code: 'RECIPE_NOT_FOUND',
+                answerChars: 0
+            })
+        })
+
+        it('publishes a preflight-failure outcome with the bridge fallback code (TOOL_FAILED) when the GUI bridge errors without a structured code', () => {
+            const bus = aFakeBus()
+            const guiRequests = aFakeGuiRequests(() => throwError(() => new Error('GUI gone')))
+            const {tool} = aTool({guiRequests, bus})
+
+            read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+            const outcomes = bus.published.filter(e => e.type === 'update_recipe.outcome')
+            expect(outcomes).toHaveLength(1)
+            expect(outcomes[0]).toMatchObject({
+                code: 'TOOL_FAILED',
+                patchAttempted: false,
+                patchSucceeded: false
+            })
+        })
+
+        it('publishes UPDATE_FAILED with patchAttempted=true and the last patch error code when recipe_patch returned ok:false', () => {
+            const bus = aFakeBus()
+            const {llm, innerTools} = aSpecialist({
+                patchResults: [{ok: false, error: {code: 'VALIDATION_FAILED', message: 'bad'}}],
+                finalText: 'Could not apply.'
+            })
+            const {tool} = aTool({llm, innerTools, bus})
+
+            read(tool.invoke$({recipeId: 'r1', instruction: 'edit'}, aContext()))
+
+            const outcomes = bus.published.filter(e => e.type === 'update_recipe.outcome')
+            expect(outcomes).toHaveLength(1)
+            expect(outcomes[0]).toMatchObject({
+                recipeId: 'r1',
+                patchAttempted: true,
+                patchSucceeded: false,
+                code: 'UPDATE_FAILED',
+                lastPatchErrorCode: 'VALIDATION_FAILED'
+            })
+        })
+    })
+
     // Visibility only — no assertion. Lets us watch the §3 budget as schema/facts evolve.
     describe('DESIGN §3 prompt-byte budget — target 15 KB', () => {
 

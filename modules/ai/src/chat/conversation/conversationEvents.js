@@ -1,5 +1,19 @@
 // Bus event publishers for conversation telemetry.
 
+const {renderPromptSnapshot} = require('../promptSnapshot')
+
+function publishOrchestratorPrompt({bus, conversationId, round, llmMessages, toolSchemas}) {
+    bus.publish({
+        type: 'orchestrator.prompt',
+        level: 'trace',
+        conversationId,
+        round,
+        messageCount: llmMessages.length,
+        toolNames: toolSchemas.map(schema => schema.name),
+        message: () => `orchestrator.prompt conversationId=${conversationId} round=${round}\n${renderPromptSnapshot({messages: llmMessages, tools: toolSchemas})}`
+    })
+}
+
 function publishLlmRequest({bus, diagnostics, conversationId, round, llmMessages, toolSchemas}) {
     const offeredTools = toolSchemas.map(tool => tool.name)
     bus.publish({
@@ -171,4 +185,4 @@ function isPlainObject(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
-module.exports = {publishLlmRequest, publishToolCall, publishEmptyLlmReply, publishEmptyLlmRetry, publishRetryToolCallsDropped, publishHistoryProjection}
+module.exports = {publishOrchestratorPrompt, publishLlmRequest, publishToolCall, publishEmptyLlmReply, publishEmptyLlmRetry, publishRetryToolCallsDropped, publishHistoryProjection}

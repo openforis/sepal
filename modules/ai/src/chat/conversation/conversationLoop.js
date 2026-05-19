@@ -4,7 +4,7 @@
 
 const {concat, concatMap, defer, filter, from, ignoreElements, mergeMap, of, tap} = require('rxjs')
 const {messagesForLlm} = require('./llmMessages')
-const {publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection, publishLlmRequest, publishRetryToolCallsDropped, publishToolCall} = require('./conversationEvents')
+const {publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection, publishLlmRequest, publishOrchestratorPrompt, publishRetryToolCallsDropped, publishToolCall} = require('./conversationEvents')
 const {createTerminalNotices, consecutiveFailureBail, invalidArgsBail} = require('./terminalNotices')
 const {createToolCallGuard} = require('../toolCallGuard')
 const {createDiagnostics} = require('../diagnostics')
@@ -52,6 +52,7 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         turn.lastExposedTools = toolSchemas.map(schema => schema.name)
         publishHistoryProjection({bus, diagnostics, conversationId: id, projection})
         publishLlmRequest({bus, diagnostics, conversationId: id, round, llmMessages, toolSchemas})
+        publishOrchestratorPrompt({bus, conversationId: id, round, llmMessages, toolSchemas})
         return concat(
             llmStream$(llmMessages, toolSchemas, acc, round),
             defer(() => decideAfterStream$(acc, turn, {round, retryMode}))

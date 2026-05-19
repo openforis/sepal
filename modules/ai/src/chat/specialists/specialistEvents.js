@@ -1,0 +1,150 @@
+// Bus event publishers for the specialist runtime. Compact summaries at
+// DEBUG (per-round lifecycle) and INFO (update outcome). Per-call shape
+// summarisers stay narrow — load_for_update and recipe_patch get bespoke
+// strings; everything else falls back to a generic kind label so new tools
+// still publish a usable event without code changes here.
+//
+// specialist.prompt is a TRACE event with a lazy message that renders the
+// full prompt + tool schemas the specialist sent to the LLM. The lazy form
+// keeps the cost off normal log paths.
+
+const {renderPromptSnapshot} = require('../promptSnapshot')
+
+function publishSpecialistPrompt({bus, name, round, conversationId, messages, toolSchemas}) {
+    bus.publish({
+        type: 'specialist.prompt',
+        level: 'trace',
+        conversationId,
+        name,
+        round,
+        messageCount: messages.length,
+        toolNames: toolSchemas.map(schema => schema.name),
+        message: () => `specialist.prompt name=${name} conversationId=${conversationId} round=${round}\n${renderPromptSnapshot({messages, tools: toolSchemas})}`
+    })
+}
+
+function publishSpecialistRequest({bus, name, round, conversationId, messages, toolSchemas}) {
+    const messageCount = messages.length
+    const toolNames = toolSchemas.map(schema => schema.name)
+    bus.publish({
+        type: 'specialist.request',
+        level: 'debug',
+        conversationId,
+        name,
+        round,
+        messageCount,
+        toolNames,
+        message: `specialist.request name=${name} round=${round} messages=${messageCount} tools=[${toolNames.join(',') || '-'}]`
+    })
+}
+
+function publishSpecialistResponse({bus, name, round, conversationId, text, toolCalls}) {
+    const textChars = (text || '').length
+    const toolCallNames = (toolCalls || []).map(toolCall => toolCall.name)
+    const empty = textChars === 0 && toolCallNames.length === 0
+    bus.publish({
+        type: 'specialist.response',
+        level: 'debug',
+        conversationId,
+        name,
+        round,
+        textChars,
+        toolCallNames,
+        empty,
+        message: `specialist.response name=${name} round=${round} textChars=${textChars} toolCalls=[${toolCallNames.join(',') || '-'}]${empty ? ' empty=true' : ''}`
+    })
+}
+
+function publishSpecialistToolRequest({bus, name, conversationId, toolCall}) {
+    const inputKeys = toolCall?.input && typeof toolCall.input === 'object'
+        ? Object.keys(toolCall.input)
+        : []
+    bus.publish({
+        type: 'specialist.tool.request',
+        level: 'debug',
+        conversationId,
+        name,
+        tool: toolCall.name,
+        inputKeys,
+        message: `specialist.tool.request name=${name} tool=${toolCall.name} inputKeys=[${inputKeys.join(',')}]`
+    })
+}
+
+function publishSpecialistToolResponse({bus, name, conversationId, tool, envelope}) {
+    if (envelope?.ok === false) {
+        const errorCode = envelope.error?.code || 'unknown'
+        bus.publish({
+            type: 'specialist.tool.response',
+            level: 'debug',
+            conversationId,
+            name,
+            tool,
+            ok: false,
+            errorCode,
+            message: `specialist.tool.response name=${name} tool=${tool} ok=false errorCode=${errorCode}`
+        })
+        return
+    }
+    const shape = summariseToolShape(tool, envelope?.data)
+    bus.publish({
+        type: 'specialist.tool.response',
+        level: 'debug',
+        conversationId,
+        name,
+        tool,
+        ok: true,
+        shape,
+        message: `specialist.tool.response name=${name} tool=${tool} ok=true shape=${shape}`
+    })
+}
+
+function publishUpdateRecipeOutcome({bus, conversationId, recipeId, attempted, succeeded, code, lastPatchErrorCode, answerChars}) {
+    bus.publish({
+        type: 'update_recipe.outcome',
+        level: 'info',
+        conversationId,
+        recipeId,
+        patchAttempted: attempted,
+        patchSucceeded: succeeded,
+        code,
+        lastPatchErrorCode: lastPatchErrorCode || null,
+        answerChars,
+        message: outcomeMessage({recipeId, attempted, succeeded, code, lastPatchErrorCode, answerChars})
+    })
+}
+
+function outcomeMessage({recipeId, attempted, succeeded, code, lastPatchErrorCode, answerChars}) {
+    const head = `update_recipe.outcome recipeId=${recipeId} patchAttempted=${attempted} patchSucceeded=${succeeded} code=${code}`
+    const tail = ` answerChars=${answerChars}`
+    return lastPatchErrorCode
+        ? `${head} lastPatchErrorCode=${lastPatchErrorCode}${tail}`
+        : `${head}${tail}`
+}
+
+function summariseToolShape(tool, data) {
+    if (tool === 'load_for_update') {
+        const intent = data?.intent || 'unknown'
+        const currentValuesCount = Object.keys(data?.currentValues || {}).length
+        const dependentPathsCount = (data?.dependentPaths || []).length
+        const guidanceCount = (data?.guidance || []).length
+        return `closure(intent=${intent},currentValues=${currentValuesCount},dependentPaths=${dependentPathsCount},guidance=${guidanceCount})`
+    }
+    if (tool === 'recipe_patch') {
+        const modelHash = data?.modelHash || 'unchanged'
+        const invalidatedPathsCount = (data?.invalidatedPaths || []).length
+        return `patch(modelHash=${modelHash},invalidatedPaths=${invalidatedPathsCount})`
+    }
+    if (Array.isArray(data)) return `array(${data.length})`
+    if (data && typeof data === 'object') return 'object'
+    if (data == null) return 'null'
+    return typeof data
+}
+
+module.exports = {
+    publishSpecialistPrompt,
+    publishSpecialistRequest,
+    publishSpecialistResponse,
+    publishSpecialistToolRequest,
+    publishSpecialistToolResponse,
+    publishUpdateRecipeOutcome
+}

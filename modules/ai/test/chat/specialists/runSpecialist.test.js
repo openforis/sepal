@@ -322,5 +322,209 @@ describe('runSpecialist$', () => {
                 {name: 'specialist.run', attrs: {name: 'map'}}
             ]))
         })
+
+        it('publishes specialist.request before each LLM round (name, round, message count, tool names)', () => {
+            const bus = aFakeBus()
+            const llm = aFakeLlm({replies: [{text: 'done'}]})
+
+            read(runSpecialist$({
+                llm, bus, name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$: noopInvokeTool$, context: {conversationId: 'c1'}
+            }))
+
+            const requests = bus.published.filter(e => e.type === 'specialist.request')
+            expect(requests).toEqual([{
+                type: 'specialist.request',
+                level: 'debug',
+                conversationId: 'c1',
+                name: 'recipe.update',
+                round: 0,
+                messageCount: 2,
+                toolNames: ['get_gui_context'],
+                message: expect.stringContaining('specialist.request name=recipe.update round=0')
+            }])
+        })
+
+        it('publishes specialist.response after the LLM stream (round, textChars, tool-call names, empty flag)', () => {
+            const bus = aFakeBus()
+            const llm = aFakeLlm({replies: [{text: 'Done.'}]})
+
+            read(runSpecialist$({
+                llm, bus, name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$: noopInvokeTool$, context: {conversationId: 'c1'}
+            }))
+
+            const responses = bus.published.filter(e => e.type === 'specialist.response')
+            expect(responses).toEqual([{
+                type: 'specialist.response',
+                level: 'debug',
+                conversationId: 'c1',
+                name: 'recipe.update',
+                round: 0,
+                textChars: 5,
+                toolCallNames: [],
+                empty: false,
+                message: expect.stringContaining('textChars=5')
+            }])
+        })
+
+        it("publishes specialist.response with empty=true when the LLM produced no text and no tool calls (UPDATE_NOT_ATTEMPTED signal)", () => {
+            const bus = aFakeBus()
+            const llm = aFakeLlm({replies: [{text: ''}]})
+
+            read(runSpecialist$({
+                llm, bus, name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$: noopInvokeTool$, context: {conversationId: 'c1'}
+            }))
+
+            const responses = bus.published.filter(e => e.type === 'specialist.response')
+            expect(responses[0].empty).toBe(true)
+            expect(responses[0].textChars).toBe(0)
+            expect(responses[0].toolCallNames).toEqual([])
+        })
+
+        it('publishes specialist.tool.request and specialist.tool.response around each inner tool call', () => {
+            const bus = aFakeBus()
+            const toolCall = {id: 'gc1', name: 'get_gui_context', input: {section: 'process'}}
+            const llm = aFakeLlm({replies: [
+                {toolCalls: [toolCall]},
+                {text: 'done'}
+            ]})
+
+            read(runSpecialist$({
+                llm, bus, name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas,
+                invokeTool$: () => of({ok: true, data: {a: 1}}),
+                context: {conversationId: 'c1'}
+            }))
+
+            const requests = bus.published.filter(e => e.type === 'specialist.tool.request')
+            const responses = bus.published.filter(e => e.type === 'specialist.tool.response')
+            expect(requests).toHaveLength(1)
+            expect(requests[0]).toMatchObject({
+                name: 'recipe.update',
+                tool: 'get_gui_context',
+                inputKeys: ['section']
+            })
+            expect(responses).toHaveLength(1)
+            expect(responses[0]).toMatchObject({
+                name: 'recipe.update',
+                tool: 'get_gui_context',
+                ok: true
+            })
+        })
+
+        it('publishes specialist.tool.response with ok=false and errorCode when the inner tool returned a failure envelope', () => {
+            const bus = aFakeBus()
+            const toolCall = {id: 'gc1', name: 'get_gui_context', input: {}}
+            const llm = aFakeLlm({replies: [{toolCalls: [toolCall]}, {text: 'done'}]})
+
+            read(runSpecialist$({
+                llm, bus, name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas,
+                invokeTool$: () => of({ok: false, error: {code: 'TOOL_FAILED', message: 'boom'}}),
+                context: {conversationId: 'c1'}
+            }))
+
+            const responses = bus.published.filter(e => e.type === 'specialist.tool.response')
+            expect(responses[0]).toMatchObject({ok: false, errorCode: 'TOOL_FAILED'})
+        })
+
+        it('publishes specialist.prompt before each specialist LLM call (trace, lazy, with round/messageCount/toolNames/name)', () => {
+            const bus = aFakeBus()
+            const llm = aFakeLlm({replies: [{text: 'done'}]})
+
+            read(runSpecialist$({
+                llm, bus, name: 'recipe.update',
+                systemPrompt: 'You are SEPAL update specialist.',
+                userText: 'change the target date to 2026-06-01',
+                allowedSchemas,
+                invokeTool$: noopInvokeTool$, context: {conversationId: 'c1'}
+            }))
+
+            const prompts = bus.published.filter(e => e.type === 'specialist.prompt')
+            expect(prompts).toHaveLength(1)
+            expect(prompts[0]).toMatchObject({
+                type: 'specialist.prompt',
+                level: 'trace',
+                conversationId: 'c1',
+                name: 'recipe.update',
+                round: 0,
+                messageCount: 2,
+                toolNames: ['get_gui_context']
+            })
+            expect(typeof prompts[0].message).toBe('function')
+        })
+
+        it('renders the user text and the system prompt in the specialist.prompt snapshot so the trace excerpt is enough to inspect a bad prompt', () => {
+            const bus = aFakeBus()
+            const llm = aFakeLlm({replies: [{text: 'done'}]})
+
+            read(runSpecialist$({
+                llm, bus, name: 'recipe.update',
+                systemPrompt: 'You are SEPAL update specialist.',
+                userText: 'change the target date to 2026-06-01',
+                allowedSchemas,
+                invokeTool$: noopInvokeTool$, context: {conversationId: 'c1'}
+            }))
+
+            const snapshot = bus.published.find(e => e.type === 'specialist.prompt').message()
+            expect(snapshot).toContain('You are SEPAL update specialist.')
+            expect(snapshot).toContain('change the target date to 2026-06-01')
+        })
+
+        it('publishes a fresh specialist.prompt for each round so the rendered snapshot reflects the post-tool history', () => {
+            const bus = aFakeBus()
+            const toolCall = {id: 'gc1', name: 'get_gui_context', input: {}}
+            const llm = aFakeLlm({replies: [{toolCalls: [toolCall]}, {text: 'done'}]})
+
+            read(runSpecialist$({
+                llm, bus, name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas,
+                invokeTool$: () => of({ok: true, data: {section: 'process'}}),
+                context: {conversationId: 'c1'}
+            }))
+
+            const prompts = bus.published.filter(e => e.type === 'specialist.prompt')
+            expect(prompts.map(p => p.round)).toEqual([0, 1])
+            expect(prompts[0].messageCount).toBe(2)
+            expect(prompts[1].messageCount).toBe(4) // system, user, assistant(toolCalls), tool(results)
+        })
+
+        it('routes by type prefix to the specialist category (logListener splits on first dot — type=specialist.prompt -> category=specialist)', () => {
+            const bus = aFakeBus()
+            const llm = aFakeLlm({replies: [{text: 'ok'}]})
+
+            read(runSpecialist$({
+                llm, bus, name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas, invokeTool$: noopInvokeTool$, context: {conversationId: 'c1'}
+            }))
+
+            const prompt = bus.published.find(e => e.type === 'specialist.prompt')
+            expect(prompt.type.split('.')[0]).toBe('specialist')
+        })
+
+        it('does not emit {toolStart} or {toolEnd} plain objects in the outer stream — inner specialist tools must not surface as user-facing tool usage', () => {
+            const toolCall = {id: 'gc1', name: 'get_gui_context', input: {}}
+            const llm = aFakeLlm({replies: [{toolCalls: [toolCall]}, {text: 'done'}]})
+
+            const {events} = run(runSpecialist$({
+                llm, bus: aFakeBus(), name: 'recipe.update',
+                systemPrompt: 'p', userText: 'q',
+                allowedSchemas,
+                invokeTool$: () => of({ok: true, data: {section: 'process'}}),
+                context: {conversationId: 'c1'}
+            }))
+
+            const userFacingEvents = events.filter(value => value && (value.toolStart || value.toolEnd))
+            expect(userFacingEvents).toEqual([])
+        })
     })
 })

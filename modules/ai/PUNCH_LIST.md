@@ -109,15 +109,20 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   but production should add a per-`update_recipe`-invocation counter on
   `recipe_patch` calls to stop genuine loops without constraining a single
   LLM "thinking out loud."
-- **Specialist safety/observability is minimal** — `runSpecialist$` has a
-  `SPECIALIST_MAX_ROUNDS` cap, per-turn tool-loop safety (no-repeat,
+- **Specialist safety/observability is partially in place** — `runSpecialist$`
+  has a `SPECIALIST_MAX_ROUNDS` cap, per-turn tool-loop safety (no-repeat,
   consecutive-failure bail-out, invalid-args retry limit via the shared
-  `toolCallGuard`), and a tracer span, but no recursion guard beyond the
-  two-layer registry (specialists can't call specialists today only because
-  the inner registry doesn't hold them), no per-specialist token budget, no
-  `specialist.invoked` / `specialist.completed` bus events for per-specialist
-  accounting, and the cap-exceeded / bail-out fallbacks are flat English
-  strings with no descriptor path back to the GUI.
+  `toolCallGuard`), and a `specialist.run` bus span. Per-round lifecycle
+  events (`specialist.request` / `specialist.response`) and per-tool events
+  (`specialist.tool.request` / `specialist.tool.response`) now publish
+  compact diagnostic summaries on the bus, and `update_recipe.outcome`
+  emits a single info-level event with `patchAttempted` / `patchSucceeded`
+  / `code` / `lastPatchErrorCode` / `answerChars` per dispatch. Still
+  missing: recursion guard beyond the two-layer registry (specialists
+  can't call specialists today only because the inner registry doesn't
+  hold them), per-specialist token budget, and the cap-exceeded /
+  bail-out fallbacks are flat English strings with no descriptor path
+  back to the GUI.
 - **UI language is not in turn context** — the GUI knows the selected locale,
   but AI turns only receive GUI/runtime state. Include the UI language as
   runtime data so the model can reply in the active interface language without
