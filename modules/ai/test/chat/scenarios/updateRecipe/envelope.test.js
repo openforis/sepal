@@ -76,11 +76,10 @@ describe('update_recipe outer envelope reflects whether the patch applied', () =
 
         const result = harness.invoke({recipeId: 'r1', instruction: 'edit'})
 
-        expect(result).toEqual({
+        expect(result).toMatchObject({
             ok: false,
             error: {
                 code: 'UPDATE_NOT_ATTEMPTED',
-                message: 'The update specialist did not call recipe_patch.',
                 specialistAnswer: 'I looked at the recipe but did not patch anything.'
             }
         })

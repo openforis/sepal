@@ -7,14 +7,14 @@ describe('sepal tools', () => {
     it('returns the pure SEPAL product tool list (no specialist-backed tools)', () => {
         const names = sepalTools({guiRequests: aFakeGuiRequests()}).map(tool => tool.name)
 
-        expect(names).toEqual([
+        expect([...names].sort()).toEqual([
             'get_gui_context',
             'recipe_list',
             'recipe_open',
             'project_list',
             'map_area_list',
             'layer_list'
-        ])
+        ].sort())
     })
 
     it('does not expose describe_recipe — that is added at chat-level composition', () => {

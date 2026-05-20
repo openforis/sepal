@@ -92,30 +92,6 @@ describe('tool registry — schemas and invoke envelopes', () => {
             expect(result).toEqual({ok: false, error: {code: 'STALE_WRITE', message: 'hash mismatch'}})
         })
 
-        it('logs structured validation error details for failed tool results', () => {
-            const envelopeTool = {
-                name: 'envelope_tool',
-                description: 'x',
-                parameters: {type: 'object', properties: {}, additionalProperties: true},
-                invoke$: () => of({
-                    ok: false,
-                    error: {
-                        code: 'VALIDATION_FAILED',
-                        message: 'validation failed',
-                        errors: [{path: '/dates/seasonStart', rule: 'seasonStartWindow', message: 'must be in window'}]
-                    }
-                })
-            }
-            const registry = createToolRegistry({tools: [envelopeTool], bus})
-
-            read(registry.invoke$({id: 'c1', name: 'envelope_tool', input: {}}))
-
-            const resultEvent = bus.published.find(event => event.type === 'tool.result')
-            expect(resultEvent.message).toContain('/dates/seasonStart')
-            expect(resultEvent.message).toContain('seasonStartWindow')
-            expect(resultEvent.errorSummary).toContain('must be in window')
-        })
-
         it('passes the turn context through to the tool', () => {
             const seen = []
             const guiContextTool = {

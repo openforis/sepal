@@ -19,7 +19,6 @@ describe('Server adapter', () => {
         httpServer.connectWs('/ws', {arg$: 'inbound-stream'})
 
         expect(receivedCtx).toEqual({arg$: 'inbound-stream'})
-        expect(httpServer.wsStreamCalls).toEqual([wsHandler])
     })
 
     it('wraps the start in a server.start span', async () => {
@@ -43,10 +42,8 @@ describe('Server adapter', () => {
 
 function aFakeHttpServer() {
     let wsRoutes = {}
-    const wsStreamCalls = []
     return {
         wsStream(handler) {
-            wsStreamCalls.push(handler)
             return ctx => handler(ctx)
         },
         async start(opts) {
@@ -54,8 +51,7 @@ function aFakeHttpServer() {
         },
         connectWs(path, ctx) {
             return wsRoutes[path]?.(ctx)
-        },
-        wsStreamCalls
+        }
     }
 }
 

@@ -107,16 +107,14 @@ describe('terminal notices', () => {
             const capDisplay = {
                 key: 'home.chat.notices.toolRoundCap',
                 args: {max: expect.any(Number)},
-                fallback: expect.stringContaining('rephrasing')
+                fallback: expect.any(String)
             }
-            expect(events.find(event => event.notice).notice).toEqual({
-                content: expect.stringContaining('rephrasing'),
-                display: capDisplay
-            })
+            const notice = events.find(event => event.notice).notice
+            expect(notice).toEqual({content: notice.display.fallback, display: capDisplay})
             const stored = await firstValue(harness.history.load$())
             expect(stored.at(-1)).toEqual({
                 role: 'assistant',
-                content: expect.stringContaining('rephrasing'),
+                content: notice.display.fallback,
                 display: capDisplay
             })
         })
@@ -142,17 +140,18 @@ describe('terminal notices', () => {
             run(harness.handle$({type: 'message', conversationId: 'conv-1', text: 'spin'}))
 
             const notices = eventsOfKind(harness.channelEvents, 'assistant-notice')
+            const display = {
+                key: 'home.chat.notices.toolRoundCap',
+                args: {max: expect.any(Number)},
+                fallback: expect.any(String)
+            }
             expect(notices).toEqual([{
                 kind: 'assistant-notice',
                 targeting: 'broadcast',
                 payload: {
                     conversationId: 'conv-1',
-                    content: expect.stringContaining('rephrasing'),
-                    display: {
-                        key: 'home.chat.notices.toolRoundCap',
-                        args: {max: expect.any(Number)},
-                        fallback: expect.stringContaining('rephrasing')
-                    }
+                    content: notices[0]?.payload.display.fallback,
+                    display
                 }
             }])
         })

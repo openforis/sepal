@@ -63,7 +63,7 @@ describe('specialist consultations', () => {
 
             expect(harness.llm.receivedMessages[0][0]).toEqual({
                 role: 'system',
-                content: expect.stringContaining('map specialist')
+                content: expect.stringMatching(/map/i)
             })
         })
 

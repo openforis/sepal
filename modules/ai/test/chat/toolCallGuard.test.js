@@ -2,8 +2,8 @@ const {createToolCallGuard} = require('#mcp/chat/toolCallGuard')
 
 describe('toolCallGuard', () => {
 
-    const consecutiveFailureBail = (tool, max) => `consecutive:${tool}:${max}`
-    const invalidArgsBail = (tool, max) => `invalid-args:${tool}:${max}`
+    const consecutiveFailureBail = tool => `consecutive:${tool}`
+    const invalidArgsBail = tool => `invalid-args:${tool}`
 
     function aGuard() {
         return createToolCallGuard({consecutiveFailureBail, invalidArgsBail})
@@ -96,7 +96,7 @@ describe('toolCallGuard', () => {
 
             fail(1); fail(2); fail(3)
 
-            expect(guard.bail()).toBe('consecutive:t:3')
+            expect(guard.bail()).toBe('consecutive:t')
         })
 
         it('triggers the invalid-args bail after three INVALID_TOOL_ARGS failures of the same tool', () => {
@@ -105,7 +105,7 @@ describe('toolCallGuard', () => {
 
             fail(1); fail(2); fail(3)
 
-            expect(guard.bail()).toBe('invalid-args:t:3')
+            expect(guard.bail()).toBe('invalid-args:t')
         })
 
         it('resets the consecutive-failure counter on a same-tool success', () => {
@@ -128,7 +128,7 @@ describe('toolCallGuard', () => {
             guard.record({name: 'b', input: {}}, aSuccess())
             guard.record({name: 'a', input: {x: 3}}, aFailure())
 
-            expect(guard.bail()).toBe('consecutive:a:3')
+            expect(guard.bail()).toBe('consecutive:a')
         })
 
         it('counts INVALID_TOOL_ARGS only against the invalid-args limit, not the consecutive cap', () => {
@@ -151,7 +151,7 @@ describe('toolCallGuard', () => {
             guard.record({name: 't', input: {a: 5}}, aFailure('INVALID_TOOL_ARGS'))
             guard.record({name: 't', input: {a: 6}}, aFailure('INVALID_TOOL_ARGS'))
 
-            expect(guard.bail()).toBe('consecutive:t:3')
+            expect(guard.bail()).toBe('consecutive:t')
         })
     })
 })

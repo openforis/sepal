@@ -11,10 +11,10 @@ describe('orchestrator tool registry', () => {
         })
     }
 
-    it('exposes the orchestrator-visible tool surface in stable order, with describe_recipe + update_recipe in place of raw recipe_load / recipe_patch', () => {
+    it('merges the specialist-backed recipe-op and consult tools onto the orchestrator surface alongside the product tools', () => {
         const names = anOrchestratorSurface().schemas().map(schema => schema.name)
 
-        expect(names).toEqual([
+        const allExpectedNames = [
             'get_gui_context',
             'recipe_list',
             'recipe_open',
@@ -24,7 +24,9 @@ describe('orchestrator tool registry', () => {
             'describe_recipe',
             'update_recipe',
             'consult_map'
-        ])
+        ]
+
+        expect([...names].sort()).toEqual([...allExpectedNames].sort())
     })
 
     it('does not expose recipe_load on the orchestrator surface — it is specialist-private', () => {

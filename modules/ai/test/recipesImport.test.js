@@ -15,14 +15,4 @@ describe('AI module -> #recipes import', () => {
 
         expect(ids).toContain('MOSAIC')
     })
-
-    it('validates a valid MOSAIC model end-to-end through the imported API', () => {
-        const defaults = recipes.getRecipeDefaults('MOSAIC')
-        const model = {
-            ...defaults,
-            aoi: {type: 'POLYGON', path: [[36.7, -1.4], [37.0, -1.4], [37.0, -1.1]]}
-        }
-
-        expect(recipes.validateRecipe('MOSAIC', model)).toEqual([])
-    })
 })

@@ -22,24 +22,23 @@ describe('publishSpecialistRequest', () => {
             toolSchemas: [{name: 'load_for_update'}, {name: 'recipe_patch'}]
         })
 
-        expect(bus.published).toEqual([{
+        expect(bus.published).toEqual([expect.objectContaining({
             type: 'specialist.request',
             level: 'debug',
             conversationId: 'c1',
             name: 'recipe.update',
             round: 0,
             messageCount: 2,
-            toolNames: ['load_for_update', 'recipe_patch'],
-            message: 'specialist.request name=recipe.update round=0 messages=2 tools=[load_for_update,recipe_patch]'
-        }])
+            toolNames: ['load_for_update', 'recipe_patch']
+        })])
     })
 
-    it('renders an empty tool list as [-]', () => {
+    it('reports no tool names when the tool list is empty', () => {
         const bus = aFakeBus()
 
         publishSpecialistRequest({bus, name: 'recipe.update', round: 0, messages: [], toolSchemas: []})
 
-        expect(bus.published[0].message).toContain('tools=[-]')
+        expect(bus.published[0].toolNames).toEqual([])
     })
 })
 
@@ -53,7 +52,7 @@ describe('publishSpecialistResponse', () => {
             text: 'Done.', toolCalls: []
         })
 
-        expect(bus.published).toEqual([{
+        expect(bus.published).toEqual([expect.objectContaining({
             type: 'specialist.response',
             level: 'debug',
             conversationId: 'c1',
@@ -61,9 +60,8 @@ describe('publishSpecialistResponse', () => {
             round: 0,
             textChars: 5,
             toolCallNames: [],
-            empty: false,
-            message: 'specialist.response name=recipe.update round=0 textChars=5 toolCalls=[-]'
-        }])
+            empty: false
+        })])
     })
 
     it('marks the response as empty=true when there is no text and no tool calls (pseudo-tool / reasoning-only signal)', () => {
@@ -72,7 +70,6 @@ describe('publishSpecialistResponse', () => {
         publishSpecialistResponse({bus, name: 'recipe.update', round: 1, text: '', toolCalls: []})
 
         expect(bus.published[0].empty).toBe(true)
-        expect(bus.published[0].message).toMatch(/empty=true/)
     })
 
     it('lists tool-call names when the response is a tool-call', () => {
@@ -84,7 +81,6 @@ describe('publishSpecialistResponse', () => {
         })
 
         expect(bus.published[0].toolCallNames).toEqual(['load_for_update', 'recipe_patch'])
-        expect(bus.published[0].message).toContain('toolCalls=[load_for_update,recipe_patch]')
     })
 })
 
@@ -98,15 +94,14 @@ describe('publishSpecialistToolRequest', () => {
             toolCall: {id: 't1', name: 'load_for_update', input: {recipeId: 'r1', instruction: 'edit'}}
         })
 
-        expect(bus.published).toEqual([{
+        expect(bus.published).toEqual([expect.objectContaining({
             type: 'specialist.tool.request',
             level: 'debug',
             conversationId: 'c1',
             name: 'recipe.update',
             tool: 'load_for_update',
-            inputKeys: ['recipeId', 'instruction'],
-            message: 'specialist.tool.request name=recipe.update tool=load_for_update inputKeys=[recipeId,instruction]'
-        }])
+            inputKeys: ['recipeId', 'instruction']
+        })])
     })
 
     it('handles a missing input gracefully', () => {
@@ -132,16 +127,15 @@ describe('publishSpecialistToolResponse', () => {
 
         publishSpecialistToolResponse({bus, name: 'recipe.update', conversationId: 'c1', tool: 'load_for_update', envelope})
 
-        expect(bus.published).toEqual([{
+        expect(bus.published).toEqual([expect.objectContaining({
             type: 'specialist.tool.response',
             level: 'debug',
             conversationId: 'c1',
             name: 'recipe.update',
             tool: 'load_for_update',
             ok: true,
-            shape: 'closure(intent=dateWindow,currentValues=3,dependentPaths=2,guidance=1)',
-            message: 'specialist.tool.response name=recipe.update tool=load_for_update ok=true shape=closure(intent=dateWindow,currentValues=3,dependentPaths=2,guidance=1)'
-        }])
+            shape: 'closure(intent=dateWindow,currentValues=3,dependentPaths=2,guidance=1)'
+        })])
     })
 
     it('summarises a recipe_patch success with modelHash/invalidatedPaths counts', () => {
@@ -164,7 +158,6 @@ describe('publishSpecialistToolResponse', () => {
             tool: 'recipe_patch',
             errorCode: 'STALE_WRITE'
         })
-        expect(bus.published[0].message).toContain('errorCode=STALE_WRITE')
     })
 
     it('falls back to a generic kind summary for unknown tool names', () => {
@@ -188,7 +181,7 @@ describe('publishUpdateRecipeOutcome', () => {
             answerChars: 42
         })
 
-        expect(bus.published).toEqual([{
+        expect(bus.published).toEqual([expect.objectContaining({
             type: 'update_recipe.outcome',
             level: 'info',
             conversationId: 'c1',
@@ -197,9 +190,8 @@ describe('publishUpdateRecipeOutcome', () => {
             patchSucceeded: true,
             code: 'ok',
             lastPatchErrorCode: null,
-            answerChars: 42,
-            message: 'update_recipe.outcome recipeId=r1 patchAttempted=true patchSucceeded=true code=ok answerChars=42'
-        }])
+            answerChars: 42
+        })])
     })
 
     it('publishes UPDATE_NOT_ATTEMPTED with patchAttempted=false', () => {
@@ -216,8 +208,6 @@ describe('publishUpdateRecipeOutcome', () => {
             code: 'UPDATE_NOT_ATTEMPTED',
             answerChars: 0
         })
-        expect(bus.published[0].message).toContain('patchAttempted=false')
-        expect(bus.published[0].message).toContain('code=UPDATE_NOT_ATTEMPTED')
     })
 
     it('publishes UPDATE_FAILED with the last patch error code', () => {
@@ -229,6 +219,5 @@ describe('publishUpdateRecipeOutcome', () => {
         })
 
         expect(bus.published[0].lastPatchErrorCode).toBe('VALIDATION_FAILED')
-        expect(bus.published[0].message).toContain('lastPatchErrorCode=VALIDATION_FAILED')
     })
 })

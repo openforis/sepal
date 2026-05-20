@@ -26,14 +26,14 @@ describe('Event bus', () => {
 
             await bus.track('test.op', {key: 'value'}, () => {})
 
-            expect(events[0]).toEqual({
+            expect(events[0]).toMatchObject({
                 type: 'test.op.started',
                 name: 'test.op',
                 correlationId: 'span-1',
                 level: 'debug',
-                message: 'test.op started key=value (span-1)',
                 at: 100,
-                key: 'value'
+                key: 'value',
+                message: expect.stringMatching(/test\.op.*started.*key=value.*span-1/)
             })
         })
 
@@ -44,15 +44,15 @@ describe('Event bus', () => {
 
             await bus.track('test.op', {key: 'value'}, () => {})
 
-            expect(events[1]).toEqual({
+            expect(events[1]).toMatchObject({
                 type: 'test.op.completed',
                 name: 'test.op',
                 correlationId: 'span-1',
                 level: 'info',
-                message: 'test.op completed key=value (span-1) in 150ms',
                 at: 250,
                 durationMs: 150,
-                key: 'value'
+                key: 'value',
+                message: expect.stringMatching(/test\.op.*completed.*key=value.*span-1.*150ms/)
             })
         })
 
@@ -68,8 +68,9 @@ describe('Event bus', () => {
             expect(events[1]).toMatchObject({
                 type: 'test.op.failed',
                 level: 'error',
-                message: 'test.op failed key=value (span-1) in 150ms: boom',
-                error: 'boom'
+                durationMs: 150,
+                error: 'boom',
+                message: expect.stringMatching(/test\.op.*failed.*span-1.*150ms.*boom/)
             })
         })
 
@@ -88,8 +89,10 @@ describe('Event bus', () => {
 
             await bus.track('test.op', {}, () => {})
 
-            expect(events[0].message).toBe('test.op started (span-1)')
-            expect(events[1].message).toBe('test.op completed (span-1) in 150ms')
+            expect(events[0].message).toMatch(/test\.op started \(span-1\)/)
+            expect(events[0].message).not.toMatch(/ {2}|=/)
+            expect(events[1].message).toMatch(/test\.op completed \(span-1\) in 150ms/)
+            expect(events[1].message).not.toMatch(/ {2}|=/)
         })
     })
 
@@ -109,7 +112,7 @@ describe('Event bus', () => {
             expect(events[0]).toMatchObject({
                 type: 'test.op.started',
                 level: 'debug',
-                message: 'test.op started key=value (span-1)'
+                message: expect.stringMatching(/test\.op.*started.*key=value.*span-1/)
             })
         })
 
@@ -123,8 +126,8 @@ describe('Event bus', () => {
             expect(events[1]).toMatchObject({
                 type: 'test.op.completed',
                 level: 'info',
-                message: 'test.op completed key=value (span-1) in 150ms',
-                durationMs: 150
+                durationMs: 150,
+                message: expect.stringMatching(/test\.op.*completed.*key=value.*span-1.*150ms/)
             })
         })
 
@@ -140,8 +143,9 @@ describe('Event bus', () => {
             expect(events[1]).toMatchObject({
                 type: 'test.op.failed',
                 level: 'error',
-                message: 'test.op failed key=value (span-1) in 150ms: boom',
-                error: 'boom'
+                durationMs: 150,
+                error: 'boom',
+                message: expect.stringMatching(/test\.op.*failed.*span-1.*150ms.*boom/)
             })
             expect(errors[0].message).toBe('boom')
         })

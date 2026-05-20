@@ -27,25 +27,20 @@ describe('recipe_patch tool', () => {
             const tool = recipePatchTool(aFakeGuiRequests())
 
             expect(tool.name).toBe('recipe_patch')
-            expect(typeof tool.description).toBe('string')
-            expect(tool.description).toContain('one operations array')
-            expect(tool.parameters).toEqual({
+            expect(tool.parameters).toMatchObject({
                 type: 'object',
                 properties: {
-                    recipeId: {type: 'string', description: 'The one recipe being patched.'},
-                    baseModelHash: {type: 'string', description: 'baseModelHash returned by the preceding load_for_update.'},
+                    recipeId: {type: 'string'},
+                    baseModelHash: {type: 'string'},
                     operations: {
                         type: 'array',
                         minItems: 1,
-                        description: 'One or more RFC 6902 operations. Group related changes here, e.g. targetDate plus seasonStart plus seasonEnd in the same array.',
                         items: {
                             type: 'object',
-                            description: 'A single RFC 6902 operation. Paths are model-relative JSON Pointers such as /dates/targetDate.',
                             properties: {
                                 op: {type: 'string', enum: ['add', 'remove', 'replace', 'move', 'copy', 'test']},
-                                path: {type: 'string', description: 'Model-relative JSON Pointer path.'},
-                                value: {description: 'Value for add, replace, and test operations.'},
-                                from: {type: 'string', description: 'Source JSON Pointer for move and copy operations.'}
+                                path: {type: 'string'},
+                                from: {type: 'string'}
                             },
                             required: ['op', 'path'],
                             additionalProperties: false

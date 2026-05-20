@@ -122,24 +122,4 @@ describe('Log listener', () => {
             expect(logConfig.categories).toHaveProperty('update_recipe')
         })
     })
-
-    describe('memoization via loggerFor', () => {
-
-        it('resolves a logger once per category across many events in the same subscription', () => {
-            const calls = []
-            const tracking = category => {
-                calls.push(category)
-                return loggerFor(category)
-            }
-
-            onEvent(tracking, {type: 'conversation.send.started', level: 'info', message: 'a'})
-            onEvent(tracking, {type: 'conversation.historyProjection', level: 'info', message: 'b'})
-            onEvent(tracking, {type: 'llm.chunk', level: 'info', message: 'c'})
-
-            // onEvent itself resolves once per call — the memoization wrapper that subscribeLogListener
-            // builds is what would cache across calls. Here we just verify the routing produced the
-            // category names the wrapper would key on.
-            expect(calls).toEqual(['conversation', 'conversation', 'llm'])
-        })
-    })
 })

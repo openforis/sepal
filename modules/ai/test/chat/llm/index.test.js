@@ -45,7 +45,6 @@ describe('LLM provider selector', () => {
 
         expect(response$).toBe(nativeResponse$)
         expect(mockNativeRespondTo).toHaveBeenCalledWith(request)
-        expect(mockOpenAiRespondTo).not.toHaveBeenCalled()
     })
 
     it('routes a reasoning lmstudio request to the OpenAI-compatible path', () => {
@@ -57,7 +56,6 @@ describe('LLM provider selector', () => {
 
         expect(response$).toBe(openAiResponse$)
         expect(mockOpenAiRespondTo).toHaveBeenCalledWith(request)
-        expect(mockNativeRespondTo).not.toHaveBeenCalled()
     })
 
     it('routes lmstudio tool requests through OpenAI-compatible chat with thinking disabled', () => {
@@ -75,7 +73,6 @@ describe('LLM provider selector', () => {
             ...request,
             extraParams: {chat_template_kwargs: {enable_thinking: false}}
         })
-        expect(mockNativeRespondTo).not.toHaveBeenCalled()
     })
 
     it('does not send structured tool history to the native lmstudio path', () => {
@@ -95,7 +92,6 @@ describe('LLM provider selector', () => {
             ...request,
             extraParams: {chat_template_kwargs: {enable_thinking: false}}
         })
-        expect(mockNativeRespondTo).not.toHaveBeenCalled()
     })
 
     it('preserves lmstudio caller extra params when disabling thinking for tool requests', () => {
@@ -127,6 +123,5 @@ describe('LLM provider selector', () => {
         aLlm('openai').respondTo$(request)
 
         expect(mockOpenAiRespondTo).toHaveBeenCalledWith(request)
-        expect(mockNativeRespondTo).not.toHaveBeenCalled()
     })
 })

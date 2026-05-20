@@ -7,6 +7,12 @@ const recipeListSchema = {
     parameters: {type: 'object', properties: {}, additionalProperties: true}
 }
 
+function hintedCalls(receivedMessages) {
+    return receivedMessages.filter(messages =>
+        messages?.at(-1)?.role === 'system' && /empty/i.test(messages.at(-1).content)
+    )
+}
+
 describe('empty reply after a tool round', () => {
 
     const toolCall = {id: 't1', name: 'recipe_list', input: {}}
@@ -47,7 +53,15 @@ describe('empty reply after a tool round', () => {
 
         await collect(harness.send$('open it'))
 
-        expect(harness.llm.receivedMessages).toHaveLength(3)
+        // The hint is injected exactly once: it rides the final LLM call and
+        // no further call follows, so a still-empty retry ends the turn rather
+        // than looping.
+        const finalMessages = harness.llm.receivedMessages.at(-1)
+        expect(finalMessages.at(-1)).toEqual({
+            role: 'system',
+            content: expect.stringMatching(/empty/i)
+        })
+        expect(hintedCalls(harness.llm.receivedMessages)).toHaveLength(1)
     })
 
     it('invokes a tool the LLM emits on the retry after a failed tool result, with tools still available', async () => {

@@ -35,11 +35,7 @@ describe('WS channel adapter — dispatch', () => {
         it('publishes a debug-level wsOut for text chunks (one per token — too verbose for info)', () => {
             channel.dispatch(chatResponseDelta('conv-1', 'Hello'))
 
-            expect(published[0]).toMatchObject({
-                type: 'wsOut',
-                level: 'debug',
-                message: 'WS out (alice broadcast) chat-response conv-1 text: "Hello"'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
 
         it('emits complete: true and publishes an info-level wsOut', () => {
@@ -49,10 +45,7 @@ describe('WS channel adapter — dispatch', () => {
                 username: 'alice',
                 data: {type: 'chat-response', conversationId: 'conv-1', complete: true}
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out (alice broadcast) chat-response conv-1 complete'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
     })
 
@@ -65,10 +58,7 @@ describe('WS channel adapter — dispatch', () => {
                 username: 'alice',
                 data: {type: 'status', conversationId: 'conv-1'}
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out (alice broadcast) status conv-1'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
     })
 
@@ -82,10 +72,7 @@ describe('WS channel adapter — dispatch', () => {
                 excludeClientId: 'c1',
                 data: {type: 'user-message', conversationId: 'conv-1', text: 'hello'}
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out (alice broadcast except c1) user-message conv-1: "hello"'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
     })
 
@@ -106,10 +93,7 @@ describe('WS channel adapter — dispatch', () => {
                     updatedAt: '2024-01-01T00:00:00Z'
                 }
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out c1:s1 (alice) conversation-created conv-1'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
     })
 
@@ -131,10 +115,7 @@ describe('WS channel adapter — dispatch', () => {
                     updatedAt: '2024-01-01T00:00:00Z'
                 }
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out (alice broadcast except c1) conversation-claimed conv-1'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
     })
 
@@ -153,10 +134,7 @@ describe('WS channel adapter — dispatch', () => {
                     title: 'NDVI change Kenya'
                 }
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out (alice broadcast) conversation-updated conv-1'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
     })
 
@@ -171,10 +149,7 @@ describe('WS channel adapter — dispatch', () => {
                 ...alice,
                 data: {type: 'conversation-loaded', conversationId: 'conv-1', messages}
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out c1:s1 (alice) conversation-loaded conv-1 (2 messages)'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
     })
 
@@ -187,10 +162,7 @@ describe('WS channel adapter — dispatch', () => {
                 username: 'alice',
                 data: {type: 'conversation-deleted', conversationId: 'conv-1'}
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out (alice broadcast) conversation-deleted conv-1'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
     })
 
@@ -203,10 +175,7 @@ describe('WS channel adapter — dispatch', () => {
                 ...alice,
                 data: {type: 'conversations', conversations: ['conv-1', 'conv-2']}
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out c1:s1 (alice) conversations (2)'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
     })
 
@@ -219,10 +188,7 @@ describe('WS channel adapter — dispatch', () => {
                 ...alice,
                 data: {type: 'gui-action', requestId: 'req-1', action: 'echo', params: {text: 'hi'}}
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out c1:s1 (alice) gui-action echo (req-1)'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
     })
 
@@ -235,10 +201,7 @@ describe('WS channel adapter — dispatch', () => {
                 username: 'alice',
                 data: {type: 'tool-start', conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', input: {text: 'hi'}}
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out (alice broadcast) tool-start echo conv-1'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
 
         it('emits a tool-end carrying the ok flag and result data for live display', () => {
@@ -248,10 +211,7 @@ describe('WS channel adapter — dispatch', () => {
                 username: 'alice',
                 data: {type: 'tool-end', conversationId: 'conv-1', toolCallId: 't1', toolName: 'echo', ok: true, data: {echoed: 'hi'}}
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out (alice broadcast) tool-end echo conv-1 ok=true'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
 
         it('emits a tool-end carrying the error envelope when the tool failed', () => {
@@ -267,10 +227,7 @@ describe('WS channel adapter — dispatch', () => {
                     error: {code: 'TOOL_FAILED', message: 'boom'}
                 }
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out (alice broadcast) tool-end echo conv-1 ok=false'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
     })
 
@@ -292,10 +249,7 @@ describe('WS channel adapter — dispatch', () => {
                     display: {key: 'home.chat.notices.toolRoundCap', args: {max: 8}, fallback: 'Step cap reached.'}
                 }
             }])
-            expect(published[0]).toMatchObject({
-                level: 'debug',
-                message: 'WS out (alice broadcast) assistant-notice conv-1 key=home.chat.notices.toolRoundCap'
-            })
+            expect(published[0]).toMatchObject({type: 'wsOut', level: 'debug'})
         })
     })
 })

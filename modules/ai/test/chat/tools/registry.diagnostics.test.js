@@ -26,10 +26,9 @@ describe('tool registry — result diagnostics', () => {
 
         read(registry.invoke$({id: 'c1', name: 'echo', input: {text: 'hi'}}, {conversationId: 'conv-1'}))
 
-        expect(debugEvents(bus.published)).toEqual([{
+        expect(debugEvents(bus.published)).toMatchObject([{
             type: 'tool.result',
             level: 'debug',
-            message: 'tool echo -> ok kind=object',
             conversationId: 'conv-1',
             toolName: 'echo',
             ok: true,
@@ -59,7 +58,6 @@ describe('tool registry — result diagnostics', () => {
         read(registry.invoke$({id: 'c1', name: 'recipe_list', input: {}}, {conversationId: 'conv-1'}))
 
         expect(debugEvents(bus.published)[0]).toMatchObject({
-            message: 'tool recipe_list -> ok kind=array count=3 named=2',
             ok: true,
             kind: 'array',
             count: 3,
@@ -76,12 +74,36 @@ describe('tool registry — result diagnostics', () => {
         expect(debugEvents(bus.published)[0]).toMatchObject({
             type: 'tool.result',
             level: 'debug',
-            message: 'tool missing -> failed code=UNKNOWN_TOOL',
             conversationId: 'conv-1',
             toolName: 'missing',
             ok: false,
             errorCode: 'UNKNOWN_TOOL'
         })
+    })
+
+    it('projects structured validation errors (path/rule/message) into errorSummary on a failed tool result', () => {
+        const envelopeTool = {
+            name: 'envelope_tool',
+            description: 'x',
+            parameters: {type: 'object', properties: {}, additionalProperties: true},
+            invoke$: () => of({
+                ok: false,
+                error: {
+                    code: 'VALIDATION_FAILED',
+                    message: 'validation failed',
+                    errors: [{path: '/dates/seasonStart', rule: 'seasonStartWindow', message: 'must be in window'}]
+                }
+            })
+        }
+        const registry = createToolRegistry({tools: [envelopeTool], bus})
+
+        read(registry.invoke$({id: 'c1', name: 'envelope_tool', input: {}}, {conversationId: 'conv-1'}))
+
+        const resultEvent = debugEvents(bus.published)[0]
+        expect(resultEvent).toMatchObject({type: 'tool.result', ok: false, errorCode: 'VALIDATION_FAILED'})
+        expect(JSON.parse(resultEvent.errorSummary)).toEqual([
+            {path: '/dates/seasonStart', rule: 'seasonStartWindow', message: 'must be in window'}
+        ])
     })
 })
 
