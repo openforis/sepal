@@ -60,6 +60,12 @@ The main architectural pressure is tool visibility: keep routing/metadata tools
 at the orchestrator level, and move raw recipe inspection and mutation behind
 recipe specialists.
 
+Recipe update knowledge and closure design is tracked separately in
+`DESIGN_recipe_update_knowledge.md`. That note covers the target split between
+generated recipe manuals, reusable operational recipe knowledge, deterministic
+`prepare_update({recipeId, focusPaths})`, dependency expansion, writable patch
+scope, and prompt-cache behavior.
+
 ## 3. Tool surface
 
 Target always-visible orchestrator tools. Some are implemented, some remain
@@ -103,11 +109,14 @@ types. Existing recipes resolve `recipeType` from `recipeId`; creation requires
 to call again for follow-ups with the new question plus relevant prior derived
 context. The recipe specialist does not own a conversation for descriptions.
 
-Raw/path-scoped `recipe_load`, `recipe_patch`, and create/update
-primitives are specialist-private. The target update surface is even narrower:
-the update specialist should see `load_for_update` plus `recipe_patch`, not an
-open-ended raw load tool. Other specialists receive derived descriptions from
-recipe specialists, not raw recipe JSON.
+Raw/path-scoped `recipe_load`, `recipe_patch`, and create/update primitives are
+specialist-private. The target update surface is narrower still: the update
+specialist should see `prepare_update` plus `recipe_patch`, not an open-ended
+raw load tool. `prepare_update` takes formal focus paths chosen by the
+specialist from the generated manual; it does not receive natural-language user
+instructions. Other specialists receive derived descriptions from recipe
+specialists, not raw recipe JSON. The older `load_for_update` closure tool is a
+legacy/private migration artifact, not the target live update workflow.
 
 Dispatcher-only bridge calls (not exposed to any LLM): `recipe-metadata`
 returns identity-only `{id, type, name, projectId}` from `process.recipes`,
@@ -122,6 +131,11 @@ Budget:
 - move tools with large recipe-domain prose, enums, or examples behind a
   specialist
 - keep diagnostic/smoke tools out of the production surface
+- track orchestrator system-prompt bytes/tokens separately from orchestrator
+  tool-schema bytes/tokens; some production profiles cache system/messages but
+  not tools
+- do not use orchestrator tool descriptions as a place to store recipe-domain
+  knowledge. Tool descriptions are dispatch contracts, not recipe manuals.
 
 ## 4. Specialist lifecycle
 
@@ -195,6 +209,13 @@ Purpose-specific recipe facts:
   needed to answer questions about a chosen recipe.
 - `editFacts`: for `update_recipe`. Includes schema/rule/edit guidance,
   dependent fields, and patch-path gotchas. It must not include routing prose.
+- reusable operational facts: source data for generated manuals and future
+  advice/troubleshooting prompts. These facts are topic-tagged and cover
+  performance, rendering, quality/completeness, availability, and validation
+  implications without being tied to one operation's prose. They should describe
+  execution-shape cost drivers such as observation volume, spatial operations,
+  collection reductions, extra passes, heavy per-item work, and availability
+  risks instead of relying on shallow "more options is slower" heuristics.
 - `createFacts`: future equivalent for `create_recipe`, covering required
   inputs, defaults, and creation-time dependencies.
 
@@ -202,10 +223,11 @@ Private tools by purpose:
 
 - describe: `recipe_load` with optional JSON Pointer path, returning an
   effective projected model fragment plus `baseModelHash`.
-- update target: `load_for_update` plus `recipe_patch`. `load_for_update`
-  returns the current effective closure, base hash, and deterministic rule
-  guidance for the requested edit. The current transitional implementation may
-  still expose raw/path-scoped `recipe_load`.
+- update target: `prepare_update` plus `recipe_patch`. `prepare_update` returns
+  the current effective values, base hash, dependency facts, validation rules,
+  and writable scope for formal focus paths. The current transitional registry
+  may still contain `load_for_update`, but live update specialists should not
+  depend on it.
 - create target: load defaults/create closure plus a create primitive. Creation
   patches the recipe type's effective default model or submits an equivalent
   complete effective draft.
@@ -258,18 +280,20 @@ changing `dates.targetDate`, `dates.seasonStart`, and `dates.seasonEnd`
 together so the post-apply model validates. The specialist should prefer one
 multi-operation patch over several sequential patches for one logical edit.
 
-`load_for_update` target contract:
+`prepare_update` target contract:
 
-- Input: `{recipeId, instruction}` plus optional continuation/session state.
+- Input: `{recipeId, focusPaths}` where paths are model-relative JSON Pointers
+  chosen by the update specialist from the generated manual and user
+  instruction.
+- It does not receive the natural-language instruction and must not infer intent
+  via keyword matching.
 - Internally loads the current stored recipe, projects it through
-  `toEffectiveModel`, calculates the deterministic validation closure for the
-  requested edit, and returns only what the specialist needs.
-- Output includes `baseModelHash`, relevant current values, candidate/dependent
-  paths, applicable rule guidance, and any known normalized/effective path
-  names.
-- It is the only load tool exposed to update specialists once implemented.
-  General raw/path `recipe_load` remains available to describe specialists and
-  transitional update implementations.
+  `toEffectiveModel`, expands deterministic dependency/validation metadata for
+  the supplied paths, and returns only what the specialist needs.
+- Output includes `baseModelHash`, `focusPaths`, `dependentPaths`,
+  `writablePaths`, `currentValues`, `dependencyFacts`, and `validationRules`.
+- General raw/path `recipe_load` remains available to describe specialists and
+  legacy/transitional implementations only.
 
 SEPAL recipe implementation rules:
 
@@ -294,9 +318,10 @@ Projected/heavy fields:
 - no replace/remove of a specific omitted index without deep-reading that path
 
 Describe-time path loading should stay explicit: `recipe_load({recipeId,
-path})`. Update-time relevance inference belongs in shared recipe knowledge and
-`load_for_update`, not in the LLM prompt. Path lookups are not pre-validated
-against the schema. The actual effective model is authoritative: paths may
+path})`. Update-time relevance inference belongs in the update specialist using
+the generated manual, while deterministic dependency expansion belongs in
+`prepare_update`. Path lookups are not pre-validated against the schema. The
+actual effective model is authoritative: paths may
 legitimately exist in the model without being schema-declared (loosely typed
 regions, optional fields, or legacy fields a newer schema does not formally
 describe). A path lookup that hits nothing returns a clean absent signal.
@@ -341,7 +366,9 @@ lib/js/recipes/
       rules.js
       toEffectiveModel.js
       facts.js
-      (updateClosure.js) # lands with load_for_update support
+      llmMetadata.js
+      (knowledge.js)          # reusable operational facts, if split out
+      (updateClosure.js)      # legacy load_for_update support, if retained
 ```
 
 Per-spec exports (current MOSAIC shape):
@@ -358,9 +385,11 @@ Per-spec exports (current MOSAIC shape):
   selectionFacts(),                // routing/workflow facts
   describeFacts(),                 // describe_recipe facts
   editFacts(),                     // update_recipe facts
+  llmMetadata(),                   // generated/structured constraints
+  updateManual(),                  // generated compact manual
   validate(model)                  // schema + rules; assumes effective input
-  // updateClosure({instruction, model})       // future load_for_update core
-  // createFacts()                            // future create_recipe facts
+  // operationalFacts()            // reusable advice/update facts
+  // createFacts()                 // future create_recipe facts
 }
 ```
 
@@ -368,6 +397,7 @@ Registry-level conveniences in `lib/js/recipes/src/index.js`:
 `listRecipeSpecs()`, `getRecipeSpec(id)`, `getRecipeSchema(id)`,
 `getRecipeDefaults(id)`, `getRecipeSelectionFacts(id)`,
 `getRecipeDescribeFacts(id)`, `getRecipeEditFacts(id)`,
+`getRecipeLlmMetadata(id)`, `getRecipeUpdateManual(id)`,
 `validateRecipe(id, model)`, `toEffectiveModel(id, model)`.
 
 Bring recipe packages back one at a time. Each package needs focused tests for
@@ -415,12 +445,17 @@ knowledge, not hand-authored from scratch per type. Facts are split by
 consumer purpose so routing prose does not leak into update prompts, and edit
 guidance does not leak into describe prompts.
 
+GUI translations and public docs are source material for authoring recipe facts,
+not runtime prompt sources. The distilled structured metadata beside the recipe
+spec is the prompt/tool source of truth.
+
 Current fact shape:
 
 ```js
 selectionFacts() -> {description, useCases, chooseWhen, dontChooseWhen, outputs}
 describeFacts()  -> {description, outputs, ...explanationFacts}
 editFacts()      -> {guidance, ...updateDependencies}
+updateManual()   -> compact generated path/rule/operational manual text
 ```
 
 The AI module composes prompts via
@@ -428,18 +463,27 @@ The AI module composes prompts via
 static base frame comes first for prompt-cache stability, then a delimited
 type-specific section assembled from the purpose-specific facts. `purpose:
 'describe'` includes describe facts only. `purpose: 'update'` includes edit
-facts and, when requested, schema. Selection facts are consumed by the
-orchestrator/workflow layer before a recipe specialist is chosen.
+facts plus the generated update manual. Selection facts are consumed by the
+orchestrator/workflow layer before a recipe specialist is chosen. Full schema
+dumps are a fallback/debug option, not the target update prompt shape.
 
 Future additions should be purpose-specific:
 
 - `createFacts()` for create specialists
-- deterministic closure summaries returned by `load_for_update`
+- deterministic preparation summaries returned by `prepare_update`
+- reusable operational-fact renderings for troubleshooting/advice specialists
 - schema/projection summaries only where a write-capable specialist needs them
 - rule prose where JSON Schema alone does not communicate recipe semantics
 
 JSON Schema alone cannot express all recipe semantics clearly enough for the
 LLM. Rule prose is intentional.
+
+Operational facts should use a shared vocabulary across recipe types where
+possible. For example, `warning`, `memory`, `latency`, `observation-volume`,
+`spatial-operation`, `collection-reduction`, `extra-pass`, `heavy-per-item`, and
+`availability` are reusable concepts even when the concrete recipe fields differ.
+This lets update, create, describe, and future troubleshooting specialists use
+the same source facts without duplicating recipe-specific prose.
 
 ## 9. Workflow, map, and browse
 
@@ -573,9 +617,10 @@ Static prefixes matter independently from in-process sessions.
 Cache-aware provider support:
 
 - Bedrock is the production cache-aware path; exact model IDs live in profiles.
-- Nova Lite-family profiles, including Nova 2 Lite where configured, cache
-  `system` and `messages`, not `tools`; 5-min sliding TTL; 1K min tokens; max 4
-  checkpoints; explicit markers are needed for cost discount.
+- Nova-family profiles, including Nova 2 Lite where configured, cache
+  `system` and `messages`, not `tools`; 5-min sliding TTL; 1K min checkpoint;
+  max 4 checkpoints; max 20K cached tokens for Nova prompt caching; explicit
+  markers are needed for cost discount.
 - Claude 4.5 family on Bedrock caches `system`, `messages`, and `tools`; 5-min
   or 1-hour TTL; 4K min tokens; max 4 checkpoints; explicit markers.
 - OpenAI direct auto-caches stable prefixes without markers.
@@ -601,6 +646,21 @@ Prompt-structure implications:
 - keep system prompts byte-identical across users
 - use `llm.usage.cachedInputTokens` and `cacheWriteTokens` to validate cache
   placement
+
+Budget implications:
+
+- specialist prompts are short-lived and narrow; the compact static
+  specialist package should target Nova cache fit, roughly <= 18K tokens
+  including base prompt and generated recipe manual
+- the orchestrator is longer-lived and sees every always-visible tool schema on
+  every round; keep its static system prompt cacheable and its tool surface
+  independently small
+- do not move recipe semantics from specialist prompts into orchestrator tool
+  descriptions to chase cache fit
+- Qwen/local development is acceptable while it pushes toward clearer compact
+  artifacts; switch focus to Nova when Qwen pressure would require brittle
+  routing, keyword matching, extra round trips, or recipe-specific hacks that
+  would not be wanted in production
 
 ## 13. Observability and usage
 
@@ -678,10 +738,13 @@ active tool loop.
 This document now tracks architecture and contracts, not a completed
 implementation checklist. Current unresolved design work:
 
-- Implement `load_for_update` as the update specialist's only load tool. It
-  should calculate the effective-model closure from shared schema/rules and
-  return `baseModelHash`, relevant current values, dependent paths, and rule
-  guidance.
+- Expand reusable operational recipe knowledge so generated manuals and future
+  advice/troubleshooting specialists can reason about performance, rendering
+  risk, quality tradeoffs, and validation implications from the same source
+  facts.
+- Continue hardening `prepare_update` and `recipe_patch` as the live update
+  workflow: formal focus paths in, deterministic writable scope out, GUI remains
+  authoritative for persistence and validation.
 - Add short-lived action-session support for create/update so `needs_info`
   can resume the same specialist task with only the new information.
 - Add `create_recipe` with a separate create specialist prompt/tool surface and
@@ -723,9 +786,9 @@ Claude must not change `Conversation` or specialist loops.
 
 ## 17. Open questions
 
-- What exact closure API should each recipe spec expose to power
-  `load_for_update`?
-- Which update closures can be derived mechanically from schema/rules, and
+- Which operational-fact shape should each recipe spec expose to support update
+  manuals and advice/troubleshooting prompts without duplicating prose?
+- Which update dependencies can be derived mechanically from schema/rules, and
   which need hand-authored recipe knowledge?
 - What `createFacts()` shape is needed before `create_recipe` lands?
 - What should `get_gui_context()` return beyond compact turn context?

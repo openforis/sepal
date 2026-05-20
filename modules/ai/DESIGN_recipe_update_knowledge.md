@@ -1,6 +1,9 @@
 # Recipe update knowledge design
 
-Status: design note, not yet implemented.
+Status: partially implemented design note. The current implementation has
+rule-derived constraint metadata, a generated update manual, and the
+`prepare_update({recipeId, focusPaths})` update-preparation tool. Rich
+operational recipe knowledge is still being expanded.
 
 This note captures the target direction for making recipe update specialists
 knowledge-rich without putting all recipe semantics into the always-visible
@@ -8,7 +11,8 @@ orchestrator prompt, and without hand-coding every possible user request.
 
 The broad specialist architecture lives in `DESIGN_chat_specialists_v2.md`.
 This document focuses on recipe update authoring, prompt-cache shape, and the
-relationship between static recipe knowledge and deterministic patch closure.
+relationship between static recipe knowledge and deterministic path-oriented
+preparation.
 
 ## Problem
 
@@ -23,11 +27,12 @@ For that kind of request, the specialist needs to understand recipe-domain
 tradeoffs: which fields affect processing time or memory, which options trade
 quality for speed, which values are reasonable, and which fields interact.
 
-The current `MOSAIC` update path does not provide that information in a general
-way. The update prompt gets a small set of edit guidance bullets, and
-`load_for_update` falls back to a broad current-value closure for unknown
-intents. The current JSON Schema also does not contain rich operational
-descriptions; the most useful prose currently lives in GUI labels/tooltips.
+The generated `MOSAIC` update manual now provides structural information such
+as paths, value shape, and validation constraints. It still needs richer
+operational knowledge in a general reusable form. The JSON Schema does not
+contain most speed/rendering/quality tradeoffs; useful source prose often lives
+in GUI labels/tooltips, public docs, or backend implementation details and must
+be distilled before it becomes runtime prompt input.
 
 ## Goals
 
@@ -42,6 +47,9 @@ descriptions; the most useful prose currently lives in GUI labels/tooltips.
 - Keep patch generation safe by deterministically expanding dependencies and
   write scope before `recipe_patch`.
 - Allow recipe support to start minimal and improve as richer facts are added.
+- Make operational recipe knowledge reusable by update, describe, and future
+  troubleshooting/advice specialists rather than baking it into one generated
+  update-manual prose block.
 
 ## Model profile stance
 
@@ -108,7 +116,11 @@ static system prompt. This manual is cacheable because it is stable for a given
 recipe type and version.
 
 The manual should be generated from structured recipe metadata rather than
-hand-written as a separate prompt file. A useful field entry shape is:
+hand-written as a separate prompt file. The manual is a generated artifact, not
+the source of truth. It can include facts from schema, validation rules, and
+reusable operational recipe knowledge.
+
+A useful generated field entry shape is:
 
 ```text
 /compositeOptions/tileOverlap
@@ -134,10 +146,112 @@ The manual should cover:
 It should not contain current recipe state, user identity, selected GUI state,
 or runtime values.
 
+## Reusable operational knowledge
+
+Operational knowledge covers speed, rendering risk, memory/data volume,
+quality/completeness tradeoffs, availability, and advice-oriented inspection
+clues. It is broader than update guidance and should not be modeled as a
+deterministic analyzer first. The immediate consumer is the update manual, but
+the same source facts should be renderable later for a troubleshooting/advice
+specialist answering questions such as:
+
+```text
+Why does this recipe render slowly?
+What settings should I inspect?
+How can I make this recipe cheaper to preview?
+```
+
+Across recipe types, operational facts should describe the execution shape and
+known failure modes instead of relying on simple option-count heuristics. A
+recipe with more selected methods is not necessarily slower if those methods are
+folded into an existing per-item map. Conversely, one option can be extremely
+expensive if it adds spatial neighborhood work, a collection reduction, an extra
+collection pass, or greatly increases the number of observations carried through
+the graph.
+
+Reusable cost vocabulary should cover at least:
+
+- `observation-volume`: more scenes, wider date windows, extra sources, or
+  duplicate observations increase memory pressure and downstream latency.
+- `spatial-operation`: neighborhood, morphology, buffering, distance-transform,
+  or other "look around each pixel" work. These can be much more expensive than
+  pixel-by-pixel band math.
+- `collection-reduction`: reducers over an image collection, percentile filters,
+  medoids, or similar operations that need to inspect many observations together.
+- `extra-pass`: options that add another collection map/reduce/mask pass rather
+  than only changing work already performed in an existing pass.
+- `heavy-per-item`: per-scene/per-image geometry, calibration, correction, or
+  ancillary-data work that is expensive even when expressed inside an existing
+  map.
+- `availability`: settings that change which backend collections are used or
+  whether data exists for the requested time/place.
+- `warning`: high-impact settings that commonly cause severe latency, memory
+  failures, or surprising quality loss and should be called out explicitly.
+
+The fact metadata should make memory and latency distinct where the domain knows
+the difference. In Earth Engine, memory pressure is often the hard failure mode,
+but the same graph shape usually also becomes slow. Specialist guidance should
+therefore avoid flattening everything to "fast/slow"; it should identify whether
+the issue is likely memory, latency, availability, or quality.
+
+Facts may be semi-structured instead of fully machine-evaluable predicates. The
+important property is reusable shape and topic tagging, not deterministic
+execution. A compact fact can look like:
+
+```js
+{
+  path: '/compositeOptions/cloudBuffer',
+  topics: ['performance', 'memory', 'latency', 'quality', 'spatial-operation'],
+  severity: 'warning',
+  warning: 'Cloud buffering is a high-cost spatial operation and can make large or cloudy jobs very slow or fail.',
+  guidance: [
+    '0 avoids cloud buffering and is preferred for fastest rendering.',
+    '120/600 should be used only when the user wants stricter cloud-edge masking and accepts the cost.'
+  ],
+  inspectWhen: [
+    'Recipe renders slowly',
+    'User asks for faster preview',
+    'Render fails with memory or timeout symptoms',
+    'Unexpected missing pixels around clouds'
+  ],
+  tradeoffs: [
+    'Lower buffer improves speed/reliability but may leave cloud-edge artifacts.'
+  ]
+}
+```
+
+Interactions should use the same model:
+
+```js
+{
+  paths: ['/sources/dataSets', '/compositeOptions/corrections'],
+  topics: ['performance', 'rendering', 'validation'],
+  guidance: [
+    'Using both Landsat and Sentinel-2 increases data volume.',
+    'Mixed sources require CALIBRATE and sceneSelectionOptions.type=ALL.'
+  ],
+  inspectWhen: [
+    'Slow rendering',
+    'Source changes',
+    'Calibration or validation errors'
+  ]
+}
+```
+
+The update-manual generator can render facts tagged `performance` into a
+compact "speed/rendering" section. A future advice specialist can select the
+same facts by `topics` and `inspectWhen` without depending on update-specific
+patch workflow wording.
+
+Warning-level facts should be rendered distinctly from normal field guidance.
+They represent settings that specialists should actively mention when proposing,
+keeping, or troubleshooting risky values. Examples include expensive spatial
+operations, expensive corrections, collection filters that add reducers/passes,
+and data-availability caveats.
+
 ## Preparation tool
 
-The future replacement/evolution of `load_for_update` should be a deterministic
-path-oriented tool. Working name:
+The update preparation tool is deterministic and path-oriented:
 
 ```js
 prepare_update({
@@ -242,6 +356,7 @@ purpose-specific artifacts:
     sections,
     fields,
     interactions,
+    operationalFacts,
     profiles
   }
 }
@@ -253,11 +368,13 @@ Generated consumers:
 - static path-first update manual
 - preparation-tool field facts
 - dependency expansion metadata
+- advice/troubleshooting specialist facts, especially operational topics such as
+  performance, rendering, quality, and validation
 - optional future GUI labels/tooltips, where practical
 
 Minimum support for a new recipe can be generated from schema paths, enums,
 defaults, and validation rules. Richer AI behavior comes from adding field
-facts, value tradeoffs, interactions, and optional profiles.
+facts, value tradeoffs, interactions, operational facts, and optional profiles.
 
 ## Authoring source material
 
@@ -282,8 +399,31 @@ recipe spec. Do not copy long tooltip or documentation text verbatim into
 runtime prompts, and do not make translations or docs the runtime source of
 truth. They are inputs to authoring, not generated artifacts.
 
+When deriving operational facts from backend/EE source, inspect the actual graph
+shape before writing guidance. In particular, look for:
+
+- where recipe fields enter the backend call chain
+- whether a setting changes source collection size, joins, filters, or selected
+  datasets
+- whether work happens inside an existing per-image/per-item map or adds a new
+  map pass
+- reducers over collections, arrays, bands, or neighborhoods
+- spatial operations such as buffers, distance transforms, morphology,
+  neighborhood reducers, feature distances, and geometry transforms
+- exact-removal or cleanup options that add bands, reduce the collection, then
+  remap/mask images
+- data-availability changes such as switching from TOA to SR collections
+- source comments, GUI tooltips, and tests that explain why an expensive-looking
+  option exists
+
+The resulting fact should state what the code does in operational terms, then
+separate impact from policy. For example, "this option adds a collection
+percentile reduction and an extra masking pass" is a source-derived fact;
+"remove optional filters first when optimizing for render reliability" is policy
+that the specialist can apply in context.
+
 For example, tooltip/doc prose about Sentinel-2 tile overlap should become
-metadata such as:
+reusable metadata such as:
 
 ```js
 {
@@ -291,12 +431,25 @@ metadata such as:
   purpose: 'Sentinel-2 tile overlap handling',
   values: {
     KEEP: {memory: 'highest', effect: 'keeps duplicate observations'},
-    QUICK_REMOVE: {memory: 'lower', speed: 'preferred fast/default option'},
+    QUICK_REMOVE: {memory: 'lower', effect: 'preferred default memory reduction'},
     REMOVE: {memory: 'similar to QUICK_REMOVE', cost: 'extra preprocessing'}
   },
-  guidance: {
-    performance: 'prefer QUICK_REMOVE over KEEP or REMOVE'
-  }
+  topics: ['performance', 'memory', 'latency', 'quality', 'observation-volume'],
+  guidance: [
+    'KEEP avoids overlap-removal preprocessing but carries duplicate observations downstream, increasing memory and latency risk.',
+    'QUICK_REMOVE is the usual best choice for reducing Sentinel-2 tile-overlap memory pressure.',
+    'REMOVE is more exact but adds an extra collection-level cleanup step and often gives little memory benefit beyond QUICK_REMOVE.'
+  ],
+  inspectWhen: [
+    'Slow Sentinel-2 rendering',
+    'Earth Engine memory errors',
+    'Tile-boundary artifacts',
+    'Time-series workflows such as CCDC',
+    'User asks for faster preview'
+  ],
+  tradeoffs: [
+    'Deduplication reduces duplicate observation volume, but exact cleanup can add extra processing.'
+  ]
 }
 ```
 
@@ -356,8 +509,10 @@ judgment outside the specialist.
 ### Separate knowledge and closure tools
 
 The concepts are distinct, but the LLM-facing round trip can be one
-`prepare_update` call. Internally, implementation can keep field-fact lookup
-and dependency expansion separate.
+`prepare_update` call for update preparation. Static reusable knowledge should
+stay in generated manuals/prompts, not require an extra per-update tool round
+trip. Internally, implementation can keep field-fact lookup, operational-fact
+rendering, and dependency expansion separate.
 
 ### Tags in v1
 
@@ -375,3 +530,5 @@ canonical paths easy for the specialist to select.
   `llm` metadata yet?
 - How should high-impact tradeoffs be surfaced back to the orchestrator for
   user confirmation?
+- What purpose-specific renderings should reusable operational facts support
+  first: update, describe, troubleshooting/advice, or UI hints?

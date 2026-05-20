@@ -36,6 +36,16 @@ describe('update_recipe per-type prompt assembly', () => {
             expect(systemPrompt.indexOf('Edit guidance:')).toBeLessThan(systemPrompt.indexOf('/compositeOptions/tileOverlap'))
         })
 
+        it('carries the corrected fast-render levers with the manual, base prompt first, schema still omitted', () => {
+            const systemPrompt = systemPromptFor(mosaicMetadata)
+
+            expect(systemPrompt).toMatch(/Warnings:/)
+            expect(systemPrompt).toMatch(/cloudBuffer.*(expensive|distance|buffer)|BRDF.*(expensive|slow|fail)/i)
+            expect(systemPrompt).not.toMatch(/```json/)
+            expect(systemPrompt).toMatch(/update specialist/i)
+            expect(systemPrompt.indexOf('update specialist')).toBeLessThan(systemPrompt.indexOf('Warnings:'))
+        })
+
         it('omits the full JSON schema and bare recipe_load', () => {
             const systemPrompt = systemPromptFor(mosaicMetadata)
 
