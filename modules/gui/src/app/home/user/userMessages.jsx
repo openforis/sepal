@@ -170,7 +170,7 @@ class _UserMessages extends React.Component {
             const sortedUserMessages = _.orderBy(userMessages, userMessage => moment(userMessage.message.creationTime) || moment(), 'desc')
             return (
                 <Layout type='vertical' spacing='tight'>
-                    {sortedUserMessages.map((userMessage, index) => this.renderMessage(userMessage, index))}
+                    {sortedUserMessages.map(userMessage => this.renderMessage(userMessage))}
                 </Layout>
             )
         } else {
@@ -198,14 +198,16 @@ class _UserMessages extends React.Component {
         )
     }
 
-    renderMessage(userMessage, index) {
+    renderMessage(userMessage) {
         const {isAdmin} = this.props
         const message = userMessage.message
         const author = userMessage.message.username
         const creationTime = userMessage.message.creationTime
+        const updateTime = userMessage.message.updateTime
+        const id = `${author}-${creationTime}-${updateTime}`
         return (
             <ListItem
-                key={index}
+                key={id}
                 onClick={() => this.setState({showMessage: userMessage})}>
                 <CrudItem
                     title={<Msg id='userMessages.author' author={author}/>}
