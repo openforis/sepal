@@ -18,9 +18,7 @@ describe('recipe_patch tool', () => {
             const tool = recipePatchTool(aFakeGuiRequests())
 
             expect(tool.description).toContain('prepare_update')
-            expect(tool.description).not.toContain('load_for_update')
             expect(tool.parameters.properties.baseModelHash.description).toContain('prepare_update')
-            expect(tool.parameters.properties.baseModelHash.description).not.toContain('load_for_update')
         })
 
         it('declares the documented parameters (recipeId, baseModelHash, operations all required)', () => {

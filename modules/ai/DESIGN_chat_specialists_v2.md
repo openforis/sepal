@@ -115,8 +115,7 @@ specialist should see `prepare_update` plus `recipe_patch`, not an open-ended
 raw load tool. `prepare_update` takes formal focus paths chosen by the
 specialist from the generated manual; it does not receive natural-language user
 instructions. Other specialists receive derived descriptions from recipe
-specialists, not raw recipe JSON. The older `load_for_update` closure tool is a
-legacy/private migration artifact, not the target live update workflow.
+specialists, not raw recipe JSON.
 
 Dispatcher-only bridge calls (not exposed to any LLM): `recipe-metadata`
 returns identity-only `{id, type, name, projectId}` from `process.recipes`,
@@ -225,9 +224,7 @@ Private tools by purpose:
   effective projected model fragment plus `baseModelHash`.
 - update target: `prepare_update` plus `recipe_patch`. `prepare_update` returns
   the current effective values, base hash, dependency facts, validation rules,
-  and writable scope for formal focus paths. The current transitional registry
-  may still contain `load_for_update`, but live update specialists should not
-  depend on it.
+  and writable scope for formal focus paths.
 - create target: load defaults/create closure plus a create primitive. Creation
   patches the recipe type's effective default model or submits an equivalent
   complete effective draft.
@@ -367,8 +364,7 @@ lib/js/recipes/
       toEffectiveModel.js
       facts.js
       llmMetadata.js
-      (knowledge.js)          # reusable operational facts, if split out
-      (updateClosure.js)      # legacy load_for_update support, if retained
+      knowledge.js            # reusable operational facts
 ```
 
 Per-spec exports (current MOSAIC shape):
@@ -386,9 +382,9 @@ Per-spec exports (current MOSAIC shape):
   describeFacts(),                 // describe_recipe facts
   editFacts(),                     // update_recipe facts
   llmMetadata(),                   // generated/structured constraints
+  knowledge(),                     // reusable operational facts
   updateManual(),                  // generated compact manual
   validate(model)                  // schema + rules; assumes effective input
-  // operationalFacts()            // reusable advice/update facts
   // createFacts()                 // future create_recipe facts
 }
 ```
@@ -397,7 +393,7 @@ Registry-level conveniences in `lib/js/recipes/src/index.js`:
 `listRecipeSpecs()`, `getRecipeSpec(id)`, `getRecipeSchema(id)`,
 `getRecipeDefaults(id)`, `getRecipeSelectionFacts(id)`,
 `getRecipeDescribeFacts(id)`, `getRecipeEditFacts(id)`,
-`getRecipeLlmMetadata(id)`, `getRecipeUpdateManual(id)`,
+`getRecipeLlmMetadata(id)`, `getRecipeUpdateManual(id)`, `getRecipeKnowledge(id)`,
 `validateRecipe(id, model)`, `toEffectiveModel(id, model)`.
 
 Bring recipe packages back one at a time. Each package needs focused tests for

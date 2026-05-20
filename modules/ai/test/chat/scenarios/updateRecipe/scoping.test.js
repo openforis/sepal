@@ -5,14 +5,13 @@ describe('update_recipe allowed-tool scoping', () => {
     function innerToolsForUpdate() {
         return innerToolsWithSchemas([
             {name: 'prepare_update', description: 'Prepare.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}},
-            {name: 'load_for_update', description: 'Closure.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, instruction: {type: 'string'}}}},
             {name: 'recipe_load', description: 'Load.', parameters: {type: 'object', properties: {}}},
             {name: 'recipe_patch', description: 'Patch.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, operations: {type: 'array'}}}},
             {name: 'recipe_list', description: 'List.', parameters: {type: 'object', properties: {}}}
         ])
     }
 
-    it('offers the specialist prepare_update and recipe_patch only (no load_for_update, no raw recipe_load, no recipe_list)', () => {
+    it('offers the specialist prepare_update and recipe_patch only (no raw recipe_load, no recipe_list)', () => {
         const harness = aToolFactoryHarness({specialist: 'update_recipe', innerTools: innerToolsForUpdate()})
 
         harness.invoke({recipeId: 'r1', instruction: 'edit'})
@@ -70,24 +69,6 @@ describe('update_recipe allowed-tool scoping', () => {
             innerTools: innerToolsForUpdate(),
             replies: [
                 {toolCalls: [recipeLoadCall]},
-                {text: 'blocked.'}
-            ]
-        })
-
-        harness.invoke({recipeId: 'r1', instruction: 'edit'})
-
-        expect(harness.innerTools.invocations).toEqual([])
-        const toolMessage = harness.llm.receivedMessages[1].find(message => message.role === 'tool')
-        expect(toolMessage.toolResults[0].result.error.code).toBe('TOOL_NOT_ALLOWED')
-    })
-
-    it('refuses load_for_update — the live update specialist no longer drives the legacy closure tool', () => {
-        const legacyCall = {id: 'tl1', name: 'load_for_update', input: {recipeId: 'r1', instruction: 'edit'}}
-        const harness = aToolFactoryHarness({
-            specialist: 'update_recipe',
-            innerTools: innerToolsForUpdate(),
-            replies: [
-                {toolCalls: [legacyCall]},
                 {text: 'blocked.'}
             ]
         })

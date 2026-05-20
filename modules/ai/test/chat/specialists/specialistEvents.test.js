@@ -129,29 +129,6 @@ describe('publishSpecialistToolResponse', () => {
         expect(bus.published[0].shape).toBe('prepared(focus=1,dependent=2,writable=3)')
     })
 
-    it('publishes a debug-level specialist.tool.response with ok flag and tool-specific shape summary for load_for_update', () => {
-        const bus = aFakeBus()
-        const envelope = {ok: true, data: {
-            baseModelHash: 'h1',
-            intent: 'dateWindow',
-            currentValues: {a: 1, b: 2, c: 3},
-            dependentPaths: ['/x', '/y'],
-            guidance: ['rule1']
-        }}
-
-        publishSpecialistToolResponse({bus, name: 'recipe.update', conversationId: 'c1', tool: 'load_for_update', envelope})
-
-        expect(bus.published).toEqual([expect.objectContaining({
-            type: 'specialist.tool.response',
-            level: 'debug',
-            conversationId: 'c1',
-            name: 'recipe.update',
-            tool: 'load_for_update',
-            ok: true,
-            shape: 'closure(intent=dateWindow,currentValues=3,dependentPaths=2,guidance=1)'
-        })])
-    })
-
     it('summarises a recipe_patch success with modelHash/invalidatedPaths counts', () => {
         const bus = aFakeBus()
         const envelope = {ok: true, data: {summary: 'patched', modelHash: 'h2', invalidatedPaths: ['/a', '/b']}}

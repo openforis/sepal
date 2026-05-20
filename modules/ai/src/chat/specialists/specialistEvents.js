@@ -1,7 +1,7 @@
 // Bus event publishers for the specialist runtime. Compact summaries at
 // DEBUG (per-round lifecycle) and INFO (update outcome). Per-call shape
-// summarisers stay narrow — prepare_update, load_for_update and recipe_patch
-// get bespoke strings; everything else falls back to a generic kind label so
+// summarisers stay narrow — prepare_update and recipe_patch get bespoke
+// strings; everything else falls back to a generic kind label so
 // new tools still publish a usable event without code changes here.
 
 const {publishLoopPrompt} = require('../loopEvents')
@@ -128,13 +128,6 @@ function summariseToolShape(tool, data) {
         const dependentCount = (data?.dependentPaths || []).length
         const writableCount = (data?.writablePaths || []).length
         return `prepared(focus=${focusCount},dependent=${dependentCount},writable=${writableCount})`
-    }
-    if (tool === 'load_for_update') {
-        const intent = data?.intent || 'unknown'
-        const currentValuesCount = Object.keys(data?.currentValues || {}).length
-        const dependentPathsCount = (data?.dependentPaths || []).length
-        const guidanceCount = (data?.guidance || []).length
-        return `closure(intent=${intent},currentValues=${currentValuesCount},dependentPaths=${dependentPathsCount},guidance=${guidanceCount})`
     }
     if (tool === 'recipe_patch') {
         const modelHash = data?.modelHash || 'unchanged'

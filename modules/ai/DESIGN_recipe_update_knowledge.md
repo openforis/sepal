@@ -356,7 +356,7 @@ purpose-specific artifacts:
     sections,
     fields,
     interactions,
-    operationalFacts,
+    knowledge,
     profiles
   }
 }

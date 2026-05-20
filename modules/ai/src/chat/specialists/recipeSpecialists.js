@@ -17,7 +17,7 @@ const UPDATE_RECIPE_ALLOWED = ['prepare_update', 'recipe_patch']
 // Tool names whose recipeId arg must equal the recipeId the outer dispatcher
 // was asked about. The orchestrator has already chosen the recipe; binding
 // at the tool-call boundary makes the scope deterministic rather than prompt-only.
-const RECIPE_BOUND_TOOLS = new Set(['recipe_load', 'load_for_update', 'prepare_update', 'recipe_patch'])
+const RECIPE_BOUND_TOOLS = new Set(['recipe_load', 'prepare_update', 'recipe_patch'])
 
 function describeRecipeTool({llm, bus, innerTools, guiRequests}) {
     const basePrompt = specialistPrompt('recipe')

@@ -8,11 +8,11 @@ prefix is a Node imports-map convention that doesn't carry to Vite, so the GUI
 uses the bare package name. Same package, byte-identical at both runtimes.
 Deps are limited to `ajv` + `ajv-formats`.
 
-Each spec exposes `{id, name, schema, rules, defaultModel(), toEffectiveModel(model), selectionFacts(), describeFacts(), editFacts(), updateClosure({instruction, effectiveModel}), validate(model)}`.
+Each spec exposes `{id, name, schema, rules, defaultModel(), toEffectiveModel(model), selectionFacts(), describeFacts(), editFacts(), llmMetadata(), knowledge(), updateManual(), validate(model)}`.
 Registry-level conveniences: `listRecipeSpecs()`, `getRecipeSpec(id)`,
 `getRecipeSchema(id)`, `getRecipeDefaults(id)`, `getRecipeSelectionFacts(id)`,
 `getRecipeDescribeFacts(id)`, `getRecipeEditFacts(id)`,
-`getRecipeUpdateClosure(id, args)`,
+`getRecipeLlmMetadata(id)`, `getRecipeUpdateManual(id)`, `getRecipeKnowledge(id)`,
 `validateRecipe(id, model)`, `toEffectiveModel(id, model)`.
 
 ## LLM-facing model contract
@@ -71,41 +71,26 @@ AI module reads the bucket for the requested `purpose`:
 - `{purpose: 'describe'}` reads `describeFacts()`. Selection facts and edit
   guidance are deliberately excluded — the recipe has already been chosen and
   the specialist is read-only.
-- `{purpose: 'update'}` reads `editFacts()`. The update specialist normally
-  receives scoped schema/rule details through `load_for_update`, not the full
+- `{purpose: 'update'}` reads `editFacts()` and appends the generated
+  `updateManual()` (constraints + `knowledge()` facts). The update specialist
+  works from that manual plus the `prepare_update` work packet, not the full
   recipe schema in its static prompt. Selection facts and describe-only prose
   are excluded for the same reason and to stay under the §3 prompt-byte budget.
 - The base prompt is placed first so cache-stable prefixes hold across recipe
   types.
 
-## Update closure (`updateClosure({instruction, effectiveModel})`)
+## Update metadata (`llmMetadata()`, `updateManual()`)
 
-The AI `load_for_update` tool calls this to return a **bounded** edit scope
-rather than handing the whole effective model + full `editFacts` to the
-update specialist every turn. The closure shape:
+`llmMetadata()` derives machine-readable edit constraints from the spec's
+`rules` — coupled fields, allowed values, validation dependencies. `updateManual()`
+renders those constraints plus the spec's `knowledge()` facts into the LLM-facing
+edit manual the update specialist receives in its prompt.
 
-```
-{
-  intent,                 // 'dateWindow' | 'broad' | ... (per-spec)
-  currentValues,          // {jsonPointer: value} — only the paths the specialist needs
-  dependentPaths,         // [jsonPointer]      — paths the patch may write; empty == broad scope (any path)
-  guidance                // [string]           — rules relevant to this intent
-}
-```
-
-`load_for_update` adds `baseModelHash` from the GUI load response so the
-specialist can call `recipe_patch` with the right concurrency token without a
-second round-trip.
-
-Intent classification is the spec's responsibility (lives next to its facts +
-rules). Detection is deliberately narrow — keyword-match on the instruction
-against a small set of known intent labels per spec, falling back to a `broad`
-closure (top-level effective sections + full `editFacts.guidance`) when no
-intent matches. No NL parsing of values; the LLM extracts target values from
-the user's instruction.
-
-MOSAIC intents today: `dateWindow` (target-date / season-window edits) +
-`broad`.
+The AI `prepare_update` tool reads `llmMetadata().constraints` to expand the
+specialist's chosen focus paths into the dependent + writable path set, returning
+the current value at each writable path plus `baseModelHash` from the GUI load so
+the specialist can call `recipe_patch` with the right concurrency token. The
+specialist picks paths from the manual; there is no keyword intent-classification.
 
 ## AOI subschema
 
