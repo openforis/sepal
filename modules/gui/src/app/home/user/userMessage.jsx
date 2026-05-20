@@ -99,7 +99,13 @@ export const EditUserMessage = compose(
     withForm({fields, mapStateToProps})
 )
 
-class ShowUserMessage extends React.Component {
+EditUserMessage.propTypes = {
+    message: PropTypes.object.isRequired,
+    onApply: PropTypes.func,
+    onCancel: PropTypes.func.isRequired
+}
+
+export class ShowUserMessage extends React.Component {
     render() {
         const {message: {message: {subject, contents}, username}, onCancel} = this.props
         return (
@@ -128,13 +134,7 @@ class ShowUserMessage extends React.Component {
     }
 }
 
-export const UserMessage = ({message, onApply, onCancel}) =>
-    onApply
-        ? <EditUserMessage message={message} onApply={onApply} onCancel={onCancel}/>
-        : <ShowUserMessage message={message} onCancel={onCancel}/>
-
-UserMessage.propTypes = {
+ShowUserMessage.propTypes = {
     message: PropTypes.object.isRequired,
-    onApply: PropTypes.func,
     onCancel: PropTypes.func.isRequired
 }

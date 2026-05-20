@@ -21,7 +21,7 @@ import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
-import {UserMessage} from './userMessage'
+import {EditUserMessage, ShowUserMessage} from './userMessage'
 import styles from './userMessages.module.css'
 
 const mapStateToProps = state => {
@@ -55,7 +55,6 @@ class _UserMessages extends React.Component {
     constructor(props) {
         super(props)
         this.newMessage = this.newMessage.bind(this)
-        this.closeMessage = this.closeMessage.bind(this)
     }
 
     updateMessage(message) {
@@ -265,11 +264,20 @@ class _UserMessages extends React.Component {
     }
 
     renderMessagePanel(message, edit) {
-        return (
-            <UserMessage
+        return edit ? (
+            <EditUserMessage
                 message={message}
-                onApply={edit ? message => this.updateMessage(message) : null}
-                onCancel={this.closeMessage}/>
+                onApply={message => this.updateMessage(message)}
+                onCancel={() => this.closeMessage()}
+            />
+        ) : (
+            <ShowUserMessage
+                message={message}
+                onCancel={() => {
+                    this.setReadState(message)
+                    this.closeMessage()
+                }}
+            />
         )
     }
 
