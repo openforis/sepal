@@ -2,6 +2,7 @@ import {of} from 'rxjs'
 import {vi} from 'vitest'
 
 import {handleGuiAction} from '~/app/home/body/chat/guiActionRegistry'
+import {gzip$} from '~/gzip'
 import {addHash, getHash} from '~/hash'
 
 import {registerMapActions} from './mapActions'
@@ -39,6 +40,11 @@ const {
 vi.mock('~/apiRegistry', () => ({
     default: {recipe: {save$: apiRecipeSave$, load$: apiRecipeLoad$}}
 }))
+
+// gzip$ is a passthrough here so the object handed to api.recipe.save$ as
+// gzippedContents is the persisted recipe itself (post-omit). That makes the
+// persisted model readable from the save$ call for write-then-read assertions.
+vi.mock('~/gzip', () => ({gzip$: vi.fn(recipe => of(recipe))}))
 
 vi.mock('~/store', () => ({
     dispatch: vi.fn(),
@@ -86,6 +92,7 @@ beforeEach(() => {
     selectRecipe.mockReset()
     apiRecipeSave$.mockReset()
     apiRecipeLoad$.mockReset()
+    gzip$.mockReset().mockImplementation(recipe => of(recipe))
 })
 
 it('handles the list-recipes action and responds with a {success, data} envelope carrying the recipe list', () => {
@@ -195,6 +202,7 @@ describe('recipe-patch', () => {
         addHash(mosaicRecipe.model)
         baseHash = getHash(mosaicRecipe.model)
         store.loadedRecipes = {mosaic1: mosaicRecipe}
+        apiRecipeSave$.mockReturnValue(of({}))
     })
 
     const replaceSeasonEnd = {op: 'replace', path: '/dates/seasonEnd', value: '2026-09-01'}
@@ -209,6 +217,12 @@ describe('recipe-patch', () => {
             ...overrides
         })
         return {handled, response}
+    }
+
+    // With the gzip$ passthrough mock, save$ receives the persisted recipe as
+    // gzippedContents, so the persisted (post-patch) model is readable here.
+    function persistedModel() {
+        return apiRecipeSave$.mock.calls[0][0].gzippedContents.model
     }
 
     it('responds with {summary, modelHash, invalidatedPaths} for a valid MOSAIC patch on a known recipe', () => {
@@ -229,11 +243,12 @@ describe('recipe-patch', () => {
         expect(response.data.modelHash).not.toBe(baseHash)
     })
 
-    it('reuses baseModelHash when the patch is a no-op (test op only)', () => {
+    it('reuses baseModelHash and does not persist when the patch is a no-op (test op only)', () => {
         const {response} = patch({operations: [{op: 'test', path: '/dates/type', value: 'YEARLY_TIME_SCAN'}]})
 
         expect(response.success).toBe(true)
         expect(response.data.modelHash).toBe(baseHash)
+        expect(apiRecipeSave$).not.toHaveBeenCalled()
     })
 
     it('returns STALE_WRITE with currentModelHash when baseModelHash does not match', () => {
@@ -289,20 +304,56 @@ describe('recipe-patch', () => {
         expect(response.error.code).toBe('RECIPE_NOT_FOUND')
     })
 
-    it('does not mutate the loaded recipe model on a successful patch (stub: this assertion flips when persistence lands)', () => {
-        const modelRefBefore = mosaicRecipe.model
-        const hashBefore = getHash(mosaicRecipe.model)
-
+    it('persists a successful patch through api.recipe.save$ for the recipe', () => {
         patch({})
 
-        expect(mosaicRecipe.model).toBe(modelRefBefore)
-        expect(getHash(mosaicRecipe.model)).toBe(hashBefore)
+        expect(apiRecipeSave$).toHaveBeenCalled()
+        expect(apiRecipeSave$.mock.calls[0][0]).toMatchObject({
+            id: 'mosaic1',
+            type: 'MOSAIC',
+            projectId: 'p1',
+            name: 'Kenya mosaic'
+        })
     })
 
-    it('does not call api.recipe.save$ (stub)', () => {
+    it('persists the post-patch effective model carrying the patched value', () => {
+        const seasonEndBefore = mosaicRecipe.model.dates.seasonEnd
+
         patch({})
 
-        expect(apiRecipeSave$).not.toHaveBeenCalled()
+        expect(persistedModel().dates.seasonEnd).toBe('2026-09-01')
+        expect(persistedModel().dates.seasonEnd).not.toBe(seasonEndBefore)
+    })
+
+    it('returns a modelHash matching the hash of the persisted model', () => {
+        const {response} = patch({})
+
+        expect(response.data.modelHash).toBe(getHash(persistedModel()))
+    })
+
+    describe('on a failed patch', () => {
+
+        const failureCases = [
+            ['STALE_WRITE', {baseModelHash: 'h-stale'}],
+            ['VALIDATION_FAILED', {operations: [{op: 'remove', path: '/dates'}]}],
+            ['INVALID_PATCH (empty ops)', {operations: []}],
+            ['INVALID_PATCH (malformed pointer)', {operations: [{op: 'replace', path: 'dates', value: {}}]}],
+            ['INVALID_PATCH (unknown op)', {operations: [{op: 'frobnicate', path: '/dates'}]}],
+            ['PATCH_APPLY_FAILED', {operations: [{op: 'remove', path: '/doesNotExist'}]}],
+            ['RECIPE_NOT_FOUND', {recipeId: 'r-missing'}]
+        ]
+
+        it.each(failureCases)('does not persist and leaves the loaded model unchanged (%s)', (_label, overrides) => {
+            const modelRefBefore = mosaicRecipe.model
+            const hashBefore = getHash(mosaicRecipe.model)
+
+            const {response} = patch(overrides)
+
+            expect(response.success).toBe(false)
+            expect(apiRecipeSave$).not.toHaveBeenCalled()
+            expect(mosaicRecipe.model).toBe(modelRefBefore)
+            expect(getHash(mosaicRecipe.model)).toBe(hashBefore)
+        })
     })
 })
 

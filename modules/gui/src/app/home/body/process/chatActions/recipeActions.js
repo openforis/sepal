@@ -185,10 +185,11 @@ const loadRecipe = ({recipeId, respond}) => {
     })
 }
 
-// Stubbed: applies + validates a JSON Patch against the effective recipe
-// model, but does not persist or mutate loadedRecipes. The next slice flips
-// the stub by replacing recipe.model with the post-apply effective model and
-// routing through the same write path createRecipe/updateRecipe use.
+// Applies + validates a JSON Patch against the effective recipe model, then
+// persists the post-patch model through the same write path updateRecipe uses.
+// A no-op patch (post-apply model equals the effective model) short-circuits:
+// no save, no mutation, and the base hash is echoed back so the caller's
+// concurrency token stays stable.
 const recipePatch = ({recipeId, baseModelHash, operations, respond}) => {
     if (typeof recipeId !== 'string' || typeof baseModelHash !== 'string' || !Array.isArray(operations)) {
         respond({success: false, error: {code: 'INVALID_PATCH', message: 'recipeId, baseModelHash and operations are required'}})
@@ -241,19 +242,39 @@ const recipePatch = ({recipeId, baseModelHash, operations, respond}) => {
         }
     }
     const invalidatedPaths = patchInvalidatedPaths(operations)
-    let newModelHash
     if (_.isEqual(after, effective)) {
-        newModelHash = baseModelHash
-    } else {
-        addHash(after)
-        newModelHash = getHash(after)
+        log.info(`recipe-patch r=${recipeId} no-op ops=${operations.length}`)
+        respond({success: true, data: {
+            summary: `Applied ${operations.length} operation${operations.length === 1 ? '' : 's'} to recipe ${recipeId}.`,
+            modelHash: baseModelHash,
+            invalidatedPaths
+        }})
+        return
     }
     log.info(`recipe-patch r=${recipeId} ok ops=${operations.length} paths=${invalidatedPaths.join(',')}`)
-    respond({success: true, data: {
-        summary: `Applied ${operations.length} operation${operations.length === 1 ? '' : 's'} to recipe ${recipeId}.`,
-        modelHash: newModelHash,
-        invalidatedPaths
-    }})
+    cancelPendingRecipeSubscription()
+    pendingRecipeSubscription = persistRecipe$({...recipe, model: after}).subscribe({
+        next: saved => {
+            const enriched = withDependentSourcesRegistered(saved)
+            const stamped = stampedForSave(enriched)
+            actionBuilder('CHAT_PATCH_RECIPE', {id: enriched.id})
+                .assign(['process.recipes', {id: enriched.id}], {
+                    id: enriched.id,
+                    projectId: enriched.projectId,
+                    name: enriched.title || enriched.placeholder,
+                    type: enriched.type
+                })
+                .set(['process.loadedRecipes', enriched.id], stamped)
+                .dispatch()
+            ensureRecipeOpenAndSelected(enriched)
+            respond({success: true, data: {
+                summary: `Applied ${operations.length} operation${operations.length === 1 ? '' : 's'} to recipe ${recipeId}.`,
+                modelHash: getHash(stamped.model),
+                invalidatedPaths
+            }})
+        },
+        error: error => respondError({log, respond, fallback: 'Failed to save recipe', error})
+    })
 }
 
 const patchInvalidatedPaths = operations => {

@@ -40,18 +40,18 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   per-layer loading/error state, dynamic-vis legend/palette inspection, and
   any live per-area viewport beyond `map.view` (per-area viewports under
   `mapCommand$` are not in Redux).
-- **`recipe_patch` GUI handler is stubbed — applies + validates but does not
-  persist.** The wire contract is complete (specialist-private tool in
-  `modules/ai/src/chat/tools/recipePatchTool.js`; GUI handler in
-  `modules/gui/src/app/home/body/process/chatActions/recipeActions.js`
-  enforces `baseModelHash`, applies the patch atomically against the
-  effective model, validates via the shared recipe spec, and returns
-  `{summary, modelHash, invalidatedPaths}` or structured `STALE_WRITE`,
+- ~~**`recipe_patch` GUI handler is stubbed — applies + validates but does not
+  persist.**~~ — closed. `recipePatch` in
+  `modules/gui/src/app/home/body/process/chatActions/recipeActions.js` now
+  persists a successful patch through the same write path
+  `updateRecipe`/`createRecipe` use: it routes the post-apply effective model
+  through `persistRecipe$` (`api.recipe.save$`), updates
+  `process.loadedRecipes` / `process.recipes`, stamps the model hash, and
+  opens/selects the recipe, returning `{summary, modelHash, invalidatedPaths}`.
+  No-op (test-only) patches and all error envelopes (`STALE_WRITE`,
   `INVALID_PATCH`, `PATCH_APPLY_FAILED`, `VALIDATION_FAILED`,
-  `RECIPE_NOT_FOUND` envelopes). The handler does not yet replace
-  `process.loadedRecipes[recipeId].model` or call `api.recipe.save$` — the
-  next slice flips the stub by routing the post-apply effective model
-  through the same write path `createRecipe` / `updateRecipe` use.
+  `RECIPE_NOT_FOUND`) still short-circuit before any save. Covered by
+  `chatActions.contract.test.js`.
 - **Recipe-domain validation is deferred** — JSON Patch envelope validation is
   not enough for safe recipe edits. Use the shared recipe spec/validation API
   (`lib/js/recipes`, currently MOSAIC only) from the GUI write path
@@ -186,6 +186,21 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   options because compose passes them, but the active app does not wire SEPAL
   or GEE clients, server-side rate limiting, or session expiry. Drop the
   options or actually wire them.
+
+## Test design
+
+- **`update_recipe` scenario tests pin MOSAIC-specific configuration** — the
+  live-loop scenarios under `test/chat/scenarios/updateRecipe/`
+  (`speedRequestFlow.test.js`, `prepareUpdateFlow.test.js`) bake in specific
+  optical-mosaic field values and op sets (e.g. `cloudBuffer` 600→0,
+  `tileOverlap` KEEP→QUICK_REMOVE, the speed-oriented focus-path list). That
+  couples them to recipe-specific config/knowledge that will churn, and isn't
+  what these tests should pin — they exist to exercise the
+  `prepare_update -> recipe_patch` loop mechanics (forwarding, write-scope,
+  success envelope), not to assert a particular MOSAIC tuning. They feel
+  fragile. Rework to pin the loop generically, decoupled from specific
+  optical-mosaic values (e.g. a minimal/synthetic recipe or value-agnostic
+  assertions).
 
 ## Test coverage
 
