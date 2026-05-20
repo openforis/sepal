@@ -6,7 +6,15 @@ import styles from './markdown.module.css'
 
 export const Markdown = ({source}) =>
     <div className={styles.markdown}>
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{source}</ReactMarkdown>
+        <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+                a: ({node: _node, ...props}) => (
+                    <a {...props} target="_blank" rel="noopener noreferrer"/>
+                ),
+            }}>
+            {source}
+        </ReactMarkdown>
     </div>
 
 Markdown.propTypes = {

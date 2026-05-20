@@ -48,12 +48,14 @@ const unreadMessagesCount = userMessages =>
 
 class _UserMessages extends React.Component {
     state = {
-        editMessage: null
+        editMessage: null,
+        showMessage: null
     }
 
     constructor(props) {
         super(props)
         this.newMessage = this.newMessage.bind(this)
+        this.closeMessage = this.closeMessage.bind(this)
     }
 
     updateMessage(message) {
@@ -68,7 +70,7 @@ class _UserMessages extends React.Component {
             },
             error => Notifications.error({message: msg('userMessage.update.error'), error})
         )
-        this.editMessage(null)
+        this.closeMessage()
     }
 
     removeMessage(message) {
@@ -150,6 +152,19 @@ class _UserMessages extends React.Component {
         })
     }
 
+    showMessage(userMessage) {
+        this.setState({
+            showMessage: userMessage
+        })
+    }
+
+    closeMessage() {
+        this.setState({
+            editMessage: null,
+            showMessage: null
+        })
+    }
+
     renderMessages() {
         const {userMessages} = this.props
         if (userMessages.length) {
@@ -192,9 +207,7 @@ class _UserMessages extends React.Component {
         return (
             <ListItem
                 key={index}
-                expansion={this.renderMessageBody(userMessage.message.contents)}
-                clickToToggle
-                onExpandDelayed={() => this.setReadState(userMessage, 'READ')}>
+                onClick={() => this.setState({showMessage: userMessage})}>
                 <CrudItem
                     title={<Msg id='userMessages.author' author={author}/>}
                     description={userMessage.message.subject}
@@ -251,22 +264,22 @@ class _UserMessages extends React.Component {
         )
     }
 
-    renderMessagePanel(message) {
+    renderMessagePanel(message, edit) {
         return (
             <UserMessage
                 message={message}
-                onApply={message => this.updateMessage(message)}
-                onCancel={() => this.editMessage()}/>
+                onApply={edit ? message => this.updateMessage(message) : null}
+                onCancel={this.closeMessage}/>
         )
     }
 
     render() {
         const {userMessages} = this.props
-        const {editMessage} = this.state
+        const {editMessage, showMessage} = this.state
         if (userMessages) {
-            return editMessage
-                ? this.renderMessagePanel(editMessage)
-                : this.renderMessagesPanel()
+            if (editMessage) return this.renderMessagePanel(editMessage, true)
+            if (showMessage) return this.renderMessagePanel(showMessage, false)
+            return this.renderMessagesPanel()
         } else {
             return null
         }
