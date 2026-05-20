@@ -21,7 +21,7 @@ import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
-import {UserMessage} from './userMessage'
+import {EditUserMessage, ShowUserMessage} from './userMessage'
 import styles from './userMessages.module.css'
 
 const mapStateToProps = state => {
@@ -55,7 +55,6 @@ class _UserMessages extends React.Component {
     constructor(props) {
         super(props)
         this.newMessage = this.newMessage.bind(this)
-        this.closeMessage = this.closeMessage.bind(this)
     }
 
     updateMessage(message) {
@@ -171,7 +170,7 @@ class _UserMessages extends React.Component {
             const sortedUserMessages = _.orderBy(userMessages, userMessage => moment(userMessage.message.creationTime) || moment(), 'desc')
             return (
                 <Layout type='vertical' spacing='tight'>
-                    {sortedUserMessages.map((userMessage, index) => this.renderMessage(userMessage, index))}
+                    {sortedUserMessages.map(userMessage => this.renderMessage(userMessage))}
                 </Layout>
             )
         } else {
@@ -199,14 +198,16 @@ class _UserMessages extends React.Component {
         )
     }
 
-    renderMessage(userMessage, index) {
+    renderMessage(userMessage) {
         const {isAdmin} = this.props
         const message = userMessage.message
         const author = userMessage.message.username
         const creationTime = userMessage.message.creationTime
+        const updateTime = userMessage.message.updateTime
+        const id = `${author}-${creationTime}-${updateTime}`
         return (
             <ListItem
-                key={index}
+                key={id}
                 onClick={() => this.setState({showMessage: userMessage})}>
                 <CrudItem
                     title={<Msg id='userMessages.author' author={author}/>}
@@ -265,11 +266,20 @@ class _UserMessages extends React.Component {
     }
 
     renderMessagePanel(message, edit) {
-        return (
-            <UserMessage
+        return edit ? (
+            <EditUserMessage
                 message={message}
-                onApply={edit ? message => this.updateMessage(message) : null}
-                onCancel={this.closeMessage}/>
+                onApply={message => this.updateMessage(message)}
+                onCancel={() => this.closeMessage()}
+            />
+        ) : (
+            <ShowUserMessage
+                message={message}
+                onCancel={() => {
+                    this.setReadState(message)
+                    this.closeMessage()
+                }}
+            />
         )
     }
 
