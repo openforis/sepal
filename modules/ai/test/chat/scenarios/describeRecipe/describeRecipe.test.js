@@ -185,6 +185,20 @@ describe('describe_recipe', () => {
             expect(systemPrompt).not.toMatch(/Edit guidance:/i)
         })
 
+        it('on a MOSAIC recipe, the describe prompt distinguishes derived index outputs (NDVI) from raw source bands', () => {
+            const harness = aToolFactoryHarness({
+                specialist: 'describe_recipe',
+                guiRequests: metadataFor(mosaicMetadata)
+            })
+
+            harness.invoke({recipeId: 'r-mosaic'})
+
+            const systemPrompt = harness.llm.receivedMessages[0][0].content
+            expect(systemPrompt).toMatch(/NDVI/)
+            expect(systemPrompt).toMatch(/derived index/i)
+            expect(systemPrompt).toMatch(/not a raw source band/i)
+        })
+
         it('on an unknown recipe type, the system prompt is the base frame (no per-type facts)', () => {
             const harness = aToolFactoryHarness({
                 specialist: 'describe_recipe',
