@@ -4,14 +4,14 @@
         "ai": "info",
         "main": "info",
         "config": "info",
-        "ws": "info",
-        "userChat": "info",
+        "ws": "warn",
+        "userChat": "warn",
         "conversation": "info",
         "llm": "info",
         "tool": "info",
         "gui": "info",
-        "title": "info",
-        "specialist": "info",
+        "title": "warn",
+        "specialist": "debug",
         "orchestrator": "info",
         "update_recipe": "info"
     }

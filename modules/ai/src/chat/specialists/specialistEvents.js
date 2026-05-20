@@ -60,6 +60,7 @@ function publishSpecialistToolRequest({bus, name, conversationId, toolCall}) {
     const inputKeys = toolCall?.input && typeof toolCall.input === 'object'
         ? Object.keys(toolCall.input)
         : []
+    const inputSummary = summariseToolInput(toolCall?.name, toolCall?.input)
     bus.publish({
         type: 'specialist.tool.request',
         level: 'debug',
@@ -67,7 +68,8 @@ function publishSpecialistToolRequest({bus, name, conversationId, toolCall}) {
         name,
         tool: toolCall.name,
         inputKeys,
-        message: `specialist.tool.request name=${name} tool=${toolCall.name} inputKeys=[${inputKeys.join(',')}]`
+        inputSummary,
+        message: `specialist.tool.request name=${name} tool=${toolCall.name} inputKeys=[${inputKeys.join(',')}]${inputSummary ? ` ${inputSummary}` : ''}`
     })
 }
 
@@ -122,22 +124,78 @@ function outcomeMessage({recipeId, attempted, succeeded, code, lastPatchErrorCod
         : `${head}${tail}`
 }
 
+function summariseToolInput(tool, input) {
+    if (!input || typeof input !== 'object') return ''
+    if (tool === 'prepare_update') {
+        return `recipeId=${input.recipeId || '-'} focusPaths=${pathList(input.focusPaths)}`
+    }
+    if (tool === 'recipe_patch') {
+        return [
+            `recipeId=${input.recipeId || '-'}`,
+            `baseModelHash=${shortHash(input.baseModelHash)}`,
+            `ops=${patchOperations(input.operations)}`
+        ].join(' ')
+    }
+    return ''
+}
+
 function summariseToolShape(tool, data) {
     if (tool === 'prepare_update') {
         const focusCount = (data?.focusPaths || []).length
         const dependentCount = (data?.dependentPaths || []).length
         const writableCount = (data?.writablePaths || []).length
-        return `prepared(focus=${focusCount},dependent=${dependentCount},writable=${writableCount})`
+        return `prepared(focus=${focusCount}${pathList(data?.focusPaths)},dependent=${dependentCount}${pathList(data?.dependentPaths)},writable=${writableCount}${pathList(data?.writablePaths)})`
     }
     if (tool === 'recipe_patch') {
         const modelHash = data?.modelHash || 'unchanged'
         const invalidatedPathsCount = (data?.invalidatedPaths || []).length
-        return `patch(modelHash=${modelHash},invalidatedPaths=${invalidatedPathsCount})`
+        return `patch(modelHash=${shortHash(modelHash)},invalidatedPaths=${invalidatedPathsCount}${pathList(data?.invalidatedPaths)})`
     }
     if (Array.isArray(data)) return `array(${data.length})`
     if (data && typeof data === 'object') return 'object'
     if (data == null) return 'null'
     return typeof data
+}
+
+function patchOperations(operations) {
+    if (!Array.isArray(operations)) return '[-]'
+    const maxOperations = 10
+    const head = operations.slice(0, maxOperations).map(patchOperation)
+    const suffix = operations.length > maxOperations ? `;+${operations.length - maxOperations}` : ''
+    return `[${head.join(';')}${suffix}]`
+}
+
+function patchOperation(operation) {
+    if (!operation || typeof operation !== 'object') return '?'
+    const head = [operation.op, operation.path].filter(Boolean).join(' ')
+    const from = operation.from ? ` from=${operation.from}` : ''
+    const value = Object.prototype.hasOwnProperty.call(operation, 'value')
+        ? ` value=${formatValue(operation.value)}`
+        : ''
+    return `${head || '?'}${from}${value}`
+}
+
+function pathList(paths) {
+    if (!Array.isArray(paths) || !paths.length) return '[-]'
+    const maxPaths = 10
+    const head = paths.slice(0, maxPaths).map(String)
+    const suffix = paths.length > maxPaths ? `,+${paths.length - maxPaths}` : ''
+    return `[${head.join(',')}${suffix}]`
+}
+
+function shortHash(hash) {
+    return typeof hash === 'string' && hash.length > 12 ? hash.slice(0, 8) : (hash || '-')
+}
+
+function formatValue(value) {
+    if (typeof value === 'string') return JSON.stringify(truncate(value, 80))
+    if (value === null || typeof value !== 'object') return String(value)
+    if (Array.isArray(value)) return `array(${value.length})`
+    return `object(${Object.keys(value).length})`
+}
+
+function truncate(value, max) {
+    return value.length > max ? `${value.slice(0, max)}...` : value
 }
 
 module.exports = {

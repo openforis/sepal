@@ -86,7 +86,7 @@ describe('publishSpecialistResponse', () => {
 
 describe('publishSpecialistToolRequest', () => {
 
-    it('publishes a debug-level specialist.tool.request with specialist name, tool name, and input keys', () => {
+    it('publishes a debug-level specialist.tool.request with specialist name, tool name, input keys, and bounded input summary', () => {
         const bus = aFakeBus()
 
         publishSpecialistToolRequest({
@@ -100,8 +100,31 @@ describe('publishSpecialistToolRequest', () => {
             conversationId: 'c1',
             name: 'recipe.update',
             tool: 'prepare_update',
-            inputKeys: ['recipeId', 'focusPaths']
+            inputKeys: ['recipeId', 'focusPaths'],
+            inputSummary: 'recipeId=r1 focusPaths=[/dates/targetDate]'
         })])
+        expect(bus.published[0].message).toContain('focusPaths=[/dates/targetDate]')
+    })
+
+    it('summarises recipe_patch request operations without enabling full payload trace logs', () => {
+        const bus = aFakeBus()
+
+        publishSpecialistToolRequest({
+            bus, name: 'recipe.update', conversationId: 'c1',
+            toolCall: {id: 't1', name: 'recipe_patch', input: {
+                recipeId: 'r1',
+                baseModelHash: '01234567-89ab-cdef-0123-456789abcdef',
+                operations: [
+                    {op: 'replace', path: '/compositeOptions/cloudBuffer', value: 0},
+                    {op: 'replace', path: '/compositeOptions/landsatCFMaskCloudMasking', value: 'AGGRESSIVE'}
+                ]
+            }}
+        })
+
+        expect(bus.published[0].inputSummary).toBe(
+            'recipeId=r1 baseModelHash=01234567 ops=[replace /compositeOptions/cloudBuffer value=0;replace /compositeOptions/landsatCFMaskCloudMasking value="AGGRESSIVE"]'
+        )
+        expect(bus.published[0].message).toContain('/compositeOptions/cloudBuffer value=0')
     })
 
     it('handles a missing input gracefully', () => {
@@ -126,7 +149,7 @@ describe('publishSpecialistToolResponse', () => {
 
         publishSpecialistToolResponse({bus, name: 'recipe.update', conversationId: 'c1', tool: 'prepare_update', envelope})
 
-        expect(bus.published[0].shape).toBe('prepared(focus=1,dependent=2,writable=3)')
+        expect(bus.published[0].shape).toBe('prepared(focus=1[/sources/dataSets],dependent=2[/compositeOptions/corrections,/sceneSelectionOptions/type],writable=3[/sources/dataSets,/compositeOptions/corrections,/sceneSelectionOptions/type])')
     })
 
     it('summarises a recipe_patch success with modelHash/invalidatedPaths counts', () => {
@@ -135,7 +158,7 @@ describe('publishSpecialistToolResponse', () => {
 
         publishSpecialistToolResponse({bus, name: 'recipe.update', tool: 'recipe_patch', envelope})
 
-        expect(bus.published[0].shape).toBe('patch(modelHash=h2,invalidatedPaths=2)')
+        expect(bus.published[0].shape).toBe('patch(modelHash=h2,invalidatedPaths=2[/a,/b])')
     })
 
     it('publishes ok=false with the error code instead of a shape for failed envelopes', () => {
