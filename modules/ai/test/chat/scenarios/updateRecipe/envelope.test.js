@@ -4,21 +4,21 @@ const {aToolFactoryHarness, innerToolsImpl} = require('../../harness')
 describe('update_recipe outer envelope reflects whether the patch applied', () => {
 
     const patchOp = {op: 'replace', path: '/dates/seasonEnd', value: '2026-06-01'}
-    const closureResult = {baseModelHash: 'h1', intent: 'dateWindow', currentValues: {}, dependentPaths: ['/dates/seasonEnd'], guidance: []}
-    const loadCall = {id: 'tl1', name: 'load_for_update', input: {recipeId: 'r1', instruction: 'edit'}}
+    const prepareResult = {ok: true, data: {baseModelHash: 'h1', focusPaths: ['/dates/seasonEnd'], dependentPaths: ['/dates/targetDate'], writablePaths: ['/dates/seasonEnd', '/dates/targetDate'], currentValues: {}, dependencyFacts: [], validationRules: []}}
+    const prepareCall = {id: 'tu1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/dates/seasonEnd']}}
 
     function aSpecialist({patchCalls, finalText, patchResults}) {
-        const replies = [{toolCalls: [loadCall]}]
+        const replies = [{toolCalls: [prepareCall]}]
         patchCalls.forEach((op, i) => replies.push({toolCalls: [{id: `tp${i}`, name: 'recipe_patch', input: {
             recipeId: 'r1', baseModelHash: 'h1', operations: [op]
         }}]}))
         replies.push({text: finalText})
         let patchIndex = 0
         const innerTools = innerToolsImpl({
-            load_for_update: () => of(closureResult),
+            prepare_update: () => of(prepareResult),
             recipe_patch: () => of(patchResults[patchIndex++])
         }, [
-            {name: 'load_for_update', description: 'Closure.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, instruction: {type: 'string'}}}},
+            {name: 'prepare_update', description: 'Prepare.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}},
             {name: 'recipe_patch', description: 'Patch.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, operations: {type: 'array'}}}}
         ])
         return aToolFactoryHarness({specialist: 'update_recipe', replies, innerTools})
@@ -59,9 +59,9 @@ describe('update_recipe outer envelope reflects whether the patch applied', () =
 
     it('returns {ok:false, UPDATE_NOT_ATTEMPTED} when the specialist never called recipe_patch', () => {
         const innerTools = innerToolsImpl(
-            {load_for_update: () => of(closureResult)},
+            {prepare_update: () => of(prepareResult)},
             [
-                {name: 'load_for_update', description: 'Closure.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, instruction: {type: 'string'}}}},
+                {name: 'prepare_update', description: 'Prepare.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}},
                 {name: 'recipe_patch', description: 'Patch.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, operations: {type: 'array'}}}}
             ]
         )
@@ -69,7 +69,7 @@ describe('update_recipe outer envelope reflects whether the patch applied', () =
             specialist: 'update_recipe',
             innerTools,
             replies: [
-                {toolCalls: [loadCall]},
+                {toolCalls: [prepareCall]},
                 {text: 'I looked at the recipe but did not patch anything.'}
             ]
         })

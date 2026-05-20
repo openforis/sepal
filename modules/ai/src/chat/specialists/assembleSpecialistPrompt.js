@@ -23,7 +23,7 @@ function assembleSpecialistPrompt(basePrompt, spec, {purpose, includeSchema = fa
         '---',
         '',
         `Recipe: ${spec.id} (${spec.name})`,
-        ...config.sectionsFor(facts)
+        ...config.sectionsFor(spec, facts)
     ]
     if (includeSchema && config.schemaAllowed && spec.schema) {
         sections.push('', 'Schema:', '```json', JSON.stringify(spec.schema), '```')
@@ -31,12 +31,17 @@ function assembleSpecialistPrompt(basePrompt, spec, {purpose, includeSchema = fa
     return sections.join('\n')
 }
 
-function describeSections(facts) {
+function describeSections(_spec, facts) {
     return [facts.description, '', `Outputs: ${facts.outputs}`]
 }
 
-function updateSections(facts) {
-    return ['Edit guidance:', ...facts.guidance.map(item => `- ${item}`)]
+function updateSections(spec, facts) {
+    const sections = ['Edit guidance:', ...facts.guidance.map(item => `- ${item}`)]
+    const manual = spec.updateManual?.()
+    if (manual) {
+        sections.push('', 'Update manual:', manual)
+    }
+    return sections
 }
 
 module.exports = {assembleSpecialistPrompt}

@@ -85,14 +85,14 @@ const INNER_TOOLS_BY_SPECIALIST = {
     ),
     update_recipe: () => aFakeTools(
         {
-            load_for_update: () => of({baseModelHash: 'h1', intent: 'broad', currentValues: {}, dependentPaths: ['/'], guidance: []}),
+            prepare_update: () => of({ok: true, data: {baseModelHash: 'h1', focusPaths: [], dependentPaths: [], writablePaths: [], currentValues: {}, dependencyFacts: [], validationRules: []}}),
             recipe_patch: () => of({ok: true, data: {summary: 'patched', modelHash: 'h2', invalidatedPaths: []}})
         },
         [
             {
-                name: 'load_for_update',
-                description: 'Load + closure for ONE recipe.',
-                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, instruction: {type: 'string'}}}
+                name: 'prepare_update',
+                description: 'Prepare a bounded edit for ONE recipe from formal focusPaths.',
+                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}
             },
             {
                 name: 'recipe_patch',

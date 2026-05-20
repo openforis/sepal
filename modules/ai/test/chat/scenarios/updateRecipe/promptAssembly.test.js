@@ -3,36 +3,57 @@ const {metadataFor, mosaicMetadata, unspeccedMetadata} = require('./fixtures')
 
 describe('update_recipe per-type prompt assembly', () => {
 
-    it('on a MOSAIC recipe, the system prompt names load_for_update, carries MOSAIC edit guidance, and omits the full JSON schema', () => {
+    function systemPromptFor(metadata) {
         const harness = aToolFactoryHarness({
             specialist: 'update_recipe',
-            guiRequests: metadataFor(mosaicMetadata)
+            guiRequests: metadataFor(metadata)
+        })
+        harness.invoke({recipeId: 'r-mosaic', instruction: 'edit'})
+        return harness.llm.receivedMessages[0][0].content
+    }
+
+    describe('on a MOSAIC recipe', () => {
+
+        it('drives the workflow with prepare_update, not load_for_update', () => {
+            const systemPrompt = systemPromptFor(mosaicMetadata)
+
+            expect(systemPrompt).toMatch(/update specialist/i)
+            expect(systemPrompt).toContain('prepare_update')
+            expect(systemPrompt).not.toMatch(/load_for_update.*first/i)
         })
 
-        harness.invoke({recipeId: 'r-mosaic', instruction: 'edit'})
+        it('carries the per-type edit guidance bullets', () => {
+            const systemPrompt = systemPromptFor(mosaicMetadata)
 
-        const systemPrompt = harness.llm.receivedMessages[0][0].content
-        expect(systemPrompt).toMatch(/update specialist/i)
-        expect(systemPrompt).toMatch(/MOSAIC/)
-        expect(systemPrompt).toMatch(/Edit guidance:/i)
-        expect(systemPrompt).toContain('load_for_update')
-        expect(systemPrompt).not.toContain('recipe_load')
-        expect(systemPrompt).not.toMatch(/```json/)
-        expect(systemPrompt).not.toMatch(/Choose when:/i)
-        expect(systemPrompt).not.toMatch(/Use cases:/i)
+            expect(systemPrompt).toMatch(/MOSAIC/)
+            expect(systemPrompt).toMatch(/Edit guidance:/i)
+        })
+
+        it('injects the generated update manual after the edit guidance (a path the guidance bullets do not carry)', () => {
+            const systemPrompt = systemPromptFor(mosaicMetadata)
+
+            expect(systemPrompt).toContain('/compositeOptions/tileOverlap')
+            expect(systemPrompt.indexOf('Edit guidance:')).toBeLessThan(systemPrompt.indexOf('/compositeOptions/tileOverlap'))
+        })
+
+        it('omits the full JSON schema and bare recipe_load', () => {
+            const systemPrompt = systemPromptFor(mosaicMetadata)
+
+            expect(systemPrompt).not.toContain('recipe_load')
+            expect(systemPrompt).not.toMatch(/```json/)
+            expect(systemPrompt).not.toMatch(/Choose when:/i)
+            expect(systemPrompt).not.toMatch(/Use cases:/i)
+        })
     })
 
-    it('on an unknown recipe type, the system prompt is the base frame (no per-type edit guidance)', () => {
-        const harness = aToolFactoryHarness({
-            specialist: 'update_recipe',
-            guiRequests: metadataFor(unspeccedMetadata)
+    describe('on an unknown recipe type', () => {
+
+        it('falls back to the base frame with no per-type edit guidance or schema', () => {
+            const systemPrompt = systemPromptFor(unspeccedMetadata)
+
+            expect(systemPrompt).toMatch(/update specialist/i)
+            expect(systemPrompt).not.toMatch(/Edit guidance:/i)
+            expect(systemPrompt).not.toMatch(/```json/)
         })
-
-        harness.invoke({recipeId: 'r-other', instruction: 'edit'})
-
-        const systemPrompt = harness.llm.receivedMessages[0][0].content
-        expect(systemPrompt).toMatch(/update specialist/i)
-        expect(systemPrompt).not.toMatch(/Edit guidance:/i)
-        expect(systemPrompt).not.toMatch(/```json/)
     })
 })

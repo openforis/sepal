@@ -34,7 +34,7 @@ describe('renderPromptSnapshot', () => {
             const out = renderPromptSnapshot({
                 messages: [
                     {role: 'assistant', content: '', toolCalls: [
-                        {id: 'tl1', name: 'load_for_update', input: {recipeId: 'r1', instruction: 'edit'}}
+                        {id: 'tl1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/dates/targetDate']}}
                     ]}
                 ],
                 tools: []
@@ -42,16 +42,16 @@ describe('renderPromptSnapshot', () => {
 
             expect(out).toMatch(/role=assistant/)
             expect(out).toContain('tl1')
-            expect(out).toContain('load_for_update')
+            expect(out).toContain('prepare_update')
             expect(out).toContain('"recipeId":"r1"')
-            expect(out).toContain('"instruction":"edit"')
+            expect(out).toContain('"focusPaths":["/dates/targetDate"]')
         })
 
         it('renders tool-result messages with toolCallId, toolName, ok, and a bounded shape', () => {
             const out = renderPromptSnapshot({
                 messages: [
                     {role: 'tool', toolResults: [
-                        {toolCallId: 'tl1', toolName: 'load_for_update', result: {ok: true, data: {intent: 'dateWindow'}}}
+                        {toolCallId: 'tl1', toolName: 'prepare_update', result: {ok: true, data: {writablePaths: ['/dates/targetDate']}}}
                     ]}
                 ],
                 tools: []
@@ -59,7 +59,7 @@ describe('renderPromptSnapshot', () => {
 
             expect(out).toMatch(/role=tool/)
             expect(out).toContain('toolCallId=tl1')
-            expect(out).toContain('toolName=load_for_update')
+            expect(out).toContain('toolName=prepare_update')
             expect(out).toContain('ok=true')
         })
 
@@ -117,13 +117,13 @@ describe('renderPromptSnapshot', () => {
             const out = renderPromptSnapshot({
                 messages: [],
                 tools: [
-                    {name: 'load_for_update', description: 'Load + closure.', parameters: {type: 'object'}},
+                    {name: 'prepare_update', description: 'Prepare bounded edit.', parameters: {type: 'object'}},
                     {name: 'recipe_patch', description: 'Apply patch.', parameters: {type: 'object'}}
                 ]
             })
 
             expect(out).toMatch(/^=== tools ===/m)
-            expect(out.indexOf('name=load_for_update')).toBeLessThan(out.indexOf('name=recipe_patch'))
+            expect(out.indexOf('name=prepare_update')).toBeLessThan(out.indexOf('name=recipe_patch'))
         })
 
         it('renders each tool with name, description, and parameter JSON', () => {

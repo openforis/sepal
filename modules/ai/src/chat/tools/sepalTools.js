@@ -8,6 +8,7 @@ const {projectTools} = require('./projectTools')
 const {recipeListTool, recipeOpenTool, recipeLoadTool} = require('./recipeTools')
 const {recipePatchTool} = require('./recipePatchTool')
 const {loadForUpdateTool} = require('./loadForUpdateTool')
+const {prepareUpdateTool} = require('./prepareUpdateTool')
 
 function sepalTools({guiRequests}) {
     return [
@@ -19,10 +20,11 @@ function sepalTools({guiRequests}) {
     ]
 }
 
-// recipe_load (describe) + load_for_update / recipe_patch (update) are
+// recipe_load (describe) + prepare_update / recipe_patch (update) are
 // included here so recipe specialists can inspect and write a recipe;
-// they're deliberately not on the orchestrator surface. Specialists scope
-// down further to a per-specialist allowed list.
+// load_for_update remains registered during the migration. None are on the
+// orchestrator surface. Specialists scope down further to a per-specialist
+// allowed list.
 function specialistInnerTools({guiRequests}) {
     return [
         guiContextTool(),
@@ -30,6 +32,7 @@ function specialistInnerTools({guiRequests}) {
         ...projectTools(guiRequests),
         recipeLoadTool(guiRequests),
         loadForUpdateTool(guiRequests),
+        prepareUpdateTool(guiRequests),
         recipePatchTool(guiRequests),
         ...mapTools(guiRequests)
     ]

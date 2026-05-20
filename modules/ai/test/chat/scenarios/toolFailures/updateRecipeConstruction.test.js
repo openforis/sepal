@@ -5,15 +5,15 @@ describe('update_recipe construction and preflight', () => {
 
     describe('when constructing update_recipe without all required inner tools', () => {
 
-        it('refuses to construct when load_for_update is missing from the inner registry', () => {
+        it('refuses to construct when prepare_update is missing from the inner registry', () => {
             const innerTools = innerToolsExposing(['recipe_patch'])
 
             expect(() => aToolFactoryHarness({specialist: 'update_recipe', innerTools}))
-                .toThrow(/load_for_update/)
+                .toThrow(/prepare_update/)
         })
 
         it('refuses to construct when recipe_patch is missing from the inner registry', () => {
-            const innerTools = innerToolsExposing(['load_for_update'])
+            const innerTools = innerToolsExposing(['prepare_update'])
 
             expect(() => aToolFactoryHarness({specialist: 'update_recipe', innerTools}))
                 .toThrow(/recipe_patch/)
@@ -49,10 +49,10 @@ describe('update_recipe construction and preflight', () => {
 // schemas() to verify required tools are present.
 function innerToolsExposing(names) {
     const SCHEMAS = {
-        load_for_update: {
-            name: 'load_for_update',
-            description: 'Load + closure for ONE recipe.',
-            parameters: {type: 'object', properties: {recipeId: {type: 'string'}, instruction: {type: 'string'}}}
+        prepare_update: {
+            name: 'prepare_update',
+            description: 'Prepare a bounded edit for ONE recipe from formal focusPaths.',
+            parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}
         },
         recipe_patch: {
             name: 'recipe_patch',

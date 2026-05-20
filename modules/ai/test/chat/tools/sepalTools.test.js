@@ -60,4 +60,16 @@ describe('sepal tools', () => {
 
         expect(names).not.toContain('load_for_update')
     })
+
+    it('adds prepare_update to the specialist inner-registry so the update specialist can prepare a bounded edit', () => {
+        const names = specialistInnerTools({guiRequests: aFakeGuiRequests(() => of({}))}).map(tool => tool.name)
+
+        expect(names).toContain('prepare_update')
+    })
+
+    it('does not expose prepare_update on the orchestrator surface — it is specialist-private', () => {
+        const names = sepalTools({guiRequests: aFakeGuiRequests()}).map(tool => tool.name)
+
+        expect(names).not.toContain('prepare_update')
+    })
 })

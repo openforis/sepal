@@ -14,13 +14,13 @@ describe('recipe_patch tool', () => {
 
     describe('schema', () => {
 
-        it('points the specialist at load_for_update (not raw recipe_load) for baseModelHash', () => {
+        it('points the specialist at prepare_update for baseModelHash', () => {
             const tool = recipePatchTool(aFakeGuiRequests())
 
-            expect(tool.description).toContain('load_for_update')
-            expect(tool.description).not.toContain('recipe_load')
-            expect(tool.parameters.properties.baseModelHash.description).toContain('load_for_update')
-            expect(tool.parameters.properties.baseModelHash.description).not.toContain('recipe_load')
+            expect(tool.description).toContain('prepare_update')
+            expect(tool.description).not.toContain('load_for_update')
+            expect(tool.parameters.properties.baseModelHash.description).toContain('prepare_update')
+            expect(tool.parameters.properties.baseModelHash.description).not.toContain('load_for_update')
         })
 
         it('declares the documented parameters (recipeId, baseModelHash, operations all required)', () => {

@@ -46,4 +46,10 @@ describe('orchestrator tool registry', () => {
 
         expect(names).not.toContain('load_for_update')
     })
+
+    it('does not expose prepare_update on the orchestrator surface — it is specialist-private', () => {
+        const names = anOrchestratorSurface().schemas().map(schema => schema.name)
+
+        expect(names).not.toContain('prepare_update')
+    })
 })

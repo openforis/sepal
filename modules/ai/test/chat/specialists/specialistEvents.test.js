@@ -19,7 +19,7 @@ describe('publishSpecialistRequest', () => {
         publishSpecialistRequest({
             bus, name: 'recipe.update', round: 0, conversationId: 'c1',
             messages: [{role: 'system', content: 's'}, {role: 'user', content: 'u'}],
-            toolSchemas: [{name: 'load_for_update'}, {name: 'recipe_patch'}]
+            toolSchemas: [{name: 'prepare_update'}, {name: 'recipe_patch'}]
         })
 
         expect(bus.published).toEqual([expect.objectContaining({
@@ -29,7 +29,7 @@ describe('publishSpecialistRequest', () => {
             name: 'recipe.update',
             round: 0,
             messageCount: 2,
-            toolNames: ['load_for_update', 'recipe_patch']
+            toolNames: ['prepare_update', 'recipe_patch']
         })])
     })
 
@@ -77,10 +77,10 @@ describe('publishSpecialistResponse', () => {
 
         publishSpecialistResponse({
             bus, name: 'recipe.update', round: 0, text: '',
-            toolCalls: [{id: 't1', name: 'load_for_update'}, {id: 't2', name: 'recipe_patch'}]
+            toolCalls: [{id: 't1', name: 'prepare_update'}, {id: 't2', name: 'recipe_patch'}]
         })
 
-        expect(bus.published[0].toolCallNames).toEqual(['load_for_update', 'recipe_patch'])
+        expect(bus.published[0].toolCallNames).toEqual(['prepare_update', 'recipe_patch'])
     })
 })
 
@@ -91,7 +91,7 @@ describe('publishSpecialistToolRequest', () => {
 
         publishSpecialistToolRequest({
             bus, name: 'recipe.update', conversationId: 'c1',
-            toolCall: {id: 't1', name: 'load_for_update', input: {recipeId: 'r1', instruction: 'edit'}}
+            toolCall: {id: 't1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/dates/targetDate']}}
         })
 
         expect(bus.published).toEqual([expect.objectContaining({
@@ -99,21 +99,35 @@ describe('publishSpecialistToolRequest', () => {
             level: 'debug',
             conversationId: 'c1',
             name: 'recipe.update',
-            tool: 'load_for_update',
-            inputKeys: ['recipeId', 'instruction']
+            tool: 'prepare_update',
+            inputKeys: ['recipeId', 'focusPaths']
         })])
     })
 
     it('handles a missing input gracefully', () => {
         const bus = aFakeBus()
 
-        publishSpecialistToolRequest({bus, name: 'recipe.update', toolCall: {id: 't1', name: 'load_for_update'}})
+        publishSpecialistToolRequest({bus, name: 'recipe.update', toolCall: {id: 't1', name: 'prepare_update'}})
 
         expect(bus.published[0].inputKeys).toEqual([])
     })
 })
 
 describe('publishSpecialistToolResponse', () => {
+
+    it('summarises a prepare_update success with focus/dependent/writable path counts', () => {
+        const bus = aFakeBus()
+        const envelope = {ok: true, data: {
+            baseModelHash: 'h1',
+            focusPaths: ['/sources/dataSets'],
+            dependentPaths: ['/compositeOptions/corrections', '/sceneSelectionOptions/type'],
+            writablePaths: ['/sources/dataSets', '/compositeOptions/corrections', '/sceneSelectionOptions/type']
+        }}
+
+        publishSpecialistToolResponse({bus, name: 'recipe.update', conversationId: 'c1', tool: 'prepare_update', envelope})
+
+        expect(bus.published[0].shape).toBe('prepared(focus=1,dependent=2,writable=3)')
+    })
 
     it('publishes a debug-level specialist.tool.response with ok flag and tool-specific shape summary for load_for_update', () => {
         const bus = aFakeBus()
