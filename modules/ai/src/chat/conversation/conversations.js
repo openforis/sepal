@@ -15,7 +15,7 @@ function createConversations({conversationsStore, conversationFor$, createId, cl
 
     return {
         create$, select$, delete$, deleteAll$, list$, abort$,
-        get$, peek, persistOrTouch$
+        get$, persistOrTouch$
     }
 
     function create$() {
@@ -91,10 +91,6 @@ function createConversations({conversationsStore, conversationFor$, createId, cl
                 })
             ))
         )
-    }
-
-    function peek(id) {
-        return instances.get(id)
     }
 
     function persistOrTouch$(id, now) {

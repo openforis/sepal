@@ -186,3 +186,32 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   options because compose passes them, but the active app does not wire SEPAL
   or GEE clients, server-side rate limiting, or session expiry. Drop the
   options or actually wire them.
+
+## Test coverage
+
+`PRACTICES.md` (Coverage) now allows uncovered code in only two cases: wiring
+(`main.js`/`app.js`/`config.js`) and the live I/O call to an uncontrolled external
+(the `fetch`/SDK/driver line — translation logic around it is faked-and-tested).
+Everything below is our code, testable through a seam, and was consciously left
+uncovered for now. Configured coverage is ~98% line / ~88% branch over a subset;
+full `src/` is ~94% / ~87%.
+
+- **Observability thunks** — lazy `message: () => …` bodies and their summary/label
+  helpers in `conversationEvents`, `titleGenerator`, `openaiChatCompletions`,
+  `registry` (resultPayload), `wsChannel` (labels), `specialistEvents`, `llm/events`,
+  `loopEvents`. Cover by invoking the thunk and asserting a marker (intent, not
+  wording).
+- **Defensive / fatal** — `conversation.js` prior-turn error swallow is real
+  serialization behaviour (a failed turn must not block the next), test it;
+  `logListener` `fatal` + bus `error`/`complete` (stub `process.exit`, error the bus);
+  `recipeProjection` non-`PointerNotFound` rethrow (test if reachable, else delete as
+  unreachable).
+- **Branch gaps in logic** — `recipeSpecialists` metadata-failure / channel-emission
+  short-circuits, `runSpecialist` stall/empty-reply paths, `fallbackTitle`
+  greeting/thanks heuristics, `llm/index` `hasStructuredToolTraffic`,
+  `lmStudioNativeChat` debugLabel/apiKey/empty-output branches, `conversationLoop`
+  default-param + `directToolAnswer` guards.
+- **Prod files outside the coverage glob** — `turnContext`, `guiRequests`,
+  `loopEvents`, `promptSnapshot`, `emitOnEnd`, `diagnostics` are real code excluded
+  from `collectCoverageFrom`, so their gaps are invisible. Widen `collectCoverageFrom`
+  to `src/**/*.js` (minus the wiring above) and triage what surfaces.

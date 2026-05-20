@@ -1,4 +1,26 @@
-const {aToolFactoryHarness, aConversationHarness, collect} = require('../harness')
+const {of} = require('rxjs')
+const {aToolFactoryHarness, aConversationHarness, collect, innerToolsImpl} = require('../harness')
+
+// A consult_map whose map_area_list tool fails every call with the given
+// error code, across enough distinct calls to trip the anti-loop guard.
+function aFailingMapConsultation(errorCode) {
+    return aToolFactoryHarness({
+        specialist: 'consult_map',
+        replies: [
+            {toolCalls: [{id: 'm1', name: 'map_area_list', input: {recipeId: 'r1'}}]},
+            {toolCalls: [{id: 'm2', name: 'map_area_list', input: {recipeId: 'r2'}}]},
+            {toolCalls: [{id: 'm3', name: 'map_area_list', input: {recipeId: 'r3'}}]}
+        ],
+        innerTools: innerToolsImpl(
+            {map_area_list: () => of({ok: false, error: {code: errorCode, message: 'map tool failed'}})},
+            [
+                {name: 'get_gui_context', description: 'GUI context.', parameters: {type: 'object', properties: {}}},
+                {name: 'map_area_list', description: 'Map areas.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}}}},
+                {name: 'layer_list', description: 'Layers per area.', parameters: {type: 'object', properties: {}}}
+            ]
+        )
+    })
+}
 
 describe('specialist consultations', () => {
 
@@ -158,6 +180,21 @@ describe('specialist consultations', () => {
             const result = harness.invoke({question: 'why is my map empty?'})
 
             expect(result).toEqual({answer: expect.stringMatching(/specialist/i)})
+        })
+    })
+
+    describe('the inner LLM repeatedly calling a map tool that keeps erroring', () => {
+
+        it('bails with a repeated-failures halt answer naming the tool', () => {
+            const result = aFailingMapConsultation('TOOL_FAILED').invoke({question: 'which areas?'})
+
+            expect(result.answer).toMatch(/repeated failures.*map_area_list/i)
+        })
+
+        it('bails with an invalid-args halt answer naming the tool when the args keep being rejected', () => {
+            const result = aFailingMapConsultation('INVALID_TOOL_ARGS').invoke({question: 'which areas?'})
+
+            expect(result.answer).toMatch(/invalid args.*map_area_list/i)
         })
     })
 

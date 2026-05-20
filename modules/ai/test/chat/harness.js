@@ -548,6 +548,7 @@ module.exports = {
     aConversationHarness,
     aUserChatHarness,
     aWsHandlerHarness,
+    aFakeLlm,
     aControllableLlm,
     aStallingTitleGenerator,
     aRecordingBus,

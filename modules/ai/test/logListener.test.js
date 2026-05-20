@@ -1,4 +1,8 @@
-const {onEvent, categoryOf} = require('#mcp/logListener')
+jest.mock('#sepal/log', () => ({getLogger: jest.fn()}))
+
+const {Subject} = require('rxjs')
+const {onEvent, categoryOf, subscribeLogListener} = require('#mcp/logListener')
+const {getLogger} = require('#sepal/log')
 
 describe('Log listener', () => {
 
@@ -120,6 +124,38 @@ describe('Log listener', () => {
 
         it('declares update_recipe — update_recipe.outcome routes here and must be settable independently of specialist', () => {
             expect(logConfig.categories).toHaveProperty('update_recipe')
+        })
+    })
+
+    describe('subscribeLogListener — bus to log4js wiring', () => {
+        let bus, loggers
+        beforeEach(() => {
+            loggers = new Map()
+            getLogger.mockReset()
+            getLogger.mockImplementation(category => {
+                if (!loggers.has(category)) {
+                    loggers.set(category, {info: jest.fn(), warn: jest.fn(), error: jest.fn(), trace: jest.fn()})
+                }
+                return loggers.get(category)
+            })
+            bus = {events$: new Subject()}
+        })
+
+        it('routes a published event to its category logger at the declared level', () => {
+            subscribeLogListener({bus})
+
+            bus.events$.next({type: 'tool.invoke.failed', level: 'error', message: 'boom'})
+
+            expect(loggers.get('tool').error).toHaveBeenCalledWith('boom')
+        })
+
+        it('resolves a category logger once across repeated events of that category', () => {
+            subscribeLogListener({bus})
+
+            bus.events$.next({type: 'tool.one', level: 'info', message: 'a'})
+            bus.events$.next({type: 'tool.two', level: 'info', message: 'b'})
+
+            expect(getLogger.mock.calls.filter(([category]) => category === 'tool')).toHaveLength(1)
         })
     })
 })

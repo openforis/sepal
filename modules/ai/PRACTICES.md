@@ -487,7 +487,19 @@ Default adapter tests fake the SDK or driver; manual tests are the rare exceptio
 
 ## Coverage
 
-Run coverage **after the refactor step**, not after green. Green confirms behaviour; refactor changes the code shape, and that's when uncovered branches surface. Use `--coverage` (Jest) on the post-refactor run. Print the summary; no enforced threshold yet. Coverage = honesty signal, not target.
+Run coverage **after the refactor step**, not after green. Green confirms behaviour; refactor changes the code shape, and that's when uncovered branches surface. Use `--coverage` (Jest) on the post-refactor run. Print the summary; no enforced threshold. Coverage = honesty signal, not target.
+
+Full line + branch coverage is the expectation. Uncovered code is legitimate in exactly two cases:
+
+1. **Wiring** — `main.js`, `app.js`, `config.js`. Kept thin and reviewed; excluded from `collectCoverageFrom`.
+2. **The I/O call to an uncontrolled external** — the live `fetch` / SDK / driver invocation against the model, network, or datastore. Fake that external and test the adapter's translation logic; the real call is covered by a sparse manual test (see Manual tests).
+
+Everything else is our code, reachable through a controllable seam, and **must** be covered — domain, composition units (`userChats`), port adapters (`redisChatStorage`), observability, and defensive paths alike:
+
+- **Observability** (lazy `message: () => …` bodies, log-label / summary helpers): invoke the thunk, assert a marker for intent — not verbatim wording (see Quality bar). The log sink is ours; nothing here is an uncontrolled external.
+- **Defensive / fatal**: force the condition (error the stream, feed the bad input); for `process.exit`, stub the boundary and assert the exit decision.
+
+"It's just wiring," "it's only logging," and "that can't happen" are not exemptions. The sole residual exception is **provably-unreachable** code — a guard no seam can trigger — justified case-by-case in review (and usually a sign of dead code or a missing seam), never a standing category.
 
 ## Refactor lens
 

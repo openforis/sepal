@@ -161,6 +161,19 @@ describe('tool registry — schemas and invoke envelopes', () => {
             expect(result.error.message).toContain('Unexpected token')
         })
 
+        it('accepts any input for a tool that declares no parameters schema', () => {
+            const schemalessTool = {
+                name: 'schemaless',
+                description: 'No parameters declared.',
+                invoke$: input => of({received: input})
+            }
+            const registry = createToolRegistry({tools: [schemalessTool], bus})
+
+            const result = read(registry.invoke$({id: 'c1', name: 'schemaless', input: {anything: 1}}))
+
+            expect(result).toEqual({ok: true, data: {received: {anything: 1}}})
+        })
+
         it('does not invoke the tool when the arguments are invalid', () => {
             let invoked = false
             const guardedTool = {

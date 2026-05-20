@@ -155,4 +155,29 @@ describe('user turns through the userChat seam', () => {
             expect(harness.channelEvents).toContainEqual(bareEvent)
         })
     })
+
+    describe('unrecognised command', () => {
+        let harness
+        beforeEach(() => {
+            harness = aUserChatHarness({conversationIds: ['conv-1']})
+        })
+
+        it('emits no channel event', () => {
+            run(harness.handle$({type: 'no-such-command', ...SUB}))
+
+            expect(harness.channelEvents).toEqual([])
+        })
+
+        it('publishes a warning naming the command type', () => {
+            run(harness.handle$({type: 'no-such-command', ...SUB}))
+
+            expect(harness.bus.events).toContainEqual(
+                expect.objectContaining({
+                    type: 'userChat.unknownCommand',
+                    level: 'warn',
+                    commandType: 'no-such-command'
+                })
+            )
+        })
+    })
 })

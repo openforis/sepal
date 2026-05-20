@@ -77,6 +77,24 @@ describe('LM Studio native chat adapter', () => {
         })
     })
 
+    it('joins multiple non-system messages into a role-prefixed native input', async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            text: async () => JSON.stringify({output: [{type: 'message', content: 'ok'}]})
+        })
+
+        await collect(aNativeChat().respondTo$({
+            messages: [
+                {role: 'system', content: 'System'},
+                {role: 'user', content: 'first'},
+                {role: 'assistant', content: 'second'}
+            ]
+        }))
+
+        const body = JSON.parse(global.fetch.mock.calls[0][1].body)
+        expect(body.input).toBe('user: first\n\nassistant: second')
+    })
+
     it('does not send tool schemas — the native path has no tool support', async () => {
         global.fetch.mockResolvedValue({
             ok: true,
