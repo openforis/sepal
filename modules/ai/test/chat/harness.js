@@ -167,6 +167,37 @@ function aFakeTools(implementations, schemas) {
     }
 }
 
+// Inner-registry double that only exposes the supplied schemas and accepts
+// any call with a generic success — used to exercise a specialist's per-tool
+// scope filter without wiring real implementations (the scoped wrapper blocks
+// out-of-scope calls before they reach an implementation).
+function innerToolsWithSchemas(schemas) {
+    return {
+        invocations: [],
+        schemas: () => schemas,
+        invoke$(toolCall) {
+            this.invocations.push(toolCall)
+            return of({ok: true, data: {}})
+        }
+    }
+}
+
+// Inner-registry double with both schemas() and per-name invoke$
+// implementations.
+function innerToolsImpl(implementations, schemas) {
+    const invocations = []
+    return {
+        invocations,
+        schemas: () => schemas,
+        invoke$(toolCall, context) {
+            invocations.push(toolCall)
+            const impl = implementations[toolCall.name]
+            if (!impl) return of({ok: false, error: {code: 'UNKNOWN_TOOL', message: toolCall.name}})
+            return impl(toolCall.input, context)
+        }
+    }
+}
+
 function aConversationHarness({
     id = 'conv-1',
     initialMessages = [],
@@ -240,6 +271,14 @@ function aUserChatHarness({
         historyFor,
         handle$(command) {
             return userChat.handle$(command).pipe(tap(event => channelEvents.push(event)))
+        },
+        // Window into channel events emitted after a marker — lets a test
+        // assert on one action's output without resetting the shared collector.
+        eventsMarker() {
+            return channelEvents.length
+        },
+        eventsSince(marker) {
+            return channelEvents.slice(marker)
         }
     }
 
@@ -497,6 +536,12 @@ function run(observable) {
     observable.subscribe({error: e => { throw e }})
 }
 
+// Filters a list of channel events down to one kind. Shared across scenario
+// directories — pass harness.channelEvents or harness.eventsSince(marker).
+function eventsOfKind(events, kind) {
+    return events.filter(event => event.kind === kind)
+}
+
 module.exports = {
     aRegistryHarness,
     aToolFactoryHarness,
@@ -512,6 +557,9 @@ module.exports = {
     createInMemoryHistory,
     createInMemoryConversationsStore,
     collect,
+    eventsOfKind,
+    innerToolsWithSchemas,
+    innerToolsImpl,
     firstValue,
     run
 }

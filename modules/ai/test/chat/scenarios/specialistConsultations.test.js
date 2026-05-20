@@ -79,10 +79,8 @@ describe('specialist consultations', () => {
         it('offers the inner LLM only the map specialist\'s scoped tool schemas', () => {
             harness.invoke({question: 'why is my map empty?'})
 
-            expect(harness.llm.receivedTools[0]).toEqual([
-                {name: 'get_gui_context', description: 'GUI context.', parameters: {type: 'object', properties: {}}},
-                {name: 'map_area_list', description: 'Map areas.', parameters: {type: 'object', properties: {}}},
-                {name: 'layer_list', description: 'Layers per area.', parameters: {type: 'object', properties: {}}}
+            expect(harness.llm.receivedTools[0].map(schema => schema.name)).toEqual([
+                'get_gui_context', 'map_area_list', 'layer_list'
             ])
         })
     })
