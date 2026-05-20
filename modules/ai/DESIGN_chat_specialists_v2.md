@@ -691,16 +691,76 @@ llm.response
 llm.usage
 ```
 
-`llm.usage` should include provider, model, model profile, role, specialist
-kind, recipe type where relevant, context window, input/output tokens,
-reasoning tokens where available, cached input/write tokens where available,
-input/output/tool-schema bytes, duration, and success/failure attribution.
+Model selection has separate dimensions:
 
-Aggregate usage per LLM call, specialist invocation, user turn, conversation,
-role, specialist kind, recipe type, provider/model/profile, cache behavior, and
-time window. This validates whether specialists reduce orchestrator prompt
-cost, whether specialist calls add too much overhead, and which recipe types are
-worth expanding.
+- `role`: `orchestrator`, `specialist`, or `title`
+- `specialist`: `recipe.describe`, `recipe.update`, `map`, future
+  `recipe.create`, etc. when `role=specialist`
+- `modelProfile`: logical tier such as `fast` or `smart`
+- `thinking`: orthogonal reasoning mode such as `off`, `low`, `medium`, `high`
+- resolved `provider` + `model`: the concrete Bedrock/OpenAI/local target
+
+Profiles map to concrete provider/model config. Thinking remains separate so
+we can compare "same profile, different thinking" and "same specialist, different
+profile" without multiplying profile names.
+
+`llm.usage` is the normalized per-call fact event. It should include:
+
+```js
+{
+  type: 'llm.usage',
+  conversationId,
+  turnId,
+  callId,
+  role,
+  specialist,        // optional
+  recipeType,        // optional
+  modelProfile,
+  thinking,
+  provider,
+  model,
+  contextWindowTokens,
+  inputTokens,
+  outputTokens,
+  totalTokens,
+  reasoningTokens,
+  cachedInputTokens,
+  cacheWriteTokens,
+  usageExact,        // false when token counts are byte/count estimates
+  cacheUsageExact,   // false when provider gives no cache usage
+  inputBytes,
+  messageBytes,
+  toolSchemaBytes,
+  contextUtilization,
+  durationMs,
+  success,
+  errorCode
+}
+```
+
+Providers that do not expose token usage still emit `llm.usage` with byte/count
+fallback estimates and `usageExact=false`. Providers that do not expose prompt
+cache usage set `cachedInputTokens=0`, `cacheWriteTokens=0`, and
+`cacheUsageExact=false`; do not infer cache hits from repeated prompts unless a
+future event marks the values as estimates.
+
+Rollup events should aggregate all `llm.usage` calls caused by a user message
+and by the full conversation:
+
+```text
+turn.usage
+conversation.usage
+```
+
+Rollups should keep input/output/total tokens separate, include cache read/write
+totals and ratios, exact-vs-estimated call counts, total duration, LLM-call
+duration, call count, round count, tool-call count, stall/retry counts, max prompt
+bytes/tokens, max context utilization, and breakdowns by role, specialist,
+recipe type, model profile, thinking mode, provider/model, and cache behavior.
+
+This validates whether specialists reduce orchestrator prompt cost, whether
+specialist calls add too much overhead, which recipe types are worth expanding,
+and what Bedrock model/profile/thinking choices cost in practice.
 
 ## 14. Tool-loop safety
 

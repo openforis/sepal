@@ -123,9 +123,14 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   but AI turns only receive GUI/runtime state. Include the UI language as
   runtime data so the model can reply in the active interface language without
   guessing from the user's text.
-- **No model-profile resolution or `llm.usage` events** — every LLM call still
-  goes through one hard-wired adapter; provider/model/profile resolution and
-  normalized usage accounting (DESIGN §9) are not wired.
+- **No model-profile resolution or usage rollups** — every LLM call still goes
+  through one hard-wired adapter; provider/model/profile resolution, orthogonal
+  thinking mode, normalized `llm.usage`, and per-turn/per-conversation rollups
+  are not wired. First implementation slice should emit provider-neutral
+  per-call usage with exact token/cache fields when available and byte/count
+  estimates otherwise, then aggregate by role, specialist, recipe type,
+  modelProfile, thinking, provider/model, cache behavior, and duration so
+  Bedrock cost/profile choices can be compared before switching providers.
 - **Recipes-in-prod-GUI fails silently** — `sepal start gui -p` fails without
   visible errors. Dev server works (`recipes` resolves via `optimizeDeps.include`
   + node_modules symlink). Production goes through Rollup with different module
@@ -150,8 +155,11 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   as chunks, token usage, cache hits, result size, and status once they are
   known.
 - **Usage accounting events are not emitted** — active adapters log response
-  summaries, but they do not emit normalized `llm.usage` events or per-turn
-  rollups.
+  summaries, but they do not emit normalized `llm.usage` events,
+  `turn.usage`, or `conversation.usage`. Rollups need separate input/output
+  tokens, cached input/write tokens, exact-vs-estimated flags, duration, call
+  counts, round/tool/stall/retry counts, max context size/utilization, and
+  role/specialist/profile/thinking/provider/model breakdowns.
 
 ## Persistence And Runtime State
 
