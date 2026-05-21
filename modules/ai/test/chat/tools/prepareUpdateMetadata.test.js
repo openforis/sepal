@@ -166,6 +166,18 @@ describe('prepare_update tool — constraint-derived metadata', () => {
             expect(Object.keys(data.currentValues).sort()).toEqual(data.writablePaths.sort())
             expect(data.currentValues['/compositeOptions/sentinel2CloudProbabilityMaxCloudProbability']).toBeNull()
         })
+
+        it('lists the absent cloud-masking companions in missingPaths so the specialist adds rather than replaces them', () => {
+            const data = packet(focusPaths)
+
+            expect(data.missingPaths).toEqual(expect.arrayContaining([
+                '/compositeOptions/includedCloudMasking',
+                '/compositeOptions/sentinel2CloudProbabilityMaxCloudProbability'
+            ]))
+            // corrections is present in the fixture, so it stays on the existing side.
+            expect(data.existingPaths).toContain('/compositeOptions/corrections')
+            expect(data.missingPaths).not.toContain('/compositeOptions/corrections')
+        })
     })
 
     describe('focusing /compositeOptions/corrections', () => {

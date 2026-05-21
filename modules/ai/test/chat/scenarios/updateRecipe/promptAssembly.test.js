@@ -29,6 +29,15 @@ describe('update_recipe per-type prompt assembly', () => {
             expect(systemPrompt).toMatch(/Edit guidance:/i)
         })
 
+        it('tells the specialist to add for missingPaths and replace for existingPaths', () => {
+            const systemPrompt = systemPromptFor(mosaicMetadata)
+
+            expect(systemPrompt).toMatch(/missingPaths/)
+            expect(systemPrompt).toMatch(/existingPaths/)
+            expect(systemPrompt).toMatch(/\badd\b/)
+            expect(systemPrompt).toMatch(/\breplace\b/)
+        })
+
         it('injects the generated update manual after the edit guidance (a path the guidance bullets do not carry)', () => {
             const systemPrompt = systemPromptFor(mosaicMetadata)
 

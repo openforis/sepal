@@ -16,7 +16,7 @@ const {parsePointer, resolvePointer, PointerNotFound} = require('./jsonPointer')
 function prepareUpdateTool(guiRequests) {
     return {
         name: 'prepare_update',
-        description: 'Prepare a bounded edit for ONE recipe from formal focusPaths (model-relative JSON Pointers you intend to change). Returns {baseModelHash, focusPaths, dependentPaths:[path], writablePaths:[path], currentValues:{path->value}, dependencyFacts, validationRules}. dependentPaths = sibling fields the recipe couples to your focus; writablePaths = focus ∪ dependent. Plan ONE atomic recipe_patch touching only writablePaths; use baseModelHash on it.',
+        description: 'Prepare a bounded edit for ONE recipe from formal focusPaths (model-relative JSON Pointers you intend to change). Returns {baseModelHash, focusPaths, dependentPaths:[path], writablePaths:[path], existingPaths:[path], missingPaths:[path], currentValues:{path->value}, dependencyFacts, validationRules}. dependentPaths = sibling fields the recipe couples to your focus; writablePaths = focus ∪ dependent. existingPaths exist in the model now; missingPaths are absent — in recipe_patch use `add` for missingPaths, `replace` for existingPaths, `remove` only for existingPaths. Plan ONE atomic recipe_patch touching only writablePaths; use baseModelHash on it.',
         parameters: {
             type: 'object',
             properties: {
@@ -53,6 +53,7 @@ function buildEnvelope(recipe, focusPaths) {
     const relevantConstraints = constraintsTouching(constraints, focusPaths)
     const dependentPaths = dependentsFrom(relevantConstraints, focusPaths)
     const writablePaths = union(focusPaths, dependentPaths)
+    const states = Object.fromEntries(writablePaths.map(path => [path, pathState(effectiveModel, path)]))
     return {
         ok: true,
         data: {
@@ -60,7 +61,9 @@ function buildEnvelope(recipe, focusPaths) {
             focusPaths,
             dependentPaths,
             writablePaths,
-            currentValues: valuesAt(effectiveModel, writablePaths),
+            existingPaths: writablePaths.filter(path => states[path].exists),
+            missingPaths: writablePaths.filter(path => !states[path].exists),
+            currentValues: Object.fromEntries(writablePaths.map(path => [path, states[path].value])),
             dependencyFacts: dependencyFacts(relevantConstraints, dependentPaths),
             validationRules: validationRules(relevantConstraints)
         }
@@ -107,18 +110,16 @@ function distinct(paths) {
     return [...new Set(paths)]
 }
 
-// A writable path absent from the effective model resolves to null rather than
-// throwing, keeping a currentValues key for every writablePath. Companions like
-// includedCloudMasking are commonly absent yet still coupled.
-function valuesAt(effectiveModel, paths) {
-    return Object.fromEntries(paths.map(path => [path, valueAt(effectiveModel, path)]))
-}
-
-function valueAt(effectiveModel, path) {
+// A writable path absent from the effective model is reported as missing with a
+// null value rather than throwing — keeping a currentValues key for every
+// writablePath while making absence explicit (a null value alone is ambiguous
+// with a present null). Companions like includedCloudMasking are commonly absent
+// yet still coupled; the specialist must `add` those, not `replace` them.
+function pathState(effectiveModel, path) {
     try {
-        return resolvePointer(effectiveModel, parsePointer(path))
+        return {exists: true, value: resolvePointer(effectiveModel, parsePointer(path))}
     } catch (error) {
-        if (error instanceof PointerNotFound) return null
+        if (error instanceof PointerNotFound) return {exists: false, value: null}
         throw error
     }
 }

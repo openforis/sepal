@@ -42,6 +42,15 @@ describe('prepare_update tool', () => {
             expect(Object.keys(tool.parameters.properties).sort()).toEqual(['focusPaths', 'recipeId'])
             expect(tool.parameters.properties).not.toHaveProperty('instruction')
         })
+
+        it('tells the caller to add for missing paths and replace/remove only for existing paths', () => {
+            const description = prepareUpdateTool(aFakeGuiRequests()).description
+
+            expect(description).toMatch(/missingPaths/)
+            expect(description).toMatch(/existingPaths/)
+            expect(description).toMatch(/add/)
+            expect(description).toMatch(/replace/)
+        })
     })
 
     describe('invocation', () => {
@@ -120,6 +129,37 @@ describe('prepare_update tool', () => {
 
             expect(result.data.writablePaths).toContain('/compositeOptions/includedCloudMasking')
             expect(result.data.currentValues['/compositeOptions/includedCloudMasking']).toBeNull()
+        })
+
+        describe('existingPaths / missingPaths — disambiguating null currentValues', () => {
+
+            it('reports all season-window paths as existing when they are present in the model', () => {
+                const tool = prepareUpdateTool(aFakeGuiRequests(() => of(aMosaicGuiResponse())))
+
+                const result = read(tool.invoke$({recipeId: 'r1', focusPaths: ['/dates/targetDate']}, context))
+
+                expect(result.data.existingPaths.sort()).toEqual(['/dates/seasonEnd', '/dates/seasonStart', '/dates/targetDate'])
+                expect(result.data.missingPaths).toEqual([])
+            })
+
+            it('reports an absent writable companion as missing (not merely null) while present companions stay existing', () => {
+                const tool = prepareUpdateTool(aFakeGuiRequests(() => of(aMosaicGuiResponse())))
+
+                const result = read(tool.invoke$({recipeId: 'r1', focusPaths: ['/sources/dataSets']}, context))
+
+                expect(result.data.missingPaths).toContain('/compositeOptions/includedCloudMasking')
+                expect(result.data.existingPaths).toContain('/sources/dataSets')
+                expect(result.data.existingPaths).not.toContain('/compositeOptions/includedCloudMasking')
+            })
+
+            it('partitions writablePaths exactly into existingPaths and missingPaths', () => {
+                const tool = prepareUpdateTool(aFakeGuiRequests(() => of(aMosaicGuiResponse())))
+
+                const result = read(tool.invoke$({recipeId: 'r1', focusPaths: ['/sources/dataSets']}, context))
+
+                expect([...result.data.existingPaths, ...result.data.missingPaths].sort()).toEqual([...result.data.writablePaths].sort())
+                expect(result.data.existingPaths.filter(path => result.data.missingPaths.includes(path))).toEqual([])
+            })
         })
 
         it('returns a TOOL_FAILED envelope when the GUI request errors', () => {

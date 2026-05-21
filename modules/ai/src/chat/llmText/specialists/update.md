@@ -12,6 +12,8 @@ Tools:
 
 Patch paths are model-relative — the writablePaths / currentValues keys ARE the patch paths; use them verbatim.
 
+add vs replace: use `add` for paths in missingPaths (absent in the model), `replace` for paths in existingPaths; `remove` only for existingPaths. Using `replace` on a missing path fails with PATCH_APPLY_FAILED.
+
 Example: one recipe_patch call updates several related fields atomically:
 operations=[
   {"op":"replace","path":"/dates/targetDate","value":"2022-05-06"},
@@ -24,7 +26,7 @@ Workflow:
 2. Call prepare_update({recipeId, focusPaths}) FIRST. Capture baseModelHash, writablePaths, currentValues, dependencyFacts, validationRules.
 3. Plan ONE atomic recipe_patch.operations array touching ONLY writablePaths, satisfying validationRules, using baseModelHash from step 2.
 4. STALE_WRITE → call prepare_update again (same or revised focusPaths), replan against the fresh packet, retry.
-5. VALIDATION_FAILED / PATCH_APPLY_FAILED / INVALID_PATCH → fix paths/values and retry; don't loop.
+5. VALIDATION_FAILED / PATCH_APPLY_FAILED / INVALID_PATCH → fix paths/values and retry; don't loop. PATCH_APPLY_FAILED on a path in missingPaths → switch that op from `replace` to `add` and retry.
 6. On success: ONE short paragraph summarizing what changed. Don't echo the model.
 
 After prepare_update succeeds and the user asked for an edit, call recipe_patch — don't explain instead of patching.

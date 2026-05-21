@@ -99,4 +99,30 @@ describe('update_recipe obtains a live prepare_update work packet', () => {
         // the specialist knows it must supply one in the patch.
         expect(packet.data.currentValues).toHaveProperty('/compositeOptions/sentinel2CloudProbabilityMaxCloudProbability')
     })
+
+    // The fixture model has no includedCloudMasking, so adding the Sentinel-2
+    // cloud-probability mask + its required threshold are NEW paths. The live
+    // packet must mark them missing so the specialist emits `add`, not `replace`
+    // (which would PATCH_APPLY_FAILED and waste a round).
+    it('marks the new cloud-masking method and its threshold as missingPaths in the live packet', () => {
+        const guiRequests = guiRequestsForMosaic()
+        const prepareCall = {id: 'tu1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/compositeOptions/includedCloudMasking']}}
+        const harness = aToolFactoryHarness({
+            specialist: 'update_recipe',
+            guiRequests,
+            innerTools: realInnerTools(guiRequests),
+            replies: [
+                {toolCalls: [prepareCall]},
+                {text: 'Prepared cloud-masking edit.'}
+            ]
+        })
+
+        harness.invoke({recipeId: 'r1', instruction: 'add the Sentinel-2 cloud probability mask'})
+
+        const packet = preparedPacketSeenBySpecialist(harness)
+        expect(packet.data.missingPaths).toEqual(expect.arrayContaining([
+            '/compositeOptions/includedCloudMasking',
+            '/compositeOptions/sentinel2CloudProbabilityMaxCloudProbability'
+        ]))
+    })
 })
