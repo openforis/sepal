@@ -1,9 +1,9 @@
 // Recipe-operation tools backed by a specialist runtime. Today:
 // describe_recipe (read-only) and update_recipe (read + patch).
 
-const {map, mergeMap, of, tap} = require('rxjs')
+const {catchError, map, mergeMap, of, reduce, tap} = require('rxjs')
 const {getRecipeSpec} = require('#recipes')
-const {specialistPrompt} = require('../llmText/prompts')
+const {specialistPrompt, updateSummarySystemPrompt} = require('../llmText/prompts')
 const {runSpecialist$, SPECIALIST_CAP_ANSWER} = require('./runSpecialist')
 const {scopeInnerTools} = require('./specialistScope')
 const {assembleSpecialistPrompt} = require('./assembleSpecialistPrompt')
@@ -124,7 +124,15 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
                         noProgressNudge: updateNoPatchNudge,
                         context
                     }).pipe(
-                        map(value => isChannelEmission(value) ? value : tracker.envelopeFor(value))
+                        mergeMap(value => isChannelEmission(value)
+                            ? of(value)
+                            : finalizeUpdate$({
+                                value, tracker, llm,
+                                conversationId: context?.conversationId, recipeId, instruction,
+                                recipeType: spec?.name || envelope.data?.type,
+                                recipeName: envelope.data?.name,
+                                valueLabels: spec?.valueLabels?.()
+                            }))
                     )
                 })
             )
@@ -141,6 +149,8 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
     let succeeded = false
     let lastError = null
     let successSummary = ''
+    let operations = []
+    let invalidatedPaths = []
     return {
         wrap: invokeTool$ => (toolCall, context) =>
             invokeTool$(toolCall, context).pipe(
@@ -152,13 +162,18 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
                         succeeded = true
                         lastError = null
                         successSummary = value.data?.summary || ''
+                        operations = [...operations, ...(toolCall.input?.operations || [])]
+                        invalidatedPaths = value.data?.invalidatedPaths || invalidatedPaths
                     } else if (value?.ok === false) {
                         lastError = value.error
                     }
                 })
             ),
-        envelopeFor: specialistResult => {
-            const answer = answerFor(specialistResult)
+        state: () => ({attempted, succeeded, lastError, successSummary, operations, invalidatedPaths}),
+        // Synchronous envelope creation from the chosen answer. The answer is
+        // decided upstream (raw specialist text, summarizer prose, or the generic
+        // fallback) so this layer stays I/O-free; it only shapes + publishes.
+        finalize: answer => {
             const envelope = buildEnvelope(answer)
             publishUpdateRecipeOutcome({
                 bus,
@@ -172,13 +187,6 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
             })
             return envelope
         }
-    }
-
-    function answerFor(specialistResult) {
-        const answer = specialistResult?.answer || ''
-        if (!succeeded) return answer
-        if (!answer || answer === SPECIALIST_CAP_ANSWER) return successSummary
-        return answer
     }
 
     function buildEnvelope(answer) {
@@ -202,6 +210,62 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
             }
         }
     }
+}
+
+// Chooses the update_recipe answer and builds the final envelope. The async
+// step lives here (not in the synchronous tracker): when the patch applied but
+// the specialist ended with no usable text — common for local thinking models
+// that reason then emit nothing — one response-only summarizer pass turns the
+// applied patch into user-facing prose. An empty/failed summary leaves the
+// deterministic generic answer (the patch tool's own summary) in place.
+function finalizeUpdate$({value, tracker, llm, conversationId, recipeId, instruction, recipeType, recipeName, valueLabels}) {
+    const rawAnswer = value?.answer || ''
+    const {succeeded, successSummary, operations, invalidatedPaths} = tracker.state()
+    if (succeeded && isEmptyFinal(rawAnswer)) {
+        return summarizeUpdate$({llm, conversationId, recipeId, instruction, recipeType, recipeName, valueLabels, operations, invalidatedPaths}).pipe(
+            map(summary => tracker.finalize(summary.trim() || successSummary))
+        )
+    }
+    return of(tracker.finalize(rawAnswer))
+}
+
+function isEmptyFinal(answer) {
+    return !answer.trim() || answer === SPECIALIST_CAP_ANSWER
+}
+
+// One tool-free, reasoning-disabled call that narrates the applied patch in
+// user-facing terms. Fed only patch-outcome data (no full model, no reasoning):
+// the operations, invalidated paths, and the recipe's type/name + the user's
+// request for language and framing.
+function summarizeUpdate$({llm, conversationId, recipeId, instruction, recipeType, recipeName, valueLabels, operations, invalidatedPaths}) {
+    return llm.respondTo$({
+        messages: buildSummaryMessages({instruction, recipeType, recipeName, valueLabels, operations, invalidatedPaths}),
+        tools: [],
+        disableReasoning: true,
+        debugLabel: `update.summary ${recipeId}`,
+        usageContext: {role: 'update.summary', conversationId, recipeId}
+    }).pipe(
+        reduce((text, event) => text + (event.textDelta || ''), ''),
+        catchError(() => of(''))
+    )
+}
+
+function buildSummaryMessages({instruction, recipeType, recipeName, valueLabels, operations, invalidatedPaths}) {
+    return [
+        {role: 'system', content: updateSummarySystemPrompt()},
+        {role: 'user', content: buildSummaryUserText({instruction, recipeType, recipeName, valueLabels, operations, invalidatedPaths})}
+    ]
+}
+
+function buildSummaryUserText({instruction, recipeType, recipeName, valueLabels, operations, invalidatedPaths}) {
+    const lines = []
+    if (instruction) lines.push(`userRequest: ${instruction}`)
+    if (recipeType) lines.push(`recipeType: ${recipeType}`)
+    if (recipeName) lines.push(`recipeName: ${recipeName}`)
+    if (valueLabels) lines.push(`valueLabels:\n${valueLabels}`)
+    lines.push(`appliedOperations: ${JSON.stringify(operations || [])}`)
+    if (invalidatedPaths?.length) lines.push(`invalidatedPaths: ${JSON.stringify(invalidatedPaths)}`)
+    return lines.join('\n')
 }
 
 // User-facing explanation of why the update was rejected, built from the human

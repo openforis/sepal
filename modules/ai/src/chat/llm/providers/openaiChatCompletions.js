@@ -88,10 +88,36 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai
         return concat(
             summary$,
             defer(() => concat(
+                publishReasoningOnly$(acc, {tools, debugLabel, attempt, usageContext}),
                 publishLengthCap$(acc, {debugLabel, attempt, willRetry: retryAfterAttempt}),
                 retryAfterAttempt ? attempt$({messages, tools, maxTokens, temperature, debugLabel, usageContext, extraParams}, attempt + 1) : EMPTY
             ))
         )
+    }
+
+    // A call that thought but emitted nothing actionable (reasoning present, no
+    // content text, no actionable tool call) — regardless of finish reason. This
+    // is the ONE place reasoning content is logged, bounded to the tail; the
+    // counts-only events (responseMeta, specialist.response) stay reasoning-free.
+    function publishReasoningOnly$(acc, {tools, debugLabel, attempt, usageContext}) {
+        if (!acc.reasoning.length || acc.text.trim()) return EMPTY
+        if (toolCallEvents(acc.toolCalls, tools || []).some(isActionableToolCallEvent)) return EMPTY
+        const context = usageContext || {}
+        const finishReason = [...acc.finishReasons].join(',') || null
+        bus.publish({
+            type: 'llm.reasoningOnly',
+            level: 'debug',
+            ...(debugLabel ? {debugLabel} : {}),
+            model,
+            attempt,
+            role: context.role ?? null,
+            specialist: context.specialist ?? null,
+            conversationId: context.conversationId ?? null,
+            reasoningChars: acc.reasoning.length,
+            finishReason,
+            message: () => `LLM reasoning-only${debugLabel ? ` (${debugLabel})` : ''}: attempt=${attempt} reasoningChars=${acc.reasoning.length} finishReason=${finishReason ?? '-'} reasoningTail=${JSON.stringify(reasoningTail(acc.reasoning))}`
+        })
+        return EMPTY
     }
 
     // One llm.usage per provider call — attached to the per-attempt stream so a
@@ -133,6 +159,12 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai
         })
         return EMPTY
     }
+}
+
+const REASONING_TAIL_CHARS = 300
+
+function reasoningTail(reasoning) {
+    return reasoning.length > REASONING_TAIL_CHARS ? reasoning.slice(-REASONING_TAIL_CHARS) : reasoning
 }
 
 // Reasoning-only output counts as empty for runtime purposes — the runtime

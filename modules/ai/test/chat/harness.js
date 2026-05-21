@@ -45,9 +45,9 @@ function aToolFactoryHarness({
     innerTools = aFakeInnerToolsFor(specialist),
     guiRequests = aFakeGuiRequests(),
     bus = aRecordingBus(),
-    context = {conversationId: 'conv-1'}
+    context = {conversationId: 'conv-1'},
+    llm = aFakeLlm({replies})
 } = {}) {
-    const llm = aFakeLlm({replies})
     const build = SPECIALIST_BUILDERS[specialist]
     if (!build) throw new Error(`Unknown specialist: ${specialist}`)
     const tool = build({llm, bus, innerTools, guiRequests})

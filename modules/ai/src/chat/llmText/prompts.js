@@ -32,4 +32,8 @@ function emptyAfterToolHint() {
     return loadPrompt('emptyAfterToolHint')
 }
 
-module.exports = {loadPromptFile, loadPrompt, specialistPrompt, mainSystemPrompt, titleSystemPrompt, emptyAfterToolHint}
+function updateSummarySystemPrompt() {
+    return loadPrompt('updateSummary')
+}
+
+module.exports = {loadPromptFile, loadPrompt, specialistPrompt, mainSystemPrompt, titleSystemPrompt, emptyAfterToolHint, updateSummarySystemPrompt}

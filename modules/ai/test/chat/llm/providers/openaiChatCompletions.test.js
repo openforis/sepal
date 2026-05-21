@@ -254,6 +254,97 @@ describe('OpenAI-compatible chat-completions adapter', () => {
         })
     })
 
+    describe('reasoning-only diagnostic', () => {
+
+        function aRecordingBus() {
+            const published = []
+            return {publish: event => published.push(event), published}
+        }
+
+        function reasoningOnly(bus) {
+            return bus.published.filter(event => event.type === 'llm.reasoningOnly')
+        }
+
+        it('logs the reasoning tail when a call ends reasoning-only with no actionable output (any finish reason)', async () => {
+            const bus = aRecordingBus()
+            mockCreate.mockResolvedValue([
+                {choices: [{delta: {reasoning_content: 'The task already looks complete, so I will stop here.'}}]},
+                {choices: [{finish_reason: 'stop', delta: {}}]}
+            ])
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'edit'}],
+                debugLabel: 'recipe.update conv-1',
+                usageContext: {role: 'specialist', specialist: 'recipe.update', conversationId: 'conv-1'}
+            }))
+
+            expect(reasoningOnly(bus)).toHaveLength(1)
+            expect(reasoningOnly(bus)[0]).toMatchObject({
+                level: 'debug',
+                finishReason: 'stop',
+                role: 'specialist',
+                specialist: 'recipe.update',
+                conversationId: 'conv-1'
+            })
+            expect(reasoningOnly(bus)[0].message()).toContain('I will stop here.')
+        })
+
+        it('does not log when the call produced content text', async () => {
+            const bus = aRecordingBus()
+            mockCreate.mockResolvedValue([
+                {choices: [{delta: {reasoning_content: 'thinking'}}]},
+                {choices: [{delta: {content: 'Done.'}}]},
+                {choices: [{finish_reason: 'stop', delta: {}}]}
+            ])
+
+            await collect(anOpenAiChat({bus}).respondTo$({messages: [{role: 'user', content: 'hi'}]}))
+
+            expect(reasoningOnly(bus)).toHaveLength(0)
+        })
+
+        it('does not log when the call produced an actionable tool call alongside reasoning', async () => {
+            const bus = aRecordingBus()
+            mockCreate.mockResolvedValue([
+                {choices: [{delta: {reasoning_content: 'thinking'}}]},
+                {choices: [{delta: {tool_calls: [{index: 0, id: 'call_1', function: {name: 'echo', arguments: '{"text":"hi"}'}}]}}]},
+                {choices: [{finish_reason: 'tool_calls', delta: {}}]}
+            ])
+
+            await collect(anOpenAiChat({bus}).respondTo$({messages: [{role: 'user', content: 'tool'}], tools: toolSchemas}))
+
+            expect(reasoningOnly(bus)).toHaveLength(0)
+        })
+
+        it('bounds the reasoning tail to the cap while reporting the full reasoning char count', async () => {
+            const bus = aRecordingBus()
+            const reasoning = 'HEAD_MARKER' + 'x'.repeat(400) + 'TAIL_MARKER'
+            mockCreate.mockResolvedValue([
+                {choices: [{delta: {reasoning_content: reasoning}}]},
+                {choices: [{finish_reason: 'stop', delta: {}}]}
+            ])
+
+            await collect(anOpenAiChat({bus}).respondTo$({messages: [{role: 'user', content: 'edit'}]}))
+
+            const event = reasoningOnly(bus)[0]
+            expect(event.reasoningChars).toBe(reasoning.length)
+            const text = event.message()
+            expect(text).toContain('TAIL_MARKER')
+            expect(text).not.toContain('HEAD_MARKER')
+        })
+
+        it('fires on a reasoning-only length cap too', async () => {
+            const bus = aRecordingBus()
+            mockCreate.mockResolvedValue([
+                {choices: [{delta: {reasoning_content: 'lots of planning'}}]},
+                {choices: [{finish_reason: 'length', delta: {}}]}
+            ])
+
+            await collect(anOpenAiChat({bus}).respondTo$({messages: [{role: 'user', content: 'edit'}]}))
+
+            expect(reasoningOnly(bus).some(event => event.finishReason === 'length')).toBe(true)
+        })
+    })
+
     describe('length-cap observability', () => {
 
         function aRecordingBus() {
