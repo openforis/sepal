@@ -82,7 +82,7 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
 
     return {
         name: 'update_recipe',
-        description: 'Update ONE recipe by natural-language instruction -> specialist plans + applies JSON Patch atomically against effective model. Stateless. Use for change/edit/modify requests on a saved recipe. Don\'t describe_recipe first -- specialist loads current state + plans internally.',
+        description: 'Update ONE current recipe from natural language. Specialist loads current state, plans, and applies atomic JSON Patch. Use for change/edit/modify/fix, including problem + action ("still clouds, remove them"). Do not call describe_recipe first.',
         directAnswer: true,
         parameters: {
             type: 'object',

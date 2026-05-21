@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://sepal.io/recipes/opticalMosaic/schema.json",
     "title": "OpticalMosaicRecipe",
-    "description": "Cloud-free optical mosaic from Landsat 4-9 and/or Sentinel-2.",
+    "description": "Cloud-masked optical mosaic from Landsat 4-9 and/or Sentinel-2.",
     "type": "object",
     "additionalProperties": false,
     "required": ["aoi", "dates", "sources", "sceneSelectionOptions", "compositeOptions"],
@@ -43,7 +43,10 @@
                 "id": {"type": "string", "minLength": 1},
                 "keyColumn": {"type": ["string", "null"]},
                 "key": {"type": ["string", "integer", "null"]},
-                "level": {"enum": ["COUNTRY", "AREA"]},
+                "level": {
+                    "enum": ["COUNTRY", "AREA"],
+                    "x-enumLabels": {"COUNTRY": "country", "AREA": "administrative area"}
+                },
                 "buffer": {"type": "integer", "minimum": 0, "maximum": 100}
             },
             "if": {
@@ -97,11 +100,30 @@
             "required": ["targetDate", "seasonStart", "seasonEnd", "yearsBefore", "yearsAfter"],
             "properties": {
                 "type": {"const": "YEARLY_TIME_SCAN"},
-                "targetDate": {"$ref": "#/$defs/date"},
-                "seasonStart": {"$ref": "#/$defs/date"},
-                "seasonEnd": {"$ref": "#/$defs/date"},
-                "yearsBefore": {"type": "integer", "minimum": 0, "maximum": 25},
-                "yearsAfter": {"type": "integer", "minimum": 0, "maximum": 25}
+                "targetDate": {
+                    "$ref": "#/$defs/date",
+                    "description": "Central date for the yearly mosaic window."
+                },
+                "seasonStart": {
+                    "$ref": "#/$defs/date",
+                    "description": "Season-window start date tied to targetDate."
+                },
+                "seasonEnd": {
+                    "$ref": "#/$defs/date",
+                    "description": "Season-window end date tied to targetDate."
+                },
+                "yearsBefore": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 25,
+                    "description": "Extra previous years included in the candidate scene pool."
+                },
+                "yearsAfter": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 25,
+                    "description": "Extra following years included in the candidate scene pool."
+                }
             }
         },
         "sources": {
@@ -110,9 +132,15 @@
             "additionalProperties": false,
             "required": ["cloudPercentageThreshold", "dataSets"],
             "properties": {
-                "cloudPercentageThreshold": {"type": "integer", "minimum": 0, "maximum": 100},
+                "cloudPercentageThreshold": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Scene-level cloud filter; lower values admit fewer cloudy scenes."
+                },
                 "dataSets": {
                     "type": "object",
+                    "description": "Selected source groups and datasets.",
                     "additionalProperties": false,
                     "minProperties": 1,
                     "properties": {
@@ -124,14 +152,27 @@
                                 "enum": [
                                     "LANDSAT_9", "LANDSAT_8", "LANDSAT_7", "LANDSAT_TM",
                                     "LANDSAT_9_T2", "LANDSAT_8_T2", "LANDSAT_7_T2", "LANDSAT_TM_T2"
-                                ]
+                                ],
+                                "x-enumLabels": {
+                                    "LANDSAT_9": "Landsat 9",
+                                    "LANDSAT_8": "Landsat 8",
+                                    "LANDSAT_7": "Landsat 7",
+                                    "LANDSAT_TM": "Landsat 4-5",
+                                    "LANDSAT_9_T2": "Landsat 9 Tier 2",
+                                    "LANDSAT_8_T2": "Landsat 8 Tier 2",
+                                    "LANDSAT_7_T2": "Landsat 7 Tier 2",
+                                    "LANDSAT_TM_T2": "Landsat 4-5 Tier 2"
+                                }
                             }
                         },
                         "SENTINEL_2": {
                             "type": "array",
                             "minItems": 1,
                             "uniqueItems": true,
-                            "items": {"enum": ["SENTINEL_2"]}
+                            "items": {
+                                "enum": ["SENTINEL_2"],
+                                "x-enumLabels": {"SENTINEL_2": "Sentinel-2"}
+                            }
                         }
                     }
                 }
@@ -143,8 +184,16 @@
             "additionalProperties": false,
             "required": ["type", "targetDateWeight"],
             "properties": {
-                "type": {"enum": ["ALL", "SELECT"]},
-                "targetDateWeight": {"enum": [0, 0.5, 1]}
+                "type": {
+                    "enum": ["ALL", "SELECT"],
+                    "x-enumLabels": {"ALL": "all scenes", "SELECT": "selected scenes"},
+                    "description": "Use all matching scenes or only manually selected scenes."
+                },
+                "targetDateWeight": {
+                    "enum": [0, 0.5, 1],
+                    "x-enumLabels": {"0": "clearest scenes", "0.5": "balanced", "1": "closest to target date"},
+                    "description": "Auto-selection preference for scenes near targetDate."
+                }
             }
         },
         "compositeOptions": {
@@ -155,42 +204,136 @@
             "properties": {
                 "corrections": {
                     "type": "array",
+                    "description": "Radiometric correction modes.",
                     "uniqueItems": true,
-                    "items": {"enum": ["SR", "BRDF", "CALIBRATE"]}
+                    "items": {
+                        "enum": ["SR", "BRDF", "CALIBRATE"],
+                        "x-enumLabels": {
+                            "SR": "surface reflectance",
+                            "BRDF": "BRDF correction",
+                            "CALIBRATE": "cross-sensor calibration"
+                        }
+                    }
                 },
-                "brdfMultiplier": {"type": "number", "exclusiveMinimum": 0},
+                "brdfMultiplier": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Strength multiplier for BRDF correction."
+                },
                 "filters": {
                     "type": "array",
+                    "description": "Optional percentile filters over the scene collection.",
                     "uniqueItems": true,
                     "items": {
                         "type": "object",
                         "additionalProperties": false,
                         "required": ["type", "percentile"],
                         "properties": {
-                            "type": {"enum": ["SHADOW", "HAZE", "NDVI", "DAY_OF_YEAR"]},
+                            "type": {
+                                "enum": ["SHADOW", "HAZE", "NDVI", "DAY_OF_YEAR"],
+                                "x-enumLabels": {
+                                    "SHADOW": "shadow filter",
+                                    "HAZE": "haze filter",
+                                    "NDVI": "NDVI filter",
+                                    "DAY_OF_YEAR": "day-of-year filter"
+                                }
+                            },
                             "percentile": {"type": "integer", "minimum": 0, "maximum": 100}
                         }
                     }
                 },
-                "orbitOverlap": {"enum": ["KEEP", "REMOVE"]},
-                "tileOverlap": {"enum": ["KEEP", "QUICK_REMOVE", "REMOVE"]},
+                "orbitOverlap": {
+                    "enum": ["KEEP", "REMOVE"],
+                    "x-enumLabels": {"KEEP": "keep overlap", "REMOVE": "remove overlap"},
+                    "description": "Sentinel-2 orbit-overlap handling."
+                },
+                "tileOverlap": {
+                    "enum": ["KEEP", "QUICK_REMOVE", "REMOVE"],
+                    "x-enumLabels": {
+                        "KEEP": "keep overlap",
+                        "QUICK_REMOVE": "quickly remove overlap",
+                        "REMOVE": "fully remove overlap"
+                    },
+                    "description": "Sentinel-2 tile-overlap handling."
+                },
                 "includedCloudMasking": {
                     "type": "array",
+                    "description": "Cloud-mask methods combined per image.",
                     "uniqueItems": true,
-                    "items": {"enum": ["sepalCloudScore", "landsatCFMask", "sentinel2CloudScorePlus", "sentinel2CloudProbability", "pino26"]}
+                    "items": {
+                        "enum": ["sepalCloudScore", "landsatCFMask", "sentinel2CloudScorePlus", "sentinel2CloudProbability", "pino26"],
+                        "x-enumLabels": {
+                            "sepalCloudScore": "SEPAL Cloud Score",
+                            "landsatCFMask": "Landsat CFMask",
+                            "sentinel2CloudScorePlus": "Sentinel-2 Cloud Score+",
+                            "sentinel2CloudProbability": "Sentinel-2 Cloud Probability",
+                            "pino26": "PINO26"
+                        }
+                    }
                 },
-                "sentinel2CloudProbabilityMaxCloudProbability": {"type": "integer", "minimum": 0, "maximum": 100},
-                "sentinel2CloudScorePlusBand": {"enum": ["cs", "cs_cdf"]},
-                "sentinel2CloudScorePlusMaxCloudProbability": {"type": "integer", "minimum": 0, "maximum": 100},
-                "landsatCFMaskCloudMasking": {"enum": ["OFF", "MODERATE", "AGGRESSIVE"]},
-                "landsatCFMaskCloudShadowMasking": {"enum": ["OFF", "MODERATE", "AGGRESSIVE"]},
-                "landsatCFMaskCirrusMasking": {"enum": ["OFF", "MODERATE", "AGGRESSIVE"]},
-                "landsatCFMaskDilatedCloud": {"enum": ["KEEP", "REMOVE"]},
-                "sepalCloudScoreMaxCloudProbability": {"type": "integer", "minimum": 0, "maximum": 100},
-                "cloudBuffer": {"enum": [0, 120, 600]},
-                "holes": {"enum": ["PREVENT", "ALLOW"]},
-                "snowMasking": {"enum": ["ON", "OFF"]},
-                "compose": {"enum": ["MEDOID", "MEDIAN"]}
+                "sentinel2CloudProbabilityMaxCloudProbability": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "S2 Cloud Probability threshold; lower is stricter."
+                },
+                "sentinel2CloudScorePlusBand": {
+                    "enum": ["cs", "cs_cdf"],
+                    "x-enumLabels": {"cs": "Cloud Score", "cs_cdf": "Cloud Score+ temporal rank"},
+                    "description": "S2 Cloud Score+ band; cs is instantaneous, cs_cdf is a temporal rank."
+                },
+                "sentinel2CloudScorePlusMaxCloudProbability": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "S2 Cloud Score+ cloud threshold; lower is stricter."
+                },
+                "landsatCFMaskCloudMasking": {
+                    "enum": ["OFF", "MODERATE", "AGGRESSIVE"],
+                    "x-enumLabels": {"OFF": "off", "MODERATE": "moderate", "AGGRESSIVE": "aggressive"},
+                    "description": "Landsat CFMask cloud masking strength."
+                },
+                "landsatCFMaskCloudShadowMasking": {
+                    "enum": ["OFF", "MODERATE", "AGGRESSIVE"],
+                    "x-enumLabels": {"OFF": "off", "MODERATE": "moderate", "AGGRESSIVE": "aggressive"},
+                    "description": "Landsat CFMask cloud-shadow masking strength."
+                },
+                "landsatCFMaskCirrusMasking": {
+                    "enum": ["OFF", "MODERATE", "AGGRESSIVE"],
+                    "x-enumLabels": {"OFF": "off", "MODERATE": "moderate", "AGGRESSIVE": "aggressive"},
+                    "description": "Landsat CFMask cirrus masking strength."
+                },
+                "landsatCFMaskDilatedCloud": {
+                    "enum": ["KEEP", "REMOVE"],
+                    "x-enumLabels": {"KEEP": "keep", "REMOVE": "remove"},
+                    "description": "Whether to remove Landsat dilated-cloud pixels."
+                },
+                "sepalCloudScoreMaxCloudProbability": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "SEPAL Cloud Score threshold; lower is stricter."
+                },
+                "cloudBuffer": {
+                    "enum": [0, 120, 600],
+                    "x-enumLabels": {"0": "none", "120": "moderate", "600": "aggressive"},
+                    "description": "Extra cloud-edge buffer distance in meters."
+                },
+                "holes": {
+                    "enum": ["PREVENT", "ALLOW"],
+                    "x-enumLabels": {"PREVENT": "prevent holes", "ALLOW": "allow holes"},
+                    "description": "Whether fully masked pixels may remain empty."
+                },
+                "snowMasking": {
+                    "enum": ["ON", "OFF"],
+                    "x-enumLabels": {"ON": "on", "OFF": "off"},
+                    "description": "Whether snow/ice pixels are masked."
+                },
+                "compose": {
+                    "enum": ["MEDOID", "MEDIAN"],
+                    "x-enumLabels": {"MEDOID": "medoid", "MEDIAN": "median"},
+                    "description": "Reducer used to compose surviving observations."
+                }
             },
             "allOf": [
                 {

@@ -56,7 +56,8 @@ describe('llmText prompts', () => {
         it('carries the direct-update routing rule so the orchestrator goes to update_recipe without pre-inspecting via describe_recipe', () => {
             const prompt = mainSystemPrompt()
             expect(prompt).toMatch(/update_recipe/)
-            expect(prompt).toMatch(/don't.*describe_recipe/i)
+            expect(prompt).toMatch(/do not preflight.*describe_recipe/i)
+            expect(prompt).toMatch(/problem reports paired with action/i)
         })
     })
 
@@ -83,10 +84,10 @@ describe('llmText prompts', () => {
             expect(() => specialistPrompt('nonexistent-specialist')).toThrow()
         })
 
-        it('the update specialist prompt carries a reasoning/emission shared-budget rule so thinking-mode models pace their planning', () => {
+        it('the update specialist prompt carries a compact budget rule so thinking-mode models pace their planning', () => {
             const prompt = specialistPrompt('update')
-            expect(prompt).toMatch(/reasoning.*emission.*share.*token budget/i)
-            expect(prompt).toMatch(/plan compactly/i)
+            expect(prompt).toMatch(/think compactly/i)
+            expect(prompt).toMatch(/call recipe_patch promptly/i)
         })
     })
 })

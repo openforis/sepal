@@ -188,7 +188,10 @@ describe('describe_recipe', () => {
 
             const systemPrompt = harness.llm.receivedMessages[0][0].content
             expect(systemPrompt).toMatch(/recipe specialist/i)
-            expect(systemPrompt).toMatch(/MOSAIC/)
+            expect(systemPrompt).toMatch(/Recipe type: Optical Mosaic/)
+            expect(systemPrompt).not.toMatch(/Recipe: MOSAIC/)
+            expect(systemPrompt).toContain('Value labels:')
+            expect(systemPrompt).toContain('landsatCFMask(Landsat CFMask)')
             expect(systemPrompt).toMatch(/Outputs:/i)
             expect(systemPrompt).not.toMatch(/Choose when:/i)
             expect(systemPrompt).not.toMatch(/Use cases:/i)

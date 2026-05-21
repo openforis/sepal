@@ -25,7 +25,8 @@ describe('update_recipe per-type prompt assembly', () => {
         it('carries the per-type edit guidance bullets', () => {
             const systemPrompt = systemPromptFor(mosaicMetadata)
 
-            expect(systemPrompt).toMatch(/MOSAIC/)
+            expect(systemPrompt).toMatch(/Recipe type: Optical Mosaic/)
+            expect(systemPrompt).not.toMatch(/Recipe: MOSAIC/)
             expect(systemPrompt).toMatch(/Edit guidance:/i)
         })
 

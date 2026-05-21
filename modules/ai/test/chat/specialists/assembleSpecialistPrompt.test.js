@@ -16,6 +16,7 @@ function aSpec(overrides = {}) {
                 'edit rule two — never set X while Y is present'
             ]
         }),
+        valueLabels: () => '/mode: RAW(readable label)',
         ...overrides
     }
 }
@@ -45,11 +46,11 @@ describe('assembleSpecialistPrompt', () => {
             expect(updateOut.indexOf(BASE)).toBe(0)
         })
 
-        it('includes the spec id and name in the type-specific section', () => {
+        it('includes the recipe type name without exposing the internal type id', () => {
             const out = assembleSpecialistPrompt(BASE, aSpec(), {purpose: 'describe'})
 
-            expect(out).toContain('MOSAIC')
-            expect(out).toContain('Optical Mosaic')
+            expect(out).toContain('Recipe type: Optical Mosaic')
+            expect(out).not.toContain('MOSAIC')
         })
     })
 
@@ -60,6 +61,13 @@ describe('assembleSpecialistPrompt', () => {
 
             expect(out).toContain('A short recipe description.')
             expect(out).toContain('produces bands A, B, C')
+        })
+
+        it('renders schema-derived value labels so raw enum values can be translated in prose', () => {
+            const out = assembleSpecialistPrompt(BASE, aSpec(), {purpose: 'describe'})
+
+            expect(out).toContain('Value labels:')
+            expect(out).toContain('/mode: RAW(readable label)')
         })
 
         it('does NOT include selection-bucket fields (useCases / chooseWhen / dontChooseWhen)', () => {

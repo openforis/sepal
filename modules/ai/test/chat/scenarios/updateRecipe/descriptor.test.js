@@ -22,7 +22,13 @@ describe('update_recipe descriptor, seeding, and direct answer', () => {
         })
 
         it('steers the orchestrator off chaining describe_recipe before update_recipe', () => {
-            expect(harness.tool.description).toMatch(/don't.*describe_recipe.*first/i)
+            expect(harness.tool.description).toMatch(/do not call describe_recipe first/i)
+            expect(harness.tool.description).toMatch(/problem \+ action/i)
+        })
+
+        it('does not imply the target recipe must already be explicitly saved', () => {
+            expect(harness.tool.description).toMatch(/current recipe/i)
+            expect(harness.tool.description).not.toMatch(/saved recipe/i)
         })
 
         it('opts into directAnswer so the orchestrator streams specialist prose verbatim', () => {

@@ -22,7 +22,7 @@ function assembleSpecialistPrompt(basePrompt, spec, {purpose, includeSchema = fa
         '',
         '---',
         '',
-        `Recipe: ${spec.id} (${spec.name})`,
+        `Recipe type: ${spec.name}`,
         ...config.sectionsFor(spec, facts)
     ]
     if (includeSchema && config.schemaAllowed && spec.schema) {
@@ -31,8 +31,13 @@ function assembleSpecialistPrompt(basePrompt, spec, {purpose, includeSchema = fa
     return sections.join('\n')
 }
 
-function describeSections(_spec, facts) {
-    return [facts.description, '', `Outputs: ${facts.outputs}`]
+function describeSections(spec, facts) {
+    const sections = [facts.description, '', `Outputs: ${facts.outputs}`]
+    const valueLabels = spec.valueLabels?.()
+    if (valueLabels) {
+        sections.push('', 'Value labels:', valueLabels)
+    }
+    return sections
 }
 
 function updateSections(spec, facts) {
