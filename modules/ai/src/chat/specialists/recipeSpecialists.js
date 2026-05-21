@@ -4,7 +4,7 @@
 const {catchError, map, mergeMap, of, reduce} = require('rxjs')
 const {getRecipeSpec} = require('#recipes')
 const {specialistPrompt, updateSummarySystemPrompt} = require('../llmText/prompts')
-const {runSpecialist$, SPECIALIST_CAP_ANSWER} = require('./runSpecialist')
+const {runSpecialist$, answerOnly, SPECIALIST_CAP_ANSWER} = require('./runSpecialist')
 const {scopeInnerTools} = require('./specialistScope')
 const {assembleSpecialistPrompt} = require('./assembleSpecialistPrompt')
 const {publishUpdateRecipeOutcome} = require('./specialistEvents')
@@ -84,7 +84,7 @@ function describeRecipeTool({llm, bus, innerTools, guiRequests}) {
                         allowedSchemas,
                         invokeTool$: restrictToRecipe(scopedInvokeTool$, recipeId),
                         context
-                    })
+                    }).pipe(answerOnly())
                 })
             )
     }
@@ -135,14 +135,14 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
                     const spec = getRecipeSpec(envelope.data?.type)
                     const valueLabelsText = valueLabelsFromSchema(spec?.schema)
                     const valueLabelsByPath = parseValueLabels(valueLabelsText)
-                    const tracker = createPatchOutcomeTracker({bus, conversationId: context?.conversationId, recipeId, valueLabelsByPath})
+                    const enricher = createPatchEnricher({valueLabelsByPath})
                     return runSpecialist$({
                         llm, bus,
                         name: 'recipe.update',
                         systemPrompt: assembleSpecialistPrompt(basePrompt, spec, {purpose: 'update'}),
                         userText: buildUpdateUserText({recipeId, instruction}),
                         allowedSchemas,
-                        invokeTool$: tracker.wrap(restrictToRecipe(scopedInvokeTool$, recipeId)),
+                        invokeTool$: enricher.wrap(restrictToRecipe(scopedInvokeTool$, recipeId)),
                         noProgressNudge: updateNoPatchNudge,
                         finishOnEmpty: patchAlreadySucceeded,
                         context
@@ -150,7 +150,7 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
                         mergeMap(value => isChannelEmission(value)
                             ? of(value)
                             : finalizeUpdate$({
-                                value, tracker, llm,
+                                result: value, llm, bus,
                                 conversationId: context?.conversationId, recipeId, instruction,
                                 recipeType: spec?.name || envelope.data?.type,
                                 recipeName: envelope.data?.name,
@@ -162,48 +162,20 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
     }
 }
 
-// Tracks recipe_patch outcomes across the specialist's inner loop so the
-// outer update_recipe envelope reflects what actually persisted — rather than
-// "specialist exited cleanly" being conflated with "user's update applied."
-// Also publishes a single update_recipe.outcome bus event when the envelope
-// is built so live conversations leave a load-bearing diagnostic signal.
-function createPatchOutcomeTracker({bus, conversationId, recipeId, valueLabelsByPath}) {
-    let attempted = false
-    let succeeded = false
-    let lastError = null
-    let successSummary = ''
-    let operations = []
-    let appliedChanges = []
-    let invalidatedPaths = []
+// Tool-result middleware for the update specialist: a successful recipe_patch
+// gains label- and context-enriched appliedChanges, a failed one gains
+// structured retryHints, before the specialist reads the result. Raw operations
+// and raw error fields stay untouched. The latest prepare_update packet is the
+// only state it carries — enrichment context (previous values + field hints)
+// for the next patch. What actually persisted is projected from the loop
+// timeline afterward (projectUpdateOutcome), not shadow-tracked here.
+function createPatchEnricher({valueLabelsByPath}) {
     let preparedPacket = null
     return {
-        // Transforms recipe_patch results before the specialist reads them:
-        // success gains label- and context-enriched appliedChanges, failure
-        // gains structured retryHints. The latest prepare_update packet is
-        // remembered so applied changes can carry previous values and field
-        // hints. Raw operations and raw error fields stay untouched.
         wrap: invokeTool$ => (toolCall, context) =>
             invokeTool$(toolCall, context).pipe(
                 map(value => annotate(toolCall, value))
-            ),
-        state: () => ({attempted, succeeded, lastError, successSummary, operations, appliedChanges, invalidatedPaths, preparedPacket}),
-        // Synchronous envelope creation from the chosen answer. The answer is
-        // decided upstream (raw specialist text, summarizer prose, or the generic
-        // fallback) so this layer stays I/O-free; it only shapes + publishes.
-        finalize: answer => {
-            const envelope = buildEnvelope(answer)
-            publishUpdateRecipeOutcome({
-                bus,
-                conversationId,
-                recipeId,
-                attempted,
-                succeeded,
-                code: succeeded ? 'ok' : envelope.error.code,
-                lastPatchErrorCode: lastError?.code || null,
-                answerChars: answer.length
-            })
-            return envelope
-        }
+            )
     }
 
     function annotate(toolCall, value) {
@@ -213,64 +185,100 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId, valueLabelsBy
             return value
         }
         if (toolCall.name !== 'recipe_patch') return value
-        attempted = true
         if (value?.ok === true) {
-            succeeded = true
-            lastError = null
-            successSummary = value.data?.summary || ''
             const changes = enrichOperations(toolCall.input?.operations, valueLabelsByPath, preparedPacket)
-            operations = [...operations, ...(toolCall.input?.operations || [])]
-            appliedChanges = [...appliedChanges, ...changes]
-            invalidatedPaths = value.data?.invalidatedPaths || invalidatedPaths
             return {...value, data: {...value.data, appliedChanges: changes}}
         }
-        lastError = value.error
         return {...value, error: {...value.error, retryHints: retryHintsFromError(value.error, toolCall.input?.operations)}}
-    }
-
-    function buildEnvelope(answer) {
-        if (succeeded) return {ok: true, data: {answer}}
-        if (attempted) return {
-            ok: false,
-            error: {
-                code: 'UPDATE_FAILED',
-                message: lastError?.message || 'Recipe patch did not succeed.',
-                patchError: lastError,
-                specialistAnswer: answer,
-                answer: failureAnswer(lastError)
-            }
-        }
-        return {
-            ok: false,
-            error: {
-                code: 'UPDATE_NOT_ATTEMPTED',
-                message: 'The update specialist did not call recipe_patch.',
-                specialistAnswer: answer
-            }
-        }
     }
 }
 
+// Projects what the recipe_patch calls actually did from the specialist loop
+// timeline, so "specialist exited cleanly" is never conflated with "user's
+// update applied." A later success overrides an earlier failure; the applied
+// changes (already label-enriched by the patch middleware) and raw operations
+// accumulate across successful patches, while invalidatedPaths is the latest
+// successful patch's set — it describes the final model state, not a union of
+// intermediate ones. lastError is the last patch error still standing;
+// preparedPacket is the latest prepare_update for narration context.
+function projectUpdateOutcome(timeline) {
+    const tools = timeline.filter(entry => entry.kind === 'tool')
+    const patches = tools.filter(entry => entry.name === 'recipe_patch')
+    const succeededPatches = patches.filter(entry => entry.ok)
+    return {
+        attempted: patches.length > 0,
+        succeeded: succeededPatches.length > 0,
+        lastError: patches.reduce((error, entry) => entry.ok ? null : entry.result?.error, null),
+        successSummary: lastOf(succeededPatches)?.result?.data?.summary || '',
+        operations: succeededPatches.flatMap(entry => entry.input?.operations || []),
+        appliedChanges: succeededPatches.flatMap(entry => entry.result?.data?.appliedChanges || []),
+        invalidatedPaths: succeededPatches.reduce((paths, entry) => entry.result?.data?.invalidatedPaths || paths, []),
+        preparedPacket: lastOf(tools.filter(entry => entry.name === 'prepare_update' && entry.ok))?.result?.data || null
+    }
+}
+
+function lastOf(list) {
+    return list.length ? list[list.length - 1] : null
+}
+
 // Chooses the update_recipe answer and builds the final envelope. The async
-// step lives here (not in the synchronous tracker): when the patch applied but
-// the specialist ended with no usable text — common for local thinking models
-// that reason then emit nothing — one response-only summarizer pass turns the
-// applied patch into user-facing prose. An empty/failed summary leaves the
-// deterministic generic answer (the patch tool's own summary) in place.
-function finalizeUpdate$({value, tracker, llm, conversationId, recipeId, instruction, recipeType, recipeName, valueLabels}) {
-    const rawAnswer = value?.answer || ''
-    const {succeeded, successSummary, operations, appliedChanges, invalidatedPaths, preparedPacket} = tracker.state()
-    if (succeeded && isEmptyFinal(rawAnswer)) {
+// step lives here (not in the synchronous projection): when the patch applied
+// but the specialist ended with no usable text — common for local thinking
+// models that reason then emit nothing — one response-only summarizer pass
+// turns the applied patch into user-facing prose. An empty/failed summary
+// leaves the deterministic generic answer (the patch tool's own summary) in place.
+function finalizeUpdate$({result, llm, bus, conversationId, recipeId, instruction, recipeType, recipeName, valueLabels}) {
+    const outcome = projectUpdateOutcome(result.timeline)
+    const rawAnswer = result?.answer || ''
+    if (outcome.succeeded && isEmptyFinal(rawAnswer)) {
         return summarizeUpdate$({
             llm, conversationId, recipeId, instruction, recipeType, recipeName, valueLabels,
-            operations, appliedChanges, invalidatedPaths,
-            dependencyFacts: preparedPacket?.dependencyFacts,
-            validationRules: preparedPacket?.validationRules
+            operations: outcome.operations, appliedChanges: outcome.appliedChanges, invalidatedPaths: outcome.invalidatedPaths,
+            dependencyFacts: outcome.preparedPacket?.dependencyFacts,
+            validationRules: outcome.preparedPacket?.validationRules
         }).pipe(
-            map(summary => tracker.finalize(summary.trim() || successSummary))
+            map(summary => finalizeOutcome({outcome, answer: summary.trim() || outcome.successSummary, bus, conversationId, recipeId}))
         )
     }
-    return of(tracker.finalize(rawAnswer))
+    return of(finalizeOutcome({outcome, answer: rawAnswer, bus, conversationId, recipeId}))
+}
+
+// Shapes the chosen answer into the update_recipe envelope and publishes the
+// single load-bearing update_recipe.outcome diagnostic. answerChars reflects
+// the answer that actually reaches the user.
+function finalizeOutcome({outcome, answer, bus, conversationId, recipeId}) {
+    const envelope = buildEnvelope(outcome, answer)
+    publishUpdateRecipeOutcome({
+        bus, conversationId, recipeId,
+        attempted: outcome.attempted,
+        succeeded: outcome.succeeded,
+        code: outcome.succeeded ? 'ok' : envelope.error.code,
+        lastPatchErrorCode: outcome.lastError?.code || null,
+        answerChars: answer.length
+    })
+    return envelope
+}
+
+function buildEnvelope(outcome, answer) {
+    if (outcome.succeeded) return {ok: true, data: {answer}}
+    if (outcome.attempted) return {
+        ok: false,
+        error: {
+            code: 'UPDATE_FAILED',
+            message: outcome.lastError?.message || 'Recipe patch did not succeed.',
+            patchError: outcome.lastError,
+            specialistAnswer: answer,
+            answer: failureAnswer(outcome.lastError)
+        }
+    }
+    return {
+        ok: false,
+        error: {
+            code: 'UPDATE_NOT_ATTEMPTED',
+            message: 'The update specialist did not call recipe_patch.',
+            specialistAnswer: answer
+        }
+    }
 }
 
 // Once a recipe_patch has applied, an empty specialist response means the work

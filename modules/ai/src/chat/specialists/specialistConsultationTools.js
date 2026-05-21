@@ -2,7 +2,7 @@
 // specialist (one tool per specialist).
 
 const {specialistPrompt} = require('../llmText/prompts')
-const {runSpecialist$} = require('./runSpecialist')
+const {runSpecialist$, answerOnly} = require('./runSpecialist')
 const {scopeInnerTools} = require('./specialistScope')
 
 const MAP_SPECIALIST = {
@@ -45,7 +45,7 @@ function buildSpecialistTool({definition, llm, bus, innerTools}) {
             allowedSchemas,
             invokeTool$,
             context
-        })
+        }).pipe(answerOnly())
     }
 }
 

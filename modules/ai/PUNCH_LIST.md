@@ -138,12 +138,17 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   projection, and the loop (not the policy) owns transient-vs-persisted nudge
   well-formedness. `noProgressNudge`/`finishOnEmpty` are now invoked from the
   stop-policy path and read the timeline's `{name, ok}` projection instead of an
-  ad-hoc array. Still implicit: the internal AgentResult `{finalText,
-  finishReason, timeline}` is not exposed publicly (callers still see
-  `{answer}`); the caller-side `createPatchOutcomeTracker` is still a second
-  tracker rather than a timeline projection; and `conversationLoop.step$` has
-  not been checked against the same shape. Next: revisit whether the
-  orchestrator loop maps cleanly through ports/policies. Extraction checklist
+  ad-hoc array. The result now exposes `{answer, finishReason, timeline}` (tool
+  entries carry `{name, ok, result, input}`); `update_recipe` derives its patch
+  outcome via a pure `projectUpdateOutcome(timeline)` and the former
+  `createPatchOutcomeTracker` is now only patch-result middleware
+  (`createPatchEnricher` — appliedChanges/retryHints enrichment + the in-flight
+  `prepare_update` packet), with no shadow outcome state. Prose-only callers
+  (`consult_*`, `describe_recipe`) collapse the result to `{answer}` via
+  `answerOnly()` so the timeline never rides along on an orchestrator-facing tool
+  result. Still implicit: `conversationLoop.step$` has not been checked against
+  the same shape. Next: revisit whether the orchestrator loop maps cleanly
+  through ports/policies. Extraction checklist
   from the current divergence: output mode (stream events vs collect `{answer}`), persistence
   (`history.append$` vs none), retry trigger (post-tool-only vs any-empty),
   retry hint role+content (`system`+`emptyAfterToolHint` vs

@@ -67,7 +67,9 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
         {role: 'user', content: userText}
     ]
     return bus.track$('specialist.run', {name}, runRound$(initial, {round: 0, stalls: 0, transientAppend: null})).pipe(
-        map(value => isChannelEmission(value) ? value : {answer: value.finalText})
+        map(value => isChannelEmission(value)
+            ? value
+            : {answer: value.finalText, finishReason: value.finishReason, timeline: value.timeline})
     )
 
     function runRound$(messages, {round, stalls, transientAppend}) {
@@ -160,7 +162,7 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
                     mergeMap(value => {
                         if (isChannelEmission(value)) return of(value)
                         toolResults.push({toolCallId: toolCall.id, toolName: toolCall.name, result: value})
-                        timeline.recordToolResult({name: toolCall.name, ok: value?.ok === true})
+                        timeline.recordToolResult({name: toolCall.name, ok: value?.ok === true, result: value, input: toolCall.input})
                         return EMPTY
                     })
                 ))
@@ -220,6 +222,14 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
     }
 }
 
+// Collapse the specialist result to {answer} for callers that only surface
+// prose (consult_*, describe_recipe). The timeline/finishReason are for callers
+// that derive structured outcome (update_recipe); they should not ride along on
+// a tool result handed back to the orchestrator. Channel emissions pass through.
+function answerOnly() {
+    return map(value => isChannelEmission(value) ? value : {answer: value.answer})
+}
+
 function stop(reason, finalText) {
     return {type: 'stop', reason, finalText}
 }
@@ -234,7 +244,7 @@ function createTimeline() {
     const entries = []
     return {
         recordOutcome(outcome) { entries.push({kind: 'round', type: outcome.type}) },
-        recordToolResult({name, ok}) { entries.push({kind: 'tool', name, ok}) },
+        recordToolResult({name, ok, result, input}) { entries.push({kind: 'tool', name, ok, result, input}) },
         // Projection the caller-supplied stop predicates read: the {name, ok} of
         // every tool result so far, in call order.
         toolHistory() { return entries.filter(entry => entry.kind === 'tool').map(({name, ok}) => ({name, ok})) },
@@ -250,4 +260,4 @@ function invalidArgsBail(tool) {
     return `Specialist halted: invalid args on ${tool}.`
 }
 
-module.exports = {runSpecialist$, SPECIALIST_MAX_ROUNDS, SPECIALIST_CAP_ANSWER}
+module.exports = {runSpecialist$, answerOnly, SPECIALIST_MAX_ROUNDS, SPECIALIST_CAP_ANSWER}
