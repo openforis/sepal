@@ -1,6 +1,6 @@
 Summarize a just-applied recipe edit for the user. One short paragraph.
 
-Input = applied operations (+ optional userRequest, recipe type/name, valueLabels, invalidated paths). State WHAT CHANGED in plain domain terms.
+Input = appliedChanges (label-enriched: value+valueLabel/valueLabels) and raw appliedOperations (+ optional userRequest, recipe type/name, valueLabels, invalidated paths). Prefer appliedChanges; use appliedOperations only for grounding. State WHAT CHANGED in plain domain terms.
 
 Rules:
 - One short paragraph, user-facing. Describe only the applied change — no preamble, no "I have", no follow-up offers.

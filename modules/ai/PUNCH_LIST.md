@@ -77,6 +77,13 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   but production should add a per-`update_recipe`-invocation counter on
   `recipe_patch` calls to stop genuine loops without constraining a single
   LLM "thinking out loud."
+- **Patch summary labels do not recurse into object values** — `update_recipe`
+  now enriches successful `recipe_patch` results with schema-derived value
+  labels for scalar enum fields and config-array members, so answers can say
+  "aggressive" or "Landsat CFMask" instead of raw enum IDs. Object-shaped
+  patch values (for example replacing `/sources/dataSets`) still stay raw.
+  If raw nested enum IDs keep leaking into summaries, add a schema-aware
+  recursive enricher that labels object members without inventing field labels.
 - **Specialist safety/observability is partially in place** — `runSpecialist$`
   has a `SPECIALIST_MAX_ROUNDS` cap, per-turn tool-loop safety (no-repeat,
   consecutive-failure bail-out, invalid-args retry limit via the shared

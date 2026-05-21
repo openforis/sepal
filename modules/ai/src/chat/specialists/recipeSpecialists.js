@@ -8,6 +8,7 @@ const {runSpecialist$, SPECIALIST_CAP_ANSWER} = require('./runSpecialist')
 const {scopeInnerTools} = require('./specialistScope')
 const {assembleSpecialistPrompt} = require('./assembleSpecialistPrompt')
 const {publishUpdateRecipeOutcome} = require('./specialistEvents')
+const {parseValueLabels, enrichOperations} = require('./appliedChanges')
 const {lookupRecipeMetadata$} = require('../tools/recipeMetadata')
 const {isChannelEmission} = require('../channelEvents')
 
@@ -113,6 +114,7 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
                         return of(envelope)
                     }
                     const spec = getRecipeSpec(envelope.data?.type)
+                    const valueLabelsByPath = parseValueLabels(spec?.valueLabels?.())
                     const tracker = createPatchOutcomeTracker({bus, conversationId: context?.conversationId, recipeId})
                     return runSpecialist$({
                         llm, bus,
@@ -120,7 +122,7 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
                         systemPrompt: assembleSpecialistPrompt(basePrompt, spec, {purpose: 'update'}),
                         userText: buildUpdateUserText({recipeId, instruction}),
                         allowedSchemas,
-                        invokeTool$: tracker.wrap(restrictToRecipe(scopedInvokeTool$, recipeId)),
+                        invokeTool$: tracker.wrap(enrichPatchResult(restrictToRecipe(scopedInvokeTool$, recipeId), valueLabelsByPath)),
                         noProgressNudge: updateNoPatchNudge,
                         context
                     }).pipe(
@@ -150,6 +152,7 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
     let lastError = null
     let successSummary = ''
     let operations = []
+    let appliedChanges = []
     let invalidatedPaths = []
     return {
         wrap: invokeTool$ => (toolCall, context) =>
@@ -163,13 +166,14 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
                         lastError = null
                         successSummary = value.data?.summary || ''
                         operations = [...operations, ...(toolCall.input?.operations || [])]
+                        appliedChanges = [...appliedChanges, ...(value.data?.appliedChanges || [])]
                         invalidatedPaths = value.data?.invalidatedPaths || invalidatedPaths
                     } else if (value?.ok === false) {
                         lastError = value.error
                     }
                 })
             ),
-        state: () => ({attempted, succeeded, lastError, successSummary, operations, invalidatedPaths}),
+        state: () => ({attempted, succeeded, lastError, successSummary, operations, appliedChanges, invalidatedPaths}),
         // Synchronous envelope creation from the chosen answer. The answer is
         // decided upstream (raw specialist text, summarizer prose, or the generic
         // fallback) so this layer stays I/O-free; it only shapes + publishes.
@@ -220,13 +224,27 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
 // deterministic generic answer (the patch tool's own summary) in place.
 function finalizeUpdate$({value, tracker, llm, conversationId, recipeId, instruction, recipeType, recipeName, valueLabels}) {
     const rawAnswer = value?.answer || ''
-    const {succeeded, successSummary, operations, invalidatedPaths} = tracker.state()
+    const {succeeded, successSummary, operations, appliedChanges, invalidatedPaths} = tracker.state()
     if (succeeded && isEmptyFinal(rawAnswer)) {
-        return summarizeUpdate$({llm, conversationId, recipeId, instruction, recipeType, recipeName, valueLabels, operations, invalidatedPaths}).pipe(
+        return summarizeUpdate$({llm, conversationId, recipeId, instruction, recipeType, recipeName, valueLabels, operations, appliedChanges, invalidatedPaths}).pipe(
             map(summary => tracker.finalize(summary.trim() || successSummary))
         )
     }
     return of(tracker.finalize(rawAnswer))
+}
+
+// Label-enriches a successful recipe_patch result before it is fed back to the
+// specialist, so its final answer can speak labels. The raw operations sent to
+// the GUI bridge, validated, and logged are untouched — this only augments the
+// result envelope the inner loop reads.
+function enrichPatchResult(invokeTool$, valueLabelsByPath) {
+    return (toolCall, context) =>
+        invokeTool$(toolCall, context).pipe(
+            map(value => {
+                if (isChannelEmission(value) || toolCall.name !== 'recipe_patch' || value?.ok !== true) return value
+                return {...value, data: {...value.data, appliedChanges: enrichOperations(toolCall.input?.operations, valueLabelsByPath)}}
+            })
+        )
 }
 
 function isEmptyFinal(answer) {
@@ -237,9 +255,9 @@ function isEmptyFinal(answer) {
 // user-facing terms. Fed only patch-outcome data (no full model, no reasoning):
 // the operations, invalidated paths, and the recipe's type/name + the user's
 // request for language and framing.
-function summarizeUpdate$({llm, conversationId, recipeId, instruction, recipeType, recipeName, valueLabels, operations, invalidatedPaths}) {
+function summarizeUpdate$({llm, conversationId, recipeId, instruction, recipeType, recipeName, valueLabels, operations, appliedChanges, invalidatedPaths}) {
     return llm.respondTo$({
-        messages: buildSummaryMessages({instruction, recipeType, recipeName, valueLabels, operations, invalidatedPaths}),
+        messages: buildSummaryMessages({instruction, recipeType, recipeName, valueLabels, operations, appliedChanges, invalidatedPaths}),
         tools: [],
         disableReasoning: true,
         debugLabel: `update.summary ${recipeId}`,
@@ -250,19 +268,20 @@ function summarizeUpdate$({llm, conversationId, recipeId, instruction, recipeTyp
     )
 }
 
-function buildSummaryMessages({instruction, recipeType, recipeName, valueLabels, operations, invalidatedPaths}) {
+function buildSummaryMessages({instruction, recipeType, recipeName, valueLabels, operations, appliedChanges, invalidatedPaths}) {
     return [
         {role: 'system', content: updateSummarySystemPrompt()},
-        {role: 'user', content: buildSummaryUserText({instruction, recipeType, recipeName, valueLabels, operations, invalidatedPaths})}
+        {role: 'user', content: buildSummaryUserText({instruction, recipeType, recipeName, valueLabels, operations, appliedChanges, invalidatedPaths})}
     ]
 }
 
-function buildSummaryUserText({instruction, recipeType, recipeName, valueLabels, operations, invalidatedPaths}) {
+function buildSummaryUserText({instruction, recipeType, recipeName, valueLabels, operations, appliedChanges, invalidatedPaths}) {
     const lines = []
     if (instruction) lines.push(`userRequest: ${instruction}`)
     if (recipeType) lines.push(`recipeType: ${recipeType}`)
     if (recipeName) lines.push(`recipeName: ${recipeName}`)
     if (valueLabels) lines.push(`valueLabels:\n${valueLabels}`)
+    if (appliedChanges?.length) lines.push(`appliedChanges: ${JSON.stringify(appliedChanges)}`)
     lines.push(`appliedOperations: ${JSON.stringify(operations || [])}`)
     if (invalidatedPaths?.length) lines.push(`invalidatedPaths: ${JSON.stringify(invalidatedPaths)}`)
     return lines.join('\n')

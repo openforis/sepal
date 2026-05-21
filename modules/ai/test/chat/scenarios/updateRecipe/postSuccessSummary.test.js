@@ -95,6 +95,23 @@ describe('update_recipe summarizes a successful patch when the specialist answer
         expect(summaryUserText).not.toContain('recipeType: MOSAIC')
     })
 
+    it('feeds the summarizer label-enriched applied changes plus the raw operations for grounding', () => {
+        const {harness, llm} = aHarness({
+            specialistReplies: [{toolCalls: [{id: 'tp1', name: 'recipe_patch', input: {
+                recipeId: 'r1', baseModelHash: 'h1',
+                operations: [{op: 'replace', path: '/compositeOptions/includedCloudMasking', value: ['landsatCFMask']}]
+            }}]}, {text: ''}],
+            summaryReplies: [{text: 'Updated cloud masking.'}]
+        })
+
+        harness.invoke({recipeId: 'r1', instruction: 'use Landsat CFMask only'})
+
+        const summaryUserText = llm.summaryRequests[0].messages[1].content
+        expect(summaryUserText).toContain('appliedChanges:')
+        expect(summaryUserText).toContain('Landsat CFMask')
+        expect(summaryUserText).toContain('appliedOperations:')
+    })
+
     it('falls back to the deterministic generic answer when the summarizer is empty', () => {
         const {harness} = aHarness({
             specialistReplies: patchThenEmpty,
