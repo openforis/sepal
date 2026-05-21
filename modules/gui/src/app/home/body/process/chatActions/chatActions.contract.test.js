@@ -133,7 +133,8 @@ it('does not mutate the loaded recipe model when reading it (load-recipe is a pu
 
 describe('recipe-metadata', () => {
 
-    it('responds with the four identity fields for a known recipe id', () => {
+    it('responds with the four identity fields for a recipe resolved from the saved list', () => {
+        store.loadedRecipes = {}
         let response
         const handled = handleGuiAction('recipe-metadata', {recipeId: 'r1', respond: r => { response = r }})
 
@@ -145,6 +146,7 @@ describe('recipe-metadata', () => {
     })
 
     it('does not return the model or any heavy field', () => {
+        store.loadedRecipes = {}
         let response
         handleGuiAction('recipe-metadata', {recipeId: 'r1', respond: r => { response = r }})
 
@@ -154,7 +156,39 @@ describe('recipe-metadata', () => {
         expect(response.data).not.toHaveProperty('modelHash')
     })
 
-    it('responds with a structured not-found envelope for an unknown recipe id', () => {
+    it('resolves identity from a recipe present only in process.loadedRecipes (open/unsaved)', () => {
+        store.recipes = []
+        store.loadedRecipes = {'r-open': {
+            id: 'r-open', type: 'MOSAIC', title: 'Unsaved mosaic', projectId: 'p2',
+            model: {a: 1}, ui: {initialized: true}, layers: {areas: {}}
+        }}
+        let response
+
+        handleGuiAction('recipe-metadata', {recipeId: 'r-open', respond: r => { response = r }})
+
+        expect(response).toEqual({
+            success: true,
+            data: {id: 'r-open', type: 'MOSAIC', name: 'Unsaved mosaic', projectId: 'p2'}
+        })
+    })
+
+    it('returns no heavy fields for a loaded-only recipe', () => {
+        store.recipes = []
+        store.loadedRecipes = {'r-open': {
+            id: 'r-open', type: 'MOSAIC', title: 'Unsaved mosaic', projectId: 'p2',
+            model: {a: 1}, ui: {initialized: true}, layers: {areas: {}}
+        }}
+        let response
+
+        handleGuiAction('recipe-metadata', {recipeId: 'r-open', respond: r => { response = r }})
+
+        expect(response.data).not.toHaveProperty('model')
+        expect(response.data).not.toHaveProperty('ui')
+        expect(response.data).not.toHaveProperty('layers')
+        expect(response.data).not.toHaveProperty('modelHash')
+    })
+
+    it('responds with a structured not-found envelope when absent from both loadedRecipes and recipes', () => {
         let response
         handleGuiAction('recipe-metadata', {recipeId: 'r-missing', respond: r => { response = r }})
 
@@ -164,8 +198,9 @@ describe('recipe-metadata', () => {
         })
     })
 
-    it('loads recipes before resolving when process.recipes is empty', () => {
+    it('loads recipes before resolving when the recipe is not already loaded and process.recipes is empty', () => {
         store.recipes = []
+        store.loadedRecipes = {}
 
         handleGuiAction('recipe-metadata', {recipeId: 'r1', respond: () => {}})
 

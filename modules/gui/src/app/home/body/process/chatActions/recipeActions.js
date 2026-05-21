@@ -313,12 +313,19 @@ const validationErrorsLog = errors =>
     truncate(JSON.stringify(errors.map(({path, rule, message}) => ({path, rule, message}))), MAX_VALIDATION_ERRORS_CHARS)
 
 // Cheap identity-only lookup for dispatcher-side type resolution (the AI
-// module's recipe-specialist routing). Reuses the same `process.recipes`
-// list-recipes draws on — no model fetch, no gzip envelope. Never exposed
-// as an LLM-callable tool.
+// module's recipe-specialist routing). An open/unsaved recipe lives in
+// `process.loadedRecipes` before it appears in the saved `process.recipes`
+// list, so resolve from loaded state first, then fall back to the list.
+// recipeSummary keeps this to the four identity fields — no model fetch, no
+// gzip envelope. Never exposed as an LLM-callable tool.
 const recipeMetadata = ({recipeId, respond}) => {
     if (!recipeId) {
         respond({success: false, error: 'recipeId is required'})
+        return
+    }
+    const loaded = select(['process.loadedRecipes', recipeId])
+    if (loaded) {
+        respond({success: true, data: recipeSummary(loaded)})
         return
     }
     ensureRecipesLoaded$().subscribe({

@@ -17,6 +17,21 @@ const {isChannelEmission} = require('../channelEvents')
 const DESCRIBE_RECIPE_ALLOWED = ['recipe_load']
 const UPDATE_RECIPE_ALLOWED = ['prepare_update', 'recipe_patch']
 
+// directAnswer tools must carry user-facing prose even when preflight fails, so
+// the orchestrator streams it straight to the user rather than attempting a
+// restate round over an answer-less failure envelope. Only RECIPE_NOT_FOUND
+// means the recipe is gone; other codes (TOOL_FAILED, timeout, bridge down) are
+// transient, so they get a try-again answer rather than claiming non-existence.
+const UPDATE_NOT_FOUND_ANSWER = "I couldn't find the recipe to update. It may have been closed, deleted, or not loaded in this session."
+const DESCRIBE_NOT_FOUND_ANSWER = "I couldn't find that recipe. It may have been closed, deleted, or not loaded in this session."
+const UPDATE_LOOKUP_FAILED_ANSWER = "I couldn't look up the recipe to update right now. Please try again."
+const DESCRIBE_LOOKUP_FAILED_ANSWER = "I couldn't look up that recipe right now. Please try again."
+
+function withPreflightAnswer(envelope, {notFound, fallback}) {
+    const answer = envelope.error?.code === 'RECIPE_NOT_FOUND' ? notFound : fallback
+    return {...envelope, error: {...envelope.error, answer}}
+}
+
 // One-time corrective nudge: the specialist prepared an edit but answered with
 // prose instead of patching. Mirrors the empty-response stall nudge — give the
 // model one structured chance to patch (or ask one concise question) before the
@@ -59,7 +74,7 @@ function describeRecipeTool({llm, bus, innerTools, guiRequests}) {
             lookupRecipeMetadata$(guiRequests, context, recipeId).pipe(
                 mergeMap(envelope => {
                     if (isChannelEmission(envelope)) return of(envelope)
-                    if (envelope.ok === false) return of(envelope)
+                    if (envelope.ok === false) return of(withPreflightAnswer(envelope, {notFound: DESCRIBE_NOT_FOUND_ANSWER, fallback: DESCRIBE_LOOKUP_FAILED_ANSWER}))
                     const spec = getRecipeSpec(envelope.data?.type)
                     return runSpecialist$({
                         llm, bus,
@@ -105,15 +120,17 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
                         // the specialist path emits at envelope-build time, so
                         // "presence of update_recipe.outcome" reliably proves
                         // the orchestrator called update_recipe regardless of
-                        // where it failed.
+                        // where it failed. Build the user-facing answer first so
+                        // answerChars reflects what actually reaches the user.
+                        const failure = withPreflightAnswer(envelope, {notFound: UPDATE_NOT_FOUND_ANSWER, fallback: UPDATE_LOOKUP_FAILED_ANSWER})
                         publishUpdateRecipeOutcome({
                             bus, conversationId: context?.conversationId, recipeId,
                             attempted: false, succeeded: false,
                             code: envelope.error.code,
                             lastPatchErrorCode: null,
-                            answerChars: 0
+                            answerChars: failure.error.answer.length
                         })
-                        return of(envelope)
+                        return of(failure)
                     }
                     const spec = getRecipeSpec(envelope.data?.type)
                     const valueLabelsText = valueLabelsFromSchema(spec?.schema)

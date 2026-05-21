@@ -1,4 +1,4 @@
-const {of} = require('rxjs')
+const {of, throwError} = require('rxjs')
 const {
     aToolFactoryHarness, aConversationHarness, aFakeGuiRequests,
     collect, innerToolsWithSchemas
@@ -39,6 +39,34 @@ describe('describe_recipe', () => {
 
         it('opts into directAnswer so the orchestrator streams specialist prose verbatim', () => {
             expect(harness.tool.directAnswer).toBe(true)
+        })
+    })
+
+    describe('preflight failure', () => {
+
+        function notFoundGui() {
+            return aFakeGuiRequests(() => throwError(() => Object.assign(new Error('Recipe not found: r1'), {code: 'RECIPE_NOT_FOUND'})))
+        }
+
+        it('returns ok:false with a user-facing error.answer when the recipe is not found', () => {
+            const harness = aToolFactoryHarness({specialist: 'describe_recipe', guiRequests: notFoundGui()})
+
+            const result = harness.invoke({recipeId: 'r1', question: 'which classifier?'})
+
+            expect(result.ok).toBe(false)
+            expect(result.error.code).toBe('RECIPE_NOT_FOUND')
+            expect(result.error.answer).toMatch(/couldn't find that recipe/i)
+        })
+
+        it('uses a transient try-again answer for a non-not-found preflight error', () => {
+            const guiRequests = aFakeGuiRequests(() => throwError(() => new Error('bridge down')))
+            const harness = aToolFactoryHarness({specialist: 'describe_recipe', guiRequests})
+
+            const result = harness.invoke({recipeId: 'r1', question: 'which classifier?'})
+
+            expect(result.error.code).toBe('TOOL_FAILED')
+            expect(result.error.answer).toMatch(/try again/i)
+            expect(result.error.answer).not.toMatch(/closed, deleted/i)
         })
     })
 
