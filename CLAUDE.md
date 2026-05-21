@@ -1,196 +1,117 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code working in this repository.
 
-## Project Overview
+## Project
 
-SEPAL (System for Earth Observation Data Access, Processing and Analysis for Land Monitoring) is a cloud computing platform for geographical data processing, built by FAO and Norway. It enables users to process large geospatial datasets without local high-performance infrastructure.
+SEPAL (System for Earth Observation Data Access, Processing and Analysis for Land Monitoring) — a cloud platform by FAO and Norway for processing large geospatial datasets without local HPC. Distributed microservices, each an independent Docker container, orchestrated via Docker Compose over a shared `sepal` Docker network.
 
 ## Architecture
 
-SEPAL is a distributed microservices system where each module runs as an independent Docker container, orchestrated via Docker Compose over a shared `sepal` Docker network.
+### Module types
 
-### Module Types
+**Java/Groovy** (Gradle, hexagonal):
+- `sepal-server` — main server UI + orchestration (entry `org.openforis.sepal.Main`)
+- `user` — user management, LDAP, auth (entry `org.openforis.sepal.component.user.Main`)
+- `common` / `common-test` — shared Java libs
 
-**Java/Groovy modules** (Gradle-based, hexagonal architecture):
-- `sepal-server` - Main server UI and orchestration (entry: `org.openforis.sepal.Main`)
-- `user` - User management, LDAP, authentication (entry: `org.openforis.sepal.component.user.Main`)
-- `common` / `common-test` - Shared Java libraries
-
-**Node.js microservices** (most modules use Koa web framework + RxJS):
-- `gui` - React 19 frontend with Redux, React Router, react-intl (Vite build, Vitest tests)
-- `gateway` - HTTP gateway/proxy (uses Express, not Koa; Redis for sessions)
-- `gee` - Google Earth Engine integration
-- `task` - Task execution (runs inside sandbox containers, not a standalone service)
-- `app-manager` / `app-launcher` - Application management
+**Node.js** (mostly Koa + RxJS):
+- `gui` — React 19 frontend (Redux, React Router, react-intl; Vite build, Vitest)
+- `gateway` — HTTP gateway/proxy (Express, not Koa; Redis sessions)
+- `gee` — Google Earth Engine integration
+- `task` — task execution (runs inside sandbox containers, not standalone)
+- `app-manager` / `app-launcher` — application management
 - `email`, `terminal`, `user-assets`, `user-files`, `user-storage`, `ssh-gateway`, `scene-metadata`, `sys-monitor`, `ceo-gateway`, `r-proxy`
 
-**Infrastructure modules** (Docker-only, no application code):
-- `caddy`, `mysql`, `rabbitmq`, `ldap`, `prometheus`, `logger`
+**Infrastructure** (Docker-only): `caddy`, `mysql`, `rabbitmq`, `ldap`, `prometheus`, `logger`.
+**Build-only** (images, not services): `java`; `sandbox-base`, `sandbox`, `geospatial-toolkit`.
 
-**Build-only modules** (images only, not runnable services):
-- `java` - Base Java Docker image
-- `sandbox-base`, `sandbox`, `geospatial-toolkit` - User sandbox images
+### Shared libraries
+- `lib/js/shared` — core Node lib used by most Node modules: HTTP server/client (`httpServer.js`, `httpClient.js`), message queue (`messageQueue.js`, amqplib), DB (`db/`, mysql2), logging (`log.js`, log4js), metrics (`metrics.js`, prom-client), RxJS utils, `service.js`.
+- `lib/js/ee` — Earth Engine JS wrapper (`gee`, `task`).
+- `lib/js/recipes` — browser-safe recipe specs + validation, consumed by `gui` and `modules/ai`.
+- `lib/python/shared` — shared Python utils.
 
-### Shared Libraries
+**Import maps:** shared libs use Node import maps. The lib declares `"#sepal/*": "./src/*.js"`; consumers link it (`"sepal": "../../lib/js/shared"`) and map `"#sepal/*": "sepal/src/*.js"`. Imports read `import {x} from '#sepal/httpServer'`. (`lib/js/recipes` similarly resolves as `#recipes` in `modules/ai`, `recipes` in the GUI Vite build.)
 
-- `lib/js/shared` - Core Node.js library used by most Node modules. Provides HTTP server/client (`httpServer.js`, `httpClient.js`), message queue (`messageQueue.js` via amqplib), database (`db/` via mysql2), logging (`log.js` via log4js), metrics (`metrics.js` via prom-client), RxJS utilities, and service base class (`service.js`).
-- `lib/js/ee` - Google Earth Engine JavaScript wrapper (used by `gee` and `task` modules)
-- `lib/python/shared` - Shared Python utilities
-
-**Import mechanism:** The shared library is accessed via Node.js import maps (`#sepal/*`). In the shared lib's own `package.json`: `"#sepal/*": "./src/*.js"`. In consuming modules, it's linked as a dependency (`"sepal": "../../lib/js/shared"`) and mapped as `"#sepal/*": "sepal/src/*.js"`. Code imports look like `import {something} from '#sepal/httpServer'`.
-
-### Inter-Service Communication
-
-- **RabbitMQ** `sepal.topic` exchange for async events (user lifecycle, file operations, worker sessions, email, storage metrics). See `RABBITMQ.md` for message format details.
+### Inter-service
+- **RabbitMQ** `sepal.topic` exchange for async events (user lifecycle, files, worker sessions, email, storage metrics) — message formats in `RABBITMQ.md`.
 - **HTTP** for synchronous service-to-service calls via the gateway.
 
-### Key Infrastructure
+### Key infrastructure
+- **Caddy** — HTTPS entry (80/443), ACME certs; proxies `gateway` (`/api/*`, `/privacy-policy`) and `gui` (everything else).
+- **nginx** — in-container HTTP reverse proxy.
+- **MySQL** — primary DB (Flyway migrations).
+- **LDAP** — authentication.
+- **AWS EC2** — dynamic worker instances for sandboxes, per-user budget tracking.
 
-- **Caddy** - HTTPS entry point (ports 80/443) with automatic ACME certificate management; reverse-proxies to `gateway` (for `/api/*`, `/privacy-policy`) and `gui` (everything else)
-- **nginx** - HTTP reverse proxy within containers
-- **MySQL** - Primary database (Flyway migrations for schema versioning)
-- **LDAP** - User authentication
-- **AWS EC2** - Dynamic worker instances for user sandboxes with per-user budget tracking
+## Dev environment
 
-## Development Environment
-
-Development runs inside a Docker container (Debian Trixie-slim based). Runtime versions: Node.js 24.x, Java 11, Gradle 6.9.1. The `sepal` CLI manages all modules.
-
-### Starting the Dev Environment
+Development runs in a Docker container (`sepal-dev`, Debian Trixie-slim). Runtime: Node 24.x, Java 11, Gradle 6.9.1. The `sepal` CLI manages modules. Repo path inside the container: `/home/sepal/sepal` (container user matches host — no `safe.directory` dance).
 
 ```bash
-bin/dev-env start                    # Start dev-env container (config from ~/.sepal)
-bin/dev-env start -c /path/to/config # Use custom config directory
-bin/dev-env stop                     # Stop dev-env
+bin/dev-env start [-c /path/to/config]   # start (config default ~/.sepal); -v verbose
+bin/dev-env stop
 ```
 
-### SEPAL CLI (inside dev-env container)
+### Running things in the container
+
+Claude usually runs on the host checkout, but tooling and correct module deps live in `sepal-dev`. Run project commands through it:
 
 ```bash
-sepal status                         # Show all module statuses
-sepal status <module>                # Show specific module status
-sepal status -d                      # Show with dependencies
-sepal build <module>                 # Build module Docker image
-sepal build <module> --nc            # Build without cache
-sepal build <module> -r              # Build recursively (with deps)
-sepal start <module>                 # Start module
-sepal start <module> -f              # Start with full log follow
-sepal stop <module>                  # Stop module
-sepal restart <module>               # Restart module
-sepal buildrestart <module>          # Build and restart
-sepal logs <module> -r               # Recent logs with follow
-sepal shell <module>                 # Shell into module container
-sepal npm-install <module>           # Install npm dependencies
-sepal npm-test <module>              # Run interactive tests
-sepal eslint <module>                # Run ESLint
-sepal eslint <module> -f             # Run ESLint with autofix
+docker exec sepal-dev sepal npm-test <module> [pattern] --runInBand   # module tests (Jest); --run for Vitest (gui)
+docker exec sepal-dev sepal status [-d] [<module>]                    # module status (+deps)
+docker exec sepal-dev sepal eslint <module> [-f]                      # ESLint (-f autofix)
+docker exec sepal-dev gradle :sepal-server:classes                    # JVM compile (fast once daemon warm)
+docker exec sepal-dev gradle :sepal-user:test                         # JVM tests
+docker exec -w /home/sepal/sepal/lib/js/recipes sepal-dev npm test -- <pattern> --runInBand   # shared JS lib tests
+docker exec -w /home/sepal/sepal/modules/<module> sepal-dev <cmd>     # arbitrary command in a module dir
 ```
 
-Module groups can be used with `:` prefix: `:default`, `:node`, `:process`, `:apps`.
+- `sepal npm-test <module>` forwards extra args to the module's test runner, so focused/pattern runs work without a shell.
+- Shared JS libs (`lib/js/recipes`, `lib/js/shared`, `lib/js/ee`) have no `sepal` CLI entry — run their tests with the `-w <lib dir>` form above.
+- **Don't rely on host `node_modules`** (esp. `modules/gui`): mounted native/optional packages can be built for a different container/libc and fail with binding errors. Always run frontend tests in the container.
+- JVM: `sepal-server`'s Gradle build excludes some component test dirs (H2 can't apply the V13 MySQL stored-proc migration) — they compile but don't run unless the exclude is removed. Gradle projects: `:sepal-common`, `:sepal-common-test`, `:sepal-user`, `:sepal-server`. Java source compatibility 10; tests run `maxParallelForks = 1`.
 
-### Codex / Agent Container Notes
-
-Codex sessions usually run on the host checkout, while the project tooling and correct
-module dependencies live in containers. Prefer running project commands through
-`sepal-dev`:
-
+### Build / image
 ```bash
-docker exec sepal-dev bash -lc 'sepal status'
-docker exec sepal-dev bash -lc 'sepal npm-test gui useConversation.test.js --run'
-docker exec sepal-dev bash -lc 'sepal npm-test ai --runInBand'
+docker exec sepal-dev sepal build <module> [--nc] [-r]   # build image (--nc no-cache, -r recursive w/ deps)
+docker exec sepal-dev sepal buildrestart <module>        # build + restart
+docker exec sepal-dev sepal start|stop|restart|logs|shell <module>
 ```
+Module groups use a `:` prefix: `:default`, `:node`, `:process`, `:apps`. Dependencies are declared in `dev-env/config/deps.json` (`lib`, `build`, `run`, `gradle` per module). Ports: see `PORTS.txt` (Caddy 80/443, MySQL 3306, RabbitMQ 5672, LDAP 389/636, Prometheus 9090; most app modules expose 80 internally; JVM debug 5005, Node debug 9229).
 
-`sepal npm-test <module>` forwards extra args to the module test runner, so focused
-tests work without opening a shell first.
+## Code style
 
-Avoid relying on host-side `node_modules` for frontend tests. The mounted
-`modules/gui/node_modules` can contain platform-specific optional packages from a
-different container/libc and fail with native binding errors. Use `sepal npm-test gui ...`
-or run inside the `gui` container.
+ESLint config at root `eslint.config.js`: 4-space indent (`SwitchCase: 1`), single quotes, no semicolons, Unix line endings, `1tbs` braces (single-line allowed), `no-console` except `info`/`warn`/`error`, no trailing spaces, no multiple empty lines, unused vars prefixed `_`, arrow parens as-needed, no spaces inside braces/brackets/parens, `space-infix-ops` + `space-before-blocks`. `modules/gui` extends this with React rules + `simple-import-sort`.
 
-### Module Dependencies
+### Branching
+For exhaustive, mutually-exclusive branches (routing, state transitions, input-type dispatch), use explicit `if / else if / else`, not early-return chains — the structure says "these are the cases" and the final `else` is a deliberate branch, not a fall-through. Reserve early returns for genuine guards/short-circuits before the main logic.
 
-Module dependencies are defined in `dev-env/config/deps.json`. Each module specifies:
-- `lib` - Shared library dependencies (`shared`, `ee`)
-- `build` - Build-time dependencies on other module images
-- `run` - Runtime dependencies (started automatically)
-- `gradle` - Whether module uses Gradle build (vs Docker-only)
+### Comments
+Govern all comments (writing, reviewing, rewriting):
+- Explain **why**, never **what** — what is derivable from the code. Prefer making the code self-explanatory (rename, extract) over commenting; reach for a comment → first try to make it unnecessary.
+- A load-bearing *why* comment stays until the code change that absorbs its meaning lands — don't strip it before then.
+- No migration/porting/"old vs new" framing, even when the file was ported.
+- No docstrings that merely list structure (fields, methods, params) — derivable from the code.
+- No dead-code-museum comments — delete dead code; git remembers.
+- No cross-document pointers ("see PUNCH_LIST / DESIGN §X / CLAUDE.md") — inline a one-line self-contained summary instead; external docs rename and decay.
+- A Write-tool rewrite of a file silently drops its comments — carry every existing comment over unless the rewrite genuinely makes it self-evident.
 
-## Build Commands
-
-### Java/Groovy (Gradle)
-
-```bash
-./gradlew :sepal-server:classes      # Compile sepal-server
-./gradlew :sepal-user:classes        # Compile user module
-./gradlew :sepal-server:test         # Test sepal-server
-./gradlew :sepal-user:test           # Test user module
-./gradlew test                       # Run all Java/Groovy tests
-```
-
-Gradle projects defined in `settings.gradle`: `:sepal-common`, `:sepal-common-test`, `:sepal-user`, `:sepal-server`. Java source compatibility: 10. Tests run with `maxParallelForks = 1`.
-
-### Node.js Modules
-
-```bash
-# From within a module directory:
-npm install
-npm test                             # Run tests (Jest or Vitest)
-npm run testWatch                    # Watch mode (shared lib)
-
-# GUI-specific:
-cd modules/gui
-npm run build                        # Production build (Vite)
-npm run lint                         # ESLint
-npm start                            # Dev server (Vite)
-npm test                             # Vitest
-```
-
-### Shared Library Tests
-
-```bash
-cd lib/js/shared
-npm test                             # Jest
-npm run testWatch                    # Jest watch mode
-```
-
-## Code Style
-
-ESLint config at root `eslint.config.js`:
-- 4-space indentation (`SwitchCase: 1`)
-- Single quotes, no semicolons
-- Unix line endings
-- `1tbs` brace style (single-line allowed)
-- `no-console` except `info`, `warn`, `error`
-- No trailing spaces, no multiple empty lines
-- Unused vars prefixed with `_`
-- Arrow parens only as-needed
-- No spaces inside braces/brackets/parens
-- `space-infix-ops`, `space-before-blocks` required
-
-The GUI module (`modules/gui/eslint.config.js`) extends this with React-specific rules and `simple-import-sort` plugin.
-
-## Java Module Structure (Hexagonal Architecture)
+## Java module structure (hexagonal)
 
 ```
 src/main/groovy/org/openforis/sepal/component/{feature}/
-  adapter/     # Infrastructure implementations (JDBC, HTTP, etc.)
-  api/         # Public interfaces and DTOs
-  command/     # Command handlers (write operations)
-  endpoint/    # REST endpoints
-  event/       # Domain events
-  query/       # Query handlers (read operations)
+  adapter/   # infrastructure impls (JDBC, HTTP, …)
+  api/       # public interfaces + DTOs
+  command/   # command handlers (writes)
+  endpoint/  # REST endpoints
+  event/     # domain events
+  query/     # query handlers (reads)
 ```
-
-Tests use Spock Framework 1.2 in `src/test/groovy/`.
-
-## Service Ports
-
-See `PORTS.txt` for complete port mapping. Key ports: Caddy 80/443, MySQL 3306, RabbitMQ 5672, LDAP 389/636, Prometheus 9090. Most application modules expose port 80 internally. JVM debug: 5005, Node debug: 9229.
+Tests: Spock 1.2 in `src/test/groovy/`.
 
 ## Contributing
-
-- Discuss changes via issue before submitting PRs
-- Follow SemVer versioning
-- PRs require sign-off from two developers
+- Discuss changes via issue before a PR.
+- SemVer.
+- PRs need sign-off from two developers.

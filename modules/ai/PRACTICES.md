@@ -303,6 +303,8 @@ Verify outcomes by observable side effect, not by asserting which internal colla
 
 Brittle pins HOW. Stable pins THAT.
 
+Asserting inputs the test itself supplied is a tautology — scripted fake-LLM tool calls, the very `operations` array the test wrote, a value passed straight into the subject. It only proves the harness forwards input. Assert what production *computes* from that input (the real envelope, the packet a wired-in real tool produced, the bridge request a real adapter emitted).
+
 For every behaviour, ask: **what side-effect surface lets me observe it?** Channel events. Persisted history. Bridge requests captured by a fake. State after the action. Returned envelope. Use those.
 
 In-memory fakes implementing real port shapes make this cheap (e.g. an in-memory `history` supporting both `append$` and `load$` in the same test).
