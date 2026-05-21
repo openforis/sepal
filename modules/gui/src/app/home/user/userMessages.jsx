@@ -138,7 +138,7 @@ class _UserMessages extends React.Component {
 
     isUnread() {
         const {userMessages} = this.props
-        return unreadMessagesCount(userMessages)
+        return unreadMessagesCount(userMessages) > 0
     }
 
     newMessage() {
@@ -238,7 +238,7 @@ class _UserMessages extends React.Component {
             <Panel
                 className={styles.panel}
                 placement='modal'
-                onBackdropClick={deactivate}>
+                onBackdropClick={() => isClosable ? deactivate() : null}>
                 <Panel.Header
                     icon='bell'
                     title={msg('userMessages.title')}/>
