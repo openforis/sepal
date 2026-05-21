@@ -41,6 +41,43 @@ describe('update_recipe obtains a live prepare_update work packet', () => {
         return toolMessage.toolResults.find(result => result.toolName === 'prepare_update').result
     }
 
+    // Regression: the model once tried to drop a cloud-masking method with a
+    // value-name path (/compositeOptions/includedCloudMasking/sentinel2CloudScorePlus)
+    // and to remove the required corrections field. The live packet must hint
+    // both as required config arrays so the planner replaces them wholesale.
+    it('hints includedCloudMasking as a required config array with its live length', () => {
+        const model = {
+            ...mosaicModel,
+            sources: {dataSets: {LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']}},
+            compositeOptions: {corrections: ['SR'], includedCloudMasking: ['sentinel2CloudScorePlus', 'landsatCFMask']}
+        }
+        const guiRequests = aFakeGuiRequests(request => {
+            if (request.action === 'recipe-metadata') return of({id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: 'p1'})
+            if (request.action === 'load-recipe') return of({id: 'r1', type: 'MOSAIC', modelHash: 'h-base', model})
+            return of({})
+        })
+        const prepareCall = {id: 'tu1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/compositeOptions/includedCloudMasking']}}
+        const harness = aToolFactoryHarness({
+            specialist: 'update_recipe',
+            guiRequests,
+            innerTools: realInnerTools(guiRequests),
+            replies: [
+                {toolCalls: [prepareCall]},
+                {text: 'Considered the cloud-masking change.'}
+            ]
+        })
+
+        harness.invoke({recipeId: 'r1', instruction: 'drop Sentinel-2 Cloud Score+'})
+
+        const packet = preparedPacketSeenBySpecialist(harness)
+        expect(packet.data.pathHints['/compositeOptions/includedCloudMasking']).toEqual({
+            valueKind: 'array',
+            arrayKind: 'config',
+            arrayLength: 2,
+            required: true
+        })
+    })
+
     it('expands the focus into the constraint-coupled writable scope', () => {
         const guiRequests = guiRequestsForMosaic()
         const prepareCall = {id: 'tu1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/sources/dataSets']}}

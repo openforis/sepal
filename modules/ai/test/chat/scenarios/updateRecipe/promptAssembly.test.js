@@ -39,6 +39,20 @@ describe('update_recipe per-type prompt assembly', () => {
             expect(systemPrompt).toMatch(/\breplace\b/)
         })
 
+        it('carries generic patch-construction guidance for required fields and arrays', () => {
+            const systemPrompt = systemPromptFor(mosaicMetadata)
+
+            expect(systemPrompt).toMatch(/never remove a required|required.*replace/i)
+            expect(systemPrompt).toMatch(/index-based|value-name/i)
+            expect(systemPrompt).toMatch(/config.*replac.*whole|whole array/i)
+        })
+
+        it('tells the specialist not to invent unrequested changes in the final answer', () => {
+            const systemPrompt = systemPromptFor(mosaicMetadata)
+
+            expect(systemPrompt).toMatch(/only the changes actually applied|don'?t invent/i)
+        })
+
         it('injects the generated update manual after the edit guidance (a path the guidance bullets do not carry)', () => {
             const systemPrompt = systemPromptFor(mosaicMetadata)
 

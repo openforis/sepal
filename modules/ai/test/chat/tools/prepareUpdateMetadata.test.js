@@ -190,6 +190,36 @@ describe('prepare_update tool — constraint-derived metadata', () => {
         })
     })
 
+    // pathHints tell the patch planner how to address each writable path: a
+    // required enum/config array (replace wholesale) vs a scalar, plus the live
+    // array length — so it does not remove a required field or address an array
+    // member by value name.
+    describe('pathHints', () => {
+
+        it('marks a required enum/config array with its kind and live length', () => {
+            const data = packet(['/compositeOptions/corrections'])
+
+            expect(data.pathHints['/compositeOptions/corrections']).toEqual({
+                valueKind: 'array',
+                arrayKind: 'config',
+                arrayLength: 2,
+                required: true
+            })
+        })
+
+        it('marks a required scalar field', () => {
+            const data = packet(['/dates/targetDate'])
+
+            expect(data.pathHints['/dates/targetDate']).toEqual({valueKind: 'scalar', required: true})
+        })
+
+        it('carries a hint for every writable path', () => {
+            const data = packet(['/compositeOptions/corrections'])
+
+            expect(Object.keys(data.pathHints).sort()).toEqual([...data.writablePaths].sort())
+        })
+    })
+
     describe('error envelopes', () => {
 
         function result(response, focusPaths = ['/dates/targetDate']) {

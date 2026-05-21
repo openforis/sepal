@@ -8,7 +8,7 @@
 // this tool only shapes those into a chat work packet.
 
 const {catchError, of} = require('rxjs')
-const {getRecipeSpec, getRecipeLlmMetadata, toEffectiveModel} = require('#recipes')
+const {getRecipeSpec, getRecipeLlmMetadata, toEffectiveModel, fieldShapeAt} = require('#recipes')
 const {mapData} = require('../channelEvents')
 const {guiProductRequest$} = require('./guiProductRequest')
 const {parsePointer, resolvePointer, PointerNotFound} = require('./jsonPointer')
@@ -16,7 +16,7 @@ const {parsePointer, resolvePointer, PointerNotFound} = require('./jsonPointer')
 function prepareUpdateTool(guiRequests) {
     return {
         name: 'prepare_update',
-        description: 'Prepare a bounded edit for ONE recipe from formal focusPaths (model-relative JSON Pointers you intend to change). Returns {baseModelHash, focusPaths, dependentPaths:[path], writablePaths:[path], existingPaths:[path], missingPaths:[path], currentValues:{path->value}, dependencyFacts, validationRules}. dependentPaths = sibling fields the recipe couples to your focus; writablePaths = focus ∪ dependent. existingPaths exist in the model now; missingPaths are absent — in recipe_patch use `add` for missingPaths, `replace` for existingPaths, `remove` only for existingPaths. Plan ONE atomic recipe_patch touching only writablePaths; use baseModelHash on it.',
+        description: 'Prepare a bounded edit for ONE recipe from formal focusPaths (model-relative JSON Pointers you intend to change). Returns {baseModelHash, focusPaths, dependentPaths:[path], writablePaths:[path], existingPaths:[path], missingPaths:[path], currentValues:{path->value}, pathHints:{path->{valueKind,arrayKind,arrayLength,required}}, dependencyFacts, validationRules}. dependentPaths = sibling fields the recipe couples to your focus; writablePaths = focus ∪ dependent. existingPaths exist in the model now; missingPaths are absent — in recipe_patch use `add` for missingPaths, `replace` for existingPaths, `remove` only for existingPaths. pathHints: required=true → replace, never remove; arrayKind=config → change membership by replacing the whole array; arrayKind=data → indexed ops only. Plan ONE atomic recipe_patch touching only writablePaths; use baseModelHash on it.',
         parameters: {
             type: 'object',
             properties: {
@@ -64,10 +64,24 @@ function buildEnvelope(recipe, focusPaths) {
             existingPaths: writablePaths.filter(path => states[path].exists),
             missingPaths: writablePaths.filter(path => !states[path].exists),
             currentValues: Object.fromEntries(writablePaths.map(path => [path, states[path].value])),
+            pathHints: Object.fromEntries(writablePaths.map(path => [path, pathHint(spec.schema, path, states[path])])),
             dependencyFacts: dependencyFacts(relevantConstraints, dependentPaths),
             validationRules: validationRules(relevantConstraints)
         }
     }
+}
+
+// Per writable path: the schema-derived shape (valueKind, arrayKind, required)
+// plus the live array length, so the patch planner replaces a required config
+// array wholesale rather than removing the field or indexing by value name.
+function pathHint(schema, path, state) {
+    const shape = fieldShapeAt(schema, path)
+    const hint = {valueKind: shape.valueKind, required: shape.required}
+    if (shape.valueKind === 'array') {
+        hint.arrayKind = shape.arrayKind
+        if (Array.isArray(state.value)) hint.arrayLength = state.value.length
+    }
+    return hint
 }
 
 function constraintsFor(recipeType) {
