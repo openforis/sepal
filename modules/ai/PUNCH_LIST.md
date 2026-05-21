@@ -130,40 +130,48 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Observability
 
-- **Agent-loop vocabulary is explicit in the specialist loop; orchestrator
-  unmapped** — `runSpecialist$` now speaks the `DESIGN_chat_specialists_v2.md`
-  §4 "Agent-loop north star" vocabulary: each round classifies into a closed
+- **Agent-loop vocabulary is explicit in both loops; verdict: keep them
+  separate** — both `runSpecialist$` and `conversationLoop` now speak the
+  `DESIGN_chat_specialists_v2.md` §4 "Agent-loop north star" vocabulary
+  explicitly. In the specialist loop: each round classifies into a closed
   RoundOutcome (`answered`/`tool-requested`/`silent`), a `decideNext` stop
   policy returns a continue/stop Directive read off the outcome + a Timeline
   projection, and the loop (not the policy) owns transient-vs-persisted nudge
-  well-formedness. `noProgressNudge`/`finishOnEmpty` are now invoked from the
-  stop-policy path and read the timeline's `{name, ok}` projection instead of an
-  ad-hoc array. The result now exposes `{answer, finishReason, timeline}` (tool
-  entries carry `{name, ok, result, input}`); `update_recipe` derives its patch
-  outcome via a pure `projectUpdateOutcome(timeline)` and the former
-  `createPatchOutcomeTracker` is now only patch-result middleware
-  (`createPatchEnricher` — appliedChanges/retryHints enrichment + the in-flight
-  `prepare_update` packet), with no shadow outcome state. Prose-only callers
-  (`consult_*`, `describe_recipe`) collapse the result to `{answer}` via
-  `answerOnly()` so the timeline never rides along on an orchestrator-facing tool
-  result. Still implicit: `conversationLoop.step$` has not been checked against
-  the same shape. Next: revisit whether the orchestrator loop maps cleanly
-  through ports/policies. Extraction checklist
-  from the current divergence: output mode (stream events vs collect `{answer}`), persistence
-  (`history.append$` vs none), retry trigger (post-tool-only vs any-empty),
-  retry hint role+content (`system`+`emptyAfterToolHint` vs
-  `user`+`STALL_NUDGE`), cap behavior (translatable notice with
-  `display`-tagged history append vs sentinel string), direct-answer shortcut
+  well-formedness. `noProgressNudge`/`finishOnEmpty` read the timeline's
+  `{name, ok}` projection; the result exposes `{answer, finishReason, timeline}`
+  (tool entries carry `{name, ok, result, input}`); `update_recipe` derives its
+  patch outcome via a pure `projectUpdateOutcome(timeline)` and the former
+  tracker is now only patch-result middleware (`createPatchEnricher`); prose-only
+  callers collapse to `{answer}` via `answerOnly()`. In the orchestrator loop:
+  `classifyRound(acc)` produces the same three outcomes, and the stop policy is
+  named per round-end — `decideAfterStream$` (no-tool round: empty-after-tool
+  retry vs reply) and `decideAfterTools$` (post-tool round: directAnswer / guard
+  bail / round cap / continue).
+
+  Decision: **keep two loops, shared vocabulary — do not extract a shared
+  primitive.** The shape reads the same in both, but the concrete axes still
+  diverge and a unifying primitive would have to parameterize all of them. The
+  divergence inventory, re-confirmed: output mode (orchestrator streams channel
+  events / specialist collects `{answer}` + timeline), persistence (orchestrator
+  mutates `messages` and appends every turn via the `history` port / specialist
+  threads an immutable list with no history), tool-outcome record (orchestrator
+  reads `isPostToolRound()` off the last message role + guard state / specialist
+  keeps an explicit timeline), retry trigger (post-tool-only / any silent
+  round), retry hint role+content (`system`+`emptyAfterToolHint`, fires once /
+  `user`+`STALL_NUDGE`, stall budget), cap behavior (translatable notice with
+  `display`-tagged history append / sentinel string), direct-answer shortcut
   (orchestrator-only), round-0 prompt construction
-  (`messagesForLlm({contextMessage, isolateHistory})` vs raw), tool envelope
-  emission to outer stream (`{toolStart,toolEnd}` vs silent), and bail-result
-  type (`{key, args, fallback}` display object vs string). The structurally
+  (`messagesForLlm({contextMessage, isolateHistory})` / raw), tool envelope
+  emission to outer stream (`{toolStart,toolEnd}` / silent), and bail-result
+  type (`{key, args, fallback}` display object / string). The structurally
   identical `prompt` trace event is already consolidated in
-  `src/chat/loopEvents.js`. Full primitive unification was deferred because a
-  >=12-parameter primitive with per-axis policy hooks was net-neutral on lines
-  while raising the cognitive cost of future behavior changes. If extraction
-  still produces a primitive dominated by policy conditionals, keep two loops
-  but preserve the shared vocabulary.
+  `src/chat/loopEvents.js`. The deepest blocker is representational: the
+  orchestrator records tool outcomes as persisted history it inspects by role,
+  the specialist as an in-memory timeline it projects — unifying would force one
+  of them to carry the other's record redundantly. A >=12-parameter primitive
+  with per-axis policy hooks was net-neutral on lines while raising the cost of
+  future behavior changes; the shared vocabulary captures the commonality without
+  that cost.
 - **Late-bound span completion attrs** — `bus.track$(name, attrs, work$)`
   fixes attrs at construction. For LLM/tool spans we want completion attrs such
   as chunks, token usage, cache hits, result size, and status once they are

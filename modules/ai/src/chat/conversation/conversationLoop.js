@@ -1,6 +1,18 @@
 // Per-conversation LLM/tool loop. Owns the mutable messages array,
 // runs each turn against the LLM and tools, and persists each
 // appended message through history.
+//
+// Each round classifies the LLM response into a RoundOutcome (answered /
+// tool-requested / silent), then a stop policy decides continue vs stop:
+// decideAfterStream$ after a no-tool round, decideAfterTools$ after a tool
+// round. This round/outcome/stop-policy shape is shared with runSpecialist$,
+// but the two loops do not share code — and diverge on nearly every concrete
+// axis: this loop streams channel events ({textDelta}/{toolStart}/{toolEnd})
+// and persists every message through the history port; the specialist loop
+// threads an immutable message list, keeps a tool timeline, and returns a
+// collected result. Continuation here also persists differently per outcome:
+// a tool round persists assistant + tool-result turns; the post-tool empty
+// retry rides a transient system hint (not persisted) and fires at most once.
 
 const {concat, concatMap, defer, filter, from, ignoreElements, mergeMap, of, tap} = require('rxjs')
 const {messagesForLlm} = require('./llmMessages')
@@ -66,19 +78,20 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
     }
 
     function decideAfterStream$(acc, turn, {round, retried}) {
-        if (acc.toolCalls.length > 0) {
-            return handleToolCalls$(acc.text, acc.toolCalls, turn, {round})
+        const outcome = classifyRound(acc)
+        if (outcome.type === 'tool-requested') {
+            return handleToolCalls$(outcome.text, outcome.calls, turn, {round})
         }
         // Empty after a tool result usually means the model gave up without explanation.
         // Retry once with a hint, tools still available — the guard blocks exact repeats so
         // the model gets one structured chance to correct args or retry after validation.
-        if (!hasVisibleText(acc.text) && isPostToolRound() && !retried) {
+        if (outcome.type === 'silent' && isPostToolRound() && !retried) {
             publishEmptyLlmRetry({
                 bus, conversationId: id, round, messages, exposedTools: turn.lastExposedTools
             })
             return step$(turn, {round: round + 1, retried: true, retryHint: EMPTY_AFTER_TOOL_HINT})
         }
-        return reply$(acc.text, {round, turn})
+        return reply$(outcome.text, {round, turn})
     }
 
     function isPostToolRound() {
@@ -111,16 +124,21 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
             append$({role: 'assistant', content: text || '', toolCalls}).pipe(ignoreElements()),
             from(toolCalls).pipe(concatMap(toolCall => invokeTool$(toolCall, turn, collected))),
             defer(() => append$({role: 'tool', toolResults: collected.results}).pipe(ignoreElements())),
-            defer(() => {
-                const directAnswer = directToolAnswer(collected.results, tools)
-                if (directAnswer) return directReply$(directAnswer)
-                const bailDisplay = turn.guard.bail()
-                if (bailDisplay) return notices.guardBail$(bailDisplay)
-                return round + 1 >= MAX_TOOL_ROUNDS
-                    ? notices.toolRoundCapReached$(MAX_TOOL_ROUNDS)
-                    : step$(turn, {round: round + 1})
-            })
+            defer(() => decideAfterTools$(collected, turn, {round}))
         )
+    }
+
+    // Stop policy after a tool round: a single directAnswer tool short-circuits
+    // to its own prose; a guard bail or the round cap ends the turn with a
+    // terminal notice; otherwise continue into the next round.
+    function decideAfterTools$(collected, turn, {round}) {
+        const directAnswer = directToolAnswer(collected.results, tools)
+        if (directAnswer) return directReply$(directAnswer)
+        const bailDisplay = turn.guard.bail()
+        if (bailDisplay) return notices.guardBail$(bailDisplay)
+        return round + 1 >= MAX_TOOL_ROUNDS
+            ? notices.toolRoundCapReached$(MAX_TOOL_ROUNDS)
+            : step$(turn, {round: round + 1})
     }
 
     function invokeTool$(toolCall, turn, collected) {
@@ -174,6 +192,12 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
 
 function hasVisibleText(text) {
     return typeof text === 'string' && text.trim().length > 0
+}
+
+function classifyRound(acc) {
+    if (acc.toolCalls.length > 0) return {type: 'tool-requested', text: acc.text, calls: acc.toolCalls}
+    if (hasVisibleText(acc.text)) return {type: 'answered', text: acc.text}
+    return {type: 'silent', text: acc.text}
 }
 
 function directToolAnswer(toolResults, tools) {
