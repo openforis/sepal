@@ -109,6 +109,60 @@ language. Passing the original instruction to it would encourage keyword
 matching and hidden per-request heuristics. The specialist already has the
 instruction in its own prompt and logs.
 
+## Open decision: model-facing update contract
+
+The current live implementation uses `prepare_update -> recipe_patch`: the
+specialist picks focus paths, receives a bounded work packet, then authors JSON
+Patch operations. This works for many small edits, and it is already wired into
+the GUI validation/persistence bridge. It also exposes a real reliability
+problem: the model can understand the intended semantic edit but fail on RFC
+6902 mechanics such as invented pointers, array indexes, or add-vs-replace.
+
+Do not treat model-authored JSON Patch as a settled long-term contract yet.
+There are four viable model-facing contracts:
+
+1. **Keep JSON Patch.** Lowest implementation cost because it is already live.
+   It keeps outputs small and scopes writes explicitly, but continues to make
+   the model responsible for pointer and operation mechanics. This path should
+   only receive enough hardening to keep the current implementation usable.
+
+2. **Whole recipe JSON.** The archived implementation used this shape and
+   worked well because the model's task was natural: rewrite a JSON object into
+   the desired state. It avoids patch mechanics entirely and is attractive for
+   creation. The costs are larger prompts/outputs, broader blast radius, and
+   reliance on the model to preserve unchanged fields.
+
+3. **Panel or submodel JSON.** This mirrors the GUI: prepare returns the
+   relevant recipe panels or coherent submodels, the model returns updated
+   panel JSON, deterministic code merges those fragments into the full effective
+   model, diffs old vs new, and sends generated JSON Patch to the GUI bridge.
+   This keeps the model's task natural while bounding blast radius to panel
+   roots. The main risk is unchanged-value preservation inside a panel; large
+   panels may need further splitting.
+
+4. **Desired field values.** The model submits `{path, value}` pairs rather
+   than operations. Deterministic code validates scope/addressability and emits
+   JSON Patch. This gives tight blast-radius control and small outputs, but it
+   introduces a field catalog/addressability layer that can become its own
+   update language.
+
+The current bias is to defer the choice until it matters for implementation,
+especially recipe creation. The specialist boundary gives room to change the
+private update surface later: the orchestrator calls `update_recipe`, not
+`recipe_patch`.
+
+Guardrails while the decision is open:
+
+- Avoid expanding prompt guidance around RFC 6902 unless it is needed to keep
+  the current tool usable.
+- Prefer tests that assert semantic final model changes, validation failures,
+  and user-facing outcomes over tests that lock in patch-op shapes.
+- Do not build recipe creation around model-authored JSON Patch by default.
+- Keep the GUI patch bridge and full recipe validation authoritative regardless
+  of the model-facing contract.
+- Keep new recipe metadata useful across all options: field meanings,
+  dependencies, labels, operational facts, and GUI/panel grouping.
+
 ## Static recipe manual
 
 Each update specialist should get a compact, path-first recipe manual in its
