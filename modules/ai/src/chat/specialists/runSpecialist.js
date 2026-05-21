@@ -23,7 +23,13 @@ const {
 
 const NO_PROGRESS_REASON = 'no-progress-nudge'
 
+// Productive rounds are those that emit a tool call or a final answer. The
+// budget bounds real work; empty-response stalls get their own small allowance
+// so a transient hiccup mid-flow can't starve the productive budget. The hard
+// cap on total inner LLM calls is the sum, so an only-ever-empty model still
+// terminates with the cap answer.
 const SPECIALIST_MAX_ROUNDS = 5
+const SPECIALIST_MAX_STALLS = 2
 const SPECIALIST_CAP_ANSWER = 'Specialist step cap exceeded; partial information only.'
 // Transient user-role nudge appended once after an empty inner response.
 // Matches the archived conversationLoop's STALL_NUDGE wording; never persisted
@@ -44,11 +50,11 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
         {role: 'system', content: systemPrompt},
         {role: 'user', content: userText}
     ]
-    return bus.track$('specialist.run', {name}, step$(initial, 0, 0))
+    return bus.track$('specialist.run', {name}, step$(initial, 0, 0, false))
 
-    function step$(messages, round, stallCount) {
+    function step$(messages, round, stalls, stalling) {
         const acc = {text: '', toolCalls: []}
-        const promptMessages = stallCount > 0 ? [...messages, STALL_NUDGE] : messages
+        const promptMessages = stalling ? [...messages, STALL_NUDGE] : messages
         publishSpecialistRequest({bus, name, round, conversationId, messages: promptMessages, toolSchemas: allowedSchemas})
         publishSpecialistPrompt({bus, name, round, conversationId, messages: promptMessages, toolSchemas: allowedSchemas})
         return concat(
@@ -67,15 +73,15 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
             defer(() => {
                 publishSpecialistResponse({bus, name, round, conversationId, text: acc.text, toolCalls: acc.toolCalls})
                 const empty = !acc.text.trim() && acc.toolCalls.length === 0
-                const canRetry = stallCount === 0 && round + 1 < SPECIALIST_MAX_ROUNDS
-                if (empty && canRetry) {
+                if (empty) {
+                    if (stalls >= SPECIALIST_MAX_STALLS) return of({answer: SPECIALIST_CAP_ANSWER})
                     publishSpecialistStall({
                         bus, name, round, conversationId,
-                        stallCount: stallCount + 1,
+                        stallCount: stalls + 1,
                         messageCount: promptMessages.length,
                         toolNames: allowedSchemas.map(schema => schema.name)
                     })
-                    return step$(messages, round + 1, stallCount + 1)
+                    return step$(messages, round, stalls + 1, true)
                 }
                 if (acc.toolCalls.length === 0) {
                     const nudge = noProgressNudgeFor(round)
@@ -91,17 +97,18 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
                         return step$(
                             [...messages, {role: 'assistant', content: acc.text}, {role: 'user', content: nudge}],
                             round + 1,
-                            0
+                            stalls,
+                            false
                         )
                     }
                     return of({answer: acc.text})
                 }
-                return runToolsAndContinue$(messages, acc, round)
+                return runToolsAndContinue$(messages, acc, round, stalls)
             })
         )
     }
 
-    function runToolsAndContinue$(messages, acc, round) {
+    function runToolsAndContinue$(messages, acc, round, stalls) {
         const assistantMessage = {role: 'assistant', content: acc.text || '', toolCalls: acc.toolCalls}
         const toolResults = []
         return concat(
@@ -124,7 +131,8 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
                 return step$(
                     [...messages, assistantMessage, {role: 'tool', toolResults}],
                     round + 1,
-                    0
+                    stalls,
+                    false
                 )
             })
         )

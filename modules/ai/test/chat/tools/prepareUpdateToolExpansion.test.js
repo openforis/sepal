@@ -57,4 +57,67 @@ describe('prepare_update tool — companion expansion', () => {
 
         expect(result).toMatchObject({ok: false, error: {code: 'UNSUPPORTED_RECIPE_TYPE'}})
     })
+
+    // A focus on a child of /sources/dataSets (removing one source group) must
+    // pull in the same companions the parent path couples to — corrections and
+    // cloud masking — or the specialist patches the removal blind and validation
+    // (which knows the coupling) rejects it. Preparation and validation must agree.
+    describe('focusing a child of a coupled parent path', () => {
+
+        function twoSourceMosaic() {
+            return aMosaicGuiResponse({
+                model: {
+                    dates: {type: 'YEARLY_TIME_SCAN', targetDate: '2024-07-02', seasonStart: '2024-01-01', seasonEnd: '2025-01-01'},
+                    sources: {dataSets: {LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']}},
+                    sceneSelectionOptions: {type: 'ALL'},
+                    compositeOptions: {corrections: ['CALIBRATE'], includedCloudMasking: ['sentinel2CloudScorePlus']}
+                }
+            })
+        }
+
+        function childPacket() {
+            const tool = prepareUpdateTool(aFakeGuiRequests(() => of(twoSourceMosaic())))
+            return read(tool.invoke$({recipeId: 'r1', focusPaths: ['/sources/dataSets/SENTINEL_2']}, context)).data
+        }
+
+        it('couples the corrections and cloud-masking companions keyed on the parent path', () => {
+            const data = childPacket()
+
+            expect(data.dependentPaths).toEqual(expect.arrayContaining([
+                '/compositeOptions/corrections',
+                '/compositeOptions/includedCloudMasking'
+            ]))
+        })
+
+        it('names the coupling rules in dependencyFacts', () => {
+            const facts = JSON.stringify(childPacket().dependencyFacts)
+
+            expect(facts).toMatch(/calibrateRequiresMultipleSources/)
+            expect(facts).toMatch(/cloudMaskingMethodAvailability/)
+        })
+
+        it('does not list the focus path or its parent as their own dependent', () => {
+            const data = childPacket()
+
+            expect(data.dependentPaths).not.toContain('/sources/dataSets/SENTINEL_2')
+            expect(data.dependentPaths).not.toContain('/sources/dataSets')
+        })
+    })
+
+    // Symmetry the other way: focusing an ancestor must match a constraint keyed
+    // on a descendant of it. Focusing /compositeOptions reaches the corrections
+    // constraint keyed on /compositeOptions/corrections.
+    it('matches a descendant-keyed constraint when focusing an ancestor path', () => {
+        const tool = prepareUpdateTool(aFakeGuiRequests(() => of(aMosaicGuiResponse({
+            model: {
+                sources: {dataSets: {LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']}},
+                sceneSelectionOptions: {type: 'ALL'},
+                compositeOptions: {corrections: ['CALIBRATE']}
+            }
+        }))))
+
+        const data = read(tool.invoke$({recipeId: 'r1', focusPaths: ['/compositeOptions']}, context)).data
+
+        expect(data.dependentPaths).toEqual(expect.arrayContaining(['/sources/dataSets']))
+    })
 })

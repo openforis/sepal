@@ -1,5 +1,6 @@
 const {of} = require('rxjs')
 const {aToolFactoryHarness, innerToolsImpl} = require('../../harness')
+const {SPECIALIST_CAP_ANSWER} = require('#mcp/chat/specialists/runSpecialist')
 
 describe('update_recipe outer envelope reflects whether the patch applied', () => {
 
@@ -46,7 +47,7 @@ describe('update_recipe outer envelope reflects whether the patch applied', () =
 
         const result = harness.invoke({recipeId: 'r1', instruction: 'edit'})
 
-        expect(result).toEqual({
+        expect(result).toMatchObject({
             ok: false,
             error: {
                 code: 'UPDATE_FAILED',
@@ -83,6 +84,34 @@ describe('update_recipe outer envelope reflects whether the patch applied', () =
                 specialistAnswer: 'I looked at the recipe but did not patch anything.'
             }
         })
+    })
+
+    it('builds a user-facing failure answer from the last patch validation details (rule, message, path)', () => {
+        const patchError = {
+            code: 'VALIDATION_FAILED',
+            message: 'recipe model failed validation',
+            details: [{
+                path: '/compositeOptions/corrections',
+                rule: 'calibrateRequiresMultipleSources',
+                message: 'cross-sensor calibration requires both Landsat and Sentinel-2 source groups'
+            }]
+        }
+        const harness = aSpecialist({
+            patchCalls: [patchOp],
+            finalText: SPECIALIST_CAP_ANSWER,
+            patchResults: [{ok: false, error: patchError}]
+        })
+
+        const result = harness.invoke({recipeId: 'r1', instruction: 'use only Landsat'})
+
+        expect(result.ok).toBe(false)
+        expect(result.error.code).toBe('UPDATE_FAILED')
+        expect(result.error.answer).toMatch(/cross-sensor calibration requires both Landsat and Sentinel-2/)
+        // Rule name + pointer are internal identifiers — kept in the structured
+        // envelope for diagnostics, kept out of the user-facing prose.
+        expect(result.error.answer).not.toMatch(/calibrateRequiresMultipleSources/)
+        expect(result.error.answer).not.toMatch(/\/compositeOptions\/corrections/)
+        expect(result.error.patchError.details).toEqual(patchError.details)
     })
 
     it('returns success when a later patch succeeds even if an earlier one failed', () => {

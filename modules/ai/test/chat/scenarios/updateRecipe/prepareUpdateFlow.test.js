@@ -104,6 +104,33 @@ describe('update_recipe obtains a live prepare_update work packet', () => {
     // cloud-probability mask + its required threshold are NEW paths. The live
     // packet must mark them missing so the specialist emits `add`, not `replace`
     // (which would PATCH_APPLY_FAILED and waste a round).
+    // Removing one source group is a focus on a child of /sources/dataSets. The
+    // live packet must still surface the companions keyed on the parent path
+    // (corrections, cloud masking) so the specialist patches the coupled fields
+    // in the same attempt rather than having validation reject a lone removal.
+    it('surfaces the parent-keyed source companions when focusing a child source path', () => {
+        const guiRequests = guiRequestsForMosaic()
+        const prepareCall = {id: 'tu1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/sources/dataSets/SENTINEL_2']}}
+        const harness = aToolFactoryHarness({
+            specialist: 'update_recipe',
+            guiRequests,
+            innerTools: realInnerTools(guiRequests),
+            replies: [
+                {toolCalls: [prepareCall]},
+                {text: 'Considered the source removal coupling.'}
+            ]
+        })
+
+        harness.invoke({recipeId: 'r1', instruction: 'use only Landsat'})
+
+        const packet = preparedPacketSeenBySpecialist(harness)
+        expect(packet.ok).toBe(true)
+        expect(packet.data.dependentPaths).toEqual(expect.arrayContaining([
+            '/compositeOptions/corrections',
+            '/compositeOptions/includedCloudMasking'
+        ]))
+    })
+
     it('marks the new cloud-masking method and its threshold as missingPaths in the live packet', () => {
         const guiRequests = guiRequestsForMosaic()
         const prepareCall = {id: 'tu1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/compositeOptions/includedCloudMasking']}}

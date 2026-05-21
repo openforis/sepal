@@ -76,17 +76,28 @@ function constraintsFor(recipeType) {
 
 // A focus path's dependents are the OTHER paths of every constraint that
 // references it. Symmetric by construction: focusing seasonStart finds the
-// seasonStartWindow constraint and pulls in its targetDate. The focus paths
-// themselves are excluded; companions shared across constraints are de-duped.
+// seasonStartWindow constraint and pulls in its targetDate. Companions that the
+// focus already covers (the focus path, an ancestor, or a descendant of it) are
+// excluded; companions shared across constraints are de-duped.
 function dependentsFrom(constraints, focusPaths) {
-    const focus = new Set(focusPaths)
-    const companions = constraints.flatMap(constraint => constraint.paths.filter(path => !focus.has(path)))
+    const companions = constraints.flatMap(constraint =>
+        constraint.paths.filter(path => !focusPaths.some(focus => pointerRelates(focus, path)))
+    )
     return distinct(companions)
 }
 
 function constraintsTouching(constraints, focusPaths) {
-    const focus = new Set(focusPaths)
-    return constraints.filter(constraint => constraint.paths.some(path => focus.has(path)))
+    return constraints.filter(constraint =>
+        constraint.paths.some(path => focusPaths.some(focus => pointerRelates(focus, path)))
+    )
+}
+
+// Two JSON Pointers relate when a constraint keyed on one should govern an edit
+// to the other: they are equal, or one is nested under the other. Removing
+// /sources/dataSets/SENTINEL_2 thus engages the rules keyed on its parent
+// /sources/dataSets, matching what post-apply validation enforces.
+function pointerRelates(a, b) {
+    return a === b || a.startsWith(b + '/') || b.startsWith(a + '/')
 }
 
 function dependencyFacts(constraints, dependentPaths) {

@@ -189,7 +189,8 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
                 code: 'UPDATE_FAILED',
                 message: lastError?.message || 'Recipe patch did not succeed.',
                 patchError: lastError,
-                specialistAnswer: answer
+                specialistAnswer: answer,
+                answer: failureAnswer(lastError)
             }
         }
         return {
@@ -201,6 +202,18 @@ function createPatchOutcomeTracker({bus, conversationId, recipeId}) {
             }
         }
     }
+}
+
+// User-facing explanation of why the update was rejected, built from the human
+// validation messages the patch tool surfaced. The specialist's own prose on a
+// failed run is often the generic step-cap string, so the actionable reason has
+// to come from the validation details. Rule names and JSON pointers stay in the
+// structured envelope (patchError.details) and logs — internal identifiers, not
+// chat copy.
+function failureAnswer(patchError) {
+    const reasons = (patchError?.details || []).map(detail => detail.message)
+    const detail = reasons.length ? reasons.join('; ') : (patchError?.message || 'the change could not be applied')
+    return `I couldn't apply that update: ${detail}.`
 }
 
 function restrictToRecipe(invokeTool$, recipeId) {

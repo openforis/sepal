@@ -180,7 +180,11 @@ function directToolAnswer(toolResults, tools) {
     if (toolResults.length !== 1) return null
     const [result] = toolResults
     if (!tools.flag(result.toolName, 'directAnswer')) return null
-    const answer = result.result?.ok === true ? result.result?.data?.answer : null
+    // A directAnswer tool owns its user-facing prose on both paths: success
+    // streams data.answer; a failure that carries error.answer (e.g. an update
+    // rejected by validation) streams that reason straight to the user rather
+    // than provoking an orchestrator restate that can stall.
+    const answer = result.result?.ok === true ? result.result?.data?.answer : result.result?.error?.answer
     return hasVisibleText(answer) ? answer.trim() : null
 }
 
