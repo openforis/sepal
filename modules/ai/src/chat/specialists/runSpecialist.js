@@ -16,9 +16,12 @@ const {
     publishSpecialistRequest,
     publishSpecialistResponse,
     publishSpecialistStall,
+    publishSpecialistNoProgress,
     publishSpecialistToolRequest,
     publishSpecialistToolResponse
 } = require('./specialistEvents')
+
+const NO_PROGRESS_REASON = 'no-progress-nudge'
 
 const SPECIALIST_MAX_ROUNDS = 5
 const SPECIALIST_CAP_ANSWER = 'Specialist step cap exceeded; partial information only.'
@@ -30,9 +33,13 @@ const STALL_NUDGE = {
     content: 'Continue working on the original request. Either make the next tool call needed, or send a final summary if the request is fulfilled.'
 }
 
-function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas, invokeTool$, context}) {
+function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas, invokeTool$, context, noProgressNudge}) {
     const guard = createToolCallGuard({consecutiveFailureBail, invalidArgsBail})
     const conversationId = context?.conversationId
+    // Tool calls observed across the loop (name + ok), and a one-shot flag so a
+    // caller-supplied no-progress nudge fires at most once.
+    const toolHistory = []
+    let noProgressNudged = false
     const initial = [
         {role: 'system', content: systemPrompt},
         {role: 'user', content: userText}
@@ -70,7 +77,25 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
                     })
                     return step$(messages, round + 1, stallCount + 1)
                 }
-                if (acc.toolCalls.length === 0) return of({answer: acc.text})
+                if (acc.toolCalls.length === 0) {
+                    const nudge = noProgressNudgeFor(round)
+                    if (nudge) {
+                        noProgressNudged = true
+                        publishSpecialistNoProgress({
+                            bus, name, round, conversationId,
+                            messageCount: promptMessages.length,
+                            toolNames: allowedSchemas.map(schema => schema.name),
+                            nudgeChars: nudge.length,
+                            reason: NO_PROGRESS_REASON
+                        })
+                        return step$(
+                            [...messages, {role: 'assistant', content: acc.text}, {role: 'user', content: nudge}],
+                            round + 1,
+                            0
+                        )
+                    }
+                    return of({answer: acc.text})
+                }
                 return runToolsAndContinue$(messages, acc, round)
             })
         )
@@ -85,6 +110,7 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
                     mergeMap(value => {
                         if (isChannelEmission(value)) return of(value)
                         toolResults.push({toolCallId: toolCall.id, toolName: toolCall.name, result: value})
+                        toolHistory.push({name: toolCall.name, ok: value?.ok === true})
                         return EMPTY
                     })
                 ))
@@ -102,6 +128,15 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
                 )
             })
         )
+    }
+
+    // A non-empty final response with no tool call gets one corrective nudge if
+    // the caller's predicate says progress is incomplete (e.g. update prepared
+    // an edit but never patched). Bounded: one nudge, and never on the last round.
+    function noProgressNudgeFor(round) {
+        if (noProgressNudged || !noProgressNudge) return null
+        if (round + 1 >= SPECIALIST_MAX_ROUNDS) return null
+        return noProgressNudge(toolHistory) || null
     }
 
     function callTool$(toolCall) {

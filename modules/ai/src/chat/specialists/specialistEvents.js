@@ -39,6 +39,21 @@ function publishSpecialistStall({bus, name, round, conversationId, stallCount, m
     })
 }
 
+function publishSpecialistNoProgress({bus, name, round, conversationId, messageCount, toolNames, nudgeChars, reason}) {
+    bus.publish({
+        type: 'specialist.noProgress',
+        level: 'warn',
+        conversationId,
+        name,
+        round,
+        messageCount,
+        toolNames,
+        nudgeChars,
+        reason,
+        message: `specialist.noProgress name=${name} round=${round} messages=${messageCount} tools=[${(toolNames || []).join(',') || '-'}] reason=${reason}`
+    })
+}
+
 function publishSpecialistResponse({bus, name, round, conversationId, text, toolCalls}) {
     const textChars = (text || '').length
     const toolCallNames = (toolCalls || []).map(toolCall => toolCall.name)
@@ -221,6 +236,7 @@ module.exports = {
     publishSpecialistRequest,
     publishSpecialistResponse,
     publishSpecialistStall,
+    publishSpecialistNoProgress,
     publishSpecialistToolRequest,
     publishSpecialistToolResponse,
     publishUpdateRecipeOutcome

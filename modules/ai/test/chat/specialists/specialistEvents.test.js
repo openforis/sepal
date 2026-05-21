@@ -3,6 +3,7 @@ const {
     publishSpecialistResponse,
     publishSpecialistToolRequest,
     publishSpecialistToolResponse,
+    publishSpecialistNoProgress,
     publishUpdateRecipeOutcome
 } = require('#mcp/chat/specialists/specialistEvents')
 
@@ -223,6 +224,42 @@ describe('publishSpecialistToolResponse', () => {
         publishSpecialistToolResponse({bus, name: 'recipe.update', tool: 'unfamiliar_tool', envelope: {ok: true, data: {x: 1}}})
 
         expect(bus.published[0].shape).toBe('object')
+    })
+})
+
+describe('publishSpecialistNoProgress', () => {
+
+    it('publishes a warn-level specialist.noProgress event with name, round, message count, tool names, and reason', () => {
+        const bus = aFakeBus()
+
+        publishSpecialistNoProgress({
+            bus, name: 'recipe.update', round: 1, conversationId: 'c1',
+            messageCount: 4, toolNames: ['prepare_update', 'recipe_patch'],
+            nudgeChars: 120, reason: 'no-progress-nudge'
+        })
+
+        expect(bus.published).toEqual([expect.objectContaining({
+            type: 'specialist.noProgress',
+            level: 'warn',
+            conversationId: 'c1',
+            name: 'recipe.update',
+            round: 1,
+            messageCount: 4,
+            toolNames: ['prepare_update', 'recipe_patch'],
+            nudgeChars: 120,
+            reason: 'no-progress-nudge'
+        })])
+        expect(bus.published[0].message).toBe(
+            'specialist.noProgress name=recipe.update round=1 messages=4 tools=[prepare_update,recipe_patch] reason=no-progress-nudge'
+        )
+    })
+
+    it('renders no tool names as a dash, matching the other specialist diagnostics', () => {
+        const bus = aFakeBus()
+
+        publishSpecialistNoProgress({bus, name: 'recipe.update', round: 1, messageCount: 2, toolNames: [], reason: 'no-progress-nudge'})
+
+        expect(bus.published[0].message).toContain('tools=[-]')
     })
 })
 

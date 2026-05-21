@@ -14,6 +14,18 @@ const {isChannelEmission} = require('../channelEvents')
 const DESCRIBE_RECIPE_ALLOWED = ['recipe_load']
 const UPDATE_RECIPE_ALLOWED = ['prepare_update', 'recipe_patch']
 
+// One-time corrective nudge: the specialist prepared an edit but answered with
+// prose instead of patching. Mirrors the empty-response stall nudge — give the
+// model one structured chance to patch (or ask one concise question) before the
+// outer tool returns UPDATE_NOT_ATTEMPTED.
+const UPDATE_NO_PATCH_NUDGE = 'You called prepare_update but did not call recipe_patch. If the request is actionable, call recipe_patch now using the prepared baseModelHash and writablePaths. If it is truly ambiguous, ask exactly one concise clarification question.'
+
+function updateNoPatchNudge(toolHistory) {
+    const preparedOk = toolHistory.some(entry => entry.name === 'prepare_update' && entry.ok)
+    const patchAttempted = toolHistory.some(entry => entry.name === 'recipe_patch')
+    return preparedOk && !patchAttempted ? UPDATE_NO_PATCH_NUDGE : null
+}
+
 // Tool names whose recipeId arg must equal the recipeId the outer dispatcher
 // was asked about. The orchestrator has already chosen the recipe; binding
 // at the tool-call boundary makes the scope deterministic rather than prompt-only.
@@ -109,6 +121,7 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
                         userText: buildUpdateUserText({recipeId, instruction}),
                         allowedSchemas,
                         invokeTool$: tracker.wrap(restrictToRecipe(scopedInvokeTool$, recipeId)),
+                        noProgressNudge: updateNoPatchNudge,
                         context
                     }).pipe(
                         map(value => isChannelEmission(value) ? value : tracker.envelopeFor(value))
