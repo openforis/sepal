@@ -1,14 +1,29 @@
 // Inner-loop runtime for a single specialist consultation. Runs an
-// isolated LLM loop with the specialist's prompt and scoped tool set;
-// passes channel emissions from inner tools through to the outer
-// turn's wsChannel.
+// isolated agent loop with the specialist's prompt and scoped tool set,
+// advancing the dialogue through LLM rounds and tool calls until a stop
+// policy ends it. Passes channel emissions from inner tools through to the
+// outer turn's wsChannel.
+//
+// One round = one LLM call. Each round is classified into a closed outcome:
+//   answered       — visible text, no tool calls
+//   tool-requested — tool calls present, possibly text too
+//   silent         — neither
+// The stop policy reads the outcome plus the tool timeline and returns a
+// directive — continue (with optional append text) or stop (with a reason).
+// The loop, not the policy, owns dialogue well-formedness: a continue after
+// `silent` uses the append as a transient prompt-only nudge (no assistant
+// turn to anchor a persisted user message); a continue after `answered`
+// persists the assistant text then the corrective user nudge; tool calls
+// persist as an assistant tool-call turn plus tool-result turns. The internal
+// result is {finalText, finishReason, timeline}; the public observable maps
+// that to {answer} for callers and lets channel emissions pass through.
 //
 // Publishes specialist.request / specialist.response per round and
 // specialist.tool.request / specialist.tool.response per inner tool call
 // for diagnostic observability. Does NOT emit {toolStart}/{toolEnd}
 // plain objects — inner tools stay below the user-facing tool boundary.
 
-const {EMPTY, concat, concatMap, defer, from, ignoreElements, mergeMap, of, tap} = require('rxjs')
+const {EMPTY, concat, concatMap, defer, from, ignoreElements, map, mergeMap, of, tap} = require('rxjs')
 const {createToolCallGuard} = require('../toolCallGuard')
 const {isChannelEmission} = require('../channelEvents')
 const {
@@ -42,19 +57,24 @@ const STALL_NUDGE = {
 function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas, invokeTool$, context, noProgressNudge, finishOnEmpty}) {
     const guard = createToolCallGuard({consecutiveFailureBail, invalidArgsBail})
     const conversationId = context?.conversationId
-    // Tool calls observed across the loop (name + ok), and a one-shot flag so a
-    // caller-supplied no-progress nudge fires at most once.
-    const toolHistory = []
+    // Canonical record of round outcomes and tool results, enough to project the
+    // {name, ok} tool history the caller-supplied stop predicates read. A one-shot
+    // flag keeps the no-progress nudge firing at most once.
+    const timeline = createTimeline()
     let noProgressNudged = false
     const initial = [
         {role: 'system', content: systemPrompt},
         {role: 'user', content: userText}
     ]
-    return bus.track$('specialist.run', {name}, step$(initial, 0, 0, false))
+    return bus.track$('specialist.run', {name}, runRound$(initial, {round: 0, stalls: 0, transientAppend: null})).pipe(
+        map(value => isChannelEmission(value) ? value : {answer: value.finalText})
+    )
 
-    function step$(messages, round, stalls, stalling) {
+    function runRound$(messages, {round, stalls, transientAppend}) {
         const acc = {text: '', toolCalls: []}
-        const promptMessages = stalling ? [...messages, STALL_NUDGE] : messages
+        const promptMessages = transientAppend
+            ? [...messages, {role: 'user', content: transientAppend}]
+            : messages
         publishSpecialistRequest({bus, name, round, conversationId, messages: promptMessages, toolSchemas: allowedSchemas})
         publishSpecialistPrompt({bus, name, round, conversationId, messages: promptMessages, toolSchemas: allowedSchemas})
         return concat(
@@ -72,79 +92,105 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
                 ignoreElements()
             ),
             defer(() => {
-                publishSpecialistResponse({
-                    bus, name, round, conversationId, text: acc.text, toolCalls: acc.toolCalls,
-                    reasoningChars: acc.responseMeta?.reasoningChars ?? 0,
-                    finishReason: acc.responseMeta?.finishReason ?? null
-                })
-                const empty = !acc.text.trim() && acc.toolCalls.length === 0
-                if (empty) {
-                    // Caller may finish the loop on an empty response instead of
-                    // nudging — e.g. once the work is already done and a narrower
-                    // post-processing step should own the final answer.
-                    if (finishOnEmpty?.(toolHistory)) return of({answer: acc.text})
-                    if (stalls >= SPECIALIST_MAX_STALLS) return of({answer: SPECIALIST_CAP_ANSWER})
-                    publishSpecialistStall({
-                        bus, name, round, conversationId,
-                        stallCount: stalls + 1,
-                        messageCount: promptMessages.length,
-                        toolNames: allowedSchemas.map(schema => schema.name)
-                    })
-                    return step$(messages, round, stalls + 1, true)
+                const outcome = classifyRound(acc)
+                timeline.recordOutcome(outcome)
+                publishResponse(outcome, round)
+                if (outcome.type === 'tool-requested') {
+                    return runTools$(messages, outcome, round, stalls)
                 }
-                if (acc.toolCalls.length === 0) {
-                    const nudge = noProgressNudgeFor(round)
-                    if (nudge) {
-                        noProgressNudged = true
-                        publishSpecialistNoProgress({
-                            bus, name, round, conversationId,
-                            messageCount: promptMessages.length,
-                            toolNames: allowedSchemas.map(schema => schema.name),
-                            nudgeChars: nudge.length,
-                            reason: NO_PROGRESS_REASON
-                        })
-                        return step$(
-                            [...messages, {role: 'assistant', content: acc.text}, {role: 'user', content: nudge}],
-                            round + 1,
-                            stalls,
-                            false
-                        )
-                    }
-                    return of({answer: acc.text})
-                }
-                return runToolsAndContinue$(messages, acc, round, stalls)
+                const directive = decideNext(outcome, round, stalls)
+                if (directive.type === 'stop') return of(stopResult(directive.reason, directive.finalText))
+                return continueAfter$(outcome, directive.append, messages, promptMessages, round, stalls)
             })
         )
     }
 
-    function runToolsAndContinue$(messages, acc, round, stalls) {
-        const assistantMessage = {role: 'assistant', content: acc.text || '', toolCalls: acc.toolCalls}
+    // Stop policy for a non-tool round. Reads the outcome and the tool timeline;
+    // returns only continue (with append text) or stop (with a reason). The loop
+    // turns the append into either a transient or persisted nudge per outcome.
+    function decideNext(outcome, round, stalls) {
+        if (outcome.type === 'silent') {
+            // The caller may finish the loop on an empty response instead of
+            // nudging — e.g. once the work is already done and a narrower
+            // post-processing step should own the final answer.
+            if (finishOnEmpty?.(timeline.toolHistory())) return stop('finish-on-empty', outcome.text)
+            if (stalls >= SPECIALIST_MAX_STALLS) return stop('capped', SPECIALIST_CAP_ANSWER)
+            return {type: 'continue', append: STALL_NUDGE.content}
+        }
+        const nudge = noProgressNudgeFor(round)
+        if (nudge) return {type: 'continue', append: nudge}
+        return stop('answered', outcome.text)
+    }
+
+    // Applies a continue directive, owning dialogue well-formedness. A silent
+    // round has no assistant turn to anchor a persisted user message, so its
+    // append rides along as a transient prompt-only nudge and charges the stall
+    // budget; an answered round persists the assistant prose plus the corrective
+    // nudge and charges a productive round.
+    function continueAfter$(outcome, append, messages, promptMessages, round, stalls) {
+        if (outcome.type === 'silent') {
+            publishSpecialistStall({
+                bus, name, round, conversationId,
+                stallCount: stalls + 1,
+                messageCount: promptMessages.length,
+                toolNames: allowedSchemas.map(schema => schema.name)
+            })
+            return runRound$(messages, {round, stalls: stalls + 1, transientAppend: append})
+        }
+        noProgressNudged = true
+        publishSpecialistNoProgress({
+            bus, name, round, conversationId,
+            messageCount: promptMessages.length,
+            toolNames: allowedSchemas.map(schema => schema.name),
+            nudgeChars: append.length,
+            reason: NO_PROGRESS_REASON
+        })
+        return runRound$(
+            [...messages, {role: 'assistant', content: outcome.text}, {role: 'user', content: append}],
+            {round: round + 1, stalls, transientAppend: null}
+        )
+    }
+
+    function runTools$(messages, outcome, round, stalls) {
+        const assistantMessage = {role: 'assistant', content: outcome.text || '', toolCalls: outcome.calls}
         const toolResults = []
         return concat(
-            from(acc.toolCalls).pipe(
+            from(outcome.calls).pipe(
                 concatMap(toolCall => callTool$(toolCall).pipe(
                     mergeMap(value => {
                         if (isChannelEmission(value)) return of(value)
                         toolResults.push({toolCallId: toolCall.id, toolName: toolCall.name, result: value})
-                        toolHistory.push({name: toolCall.name, ok: value?.ok === true})
+                        timeline.recordToolResult({name: toolCall.name, ok: value?.ok === true})
                         return EMPTY
                     })
                 ))
             ),
             defer(() => {
                 const bailAnswer = guard.bail()
-                if (bailAnswer) return of({answer: bailAnswer})
+                if (bailAnswer) return of(stopResult('guard-bailed', bailAnswer))
                 if (round + 1 >= SPECIALIST_MAX_ROUNDS) {
-                    return of({answer: acc.text.trim() ? acc.text : SPECIALIST_CAP_ANSWER})
+                    return of(stopResult('capped', outcome.text.trim() ? outcome.text : SPECIALIST_CAP_ANSWER))
                 }
-                return step$(
+                return runRound$(
                     [...messages, assistantMessage, {role: 'tool', toolResults}],
-                    round + 1,
-                    stalls,
-                    false
+                    {round: round + 1, stalls, transientAppend: null}
                 )
             })
         )
+    }
+
+    function publishResponse(outcome, round) {
+        publishSpecialistResponse({
+            bus, name, round, conversationId,
+            text: outcome.text,
+            toolCalls: outcome.calls || [],
+            reasoningChars: outcome.meta?.reasoningChars ?? 0,
+            finishReason: outcome.meta?.finishReason ?? null
+        })
+    }
+
+    function stopResult(finishReason, finalText) {
+        return {finalText, finishReason, timeline: timeline.entries()}
     }
 
     // A non-empty final response with no tool call gets one corrective nudge if
@@ -153,7 +199,7 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
     function noProgressNudgeFor(round) {
         if (noProgressNudged || !noProgressNudge) return null
         if (round + 1 >= SPECIALIST_MAX_ROUNDS) return null
-        return noProgressNudge(toolHistory) || null
+        return noProgressNudge(timeline.toolHistory()) || null
     }
 
     function callTool$(toolCall) {
@@ -171,6 +217,28 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
                 guard.record(toolCall, value)
             })
         )
+    }
+}
+
+function stop(reason, finalText) {
+    return {type: 'stop', reason, finalText}
+}
+
+function classifyRound({text, toolCalls, responseMeta}) {
+    if (toolCalls.length) return {type: 'tool-requested', text, calls: toolCalls, meta: responseMeta}
+    if (text.trim()) return {type: 'answered', text, meta: responseMeta}
+    return {type: 'silent', text, meta: responseMeta}
+}
+
+function createTimeline() {
+    const entries = []
+    return {
+        recordOutcome(outcome) { entries.push({kind: 'round', type: outcome.type}) },
+        recordToolResult({name, ok}) { entries.push({kind: 'tool', name, ok}) },
+        // Projection the caller-supplied stop predicates read: the {name, ok} of
+        // every tool result so far, in call order.
+        toolHistory() { return entries.filter(entry => entry.kind === 'tool').map(({name, ok}) => ({name, ok})) },
+        entries() { return [...entries] }
     }
 }
 

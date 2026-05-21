@@ -48,6 +48,31 @@ describe('update_recipe recovery and observability', () => {
 
             expect(result).toEqual({ok: true, data: {answer: 'Recovered and patched.'}})
         })
+
+        // The transient stall nudge anchors a silent round's retry prompt only.
+        // It must never leak into the accumulating dialogue, or every later round
+        // would carry it and the specialist would re-read a fabricated user turn.
+        it('keeps the transient stall nudge out of the persisted history of later rounds', () => {
+            const isStallNudge = message => /Continue working on the original request/.test(message.content || '')
+            const patchCall = {id: 'tp1', name: 'recipe_patch', input: {
+                recipeId: 'r1', baseModelHash: 'h1',
+                operations: [{op: 'replace', path: '/dates/seasonEnd', value: '2026-06-01'}]
+            }}
+            const harness = aToolFactoryHarness({
+                specialist: 'update_recipe',
+                replies: [
+                    {text: ''},
+                    {toolCalls: [patchCall]},
+                    {text: 'Recovered and patched.'}
+                ]
+            })
+
+            harness.invoke({recipeId: 'r1', instruction: 'edit'})
+
+            const [, stallRound, postPatchRound] = harness.llm.receivedMessages
+            expect(stallRound.some(isStallNudge)).toBe(true)
+            expect(postPatchRound.some(isStallNudge)).toBe(false)
+        })
     })
 
     describe('no-patch corrective nudge', () => {

@@ -130,14 +130,21 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Observability
 
-- **Agent-loop vocabulary is not explicit yet** — `runSpecialist$` and
-  `conversationLoop.step$` are both agent loops, but the shared concept is still
-  implicit and the specialist runner is accumulating open-ended hooks
-  (`noProgressNudge`, `finishOnEmpty`, caller-side trackers). Refactor
-  specialist-first toward the vocabulary in `DESIGN_chat_specialists_v2.md`
-  §4 "Agent-loop north star", then revisit whether the orchestrator loop maps
-  cleanly through ports/policies. Extraction checklist from the current
-  divergence: output mode (stream events vs collect `{answer}`), persistence
+- **Agent-loop vocabulary is explicit in the specialist loop; orchestrator
+  unmapped** — `runSpecialist$` now speaks the `DESIGN_chat_specialists_v2.md`
+  §4 "Agent-loop north star" vocabulary: each round classifies into a closed
+  RoundOutcome (`answered`/`tool-requested`/`silent`), a `decideNext` stop
+  policy returns a continue/stop Directive read off the outcome + a Timeline
+  projection, and the loop (not the policy) owns transient-vs-persisted nudge
+  well-formedness. `noProgressNudge`/`finishOnEmpty` are now invoked from the
+  stop-policy path and read the timeline's `{name, ok}` projection instead of an
+  ad-hoc array. Still implicit: the internal AgentResult `{finalText,
+  finishReason, timeline}` is not exposed publicly (callers still see
+  `{answer}`); the caller-side `createPatchOutcomeTracker` is still a second
+  tracker rather than a timeline projection; and `conversationLoop.step$` has
+  not been checked against the same shape. Next: revisit whether the
+  orchestrator loop maps cleanly through ports/policies. Extraction checklist
+  from the current divergence: output mode (stream events vs collect `{answer}`), persistence
   (`history.append$` vs none), retry trigger (post-tool-only vs any-empty),
   retry hint role+content (`system`+`emptyAfterToolHint` vs
   `user`+`STALL_NUDGE`), cap behavior (translatable notice with
