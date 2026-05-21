@@ -136,6 +136,48 @@ describe('prepare_update tool — constraint-derived metadata', () => {
         })
     })
 
+    describe('focusing /compositeOptions/includedCloudMasking', () => {
+
+        const focusPaths = ['/compositeOptions/includedCloudMasking']
+
+        // The schema's allOf if/then required conditionals make each cloud-masking
+        // method pull in its own required threshold/band/sub-option fields. The
+        // specialist must see all of them as writable so it can patch the method
+        // and its required companions in one atomic patch.
+        it.each([
+            '/compositeOptions/sentinel2CloudProbabilityMaxCloudProbability',
+            '/compositeOptions/sentinel2CloudScorePlusBand',
+            '/compositeOptions/sentinel2CloudScorePlusMaxCloudProbability',
+            '/compositeOptions/landsatCFMaskCloudMasking',
+            '/compositeOptions/landsatCFMaskCloudShadowMasking',
+            '/compositeOptions/landsatCFMaskCirrusMasking',
+            '/compositeOptions/landsatCFMaskDilatedCloud',
+            '/compositeOptions/sepalCloudScoreMaxCloudProbability'
+        ])('couples the schema-required companion %s', companion => {
+            const data = packet(focusPaths)
+
+            expect(data.dependentPaths).toContain(companion)
+            expect(data.writablePaths).toContain(companion)
+        })
+
+        it('returns a currentValues entry for every writable path, null for absent companions', () => {
+            const data = packet(focusPaths)
+
+            expect(Object.keys(data.currentValues).sort()).toEqual(data.writablePaths.sort())
+            expect(data.currentValues['/compositeOptions/sentinel2CloudProbabilityMaxCloudProbability']).toBeNull()
+        })
+    })
+
+    describe('focusing /compositeOptions/corrections', () => {
+
+        it('couples brdfMultiplier, which BRDF requires', () => {
+            const data = packet(['/compositeOptions/corrections'])
+
+            expect(data.dependentPaths).toContain('/compositeOptions/brdfMultiplier')
+            expect(data.writablePaths).toContain('/compositeOptions/brdfMultiplier')
+        })
+    })
+
     describe('error envelopes', () => {
 
         function result(response, focusPaths = ['/dates/targetDate']) {

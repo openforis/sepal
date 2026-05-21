@@ -68,4 +68,35 @@ describe('update_recipe obtains a live prepare_update work packet', () => {
             '/sceneSelectionOptions/type'
         ]))
     })
+
+    // Adding a cloud-masking method requires its schema-conditional companion in
+    // the SAME patch (sentinel2CloudProbability needs its max-cloud-probability
+    // threshold) or the post-apply model fails validation. The live packet must
+    // therefore hand the specialist both paths in one work packet so it can patch
+    // method + threshold in one attempt.
+    it('hands the specialist the method and its schema-required threshold when focusing includedCloudMasking', () => {
+        const guiRequests = guiRequestsForMosaic()
+        const prepareCall = {id: 'tu1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/compositeOptions/includedCloudMasking']}}
+        const harness = aToolFactoryHarness({
+            specialist: 'update_recipe',
+            guiRequests,
+            innerTools: realInnerTools(guiRequests),
+            replies: [
+                {toolCalls: [prepareCall]},
+                {text: 'Prepared cloud-masking edit.'}
+            ]
+        })
+
+        harness.invoke({recipeId: 'r1', instruction: 'add the Sentinel-2 cloud probability mask'})
+
+        const packet = preparedPacketSeenBySpecialist(harness)
+        expect(packet.ok).toBe(true)
+        expect(packet.data.writablePaths).toEqual(expect.arrayContaining([
+            '/compositeOptions/includedCloudMasking',
+            '/compositeOptions/sentinel2CloudProbabilityMaxCloudProbability'
+        ]))
+        // The threshold companion's current value is carried (null when unset) so
+        // the specialist knows it must supply one in the patch.
+        expect(packet.data.currentValues).toHaveProperty('/compositeOptions/sentinel2CloudProbabilityMaxCloudProbability')
+    })
 })
