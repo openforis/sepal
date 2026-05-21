@@ -16,7 +16,7 @@ function aSpec(overrides = {}) {
                 'edit rule two — never set X while Y is present'
             ]
         }),
-        valueLabels: () => '/mode: RAW(readable label)',
+        schema: {type: 'object', properties: {mode: {enum: ['RAW'], 'x-enumLabels': {RAW: 'readable label'}}}},
         ...overrides
     }
 }

@@ -5,6 +5,8 @@
 // appends the spec's JSON Schema as a compact fenced json block (write-capable
 // specialists only — ignored for purpose 'describe').
 
+const {valueLabelsFromSchema} = require('./valueLabelsFromSchema')
+
 const PURPOSES = {
     describe: {factsMethod: 'describeFacts', sectionsFor: describeSections, schemaAllowed: false},
     update: {factsMethod: 'editFacts', sectionsFor: updateSections, schemaAllowed: true}
@@ -33,7 +35,7 @@ function assembleSpecialistPrompt(basePrompt, spec, {purpose, includeSchema = fa
 
 function describeSections(spec, facts) {
     const sections = [facts.description, '', `Outputs: ${facts.outputs}`]
-    const valueLabels = spec.valueLabels?.()
+    const valueLabels = spec.schema ? valueLabelsFromSchema(spec.schema) : ''
     if (valueLabels) {
         sections.push('', 'Value labels:', valueLabels)
     }

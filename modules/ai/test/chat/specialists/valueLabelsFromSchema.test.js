@@ -1,4 +1,4 @@
-const {valueLabelsFromSchema} = require('./valueLabelsFromSchema')
+const {valueLabelsFromSchema} = require('#mcp/chat/specialists/valueLabelsFromSchema')
 
 describe('valueLabelsFromSchema', () => {
 

@@ -1,7 +1,7 @@
 // Label-enriches JSON Patch operations for user-facing description, without
 // touching the raw operations sent to the tool. Uses the recipe spec's
-// valueLabels() text (path: token(label)|token(label)) so a patch outcome can
-// be narrated with human labels ("Landsat CFMask", "aggressive") instead of raw
+// value-label text (path: token(label)|token(label)) so a patch outcome can be
+// narrated with human labels ("Landsat CFMask", "aggressive") instead of raw
 // enum ids. Recipe-agnostic: enrichment is driven by the parsed label map and
 // the operation's value shape, never by recipe-specific knowledge.
 

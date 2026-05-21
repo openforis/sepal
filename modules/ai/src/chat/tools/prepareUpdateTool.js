@@ -8,7 +8,8 @@
 // this tool only shapes those into a chat work packet.
 
 const {catchError, of} = require('rxjs')
-const {getRecipeSpec, getRecipeLlmMetadata, toEffectiveModel, fieldShapeAt} = require('#recipes')
+const {getRecipeSpec, getRecipeLlmMetadata, toEffectiveModel} = require('#recipes')
+const {fieldShapeAt} = require('./fieldShapeFromSchema')
 const {mapData} = require('../channelEvents')
 const {guiProductRequest$} = require('./guiProductRequest')
 const {parsePointer, resolvePointer, PointerNotFound} = require('./jsonPointer')

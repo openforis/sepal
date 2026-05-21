@@ -10,6 +10,7 @@ const {assembleSpecialistPrompt} = require('./assembleSpecialistPrompt')
 const {publishUpdateRecipeOutcome} = require('./specialistEvents')
 const {parseValueLabels, enrichOperations} = require('./appliedChanges')
 const {retryHintsFromError} = require('./retryHints')
+const {valueLabelsFromSchema} = require('./valueLabelsFromSchema')
 const {lookupRecipeMetadata$} = require('../tools/recipeMetadata')
 const {isChannelEmission} = require('../channelEvents')
 
@@ -115,7 +116,8 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
                         return of(envelope)
                     }
                     const spec = getRecipeSpec(envelope.data?.type)
-                    const valueLabelsByPath = parseValueLabels(spec?.valueLabels?.())
+                    const valueLabelsText = valueLabelsFromSchema(spec?.schema)
+                    const valueLabelsByPath = parseValueLabels(valueLabelsText)
                     const tracker = createPatchOutcomeTracker({bus, conversationId: context?.conversationId, recipeId})
                     return runSpecialist$({
                         llm, bus,
@@ -134,7 +136,7 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
                                 conversationId: context?.conversationId, recipeId, instruction,
                                 recipeType: spec?.name || envelope.data?.type,
                                 recipeName: envelope.data?.name,
-                                valueLabels: spec?.valueLabels?.()
+                                valueLabels: valueLabelsText
                             }))
                     )
                 })
