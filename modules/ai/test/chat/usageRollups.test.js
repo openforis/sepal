@@ -124,13 +124,33 @@ describe('usage rollups', () => {
             const turnUsage = rollups.filter(event => event.type === 'turn.usage')
             expect(turnUsage).toHaveLength(1)
             expect(turnUsage[0]).toMatchObject({
-                conversationId: 'conv-1',
-                turnId: 'turn-1',
-                callCount: 2,
-                inputTokens: 600,
-                outputTokens: 50,
-                totalTokens: 650
+                type: 'turn.usage',
+                level: 'info',
+                action: 'summarized',
+                context: {conversationId: 'conv-1', turnId: 'turn-1'},
+                metrics: {calls: 2, inputTokens: 600, outputTokens: 50, totalTokens: 650}
             })
+        })
+
+        it('publishes rollups as structured events (no hand-built message) with renamed metric labels', () => {
+            const {bus, rollups} = aRollupHarness()
+
+            startTurn(bus, {conversationId: 'conv-1', turnId: 'turn-1'})
+            bus.publish(anLlmUsage({conversationId: 'conv-1', usageExact: true, durationMs: 40599}))
+            completeTurn(bus, {conversationId: 'conv-1', turnId: 'turn-1'})
+
+            const turnUsage = rollups.find(event => event.type === 'turn.usage')
+            expect(turnUsage.message).toBeUndefined()
+            expect(turnUsage.metrics).toMatchObject({
+                calls: 1,
+                cachedInputTokens: 0,
+                exactCalls: '1/1',
+                llmDurationMs: 40599
+            })
+            // The old ambiguous compact labels are gone — the metric keys carry meaning.
+            expect(turnUsage.metrics).not.toHaveProperty('in')
+            expect(turnUsage.metrics).not.toHaveProperty('out')
+            expect(turnUsage.metrics).not.toHaveProperty('durationMs')
         })
 
         it('separates orchestrator and recipe.update specialist usage within the turn rollup', () => {
@@ -142,6 +162,7 @@ describe('usage rollups', () => {
             completeTurn(bus, {conversationId: 'conv-1', turnId: 'turn-1'})
 
             const turnUsage = rollups.find(event => event.type === 'turn.usage')
+            // Breakdowns stay top-level structured fields for programmatic consumers.
             expect(turnUsage.byRole.orchestrator).toMatchObject({inputTokens: 100})
             expect(turnUsage.bySpecialist['recipe.update']).toMatchObject({inputTokens: 500})
         })
@@ -159,9 +180,10 @@ describe('usage rollups', () => {
 
             const conversationUsage = rollups.filter(event => event.type === 'conversation.usage')
             expect(conversationUsage.at(-1)).toMatchObject({
-                conversationId: 'conv-1',
-                inputTokens: 300,
-                totalTokens: 330
+                type: 'conversation.usage',
+                action: 'updated',
+                context: {conversationId: 'conv-1'},
+                metrics: {inputTokens: 300, totalTokens: 330}
             })
         })
 
@@ -175,7 +197,7 @@ describe('usage rollups', () => {
             completeTurn(bus, {conversationId: 'conv-1', turnId: 'turn-a'})
 
             const turnUsage = rollups.find(event => event.type === 'turn.usage')
-            expect(turnUsage).toMatchObject({conversationId: 'conv-1', inputTokens: 100, callCount: 1})
+            expect(turnUsage).toMatchObject({context: {conversationId: 'conv-1'}, metrics: {inputTokens: 100, calls: 1}})
         })
     })
 })

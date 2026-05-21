@@ -50,11 +50,22 @@ function createUsageTally() {
     }
 
     function summary() {
-        return {
-            ...totals,
-            ...breakdowns,
-            message: () => `calls=${totals.callCount} in=${totals.inputTokens} out=${totals.outputTokens} total=${totals.totalTokens} cached=${totals.cachedInputTokens} exact=${totals.exactCalls}/${totals.callCount} durationMs=${totals.durationMs}`
-        }
+        return {...totals, ...breakdowns}
+    }
+}
+
+// The curated log projection: unambiguous labels (inputTokens not in, exactCalls
+// as exact/total, llmDurationMs) the log listener renders as `key=value`. The
+// full summary still rides along on the event for programmatic consumers.
+function metricsOf(summary) {
+    return {
+        calls: summary.callCount,
+        inputTokens: summary.inputTokens,
+        outputTokens: summary.outputTokens,
+        totalTokens: summary.totalTokens,
+        cachedInputTokens: summary.cachedInputTokens,
+        exactCalls: `${summary.exactCalls}/${summary.callCount}`,
+        llmDurationMs: summary.durationMs
     }
 }
 
@@ -92,19 +103,15 @@ function subscribeUsageRollups({bus}) {
         const turn = turns.get(conversationId)
         if (!turn) return
         turns.delete(conversationId)
-        bus.publish({
-            type: 'turn.usage',
-            level: 'info',
-            conversationId,
-            turnId: turn.turnId,
-            ...turn.tally.summary()
-        })
-        bus.publish({
-            type: 'conversation.usage',
-            level: 'info',
-            conversationId,
-            ...conversationTally(conversationId).summary()
-        })
+        publishRollup('turn.usage', 'summarized', {conversationId, turnId: turn.turnId}, turn.tally.summary())
+        publishRollup('conversation.usage', 'updated', {conversationId}, conversationTally(conversationId).summary())
+    }
+
+    // Structured event: the log listener default-formats type/action/context/
+    // metrics into a span-consistent line; the full summary stays on the event
+    // for programmatic consumers.
+    function publishRollup(type, action, context, summary) {
+        bus.publish({type, level: 'info', action, context, metrics: metricsOf(summary), ...summary})
     }
 }
 

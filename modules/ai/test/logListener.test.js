@@ -51,6 +51,45 @@ describe('Log listener', () => {
 
             expect(logs).toEqual([])
         })
+
+        it('default-formats a structured event (type action context metrics) when it carries no explicit message', () => {
+            onEvent(loggerFor, {
+                type: 'turn.usage', level: 'info', action: 'summarized',
+                context: {conversationId: 'conv-1', turnId: 'turn-1'},
+                metrics: {calls: 6, inputTokens: 25822, exactCalls: '6/6', llmDurationMs: 40599}
+            })
+
+            expect(logs).toEqual([{
+                category: 'turn', level: 'info',
+                line: 'turn.usage summarized conversationId=conv-1 turnId=turn-1 calls=6 inputTokens=25822 exactCalls=6/6 llmDurationMs=40599'
+            }])
+        })
+
+        it('keeps an explicit message as the escape hatch even when structured fields are present', () => {
+            onEvent(loggerFor, {
+                type: 'turn.usage', level: 'info', action: 'summarized',
+                context: {conversationId: 'conv-1'}, metrics: {calls: 1},
+                message: 'explicit message wins'
+            })
+
+            expect(logs).toEqual([{category: 'turn', level: 'info', line: 'explicit message wins'}])
+        })
+
+        it('omits null/undefined context and metric values but keeps zeros', () => {
+            onEvent(loggerFor, {
+                type: 'conversation.usage', level: 'info', action: 'updated',
+                context: {conversationId: 'conv-1', turnId: null},
+                metrics: {calls: 11, cachedInputTokens: 0}
+            })
+
+            expect(logs[0].line).toBe('conversation.usage updated conversationId=conv-1 calls=11 cachedInputTokens=0')
+        })
+
+        it('does not log a level-only event that is neither a message nor structured', () => {
+            onEvent(loggerFor, {type: 'internal', level: 'info'})
+
+            expect(logs).toEqual([])
+        })
     })
 
     describe('categoryOf — routing rules', () => {
@@ -124,6 +163,10 @@ describe('Log listener', () => {
 
         it('declares update_recipe — update_recipe.outcome routes here and must be settable independently of specialist', () => {
             expect(logConfig.categories).toHaveProperty('update_recipe')
+        })
+
+        it('declares turn — turn.usage rollups route here and must be settable independently of conversation', () => {
+            expect(logConfig.categories).toHaveProperty('turn')
         })
     })
 

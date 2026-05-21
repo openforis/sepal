@@ -30,9 +30,35 @@ function subscribeLogListener({bus}) {
 }
 
 function onEvent(loggerFor, event) {
-    if (event.level && event.message) {
+    if (!event.level) return
+    if (event.message !== undefined) {
         loggerFor(categoryOf(event))[event.level](event.message)
+    } else if (isStructured(event)) {
+        loggerFor(categoryOf(event))[event.level](formatStructured(event))
     }
+}
+
+// Default formatting for structured bus events with no explicit message:
+//   <type> <action> <context key=value...> <metrics key=value...>
+// Lets a publisher emit structured fields and get a readable, span-consistent
+// log line for free. Explicit `message` (incl. lazy thunks) stays the escape
+// hatch for payload/debug logs.
+function isStructured(event) {
+    return event.action !== undefined || event.context !== undefined || event.metrics !== undefined
+}
+
+function formatStructured(event) {
+    return [event.type, event.action, formatPairs(event.context), formatPairs(event.metrics)]
+        .filter(Boolean)
+        .join(' ')
+}
+
+function formatPairs(fields) {
+    if (!fields) return ''
+    return Object.entries(fields)
+        .filter(([, value]) => value !== undefined && value !== null)
+        .map(([key, value]) => `${key}=${value}`)
+        .join(' ')
 }
 
 function categoryOf({type}) {

@@ -59,15 +59,15 @@ function createEventBus({clock, createId} = {}) {
 }
 
 function formatStart(name, attrs, correlationId) {
-    return `${name} started ${formatAttrs(attrs)}(${correlationId})`
+    return `${name} started ${formatAttrs(attrs)}spanId=${correlationId}`
 }
 
 function formatComplete(name, attrs, correlationId, durationMs) {
-    return `${name} completed ${formatAttrs(attrs)}(${correlationId}) in ${durationMs}ms`
+    return `${name} completed ${formatAttrs(attrs)}spanId=${correlationId} in ${durationMs}ms`
 }
 
 function formatFailed(name, attrs, correlationId, durationMs, error) {
-    return `${name} failed ${formatAttrs(attrs)}(${correlationId}) in ${durationMs}ms: ${error}`
+    return `${name} failed ${formatAttrs(attrs)}spanId=${correlationId} in ${durationMs}ms: ${error}`
 }
 
 function formatAttrs(attrs) {

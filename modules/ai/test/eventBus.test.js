@@ -89,10 +89,10 @@ describe('Event bus', () => {
 
             await bus.track('test.op', {}, () => {})
 
-            expect(events[0].message).toMatch(/test\.op started \(span-1\)/)
-            expect(events[0].message).not.toMatch(/ {2}|=/)
-            expect(events[1].message).toMatch(/test\.op completed \(span-1\) in 150ms/)
-            expect(events[1].message).not.toMatch(/ {2}|=/)
+            expect(events[0].message).toMatch(/test\.op started spanId=span-1/)
+            expect(events[0].message).not.toMatch(/ {2}/)
+            expect(events[1].message).toMatch(/test\.op completed spanId=span-1 in 150ms/)
+            expect(events[1].message).not.toMatch(/ {2}/)
         })
     })
 

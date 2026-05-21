@@ -134,6 +134,49 @@ describe('publishSpecialistToolRequest', () => {
 
         expect(bus.published[0].inputKeys).toEqual([])
     })
+
+    it('renders a small scalar array value inline so a narrowed includedCloudMasking is visible in logs', () => {
+        const bus = aFakeBus()
+
+        publishSpecialistToolRequest({
+            bus, name: 'recipe.update', conversationId: 'c1',
+            toolCall: {id: 't1', name: 'recipe_patch', input: {
+                recipeId: 'r1', baseModelHash: 'h',
+                operations: [{op: 'replace', path: '/compositeOptions/includedCloudMasking', value: ['sepalCloudScore', 'landsatCFMask']}]
+            }}
+        })
+
+        expect(bus.published[0].inputSummary).toContain('replace /compositeOptions/includedCloudMasking value=["sepalCloudScore","landsatCFMask"]')
+    })
+
+    it('keeps a large scalar array summarized to avoid noisy logs', () => {
+        const bus = aFakeBus()
+        const manyMethods = Array.from({length: 30}, (_, i) => `method-${i}`)
+
+        publishSpecialistToolRequest({
+            bus, name: 'recipe.update', conversationId: 'c1',
+            toolCall: {id: 't1', name: 'recipe_patch', input: {
+                recipeId: 'r1', baseModelHash: 'h',
+                operations: [{op: 'replace', path: '/compositeOptions/includedCloudMasking', value: manyMethods}]
+            }}
+        })
+
+        expect(bus.published[0].inputSummary).toContain('value=array(30)')
+    })
+
+    it('summarizes an array of objects rather than dumping nested structures', () => {
+        const bus = aFakeBus()
+
+        publishSpecialistToolRequest({
+            bus, name: 'recipe.update', conversationId: 'c1',
+            toolCall: {id: 't1', name: 'recipe_patch', input: {
+                recipeId: 'r1', baseModelHash: 'h',
+                operations: [{op: 'replace', path: '/compositeOptions/filters', value: [{type: 'HAZE', percentile: 90}, {type: 'NDVI', percentile: 50}]}]
+            }}
+        })
+
+        expect(bus.published[0].inputSummary).toContain('value=array(2)')
+    })
 })
 
 describe('publishSpecialistToolResponse', () => {

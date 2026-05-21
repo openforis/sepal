@@ -190,8 +190,26 @@ function shortHash(hash) {
 function formatValue(value) {
     if (typeof value === 'string') return JSON.stringify(truncate(value, 80))
     if (value === null || typeof value !== 'object') return String(value)
-    if (Array.isArray(value)) return `array(${value.length})`
+    if (Array.isArray(value)) return formatArray(value)
     return `object(${Object.keys(value).length})`
+}
+
+// A small array of scalars (e.g. includedCloudMasking) renders its contents so a
+// narrowed/incorrect selection is visible in the log. Large or non-scalar arrays
+// stay summarized as array(n) to keep the line bounded.
+const MAX_ARRAY_ITEMS = 12
+const MAX_ARRAY_CHARS = 200
+
+function formatArray(value) {
+    if (value.every(isScalar) && value.length <= MAX_ARRAY_ITEMS) {
+        const rendered = JSON.stringify(value)
+        if (rendered.length <= MAX_ARRAY_CHARS) return rendered
+    }
+    return `array(${value.length})`
+}
+
+function isScalar(item) {
+    return item === null || typeof item !== 'object'
 }
 
 function truncate(value, max) {
