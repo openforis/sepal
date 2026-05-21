@@ -27,12 +27,20 @@ function labelMap(tokens) {
     return map
 }
 
-function enrichOperations(operations, labelsByPath) {
-    return (operations || []).map(operation => enrichOperation(operation, labelsByPath || {}))
+// context (optional) is the prepare_update packet: currentValues supplies the
+// previousValue a change overwrote; pathHints supplies the field shape. Both are
+// added per change when available, so the summarizer can explain old -> new
+// without re-reading the model.
+function enrichOperations(operations, labelsByPath, context) {
+    return (operations || []).map(operation => enrichOperation(operation, labelsByPath || {}, context || {}))
 }
 
-function enrichOperation(operation, labelsByPath) {
+function enrichOperation(operation, labelsByPath, context) {
     const change = {op: operation.op, path: operation.path}
+    const previousValue = context.currentValues?.[operation.path]
+    if (previousValue !== undefined && previousValue !== null) change.previousValue = previousValue
+    const pathHint = context.pathHints?.[operation.path]
+    if (pathHint) change.pathHint = pathHint
     if (!Object.prototype.hasOwnProperty.call(operation, 'value')) return change
     const labels = labelsByPath[operation.path]
     const value = operation.value

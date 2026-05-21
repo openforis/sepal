@@ -39,7 +39,7 @@ const STALL_NUDGE = {
     content: 'Continue working on the original request. Either make the next tool call needed, or send a final summary if the request is fulfilled.'
 }
 
-function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas, invokeTool$, context, noProgressNudge}) {
+function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas, invokeTool$, context, noProgressNudge, finishOnEmpty}) {
     const guard = createToolCallGuard({consecutiveFailureBail, invalidArgsBail})
     const conversationId = context?.conversationId
     // Tool calls observed across the loop (name + ok), and a one-shot flag so a
@@ -79,6 +79,10 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
                 })
                 const empty = !acc.text.trim() && acc.toolCalls.length === 0
                 if (empty) {
+                    // Caller may finish the loop on an empty response instead of
+                    // nudging — e.g. once the work is already done and a narrower
+                    // post-processing step should own the final answer.
+                    if (finishOnEmpty?.(toolHistory)) return of({answer: acc.text})
                     if (stalls >= SPECIALIST_MAX_STALLS) return of({answer: SPECIALIST_CAP_ANSWER})
                     publishSpecialistStall({
                         bus, name, round, conversationId,

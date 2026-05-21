@@ -33,12 +33,26 @@ describe('update_recipe summarizes a successful patch when the specialist answer
         const summary = aFakeLlm({replies: summaryReplies})
         return {
             get summaryRequests() { return summary.receivedRequests },
+            get specialistRequests() { return specialist.receivedRequests },
             respondTo$(request) {
                 return (request.tools && request.tools.length)
                     ? specialist.respondTo$(request)
                     : summary.respondTo$(request)
             }
         }
+    }
+
+    function prepareThenPatchTools(preparePacket) {
+        return innerToolsImpl(
+            {
+                prepare_update: () => of(preparePacket),
+                recipe_patch: () => of({ok: true, data: successData})
+            },
+            [
+                {name: 'prepare_update', description: 'Prepare.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}},
+                {name: 'recipe_patch', description: 'Patch.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, operations: {type: 'array'}}}}
+            ]
+        )
     }
 
     function aHarness({specialistReplies, summaryReplies}) {
@@ -52,7 +66,7 @@ describe('update_recipe summarizes a successful patch when the specialist answer
         return {harness, llm}
     }
 
-    // patch applied, then empty rounds -> the specialist caps with no usable text.
+    // patch applied, then empty -> the loop exits and the summary pass owns final prose.
     const patchThenEmpty = [{toolCalls: [patchCall]}, {text: ''}]
 
     it('uses the summarizer prose as the answer, not the deterministic fallback', () => {
@@ -121,6 +135,98 @@ describe('update_recipe summarizes a successful patch when the specialist answer
         const result = harness.invoke({recipeId: 'r1', instruction: 'use only Landsat'})
 
         expect(result).toEqual({ok: true, data: {answer: 'Applied 1 operation to recipe r1'}})
+    })
+
+    it('ends the loop on an empty response after a successful patch — no stall-nudge round', () => {
+        const {harness, llm} = aHarness({
+            specialistReplies: patchThenEmpty,
+            summaryReplies: [{text: 'Removed Sentinel-2.'}]
+        })
+
+        harness.invoke({recipeId: 'r1', instruction: 'use only Landsat'})
+
+        expect(harness.bus.events.filter(event => event.type === 'specialist.stall')).toHaveLength(0)
+        expect(llm.specialistRequests).toHaveLength(2)
+    })
+
+    it('feeds the summarizer the user request and applied changes with previous values', () => {
+        const preparePacket = {ok: true, data: {
+            baseModelHash: 'h1',
+            writablePaths: ['/compositeOptions/includedCloudMasking'],
+            currentValues: {'/compositeOptions/includedCloudMasking': ['sentinel2CloudScorePlus', 'landsatCFMask']},
+            pathHints: {'/compositeOptions/includedCloudMasking': {valueKind: 'array', arrayKind: 'config', arrayLength: 2, required: true}},
+            dependencyFacts: [{path: '/compositeOptions/corrections', constraint: 'cloudMaskingMethodAvailability', description: 'methods need matching sources'}],
+            validationRules: [{name: 'cloudMaskingMethodAvailability', description: 'methods need matching sources'}]
+        }}
+        const prepareCall = {id: 'tu1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/compositeOptions/includedCloudMasking']}}
+        const patchToLandsatOnly = {id: 'tp1', name: 'recipe_patch', input: {
+            recipeId: 'r1', baseModelHash: 'h1',
+            operations: [{op: 'replace', path: '/compositeOptions/includedCloudMasking', value: ['landsatCFMask']}]
+        }}
+        const llm = aRoutingLlm({
+            specialistReplies: [{toolCalls: [prepareCall]}, {toolCalls: [patchToLandsatOnly]}, {text: ''}],
+            summaryReplies: [{text: 'Now masks clouds with Landsat CFMask only.'}]
+        })
+        const harness = aToolFactoryHarness({
+            specialist: 'update_recipe',
+            innerTools: prepareThenPatchTools(preparePacket),
+            guiRequests: metadataFor(mosaicMetadata),
+            llm
+        })
+
+        harness.invoke({recipeId: 'r1', instruction: 'mask clouds with Landsat only'})
+
+        const summaryUserText = llm.summaryRequests[0].messages[1].content
+        expect(summaryUserText).toContain('userRequest: mask clouds with Landsat only')
+        expect(summaryUserText).toContain('appliedChanges:')
+        expect(summaryUserText).toContain('"previousValue":["sentinel2CloudScorePlus","landsatCFMask"]')
+        expect(summaryUserText).toContain('appliedOperations:')
+    })
+
+    describe('recovery guards — finishOnEmpty fires only after a successful patch', () => {
+
+        const prepareCall = {id: 'tu1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/dates/targetDate']}}
+        const patchCallFailing = {id: 'tp1', name: 'recipe_patch', input: {
+            recipeId: 'r1', baseModelHash: 'h1', operations: [{op: 'remove', path: '/sources/dataSets/SENTINEL_2'}]
+        }}
+
+        function stallEvents(harness) {
+            return harness.bus.events.filter(event => event.type === 'specialist.stall')
+        }
+
+        it('still stalls on an empty response before any successful patch', () => {
+            const preparePacket = {ok: true, data: {baseModelHash: 'h1', writablePaths: ['/dates/targetDate'], currentValues: {}, pathHints: {}}}
+            const harness = aToolFactoryHarness({
+                specialist: 'update_recipe',
+                innerTools: prepareThenPatchTools(preparePacket),
+                guiRequests: metadataFor(mosaicMetadata),
+                replies: [{toolCalls: [prepareCall]}, {text: ''}]
+            })
+
+            harness.invoke({recipeId: 'r1', instruction: 'edit'})
+
+            expect(stallEvents(harness).length).toBeGreaterThan(0)
+        })
+
+        it('still stalls on an empty response after a failed patch (so retryHints can be used)', () => {
+            const failingPatchTools = innerToolsImpl(
+                {recipe_patch: () => of({ok: false, error: {code: 'VALIDATION_FAILED', message: 'bad', details: []}})},
+                [
+                    {name: 'prepare_update', description: 'Prepare.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}},
+                    {name: 'recipe_patch', description: 'Patch.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, operations: {type: 'array'}}}}
+                ]
+            )
+            const harness = aToolFactoryHarness({
+                specialist: 'update_recipe',
+                innerTools: failingPatchTools,
+                guiRequests: metadataFor(mosaicMetadata),
+                replies: [{toolCalls: [patchCallFailing]}, {text: ''}]
+            })
+
+            harness.invoke({recipeId: 'r1', instruction: 'edit'})
+
+            expect(stallEvents(harness).length).toBeGreaterThan(0)
+        })
     })
 
     it('does not summarize when the specialist already produced a non-empty answer', () => {

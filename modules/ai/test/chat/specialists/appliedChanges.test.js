@@ -44,6 +44,32 @@ describe('enrichOperations', () => {
         })
     })
 
+    it('adds previousValue and pathHint from the prepare_update packet context', () => {
+        const context = {
+            currentValues: {'/options/mode': 'OFF'},
+            pathHints: {'/options/mode': {valueKind: 'scalar', required: true}}
+        }
+
+        const [change] = enrichOperations([{op: 'replace', path: '/options/mode', value: 'AGGRESSIVE'}], labelsByPath, context)
+
+        expect(change).toEqual({
+            op: 'replace',
+            path: '/options/mode',
+            previousValue: 'OFF',
+            pathHint: {valueKind: 'scalar', required: true},
+            value: 'AGGRESSIVE',
+            valueLabel: 'aggressive'
+        })
+    })
+
+    it('omits previousValue when the path was absent (null/missing) in currentValues', () => {
+        const context = {currentValues: {'/options/mode': null}}
+
+        const [change] = enrichOperations([{op: 'add', path: '/options/mode', value: 'OFF'}], labelsByPath, context)
+
+        expect(change).not.toHaveProperty('previousValue')
+    })
+
     it('falls back to the raw member when an array item has no label', () => {
         const [change] = enrichOperations([{op: 'replace', path: '/options/methods', value: ['landsatCFMask', 'unknownMethod']}], labelsByPath)
 
