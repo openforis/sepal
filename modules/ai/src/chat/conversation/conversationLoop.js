@@ -90,7 +90,8 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
             llm.respondTo$({
                 messages: llmMessages,
                 tools: toolSchemas,
-                debugLabel: `orchestrator ${id} round ${round}`
+                debugLabel: `orchestrator ${id} round ${round}`,
+                usageContext: {role: 'orchestrator', conversationId: id}
             }).pipe(
                 tap(event => {
                     if (event.textDelta) acc.text += event.textDelta

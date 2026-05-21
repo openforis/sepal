@@ -17,16 +17,20 @@ function aConversation({
 function aFakeLlm({replies = [{text: 'response'}]} = {}) {
     const receivedMessages = []
     const receivedTools = []
+    const receivedRequests = []
     let i = 0
     return {
-        respondTo$({messages, tools} = {}) {
+        respondTo$(request = {}) {
+            const {messages, tools} = request
             receivedMessages.push(messages ? [...messages] : null)
             receivedTools.push(tools)
+            receivedRequests.push(request)
             const reply = replies[Math.min(i++, replies.length - 1)]
             return from(replyToEvents(reply))
         },
         receivedMessages,
-        receivedTools
+        receivedTools,
+        receivedRequests
     }
 }
 

@@ -16,7 +16,8 @@ const {createLmStudioNativeChat} = require('#mcp/chat/llm/providers/lmStudioNati
 
 describe('LLM provider selector', () => {
 
-    const providerConfig = {baseURL: 'http://example.test/v1', apiKey: 'test-key', model: 'test-model', bus: {publish: () => {}}}
+    const clock = {now: () => 0}
+    const providerConfig = {baseURL: 'http://example.test/v1', apiKey: 'test-key', model: 'test-model', bus: {publish: () => {}}, clock}
 
     beforeEach(() => {
         createOpenAiChatCompletions.mockClear()
@@ -29,11 +30,11 @@ describe('LLM provider selector', () => {
         return createLlm({...providerConfig, provider})
     }
 
-    it('builds both provider adapters from the shared provider config', () => {
+    it('builds both provider adapters, passing the provider name and clock through so usage events are labelled and timed', () => {
         aLlm('lmstudio')
 
-        expect(createOpenAiChatCompletions).toHaveBeenCalledWith(providerConfig)
-        expect(createLmStudioNativeChat).toHaveBeenCalledWith(providerConfig)
+        expect(createOpenAiChatCompletions).toHaveBeenCalledWith(expect.objectContaining({...providerConfig, provider: 'lmstudio'}))
+        expect(createLmStudioNativeChat).toHaveBeenCalledWith(expect.objectContaining({...providerConfig, provider: 'lmstudio'}))
     })
 
     it('routes a non-reasoning lmstudio request to the native chat path', () => {

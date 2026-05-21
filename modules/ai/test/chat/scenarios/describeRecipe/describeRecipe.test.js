@@ -75,6 +75,16 @@ describe('describe_recipe', () => {
             expect(userMessage.content).toMatch(/which classifier\?/)
         })
 
+        it('tags the specialist LLM call with role and specialist name so usage accounting can attribute it', () => {
+            harness.invoke({recipeId: 'r1', question: 'which classifier?'})
+
+            expect(harness.llm.receivedRequests[0].usageContext).toMatchObject({
+                role: 'specialist',
+                specialist: 'recipe.describe',
+                conversationId: 'conv-1'
+            })
+        })
+
         it('issues a recipe-metadata GUI request to resolve the recipe type (not a recipe_load preflight)', () => {
             harness.invoke({recipeId: 'r1'})
 

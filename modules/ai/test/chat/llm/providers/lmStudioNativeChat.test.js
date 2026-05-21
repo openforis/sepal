@@ -22,6 +22,7 @@ describe('LM Studio native chat adapter', () => {
             apiKey: 'test-key',
             model: 'qwen/qwen3.5-9b',
             bus: {publish: () => {}},
+            clock: {now: () => 0},
             ...overrides
         })
     }
@@ -151,6 +152,46 @@ describe('LM Studio native chat adapter', () => {
             expect(response.message()).toContain(debugLabel)
             expect(response.message()).toContain('contentChunks=1')
             expect(bus.published).not.toContainEqual(expect.objectContaining({type: 'llm.debugResponse'}))
+        })
+    })
+
+    describe('usage accounting', () => {
+
+        function aRecordingBus() {
+            const published = []
+            return {publish: event => published.push(event), published}
+        }
+
+        function aStepClock(times) {
+            let i = 0
+            return {now: () => times[Math.min(i++, times.length - 1)]}
+        }
+
+        it('publishes one llm.usage event with the call dimensions and duration, estimating tokens when the native response carries no usage', async () => {
+            const bus = aRecordingBus()
+            global.fetch.mockResolvedValue({
+                ok: true,
+                text: async () => JSON.stringify({output: [{type: 'message', content: 'My Title'}]})
+            })
+
+            await collect(aNativeChat({bus, clock: aStepClock([2000, 2300])}).respondTo$({
+                messages: [{role: 'user', content: 'name this chat'}],
+                usageContext: {role: 'title', conversationId: 'conv-7'}
+            }))
+
+            const usage = bus.published.filter(event => event.type === 'llm.usage')
+            expect(usage).toHaveLength(1)
+            expect(usage[0]).toMatchObject({
+                type: 'llm.usage',
+                role: 'title',
+                conversationId: 'conv-7',
+                provider: 'lmstudio',
+                model: 'qwen/qwen3.5-9b',
+                usageExact: false,
+                durationMs: 300,
+                success: true
+            })
+            expect(usage[0].inputTokens).toBeGreaterThan(0)
         })
     })
 })

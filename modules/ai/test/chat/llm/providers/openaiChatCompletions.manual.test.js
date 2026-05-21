@@ -14,7 +14,8 @@ describe('OpenAI-compatible chat-completions adapter [manual]', () => {
 
         const openAiChat = createOpenAiChatCompletions({
             baseURL: BASE_URL, apiKey: API_KEY, model: MODEL,
-            bus: {publish: () => {}}
+            bus: {publish: () => {}},
+            clock: {now: () => Date.now()}
         })
 
         const events = await firstValueFrom(

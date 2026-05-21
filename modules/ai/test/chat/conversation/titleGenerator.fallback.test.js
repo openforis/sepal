@@ -168,4 +168,24 @@ describe('TitleGenerator — fallback and error paths', () => {
             expect(fixture.bus.published.map(event => event.type)).toContain('title.empty')
         })
     })
+
+    describe('usage attribution', () => {
+
+        it('tags the title-generation LLM call with the title role and conversation so usage accounting can attribute it', () => {
+            const fixture = aTitleGenFixture({llm: aFakeLlm({replies: [{text: 'NDVI change Kenya'}]})})
+            const conversation = aConversation([
+                {role: 'user', content: 'How do I detect NDVI change?'},
+                {role: 'assistant', content: 'Use a time-series recipe.'}
+            ])
+
+            run(fixture.titleGen.afterTurn$({
+                conversation, conversationId: 'conv-1', userText: 'How do I detect NDVI change?'
+            }))
+
+            expect(fixture.llm.receivedRequests[0].usageContext).toMatchObject({
+                role: 'title',
+                conversationId: 'conv-1'
+            })
+        })
+    })
 })

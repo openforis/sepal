@@ -48,7 +48,8 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
             llm.respondTo$({
                 messages: promptMessages,
                 tools: allowedSchemas,
-                debugLabel: `specialist ${name} round ${round}`
+                debugLabel: `specialist ${name} round ${round}`,
+                usageContext: {role: 'specialist', specialist: name, conversationId}
             }).pipe(
                 tap(event => {
                     if (event.textDelta) acc.text += event.textDelta

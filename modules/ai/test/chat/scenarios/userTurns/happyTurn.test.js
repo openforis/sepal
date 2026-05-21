@@ -119,4 +119,18 @@ describe('happy turn', () => {
             expect(stored).toEqual([{role: 'user', content: 'hello'}])
         })
     })
+
+    describe('usage attribution', () => {
+
+        it('tags the orchestrator LLM call with role and conversation so usage accounting can attribute it', async () => {
+            const harness = aConversationHarness({id: 'conv-1', replies: [{text: 'Hi!'}]})
+
+            await collect(harness.send$('Hello'))
+
+            expect(harness.llm.receivedRequests[0].usageContext).toMatchObject({
+                role: 'orchestrator',
+                conversationId: 'conv-1'
+            })
+        })
+    })
 })

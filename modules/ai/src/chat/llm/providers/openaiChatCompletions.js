@@ -1,10 +1,11 @@
 // OpenAI-compatible Chat Completions provider adapter. Unrolls the
 // streamed response into {textDelta, toolCall} events for the domain.
 
-const {EMPTY, concat, defer, filter, from, map, mergeMap, tap, timeout} = require('rxjs')
+const {EMPTY, concat, defer, filter, finalize, from, map, mergeMap, tap, timeout} = require('rxjs')
 const OpenAI = require('openai').default
 const {createDiagnostics} = require('../../diagnostics')
 const {publishResponseSummary} = require('../events')
+const {publishLlmUsage} = require('../usage')
 
 const FIRST_CHUNK_TIMEOUT_MS = 60_000
 const BETWEEN_CHUNKS_TIMEOUT_MS = 30_000
@@ -17,7 +18,7 @@ const DEFAULT_MAX_TOKENS = 4096
 
 const DEFAULT_DIAGNOSTICS = createDiagnostics()
 
-function createOpenAiChatCompletions({baseURL, apiKey, model, bus, diagnostics = DEFAULT_DIAGNOSTICS}) {
+function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai', bus, clock, diagnostics = DEFAULT_DIAGNOSTICS}) {
     const client = new OpenAI({baseURL, apiKey})
 
     return {respondTo$}
@@ -26,7 +27,7 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus, diagnostics =
         return attempt$(request, 0)
     }
 
-    function attempt$({messages, tools, maxTokens, temperature, debugLabel, extraParams = {}}, attempt) {
+    function attempt$({messages, tools, maxTokens, temperature, debugLabel, usageContext, extraParams = {}}, attempt) {
         const acc = freshAcc()
         // Mutated inside the toolCalls$ defer and read by the retry defer below.
         // The mutation order is implicit in RxJS's sequential evaluation of
@@ -38,12 +39,14 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus, diagnostics =
             model,
             messages: toProviderMessages(requestMessages),
             stream: true,
+            stream_options: {include_usage: true},
             ...(hasTools ? {tools: toProviderTools(tools), tool_choice: 'auto'} : {}),
             ...extraParams,
             max_tokens: maxTokens !== undefined ? maxTokens : DEFAULT_MAX_TOKENS,
             ...(temperature !== undefined ? {temperature} : {})
         }
         const text$ = defer(() => {
+            acc.startedAt = clock.now()
             if (debugLabel) {
                 bus.publish({
                     type: 'llm.request',
@@ -70,14 +73,38 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, bus, diagnostics =
             retryAfterAttempt = shouldRetryLengthCap({acc, toolCallEvents: events, attempt})
             return retryAfterAttempt ? EMPTY : from(events)
         })
-        const summary$ = concat(text$, toolCalls$).pipe(publishResponseSummary({bus, diagnostics, model, acc, debugLabel, attempt}))
+        const summary$ = concat(text$, toolCalls$).pipe(
+            tap({error: error => { acc.error = error }}),
+            publishResponseSummary({bus, diagnostics, model, acc, debugLabel, attempt}),
+            publishAttemptUsage(acc, params, usageContext)
+        )
         return concat(
             summary$,
             defer(() => concat(
                 publishLengthCap$(acc, {debugLabel, attempt, willRetry: retryAfterAttempt}),
-                retryAfterAttempt ? attempt$({messages, tools, maxTokens, temperature, debugLabel, extraParams}, attempt + 1) : EMPTY
+                retryAfterAttempt ? attempt$({messages, tools, maxTokens, temperature, debugLabel, usageContext, extraParams}, attempt + 1) : EMPTY
             ))
         )
+    }
+
+    // One llm.usage per provider call — attached to the per-attempt stream so a
+    // length-cap retry (a second provider call) emits its own usage event.
+    function publishAttemptUsage(acc, params, usageContext) {
+        return finalize(() => {
+            const context = usageContext || {}
+            publishLlmUsage({
+                bus, provider, model,
+                role: context.role, specialist: context.specialist, recipeType: context.recipeType,
+                conversationId: context.conversationId, turnId: context.turnId, callId: context.callId,
+                usage: neutralUsageFromOpenAi(acc.usage),
+                outputText: acc.text,
+                messageBytes: Buffer.byteLength(JSON.stringify(params.messages), 'utf8'),
+                toolSchemaBytes: Buffer.byteLength(JSON.stringify(params.tools || []), 'utf8'),
+                durationMs: acc.startedAt != null ? clock.now() - acc.startedAt : null,
+                success: !acc.error,
+                errorCode: acc.error ? 'LLM_CALL_FAILED' : null
+            })
+        })
     }
 
     function publishLengthCap$(acc, {debugLabel, attempt, willRetry}) {
@@ -127,6 +154,9 @@ function freshAcc() {
     return {
         text: '',
         reasoning: '',
+        usage: null,
+        startedAt: null,
+        error: null,
         chunkCount: 0,
         contentChunkCount: 0,
         reasoningChunkCount: 0,
@@ -200,8 +230,31 @@ function toProviderToolResultMessages({toolResults}) {
     }))
 }
 
+// Translates OpenAI-compatible raw `usage` into the neutral usage shape that
+// usage.js consumes. Provider field names live here, in the adapter — not in
+// shared code. OpenAI prompt_tokens already counts cached tokens, and the API
+// has no cache-write concept. Returns null when the provider reported nothing.
+function neutralUsageFromOpenAi(raw) {
+    if (!raw) return null
+    const cachedInputTokens = raw.prompt_tokens_details?.cached_tokens ?? 0
+    const inputTokens = raw.prompt_tokens ?? 0
+    const outputTokens = raw.completion_tokens ?? 0
+    return {
+        inputTokens,
+        outputTokens,
+        totalTokens: raw.total_tokens ?? inputTokens + outputTokens,
+        cachedInputTokens,
+        cacheWriteTokens: 0,
+        reasoningTokens: raw.completion_tokens_details?.reasoning_tokens ?? 0,
+        usageExact: true,
+        cacheUsageExact: raw.prompt_tokens_details?.cached_tokens !== undefined
+    }
+}
+
 function accumulateChunk(acc, chunk) {
     acc.chunkCount++
+    // include_usage streams a final chunk with empty choices carrying token usage.
+    if (chunk.usage) acc.usage = chunk.usage
     const choice = chunk.choices?.[0]
     const delta = choice?.delta
     if (choice?.finish_reason) acc.finishReasons.add(choice.finish_reason)

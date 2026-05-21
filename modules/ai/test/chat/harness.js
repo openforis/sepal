@@ -112,13 +112,17 @@ function aFakeInnerToolsFor(specialist) {
 function aFakeLlm({replies = [{text: ''}]} = {}) {
     const receivedMessages = []
     const receivedTools = []
+    const receivedRequests = []
     let i = 0
     return {
         receivedMessages,
         receivedTools,
-        respondTo$({messages, tools} = {}) {
+        receivedRequests,
+        respondTo$(request = {}) {
+            const {messages, tools} = request
             receivedMessages.push(messages ? [...messages] : null)
             receivedTools.push(tools)
+            receivedRequests.push(request)
             const reply = replies[Math.min(i++, replies.length - 1)]
             return from(replyToEvents(reply))
         }

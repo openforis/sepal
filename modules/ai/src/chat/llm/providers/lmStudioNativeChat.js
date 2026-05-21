@@ -1,19 +1,20 @@
 // LM Studio's native /api/v1/chat provider adapter. Used when the
 // caller disables reasoning (currently only title generation).
 
-const {EMPTY, defer, from, mergeMap} = require('rxjs')
+const {EMPTY, defer, finalize, from, mergeMap, tap} = require('rxjs')
 const {createDiagnostics, truncateString, MAX_DEBUG_TEXT} = require('../../diagnostics')
 const {publishResponseSummary} = require('../events')
+const {publishLlmUsage} = require('../usage')
 
 const DEFAULT_DIAGNOSTICS = createDiagnostics()
 
-function createLmStudioNativeChat({baseURL, apiKey, model, bus, diagnostics = DEFAULT_DIAGNOSTICS}) {
+function createLmStudioNativeChat({baseURL, apiKey, model, provider = 'lmstudio', bus, clock, diagnostics = DEFAULT_DIAGNOSTICS}) {
 
     return {respondTo$}
 
-    function respondTo$({messages, maxTokens, temperature, debugLabel}) {
+    function respondTo$({messages, maxTokens, temperature, debugLabel, usageContext}) {
         const url = nativeChatUrl(baseURL)
-        const acc = {text: '', chunkCount: 0, contentChunkCount: 0}
+        const acc = {text: '', chunkCount: 0, contentChunkCount: 0, startedAt: null, error: null}
         const params = {
             model,
             input: nativeInput(messages),
@@ -25,6 +26,7 @@ function createLmStudioNativeChat({baseURL, apiKey, model, bus, diagnostics = DE
             ...(temperature !== undefined ? {temperature} : {})
         }
         return defer(() => {
+            acc.startedAt = clock.now()
             if (debugLabel) {
                 bus.publish({
                     type: 'llm.request',
@@ -41,8 +43,29 @@ function createLmStudioNativeChat({baseURL, apiKey, model, bus, diagnostics = DE
                 acc.contentChunkCount = text ? 1 : 0
                 return text ? from([{textDelta: text}]) : EMPTY
             }),
-            publishResponseSummary({bus, diagnostics, model, acc, debugLabel})
+            tap({error: error => { acc.error = error }}),
+            publishResponseSummary({bus, diagnostics, model, acc, debugLabel}),
+            finalize(() => publishUsage(acc, params, usageContext))
         )
+    }
+
+    // The native /api/v1/chat path is title-only and its usage wire shape is not
+    // verified, so usage is estimated from bytes (usage: null). If LM Studio's
+    // native usage shape is confirmed later, translate it here, test-first.
+    function publishUsage(acc, params, usageContext) {
+        const context = usageContext || {}
+        publishLlmUsage({
+            bus, provider, model,
+            role: context.role, specialist: context.specialist, recipeType: context.recipeType,
+            conversationId: context.conversationId, turnId: context.turnId, callId: context.callId,
+            usage: null,
+            outputText: acc.text,
+            messageBytes: Buffer.byteLength(JSON.stringify([params.system_prompt, params.input]), 'utf8'),
+            toolSchemaBytes: 0,
+            durationMs: acc.startedAt != null ? clock.now() - acc.startedAt : null,
+            success: !acc.error,
+            errorCode: acc.error ? 'LLM_CALL_FAILED' : null
+        })
     }
 }
 

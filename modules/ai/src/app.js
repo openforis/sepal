@@ -16,6 +16,7 @@ const {createOrchestratorToolRegistry} = require('./chat/orchestratorToolRegistr
 const {createLlm} = require('./chat/llm')
 const {createEventBus} = require('./eventBus')
 const {subscribeLogListener} = require('./logListener')
+const {subscribeUsageRollups} = require('./chat/usageRollups')
 const {createServer} = require('./server')
 
 const GUI_REQUEST_TIMEOUT_MS = 30_000
@@ -26,6 +27,7 @@ function createApp({config}) {
     const diagnostics = createDiagnostics({fullPayloads: config.fullTracePayloads})
 
     subscribeLogListener({bus})
+    subscribeUsageRollups({bus})
 
     const llm = createLlm({
         baseURL: config.llmBaseUrl,
@@ -33,6 +35,7 @@ function createApp({config}) {
         model: config.llmModel,
         provider: config.llmProvider,
         bus,
+        clock,
         diagnostics
     })
     const guiRequests = createGuiRequests({clock, createId: uuid, timeoutMs: GUI_REQUEST_TIMEOUT_MS, bus})

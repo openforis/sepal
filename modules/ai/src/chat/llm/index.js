@@ -5,8 +5,8 @@
 const {createOpenAiChatCompletions} = require('./providers/openaiChatCompletions')
 const {createLmStudioNativeChat} = require('./providers/lmStudioNativeChat')
 
-function createLlm({baseURL, apiKey, model, provider, bus, diagnostics}) {
-    const providerConfig = {baseURL, apiKey, model, bus, diagnostics}
+function createLlm({baseURL, apiKey, model, provider, bus, clock, diagnostics}) {
+    const providerConfig = {baseURL, apiKey, model, provider, bus, clock, diagnostics}
     const openAiChat = createOpenAiChatCompletions(providerConfig)
     const lmStudioNativeChat = createLmStudioNativeChat(providerConfig)
 

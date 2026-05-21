@@ -94,7 +94,8 @@ function createTitleGenerator({llm, conversationsStore, bus, diagnostics = DEFAU
                 maxTokens: TITLE_MAX_TOKENS,
                 temperature: TITLE_TEMPERATURE,
                 disableReasoning: true,
-                debugLabel: `title ${conversationId}`
+                debugLabel: `title ${conversationId}`,
+                usageContext: {role: 'title', conversationId}
             }).pipe(
                 timeout({
                     first: TITLE_FIRST_TEXT_TIMEOUT_MS,

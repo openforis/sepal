@@ -27,6 +27,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             apiKey: 'test-key',
             model: 'test-model',
             bus: {publish: () => {}},
+            clock: {now: () => 0},
             ...overrides
         })
     }
@@ -50,10 +51,19 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             model: 'test-model',
             messages: [{role: 'user', content: 'hello'}],
             stream: true,
+            stream_options: {include_usage: true},
             chat_template_kwargs: {enable_thinking: false},
             max_tokens: 32,
             temperature: 0
         })
+    })
+
+    it('asks the provider to include token usage in the stream so usage can be exact', async () => {
+        mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])
+
+        await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
+
+        expect(mockCreate.mock.calls[0][0].stream_options).toEqual({include_usage: true})
     })
 
     it('sends tool schemas in provider function format and lets the model choose', async () => {
@@ -486,6 +496,91 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             expect(summary).toContain('reasoningChunks=3')
             // The actual reasoning text is surfaced (may be truncated, but the head is present).
             expect(summary).toContain('The user wants')
+        })
+    })
+
+    describe('usage accounting', () => {
+
+        function aRecordingBus() {
+            const published = []
+            return {publish: event => published.push(event), published}
+        }
+
+        // now() returns 1000 on the first read (request start) then 1450 (stream end).
+        function aStepClock(times) {
+            let i = 0
+            return {now: () => times[Math.min(i++, times.length - 1)]}
+        }
+
+        const usageChunk = {choices: [], usage: {prompt_tokens: 1000, completion_tokens: 50, total_tokens: 1050, prompt_tokens_details: {cached_tokens: 800}}}
+
+        it('publishes one llm.usage event with provider-reported tokens, the call dimensions, byte sizes, and duration', async () => {
+            const bus = aRecordingBus()
+            mockCreate.mockResolvedValue([{choices: [{delta: {content: 'patched.'}}]}, usageChunk])
+
+            await collect(anOpenAiChat({bus, provider: 'lmstudio', clock: aStepClock([1000, 1450])}).respondTo$({
+                messages: [{role: 'user', content: 'edit the recipe'}],
+                tools: toolSchemas,
+                usageContext: {role: 'specialist', specialist: 'recipe.update', conversationId: 'conv-1'}
+            }))
+
+            const usage = bus.published.filter(event => event.type === 'llm.usage')
+            expect(usage).toHaveLength(1)
+            expect(usage[0]).toMatchObject({
+                role: 'specialist',
+                specialist: 'recipe.update',
+                conversationId: 'conv-1',
+                provider: 'lmstudio',
+                model: 'test-model',
+                inputTokens: 1000,
+                outputTokens: 50,
+                cachedInputTokens: 800,
+                usageExact: true,
+                cacheUsageExact: true,
+                durationMs: 450,
+                success: true
+            })
+            expect(usage[0].toolSchemaBytes).toBeGreaterThan(0)
+            expect(usage[0].inputBytes).toBe(usage[0].messageBytes + usage[0].toolSchemaBytes)
+        })
+
+        it('falls back to an inexact byte estimate when the provider streams no usage chunk', async () => {
+            const bus = aRecordingBus()
+            mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'hi'}],
+                usageContext: {role: 'orchestrator', conversationId: 'conv-1'}
+            }))
+
+            const usage = bus.published.find(event => event.type === 'llm.usage')
+            expect(usage).toMatchObject({role: 'orchestrator', usageExact: false, cacheUsageExact: false, cachedInputTokens: 0})
+            expect(usage.inputTokens).toBeGreaterThan(0)
+        })
+
+        it('emits one llm.usage per provider call across a length-cap retry, keeping the same attribution on both', async () => {
+            const bus = aRecordingBus()
+            mockCreate
+                .mockResolvedValueOnce([
+                    {choices: [{delta: {reasoning_content: 'planning...'}}]},
+                    {choices: [{finish_reason: 'length', delta: {}}]}
+                ])
+                .mockResolvedValueOnce([{choices: [{delta: {content: 'recovered.'}}]}])
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'edit'}],
+                usageContext: {role: 'specialist', specialist: 'recipe.update', conversationId: 'conv-1'}
+            }))
+
+            const usage = bus.published.filter(event => event.type === 'llm.usage')
+            expect(usage).toHaveLength(2)
+            // The retry call must carry the same role/conversation, or its tokens
+            // drop out of the real turn/conversation rollups.
+            usage.forEach(event => expect(event).toMatchObject({
+                role: 'specialist',
+                specialist: 'recipe.update',
+                conversationId: 'conv-1'
+            }))
         })
     })
 })
