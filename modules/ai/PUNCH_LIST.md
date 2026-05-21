@@ -39,39 +39,11 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   per-layer loading/error state, dynamic-vis legend/palette inspection, and
   any live per-area viewport beyond `map.view` (per-area viewports under
   `mapCommand$` are not in Redux).
-- ~~**`recipe_patch` GUI handler is stubbed — applies + validates but does not
-  persist.**~~ — closed. `recipePatch` in
-  `modules/gui/src/app/home/body/process/chatActions/recipeActions.js` now
-  persists a successful patch through the same write path
-  `updateRecipe`/`createRecipe` use: it routes the post-apply effective model
-  through `persistRecipe$` (`api.recipe.save$`), updates
-  `process.loadedRecipes` / `process.recipes`, stamps the model hash, and
-  opens/selects the recipe, returning `{summary, modelHash, invalidatedPaths}`.
-  No-op (test-only) patches and all error envelopes (`STALE_WRITE`,
-  `INVALID_PATCH`, `PATCH_APPLY_FAILED`, `VALIDATION_FAILED`,
-  `RECIPE_NOT_FOUND`) still short-circuit before any save. Covered by
-  `chatActions.contract.test.js`.
 - **Recipe-domain validation is deferred** — JSON Patch envelope validation is
   not enough for safe recipe edits. Use the shared recipe spec/validation API
   (`lib/js/recipes`, currently MOSAIC only) from the GUI write path
   for authoritative validation and from recipe specialists for dependent-fragment
   planning and prompt facts.
-- ~~**Shared recipe spec lacks `promptFacts()`**~~ — closed, then split into
-  per-purpose buckets. See the "Recipe specialist routing is partially
-  type-aware" entry above and `lib/js/recipes/README.md` for the current API.
-- ~~**`describe_recipe` preflight `recipe_load` is wasteful**~~ — closed.
-  Type resolution now goes through `lookupRecipeMetadata$` (see
-  `modules/ai/src/chat/tools/recipeMetadata.js`) which hits the GUI's
-  `recipe-metadata` bridge handler in
-  `modules/gui/src/app/home/body/process/chatActions/recipeActions.js` —
-  identity-only response, no model fetch, no gzip envelope. Reusable by
-  the future `update_recipe` / `create_recipe` dispatchers.
-- ~~**Shared recipe spec lacks `fragmentsForEdit({intent, targetPaths})`**~~ —
-  closed, then superseded. The original `spec.updateClosure()` / `load_for_update`
-  keyword-intent closure was replaced by `prepare_update`, which expands the
-  specialist's chosen focus paths into the dependent + writable set via
-  `spec.llmMetadata()` constraints (no keyword intent-classification). The
-  closure code has been removed.
 - **AI patch-apply path (future GUI slice)** — apply the LLM's effective
   output directly; no re-merge of dormant fields. Validation runs on the
   effective shape via `spec.validate(model)`. Contract is fixed in
@@ -123,14 +95,16 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   but AI turns only receive GUI/runtime state. Include the UI language as
   runtime data so the model can reply in the active interface language without
   guessing from the user's text.
-- **No model-profile resolution or usage rollups** — every LLM call still goes
-  through one hard-wired adapter; provider/model/profile resolution, orthogonal
-  thinking mode, normalized `llm.usage`, and per-turn/per-conversation rollups
-  are not wired. First implementation slice should emit provider-neutral
-  per-call usage with exact token/cache fields when available and byte/count
-  estimates otherwise, then aggregate by role, specialist, recipe type,
-  modelProfile, thinking, provider/model, cache behavior, and duration so
-  Bedrock cost/profile choices can be compared before switching providers.
+- **No model-profile / thinking-effort resolution** — `llm.usage` + `turn.usage`
+  + `conversation.usage` rollups now emit, but every call still uses one
+  hard-wired adapter with no profile/thinking resolution. Wire per-specialist
+  policy: `modelProfile` (tier) + orthogonal `thinking` (`off|low|medium|high`)
+  resolved per call, with adapters translating `thinking` to each target's native
+  control (see DESIGN_chat_specialists_v2 §11 "Reasoning effort") — update
+  specialist `medium`/`high`, title `off`. Effort is runtime-enforced, never
+  prompt-instructed. LM Studio/Qwen is on/off only (no graceful budget; that's a
+  Nova/Claude production capability), so a no-effort model logs a warning and runs
+  thinking-on + `max_tokens` cap.
 - **Recipes-in-prod-GUI fails silently** — `sepal start gui -p` fails without
   visible errors. Dev server works (`recipes` resolves via `optimizeDeps.include`
   + node_modules symlink). Production goes through Rollup with different module
@@ -141,11 +115,6 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   captured, (2) confirm the `recipes` source is in the production bundle
   (minified + tree-shaken), and (3) verify chat-driven recipe ops work through
   the production nginx reverse proxy.
-- ~~**Boundary events are not lazy**~~ — closed. Trace/debug bus events go through
-  `src/chat/diagnostics.js` (`summarizeMessages` / `summarizeTools` /
-  `summarizeObject` / `truncateString`); messages and tools/payload events use
-  `message: () => ...` lazy strings throughout. Bounded by default; opt-in full
-  payloads via `AI_FULL_TRACE_PAYLOADS=true`.
 
 ## Observability
 
@@ -154,12 +123,23 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   fixes attrs at construction. For LLM/tool spans we want completion attrs such
   as chunks, token usage, cache hits, result size, and status once they are
   known.
-- **Usage accounting events are not emitted** — active adapters log response
-  summaries, but they do not emit normalized `llm.usage` events,
-  `turn.usage`, or `conversation.usage`. Rollups need separate input/output
-  tokens, cached input/write tokens, exact-vs-estimated flags, duration, call
-  counts, round/tool/stall/retry counts, max context size/utilization, and
-  role/specialist/profile/thinking/provider/model breakdowns.
+- **Reasoning-loop diagnostics are thin** (smallest unblocking slice) — an empty
+  `specialist.response` doesn't say *why* (the provider captures
+  `reasoningChunkCount` + `finishReasons` but they don't reach that line); a
+  failed `specialist.tool.response` logs only `errorCode` (the reason — "invalid
+  array index", "path not found" — is browser-only); the usage rollup omits
+  `reasoningTokens`. Surface: `reasoningChars` + `finishReason` on
+  `specialist.response`, the error `message`/`details` on failed tool responses,
+  and `reasoningTokens` in `turn.usage` — counts only, never reasoning content
+  (the provider deliberately keeps reasoning out of the runtime). This is the
+  diagnostic that distinguishes reasoning-burn (`finishReason=length`) from a true
+  empty, and that tunes the cap/effort.
+- **Over-think recovery** — today's length-cap retry re-reasons from scratch with
+  a "be concise" system hint (`LENGTH_CAP_RETRY_HINT`), discarding the prior
+  thinking and able to re-cap. Replace with the adapter-internal reasoning-off
+  completion pass seeded with the captured reasoning (DESIGN_chat_specialists_v2
+  §11 "Reasoning effort"), emitting only the final tool call/answer; log when it
+  fires.
 
 ## Persistence And Runtime State
 

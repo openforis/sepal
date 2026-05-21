@@ -606,6 +606,36 @@ Provider notes:
 Add/reuse provider conformance fixtures so every adapter proves the same
 internal tool-turn contract.
 
+### Reasoning effort
+
+`thinking` (`off|low|medium|high`) is **runtime-enforced, never prompt-instructed.**
+An in-prompt limit ("use at most N thinking tokens") makes the model spend
+reasoning on self-accounting — and it can't count its own tokens reliably — so
+the mode stays qualitative and the model never sees a token number. Adapters
+translate it to the target's native control:
+
+| Target | Mechanism | Enforcement |
+|---|---|---|
+| Nova 2 (Bedrock) | `reasoningConfig {type, maxReasoningEffort: low/medium/high}` | graceful; unset `temperature`/`topP`/`maxTokens` at `high` |
+| Claude (Bedrock) | `thinking {type: enabled, budget_tokens}` | graceful |
+| OpenAI | `reasoning_effort: low/medium/high` | graceful, qualitative |
+| LM Studio / Qwen | `enable_thinking` on/off only (native `/api/v1/chat`: `reasoning:'off'`; OpenAI path `chat_template_kwargs.enable_thinking`, flaky for Qwen3.5) | **no graceful budget — on/off + `max_tokens` floor** |
+
+When the resolved model has no effort knob, the adapter logs info/warn once and
+runs thinking-on with the `max_tokens` cap — no elaborate fallback. Qwen is
+dev-only; a graceful reasoning budget is a production (Nova/Claude) capability.
+
+**Over-think recovery.** `max_tokens` is a generous backstop, rarely hit. When a
+call length-caps with no actionable output (reasoning consumed the budget before
+a tool call or answer), the adapter makes **one reasoning-off completion pass
+seeded with the captured reasoning**, asking the model to finish — reusing the
+thinking instead of re-running it (the current length-cap retry re-reasons from
+scratch), and, where reasoning-off takes effect, unable to re-cap. The reasoning
+stays adapter-internal: only the final tool call/answer reaches the runtime.
+Degrade to the stall/cap behaviour if the completion pass also fails (e.g. a
+local model that ignores reasoning-off). Log every occurrence so the cap/effort
+can be tuned empirically.
+
 ## 12. Prompt caching
 
 Static prefixes matter independently from in-process sessions.
