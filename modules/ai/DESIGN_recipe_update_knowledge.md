@@ -422,6 +422,151 @@ percentile reduction and an extra masking pass" is a source-derived fact;
 "remove optional filters first when optimizing for render reliability" is policy
 that the specialist can apply in context.
 
+## Captured MOSAIC cloud-masking notes
+
+These notes are working source material for future MOSAIC `knowledge.js` and
+manual-generation slices. They capture behavior observed while testing the
+update specialist and facts checked against the GUI implementation on
+2026-05-21. They are not intended to be copied verbatim into prompts; distill
+them into structured recipe metadata with tests.
+
+### User intent shape
+
+Users are more likely to complain that a mosaic does not render, a layer does
+not load, or clouds remain visible than to use precise terms such as "optimize
+latency". For Earth Engine-backed mosaics, failed rendering is often memory
+pressure first and slowness second. Specialist guidance should therefore treat
+"render fails", "layer does not load", "timeout", and "very slow" as related
+operational symptoms, but still distinguish memory, latency, availability, and
+quality when the fact source supports it.
+
+For a broad request such as "there are still clouds, remove them", the expected
+first move is usually a coherent cloud-masking strategy, not an isolated
+threshold tweak. The specialist should consider the source groups currently in
+the recipe and adjust source-appropriate masking settings together. It should
+avoid changing expensive performance levers such as cloud buffering unless the
+user specifically mentions cloud-edge haze or border artifacts.
+
+### GUI simple presets
+
+The optical mosaic GUI has a simple cloud-masking control with `MODERATE`,
+`AGGRESSIVE`, and read-only `CUSTOM` states in:
+
+```text
+modules/gui/src/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions.jsx
+```
+
+The preset detection only compares this subset of fields:
+
+```js
+MODERATE: {
+  includedCloudMasking: ['sepalCloudScore', 'landsatCFMask', 'sentinel2CloudScorePlus'],
+  sentinel2CloudScorePlusBand: 'cs_cdf',
+  sentinel2CloudScorePlusMaxCloudProbability: 45,
+  landsatCFMaskCloudMasking: 'MODERATE',
+  landsatCFMaskCloudShadowMasking: 'MODERATE',
+  landsatCFMaskCirrusMasking: 'MODERATE',
+  sepalCloudScoreMaxCloudProbability: 30
+}
+
+AGGRESSIVE: {
+  includedCloudMasking: ['sepalCloudScore', 'landsatCFMask', 'sentinel2CloudScorePlus'],
+  sentinel2CloudScorePlusBand: 'cs',
+  sentinel2CloudScorePlusMaxCloudProbability: 35,
+  landsatCFMaskCloudMasking: 'AGGRESSIVE',
+  landsatCFMaskCloudShadowMasking: 'AGGRESSIVE',
+  landsatCFMaskCirrusMasking: 'AGGRESSIVE',
+  sepalCloudScoreMaxCloudProbability: 25
+}
+```
+
+`CUSTOM` means the current values do not match either preset for those fields.
+It does not mean every cloud-related field has been manually tuned. The simple
+preset comparison does not include `sentinel2CloudProbability`,
+`sentinel2CloudProbabilityMaxCloudProbability`, `landsatCFMaskDilatedCloud`,
+`cloudBuffer`, `snowMasking`, `holes`, filters, date ranges, or source
+selection.
+
+The GUI default model also sets `landsatCFMaskDilatedCloud: 'REMOVE'`,
+`snowMasking: 'ON'`, `holes: 'ALLOW'`, and `compose: 'MEDOID'`. Be careful
+when using defaults as guidance: they are source facts, not always a policy for
+every user request.
+
+The English GUI tooltips are useful authoring material, but can lag behavior.
+For example, the simple preset tooltip says the moderate preset relies only on
+source QA bands, while the current preset values include SEPAL Cloud Score and
+Sentinel-2 Cloud Score+. Prefer code-backed preset values over tooltip prose
+when they disagree.
+
+### Source-appropriate cloud methods
+
+`includedCloudMasking` is a list of cloud-mask methods whose availability
+depends on the selected source groups:
+
+- `sepalCloudScore`: general cloud score.
+- `landsatCFMask`: Landsat only; has separate cloud, shadow, cirrus, and
+  dilated-cloud controls.
+- `sentinel2CloudScorePlus`: Sentinel-2 only; has `cs` and `cs_cdf` bands plus
+  a maximum-cloud-probability threshold.
+- `sentinel2CloudProbability`: Sentinel-2 only; ancillary probability source
+  with its own threshold.
+- `pino26`: Sentinel-2-only and disabled by the GUI when SR is selected; it is
+  not a generic default for "remove clouds".
+
+Cloud score thresholds use 0-100 sliders where lower maximum cloud probability
+means stricter masking. GUI preset values are useful reasonable anchors:
+`sepalCloudScoreMaxCloudProbability` 30 for moderate and 25 for aggressive;
+`sentinel2CloudScorePlusMaxCloudProbability` 45 for moderate and 35 for
+aggressive. Very low values such as 5 are extremely strict and can remove too
+many pixels; they should be reserved for explicit "be very aggressive" requests
+or as a fallback after a more normal aggressive strategy.
+
+For Landsat cloud complaints, the aggressive preset moves
+`landsatCFMaskCloudMasking`, `landsatCFMaskCloudShadowMasking`, and
+`landsatCFMaskCirrusMasking` to `AGGRESSIVE`. If Landsat is present and these
+fields are still `MODERATE`, a broad "clouds remain" request should normally
+include them in the focus/write set. `landsatCFMaskDilatedCloud: 'REMOVE'` is
+already the default and is not part of the simple preset comparison, but keeping
+or setting it to `REMOVE` is consistent with stricter Landsat masking.
+
+Adding `sentinel2CloudProbability` can be a valid stricter Sentinel-2 move, but
+it should not hide the simpler preset-like strategy. When adding this method,
+`prepare_update` should surface the absent method and its
+`sentinel2CloudProbabilityMaxCloudProbability` companion as missing paths so
+the specialist uses `add` rather than `replace`.
+
+### Cloud quality vs performance
+
+Cloud masking method count is not itself the main Earth Engine performance
+lever in MOSAIC. The cloud masking methods are folded into per-image cloud-band
+work; the dominant cost drivers are more often candidate observation volume,
+spatial operations, collection reductions, extra collection passes, heavy
+per-image corrections, and source availability.
+
+`cloudBuffer` is the opposite: it is a spatial neighborhood operation and can
+be extremely expensive. The GUI presets are `0`, `120`, and `600`; use `0` for
+fastest/reliable rendering. Increasing cloud buffer should be an explicit
+quality choice for cloud-edge/haze artifacts, not a default answer to residual
+clouds.
+
+`snowMasking` should normally remain `ON`, even outside snowy regions, because
+some clouds can be misclassified as snow. Turning it off can expose cloud
+artifacts.
+
+`holes: 'ALLOW'` is normal. `PREVENT` is a fallback when masking removes the
+exact features the user cares about, such as bright built-up areas or deserts.
+The usual first response to masked-out pixels is to add data, change the date
+range, or reduce overly aggressive masking rather than preventing holes.
+
+Filters are costly because each active filter adds a collection-level
+percentile reduction and masking pass. They should not be introduced as a cloud
+cleanup default unless the user's goal clearly maps to that filter.
+
+BRDF correction is expensive, especially for Sentinel-2 and large mosaics. It
+is a render-reliability lever, but not a cloud-masking lever. Do not remove BRDF
+as an answer to residual clouds unless the user's actual problem is render
+failure or latency.
+
 For example, tooltip/doc prose about Sentinel-2 tile overlap should become
 reusable metadata such as:
 
