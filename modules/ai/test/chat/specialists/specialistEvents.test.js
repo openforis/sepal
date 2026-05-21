@@ -83,6 +83,38 @@ describe('publishSpecialistResponse', () => {
 
         expect(bus.published[0].toolCallNames).toEqual(['prepare_update', 'recipe_patch'])
     })
+
+    it('carries reasoningChars + finishReason so an empty round is self-diagnosing (reasoning-burn vs true empty)', () => {
+        const bus = aFakeBus()
+
+        publishSpecialistResponse({
+            bus, name: 'recipe.update', round: 1, text: '', toolCalls: [],
+            reasoningChars: 1840, finishReason: 'length'
+        })
+
+        expect(bus.published[0]).toMatchObject({empty: true, reasoningChars: 1840, finishReason: 'length'})
+        expect(bus.published[0].message).toContain('reasoningChars=1840')
+        expect(bus.published[0].message).toContain('finishReason=length')
+    })
+
+    it('defaults reasoningChars to 0 and finishReason to null when the provider summary is absent', () => {
+        const bus = aFakeBus()
+
+        publishSpecialistResponse({bus, name: 'recipe.update', round: 0, text: 'Done.', toolCalls: []})
+
+        expect(bus.published[0]).toMatchObject({reasoningChars: 0, finishReason: null})
+    })
+
+    it('never carries reasoning text — only the count + finish reason', () => {
+        const bus = aFakeBus()
+
+        publishSpecialistResponse({
+            bus, name: 'recipe.update', round: 1, text: '', toolCalls: [],
+            reasoningChars: 42, finishReason: 'length'
+        })
+
+        expect(JSON.stringify(bus.published[0])).not.toMatch(/reasoning_content|reasoningText|"reasoning":/)
+    })
 })
 
 describe('publishSpecialistToolRequest', () => {
@@ -205,17 +237,40 @@ describe('publishSpecialistToolResponse', () => {
         expect(bus.published[0].shape).toBe('patch(modelHash=h2,invalidatedPaths=2[/a,/b])')
     })
 
-    it('publishes ok=false with the error code instead of a shape for failed envelopes', () => {
+    it('publishes ok=false with the error code and the error message for failed envelopes', () => {
         const bus = aFakeBus()
-        const envelope = {ok: false, error: {code: 'STALE_WRITE', message: 'base hash mismatch'}}
+        const envelope = {ok: false, error: {code: 'PATCH_APPLY_FAILED', message: 'invalid array index: 3'}}
 
         publishSpecialistToolResponse({bus, name: 'recipe.update', tool: 'recipe_patch', envelope})
 
         expect(bus.published[0]).toMatchObject({
             ok: false,
             tool: 'recipe_patch',
-            errorCode: 'STALE_WRITE'
+            errorCode: 'PATCH_APPLY_FAILED',
+            errorMessage: 'invalid array index: 3'
         })
+        expect(bus.published[0].message).toContain('invalid array index: 3')
+    })
+
+    it('carries the compact rule+path details for a VALIDATION_FAILED failure', () => {
+        const bus = aFakeBus()
+        const envelope = {ok: false, error: {
+            code: 'VALIDATION_FAILED',
+            message: 'recipe model failed validation',
+            details: [
+                {path: '/compositeOptions/corrections', rule: 'calibrateRequiresMultipleSources', message: 'needs both source groups'},
+                {path: '/compositeOptions/includedCloudMasking', rule: 'cloudMaskingMethodAvailability', message: 'Cloud Score+ needs Sentinel-2'}
+            ]
+        }}
+
+        publishSpecialistToolResponse({bus, name: 'recipe.update', tool: 'recipe_patch', envelope})
+
+        expect(bus.published[0].details).toEqual([
+            {rule: 'calibrateRequiresMultipleSources', path: '/compositeOptions/corrections'},
+            {rule: 'cloudMaskingMethodAvailability', path: '/compositeOptions/includedCloudMasking'}
+        ])
+        expect(bus.published[0].message).toContain('calibrateRequiresMultipleSources')
+        expect(bus.published[0].message).toContain('/compositeOptions/corrections')
     })
 
     it('falls back to a generic kind summary for unknown tool names', () => {

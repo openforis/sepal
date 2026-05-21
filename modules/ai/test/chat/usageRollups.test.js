@@ -43,6 +43,15 @@ describe('usage rollups', () => {
             })
         })
 
+        it('sums reasoning tokens across calls', () => {
+            const tally = createUsageTally()
+
+            tally.add(anLlmUsage({reasoningTokens: 1840}))
+            tally.add(anLlmUsage({reasoningTokens: 260}))
+
+            expect(tally.summary()).toMatchObject({reasoningTokens: 2100})
+        })
+
         it('tracks cache totals and exact-vs-estimated call counts', () => {
             const tally = createUsageTally()
 
@@ -130,6 +139,18 @@ describe('usage rollups', () => {
                 context: {conversationId: 'conv-1', turnId: 'turn-1'},
                 metrics: {calls: 2, inputTokens: 600, outputTokens: 50, totalTokens: 650}
             })
+        })
+
+        it('surfaces summed reasoning tokens on the rollup metrics line', () => {
+            const {bus, rollups} = aRollupHarness()
+
+            startTurn(bus, {conversationId: 'conv-1', turnId: 'turn-1'})
+            bus.publish(anLlmUsage({conversationId: 'conv-1', reasoningTokens: 1840}))
+            bus.publish(anLlmUsage({conversationId: 'conv-1', reasoningTokens: 260}))
+            completeTurn(bus, {conversationId: 'conv-1', turnId: 'turn-1'})
+
+            const turnUsage = rollups.find(event => event.type === 'turn.usage')
+            expect(turnUsage.metrics).toMatchObject({reasoningTokens: 2100})
         })
 
         it('publishes rollups as structured events (no hand-built message) with renamed metric labels', () => {

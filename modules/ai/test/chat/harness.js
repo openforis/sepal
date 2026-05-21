@@ -147,6 +147,7 @@ function replyToEvents(reply) {
     if (reply.text) events.push({textDelta: reply.text})
     if (reply.textChunks) reply.textChunks.forEach(chunk => events.push({textDelta: chunk}))
     if (reply.toolCalls) reply.toolCalls.forEach(toolCall => events.push({toolCall}))
+    if (reply.responseMeta) events.push({responseMeta: reply.responseMeta})
     return events
 }
 

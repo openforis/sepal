@@ -123,17 +123,6 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   fixes attrs at construction. For LLM/tool spans we want completion attrs such
   as chunks, token usage, cache hits, result size, and status once they are
   known.
-- **Reasoning-loop diagnostics are thin** (smallest unblocking slice) — an empty
-  `specialist.response` doesn't say *why* (the provider captures
-  `reasoningChunkCount` + `finishReasons` but they don't reach that line); a
-  failed `specialist.tool.response` logs only `errorCode` (the reason — "invalid
-  array index", "path not found" — is browser-only); the usage rollup omits
-  `reasoningTokens`. Surface: `reasoningChars` + `finishReason` on
-  `specialist.response`, the error `message`/`details` on failed tool responses,
-  and `reasoningTokens` in `turn.usage` — counts only, never reasoning content
-  (the provider deliberately keeps reasoning out of the runtime). This is the
-  diagnostic that distinguishes reasoning-burn (`finishReason=length`) from a true
-  empty, and that tunes the cap/effort.
 - **Over-think recovery** — today's length-cap retry re-reasons from scratch with
   a "be concise" system hint (`LENGTH_CAP_RETRY_HINT`), discarding the prior
   thinking and able to re-cap. Replace with the adapter-internal reasoning-off

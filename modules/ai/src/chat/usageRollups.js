@@ -21,6 +21,7 @@ function createUsageTally() {
     const totals = {
         callCount: 0,
         inputTokens: 0, outputTokens: 0, totalTokens: 0,
+        reasoningTokens: 0,
         cachedInputTokens: 0, cacheWriteTokens: 0,
         exactCalls: 0, estimatedCalls: 0,
         exactCacheCalls: 0, noCacheCalls: 0,
@@ -37,6 +38,7 @@ function createUsageTally() {
         totals.inputTokens += event.inputTokens || 0
         totals.outputTokens += event.outputTokens || 0
         totals.totalTokens += event.totalTokens || 0
+        totals.reasoningTokens += event.reasoningTokens || 0
         totals.cachedInputTokens += event.cachedInputTokens || 0
         totals.cacheWriteTokens += event.cacheWriteTokens || 0
         totals.exactCalls += event.usageExact ? 1 : 0
@@ -63,6 +65,7 @@ function metricsOf(summary) {
         inputTokens: summary.inputTokens,
         outputTokens: summary.outputTokens,
         totalTokens: summary.totalTokens,
+        reasoningTokens: summary.reasoningTokens,
         cachedInputTokens: summary.cachedInputTokens,
         exactCalls: `${summary.exactCalls}/${summary.callCount}`,
         llmDurationMs: summary.durationMs

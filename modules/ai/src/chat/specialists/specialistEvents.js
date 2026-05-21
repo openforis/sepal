@@ -54,7 +54,10 @@ function publishSpecialistNoProgress({bus, name, round, conversationId, messageC
     })
 }
 
-function publishSpecialistResponse({bus, name, round, conversationId, text, toolCalls}) {
+// reasoningChars + finishReason are counts-only provider summary fields (never
+// reasoning text): empty=true reasoningChars=1840 finishReason=length signals
+// reasoning-burn at the token cap, reasoningChars=0 a true empty round.
+function publishSpecialistResponse({bus, name, round, conversationId, text, toolCalls, reasoningChars = 0, finishReason = null}) {
     const textChars = (text || '').length
     const toolCallNames = (toolCalls || []).map(toolCall => toolCall.name)
     const empty = textChars === 0 && toolCallNames.length === 0
@@ -67,7 +70,10 @@ function publishSpecialistResponse({bus, name, round, conversationId, text, tool
         textChars,
         toolCallNames,
         empty,
-        message: `specialist.response name=${name} round=${round} textChars=${textChars} toolCalls=[${toolCallNames.join(',') || '-'}]${empty ? ' empty=true' : ''}`
+        reasoningChars,
+        finishReason,
+        message: `specialist.response name=${name} round=${round} textChars=${textChars} toolCalls=[${toolCallNames.join(',') || '-'}]`
+            + ` reasoningChars=${reasoningChars} finishReason=${finishReason ?? '-'}${empty ? ' empty=true' : ''}`
     })
 }
 
@@ -91,6 +97,8 @@ function publishSpecialistToolRequest({bus, name, conversationId, toolCall}) {
 function publishSpecialistToolResponse({bus, name, conversationId, tool, envelope}) {
     if (envelope?.ok === false) {
         const errorCode = envelope.error?.code || 'unknown'
+        const errorMessage = envelope.error?.message || ''
+        const details = validationDetails(envelope.error)
         bus.publish({
             type: 'specialist.tool.response',
             level: 'debug',
@@ -99,7 +107,11 @@ function publishSpecialistToolResponse({bus, name, conversationId, tool, envelop
             tool,
             ok: false,
             errorCode,
+            errorMessage,
+            ...(details ? {details} : {}),
             message: `specialist.tool.response name=${name} tool=${tool} ok=false errorCode=${errorCode}`
+                + (errorMessage ? ` error=${JSON.stringify(truncate(errorMessage, 200))}` : '')
+                + (details ? ` details=${formatValidationDetails(details)}` : '')
         })
         return
     }
@@ -137,6 +149,19 @@ function outcomeMessage({recipeId, attempted, succeeded, code, lastPatchErrorCod
     return lastPatchErrorCode
         ? `${head} lastPatchErrorCode=${lastPatchErrorCode}${tail}`
         : `${head}${tail}`
+}
+
+// VALIDATION_FAILED carries the per-field reasons the recipe spec rejected the
+// patch on; surface just rule + path so a bad patch is diagnosable from the log
+// line. The human messages stay off this diagnostic line — they reach the user
+// via the update_recipe answer.
+function validationDetails(error) {
+    if (!Array.isArray(error?.details) || !error.details.length) return null
+    return error.details.map(detail => ({rule: detail.rule, path: detail.path}))
+}
+
+function formatValidationDetails(details) {
+    return `[${details.map(detail => `${detail.rule || '?'}@${detail.path || '?'}`).join(',')}]`
 }
 
 function summariseToolInput(tool, input) {

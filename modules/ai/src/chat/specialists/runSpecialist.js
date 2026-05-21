@@ -67,11 +67,16 @@ function runSpecialist$({llm, bus, name, systemPrompt, userText, allowedSchemas,
                 tap(event => {
                     if (event.textDelta) acc.text += event.textDelta
                     if (event.toolCall) acc.toolCalls = [...acc.toolCalls, event.toolCall]
+                    if (event.responseMeta) acc.responseMeta = event.responseMeta
                 }),
                 ignoreElements()
             ),
             defer(() => {
-                publishSpecialistResponse({bus, name, round, conversationId, text: acc.text, toolCalls: acc.toolCalls})
+                publishSpecialistResponse({
+                    bus, name, round, conversationId, text: acc.text, toolCalls: acc.toolCalls,
+                    reasoningChars: acc.responseMeta?.reasoningChars ?? 0,
+                    finishReason: acc.responseMeta?.finishReason ?? null
+                })
                 const empty = !acc.text.trim() && acc.toolCalls.length === 0
                 if (empty) {
                     if (stalls >= SPECIALIST_MAX_STALLS) return of({answer: SPECIALIST_CAP_ANSWER})

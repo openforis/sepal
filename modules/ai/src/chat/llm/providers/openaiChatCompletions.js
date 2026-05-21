@@ -73,7 +73,14 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai
             retryAfterAttempt = shouldRetryLengthCap({acc, toolCallEvents: events, attempt})
             return retryAfterAttempt ? EMPTY : from(events)
         })
-        const summary$ = concat(text$, toolCalls$).pipe(
+        // Terminal counts-only summary for this provider call. Reasoning content
+        // is captured for log visibility but never re-emitted to the runtime —
+        // only its length and the finish reason cross the boundary.
+        const responseMeta$ = defer(() => from([{responseMeta: {
+            reasoningChars: acc.reasoning.length,
+            finishReason: [...acc.finishReasons].join(',') || null
+        }}]))
+        const summary$ = concat(text$, toolCalls$, responseMeta$).pipe(
             tap({error: error => { acc.error = error }}),
             publishResponseSummary({bus, diagnostics, model, acc, debugLabel, attempt}),
             publishAttemptUsage(acc, params, usageContext)

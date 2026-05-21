@@ -36,6 +36,13 @@ describe('OpenAI-compatible chat-completions adapter', () => {
         return firstValueFrom(response$.pipe(toArray()))
     }
 
+    // Tests that pin chunk→domain-event translation assert on the content events
+    // only; the terminal {responseMeta} per-call summary is a separate concern
+    // with its own test.
+    function contentEvents(events) {
+        return events.filter(event => 'textDelta' in event || 'toolCall' in event)
+    }
+
     it('passes bounded generation and provider-specific extra params', async () => {
         mockCreate.mockResolvedValue([{choices: [{delta: {content: 'Title'}}]}])
 
@@ -46,7 +53,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             extraParams: {chat_template_kwargs: {enable_thinking: false}}
         }))
 
-        expect(events).toEqual([{textDelta: 'Title'}])
+        expect(contentEvents(events)).toEqual([{textDelta: 'Title'}])
         expect(mockCreate).toHaveBeenCalledWith({
             model: 'test-model',
             messages: [{role: 'user', content: 'hello'}],
@@ -164,7 +171,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
 
         const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
 
-        expect(events).toEqual([{toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}])
+        expect(contentEvents(events)).toEqual([{toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}])
     })
 
     it('accumulates tool-call arguments fragmented across chunks', async () => {
@@ -175,7 +182,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
 
         const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
 
-        expect(events).toEqual([{toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}])
+        expect(contentEvents(events)).toEqual([{toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}])
     })
 
     it('parses multiple tool calls in one assistant response', async () => {
@@ -188,7 +195,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
 
         const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
 
-        expect(events).toEqual([
+        expect(contentEvents(events)).toEqual([
             {toolCall: {id: 'call_1', name: 'echo', input: {text: 'a'}}},
             {toolCall: {id: 'call_2', name: 'echo', input: {text: 'b'}}}
         ])
@@ -201,9 +208,9 @@ describe('OpenAI-compatible chat-completions adapter', () => {
 
         const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
 
-        expect(events).toHaveLength(1)
-        expect(events[0].toolCall).toMatchObject({id: 'call_1', name: 'echo', input: null})
-        expect(events[0].toolCall.argsError).toBeDefined()
+        expect(contentEvents(events)).toHaveLength(1)
+        expect(contentEvents(events)[0].toolCall).toMatchObject({id: 'call_1', name: 'echo', input: null})
+        expect(contentEvents(events)[0].toolCall.argsError).toBeDefined()
     })
 
     it('emits text deltas before tool calls when an assistant response has both', async () => {
@@ -214,10 +221,37 @@ describe('OpenAI-compatible chat-completions adapter', () => {
 
         const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
 
-        expect(events).toEqual([
+        expect(contentEvents(events)).toEqual([
             {textDelta: 'Let me check. '},
             {toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}
         ])
+    })
+
+    describe('per-call response summary', () => {
+
+        it('emits a terminal responseMeta carrying the reasoning char count and finish reason (counts only, never reasoning text)', async () => {
+            mockCreate.mockResolvedValue([
+                {choices: [{delta: {reasoning_content: 'planning the edit'}}]},
+                {choices: [{delta: {content: 'Done.'}}]},
+                {choices: [{finish_reason: 'stop', delta: {}}]}
+            ])
+
+            const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
+
+            expect(events.at(-1)).toEqual({responseMeta: {reasoningChars: 'planning the edit'.length, finishReason: 'stop'}})
+            expect(JSON.stringify(events)).not.toContain('planning the edit')
+        })
+
+        it('reports finishReason=length and the burned reasoning count on a reasoning-only length cap', async () => {
+            mockCreate.mockResolvedValue([
+                {choices: [{delta: {reasoning_content: 'lots of planning'}}]},
+                {choices: [{finish_reason: 'length', delta: {}}]}
+            ])
+
+            const events = await collect(anOpenAiChat().respondTo$({messages: [{role: 'user', content: 'edit'}]}))
+
+            expect(events.at(-1)).toEqual({responseMeta: {reasoningChars: 'lots of planning'.length, finishReason: 'length'}})
+        })
     })
 
     describe('length-cap observability', () => {
@@ -245,7 +279,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             }))
 
             expect(mockCreate).toHaveBeenCalledTimes(2)
-            expect(events).toEqual([{textDelta: 'patched.'}])
+            expect(contentEvents(events)).toEqual([{textDelta: 'patched.'}])
             expect(mockCreate.mock.calls[1][0].messages).toEqual([
                 {role: 'user', content: 'edit'},
                 {role: 'system', content: expect.stringMatching(/RETRY.*reasoning token budget.*complete tool call.*promptly/i)}
@@ -289,7 +323,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             }))
 
             expect(mockCreate).toHaveBeenCalledTimes(2)
-            expect(events).toEqual([{toolCall: {id: 'call_2', name: 'echo', input: {text: 'hi'}}}])
+            expect(contentEvents(events)).toEqual([{toolCall: {id: 'call_2', name: 'echo', input: {text: 'hi'}}}])
             expect(bus.published.find(event => event.type === 'llm.lengthCap')).toMatchObject({
                 empty: false,
                 willRetry: true,
@@ -309,7 +343,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             }))
 
             expect(mockCreate).toHaveBeenCalledTimes(2)
-            expect(events).toEqual([])
+            expect(contentEvents(events)).toEqual([])
             const lengthCaps = bus.published.filter(event => event.type === 'llm.lengthCap')
             expect(lengthCaps).toHaveLength(2)
             expect(lengthCaps[0]).toMatchObject({attempt: 0, empty: true, willRetry: true})
@@ -330,7 +364,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             }))
 
             expect(mockCreate).toHaveBeenCalledTimes(1)
-            expect(events).toEqual([{textDelta: 'partial '}, {textDelta: 'answer'}])
+            expect(contentEvents(events)).toEqual([{textDelta: 'partial '}, {textDelta: 'answer'}])
             expect(bus.published.find(event => event.type === 'llm.lengthCap')).toMatchObject({
                 empty: false,
                 willRetry: false
@@ -352,7 +386,7 @@ describe('OpenAI-compatible chat-completions adapter', () => {
             }))
 
             expect(mockCreate).toHaveBeenCalledTimes(1)
-            expect(events).toEqual([{toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}])
+            expect(contentEvents(events)).toEqual([{toolCall: {id: 'call_1', name: 'echo', input: {text: 'hi'}}}])
             expect(bus.published.find(event => event.type === 'llm.lengthCap')).toMatchObject({
                 empty: false,
                 willRetry: false
