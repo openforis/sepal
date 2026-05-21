@@ -130,7 +130,28 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Observability
 
-- **`runSpecialist$` and `conversationLoop.step$` share per-round shape but diverge on 9 substantive policy axes** — output mode (stream events vs collect `{answer}`), persistence (`history.append$` vs none), retry trigger (post-tool-only vs any-empty), retry hint role+content (`system`+`emptyAfterToolHint` vs `user`+`STALL_NUDGE`), cap behavior (translatable notice with `display`-tagged history append vs sentinel string), direct-answer shortcut (orchestrator-only), round-0 prompt construction (`messagesForLlm({contextMessage, isolateHistory})` vs raw), tool envelope emission to outer stream (`{toolStart,toolEnd}` vs silent), and bail-result type (`{key, args, fallback}` display object vs string). The structurally identical `prompt` trace event is consolidated in `src/chat/loopEvents.js`. Full primitive unification was considered and rejected: a ≥12-parameter primitive with per-axis policy hooks would be net-neutral on lines while raising the cognitive cost of future behavior changes. Reconsider if the parallel surface grows materially.
+- **Agent-loop vocabulary is not explicit yet** — `runSpecialist$` and
+  `conversationLoop.step$` are both agent loops, but the shared concept is still
+  implicit and the specialist runner is accumulating open-ended hooks
+  (`noProgressNudge`, `finishOnEmpty`, caller-side trackers). Refactor
+  specialist-first toward the vocabulary in `DESIGN_chat_specialists_v2.md`
+  §4 "Agent-loop north star", then revisit whether the orchestrator loop maps
+  cleanly through ports/policies. Extraction checklist from the current
+  divergence: output mode (stream events vs collect `{answer}`), persistence
+  (`history.append$` vs none), retry trigger (post-tool-only vs any-empty),
+  retry hint role+content (`system`+`emptyAfterToolHint` vs
+  `user`+`STALL_NUDGE`), cap behavior (translatable notice with
+  `display`-tagged history append vs sentinel string), direct-answer shortcut
+  (orchestrator-only), round-0 prompt construction
+  (`messagesForLlm({contextMessage, isolateHistory})` vs raw), tool envelope
+  emission to outer stream (`{toolStart,toolEnd}` vs silent), and bail-result
+  type (`{key, args, fallback}` display object vs string). The structurally
+  identical `prompt` trace event is already consolidated in
+  `src/chat/loopEvents.js`. Full primitive unification was deferred because a
+  >=12-parameter primitive with per-axis policy hooks was net-neutral on lines
+  while raising the cognitive cost of future behavior changes. If extraction
+  still produces a primitive dominated by policy conditionals, keep two loops
+  but preserve the shared vocabulary.
 - **Late-bound span completion attrs** — `bus.track$(name, attrs, work$)`
   fixes attrs at construction. For LLM/tool spans we want completion attrs such
   as chunks, token usage, cache hits, result size, and status once they are

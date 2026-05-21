@@ -185,6 +185,73 @@ recipe edits and makes routing harder to reason about. Prompt-prefix caching
 still works because static specialist prompts and tool schemas remain
 byte-identical across fresh invocations.
 
+### Agent-loop north star
+
+`runSpecialist$` and the orchestrator `conversationLoop` are both instances of
+one domain idea: an agent loop advances a dialogue through LLM responses and
+tool calls until a stop policy says the work is done. Do not force this into a
+shared primitive until the vocabulary proves itself in active code. The first
+refactor should make the specialist loop speak the clean vocabulary below; only
+then check whether the orchestrator loop maps to the same shape without a pile
+of policy conditionals.
+
+Loop ports:
+
+- LLM call: messages plus allowed tools -> model response
+- tool invocation: execute one allowed tool call and return a neutral result
+- event bus: diagnostics and span notifications
+- sink/history: where visible text and durable dialogue state go
+
+Loop domain:
+
+- dialogue/timeline state
+- round outcome classification
+- stop policy
+- round/stall/tool-call budget and guard
+- structured result
+
+Model each round with a closed outcome type:
+
+```js
+{type: 'answered', text, meta}
+{type: 'tool-requested', text, calls, meta}
+{type: 'silent', meta}
+```
+
+The stop policy reads the outcome plus the canonical tool timeline and returns
+only:
+
+```js
+{type: 'continue', append?}
+{type: 'stop', reason}
+```
+
+The loop owns dialogue well-formedness. A `continue` after `silent` uses the
+append text as a transient prompt-only nudge because there is no assistant turn
+to anchor a persisted user message. A `continue` after `answered` persists the
+assistant text and then the corrective user nudge. Tool calls persist as an
+assistant tool-call turn plus tool-result turns. The policy should not choose
+transient vs persisted; that follows from the outcome.
+
+Stop reasons are either loop-structural (`capped`, `guard-bailed`) or
+policy-authored. For example, the update policy may return
+`{type: 'stop', reason: 'silent-after-success'}` when a silent round follows a
+successful `recipe_patch`. The generic loop must not know what "success" means;
+it only carries the policy's reason in the result:
+
+```js
+{finalText, finishReason, timeline}
+```
+
+Caller-side wrappers still own tool contracts. `update_recipe` turns the loop
+result into the orchestrator-facing envelope, publishes `update_recipe.outcome`,
+and, for `silent-after-success`, may run a constrained tool-free summary call
+from patch facts only. That facts-only narration belongs outside the loop so the
+model cannot invent details from the broader specialist dialogue. Likewise,
+tool-result enrichment (`appliedChanges`, `retryHints`) belongs in tool
+middleware, and patch outcome state should be a projection of the loop timeline
+rather than a second tracker.
+
 ## 5. Recipe specialists
 
 Recipe specialists are scoped by recipe type and purpose. This can share one
