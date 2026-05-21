@@ -9,6 +9,7 @@ const {scopeInnerTools} = require('./specialistScope')
 const {assembleSpecialistPrompt} = require('./assembleSpecialistPrompt')
 const {publishUpdateRecipeOutcome} = require('./specialistEvents')
 const {parseValueLabels, enrichOperations} = require('./appliedChanges')
+const {retryHintsFromError} = require('./retryHints')
 const {lookupRecipeMetadata$} = require('../tools/recipeMetadata')
 const {isChannelEmission} = require('../channelEvents')
 
@@ -233,16 +234,19 @@ function finalizeUpdate$({value, tracker, llm, conversationId, recipeId, instruc
     return of(tracker.finalize(rawAnswer))
 }
 
-// Label-enriches a successful recipe_patch result before it is fed back to the
-// specialist, so its final answer can speak labels. The raw operations sent to
-// the GUI bridge, validated, and logged are untouched — this only augments the
-// result envelope the inner loop reads.
+// Annotates a recipe_patch result before it is fed back to the specialist:
+// success gets label-enriched appliedChanges (so the final answer speaks
+// labels), failure gets structured retryHints (so recovery doesn't hinge on
+// parsing error strings). The raw operations sent to the GUI bridge and the raw
+// error fields are untouched — this only augments the result the inner loop reads.
 function enrichPatchResult(invokeTool$, valueLabelsByPath) {
     return (toolCall, context) =>
         invokeTool$(toolCall, context).pipe(
             map(value => {
-                if (isChannelEmission(value) || toolCall.name !== 'recipe_patch' || value?.ok !== true) return value
-                return {...value, data: {...value.data, appliedChanges: enrichOperations(toolCall.input?.operations, valueLabelsByPath)}}
+                if (isChannelEmission(value) || toolCall.name !== 'recipe_patch') return value
+                if (value?.ok === true) return {...value, data: {...value.data, appliedChanges: enrichOperations(toolCall.input?.operations, valueLabelsByPath)}}
+                if (value?.ok === false) return {...value, error: {...value.error, retryHints: retryHintsFromError(value.error, toolCall.input?.operations)}}
+                return value
             })
         )
 }

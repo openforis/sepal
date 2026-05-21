@@ -47,6 +47,13 @@ describe('update_recipe per-type prompt assembly', () => {
             expect(systemPrompt).toMatch(/config.*replac.*whole|whole array/i)
         })
 
+        it('tells the specialist to read retryHints after a failed patch while keeping strict patch rules', () => {
+            const systemPrompt = systemPromptFor(mosaicMetadata)
+
+            expect(systemPrompt).toMatch(/retryHints/)
+            expect(systemPrompt).toMatch(/index-based|never remove a required/i)
+        })
+
         it('tells the specialist not to invent unrequested changes in the final answer', () => {
             const systemPrompt = systemPromptFor(mosaicMetadata)
 

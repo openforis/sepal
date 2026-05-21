@@ -84,6 +84,11 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   patch values (for example replacing `/sources/dataSets`) still stay raw.
   If raw nested enum IDs keep leaking into summaries, add a schema-aware
   recursive enricher that labels object members without inventing field labels.
+- **`INVALID_PATCH` retry hint kind is generic** — failed `recipe_patch`
+  results now carry structured `error.retryHints`, but `INVALID_PATCH` still
+  uses `kind: "unknown"` with an op-shape `suggestedAction`. If specialists
+  ignore or mishandle invalid patch envelopes, promote this to an explicit
+  `kind: "invalid-patch"` so recovery policy can key on it directly.
 - **Specialist safety/observability is partially in place** — `runSpecialist$`
   has a `SPECIALIST_MAX_ROUNDS` cap, per-turn tool-loop safety (no-repeat,
   consecutive-failure bail-out, invalid-args retry limit via the shared

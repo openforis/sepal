@@ -37,7 +37,7 @@ Workflow:
 2. Call prepare_update first.
 3. Build one recipe_patch operations array using baseModelHash.
 4. STALE_WRITE: prepare_update again, replan, retry.
-5. VALIDATION_FAILED / PATCH_APPLY_FAILED / INVALID_PATCH: fix once or twice; do not loop. If a missingPaths op used replace, retry with add.
+5. VALIDATION_FAILED / PATCH_APPLY_FAILED / INVALID_PATCH: read error.retryHints (kind + suggestedAction) and follow them; fix once or twice, do not loop. recipe_patch stays strict — fix the operation, no auto-correction. If a missingPaths op used replace, retry with add.
 6. On success: one short paragraph summarizing actual changed fields. Do not echo raw JSON/model.
 
 After prepare_update succeeds and the user asked for an edit, call recipe_patch — don't explain instead of patching.
