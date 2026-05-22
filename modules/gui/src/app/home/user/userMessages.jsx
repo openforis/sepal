@@ -24,11 +24,14 @@ import {Panel} from '~/widget/panel/panel'
 import {EditUserMessage, ShowUserMessage} from './userMessage'
 import styles from './userMessages.module.css'
 
+const isAdmin = user =>
+    user.roles && user.roles.includes('application_admin')
+
 const mapStateToProps = state => {
     const currentUser = state.user.currentUser
     const userMessages = state.user.userMessages
     return {
-        isAdmin: currentUser.roles && currentUser.roles.includes('application_admin'),
+        isAdmin: isAdmin(currentUser),
         userMessages
     }
 }
@@ -344,7 +347,7 @@ class _UserMessagesButton extends React.Component {
     componentDidUpdate() {
         const {user, unreadUserMessages, activator: {activatables: {userMessages}}} = this.props
         const {shown} = this.state
-        if (user.privacyPolicyAccepted && unreadUserMessages && !shown && userMessages.canActivate) {
+        if (user.privacyPolicyAccepted && unreadUserMessages && !isAdmin(user) && !shown && userMessages.canActivate) {
             userMessages.activate()
             this.setState({shown: true})
         }
