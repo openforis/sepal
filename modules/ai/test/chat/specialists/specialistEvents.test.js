@@ -3,7 +3,6 @@ const {
     publishSpecialistResponse,
     publishSpecialistToolRequest,
     publishSpecialistToolResponse,
-    publishSpecialistNoProgress,
     publishUpdateRecipeOutcome
 } = require('#mcp/chat/specialists/specialistEvents')
 
@@ -20,7 +19,7 @@ describe('publishSpecialistRequest', () => {
         publishSpecialistRequest({
             bus, name: 'recipe.update', round: 0, conversationId: 'c1',
             messages: [{role: 'system', content: 's'}, {role: 'user', content: 'u'}],
-            toolSchemas: [{name: 'prepare_update'}, {name: 'recipe_patch'}]
+            toolSchemas: [{name: 'update_recipe_values'}]
         })
 
         expect(bus.published).toEqual([expect.objectContaining({
@@ -30,7 +29,7 @@ describe('publishSpecialistRequest', () => {
             name: 'recipe.update',
             round: 0,
             messageCount: 2,
-            toolNames: ['prepare_update', 'recipe_patch']
+            toolNames: ['update_recipe_values']
         })])
     })
 
@@ -78,10 +77,10 @@ describe('publishSpecialistResponse', () => {
 
         publishSpecialistResponse({
             bus, name: 'recipe.update', round: 0, text: '',
-            toolCalls: [{id: 't1', name: 'prepare_update'}, {id: 't2', name: 'recipe_patch'}]
+            toolCalls: [{id: 't1', name: 'update_recipe_values'}]
         })
 
-        expect(bus.published[0].toolCallNames).toEqual(['prepare_update', 'recipe_patch'])
+        expect(bus.published[0].toolCallNames).toEqual(['update_recipe_values'])
     })
 
     it('carries reasoningChars + finishReason so an empty round is self-diagnosing (reasoning-burn vs true empty)', () => {
@@ -124,7 +123,10 @@ describe('publishSpecialistToolRequest', () => {
 
         publishSpecialistToolRequest({
             bus, name: 'recipe.update', conversationId: 'c1',
-            toolCall: {id: 't1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/dates/targetDate']}}
+            toolCall: {id: 'tu1', name: 'update_recipe_values', input: {
+                recipeId: 'r1', baseModelHash: '01234567-89ab', writableHandles: ['datasets'],
+                values: {datasets: {LANDSAT: ['LANDSAT_9']}}
+            }}
         })
 
         expect(bus.published).toEqual([expect.objectContaining({
@@ -132,145 +134,110 @@ describe('publishSpecialistToolRequest', () => {
             level: 'debug',
             conversationId: 'c1',
             name: 'recipe.update',
-            tool: 'prepare_update',
-            inputKeys: ['recipeId', 'focusPaths'],
-            inputSummary: 'recipeId=r1 focusPaths=[/dates/targetDate]'
+            tool: 'update_recipe_values',
+            inputKeys: ['recipeId', 'baseModelHash', 'writableHandles', 'values'],
+            inputSummary: 'recipeId=r1 baseModelHash=01234567 handles=[datasets]'
         })])
-        expect(bus.published[0].message).toContain('focusPaths=[/dates/targetDate]')
     })
 
-    it('summarises recipe_patch request operations without enabling full payload trace logs', () => {
+    it('lists every handle the LLM submitted so a narrow vs broad request is visible in logs', () => {
         const bus = aFakeBus()
 
         publishSpecialistToolRequest({
             bus, name: 'recipe.update', conversationId: 'c1',
-            toolCall: {id: 't1', name: 'recipe_patch', input: {
-                recipeId: 'r1',
-                baseModelHash: '01234567-89ab-cdef-0123-456789abcdef',
-                operations: [
-                    {op: 'replace', path: '/compositeOptions/cloudBuffer', value: 0},
-                    {op: 'replace', path: '/compositeOptions/landsatCFMaskCloudMasking', value: 'AGGRESSIVE'}
-                ]
+            toolCall: {id: 'tu1', name: 'update_recipe_values', input: {
+                recipeId: 'r1', baseModelHash: 'h-base',
+                writableHandles: ['cloudMethods', 'landsatCloudMask'],
+                values: {cloudMethods: ['sepalCloudScore', 'landsatCFMask'], landsatCloudMask: 'AGGRESSIVE'}
             }}
         })
 
-        expect(bus.published[0].inputSummary).toBe(
-            'recipeId=r1 baseModelHash=01234567 ops=[replace /compositeOptions/cloudBuffer value=0;replace /compositeOptions/landsatCFMaskCloudMasking value="AGGRESSIVE"]'
-        )
-        expect(bus.published[0].message).toContain('/compositeOptions/cloudBuffer value=0')
+        expect(bus.published[0].inputSummary).toContain('handles=[cloudMethods,landsatCloudMask]')
     })
 
     it('handles a missing input gracefully', () => {
         const bus = aFakeBus()
 
-        publishSpecialistToolRequest({bus, name: 'recipe.update', toolCall: {id: 't1', name: 'prepare_update'}})
+        publishSpecialistToolRequest({bus, name: 'recipe.update', toolCall: {id: 'tu1', name: 'update_recipe_values'}})
 
         expect(bus.published[0].inputKeys).toEqual([])
+        expect(bus.published[0].inputSummary).toBe('')
     })
 
-    it('renders a small scalar array value inline so a narrowed includedCloudMasking is visible in logs', () => {
+    it('renders a dash for no submitted values rather than a misleading empty bracket', () => {
         const bus = aFakeBus()
 
         publishSpecialistToolRequest({
             bus, name: 'recipe.update', conversationId: 'c1',
-            toolCall: {id: 't1', name: 'recipe_patch', input: {
-                recipeId: 'r1', baseModelHash: 'h',
-                operations: [{op: 'replace', path: '/compositeOptions/includedCloudMasking', value: ['sepalCloudScore', 'landsatCFMask']}]
-            }}
+            toolCall: {id: 'tu1', name: 'update_recipe_values', input: {recipeId: 'r1', baseModelHash: 'h', values: {}}}
         })
 
-        expect(bus.published[0].inputSummary).toContain('replace /compositeOptions/includedCloudMasking value=["sepalCloudScore","landsatCFMask"]')
-    })
-
-    it('keeps a large scalar array summarized to avoid noisy logs', () => {
-        const bus = aFakeBus()
-        const manyMethods = Array.from({length: 30}, (_, i) => `method-${i}`)
-
-        publishSpecialistToolRequest({
-            bus, name: 'recipe.update', conversationId: 'c1',
-            toolCall: {id: 't1', name: 'recipe_patch', input: {
-                recipeId: 'r1', baseModelHash: 'h',
-                operations: [{op: 'replace', path: '/compositeOptions/includedCloudMasking', value: manyMethods}]
-            }}
-        })
-
-        expect(bus.published[0].inputSummary).toContain('value=array(30)')
-    })
-
-    it('summarizes an array of objects rather than dumping nested structures', () => {
-        const bus = aFakeBus()
-
-        publishSpecialistToolRequest({
-            bus, name: 'recipe.update', conversationId: 'c1',
-            toolCall: {id: 't1', name: 'recipe_patch', input: {
-                recipeId: 'r1', baseModelHash: 'h',
-                operations: [{op: 'replace', path: '/compositeOptions/filters', value: [{type: 'HAZE', percentile: 90}, {type: 'NDVI', percentile: 50}]}]
-            }}
-        })
-
-        expect(bus.published[0].inputSummary).toContain('value=array(2)')
+        expect(bus.published[0].inputSummary).toContain('handles=[-]')
     })
 })
 
 describe('publishSpecialistToolResponse', () => {
 
-    it('summarises a prepare_update success with focus/dependent/writable path counts', () => {
+    it('summarises an update_recipe_values success with modelHash + applied/invalidated handle counts and names', () => {
         const bus = aFakeBus()
         const envelope = {ok: true, data: {
-            baseModelHash: 'h1',
-            focusPaths: ['/sources/dataSets'],
-            dependentPaths: ['/compositeOptions/corrections', '/sceneSelectionOptions/type'],
-            writablePaths: ['/sources/dataSets', '/compositeOptions/corrections', '/sceneSelectionOptions/type']
+            summary: 'updated',
+            modelHash: 'h2-deadbeef-xx',
+            appliedHandles: ['datasets', 'corrections'],
+            invalidatedHandles: ['cloudMethods']
         }}
 
-        publishSpecialistToolResponse({bus, name: 'recipe.update', conversationId: 'c1', tool: 'prepare_update', envelope})
+        publishSpecialistToolResponse({bus, name: 'recipe.update', conversationId: 'c1', tool: 'update_recipe_values', envelope})
 
-        expect(bus.published[0].shape).toBe('prepared(focus=1[/sources/dataSets],dependent=2[/compositeOptions/corrections,/sceneSelectionOptions/type],writable=3[/sources/dataSets,/compositeOptions/corrections,/sceneSelectionOptions/type])')
-    })
-
-    it('summarises a recipe_patch success with modelHash/invalidatedPaths counts', () => {
-        const bus = aFakeBus()
-        const envelope = {ok: true, data: {summary: 'patched', modelHash: 'h2', invalidatedPaths: ['/a', '/b']}}
-
-        publishSpecialistToolResponse({bus, name: 'recipe.update', tool: 'recipe_patch', envelope})
-
-        expect(bus.published[0].shape).toBe('patch(modelHash=h2,invalidatedPaths=2[/a,/b])')
+        expect(bus.published[0].shape).toBe('update(modelHash=h2-deadb,applied=2[datasets,corrections],invalidated=1[cloudMethods])')
     })
 
     it('publishes ok=false with the error code and the error message for failed envelopes', () => {
         const bus = aFakeBus()
-        const envelope = {ok: false, error: {code: 'PATCH_APPLY_FAILED', message: 'invalid array index: 3'}}
+        const envelope = {ok: false, error: {code: 'HANDLE_OUT_OF_SCOPE', message: 'Handle(s) not in writableHandles: snowMasking'}}
 
-        publishSpecialistToolResponse({bus, name: 'recipe.update', tool: 'recipe_patch', envelope})
+        publishSpecialistToolResponse({bus, name: 'recipe.update', tool: 'update_recipe_values', envelope})
 
         expect(bus.published[0]).toMatchObject({
             ok: false,
-            tool: 'recipe_patch',
-            errorCode: 'PATCH_APPLY_FAILED',
-            errorMessage: 'invalid array index: 3'
+            tool: 'update_recipe_values',
+            errorCode: 'HANDLE_OUT_OF_SCOPE',
+            errorMessage: 'Handle(s) not in writableHandles: snowMasking'
         })
-        expect(bus.published[0].message).toContain('invalid array index: 3')
+        expect(bus.published[0].message).toContain('snowMasking')
     })
 
-    it('carries the compact rule+path details for a VALIDATION_FAILED failure', () => {
+    it('carries the handle-keyed reasons for a VALIDATION_FAILED failure', () => {
         const bus = aFakeBus()
         const envelope = {ok: false, error: {
             code: 'VALIDATION_FAILED',
             message: 'recipe model failed validation',
-            details: [
-                {path: '/compositeOptions/corrections', rule: 'calibrateRequiresMultipleSources', message: 'needs both source groups'},
-                {path: '/compositeOptions/includedCloudMasking', rule: 'cloudMaskingMethodAvailability', message: 'Cloud Score+ needs Sentinel-2'}
+            handleErrors: [
+                {handle: 'corrections', message: 'cross-sensor calibration requires both source groups'},
+                {handle: 'cloudMethods', message: 'Cloud Score+ requires Sentinel-2'}
             ]
         }}
 
-        publishSpecialistToolResponse({bus, name: 'recipe.update', tool: 'recipe_patch', envelope})
+        publishSpecialistToolResponse({bus, name: 'recipe.update', tool: 'update_recipe_values', envelope})
 
-        expect(bus.published[0].details).toEqual([
-            {rule: 'calibrateRequiresMultipleSources', path: '/compositeOptions/corrections'},
-            {rule: 'cloudMaskingMethodAvailability', path: '/compositeOptions/includedCloudMasking'}
+        expect(bus.published[0].handleErrors).toEqual([
+            {handle: 'corrections', message: 'cross-sensor calibration requires both source groups'},
+            {handle: 'cloudMethods', message: 'Cloud Score+ requires Sentinel-2'}
         ])
-        expect(bus.published[0].message).toContain('calibrateRequiresMultipleSources')
-        expect(bus.published[0].message).toContain('/compositeOptions/corrections')
+        expect(bus.published[0].message).toContain('corrections: cross-sensor calibration requires both source groups')
+        expect(bus.published[0].message).toContain('cloudMethods: Cloud Score+ requires Sentinel-2')
+    })
+
+    it('renders a "?" for a null-handle entry (path that did not map back to a handle)', () => {
+        const bus = aFakeBus()
+        const envelope = {ok: false, error: {
+            code: 'VALIDATION_FAILED',
+            handleErrors: [{handle: null, message: 'pathless detail'}]
+        }}
+
+        publishSpecialistToolResponse({bus, name: 'recipe.update', tool: 'update_recipe_values', envelope})
+
+        expect(bus.published[0].message).toContain('?: pathless detail')
     })
 
     it('falls back to a generic kind summary for unknown tool names', () => {
@@ -282,45 +249,9 @@ describe('publishSpecialistToolResponse', () => {
     })
 })
 
-describe('publishSpecialistNoProgress', () => {
-
-    it('publishes a warn-level specialist.noProgress event with name, round, message count, tool names, and reason', () => {
-        const bus = aFakeBus()
-
-        publishSpecialistNoProgress({
-            bus, name: 'recipe.update', round: 1, conversationId: 'c1',
-            messageCount: 4, toolNames: ['prepare_update', 'recipe_patch'],
-            nudgeChars: 120, reason: 'no-progress-nudge'
-        })
-
-        expect(bus.published).toEqual([expect.objectContaining({
-            type: 'specialist.noProgress',
-            level: 'warn',
-            conversationId: 'c1',
-            name: 'recipe.update',
-            round: 1,
-            messageCount: 4,
-            toolNames: ['prepare_update', 'recipe_patch'],
-            nudgeChars: 120,
-            reason: 'no-progress-nudge'
-        })])
-        expect(bus.published[0].message).toBe(
-            'specialist.noProgress name=recipe.update round=1 messages=4 tools=[prepare_update,recipe_patch] reason=no-progress-nudge'
-        )
-    })
-
-    it('renders no tool names as a dash, matching the other specialist diagnostics', () => {
-        const bus = aFakeBus()
-
-        publishSpecialistNoProgress({bus, name: 'recipe.update', round: 1, messageCount: 2, toolNames: [], reason: 'no-progress-nudge'})
-
-        expect(bus.published[0].message).toContain('tools=[-]')
-    })
-})
-
 describe('publishUpdateRecipeOutcome', () => {
 
-    it('publishes an info-level update_recipe.outcome with success fields when the patch applied', () => {
+    it('publishes an info-level update_recipe.outcome with success fields when the update applied', () => {
         const bus = aFakeBus()
 
         publishUpdateRecipeOutcome({
@@ -359,7 +290,7 @@ describe('publishUpdateRecipeOutcome', () => {
         })
     })
 
-    it('publishes UPDATE_FAILED with the last patch error code', () => {
+    it('publishes UPDATE_FAILED with the last update error code', () => {
         const bus = aFakeBus()
 
         publishUpdateRecipeOutcome({

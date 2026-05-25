@@ -31,33 +31,21 @@ describe('sepal tools', () => {
         }
     })
 
-    it('keeps recipe_load in the specialist inner-registry tool list so specialists can inspect a recipe', () => {
+    it('keeps recipe_load in the specialist inner-registry tool list so the describe specialist can inspect a recipe', () => {
         const names = specialistInnerTools({guiRequests: aFakeGuiRequests(() => of({}))}).map(tool => tool.name)
 
         expect(names).toContain('recipe_load')
     })
 
-    it('keeps recipe_patch in the specialist inner-registry so the patch specialist can write recipes', () => {
+    it('adds update_recipe_values to the specialist inner-registry so the update specialist can apply handle-keyed changes', () => {
         const names = specialistInnerTools({guiRequests: aFakeGuiRequests(() => of({}))}).map(tool => tool.name)
 
-        expect(names).toContain('recipe_patch')
+        expect(names).toContain('update_recipe_values')
     })
 
-    it('does not expose recipe_patch on the orchestrator surface — it is specialist-private', () => {
+    it('does not expose update_recipe_values on the orchestrator surface — it is specialist-private', () => {
         const names = sepalTools({guiRequests: aFakeGuiRequests()}).map(tool => tool.name)
 
-        expect(names).not.toContain('recipe_patch')
-    })
-
-    it('adds prepare_update to the specialist inner-registry so the update specialist can prepare a bounded edit', () => {
-        const names = specialistInnerTools({guiRequests: aFakeGuiRequests(() => of({}))}).map(tool => tool.name)
-
-        expect(names).toContain('prepare_update')
-    })
-
-    it('does not expose prepare_update on the orchestrator surface — it is specialist-private', () => {
-        const names = sepalTools({guiRequests: aFakeGuiRequests()}).map(tool => tool.name)
-
-        expect(names).not.toContain('prepare_update')
+        expect(names).not.toContain('update_recipe_values')
     })
 })

@@ -84,10 +84,27 @@ describe('llmText prompts', () => {
             expect(() => specialistPrompt('nonexistent-specialist')).toThrow()
         })
 
-        it('the update specialist prompt carries a compact budget rule so thinking-mode models pace their planning', () => {
-            const prompt = specialistPrompt('update')
-            expect(prompt).toMatch(/think compactly/i)
-            expect(prompt).toMatch(/call recipe_patch promptly/i)
+        it('the picker prompt instructs handles-only output with no values, no tool calls, no rationale', () => {
+            const prompt = specialistPrompt('pickHandles')
+            expect(prompt).toMatch(/{"handles":\[/)
+            expect(prompt).toMatch(/do not pick values/i)
+            expect(prompt).toMatch(/do not call tools/i)
+        })
+
+        it('the handle-based updater prompt names the update_recipe_values tool and writableHandles boundary', () => {
+            const prompt = specialistPrompt('updateHandles')
+            expect(prompt).toMatch(/update_recipe_values/)
+            expect(prompt).toMatch(/writableHandles/)
+        })
+
+        // The LLM-facing tool schema is narrowed to {recipeId, values}; the
+        // prompt must match that contract, not say "pass baseModelHash" or
+        // "pass writableHandles" — those are workflow-managed.
+        it('the updater prompt does not instruct the model to pass workflow-bound fields in the tool call', () => {
+            const prompt = specialistPrompt('updateHandles')
+            expect(prompt).not.toMatch(/pass.*baseModelHash/i)
+            expect(prompt).not.toMatch(/pass.*writableHandles/i)
+            expect(prompt).not.toMatch(/use.*writableHandles.*in the call/i)
         })
     })
 })

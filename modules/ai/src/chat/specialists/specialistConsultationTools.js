@@ -1,8 +1,5 @@
-// Free-form consult_* tools the orchestrator uses to delegate to a
-// specialist (one tool per specialist).
-
 const {specialistPrompt} = require('../llmText/prompts')
-const {runSpecialist$, answerOnly} = require('./runSpecialist')
+const {createSpecialistRuntime, answerOnly} = require('./runSpecialist')
 const {scopeInnerTools} = require('./specialistScope')
 
 const MAP_SPECIALIST = {
@@ -20,11 +17,12 @@ function specialistConsultationTools({llm, bus, innerTools}) {
 }
 
 function buildSpecialistTool({definition, llm, bus, innerTools}) {
-    const systemPrompt = specialistPrompt(definition.promptAsset)
-    const {allowedSchemas, invokeTool$} = scopeInnerTools({
-        innerTools,
-        allowed: definition.allowed,
-        label: `Specialist ${definition.name}`
+    const scope = scopeInnerTools({innerTools, allowed: definition.allowed, label: `Specialist ${definition.name}`})
+    const runtime = createSpecialistRuntime({
+        llm, bus,
+        name: definition.name,
+        systemPrompt: specialistPrompt(definition.promptAsset),
+        tools: {schemas: scope.allowedSchemas, invoke$: scope.invokeTool$}
     })
 
     return {
@@ -37,15 +35,8 @@ function buildSpecialistTool({definition, llm, bus, innerTools}) {
             required: ['question'],
             additionalProperties: false
         },
-        invoke$: ({question}, context) => runSpecialist$({
-            llm, bus,
-            name: definition.name,
-            systemPrompt,
-            userText: question,
-            allowedSchemas,
-            invokeTool$,
-            context
-        }).pipe(answerOnly())
+        invoke$: ({question}, context) =>
+            runtime.consult$({userText: question, context}).pipe(answerOnly())
     }
 }
 

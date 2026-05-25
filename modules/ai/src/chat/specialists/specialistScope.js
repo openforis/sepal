@@ -1,12 +1,5 @@
-// Restricts the inner tool registry to one specialist's allowed
-// subset (in both schemas() and invoke$).
-
 const {of} = require('rxjs')
 
-// Builds the schema list and the defence-in-depth scoped invokeTool$ a
-// specialist needs to drive runSpecialist$ against the shared inner registry.
-// The inner LLM is told what's allowed via allowedSchemas; invokeTool$
-// enforces the same allow-list even if the LLM ignores the schema list.
 function scopeInnerTools({innerTools, allowed, label}) {
     const innerSchemas = innerTools.schemas()
     const innerNames = new Set(innerSchemas.map(schema => schema.name))
@@ -23,4 +16,21 @@ function scopeInnerTools({innerTools, allowed, label}) {
     }
 }
 
-module.exports = {scopeInnerTools}
+// Authorises tool calls whose recipeId arg must match the workflow's recipeId.
+// The workflow signals its recipeId via context.recipeId per consult; this
+// keeps the wrapper stable across calls while still enforcing scope per call.
+function bindToolsToRecipe(invokeTool$, {boundTools}) {
+    return (toolCall, context) => {
+        if (!boundTools.has(toolCall.name)) return invokeTool$(toolCall, context)
+        if (toolCall.input?.recipeId === context?.recipeId) return invokeTool$(toolCall, context)
+        return of({
+            ok: false,
+            error: {
+                code: 'RECIPE_SCOPE_VIOLATION',
+                message: `${toolCall.name} restricted to recipeId=${context?.recipeId}; got ${toolCall.input?.recipeId}`
+            }
+        })
+    }
+}
+
+module.exports = {scopeInnerTools, bindToolsToRecipe}

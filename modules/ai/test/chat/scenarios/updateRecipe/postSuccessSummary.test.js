@@ -1,89 +1,82 @@
 const {of} = require('rxjs')
 const {aToolFactoryHarness, aFakeLlm, innerToolsImpl} = require('../../harness')
-const {metadataFor, mosaicMetadata} = require('./fixtures')
 
-// Local LM models (Qwen via LM Studio) often emit reasoning then end the turn
-// with no visible content after a successful recipe_patch. The specialist's
-// final answer is then empty (it caps after the stalls), and the deterministic
-// fallback is a robotic "Applied N operations to recipe ...". One response-only
-// summarizer pass turns the successful patch into user-facing prose before the
-// deterministic fallback. Routing the fake LLM by tool-presence separates the
-// specialist loop (always tool-bearing) from the tool-free summarizer call.
-describe('update_recipe summarizes a successful patch when the specialist answers empty', () => {
+// Local thinking models sometimes emit reasoning then end the turn with no
+// visible content after a successful update. The specialist's final answer is
+// then empty, and the deterministic fallback is a robotic tool summary. One
+// response-only summarizer pass turns the successful update into user-facing
+// prose. Routing the fake LLM by tool-presence separates the specialist loop
+// (always tool-bearing) from the tool-free summarizer call.
+describe('update_recipe summarizes a successful update when the specialist answers empty', () => {
 
-    const patchCall = {id: 'tp1', name: 'recipe_patch', input: {
-        recipeId: 'r1', baseModelHash: 'h1',
-        operations: [{op: 'remove', path: '/sources/dataSets/SENTINEL_2'}]
+    const updateCall = {id: 'tu1', name: 'update_recipe_values', input: {
+        recipeId: 'r1', baseModelHash: 'h-base',
+        writableHandles: ['datasets', 'corrections', 'sceneSelection'],
+        values: {datasets: {LANDSAT: ['LANDSAT_9']}}
     }}
-    const successData = {summary: 'Applied 1 operation to recipe r1', modelHash: 'h2', invalidatedPaths: ['/sources/dataSets']}
+    const successData = {summary: 'Updated 1 handle', modelHash: 'h-next', appliedHandles: ['datasets'], invalidatedPaths: ['/sources/dataSets']}
 
-    function patchInnerTools() {
+    function updaterInnerTools(result = {ok: true, data: successData}) {
         return innerToolsImpl(
-            {recipe_patch: () => of({ok: true, data: successData})},
-            [
-                {name: 'prepare_update', description: 'Prepare.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}},
-                {name: 'recipe_patch', description: 'Patch.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, operations: {type: 'array'}}}}
-            ]
+            {update_recipe_values: () => of(result)},
+            [{
+                name: 'update_recipe_values',
+                description: 'Update.',
+                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+            }]
         )
     }
 
-    // Specialist calls always carry tools; the summarizer call carries none.
-    function aRoutingLlm({specialistReplies, summaryReplies}) {
-        const specialist = aFakeLlm({replies: specialistReplies})
+    // Specialist + picker calls carry tools (picker is tool-free too, so route
+    // by presence of a "system" prompt mentioning specialist text instead).
+    // The summarizer call has tools=[] AND disableReasoning=true — disambiguate
+    // by that combination.
+    function aRoutingLlm({mainReplies, summaryReplies}) {
+        const main = aFakeLlm({replies: mainReplies})
         const summary = aFakeLlm({replies: summaryReplies})
         return {
             get summaryRequests() { return summary.receivedRequests },
-            get specialistRequests() { return specialist.receivedRequests },
+            get mainRequests() { return main.receivedRequests },
             respondTo$(request) {
-                return (request.tools && request.tools.length)
-                    ? specialist.respondTo$(request)
-                    : summary.respondTo$(request)
+                return request.disableReasoning === true
+                    ? summary.respondTo$(request)
+                    : main.respondTo$(request)
             }
         }
     }
 
-    function prepareThenPatchTools(preparePacket) {
-        return innerToolsImpl(
-            {
-                prepare_update: () => of(preparePacket),
-                recipe_patch: () => of({ok: true, data: successData})
-            },
-            [
-                {name: 'prepare_update', description: 'Prepare.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}},
-                {name: 'recipe_patch', description: 'Patch.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, operations: {type: 'array'}}}}
-            ]
-        )
-    }
-
-    function aHarness({specialistReplies, summaryReplies}) {
-        const llm = aRoutingLlm({specialistReplies, summaryReplies})
+    function aHarness({mainReplies, summaryReplies}) {
+        const llm = aRoutingLlm({mainReplies, summaryReplies})
         const harness = aToolFactoryHarness({
             specialist: 'update_recipe',
-            innerTools: patchInnerTools(),
-            guiRequests: metadataFor(mosaicMetadata),
+            innerTools: updaterInnerTools(),
             llm
         })
         return {harness, llm}
     }
 
-    // patch applied, then empty -> the loop exits and the summary pass owns final prose.
-    const patchThenEmpty = [{toolCalls: [patchCall]}, {text: ''}]
+    // picker -> updater tool call -> updater empty -> summary fires
+    const pickerThenUpdateThenEmpty = [
+        {text: '{"handles":["datasets"]}'},
+        {toolCalls: [updateCall]},
+        {text: ''}
+    ]
 
     it('uses the summarizer prose as the answer, not the deterministic fallback', () => {
         const {harness} = aHarness({
-            specialistReplies: patchThenEmpty,
+            mainReplies: pickerThenUpdateThenEmpty,
             summaryReplies: [{text: 'Updated the recipe to use Landsat only and tuned rendering.'}]
         })
 
         const result = harness.invoke({recipeId: 'r1', instruction: 'use only Landsat, speed up rendering'})
 
         expect(result).toEqual({ok: true, data: {answer: 'Updated the recipe to use Landsat only and tuned rendering.'}})
-        expect(result.data.answer).not.toMatch(/Applied 1 operation/)
+        expect(result.data.answer).not.toMatch(/Updated 1 handle/)
     })
 
     it('makes the summarizer call with no tools and reasoning disabled', () => {
         const {harness, llm} = aHarness({
-            specialistReplies: patchThenEmpty,
+            mainReplies: pickerThenUpdateThenEmpty,
             summaryReplies: [{text: 'Updated the recipe to use Landsat only.'}]
         })
 
@@ -94,144 +87,87 @@ describe('update_recipe summarizes a successful patch when the specialist answer
         expect(llm.summaryRequests[0].disableReasoning).toBe(true)
     })
 
-    it('feeds the summarizer recipe labels rather than only raw recipe type ids', () => {
+    it('feeds the summarizer the applied handles and the user request', () => {
         const {harness, llm} = aHarness({
-            specialistReplies: patchThenEmpty,
-            summaryReplies: [{text: 'Updated the recipe to use Landsat only.'}]
+            mainReplies: pickerThenUpdateThenEmpty,
+            summaryReplies: [{text: 'Now Landsat only.'}]
         })
 
         harness.invoke({recipeId: 'r1', instruction: 'use only Landsat'})
 
         const summaryUserText = llm.summaryRequests[0].messages[1].content
-        expect(summaryUserText).toContain('recipeType: Optical Mosaic')
-        expect(summaryUserText).toContain('valueLabels:')
-        expect(summaryUserText).toContain('SENTINEL_2(Sentinel-2)')
-        expect(summaryUserText).not.toContain('recipeType: MOSAIC')
+        expect(summaryUserText).toContain('userRequest: use only Landsat')
+        expect(summaryUserText).toContain('appliedHandles')
+        expect(summaryUserText).toContain('datasets')
     })
 
-    it('feeds the summarizer label-enriched applied changes plus the raw operations for grounding', () => {
-        const {harness, llm} = aHarness({
-            specialistReplies: [{toolCalls: [{id: 'tp1', name: 'recipe_patch', input: {
-                recipeId: 'r1', baseModelHash: 'h1',
-                operations: [{op: 'replace', path: '/compositeOptions/includedCloudMasking', value: ['landsatCFMask']}]
-            }}]}, {text: ''}],
-            summaryReplies: [{text: 'Updated cloud masking.'}]
+    it('does not feed the summarizer raw invalidatedPaths — only handle-level invalidatedHandles', () => {
+        // Inner-tool result carries invalidatedHandles, never invalidatedPaths.
+        // Guard that no JSON Pointer leaks into the summary user message.
+        const updateCallWithInvalidations = updateCall
+        const successResult = {
+            ok: true,
+            data: {summary: 'Updated', modelHash: 'h-next', appliedHandles: ['datasets'], invalidatedHandles: ['cloudMethods']}
+        }
+        const innerTools = innerToolsImpl(
+            {update_recipe_values: () => of(successResult)},
+            [{
+                name: 'update_recipe_values',
+                description: 'Update.',
+                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+            }]
+        )
+        const llm = aRoutingLlm({
+            mainReplies: [
+                {text: '{"handles":["datasets"]}'},
+                {toolCalls: [updateCallWithInvalidations]},
+                {text: ''}
+            ],
+            summaryReplies: [{text: 'Now Landsat only.'}]
         })
+        const harness = aToolFactoryHarness({specialist: 'update_recipe', innerTools, llm})
 
-        harness.invoke({recipeId: 'r1', instruction: 'use Landsat CFMask only'})
+        harness.invoke({recipeId: 'r1', instruction: 'use only Landsat'})
 
         const summaryUserText = llm.summaryRequests[0].messages[1].content
-        expect(summaryUserText).toContain('appliedChanges:')
-        expect(summaryUserText).toContain('Landsat CFMask')
-        expect(summaryUserText).toContain('appliedOperations:')
+        expect(summaryUserText).not.toMatch(/invalidatedPaths/)
+        expect(summaryUserText).not.toMatch(/\/sources\//)
+        expect(summaryUserText).not.toMatch(/\/compositeOptions\//)
+        expect(summaryUserText).toMatch(/invalidatedHandles/)
+        expect(summaryUserText).toContain('cloudMethods')
     })
 
     it('falls back to the deterministic generic answer when the summarizer is empty', () => {
         const {harness} = aHarness({
-            specialistReplies: patchThenEmpty,
+            mainReplies: pickerThenUpdateThenEmpty,
             summaryReplies: [{text: ''}]
         })
 
         const result = harness.invoke({recipeId: 'r1', instruction: 'use only Landsat'})
 
-        expect(result).toEqual({ok: true, data: {answer: 'Applied 1 operation to recipe r1'}})
+        expect(result).toEqual({ok: true, data: {answer: 'Updated 1 handle'}})
     })
 
-    it('ends the loop on an empty response after a successful patch — no stall-nudge round', () => {
+    it('ends the loop on an empty response after a successful update — no stall-nudge round', () => {
         const {harness, llm} = aHarness({
-            specialistReplies: patchThenEmpty,
+            mainReplies: pickerThenUpdateThenEmpty,
             summaryReplies: [{text: 'Removed Sentinel-2.'}]
         })
 
         harness.invoke({recipeId: 'r1', instruction: 'use only Landsat'})
 
         expect(harness.bus.events.filter(event => event.type === 'specialist.stall')).toHaveLength(0)
-        expect(llm.specialistRequests).toHaveLength(2)
-    })
-
-    it('feeds the summarizer the user request and applied changes with previous values', () => {
-        const preparePacket = {ok: true, data: {
-            baseModelHash: 'h1',
-            writablePaths: ['/compositeOptions/includedCloudMasking'],
-            currentValues: {'/compositeOptions/includedCloudMasking': ['sentinel2CloudScorePlus', 'landsatCFMask']},
-            pathHints: {'/compositeOptions/includedCloudMasking': {valueKind: 'array', arrayKind: 'config', arrayLength: 2, required: true}},
-            dependencyFacts: [{path: '/compositeOptions/corrections', constraint: 'cloudMaskingMethodAvailability', description: 'methods need matching sources'}],
-            validationRules: [{name: 'cloudMaskingMethodAvailability', description: 'methods need matching sources'}]
-        }}
-        const prepareCall = {id: 'tu1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/compositeOptions/includedCloudMasking']}}
-        const patchToLandsatOnly = {id: 'tp1', name: 'recipe_patch', input: {
-            recipeId: 'r1', baseModelHash: 'h1',
-            operations: [{op: 'replace', path: '/compositeOptions/includedCloudMasking', value: ['landsatCFMask']}]
-        }}
-        const llm = aRoutingLlm({
-            specialistReplies: [{toolCalls: [prepareCall]}, {toolCalls: [patchToLandsatOnly]}, {text: ''}],
-            summaryReplies: [{text: 'Now masks clouds with Landsat CFMask only.'}]
-        })
-        const harness = aToolFactoryHarness({
-            specialist: 'update_recipe',
-            innerTools: prepareThenPatchTools(preparePacket),
-            guiRequests: metadataFor(mosaicMetadata),
-            llm
-        })
-
-        harness.invoke({recipeId: 'r1', instruction: 'mask clouds with Landsat only'})
-
-        const summaryUserText = llm.summaryRequests[0].messages[1].content
-        expect(summaryUserText).toContain('userRequest: mask clouds with Landsat only')
-        expect(summaryUserText).toContain('appliedChanges:')
-        expect(summaryUserText).toContain('"previousValue":["sentinel2CloudScorePlus","landsatCFMask"]')
-        expect(summaryUserText).toContain('appliedOperations:')
-    })
-
-    describe('recovery guards — finishOnEmpty fires only after a successful patch', () => {
-
-        const prepareCall = {id: 'tu1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/dates/targetDate']}}
-        const patchCallFailing = {id: 'tp1', name: 'recipe_patch', input: {
-            recipeId: 'r1', baseModelHash: 'h1', operations: [{op: 'remove', path: '/sources/dataSets/SENTINEL_2'}]
-        }}
-
-        function stallEvents(harness) {
-            return harness.bus.events.filter(event => event.type === 'specialist.stall')
-        }
-
-        it('still stalls on an empty response before any successful patch', () => {
-            const preparePacket = {ok: true, data: {baseModelHash: 'h1', writablePaths: ['/dates/targetDate'], currentValues: {}, pathHints: {}}}
-            const harness = aToolFactoryHarness({
-                specialist: 'update_recipe',
-                innerTools: prepareThenPatchTools(preparePacket),
-                guiRequests: metadataFor(mosaicMetadata),
-                replies: [{toolCalls: [prepareCall]}, {text: ''}]
-            })
-
-            harness.invoke({recipeId: 'r1', instruction: 'edit'})
-
-            expect(stallEvents(harness).length).toBeGreaterThan(0)
-        })
-
-        it('still stalls on an empty response after a failed patch (so retryHints can be used)', () => {
-            const failingPatchTools = innerToolsImpl(
-                {recipe_patch: () => of({ok: false, error: {code: 'VALIDATION_FAILED', message: 'bad', details: []}})},
-                [
-                    {name: 'prepare_update', description: 'Prepare.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}},
-                    {name: 'recipe_patch', description: 'Patch.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, operations: {type: 'array'}}}}
-                ]
-            )
-            const harness = aToolFactoryHarness({
-                specialist: 'update_recipe',
-                innerTools: failingPatchTools,
-                guiRequests: metadataFor(mosaicMetadata),
-                replies: [{toolCalls: [patchCallFailing]}, {text: ''}]
-            })
-
-            harness.invoke({recipeId: 'r1', instruction: 'edit'})
-
-            expect(stallEvents(harness).length).toBeGreaterThan(0)
-        })
+        // picker + updater round 0 (tool call) + updater round 1 (empty / finish-on-empty)
+        expect(llm.mainRequests).toHaveLength(3)
     })
 
     it('does not summarize when the specialist already produced a non-empty answer', () => {
         const {harness, llm} = aHarness({
-            specialistReplies: [{toolCalls: [patchCall]}, {text: 'Removed Sentinel-2 from the sources.'}],
+            mainReplies: [
+                {text: '{"handles":["datasets"]}'},
+                {toolCalls: [updateCall]},
+                {text: 'Removed Sentinel-2 from the sources.'}
+            ],
             summaryReplies: [{text: 'should never be used'}]
         })
 

@@ -13,7 +13,8 @@ const {createUserChat} = require('#mcp/chat/conversation/userChat')
 const {createWsHandler} = require('#mcp/chat/conversation/wsHandler')
 const {createToolRegistry} = require('#mcp/chat/tools/registry')
 const {specialistConsultationTools} = require('#mcp/chat/specialists/specialistConsultationTools')
-const {describeRecipeTool, updateRecipeTool} = require('#mcp/chat/specialists/recipeSpecialists')
+const {describeRecipeTool} = require('#mcp/chat/specialists/describeRecipe')
+const {updateRecipeTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeTool')
 
 function aRegistryHarness({tools, bus = aRecordingBus()} = {}) {
     const registry = createToolRegistry({tools, bus})
@@ -85,19 +86,13 @@ const INNER_TOOLS_BY_SPECIALIST = {
     ),
     update_recipe: () => aFakeTools(
         {
-            prepare_update: () => of({ok: true, data: {baseModelHash: 'h1', focusPaths: [], dependentPaths: [], writablePaths: [], currentValues: {}, dependencyFacts: [], validationRules: []}}),
-            recipe_patch: () => of({ok: true, data: {summary: 'patched', modelHash: 'h2', invalidatedPaths: []}})
+            update_recipe_values: () => of({ok: true, data: {summary: 'updated', modelHash: 'h2', appliedHandles: [], invalidatedHandles: []}})
         },
         [
             {
-                name: 'prepare_update',
-                description: 'Prepare a bounded edit for ONE recipe from formal focusPaths.',
-                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}
-            },
-            {
-                name: 'recipe_patch',
-                description: 'Apply JSON Patch to ONE recipe.',
-                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, operations: {type: 'array'}}}
+                name: 'update_recipe_values',
+                description: 'Set values for ONE recipe by handle name.',
+                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
             }
         ]
     )
@@ -464,13 +459,40 @@ function collectInvocations(registry) {
     }
 }
 
-function aFakeGuiRequests(handler = () => of({id: 'r1', type: 'CLASSIFICATION', name: 'Kenya', projectId: 'p1'})) {
+function aFakeGuiRequests(handler = defaultGuiHandler) {
     const requests = []
     return {
         requests,
         request$(request) {
             requests.push(request)
             return handler(request)
+        }
+    }
+}
+
+// Default GUI handler used when tests don't supply one. Maps recipe-metadata
+// to a MOSAIC recipe (the only recipe with a v1 handle catalog) and load-recipe
+// to a minimal MOSAIC effective model — enough for the update flow's preflight
+// + picker + prepare to run without per-test wiring.
+function defaultGuiHandler(request) {
+    if (request.action === 'recipe-metadata') return of({id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: 'p1'})
+    if (request.action === 'load-recipe') return of({id: 'r1', type: 'MOSAIC', modelHash: 'h-base', model: defaultMosaicModel()})
+    return of({id: 'r1', type: 'MOSAIC', name: 'Kenya', projectId: 'p1'})
+}
+
+function defaultMosaicModel() {
+    return {
+        dates: {type: 'YEARLY_TIME_SCAN', targetDate: '2024-07-02', seasonStart: '2024-01-01', seasonEnd: '2025-01-01', yearsBefore: 0, yearsAfter: 0},
+        sources: {cloudPercentageThreshold: 75, dataSets: {LANDSAT: ['LANDSAT_9']}},
+        sceneSelectionOptions: {type: 'ALL', targetDateWeight: 0},
+        compositeOptions: {
+            corrections: ['SR', 'BRDF'], brdfMultiplier: 4, filters: [],
+            orbitOverlap: 'KEEP', tileOverlap: 'QUICK_REMOVE',
+            includedCloudMasking: ['sepalCloudScore', 'landsatCFMask'],
+            landsatCFMaskCloudMasking: 'MODERATE', landsatCFMaskCloudShadowMasking: 'MODERATE',
+            landsatCFMaskCirrusMasking: 'MODERATE', landsatCFMaskDilatedCloud: 'REMOVE',
+            sepalCloudScoreMaxCloudProbability: 30,
+            cloudBuffer: 0, holes: 'ALLOW', snowMasking: 'ON', compose: 'MEDOID'
         }
     }
 }

@@ -1,39 +1,33 @@
 const {of} = require('rxjs')
-const {runSpecialist$} = require('#mcp/chat/specialists/runSpecialist')
+const {createSpecialistRuntime, wasCapped} = require('#mcp/chat/specialists/runSpecialist')
 const {aFakeLlm, aRecordingBus} = require('../harness')
+const {read} = require('../builders')
 
-// runSpecialist$ exposes its canonical loop timeline on the final result so a
-// caller (update_recipe) can derive structured outcome from the loop record
-// instead of shadowing the same state in a side tracker. The {answer} field
-// stays for callers that only surface prose.
-describe('runSpecialist$ result', () => {
+describe('createSpecialistRuntime — construction + consult$', () => {
 
     const loadCall = {id: 't1', name: 'recipe_load', input: {recipeId: 'r1'}}
     const loadResult = {ok: true, data: {id: 'r1', type: 'MOSAIC'}}
     const loadSchema = {name: 'recipe_load', description: 'Load.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}}}}
 
-    function run({replies, invokeTool$ = () => of(loadResult)}) {
-        const result = lastValue(runSpecialist$({
+    function consult({replies, invoke$ = () => of(loadResult), canonicalizeCall, context = {conversationId: 'conv-1'}}) {
+        const runtime = createSpecialistRuntime({
             llm: aFakeLlm({replies}),
             bus: aRecordingBus(),
             name: 'recipe.describe',
             systemPrompt: 'sys',
-            userText: 'describe r1',
-            allowedSchemas: [loadSchema],
-            invokeTool$,
-            context: {conversationId: 'conv-1'}
-        }))
-        return result
+            tools: {schemas: [loadSchema], invoke$, canonicalizeCall}
+        })
+        return read(runtime.consult$({userText: 'describe r1', context}))
     }
 
     it('carries the answer the loop ended on', () => {
-        const result = run({replies: [{toolCalls: [loadCall]}, {text: 'A mosaic recipe.'}]})
+        const result = consult({replies: [{toolCalls: [loadCall]}, {text: 'A mosaic recipe.'}]})
 
         expect(result.answer).toBe('A mosaic recipe.')
     })
 
     it('records each tool call on the timeline with its name, ok, result, and input', () => {
-        const result = run({replies: [{toolCalls: [loadCall]}, {text: 'A mosaic recipe.'}]})
+        const result = consult({replies: [{toolCalls: [loadCall]}, {text: 'A mosaic recipe.'}]})
 
         expect(result.timeline).toEqual(expect.arrayContaining([
             {kind: 'tool', name: 'recipe_load', ok: true, result: loadResult, input: {recipeId: 'r1'}}
@@ -41,14 +35,28 @@ describe('runSpecialist$ result', () => {
     })
 
     it('reports why the loop stopped', () => {
-        const result = run({replies: [{text: 'Answered without a tool.'}]})
+        const result = consult({replies: [{text: 'Answered without a tool.'}]})
 
         expect(result.finishReason).toBe('answered')
     })
-})
 
-function lastValue(observable) {
-    let value
-    observable.subscribe({next: emitted => { value = emitted }, error: error => { throw error }})
-    return value
-}
+    it('wasCapped is true when the loop terminated at the round/stall cap', () => {
+        const result = consult({replies: [{text: ''}]})
+
+        expect(result.finishReason).toBe('capped')
+        expect(wasCapped(result)).toBe(true)
+    })
+
+    it('records the canonicalized tool input on the timeline, not the raw model emission', () => {
+        const seen = []
+        const result = consult({
+            replies: [{toolCalls: [{...loadCall, input: {recipeId: 'r-bogus'}}]}, {text: 'done.'}],
+            canonicalizeCall: toolCall => ({...toolCall, input: {recipeId: 'r1'}}),
+            invoke$: toolCall => { seen.push(toolCall.input); return of(loadResult) }
+        })
+
+        expect(seen).toEqual([{recipeId: 'r1'}])
+        const toolEntry = result.timeline.find(entry => entry.kind === 'tool')
+        expect(toolEntry.input).toEqual({recipeId: 'r1'})
+    })
+})

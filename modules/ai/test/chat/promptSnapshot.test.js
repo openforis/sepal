@@ -34,32 +34,32 @@ describe('renderPromptSnapshot', () => {
             const out = renderPromptSnapshot({
                 messages: [
                     {role: 'assistant', content: '', toolCalls: [
-                        {id: 'tl1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/dates/targetDate']}}
+                        {id: 'tu1', name: 'update_recipe_values', input: {recipeId: 'r1', values: {targetDate: '2026-06-01'}}}
                     ]}
                 ],
                 tools: []
             })
 
             expect(out).toMatch(/role=assistant/)
-            expect(out).toContain('tl1')
-            expect(out).toContain('prepare_update')
+            expect(out).toContain('tu1')
+            expect(out).toContain('update_recipe_values')
             expect(out).toContain('"recipeId":"r1"')
-            expect(out).toContain('"focusPaths":["/dates/targetDate"]')
+            expect(out).toContain('"targetDate":"2026-06-01"')
         })
 
         it('renders tool-result messages with toolCallId, toolName, ok, and a bounded shape', () => {
             const out = renderPromptSnapshot({
                 messages: [
                     {role: 'tool', toolResults: [
-                        {toolCallId: 'tl1', toolName: 'prepare_update', result: {ok: true, data: {writablePaths: ['/dates/targetDate']}}}
+                        {toolCallId: 'tu1', toolName: 'update_recipe_values', result: {ok: true, data: {appliedHandles: ['targetDate']}}}
                     ]}
                 ],
                 tools: []
             })
 
             expect(out).toMatch(/role=tool/)
-            expect(out).toContain('toolCallId=tl1')
-            expect(out).toContain('toolName=prepare_update')
+            expect(out).toContain('toolCallId=tu1')
+            expect(out).toContain('toolName=update_recipe_values')
             expect(out).toContain('ok=true')
         })
 
@@ -67,7 +67,7 @@ describe('renderPromptSnapshot', () => {
             const out = renderPromptSnapshot({
                 messages: [
                     {role: 'tool', toolResults: [
-                        {toolCallId: 'tp1', toolName: 'recipe_patch', result: {ok: false, error: {code: 'VALIDATION_FAILED', message: 'bad'}}}
+                        {toolCallId: 'tu1', toolName: 'update_recipe_values', result: {ok: false, error: {code: 'VALIDATION_FAILED', message: 'bad'}}}
                     ]}
                 ],
                 tools: []
@@ -77,26 +77,19 @@ describe('renderPromptSnapshot', () => {
             expect(out).toContain('VALIDATION_FAILED')
         })
 
-        it('preserves real prompt content up to the snapshot cap (system prompts in the ~10KB range survive intact)', () => {
-            const {assembleSpecialistPrompt} = require('#mcp/chat/specialists/assembleSpecialistPrompt')
-            const {specialistPrompt} = require('#mcp/chat/llmText/prompts')
-            const {getRecipeSpec} = require('#recipes')
-            const realSystemPrompt = assembleSpecialistPrompt(
-                specialistPrompt('update'), getRecipeSpec('MOSAIC'),
-                {purpose: 'update', includeSchema: true}
-            )
+        it('preserves real prompt content up to the snapshot cap (the picker prompt + full MOSAIC handle catalog survives intact)', () => {
+            const {pickerSystemPrompt} = require('#mcp/chat/specialists/updateRecipe/pickHandles')
+            const realSystemPrompt = pickerSystemPrompt('MOSAIC')
 
             const out = renderPromptSnapshot({
                 messages: [{role: 'system', content: realSystemPrompt}],
                 tools: []
             })
 
-            // Late schema-rule content must survive: a MOSAIC schema rule referencing
-            // `sepalCloudScore` lands near the trailing bytes of the assembled prompt.
-            expect(out).toContain('sepalCloudScore')
-            // And the closing schema-block fence has to land too — otherwise the LLM's
-            // most-likely-attended part of the prompt is invisible to the trace.
-            expect(out).toMatch(/```\s*$/m)
+            // Late handle-catalog content must survive: the BRDF / date handles
+            // land near the end of the assembled picker prompt.
+            expect(out).toContain('brdfMultiplier')
+            expect(out).toContain('yearsAfter')
         })
 
         it('still bounds genuinely huge content with a cap so a runaway can never dump megabytes', () => {
@@ -117,26 +110,26 @@ describe('renderPromptSnapshot', () => {
             const out = renderPromptSnapshot({
                 messages: [],
                 tools: [
-                    {name: 'prepare_update', description: 'Prepare bounded edit.', parameters: {type: 'object'}},
-                    {name: 'recipe_patch', description: 'Apply patch.', parameters: {type: 'object'}}
+                    {name: 'recipe_load', description: 'Load one recipe.', parameters: {type: 'object'}},
+                    {name: 'update_recipe_values', description: 'Apply handle-keyed update.', parameters: {type: 'object'}}
                 ]
             })
 
             expect(out).toMatch(/^=== tools ===/m)
-            expect(out.indexOf('name=prepare_update')).toBeLessThan(out.indexOf('name=recipe_patch'))
+            expect(out.indexOf('name=recipe_load')).toBeLessThan(out.indexOf('name=update_recipe_values'))
         })
 
         it('renders each tool with name, description, and parameter JSON', () => {
             const out = renderPromptSnapshot({
                 messages: [],
                 tools: [{
-                    name: 'recipe_patch',
-                    description: 'Apply JSON Patch to ONE recipe.',
+                    name: 'update_recipe_values',
+                    description: 'Apply a handle-keyed update to ONE recipe.',
                     parameters: {type: 'object', properties: {recipeId: {type: 'string'}}}
                 }]
             })
 
-            expect(out).toContain('Apply JSON Patch to ONE recipe.')
+            expect(out).toContain('Apply a handle-keyed update to ONE recipe.')
             expect(out).toContain('"properties":{"recipeId":{"type":"string"}}')
         })
 

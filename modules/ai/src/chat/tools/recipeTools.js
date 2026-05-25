@@ -47,7 +47,7 @@ function recipeOpenTool(guiRequests) {
 function recipeLoadTool(guiRequests) {
     return {
         name: 'recipe_load',
-        description: 'Load ONE recipe for inspection/editing -> effective model fields at the root + baseModelHash (pass to recipe_patch). path = JSON Pointer into the model (optional) -> returns {baseModelHash, value}; paths into dormant/stripped fields return no value; heavy CLASSIFICATION arrays return omitted markers. Patch paths are model-relative (e.g. /dates/targetDate, NOT /model/dates/...).',
+        description: 'Inspect ONE recipe -> effective model fields at the root. path = JSON Pointer into the model (optional) -> returns the value at that path; paths into dormant/stripped fields return no value; heavy CLASSIFICATION arrays return omitted markers. Read-only: paths are model-relative (e.g. /dates/targetDate, NOT /model/dates/...).',
         parameters: {
             type: 'object',
             properties: {recipeId: {type: 'string'}, path: {type: 'string'}},

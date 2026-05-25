@@ -1,100 +1,104 @@
 const {aToolFactoryHarness} = require('../../harness')
 const {metadataFor, mosaicMetadata, unspeccedMetadata} = require('./fixtures')
 
+// The new picker/updater prompts are split:
+// - picker prompt: recipe handle catalog (system), tool-free
+// - updater prompt: generic + the prepared handle packet (system + user)
+// Neither model-facing prompt should expose JSON Pointer paths or RFC 6902.
 describe('update_recipe per-type prompt assembly', () => {
 
-    function systemPromptFor(metadata) {
+    function pickerSystemPromptFor(metadata) {
         const harness = aToolFactoryHarness({
             specialist: 'update_recipe',
-            guiRequests: metadataFor(metadata)
+            guiRequests: metadataFor(metadata),
+            replies: [{text: '{"handles":["targetDate"]}'}, {text: 'OK'}]
         })
-        harness.invoke({recipeId: 'r-mosaic', instruction: 'edit'})
+        harness.invoke({recipeId: metadata.id, instruction: 'edit'})
         return harness.llm.receivedMessages[0][0].content
+    }
+
+    function updaterSystemPromptFor(metadata) {
+        const harness = aToolFactoryHarness({
+            specialist: 'update_recipe',
+            guiRequests: metadataFor(metadata),
+            replies: [{text: '{"handles":["targetDate"]}'}, {text: 'OK'}]
+        })
+        harness.invoke({recipeId: metadata.id, instruction: 'edit'})
+        return harness.llm.receivedMessages[1][0].content
     }
 
     describe('on a MOSAIC recipe', () => {
 
-        it('drives the workflow with prepare_update, not load_for_update', () => {
-            const systemPrompt = systemPromptFor(mosaicMetadata)
+        it('uses the picker prompt as the first system message and includes the recipe handle catalog', () => {
+            const prompt = pickerSystemPromptFor(mosaicMetadata)
 
-            expect(systemPrompt).toMatch(/update specialist/i)
-            expect(systemPrompt).toContain('prepare_update')
-            expect(systemPrompt).not.toMatch(/load_for_update.*first/i)
+            expect(prompt).toMatch(/select which recipe fields/i)
+            expect(prompt).toContain('Recipe type: MOSAIC')
+            expect(prompt).toContain('datasets')
+            expect(prompt).toContain('cloudMethods')
         })
 
-        it('carries the per-type edit guidance bullets', () => {
-            const systemPrompt = systemPromptFor(mosaicMetadata)
+        it('keeps JSON Pointer paths and RFC 6902 mechanics out of the picker prompt', () => {
+            const prompt = pickerSystemPromptFor(mosaicMetadata)
 
-            expect(systemPrompt).toMatch(/Recipe type: Optical Mosaic/)
-            expect(systemPrompt).not.toMatch(/Recipe: MOSAIC/)
-            expect(systemPrompt).toMatch(/Edit guidance:/i)
+            expect(prompt).not.toMatch(/\/compositeOptions\//)
+            expect(prompt).not.toMatch(/RFC 6902/i)
+            expect(prompt).not.toMatch(/JSON Patch/i)
         })
 
-        it('tells the specialist to add for missingPaths and replace for existingPaths', () => {
-            const systemPrompt = systemPromptFor(mosaicMetadata)
+        it('uses the generic updater prompt as the second system message', () => {
+            const prompt = updaterSystemPromptFor(mosaicMetadata)
 
-            expect(systemPrompt).toMatch(/missingPaths/)
-            expect(systemPrompt).toMatch(/existingPaths/)
-            expect(systemPrompt).toMatch(/\badd\b/)
-            expect(systemPrompt).toMatch(/\breplace\b/)
+            expect(prompt).toMatch(/update_recipe_values/)
+            expect(prompt).toMatch(/writableHandles/)
+            expect(prompt).toMatch(/handleErrors/)
         })
 
-        it('carries generic patch-construction guidance for required fields and arrays', () => {
-            const systemPrompt = systemPromptFor(mosaicMetadata)
+        it('keeps JSON Pointer paths and RFC 6902 mechanics out of the updater prompt', () => {
+            const prompt = updaterSystemPromptFor(mosaicMetadata)
 
-            expect(systemPrompt).toMatch(/never remove a required|required.*replace/i)
-            expect(systemPrompt).toMatch(/index-based|value-name/i)
-            expect(systemPrompt).toMatch(/config.*replac.*whole|whole array/i)
+            expect(prompt).not.toMatch(/\/compositeOptions\//)
+            expect(prompt).not.toMatch(/RFC 6902/i)
+            expect(prompt).not.toMatch(/JSON Patch/i)
+            expect(prompt).not.toMatch(/JSON Pointer/i)
         })
 
-        it('tells the specialist to read retryHints after a failed patch while keeping strict patch rules', () => {
-            const systemPrompt = systemPromptFor(mosaicMetadata)
+        it('updater prompt does not embed the full JSON schema', () => {
+            const prompt = updaterSystemPromptFor(mosaicMetadata)
 
-            expect(systemPrompt).toMatch(/retryHints/)
-            expect(systemPrompt).toMatch(/index-based|never remove a required/i)
+            expect(prompt).not.toMatch(/```json/)
+            expect(prompt).not.toContain('$defs')
         })
 
-        it('tells the specialist not to invent unrequested changes in the final answer', () => {
-            const systemPrompt = systemPromptFor(mosaicMetadata)
-
-            expect(systemPrompt).toMatch(/only the changes actually applied|don'?t invent/i)
-        })
-
-        it('injects the generated update manual after the edit guidance (a path the guidance bullets do not carry)', () => {
-            const systemPrompt = systemPromptFor(mosaicMetadata)
-
-            expect(systemPrompt).toContain('/compositeOptions/tileOverlap')
-            expect(systemPrompt.indexOf('Edit guidance:')).toBeLessThan(systemPrompt.indexOf('/compositeOptions/tileOverlap'))
-        })
-
-        it('carries the corrected fast-render levers with the manual, base prompt first, schema still omitted', () => {
-            const systemPrompt = systemPromptFor(mosaicMetadata)
-
-            expect(systemPrompt).toMatch(/Warnings:/)
-            expect(systemPrompt).toMatch(/cloudBuffer.*(expensive|distance|buffer)|BRDF.*(expensive|slow|fail)/i)
-            expect(systemPrompt).not.toMatch(/```json/)
-            expect(systemPrompt).toMatch(/update specialist/i)
-            expect(systemPrompt.indexOf('update specialist')).toBeLessThan(systemPrompt.indexOf('Warnings:'))
-        })
-
-        it('omits the full JSON schema and bare recipe_load', () => {
-            const systemPrompt = systemPromptFor(mosaicMetadata)
-
-            expect(systemPrompt).not.toContain('recipe_load')
-            expect(systemPrompt).not.toMatch(/```json/)
-            expect(systemPrompt).not.toMatch(/Choose when:/i)
-            expect(systemPrompt).not.toMatch(/Use cases:/i)
+        it('updater user message carries the prepared handle packet so handle catalogs do not have to re-appear in the system prompt', () => {
+            const harness = aToolFactoryHarness({
+                specialist: 'update_recipe',
+                guiRequests: metadataFor(mosaicMetadata),
+                replies: [{text: '{"handles":["targetDate"]}'}, {text: 'OK'}]
+            })
+            harness.invoke({recipeId: mosaicMetadata.id, instruction: 'edit'})
+            const updaterMessages = harness.llm.receivedMessages[1]
+            const userMessage = updaterMessages[updaterMessages.length - 1]
+            expect(userMessage.role).toBe('user')
+            expect(userMessage.content).toContain('Prepared packet')
+            expect(userMessage.content).toContain('"writableHandles"')
+            expect(userMessage.content).toContain('"baseModelHash"')
         })
     })
 
     describe('on an unknown recipe type', () => {
 
-        it('falls back to the base frame with no per-type edit guidance or schema', () => {
-            const systemPrompt = systemPromptFor(unspeccedMetadata)
+        it('refuses with an UNSUPPORTED_RECIPE_TYPE answer before any LLM call', () => {
+            const harness = aToolFactoryHarness({
+                specialist: 'update_recipe',
+                guiRequests: metadataFor(unspeccedMetadata),
+                replies: [{text: 'never reached'}]
+            })
 
-            expect(systemPrompt).toMatch(/update specialist/i)
-            expect(systemPrompt).not.toMatch(/Edit guidance:/i)
-            expect(systemPrompt).not.toMatch(/```json/)
+            const result = harness.invoke({recipeId: unspeccedMetadata.id, instruction: 'edit'})
+
+            expect(result).toMatchObject({ok: false, error: {code: 'UNSUPPORTED_RECIPE_TYPE'}})
+            expect(harness.llm.receivedMessages).toEqual([])
         })
     })
 })

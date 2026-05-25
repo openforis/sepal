@@ -1,8 +1,8 @@
 // Bus event publishers for the specialist runtime. Compact summaries at
-// DEBUG (per-round lifecycle) and INFO (update outcome). Per-call shape
-// summarisers stay narrow — prepare_update and recipe_patch get bespoke
-// strings; everything else falls back to a generic kind label so
-// new tools still publish a usable event without code changes here.
+// DEBUG (per-round lifecycle) and INFO (update outcome). The per-tool
+// summarisers are narrow — update_recipe_values gets a bespoke string;
+// every other tool falls back to a generic kind label so a new tool still
+// publishes a usable event without code changes here.
 
 const {publishLoopPrompt} = require('../loopEvents')
 
@@ -36,21 +36,6 @@ function publishSpecialistStall({bus, name, round, conversationId, stallCount, m
         messageCount,
         toolNames,
         message: `specialist.stall name=${name} round=${round} stallCount=${stallCount} messages=${messageCount} tools=[${toolNames.join(',') || '-'}]`
-    })
-}
-
-function publishSpecialistNoProgress({bus, name, round, conversationId, messageCount, toolNames, nudgeChars, reason}) {
-    bus.publish({
-        type: 'specialist.noProgress',
-        level: 'warn',
-        conversationId,
-        name,
-        round,
-        messageCount,
-        toolNames,
-        nudgeChars,
-        reason,
-        message: `specialist.noProgress name=${name} round=${round} messages=${messageCount} tools=[${(toolNames || []).join(',') || '-'}] reason=${reason}`
     })
 }
 
@@ -98,7 +83,7 @@ function publishSpecialistToolResponse({bus, name, conversationId, tool, envelop
     if (envelope?.ok === false) {
         const errorCode = envelope.error?.code || 'unknown'
         const errorMessage = envelope.error?.message || ''
-        const details = validationDetails(envelope.error)
+        const handleErrors = handleErrorsFor(envelope.error)
         bus.publish({
             type: 'specialist.tool.response',
             level: 'debug',
@@ -108,10 +93,10 @@ function publishSpecialistToolResponse({bus, name, conversationId, tool, envelop
             ok: false,
             errorCode,
             errorMessage,
-            ...(details ? {details} : {}),
+            ...(handleErrors ? {handleErrors} : {}),
             message: `specialist.tool.response name=${name} tool=${tool} ok=false errorCode=${errorCode}`
                 + (errorMessage ? ` error=${JSON.stringify(truncate(errorMessage, 200))}` : '')
-                + (details ? ` details=${formatValidationDetails(details)}` : '')
+                + (handleErrors ? ` handleErrors=${formatHandleErrors(handleErrors)}` : '')
         })
         return
     }
@@ -151,45 +136,39 @@ function outcomeMessage({recipeId, attempted, succeeded, code, lastPatchErrorCod
         : `${head}${tail}`
 }
 
-// VALIDATION_FAILED carries the per-field reasons the recipe spec rejected the
-// patch on; surface just rule + path so a bad patch is diagnosable from the log
-// line. The human messages stay off this diagnostic line — they reach the user
-// via the update_recipe answer.
-function validationDetails(error) {
-    if (!Array.isArray(error?.details) || !error.details.length) return null
-    return error.details.map(detail => ({rule: detail.rule, path: detail.path}))
+// Handle-keyed validation reasons from the GUI patch bridge, the only
+// per-tool error shape the specialist runtime needs to flatten. The human
+// messages stay off this diagnostic line — they reach the user via the
+// update_recipe answer.
+function handleErrorsFor(error) {
+    if (!Array.isArray(error?.handleErrors) || !error.handleErrors.length) return null
+    return error.handleErrors.map(entry => ({
+        handle: entry.handle || null,
+        message: entry.message || ''
+    }))
 }
 
-function formatValidationDetails(details) {
-    return `[${details.map(detail => `${detail.rule || '?'}@${detail.path || '?'}`).join(',')}]`
+function formatHandleErrors(handleErrors) {
+    return `[${handleErrors.map(entry => `${entry.handle || '?'}: ${truncate(entry.message, 80)}`).join('; ')}]`
 }
 
 function summariseToolInput(tool, input) {
     if (!input || typeof input !== 'object') return ''
-    if (tool === 'prepare_update') {
-        return `recipeId=${input.recipeId || '-'} focusPaths=${pathList(input.focusPaths)}`
-    }
-    if (tool === 'recipe_patch') {
+    if (tool === 'update_recipe_values') {
         return [
             `recipeId=${input.recipeId || '-'}`,
             `baseModelHash=${shortHash(input.baseModelHash)}`,
-            `ops=${patchOperations(input.operations)}`
+            `handles=${nameList(Object.keys(input.values || {}))}`
         ].join(' ')
     }
     return ''
 }
 
 function summariseToolShape(tool, data) {
-    if (tool === 'prepare_update') {
-        const focusCount = (data?.focusPaths || []).length
-        const dependentCount = (data?.dependentPaths || []).length
-        const writableCount = (data?.writablePaths || []).length
-        return `prepared(focus=${focusCount}${pathList(data?.focusPaths)},dependent=${dependentCount}${pathList(data?.dependentPaths)},writable=${writableCount}${pathList(data?.writablePaths)})`
-    }
-    if (tool === 'recipe_patch') {
-        const modelHash = data?.modelHash || 'unchanged'
-        const invalidatedPathsCount = (data?.invalidatedPaths || []).length
-        return `patch(modelHash=${shortHash(modelHash)},invalidatedPaths=${invalidatedPathsCount}${pathList(data?.invalidatedPaths)})`
+    if (tool === 'update_recipe_values') {
+        const applied = data?.appliedHandles || []
+        const invalidated = data?.invalidatedHandles || []
+        return `update(modelHash=${shortHash(data?.modelHash)},applied=${applied.length}${nameList(applied)},invalidated=${invalidated.length}${nameList(invalidated)})`
     }
     if (Array.isArray(data)) return `array(${data.length})`
     if (data && typeof data === 'object') return 'object'
@@ -197,59 +176,16 @@ function summariseToolShape(tool, data) {
     return typeof data
 }
 
-function patchOperations(operations) {
-    if (!Array.isArray(operations)) return '[-]'
-    const maxOperations = 10
-    const head = operations.slice(0, maxOperations).map(patchOperation)
-    const suffix = operations.length > maxOperations ? `;+${operations.length - maxOperations}` : ''
-    return `[${head.join(';')}${suffix}]`
-}
-
-function patchOperation(operation) {
-    if (!operation || typeof operation !== 'object') return '?'
-    const head = [operation.op, operation.path].filter(Boolean).join(' ')
-    const from = operation.from ? ` from=${operation.from}` : ''
-    const value = Object.prototype.hasOwnProperty.call(operation, 'value')
-        ? ` value=${formatValue(operation.value)}`
-        : ''
-    return `${head || '?'}${from}${value}`
-}
-
-function pathList(paths) {
-    if (!Array.isArray(paths) || !paths.length) return '[-]'
-    const maxPaths = 10
-    const head = paths.slice(0, maxPaths).map(String)
-    const suffix = paths.length > maxPaths ? `,+${paths.length - maxPaths}` : ''
+function nameList(names) {
+    if (!Array.isArray(names) || !names.length) return '[-]'
+    const maxNames = 10
+    const head = names.slice(0, maxNames).map(String)
+    const suffix = names.length > maxNames ? `,+${names.length - maxNames}` : ''
     return `[${head.join(',')}${suffix}]`
 }
 
 function shortHash(hash) {
     return typeof hash === 'string' && hash.length > 12 ? hash.slice(0, 8) : (hash || '-')
-}
-
-function formatValue(value) {
-    if (typeof value === 'string') return JSON.stringify(truncate(value, 80))
-    if (value === null || typeof value !== 'object') return String(value)
-    if (Array.isArray(value)) return formatArray(value)
-    return `object(${Object.keys(value).length})`
-}
-
-// A small array of scalars (e.g. includedCloudMasking) renders its contents so a
-// narrowed/incorrect selection is visible in the log. Large or non-scalar arrays
-// stay summarized as array(n) to keep the line bounded.
-const MAX_ARRAY_ITEMS = 12
-const MAX_ARRAY_CHARS = 200
-
-function formatArray(value) {
-    if (value.every(isScalar) && value.length <= MAX_ARRAY_ITEMS) {
-        const rendered = JSON.stringify(value)
-        if (rendered.length <= MAX_ARRAY_CHARS) return rendered
-    }
-    return `array(${value.length})`
-}
-
-function isScalar(item) {
-    return item === null || typeof item !== 'object'
 }
 
 function truncate(value, max) {
@@ -261,7 +197,6 @@ module.exports = {
     publishSpecialistRequest,
     publishSpecialistResponse,
     publishSpecialistStall,
-    publishSpecialistNoProgress,
     publishSpecialistToolRequest,
     publishSpecialistToolResponse,
     publishUpdateRecipeOutcome

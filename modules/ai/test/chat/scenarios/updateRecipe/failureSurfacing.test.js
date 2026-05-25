@@ -1,39 +1,47 @@
-const {of} = require('rxjs')
-const {aToolFactoryHarness, aConversationHarness, collect, innerToolsImpl} = require('../../harness')
+const {of, throwError} = require('rxjs')
+const {aToolFactoryHarness, aConversationHarness, aFakeGuiRequests, collect, innerToolsImpl} = require('../../harness')
+const {aFullMosaicModel} = require('./fixtures')
+const {updateRecipeValuesTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool')
 
 // A failed update is a directAnswer tool returning ok:false. The validation
-// reason must reach the user in the SAME orchestrator round — the live failure
-// was the orchestrator going empty then silent on the post-tool restate. The
-// failure explanation rides on the envelope and streams straight to the channel.
+// reason must reach the user in the same orchestrator round — falling back
+// to an empty post-tool restate was the live regression. The failure
+// explanation rides on the envelope and streams straight to the channel.
 describe('a failed update_recipe surfaces the validation reason to the user', () => {
 
-    const prepareCall = {id: 'tu1', name: 'prepare_update', input: {recipeId: 'r1', focusPaths: ['/sources/dataSets/SENTINEL_2']}}
-    const patchCall = {id: 'tp1', name: 'recipe_patch', input: {recipeId: 'r1', baseModelHash: 'h1', operations: [{op: 'remove', path: '/sources/dataSets/SENTINEL_2'}]}}
-    const prepareResult = {ok: true, data: {baseModelHash: 'h1', focusPaths: ['/sources/dataSets/SENTINEL_2'], dependentPaths: ['/compositeOptions/corrections'], writablePaths: ['/sources/dataSets/SENTINEL_2', '/compositeOptions/corrections'], currentValues: {}, dependencyFacts: [], validationRules: []}}
-    const patchError = {
-        code: 'VALIDATION_FAILED',
-        message: 'recipe model failed validation',
-        details: [{path: '/compositeOptions/corrections', rule: 'calibrateRequiresMultipleSources', message: 'cross-sensor calibration requires both Landsat and Sentinel-2 source groups'}]
-    }
+    const HUMAN_REASON = 'cross-sensor calibration requires both Landsat and Sentinel-2 source groups'
     const updateCall = {id: 'ur1', name: 'update_recipe', input: {recipeId: 'r1', instruction: 'use only Landsat'}}
 
     function aFailingUpdateTool() {
+        const guiRequests = aFakeGuiRequests(request => {
+            if (request.action === 'recipe-metadata') return of({id: 'r1', type: 'MOSAIC', name: 'Kenya'})
+            if (request.action === 'load-recipe') return of({id: 'r1', type: 'MOSAIC', modelHash: 'h-base', model: aFullMosaicModel()})
+            if (request.action === 'recipe-patch') return throwError(() => Object.assign(new Error('recipe model failed validation'), {
+                code: 'VALIDATION_FAILED',
+                errors: [{path: '/compositeOptions/corrections', rule: 'calibrateRequiresMultipleSources', message: HUMAN_REASON}]
+            }))
+            return of({})
+        })
         const innerTools = innerToolsImpl(
-            {
-                prepare_update: () => of(prepareResult),
-                recipe_patch: () => of({ok: false, error: patchError})
-            },
-            [
-                {name: 'prepare_update', description: 'Prepare.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}},
-                {name: 'recipe_patch', description: 'Patch.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, operations: {type: 'array'}}}}
-            ]
+            {update_recipe_values: (input, context) => updateRecipeValuesTool(guiRequests).invoke$(input, context)},
+            [{
+                name: 'update_recipe_values',
+                description: 'Update.',
+                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+            }]
         )
+        const updaterCall = {id: 'tu1', name: 'update_recipe_values', input: {
+            recipeId: 'r1', baseModelHash: 'h-base',
+            writableHandles: ['datasets', 'corrections', 'sceneSelection'],
+            values: {datasets: {LANDSAT: ['LANDSAT_9']}}
+        }}
         return aToolFactoryHarness({
             specialist: 'update_recipe',
+            guiRequests,
             innerTools,
             replies: [
-                {toolCalls: [prepareCall]},
-                {toolCalls: [patchCall]},
+                {text: '{"handles":["datasets"]}'},
+                {toolCalls: [updaterCall]},
                 {text: 'I attempted the change.'}
             ]
         }).tool
@@ -55,8 +63,7 @@ describe('a failed update_recipe surfaces the validation reason to the user', ()
         const events = await collect(conversation.send$('use only Landsat', {toolContext: {clientId: 'c1', subscriptionId: 's1', conversationId: 'conv-1'}}))
 
         const text = events.filter(event => event.textDelta).map(event => event.textDelta).join('')
-        expect(text).toMatch(/cross-sensor calibration requires both Landsat and Sentinel-2/)
-        // The human reason reaches the user; the internal rule name does not.
+        expect(text).toMatch(new RegExp(HUMAN_REASON.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
         expect(text).not.toMatch(/calibrateRequiresMultipleSources/)
     })
 

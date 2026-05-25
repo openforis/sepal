@@ -5,18 +5,11 @@ describe('update_recipe construction and preflight', () => {
 
     describe('when constructing update_recipe without all required inner tools', () => {
 
-        it('refuses to construct when prepare_update is missing from the inner registry', () => {
-            const innerTools = innerToolsExposing(['recipe_patch'])
+        it('refuses to construct when update_recipe_values is missing from the inner registry', () => {
+            const innerTools = innerToolsExposing([])
 
             expect(() => aToolFactoryHarness({specialist: 'update_recipe', innerTools}))
-                .toThrow(/prepare_update/)
-        })
-
-        it('refuses to construct when recipe_patch is missing from the inner registry', () => {
-            const innerTools = innerToolsExposing(['prepare_update'])
-
-            expect(() => aToolFactoryHarness({specialist: 'update_recipe', innerTools}))
-                .toThrow(/recipe_patch/)
+                .toThrow(/update_recipe_values/)
         })
     })
 
@@ -36,7 +29,7 @@ describe('update_recipe construction and preflight', () => {
             })
         })
 
-        it('does not invoke the inner specialist LLM', () => {
+        it('does not invoke any inner specialist LLM', () => {
             harness.invoke({recipeId: 'r1', instruction: 'edit'})
 
             expect(harness.llm.receivedMessages).toEqual([])
@@ -44,20 +37,12 @@ describe('update_recipe construction and preflight', () => {
     })
 })
 
-// Inner-registry double exposing only the named tool schemas, with no
-// invoke$ implementations. update_recipe construction only inspects
-// schemas() to verify required tools are present.
 function innerToolsExposing(names) {
     const SCHEMAS = {
-        prepare_update: {
-            name: 'prepare_update',
-            description: 'Prepare a bounded edit for ONE recipe from formal focusPaths.',
-            parameters: {type: 'object', properties: {recipeId: {type: 'string'}, focusPaths: {type: 'array', items: {type: 'string'}}}}
-        },
-        recipe_patch: {
-            name: 'recipe_patch',
-            description: 'Apply JSON Patch to ONE recipe.',
-            parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, operations: {type: 'array'}}}
+        update_recipe_values: {
+            name: 'update_recipe_values',
+            description: 'Set values for ONE recipe by handle name.',
+            parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
         }
     }
     return {schemas: () => names.map(name => SCHEMAS[name])}

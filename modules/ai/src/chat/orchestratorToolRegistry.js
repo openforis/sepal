@@ -3,7 +3,8 @@
 
 const {createToolRegistry} = require('./tools/registry')
 const {sepalTools, specialistInnerTools} = require('./tools/sepalTools')
-const {describeRecipeTool, updateRecipeTool} = require('./specialists/recipeSpecialists')
+const {describeRecipeTool} = require('./specialists/describeRecipe')
+const {updateRecipeTool} = require('./specialists/updateRecipe/updateRecipeTool')
 const {specialistConsultationTools} = require('./specialists/specialistConsultationTools')
 
 function createOrchestratorToolRegistry({guiRequests, llm, bus, diagnostics}) {
