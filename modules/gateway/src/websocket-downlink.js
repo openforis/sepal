@@ -152,17 +152,12 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
         }
     }
 
-    const isOutdatedClientVersion = (clientVersion, serverVersion) => {
-        const numericClientVersion = Number(clientVersion)
-        const numericServerVersion = Number(serverVersion)
-        return isNaN(numericClientVersion) || isNaN(numericServerVersion)
-            ? false
-            : numericClientVersion < numericServerVersion
-    }
+    const isSameVersion = (clientVersion, serverVersion) =>
+        String(clientVersion) === String(serverVersion)
 
     const onVersion = (username, clientId, {buildNumber}) => {
-        if (isOutdatedClientVersion(buildNumber, BUILD_NUMBER)) {
-            log.info(`${clientTag(username, clientId)} running outdated version:`, buildNumber)
+        if (!isSameVersion(buildNumber, BUILD_NUMBER)) {
+            log.info(`${clientTag(username, clientId)} running different version:`, buildNumber)
             event$.next({type: CLIENT_VERSION_MISMATCH, data: {username, clientId}})
         }
     }
