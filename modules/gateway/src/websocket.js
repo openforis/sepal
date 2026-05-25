@@ -37,7 +37,7 @@ const READY_STATE = new Boolean
 const EVENT_TYPE = new String
 const DATA = new Object
 
-// module <-> gateway: implemented by backend modules
+// gateway <-> module
 
 const MODULE_PROTOCOL = () => ({
     rx: [
@@ -74,9 +74,9 @@ const MODULE_PROTOCOL = () => ({
     ]
 })
 
-// gateway <-> client: implemented internally by ws.js and gateway
+// gateway <-> client
 
-const INTERNAL_PROTOCOL = () => ({
+const CLIENT_PROTOCOL = () => ({
     rx: [
         // heartbeat request
         {hb: HEARTBEAT},
@@ -101,7 +101,7 @@ const INTERNAL_PROTOCOL = () => ({
     ]
 })
 
-// client <-> subscriptiion: implemented by subscribers
+// client <-> subscription
 
 const SUBSCRIPTION_PROTOCOL = () => ({
     rx: [
