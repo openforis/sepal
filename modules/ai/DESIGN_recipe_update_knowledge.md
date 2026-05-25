@@ -1,9 +1,11 @@
 # Recipe update knowledge design
 
-Status: partially implemented design note. The current implementation has
-rule-derived constraint metadata, a generated update manual, and the
-`prepare_update({recipeId, focusPaths})` update-preparation tool. Rich
-operational recipe knowledge is still being expanded.
+Status: target direction with partial implementation. The current implementation
+has rule-derived constraint metadata, a generated update manual, and the
+`prepare_update({recipeId, focusPaths})` update-preparation tool. The target
+direction is a handle-based picker/prepare/updater workflow behind the same
+`update_recipe(recipeId, instruction)` boundary. Rich operational recipe
+knowledge and handle metadata are still being expanded.
 
 This note captures the target direction for making recipe update specialists
 knowledge-rich without putting all recipe semantics into the always-visible
@@ -11,8 +13,8 @@ orchestrator prompt, and without hand-coding every possible user request.
 
 The broad specialist architecture lives in `DESIGN_chat_specialists_v2.md`.
 This document focuses on recipe update authoring, prompt-cache shape, and the
-relationship between static recipe knowledge and deterministic path-oriented
-preparation.
+relationship between static recipe knowledge, handle-based preparation, and
+deterministic update mechanics.
 
 ## Problem
 
@@ -28,11 +30,12 @@ tradeoffs: which fields affect processing time or memory, which options trade
 quality for speed, which values are reasonable, and which fields interact.
 
 The generated `MOSAIC` update manual now provides structural information such
-as paths, value shape, and validation constraints. It still needs richer
-operational knowledge in a general reusable form. The JSON Schema does not
-contain most speed/rendering/quality tradeoffs; useful source prose often lives
-in GUI labels/tooltips, public docs, or backend implementation details and must
-be distilled before it becomes runtime prompt input.
+as paths, value shape, and validation constraints. The target picker catalog
+should expose short semantic handles instead of JSON Pointer paths, and it still
+needs richer operational knowledge in a general reusable form. The JSON Schema
+does not contain most speed/rendering/quality tradeoffs; useful source prose
+often lives in GUI labels/tooltips, public docs, or backend implementation
+details and must be distilled before it becomes runtime prompt input.
 
 ## Goals
 
@@ -44,27 +47,28 @@ be distilled before it becomes runtime prompt input.
   limits while still useful to local small-model development.
 - Avoid keyword-matching user instructions in deterministic tool code.
 - Avoid requiring many separate authoring files for each recipe type.
-- Keep patch generation safe by deterministically expanding dependencies and
-  write scope before `recipe_patch`.
+- Keep patch generation hidden from the model: specialists choose handles and
+  values; deterministic code maps handles to internal paths, diffs, and
+  applies through the GUI patch bridge.
 - Allow recipe support to start minimal and improve as richer facts are added.
 - Make operational recipe knowledge reusable by update, describe, and future
   troubleshooting/advice specialists rather than baking it into one generated
-  update-manual prose block.
+  picker-catalog prose block.
 
 ## Model profile stance
 
 The design should be model-neutral. It should work with the current local Qwen
 development profile and with a future Bedrock Nova production profile.
 
-Use Qwen as a useful development constraint: if the compact manual,
-path-focused preparation, dependency expansion, and validation loop work on a
-smaller local model, the same structure should generally be easier for a larger
-managed production model. Switch development focus to Nova only when Qwen starts
-forcing design choices that would be undesirable in production.
+Use Qwen as a useful development constraint: if the compact handle catalog,
+focused preparation, dependency expansion, and validation loop work on a smaller
+local model, the same structure should generally be easier for a larger managed
+production model. Switch development focus to Nova only when Qwen starts forcing
+design choices that would be undesirable in production.
 
 Acceptable Qwen pressure:
 
-- make manuals clearer and more compact
+- make generated catalogs and prepared packets clearer and more compact
 - reduce duplicated schema prose
 - make write scopes explicit
 - add evals for subtle recipe cases
@@ -77,7 +81,8 @@ Bad Qwen pressure:
 - prompt branches for every user phrasing
 - extra tool round trips only because the model loses context
 - hand-written recipe hacks that do not generalize
-- removing useful recipe semantics from the manual just to fit the model
+- removing useful recipe semantics from generated artifacts just to fit the
+  model
 
 Generated artifacts may have profiles, for example `compact` and `full`, but
 they must come from the same source metadata. The `compact` profile is the
@@ -89,27 +94,35 @@ profile is optional and should be justified by evals.
 The update flow should separate language reasoning from deterministic recipe
 mechanics:
 
-- **Update specialist** receives the user instruction and static recipe manual.
-  It decides which recipe paths are relevant and what tradeoffs may matter.
-- **Preparation/closure tool** receives formal paths, not user prose. It loads
-  current values, returns path facts, expands dependencies, and defines the
-  allowed write scope.
+- **Picker specialist** receives the user instruction and static recipe handle
+  catalog. It decides which handles are relevant and what tradeoffs may matter.
+  It does not pick values and does not call tools.
+- **Preparation/closure step** receives handles, not user prose. It loads
+  current values, returns focused handle facts, expands deterministic validation
+  dependencies, and defines the writable handle set.
+- **Updater specialist** receives the instruction and prepared handle packet. It
+  picks values, calls the recipe-value update tool, iterates on validation
+  errors, and returns the user-facing summary.
+- **Recipe-value update tool** maps handles to internal paths, diffs current vs
+  requested values, emits JSON Patch internally, and calls the GUI patch
+  bridge.
 - **GUI/shared validator** remains authoritative for final validation and
   persistence.
 
 In short:
 
 ```text
-user request -> specialist chooses paths -> prepare_update expands facts/scope
-             -> specialist writes JSON Patch -> recipe_patch validates/applies
+user request -> picker chooses handles -> prepare_update expands facts/scope
+             -> updater sets values -> update_recipe_values generates JSON Patch
+             -> GUI patch bridge validates/applies
 ```
 
 The deterministic preparation layer should not infer intent from natural
 language. Passing the original instruction to it would encourage keyword
-matching and hidden per-request heuristics. The specialist already has the
-instruction in its own prompt and logs.
+matching and hidden per-request heuristics. The picker and updater already have
+the instruction in their own prompts and logs.
 
-## Open decision: model-facing update contract
+## Chosen direction: picker, prepare, updater
 
 The current live implementation uses `prepare_update -> recipe_patch`: the
 specialist picks focus paths, receives a bounded work packet, then authors JSON
@@ -118,8 +131,12 @@ the GUI validation/persistence bridge. It also exposes a real reliability
 problem: the model can understand the intended semantic edit but fail on RFC
 6902 mechanics such as invented pointers, array indexes, or add-vs-replace.
 
-Do not treat model-authored JSON Patch as a settled long-term contract yet.
-There are four viable model-facing contracts:
+Model-authored JSON Patch is transitional, not the target. The chosen direction
+is a picker/prepare/updater workflow using short semantic handles and requested
+values. The orchestrator boundary remains `update_recipe(recipeId,
+instruction)`.
+
+Alternatives considered:
 
 1. **Keep JSON Patch.** Lowest implementation cost because it is already live.
    It keeps outputs small and scopes writes explicitly, but continues to make
@@ -140,44 +157,282 @@ There are four viable model-facing contracts:
    roots. The main risk is unchanged-value preservation inside a panel; large
    panels may need further splitting.
 
-4. **Desired field values.** The model submits `{path, value}` pairs rather
-   than operations. Deterministic code validates scope/addressability and emits
-   JSON Patch. This gives tight blast-radius control and small outputs, but it
-   introduces a field catalog/addressability layer that can become its own
-   update language.
+4. **Raw path/value pairs.** The model submits `{path, value}` pairs
+   rather than operations. Deterministic code validates scope/addressability and
+   emits JSON Patch. This removes RFC 6902 mechanics but still exposes internal
+   JSON Pointer paths. The chosen workflow keeps the value-setting idea but uses
+   stable handles instead of paths.
 
-The current bias is to defer the choice until it matters for implementation,
-especially recipe creation. The specialist boundary gives room to change the
-private update surface later: the orchestrator calls `update_recipe`, not
-`recipe_patch`.
-
-Guardrails while the decision is open:
+Guardrails for the chosen direction:
 
 - Avoid expanding prompt guidance around RFC 6902 unless it is needed to keep
-  the current tool usable.
+  the current transitional tool usable.
 - Prefer tests that assert semantic final model changes, validation failures,
   and user-facing outcomes over tests that lock in patch-op shapes.
-- Do not build recipe creation around model-authored JSON Patch by default.
+- Do not build recipe creation around model-authored JSON Patch; model creation
+  should reuse the picker/prepare/updater workflow over `defaultModel()`.
 - Keep the GUI patch bridge and full recipe validation authoritative regardless
   of the model-facing contract.
-- Keep new recipe metadata useful across all options: field meanings,
-  dependencies, labels, operational facts, and GUI/panel grouping.
+- Keep new recipe metadata useful across picker catalogs, prepared packets,
+  validation feedback, summaries, and future describe/advice specialists.
 
-## Static recipe manual
-
-Each update specialist should get a compact, path-first recipe manual in its
-static system prompt. This manual is cacheable because it is stable for a given
-recipe type and version.
-
-The manual should be generated from structured recipe metadata rather than
-hand-written as a separate prompt file. The manual is a generated artifact, not
-the source of truth. It can include facts from schema, validation rules, and
-reusable operational recipe knowledge.
-
-A useful generated field entry shape is:
+## Target workflow
 
 ```text
-/compositeOptions/tileOverlap
+update_recipe(recipeId, instruction)
+  -> picker specialist
+  -> prepare_update
+  -> updater specialist
+  -> update_recipe_values
+  -> answer
+```
+
+The orchestrator still sees one `update_recipe` tool. The split is internal to
+that tool and should be reusable for creation by running the same workflow over
+`defaultModel()` instead of an existing recipe model.
+
+### Picker
+
+The picker translates the natural-language instruction into recipe field
+handles. It is recipe-type-aware, cacheable, tool-free, and should run as a
+single structured LLM call.
+
+Picker prompt contents:
+
+- compact handle catalog for the recipe type
+- per-field descriptions and purpose
+- operational knowledge such as performance, cost, availability, and tradeoffs
+- cross-property knowledge useful for selecting related fields
+
+Picker prompt omissions:
+
+- current recipe values
+- validation rule details
+- value-picking instructions
+- patch mechanics
+
+Picker output should be only handles, with no rationale in v1:
+
+```js
+{fields: ['datasets', 'cloudMethods', 'cloudFilter']}
+```
+
+Leaving out rationale keeps token cost down and avoids passing fuzzy picker
+reasoning to the updater. If logs later show picker decisions are hard to
+debug, rationale can be added to diagnostics without becoming updater input.
+
+### Handles
+
+The model should not use JSON Pointer paths as its primary field handles.
+Internal paths are deterministic metadata behind the tool boundary. LLM-facing
+handles should be short, stable, semantic lower-camel identifiers with as few
+words as clarity allows:
+
+```text
+datasets
+cloudFilter
+cloudMethods
+s2CloudScore
+landsatCloudMask
+landsatShadowMask
+landsatCirrusMask
+corrections
+tileOverlap
+targetDate
+dateWindow
+filters
+```
+
+Handles should come from explicit recipe metadata and be transformed
+programmatically for picker catalogs, prepare lookup, validation feedback,
+summaries, and logs. The exact source file is less important than avoiding
+duplication and keeping one deterministic handle-to-path mapping.
+
+Handle granularity rules for v1:
+
+- Prefer one handle per atomic settable recipe value.
+- Avoid one-handle-to-many-path clusters. If a broad move needs many fields,
+  the picker should return multiple concrete handles.
+- `datasets` represents the whole source-membership object, because changing
+  "only Landsat" is a coherent membership update.
+- Config arrays such as cloud methods are whole-value handles, not
+  index-addressable handles.
+- Do not expose group handles such as `cloudMasking` or `performance` in v1.
+  They require group descriptions, group expansion logic, and another model
+  choice.
+- For MOSAIC v1, expose `filters` as one whole-array handle because filters are
+  a material rendering-cost lever. Do not expose per-filter item handles until a
+  concrete edit need appears.
+
+### Programmatic prepare
+
+`prepare_update` should run programmatically after picker output. It receives
+handles, not user prose, and expands only deterministic validation dependencies
+in v1. Semantic breadth belongs in the picker catalog; prepare should not become
+a hidden natural-language policy engine.
+
+The prepared object is the contract between picker and updater. It should be
+handle-keyed and contain only the subset the updater may edit:
+
+- current value per handle
+- field description and value guidance
+- allowed values, labels, ranges, and examples where available
+- per-handle validation rules
+- cross-handle validation rules
+- dependency reasons for fields pulled in by closure
+- `baseModelHash`
+
+For fields without a current value, the prepared object may include examples or
+templates plus a source-of-truth classification:
+
+- model-selectable
+- user-required
+- GUI-context-required
+- unsupported by chat
+
+The updater must not invent values for user-required or GUI-context-required
+fields.
+
+### Updater
+
+The updater is generic and recipe-agnostic. Its prompt explains how to read the
+prepared format, choose values, satisfy validation rules, call the recipe-value
+update tool, recover from validation errors, and summarize applied changes. It
+should know nothing about a specific recipe type except what the prepared
+object says.
+
+The updater owns the `update_recipe_values` tool call so it can iterate on
+validation errors without bouncing through the orchestrator or picker. Each
+update attempt should submit all values together:
+
+```js
+update_recipe_values({
+  baseModelHash,
+  writableHandles: ['datasets', 'cloudMethods'],
+  values: {
+    datasets: {LANDSAT: ['LANDSAT_9', 'LANDSAT_8']},
+    cloudMethods: ['sepalCloudScore', 'landsatCFMask']
+  }
+})
+```
+
+Retries should also submit a full corrected value set for the current
+attempt, not tiny incremental edits. This preserves atomic cross-field
+validation.
+
+The updater returns the final user-facing summary itself after a successful
+update. It has the relevant instruction, prepared fields, chosen values, update
+result, and validation history. This is intentional: the summary should explain
+what changed and why in user language, including the impact of Earth Engine
+concepts such as mapping, reductions, or spatial operations without exposing
+technical implementation terms. A separate summarizer should remain a fallback
+mechanism, not the primary design.
+
+### Recipe-value update tool
+
+`update_recipe_values` is deterministic:
+
+```text
+writableHandles + values + current values + baseModelHash
+  -> internal paths
+  -> JSON Patch ops
+  -> GUI patch bridge
+```
+
+The updater never authors RFC 6902. Validation and update errors returned to the
+updater should be expressed in handles, not paths. Internal paths may appear in
+logs, but the model should never need to see them.
+
+`writableHandles` is passed through from the prepared packet. The tool rejects
+any value whose handle is outside that set before mapping handles to internal
+paths. A preparation token/session can be added later for cross-process
+hardening, but the in-process boundary is unconditional.
+
+### Missing information and state
+
+Any specialist step may discover missing information. This is not specific to
+recipe update; creation and other workflows can hit the same case.
+
+The preferred interaction is explicit, not inferred from the next free-text
+message:
+
+1. A step returns structured `needs_info`.
+2. The chat UI opens a question panel tied to a pending action id.
+3. The user answers that panel or cancels it.
+4. The workflow resumes or clears the pending action.
+
+Pending action state should be stored with the conversation as structured
+workflow state, not raw specialist message history and not extra orchestrator
+chat context. It should include enough to reconstruct a bounded next call:
+
+- workflow type and phase
+- pending action id
+- recipe id/type
+- original instruction
+- selected handles if picker already ran
+- prepared object if prepare already ran
+- `baseModelHash` if known
+- question asked
+- created metadata
+
+On resume, verify that any saved `baseModelHash` is still current. If stale,
+rerun prepare for the selected handles before invoking the updater. Also verify
+that selected handles still exist and apply to the current recipe state; if they
+do not, fail clearly or rerun the picker rather than preparing a broken packet.
+
+Do not automatically dump map or GUI context into recipe update. The
+orchestrator or workflow wrapper should include sparse external context only
+when the user request actually depends on it, for example "what I am looking
+at" or "use the selected area". Recipe-state and validation context belongs in
+the prepared object; map state and earlier-user-message context belong in the
+orchestrator-supplied instruction/context.
+
+The first version does not need a time-based expiry policy. Explicit answer,
+cancel, conversation switch, stale `baseModelHash`, and stale handles are enough
+to define the lifecycle. Old pending-state cleanup can be added later as
+housekeeping.
+
+If the user types a normal chat message while a pending action exists, do not
+silently consume that message as the answer. The explicit question panel owns
+answer/cancel for the pending action; ordinary chat input starts a normal turn
+or is blocked by the UI until the panel is resolved.
+
+### Metrics
+
+This workflow needs first-class metrics from the start:
+
+- picker input/output tokens
+- selected handle count
+- prepared handle count
+- prepared object bytes or estimated tokens
+- updater attempts and tokens
+- updater final-summary tokens
+- update validation failures
+- `needs_info` count and cancellation count
+- total workflow duration and token cost
+
+The expected token advantage is not fewer LLM calls in the happy path. It is
+prompt specialization: the full recipe catalog appears only in the picker call,
+while updater rounds work on a prepared subset with a generic cacheable prompt.
+
+## Static picker catalog and field knowledge
+
+Each recipe type should generate a compact picker catalog for the picker
+specialist. The catalog is cacheable because it is stable for a given recipe
+type and version. It should be handle-first, not path-first: the model sees
+short semantic handles, while deterministic metadata maps handles to internal
+paths.
+
+The catalog and the prepared field packets should be generated from structured
+recipe metadata rather than hand-written as separate prompt files. Generated
+artifacts are not the source of truth. They can include facts from schema,
+validation rules, and reusable operational recipe knowledge, rendered
+differently for picker and updater.
+
+A useful generated picker entry shape is:
+
+```text
+tileOverlap
 Purpose: Sentinel-2 tile-overlap handling.
 Values:
 - KEEP: keeps duplicate S2 tile observations; highest memory risk.
@@ -185,29 +440,30 @@ Values:
   memory reduction.
 - REMOVE: removes all overlap; extra preprocessing; usually no meaningful memory
   gain over QUICK_REMOVE.
-Related: /sources/dataSets
+Related: datasets
 ```
 
-The manual should cover:
+The picker catalog should cover:
 
-- canonical model-relative paths
+- stable handles
 - field meaning
-- allowed values or range shape
-- value tradeoffs
-- common related paths
+- broad value shape and important value tradeoffs
+- common related handles
 - high-level recipe sections
 
 It should not contain current recipe state, user identity, selected GUI state,
-or runtime values.
+runtime values, detailed validation rules, or value-picking instructions. Those
+belong in the prepared packet for the updater after the picker has selected a
+small subset of handles.
 
 ## Reusable operational knowledge
 
 Operational knowledge covers speed, rendering risk, memory/data volume,
 quality/completeness tradeoffs, availability, and advice-oriented inspection
 clues. It is broader than update guidance and should not be modeled as a
-deterministic analyzer first. The immediate consumer is the update manual, but
-the same source facts should be renderable later for a troubleshooting/advice
-specialist answering questions such as:
+deterministic analyzer first. The immediate consumers are the picker catalog
+and prepared field packets, but the same source facts should be renderable
+later for a troubleshooting/advice specialist answering questions such as:
 
 ```text
 Why does this recipe render slowly?
@@ -250,11 +506,25 @@ the issue is likely memory, latency, availability, or quality.
 
 Facts may be semi-structured instead of fully machine-evaluable predicates. The
 important property is reusable shape and topic tagging, not deterministic
-execution. A compact fact can look like:
+execution.
+
+Use one canonical envelope with typed variants:
+
+- Field facts use `handle`, `internalPath`, `purpose`, `topics`, optional
+  `severity`, `guidance`, `inspectWhen`, and `tradeoffs`.
+- Enum-bearing fields may add a `values` map for per-value memory, cost,
+  quality, or behavior notes.
+- Scalar/range/array fields should use flat `guidance` and `tradeoffs` unless
+  they have a small named value set worth describing per value.
+- Interaction facts use `handles` and `internalPaths` instead of one `handle`.
+
+For example, a scalar/range-style fact can look like:
 
 ```js
 {
-  path: '/compositeOptions/cloudBuffer',
+  handle: 'cloudBuffer',
+  internalPath: '/compositeOptions/cloudBuffer',
+  purpose: 'Cloud-edge buffer distance',
   topics: ['performance', 'memory', 'latency', 'quality', 'spatial-operation'],
   severity: 'warning',
   warning: 'Cloud buffering is a high-cost spatial operation and can make large or cloudy jobs very slow or fail.',
@@ -274,11 +544,12 @@ execution. A compact fact can look like:
 }
 ```
 
-Interactions should use the same model:
+Interactions use the same envelope but target a set of handles:
 
 ```js
 {
-  paths: ['/sources/dataSets', '/compositeOptions/corrections'],
+  handles: ['datasets', 'corrections'],
+  internalPaths: ['/sources/dataSets', '/compositeOptions/corrections'],
   topics: ['performance', 'rendering', 'validation'],
   guidance: [
     'Using both Landsat and Sentinel-2 increases data volume.',
@@ -292,10 +563,11 @@ Interactions should use the same model:
 }
 ```
 
-The update-manual generator can render facts tagged `performance` into a
-compact "speed/rendering" section. A future advice specialist can select the
-same facts by `topics` and `inspectWhen` without depending on update-specific
-patch workflow wording.
+The picker-catalog generator can render facts tagged `performance` into a
+compact "speed/rendering" section, while preparation can include detailed
+value/rule guidance only for selected handles. A future advice specialist can
+select the same facts by `topics` and `inspectWhen` without depending on
+update-specific patch workflow wording.
 
 Warning-level facts should be rendered distinctly from normal field guidance.
 They represent settings that specialists should actively mention when proposing,
@@ -303,32 +575,33 @@ keeping, or troubleshooting risky values. Examples include expensive spatial
 operations, expensive corrections, collection filters that add reducers/passes,
 and data-availability caveats.
 
-## Preparation tool
+## Preparation step
 
-The update preparation tool is deterministic and path-oriented:
+The target preparation step is deterministic and handle-oriented:
 
 ```js
 prepare_update({
   recipeId,
-  focusPaths
+  handles: ['datasets', 'cloudMethods']
 })
 ```
 
-Initial version should use only `focusPaths`. Tags may be added later if a
+The current live tool accepts `focusPaths`; that is transitional. The target
+workflow should call preparation programmatically after the picker, using
+handles selected from the static picker catalog. Tags may be added later if a
 concrete need appears, but they should not be required for v1. If tags are
-introduced, they must come from a bounded recipe-defined vocabulary, not
-free-form user prose.
+introduced, they must come from bounded recipe metadata, not free-form user
+prose.
 
-The tool returns a complete update work packet:
+The step returns a complete prepared packet for the updater:
 
 ```js
 {
   baseModelHash,
-  focusPaths,
-  dependentPaths,
-  writablePaths,
-  currentValues,
-  fieldFacts,
+  pickedHandles,
+  dependentHandles,
+  writableHandles,
+  fields,
   dependencyFacts,
   validationRules
 }
@@ -336,38 +609,42 @@ The tool returns a complete update work packet:
 
 Where:
 
-- `focusPaths` are the paths chosen by the specialist.
-- `dependentPaths` are deterministic companion paths that may need to be read
-  or patched to keep the recipe valid.
-- `writablePaths` is the allowed write set, normally
-  `focusPaths + dependentPaths`.
-- `currentValues` contains current effective-model values for all relevant
-  paths.
-- `fieldFacts` contains facts for the focus and dependent paths.
-- `dependencyFacts` explains why companion paths were included.
+- `pickedHandles` are the handles chosen by the picker.
+- `dependentHandles` are deterministic companion handles that may need to be
+  read or changed to keep the recipe valid.
+- `writableHandles` is the allowed write set, normally
+  `pickedHandles + dependentHandles`.
+- `fields` is keyed by handle. Each entry contains current effective value,
+  handle-local description, value guidance, allowed values/labels/ranges,
+  examples where available, source-of-truth classification for missing values,
+  and any handle-local validation facts.
+- `dependencyFacts` explains why companion handles were included.
 - `validationRules` summarizes relevant schema/rule constraints in
   LLM-friendly terms.
 
-For example, if the specialist focuses `/dates/targetDate`, the tool can add
-`/dates/seasonStart`, `/dates/seasonEnd`, `/dates/yearsBefore`, and
-`/dates/yearsAfter`. If it focuses `/sources/dataSets`, the tool can add
-correction, scene-selection, scene, and cloud-mask availability dependencies.
+For example, if the picker selects `targetDate`, preparation can add
+`dateWindow` companions needed by validation. If it selects `datasets`,
+preparation can add correction, scene-selection, and cloud-mask availability
+companions.
 
-The tool may return facts for paths the specialist did not choose, but they
-must be clearly distinguished as dependent/companion paths rather than primary
-focus paths.
+The step may return facts for handles the picker did not choose, but they must
+be clearly distinguished as dependent/companion handles rather than primary
+picked handles.
 
-## Patch scope
+## Update scope
 
-The update specialist should only patch paths returned in `writablePaths`.
+The updater should only set values for handles returned in `writableHandles`.
+The model should not see or author JSON Pointer paths.
 
 The strongest future version would issue a preparation token or short-lived
-session id, and `recipe_patch` would reject operations outside the prepared
-write set. This is optional for the first design slice, but it is the clearest
-way to prevent broad-request drift.
+session id, and `update_recipe_values` would reject values outside the prepared
+write set. This is optional for the first implementation slice, but it is the
+clearest way to prevent broad-request drift.
 
-Even without a token, the specialist prompt should treat `writablePaths` as a
-hard boundary.
+Even without a token, `update_recipe_values` must enforce `writableHandles` in
+code. The updater prompt should state the same boundary, but prompt text is not
+a boundary. Validation/update errors returned to the updater should use handles,
+not paths.
 
 ## Facts vs policy
 
@@ -419,21 +696,23 @@ purpose-specific artifacts:
 Generated consumers:
 
 - JSON Schema / validator shape
-- static path-first update manual
-- preparation-tool field facts
+- static handle-first picker catalog
+- prepared field packets for the updater
 - dependency expansion metadata
 - advice/troubleshooting specialist facts, especially operational topics such as
   performance, rendering, quality, and validation
 - optional future GUI labels/tooltips, where practical
 
 Minimum support for a new recipe can be generated from schema paths, enums,
-defaults, and validation rules. Richer AI behavior comes from adding field
-facts, value tradeoffs, interactions, operational facts, and optional profiles.
+defaults, and validation rules, but exposed update fields should get explicit
+stable handles. Richer AI behavior comes from adding field facts, value
+tradeoffs, interactions, operational facts, and optional profiles.
 
 ## Authoring source material
 
-The generated manual and `prepare_update` facts should come from structured
-recipe metadata, not directly from GUI translations or public documentation.
+The generated picker catalog and prepared field facts should come from
+structured recipe metadata, not directly from GUI translations or public
+documentation.
 
 Recommended source material when adding metadata for a recipe:
 
@@ -479,7 +758,7 @@ that the specialist can apply in context.
 ## Captured MOSAIC cloud-masking notes
 
 These notes are working source material for future MOSAIC `knowledge.js` and
-manual-generation slices. They capture behavior observed while testing the
+catalog/preparation-generation slices. They capture behavior observed while testing the
 update specialist and facts checked against the GUI implementation on
 2026-05-21. They are not intended to be copied verbatim into prompts; distill
 them into structured recipe metadata with tests.
@@ -585,9 +864,9 @@ or setting it to `REMOVE` is consistent with stricter Landsat masking.
 
 Adding `sentinel2CloudProbability` can be a valid stricter Sentinel-2 move, but
 it should not hide the simpler preset-like strategy. When adding this method,
-`prepare_update` should surface the absent method and its
-`sentinel2CloudProbabilityMaxCloudProbability` companion as missing paths so
-the specialist uses `add` rather than `replace`.
+preparation should surface the absent method and its
+`sentinel2CloudProbabilityMaxCloudProbability` companion as writable handles so
+the updater sets a complete value set rather than relying on patch mechanics.
 
 ### Cloud quality vs performance
 
@@ -614,7 +893,9 @@ range, or reduce overly aggressive masking rather than preventing holes.
 
 Filters are costly because each active filter adds a collection-level
 percentile reduction and masking pass. They should not be introduced as a cloud
-cleanup default unless the user's goal clearly maps to that filter.
+cleanup default unless the user's goal clearly maps to that filter. In MOSAIC
+v1, expose filters as one whole-array handle so render-speed requests can remove
+or avoid them, but do not expose per-filter item handles yet.
 
 BRDF correction is expensive, especially for Sentinel-2 and large mosaics. It
 is a render-reliability lever, but not a cloud-masking lever. Do not remove BRDF
@@ -622,11 +903,12 @@ as an answer to residual clouds unless the user's actual problem is render
 failure or latency.
 
 For example, tooltip/doc prose about Sentinel-2 tile overlap should become
-reusable metadata such as:
+enum-bearing field metadata such as:
 
 ```js
 {
-  path: '/compositeOptions/tileOverlap',
+  handle: 'tileOverlap',
+  internalPath: '/compositeOptions/tileOverlap',
   purpose: 'Sentinel-2 tile overlap handling',
   values: {
     KEEP: {memory: 'highest', effect: 'keeps duplicate observations'},
@@ -656,15 +938,21 @@ reusable metadata such as:
 
 Prompt-cache-friendly shape:
 
-- static base update prompt
-- static recipe manual generated from recipe facts
+- static picker prompt plus recipe handle catalog generated from recipe facts
+- static generic updater prompt
 - dynamic user request
-- dynamic `prepare_update` result
-- dynamic patch result
+- dynamic prepared handle packet
+- dynamic update result
 
-The static manual should be stable and byte-identical across users for a given
-recipe version. Runtime GUI state and current recipe values belong in tool
-results, not the cacheable manual.
+The static picker catalog should be stable and byte-identical across users for
+a given recipe version. Runtime GUI state and current recipe values belong in
+prepared packets and update results, not the cacheable catalog. The updater
+prompt should be generic and cacheable across recipe types.
+
+The prompt assembler must put each cacheable static prefix literally at the
+start of the assembled LLM call, with dynamic request/context/tool-result
+content appended after it. Dynamic preambles before the cacheable prefix silently
+break provider prefix-cache hit rates.
 
 For Nova 2 Lite, treat the prompt-cache budget as smaller than the context
 window. The model may accept a very large prompt, but the cacheable repeated
@@ -674,16 +962,17 @@ specialist package should stay below roughly 18K tokens, leaving room for base
 instructions and cache marker overhead.
 
 Prompt caching can reduce cost and latency for static recipe knowledge, but it
-does not remove the model-attention cost of noisy prompts. The manual should
-therefore be compact and path-first, not a full raw schema dump.
+does not remove the model-attention cost of noisy prompts. The picker catalog
+should therefore be compact and handle-first, not a full raw schema dump.
 
 Cache accounting should be split by role:
 
-- update specialist static prompt plus recipe manual
-- create specialist static prompt plus recipe manual
+- picker static prompt plus recipe handle catalog
+- generic updater static prompt
 - orchestrator static prompt
 - orchestrator always-visible tool schemas
-- dynamic runtime context, tool results, and conversation history
+- dynamic runtime context, prepared packets, tool results, and conversation
+  history
 
 The orchestrator budget is a separate concern. Recipe semantics should not be
 moved into orchestrator tool descriptions to make specialist prompts smaller.
@@ -695,7 +984,7 @@ are a recurring per-round cost and a source of routing confusion.
 ### Full schema in every update prompt
 
 Rich schema descriptions are useful source material, but raw JSON Schema is not
-an ideal LLM manual. It is verbose, local to properties, and awkward for
+an ideal LLM catalog. It is verbose, local to properties, and awkward for
 cross-field tradeoffs, operational profiles, and user-goal guidance. The
 current MOSAIC schema also lacks most operational descriptions.
 
@@ -703,31 +992,44 @@ current MOSAIC schema also lacks most operational descriptions.
 
 This would make the deterministic tool responsible for natural-language intent
 recognition. That encourages brittle keyword matching and hides important
-judgment outside the specialist.
+judgment outside the picker/updater specialists.
 
-### Separate knowledge and closure tools
+### Separate knowledge and closure tools in the updater loop
 
 The concepts are distinct, but the LLM-facing round trip can be one
-`prepare_update` call for update preparation. Static reusable knowledge should
-stay in generated manuals/prompts, not require an extra per-update tool round
-trip. Internally, implementation can keep field-fact lookup, operational-fact
-rendering, and dependency expansion separate.
+programmatic preparation step between picker and updater. Static reusable
+knowledge should stay in generated picker catalogs and prepared packets, not
+require an extra updater tool round trip. Internally, implementation can keep
+field-fact lookup, operational-fact rendering, and dependency expansion
+separate.
 
-### Tags in v1
+### Group handles in v1
 
-Tags such as `performance`, `quality`, or `cloudMasking` may be useful later,
-but v1 should start with explicit `focusPaths`. The static manual should make
-canonical paths easy for the specialist to select.
+Group handles such as `cloudMasking` or `performance` may be useful later, but
+v1 should start with concrete field handles. Group handles require descriptions,
+expansion rules, and another model choice; the picker can instead return
+multiple concrete handles for broad requests.
+
+### Implicit resume from the next chat message
+
+When a workflow needs more information, do not infer by default that the next
+free-text user message is the answer. That creates routing ambiguity and hidden
+state. Prefer an explicit chat question panel tied to a pending action id; the
+user either answers that panel or cancels the action.
 
 ## Open questions
 
-- Should `recipe_patch` enforce `writablePaths` via a preparation token/session?
-- How compact should the generated static manual be for large recipe types?
+- Should `update_recipe_values` add a preparation token/session for
+  cross-process hardening beyond the in-process `writableHandles` check?
+- How compact should the generated picker catalog be for large recipe types?
 - Can GUI labels/tooltips and LLM facts share one source without making GUI
   translations harder?
-- What is the minimum acceptable generated manual for a recipe with no rich
+- What is the minimum acceptable generated catalog for a recipe with no rich
   `llm` metadata yet?
 - How should high-impact tradeoffs be surfaced back to the orchestrator for
   user confirmation?
 - What purpose-specific renderings should reusable operational facts support
   first: update, describe, troubleshooting/advice, or UI hints?
+- What is the minimal workflow-state model for pending actions: one per
+  conversation, cancellation, conversation switching, stale handle checks, and
+  stale `baseModelHash` recovery?
