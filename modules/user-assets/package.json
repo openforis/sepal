@@ -11,13 +11,13 @@
     "license": "ISC",
     "dependencies": {
         "commander": "^14.0.3",
-        "date-fns": "^4.2.1",
+        "date-fns": "^4.3.0",
         "ioredis": "^5.10.1",
         "lodash": "^4.18.1",
         "log4js": "^6.9.1",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
-        "ws": "^8.20.1"
+        "ws": "^8.21.0"
     },
     "imports": {
         "#sepal/*": "sepal/src/*.js",
