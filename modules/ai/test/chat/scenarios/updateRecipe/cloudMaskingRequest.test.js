@@ -9,6 +9,39 @@ const {toEffectiveModel, validateRecipe} = require('#recipes')
 // edited by index or removed by value-name path.
 describe('"There are still clouds, remove them" — semantic cloud-masking update', () => {
 
+    it('on a mixed-source recipe with SR, a cloud-only update does not touch /compositeOptions/corrections and preserves SR through the projection', () => {
+        const setup = aLiveMosaicSetup({model: aFullMosaicModel({compositeOptions: {corrections: ['SR', 'BRDF']}})})
+        const updateCall = {
+            id: 'tu1', name: 'update_recipe_values',
+            input: {
+                recipeId: 'r1', baseModelHash: 'h-base',
+                writableHandles: ['sepalCloudScoreMax'],
+                values: {sepalCloudScoreMax: 25}
+            }
+        }
+        const harness = aToolFactoryHarness({
+            specialist: 'update_recipe',
+            guiRequests: setup.guiRequests,
+            innerTools: setup.innerTools,
+            replies: [
+                {text: '{"handles":["sepalCloudScoreMax"]}'},
+                {toolCalls: [updateCall]},
+                {text: 'Tightened SEPAL Cloud Score.'}
+            ]
+        })
+
+        const result = harness.invoke({recipeId: 'r1', instruction: 'There are still clouds, remove them'})
+
+        expect(result.ok).toBe(true)
+        for (const patch of setup.patchCalls) {
+            for (const op of patch.params.operations) {
+                expect(op.path).not.toMatch(/^\/compositeOptions\/corrections/)
+            }
+        }
+        const finalModel = setup.getCurrentModel()
+        expect(toEffectiveModel('MOSAIC', finalModel).compositeOptions.corrections).toContain('SR')
+    })
+
     it('strengthens cloud masking via handles, applies a valid effective model, and never patches a config array by index', () => {
         const setup = aLiveMosaicSetup({model: aFullMosaicModel()})
         const updateCall = {

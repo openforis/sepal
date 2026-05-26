@@ -197,7 +197,7 @@ describe('prepareHandlePacket$', () => {
 
             const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['datasets'], context}))
 
-            const rule = result.data.validationRules.find(r => r.name === 'multipleSourcesRequireCalibrate')
+            const rule = result.data.validationRules.find(r => r.name === 'mixedSourcesRequireSrOrCalibrate')
             expect(rule.handles.sort()).toEqual(['corrections', 'datasets'])
             expect(rule).not.toHaveProperty('paths')
         })
