@@ -89,6 +89,15 @@ describe('update_recipe per-type prompt assembly', () => {
             expect(prompt).toMatch(/applicabilityFacts/)
         })
 
+        it('updater prompt documents inactiveCompanionFacts and the companion-doesn\'t-activate rule (no auto-promotion via companion alone)', () => {
+            const prompt = updaterSystemPromptFor(mosaicMetadata)
+
+            expect(prompt).toMatch(/inactiveCompanionFacts/)
+            expect(prompt).toMatch(/does NOT activate/i)
+            expect(prompt).toMatch(/same atomic call/i)
+            expect(prompt).toMatch(/INACTIVE_VALUE/)
+        })
+
         it('updater prompt routes the inapplicable case by whether the prerequisite is in writableHandles (ask one clarification vs set both together)', () => {
             const prompt = updaterSystemPromptFor(mosaicMetadata)
 

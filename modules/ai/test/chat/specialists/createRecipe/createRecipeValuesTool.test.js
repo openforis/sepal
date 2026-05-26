@@ -93,6 +93,53 @@ describe('create_recipe_values tool', () => {
         })
     })
 
+    describe('projection-survival guard (inactive companion handles)', () => {
+
+        it('rejects a companion value with INACTIVE_VALUE when its selector item is not active in the resulting model', () => {
+            // Set s2CloudProbabilityMax alone on a default MOSAIC (cloudMethods doesn't
+            // include sentinel2CloudProbability). Projection strips s2CloudProbabilityMax;
+            // tool must reject before GUI work.
+            const {handler, calls} = aRecordingGui()
+            const tool = createRecipeValuesTool(aFakeGuiRequests(handler))
+
+            const result = read(tool.invoke$(aValidCall({
+                writableHandles: ['aoi', 's2CloudProbabilityMax'],
+                values: {aoi: aPolygonAoi(), s2CloudProbabilityMax: 60}
+            }), context))
+
+            expect(result).toMatchObject({
+                ok: false,
+                error: {
+                    code: 'INACTIVE_VALUE',
+                    handleErrors: [expect.objectContaining({handle: 's2CloudProbabilityMax'})]
+                }
+            })
+            expect(calls.find(call => call.action === 'create-recipe')).toBeUndefined()
+        })
+
+        it('allows the same companion when the same atomic call also sets the selector to include the activating item (single-source Sentinel-2 with companion suite)', () => {
+            const {handler, calls} = aRecordingGui({
+                createResponse: {summary: 'created', recipeId: 'r-new'}
+            })
+            const tool = createRecipeValuesTool(aFakeGuiRequests(handler))
+
+            const result = read(tool.invoke$(aValidCall({
+                writableHandles: ['aoi', 'datasets', 'cloudMethods', 's2CloudProbabilityMax', 's2CloudScoreBand', 's2CloudScoreMax'],
+                values: {
+                    aoi: aPolygonAoi(),
+                    datasets: {SENTINEL_2: ['SENTINEL_2']},
+                    cloudMethods: ['sentinel2CloudProbability', 'sentinel2CloudScorePlus'],
+                    s2CloudProbabilityMax: 60,
+                    s2CloudScoreBand: 'cs',
+                    s2CloudScoreMax: 35
+                }
+            }), context))
+
+            expect(result.ok).toBe(true)
+            expect(calls.find(call => call.action === 'create-recipe')).toBeDefined()
+        })
+    })
+
     describe('validation before GUI work', () => {
 
         it('returns VALIDATION_FAILED with handle-keyed errors when defaults+values fail spec.validate, before any GUI call', () => {

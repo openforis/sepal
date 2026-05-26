@@ -407,6 +407,69 @@ describe('prepareHandlePacket$', () => {
         })
     })
 
+    describe('inactiveCompanionFacts — writable companion + selector item not active', () => {
+
+        it('emits a fact for s2CloudProbabilityMax when its selector item is not in cloudMethods and cloudMethods is read-only here', () => {
+            // Picking s2CloudProbabilityMax (a companion of cloudMethods item
+            // sentinel2CloudProbability) makes the companion writable. The schema
+            // constraint pulls cloudMethods in as read-only context. The recipe's
+            // current cloudMethods doesn't include sentinel2CloudProbability, so
+            // the companion is inactive — fact emitted.
+            const guiRequests = loadRecipe(aMosaicRecipe())
+
+            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['s2CloudProbabilityMax'], context}))
+
+            const fact = result.data.inactiveCompanionFacts.find(f => f.handle === 's2CloudProbabilityMax')
+            expect(fact).toMatchObject({
+                handle: 's2CloudProbabilityMax',
+                label: 'Sentinel-2 Cloud Probability threshold',
+                selectorHandle: 'cloudMethods',
+                selectorLabel: 'Cloud-masking methods',
+                item: 'sentinel2CloudProbability',
+                itemLabel: 'Sentinel-2 Cloud Probability',
+                selectorWritable: false
+            })
+            expect(fact.guidance).toMatch(/does NOT activate/i)
+            expect(fact.guidance).toMatch(/read-only/i)
+        })
+
+        it('marks selectorWritable=true and guides the updater to set both in the same atomic call when cloudMethods is writable', () => {
+            // Picking cloudMethods promotes all companion handles via selector
+            // expansion. Companions whose items aren't currently active get a
+            // fact with selectorWritable=true.
+            const guiRequests = loadRecipe(aMosaicRecipe())
+
+            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['cloudMethods'], context}))
+
+            const fact = result.data.inactiveCompanionFacts.find(f => f.handle === 's2CloudProbabilityMax')
+            expect(fact).toMatchObject({
+                handle: 's2CloudProbabilityMax',
+                selectorHandle: 'cloudMethods',
+                selectorWritable: true
+            })
+            expect(fact.guidance).toMatch(/same atomic call/i)
+            expect(fact.guidance).toMatch(/does NOT activate/i)
+        })
+
+        it('does not emit a fact for companions whose selector item is currently active (sepalCloudScoreMax stays out)', () => {
+            // Current cloudMethods includes sepalCloudScore, so sepalCloudScoreMax
+            // is active — no inactive fact even though it's a companion.
+            const guiRequests = loadRecipe(aMosaicRecipe())
+
+            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['cloudMethods'], context}))
+
+            expect(result.data.inactiveCompanionFacts.find(f => f.handle === 'sepalCloudScoreMax')).toBeUndefined()
+        })
+
+        it('inactiveCompanionFacts never carry JSON Pointer paths', () => {
+            const guiRequests = loadRecipe(aMosaicRecipe())
+
+            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['cloudMethods'], context}))
+
+            expectNoHandlePathsIn(result.data.inactiveCompanionFacts)
+        })
+    })
+
     describe('writableHandles enforcement', () => {
 
         it('limits writableHandles to picked + explicit-intent expansions when no rule fires', () => {

@@ -12,6 +12,7 @@ Prepared packet (user message):
 - readOnlyFields[handle] (read-only): same shape as fields, inspection only.
 - couplingFacts: condition-based facts naming involvedHandles + guidance + (optional) examples.
 - applicabilityFacts: per writable selector handle, one entry per item whose `requires` is not satisfied by the current scope handle. Each entry names selectorHandle, item + itemLabel, requires (handle + anyOfKeys), currentValue, and guidance.
+- inactiveCompanionFacts: per writable companion handle whose selector item is NOT currently active. Each entry names handle + label, the selectorHandle + selectorLabel, the activating item + itemLabel, selectorWritable, and guidance. Setting a companion alone never activates its selector item — to set the companion you must either be writing the selector to include the item in the same call, or the item must already be active.
 - dependencyFacts: which constraint pulled each read-only handle in (so you know why it's context).
 - validationRules: constraints relevant to this edit (handle-keyed; may reference both writable and read-only handles).
 
@@ -27,6 +28,7 @@ Rules:
 - Submit every value you intend (full set per attempt). Do not stream partial edits.
 - For whole-array handles (e.g. cloudMethods, filters, corrections), send the complete intended array.
 - For whole-object handles (e.g. datasets), send the complete intended object.
+- Companion-doesn't-activate: a handle listed in inactiveCompanionFacts will be stripped by projection unless its selector item is active. Setting the companion alone does NOT activate the item. If selectorWritable is true, set the selector in the same atomic call to include the named item AND set the companion. If selectorWritable is false, omit the companion (or ask a clarification). The tool returns `INACTIVE_VALUE` if you try anyway.
 - Do not call update_recipe_values with guesses. If the instruction is ambiguous, a handle's currentValue is null without guidance for it, or a prerequisite handle is not in writableHandles, ask exactly ONE concise clarification question instead.
 - Reply in the user's language. Translate handle names, codes, and ranges into plain user-facing phrases.
 

@@ -2,9 +2,12 @@
 // handle vocabulary and the recipe spec's internal JSON Pointer paths. Used by
 // every recipe-values tool (currently update_recipe_values and
 // create_recipe_values). Domain concept: writable scope + applicability +
-// path<->handle error translation. Each tool layers its own envelope shape
-// over these primitives (success summary, optional passthrough fields, etc.).
+// projection-survival + path<->handle error translation. Each tool layers
+// its own envelope shape over these primitives (success summary, optional
+// passthrough fields, etc.).
 
+const isEqual = require('lodash/isEqual')
+const {parsePointer, resolvePointer, PointerNotFound} = require('../tools/jsonPointer')
 const {applicabilityConflictFor, isSelectorHandle, scopeIndexFromHandles, scopeValueIn} = require('./applicability')
 
 function checkWritableScope(values, writableHandles) {
@@ -79,6 +82,76 @@ function invertByPath(handlesByName) {
     return new Map([...handlesByName.values()].map(handle => [handle.path, handle.name]))
 }
 
+// Deep-clone the source model and overlay each requested handle value at
+// its handle path. Used to build a "desired" model the value tools can then
+// project through toEffectiveModel for the projection-survival check, and
+// (for create) the model the GUI eventually persists.
+function applyHandleValuesToModel(model, values, handlesByName) {
+    const next = JSON.parse(JSON.stringify(model))
+    for (const [handleName, value] of Object.entries(values)) {
+        const handle = handlesByName.get(handleName)
+        if (!handle) continue
+        setAtPointer(next, parsePointer(handle.path), value)
+    }
+    return next
+}
+
+function setAtPointer(model, tokens, value) {
+    if (!tokens.length) return
+    let node = model
+    for (let i = 0; i < tokens.length - 1; i++) {
+        const key = tokens[i]
+        if (node[key] == null || typeof node[key] !== 'object') node[key] = {}
+        node = node[key]
+    }
+    node[tokens[tokens.length - 1]] = value
+}
+
+// Rejects requested handle values that don't survive effective-model
+// projection. When a selector item is inactive (e.g. cloudMethods doesn't
+// include sentinel2CloudProbability), toEffectiveModel strips that item's
+// companions (e.g. s2CloudProbabilityMax). Without this guard, the GUI
+// patch/create would silently drop the value while the tool would happily
+// report it as applied. Surfaces as a handle-keyed error so the updater
+// can retry with the selector item activated, or omit the inactive value.
+function checkInactiveValues({values, projectedModel, handlesByName}) {
+    const handleErrors = []
+    for (const [handleName, requestedValue] of Object.entries(values)) {
+        const handle = handlesByName.get(handleName)
+        if (!handle) continue
+        const {exists, value: projectedValue} = pathState(projectedModel, handle.path)
+        if (!exists || !isEqual(projectedValue, requestedValue)) {
+            handleErrors.push(inactiveValueError(handleName, handle))
+        }
+    }
+    if (!handleErrors.length) return null
+    return {
+        ok: false,
+        error: {
+            code: 'INACTIVE_VALUE',
+            message: 'One or more requested handle values are inactive in the current configuration and would be stripped by effective-model projection.',
+            handleErrors
+        }
+    }
+}
+
+function inactiveValueError(handleName, handle) {
+    const label = handle.label || handleName
+    return {
+        handle: handleName,
+        message: `${label} is inactive in the current configuration — the selector item or condition that activates it is not enabled. Activate that selector item (or omit this value).`
+    }
+}
+
+function pathState(model, path) {
+    try {
+        return {exists: true, value: resolvePointer(model, parsePointer(path))}
+    } catch (error) {
+        if (error instanceof PointerNotFound) return {exists: false, value: undefined}
+        throw error
+    }
+}
+
 // Maps validation/persistence error details (path-keyed) back to handle names.
 // Returns null when the error carries no array-of-details surface, so callers
 // can short-circuit (no handleErrors field). Path-to-handle resolution walks
@@ -132,9 +205,11 @@ function handleFromAncestor(path, handlesByPath) {
 }
 
 module.exports = {
-    checkWritableScope,
-    checkUnknownHandles,
+    applyHandleValuesToModel,
     checkApplicability,
+    checkInactiveValues,
+    checkUnknownHandles,
+    checkWritableScope,
     invertByPath,
     mapErrorDetailsToHandles,
     resolveHandle,

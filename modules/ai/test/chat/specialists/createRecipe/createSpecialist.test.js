@@ -49,6 +49,13 @@ describe('create-recipe specialist', () => {
             expect(prompt).toMatch(/writableHandles/)
             expect(prompt).toMatch(/(do not include in the tool call|workflow-managed)/i)
         })
+
+        it('documents inactiveCompanionFacts and the companion-doesn\'t-activate rule (no auto-promotion via companion alone)', () => {
+            expect(prompt).toMatch(/inactiveCompanionFacts/)
+            expect(prompt).toMatch(/does NOT activate/i)
+            expect(prompt).toMatch(/same atomic call/i)
+            expect(prompt).toMatch(/INACTIVE_VALUE/)
+        })
     })
 
     describe('workflow-bound fields are injected from the prepared packet, not from the model', () => {

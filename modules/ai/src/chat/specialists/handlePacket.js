@@ -82,6 +82,7 @@ function buildHandlePacket({recipeType, effectiveModel, pickedHandles, requiredH
             dependencyFacts: dependencyFacts(relevantConstraints, readOnlyHandles, handlesByPath, handlesByName),
             couplingFacts,
             applicabilityFacts: applicabilityFactsFor({writableHandles, handlesByName, effectiveModel}),
+            inactiveCompanionFacts: inactiveCompanionFactsFor({writableHandles, handlesByName, effectiveModel}),
             validationRules: validationRulesFor(relevantConstraints, handlesByPath)
         }
     }
@@ -184,6 +185,84 @@ function applicabilityFactsFor({writableHandles, handlesByName, effectiveModel})
         }
     }
     return facts
+}
+
+// For each writable companion handle, surface a fact when its selector item
+// isn't currently active in the effective model AND no other selector item it
+// companions for is active either. Drives two kinds of updater behaviour:
+//   - selector is writable → guidance says "to set this companion, also include
+//     <item> in <selector> in the same atomic call" (the same-call activation
+//     contract — the runtime guard enforces it via toEffectiveModel projection).
+//   - selector is read-only → guidance says "do not set this companion; the
+//     selector that would activate it is not writable here."
+// A companion never activates its own selector item — it only configures one
+// that is (or is being) activated by setting the selector itself.
+function inactiveCompanionFactsFor({writableHandles, handlesByName, effectiveModel}) {
+    const writable = new Set(writableHandles)
+    const refsByCompanion = buildCompanionReverseIndex(handlesByName)
+    const facts = []
+    for (const handleName of writableHandles) {
+        const refs = refsByCompanion.get(handleName) || []
+        if (!refs.length) continue
+        const anyActive = refs.some(ref => isSelectorItemActive(effectiveModel, ref))
+        if (anyActive) continue
+        for (const ref of refs) {
+            facts.push(renderInactiveCompanionFact({
+                companionHandle: handlesByName.get(handleName),
+                ref,
+                selectorWritable: writable.has(ref.selectorHandleName)
+            }))
+        }
+    }
+    return facts
+}
+
+function buildCompanionReverseIndex(handlesByName) {
+    const index = new Map()
+    for (const selectorHandle of handlesByName.values()) {
+        if (!isSelectorHandle(selectorHandle)) continue
+        for (const item of selectorHandle.allowedItems) {
+            if (!item || typeof item !== 'object') continue
+            for (const companion of item.companionHandles || []) {
+                const list = index.get(companion) || []
+                list.push({
+                    selectorHandleName: selectorHandle.name,
+                    selectorHandlePath: selectorHandle.path,
+                    selectorLabel: selectorHandle.label,
+                    itemValue: item.value,
+                    itemLabel: item.label
+                })
+                index.set(companion, list)
+            }
+        }
+    }
+    return index
+}
+
+function isSelectorItemActive(effectiveModel, ref) {
+    const {exists, value} = pathState(effectiveModel, ref.selectorHandlePath)
+    if (!exists) return false
+    if (Array.isArray(value)) return value.includes(ref.itemValue)
+    if (value && typeof value === 'object') return Object.prototype.hasOwnProperty.call(value, ref.itemValue)
+    return value === ref.itemValue
+}
+
+function renderInactiveCompanionFact({companionHandle, ref, selectorWritable}) {
+    const companionLabel = companionHandle.label || companionHandle.name
+    const baseExplain = `${companionLabel} only configures ${ref.itemLabel} when ${ref.selectorLabel} includes it; setting this value alone does NOT activate ${ref.itemLabel}.`
+    const action = selectorWritable
+        ? `If you want to set ${companionLabel}, set ${ref.selectorHandleName} in the same atomic call to include ${ref.itemLabel}.`
+        : `Do not set ${companionLabel} here — ${ref.selectorHandleName} is read-only in this scope, so ${ref.itemLabel} cannot be activated.`
+    return {
+        handle: companionHandle.name,
+        label: companionLabel,
+        selectorHandle: ref.selectorHandleName,
+        selectorLabel: ref.selectorLabel,
+        item: ref.itemValue,
+        itemLabel: ref.itemLabel,
+        selectorWritable,
+        guidance: `${baseExplain} ${action}`
+    }
 }
 
 function renderApplicabilityFact(selectorHandle, item, conflict) {

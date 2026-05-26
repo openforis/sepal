@@ -10,9 +10,9 @@ const {catchError, of} = require('rxjs')
 const {getRecipeHandles, getRecipeSpec, toEffectiveModel} = require('#recipes')
 const {guiProductRequest$} = require('../../tools/guiProductRequest')
 const {mapData} = require('../../channelEvents')
-const {parsePointer} = require('../../tools/jsonPointer')
 const {
-    checkApplicability, checkUnknownHandles, checkWritableScope,
+    applyHandleValuesToModel, checkApplicability, checkInactiveValues,
+    checkUnknownHandles, checkWritableScope,
     invertByPath, mapErrorDetailsToHandles, toHandleError
 } = require('../handleValueIO')
 
@@ -55,11 +55,16 @@ function handleRequest$({guiRequests, context, recipeType, projectId, name, writ
     const unknownError = checkUnknownHandles(values, handlesByName, recipeType)
     if (unknownError) return of(unknownError)
 
-    const model = applyHandleValues(spec.defaultModel(), values, handlesByName)
+    const model = applyHandleValuesToModel(spec.defaultModel(), values, handlesByName)
     const effectiveModel = toEffectiveModel(recipeType, model)
 
     const applicabilityError = checkApplicability({values, effectiveModel, handlesByName})
     if (applicabilityError) return of(applicabilityError)
+    // Projection-survival guard: any requested value that gets stripped by
+    // toEffectiveModel (e.g. a selector companion whose item isn't enabled)
+    // is rejected with a handle-keyed error before any GUI work.
+    const inactiveError = checkInactiveValues({values, projectedModel: effectiveModel, handlesByName})
+    if (inactiveError) return of(inactiveError)
 
     const handlesByPath = invertByPath(handlesByName)
     const validationErrors = spec.validate(effectiveModel)
@@ -112,26 +117,6 @@ function successEnvelope({data, recipeType, projectId, name}) {
             summary: data?.summary || ''
         }
     }
-}
-
-function applyHandleValues(defaultModel, values, handlesByName) {
-    const next = JSON.parse(JSON.stringify(defaultModel))
-    for (const [handleName, value] of Object.entries(values)) {
-        const tokens = parsePointer(handlesByName.get(handleName).path)
-        setAtPointer(next, tokens, value)
-    }
-    return next
-}
-
-function setAtPointer(model, tokens, value) {
-    if (!tokens.length) return
-    let node = model
-    for (let i = 0; i < tokens.length - 1; i++) {
-        const key = tokens[i]
-        if (node[key] == null || typeof node[key] !== 'object') node[key] = {}
-        node = node[key]
-    }
-    node[tokens[tokens.length - 1]] = value
 }
 
 function toErrorEnvelope(error, handlesByPath) {

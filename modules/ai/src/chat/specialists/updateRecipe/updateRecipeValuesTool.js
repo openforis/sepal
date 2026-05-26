@@ -14,7 +14,8 @@ const {guiProductRequest$} = require('../../tools/guiProductRequest')
 const {isChannelEmission, mapData} = require('../../channelEvents')
 const {parsePointer, resolvePointer, PointerNotFound} = require('../../tools/jsonPointer')
 const {
-    checkApplicability, checkUnknownHandles, checkWritableScope,
+    applyHandleValuesToModel, checkApplicability, checkInactiveValues,
+    checkUnknownHandles, checkWritableScope,
     invertByPath, mapErrorDetailsToHandles, resolveHandle
 } = require('../handleValueIO')
 
@@ -74,6 +75,13 @@ function applyValues$({guiRequests, context, recipe, recipeId, baseModelHash, va
     const effectiveModel = toEffectiveModel(recipe?.type, recipe?.model)
     const applicabilityError = checkApplicability({values, effectiveModel, handlesByName})
     if (applicabilityError) return of(applicabilityError)
+    // Projection-survival guard: overlay the requested values onto effective,
+    // project again, and reject any handle whose value didn't survive (the
+    // selector item or schema condition that activates it isn't enabled).
+    const desiredModel = applyHandleValuesToModel(effectiveModel, values, handlesByName)
+    const projectedModel = toEffectiveModel(recipe?.type, desiredModel)
+    const inactiveError = checkInactiveValues({values, projectedModel, handlesByName})
+    if (inactiveError) return of(inactiveError)
     const handlesByPath = invertByPath(handlesByName)
     const {operations, changedHandles} = computeOperations({effectiveModel, values, handlesByName})
     if (!operations.length) return of(noopSuccess(recipe?.modelHash))

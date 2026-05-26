@@ -223,22 +223,100 @@ describe('update_recipe_values tool', () => {
             expect(patch).toBeUndefined()
         })
 
-        it('generates an add op when the handle\'s path is absent from the current model', () => {
+        it('generates an add op when the handle\'s path is absent from the current effective model (path-survives-projection variant)', () => {
+            // brdfMultiplier is only addressable when corrections contains BRDF.
+            // Set the same in the same call so projection survives; the path
+            // was deleted from the stored model so the patch must be 'add' not
+            // 'replace'.
             const recipe = aMosaicRecipe()
-            delete recipe.model.compositeOptions.sentinel2CloudProbabilityMaxCloudProbability
+            recipe.model.sources.dataSets = {LANDSAT: ['LANDSAT_9']}
+            recipe.model.compositeOptions.corrections = ['BRDF']
+            delete recipe.model.compositeOptions.brdfMultiplier
             const {handler, calls} = aGuiHandler({recipe, patchResponse: {summary: 'ok', modelHash: 'h-next', invalidatedPaths: []}})
             const tool = updateRecipeValuesTool(aFakeGuiRequests(handler))
 
             read(tool.invoke$({
                 recipeId: 'r1', baseModelHash: 'h-base',
-                writableHandles: ['s2CloudProbabilityMax'],
-                values: {s2CloudProbabilityMax: 60}
+                writableHandles: ['brdfMultiplier'],
+                values: {brdfMultiplier: 4}
             }, context))
 
             const patch = calls.find(request => request.action === 'recipe-patch')
             expect(patch.params.operations).toEqual([
-                {op: 'add', path: '/compositeOptions/sentinel2CloudProbabilityMaxCloudProbability', value: 60}
+                {op: 'add', path: '/compositeOptions/brdfMultiplier', value: 4}
             ])
+        })
+    })
+
+    describe('projection-survival guard (inactive companion handles)', () => {
+
+        it('rejects a companion value with INACTIVE_VALUE when its selector item is inactive and the call is not also activating it', () => {
+            // s2CloudProbabilityMax is a companion of cloudMethods item sentinel2CloudProbability.
+            // Recipe has cloudMethods=['sepalCloudScore','landsatCFMask','sentinel2CloudScorePlus']
+            // — sentinel2CloudProbability NOT active. Setting the companion alone would be
+            // stripped by toEffectiveModel; reject before any GUI work.
+            const {handler, calls} = aGuiHandler({recipe: aMosaicRecipe()})
+            const tool = updateRecipeValuesTool(aFakeGuiRequests(handler))
+
+            const result = read(tool.invoke$({
+                recipeId: 'r1', baseModelHash: 'h-base',
+                writableHandles: ['s2CloudProbabilityMax'],
+                values: {s2CloudProbabilityMax: 60}
+            }, context))
+
+            expect(result).toMatchObject({
+                ok: false,
+                error: {
+                    code: 'INACTIVE_VALUE',
+                    handleErrors: [expect.objectContaining({handle: 's2CloudProbabilityMax'})]
+                }
+            })
+            expect(calls.find(request => request.action === 'recipe-patch')).toBeUndefined()
+        })
+
+        it('allows the same companion when the same atomic call also sets the selector to include the activating item', () => {
+            // Setting s2CloudProbabilityMax is only valid when cloudMethods includes
+            // sentinel2CloudProbability. Same-call activation must work — the companion
+            // never activates the item on its own, but a values call that does both is
+            // a single atomic transition the projection accepts.
+            const {handler, calls} = aGuiHandler({
+                recipe: aMosaicRecipe(),
+                patchResponse: {summary: 'ok', modelHash: 'h-next', invalidatedPaths: []}
+            })
+            const tool = updateRecipeValuesTool(aFakeGuiRequests(handler))
+
+            const result = read(tool.invoke$({
+                recipeId: 'r1', baseModelHash: 'h-base',
+                writableHandles: ['cloudMethods', 's2CloudProbabilityMax'],
+                values: {
+                    cloudMethods: ['sepalCloudScore', 'landsatCFMask', 'sentinel2CloudScorePlus', 'sentinel2CloudProbability'],
+                    s2CloudProbabilityMax: 60
+                }
+            }, context))
+
+            expect(result.ok).toBe(true)
+            const patch = calls.find(request => request.action === 'recipe-patch')
+            const paths = patch.params.operations.map(op => op.path)
+            expect(paths).toEqual(expect.arrayContaining([
+                '/compositeOptions/includedCloudMasking',
+                '/compositeOptions/sentinel2CloudProbabilityMaxCloudProbability'
+            ]))
+        })
+
+        it('INACTIVE_VALUE message names the handle label and never leaks JSON Pointer paths', () => {
+            const {handler} = aGuiHandler({recipe: aMosaicRecipe()})
+            const tool = updateRecipeValuesTool(aFakeGuiRequests(handler))
+
+            const result = read(tool.invoke$({
+                recipeId: 'r1', baseModelHash: 'h-base',
+                writableHandles: ['s2CloudProbabilityMax'],
+                values: {s2CloudProbabilityMax: 60}
+            }, context))
+
+            const [handleError] = result.error.handleErrors
+            expect(handleError.handle).toBe('s2CloudProbabilityMax')
+            expect(handleError.message).toMatch(/Sentinel-2 Cloud Probability threshold/)
+            expect(JSON.stringify(result.error)).not.toMatch(/\/compositeOptions\//)
         })
     })
 
@@ -436,11 +514,13 @@ describe('update_recipe_values tool', () => {
 
     describe('diff against the effective model, not the stored model', () => {
 
-        it('generates add (not replace) when the stored model has a dormant field that toEffectiveModel strips', () => {
-            // toEffectiveModel deletes brdfMultiplier when corrections does not include BRDF.
-            // A request that re-enables BRDF + sets brdfMultiplier must `add` brdfMultiplier
-            // because the effective model has no value to replace; using replace would fail.
+        it('generates add (not replace) when the stored model has a dormant field that toEffectiveModel strips — same call re-enables the activating condition', () => {
+            // Stored has corrections=['SR'] so brdfMultiplier is dormant (stripped by
+            // projection). The same atomic call re-enables BRDF and sets brdfMultiplier:
+            // brdfMultiplier survives projection now, and because the EFFECTIVE model
+            // (pre-call) lacked it, the patch must `add` not `replace`.
             const recipe = aMosaicRecipe()
+            recipe.model.sources.dataSets = {LANDSAT: ['LANDSAT_9']}
             recipe.model.compositeOptions.corrections = ['SR']
             recipe.model.compositeOptions.brdfMultiplier = 4
             const {handler, calls} = aGuiHandler({recipe, patchResponse: {summary: 'ok', modelHash: 'h-next', invalidatedPaths: []}})
@@ -448,19 +528,21 @@ describe('update_recipe_values tool', () => {
 
             read(tool.invoke$({
                 recipeId: 'r1', baseModelHash: 'h-base',
-                writableHandles: ['brdfMultiplier'],
-                values: {brdfMultiplier: 5}
+                writableHandles: ['corrections', 'brdfMultiplier'],
+                values: {corrections: ['BRDF'], brdfMultiplier: 5}
             }, context))
 
             const patch = calls.find(request => request.action === 'recipe-patch')
-            expect(patch.params.operations).toEqual([
+            expect(patch.params.operations).toEqual(expect.arrayContaining([
                 {op: 'add', path: '/compositeOptions/brdfMultiplier', value: 5}
-            ])
+            ]))
         })
 
-        it('generates add when toEffectiveModel strips method-tuning for an unused cloud method', () => {
+        it('generates add when toEffectiveModel strips method-tuning for an unused cloud method — same call activates the method', () => {
             // Stored has landsatCFMaskCloudMasking even though includedCloudMasking omits landsatCFMask;
-            // toEffectiveModel strips that field. Setting it must therefore be `add`, not `replace`.
+            // toEffectiveModel strips that field. Updater activates landsatCFMask in the
+            // same call (with all required companions per schema) so projection survives;
+            // the EFFECTIVE model lacked landsatCloudMask so the patch must be `add`.
             const recipe = aMosaicRecipe()
             recipe.model.compositeOptions.includedCloudMasking = ['sepalCloudScore']
             recipe.model.compositeOptions.landsatCFMaskCloudMasking = 'MODERATE'
@@ -469,14 +551,20 @@ describe('update_recipe_values tool', () => {
 
             read(tool.invoke$({
                 recipeId: 'r1', baseModelHash: 'h-base',
-                writableHandles: ['landsatCloudMask'],
-                values: {landsatCloudMask: 'AGGRESSIVE'}
+                writableHandles: ['cloudMethods', 'landsatCloudMask', 'landsatShadowMask', 'landsatCirrusMask', 'landsatDilatedCloud'],
+                values: {
+                    cloudMethods: ['sepalCloudScore', 'landsatCFMask'],
+                    landsatCloudMask: 'AGGRESSIVE',
+                    landsatShadowMask: 'AGGRESSIVE',
+                    landsatCirrusMask: 'AGGRESSIVE',
+                    landsatDilatedCloud: 'REMOVE'
+                }
             }, context))
 
             const patch = calls.find(request => request.action === 'recipe-patch')
-            expect(patch.params.operations).toEqual([
+            expect(patch.params.operations).toEqual(expect.arrayContaining([
                 {op: 'add', path: '/compositeOptions/landsatCFMaskCloudMasking', value: 'AGGRESSIVE'}
-            ])
+            ]))
         })
     })
 
