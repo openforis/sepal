@@ -475,7 +475,7 @@ describe('update_recipe_values tool', () => {
         it('drops invalidated paths that do not map to any handle rather than leaking the raw pointer', () => {
             const {handler} = aGuiHandler({
                 recipe: aMosaicRecipe(),
-                patchResponse: {summary: 'ok', modelHash: 'h-next', invalidatedPaths: ['/aoi', '/sources/dataSets']}
+                patchResponse: {summary: 'ok', modelHash: 'h-next', invalidatedPaths: ['/scenes', '/sources/dataSets']}
             })
             const tool = updateRecipeValuesTool(aFakeGuiRequests(handler))
 
@@ -486,7 +486,7 @@ describe('update_recipe_values tool', () => {
             }, context))
 
             expect(result.data.invalidatedHandles).toEqual(['datasets'])
-            expect(JSON.stringify(result.data)).not.toMatch(/\/aoi/)
+            expect(JSON.stringify(result.data)).not.toMatch(/\/scenes/)
         })
 
         it('returns invalidatedHandles=[] when GUI omits or returns empty invalidatedPaths', () => {

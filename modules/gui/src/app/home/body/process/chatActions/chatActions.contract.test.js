@@ -392,6 +392,125 @@ describe('recipe-patch', () => {
     })
 })
 
+describe('create-recipe', () => {
+
+    let validMosaicModel
+
+    beforeEach(async () => {
+        const {getRecipeDefaults} = await import('recipes')
+        validMosaicModel = {
+            ...getRecipeDefaults('MOSAIC'),
+            aoi: {type: 'POLYGON', path: [[36.7, -1.4], [37.0, -1.4], [37.0, -1.1]]}
+        }
+        store.recipes = []
+        store.loadedRecipes = {}
+        apiRecipeSave$.mockReturnValue(of({}))
+    })
+
+    function create(overrides) {
+        let response
+        const handled = handleGuiAction('create-recipe', {
+            type: 'MOSAIC',
+            name: 'Kenya mosaic',
+            projectId: 'p1',
+            model: validMosaicModel,
+            respond: r => { response = r },
+            ...overrides
+        })
+        return {handled, response}
+    }
+
+    function persistedModel() {
+        return apiRecipeSave$.mock.calls[0][0].gzippedContents.model
+    }
+
+    it('accepts a valid MOSAIC model and responds with an identity summary', async () => {
+        const {handled, response} = create({})
+        await flushPersist()
+
+        expect(handled).toBe(true)
+        expect(response.success).toBe(true)
+        expect(response.data).toMatchObject({type: 'MOSAIC', name: 'Kenya mosaic', projectId: 'p1'})
+        expect(response.data.id).toEqual(expect.any(String))
+    })
+
+    it('persists the submitted model through api.recipe.save$ on a valid create', async () => {
+        create({})
+        await flushPersist()
+
+        expect(apiRecipeSave$).toHaveBeenCalled()
+        expect(persistedModel()).toMatchObject({aoi: validMosaicModel.aoi})
+    })
+
+    it('returns VALIDATION_FAILED with structured per-path errors for a MOSAIC model missing aoi', () => {
+        const {ui: _ui, ...defaultsOnly} = validMosaicModel
+        const noAoi = (() => { const m = {...defaultsOnly}; delete m.aoi; return m })()
+
+        const {response} = create({model: noAoi})
+
+        expect(response.success).toBe(false)
+        expect(response.error.code).toBe('VALIDATION_FAILED')
+        expect(Array.isArray(response.error.errors)).toBe(true)
+        expect(response.error.errors.length).toBeGreaterThan(0)
+        response.error.errors.forEach(error => {
+            expect(error).toMatchObject({path: expect.any(String), message: expect.any(String), rule: expect.any(String)})
+        })
+    })
+
+    it('does not persist on a failed validation', () => {
+        const noAoi = {...validMosaicModel}
+        delete noAoi.aoi
+
+        create({model: noAoi})
+
+        expect(apiRecipeSave$).not.toHaveBeenCalled()
+    })
+
+    it('returns VALIDATION_FAILED when a rule fails (targetDate before the Landsat 4 epoch)', () => {
+        const bad = {
+            ...validMosaicModel,
+            dates: {...validMosaicModel.dates, targetDate: '1970-01-01'}
+        }
+
+        const {response} = create({model: bad})
+
+        expect(response.error.code).toBe('VALIDATION_FAILED')
+        expect(response.error.errors.some(error => /1982-08-22/.test(error.message))).toBe(true)
+        expect(apiRecipeSave$).not.toHaveBeenCalled()
+    })
+
+    // Closes the validate-effective-but-persist-raw gap. Validation projects
+    // through toEffectiveModel (which strips dormant fields), so a submitted
+    // model can validate cleanly while still carrying dormant junk. Persisting
+    // the raw submission would let chat-created recipes carry shapes the AI
+    // contract says it should not create.
+    it('persists the effective model (dormant Sentinel-2 cloud companions stripped on a Landsat-only create)', async () => {
+        const withDormantS2 = {
+            ...validMosaicModel,
+            sources: {cloudPercentageThreshold: 75, dataSets: {LANDSAT: ['LANDSAT_9']}},
+            compositeOptions: {
+                ...validMosaicModel.compositeOptions,
+                includedCloudMasking: ['sepalCloudScore', 'landsatCFMask', 'sentinel2CloudScorePlus'],
+                sentinel2CloudScorePlusBand: 'cs_cdf',
+                sentinel2CloudScorePlusMaxCloudProbability: 45
+            }
+        }
+
+        const {response} = create({model: withDormantS2})
+        await flushPersist()
+
+        expect(response.success).toBe(true)
+        const persisted = persistedModel()
+        expect(persisted.compositeOptions.includedCloudMasking).not.toContain('sentinel2CloudScorePlus')
+        expect(persisted.compositeOptions).not.toHaveProperty('sentinel2CloudScorePlusBand')
+        expect(persisted.compositeOptions).not.toHaveProperty('sentinel2CloudScorePlusMaxCloudProbability')
+    })
+})
+
+function flushPersist() {
+    return Promise.resolve()
+}
+
 it('handles the open action, opens the recipe, and responds with a summary', () => {
     let response
     const handled = handleGuiAction('open', {recipeId: 'r1', respond: r => { response = r }})

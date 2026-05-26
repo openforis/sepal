@@ -124,13 +124,30 @@ const loadRecipeFromCacheOrServer$ = recipeId => {
 }
 
 const createRecipe = ({type, name, projectId, model, respond}) => {
+    const spec = getRecipeSpec(type)
+    // Project once: validate the same shape we persist, so dormant stored
+    // fields cannot validate-then-leak. recipe-patch already persists the
+    // post-apply effective model; create mirrors that contract.
+    const effectiveModel = spec ? toEffectiveModel(type, model) : model
+    if (spec) {
+        const errors = spec.validate(effectiveModel)
+        if (errors.length > 0) {
+            log.info(() => `create-recipe type=${type} validation-failed errors=${errors.length} details=${validationErrorsLog(errors)}`)
+            respond({success: false, error: {
+                code: 'VALIDATION_FAILED',
+                message: `${errors.length} validation error${errors.length === 1 ? '' : 's'}`,
+                errors
+            }})
+            return
+        }
+    }
     const id = uuid()
     const recipe = {
         id,
         type,
         title: name,
         projectId,
-        model,
+        model: effectiveModel,
         ui: {initialized: true}
     }
     cancelPendingRecipeSubscription()
