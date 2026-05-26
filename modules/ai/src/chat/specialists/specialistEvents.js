@@ -113,30 +113,33 @@ function publishSpecialistToolResponse({bus, name, conversationId, tool, envelop
     })
 }
 
-function publishPickHandlesCompleted({bus, conversationId, recipeType, pickedHandles}) {
+function publishPickHandlesCompleted({bus, conversationId, recipeType, pickedHandles, flow = 'update'}) {
+    const type = `${flow}_recipe.picker.completed`
     bus.publish({
-        type: 'update_recipe.picker.completed',
+        type,
         level: 'info',
         conversationId,
         recipeType,
         pickedHandleCount: pickedHandles.length,
         pickedHandles,
-        message: `update_recipe.picker.completed recipeType=${recipeType} picked=${pickedHandles.length}${nameList(pickedHandles)}`
+        message: `${type} recipeType=${recipeType} picked=${pickedHandles.length}${nameList(pickedHandles)}`
     })
 }
 
-function publishPrepareHandlePacketCompleted({bus, conversationId, recipeType, pickedHandles, dependentHandles, writableHandles}) {
+function publishPrepareHandlePacketCompleted({bus, conversationId, recipeType, pickedHandles, dependentHandles, writableHandles, requiredHandles = [], flow = 'update'}) {
+    const type = `${flow}_recipe.prepare.completed`
     bus.publish({
-        type: 'update_recipe.prepare.completed',
+        type,
         level: 'info',
         conversationId,
         recipeType,
         pickedHandleCount: pickedHandles.length,
         dependentHandleCount: dependentHandles.length,
+        requiredHandleCount: requiredHandles.length,
         writableHandleCount: writableHandles.length,
         writableHandles,
-        message: `update_recipe.prepare.completed recipeType=${recipeType} picked=${pickedHandles.length}${nameList(pickedHandles)}`
-            + ` dependent=${dependentHandles.length}${nameList(dependentHandles)} writable=${writableHandles.length}`
+        message: `${type} recipeType=${recipeType} picked=${pickedHandles.length}${nameList(pickedHandles)}`
+            + ` dependent=${dependentHandles.length}${nameList(dependentHandles)} required=${requiredHandles.length} writable=${writableHandles.length}`
     })
 }
 
@@ -160,6 +163,30 @@ function outcomeMessage({recipeId, attempted, succeeded, code, lastPatchErrorCod
     const tail = ` answerChars=${answerChars}`
     return lastPatchErrorCode
         ? `${head} lastPatchErrorCode=${lastPatchErrorCode}${tail}`
+        : `${head}${tail}`
+}
+
+function publishCreateRecipeOutcome({bus, conversationId, recipeType, recipeId, attempted, succeeded, code, lastToolErrorCode, answerChars}) {
+    bus.publish({
+        type: 'create_recipe.outcome',
+        level: 'info',
+        conversationId,
+        recipeType,
+        recipeId: recipeId || null,
+        createAttempted: attempted,
+        createSucceeded: succeeded,
+        code,
+        lastToolErrorCode: lastToolErrorCode || null,
+        answerChars,
+        message: createOutcomeMessage({recipeType, recipeId, attempted, succeeded, code, lastToolErrorCode, answerChars})
+    })
+}
+
+function createOutcomeMessage({recipeType, recipeId, attempted, succeeded, code, lastToolErrorCode, answerChars}) {
+    const head = `create_recipe.outcome recipeType=${recipeType} recipeId=${recipeId || '-'} createAttempted=${attempted} createSucceeded=${succeeded} code=${code}`
+    const tail = ` answerChars=${answerChars}`
+    return lastToolErrorCode
+        ? `${head} lastToolErrorCode=${lastToolErrorCode}${tail}`
         : `${head}${tail}`
 }
 
@@ -228,5 +255,6 @@ module.exports = {
     publishSpecialistToolResponse,
     publishPickHandlesCompleted,
     publishPrepareHandlePacketCompleted,
-    publishUpdateRecipeOutcome
+    publishUpdateRecipeOutcome,
+    publishCreateRecipeOutcome
 }

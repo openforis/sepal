@@ -1,11 +1,11 @@
 // Shared handle-keyed value I/O helpers — the boundary between the LLM-facing
 // handle vocabulary and the recipe spec's internal JSON Pointer paths. Used by
-// every tool that lets a specialist set values by handle name (update_recipe_values,
-// create_recipe_values, ...). Domain concept: writable scope + applicability +
-// path<->handle error translation. Both tools layer their own envelope shapes
+// every recipe-values tool (currently update_recipe_values and
+// create_recipe_values). Domain concept: writable scope + applicability +
+// path<->handle error translation. Each tool layers its own envelope shape
 // over these primitives (success summary, optional passthrough fields, etc.).
 
-const {applicabilityConflictFor, isSelectorHandle, scopeIndexFromHandles, scopeValueIn} = require('./updateRecipe/applicability')
+const {applicabilityConflictFor, isSelectorHandle, scopeIndexFromHandles, scopeValueIn} = require('./applicability')
 
 function checkWritableScope(values, writableHandles) {
     const writable = new Set(writableHandles)
@@ -37,9 +37,11 @@ function checkUnknownHandles(values, handlesByName, recipeType) {
 // In-process rejection for selector items whose appliesTo is not satisfied by
 // the post-write scope handle. Values overlay the model so a single write that
 // fixes both the selector and its prerequisite together is fine; only a write
-// that requests an item the post-write scope still doesn't support fails. The
-// update path projects toEffectiveModel and would otherwise silently strip the
-// inapplicable item; this surfaces the conflict in handle terms before any IO.
+// that requests an item the post-write scope still doesn't support fails.
+// Without this, toEffectiveModel would silently strip the inapplicable item
+// during projection and the inner write would succeed against a model that
+// quietly dropped the user's intent; this surfaces the conflict in handle
+// terms before any IO.
 function checkApplicability({values, effectiveModel, handlesByName}) {
     const scopeIndex = scopeIndexFromHandles(handlesByName)
     const scopeValueOf = scopeHandle => scopeHandle.name in values

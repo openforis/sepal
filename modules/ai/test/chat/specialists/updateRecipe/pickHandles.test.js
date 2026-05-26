@@ -48,13 +48,30 @@ describe('pickHandles$', () => {
         expect(result.handles).toEqual(['datasets', 'corrections'])
     })
 
-    it('returns ok=false with PICKER_EMPTY when the model returned no recognised handle', () => {
+    it('returns ok=false with PICKER_EMPTY when the model returned no recognised handle (default flow=update)', () => {
         const llm = scriptedLlm('{"handles":[]}')
 
         const result = read(pickHandles$({llm, recipeType: 'MOSAIC', instruction: 'x', conversationId: 'c1'}))
 
         expect(result.ok).toBe(false)
         expect(result.error.code).toBe('PICKER_EMPTY')
+    })
+
+    it('accepts an empty handles array as ok=true when allowEmpty=true (create flow tolerates picker silence)', () => {
+        const llm = scriptedLlm('{"handles":[]}')
+
+        const result = read(pickHandles$({llm, recipeType: 'MOSAIC', instruction: 'Create a mosaic', conversationId: 'c1', allowEmpty: true}))
+
+        expect(result).toEqual({ok: true, handles: []})
+    })
+
+    it('still returns PICKER_PARSE_FAILED for non-JSON output even when allowEmpty=true (allowEmpty does not bypass other failures)', () => {
+        const llm = scriptedLlm('I think we should create a mosaic.')
+
+        const result = read(pickHandles$({llm, recipeType: 'MOSAIC', instruction: 'Create a mosaic', conversationId: 'c1', allowEmpty: true}))
+
+        expect(result.ok).toBe(false)
+        expect(result.error.code).toBe('PICKER_PARSE_FAILED')
     })
 
     it('returns ok=false with PICKER_PARSE_FAILED for non-JSON output', () => {
@@ -147,6 +164,17 @@ describe('pickHandles$', () => {
         read(pickHandles$({llm, recipeType: 'MOSAIC', instruction: 'x', conversationId: 'c1'}))
 
         expect(llm.receivedRequests[0].usageContext).toMatchObject({role: 'update.picker', recipeType: 'MOSAIC'})
+    })
+
+    it('tags the LLM usage role and bus event with the create flow when flow=create', () => {
+        const bus = aFakeBus()
+        const llm = scriptedLlm('{"handles":["cloudMethods"]}')
+
+        read(pickHandles$({llm, bus, recipeType: 'MOSAIC', instruction: 'aggressive cloud masking', conversationId: 'c1', flow: 'create'}))
+
+        expect(llm.receivedRequests[0].usageContext).toMatchObject({role: 'create.picker', recipeType: 'MOSAIC'})
+        expect(bus.published.find(event => event.type === 'create_recipe.picker.completed')).toBeDefined()
+        expect(bus.published.find(event => event.type === 'update_recipe.picker.completed')).toBeUndefined()
     })
 
     it('publishes update_recipe.picker.completed with handle names + counts on success', () => {

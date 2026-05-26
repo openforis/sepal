@@ -53,8 +53,10 @@ Current AI/chat code already has:
   responses
 - shared recipe validation/projection in `lib/js/recipes`, consumed by both
   AI and GUI
-- `describe_recipe` and `update_recipe` operation tools routed through
-  recipe-type specialist prompts; `create_recipe` is still target design
+- `describe_recipe`, `update_recipe`, and `create_recipe` operation tools
+  routed through recipe-type specialist prompts; update and create share the
+  handle-based picker/prepare/specialist/values-tool pipeline (create is
+  MOSAIC-only in v1)
 
 The main architectural pressure is tool visibility: keep routing/metadata tools
 at the orchestrator level, and move raw recipe inspection and mutation behind
@@ -916,8 +918,9 @@ implementation checklist. Current unresolved design work:
 - Harden pending-action support for create/update clarifications: process-local
   v1 state is acceptable, but select/reload discovery and later durable
   conversation sidecar storage are required before production scale.
-- Add `create_recipe` with a separate create specialist prompt/tool surface and
-  purpose-specific create facts.
+- Extend `create_recipe` beyond MOSAIC by giving each recipe type a handle
+  catalog (including `userRequired` markers for user-supplied fields like AOI)
+  and operational/create facts; the workflow itself is recipe-agnostic.
 - Keep broad workflow planning separate from recipe update/create execution;
   workflow uses selection facts and derived summaries, not raw recipe JSON.
 - Expand recipe types only when the shared schema/rules/effective projection

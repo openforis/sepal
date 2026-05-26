@@ -4,7 +4,13 @@ const {getRecipeHandles} = require('#recipes')
 const {specialistPrompt} = require('../../llmText/prompts')
 const {publishPickHandlesCompleted} = require('../specialistEvents')
 
-function pickHandles$({llm, bus, recipeType, instruction, conversationId, recipeName}) {
+// `flow` tags both the LLM usage role ('{flow}.picker') and the published
+// completion event type ('{flow}_recipe.picker.completed') so observability
+// rolls up by workflow even though the picker logic is shared.
+// `allowEmpty` lets create accept a picker that returned no handles — the
+// workflow proceeds to prepare, which always pulls user-required handles
+// into the writable set.
+function pickHandles$({llm, bus, recipeType, instruction, conversationId, recipeName, flow = 'update', allowEmpty = false}) {
     const handles = getRecipeHandles(recipeType)
     if (!handles) {
         return of({ok: false, error: {code: 'UNSUPPORTED_RECIPE_TYPE', message: `Recipe type ${recipeType} has no handle catalog`}})
@@ -18,18 +24,18 @@ function pickHandles$({llm, bus, recipeType, instruction, conversationId, recipe
         messages,
         tools: [],
         debugLabel: `picker ${recipeType}`,
-        usageContext: {role: 'update.picker', recipeType, conversationId}
+        usageContext: {role: `${flow}.picker`, recipeType, conversationId}
     })).pipe(
         reduce((text, event) => text + (event.textDelta || ''), ''),
-        map(text => parsePickerOutput(text, allowedNames)),
-        tap(result => publishOnSuccess({bus, conversationId, recipeType, result})),
+        map(text => parsePickerOutput(text, allowedNames, {allowEmpty})),
+        tap(result => publishOnSuccess({bus, conversationId, recipeType, result, flow})),
         catchError(error => of({ok: false, error: {code: 'PICKER_FAILED', message: error.message}}))
     )
 }
 
-function publishOnSuccess({bus, conversationId, recipeType, result}) {
+function publishOnSuccess({bus, conversationId, recipeType, result, flow}) {
     if (!bus || !result?.ok) return
-    publishPickHandlesCompleted({bus, conversationId, recipeType, pickedHandles: result.handles})
+    publishPickHandlesCompleted({bus, conversationId, recipeType, pickedHandles: result.handles, flow})
 }
 
 function buildUserText({instruction, recipeName, recipeType}) {
@@ -39,7 +45,7 @@ function buildUserText({instruction, recipeName, recipeType}) {
     return lines.join('\n')
 }
 
-function parsePickerOutput(text, allowedNames) {
+function parsePickerOutput(text, allowedNames, {allowEmpty = false} = {}) {
     const json = extractJson(text)
     if (!json) return {ok: false, error: {code: 'PICKER_PARSE_FAILED', message: 'Picker output did not contain a JSON object.'}}
     const raw = Array.isArray(json.handles) ? json.handles : null
@@ -53,7 +59,7 @@ function parsePickerOutput(text, allowedNames) {
         seen.add(name)
         filtered.push(name)
     }
-    if (!filtered.length) {
+    if (!filtered.length && !allowEmpty) {
         return {ok: false, error: {code: 'PICKER_EMPTY', message: 'Picker produced no recognised handle.'}}
     }
     return {ok: true, handles: filtered}

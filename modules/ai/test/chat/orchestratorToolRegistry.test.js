@@ -23,10 +23,21 @@ describe('orchestrator tool registry', () => {
             'layer_list',
             'describe_recipe',
             'update_recipe',
+            'create_recipe',
             'consult_map'
         ]
 
         expect([...names].sort()).toEqual([...allExpectedNames].sort())
+    })
+
+    it('exposes create_recipe as a directAnswer tool steered for new recipes (not edits)', () => {
+        const registry = anOrchestratorSurface()
+        const createSchema = registry.schemas().find(schema => schema.name === 'create_recipe')
+
+        expect(createSchema).toBeDefined()
+        expect(registry.flag('create_recipe', 'directAnswer')).toBe(true)
+        expect(createSchema.description).toMatch(/update_recipe/i)
+        expect(createSchema.parameters.properties.recipeType.enum).toEqual(['MOSAIC'])
     })
 
     it('does not expose recipe_load on the orchestrator surface — it is specialist-private', () => {
@@ -45,5 +56,11 @@ describe('orchestrator tool registry', () => {
         const names = anOrchestratorSurface().schemas().map(schema => schema.name)
 
         expect(names).not.toContain('prepare_update')
+    })
+
+    it('does not expose create_recipe_values on the orchestrator surface — it is specialist-private', () => {
+        const names = anOrchestratorSurface().schemas().map(schema => schema.name)
+
+        expect(names).not.toContain('create_recipe_values')
     })
 })

@@ -7,6 +7,7 @@ const {mapTools} = require('./mapTools')
 const {projectTools} = require('./projectTools')
 const {recipeListTool, recipeOpenTool, recipeLoadTool} = require('./recipeTools')
 const {updateRecipeValuesTool} = require('../specialists/updateRecipe/updateRecipeValuesTool')
+const {createRecipeValuesTool} = require('../specialists/createRecipe/createRecipeValuesTool')
 
 function sepalTools({guiRequests}) {
     return [
@@ -18,10 +19,10 @@ function sepalTools({guiRequests}) {
     ]
 }
 
-// recipe_load (describe) + update_recipe_values (update) are included here so
-// recipe specialists can inspect and write a recipe. Neither is on the
-// orchestrator surface. Specialists scope down further to a per-specialist
-// allowed list.
+// recipe_load (describe), update_recipe_values (update), and
+// create_recipe_values (create) are included here so recipe specialists can
+// inspect, write, and create recipes. None are on the orchestrator surface.
+// Specialists scope down further to a per-specialist allowed list.
 function specialistInnerTools({guiRequests}) {
     return [
         guiContextTool(),
@@ -29,6 +30,7 @@ function specialistInnerTools({guiRequests}) {
         ...projectTools(guiRequests),
         recipeLoadTool(guiRequests),
         updateRecipeValuesTool(guiRequests),
+        createRecipeValuesTool(guiRequests),
         ...mapTools(guiRequests)
     ]
 }

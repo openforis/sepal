@@ -14,14 +14,17 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 ## Tool And GUI Bridge
 
-- **Recipe operation dispatchers are partial** — `describe_recipe({recipeId,
-  question?})` and `update_recipe({recipeId, instruction})` are on the
-  orchestrator surface. `update_recipe` is now handle-based internally:
-  picker chooses handles, prepare builds a handle-keyed packet, updater calls
-  `update_recipe_values({recipeId, values})`, and deterministic code maps
-  handles to internal patch operations. Still missing:
-  `create_recipe({recipeType, instruction, projectId?, name?})`, seeded with
-  `spec.defaultModel()` and using the same pending-action/clarification path.
+- **Recipe operation dispatchers** — `describe_recipe({recipeId, question?})`,
+  `update_recipe({recipeId, instruction})`, and
+  `create_recipe({recipeType, instruction, projectId?, name?})` are on the
+  orchestrator surface. Update and create both run the same handle-based
+  workflow internally: picker chooses handles, prepare builds a handle-keyed
+  packet, the specialist calls `{update,create}_recipe_values({values})`, and
+  deterministic code maps handles to internal paths (patch ops for update,
+  effective-model construction for create). Create always pulls user-required
+  handles (`userRequired: true` in the catalog, e.g. MOSAIC `aoi`) into the
+  writable set so missing values surface as clarifications instead of being
+  defaulted/invented. Both share the same pending-action/clarification resume.
 - **Recipe-type coverage is still MOSAIC-first** — MOSAIC has the live handle
   catalog, selector metadata, applicability facts, and handle-keyed update
   flow. Other recipe types still need shared schema/effective-model support,

@@ -16,6 +16,7 @@ const {createToolRegistry} = require('#mcp/chat/tools/registry')
 const {specialistConsultationTools} = require('#mcp/chat/specialists/specialistConsultationTools')
 const {describeRecipeTool} = require('#mcp/chat/specialists/describeRecipe')
 const {updateRecipeTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeTool')
+const {createRecipeTool} = require('#mcp/chat/specialists/createRecipe/createRecipeTool')
 
 function aRegistryHarness({tools, bus = aRecordingBus()} = {}) {
     const registry = createToolRegistry({tools, bus})
@@ -38,7 +39,9 @@ const SPECIALIST_BUILDERS = {
     describe_recipe: ({llm, bus, innerTools, guiRequests}) =>
         describeRecipeTool({llm, bus, innerTools, guiRequests}),
     update_recipe: ({llm, bus, innerTools, guiRequests}) =>
-        updateRecipeTool({llm, bus, innerTools, guiRequests})
+        updateRecipeTool({llm, bus, innerTools, guiRequests}),
+    create_recipe: ({llm, bus, innerTools}) =>
+        createRecipeTool({llm, bus, innerTools})
 }
 
 function aToolFactoryHarness({
@@ -94,6 +97,18 @@ const INNER_TOOLS_BY_SPECIALIST = {
                 name: 'update_recipe_values',
                 description: 'Set values for ONE recipe by handle name.',
                 parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+            }
+        ]
+    ),
+    create_recipe: () => aFakeTools(
+        {
+            create_recipe_values: () => of({ok: true, data: {recipeId: 'r-new', type: 'MOSAIC', name: 'Kenya', projectId: 'p1', summary: 'created'}})
+        },
+        [
+            {
+                name: 'create_recipe_values',
+                description: 'Create ONE new recipe by handle name.',
+                parameters: {type: 'object', properties: {recipeType: {type: 'string'}, projectId: {type: 'string'}, name: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
             }
         ]
     )

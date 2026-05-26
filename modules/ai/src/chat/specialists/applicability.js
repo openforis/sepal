@@ -1,13 +1,15 @@
-// Shared by prepareHandlePacket (facts before-the-fact) and
-// updateRecipeValuesTool (in-process rejection before any patch). A "scope
-// handle" is one whose `allowedKeys` declares a vocabulary (e.g. datasets
-// declares LANDSAT + SENTINEL_2). A selector item's `appliesTo` listing those
-// keys must overlap the scope handle's value — otherwise the item is
-// inapplicable. The conflict check takes a `scopeValueOf(handle)` callback so
-// prepare reads the current model and update overlays the values being set
-// in the same call (a write that fixes both handles together is fine).
+// Shared selector-item applicability check. Used by handlePacket to emit
+// "before-the-fact" applicability facts in the prepared packet, and by
+// handleValueIO to reject inapplicable items in-process before any GUI work.
+// A "scope handle" is one whose `allowedKeys` declares a vocabulary (e.g.
+// datasets declares LANDSAT + SENTINEL_2). A selector item's `appliesTo`
+// listing those keys must overlap the scope handle's value — otherwise the
+// item is inapplicable. The conflict check takes a `scopeValueOf(handle)`
+// callback so prepare reads the current model while the value tools overlay
+// the values being set in the same call (a write that fixes both handles
+// together is fine).
 
-const {parsePointer, resolvePointer, PointerNotFound} = require('../../tools/jsonPointer')
+const {parsePointer, resolvePointer, PointerNotFound} = require('../tools/jsonPointer')
 
 function scopeIndexFromHandles(handlesByName) {
     const index = new Map()

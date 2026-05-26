@@ -17,7 +17,11 @@ const {
 } = require('../channelEvents')
 const {routeTurnEvent} = require('./messageHandler')
 
-const UPDATE_RECIPE = 'update_recipe'
+// Tools whose CLARIFICATION_NEEDED outcome should be lifted into a
+// resumable pending action. Both update_recipe and create_recipe go through
+// the same shape: the resumed instruction preserves the original args
+// (recipeId / recipeType / projectId / name / etc.) and augments instruction.
+const CLARIFIABLE_TOOLS = new Set(['update_recipe', 'create_recipe'])
 
 function createPendingActions({conversations, createId, clock}) {
     const byConversation = new Map()
@@ -25,7 +29,7 @@ function createPendingActions({conversations, createId, clock}) {
     return {observeToolResult$, answer$, cancel$, clear, clientView, get}
 
     function observeToolResult$({conversationId, toolCall, result}) {
-        if (!isUpdateRecipeClarification(toolCall, result)) return EMPTY
+        if (!isClarificationNeeded(toolCall, result)) return EMPTY
         const previous = byConversation.get(conversationId)
         const pendingAction = {
             id: createId(),
@@ -120,8 +124,8 @@ function createPendingActions({conversations, createId, clock}) {
     }
 }
 
-function isUpdateRecipeClarification(toolCall, result) {
-    return toolCall?.name === UPDATE_RECIPE
+function isClarificationNeeded(toolCall, result) {
+    return CLARIFIABLE_TOOLS.has(toolCall?.name)
         && result?.ok === false
         && result?.error?.code === 'CLARIFICATION_NEEDED'
         && typeof result.error.answer === 'string'
