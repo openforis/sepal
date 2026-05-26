@@ -517,7 +517,10 @@ Questions to ask while green:
 - **Short functions, few args, descriptive names**. Rename until the code self-explains.
 - **DRY vs coupling**: dedupe when it's *the same idea*, not just code that looks alike. Different ideas that look alike → leave.
 - **No premature abstractions**. Two or three real uses, or a concrete reason (test seam, pluggable strategy). Inline duplication beats a wrong abstraction. **Single-use helpers earn extraction only when the name reveals something the inlined code obscures** — not when they merely shrink the parent function. Cosmetic extraction fragments the flow and forces readers to jump between functions to follow a single chain.
-- **Comments only when code can't say it** — constraint, workaround, non-obvious invariant. No "what" comments. Reaching for one → extract & name.
+- **Comment discipline** — prefer deletion over rewriting. Keep comments only for non-obvious invariants, safety boundaries, wire contracts, or gotchas the code cannot express.
+- No comments that list current consumers, narrate history, restate workflow steps, explain what a function name already says, or defend a local design choice that belongs in a design doc.
+- Durable architecture → `DESIGN_*.md`. Executable contracts → tests with names/assertions that pin the rule. Code comments stay local and operational.
+- Reaching for a comment → first try naming/extraction. If the comment survives, make it about the invariant, not the implementation tour.
 - **No circular deps**, file or slice. Slices collaborate through constructor-injected ports, exported entry points, and composition; never through hidden internals.
 - **Importance first**: most relevant at top of file / function. Helpers below callers.
 - **Cyclomatic complexity** climbing → extraction signal.
