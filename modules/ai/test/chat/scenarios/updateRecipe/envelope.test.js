@@ -56,30 +56,41 @@ describe('update_recipe outer envelope reflects whether the update applied', () 
         })
     })
 
-    it('returns {ok:false, UPDATE_NOT_ATTEMPTED} when the updater never called update_recipe_values', () => {
-        const innerTools = innerToolsImpl({update_recipe_values: () => of({ok: true, data: {summary: '', modelHash: 'h2', appliedHandles: [], invalidatedPaths: []}})}, [{
-            name: 'update_recipe_values',
-            description: 'Update.',
-            parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-        }])
+    it('classifies a not-attempted updater with non-empty text as CLARIFICATION_NEEDED, carrying the updater text as error.answer for direct surface to the user', () => {
+        const harness = aNeverCallsUpdate({text: 'Cloud Score+ requires Sentinel-2. Do you want to add Sentinel-2 to this recipe?'})
+
+        const result = harness.invoke({recipeId: 'r1', instruction: 'Use Cloud Score+ instead'})
+
+        expect(result).toMatchObject({
+            ok: false,
+            error: {
+                code: 'CLARIFICATION_NEEDED',
+                answer: 'Cloud Score+ requires Sentinel-2. Do you want to add Sentinel-2 to this recipe?'
+            }
+        })
+    })
+
+    it('reserves UPDATE_NOT_ATTEMPTED for the not-attempted + empty-text case (nothing to surface to the user)', () => {
+        const harness = aNeverCallsUpdate({text: ''})
+
+        const result = harness.invoke({recipeId: 'r1', instruction: 'edit'})
+
+        expect(result).toMatchObject({ok: false, error: {code: 'UPDATE_NOT_ATTEMPTED'}})
+    })
+
+    it('does not promote a capped run with no successful update to CLARIFICATION_NEEDED (cap text is a runtime sentinel, not a user-intended clarification)', () => {
         const harness = aToolFactoryHarness({
             specialist: 'update_recipe',
-            innerTools,
             replies: [
                 {text: '{"handles":["targetDate"]}'},
-                {text: 'I looked but did not change anything.'}
+                {text: ''}, {text: ''}, {text: ''}
             ]
         })
 
         const result = harness.invoke({recipeId: 'r1', instruction: 'edit'})
 
-        expect(result).toMatchObject({
-            ok: false,
-            error: {
-                code: 'UPDATE_NOT_ATTEMPTED',
-                specialistAnswer: 'I looked but did not change anything.'
-            }
-        })
+        expect(result.ok).toBe(false)
+        expect(result.error.code).not.toBe('CLARIFICATION_NEEDED')
     })
 
     it('builds a user-facing failure answer from handle-keyed errors', () => {
@@ -140,3 +151,13 @@ describe('update_recipe outer envelope reflects whether the update applied', () 
         expect(result).toEqual({ok: true, data: {answer: 'Got it on the second try.'}})
     })
 })
+
+function aNeverCallsUpdate({text}) {
+    return aToolFactoryHarness({
+        specialist: 'update_recipe',
+        replies: [
+            {text: '{"handles":["targetDate"]}'},
+            {text}
+        ]
+    })
+}

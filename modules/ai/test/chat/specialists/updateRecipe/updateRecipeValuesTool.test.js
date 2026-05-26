@@ -71,6 +71,67 @@ describe('update_recipe_values tool', () => {
         })
     })
 
+    describe('applicability check before any GUI work', () => {
+
+        it('rejects an inapplicable selector item with APPLICABILITY_VIOLATION when the scope handle does not satisfy it', () => {
+            const recipe = aMosaicRecipe()
+            recipe.model.sources.dataSets = {LANDSAT: ['LANDSAT_9']}
+            const {handler, calls} = aGuiHandler({recipe})
+            const tool = updateRecipeValuesTool(aFakeGuiRequests(handler))
+
+            const result = read(tool.invoke$({
+                recipeId: 'r1', baseModelHash: 'h-base',
+                writableHandles: ['cloudMethods'],
+                values: {cloudMethods: ['sepalCloudScore', 'landsatCFMask', 'sentinel2CloudScorePlus']}
+            }, context))
+
+            expect(result.ok).toBe(false)
+            expect(result.error.code).toBe('APPLICABILITY_VIOLATION')
+            expect(result.error.handleErrors).toEqual([
+                expect.objectContaining({handle: 'cloudMethods'})
+            ])
+            expect(calls.some(request => request.action === 'recipe-patch')).toBe(false)
+        })
+
+        it('accepts the same item when the scope handle is being set in the same call to satisfy the requirement', () => {
+            const recipe = aMosaicRecipe()
+            recipe.model.sources.dataSets = {LANDSAT: ['LANDSAT_9']}
+            recipe.model.compositeOptions.corrections = ['SR']
+            const {handler} = aGuiHandler({recipe, patchResponse: {summary: 'ok', modelHash: 'h-next', invalidatedPaths: []}})
+            const tool = updateRecipeValuesTool(aFakeGuiRequests(handler))
+
+            const result = read(tool.invoke$({
+                recipeId: 'r1', baseModelHash: 'h-base',
+                writableHandles: ['datasets', 'cloudMethods', 'corrections'],
+                values: {
+                    datasets: {LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']},
+                    cloudMethods: ['sepalCloudScore', 'landsatCFMask', 'sentinel2CloudScorePlus'],
+                    corrections: ['CALIBRATE']
+                }
+            }, context))
+
+            expect(result.ok).toBe(true)
+        })
+
+        it('names the conflicting item label and the missing scope keys without leaking internal paths', () => {
+            const recipe = aMosaicRecipe()
+            recipe.model.sources.dataSets = {LANDSAT: ['LANDSAT_9']}
+            const {handler} = aGuiHandler({recipe})
+            const tool = updateRecipeValuesTool(aFakeGuiRequests(handler))
+
+            const result = read(tool.invoke$({
+                recipeId: 'r1', baseModelHash: 'h-base',
+                writableHandles: ['cloudMethods'],
+                values: {cloudMethods: ['sepalCloudScore', 'sentinel2CloudScorePlus']}
+            }, context))
+
+            const handleError = result.error.handleErrors.find(entry => entry.handle === 'cloudMethods')
+            expect(handleError.message).toMatch(/sentinel-2 cloud score\+/i)
+            expect(handleError.message).toMatch(/sentinel-2|datasets/i)
+            expect(JSON.stringify(result.error)).not.toMatch(/\/(compositeOptions|sources)\//)
+        })
+    })
+
     describe('writableHandles enforcement', () => {
 
         it('rejects a value whose handle is not in writableHandles, in handle terms', () => {

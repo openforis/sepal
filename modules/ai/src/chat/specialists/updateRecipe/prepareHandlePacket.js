@@ -5,6 +5,7 @@ const {fieldShapeAt} = require('../../tools/fieldShapeFromSchema')
 const {guiProductRequest$} = require('../../tools/guiProductRequest')
 const {parsePointer, resolvePointer, PointerNotFound} = require('../../tools/jsonPointer')
 const {publishPrepareHandlePacketCompleted} = require('../specialistEvents')
+const {applicabilityConflictFor, isSelectorHandle, scopeIndexFromHandles, scopeValueIn} = require('./applicability')
 
 // Prepares one handle-keyed packet per update attempt. Two sources expand the
 // writable set:
@@ -78,6 +79,7 @@ function buildPacket({recipe, recipeType, pickedHandles, handles, handlesByName}
             fields,
             dependencyFacts: dependencyFacts(relevantConstraints, dependentHandles, handlesByPath, handlesByName),
             couplingFacts,
+            applicabilityFacts: applicabilityFactsFor({writableHandles, handlesByName, effectiveModel}),
             validationRules: validationRulesFor(relevantConstraints, handlesByPath)
         }
     }
@@ -159,6 +161,48 @@ function expandSelectorItemCompanions({seed, handlesByName}) {
         }
     }
     return distinct(expansions)
+}
+
+// For each writable selector handle, emit one fact per item whose appliesTo
+// requirement is not currently satisfied by the scope handle that holds its
+// vocabulary. The scope-handle resolution + conflict detection live in
+// ./applicability; per-fact guidance is templated from data so the policy
+// the model reads stays out of keyword-matching code.
+function applicabilityFactsFor({writableHandles, handlesByName, effectiveModel}) {
+    const scopeIndex = scopeIndexFromHandles(handlesByName)
+    const scopeValueOf = handle => scopeValueIn(effectiveModel, handle)
+    const facts = []
+    for (const handleName of writableHandles) {
+        const handle = handlesByName.get(handleName)
+        if (!isSelectorHandle(handle)) continue
+        for (const item of handle.allowedItems) {
+            const conflict = applicabilityConflictFor(item, scopeIndex, scopeValueOf)
+            if (conflict) facts.push(renderApplicabilityFact(handle, item, conflict))
+        }
+    }
+    return facts
+}
+
+function renderApplicabilityFact(selectorHandle, item, conflict) {
+    const required = formatList(conflict.missingKeys.map(key => labelForScopeKey(key, conflict.scopeHandle)))
+    return {
+        selectorHandle: selectorHandle.name,
+        item: item.value,
+        itemLabel: item.label,
+        requires: {handle: conflict.scopeHandle.name, anyOfKeys: conflict.missingKeys},
+        currentValue: conflict.currentValue,
+        guidance: `${item.label} requires ${required} in ${conflict.scopeHandle.label.toLowerCase()}. Do not silently change ${conflict.scopeHandle.name} unless the user asked to change it.`
+    }
+}
+
+function labelForScopeKey(key, scopeHandle) {
+    return scopeHandle.valueLabels?.[key] || key
+}
+
+function formatList(items) {
+    if (items.length <= 1) return items.join('')
+    if (items.length === 2) return `${items[0]} or ${items[1]}`
+    return `${items.slice(0, -1).join(', ')}, or ${items[items.length - 1]}`
 }
 
 function conditionHolds(when, effectiveModel, handlesByName) {

@@ -125,6 +125,22 @@ describe('pickHandles$', () => {
         expect(prompt).toMatch(/no rationale/i)
     })
 
+    it('teaches the picker not to pick a prerequisite handle (e.g. datasets) unless the user explicitly asked to change it', () => {
+        const prompt = pickerSystemPrompt('MOSAIC')
+
+        expect(prompt).toMatch(/prerequisite/i)
+        expect(prompt).toMatch(/datasets/)
+        expect(prompt).toMatch(/only.*(explicit|when the user)/i)
+    })
+
+    it('illustrates the rule with the Cloud Score+ examples that separate "swap a method" from "switch sources too"', () => {
+        const prompt = pickerSystemPrompt('MOSAIC')
+
+        expect(prompt).toMatch(/cloud score\+/i)
+        expect(prompt).toMatch(/cloudMethods only/i)
+        expect(prompt).toMatch(/datasets.*cloudMethods|cloudMethods.*datasets/)
+    })
+
     it('declares update.picker as the LLM usage role so usage rolls up to the right slot', () => {
         const llm = scriptedLlm('{"handles":["targetDate"]}')
 

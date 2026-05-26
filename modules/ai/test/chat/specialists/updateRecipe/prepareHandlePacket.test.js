@@ -4,44 +4,6 @@ const {aFakeBus, aFakeGuiRequests, expectNoHandlePathsIn, read} = require('../..
 
 const context = {clientId: 'c1', subscriptionId: 's1'}
 
-function aMosaicRecipe(overrides = {}) {
-    return {
-        id: 'r1',
-        type: 'MOSAIC',
-        modelHash: 'h-base',
-        model: {
-            dates: {type: 'YEARLY_TIME_SCAN', targetDate: '2024-07-02', seasonStart: '2024-01-01', seasonEnd: '2025-01-01', yearsBefore: 0, yearsAfter: 0},
-            sources: {cloudPercentageThreshold: 75, dataSets: {LANDSAT: ['LANDSAT_9']}},
-            sceneSelectionOptions: {type: 'ALL', targetDateWeight: 0},
-            compositeOptions: {
-                corrections: ['SR', 'BRDF'],
-                brdfMultiplier: 4,
-                filters: [],
-                orbitOverlap: 'KEEP',
-                tileOverlap: 'QUICK_REMOVE',
-                includedCloudMasking: ['sepalCloudScore', 'landsatCFMask'],
-                landsatCFMaskCloudMasking: 'MODERATE',
-                landsatCFMaskCloudShadowMasking: 'MODERATE',
-                landsatCFMaskCirrusMasking: 'MODERATE',
-                landsatCFMaskDilatedCloud: 'REMOVE',
-                sepalCloudScoreMaxCloudProbability: 30,
-                cloudBuffer: 0,
-                holes: 'ALLOW',
-                snowMasking: 'ON',
-                compose: 'MEDOID'
-            }
-        },
-        ...overrides
-    }
-}
-
-function loadRecipe(recipe) {
-    return aFakeGuiRequests(request => {
-        if (request.action === 'load-recipe') return of(recipe)
-        return of({})
-    })
-}
-
 describe('prepareHandlePacket$', () => {
 
     it('issues a load-recipe GUI request for the requested recipeId', () => {
@@ -326,6 +288,67 @@ describe('prepareHandlePacket$', () => {
         })
     })
 
+    describe('applicability facts for inapplicable selector items', () => {
+
+        it('flags a Sentinel-2-only item on a Landsat-only recipe, naming the scope handle and the missing key', () => {
+            const packet = prepareFor({recipe: aLandsatOnlyMosaic(), pickedHandles: ['cloudMethods']})
+
+            expect(factFor(packet, 'sentinel2CloudScorePlus')).toMatchObject({
+                selectorHandle: 'cloudMethods',
+                itemLabel: 'Sentinel-2 Cloud Score+',
+                requires: {handle: 'datasets', anyOfKeys: ['SENTINEL_2']}
+            })
+        })
+
+        it('carries the current scope-handle value so the updater can see what is there now', () => {
+            const packet = prepareFor({recipe: aLandsatOnlyMosaic(), pickedHandles: ['cloudMethods']})
+
+            expect(factFor(packet, 'sentinel2CloudScorePlus').currentValue).toEqual({LANDSAT: ['LANDSAT_9']})
+        })
+
+        it('flags every inapplicable item on the writable selector, not just the first', () => {
+            const packet = prepareFor({recipe: aLandsatOnlyMosaic(), pickedHandles: ['cloudMethods']})
+
+            const flagged = packet.applicabilityFacts.map(fact => fact.item).sort()
+            expect(flagged).toEqual(['pino26', 'sentinel2CloudProbability', 'sentinel2CloudScorePlus'])
+        })
+
+        it('is symmetric in the scope vocabulary: a Landsat-only item on a Sentinel-2-only recipe is flagged the same way', () => {
+            const packet = prepareFor({recipe: aSentinel2OnlyMosaic(), pickedHandles: ['cloudMethods']})
+
+            expect(factFor(packet, 'landsatCFMask')).toMatchObject({
+                selectorHandle: 'cloudMethods',
+                requires: {handle: 'datasets', anyOfKeys: ['LANDSAT']}
+            })
+        })
+
+        it('emits no facts when every item\'s requirements are satisfied by the current scope handle', () => {
+            const recipe = aMosaicRecipe()
+            recipe.model.sources.dataSets = {LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']}
+            const packet = prepareFor({recipe, pickedHandles: ['cloudMethods']})
+
+            expect(packet.applicabilityFacts).toEqual([])
+        })
+
+        it('emits no facts when the selector handle is not writable (picker did not include it)', () => {
+            const packet = prepareFor({recipe: aLandsatOnlyMosaic(), pickedHandles: ['targetDate']})
+
+            expect(packet.applicabilityFacts).toEqual([])
+        })
+
+        it('renders per-fact guidance that names the scope handle and forbids silent prerequisite changes', () => {
+            const packet = prepareFor({recipe: aLandsatOnlyMosaic(), pickedHandles: ['cloudMethods']})
+
+            expect(factFor(packet, 'sentinel2CloudScorePlus').guidance).toMatch(/do not silently.*datasets/i)
+        })
+
+        it('carries no JSON Pointer paths', () => {
+            const packet = prepareFor({recipe: aLandsatOnlyMosaic(), pickedHandles: ['cloudMethods']})
+
+            expectNoHandlePathsIn(packet.applicabilityFacts)
+        })
+    })
+
     describe('writableHandles enforcement', () => {
 
         it('limits writableHandles to picked + deterministic dependents', () => {
@@ -434,3 +457,70 @@ describe('prepareHandlePacket$', () => {
         })
     })
 })
+
+function prepareFor({recipe, pickedHandles}) {
+    const guiRequests = loadRecipe(recipe)
+    return read(prepareHandlePacket$({
+        guiRequests, recipeId: 'r1', recipeType: 'MOSAIC',
+        pickedHandles, context
+    })).data
+}
+
+function factFor(packet, itemValue) {
+    return packet.applicabilityFacts.find(fact => fact.item === itemValue)
+}
+
+function aMosaicRecipe(overrides = {}) {
+    return {
+        id: 'r1',
+        type: 'MOSAIC',
+        modelHash: 'h-base',
+        model: {
+            dates: {type: 'YEARLY_TIME_SCAN', targetDate: '2024-07-02', seasonStart: '2024-01-01', seasonEnd: '2025-01-01', yearsBefore: 0, yearsAfter: 0},
+            sources: {cloudPercentageThreshold: 75, dataSets: {LANDSAT: ['LANDSAT_9']}},
+            sceneSelectionOptions: {type: 'ALL', targetDateWeight: 0},
+            compositeOptions: {
+                corrections: ['SR', 'BRDF'],
+                brdfMultiplier: 4,
+                filters: [],
+                orbitOverlap: 'KEEP',
+                tileOverlap: 'QUICK_REMOVE',
+                includedCloudMasking: ['sepalCloudScore', 'landsatCFMask'],
+                landsatCFMaskCloudMasking: 'MODERATE',
+                landsatCFMaskCloudShadowMasking: 'MODERATE',
+                landsatCFMaskCirrusMasking: 'MODERATE',
+                landsatCFMaskDilatedCloud: 'REMOVE',
+                sepalCloudScoreMaxCloudProbability: 30,
+                cloudBuffer: 0,
+                holes: 'ALLOW',
+                snowMasking: 'ON',
+                compose: 'MEDOID'
+            }
+        },
+        ...overrides
+    }
+}
+
+function aLandsatOnlyMosaic() {
+    const recipe = aMosaicRecipe()
+    recipe.model.sources.dataSets = {LANDSAT: ['LANDSAT_9']}
+    recipe.model.compositeOptions.includedCloudMasking = ['sepalCloudScore', 'landsatCFMask']
+    return recipe
+}
+
+function aSentinel2OnlyMosaic() {
+    const recipe = aMosaicRecipe()
+    recipe.model.sources.dataSets = {SENTINEL_2: ['SENTINEL_2']}
+    recipe.model.compositeOptions.corrections = ['SR']
+    recipe.model.compositeOptions.includedCloudMasking = ['sepalCloudScore', 'sentinel2CloudScorePlus']
+    recipe.model.compositeOptions.sentinel2CloudScorePlusBand = 'cs_cdf'
+    recipe.model.compositeOptions.sentinel2CloudScorePlusMaxCloudProbability = 45
+    return recipe
+}
+
+function loadRecipe(recipe) {
+    return aFakeGuiRequests(request => {
+        if (request.action === 'load-recipe') return of(recipe)
+        return of({})
+    })
+}

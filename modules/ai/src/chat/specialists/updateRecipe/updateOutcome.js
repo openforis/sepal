@@ -24,8 +24,8 @@ function projectUpdateOutcome(timeline) {
     }
 }
 
-function publishOutcomeAndShape({outcome, answer, bus, conversationId, recipeId}) {
-    const envelope = buildEnvelope(outcome, answer)
+function publishOutcomeAndShape({outcome, answer, capped = false, bus, conversationId, recipeId}) {
+    const envelope = buildEnvelope(outcome, answer, {capped})
     publishUpdateRecipeOutcome({
         bus, conversationId, recipeId,
         attempted: outcome.attempted,
@@ -37,7 +37,15 @@ function publishOutcomeAndShape({outcome, answer, bus, conversationId, recipeId}
     return envelope
 }
 
-function buildEnvelope(outcome, answer) {
+// Three not-succeeded branches, in order:
+//   UPDATE_FAILED         — update_recipe_values ran and the last call failed.
+//   CLARIFICATION_NEEDED  — the updater chose to ask / explain instead of
+//                           calling the tool, and its text is meant for the
+//                           user (`error.answer` streams straight through).
+//   UPDATE_NOT_ATTEMPTED  — residual: no call, no usable text. Capped runs
+//                           land here too: the cap text is a runtime sentinel,
+//                           not deliberate communication.
+function buildEnvelope(outcome, answer, {capped = false} = {}) {
     if (outcome.succeeded) return {ok: true, data: {answer}}
     if (outcome.attempted) return {
         ok: false,
@@ -47,6 +55,14 @@ function buildEnvelope(outcome, answer) {
             patchError: outcome.lastError,
             specialistAnswer: answer,
             answer: failureAnswer(outcome.lastError)
+        }
+    }
+    if (answer.trim() && !capped) return {
+        ok: false,
+        error: {
+            code: 'CLARIFICATION_NEEDED',
+            message: 'The update specialist asked for more information before proceeding.',
+            answer
         }
     }
     return {

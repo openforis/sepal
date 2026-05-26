@@ -71,20 +71,25 @@ describe('update_recipe recovery and observability', () => {
             expect(outcomes[0]).toMatchObject({type: 'update_recipe.outcome', code: 'ok'})
         })
 
-        it('publishes a single outcome event with the failure code when the updater never called update_recipe_values', () => {
+        it('publishes a single outcome event with code=CLARIFICATION_NEEDED when the updater asked for more info instead of calling update_recipe_values', () => {
             const harness = aToolFactoryHarness({
                 specialist: 'update_recipe',
                 replies: [
                     {text: '{"handles":["targetDate"]}'},
-                    {text: 'I could not satisfy that.'}
+                    {text: 'Which date should I use as the new target?'}
                 ]
             })
 
-            harness.invoke({recipeId: 'r1', instruction: 'do something impossible'})
+            harness.invoke({recipeId: 'r1', instruction: 'shift the target date'})
 
             const outcomes = harness.bus.events.filter(event => event.type === 'update_recipe.outcome')
             expect(outcomes).toHaveLength(1)
-            expect(outcomes[0]).toMatchObject({code: 'UPDATE_NOT_ATTEMPTED', patchAttempted: false, patchSucceeded: false})
+            expect(outcomes[0]).toMatchObject({
+                code: 'CLARIFICATION_NEEDED',
+                patchAttempted: false,
+                patchSucceeded: false,
+                answerChars: 'Which date should I use as the new target?'.length
+            })
         })
     })
 

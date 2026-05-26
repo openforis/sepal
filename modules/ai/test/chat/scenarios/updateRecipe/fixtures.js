@@ -9,9 +9,10 @@
 //                              or more handle-keyed updates flow through the
 //                              real update_recipe_values tool.
 
-const {of} = require('rxjs')
+const {of, throwError} = require('rxjs')
 const {aFakeGuiRequests, innerToolsImpl} = require('../../harness')
 const {updateRecipeValuesTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool')
+const {toEffectiveModel, validateRecipe} = require('#recipes')
 
 const mosaicMetadata = {id: 'r1', type: 'MOSAIC', name: 'Kenya mosaic', projectId: 'p1'}
 const unspeccedMetadata = {id: 'r-other', type: 'NOT_IN_REGISTRY', name: 'Other', projectId: 'p1'}
@@ -61,7 +62,7 @@ function aFullMosaicModel(overrides = {}) {
     return {...base, ...overrides, compositeOptions: {...base.compositeOptions, ...(overrides.compositeOptions || {})}}
 }
 
-function aLiveMosaicSetup({model}) {
+function aLiveMosaicSetup({model, validate = false}) {
     const patchCalls = []
     let currentModel = JSON.parse(JSON.stringify(model))
     let currentHash = 'h-base'
@@ -70,7 +71,12 @@ function aLiveMosaicSetup({model}) {
         if (request.action === 'load-recipe') return of({id: 'r1', type: 'MOSAIC', modelHash: currentHash, model: currentModel})
         if (request.action === 'recipe-patch') {
             patchCalls.push(request)
-            currentModel = applyPatchOperations(currentModel, request.params.operations)
+            const nextModel = applyPatchOperations(currentModel, request.params.operations)
+            if (validate) {
+                const errors = validateRecipe('MOSAIC', toEffectiveModel('MOSAIC', nextModel))
+                if (errors.length) return throwError(() => validationFailedError(errors))
+            }
+            currentModel = nextModel
             currentHash = `h-${patchCalls.length + 1}`
             return of({summary: `Applied ${request.params.operations.length} operations`, modelHash: currentHash, invalidatedPaths: []})
         }
@@ -85,6 +91,10 @@ function aLiveMosaicSetup({model}) {
         }]
     )
     return {guiRequests, innerTools, patchCalls, getCurrentModel: () => currentModel}
+}
+
+function validationFailedError(errors) {
+    return Object.assign(new Error('validation failed'), {code: 'VALIDATION_FAILED', errors})
 }
 
 function applyPatchOperations(model, operations) {

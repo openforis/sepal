@@ -122,7 +122,8 @@ function createUpdateWorkflow({llm, bus, guiRequests, innerTools}) {
     function finalize$(state, result) {
         const outcome = projectUpdateOutcome(result.timeline)
         const rawAnswer = result?.answer || ''
-        if (outcome.succeeded && shouldFallbackToSummary(result, rawAnswer)) {
+        const capped = wasCapped(result)
+        if (outcome.succeeded && shouldFallbackToSummary(rawAnswer, capped)) {
             return summarizeUpdate$({
                 llm,
                 conversationId: state.context?.conversationId,
@@ -130,18 +131,18 @@ function createUpdateWorkflow({llm, bus, guiRequests, innerTools}) {
                 instruction: state.instruction,
                 recipeType: state.recipeType, recipeName: state.recipeName,
                 outcome, packet: state.packet
-            }).pipe(map(summary => publishOutcome(state, outcome, summary.trim() || outcome.successSummary)))
+            }).pipe(map(summary => publishOutcome(state, outcome, summary.trim() || outcome.successSummary, {capped})))
         }
-        return of(publishOutcome(state, outcome, rawAnswer))
+        return of(publishOutcome(state, outcome, rawAnswer, {capped}))
     }
 
-    function shouldFallbackToSummary(result, rawAnswer) {
-        return !rawAnswer.trim() || wasCapped(result)
+    function shouldFallbackToSummary(rawAnswer, capped) {
+        return !rawAnswer.trim() || capped
     }
 
-    function publishOutcome(state, outcome, answer) {
+    function publishOutcome(state, outcome, answer, {capped}) {
         return publishOutcomeAndShape({
-            outcome, answer, bus,
+            outcome, answer, capped, bus,
             conversationId: state.context?.conversationId, recipeId: state.recipeId
         })
     }

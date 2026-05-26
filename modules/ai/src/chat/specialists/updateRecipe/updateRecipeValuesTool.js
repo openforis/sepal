@@ -13,6 +13,7 @@ const {getRecipeHandles, toEffectiveModel} = require('#recipes')
 const {guiProductRequest$} = require('../../tools/guiProductRequest')
 const {mapData} = require('../../channelEvents')
 const {parsePointer, resolvePointer, PointerNotFound} = require('../../tools/jsonPointer')
+const {applicabilityConflictFor, isSelectorHandle, scopeIndexFromHandles, scopeValueIn} = require('./applicability')
 
 // STALE_WRITE needs currentModelHash so the updater can decide whether to give
 // up; everything else path-bearing (errors, details) is stripped before the
@@ -79,6 +80,8 @@ function applyValues$({guiRequests, context, recipe, recipeId, baseModelHash, va
     // not the raw stored model. Diff against the same projection so dormant
     // stored fields generate `add`, not `replace`.
     const effectiveModel = toEffectiveModel(recipe?.type, recipe?.model)
+    const applicabilityError = checkApplicability({values, effectiveModel, handlesByName})
+    if (applicabilityError) return of(applicabilityError)
     const handlesByPath = invertByPath(handlesByName)
     const {operations, changedHandles} = computeOperations({effectiveModel, values, handlesByName})
     if (!operations.length) return of(noopSuccess(recipe?.modelHash))
@@ -86,6 +89,44 @@ function applyValues$({guiRequests, context, recipe, recipeId, baseModelHash, va
         mapData(data => successEnvelope({data, changedHandles, handlesByPath})),
         catchError(error => of({ok: false, error: toErrorEnvelope(error, handlesByPath)}))
     )
+}
+
+// In-process rejection for selector items whose appliesTo is not satisfied by
+// the post-update scope handle (values overlay the current model so a write
+// that fixes both the selector and its prerequisite in the same call succeeds).
+// toEffectiveModel would otherwise silently strip the inapplicable item — this
+// surfaces the conflict in handle terms before any patch.
+function checkApplicability({values, effectiveModel, handlesByName}) {
+    const scopeIndex = scopeIndexFromHandles(handlesByName)
+    const scopeValueOf = scopeHandle => scopeHandle.name in values
+        ? values[scopeHandle.name]
+        : scopeValueIn(effectiveModel, scopeHandle)
+    const handleErrors = []
+    for (const [selectorName, requestedValue] of Object.entries(values)) {
+        const selectorHandle = handlesByName.get(selectorName)
+        if (!isSelectorHandle(selectorHandle)) continue
+        if (!Array.isArray(requestedValue)) continue
+        for (const itemValue of requestedValue) {
+            const item = selectorHandle.allowedItems.find(allowedItem => allowedItem?.value === itemValue)
+            if (!item) continue
+            const conflict = applicabilityConflictFor(item, scopeIndex, scopeValueOf)
+            if (conflict) handleErrors.push(applicabilityErrorMessage(selectorName, item, conflict))
+        }
+    }
+    if (!handleErrors.length) return null
+    return {
+        ok: false,
+        error: {
+            code: 'APPLICABILITY_VIOLATION',
+            message: 'One or more requested values are not applicable to the current recipe state.',
+            handleErrors
+        }
+    }
+}
+
+function applicabilityErrorMessage(handle, item, conflict) {
+    const required = conflict.missingKeys.map(key => conflict.scopeHandle.valueLabels?.[key] || key).join(' or ')
+    return {handle, message: `${item.label} requires ${required} in ${conflict.scopeHandle.label.toLowerCase()}.`}
 }
 
 function handleLookup(recipeType) {

@@ -11,6 +11,7 @@ Rules:
 - Pick a coherent set, not just one when the request implies several.
 - For broad performance/render-speed requests, pick the relevant performance levers together.
 - For broad "remove residual clouds" requests, pick the cloud-masking strength fields appropriate to the user's source groups together.
+- Pick prerequisite handles (e.g. datasets) only when the user explicitly asks to change them. "Use Cloud Score+ instead" → cloudMethods only. "Use Sentinel-2 and Cloud Score+" → datasets + cloudMethods.
 - Omit handles unrelated to the instruction.
 - No prose around the JSON. No rationale. No extra keys.
 - If nothing in the catalog applies, return `{"handles":[]}`.

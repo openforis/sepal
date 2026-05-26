@@ -81,6 +81,20 @@ describe('update_recipe per-type prompt assembly', () => {
             expect(prompt).toMatch(/preserve.*unrelated/i)
         })
 
+        it('updater prompt documents applicabilityFacts as part of the packet so the updater recognises inapplicable items before writing', () => {
+            const prompt = updaterSystemPromptFor(mosaicMetadata)
+
+            expect(prompt).toMatch(/applicabilityFacts/)
+        })
+
+        it('updater prompt routes the inapplicable case by whether the prerequisite is in writableHandles (ask one clarification vs set both together)', () => {
+            const prompt = updaterSystemPromptFor(mosaicMetadata)
+
+            expect(prompt).toMatch(/do not silently.*prerequisite/i)
+            expect(prompt).toMatch(/clarif/i)
+            expect(prompt).toMatch(/(set both|both.*together)/i)
+        })
+
         it('updater user message carries the prepared handle packet so handle catalogs do not have to re-appear in the system prompt', () => {
             const harness = aToolFactoryHarness({
                 specialist: 'update_recipe',
