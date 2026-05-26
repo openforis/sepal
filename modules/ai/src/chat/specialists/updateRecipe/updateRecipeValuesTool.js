@@ -13,7 +13,10 @@ const {getRecipeHandles, toEffectiveModel} = require('#recipes')
 const {guiProductRequest$} = require('../../tools/guiProductRequest')
 const {mapData} = require('../../channelEvents')
 const {parsePointer, resolvePointer, PointerNotFound} = require('../../tools/jsonPointer')
-const {applicabilityConflictFor, isSelectorHandle, scopeIndexFromHandles, scopeValueIn} = require('./applicability')
+const {
+    checkApplicability, checkUnknownHandles, checkWritableScope,
+    invertByPath, mapErrorDetailsToHandles, resolveHandle
+} = require('../handleValueIO')
 
 // STALE_WRITE needs currentModelHash so the updater can decide whether to give
 // up; everything else path-bearing (errors, details) is stripped before the
@@ -57,25 +60,11 @@ function handleRequest$({guiRequests, context, recipeId, baseModelHash, writable
     )
 }
 
-function checkWritableScope(values, writableHandles) {
-    const writable = new Set(writableHandles)
-    const outOfScope = Object.keys(values || {}).filter(handle => !writable.has(handle))
-    if (!outOfScope.length) return null
-    return {
-        ok: false,
-        error: {
-            code: 'HANDLE_OUT_OF_SCOPE',
-            message: `Handle(s) not in writableHandles: ${outOfScope.join(', ')}`,
-            handles: outOfScope
-        }
-    }
-}
-
 function applyValues$({guiRequests, context, recipe, recipeId, baseModelHash, values}) {
     const handlesByName = handleLookup(recipe?.type)
     if (!handlesByName) return of({ok: false, error: {code: 'UNSUPPORTED_RECIPE_TYPE', message: `Recipe type ${recipe?.type} has no handle catalog`}})
-    const unknown = Object.keys(values).filter(handle => !handlesByName.has(handle))
-    if (unknown.length) return of(unknownHandleEnvelope({recipeType: recipe?.type, unknown}))
+    const unknownError = checkUnknownHandles(values, handlesByName, recipe?.type)
+    if (unknownError) return of(unknownError)
     // The GUI patch bridge applies operations to toEffectiveModel(type, stored),
     // not the raw stored model. Diff against the same projection so dormant
     // stored fields generate `add`, not `replace`.
@@ -91,62 +80,9 @@ function applyValues$({guiRequests, context, recipe, recipeId, baseModelHash, va
     )
 }
 
-// In-process rejection for selector items whose appliesTo is not satisfied by
-// the post-update scope handle (values overlay the current model so a write
-// that fixes both the selector and its prerequisite in the same call succeeds).
-// toEffectiveModel would otherwise silently strip the inapplicable item — this
-// surfaces the conflict in handle terms before any patch.
-function checkApplicability({values, effectiveModel, handlesByName}) {
-    const scopeIndex = scopeIndexFromHandles(handlesByName)
-    const scopeValueOf = scopeHandle => scopeHandle.name in values
-        ? values[scopeHandle.name]
-        : scopeValueIn(effectiveModel, scopeHandle)
-    const handleErrors = []
-    for (const [selectorName, requestedValue] of Object.entries(values)) {
-        const selectorHandle = handlesByName.get(selectorName)
-        if (!isSelectorHandle(selectorHandle)) continue
-        if (!Array.isArray(requestedValue)) continue
-        for (const itemValue of requestedValue) {
-            const item = selectorHandle.allowedItems.find(allowedItem => allowedItem?.value === itemValue)
-            if (!item) continue
-            const conflict = applicabilityConflictFor(item, scopeIndex, scopeValueOf)
-            if (conflict) handleErrors.push(applicabilityErrorMessage(selectorName, item, conflict))
-        }
-    }
-    if (!handleErrors.length) return null
-    return {
-        ok: false,
-        error: {
-            code: 'APPLICABILITY_VIOLATION',
-            message: 'One or more requested values are not applicable to the current recipe state.',
-            handleErrors
-        }
-    }
-}
-
-function applicabilityErrorMessage(handle, item, conflict) {
-    const required = conflict.missingKeys.map(key => conflict.scopeHandle.valueLabels?.[key] || key).join(' or ')
-    return {handle, message: `${item.label} requires ${required} in ${conflict.scopeHandle.label.toLowerCase()}.`}
-}
-
 function handleLookup(recipeType) {
     const handles = getRecipeHandles(recipeType)
     return handles ? new Map(handles.map(handle => [handle.name, handle])) : null
-}
-
-function invertByPath(handlesByName) {
-    return new Map([...handlesByName.values()].map(handle => [handle.path, handle.name]))
-}
-
-function unknownHandleEnvelope({recipeType, unknown}) {
-    return {
-        ok: false,
-        error: {
-            code: 'UNKNOWN_HANDLE',
-            message: `Unknown handle(s) for ${recipeType}: ${unknown.join(', ')}`,
-            handles: unknown
-        }
-    }
 }
 
 function noopSuccess(modelHash) {
@@ -193,14 +129,12 @@ function distinct(list) {
 }
 
 function toErrorEnvelope(error, handlesByPath) {
-    const sourceDetails = Array.isArray(error.errors) ? error.errors
-        : Array.isArray(error.details) ? error.details
-        : null
+    const handleErrors = mapErrorDetailsToHandles(error, handlesByPath)
     return {
         code: error.code || 'TOOL_FAILED',
         message: error.message,
         ...passthroughFields(error),
-        ...(sourceDetails ? {handleErrors: sourceDetails.map(detail => toHandleError(detail, handlesByPath))} : {})
+        ...(handleErrors ? {handleErrors} : {})
     }
 }
 
@@ -209,28 +143,6 @@ function passthroughFields(error) {
         (fields, name) => error[name] === undefined ? fields : {...fields, [name]: error[name]},
         {}
     )
-}
-
-function toHandleError(detail, handlesByPath) {
-    return {handle: resolveHandle(detail.path, handlesByPath), message: detail.message}
-}
-
-function resolveHandle(path, handlesByPath) {
-    if (typeof path !== 'string') return null
-    return handlesByPath.get(path) || handleFromAncestor(path, handlesByPath) || null
-}
-
-// Validation errors may reference a sub-path inside a whole-object/array
-// handle (e.g. /compositeOptions/filters/0/percentile). Walk up the pointer
-// until we hit a handle path so the updater always gets a handle key.
-function handleFromAncestor(path, handlesByPath) {
-    let cursor = path
-    while (true) {
-        const cut = cursor.lastIndexOf('/')
-        if (cut <= 0) return null
-        cursor = cursor.slice(0, cut)
-        if (handlesByPath.has(cursor)) return handlesByPath.get(cursor)
-    }
 }
 
 function pathState(model, path) {
