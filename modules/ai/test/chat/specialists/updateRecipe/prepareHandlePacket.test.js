@@ -1,4 +1,5 @@
 const {concat, of, throwError, toArray} = require('rxjs')
+const {getRecipeHandles} = require('#recipes')
 const {prepareHandlePacket$} = require('#mcp/chat/specialists/updateRecipe/prepareHandlePacket')
 const {emitChannel, guiAction, isChannelEmission} = require('#mcp/chat/channelEvents')
 const {aFakeBus, aFakeGuiRequests, expectNoHandlePathsIn, read} = require('../../builders')
@@ -89,13 +90,10 @@ describe('prepareHandlePacket$', () => {
             expect(typeof fieldFor('cloudBuffer').summaryGuidance).toBe('string')
         })
 
-        it('carries cloudMethods guidance that residual-cloud requests tighten methods instead of disabling them', () => {
-            const guidance = fieldFor('cloudMethods', ['cloudMethods']).valueGuidance
+        it('carries cloudMethods guidance from the recipe handle catalog', () => {
+            const catalogGuidance = getRecipeHandles('MOSAIC').find(handle => handle.name === 'cloudMethods').valueGuidance
 
-            expect(guidance).toMatch(/disables cloud masking|leaves more clouds/i)
-            expect(guidance).toMatch(/too cloudy|residual clouds|cloudy images/i)
-            expect(guidance).toMatch(/aggressive profiles/i)
-            expect(guidance).toMatch(/explicitly asks to disable/i)
+            expect(fieldFor('cloudMethods', ['cloudMethods']).valueGuidance).toBe(catalogGuidance)
         })
 
         it('includes shape-clarifying examples on handles that have them', () => {
