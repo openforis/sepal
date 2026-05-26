@@ -100,6 +100,17 @@ describe('pickHandles$', () => {
         expect(llm.receivedTools[0]).toEqual([])
     })
 
+    it('disables reasoning and uses a small output cap because handle picking is classification', () => {
+        const llm = scriptedLlm('{"handles":["targetDate"]}')
+
+        read(pickHandles$({llm, recipeType: 'MOSAIC', instruction: 'x', conversationId: 'c1'}))
+
+        expect(llm.receivedRequests[0]).toMatchObject({
+            disableReasoning: true,
+            maxTokens: 512
+        })
+    })
+
     it('puts the static picker prompt + recipe handle catalog as the system message and the instruction as the user message', () => {
         const llm = scriptedLlm('{"handles":["targetDate"]}')
 

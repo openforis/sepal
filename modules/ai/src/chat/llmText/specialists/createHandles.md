@@ -7,11 +7,13 @@ Prepared packet (user message):
 - pickedHandles: handles the picker chose from the user request.
 - requiredHandles: user-required handles for this recipe type that have no sensible default (e.g. aoi). ALWAYS in writableHandles. If a requiredHandle has currentValue=null and no real value is supplied via the instruction or context, ASK ONE clarification question — do NOT invent.
 - writableHandles: the only handles you may set. Workflow-managed scope — do NOT include in the tool call; the workflow rejects any value whose handle is outside this set.
-- fields[handle]: currentValue, label, description, valueGuidance/summaryGuidance/performanceNote when present, allowed values/items/keys/range/format, examples. Whole-array handles take the whole intended array; whole-object handles take the whole intended object.
+- readOnlyHandles: validation-rule context handles. You may READ their currentValue from readOnlyFields; you MUST NOT set them.
+- fields[handle] (writable): currentValue, label, description, valueGuidance/summaryGuidance/performanceNote when present, allowed values/items/keys/range/format, examples. Whole-array handles take the whole intended array; whole-object handles take the whole intended object.
+- readOnlyFields[handle] (read-only): same shape as fields, inspection only.
 - couplingFacts: condition-based facts naming involvedHandles + guidance + (optional) examples.
 - applicabilityFacts: per writable selector handle, one entry per item whose `requires` is not satisfied by the current scope handle. Each entry names selectorHandle, item + itemLabel, requires (handle + anyOfKeys), currentValue, and guidance.
-- dependencyFacts: which constraint pulled each dependent handle in.
-- validationRules: constraints relevant to this create (handle-keyed).
+- dependencyFacts: which constraint pulled each read-only handle in.
+- validationRules: constraints relevant to this create (handle-keyed; may reference both writable and read-only handles).
 
 Workflow:
 1. Read the packet. Decide which writable handles to set and to what values, satisfying validationRules.

@@ -79,6 +79,8 @@ describe('update_recipe per-type prompt assembly', () => {
             expect(prompt).toMatch(/profiles/)
             expect(prompt).toMatch(/"instead"/i)
             expect(prompt).toMatch(/preserve.*unrelated/i)
+            expect(prompt).toMatch(/removing selector items disables/i)
+            expect(prompt).toMatch(/quality-improvement.*keep or add compatible/i)
         })
 
         it('updater prompt documents applicabilityFacts as part of the packet so the updater recognises inapplicable items before writing', () => {
@@ -93,6 +95,17 @@ describe('update_recipe per-type prompt assembly', () => {
             expect(prompt).toMatch(/do not silently.*prerequisite/i)
             expect(prompt).toMatch(/clarif/i)
             expect(prompt).toMatch(/(set both|both.*together)/i)
+        })
+
+        it('updater prompt teaches summary discipline for applied handles vs validation companions', () => {
+            const prompt = updaterSystemPromptFor(mosaicMetadata)
+
+            expect(prompt).toMatch(/success summary/i)
+            expect(prompt).toMatch(/appliedHandles/)
+            expect(prompt).toMatch(/directly satisfy.*user/i)
+            expect(prompt).toMatch(/validation\/applicability.*secondary/i)
+            expect(prompt).toMatch(/unchanged defaults.*context fields.*validation companions/i)
+            expect(prompt).not.toMatch(/brdfMultiplier/)
         })
 
         it('updater user message carries the prepared handle packet so handle catalogs do not have to re-appear in the system prompt', () => {

@@ -4,6 +4,8 @@ const {getRecipeHandles} = require('#recipes')
 const {specialistPrompt} = require('../../llmText/prompts')
 const {publishPickHandlesCompleted} = require('../specialistEvents')
 
+const PICKER_MAX_TOKENS = 512
+
 // `flow` tags both the LLM usage role ('{flow}.picker') and the published
 // completion event type ('{flow}_recipe.picker.completed') so observability
 // rolls up by workflow even though the picker logic is shared.
@@ -23,6 +25,8 @@ function pickHandles$({llm, bus, recipeType, instruction, conversationId, recipe
     return defer(() => llm.respondTo$({
         messages,
         tools: [],
+        maxTokens: PICKER_MAX_TOKENS,
+        disableReasoning: true,
         debugLabel: `picker ${recipeType}`,
         usageContext: {role: `${flow}.picker`, recipeType, conversationId}
     })).pipe(

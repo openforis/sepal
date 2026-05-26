@@ -1,5 +1,5 @@
-// LM Studio's native /api/v1/chat provider adapter. Used when the
-// caller disables reasoning (currently only title generation).
+// LM Studio's native /api/v1/chat provider adapter. Used for tool-free calls
+// that explicitly disable reasoning.
 
 const {EMPTY, defer, finalize, from, mergeMap, tap} = require('rxjs')
 const {createDiagnostics, truncateString, MAX_DEBUG_TEXT} = require('../../diagnostics')

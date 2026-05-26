@@ -1,5 +1,6 @@
-const {of, throwError} = require('rxjs')
+const {concat, of, throwError, toArray} = require('rxjs')
 const {updateRecipeValuesTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool')
+const {emitChannel, guiAction, isChannelEmission} = require('#mcp/chat/channelEvents')
 const {aFakeGuiRequests, read} = require('../../builders')
 
 const context = {clientId: 'c1', subscriptionId: 's1'}
@@ -69,6 +70,29 @@ describe('update_recipe_values tool', () => {
             expect(description).not.toMatch(/RFC 6902/i)
             expect(description).not.toMatch(/JSON Patch/i)
         })
+    })
+
+    it('passes the load-recipe GUI channel emission through and applies only the load-recipe response', async () => {
+        const recipe = aMosaicRecipe()
+        const guiRequests = aFakeGuiRequests(request => {
+            if (request.action === 'load-recipe') return concat(
+                of(emitChannel(guiAction({requestId: 'req-load', action: 'load-recipe', params: {recipeId: 'r1'}}))),
+                of(recipe)
+            )
+            if (request.action === 'recipe-patch') return of({summary: 'ok', modelHash: 'h-next', invalidatedPaths: []})
+            return of({})
+        })
+        const tool = updateRecipeValuesTool(guiRequests)
+
+        const emissions = await tool.invoke$({
+            recipeId: 'r1', baseModelHash: 'h-base',
+            writableHandles: ['cloudBuffer'],
+            values: {cloudBuffer: 120}
+        }, context).pipe(toArray()).toPromise()
+
+        expect(emissions).toHaveLength(2)
+        expect(isChannelEmission(emissions[0])).toBe(true)
+        expect(emissions[1]).toMatchObject({ok: true, data: {appliedHandles: ['cloudBuffer']}})
     })
 
     describe('applicability check before any GUI work', () => {
@@ -362,6 +386,26 @@ describe('update_recipe_values tool', () => {
             expect(result.ok).toBe(false)
             expect(result.error.handleErrors).toEqual([
                 {handle: null, message: 'something is wrong, no path attached'}
+            ])
+        })
+
+        it('maps required-property messages back to the missing field handle when the bridge omitted missingProperty', () => {
+            const validationError = Object.assign(new Error('bad'), {
+                code: 'VALIDATION_FAILED',
+                errors: [{path: '/compositeOptions', message: "must have required property 'brdfMultiplier'"}]
+            })
+            const {handler} = aGuiHandler({recipe: aMosaicRecipe(), patchResponse: () => throwError(() => validationError)})
+            const tool = updateRecipeValuesTool(aFakeGuiRequests(handler))
+
+            const result = read(tool.invoke$({
+                recipeId: 'r1', baseModelHash: 'h-base',
+                writableHandles: ['cloudMethods'],
+                values: {cloudMethods: ['sepalCloudScore']}
+            }, context))
+
+            expect(result.ok).toBe(false)
+            expect(result.error.handleErrors).toEqual([
+                {handle: 'brdfMultiplier', message: "must have required property 'brdfMultiplier'"}
             ])
         })
 

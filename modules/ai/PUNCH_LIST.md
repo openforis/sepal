@@ -57,6 +57,17 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   handle update path now diffs against the effective model and rejects
   inapplicable selector items before patching; creation should get the same
   treatment from the start.
+- **MOSAIC model-facing text needs a compaction/audit pass** — MOSAIC guidance
+  now spans handle labels/descriptions/valueGuidance, knowledge facts, schema
+  descriptions, updater/create prompts, and summary prompts. Review the live
+  text as one surface: keep structural metadata and short domain traps, remove
+  stale/path-era phrasing, move procedural behavior into generic prompts or code,
+  and avoid turning the handle catalog into a second schema plus prompt library.
+  Test discipline for that pass: do not copy prose into assertions; prefer
+  generic catalog invariants (required fields present, no path leaks, bounded
+  guidance length, valid selector companion/applicability references) and only a
+  few sparse MOSAIC fixture assertions for truly load-bearing semantics such as
+  `aoi` being user-required or `cloudMethods` being a selector.
 - **Summary/value labels are handle-first now, but nested prose still needs
   observation** — applied values and invalidations are handle-keyed, and rich
   item metadata supplies user-facing labels. If raw nested enum IDs leak into

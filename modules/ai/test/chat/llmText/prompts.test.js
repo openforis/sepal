@@ -2,7 +2,7 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 
-const {loadPromptFile, mainSystemPrompt, specialistPrompt, titleSystemPrompt} = require('#mcp/chat/llmText/prompts')
+const {loadPromptFile, mainSystemPrompt, specialistPrompt, titleSystemPrompt, updateSummarySystemPrompt} = require('#mcp/chat/llmText/prompts')
 
 describe('llmText prompts', () => {
 
@@ -70,6 +70,18 @@ describe('llmText prompts', () => {
 
         it('carries the bare-title instruction so callers do not need to know its content', () => {
             expect(titleSystemPrompt()).toMatch(/3-7 word title/i)
+        })
+    })
+
+    describe('updateSummarySystemPrompt', () => {
+
+        it('teaches the fallback summarizer to lead with user-intent changes and demote validation companions', () => {
+            const prompt = updateSummarySystemPrompt()
+
+            expect(prompt).toMatch(/applied changes/i)
+            expect(prompt).toMatch(/directly satisfy userRequest/i)
+            expect(prompt).toMatch(/validation\/applicability companion/i)
+            expect(prompt).toMatch(/unchanged defaults.*context fields.*validation companions/i)
         })
     })
 

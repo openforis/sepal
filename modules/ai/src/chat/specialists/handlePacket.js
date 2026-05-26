@@ -1,12 +1,21 @@
 // Shared handle-keyed packet builder — the structured input a recipe
-// specialist receives. Computes the writable handle set (picked + schema-
-// dependent + coupling-expanded + selector-companion + caller-required),
-// builds per-handle field entries (label/value/guidance/allowed values),
-// renders dependency, coupling, applicability, and validation-rule facts —
-// all from a recipe model + the picker's chosen handles. The caller stamps
-// model-source-specific fields on top (e.g. baseModelHash for the update
-// flow, which carries a concurrency token; the create flow has no such
-// token because the recipe doesn't exist yet).
+// specialist receives. Computes two disjoint handle sets:
+//
+//   writableHandles: handles the updater may set. Seeded from
+//     pickedHandles + handle-declared `couplings` + selector-item
+//     companionHandles + caller-supplied requiredHandles, then grown by
+//     validation-rule SUBJECTS (the "violated path" the rule asserts about)
+//     when any of the rule's other paths is already writable.
+//   readOnlyHandles: validation-rule trigger/context paths that aren't
+//     writable. The updater may inspect these (label / currentValue / etc.)
+//     but never set them. Read-only paths do NOT further expand writability
+//     — picking cloudMethods makes corrections read-only context, but does
+//     not then promote brdfMultiplier through corrections.
+//
+// `fields` carries writable entries; `readOnlyFields` carries read-only
+// entries. The two together describe everything the rule graph reaches from
+// the picker's selection. JSON Pointer paths stay below this boundary; only
+// handle names cross it.
 
 const {getRecipeHandles, getRecipeLlmMetadata, getRecipeSpec} = require('#recipes')
 const {fieldShapeAt} = require('../tools/fieldShapeFromSchema')
@@ -30,35 +39,47 @@ function buildHandlePacket({recipeType, effectiveModel, pickedHandles, requiredH
     const handlesByPath = new Map(handles.map(handle => [handle.path, handle]))
     const constraints = getRecipeLlmMetadata(recipeType)?.constraints || []
 
-    const focusPaths = pickedHandles.map(name => handlesByName.get(name).path)
-    const relevantConstraints = constraintsTouching(constraints, focusPaths)
-    const schemaDependents = dependentHandlesFrom(relevantConstraints, focusPaths, handlesByPath, pickedHandles)
+    // Step 1: explicit-intent expansions are writable. Picked + required form
+    // the writable seed; couplings (handle-author intent) and selector-item
+    // companions (you can't swap items without their companions) expand from
+    // that same seed — so a future required handle that declares couplings or
+    // is a selector still gets its companions pulled in.
+    const explicitSeed = distinct([...pickedHandles, ...requiredHandles])
     const {couplingDependents, couplingFacts} = expandCouplings({
-        seed: [...pickedHandles, ...schemaDependents],
+        seed: explicitSeed,
         handles, handlesByName, effectiveModel
     })
-    // Selector handles (rich allowedItems with companionHandles) eagerly pull
-    // every item's companions into writable so the specialist can swap items
-    // as well as add to or strip from the current selection.
     const selectorDependents = expandSelectorItemCompanions({
-        seed: distinct([...pickedHandles, ...schemaDependents, ...couplingDependents]),
+        seed: distinct([...explicitSeed, ...couplingDependents]),
         handlesByName
     })
-    const dependentHandles = distinct([...schemaDependents, ...couplingDependents, ...selectorDependents])
-    const writableHandles = distinct([...pickedHandles, ...dependentHandles, ...requiredHandles])
+    const initialWritable = distinct([
+        ...explicitSeed,
+        ...couplingDependents,
+        ...selectorDependents
+    ])
+
+    // Step 2: rule expansion splits subjects (writable) from context (readOnly).
+    const {writableHandles, readOnlyHandles, relevantConstraints} = expandConstraints({
+        constraints, seedHandles: initialWritable, handlesByName, handlesByPath
+    })
 
     const fields = Object.fromEntries(writableHandles.map(name => [
+        name, fieldEntry(handlesByName.get(name), effectiveModel, schema)
+    ]))
+    const readOnlyFields = Object.fromEntries(readOnlyHandles.map(name => [
         name, fieldEntry(handlesByName.get(name), effectiveModel, schema)
     ]))
     return {
         ok: true,
         data: {
             pickedHandles,
-            dependentHandles,
             requiredHandles,
             writableHandles,
+            readOnlyHandles,
             fields,
-            dependencyFacts: dependencyFacts(relevantConstraints, dependentHandles, handlesByPath, handlesByName),
+            readOnlyFields,
+            dependencyFacts: dependencyFacts(relevantConstraints, readOnlyHandles, handlesByPath, handlesByName),
             couplingFacts,
             applicabilityFacts: applicabilityFactsFor({writableHandles, handlesByName, effectiveModel}),
             validationRules: validationRulesFor(relevantConstraints, handlesByPath)
@@ -227,28 +248,54 @@ function describeCondition({includes, excludes, equals, missingKey, hasKey, pres
     return {kind: 'unknown'}
 }
 
-function constraintsTouching(constraints, focusPaths) {
-    return constraints.filter(constraint =>
-        constraint.paths.some(path => focusPaths.some(focus => pointerRelates(focus, path)))
-    )
-}
-
-function dependentHandlesFrom(constraints, focusPaths, handlesByPath, pickedHandles) {
-    const pickedSet = new Set(pickedHandles)
-    const dependents = []
-    const seen = new Set()
-    for (const constraint of constraints) {
-        for (const path of constraint.paths) {
-            if (focusPaths.some(focus => pointerRelates(focus, path))) continue
-            const handle = handleForPath(path, handlesByPath)
-            if (!handle) continue
-            if (pickedSet.has(handle.name)) continue
-            if (seen.has(handle.name)) continue
-            seen.add(handle.name)
-            dependents.push(handle.name)
+// Walk validation-rule constraints to a fixed point, splitting subjects from
+// trigger/context paths:
+//   - A constraint is "active" when any of its paths is in the writable set
+//     (writable triggers the rule).
+//   - Each active constraint's subject paths (the "violated" / required-companion
+//     paths the rule asserts about) become writable. Non-subject paths whose
+//     handles aren't already writable become read-only context.
+//   - Read-only handles never expand further — focus only includes writable
+//     paths, so a rule whose only writable touchpoint is a read-only handle
+//     doesn't fire. This is what stops cloudMethods → corrections (read-only)
+//     → brdfMultiplier from cascading into writable.
+// A constraint with no subjectPaths declared (legacy) only emits read-only
+// context — no auto-promotion, the safer default.
+function expandConstraints({constraints, seedHandles, handlesByName, handlesByPath}) {
+    const writable = new Set(seedHandles)
+    const readOnly = new Set()
+    const relevant = []
+    const seenConstraints = new Set()
+    let added = true
+    while (added) {
+        added = false
+        const focusPaths = [...writable].map(name => handlesByName.get(name)?.path).filter(Boolean)
+        for (const constraint of constraints) {
+            if (!constraint.paths.some(path => focusPaths.some(focus => pointerRelates(focus, path)))) continue
+            if (!seenConstraints.has(constraint.name)) {
+                seenConstraints.add(constraint.name)
+                relevant.push(constraint)
+            }
+            const subjectPaths = new Set(constraint.subjectPaths || [])
+            for (const path of constraint.paths) {
+                const handle = handleForPath(path, handlesByPath)
+                if (!handle) continue
+                if (writable.has(handle.name)) continue
+                if (subjectPaths.has(path)) {
+                    writable.add(handle.name)
+                    readOnly.delete(handle.name)
+                    added = true
+                } else {
+                    readOnly.add(handle.name)
+                }
+            }
         }
     }
-    return dependents
+    return {
+        writableHandles: [...writable],
+        readOnlyHandles: [...readOnly].filter(name => !writable.has(name)),
+        relevantConstraints: relevant
+    }
 }
 
 function dependencyFacts(constraints, dependentHandles, handlesByPath, handlesByName) {

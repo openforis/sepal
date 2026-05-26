@@ -1,5 +1,6 @@
-const {of, throwError} = require('rxjs')
+const {concat, of, throwError, toArray} = require('rxjs')
 const {prepareHandlePacket$} = require('#mcp/chat/specialists/updateRecipe/prepareHandlePacket')
+const {emitChannel, guiAction, isChannelEmission} = require('#mcp/chat/channelEvents')
 const {aFakeBus, aFakeGuiRequests, expectNoHandlePathsIn, read} = require('../../builders')
 
 const context = {clientId: 'c1', subscriptionId: 's1'}
@@ -22,6 +23,23 @@ describe('prepareHandlePacket$', () => {
 
         expect(result.ok).toBe(true)
         expect(result.data.baseModelHash).toBe('h-current')
+    })
+
+    it('passes GUI channel emissions through and only builds the packet from the load-recipe response', async () => {
+        const recipe = aMosaicRecipe({modelHash: 'h-current'})
+        const guiRequests = aFakeGuiRequests(() => concat(
+            of(emitChannel(guiAction({requestId: 'req-1', action: 'load-recipe', params: {recipeId: 'r1'}}))),
+            of(recipe)
+        ))
+
+        const emissions = await prepareHandlePacket$({
+            guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['targetDate'], context
+        }).pipe(toArray()).toPromise()
+
+        expect(emissions).toHaveLength(2)
+        expect(isChannelEmission(emissions[0])).toBe(true)
+        expect(emissions[1].ok).toBe(true)
+        expect(emissions[1].data.baseModelHash).toBe('h-current')
     })
 
     it('returns the picked handles unchanged', () => {
@@ -71,6 +89,15 @@ describe('prepareHandlePacket$', () => {
             expect(typeof fieldFor('cloudBuffer').summaryGuidance).toBe('string')
         })
 
+        it('carries cloudMethods guidance that residual-cloud requests tighten methods instead of disabling them', () => {
+            const guidance = fieldFor('cloudMethods', ['cloudMethods']).valueGuidance
+
+            expect(guidance).toMatch(/disables cloud masking|leaves more clouds/i)
+            expect(guidance).toMatch(/too cloudy|residual clouds|cloudy images/i)
+            expect(guidance).toMatch(/aggressive profiles/i)
+            expect(guidance).toMatch(/explicitly asks to disable/i)
+        })
+
         it('includes shape-clarifying examples on handles that have them', () => {
             expect(fieldFor('datasets').examples).toContainEqual({LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']})
             expect(fieldFor('cloudMethods', ['cloudMethods']).examples).toContainEqual(['sepalCloudScore', 'landsatCFMask'])
@@ -103,38 +130,69 @@ describe('prepareHandlePacket$', () => {
         expect(result.data.fields.s2CloudProbabilityMax.currentValue).toBeNull()
     })
 
-    describe('dependency expansion via recipe constraints', () => {
+    describe('rule expansion — writable subjects vs read-only context', () => {
 
-        it('expands targetDate into seasonStart and seasonEnd dependent handles', () => {
+        it('promotes the rule subjects of seasonStartWindow/seasonEndWindow to writable when targetDate is picked', () => {
             const guiRequests = loadRecipe(aMosaicRecipe())
 
             const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['targetDate'], context}))
 
-            expect(result.data.dependentHandles.sort()).toEqual(['seasonEnd', 'seasonStart'])
             expect(result.data.writableHandles.sort()).toEqual(['seasonEnd', 'seasonStart', 'targetDate'])
+            expect(result.data.readOnlyHandles).toEqual([])
         })
 
-        it('expands datasets into corrections and sceneSelection dependent handles', () => {
+        it('promotes corrections and sceneSelection to writable when datasets is picked (datasets is the trigger; both are rule subjects)', () => {
             const guiRequests = loadRecipe(aMosaicRecipe())
 
             const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['datasets'], context}))
 
-            expect(result.data.dependentHandles).toEqual(expect.arrayContaining(['corrections', 'sceneSelection']))
             expect(result.data.writableHandles).toEqual(expect.arrayContaining(['datasets', 'corrections', 'sceneSelection']))
         })
 
-        it('emits a dependencyFacts entry per dependent handle naming the constraint that pulled it in', () => {
+        it('keeps datasets and corrections as read-only context when only cloudMethods is picked (cloudMethods is the rule subject; the rest are validation triggers)', () => {
+            // The previous "fixed point" behaviour promoted corrections to
+            // writable via cloudMaskingMethodAvailability, then brdfMultiplier
+            // via the schema's "BRDF requires brdfMultiplier" rule. That's the
+            // exact detour we're cutting: read-only context must not seed
+            // further writable expansion.
             const guiRequests = loadRecipe(aMosaicRecipe())
 
-            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['targetDate'], context}))
+            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['cloudMethods'], context}))
+
+            expect(result.data.writableHandles).toContain('cloudMethods')
+            expect(result.data.writableHandles).not.toContain('corrections')
+            expect(result.data.writableHandles).not.toContain('brdfMultiplier')
+            expect(result.data.readOnlyHandles).toEqual(expect.arrayContaining(['corrections', 'datasets']))
+            // brdfMultiplier is not pulled in at all (its rule wasn't activated by
+            // any writable focus path — corrections is read-only).
+            expect(result.data.readOnlyHandles).not.toContain('brdfMultiplier')
+        })
+
+        it('exposes readOnlyFields entries (label + currentValue) for read-only context handles so the updater can inspect them', () => {
+            const guiRequests = loadRecipe(aMosaicRecipe())
+
+            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['cloudMethods'], context}))
+
+            expect(result.data.readOnlyFields.corrections.label).toBe('Radiometric corrections')
+            expect(Array.isArray(result.data.readOnlyFields.corrections.currentValue)).toBe(true)
+            expect(result.data.readOnlyFields.datasets.label).toBe('Source datasets')
+            expect(typeof result.data.readOnlyFields.datasets.currentValue).toBe('object')
+            // Writable handles do not appear in readOnlyFields.
+            expect(result.data.readOnlyFields).not.toHaveProperty('cloudMethods')
+        })
+
+        it('emits a dependencyFacts entry per read-only handle naming the constraint that pulled it in as context', () => {
+            const guiRequests = loadRecipe(aMosaicRecipe())
+
+            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['cloudMethods'], context}))
 
             expect(result.data.dependencyFacts).toEqual(expect.arrayContaining([
-                expect.objectContaining({handle: 'seasonStart', constraint: 'seasonStartWindow'}),
-                expect.objectContaining({handle: 'seasonEnd', constraint: 'seasonEndWindow'})
+                expect.objectContaining({handle: 'corrections', constraint: 'cloudMaskingMethodAvailability'}),
+                expect.objectContaining({handle: 'datasets', constraint: 'cloudMaskingMethodAvailability'})
             ]))
         })
 
-        it('summarizes validation rules with handle names (never paths)', () => {
+        it('summarizes validation rules with handle names (never paths), referencing both writable and read-only handles', () => {
             const guiRequests = loadRecipe(aMosaicRecipe())
 
             const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['datasets'], context}))
@@ -144,13 +202,13 @@ describe('prepareHandlePacket$', () => {
             expect(rule).not.toHaveProperty('paths')
         })
 
-        it('dependencyFacts carry the dependent handle label', () => {
+        it('dependencyFacts carry the read-only handle label', () => {
             const guiRequests = loadRecipe(aMosaicRecipe())
 
-            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['targetDate'], context}))
+            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['cloudMethods'], context}))
 
-            const seasonStart = result.data.dependencyFacts.find(fact => fact.handle === 'seasonStart')
-            expect(seasonStart.label).toBe('Season start')
+            const corrections = result.data.dependencyFacts.find(fact => fact.handle === 'corrections')
+            expect(corrections.label).toBe('Radiometric corrections')
         })
     })
 
@@ -351,13 +409,13 @@ describe('prepareHandlePacket$', () => {
 
     describe('writableHandles enforcement', () => {
 
-        it('limits writableHandles to picked + deterministic dependents', () => {
+        it('limits writableHandles to picked + explicit-intent expansions when no rule fires', () => {
             const guiRequests = loadRecipe(aMosaicRecipe())
 
             const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['cloudBuffer'], context}))
 
             expect(result.data.writableHandles).toEqual(['cloudBuffer'])
-            expect(result.data.dependentHandles).toEqual([])
+            expect(result.data.readOnlyHandles).toEqual([])
         })
     })
 
@@ -427,21 +485,21 @@ describe('prepareHandlePacket$', () => {
 
     describe('diagnostics', () => {
 
-        it('publishes update_recipe.prepare.completed with picked/dependent/writable counts and handle names', () => {
+        it('publishes update_recipe.prepare.completed with picked/writable/readOnly counts and handle names', () => {
             const bus = aFakeBus()
             const guiRequests = loadRecipe(aMosaicRecipe())
 
-            read(prepareHandlePacket$({guiRequests, bus, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['targetDate'], context}))
+            read(prepareHandlePacket$({guiRequests, bus, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['cloudMethods'], context}))
 
             const events = bus.published.filter(event => event.type === 'update_recipe.prepare.completed')
             expect(events).toHaveLength(1)
             expect(events[0]).toMatchObject({
                 recipeType: 'MOSAIC',
                 pickedHandleCount: 1,
-                dependentHandleCount: 2,
-                writableHandleCount: 3,
-                writableHandles: expect.arrayContaining(['targetDate', 'seasonStart', 'seasonEnd'])
+                writableHandles: expect.arrayContaining(['cloudMethods']),
+                readOnlyHandles: expect.arrayContaining(['corrections', 'datasets'])
             })
+            expect(events[0].readOnlyHandleCount).toBeGreaterThan(0)
         })
 
         it('the prepare.completed event does not carry guidance/value blobs — counts + names only', () => {

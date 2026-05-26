@@ -11,7 +11,7 @@ const {mergeMap} = require('rxjs/operators')
 const isEqual = require('lodash/isEqual')
 const {getRecipeHandles, toEffectiveModel} = require('#recipes')
 const {guiProductRequest$} = require('../../tools/guiProductRequest')
-const {mapData} = require('../../channelEvents')
+const {isChannelEmission, mapData} = require('../../channelEvents')
 const {parsePointer, resolvePointer, PointerNotFound} = require('../../tools/jsonPointer')
 const {
     checkApplicability, checkUnknownHandles, checkWritableScope,
@@ -55,7 +55,10 @@ function handleRequest$({guiRequests, context, recipeId, baseModelHash, writable
     const scopeError = checkWritableScope(values, writableHandles)
     if (scopeError) return of(scopeError)
     return guiProductRequest$(guiRequests, context, 'load-recipe', {recipeId}).pipe(
-        mergeMap(recipe => applyValues$({guiRequests, context, recipe, recipeId, baseModelHash, values})),
+        mergeMap(value => isChannelEmission(value)
+            ? of(value)
+            : applyValues$({guiRequests, context, recipe: value, recipeId, baseModelHash, values})
+        ),
         catchError(error => of({ok: false, error: {code: error.code || 'TOOL_FAILED', message: error.message}}))
     )
 }

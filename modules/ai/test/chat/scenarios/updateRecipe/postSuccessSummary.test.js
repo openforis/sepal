@@ -27,10 +27,9 @@ describe('update_recipe summarizes a successful update when the specialist answe
         )
     }
 
-    // Specialist + picker calls carry tools (picker is tool-free too, so route
-    // by presence of a "system" prompt mentioning specialist text instead).
-    // The summarizer call has tools=[] AND disableReasoning=true — disambiguate
-    // by that combination.
+    // Picker, specialist, and summarizer all share the same LLM port but tag
+    // distinct usage roles. Route by role: 'update.summary' for the summary
+    // call, everything else (picker, specialist) to the main fake.
     function aRoutingLlm({mainReplies, summaryReplies}) {
         const main = aFakeLlm({replies: mainReplies})
         const summary = aFakeLlm({replies: summaryReplies})
@@ -38,7 +37,7 @@ describe('update_recipe summarizes a successful update when the specialist answe
             get summaryRequests() { return summary.receivedRequests },
             get mainRequests() { return main.receivedRequests },
             respondTo$(request) {
-                return request.disableReasoning === true
+                return request.usageContext?.role === 'update.summary'
                     ? summary.respondTo$(request)
                     : main.respondTo$(request)
             }
@@ -85,6 +84,7 @@ describe('update_recipe summarizes a successful update when the specialist answe
         expect(llm.summaryRequests).toHaveLength(1)
         expect(llm.summaryRequests[0].tools).toEqual([])
         expect(llm.summaryRequests[0].disableReasoning).toBe(true)
+        expect(llm.summaryRequests[0].usageContext).toMatchObject({role: 'update.summary'})
     })
 
     it('feeds the summarizer the applied handles and the user request', () => {

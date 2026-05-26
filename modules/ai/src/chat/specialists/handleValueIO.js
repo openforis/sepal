@@ -101,12 +101,19 @@ function toHandleError(detail, handlesByPath) {
 // across as detail.missingProperty. Compose them so a missing top-level field
 // like /aoi resolves to its handle instead of falling through to null.
 function resolveDetailHandle(detail, handlesByPath) {
-    if (typeof detail.missingProperty === 'string' && detail.missingProperty) {
-        const composed = `${detail.path || ''}/${detail.missingProperty}`
+    const missingProperty = detail.missingProperty || requiredPropertyFromMessage(detail.message)
+    if (typeof missingProperty === 'string' && missingProperty) {
+        const composed = `${detail.path || ''}/${missingProperty}`
         const handle = resolveHandle(composed, handlesByPath)
         if (handle) return handle
     }
     return resolveHandle(detail.path, handlesByPath)
+}
+
+function requiredPropertyFromMessage(message) {
+    return typeof message === 'string'
+        ? message.match(/required property '([^']+)'/)?.[1]
+        : null
 }
 
 function resolveHandle(path, handlesByPath) {

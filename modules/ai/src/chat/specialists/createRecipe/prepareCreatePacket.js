@@ -31,9 +31,9 @@ function publishOnSuccess({bus, conversationId, recipeType, packet}) {
     publishPrepareHandlePacketCompleted({
         bus, conversationId, recipeType, flow: 'create',
         pickedHandles: packet.pickedHandles,
-        dependentHandles: packet.dependentHandles,
         requiredHandles: packet.requiredHandles,
-        writableHandles: packet.writableHandles
+        writableHandles: packet.writableHandles,
+        readOnlyHandles: packet.readOnlyHandles
     })
 }
 

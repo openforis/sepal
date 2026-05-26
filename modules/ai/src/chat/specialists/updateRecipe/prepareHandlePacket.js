@@ -2,6 +2,7 @@ const {catchError, of} = require('rxjs')
 const {map, tap} = require('rxjs/operators')
 const {toEffectiveModel} = require('#recipes')
 const {guiProductRequest$} = require('../../tools/guiProductRequest')
+const {mapData} = require('../../channelEvents')
 const {publishPrepareHandlePacketCompleted} = require('../specialistEvents')
 const {buildHandlePacket} = require('../handlePacket')
 
@@ -11,7 +12,7 @@ const {buildHandlePacket} = require('../handlePacket')
 // stamps the concurrency token (baseModelHash) on the result.
 function prepareHandlePacket$({guiRequests, bus, recipeId, recipeType, pickedHandles, context}) {
     return guiProductRequest$(guiRequests, context, 'load-recipe', {recipeId}).pipe(
-        map(recipe => buildUpdatePacket({recipe, recipeType, pickedHandles})),
+        mapData(recipe => buildUpdatePacket({recipe, recipeType, pickedHandles})),
         tap(packet => publishOnSuccess({bus, conversationId: context?.conversationId, recipeType, packet})),
         catchError(error => of({ok: false, error: {code: error.code || 'TOOL_FAILED', message: error.message}}))
     )
@@ -32,8 +33,8 @@ function publishOnSuccess({bus, conversationId, recipeType, packet}) {
     publishPrepareHandlePacketCompleted({
         bus, conversationId, recipeType,
         pickedHandles: packet.data.pickedHandles,
-        dependentHandles: packet.data.dependentHandles,
-        writableHandles: packet.data.writableHandles
+        writableHandles: packet.data.writableHandles,
+        readOnlyHandles: packet.data.readOnlyHandles
     })
 }
 

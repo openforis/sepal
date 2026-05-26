@@ -126,7 +126,7 @@ function publishPickHandlesCompleted({bus, conversationId, recipeType, pickedHan
     })
 }
 
-function publishPrepareHandlePacketCompleted({bus, conversationId, recipeType, pickedHandles, dependentHandles, writableHandles, requiredHandles = [], flow = 'update'}) {
+function publishPrepareHandlePacketCompleted({bus, conversationId, recipeType, pickedHandles, writableHandles, readOnlyHandles = [], requiredHandles = [], flow = 'update'}) {
     const type = `${flow}_recipe.prepare.completed`
     bus.publish({
         type,
@@ -134,12 +134,14 @@ function publishPrepareHandlePacketCompleted({bus, conversationId, recipeType, p
         conversationId,
         recipeType,
         pickedHandleCount: pickedHandles.length,
-        dependentHandleCount: dependentHandles.length,
         requiredHandleCount: requiredHandles.length,
         writableHandleCount: writableHandles.length,
+        readOnlyHandleCount: readOnlyHandles.length,
         writableHandles,
+        readOnlyHandles,
         message: `${type} recipeType=${recipeType} picked=${pickedHandles.length}${nameList(pickedHandles)}`
-            + ` dependent=${dependentHandles.length}${nameList(dependentHandles)} required=${requiredHandles.length} writable=${writableHandles.length}`
+            + ` required=${requiredHandles.length} writable=${writableHandles.length}${nameList(writableHandles)}`
+            + ` readOnly=${readOnlyHandles.length}${nameList(readOnlyHandles)}`
     })
 }
 
