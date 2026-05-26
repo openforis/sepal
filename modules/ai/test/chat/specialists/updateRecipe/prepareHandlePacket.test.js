@@ -1,6 +1,6 @@
 const {of, throwError} = require('rxjs')
 const {prepareHandlePacket$} = require('#mcp/chat/specialists/updateRecipe/prepareHandlePacket')
-const {aFakeGuiRequests, read} = require('../../builders')
+const {aFakeBus, aFakeGuiRequests, expectNoHandlePathsIn, read} = require('../../builders')
 
 const context = {clientId: 'c1', subscriptionId: 's1'}
 
@@ -82,6 +82,55 @@ describe('prepareHandlePacket$', () => {
         expect(typeof field.valueGuidance).toBe('string')
     })
 
+    describe('field entries carry handle metadata for user-language reasoning', () => {
+
+        function fieldFor(handleName, pickedHandles = [handleName]) {
+            const guiRequests = loadRecipe(aMosaicRecipe())
+            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles, context}))
+            return result.data.fields[handleName]
+        }
+
+        it('includes the user-facing label', () => {
+            expect(fieldFor('cloudBuffer').label).toBe('Cloud-edge buffer')
+            expect(fieldFor('datasets').label).toBe('Source datasets')
+        })
+
+        it('includes valueLabels for enum-bearing handles', () => {
+            expect(fieldFor('tileOverlap').valueLabels).toEqual({
+                KEEP: 'keep overlap', QUICK_REMOVE: 'quickly remove overlap', REMOVE: 'fully remove overlap'
+            })
+        })
+
+        it('includes performanceNote on cost-sensitive handles', () => {
+            expect(fieldFor('cloudBuffer').performanceNote).toMatch(/spatial|expensive/i)
+        })
+
+        it('includes summaryGuidance on handles that have it', () => {
+            expect(typeof fieldFor('cloudBuffer').summaryGuidance).toBe('string')
+        })
+
+        it('includes shape-clarifying examples on handles that have them', () => {
+            expect(fieldFor('datasets').examples).toContainEqual({LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']})
+            expect(fieldFor('cloudMethods', ['cloudMethods']).examples).toContainEqual(['sepalCloudScore', 'landsatCFMask'])
+        })
+
+        it('marks schema-required handles with required=true', () => {
+            // `compose` is required in the MOSAIC compositeOptions schema.
+            expect(fieldFor('compose').required).toBe(true)
+            // `brdfMultiplier` is conditionally required (only when BRDF is included);
+            // unconditional required is false.
+            expect(fieldFor('brdfMultiplier').required).toBe(false)
+        })
+
+        it('does not duplicate handle metadata in parallel top-level maps', () => {
+            const guiRequests = loadRecipe(aMosaicRecipe())
+            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['cloudBuffer'], context}))
+            expect(result.data).not.toHaveProperty('labels')
+            expect(result.data).not.toHaveProperty('descriptions')
+            expect(result.data).not.toHaveProperty('valueLabels')
+        })
+    })
+
     it('uses null currentValue for a handle whose path is absent from the model', () => {
         const recipe = aMosaicRecipe()
         delete recipe.model.compositeOptions.sentinel2CloudProbabilityMaxCloudProbability
@@ -123,14 +172,157 @@ describe('prepareHandlePacket$', () => {
             ]))
         })
 
-        it('summarizes validation rules in handle-friendly form (name + description)', () => {
+        it('summarizes validation rules with handle names (never paths)', () => {
             const guiRequests = loadRecipe(aMosaicRecipe())
 
             const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['datasets'], context}))
 
-            expect(result.data.validationRules).toEqual(expect.arrayContaining([
-                expect.objectContaining({name: 'multipleSourcesRequireCalibrate', description: expect.any(String)})
+            const rule = result.data.validationRules.find(r => r.name === 'multipleSourcesRequireCalibrate')
+            expect(rule.handles.sort()).toEqual(['corrections', 'datasets'])
+            expect(rule).not.toHaveProperty('paths')
+        })
+
+        it('dependencyFacts carry the dependent handle label', () => {
+            const guiRequests = loadRecipe(aMosaicRecipe())
+
+            const result = read(prepareHandlePacket$({guiRequests, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['targetDate'], context}))
+
+            const seasonStart = result.data.dependencyFacts.find(fact => fact.handle === 'seasonStart')
+            expect(seasonStart.label).toBe('Season start')
+        })
+    })
+
+    describe('coupling expansion is generic — driven by handle-declared metadata', () => {
+
+        function recipeWith({cloudMethods, datasets}) {
+            const recipe = aMosaicRecipe()
+            if (cloudMethods) recipe.model.compositeOptions.includedCloudMasking = cloudMethods
+            if (datasets) recipe.model.sources.dataSets = datasets
+            return recipe
+        }
+
+        it('fires condition-based couplings whose trigger handle is writable and whose condition holds (datasets missing a group)', () => {
+            const guiRequests = loadRecipe(recipeWith({
+                cloudMethods: ['sepalCloudScore'],
+                datasets: {LANDSAT: ['LANDSAT_9']}
+            }))
+
+            const result = read(prepareHandlePacket$({
+                guiRequests, recipeId: 'r1', recipeType: 'MOSAIC',
+                pickedHandles: ['datasets'], context
+            }))
+
+            const triggers = result.data.couplingFacts.map(fact => fact.triggerHandle)
+            expect(triggers).toContain('datasets')
+            const facts = result.data.couplingFacts.filter(f => f.triggerHandle === 'datasets')
+            expect(facts.some(f => f.condition?.kind === 'missingKey' && f.condition.value === 'SENTINEL_2')).toBe(true)
+        })
+
+        it('does not emit a coupling fact for a condition that does not hold', () => {
+            const guiRequests = loadRecipe(recipeWith({
+                cloudMethods: ['sepalCloudScore'],
+                datasets: {LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']}
+            }))
+
+            const result = read(prepareHandlePacket$({
+                guiRequests, recipeId: 'r1', recipeType: 'MOSAIC',
+                pickedHandles: ['datasets'], context
+            }))
+
+            // datasets has both groups present, so the missing-group couplings do not fire.
+            const facts = result.data.couplingFacts.filter(f => f.triggerHandle === 'datasets')
+            expect(facts).toEqual([])
+        })
+
+        it('chains coupling expansions to a fixed point (datasets missing → cloudMethods → its method companions)', () => {
+            // datasets currently has both groups but cloudMethods only includes Landsat-only methods;
+            // dropping SENTINEL_2 (picker chose datasets) expands cloudMethods, which then expands
+            // its own Landsat companions because cloudMethods includes landsatCFMask.
+            const guiRequests = loadRecipe(recipeWith({
+                cloudMethods: ['sepalCloudScore', 'landsatCFMask'],
+                datasets: {LANDSAT: ['LANDSAT_9']}
+            }))
+
+            const result = read(prepareHandlePacket$({
+                guiRequests, recipeId: 'r1', recipeType: 'MOSAIC',
+                pickedHandles: ['datasets'], context
+            }))
+
+            expect(result.data.writableHandles).toEqual(expect.arrayContaining([
+                'cloudMethods',
+                'landsatCloudMask', 'landsatShadowMask', 'landsatCirrusMask', 'landsatDilatedCloud',
+                'sepalCloudScoreMax'
             ]))
+        })
+
+        it('emits coupling facts in handle terms with condition + expands + optional guidance', () => {
+            const guiRequests = loadRecipe(recipeWith({
+                cloudMethods: ['sepalCloudScore'],
+                datasets: {LANDSAT: ['LANDSAT_9']}
+            }))
+
+            const result = read(prepareHandlePacket$({
+                guiRequests, recipeId: 'r1', recipeType: 'MOSAIC',
+                pickedHandles: ['datasets'], context
+            }))
+
+            const fact = result.data.couplingFacts.find(f => f.triggerHandle === 'datasets' && f.condition?.value === 'SENTINEL_2')
+            expect(fact.involvedHandles.sort()).toEqual(['cloudMethods', 'datasets'])
+            expect(fact.expands).toEqual(['cloudMethods'])
+            expect(typeof fact.guidance).toBe('string')
+        })
+
+        it('eagerly expands every selector-item companion into writable so the updater can swap items, not just append', () => {
+            const guiRequests = loadRecipe(recipeWith({
+                cloudMethods: ['sepalCloudScore'],
+                datasets: {LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']}
+            }))
+
+            const result = read(prepareHandlePacket$({
+                guiRequests, recipeId: 'r1', recipeType: 'MOSAIC',
+                pickedHandles: ['cloudMethods'], context
+            }))
+
+            // Even though cloudMethods currently has only sepalCloudScore, every
+            // rich-item companion is writable so the updater can switch to any item.
+            expect(result.data.writableHandles).toEqual(expect.arrayContaining([
+                'sepalCloudScoreMax',
+                's2CloudScoreBand', 's2CloudScoreMax',
+                's2CloudProbabilityMax',
+                'landsatCloudMask', 'landsatShadowMask', 'landsatCirrusMask', 'landsatDilatedCloud'
+            ]))
+        })
+
+        it('exposes the rich selector-item metadata on the field entry so the updater can read alternativeGroup + profiles', () => {
+            const guiRequests = loadRecipe(recipeWith({
+                cloudMethods: ['sepalCloudScore', 'landsatCFMask'],
+                datasets: {LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']}
+            }))
+
+            const result = read(prepareHandlePacket$({
+                guiRequests, recipeId: 'r1', recipeType: 'MOSAIC',
+                pickedHandles: ['cloudMethods'], context
+            }))
+
+            const item = result.data.fields.cloudMethods.allowedItems.find(i => i.value === 'sentinel2CloudScorePlus')
+            expect(item.alternativeGroup).toBe('sentinel2CloudMask')
+            expect(item.companionHandles).toEqual(['s2CloudScoreBand', 's2CloudScoreMax'])
+            expect(item.profiles.moderate).toEqual({s2CloudScoreBand: 'cs_cdf', s2CloudScoreMax: 45})
+            expect(item.profiles.aggressive).toEqual({s2CloudScoreBand: 'cs', s2CloudScoreMax: 35})
+        })
+
+        it('couplingFacts and field entries never carry JSON Pointer paths', () => {
+            const guiRequests = loadRecipe(recipeWith({
+                cloudMethods: ['sepalCloudScore', 'landsatCFMask', 'sentinel2CloudScorePlus'],
+                datasets: {LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']}
+            }))
+
+            const result = read(prepareHandlePacket$({
+                guiRequests, recipeId: 'r1', recipeType: 'MOSAIC',
+                pickedHandles: ['cloudMethods', 'datasets'], context
+            }))
+
+            expectNoHandlePathsIn(result.data)
         })
     })
 
@@ -208,5 +400,37 @@ describe('prepareHandlePacket$', () => {
         expect(result.ok).toBe(false)
         expect(result.error.code).toBe('UNKNOWN_HANDLE')
         expect(result.error.handles).toEqual(['bogus'])
+    })
+
+    describe('diagnostics', () => {
+
+        it('publishes update_recipe.prepare.completed with picked/dependent/writable counts and handle names', () => {
+            const bus = aFakeBus()
+            const guiRequests = loadRecipe(aMosaicRecipe())
+
+            read(prepareHandlePacket$({guiRequests, bus, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['targetDate'], context}))
+
+            const events = bus.published.filter(event => event.type === 'update_recipe.prepare.completed')
+            expect(events).toHaveLength(1)
+            expect(events[0]).toMatchObject({
+                recipeType: 'MOSAIC',
+                pickedHandleCount: 1,
+                dependentHandleCount: 2,
+                writableHandleCount: 3,
+                writableHandles: expect.arrayContaining(['targetDate', 'seasonStart', 'seasonEnd'])
+            })
+        })
+
+        it('the prepare.completed event does not carry guidance/value blobs — counts + names only', () => {
+            const bus = aFakeBus()
+            const guiRequests = loadRecipe(aMosaicRecipe())
+
+            read(prepareHandlePacket$({guiRequests, bus, recipeId: 'r1', recipeType: 'MOSAIC', pickedHandles: ['cloudBuffer'], context}))
+
+            const event = bus.published.find(event => event.type === 'update_recipe.prepare.completed')
+            expect(event).not.toHaveProperty('fields')
+            expect(event).not.toHaveProperty('couplingFacts')
+            expect(event).not.toHaveProperty('validationRules')
+        })
     })
 })

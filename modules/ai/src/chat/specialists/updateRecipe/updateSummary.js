@@ -1,17 +1,11 @@
-// Fallback summarizer: one tool-free, reasoning-disabled LLM call that
-// narrates a successful update in user-facing prose when the specialist's own
-// final answer was empty. Local thinking models routinely emit reasoning then
-// end the turn with no visible text after a successful tool call; without this
-// pass the user would see the deterministic "Updated N handle" string.
-//
-// Fed only handle-keyed outcome data — appliedHandles, appliedValues, the
-// per-handle descriptions from the prepared packet, and the dependency /
-// validation context. No JSON Pointer, no operation count.
-
 const {catchError, defer, of} = require('rxjs')
 const {reduce} = require('rxjs/operators')
 const {updateSummarySystemPrompt} = require('../../llmText/prompts')
 
+// One tool-free, reasoning-disabled LLM call that narrates a successful
+// update in user-facing prose when the specialist answered empty. Reads only
+// from the prepared packet's per-handle metadata so the summary speaks in
+// labels and valueLabels rather than handle names or enum tokens.
 function summarizeUpdate$({llm, conversationId, recipeId, instruction, recipeType, recipeName, outcome, packet}) {
     return defer(() => llm.respondTo$({
         messages: buildSummaryMessages({instruction, recipeType, recipeName, outcome, packet}),
@@ -33,34 +27,44 @@ function buildSummaryMessages({instruction, recipeType, recipeName, outcome, pac
 }
 
 function buildSummaryUserText({instruction, recipeType, recipeName, outcome, packet}) {
-    return summaryLines({instruction, recipeType, recipeName, outcome, packet})
+    const appliedFields = appliedFieldsFor(outcome, packet)
+    return summaryLines({instruction, recipeType, recipeName, outcome, packet, appliedFields})
         .filter(line => line !== null)
         .join('\n')
 }
 
-function summaryLines({instruction, recipeType, recipeName, outcome, packet}) {
+// Per-applied-handle metadata for the summarizer: label, the value the
+// updater sent, optional valueLabels/summaryGuidance from the packet. Drives
+// user-facing prose without forcing the summarizer to read raw enum tokens.
+function appliedFieldsFor(outcome, packet) {
+    const appliedHandles = outcome.appliedHandles || []
+    const fields = packet?.fields || {}
+    const result = {}
+    for (const handle of appliedHandles) {
+        const field = fields[handle]
+        if (!field) continue
+        result[handle] = {
+            label: field.label,
+            value: outcome.appliedValues?.[handle],
+            ...(field.valueLabels !== undefined ? {valueLabels: field.valueLabels} : {}),
+            ...(field.summaryGuidance !== undefined ? {summaryGuidance: field.summaryGuidance} : {})
+        }
+    }
+    return result
+}
+
+function summaryLines({instruction, recipeType, recipeName, outcome, packet, appliedFields}) {
     return [
         instruction && `userRequest: ${instruction}`,
         recipeType && `recipeType: ${recipeType}`,
         recipeName && `recipeName: ${recipeName}`,
         outcome.appliedHandles?.length && `appliedHandles: ${JSON.stringify(outcome.appliedHandles)}`,
-        anyKey(outcome.appliedValues) && `appliedValues: ${JSON.stringify(outcome.appliedValues)}`,
-        fieldDescriptionsLine(outcome.appliedHandles, packet?.fields),
+        anyKey(appliedFields) && `appliedFields: ${JSON.stringify(appliedFields)}`,
         outcome.invalidatedHandles?.length && `invalidatedHandles: ${JSON.stringify(outcome.invalidatedHandles)}`,
         packet?.dependencyFacts?.length && `dependencyFacts: ${JSON.stringify(packet.dependencyFacts)}`,
+        packet?.couplingFacts?.length && `couplingFacts: ${JSON.stringify(packet.couplingFacts)}`,
         packet?.validationRules?.length && `validationRules: ${JSON.stringify(packet.validationRules)}`
     ].map(line => line || null)
-}
-
-function fieldDescriptionsLine(appliedHandles, fields) {
-    if (!fields) return null
-    const descriptions = Object.fromEntries(
-        (appliedHandles || [])
-            .filter(handle => fields[handle])
-            .map(handle => [handle, fields[handle].description])
-    )
-    if (!anyKey(descriptions)) return null
-    return `fieldDescriptions: ${JSON.stringify(descriptions)}`
 }
 
 function anyKey(object) {

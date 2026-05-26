@@ -164,6 +164,28 @@ describe('update_recipe allowed-tool scoping', () => {
             expect(invocations[0].input.baseModelHash).toBe('h-base')
         })
 
+        it('declares update.updater as the LLM usage role for the updater specialist (distinct from picker + summary)', () => {
+            const innerTools = spyInnerTools()
+            const harness = aToolFactoryHarness({
+                specialist: 'update_recipe',
+                innerTools,
+                replies: [
+                    {text: '{"handles":["cloudBuffer"]}'},
+                    {toolCalls: [updateCallWith({
+                        recipeId: 'r1', baseModelHash: 'h-base',
+                        writableHandles: ['cloudBuffer'],
+                        values: {cloudBuffer: 120}
+                    })]},
+                    {text: 'done.'}
+                ]
+            })
+
+            harness.invoke({recipeId: 'r1', instruction: 'set cloud buffer'})
+
+            const updaterRequests = harness.llm.receivedRequests.filter(req => req.usageContext?.role === 'update.updater')
+            expect(updaterRequests.length).toBeGreaterThan(0)
+        })
+
         // The runtime canonicalizes the tool call before logging, so the
         // specialist.tool.request diagnostic never carries the model's
         // pre-bound fakes. Timeline canonicalization is covered directly

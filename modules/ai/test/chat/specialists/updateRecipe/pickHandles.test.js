@@ -1,6 +1,6 @@
 const {of, throwError} = require('rxjs')
 const {pickHandles$, pickerSystemPrompt} = require('#mcp/chat/specialists/updateRecipe/pickHandles')
-const {aFakeLlm, read, readError} = require('../../builders')
+const {aFakeBus, aFakeLlm, expectNoHandlePathsIn, read, readError} = require('../../builders')
 
 describe('pickHandles$', () => {
 
@@ -105,10 +105,57 @@ describe('pickHandles$', () => {
     it('the picker prompt does not expose JSON Pointer paths or RFC 6902 patch mechanics', () => {
         const prompt = pickerSystemPrompt('MOSAIC')
 
-        expect(prompt).not.toMatch(/\/compositeOptions\//)
+        expectNoHandlePathsIn(prompt)
         expect(prompt).not.toMatch(/RFC 6902/i)
         expect(prompt).not.toMatch(/JSON Patch/i)
         expect(prompt).not.toMatch(/JSON Pointer/i)
+    })
+
+    it('the picker prompt carries user-facing handle labels and performance notes', () => {
+        const prompt = pickerSystemPrompt('MOSAIC')
+
+        expect(prompt).toContain('Source datasets')
+        expect(prompt).toContain('Cloud-edge buffer')
+        expect(prompt).toMatch(/performance:.*spatial|performance:.*expensive/i)
+    })
+
+    it('the picker prompt instructs the model not to include rationale alongside the handles', () => {
+        const prompt = pickerSystemPrompt('MOSAIC')
+
+        expect(prompt).toMatch(/no rationale/i)
+    })
+
+    it('declares update.picker as the LLM usage role so usage rolls up to the right slot', () => {
+        const llm = scriptedLlm('{"handles":["targetDate"]}')
+
+        read(pickHandles$({llm, recipeType: 'MOSAIC', instruction: 'x', conversationId: 'c1'}))
+
+        expect(llm.receivedRequests[0].usageContext).toMatchObject({role: 'update.picker', recipeType: 'MOSAIC'})
+    })
+
+    it('publishes update_recipe.picker.completed with handle names + counts on success', () => {
+        const bus = aFakeBus()
+        const llm = scriptedLlm('{"handles":["targetDate","cloudMethods"]}')
+
+        read(pickHandles$({llm, bus, recipeType: 'MOSAIC', instruction: 'x', conversationId: 'c1'}))
+
+        const events = bus.published.filter(event => event.type === 'update_recipe.picker.completed')
+        expect(events).toHaveLength(1)
+        expect(events[0]).toMatchObject({
+            recipeType: 'MOSAIC',
+            pickedHandleCount: 2,
+            pickedHandles: ['targetDate', 'cloudMethods']
+        })
+        expect(events[0]).not.toHaveProperty('rationale')
+    })
+
+    it('does not publish picker.completed on failure', () => {
+        const bus = aFakeBus()
+        const llm = scriptedLlm('not JSON')
+
+        read(pickHandles$({llm, bus, recipeType: 'MOSAIC', instruction: 'x', conversationId: 'c1'}))
+
+        expect(bus.published.filter(event => event.type === 'update_recipe.picker.completed')).toHaveLength(0)
     })
 
     it('surfaces an upstream LLM error as a PICKER_FAILED envelope', () => {

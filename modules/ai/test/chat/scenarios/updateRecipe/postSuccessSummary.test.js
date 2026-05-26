@@ -101,6 +101,31 @@ describe('update_recipe summarizes a successful update when the specialist answe
         expect(summaryUserText).toContain('datasets')
     })
 
+    it('feeds the summarizer per-handle field metadata (label + valueLabels) so prose can avoid raw tokens', () => {
+        const {harness, llm} = aHarness({
+            mainReplies: pickerThenUpdateThenEmpty,
+            summaryReplies: [{text: 'Switched to Landsat only.'}]
+        })
+
+        harness.invoke({recipeId: 'r1', instruction: 'use only Landsat'})
+
+        const summaryUserText = llm.summaryRequests[0].messages[1].content
+        expect(summaryUserText).toContain('appliedFields')
+        expect(summaryUserText).toContain('"label":"Source datasets"')
+        expect(summaryUserText).toContain('"LANDSAT":"Landsat"')
+    })
+
+    it('declares update.summary as the LLM usage role', () => {
+        const {harness, llm} = aHarness({
+            mainReplies: pickerThenUpdateThenEmpty,
+            summaryReplies: [{text: 'ok'}]
+        })
+
+        harness.invoke({recipeId: 'r1', instruction: 'use only Landsat'})
+
+        expect(llm.summaryRequests[0].usageContext).toMatchObject({role: 'update.summary'})
+    })
+
     it('does not feed the summarizer raw invalidatedPaths — only handle-level invalidatedHandles', () => {
         // Inner-tool result carries invalidatedHandles, never invalidatedPaths.
         // Guard that no JSON Pointer leaks into the summary user message.

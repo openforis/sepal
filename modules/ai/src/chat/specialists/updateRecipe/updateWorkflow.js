@@ -73,7 +73,7 @@ function createUpdateWorkflow({llm, bus, guiRequests, innerTools}) {
 
     function intend$(state) {
         return pickHandles$({
-            llm,
+            llm, bus,
             recipeType: state.recipeType, recipeName: state.recipeName,
             instruction: state.instruction,
             conversationId: state.context?.conversationId
@@ -90,6 +90,7 @@ function createUpdateWorkflow({llm, bus, guiRequests, innerTools}) {
     function scopeFor$(state) {
         return prepareHandlePacket$({
             guiRequests,
+            bus,
             recipeId: state.recipeId,
             recipeType: state.recipeType,
             pickedHandles: state.handles,

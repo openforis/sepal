@@ -70,6 +70,17 @@ describe('update_recipe per-type prompt assembly', () => {
             expect(prompt).not.toContain('$defs')
         })
 
+        it('updater prompt teaches the selector-handle contract (instead, alternativeGroup, companionHandles, profiles, preserving unrelated items)', () => {
+            const prompt = updaterSystemPromptFor(mosaicMetadata)
+
+            expect(prompt).toMatch(/selector handles/i)
+            expect(prompt).toMatch(/alternativeGroup/)
+            expect(prompt).toMatch(/companionHandles/)
+            expect(prompt).toMatch(/profiles/)
+            expect(prompt).toMatch(/"instead"/i)
+            expect(prompt).toMatch(/preserve.*unrelated/i)
+        })
+
         it('updater user message carries the prepared handle packet so handle catalogs do not have to re-appear in the system prompt', () => {
             const harness = aToolFactoryHarness({
                 specialist: 'update_recipe',

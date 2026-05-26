@@ -241,6 +241,26 @@ function readError(observable) {
     return error
 }
 
+// Recursively scans a model-facing payload for JSON-Pointer-shaped strings
+// (the handle paths a recipe spec maps its handles to). Surfaces a leak as a
+// readable failure; ignore by passing the user-provided fields under `ignore`
+// (e.g. the original instruction prose).
+function expectNoHandlePathsIn(value, {recipeType = 'MOSAIC', ignore = []} = {}) {
+    const {getRecipeHandles} = require('#recipes')
+    const handlePaths = (getRecipeHandles(recipeType) || []).map(handle => handle.path)
+    const ignoreSet = new Set(ignore)
+    const serialized = serializeFor(value, ignoreSet)
+    const leaked = handlePaths.filter(path => serialized.includes(path))
+    if (leaked.length) {
+        throw new Error(`expected pathless content; leaked handle paths: ${leaked.join(', ')}`)
+    }
+}
+
+function serializeFor(value, ignoreSet) {
+    if (typeof value === 'string') return value
+    return JSON.stringify(value, (key, fieldValue) => ignoreSet.has(key) ? undefined : fieldValue)
+}
+
 function aFakeDiagnostics(opts) {
     return createDiagnostics(opts)
 }
@@ -257,6 +277,7 @@ module.exports = {
     aFakeLlm,
     aFakeTitleGenerator,
     aFakeTools,
+    expectNoHandlePathsIn,
     read,
     readError,
     run

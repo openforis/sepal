@@ -113,6 +113,33 @@ function publishSpecialistToolResponse({bus, name, conversationId, tool, envelop
     })
 }
 
+function publishPickHandlesCompleted({bus, conversationId, recipeType, pickedHandles}) {
+    bus.publish({
+        type: 'update_recipe.picker.completed',
+        level: 'info',
+        conversationId,
+        recipeType,
+        pickedHandleCount: pickedHandles.length,
+        pickedHandles,
+        message: `update_recipe.picker.completed recipeType=${recipeType} picked=${pickedHandles.length}${nameList(pickedHandles)}`
+    })
+}
+
+function publishPrepareHandlePacketCompleted({bus, conversationId, recipeType, pickedHandles, dependentHandles, writableHandles}) {
+    bus.publish({
+        type: 'update_recipe.prepare.completed',
+        level: 'info',
+        conversationId,
+        recipeType,
+        pickedHandleCount: pickedHandles.length,
+        dependentHandleCount: dependentHandles.length,
+        writableHandleCount: writableHandles.length,
+        writableHandles,
+        message: `update_recipe.prepare.completed recipeType=${recipeType} picked=${pickedHandles.length}${nameList(pickedHandles)}`
+            + ` dependent=${dependentHandles.length}${nameList(dependentHandles)} writable=${writableHandles.length}`
+    })
+}
+
 function publishUpdateRecipeOutcome({bus, conversationId, recipeId, attempted, succeeded, code, lastPatchErrorCode, answerChars}) {
     bus.publish({
         type: 'update_recipe.outcome',
@@ -199,5 +226,7 @@ module.exports = {
     publishSpecialistStall,
     publishSpecialistToolRequest,
     publishSpecialistToolResponse,
+    publishPickHandlesCompleted,
+    publishPrepareHandlePacketCompleted,
     publishUpdateRecipeOutcome
 }

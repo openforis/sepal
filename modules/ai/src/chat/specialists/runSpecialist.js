@@ -15,7 +15,7 @@ const SPECIALIST_MAX_STALLS = 2
 const SPECIALIST_CAP_ANSWER = 'Specialist step cap exceeded; partial information only.'
 const STALL_NUDGE_CONTENT = 'Continue working on the original request. Either make the next tool call needed, or send a final summary if the request is fulfilled.'
 
-function createSpecialistRuntime({llm, bus, name, systemPrompt, tools, finishOnEmpty}) {
+function createSpecialistRuntime({llm, bus, name, systemPrompt, tools, finishOnEmpty, usageRole = 'specialist'}) {
     const canonicalizeCall = tools.canonicalizeCall || identity
     const allowedSchemas = tools.schemas
     const invokeTool$ = tools.invoke$
@@ -46,7 +46,7 @@ function createSpecialistRuntime({llm, bus, name, systemPrompt, tools, finishOnE
                     messages: promptMessages,
                     tools: allowedSchemas,
                     debugLabel: `specialist ${name} round ${round}`,
-                    usageContext: {role: 'specialist', specialist: name, conversationId}
+                    usageContext: {role: usageRole, specialist: name, conversationId}
                 }).pipe(
                     tap(event => {
                         if (event.textDelta) acc.text += event.textDelta

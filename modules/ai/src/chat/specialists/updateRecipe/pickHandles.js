@@ -1,14 +1,10 @@
-// Picker step: one tool-free LLM call that translates the user instruction into
-// recipe handles. The picker prompt + recipe handle catalog is the only
-// cacheable static slice; the user message is the dynamic instruction. Output
-// is a handles-only JSON object — no rationale, no values, no path mechanics.
-
 const {catchError, of, defer} = require('rxjs')
-const {map, reduce} = require('rxjs/operators')
+const {map, reduce, tap} = require('rxjs/operators')
 const {getRecipeHandles} = require('#recipes')
 const {specialistPrompt} = require('../../llmText/prompts')
+const {publishPickHandlesCompleted} = require('../specialistEvents')
 
-function pickHandles$({llm, recipeType, instruction, conversationId, recipeName}) {
+function pickHandles$({llm, bus, recipeType, instruction, conversationId, recipeName}) {
     const handles = getRecipeHandles(recipeType)
     if (!handles) {
         return of({ok: false, error: {code: 'UNSUPPORTED_RECIPE_TYPE', message: `Recipe type ${recipeType} has no handle catalog`}})
@@ -22,12 +18,18 @@ function pickHandles$({llm, recipeType, instruction, conversationId, recipeName}
         messages,
         tools: [],
         debugLabel: `picker ${recipeType}`,
-        usageContext: {role: 'picker', recipeType, conversationId}
+        usageContext: {role: 'update.picker', recipeType, conversationId}
     })).pipe(
         reduce((text, event) => text + (event.textDelta || ''), ''),
         map(text => parsePickerOutput(text, allowedNames)),
+        tap(result => publishOnSuccess({bus, conversationId, recipeType, result})),
         catchError(error => of({ok: false, error: {code: 'PICKER_FAILED', message: error.message}}))
     )
+}
+
+function publishOnSuccess({bus, conversationId, recipeType, result}) {
+    if (!bus || !result?.ok) return
+    publishPickHandlesCompleted({bus, conversationId, recipeType, pickedHandles: result.handles})
 }
 
 function buildUserText({instruction, recipeName, recipeType}) {
@@ -95,14 +97,14 @@ function pickerSystemPromptFromHandles(recipeType, handles) {
         '',
         `Recipe type: ${recipeType}`,
         '',
-        'Handle catalog (handle: description / valueGuidance):',
+        'Handle catalog (handle | label | description; performance note where it matters):',
         ...handles.map(renderHandleEntry)
     ].join('\n')
 }
 
 function renderHandleEntry(handle) {
-    const parts = [`- ${handle.name}: ${handle.description}`]
-    if (handle.valueGuidance) parts.push(`  values: ${handle.valueGuidance}`)
+    const parts = [`- ${handle.name} | ${handle.label} | ${handle.description}`]
+    if (handle.performanceNote) parts.push(`  performance: ${handle.performanceNote}`)
     return parts.join('\n')
 }
 

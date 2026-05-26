@@ -24,7 +24,8 @@ function createRecipeUpdateSpecialist({llm, bus, innerTools}) {
             invoke$: bindToolsToRecipe(scope.invokeTool$, {boundTools: RECIPE_BOUND_TOOLS}),
             canonicalizeCall: injectWorkflowBoundFields
         },
-        finishOnEmpty: anyUpdateApplied
+        finishOnEmpty: anyUpdateApplied,
+        usageRole: 'update.updater'
     })
 
     return {consult$}
