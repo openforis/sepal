@@ -8,8 +8,8 @@ const {createDiagnostics} = require('../diagnostics')
 
 const DEFAULT_DIAGNOSTICS = createDiagnostics()
 
-function createConversation({id, initialMessages = [], llm, history, tools, bus, diagnostics = DEFAULT_DIAGNOSTICS}) {
-    const loop = createConversationLoop({id, initialMessages, llm, history, tools, bus, diagnostics})
+function createConversation({id, initialMessages = [], llm, history, tools, pendingActions, bus, diagnostics = DEFAULT_DIAGNOSTICS}) {
+    const loop = createConversationLoop({id, initialMessages, llm, history, tools, pendingActions, bus, diagnostics})
     const abortRequests$ = new Subject()
     let tail$ = EMPTY
     let streaming = false
@@ -17,6 +17,7 @@ function createConversation({id, initialMessages = [], llm, history, tools, bus,
     return {
         id,
         sendUserMessage$,
+        resumePendingTool$,
         abort,
         messagesSnapshot: loop.messagesSnapshot,
         get isStreaming() { return streaming }
@@ -28,12 +29,23 @@ function createConversation({id, initialMessages = [], llm, history, tools, bus,
     // abortRequests$ is a non-replaying Subject and queued turns don't
     // subscribe to takeUntil until concat advances to them.
     function sendUserMessage$(text, opts = {}) {
+        return enqueueTurn$(() => loop.runTurn$(text, opts))
+    }
+
+    // Resume from a pending-action answer: bypass the LLM and run a single
+    // pre-determined tool round on the same turn queue, so a concurrent
+    // user-message send still serializes correctly.
+    function resumePendingTool$({toolCall, userAnswerText, toolContext}) {
+        return enqueueTurn$(() => loop.runResumeTurn$({toolCall, userAnswerText, toolContext}))
+    }
+
+    function enqueueTurn$(runTurn$) {
         const previousTail$ = tail$
         const turn$ = concat(
             previousTail$.pipe(ignoreElements(), catchError(() => EMPTY)),
             defer(() => {
                 streaming = true
-                return loop.runTurn$(text, opts).pipe(
+                return runTurn$().pipe(
                     takeUntil(abortRequests$),
                     finalize(() => { streaming = false })
                 )

@@ -1,11 +1,11 @@
 # Recipe update knowledge design
 
-Status: target direction with partial implementation. The current implementation
-has rule-derived constraint metadata, a generated update manual, and the
-`prepare_update({recipeId, focusPaths})` update-preparation tool. The target
-direction is a handle-based picker/prepare/updater workflow behind the same
-`update_recipe(recipeId, instruction)` boundary. Rich operational recipe
-knowledge and handle metadata are still being expanded.
+Status: target direction with live handle-based implementation for MOSAIC
+updates. `update_recipe(recipeId, instruction)` now runs an internal
+picker/prepare/updater workflow: the picker selects semantic handles,
+preparation builds a handle-keyed packet, the updater chooses values, and
+`update_recipe_values` maps those values to internal patch operations. Rich
+operational recipe knowledge and handle metadata are still being expanded.
 
 This note captures the target direction for making recipe update specialists
 knowledge-rich without putting all recipe semantics into the always-visible
@@ -18,8 +18,9 @@ deterministic update mechanics.
 
 ## Problem
 
-The current update specialist is good at narrow, explicitly supported edits,
-especially date updates. It is weaker for broad semantic requests such as:
+The handle-based update specialist is much better than the old patch-authoring
+loop at keeping pointer/operation mechanics away from the model. The remaining
+hard cases are broad semantic requests such as:
 
 ```text
 Make sure the mosaic renders as quick as possible.
@@ -29,13 +30,13 @@ For that kind of request, the specialist needs to understand recipe-domain
 tradeoffs: which fields affect processing time or memory, which options trade
 quality for speed, which values are reasonable, and which fields interact.
 
-The generated `MOSAIC` update manual now provides structural information such
-as paths, value shape, and validation constraints. The target picker catalog
-should expose short semantic handles instead of JSON Pointer paths, and it still
-needs richer operational knowledge in a general reusable form. The JSON Schema
-does not contain most speed/rendering/quality tradeoffs; useful source prose
-often lives in GUI labels/tooltips, public docs, or backend implementation
-details and must be distilled before it becomes runtime prompt input.
+The `MOSAIC` handle catalog now exposes short semantic handles instead of JSON
+Pointer paths, with labels, value guidance, examples, profiles, and some
+performance notes. It still needs richer operational knowledge in a general
+reusable form. The JSON Schema does not contain most speed/rendering/quality
+tradeoffs; useful source prose often lives in GUI labels/tooltips, public docs,
+or backend implementation details and must be distilled before it becomes
+runtime prompt input.
 
 ## Goals
 
@@ -112,7 +113,7 @@ mechanics:
 In short:
 
 ```text
-user request -> picker chooses handles -> prepare_update expands facts/scope
+user request -> picker chooses handles -> prepare step expands facts/scope
              -> updater sets values -> update_recipe_values generates JSON Patch
              -> GUI patch bridge validates/applies
 ```
@@ -124,14 +125,14 @@ the instruction in their own prompts and logs.
 
 ## Chosen direction: picker, prepare, updater
 
-The current live implementation uses `prepare_update -> recipe_patch`: the
-specialist picks focus paths, receives a bounded work packet, then authors JSON
-Patch operations. This works for many small edits, and it is already wired into
-the GUI validation/persistence bridge. It also exposes a real reliability
-problem: the model can understand the intended semantic edit but fail on RFC
-6902 mechanics such as invented pointers, array indexes, or add-vs-replace.
+The previous implementation used `prepare_update -> recipe_patch`: the
+specialist picked focus paths, received a bounded work packet, then authored
+JSON Patch operations. It worked for many small edits, but exposed a real
+reliability problem: the model could understand the intended semantic edit and
+still fail on RFC 6902 mechanics such as invented pointers, array indexes, or
+add-vs-replace.
 
-Model-authored JSON Patch is transitional, not the target. The chosen direction
+Model-authored JSON Patch was transitional. The chosen and now live direction
 is a picker/prepare/updater workflow using short semantic handles and requested
 values. The orchestrator boundary remains `update_recipe(recipeId,
 instruction)`.
@@ -181,7 +182,7 @@ Guardrails for the chosen direction:
 ```text
 update_recipe(recipeId, instruction)
   -> picker specialist
-  -> prepare_update
+  -> programmatic prepare
   -> updater specialist
   -> update_recipe_values
   -> answer
@@ -214,7 +215,7 @@ Picker prompt omissions:
 Picker output should be only handles, with no rationale in v1:
 
 ```js
-{fields: ['datasets', 'cloudMethods', 'cloudFilter']}
+{handles: ['datasets', 'cloudMethods', 'sceneCloudLimit']}
 ```
 
 Leaving out rationale keeps token cost down and avoids passing fuzzy picker
@@ -266,10 +267,10 @@ Handle granularity rules for v1:
 
 ### Programmatic prepare
 
-`prepare_update` should run programmatically after picker output. It receives
-handles, not user prose, and expands only deterministic validation dependencies
-in v1. Semantic breadth belongs in the picker catalog; prepare should not become
-a hidden natural-language policy engine.
+The prepare step runs programmatically after picker output. It receives handles,
+not user prose, and expands only deterministic validation dependencies and
+declared handle couplings in v1. Semantic breadth belongs in the picker catalog;
+prepare should not become a hidden natural-language policy engine.
 
 The prepared object is the contract between picker and updater. It should be
 handle-keyed and contain only the subset the updater may edit:
@@ -307,14 +308,17 @@ update attempt should submit all values together:
 
 ```js
 update_recipe_values({
-  baseModelHash,
-  writableHandles: ['datasets', 'cloudMethods'],
+  recipeId,
   values: {
     datasets: {LANDSAT: ['LANDSAT_9', 'LANDSAT_8']},
     cloudMethods: ['sepalCloudScore', 'landsatCFMask']
   }
 })
 ```
+
+`baseModelHash` and `writableHandles` are workflow-managed fields. The updater
+does not include them in the tool call; the workflow binds them at the tool
+boundary and the tool rejects values outside the prepared writable set.
 
 Retries should also submit a full corrected value set for the current
 attempt, not tiny incremental edits. This preserves atomic cross-field
@@ -356,7 +360,7 @@ recipe update; creation and other workflows can hit the same case.
 The preferred interaction is explicit, not inferred from the next free-text
 message:
 
-1. A step returns structured `needs_info`.
+1. A step returns structured `clarification_needed` / `CLARIFICATION_NEEDED`.
 2. The chat UI opens a question panel tied to a pending action id.
 3. The user answers that panel or cancels it.
 4. The workflow resumes or clears the pending action.
@@ -374,6 +378,27 @@ chat context. It should include enough to reconstruct a bounded next call:
 - `baseModelHash` if known
 - question asked
 - created metadata
+
+The v1 implementation may keep this pending-action state process-local, as long
+as it is projected back to clients when they select/reload the conversation in
+the same process. That is a bridge, not the production storage model. Before
+horizontal scaling, worker failover, or restart-resilient pending questions,
+pending actions should become durable conversation sidecar metadata. They should
+not be encoded as chat messages, hidden system context, or Redis-history
+sentinels.
+
+Long term, conversation storage should separate:
+
+- append-only message history
+- conversation metadata (`id`, title, timestamps, ownership/project context)
+- sidecar workflow state such as the active pending action
+- optional runtime cache for active conversation objects
+
+A live `Conversation` object should be hydrate-on-demand and evictable. Old
+conversations should be rows/documents in the conversation store, not permanent
+in-memory objects. A future store should therefore expose operations such as
+`getPendingAction`, `setPendingAction`, and `clearPendingAction` beside
+message-history and metadata operations.
 
 On resume, verify that any saved `baseModelHash` is still current. If stale,
 rerun prepare for the selected handles before invoking the updater. Also verify
@@ -408,7 +433,7 @@ This workflow needs first-class metrics from the start:
 - updater attempts and tokens
 - updater final-summary tokens
 - update validation failures
-- `needs_info` count and cancellation count
+- clarification-needed count and cancellation count
 - total workflow duration and token cost
 
 The expected token advantage is not fewer LLM calls in the happy path. It is
@@ -580,18 +605,16 @@ and data-availability caveats.
 The target preparation step is deterministic and handle-oriented:
 
 ```js
-prepare_update({
+prepareHandlePacket({
   recipeId,
   handles: ['datasets', 'cloudMethods']
 })
 ```
 
-The current live tool accepts `focusPaths`; that is transitional. The target
-workflow should call preparation programmatically after the picker, using
-handles selected from the static picker catalog. Tags may be added later if a
-concrete need appears, but they should not be required for v1. If tags are
-introduced, they must come from bounded recipe metadata, not free-form user
-prose.
+The workflow calls preparation programmatically after the picker, using handles
+selected from the static picker catalog. Tags may be added later if a concrete
+need appears, but they should not be required for v1. If tags are introduced,
+they must come from bounded recipe metadata, not free-form user prose.
 
 The step returns a complete prepared packet for the updater:
 
@@ -603,6 +626,8 @@ The step returns a complete prepared packet for the updater:
   writableHandles,
   fields,
   dependencyFacts,
+  couplingFacts,
+  applicabilityFacts,
   validationRules
 }
 ```
@@ -619,6 +644,9 @@ Where:
   examples where available, source-of-truth classification for missing values,
   and any handle-local validation facts.
 - `dependencyFacts` explains why companion handles were included.
+- `couplingFacts` explains handle-declared companion/coupling expansion.
+- `applicabilityFacts` explains selector items that are not applicable to the
+  current scope, such as source-specific cloud-mask methods.
 - `validationRules` summarizes relevant schema/rule constraints in
   LLM-friendly terms.
 
@@ -636,15 +664,11 @@ picked handles.
 The updater should only set values for handles returned in `writableHandles`.
 The model should not see or author JSON Pointer paths.
 
-The strongest future version would issue a preparation token or short-lived
-session id, and `update_recipe_values` would reject values outside the prepared
-write set. This is optional for the first implementation slice, but it is the
-clearest way to prevent broad-request drift.
-
-Even without a token, `update_recipe_values` must enforce `writableHandles` in
-code. The updater prompt should state the same boundary, but prompt text is not
-a boundary. Validation/update errors returned to the updater should use handles,
-not paths.
+`update_recipe_values` enforces `writableHandles` in code. The updater prompt
+states the same boundary, but prompt text is not a boundary. A future
+preparation token or short-lived session id can harden the boundary across
+processes; the in-process check is already required. Validation/update errors
+returned to the updater should use handles, not paths.
 
 ## Facts vs policy
 
@@ -1030,6 +1054,7 @@ user either answers that panel or cancels the action.
   user confirmation?
 - What purpose-specific renderings should reusable operational facts support
   first: update, describe, troubleshooting/advice, or UI hints?
-- What is the minimal workflow-state model for pending actions: one per
-  conversation, cancellation, conversation switching, stale handle checks, and
-  stale `baseModelHash` recovery?
+- When should pending actions move from the process-local v1 store to durable
+  conversation sidecar storage?
+- What is the durable resume policy for stale saved state: rerun picker,
+  rerun prepare from selected handles, or ask the user again?

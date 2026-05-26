@@ -15,43 +15,29 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 ## Tool And GUI Bridge
 
 - **Recipe operation dispatchers are partial** — `describe_recipe({recipeId,
-  question?})` and `update_recipe({recipeId, instruction})` are both on the
-  orchestrator surface, each backed by its own per-type specialist
-  (`recipe_load` only for describe; `prepare_update` + `recipe_patch` for
-  update, with the generated update manual injected into the update prompt). Still missing:
-  `create_recipe({recipeType, instruction, projectId?, name?})` dispatcher
-  seeded with `spec.defaultModel()`.
-- **Recipe specialist routing is partially type-aware** — `describeRecipeTool`
-  and `updateRecipeTool` both resolve `recipeId -> recipeType` via
-  `lookupRecipeMetadata$` and assemble a per-type system prompt from
-  per-purpose fact buckets (`spec.describeFacts()` / `spec.editFacts()` —
-  MOSAIC today; other types fall back to the generic base frame).
-  `updateRecipeTool` additionally sees only `prepare_update` + `recipe_patch`
-  in scope; `prepare_update` expands the specialist's chosen focus paths into
-  the dependent + writable set via `spec.llmMetadata()` constraints. Still
-  missing: per-type allowed-tool sets beyond the describe/update split, per-type
-  prompt file overrides (if a recipe ever needs more than per-purpose facts can
-  express), structured `editFacts` fields beyond `guidance` (e.g. `pathAliases`,
-  `validationDependencies`), and `create_recipe` dispatcher routing.
+  question?})` and `update_recipe({recipeId, instruction})` are on the
+  orchestrator surface. `update_recipe` is now handle-based internally:
+  picker chooses handles, prepare builds a handle-keyed packet, updater calls
+  `update_recipe_values({recipeId, values})`, and deterministic code maps
+  handles to internal patch operations. Still missing:
+  `create_recipe({recipeType, instruction, projectId?, name?})`, seeded with
+  `spec.defaultModel()` and using the same pending-action/clarification path.
+- **Recipe-type coverage is still MOSAIC-first** — MOSAIC has the live handle
+  catalog, selector metadata, applicability facts, and handle-keyed update
+  flow. Other recipe types still need shared schema/effective-model support,
+  handle catalogs, operational facts, and scenario coverage before they should
+  use the same update/create workflow.
 - **Map specialist read tools are minimal** — `consult_map` exposes
   `get_gui_context`, `map_area_list` (layout + areas + AOI + view), and
   `layer_list` (per-area imageLayer + featureLayers). Still missing:
   per-layer loading/error state, dynamic-vis legend/palette inspection, and
   any live per-area viewport beyond `map.view` (per-area viewports under
   `mapCommand$` are not in Redux).
-- **Recipe-domain validation is deferred** — JSON Patch envelope validation is
-  not enough for safe recipe edits. Use the shared recipe spec/validation API
-  (`lib/js/recipes`, currently MOSAIC only) from the GUI write path
-  for authoritative validation and from recipe specialists for dependent-fragment
-  planning and prompt facts.
-- **AI patch-apply path (future GUI slice)** — apply the LLM's effective
-  output directly; no re-merge of dormant fields. Validation runs on the
-  effective shape via `spec.validate(model)`. Contract is fixed in
-  `lib/js/recipes/README.md` (LLM-facing model contract); do not
-  relitigate at apply time.
-- **AI `create_recipe` starting point** — use `spec.defaultModel()` (already
-  in effective shape) as the LLM's seed; AI-created recipes persist in
-  effective shape, never expanded into the GUI's stored shape.
+- **AI `create_recipe` starting point** — use `spec.defaultModel()` as the seed
+  and treat creation as an update over defaults. The create workflow should use
+  the handle picker/prepare/updater shape where it fits, surface
+  `CLARIFICATION_NEEDED` for missing AOI/date/training/class details, and rely
+  on the pending-action lifecycle instead of guessing.
 - **Heavy-field omission belongs on the recipe spec, not in AI tools** —
   `omitReferenceData` / `isReferenceDataPath` in
   `modules/ai/src/chat/tools/recipeProjection.js` hardcode CLASSIFICATION's
@@ -63,32 +49,16 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   declarative schema annotation (`x-llmOmit: 'count'` etc.) walked by a
   generic engine, with a per-spec method as an escape hatch for cases that
   need summarization/sampling. AI tools should go back to being type-agnostic.
-- **GUI `defaultModel` ships an internally inconsistent default** — for the
-  MOSAIC recipe, the GUI's committed `defaultModel.compositeOptions.includedCloudMasking`
-  pre-lists `sentinel2CloudScorePlus` while `sources.dataSets` defaults to
-  LANDSAT only. The shared `cloudMaskingMethodAvailability` rule correctly
-  rejects the combination. Touching the GUI default is regression risk;
-  reconcile when the patch specialist lands and there's a real recipe-write
-  path that needs the default to round-trip through `validate()`.
-- **`update_recipe` STALE_WRITE retry cap is prose-only** — `llmText/specialists/update.md`
-  tells the specialist to retry once after STALE_WRITE; `toolCallGuard` catches
-  exact-repeat tool calls but not reload-replan-retry cycles where each new
-  patch differs. Acceptable for the spike (we want to observe real behavior),
-  but production should add a per-`update_recipe`-invocation counter on
-  `recipe_patch` calls to stop genuine loops without constraining a single
-  LLM "thinking out loud."
-- **Patch summary labels do not recurse into object values** — `update_recipe`
-  now enriches successful `recipe_patch` results with schema-derived value
-  labels for scalar enum fields and config-array members, so answers can say
-  "aggressive" or "Landsat CFMask" instead of raw enum IDs. Object-shaped
-  patch values (for example replacing `/sources/dataSets`) still stay raw.
-  If raw nested enum IDs keep leaking into summaries, add a schema-aware
-  recursive enricher that labels object members without inventing field labels.
-- **`INVALID_PATCH` retry hint kind is generic** — failed `recipe_patch`
-  results now carry structured `error.retryHints`, but `INVALID_PATCH` still
-  uses `kind: "unknown"` with an op-shape `suggestedAction`. If specialists
-  ignore or mishandle invalid patch envelopes, promote this to an explicit
-  `kind: "invalid-patch"` so recovery policy can key on it directly.
+- **MOSAIC default/effective-model consistency needs watching** — source-specific
+  defaults and effective-model cleanup can hide invalid dormant fields. The
+  handle update path now diffs against the effective model and rejects
+  inapplicable selector items before patching; creation should get the same
+  treatment from the start.
+- **Summary/value labels are handle-first now, but nested prose still needs
+  observation** — applied values and invalidations are handle-keyed, and rich
+  item metadata supplies user-facing labels. If raw nested enum IDs leak into
+  summaries for whole-object handles such as `datasets`, add a recursive
+  handle/value label renderer rather than reintroducing paths.
 - **Specialist safety/observability is partially in place** — `runSpecialist$`
   has a `SPECIALIST_MAX_ROUNDS` cap, per-turn tool-loop safety (no-repeat,
   consecutive-failure bail-out, invalid-args retry limit via the shared
@@ -131,7 +101,7 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 ## Observability
 
 - **Agent-loop vocabulary is explicit in both loops; verdict: keep them
-  separate** — both `runSpecialist$` and `conversationLoop` now speak the
+  separate** — both `createSpecialistRuntime` and `conversationLoop` now speak the
   `DESIGN_chat_specialists_v2.md` §4 "Agent-loop north star" vocabulary
   explicitly. In the specialist loop: each round classifies into a closed
   RoundOutcome (`answered`/`tool-requested`/`silent`), a `decideNext` stop
@@ -140,9 +110,8 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   well-formedness. `noProgressNudge`/`finishOnEmpty` read the timeline's
   `{name, ok}` projection; the result exposes `{answer, finishReason, timeline}`
   (tool entries carry `{name, ok, result, input}`); `update_recipe` derives its
-  patch outcome via a pure `projectUpdateOutcome(timeline)` and the former
-  tracker is now only patch-result middleware (`createPatchEnricher`); prose-only
-  callers collapse to `{answer}` via `answerOnly()`. In the orchestrator loop:
+  update outcome via a pure `projectUpdateOutcome(timeline)`; prose-only callers
+  collapse to `{answer}` via `answerOnly()`. In the orchestrator loop:
   `classifyRound(acc)` produces the same three outcomes, and the stop policy is
   named per round-end — `decideAfterStream$` (no-tool round: empty-after-tool
   retry vs reply) and `decideAfterTools$` (post-tool round: directAnswer / guard
@@ -187,10 +156,21 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
 
 - **In-flight streams do not survive restart** — conversation metadata and
   history are persisted in Redis, but an active LLM stream is in-memory only.
+- **Pending actions are process-local v1 state** — active pending actions are
+  conversation sidecar workflow state, not chat messages or LLM context. The
+  current bridge can keep them in memory if select/reload projects the active
+  action back to the client, but production scale needs durable sidecar storage
+  (`get/set/clearPendingAction`) in the conversation store before worker
+  failover, restarts, or non-sticky load balancing.
 - **In-memory caches grow unbounded** — the per-username `chats` map in
   `src/chat/conversation/userChats.js` and the per-user `instances`/`pendingMetas`
   maps in `src/chat/conversation/conversations.js` never evict. Add idle
   eviction or an LRU cap if uptime/user count makes this matter.
+- **Conversation store boundary should outlive Redis** — old conversations
+  cannot stay resident in production. Keep storage APIs oriented around
+  metadata, paged/append-only messages, workflow sidecars, and an evictable
+  runtime cache rather than assuming Redis-backed histories are always loaded
+  into live `Conversation` objects.
 - **Single ai-module instance assumption** — cross-tab sync goes through
   the in-memory `UserChats` / `Conversations` state. Multiple ai-module
   instances behind a load balancer would need Redis pub/sub or an
@@ -212,21 +192,6 @@ Lean list of active-code gaps. Broader specialist/tool architecture lives in
   options because compose passes them, but the active app does not wire SEPAL
   or GEE clients, server-side rate limiting, or session expiry. Drop the
   options or actually wire them.
-
-## Test design
-
-- **`update_recipe` scenario tests pin MOSAIC-specific configuration** — the
-  live-loop scenarios under `test/chat/scenarios/updateRecipe/`
-  (`speedRequestFlow.test.js`, `prepareUpdateFlow.test.js`) bake in specific
-  optical-mosaic field values and op sets (e.g. `cloudBuffer` 600→0,
-  `tileOverlap` KEEP→QUICK_REMOVE, the speed-oriented focus-path list). That
-  couples them to recipe-specific config/knowledge that will churn, and isn't
-  what these tests should pin — they exist to exercise the
-  `prepare_update -> recipe_patch` loop mechanics (forwarding, write-scope,
-  success envelope), not to assert a particular MOSAIC tuning. They feel
-  fragile. Rework to pin the loop generically, decoupled from specific
-  optical-mosaic values (e.g. a minimal/synthetic recipe or value-agnostic
-  assertions).
 
 ## Test coverage
 

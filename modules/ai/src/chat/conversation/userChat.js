@@ -4,7 +4,7 @@
 
 const {EMPTY} = require('rxjs')
 
-function createUserChat({conversations, guiContexts, messageHandler, bus}) {
+function createUserChat({conversations, guiContexts, messageHandler, pendingActions, bus}) {
     const dispatch = {
         'create-conversation':      conversations.create$,
         'select-conversation':      conversations.select$,
@@ -14,7 +14,20 @@ function createUserChat({conversations, guiContexts, messageHandler, bus}) {
         'message':                  messageHandler.handle$,
         'abort':                    conversations.abort$,
         'context':                  guiContexts.update$,
-        'clear-context':            guiContexts.clear$
+        'clear-context':            guiContexts.clear$,
+        'answer-pending-action':    answerPendingAction$,
+        'cancel-pending-action':    pendingActions.cancel$
+    }
+
+    function answerPendingAction$(args) {
+        return pendingActions.answer$({
+            ...args,
+            toolContext: toolContextFor(args)
+        })
+    }
+
+    function toolContextFor({conversationId, clientId, subscriptionId}) {
+        return {conversationId, clientId, subscriptionId, guiContext: guiContexts.get(clientId, subscriptionId)}
     }
 
     return {handle$}

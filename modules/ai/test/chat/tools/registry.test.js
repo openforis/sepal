@@ -77,8 +77,8 @@ describe('tool registry — schemas and invoke envelopes', () => {
 
         it('passes through an envelope-shaped tool result unchanged (no double-wrap)', () => {
             // Tools may explicitly return an envelope to carry structured success/failure
-            // (e.g. recipe_patch, update_recipe). Double-wrapping would hide the outcome
-            // from tool-end events and from the LLM behind data.ok.
+            // (e.g. update_recipe_values, update_recipe). Double-wrapping would hide
+            // the outcome from tool-end events and from the LLM behind data.ok.
             const envelopeTool = {
                 name: 'envelope_tool',
                 description: 'x',

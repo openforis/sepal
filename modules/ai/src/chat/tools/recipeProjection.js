@@ -3,8 +3,8 @@
 // included — the LLM already has the recipeId from its tool args, and recipe
 // type was resolved by the dispatcher's recipe-metadata preflight. Returning
 // fields the LLM doesn't need would only invite confusion; in particular,
-// having a `model` wrapper caused the LLM to patch /model/dates/... instead
-// of /dates/... (recipe_patch operates on the model, not the load envelope).
+// having a `model` wrapper caused older update flows to target
+// /model/dates/... instead of model-relative fields.
 //
 // Pipeline:
 //   1. toEffectiveModel — strips dormant fields per the recipe spec (silent
@@ -17,8 +17,9 @@ const {parsePointer, resolvePointer, formatPointer, PointerNotFound} = require('
 const {toEffectiveModel} = require('#recipes')
 
 function projectLoadedRecipe(recipe, pathString) {
-    // modelHash is the optimistic-concurrency token a later recipe_patch needs;
-    // without it the result is unusable, so fail fast rather than succeed.
+    // modelHash is the optimistic-concurrency token for write-capable recipe
+    // flows; without it the result is unusable, so fail fast rather than
+    // succeed.
     if (!recipe.modelHash) {
         throw new Error('recipe_load: GUI load-recipe response is missing modelHash')
     }

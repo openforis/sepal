@@ -8,6 +8,7 @@ const {createConversations} = require('./conversations')
 const {createGuiContexts} = require('./guiContexts')
 const {createTitleGenerator} = require('./titleGenerator')
 const {createMessageHandler} = require('./messageHandler')
+const {createPendingActions} = require('./pendingActions')
 const {createUserChat} = require('./userChat')
 const {mainSystemPrompt} = require('../llmText/prompts')
 
@@ -22,21 +23,33 @@ function createUserChats({chatStorage, llm, tools, bus, clock, createId, diagnos
         return chats.get(username)
     }
 
+    // pendingActions.answer$ resolves a conversation lazily via the closure
+    // over `conversations`, so we can build pendingActions first and pass it
+    // straight into createConversations + every conversation factory below.
     function buildChat(username) {
         const conversationsStore = chatStorage.conversationsFor(username)
         const titleGenerator = createTitleGenerator({llm, conversationsStore, bus, diagnostics})
-        const conversations = createConversations({
-            conversationsStore,
-            conversationFor$: id => buildConversation$(username, id),
+        const pendingActions = createPendingActions({
+            conversations: {
+                get$: id => conversations.get$(id),
+                persistOrTouch$: (id, now) => conversations.persistOrTouch$(id, now)
+            },
             createId,
             clock
         })
+        const conversations = createConversations({
+            conversationsStore,
+            conversationFor$: id => buildConversation$(username, id, pendingActions),
+            createId,
+            clock,
+            pendingActions
+        })
         const guiContexts = createGuiContexts()
         const messageHandler = createMessageHandler({conversations, guiContexts, titleGenerator, clock})
-        return createUserChat({conversations, guiContexts, messageHandler, bus})
+        return createUserChat({conversations, guiContexts, messageHandler, pendingActions, bus})
     }
 
-    function buildConversation$(username, id) {
+    function buildConversation$(username, id, pendingActions) {
         const history = chatStorage.historyFor(username, id)
         return history.load$().pipe(
             map(persistedMessages => createConversation({
@@ -44,7 +57,8 @@ function createUserChats({chatStorage, llm, tools, bus, clock, createId, diagnos
                 initialMessages: [systemMessage, ...persistedMessages],
                 id,
                 bus,
-                diagnostics
+                diagnostics,
+                pendingActions
             }))
         )
     }

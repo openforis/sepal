@@ -8,6 +8,7 @@ const {createConversation} = require('#mcp/chat/conversation/conversation')
 const {createConversations} = require('#mcp/chat/conversation/conversations')
 const {createGuiContexts} = require('#mcp/chat/conversation/guiContexts')
 const {createMessageHandler} = require('#mcp/chat/conversation/messageHandler')
+const {createPendingActions, noPendingActions} = require('#mcp/chat/conversation/pendingActions')
 const {createTitleGenerator} = require('#mcp/chat/conversation/titleGenerator')
 const {createUserChat} = require('#mcp/chat/conversation/userChat')
 const {createWsHandler} = require('#mcp/chat/conversation/wsHandler')
@@ -205,12 +206,13 @@ function aConversationHarness({
     tools = [],
     bus = aRecordingBus(),
     history = createInMemoryHistory(initialMessages),
-    llm = aFakeLlm({replies})
+    llm = aFakeLlm({replies}),
+    pendingActions = noPendingActions
 } = {}) {
     const registry = createToolRegistry({tools, bus})
     const invocations = collectInvocations(registry)
     const conversation = createConversation({
-        id, initialMessages, llm, history, tools: invocations.registry, bus
+        id, initialMessages, llm, history, tools: invocations.registry, pendingActions, bus
     })
     return {
         conversation,
@@ -226,6 +228,7 @@ function aConversationHarness({
 
 function aUserChatHarness({
     conversationIds = ['conv-1'],
+    pendingActionIds = ['pa-1', 'pa-2', 'pa-3'],
     replies = [{text: 'ok'}],
     tools = [],
     initialMessagesById = {},
@@ -240,6 +243,14 @@ function aUserChatHarness({
     const historiesById = new Map()
     const channelEvents = []
     const createId = sequentialIds(conversationIds)
+    const pendingActions = createPendingActions({
+        conversations: {
+            get$: id => conversations.get$(id),
+            persistOrTouch$: (id, now) => conversations.persistOrTouch$(id, now)
+        },
+        createId: sequentialIds(pendingActionIds),
+        clock
+    })
     const conversations = createConversations({
         conversationsStore,
         conversationFor$: id => of(createConversation({
@@ -248,10 +259,12 @@ function aUserChatHarness({
             llm,
             history: historyFor(id),
             tools: invocations.registry,
+            pendingActions,
             bus
         })),
         createId,
-        clock
+        clock,
+        pendingActions
     })
     const guiContexts = createGuiContexts()
     const messageHandler = createMessageHandler({
@@ -259,7 +272,7 @@ function aUserChatHarness({
         titleGenerator: resolveTitleGenerator(titleGenerator, {llm, conversationsStore, bus}),
         clock
     })
-    const userChat = createUserChat({conversations, guiContexts, messageHandler, bus})
+    const userChat = createUserChat({conversations, guiContexts, messageHandler, pendingActions, bus})
 
     return {
         userChat,
@@ -268,6 +281,7 @@ function aUserChatHarness({
         conversationsStore,
         channelEvents,
         invocations: invocations.calls,
+        pendingActions,
         historyFor,
         handle$(command) {
             return userChat.handle$(command).pipe(tap(event => channelEvents.push(event)))
@@ -311,10 +325,12 @@ function aWsHandlerHarness({
                     llm,
                     history: createInMemoryHistory(),
                     tools: registry,
+                    pendingActions: noPendingActions,
                     bus: aRecordingBus()
                 })),
                 createId,
-                clock
+                clock,
+                pendingActions: noPendingActions
             })
             const guiContexts = createGuiContexts()
             const messageHandler = createMessageHandler({
@@ -323,7 +339,7 @@ function aWsHandlerHarness({
                 clock
             })
             userChatCache.set(username, createUserChat({
-                conversations, guiContexts, messageHandler, bus: aRecordingBus()
+                conversations, guiContexts, messageHandler, pendingActions: noPendingActions, bus: aRecordingBus()
             }))
         }
         return userChatCache.get(username)

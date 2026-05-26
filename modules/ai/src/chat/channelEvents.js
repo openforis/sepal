@@ -83,6 +83,18 @@ function guiAction({requestId, action, params}) {
     return event('gui-action', TARGETED, {requestId, action, params})
 }
 
+function conversationPendingActionCreated({conversationId, pendingAction, targeting = BROADCAST}) {
+    return event('conversation-pending-action-created', targeting, {conversationId, pendingAction})
+}
+
+function conversationPendingActionCleared({conversationId, pendingActionId, reason}) {
+    return event('conversation-pending-action-cleared', BROADCAST, {conversationId, pendingActionId, reason})
+}
+
+function pendingActionError({conversationId, pendingActionId, code, message}) {
+    return event('pending-action-error', TARGETED, {conversationId, pendingActionId, code, message})
+}
+
 function event(kind, targeting, payload) {
     return {kind, targeting, payload}
 }
@@ -92,11 +104,13 @@ function withoutId({id: _id, ...rest}) {
 }
 
 module.exports = {
+    TARGETED, BROADCAST, BROADCAST_EXCEPT,
     emitChannel, isChannelEmission, mapData,
     conversationCreated, conversationClaimed, conversationLoaded, conversationUpdated,
     conversationDeleted, conversationsList,
     chatResponseDelta, chatResponseComplete,
     status, userMessage,
     toolStart, toolEnd, assistantNotice,
-    guiAction
+    guiAction,
+    conversationPendingActionCreated, conversationPendingActionCleared, pendingActionError
 }

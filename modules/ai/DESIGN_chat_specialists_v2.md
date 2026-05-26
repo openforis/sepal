@@ -61,10 +61,10 @@ at the orchestrator level, and move raw recipe inspection and mutation behind
 recipe specialists.
 
 Recipe update knowledge and closure design is tracked separately in
-`DESIGN_recipe_update_knowledge.md`. That note covers the target split between
-generated recipe manuals, reusable operational recipe knowledge, deterministic
-`prepare_update({recipeId, focusPaths})`, dependency expansion, writable patch
-scope, and prompt-cache behavior.
+`DESIGN_recipe_update_knowledge.md`. That note covers the handle-based
+picker/prepare/updater workflow, reusable operational recipe knowledge,
+deterministic handle-keyed preparation, writable handle scope, pending-action
+clarifications, and prompt-cache behavior.
 
 ## 3. Tool surface
 
@@ -109,13 +109,12 @@ types. Existing recipes resolve `recipeType` from `recipeId`; creation requires
 to call again for follow-ups with the new question plus relevant prior derived
 context. The recipe specialist does not own a conversation for descriptions.
 
-Raw/path-scoped `recipe_load`, `recipe_patch`, and create/update primitives are
-specialist-private. The target update surface is narrower still: the update
-specialist should see `prepare_update` plus `recipe_patch`, not an open-ended
-raw load tool. `prepare_update` takes formal focus paths chosen by the
-specialist from the generated manual; it does not receive natural-language user
-instructions. Other specialists receive derived descriptions from recipe
-specialists, not raw recipe JSON.
+Raw/path-scoped `recipe_load` remains specialist-private for description and
+inspection. Update specialists should not author raw JSON Patch. The live update
+surface is handle-based: picker chooses handles, a deterministic prepare step
+builds a handle-keyed packet, the updater calls `update_recipe_values`, and
+deterministic code maps handles to internal patch operations. Other specialists
+receive derived descriptions from recipe specialists, not raw recipe JSON.
 
 Dispatcher-only bridge calls (not exposed to any LLM): `recipe-metadata`
 returns identity-only `{id, type, name, projectId}` from `process.recipes`,
@@ -141,44 +140,52 @@ Budget:
 Inquiry operations, including `describe_recipe`, map explanation, and workflow
 advice, are stateless. Follow-up continuity belongs to the orchestrator.
 
-Action operations (`create_recipe`, `update_recipe`) may be short-lived
-stateful sessions. The state is scoped to one user task, one selected recipe
-or new recipe draft, one recipe type, and one operation. It exists so a
-specialist can load a closure, plan a patch/create draft, hit missing
-information or validation feedback, and continue after the orchestrator fetches
-only the additional information needed.
+Action operations (`create_recipe`, `update_recipe`) may need one explicit
+clarification before they can continue. The state is scoped to one conversation,
+one user task, one selected recipe or new recipe draft, one recipe type, and one
+operation. It exists so the system can resume a bounded operation after the
+user answers a concrete question, without replaying the whole chat or adding
+hidden context to the orchestrator prompt.
 
-The specialist never talks to the user directly. It returns structured
+The specialist does not own the user conversation. It returns structured
 outcomes:
 
 ```js
-{status: 'patched', summary}
+{status: 'updated', summary}
 {status: 'created', recipeId, summary}
-{status: 'needs_info', question, missingFields, continuation}
+{status: 'clarification_needed', question, pendingAction}
 {status: 'failed', reason, details}
 ```
 
-The orchestrator owns the user conversation. On `needs_info`, it decides
-whether to ask the user, call another direct tool, or abort. If it gets the
-missing information, it resumes the same action session with the new data
-instead of replaying the whole chat or asking a fresh specialist to infer the
-same closure again.
+The orchestrator and chat layer own the user-visible clarification. On
+`clarification_needed`, the tool result carries direct user-facing text and a
+pending-action record. The chat UI shows a question panel. If the user answers,
+the system reruns the predetermined tool with the original instruction plus the
+answer; if the user cancels, the pending action is cleared. The clarification
+answer is not injected into the orchestrator conversation as hidden context.
 
-Stateful action sessions are bounded: close on success, failure, user cancel,
-subscription cancel, or TTL. Keep state compact and structured:
+Pending-action state is compact sidecar workflow state, not chat history:
 
 ```js
 {
+  id,
   purpose: 'update',
+  toolName,
+  toolInput,
+  originalInstruction,
+  question,
   recipeType,
   recipeId,
-  pendingGoal,
-  loadedClosure,
-  attemptedOperations,
-  validationErrors,
-  missingInformation
+  createdAt
 }
 ```
+
+For v1, this state may be process-local if it is projected back to clients when
+they select or reload the conversation in the same process. It closes on
+success, failure, explicit user cancel, or conversation deletion. A time-based
+expiry is not required for v1; durable sidecar storage should define retention
+when pending actions need to survive restarts, worker failover, or non-sticky
+load balancing.
 
 Do not keep successful specialist history by default. It is likely stale after
 recipe edits and makes routing harder to reason about. Prompt-prefix caching
@@ -236,8 +243,8 @@ transient vs persisted; that follows from the outcome.
 Stop reasons are either loop-structural (`capped`, `guard-bailed`) or
 policy-authored. For example, the update policy may return
 `{type: 'stop', reason: 'silent-after-success'}` when a silent round follows a
-successful `recipe_patch`. The generic loop must not know what "success" means;
-it only carries the policy's reason in the result:
+successful `update_recipe_values` call. The generic loop must not know what
+"success" means; it only carries the policy's reason in the result:
 
 ```js
 {finalText, finishReason, timeline}
@@ -246,11 +253,11 @@ it only carries the policy's reason in the result:
 Caller-side wrappers still own tool contracts. `update_recipe` turns the loop
 result into the orchestrator-facing envelope, publishes `update_recipe.outcome`,
 and, for `silent-after-success`, may run a constrained tool-free summary call
-from patch facts only. That facts-only narration belongs outside the loop so the
-model cannot invent details from the broader specialist dialogue. Likewise,
-tool-result enrichment (`appliedChanges`, `retryHints`) belongs in tool
-middleware, and patch outcome state should be a projection of the loop timeline
-rather than a second tracker.
+from applied handle/value facts only. That facts-only narration belongs outside
+the loop so the model cannot invent details from the broader specialist
+dialogue. Likewise, tool-result shaping belongs in tool middleware, and update
+outcome state should be a projection of the loop timeline rather than a second
+tracker.
 
 ## 5. Recipe specialists
 
@@ -273,8 +280,9 @@ Purpose-specific recipe facts:
   description, use cases, choose/dont-choose guidance, and outputs.
 - `describeFacts`: for `describe_recipe`. Includes explanation/output facts
   needed to answer questions about a chosen recipe.
-- `editFacts`: for `update_recipe`. Includes schema/rule/edit guidance,
-  dependent fields, and patch-path gotchas. It must not include routing prose.
+- `editFacts`: for `update_recipe`. Includes handle metadata, schema/rule/edit
+  guidance, dependent fields, selector/applicability facts, and value guidance.
+  It must not include routing prose.
 - reusable operational facts: source data for generated manuals and future
   advice/troubleshooting prompts. These facts are topic-tagged and cover
   performance, rendering, quality/completeness, availability, and validation
@@ -289,9 +297,11 @@ Private tools by purpose:
 
 - describe: `recipe_load` with optional JSON Pointer path, returning an
   effective projected model fragment plus `baseModelHash`.
-- update target: `prepare_update` plus `recipe_patch`. `prepare_update` returns
-  the current effective values, base hash, dependency facts, validation rules,
-  and writable scope for formal focus paths.
+- update target: `update_recipe_values` behind a handle-based picker/prepare
+  workflow. Preparation returns current effective values, base hash, dependency
+  facts, coupling/applicability facts, validation rules, and writable handle
+  scope for selected handles. The updater sends handle-keyed values, not paths
+  or JSON Patch operations.
 - create target: load defaults/create closure plus a create primitive. Creation
   patches the recipe type's effective default model or submits an equivalent
   complete effective draft.
@@ -302,62 +312,63 @@ JSON back unless a later design explicitly requires it.
 
 ## 6. Recipe create/update model
 
-Recipe specialists should express create/update as JSON Patch operations, not
-full recipe documents. A whole-model rewrite is expressible as a single root
-`replace` op when the specialist wants it; the wire shape stays the same.
+Recipe specialists should express update intent as handle-keyed values, not
+JSON Patch operations or full recipe documents. Deterministic code maps handles
+to internal paths, diffs against the current effective model, and applies the
+generated patch through the GUI bridge. Creation may use the same handle flow
+over defaults or submit an equivalent complete effective draft behind a
+create-specific primitive.
 
 Validation is layered:
 
-- **AI tool boundary** validates the patch envelope: required fields,
-  non-empty operation list, operation shape, and JSON Pointer strings. It maps
-  GUI failures into structured tool errors with validation details intact.
+- **AI tool boundary** validates the handle-value request: recipe id,
+  workflow-managed write scope, known handles, and value envelope. It maps GUI
+  failures into structured, handle-keyed tool errors.
 - **GUI (recipe-patch handler)** is the authoritative validator on every call:
   applies the patch atomically to the effective model, runs full
   `spec.validate(toEffectiveModel(applied))` (schema **plus** cross-field
   rules), then persists. Server-side checks must never authorize the GUI to
   skip its own validation.
 
-Patch contract:
+Internal patch contract:
 
 - allowed ops: `add`, `remove`, `replace`, `move`, `copy`, optional `test`
 - all-or-nothing apply
 - GUI authoritative post-apply validation
 - persistence through GUI as source of truth
-- structured result with concise summary, invalidated paths, and new
+- structured result with concise summary, invalidated handles, and new
   `modelHash` on success
 
 Creation patches the recipe type's default model. Update patches the current
 model snapshot. Specialist-authored complete recipe JSON is only a fallback for
 small/immature recipe types.
 
-Optimistic concurrency uses `baseModelHash`. Specialist-private load returns
-the current GUI `modelHash` as `baseModelHash`. `recipe_patch` requires
-`{recipeId, baseModelHash, operations}`. Before persistence, GUI compares
-`baseModelHash` to the current model hash. Mismatch returns a structured
-`STALE_WRITE` error with `currentModelHash`; the specialist reloads/retries or
-reports the conflict. JSON Patch `test` ops are semantic guards, not the
-primary concurrency mechanism.
+Optimistic concurrency uses `baseModelHash`. The prepare step returns the
+current GUI `modelHash` as `baseModelHash`; the workflow binds it into
+`update_recipe_values` so the updater model does not supply it. Before
+persistence, GUI compares `baseModelHash` to the current model hash. Mismatch
+returns a structured `STALE_WRITE` error with `currentModelHash`; the updater
+reports the conflict or the workflow reruns preparation in a later design.
 
-`recipe_patch.operations` is an array because dependent changes must land in
-one atomic patch. For example, changing a MOSAIC target date may require
-changing `dates.targetDate`, `dates.seasonStart`, and `dates.seasonEnd`
-together so the post-apply model validates. The specialist should prefer one
-multi-operation patch over several sequential patches for one logical edit.
+`update_recipe_values` receives all intended handle values for one attempt and
+applies them atomically. Dependent changes must land together. For example,
+changing a MOSAIC target date may require changing `targetDate`, `seasonStart`,
+and `seasonEnd` together so the post-apply model validates.
 
-`prepare_update` target contract:
+Preparation contract:
 
-- Input: `{recipeId, focusPaths}` where paths are model-relative JSON Pointers
-  chosen by the update specialist from the generated manual and user
-  instruction.
+- Input: `{recipeId, handles}` where handles are selected by the picker from the
+  static handle catalog.
 - It does not receive the natural-language instruction and must not infer intent
   via keyword matching.
 - Internally loads the current stored recipe, projects it through
-  `toEffectiveModel`, expands deterministic dependency/validation metadata for
-  the supplied paths, and returns only what the specialist needs.
-- Output includes `baseModelHash`, `focusPaths`, `dependentPaths`,
-  `writablePaths`, `currentValues`, `dependencyFacts`, and `validationRules`.
+  `toEffectiveModel`, expands deterministic dependency/coupling/applicability
+  metadata for the supplied handles, and returns only what the updater needs.
+- Output includes `baseModelHash`, `pickedHandles`, `dependentHandles`,
+  `writableHandles`, `fields`, `dependencyFacts`, `couplingFacts`,
+  `applicabilityFacts`, and `validationRules`.
 - General raw/path `recipe_load` remains available to describe specialists and
-  legacy/transitional implementations only.
+  transitional inspection paths only.
 
 SEPAL recipe implementation rules:
 
@@ -382,9 +393,10 @@ Projected/heavy fields:
 - no replace/remove of a specific omitted index without deep-reading that path
 
 Describe-time path loading should stay explicit: `recipe_load({recipeId,
-path})`. Update-time relevance inference belongs in the update specialist using
-the generated manual, while deterministic dependency expansion belongs in
-`prepare_update`. Path lookups are not pre-validated against the schema. The
+path})`. Update-time relevance inference belongs in the picker using the
+handle catalog, while deterministic dependency/coupling/applicability expansion
+belongs in the programmatic prepare step. Path lookups are not pre-validated
+against the schema. The
 actual effective model is authoritative: paths may
 legitimately exist in the model without being schema-declared (loosely typed
 regions, optional fields, or legacy fields a newer schema does not formally
@@ -450,6 +462,7 @@ Per-spec exports (current MOSAIC shape):
   editFacts(),                     // update_recipe facts
   llmMetadata(),                   // generated/structured constraints
   knowledge(),                     // reusable operational facts
+  handles(),                       // handle catalog for update_recipe
   updateManual(),                  // generated compact manual
   validate(model)                  // schema + rules; assumes effective input
   // createFacts()                 // future create_recipe facts
@@ -461,7 +474,7 @@ Registry-level conveniences in `lib/js/recipes/src/index.js`:
 `getRecipeDefaults(id)`, `getRecipeSelectionFacts(id)`,
 `getRecipeDescribeFacts(id)`, `getRecipeEditFacts(id)`,
 `getRecipeLlmMetadata(id)`, `getRecipeUpdateManual(id)`, `getRecipeKnowledge(id)`,
-`validateRecipe(id, model)`, `toEffectiveModel(id, model)`.
+`getRecipeHandles(id)`, `validateRecipe(id, model)`, `toEffectiveModel(id, model)`.
 
 Bring recipe packages back one at a time. Each package needs focused tests for
 defaults, schema acceptance, validation rules, effective projection, prompt
@@ -518,22 +531,24 @@ Current fact shape:
 selectionFacts() -> {description, useCases, chooseWhen, dontChooseWhen, outputs}
 describeFacts()  -> {description, outputs, ...explanationFacts}
 editFacts()      -> {guidance, ...updateDependencies}
-updateManual()   -> compact generated path/rule/operational manual text
+handles()        -> handle catalog with labels, descriptions, value guidance, couplings, applicability
+updateManual()   -> legacy/generated compact update reference; not the live handle-update prompt surface
 ```
 
-The AI module composes prompts via
-`assembleSpecialistPrompt(basePrompt, spec, {purpose, includeSchema})`: the
-static base frame comes first for prompt-cache stability, then a delimited
-type-specific section assembled from the purpose-specific facts. `purpose:
-'describe'` includes describe facts only. `purpose: 'update'` includes edit
-facts plus the generated update manual. Selection facts are consumed by the
+The describe specialist prompt is composed via
+`assembleSpecialistPrompt(basePrompt, spec, {purpose: 'describe'})`: the static
+base frame comes first for prompt-cache stability, then a delimited
+type-specific section assembled from describe facts and value labels. Update is
+different: it uses a generic updater prompt and receives recipe-specific
+handles, field metadata, coupling facts, applicability facts, and validation
+rules through the prepared handle packet. Selection facts are consumed by the
 orchestrator/workflow layer before a recipe specialist is chosen. Full schema
 dumps are a fallback/debug option, not the target update prompt shape.
 
 Future additions should be purpose-specific:
 
 - `createFacts()` for create specialists
-- deterministic preparation summaries returned by `prepare_update`
+- deterministic handle-preparation summaries
 - reusable operational-fact renderings for troubleshooting/advice specialists
 - schema/projection summaries only where a write-capable specialist needs them
 - rule prose where JSON Schema alone does not communicate recipe semantics
@@ -744,7 +759,7 @@ Budget implications:
 
 - specialist prompts are short-lived and narrow; the compact static
   specialist package should target Nova cache fit, roughly <= 18K tokens
-  including base prompt and generated recipe manual
+  including base prompt and handle catalog/prepared-packet metadata
 - the orchestrator is longer-lived and sees every always-visible tool schema on
   every round; keep its static system prompt cacheable and its tool surface
   independently small
@@ -891,15 +906,16 @@ active tool loop.
 This document now tracks architecture and contracts, not a completed
 implementation checklist. Current unresolved design work:
 
-- Expand reusable operational recipe knowledge so generated manuals and future
-  advice/troubleshooting specialists can reason about performance, rendering
-  risk, quality tradeoffs, and validation implications from the same source
-  facts.
-- Continue hardening `prepare_update` and `recipe_patch` as the live update
-  workflow: formal focus paths in, deterministic writable scope out, GUI remains
-  authoritative for persistence and validation.
-- Add short-lived action-session support for create/update so `needs_info`
-  can resume the same specialist task with only the new information.
+- Expand reusable operational recipe knowledge so handle catalogs, prepared
+  packets, and future advice/troubleshooting specialists can reason about
+  performance, rendering risk, quality tradeoffs, and validation implications
+  from the same source facts.
+- Continue hardening the handle-based update workflow: picker handle selection,
+  deterministic preparation, `update_recipe_values` scope enforcement, GUI
+  authoritative persistence/validation, and handle-keyed errors/summaries.
+- Harden pending-action support for create/update clarifications: process-local
+  v1 state is acceptable, but select/reload discovery and later durable
+  conversation sidecar storage are required before production scale.
 - Add `create_recipe` with a separate create specialist prompt/tool surface and
   purpose-specific create facts.
 - Keep broad workflow planning separate from recipe update/create execution;
@@ -909,8 +925,8 @@ implementation checklist. Current unresolved design work:
 
 Measure prompt tokens, specialist tokens, orchestrator vs specialist cost,
 reasoning/cache tokens, context utilization, provider/profile usage, round
-trips, tool failure rate, `needs_info` rate, patch size vs full save, and
-user-visible retries.
+trips, tool failure rate, clarification-needed rate, changed-handle/internal
+patch size vs full save, and user-visible retries.
 
 ## 16. Target file layout
 
@@ -939,8 +955,9 @@ Claude must not change `Conversation` or specialist loops.
 
 ## 17. Open questions
 
-- Which operational-fact shape should each recipe spec expose to support update
-  manuals and advice/troubleshooting prompts without duplicating prose?
+- Which operational-fact shape should each recipe spec expose to support handle
+  catalogs, prepared packets, and advice/troubleshooting prompts without
+  duplicating prose?
 - Which update dependencies can be derived mechanically from schema/rules, and
   which need hand-authored recipe knowledge?
 - What `createFacts()` shape is needed before `create_recipe` lands?

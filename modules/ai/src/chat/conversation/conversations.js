@@ -5,11 +5,12 @@
 
 const {EMPTY, concat, concatMap, defer, filter, from, of} = require('rxjs')
 const {
+    TARGETED,
     conversationCreated, conversationClaimed, conversationLoaded,
-    conversationDeleted, conversationsList, status
+    conversationDeleted, conversationPendingActionCreated, conversationsList, status
 } = require('../channelEvents')
 
-function createConversations({conversationsStore, conversationFor$, createId, clock}) {
+function createConversations({conversationsStore, conversationFor$, createId, clock, pendingActions}) {
     const instances = new Map()
     const pendingMetas = new Map()
 
@@ -35,19 +36,28 @@ function createConversations({conversationsStore, conversationFor$, createId, cl
 
     function select$({conversationId}) {
         return get$(conversationId).pipe(
-            concatMap(conversation => {
-                const loaded = conversationLoaded(conversationId, conversation.messagesSnapshot())
-                return conversation.isStreaming
-                    ? from([loaded, status(conversationId)])
-                    : of(loaded)
-            })
+            concatMap(conversation => from(selectEvents(conversation, conversationId)))
         )
+    }
+
+    // Order: loaded → pending-action-created (when active) → status (when
+    // streaming). The pending projection is targeted at the selecting
+    // subscription — only that client needs to learn about an in-flight
+    // clarification it missed. Live recording stays broadcast so every tab
+    // sees a fresh clarification as it happens.
+    function selectEvents(conversation, conversationId) {
+        const events = [conversationLoaded(conversationId, conversation.messagesSnapshot())]
+        const pending = pendingActions.clientView(conversationId)
+        if (pending) events.push(conversationPendingActionCreated({conversationId, pendingAction: pending, targeting: TARGETED}))
+        if (conversation.isStreaming) events.push(status(conversationId))
+        return events
     }
 
     function delete$({conversationId}) {
         return defer(() => {
             instances.get(conversationId)?.abort()
             instances.delete(conversationId)
+            pendingActions.clear(conversationId)
             if (pendingMetas.delete(conversationId)) {
                 return of(conversationDeleted(conversationId))
             }

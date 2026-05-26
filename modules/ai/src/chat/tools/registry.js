@@ -66,8 +66,8 @@ function createToolRegistry({tools, bus = NOOP_BUS, diagnostics = DEFAULT_DIAGNO
             map(value => {
                 if (isChannelEmission(value)) return value
                 // A tool may explicitly return an envelope ({ok: boolean, data|error})
-                // to carry structured success/failure (e.g. recipe_patch's STALE_WRITE,
-                // update_recipe's UPDATE_FAILED). Pass envelopes through so the outer
+                // to carry structured success/failure (e.g. update_recipe_values'
+                // STALE_WRITE, update_recipe's UPDATE_FAILED). Pass envelopes through so the outer
                 // tool-end event and the LLM-facing toolResult reflect the real
                 // outcome instead of being wrapped as ok=true with the failure
                 // hidden inside data.

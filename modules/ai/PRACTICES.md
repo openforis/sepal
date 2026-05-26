@@ -169,6 +169,8 @@ Nested actions (turn → llm-call → tool-invocation) get a child `correlationI
 
 **State lives in the domain object.** It owns its in-memory state (lists, counters, derived values). Durable persistence is a Notification, not a source of truth — the object tells the persister about each change; it doesn't read from the persister on every operation. Don't reach into a collaborator for state the object should hold itself.
 
+**Required deps over null-checked optionals.** When a constructor needs a collaborator, require it. For code paths that don't exercise the collaborator, export one canonical inert instance beside the factory (e.g. `noPendingActions` next to `createPendingActions`) — production and tests both pass a real or inert instance, never `undefined`. Defensive `?.method()` is a smell: real-world missing wiring slips through silently, and call sites bloat. For circular constructor deps, resolve with a lazy closure over the late dep (`{get$: id => later.get$(id)}`), not a forwarder object that null-checks until the late dep arrives — JS closures resolve lexically at call time, untangling the cycle without an intermediate holder.
+
 **Factory-with-collaborators** is the dynamic-language analogue of constructor injection. Use for stateful or coordinating objects. Per-call data → method args.
 
 ```js
@@ -470,6 +472,8 @@ Adapter tests, pure-algorithm tests, and unit tests for genuinely-orthogonal con
 Top-level `test/` keeps tests out of production builds. Configure the build (Docker `COPY`, npm `files`, etc.) to ship `src/` only.
 
 Per-slice test infrastructure (drivers, builders, harnesses) → `test/<area>/`. Start collapsed (one `harness.<ext>`). Split when files grow or cohesion suffers.
+
+**Helpers below tests.** Within a test file, `describe` / `it` blocks come first; helper builders (`aMosaicRecipe`, `loadRecipe`, `prepareFor`, …) come after at file scope. JS function-declaration hoisting keeps references inside tests safe. Default to file scope, not describe scope, unless a helper is genuinely specific to one nested scope. A test file reads top-down: what's being pinned first, how it's set up second.
 
 ## Manual tests
 

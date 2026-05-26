@@ -23,7 +23,7 @@ const PATCH_ERROR_PASSTHROUGH = ['currentModelHash']
 function updateRecipeValuesTool(guiRequests) {
     return {
         name: 'update_recipe_values',
-        description: 'Set values for ONE recipe by handle name. Send {recipeId, baseModelHash, writableHandles, values:{handle->value}}. values is a handle-keyed object; only handles in writableHandles are accepted. The tool applies all values atomically and returns success or a handle-keyed error.',
+        description: 'Set values for ONE recipe by handle name. Send {recipeId, values:{handle->value}}. The workflow supplies the concurrency token and writable handle set. The tool applies all values atomically and returns success or a handle-keyed error.',
         parameters: {
             type: 'object',
             properties: {

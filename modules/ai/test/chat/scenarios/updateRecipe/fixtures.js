@@ -2,12 +2,12 @@
 //
 //   metadataFor / *Metadata  — recipe-metadata + load-recipe doubles that hand
 //                              a workflow a constant recipe (no patch state).
-//   aLiveMosaicSetup         — recipe-metadata + load-recipe + recipe-patch
-//                              that maintain a live in-memory MOSAIC model
-//                              across recipe_patch calls. Lets scenario tests
-//                              assert on the SEMANTIC final model after one
-//                              or more handle-keyed updates flow through the
-//                              real update_recipe_values tool.
+//   aLiveMosaicSetup         — recipe-metadata + load-recipe + GUI recipe-patch
+//                              doubles that maintain a live in-memory MOSAIC
+//                              model. Lets scenario tests assert on the
+//                              SEMANTIC final model after one or more
+//                              handle-keyed updates flow through the real
+//                              update_recipe_values tool.
 
 const {of, throwError} = require('rxjs')
 const {aFakeGuiRequests, innerToolsImpl} = require('../../harness')

@@ -29,11 +29,11 @@ const DEFAULT_DIAGNOSTICS = createDiagnostics()
 
 const MAX_TOOL_ROUNDS = 8
 
-function createConversationLoop({id, initialMessages = [], llm, history, tools, bus, diagnostics = DEFAULT_DIAGNOSTICS}) {
+function createConversationLoop({id, initialMessages = [], llm, history, tools, pendingActions, bus, diagnostics = DEFAULT_DIAGNOSTICS}) {
     const messages = [...initialMessages]
     const notices = createTerminalNotices({bus, conversationId: id, append$})
 
-    return {runTurn$, messagesSnapshot}
+    return {runTurn$, runResumeTurn$, messagesSnapshot}
 
     function messagesSnapshot() {
         return [...messages]
@@ -48,6 +48,23 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         return bus.track$('conversation.send', {conversationId: id},
             append$({role: 'user', content: text}).pipe(
                 concatMap(() => step$(turn, {round: 0}))
+            )
+        )
+    }
+
+    // Pending-action resume: run a single pre-determined tool round with no
+    // LLM call. handleToolCalls$ persists assistant+tool+directReply just like
+    // a normal tool round; decideAfterTools$ then short-circuits via the
+    // tool's directAnswer flag to stream user-facing text.
+    function runResumeTurn$({toolCall, userAnswerText, toolContext}) {
+        const turn = {
+            toolContext,
+            guard: createToolCallGuard({consecutiveFailureBail, invalidArgsBail}),
+            contextMessage: null
+        }
+        return bus.track$('conversation.resume', {conversationId: id},
+            append$({role: 'user', content: userAnswerText}).pipe(
+                concatMap(() => handleToolCalls$('', [toolCall], turn, {round: 0}))
             )
         )
     }
@@ -157,7 +174,10 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
                     // collected.results is the persisted shape; the load path rebuilds from it.
                     // toolStart/toolEnd carry input/data/error for live display only.
                     collected.results.push({...ref, result: value})
-                    return of({toolEnd: {...ref, ok: value.ok, data: value.data, error: value.error}})
+                    return concat(
+                        of({toolEnd: {...ref, ok: value.ok, data: value.data, error: value.error}}),
+                        pendingActions.observeToolResult$({conversationId: id, toolCall, result: value})
+                    )
                 })
             )
         )

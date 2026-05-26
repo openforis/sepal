@@ -43,4 +43,4 @@ function routeTurnEvent(conversationId, value) {
     return chatResponseDelta(conversationId, value.textDelta)
 }
 
-module.exports = {createMessageHandler}
+module.exports = {createMessageHandler, routeTurnEvent}
