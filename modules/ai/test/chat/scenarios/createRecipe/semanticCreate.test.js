@@ -89,19 +89,27 @@ function aLiveCreateSetup() {
     })
     const realTool = createRecipeValuesTool(guiRequests)
     const innerTools = innerToolsImpl(
-        {create_recipe_values: (input, ctx) => realTool.invoke$(input, ctx)},
-        [{
-            name: 'create_recipe_values',
-            description: 'Create.',
-            parameters: {
-                type: 'object',
-                properties: {
-                    recipeType: {type: 'string'}, projectId: {type: 'string'}, name: {type: 'string'},
-                    writableHandles: {type: 'array'}, values: {type: 'object'}
-                },
-                required: ['recipeType', 'writableHandles', 'values']
-            }
-        }]
+        {
+            create_recipe_values: (input, ctx) => realTool.invoke$(input, ctx),
+            aoi_list_countries: () => of([]),
+            aoi_list_country_areas: () => of([])
+        },
+        [
+            {
+                name: 'create_recipe_values',
+                description: 'Create.',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        recipeType: {type: 'string'}, projectId: {type: 'string'}, name: {type: 'string'},
+                        writableHandles: {type: 'array'}, values: {type: 'object'}
+                    },
+                    required: ['recipeType', 'writableHandles', 'values']
+                }
+            },
+            {name: 'aoi_list_countries', description: 'List countries.', parameters: {type: 'object', properties: {query: {type: 'string'}}}},
+            {name: 'aoi_list_country_areas', description: 'List areas.', parameters: {type: 'object', properties: {countryId: {type: 'integer'}, query: {type: 'string'}}, required: ['countryId']}}
+        ]
     )
     return {guiRequests, innerTools, createCalls, getSubmittedModel: () => submittedModel}
 }

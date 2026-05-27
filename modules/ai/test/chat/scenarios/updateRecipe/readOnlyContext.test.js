@@ -1,5 +1,5 @@
 const {of} = require('rxjs')
-const {aToolFactoryHarness, innerToolsImpl} = require('../../harness')
+const {aToolFactoryHarness, innerToolsImpl, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
 const {updateRecipeValuesTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool')
 const {metadataFor, mosaicMetadata, aFullMosaicModel} = require('./fixtures')
 const {aFakeGuiRequests} = require('../../builders')
@@ -23,11 +23,17 @@ describe('"only cloudMethods picked" — corrections/brdfMultiplier are read-onl
         })
         const realTool = updateRecipeValuesTool(guiRequests)
         const innerTools = innerToolsImpl(
-            {update_recipe_values: (input, ctx) => realTool.invoke$(input, ctx)},
-            [{
-                name: 'update_recipe_values', description: 'Update.',
-                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-            }]
+            {
+                update_recipe_values: (input, ctx) => realTool.invoke$(input, ctx),
+                ...AOI_INNER_TOOL_IMPLS
+            },
+            [
+                {
+                    name: 'update_recipe_values', description: 'Update.',
+                    parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+                },
+                ...AOI_INNER_TOOL_SCHEMAS
+            ]
         )
         return {guiRequests, innerTools, calls}
     }

@@ -10,12 +10,14 @@ describe('update_recipe allowed-tool scoping', () => {
                 properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}},
                 required: ['recipeId', 'baseModelHash', 'writableHandles', 'values']
             }},
+            {name: 'aoi_list_countries', description: 'List countries.', parameters: {type: 'object', properties: {query: {type: 'string'}}}},
+            {name: 'aoi_list_country_areas', description: 'List areas.', parameters: {type: 'object', properties: {countryId: {type: 'integer'}, query: {type: 'string'}}, required: ['countryId']}},
             {name: 'recipe_load', description: 'Load.', parameters: {type: 'object', properties: {}}},
             {name: 'recipe_list', description: 'List.', parameters: {type: 'object', properties: {}}}
         ])
     }
 
-    it('offers the updater only update_recipe_values — no recipe_patch, no recipe_load, no prepare_update', () => {
+    it('offers the updater update_recipe_values + AOI lookup tools — and nothing else (no recipe_load, no recipe_list, no recipe_patch)', () => {
         const harness = aToolFactoryHarness({
             specialist: 'update_recipe',
             innerTools: innerToolsForUpdate(),
@@ -29,7 +31,8 @@ describe('update_recipe allowed-tool scoping', () => {
 
         // receivedTools[0] is the picker call (tool-free). receivedTools[1] is the updater call.
         expect(harness.llm.receivedTools[0]).toEqual([])
-        expect(harness.llm.receivedTools[1].map(schema => schema.name).sort()).toEqual(['update_recipe_values'])
+        expect(harness.llm.receivedTools[1].map(schema => schema.name).sort())
+            .toEqual(['aoi_list_countries', 'aoi_list_country_areas', 'update_recipe_values'])
     })
 
     it('refuses an update_recipe_values call for a different recipeId with RECIPE_SCOPE_VIOLATION', () => {
@@ -55,7 +58,7 @@ describe('update_recipe allowed-tool scoping', () => {
         expect(toolMessage.toolResults[0].result.error.message).toContain('r999')
     })
 
-    it('refuses raw recipe_load entirely from the updater — only update_recipe_values is in scope', () => {
+    it('refuses raw recipe_load entirely from the updater — only update values and AOI lookup are in scope', () => {
         const recipeLoadCall = {id: 'tl1', name: 'recipe_load', input: {recipeId: 'r1'}}
         const harness = aToolFactoryHarness({
             specialist: 'update_recipe',
@@ -72,6 +75,15 @@ describe('update_recipe allowed-tool scoping', () => {
         expect(harness.innerTools.invocations).toEqual([])
         const toolMessage = harness.llm.receivedMessages[2].find(message => message.role === 'tool')
         expect(toolMessage.toolResults[0].result.error.code).toBe('TOOL_NOT_ALLOWED')
+    })
+
+    it('throws at specialist construction when AOI lookup tools are absent from inner tools (load-bearing — prompt always advertises them)', () => {
+        const innerToolsWithoutAoi = innerToolsWithSchemas([
+            {name: 'update_recipe_values', description: 'Update.', parameters: {type: 'object', properties: {}}}
+        ])
+
+        expect(() => aToolFactoryHarness({specialist: 'update_recipe', innerTools: innerToolsWithoutAoi}))
+            .toThrow(/aoi_list_countries.*aoi_list_country_areas/)
     })
 
     describe('the LLM-facing update_recipe_values schema hides workflow-bound fields', () => {
@@ -101,14 +113,22 @@ describe('update_recipe allowed-tool scoping', () => {
         function spyInnerTools() {
             const seen = []
             return innerToolsImpl(
-                {update_recipe_values: input => {
-                    seen.push(input)
-                    return of({ok: true, data: {summary: 'ok', modelHash: 'h-next', appliedHandles: Object.keys(input.values), invalidatedHandles: []}})
-                }},
-                [{
-                    name: 'update_recipe_values', description: 'Update.',
-                    parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-                }]
+                {
+                    update_recipe_values: input => {
+                        seen.push(input)
+                        return of({ok: true, data: {summary: 'ok', modelHash: 'h-next', appliedHandles: Object.keys(input.values), invalidatedHandles: []}})
+                    },
+                    aoi_list_countries: () => of([]),
+                    aoi_list_country_areas: () => of([])
+                },
+                [
+                    {
+                        name: 'update_recipe_values', description: 'Update.',
+                        parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+                    },
+                    {name: 'aoi_list_countries', description: 'List countries.', parameters: {type: 'object', properties: {query: {type: 'string'}}}},
+                    {name: 'aoi_list_country_areas', description: 'List areas.', parameters: {type: 'object', properties: {countryId: {type: 'integer'}, query: {type: 'string'}}, required: ['countryId']}}
+                ]
             )
         }
 

@@ -88,12 +88,20 @@ function aLiveMosaicSetup({model, validate = false}) {
         return of({})
     })
     const innerTools = innerToolsImpl(
-        {update_recipe_values: (input, context) => updateRecipeValuesTool(guiRequests).invoke$(input, context)},
-        [{
-            name: 'update_recipe_values',
-            description: 'Update.',
-            parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-        }]
+        {
+            update_recipe_values: (input, context) => updateRecipeValuesTool(guiRequests).invoke$(input, context),
+            aoi_list_countries: () => of([]),
+            aoi_list_country_areas: () => of([])
+        },
+        [
+            {
+                name: 'update_recipe_values',
+                description: 'Update.',
+                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+            },
+            {name: 'aoi_list_countries', description: 'List countries.', parameters: {type: 'object', properties: {query: {type: 'string'}}}},
+            {name: 'aoi_list_country_areas', description: 'List areas.', parameters: {type: 'object', properties: {countryId: {type: 'integer'}, query: {type: 'string'}}, required: ['countryId']}}
+        ]
     )
     return {guiRequests, innerTools, patchCalls, getCurrentModel: () => currentModel}
 }

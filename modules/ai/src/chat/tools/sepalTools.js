@@ -1,8 +1,9 @@
 // SEPAL product-domain tools. sepalTools() — orchestrator-facing list.
-// specialistInnerTools() — list specialists see inside their inner loop
-// (adds recipe_load + update_recipe_values).
+// specialistInnerTools() — full inner-loop tool registry. Each specialist
+// scopes this down to the tools it is allowed to call.
 
 const {guiContextTool} = require('./guiContextTool')
+const {aoiTools} = require('./aoiTools')
 const {mapTools} = require('./mapTools')
 const {projectTools} = require('./projectTools')
 const {recipeListTool, recipeOpenTool, recipeLoadTool} = require('./recipeTools')
@@ -19,15 +20,14 @@ function sepalTools({guiRequests}) {
     ]
 }
 
-// recipe_load (describe), update_recipe_values (update), and
-// create_recipe_values (create) are included here so recipe specialists can
-// inspect, write, and create recipes. None are on the orchestrator surface.
-// Specialists scope down further to a per-specialist allowed list.
+// Recipe value tools and specialist-only lookup tools live here, not on the
+// orchestrator surface. Specialists scope down to a per-specialist allow-list.
 function specialistInnerTools({guiRequests, bus}) {
     return [
         guiContextTool(),
         recipeListTool(guiRequests),
         ...projectTools(guiRequests),
+        ...aoiTools(guiRequests),
         recipeLoadTool(guiRequests),
         updateRecipeValuesTool(guiRequests, bus),
         createRecipeValuesTool(guiRequests),

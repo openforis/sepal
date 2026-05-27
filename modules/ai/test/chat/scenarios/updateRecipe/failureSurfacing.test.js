@@ -1,5 +1,5 @@
 const {of, throwError} = require('rxjs')
-const {aToolFactoryHarness, aConversationHarness, aFakeGuiRequests, collect, innerToolsImpl} = require('../../harness')
+const {aToolFactoryHarness, aConversationHarness, aFakeGuiRequests, collect, innerToolsImpl, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
 const {aFullMosaicModel} = require('./fixtures')
 const {updateRecipeValuesTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool')
 
@@ -23,12 +23,18 @@ describe('a failed update_recipe surfaces the validation reason to the user', ()
             return of({})
         })
         const innerTools = innerToolsImpl(
-            {update_recipe_values: (input, context) => updateRecipeValuesTool(guiRequests).invoke$(input, context)},
-            [{
-                name: 'update_recipe_values',
-                description: 'Update.',
-                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-            }]
+            {
+                update_recipe_values: (input, context) => updateRecipeValuesTool(guiRequests).invoke$(input, context),
+                ...AOI_INNER_TOOL_IMPLS
+            },
+            [
+                {
+                    name: 'update_recipe_values',
+                    description: 'Update.',
+                    parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+                },
+                ...AOI_INNER_TOOL_SCHEMAS
+            ]
         )
         const updaterCall = {id: 'tu1', name: 'update_recipe_values', input: {
             recipeId: 'r1', baseModelHash: 'h-base',

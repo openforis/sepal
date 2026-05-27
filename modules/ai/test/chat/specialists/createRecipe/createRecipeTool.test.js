@@ -2,7 +2,7 @@ const {of} = require('rxjs')
 const {createRecipeTool} = require('#mcp/chat/specialists/createRecipe/createRecipeTool')
 const {createRecipeValuesTool} = require('#mcp/chat/specialists/createRecipe/createRecipeValuesTool')
 const {aFakeBus, aFakeLlm, aFakeGuiRequests, read} = require('../../builders')
-const {innerToolsImpl, innerToolsWithSchemas} = require('../../harness')
+const {innerToolsImpl, innerToolsWithSchemas, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
 
 const POLYGON = {type: 'POLYGON', path: [[36.7, -1.4], [37.0, -1.4], [37.0, -1.1]]}
 
@@ -183,8 +183,11 @@ function aTool({replies, guiCalls, createResponse, useRealInnerTool = true} = {}
     const innerTools = useRealInnerTool
         ? innerToolsWithRealCreateValues(gui.handler)
         : innerToolsImpl(
-            {create_recipe_values: (_input, _ctx) => typeof createResponse === 'function' ? createResponse() : of(createResponse)},
-            [createRecipeValuesSchema()]
+            {
+                create_recipe_values: (_input, _ctx) => typeof createResponse === 'function' ? createResponse() : of(createResponse),
+                ...AOI_INNER_TOOL_IMPLS
+            },
+            [createRecipeValuesSchema(), ...AOI_INNER_TOOL_SCHEMAS]
         )
     const tool = createRecipeTool({llm, bus: busTracked, innerTools})
     return {
@@ -200,8 +203,11 @@ function aTool({replies, guiCalls, createResponse, useRealInnerTool = true} = {}
 function innerToolsWithRealCreateValues(guiHandler) {
     const realTool = createRecipeValuesTool(aFakeGuiRequests(guiHandler))
     return innerToolsImpl(
-        {create_recipe_values: (input, ctx) => realTool.invoke$(input, ctx)},
-        [createRecipeValuesSchema()]
+        {
+            create_recipe_values: (input, ctx) => realTool.invoke$(input, ctx),
+            ...AOI_INNER_TOOL_IMPLS
+        },
+        [createRecipeValuesSchema(), ...AOI_INNER_TOOL_SCHEMAS]
     )
 }
 

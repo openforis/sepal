@@ -8,8 +8,8 @@
 //   -> pickHandles$           (one tool-free LLM call → handles; allowEmpty)
 //   -> prepareCreatePacket$   (defaultModel → handle-keyed packet, always
 //                              including user-required handles)
-//   -> create specialist      (LLM loop, only create_recipe_values in scope,
-//                              workflow-bound fields injected per attempt)
+//   -> create specialist      (LLM loop, create_recipe_values + lookup tools
+//                              in scope; workflow-bound fields injected)
 //   -> projectCreateOutcome   (timeline → user-facing envelope + diagnostic)
 // JSON Pointer paths stay below the GUI/log boundary.
 
@@ -21,7 +21,7 @@ const {isChannelEmission} = require('../../channelEvents')
 const {pickHandles$} = require('../updateRecipe/pickHandles')
 const {prepareCreatePacket$} = require('./prepareCreatePacket')
 const {projectCreateOutcome, publishOutcomeAndShape} = require('./createOutcome')
-const {createRecipeCreateSpecialist} = require('./createSpecialist')
+const {createCreateRecipeSpecialist} = require('./createRecipeSpecialist')
 
 // directAnswer tools carry user-facing prose even when the attempt short-
 // circuits, so the orchestrator can stream it without an answer-less restate.
@@ -30,7 +30,7 @@ const PICKER_FAILED_ANSWER = "I couldn't figure out which recipe fields your req
 const PREPARE_FAILED_ANSWER = "I couldn't prepare that create right now. Please try again."
 
 function createCreateWorkflow({llm, bus, innerTools}) {
-    const specialist = createRecipeCreateSpecialist({llm, bus, innerTools})
+    const specialist = createCreateRecipeSpecialist({llm, bus, innerTools})
 
     return {run$}
 

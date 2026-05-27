@@ -2,7 +2,7 @@ const {specialistPrompt} = require('../../llmText/prompts')
 const {createSpecialistRuntime} = require('../runSpecialist')
 const {scopeInnerTools} = require('../specialistScope')
 
-const ALLOWED_INNER_TOOLS = ['create_recipe_values']
+const ALLOWED_INNER_TOOLS = ['create_recipe_values', 'aoi_list_countries', 'aoi_list_country_areas']
 
 // The LLM-facing schema hides these; the workflow supplies them per-attempt
 // via canonicalizeCall before the runtime logs/guards the tool call. The
@@ -10,7 +10,7 @@ const ALLOWED_INNER_TOOLS = ['create_recipe_values']
 // between the two confuses the model and got us once on update.
 const WORKFLOW_BOUND_FIELDS = ['recipeType', 'projectId', 'name', 'writableHandles']
 
-function createRecipeCreateSpecialist({llm, bus, innerTools}) {
+function createCreateRecipeSpecialist({llm, bus, innerTools}) {
     const scope = scopeInnerTools({innerTools, allowed: ALLOWED_INNER_TOOLS, label: 'create_recipe'})
     const schemas = hideToolFields(scope.allowedSchemas, {
         tool: 'create_recipe_values', fields: WORKFLOW_BOUND_FIELDS
@@ -19,7 +19,7 @@ function createRecipeCreateSpecialist({llm, bus, innerTools}) {
     const runtime = createSpecialistRuntime({
         llm, bus,
         name: 'recipe.create',
-        systemPrompt: specialistPrompt('createHandles'),
+        systemPrompt: specialistPrompt('createRecipeHandles'),
         tools: {
             schemas,
             invoke$: scope.invokeTool$,
@@ -84,4 +84,4 @@ function narrowSchema(schema, hidden) {
     return {...schema, parameters: {...schema.parameters, properties, required}}
 }
 
-module.exports = {createRecipeCreateSpecialist}
+module.exports = {createCreateRecipeSpecialist}

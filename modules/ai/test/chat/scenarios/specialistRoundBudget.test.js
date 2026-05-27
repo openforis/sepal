@@ -1,5 +1,5 @@
 const {of} = require('rxjs')
-const {aToolFactoryHarness, innerToolsImpl} = require('../harness')
+const {aToolFactoryHarness, innerToolsImpl, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../harness')
 const {SPECIALIST_CAP_ANSWER} = require('#mcp/chat/specialists/runSpecialist')
 
 // The specialist's productive-round budget must not be spent by empty-response
@@ -23,12 +23,18 @@ describe('specialist round budget separates productive rounds from stalls', () =
         ]
         let i = 0
         const innerTools = innerToolsImpl(
-            {update_recipe_values: () => of(updateResults[i++])},
-            [{
-                name: 'update_recipe_values',
-                description: 'Update.',
-                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-            }]
+            {
+                update_recipe_values: () => of(updateResults[i++]),
+                ...AOI_INNER_TOOL_IMPLS
+            },
+            [
+                {
+                    name: 'update_recipe_values',
+                    description: 'Update.',
+                    parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+                },
+                ...AOI_INNER_TOOL_SCHEMAS
+            ]
         )
         const harness = aToolFactoryHarness({
             specialist: 'update_recipe',

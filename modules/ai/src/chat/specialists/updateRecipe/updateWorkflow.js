@@ -14,7 +14,7 @@
 //   scope     deterministic prepare expands handle dependencies + current
 //             values into a writable, handle-keyed packet
 //   apply     update specialist runs the LLM loop on update_recipe_values
-//             (owns its prompt, scope, tool wrappers — see updateSpecialist)
+//             (owns its prompt, scope, tool wrappers — see updateRecipeSpecialist)
 //   report    project the timeline into a user-facing envelope and publish
 //             the update_recipe.outcome diagnostic; fall back to a summary
 //             LLM call when the updater answered empty after a success
@@ -29,7 +29,7 @@ const {pickHandles$} = require('./pickHandles')
 const {prepareHandlePacket$} = require('./prepareHandlePacket')
 const {projectUpdateOutcome, publishOutcomeAndShape} = require('./updateOutcome')
 const {summarizeUpdate$} = require('./updateSummary')
-const {createRecipeUpdateSpecialist} = require('./updateSpecialist')
+const {createUpdateRecipeSpecialist} = require('./updateRecipeSpecialist')
 
 // directAnswer tools carry user-facing prose even when the attempt short-
 // circuits, so the orchestrator can stream it without an answer-less restate.
@@ -40,7 +40,7 @@ const UNSUPPORTED_RECIPE_ANSWER = "This recipe type isn't supported by the chat 
 const PREPARE_FAILED_ANSWER = "I couldn't prepare that update right now. Please try again."
 
 function createUpdateWorkflow({llm, bus, guiRequests, innerTools}) {
-    const updater = createRecipeUpdateSpecialist({llm, bus, innerTools})
+    const updater = createUpdateRecipeSpecialist({llm, bus, innerTools})
 
     return {run$}
 

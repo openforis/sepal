@@ -1,8 +1,7 @@
 // Bus event publishers for the specialist runtime. Compact summaries at
 // DEBUG (per-round lifecycle) and INFO (update outcome). The per-tool
-// summarisers are narrow — update_recipe_values gets a bespoke string;
-// every other tool falls back to a generic kind label so a new tool still
-// publishes a usable event without code changes here.
+// summarisers are narrow: high-volume value/lookup tools get compact bespoke
+// strings, and new tools still publish usable generic events.
 
 const {publishLoopPrompt} = require('../loopEvents')
 const {compactJson, handleValuesSummary, recipeStateSummary} = require('./recipeStateDiagnostics')
@@ -279,6 +278,14 @@ function summariseToolInput(tool, input) {
             `baseModelHash=${shortHash(input.baseModelHash)}`,
             `handles=${nameList(Object.keys(input.values || {}))}`
         ].join(' ')
+    }
+    if (tool === 'aoi_list_countries') {
+        return input.query ? `query=${JSON.stringify(truncate(input.query, 80))}` : ''
+    }
+    if (tool === 'aoi_list_country_areas') {
+        const parts = [`countryId=${input.countryId || '-'}`]
+        if (input.query) parts.push(`query=${JSON.stringify(truncate(input.query, 80))}`)
+        return parts.join(' ')
     }
     return ''
 }

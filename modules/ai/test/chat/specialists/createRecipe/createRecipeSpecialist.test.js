@@ -1,8 +1,8 @@
 const {of} = require('rxjs')
-const {createRecipeCreateSpecialist} = require('#mcp/chat/specialists/createRecipe/createSpecialist')
+const {createCreateRecipeSpecialist} = require('#mcp/chat/specialists/createRecipe/createRecipeSpecialist')
 const {specialistPrompt} = require('#mcp/chat/llmText/prompts')
 const {aFakeLlm, aFakeBus, expectNoHandlePathsIn} = require('../../builders')
-const {innerToolsImpl, innerToolsWithSchemas} = require('../../harness')
+const {innerToolsImpl, innerToolsWithSchemas, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
 
 const CONTEXT = {conversationId: 'conv-1'}
 
@@ -25,7 +25,7 @@ describe('create-recipe specialist', () => {
 
     describe('the prompt agrees with the visible schema', () => {
 
-        const prompt = specialistPrompt('createHandles')
+        const prompt = specialistPrompt('createRecipeHandles')
 
         it('shows the create_recipe_values call shape as ({values}) — the visible LLM surface', () => {
             expect(prompt).toMatch(/create_recipe_values\s*\(\s*\{\s*values\s*\}\s*\)/)
@@ -63,14 +63,20 @@ describe('create-recipe specialist', () => {
         function spyInnerTools() {
             const seen = []
             return innerToolsImpl(
-                {create_recipe_values: input => {
-                    seen.push(input)
-                    return of({ok: true, data: {recipeId: 'r-new', type: 'MOSAIC', name: input.name, projectId: input.projectId, summary: 'created'}})
-                }},
-                [{
-                    name: 'create_recipe_values', description: 'Create.',
-                    parameters: {type: 'object', properties: {recipeType: {type: 'string'}, projectId: {type: 'string'}, name: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-                }]
+                {
+                    create_recipe_values: input => {
+                        seen.push(input)
+                        return of({ok: true, data: {recipeId: 'r-new', type: 'MOSAIC', name: input.name, projectId: input.projectId, summary: 'created'}})
+                    },
+                    ...AOI_INNER_TOOL_IMPLS
+                },
+                [
+                    {
+                        name: 'create_recipe_values', description: 'Create.',
+                        parameters: {type: 'object', properties: {recipeType: {type: 'string'}, projectId: {type: 'string'}, name: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+                    },
+                    ...AOI_INNER_TOOL_SCHEMAS
+                ]
             )
         }
 
@@ -129,6 +135,29 @@ describe('create-recipe specialist', () => {
         })
     })
 
+    describe('AOI lookup tools are required inner tools', () => {
+
+        it('throws at specialist construction when AOI lookup tools are absent from inner tools', () => {
+            const innerToolsWithoutAoi = innerToolsWithSchemas([createRecipeValuesSchema()])
+
+            expect(() => consultOnce({replies: [{text: 'ok'}], innerTools: innerToolsWithoutAoi}))
+                .toThrow(/aoi_list_countries.*aoi_list_country_areas/)
+        })
+
+        it('exposes aoi_list_countries + aoi_list_country_areas alongside create_recipe_values, hides everything else', () => {
+            const innerTools = innerToolsWithSchemas([
+                createRecipeValuesSchema(),
+                {name: 'aoi_list_countries', description: 'List countries.', parameters: {type: 'object', properties: {query: {type: 'string'}}}},
+                {name: 'aoi_list_country_areas', description: 'List areas.', parameters: {type: 'object', properties: {countryId: {type: 'integer'}, query: {type: 'string'}}, required: ['countryId']}},
+                {name: 'recipe_load', description: 'Load.', parameters: {type: 'object', properties: {}}}
+            ])
+            const {llm} = consultOnce({replies: [{text: 'ok'}], innerTools})
+
+            expect(llm.receivedTools[0].map(schema => schema.name).sort())
+                .toEqual(['aoi_list_countries', 'aoi_list_country_areas', 'create_recipe_values'])
+        })
+    })
+
     describe('user message carries the prepared packet (handles + values) for the updater', () => {
 
         it('includes the instruction, the recipeType, and the prepared packet in the user message', () => {
@@ -168,7 +197,7 @@ function consultOnce({replies, innerTools, consultArgs = {}}) {
     const bus = aFakeBus()
     const busTracked = {publish: bus.publish, track$: (_n, _a, work$) => work$, track: bus.track}
     const llm = aFakeLlm({replies})
-    const specialist = createRecipeCreateSpecialist({llm, bus: busTracked, innerTools})
+    const specialist = createCreateRecipeSpecialist({llm, bus: busTracked, innerTools})
     const args = {
         recipeType: 'MOSAIC',
         instruction: 'Create a mosaic',
@@ -181,7 +210,7 @@ function consultOnce({replies, innerTools, consultArgs = {}}) {
 }
 
 function innerToolsForCreate() {
-    return innerToolsWithSchemas([createRecipeValuesSchema()])
+    return innerToolsWithSchemas([createRecipeValuesSchema(), ...AOI_INNER_TOOL_SCHEMAS])
 }
 
 function createRecipeValuesSchema() {

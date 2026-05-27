@@ -1,5 +1,5 @@
 const {of} = require('rxjs')
-const {aToolFactoryHarness, aFakeLlm, innerToolsImpl} = require('../../harness')
+const {aToolFactoryHarness, aFakeLlm, innerToolsImpl, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
 
 // Local thinking models sometimes emit reasoning then end the turn with no
 // visible content after a successful update. The specialist's final answer is
@@ -18,12 +18,18 @@ describe('update_recipe summarizes a successful update when the specialist answe
 
     function updaterInnerTools(result = {ok: true, data: successData}) {
         return innerToolsImpl(
-            {update_recipe_values: () => of(result)},
-            [{
-                name: 'update_recipe_values',
-                description: 'Update.',
-                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-            }]
+            {
+                update_recipe_values: () => of(result),
+                ...AOI_INNER_TOOL_IMPLS
+            },
+            [
+                {
+                    name: 'update_recipe_values',
+                    description: 'Update.',
+                    parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+                },
+                ...AOI_INNER_TOOL_SCHEMAS
+            ]
         )
     }
 
@@ -135,12 +141,18 @@ describe('update_recipe summarizes a successful update when the specialist answe
             data: {summary: 'Updated', modelHash: 'h-next', appliedHandles: ['datasets'], invalidatedHandles: ['cloudMethods']}
         }
         const innerTools = innerToolsImpl(
-            {update_recipe_values: () => of(successResult)},
-            [{
-                name: 'update_recipe_values',
-                description: 'Update.',
-                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-            }]
+            {
+                update_recipe_values: () => of(successResult),
+                ...AOI_INNER_TOOL_IMPLS
+            },
+            [
+                {
+                    name: 'update_recipe_values',
+                    description: 'Update.',
+                    parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+                },
+                ...AOI_INNER_TOOL_SCHEMAS
+            ]
         )
         const llm = aRoutingLlm({
             mainReplies: [

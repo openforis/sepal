@@ -71,6 +71,19 @@ function aToolFactoryHarness({
     }
 }
 
+// AOI lookup tools are required inner tools for both recipe specialists.
+// Test fixtures that build inner tools locally can spread these defaults
+// in to satisfy the required-tool check without exercising AOI behaviour.
+const AOI_INNER_TOOL_SCHEMAS = [
+    {name: 'aoi_list_countries', description: 'List countries.', parameters: {type: 'object', properties: {query: {type: 'string'}}}},
+    {name: 'aoi_list_country_areas', description: 'List areas.', parameters: {type: 'object', properties: {countryId: {type: 'integer'}, query: {type: 'string'}}, required: ['countryId']}}
+]
+
+const AOI_INNER_TOOL_IMPLS = {
+    aoi_list_countries: () => of([]),
+    aoi_list_country_areas: () => of([])
+}
+
 const INNER_TOOLS_BY_SPECIALIST = {
     consult_map: () => aFakeTools(
         {
@@ -90,26 +103,32 @@ const INNER_TOOLS_BY_SPECIALIST = {
     ),
     update_recipe: () => aFakeTools(
         {
-            update_recipe_values: () => of({ok: true, data: {summary: 'updated', modelHash: 'h2', appliedHandles: [], invalidatedHandles: []}})
+            update_recipe_values: () => of({ok: true, data: {summary: 'updated', modelHash: 'h2', appliedHandles: [], invalidatedHandles: []}}),
+            aoi_list_countries: () => of([]),
+            aoi_list_country_areas: () => of([])
         },
         [
             {
                 name: 'update_recipe_values',
                 description: 'Set values for ONE recipe by handle name.',
                 parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-            }
+            },
+            ...AOI_INNER_TOOL_SCHEMAS
         ]
     ),
     create_recipe: () => aFakeTools(
         {
-            create_recipe_values: () => of({ok: true, data: {recipeId: 'r-new', type: 'MOSAIC', name: 'Kenya', projectId: 'p1', summary: 'created'}})
+            create_recipe_values: () => of({ok: true, data: {recipeId: 'r-new', type: 'MOSAIC', name: 'Kenya', projectId: 'p1', summary: 'created'}}),
+            aoi_list_countries: () => of([]),
+            aoi_list_country_areas: () => of([])
         },
         [
             {
                 name: 'create_recipe_values',
                 description: 'Create ONE new recipe by handle name.',
                 parameters: {type: 'object', properties: {recipeType: {type: 'string'}, projectId: {type: 'string'}, name: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-            }
+            },
+            ...AOI_INNER_TOOL_SCHEMAS
         ]
     )
 }
@@ -619,6 +638,8 @@ module.exports = {
     eventsOfKind,
     innerToolsWithSchemas,
     innerToolsImpl,
+    AOI_INNER_TOOL_SCHEMAS,
+    AOI_INNER_TOOL_IMPLS,
     firstValue,
     run
 }

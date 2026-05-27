@@ -3,8 +3,8 @@
 //   recipe-type validation
 //   -> pickHandles$              (one tool-free LLM call → handles; allowEmpty)
 //   -> prepareCreatePacket$      (defaults → handle-keyed packet; required handles)
-//   -> create specialist         (LLM loop, only create_recipe_values in scope,
-//                                 workflow-bound fields injected from packet)
+//   -> create specialist         (LLM loop, create_recipe_values + lookup tools
+//                                 in scope; workflow-bound fields injected)
 //   -> projectCreateOutcome      (timeline → user-facing envelope + diagnostic)
 // JSON Pointer paths and patch mechanics stay below the GUI/log boundary.
 

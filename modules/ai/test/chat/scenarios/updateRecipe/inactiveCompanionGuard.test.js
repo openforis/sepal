@@ -1,5 +1,5 @@
 const {of} = require('rxjs')
-const {aToolFactoryHarness, innerToolsImpl} = require('../../harness')
+const {aToolFactoryHarness, innerToolsImpl, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
 const {updateRecipeValuesTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool')
 const {aFakeGuiRequests} = require('../../builders')
 const {mosaicMetadata} = require('./fixtures')
@@ -50,11 +50,17 @@ describe('cloudy-update shape — picked s2CloudProbabilityMax with cloudMethods
         })
         const realTool = updateRecipeValuesTool(guiRequests)
         const innerTools = innerToolsImpl(
-            {update_recipe_values: (input, ctx) => realTool.invoke$(input, ctx)},
-            [{
-                name: 'update_recipe_values', description: 'Update.',
-                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-            }]
+            {
+                update_recipe_values: (input, ctx) => realTool.invoke$(input, ctx),
+                ...AOI_INNER_TOOL_IMPLS
+            },
+            [
+                {
+                    name: 'update_recipe_values', description: 'Update.',
+                    parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+                },
+                ...AOI_INNER_TOOL_SCHEMAS
+            ]
         )
         return {guiRequests, innerTools, calls}
     }

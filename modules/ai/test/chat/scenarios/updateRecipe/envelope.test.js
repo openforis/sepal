@@ -1,5 +1,5 @@
 const {of} = require('rxjs')
-const {aToolFactoryHarness, innerToolsImpl} = require('../../harness')
+const {aToolFactoryHarness, innerToolsImpl, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
 
 describe('update_recipe outer envelope reflects whether the update applied', () => {
 
@@ -15,12 +15,18 @@ describe('update_recipe outer envelope reflects whether the update applied', () 
         replies.push({text: finalText})
         let i = 0
         const innerTools = innerToolsImpl(
-            {update_recipe_values: () => of(updateResults[i++])},
-            [{
-                name: 'update_recipe_values',
-                description: 'Update.',
-                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-            }]
+            {
+                update_recipe_values: () => of(updateResults[i++]),
+                ...AOI_INNER_TOOL_IMPLS
+            },
+            [
+                {
+                    name: 'update_recipe_values',
+                    description: 'Update.',
+                    parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+                },
+                ...AOI_INNER_TOOL_SCHEMAS
+            ]
         )
         return aToolFactoryHarness({specialist: 'update_recipe', innerTools, replies})
     }
@@ -128,12 +134,18 @@ describe('update_recipe outer envelope reflects whether the update applied', () 
         ]
         let i = 0
         const innerTools = innerToolsImpl(
-            {update_recipe_values: () => of(results[i++])},
-            [{
-                name: 'update_recipe_values',
-                description: 'Update.',
-                parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
-            }]
+            {
+                update_recipe_values: () => of(results[i++]),
+                ...AOI_INNER_TOOL_IMPLS
+            },
+            [
+                {
+                    name: 'update_recipe_values',
+                    description: 'Update.',
+                    parameters: {type: 'object', properties: {recipeId: {type: 'string'}, baseModelHash: {type: 'string'}, writableHandles: {type: 'array'}, values: {type: 'object'}}}
+                },
+                ...AOI_INNER_TOOL_SCHEMAS
+            ]
         )
         const harness = aToolFactoryHarness({
             specialist: 'update_recipe',

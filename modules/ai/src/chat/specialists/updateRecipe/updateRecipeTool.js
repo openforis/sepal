@@ -3,9 +3,9 @@
 //   recipe-metadata preflight
 //   -> pickHandles$           (one tool-free LLM call → handles)
 //   -> prepareHandlePacket$   (deterministic, handle-keyed packet)
-//   -> updater specialist     (LLM loop, only update_recipe_values in scope,
-//                              writableHandles + baseModelHash bound from
-//                              the packet so the model cannot widen scope)
+//   -> updater specialist     (LLM loop, update_recipe_values + lookup tools
+//                              in scope; workflow-bound fields injected so
+//                              the model cannot widen scope)
 //   -> projectUpdateOutcome   (timeline → user-facing envelope + diagnostic)
 // JSON Pointer paths and RFC 6902 mechanics stay below the tool boundary.
 

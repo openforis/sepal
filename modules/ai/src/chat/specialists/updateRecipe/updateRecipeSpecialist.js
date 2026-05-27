@@ -2,14 +2,14 @@ const {specialistPrompt} = require('../../llmText/prompts')
 const {createSpecialistRuntime} = require('../runSpecialist')
 const {scopeInnerTools, bindToolsToRecipe} = require('../specialistScope')
 
-const ALLOWED_INNER_TOOLS = ['update_recipe_values']
+const ALLOWED_INNER_TOOLS = ['update_recipe_values', 'aoi_list_countries', 'aoi_list_country_areas']
 const RECIPE_BOUND_TOOLS = new Set(['update_recipe_values'])
 
 // The LLM-facing schema hides these; the workflow supplies them per-attempt
 // via canonicalizeCall before the runtime logs/guards the tool call.
 const WORKFLOW_BOUND_FIELDS = ['writableHandles', 'baseModelHash']
 
-function createRecipeUpdateSpecialist({llm, bus, innerTools}) {
+function createUpdateRecipeSpecialist({llm, bus, innerTools}) {
     const scope = scopeInnerTools({innerTools, allowed: ALLOWED_INNER_TOOLS, label: 'update_recipe'})
     const schemas = hideToolFields(scope.allowedSchemas, {
         tool: 'update_recipe_values', fields: WORKFLOW_BOUND_FIELDS
@@ -18,7 +18,7 @@ function createRecipeUpdateSpecialist({llm, bus, innerTools}) {
     const runtime = createSpecialistRuntime({
         llm, bus,
         name: 'recipe.update',
-        systemPrompt: specialistPrompt('updateHandles'),
+        systemPrompt: specialistPrompt('updateRecipeHandles'),
         tools: {
             schemas,
             invoke$: bindToolsToRecipe(scope.invokeTool$, {boundTools: RECIPE_BOUND_TOOLS}),
@@ -76,4 +76,4 @@ function narrowSchema(schema, hidden) {
     return {...schema, parameters: {...schema.parameters, properties, required}}
 }
 
-module.exports = {createRecipeUpdateSpecialist}
+module.exports = {createUpdateRecipeSpecialist}
