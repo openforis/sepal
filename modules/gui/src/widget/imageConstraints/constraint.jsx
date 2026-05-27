@@ -2,6 +2,7 @@ import _ from 'lodash'
 import React from 'react'
 
 import {compose} from '~/compose'
+import {toInt} from '~/parse'
 import {msg} from '~/translate'
 import {CrudItem} from '~/widget/crudItem'
 import {Form} from '~/widget/form'
@@ -459,12 +460,6 @@ const inclButton = input =>
         tabIndex={-1}
     />
     
-const toInt = input => {
-    input = _.isString(input) ? input : _.toString(input)
-    const parsed = parseInt(input)
-    return _.isFinite(parsed) ? parsed : null
-}
-
 const isSelected = input => input.value && input.value.length && input.value[0]
 
 export const Constraint = compose(

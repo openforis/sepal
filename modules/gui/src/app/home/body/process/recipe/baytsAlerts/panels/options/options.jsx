@@ -1,8 +1,8 @@
-import _ from 'lodash'
 import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
+import {toFloat, toInt} from '~/parse'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
@@ -335,18 +335,6 @@ const valuesToModel = values => {
             }
             : undefined
     }
-}
-
-const toInt = input => {
-    input = _.isString(input) ? input : _.toString(input)
-    const parsed = parseInt(input)
-    return _.isFinite(parsed) ? parsed : null
-}
-
-const toFloat = input => {
-    input = _.isString(input) ? input : _.toString(input)
-    const parsed = parseFloat(input)
-    return _.isFinite(parsed) ? parsed : null
 }
 
 export const Options = compose(
