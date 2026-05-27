@@ -8,6 +8,7 @@ then
     --watch "${MODULE}"/src \
     --watch "${MODULE}/config" \
     --watch "${SHARED}" \
+    --watch "${RECIPES}" \
     --inspect=0.0.0.0:9229 \
     src/main.js
 else
