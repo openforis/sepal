@@ -4,6 +4,7 @@ import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
+import {toFloat} from '~/parse'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -735,7 +736,7 @@ PercentileField.propTypes = {
 
 const valuesToModel = values => ({
     corrections: values.corrections,
-    brdfMultiplier: values.brdfMultiplier,
+    brdfMultiplier: brdfMultiplierFor(values),
     filters: values.includedFilters
         .map(type => ({type, percentile: values[filterInputNameByType[type]]}))
         .filter(({percentile}) => percentile),
@@ -755,6 +756,13 @@ const valuesToModel = values => ({
     snowMasking: values.snowMasking,
     compose: values.compose,
 })
+
+const BRDF_MULTIPLIER_DEFAULT = 4
+const brdfMultiplierFor = values => {
+    const multiplier = toFloat(values.brdfMultiplier)
+    if (multiplier > 0) return multiplier
+    return values.corrections?.includes('BRDF') ? BRDF_MULTIPLIER_DEFAULT : undefined
+}
 
 const modelToValues = model => {
     const getPercentile = type => {
