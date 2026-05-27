@@ -16,18 +16,25 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
 
     return {
         name: 'update_recipe',
-        description: 'Update ONE current recipe from natural language. Specialist picks recipe fields, prepares the change, and applies it. Use for change/edit/modify/fix, including problem + action ("still clouds, remove them"). Do not call describe_recipe first.',
+        description: 'Update ONE current open recipe. Use the selected recipe, or the only open recipe. Pass `request` close to the user\'s latest recipe-edit wording (problem + action like "still clouds, remove them" or "too slow, fix it" is fine). Pass `context` only as neutral conversation context (e.g. "follow-up to slow rendering"); do not put field-level settings in `context` unless the user named them. Do not invent a field-level plan. Do not call describe_recipe first. `instruction` is a deprecated alias for `request`.',
         directAnswer: true,
         parameters: {
             type: 'object',
             properties: {
                 recipeId: {type: 'string'},
+                request: {type: 'string'},
+                context: {type: 'string'},
                 instruction: {type: 'string'}
             },
-            required: ['recipeId', 'instruction'],
+            required: ['recipeId'],
             additionalProperties: false
         },
-        invoke$: ({recipeId, instruction}, context) => workflow.run$({recipeId, instruction, context})
+        invoke$: (args, runtimeContext) => workflow.run$({
+            recipeId: args.recipeId,
+            request: args.request ?? args.instruction,
+            contextText: args.context,
+            context: runtimeContext
+        })
     }
 }
 

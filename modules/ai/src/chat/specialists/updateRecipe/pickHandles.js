@@ -12,15 +12,19 @@ const PICKER_MAX_TOKENS = 512
 // `allowEmpty` lets create accept a picker that returned no handles — the
 // workflow proceeds to prepare, which always pulls user-required handles
 // into the writable set.
-function pickHandles$({llm, bus, recipeType, instruction, conversationId, recipeName, flow = 'update', allowEmpty = false}) {
+// Accepts `{request, context}` (preferred) and legacy `{instruction}` as a
+// fallback for callers/tests not yet migrated. `context` is neutral prose,
+// labelled distinctly so the picker doesn't treat it as instructions.
+function pickHandles$({llm, bus, recipeType, request, context, instruction, conversationId, recipeName, flow = 'update', allowEmpty = false}) {
     const handles = getRecipeHandles(recipeType)
     if (!handles) {
         return of({ok: false, error: {code: 'UNSUPPORTED_RECIPE_TYPE', message: `Recipe type ${recipeType} has no handle catalog`}})
     }
     const allowedNames = new Set(handles.map(handle => handle.name))
+    const userRequest = request ?? instruction
     const messages = [
         {role: 'system', content: pickerSystemPromptFromHandles(recipeType, handles)},
-        {role: 'user', content: buildUserText({instruction, recipeName, recipeType})}
+        {role: 'user', content: buildUserText({request: userRequest, context, recipeName, recipeType})}
     ]
     return defer(() => llm.respondTo$({
         messages,
@@ -42,10 +46,11 @@ function publishOnSuccess({bus, conversationId, recipeType, result, flow}) {
     publishPickHandlesCompleted({bus, conversationId, recipeType, pickedHandles: result.handles, flow})
 }
 
-function buildUserText({instruction, recipeName, recipeType}) {
+function buildUserText({request, context, recipeName, recipeType}) {
     const lines = [`recipeType: ${recipeType}`]
     if (recipeName) lines.push(`recipeName: ${recipeName}`)
-    lines.push(`instruction: ${instruction}`)
+    lines.push(`request: ${request ?? ''}`)
+    if (context && context.trim()) lines.push(`context: ${context}`)
     return lines.join('\n')
 }
 

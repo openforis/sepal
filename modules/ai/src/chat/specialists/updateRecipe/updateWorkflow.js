@@ -22,7 +22,7 @@
 const {map, mergeMap, of} = require('rxjs')
 const {getRecipeHandles} = require('#recipes')
 const {wasCapped} = require('../runSpecialist')
-const {publishUpdateRecipeOutcome} = require('../specialistEvents')
+const {publishUpdateRecipeOutcome, publishUpdateRecipeRequest} = require('../specialistEvents')
 const {lookupRecipeMetadata$} = require('../../tools/recipeMetadata')
 const {isChannelEmission} = require('../../channelEvents')
 const {pickHandles$} = require('./pickHandles')
@@ -44,8 +44,17 @@ function createUpdateWorkflow({llm, bus, guiRequests, innerTools}) {
 
     return {run$}
 
-    function run$({recipeId, instruction, context}) {
-        return runStages$({recipeId, instruction, context}, [identify$, intend$, scopeFor$, applyAndReport$])
+    function run$({recipeId, request, contextText, instruction, context}) {
+        const userRequest = request ?? instruction
+        publishUpdateRecipeRequest({
+            bus,
+            conversationId: context?.conversationId,
+            recipeId,
+            request: userRequest,
+            contextText,
+            guiContext: context?.guiContext
+        })
+        return runStages$({recipeId, request: userRequest, contextText, context}, [identify$, intend$, scopeFor$, applyAndReport$])
     }
 
     // --- identify: who are we editing? -------------------------------------
@@ -70,19 +79,35 @@ function createUpdateWorkflow({llm, bus, guiRequests, innerTools}) {
     }
 
     // --- intend: which handles is the user asking about? -------------------
+    //
+    // Empty picker output is not a hard failure: it means the request didn't
+    // map to any catalog handle, so we ask one targeted clarification instead
+    // of declaring the update failed. PICKER_EMPTY survives as the diagnostic
+    // code on the bus; the user sees CLARIFICATION_NEEDED + a question that
+    // pendingActions lifts into a resumable pending action.
 
     function intend$(state) {
         return pickHandles$({
             llm, bus,
             recipeType: state.recipeType, recipeName: state.recipeName,
-            instruction: state.instruction,
+            request: state.request, context: state.contextText,
             conversationId: state.context?.conversationId
         }).pipe(
-            map(picker => picker.ok === false
-                ? done(fail(state, {code: picker.error.code, message: picker.error.message, answer: PICKER_FAILED_ANSWER}))
-                : advance(state, {handles: picker.handles})
-            )
+            map(picker => mapPickerResult(state, picker))
         )
+    }
+
+    function mapPickerResult(state, picker) {
+        if (picker.ok === false) {
+            if (picker.error?.code === 'PICKER_EMPTY') {
+                return done(clarify(state, {
+                    diagnosticCode: 'PICKER_EMPTY',
+                    answer: clarificationFor(state.request)
+                }))
+            }
+            return done(fail(state, {code: picker.error.code, message: picker.error.message, answer: PICKER_FAILED_ANSWER}))
+        }
+        return advance(state, {handles: picker.handles})
     }
 
     // --- scope: bound the write to picked + dependent handles --------------
@@ -111,7 +136,8 @@ function createUpdateWorkflow({llm, bus, guiRequests, innerTools}) {
     function applyAndReport$(state) {
         return updater.consult$({
             recipeId: state.recipeId,
-            instruction: state.instruction,
+            request: state.request,
+            contextText: state.contextText,
             packet: state.packet,
             context: state.context
         }).pipe(
@@ -128,7 +154,7 @@ function createUpdateWorkflow({llm, bus, guiRequests, innerTools}) {
                 llm,
                 conversationId: state.context?.conversationId,
                 recipeId: state.recipeId,
-                instruction: state.instruction,
+                instruction: state.request,
                 recipeType: state.recipeType, recipeName: state.recipeName,
                 outcome, packet: state.packet
             }).pipe(map(summary => publishOutcome(state, outcome, summary.trim() || outcome.successSummary, {capped})))
@@ -169,6 +195,42 @@ function createUpdateWorkflow({llm, bus, guiRequests, innerTools}) {
         })
         return {ok: false, error: {code, message, answer}}
     }
+
+    function clarify(state, {diagnosticCode, answer}) {
+        publishUpdateRecipeOutcome({
+            bus,
+            conversationId: state.context?.conversationId,
+            recipeId: state.recipeId,
+            attempted: false, succeeded: false,
+            code: 'CLARIFICATION_NEEDED', lastPatchErrorCode: null,
+            answerChars: answer.length
+        })
+        return {
+            ok: false,
+            error: {
+                code: 'CLARIFICATION_NEEDED',
+                reason: diagnosticCode,
+                message: 'The update workflow needs a clarification before proceeding.',
+                answer
+            }
+        }
+    }
+}
+
+// Tiny bucketed classifier — no LLM round. We only need enough cues to ask
+// a useful question; the resumed call goes through the picker again.
+const UNSUPPORTED_PATTERN = /\b(output ?bands?|browser|network|rendering ?lag|cpu|memory|ram|tile ?size|hardware)\b/i
+const PERFORMANCE_PATTERN = /\b(slow|speed|fast|faster|slower|rendering|performance|hang|hangs|preview)\b/i
+
+const UNSUPPORTED_ANSWER = "That sounds like something outside the recipe settings I can change. Want me to look at recipe settings that affect this instead — like inputs, cloud masking, or processing options?"
+const PERFORMANCE_ANSWER = "I'm not sure which setting to change for that. Should I make it faster by reducing input data, simplifying processing, or making safer changes that preserve quality?"
+const GENERIC_ANSWER = "I'm not sure which recipe setting to change for that. Do you want me to adjust inputs, dates, cloud masking, processing, or a specific setting?"
+
+function clarificationFor(request) {
+    const text = request || ''
+    if (UNSUPPORTED_PATTERN.test(text)) return UNSUPPORTED_ANSWER
+    if (PERFORMANCE_PATTERN.test(text)) return PERFORMANCE_ANSWER
+    return GENERIC_ANSWER
 }
 
 // --- stage runner --------------------------------------------------------

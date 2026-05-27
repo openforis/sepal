@@ -116,10 +116,14 @@ function createPendingActions({conversations, createId, clock}) {
     }
 
     function resumedCallFor(pending, answer) {
+        // Write the augmented text back into whichever field the original
+        // call carried it on — `request` for update_recipe's new contract,
+        // `instruction` for create_recipe (and legacy update_recipe callers).
+        const field = pending.args && 'request' in pending.args ? 'request' : 'instruction'
         return {
             id: createId(),
             name: pending.toolName,
-            input: {...pending.args, instruction: augmentedInstruction(pending, answer)}
+            input: {...pending.args, [field]: augmentedInstruction(pending, answer)}
         }
     }
 }
@@ -133,8 +137,9 @@ function isClarificationNeeded(toolCall, result) {
 }
 
 function augmentedInstruction({args, question}, answer) {
+    const original = args?.request ?? args?.instruction ?? ''
     return [
-        `Original request: ${args.instruction}`,
+        `Original request: ${original}`,
         '',
         `Clarification question: ${question}`,
         `Clarification answer: ${answer}`

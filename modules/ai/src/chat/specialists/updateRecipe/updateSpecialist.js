@@ -30,9 +30,9 @@ function createRecipeUpdateSpecialist({llm, bus, innerTools}) {
 
     return {consult$}
 
-    function consult$({recipeId, instruction, packet, context}) {
+    function consult$({recipeId, request, contextText, packet, context}) {
         return runtime.consult$({
-            userText: buildUpdaterUserText({recipeId, instruction, packet}),
+            userText: buildUpdaterUserText({recipeId, request, contextText, packet}),
             context: {...context, recipeId, updatePacket: packet}
         })
     }
@@ -56,14 +56,11 @@ function anyUpdateApplied(toolHistory) {
     return toolHistory.some(entry => entry.name === 'update_recipe_values' && entry.ok)
 }
 
-function buildUpdaterUserText({recipeId, instruction, packet}) {
-    return [
-        `recipeId: ${recipeId}`,
-        `instruction: ${instruction}`,
-        '',
-        'Prepared packet:',
-        JSON.stringify(packet)
-    ].join('\n')
+function buildUpdaterUserText({recipeId, request, contextText, packet}) {
+    const lines = [`recipeId: ${recipeId}`, `request: ${request ?? ''}`]
+    if (contextText && contextText.trim()) lines.push(`context: ${contextText}`)
+    lines.push('', 'Prepared packet:', JSON.stringify(packet))
+    return lines.join('\n')
 }
 
 function hideToolFields(schemas, {tool, fields}) {

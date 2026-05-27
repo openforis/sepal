@@ -8,15 +8,17 @@ describe('update_recipe descriptor, seeding, and direct answer', () => {
             harness = aToolFactoryHarness({specialist: 'update_recipe'})
         })
 
-        it('is named update_recipe with recipeId and instruction both required', () => {
+        it('exposes recipeId, request, optional context, and legacy instruction alias', () => {
             expect(harness.tool.name).toBe('update_recipe')
             expect(harness.tool.parameters).toEqual({
                 type: 'object',
                 properties: {
                     recipeId: {type: 'string'},
+                    request: {type: 'string'},
+                    context: {type: 'string'},
                     instruction: {type: 'string'}
                 },
-                required: ['recipeId', 'instruction'],
+                required: ['recipeId'],
                 additionalProperties: false
             })
         })
@@ -26,8 +28,14 @@ describe('update_recipe descriptor, seeding, and direct answer', () => {
             expect(harness.tool.description).toMatch(/problem \+ action/i)
         })
 
+        it('tells the orchestrator to pass the user request close to verbatim and keep context neutral', () => {
+            expect(harness.tool.description).toMatch(/request/i)
+            expect(harness.tool.description).toMatch(/context/i)
+            expect(harness.tool.description).toMatch(/do not invent a field-level plan/i)
+        })
+
         it('does not imply the target recipe must already be explicitly saved', () => {
-            expect(harness.tool.description).toMatch(/current recipe/i)
+            expect(harness.tool.description).toMatch(/open recipe/i)
             expect(harness.tool.description).not.toMatch(/saved recipe/i)
         })
 
@@ -45,7 +53,35 @@ describe('update_recipe descriptor, seeding, and direct answer', () => {
             expect(harness.guiRequests.requests[0].action).toBe('recipe-metadata')
         })
 
-        it('passes the instruction to the picker LLM call as the user message', () => {
+        it('passes the request to the picker LLM call as the user message', () => {
+            const harness = aToolFactoryHarness({
+                specialist: 'update_recipe',
+                replies: [{text: '{"handles":["seasonEnd"]}'}, {text: 'OK'}]
+            })
+
+            harness.invoke({recipeId: 'r1', request: 'change season end to 2026-06-01'})
+
+            const pickerMessages = harness.llm.receivedMessages[0]
+            const userMessage = pickerMessages[pickerMessages.length - 1]
+            expect(userMessage.role).toBe('user')
+            expect(userMessage.content).toMatch(/request:.*change season end to 2026-06-01/)
+        })
+
+        it('forwards request + neutral context into the picker user message with distinct labels', () => {
+            const harness = aToolFactoryHarness({
+                specialist: 'update_recipe',
+                replies: [{text: '{"handles":["seasonEnd"]}'}, {text: 'OK'}]
+            })
+
+            harness.invoke({recipeId: 'r1', request: 'try again', context: 'follow-up to slow rendering'})
+
+            const pickerMessages = harness.llm.receivedMessages[0]
+            const userMessage = pickerMessages[pickerMessages.length - 1]
+            expect(userMessage.content).toMatch(/request:.*try again/)
+            expect(userMessage.content).toMatch(/context:.*follow-up to slow rendering/)
+        })
+
+        it('accepts legacy instruction as a request fallback', () => {
             const harness = aToolFactoryHarness({
                 specialist: 'update_recipe',
                 replies: [{text: '{"handles":["seasonEnd"]}'}, {text: 'OK'}]
@@ -55,23 +91,22 @@ describe('update_recipe descriptor, seeding, and direct answer', () => {
 
             const pickerMessages = harness.llm.receivedMessages[0]
             const userMessage = pickerMessages[pickerMessages.length - 1]
-            expect(userMessage.role).toBe('user')
             expect(userMessage.content).toMatch(/change season end to 2026-06-01/)
         })
 
-        it('forwards recipeId and instruction into the updater user message alongside the prepared packet', () => {
+        it('forwards recipeId and request into the updater user message alongside the prepared packet', () => {
             const harness = aToolFactoryHarness({
                 specialist: 'update_recipe',
                 replies: [{text: '{"handles":["seasonEnd"]}'}, {text: 'Updated.'}]
             })
 
-            harness.invoke({recipeId: 'r1', instruction: 'change season end to 2026-06-01'})
+            harness.invoke({recipeId: 'r1', request: 'change season end to 2026-06-01'})
 
             const updaterMessages = harness.llm.receivedMessages[1]
             const userMessage = updaterMessages[updaterMessages.length - 1]
             expect(userMessage.role).toBe('user')
             expect(userMessage.content).toContain('r1')
-            expect(userMessage.content).toMatch(/change season end to 2026-06-01/)
+            expect(userMessage.content).toMatch(/request:.*change season end to 2026-06-01/)
             expect(userMessage.content).toContain('Prepared packet')
         })
     })
