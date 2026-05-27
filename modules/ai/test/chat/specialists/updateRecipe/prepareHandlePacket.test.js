@@ -102,10 +102,9 @@ describe('prepareHandlePacket$', () => {
         })
 
         it('marks schema-required handles with required=true', () => {
-            // `compose` is required in the MOSAIC compositeOptions schema.
             expect(fieldFor('compose').required).toBe(true)
-            // `brdfMultiplier` is conditionally required (only when BRDF is included);
-            // unconditional required is false.
+            // `brdfMultiplier` is only conditionally required (BRDF→multiplier
+            // via if/then); the field-level flag reflects unconditional only.
             expect(fieldFor('brdfMultiplier').required).toBe(false)
         })
 

@@ -9,7 +9,7 @@ const {createRecipeTool} = require('./specialists/createRecipe/createRecipeTool'
 const {specialistConsultationTools} = require('./specialists/specialistConsultationTools')
 
 function createOrchestratorToolRegistry({guiRequests, llm, bus, diagnostics}) {
-    const innerTools = createToolRegistry({tools: specialistInnerTools({guiRequests}), bus, diagnostics})
+    const innerTools = createToolRegistry({tools: specialistInnerTools({guiRequests, bus}), bus, diagnostics})
     const orchestratorToolList = [
         ...sepalTools({guiRequests}),
         describeRecipeTool({llm, bus, innerTools, guiRequests}),

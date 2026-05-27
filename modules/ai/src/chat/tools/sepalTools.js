@@ -23,13 +23,13 @@ function sepalTools({guiRequests}) {
 // create_recipe_values (create) are included here so recipe specialists can
 // inspect, write, and create recipes. None are on the orchestrator surface.
 // Specialists scope down further to a per-specialist allowed list.
-function specialistInnerTools({guiRequests}) {
+function specialistInnerTools({guiRequests, bus}) {
     return [
         guiContextTool(),
         recipeListTool(guiRequests),
         ...projectTools(guiRequests),
         recipeLoadTool(guiRequests),
-        updateRecipeValuesTool(guiRequests),
+        updateRecipeValuesTool(guiRequests, bus),
         createRecipeValuesTool(guiRequests),
         ...mapTools(guiRequests)
     ]

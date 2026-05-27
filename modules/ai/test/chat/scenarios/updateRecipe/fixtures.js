@@ -71,9 +71,14 @@ function aLiveMosaicSetup({model, validate = false}) {
         if (request.action === 'load-recipe') return of({id: 'r1', type: 'MOSAIC', modelHash: currentHash, model: currentModel})
         if (request.action === 'recipe-patch') {
             patchCalls.push(request)
-            const nextModel = applyPatchOperations(currentModel, request.params.operations)
+            // Mirror the GUI's recipePatch: project stored → effective, apply
+            // ops to the projection, persist that. Without the projection step,
+            // the mock cannot catch canonicalization bugs in toEffectiveModel
+            // (e.g. SR being silently rewritten on every mixed-source patch).
+            const projected = toEffectiveModel('MOSAIC', currentModel)
+            const nextModel = applyPatchOperations(projected, request.params.operations)
             if (validate) {
-                const errors = validateRecipe('MOSAIC', toEffectiveModel('MOSAIC', nextModel))
+                const errors = validateRecipe('MOSAIC', nextModel)
                 if (errors.length) return throwError(() => validationFailedError(errors))
             }
             currentModel = nextModel

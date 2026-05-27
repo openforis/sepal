@@ -360,6 +360,23 @@ describe('recipe-patch', () => {
         expect(persistedModel().dates.seasonEnd).not.toBe(seasonEndBefore)
     })
 
+    // recipePatch projects stored → effective → applies ops → persists the
+    // projection, so any canonicalization in toEffectiveModel rides every
+    // patch. A mixed Landsat+Sentinel-2 recipe stored with SR must still carry
+    // SR after a patch that does not target corrections — previously, the
+    // projection rewrote ['SR','BRDF'] to ['BRDF','CALIBRATE'] and an unrelated
+    // cloud patch silently disabled SR.
+    it('preserves SR on a mixed-source recipe when ops do not touch corrections', () => {
+        mosaicRecipe.model.sources.dataSets = {LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']}
+        mosaicRecipe.model.compositeOptions.corrections = ['SR', 'BRDF']
+        addHash(mosaicRecipe.model)
+        baseHash = getHash(mosaicRecipe.model)
+
+        patch({operations: [{op: 'replace', path: '/compositeOptions/sepalCloudScoreMaxCloudProbability', value: 25}]})
+
+        expect(persistedModel().compositeOptions.corrections).toContain('SR')
+    })
+
     it('returns a modelHash matching the hash of the persisted model', () => {
         const {response} = patch({})
 
@@ -504,6 +521,23 @@ describe('create-recipe', () => {
         expect(persisted.compositeOptions.includedCloudMasking).not.toContain('sentinel2CloudScorePlus')
         expect(persisted.compositeOptions).not.toHaveProperty('sentinel2CloudScorePlusBand')
         expect(persisted.compositeOptions).not.toHaveProperty('sentinel2CloudScorePlusMaxCloudProbability')
+    })
+
+    // Same projection-on-write contract as recipe-patch: a mixed Landsat+S2
+    // create submitted with SR must persist with SR intact. Pre-fix the
+    // projection rewrote ['SR','BRDF'] → ['BRDF','CALIBRATE'].
+    it('preserves SR when persisting a mixed-source create', async () => {
+        const mixedWithSR = {
+            ...validMosaicModel,
+            sources: {cloudPercentageThreshold: 75, dataSets: {LANDSAT: ['LANDSAT_9'], SENTINEL_2: ['SENTINEL_2']}},
+            compositeOptions: {...validMosaicModel.compositeOptions, corrections: ['SR', 'BRDF']}
+        }
+
+        const {response} = create({model: mixedWithSR})
+        await flushPersist()
+
+        expect(response.success).toBe(true)
+        expect(persistedModel().compositeOptions.corrections).toContain('SR')
     })
 })
 

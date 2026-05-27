@@ -5,6 +5,7 @@
 // publishes a usable event without code changes here.
 
 const {publishLoopPrompt} = require('../loopEvents')
+const {compactJson, handleValuesSummary, recipeStateSummary} = require('./recipeStateDiagnostics')
 
 function publishSpecialistPrompt({bus, name, round, conversationId, messages, toolSchemas}) {
     publishLoopPrompt({bus, prefix: 'specialist', name, conversationId, round, messages, toolSchemas})
@@ -145,6 +146,68 @@ function publishPrepareHandlePacketCompleted({bus, conversationId, recipeType, p
     })
 }
 
+function publishUpdateRecipeRequest({bus, conversationId, recipeId, request, contextText, guiContext}) {
+    const recipeContext = recipeContextSummary(recipeId, guiContext)
+    bus.publish({
+        type: 'update_recipe.request',
+        level: 'info',
+        conversationId,
+        recipeId,
+        request: truncate(request || '', 600),
+        ...(contextText ? {contextText: truncate(contextText, 400)} : {}),
+        ...recipeContext,
+        message: `update_recipe.request recipeId=${recipeId} selected=${recipeContext.selectedRecipeId || '-'}`
+            + ` open=${recipeContext.openRecipeIds.length}${nameList(recipeContext.openRecipeIds)} match=${recipeContext.recipeContextMatch}`
+            + ` request=${JSON.stringify(truncate(request || '', 600))}`
+            + (contextText ? ` context=${JSON.stringify(truncate(contextText, 400))}` : '')
+    })
+}
+
+function publishUpdateRecipeValuesRequest({bus, conversationId, recipeId, values}) {
+    const handles = Object.keys(values || {})
+    const valueSummary = handleValuesSummary(values || {})
+    bus.publish({
+        type: 'update_recipe.values.request',
+        level: 'debug',
+        conversationId,
+        recipeId,
+        handleCount: handles.length,
+        handles,
+        values: valueSummary,
+        message: () => `update_recipe.values.request recipeId=${recipeId} handles=${handles.length}${nameList(handles)} values=${compactJson(valueSummary)}`
+    })
+}
+
+function publishUpdateRecipeValuesProjection({bus, conversationId, recipeId, currentModel, desiredModel, projectedModel}) {
+    const current = recipeStateSummary(currentModel)
+    const desired = recipeStateSummary(desiredModel)
+    const projected = recipeStateSummary(projectedModel)
+    bus.publish({
+        type: 'update_recipe.values.projection',
+        level: 'trace',
+        conversationId,
+        recipeId,
+        current,
+        desired,
+        projected,
+        message: () => `update_recipe.values.projection recipeId=${recipeId}`
+            + ` current=${compactJson(current)} desired=${compactJson(desired)} projected=${compactJson(projected)}`
+    })
+}
+
+function publishUpdateRecipeValuesChanged({bus, conversationId, recipeId, changedHandles, operationCount}) {
+    bus.publish({
+        type: 'update_recipe.values.changed',
+        level: 'debug',
+        conversationId,
+        recipeId,
+        changedHandleCount: changedHandles.length,
+        changedHandles,
+        operationCount,
+        message: `update_recipe.values.changed recipeId=${recipeId} operations=${operationCount} changed=${changedHandles.length}${nameList(changedHandles)}`
+    })
+}
+
 function publishUpdateRecipeOutcome({bus, conversationId, recipeId, attempted, succeeded, code, lastPatchErrorCode, answerChars}) {
     bus.publish({
         type: 'update_recipe.outcome',
@@ -226,6 +289,11 @@ function summariseToolShape(tool, data) {
         const invalidated = data?.invalidatedHandles || []
         return `update(modelHash=${shortHash(data?.modelHash)},applied=${applied.length}${nameList(applied)},invalidated=${invalidated.length}${nameList(invalidated)})`
     }
+    if (tool === 'recipe_load' && data && typeof data === 'object') {
+        return data.sources || data.compositeOptions || data.dates
+            ? `recipeLoad(${compactJson(recipeStateSummary(data))})`
+            : 'recipeLoad(fragment)'
+    }
     if (Array.isArray(data)) return `array(${data.length})`
     if (data && typeof data === 'object') return 'object'
     if (data == null) return 'null'
@@ -248,6 +316,29 @@ function truncate(value, max) {
     return value.length > max ? `${value.slice(0, max)}...` : value
 }
 
+function recipeContextSummary(recipeId, guiContext) {
+    const selectedRecipeId = recipeIdOf(guiContext?.selectedRecipe)
+    const openRecipeIds = Array.isArray(guiContext?.openRecipes)
+        ? guiContext.openRecipes.map(recipeIdOf).filter(Boolean)
+        : []
+    return {
+        selectedRecipeId: selectedRecipeId || null,
+        openRecipeIds,
+        recipeContextMatch: recipeIdMatch(recipeId, {selectedRecipeId, openRecipeIds})
+    }
+}
+
+function recipeIdOf(recipe) {
+    return recipe?.recipeId || recipe?.id || null
+}
+
+function recipeIdMatch(recipeId, {selectedRecipeId, openRecipeIds}) {
+    if (recipeId && recipeId === selectedRecipeId) return 'selected'
+    if (recipeId && openRecipeIds.includes(recipeId)) return openRecipeIds.length === 1 ? 'only-open' : 'open'
+    if (!recipeId) return 'missing'
+    return selectedRecipeId || openRecipeIds.length ? 'not-current' : 'no-context'
+}
+
 module.exports = {
     publishSpecialistPrompt,
     publishSpecialistRequest,
@@ -257,6 +348,10 @@ module.exports = {
     publishSpecialistToolResponse,
     publishPickHandlesCompleted,
     publishPrepareHandlePacketCompleted,
+    publishUpdateRecipeRequest,
+    publishUpdateRecipeValuesRequest,
+    publishUpdateRecipeValuesProjection,
+    publishUpdateRecipeValuesChanged,
     publishUpdateRecipeOutcome,
     publishCreateRecipeOutcome
 }

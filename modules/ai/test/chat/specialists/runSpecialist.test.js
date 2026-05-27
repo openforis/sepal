@@ -59,4 +59,34 @@ describe('createSpecialistRuntime — construction + consult$', () => {
         const toolEntry = result.timeline.find(entry => entry.kind === 'tool')
         expect(toolEntry.input).toEqual({recipeId: 'r1'})
     })
+
+    it('wraps inner tool invocation in a specialist.tool.invoke span', () => {
+        const bus = aSpanRecordingBus()
+        const runtime = createSpecialistRuntime({
+            llm: aFakeLlm({replies: [{toolCalls: [loadCall]}, {text: 'done.'}]}),
+            bus,
+            name: 'recipe.describe',
+            systemPrompt: 'sys',
+            tools: {schemas: [loadSchema], invoke$: () => of(loadResult)}
+        })
+
+        read(runtime.consult$({userText: 'describe r1', context: {conversationId: 'conv-1'}}))
+
+        expect(bus.spans).toContainEqual({
+            name: 'specialist.tool.invoke',
+            attrs: {conversationId: 'conv-1', specialist: 'recipe.describe', tool: 'recipe_load'}
+        })
+    })
 })
+
+function aSpanRecordingBus() {
+    const spans = []
+    return {
+        spans,
+        publish() {},
+        track$(name, attrs, work$) {
+            spans.push({name, attrs})
+            return work$
+        }
+    }
+}

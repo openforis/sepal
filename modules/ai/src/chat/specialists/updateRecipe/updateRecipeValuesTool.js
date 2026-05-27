@@ -14,6 +14,11 @@ const {guiProductRequest$} = require('../../tools/guiProductRequest')
 const {isChannelEmission, mapData} = require('../../channelEvents')
 const {parsePointer, resolvePointer, PointerNotFound} = require('../../tools/jsonPointer')
 const {
+    publishUpdateRecipeValuesChanged,
+    publishUpdateRecipeValuesProjection,
+    publishUpdateRecipeValuesRequest
+} = require('../specialistEvents')
+const {
     applyHandleValuesToModel, checkApplicability, checkInactiveValues,
     checkUnknownHandles, checkWritableScope,
     invertByPath, mapErrorDetailsToHandles, resolveHandle
@@ -23,8 +28,9 @@ const {
 // up; everything else path-bearing (errors, details) is stripped before the
 // envelope reaches the model — handleErrors is the model-facing surface.
 const PATCH_ERROR_PASSTHROUGH = ['currentModelHash']
+const NOOP_BUS = {publish() {}}
 
-function updateRecipeValuesTool(guiRequests) {
+function updateRecipeValuesTool(guiRequests, bus = NOOP_BUS) {
     return {
         name: 'update_recipe_values',
         description: 'Set values for ONE recipe by handle name. Send {recipeId, values:{handle->value}}. The workflow supplies the concurrency token and writable handle set. The tool applies all values atomically and returns success or a handle-keyed error.',
@@ -48,23 +54,23 @@ function updateRecipeValuesTool(guiRequests) {
             additionalProperties: false
         },
         invoke$: ({recipeId, baseModelHash, writableHandles, values}, context) =>
-            handleRequest$({guiRequests, context, recipeId, baseModelHash, writableHandles, values})
+            handleRequest$({guiRequests, bus, context, recipeId, baseModelHash, writableHandles, values})
     }
 }
 
-function handleRequest$({guiRequests, context, recipeId, baseModelHash, writableHandles, values}) {
+function handleRequest$({guiRequests, bus, context, recipeId, baseModelHash, writableHandles, values}) {
     const scopeError = checkWritableScope(values, writableHandles)
     if (scopeError) return of(scopeError)
     return guiProductRequest$(guiRequests, context, 'load-recipe', {recipeId}).pipe(
         mergeMap(value => isChannelEmission(value)
             ? of(value)
-            : applyValues$({guiRequests, context, recipe: value, recipeId, baseModelHash, values})
+            : applyValues$({guiRequests, bus, context, recipe: value, recipeId, baseModelHash, values})
         ),
         catchError(error => of({ok: false, error: {code: error.code || 'TOOL_FAILED', message: error.message}}))
     )
 }
 
-function applyValues$({guiRequests, context, recipe, recipeId, baseModelHash, values}) {
+function applyValues$({guiRequests, bus, context, recipe, recipeId, baseModelHash, values}) {
     const handlesByName = handleLookup(recipe?.type)
     if (!handlesByName) return of({ok: false, error: {code: 'UNSUPPORTED_RECIPE_TYPE', message: `Recipe type ${recipe?.type} has no handle catalog`}})
     const unknownError = checkUnknownHandles(values, handlesByName, recipe?.type)
@@ -73,6 +79,7 @@ function applyValues$({guiRequests, context, recipe, recipeId, baseModelHash, va
     // not the raw stored model. Diff against the same projection so dormant
     // stored fields generate `add`, not `replace`.
     const effectiveModel = toEffectiveModel(recipe?.type, recipe?.model)
+    publishUpdateRecipeValuesRequest({bus, conversationId: context?.conversationId, recipeId, values})
     const applicabilityError = checkApplicability({values, effectiveModel, handlesByName})
     if (applicabilityError) return of(applicabilityError)
     // Projection-survival guard: overlay the requested values onto effective,
@@ -80,10 +87,12 @@ function applyValues$({guiRequests, context, recipe, recipeId, baseModelHash, va
     // selector item or schema condition that activates it isn't enabled).
     const desiredModel = applyHandleValuesToModel(effectiveModel, values, handlesByName)
     const projectedModel = toEffectiveModel(recipe?.type, desiredModel)
+    publishUpdateRecipeValuesProjection({bus, conversationId: context?.conversationId, recipeId, currentModel: effectiveModel, desiredModel, projectedModel})
     const inactiveError = checkInactiveValues({values, projectedModel, handlesByName})
     if (inactiveError) return of(inactiveError)
     const handlesByPath = invertByPath(handlesByName)
     const {operations, changedHandles} = computeOperations({effectiveModel, values, handlesByName})
+    publishUpdateRecipeValuesChanged({bus, conversationId: context?.conversationId, recipeId, changedHandles, operationCount: operations.length})
     if (!operations.length) return of(noopSuccess(recipe?.modelHash))
     return guiProductRequest$(guiRequests, context, 'recipe-patch', {recipeId, baseModelHash, operations}).pipe(
         mapData(data => successEnvelope({data, changedHandles, handlesByPath})),

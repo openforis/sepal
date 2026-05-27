@@ -123,7 +123,7 @@ function createSpecialistRuntime({llm, bus, name, systemPrompt, tools, finishOnE
                 return of(blocked)
             }
             publishSpecialistToolRequest({bus, name, conversationId, toolCall: canonical})
-            return invokeTool$(canonical, context).pipe(
+            return bus.track$('specialist.tool.invoke', toolSpanAttrs({conversationId, specialist: name, tool: canonical.name}), invokeTool$(canonical, context)).pipe(
                 tap(value => {
                     if (isChannelEmission(value)) return
                     publishSpecialistToolResponse({bus, name, conversationId, tool: canonical.name, envelope: value})
@@ -162,6 +162,14 @@ function asSpecialistResult({finalText, finishReason, timeline}) {
 
 function identity(value) {
     return value
+}
+
+function toolSpanAttrs({conversationId, specialist, tool}) {
+    return {
+        ...(conversationId ? {conversationId} : {}),
+        specialist,
+        tool
+    }
 }
 
 function stop(reason, finalText) {

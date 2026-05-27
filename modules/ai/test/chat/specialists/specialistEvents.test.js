@@ -3,6 +3,10 @@ const {
     publishSpecialistResponse,
     publishSpecialistToolRequest,
     publishSpecialistToolResponse,
+    publishUpdateRecipeRequest,
+    publishUpdateRecipeValuesChanged,
+    publishUpdateRecipeValuesProjection,
+    publishUpdateRecipeValuesRequest,
     publishUpdateRecipeOutcome
 } = require('#mcp/chat/specialists/specialistEvents')
 
@@ -246,6 +250,92 @@ describe('publishSpecialistToolResponse', () => {
         publishSpecialistToolResponse({bus, name: 'recipe.update', tool: 'unfamiliar_tool', envelope: {ok: true, data: {x: 1}}})
 
         expect(bus.published[0].shape).toBe('object')
+    })
+})
+
+describe('update_recipe diagnostic events', () => {
+
+    it('publishes the request with selected/open recipe routing context', () => {
+        const bus = aFakeBus()
+
+        publishUpdateRecipeRequest({
+            bus, conversationId: 'c1', recipeId: 'r1',
+            request: 'make it faster',
+            contextText: 'follow-up to slow rendering',
+            guiContext: {
+                selectedRecipe: {id: 'r1'},
+                openRecipes: [{id: 'r1'}, {id: 'r2'}]
+            }
+        })
+
+        expect(bus.published[0]).toMatchObject({
+            type: 'update_recipe.request',
+            level: 'info',
+            conversationId: 'c1',
+            recipeId: 'r1',
+            request: 'make it faster',
+            contextText: 'follow-up to slow rendering',
+            selectedRecipeId: 'r1',
+            openRecipeIds: ['r1', 'r2'],
+            recipeContextMatch: 'selected'
+        })
+    })
+
+    it('publishes submitted handle values as a bounded structured summary', () => {
+        const bus = aFakeBus()
+
+        publishUpdateRecipeValuesRequest({
+            bus, conversationId: 'c1', recipeId: 'r1',
+            values: {datasets: {LANDSAT: ['LANDSAT_9']}, cloudMethods: ['sepalCloudScore']}
+        })
+
+        expect(bus.published[0]).toMatchObject({
+            type: 'update_recipe.values.request',
+            level: 'debug',
+            conversationId: 'c1',
+            recipeId: 'r1',
+            handleCount: 2,
+            handles: ['datasets', 'cloudMethods'],
+            values: {datasets: {LANDSAT: ['LANDSAT_9']}, cloudMethods: ['sepalCloudScore']}
+        })
+    })
+
+    it('publishes current, desired, and projected model summaries at trace level', () => {
+        const bus = aFakeBus()
+        const currentModel = {sources: {dataSets: {LANDSAT: ['LANDSAT_9']}, cloudPercentageThreshold: 90}, compositeOptions: {corrections: ['SR', 'BRDF'], includedCloudMasking: []}}
+        const desiredModel = {sources: {dataSets: {LANDSAT: ['LANDSAT_9']}, cloudPercentageThreshold: 50}, compositeOptions: {corrections: ['SR'], includedCloudMasking: []}}
+
+        publishUpdateRecipeValuesProjection({
+            bus, conversationId: 'c1', recipeId: 'r1',
+            currentModel, desiredModel, projectedModel: desiredModel
+        })
+
+        expect(bus.published[0]).toMatchObject({
+            type: 'update_recipe.values.projection',
+            level: 'trace',
+            current: {sceneCloudLimit: 90, corrections: ['SR', 'BRDF']},
+            desired: {sceneCloudLimit: 50, corrections: ['SR']},
+            projected: {sceneCloudLimit: 50, corrections: ['SR']}
+        })
+    })
+
+    it('publishes changed handles after diffing values to operations', () => {
+        const bus = aFakeBus()
+
+        publishUpdateRecipeValuesChanged({
+            bus, conversationId: 'c1', recipeId: 'r1',
+            changedHandles: ['sceneCloudLimit', 'corrections'],
+            operationCount: 2
+        })
+
+        expect(bus.published[0]).toMatchObject({
+            type: 'update_recipe.values.changed',
+            level: 'debug',
+            recipeId: 'r1',
+            changedHandleCount: 2,
+            changedHandles: ['sceneCloudLimit', 'corrections'],
+            operationCount: 2
+        })
     })
 })
 
