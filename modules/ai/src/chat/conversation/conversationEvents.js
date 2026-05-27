@@ -34,6 +34,7 @@ function publishLlmRequest({bus, diagnostics, conversationId, round, llmMessages
 }
 
 function publishToolCall({bus, diagnostics, conversationId, round, toolCall}) {
+    const inputSummary = summariseToolCallInput(toolCall)
     bus.publish({
         type: 'conversation.llmToolCall',
         level: 'debug',
@@ -41,7 +42,8 @@ function publishToolCall({bus, diagnostics, conversationId, round, toolCall}) {
         round,
         toolName: toolCall.name,
         toolCallId: toolCall.id,
-        message: `LLM orchestrator ${conversationId} round=${round} requested tool ${toolCall.name} (${toolCall.id})`
+        inputSummary,
+        message: `LLM orchestrator ${conversationId} round=${round} requested tool ${toolCall.name} (${toolCall.id})${inputSummary ? ` ${inputSummary}` : ''}`
     })
     bus.publish({
         type: 'conversation.llmToolCallPayload',
@@ -52,6 +54,68 @@ function publishToolCall({bus, diagnostics, conversationId, round, toolCall}) {
         toolCallId: toolCall.id,
         message: () => `LLM orchestrator ${conversationId} round=${round} tool call payload: ${diagnostics.summarizeObject(toolCall)}`
     })
+}
+
+// Per-tool compact input summary on the debug event. Full payloads stay
+// trace-only via conversation.llmToolCallPayload.
+const TOOL_TEXT_MAX_CHARS = 200
+
+function summariseToolCallInput(toolCall) {
+    const input = toolCall?.input
+    if (!input || typeof input !== 'object') return ''
+    switch (toolCall.name) {
+        case 'update_recipe': return summariseUpdateRecipe(input)
+        case 'describe_recipe': return summariseDescribeRecipe(input)
+        case 'create_recipe': return summariseCreateRecipe(input)
+        default: return summariseGeneric(input)
+    }
+}
+
+function summariseUpdateRecipe(input) {
+    const intent = input.request ?? input.instruction
+    const parts = [
+        `recipeId=${input.recipeId || '-'}`,
+        hasText(intent) ? `request=${quote(truncate(intent, TOOL_TEXT_MAX_CHARS))}` : 'request=<missing>'
+    ]
+    if (hasText(input.context)) {
+        parts.push(`context=${quote(truncate(input.context, TOOL_TEXT_MAX_CHARS))}`)
+    }
+    return parts.join(' ')
+}
+
+function summariseDescribeRecipe(input) {
+    const parts = [`recipeId=${input.recipeId || '-'}`]
+    if (hasText(input.question)) {
+        parts.push(`question=${quote(truncate(input.question, TOOL_TEXT_MAX_CHARS))}`)
+    }
+    return parts.join(' ')
+}
+
+function summariseCreateRecipe(input) {
+    const intent = input.request ?? input.instruction
+    const parts = [`recipeType=${input.recipeType || '-'}`]
+    if (hasText(intent)) parts.push(`request=${quote(truncate(intent, TOOL_TEXT_MAX_CHARS))}`)
+    if (hasText(input.projectId)) parts.push(`projectId=${input.projectId}`)
+    if (hasText(input.name)) parts.push(`name=${input.name}`)
+    return parts.join(' ')
+}
+
+function summariseGeneric(input) {
+    const keys = Object.keys(input)
+    return keys.length ? `inputKeys=[${keys.join(',')}]` : ''
+}
+
+function hasText(value) {
+    return typeof value === 'string' && value.trim().length > 0
+}
+
+function quote(value) {
+    return JSON.stringify(value ?? '')
+}
+
+function truncate(value, max) {
+    const s = String(value ?? '')
+    return s.length > max ? `${s.slice(0, max)}...` : s
 }
 
 function publishEmptyLlmRetry({bus, conversationId, round, messages, exposedTools}) {

@@ -5,7 +5,7 @@ Tool:
 
 Prepared packet (user message):
 - pickedHandles: handles the picker chose from the user request.
-- requiredHandles: user-required handles for this recipe type that have no sensible default (e.g. aoi). ALWAYS in writableHandles. If a requiredHandle has currentValue=null and no real value is supplied via the instruction or context, ASK ONE clarification question — do NOT invent.
+- requiredHandles: user-required handles for this recipe type that have no sensible default (e.g. aoi). ALWAYS in writableHandles. If a requiredHandle has currentValue=null and no real value is supplied via the instruction or prepared packet, ASK ONE clarification question — do NOT invent.
 - writableHandles: the only handles you may set. Workflow-managed scope — do NOT include in the tool call; the workflow rejects any value whose handle is outside this set.
 - readOnlyHandles: validation-rule context handles. You may READ their currentValue from readOnlyFields; you MUST NOT set them.
 - fields[handle] (writable): currentValue, label, description, valueGuidance/summaryGuidance/performanceNote when present, allowed values/items/keys/range/format, examples. Whole-array handles take the whole intended array; whole-object handles take the whole intended object.
@@ -29,7 +29,7 @@ Rules:
 - For whole-array handles (e.g. cloudMethods, filters, corrections), send the complete intended array.
 - For whole-object handles (e.g. datasets, aoi), send the complete intended object.
 - Companion-doesn't-activate: a handle listed in inactiveCompanionFacts will be stripped by projection unless its selector item is active. Setting the companion alone does NOT activate the item. If selectorWritable is true, set the selector in the same atomic call to include the named item AND set the companion. If selectorWritable is false, omit the companion (or ask a clarification). The tool returns `INACTIVE_VALUE` if you try anyway.
-- AOI rule (load-bearing): aoi MUST come from a real geometry/feature-table object — instruction context, GUI selection, or a clarification answer. Do NOT geocode place names. Do NOT invent polygon coordinates. If only a place name is given and no AOI object is available, ASK ONE clarification question and stop.
+- AOI rule (load-bearing): aoi MUST come from a real geometry/feature-table object in the instruction, prepared packet, or a clarification answer. Do NOT geocode place names. Do NOT invent polygon coordinates. If only a place name is given and no AOI object is available, ASK ONE clarification question and stop.
 - Do not call create_recipe_values with guesses for user-required handles. If the instruction is ambiguous or a prerequisite handle is missing, ask exactly ONE concise clarification question instead.
 - Reply in the user's language. Translate handle names, codes, and ranges into plain user-facing phrases.
 

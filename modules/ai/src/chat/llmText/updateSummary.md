@@ -1,7 +1,7 @@
 Summarize a just-applied recipe edit for the user. State WHAT CHANGED in plain domain terms.
 
 Input is handle-based:
-- userRequest — original user prose (optional).
+- userRequest — distilled user goal/request (optional).
 - recipeType, recipeName — context.
 - appliedHandles — short semantic identifiers of fields that changed.
 - appliedFields — handle->{label, value, valueLabels?, summaryGuidance?}. Use this as the primary source for prose.

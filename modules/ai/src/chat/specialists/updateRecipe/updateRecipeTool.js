@@ -16,7 +16,7 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
 
     return {
         name: 'update_recipe',
-        description: 'Update ONE current open recipe. Use the selected recipe, or the only open recipe. Pass `request` close to the user\'s latest recipe-edit wording (problem + action like "still clouds, remove them" or "too slow, fix it" is fine). Pass `context` only as neutral conversation context (e.g. "follow-up to slow rendering"); do not put field-level settings in `context` unless the user named them. Do not invent a field-level plan. Do not call describe_recipe first. `instruction` is a deprecated alias for `request`.',
+        description: 'Update ONE open recipe. `recipeId` = selected, or only-open (ask if multiple open + none selected). Id from runtime context, never chat history. `request` = the user\'s distilled goal in the user\'s language when clear (e.g. "speed up rendering", "remove residual clouds") — use the SAME phrasing across follow-up turns when the user is on the same goal. NOT raw user text; do NOT invent goals the user didn\'t state. `context` (optional) = factual conversation history relevant to this update: what was tried, what the user rejected, prior constraints they explicitly stated. Facts only — no editorializing ("maintain usability"), prompt/routing notes, or tool-behavior commentary. No field-level plans. No read-only preflight (describe_recipe / recipe_list / get_gui_context). One conceptual edit proceeds without confirmation. `instruction`: deprecated alias.',
         directAnswer: true,
         parameters: {
             type: 'object',

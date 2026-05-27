@@ -17,7 +17,7 @@ function createRecipeTool({llm, bus, innerTools}) {
 
     return {
         name: 'create_recipe',
-        description: 'Create ONE new recipe from natural language. Picks recipe fields, applies values to defaults, validates, and creates. Use for create/new — for editing an existing recipe use update_recipe instead. v1 supports MOSAIC.',
+        description: 'Create ONE new recipe from natural language. For editing an existing recipe use `update_recipe`. v1: MOSAIC only.',
         directAnswer: true,
         parameters: {
             type: 'object',
