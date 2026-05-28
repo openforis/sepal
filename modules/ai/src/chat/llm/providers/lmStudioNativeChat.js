@@ -2,7 +2,7 @@
 // that explicitly disable reasoning.
 
 const {EMPTY, defer, finalize, from, mergeMap, tap} = require('rxjs')
-const {createDiagnostics, truncateString, shortHashOf, MAX_DEBUG_TEXT} = require('../../diagnostics')
+const {createDiagnostics, truncateString, shortHashOf, newCallId, MAX_DEBUG_TEXT} = require('../../diagnostics')
 const {publishResponseSummary} = require('../events')
 const {publishLlmUsage} = require('../usage')
 
@@ -15,6 +15,8 @@ function createLmStudioNativeChat({baseURL, apiKey, model, provider = 'lmstudio'
     function respondTo$({messages, maxTokens, temperature, debugLabel, usageContext}) {
         const url = nativeChatUrl(baseURL)
         const acc = {text: '', chunkCount: 0, contentChunkCount: 0, startedAt: null, error: null}
+        const callId = newCallId()
+        const conversationId = usageContext?.conversationId ?? null
         const params = {
             model,
             input: nativeInput(messages),
@@ -27,7 +29,7 @@ function createLmStudioNativeChat({baseURL, apiKey, model, provider = 'lmstudio'
         }
         return defer(() => {
             acc.startedAt = clock.now()
-            if (debugLabel) publishRequestEvents({bus, debugLabel, diagnostics, params})
+            if (debugLabel) publishRequestEvents({bus, debugLabel, diagnostics, params, conversationId, callId})
             return from(postJson({url, apiKey, params}))
         }).pipe(
             mergeMap(response => {
@@ -39,19 +41,19 @@ function createLmStudioNativeChat({baseURL, apiKey, model, provider = 'lmstudio'
             }),
             tap({error: error => { acc.error = error }}),
             publishResponseSummary({bus, diagnostics, model, acc, debugLabel}),
-            finalize(() => publishUsage(acc, params, usageContext))
+            finalize(() => publishUsage(acc, params, usageContext, callId))
         )
     }
 
     // The native /api/v1/chat path is title-only and its usage wire shape is not
     // verified, so usage is estimated from bytes (usage: null). If LM Studio's
     // native usage shape is confirmed later, translate it here, test-first.
-    function publishUsage(acc, params, usageContext) {
+    function publishUsage(acc, params, usageContext, callId) {
         const context = usageContext || {}
         publishLlmUsage({
             bus, provider, model,
             role: context.role, specialist: context.specialist, recipeType: context.recipeType,
-            conversationId: context.conversationId, turnId: context.turnId, callId: context.callId,
+            conversationId: context.conversationId, turnId: context.turnId, callId,
             usage: null,
             outputText: acc.text,
             messageBytes: Buffer.byteLength(JSON.stringify([params.system_prompt, params.input]), 'utf8'),
@@ -63,20 +65,26 @@ function createLmStudioNativeChat({baseURL, apiKey, model, provider = 'lmstudio'
     }
 }
 
-function publishRequestEvents({bus, debugLabel, diagnostics, params}) {
+function publishRequestEvents({bus, debugLabel, diagnostics, params, conversationId, callId}) {
     const inputJson = stableJson(params.input)
     const systemPromptJson = stableJson(params.system_prompt)
     bus.publish({
         type: 'llm.request',
         level: 'debug',
+        conversationId,
+        callId,
         message: () => `LLM ${debugLabel} native LM Studio request: model=${params.model}`
+            + ` conversationId=${conversationId ?? '-'} callId=${callId}`
             + ` inputBytes=${byteLength(inputJson)} inputHash=${shortHashOf(inputJson)}`
             + ` systemPromptBytes=${byteLength(systemPromptJson)} systemPromptHash=${shortHashOf(systemPromptJson)}`
     })
     bus.publish({
         type: 'llm.requestPayload',
         level: 'trace',
+        conversationId,
+        callId,
         message: () => `LLM ${debugLabel} native LM Studio request payload:`
+            + ` conversationId=${conversationId ?? '-'} callId=${callId}`
             + ` input=${diagnostics.summarizeObject(params.input)}`
             + ` systemPrompt=${diagnostics.summarizeObject(params.system_prompt)}`
     })

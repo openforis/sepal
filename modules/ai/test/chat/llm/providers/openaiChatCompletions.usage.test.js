@@ -58,6 +58,22 @@ describe('OpenAI adapter — llm.usage accounting', () => {
         expect(usage.inputTokens).toBeGreaterThan(0)
     })
 
+    it('pairs each llm.usage to its matching llm.request via a shared callId, surfaced on both message lines', async () => {
+        const bus = aRecordingBus()
+        mockCreate.mockResolvedValue([{choices: [{delta: {content: 'patched.'}}]}, usageChunk])
+
+        await collect(anOpenAiChat({bus, provider: 'lmstudio', clock: aStepClock([1000, 1450])}).respondTo$({
+            messages: [{role: 'user', content: 'edit'}], debugLabel: 'specialist recipe.update conv-1',
+            usageContext: {role: 'specialist', specialist: 'recipe.update', conversationId: 'conv-1'}
+        }))
+
+        const request = bus.events.find(event => event.type === 'llm.request')
+        const usage = bus.events.find(event => event.type === 'llm.usage')
+        expect(usage.callId).toBe(request.callId)
+        expect(usage.message()).toMatch(/conversationId=conv-1/)
+        expect(usage.message()).toMatch(new RegExp(`callId=${request.callId}`))
+    })
+
     it('emits one llm.usage per provider call across a length-cap retry, with attribution preserved', async () => {
         const bus = aRecordingBus()
         mockCreate

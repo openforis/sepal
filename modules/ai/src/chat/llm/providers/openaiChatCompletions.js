@@ -3,7 +3,7 @@
 
 const {EMPTY, concat, defer, filter, finalize, from, map, mergeMap, tap, timeout} = require('rxjs')
 const OpenAI = require('openai').default
-const {createDiagnostics, shortHashOf} = require('../../diagnostics')
+const {createDiagnostics, newCallId, shortHashOf} = require('../../diagnostics')
 const {publishResponseSummary} = require('../events')
 const {publishLlmUsage} = require('../usage')
 
@@ -30,6 +30,8 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai
 
     function attempt$({messages, tools, maxTokens, temperature, debugLabel, usageContext, extraParams = {}}, attempt) {
         const acc = freshAcc()
+        const callId = newCallId()
+        const conversationId = usageContext?.conversationId ?? null
         // Mutated by toolCalls$, read by the retry defer below. Order matters:
         // concat'd defers evaluate sequentially — don't reorder.
         let retryAfterAttempt = false
@@ -53,13 +55,18 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai
                     type: 'llm.request',
                     level: 'debug',
                     parts,
-                    message: () => `LLM ${debugLabel} request: model=${model} attempt=${attempt} messages=${requestMessages.length} tools=${tools?.length || 0} ${describeRequestParams(params)}`
+                    conversationId,
+                    callId,
+                    message: () => `LLM ${debugLabel} request: model=${model} attempt=${attempt} conversationId=${conversationId ?? '-'} callId=${callId}`
+                        + ` messages=${requestMessages.length} tools=${tools?.length || 0} ${describeRequestParams(params)}`
                         + ` ${describePromptParts(parts)}`
                 })
                 bus.publish({
                     type: 'llm.requestPayload',
                     level: 'trace',
-                    message: () => `LLM ${debugLabel} request payload: attempt=${attempt} messages=${diagnostics.summarizeMessages(requestMessages)} tools=${diagnostics.summarizeTools(tools || [])}`
+                    conversationId,
+                    callId,
+                    message: () => `LLM ${debugLabel} request payload: attempt=${attempt} conversationId=${conversationId ?? '-'} callId=${callId} messages=${diagnostics.summarizeMessages(requestMessages)} tools=${diagnostics.summarizeTools(tools || [])}`
                 })
             }
             return from(client.chat.completions.create(params))
@@ -86,7 +93,7 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai
         const summary$ = concat(text$, toolCalls$, responseMeta$).pipe(
             tap({error: error => { acc.error = error }}),
             publishResponseSummary({bus, diagnostics, model, acc, debugLabel, attempt}),
-            publishAttemptUsage(acc, params, usageContext)
+            publishAttemptUsage(acc, params, usageContext, callId)
         )
         return concat(
             summary$,
@@ -130,13 +137,13 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai
         return EMPTY
     }
 
-    function publishAttemptUsage(acc, params, usageContext) {
+    function publishAttemptUsage(acc, params, usageContext, callId) {
         return finalize(() => {
             const context = usageContext || {}
             publishLlmUsage({
                 bus, provider, model,
                 role: context.role, specialist: context.specialist, recipeType: context.recipeType,
-                conversationId: context.conversationId, turnId: context.turnId, callId: context.callId,
+                conversationId: context.conversationId, turnId: context.turnId, callId,
                 usage: neutralUsageFromOpenAi(acc.usage),
                 outputText: acc.text,
                 messageBytes: Buffer.byteLength(JSON.stringify(params.messages), 'utf8'),

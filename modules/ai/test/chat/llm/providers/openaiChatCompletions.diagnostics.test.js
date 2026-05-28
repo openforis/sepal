@@ -64,6 +64,42 @@ describe('OpenAI adapter — diagnostic bus events', () => {
             expect(request.parts.tools).toMatchObject({bytes: expect.any(Number), hash: expect.stringMatching(/^[0-9a-f]{8}$/)})
         })
 
+        it('carries conversationId and a stable callId on the structured event and message line', async () => {
+            const bus = aRecordingBus()
+            mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'hi'}], debugLabel: 'orchestrator conv-1',
+                usageContext: {role: 'orchestrator', conversationId: 'conv-1'}
+            }))
+
+            const request = eventsOf(bus, 'llm.request')[0]
+            expect(request.conversationId).toBe('conv-1')
+            expect(request.callId).toMatch(/^[0-9a-f]+$/)
+            expect(request.message()).toMatch(/conversationId=conv-1/)
+            expect(request.message()).toMatch(new RegExp(`callId=${request.callId}`))
+        })
+
+        it('mints a fresh callId on the length-cap retry so the two attempts pair to distinct usage records', async () => {
+            const bus = aRecordingBus()
+            mockCreate
+                .mockResolvedValueOnce([
+                    {choices: [{delta: {reasoning_content: 'planning'}}]},
+                    {choices: [{finish_reason: 'length', delta: {}}]}
+                ])
+                .mockResolvedValueOnce([{choices: [{delta: {content: 'recovered.'}}]}])
+
+            await collect(anOpenAiChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'edit'}], debugLabel: 'orchestrator conv-1',
+                usageContext: {role: 'orchestrator', conversationId: 'conv-1'}
+            }))
+
+            const [first, second] = eventsOf(bus, 'llm.request')
+            expect(first.callId).toMatch(/^[0-9a-f]+$/)
+            expect(second.callId).toMatch(/^[0-9a-f]+$/)
+            expect(first.callId).not.toBe(second.callId)
+        })
+
         it('produces the same system hash across calls that share the leading system messages — the cacheable-prefix signal', async () => {
             const bus = aRecordingBus()
             mockCreate.mockResolvedValue([{choices: [{delta: {content: 'ok'}}]}])

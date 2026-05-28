@@ -66,6 +66,7 @@ function publishLlmUsage({
         errorCode,
         message: () => [
             `llm.usage ${role}${specialist ? `/${specialist}` : ''}`,
+            `conversationId=${conversationId ?? '-'} callId=${callId ?? '-'}`,
             `provider=${provider} model=${model}`,
             `in=${usage.inputTokens} out=${usage.outputTokens} total=${usage.totalTokens}`,
             `cached=${usage.cachedInputTokens} cacheWrite=${usage.cacheWriteTokens}`,

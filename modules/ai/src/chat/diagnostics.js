@@ -113,6 +113,12 @@ function stableValue(value, seen) {
     return result
 }
 
+// Per-LLM-call correlation id, surfaced on llm.request + llm.usage so a log
+// scanner can pair them without sequential guessing across interleaved calls.
+function newCallId() {
+    return require('crypto').randomBytes(4).toString('hex')
+}
+
 // FNV-1a 32-bit, hex slice. Stable, dependency-free, good enough to correlate
 // across log lines — not cryptographic.
 function shortHashOf(text) {
@@ -137,4 +143,4 @@ function hasVisibleText(value) {
     return typeof value === 'string' && value.trim().length > 0
 }
 
-module.exports = {createDiagnostics, truncateString, shortHashOf, textChunk, MAX_DEBUG_TEXT}
+module.exports = {createDiagnostics, truncateString, shortHashOf, newCallId, textChunk, MAX_DEBUG_TEXT}

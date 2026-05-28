@@ -160,6 +160,25 @@ describe('LM Studio native chat adapter', () => {
             expect(request.message()).not.toContain(systemPrompt)
         })
 
+        it('carries conversationId and a stable callId on llm.request + llm.usage for log-line correlation', async () => {
+            const bus = aRecordingBus()
+            mockNativeReplyOf('Title')
+
+            await collect(aNativeChat({bus}).respondTo$({
+                messages: [{role: 'user', content: 'hi'}], debugLabel,
+                usageContext: {role: 'title', conversationId: 'conv-9'}
+            }))
+
+            const request = bus.published.find(event => event.type === 'llm.request')
+            const usage = bus.published.find(event => event.type === 'llm.usage')
+            expect(request.callId).toMatch(/^[0-9a-f]+$/)
+            expect(usage.callId).toBe(request.callId)
+            expect(request.message()).toMatch(/conversationId=conv-9/)
+            expect(request.message()).toMatch(new RegExp(`callId=${request.callId}`))
+            expect(usage.message()).toMatch(/conversationId=conv-9/)
+            expect(usage.message()).toMatch(new RegExp(`callId=${request.callId}`))
+        })
+
         it('publishes the raw input + systemPrompt on llm.requestPayload at trace when full-trace payloads are enabled', async () => {
             const bus = aRecordingBus()
             const {createDiagnostics} = require('#mcp/chat/diagnostics')
