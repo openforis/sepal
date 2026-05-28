@@ -71,3 +71,5 @@ supervisord.pid
 .RData
 
 TODO.md
+
+.claude
