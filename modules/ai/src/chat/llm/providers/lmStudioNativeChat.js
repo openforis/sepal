@@ -2,7 +2,7 @@
 // that explicitly disable reasoning.
 
 const {EMPTY, defer, finalize, from, mergeMap, tap} = require('rxjs')
-const {createDiagnostics, truncateString, MAX_DEBUG_TEXT} = require('../../diagnostics')
+const {createDiagnostics, truncateString, shortHashOf, MAX_DEBUG_TEXT} = require('../../diagnostics')
 const {publishResponseSummary} = require('../events')
 const {publishLlmUsage} = require('../usage')
 
@@ -27,13 +27,7 @@ function createLmStudioNativeChat({baseURL, apiKey, model, provider = 'lmstudio'
         }
         return defer(() => {
             acc.startedAt = clock.now()
-            if (debugLabel) {
-                bus.publish({
-                    type: 'llm.request',
-                    level: 'debug',
-                    message: () => `LLM ${debugLabel} native LM Studio request: model=${params.model} input=${diagnostics.summarizeObject(params.input)} systemPrompt=${diagnostics.summarizeObject(params.system_prompt)}`
-                })
-            }
+            if (debugLabel) publishRequestEvents({bus, debugLabel, diagnostics, params})
             return from(postJson({url, apiKey, params}))
         }).pipe(
             mergeMap(response => {
@@ -67,6 +61,33 @@ function createLmStudioNativeChat({baseURL, apiKey, model, provider = 'lmstudio'
             errorCode: acc.error ? 'LLM_CALL_FAILED' : null
         })
     }
+}
+
+function publishRequestEvents({bus, debugLabel, diagnostics, params}) {
+    const inputJson = stableJson(params.input)
+    const systemPromptJson = stableJson(params.system_prompt)
+    bus.publish({
+        type: 'llm.request',
+        level: 'debug',
+        message: () => `LLM ${debugLabel} native LM Studio request: model=${params.model}`
+            + ` inputBytes=${byteLength(inputJson)} inputHash=${shortHashOf(inputJson)}`
+            + ` systemPromptBytes=${byteLength(systemPromptJson)} systemPromptHash=${shortHashOf(systemPromptJson)}`
+    })
+    bus.publish({
+        type: 'llm.requestPayload',
+        level: 'trace',
+        message: () => `LLM ${debugLabel} native LM Studio request payload:`
+            + ` input=${diagnostics.summarizeObject(params.input)}`
+            + ` systemPrompt=${diagnostics.summarizeObject(params.system_prompt)}`
+    })
+}
+
+function stableJson(value) {
+    return value == null ? '' : (typeof value === 'string' ? value : JSON.stringify(value))
+}
+
+function byteLength(value) {
+    return typeof value === 'string' ? Buffer.byteLength(value, 'utf8') : 0
 }
 
 function nativeSystemPrompt(messages) {

@@ -5,7 +5,7 @@
 // but tracks createdRecipeId rather than appliedHandles, since create's
 // success surface is identity, not a diff.
 
-const {publishCreateRecipeOutcome} = require('../specialistEvents')
+const {publishCreateRecipeOutcome} = require('./createRecipeEvents')
 
 const CREATE_TOOL = 'create_recipe_values'
 

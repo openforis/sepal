@@ -3,7 +3,7 @@ const {map, tap} = require('rxjs/operators')
 const {toEffectiveModel} = require('#recipes')
 const {guiProductRequest$} = require('../../tools/guiProductRequest')
 const {mapData} = require('../../channelEvents')
-const {publishPrepareHandlePacketCompleted} = require('../specialistEvents')
+const {publishPrepareHandlePacketCompleted} = require('../recipeFlowEvents')
 const {buildHandlePacket} = require('../handlePacket')
 
 // Prepares one handle-keyed packet per update attempt. Loads the current

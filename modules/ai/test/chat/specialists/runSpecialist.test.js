@@ -3,74 +3,104 @@ const {createSpecialistRuntime, wasCapped} = require('#mcp/chat/specialists/runS
 const {aFakeLlm, aRecordingBus} = require('../harness')
 const {read} = require('../builders')
 
-describe('createSpecialistRuntime — construction + consult$', () => {
+const loadCall = {id: 't1', name: 'recipe_load', input: {recipeId: 'r1'}}
+const loadResult = {ok: true, data: {id: 'r1', type: 'MOSAIC'}}
+const loadSchema = {name: 'recipe_load', description: 'Load.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}}}}
 
-    const loadCall = {id: 't1', name: 'recipe_load', input: {recipeId: 'r1'}}
-    const loadResult = {ok: true, data: {id: 'r1', type: 'MOSAIC'}}
-    const loadSchema = {name: 'recipe_load', description: 'Load.', parameters: {type: 'object', properties: {recipeId: {type: 'string'}}}}
+function aConsult({replies, invoke$ = () => of(loadResult), canonicalizeCall} = {}) {
+    const llm = aFakeLlm({replies})
+    const bus = aRecordingBus()
+    const runtime = createSpecialistRuntime({
+        llm, bus, name: 'recipe.describe', systemPrompt: 'sys',
+        tools: {schemas: [loadSchema], invoke$, canonicalizeCall}
+    })
+    const result = read(runtime.consult$({userText: 'describe r1', context: {conversationId: 'conv-1'}}))
+    return {result, llm, bus}
+}
 
-    function consult({replies, invoke$ = () => of(loadResult), canonicalizeCall, context = {conversationId: 'conv-1'}}) {
-        const runtime = createSpecialistRuntime({
-            llm: aFakeLlm({replies}),
-            bus: aRecordingBus(),
-            name: 'recipe.describe',
-            systemPrompt: 'sys',
-            tools: {schemas: [loadSchema], invoke$, canonicalizeCall}
-        })
-        return read(runtime.consult$({userText: 'describe r1', context}))
-    }
+describe('specialist runtime — consult$', () => {
 
     it('carries the answer the loop ended on', () => {
-        const result = consult({replies: [{toolCalls: [loadCall]}, {text: 'A mosaic recipe.'}]})
+        const {result} = aConsult({replies: [{toolCalls: [loadCall]}, {text: 'A mosaic recipe.'}]})
 
         expect(result.answer).toBe('A mosaic recipe.')
     })
 
-    it('records each tool call on the timeline with its name, ok, result, and input', () => {
-        const result = consult({replies: [{toolCalls: [loadCall]}, {text: 'A mosaic recipe.'}]})
+    it('records each tool call on the timeline with name, ok, result, and input', () => {
+        const {result} = aConsult({replies: [{toolCalls: [loadCall]}, {text: 'A mosaic recipe.'}]})
 
-        expect(result.timeline).toEqual(expect.arrayContaining([
-            {kind: 'tool', name: 'recipe_load', ok: true, result: loadResult, input: {recipeId: 'r1'}}
-        ]))
+        expect(result.timeline).toContainEqual({
+            kind: 'tool', name: 'recipe_load', ok: true, result: loadResult, input: {recipeId: 'r1'}
+        })
     })
 
-    it('reports why the loop stopped', () => {
-        const result = consult({replies: [{text: 'Answered without a tool.'}]})
+    it('reports finishReason=answered when the loop stopped on visible text', () => {
+        const {result} = aConsult({replies: [{text: 'Answered without a tool.'}]})
 
         expect(result.finishReason).toBe('answered')
     })
 
-    it('wasCapped is true when the loop terminated at the round/stall cap', () => {
-        const result = consult({replies: [{text: ''}]})
+    it('caps at the stall budget when every round stays silent', () => {
+        const {result} = aConsult({replies: [{text: ''}]})
 
-        expect(result.finishReason).toBe('capped')
         expect(wasCapped(result)).toBe(true)
     })
 
-    it('records the canonicalized tool input on the timeline, not the raw model emission', () => {
-        const seen = []
-        const result = consult({
+    it('records the canonicalised tool input, not the raw model emission', () => {
+        const invoked = []
+        const {result} = aConsult({
             replies: [{toolCalls: [{...loadCall, input: {recipeId: 'r-bogus'}}]}, {text: 'done.'}],
             canonicalizeCall: toolCall => ({...toolCall, input: {recipeId: 'r1'}}),
-            invoke$: toolCall => { seen.push(toolCall.input); return of(loadResult) }
+            invoke$: toolCall => { invoked.push(toolCall.input); return of(loadResult) }
         })
 
-        expect(seen).toEqual([{recipeId: 'r1'}])
-        const toolEntry = result.timeline.find(entry => entry.kind === 'tool')
-        expect(toolEntry.input).toEqual({recipeId: 'r1'})
+        expect(invoked).toEqual([{recipeId: 'r1'}])
+        expect(result.timeline.find(entry => entry.kind === 'tool').input).toEqual({recipeId: 'r1'})
+    })
+})
+
+describe('specialist runtime — reasoning across rounds', () => {
+
+    it('rides reasoning forward on the assistant tool-call turn to the next round', () => {
+        const {llm} = aConsult({replies: [
+            {toolCalls: [loadCall], responseMeta: {reasoning: 'plan to load r1'}},
+            {text: 'Done.'}
+        ]})
+
+        expect(toolCallTurnIn(llm.receivedMessages[1])).toMatchObject({reasoning: 'plan to load r1'})
     })
 
-    it('wraps inner tool invocation in a specialist.tool.invoke span', () => {
-        const bus = aSpanRecordingBus()
-        const runtime = createSpecialistRuntime({
-            llm: aFakeLlm({replies: [{toolCalls: [loadCall]}, {text: 'done.'}]}),
-            bus,
-            name: 'recipe.describe',
-            systemPrompt: 'sys',
-            tools: {schemas: [loadSchema], invoke$: () => of(loadResult)}
-        })
+    it('omits reasoning on the assistant turn when none was emitted', () => {
+        const {llm} = aConsult({replies: [
+            {toolCalls: [loadCall], responseMeta: {finishReason: 'tool_calls'}},
+            {text: 'Done.'}
+        ]})
 
-        read(runtime.consult$({userText: 'describe r1', context: {conversationId: 'conv-1'}}))
+        expect(toolCallTurnIn(llm.receivedMessages[1])).not.toHaveProperty('reasoning')
+    })
+
+    it('appends a silent reasoning carrier on stall so the next round sees the prior thinking', () => {
+        const {llm} = aConsult({replies: [
+            {text: '', responseMeta: {reasoning: 'thinking out loud'}},
+            {text: 'final answer.'}
+        ]})
+
+        expect(llm.receivedMessages[1]).toContainEqual(expect.objectContaining({
+            role: 'assistant', reasoning: 'thinking out loud'
+        }))
+    })
+
+    it('does not append a synthetic turn on stall when no reasoning was emitted', () => {
+        const {llm} = aConsult({replies: [{text: ''}, {text: 'final answer.'}]})
+
+        expect(llm.receivedMessages[1].filter(message => message.role === 'assistant')).toHaveLength(0)
+    })
+})
+
+describe('specialist runtime — spans', () => {
+
+    it('wraps inner tool invocation in a specialist.tool.invoke span', () => {
+        const {bus} = aConsult({replies: [{toolCalls: [loadCall]}, {text: 'done.'}]})
 
         expect(bus.spans).toContainEqual({
             name: 'specialist.tool.invoke',
@@ -79,14 +109,6 @@ describe('createSpecialistRuntime — construction + consult$', () => {
     })
 })
 
-function aSpanRecordingBus() {
-    const spans = []
-    return {
-        spans,
-        publish() {},
-        track$(name, attrs, work$) {
-            spans.push({name, attrs})
-            return work$
-        }
-    }
+function toolCallTurnIn(messages) {
+    return messages.find(message => message.role === 'assistant' && message.toolCalls)
 }

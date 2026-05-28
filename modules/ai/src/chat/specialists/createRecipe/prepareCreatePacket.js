@@ -7,7 +7,7 @@
 
 const {of} = require('rxjs')
 const {getRecipeHandles, getRecipeSpec, toEffectiveModel} = require('#recipes')
-const {publishPrepareHandlePacketCompleted} = require('../specialistEvents')
+const {publishPrepareHandlePacketCompleted} = require('../recipeFlowEvents')
 const {buildHandlePacket} = require('../handlePacket')
 
 function prepareCreatePacket$({recipeType, pickedHandles, bus, conversationId}) {

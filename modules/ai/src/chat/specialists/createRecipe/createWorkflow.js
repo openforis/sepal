@@ -16,7 +16,7 @@
 const {map, mergeMap, of} = require('rxjs')
 const {getRecipeHandles, getRecipeSpec} = require('#recipes')
 const {wasCapped} = require('../runSpecialist')
-const {publishCreateRecipeOutcome} = require('../specialistEvents')
+const {publishCreateRecipeOutcome} = require('./createRecipeEvents')
 const {isChannelEmission} = require('../../channelEvents')
 const {pickHandles$} = require('../updateRecipe/pickHandles')
 const {prepareCreatePacket$} = require('./prepareCreatePacket')

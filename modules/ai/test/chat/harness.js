@@ -173,6 +173,7 @@ function aControllableLlm() {
 }
 
 function replyToEvents(reply) {
+    if (Array.isArray(reply.events)) return reply.events
     const events = []
     if (reply.text) events.push({textDelta: reply.text})
     if (reply.textChunks) reply.textChunks.forEach(chunk => events.push({textDelta: chunk}))
@@ -549,11 +550,14 @@ function defaultMosaicModel() {
 
 function aRecordingBus() {
     const events = []
+    const spans = []
     return {
         events,
+        published: events,
+        spans,
         publish(event) { events.push(event) },
-        track$(_name, _attrs, work$) { return work$ },
-        track(_name, _attrs, work) { return work() }
+        track$(name, attrs, work$) { spans.push({name, attrs}); return work$ },
+        track(name, attrs, work) { spans.push({name, attrs}); return work() }
     }
 }
 

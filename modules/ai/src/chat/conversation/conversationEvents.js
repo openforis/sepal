@@ -1,6 +1,7 @@
 // Bus event publishers for conversation telemetry.
 
 const {publishLoopPrompt} = require('../loopEvents')
+const {textChunk} = require('../diagnostics')
 
 function publishOrchestratorPrompt({bus, conversationId, round, llmMessages, toolSchemas}) {
     publishLoopPrompt({bus, prefix: 'orchestrator', conversationId, round, messages: llmMessages, toolSchemas})
@@ -18,18 +19,13 @@ function publishLlmRequest({bus, diagnostics, conversationId, round, llmMessages
         message: `LLM orchestrator ${conversationId} round=${round} messages=${messageSummary(llmMessages)} tools=[${offeredTools.join(',')}]`
     })
     bus.publish({
-        type: 'conversation.llmMessages',
+        type: 'conversation.llmRequestPayload',
         level: 'trace',
         conversationId,
         round,
-        message: () => `LLM orchestrator ${conversationId} round=${round} messages payload: ${diagnostics.summarizeMessages(llmMessages)}`
-    })
-    bus.publish({
-        type: 'conversation.llmTools',
-        level: 'trace',
-        conversationId,
-        round,
-        message: () => `LLM orchestrator ${conversationId} round=${round} tools payload: ${diagnostics.summarizeTools(toolSchemas)}`
+        message: () => `LLM orchestrator ${conversationId} round=${round} payload:`
+            + ` messages=${diagnostics.summarizeMessages(llmMessages)}`
+            + ` tools=${diagnostics.summarizeTools(toolSchemas)}`
     })
 }
 
@@ -56,10 +52,6 @@ function publishToolCall({bus, diagnostics, conversationId, round, toolCall}) {
     })
 }
 
-// Per-tool compact input summary on the debug event. Full payloads stay
-// trace-only via conversation.llmToolCallPayload.
-const TOOL_TEXT_MAX_CHARS = 200
-
 function summariseToolCallInput(toolCall) {
     const input = toolCall?.input
     if (!input || typeof input !== 'object') return ''
@@ -73,28 +65,20 @@ function summariseToolCallInput(toolCall) {
 
 function summariseUpdateRecipe(input) {
     const intent = input.request ?? input.instruction
-    const parts = [
-        `recipeId=${input.recipeId || '-'}`,
-        hasText(intent) ? `request=${quote(truncate(intent, TOOL_TEXT_MAX_CHARS))}` : 'request=<missing>'
-    ]
-    if (hasText(input.context)) {
-        parts.push(`context=${quote(truncate(input.context, TOOL_TEXT_MAX_CHARS))}`)
-    }
+    const parts = [`recipeId=${input.recipeId || '-'}`, ...textChunk('request', intent)]
+    if (hasText(input.context)) parts.push(...textChunk('context', input.context))
     return parts.join(' ')
 }
 
 function summariseDescribeRecipe(input) {
     const parts = [`recipeId=${input.recipeId || '-'}`]
-    if (hasText(input.question)) {
-        parts.push(`question=${quote(truncate(input.question, TOOL_TEXT_MAX_CHARS))}`)
-    }
+    if (hasText(input.question)) parts.push(...textChunk('question', input.question))
     return parts.join(' ')
 }
 
 function summariseCreateRecipe(input) {
     const intent = input.request ?? input.instruction
-    const parts = [`recipeType=${input.recipeType || '-'}`]
-    if (hasText(intent)) parts.push(`request=${quote(truncate(intent, TOOL_TEXT_MAX_CHARS))}`)
+    const parts = [`recipeType=${input.recipeType || '-'}`, ...textChunk('request', intent)]
     if (hasText(input.projectId)) parts.push(`projectId=${input.projectId}`)
     if (hasText(input.name)) parts.push(`name=${input.name}`)
     return parts.join(' ')
@@ -107,15 +91,6 @@ function summariseGeneric(input) {
 
 function hasText(value) {
     return typeof value === 'string' && value.trim().length > 0
-}
-
-function quote(value) {
-    return JSON.stringify(value ?? '')
-}
-
-function truncate(value, max) {
-    const s = String(value ?? '')
-    return s.length > max ? `${s.slice(0, max)}...` : s
 }
 
 function publishEmptyLlmRetry({bus, conversationId, round, messages, exposedTools}) {

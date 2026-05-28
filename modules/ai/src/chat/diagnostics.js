@@ -113,4 +113,28 @@ function stableValue(value, seen) {
     return result
 }
 
-module.exports = {createDiagnostics, truncateString, MAX_DEBUG_TEXT}
+// FNV-1a 32-bit, hex slice. Stable, dependency-free, good enough to correlate
+// across log lines — not cryptographic.
+function shortHashOf(text) {
+    if (typeof text !== 'string' || !text.length) return '-'
+    let hash = 0x811c9dc5
+    for (let i = 0; i < text.length; i++) {
+        hash ^= text.charCodeAt(i)
+        hash = Math.imul(hash, 0x01000193)
+    }
+    return (hash >>> 0).toString(16).padStart(8, '0')
+}
+
+// Renders a piece of user text for debug/info events: chars + hash, never
+// the raw body. Returns the parts as an array so callers join into their
+// own message-line shape; emits `${label}=<missing>` when value is blank.
+function textChunk(label, value) {
+    if (!hasVisibleText(value)) return [`${label}=<missing>`]
+    return [`${label}Chars=${value.length}`, `${label}Hash=${shortHashOf(value)}`]
+}
+
+function hasVisibleText(value) {
+    return typeof value === 'string' && value.trim().length > 0
+}
+
+module.exports = {createDiagnostics, truncateString, shortHashOf, textChunk, MAX_DEBUG_TEXT}

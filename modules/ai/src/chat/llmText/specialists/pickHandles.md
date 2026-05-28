@@ -8,6 +8,7 @@ Output: one JSON object on its own line.
 
 Rules:
 - Use only handles in the catalog below.
+- Map the request's concepts to handle descriptions, not its literal words. An informal reference — a bare year, a season name, a sensor name, a plain-English knob — picks whichever handle's description covers that concept.
 - If the user message contains `context:`, use it only to resolve references or follow-ups. Do not pick handles just because context mentions a setting; pick handles from `request:`.
 - Pick a coherent set, not just one when the request implies several.
 - For broad performance/render-speed requests, pick the relevant low/normal-tradeoff performance levers together.

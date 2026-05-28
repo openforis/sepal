@@ -3,7 +3,7 @@
 
 const {EMPTY, concat, defer, filter, finalize, from, map, mergeMap, tap, timeout} = require('rxjs')
 const OpenAI = require('openai').default
-const {createDiagnostics} = require('../../diagnostics')
+const {createDiagnostics, shortHashOf} = require('../../diagnostics')
 const {publishResponseSummary} = require('../events')
 const {publishLlmUsage} = require('../usage')
 
@@ -20,6 +20,7 @@ const DEFAULT_DIAGNOSTICS = createDiagnostics()
 
 function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai', bus, clock, diagnostics = DEFAULT_DIAGNOSTICS}) {
     const client = new OpenAI({baseURL, apiKey})
+    const sendReasoning = providerAcceptsReasoningContent(provider)
 
     return {respondTo$}
 
@@ -29,15 +30,14 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai
 
     function attempt$({messages, tools, maxTokens, temperature, debugLabel, usageContext, extraParams = {}}, attempt) {
         const acc = freshAcc()
-        // Mutated inside the toolCalls$ defer and read by the retry defer below.
-        // The mutation order is implicit in RxJS's sequential evaluation of
-        // concat'd defers — don't reorder this pipeline.
+        // Mutated by toolCalls$, read by the retry defer below. Order matters:
+        // concat'd defers evaluate sequentially — don't reorder.
         let retryAfterAttempt = false
         const requestMessages = attempt > 0 ? withRetryHint(messages) : messages
         const hasTools = tools?.length > 0
         const params = {
             model,
-            messages: toProviderMessages(requestMessages),
+            messages: toProviderMessages(requestMessages, {sendReasoning}),
             stream: true,
             stream_options: {include_usage: true},
             ...(hasTools ? {tools: toProviderTools(tools), tool_choice: 'auto'} : {}),
@@ -48,10 +48,13 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai
         const text$ = defer(() => {
             acc.startedAt = clock.now()
             if (debugLabel) {
+                const parts = promptParts(requestMessages, tools)
                 bus.publish({
                     type: 'llm.request',
                     level: 'debug',
+                    parts,
                     message: () => `LLM ${debugLabel} request: model=${model} attempt=${attempt} messages=${requestMessages.length} tools=${tools?.length || 0} ${describeRequestParams(params)}`
+                        + ` ${describePromptParts(parts)}`
                 })
                 bus.publish({
                     type: 'llm.requestPayload',
@@ -73,10 +76,10 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai
             retryAfterAttempt = shouldRetryLengthCap({acc, toolCallEvents: events, attempt})
             return retryAfterAttempt ? EMPTY : from(events)
         })
-        // Terminal counts-only summary for this provider call. Reasoning content
-        // is captured for log visibility but never re-emitted to the runtime —
-        // only its length and the finish reason cross the boundary.
+        // Reasoning crosses the boundary so the runtime can round-trip it on
+        // the next assistant message (Qwen3.5 / extended-thinking contract).
         const responseMeta$ = defer(() => from([{responseMeta: {
+            reasoning: acc.reasoning,
             reasoningChars: acc.reasoning.length,
             finishReason: [...acc.finishReasons].join(',') || null
         }}]))
@@ -95,33 +98,38 @@ function createOpenAiChatCompletions({baseURL, apiKey, model, provider = 'openai
         )
     }
 
-    // A call that thought but emitted nothing actionable (reasoning present, no
-    // content text, no actionable tool call) — regardless of finish reason. This
-    // is the ONE place reasoning content is logged, bounded to the tail; the
-    // counts-only events (responseMeta, specialist.response) stay reasoning-free.
     function publishReasoningOnly$(acc, {tools, debugLabel, attempt, usageContext}) {
         if (!acc.reasoning.length || acc.text.trim()) return EMPTY
         if (toolCallEvents(acc.toolCalls, tools || []).some(isActionableToolCallEvent)) return EMPTY
         const context = usageContext || {}
         const finishReason = [...acc.finishReasons].join(',') || null
-        bus.publish({
-            type: 'llm.reasoningOnly',
-            level: 'debug',
+        const reasoningHash = shortHashOf(acc.reasoning)
+        const common = {
             ...(debugLabel ? {debugLabel} : {}),
             model,
             attempt,
             role: context.role ?? null,
             specialist: context.specialist ?? null,
-            conversationId: context.conversationId ?? null,
+            conversationId: context.conversationId ?? null
+        }
+        bus.publish({
+            type: 'llm.reasoningOnly',
+            level: 'debug',
+            ...common,
             reasoningChars: acc.reasoning.length,
+            reasoningHash,
             finishReason,
-            message: () => `LLM reasoning-only${debugLabel ? ` (${debugLabel})` : ''}: attempt=${attempt} reasoningChars=${acc.reasoning.length} finishReason=${finishReason ?? '-'} reasoningTail=${JSON.stringify(reasoningTail(acc.reasoning))}`
+            message: `LLM reasoning-only${debugLabel ? ` (${debugLabel})` : ''}: attempt=${attempt} reasoningChars=${acc.reasoning.length} reasoningHash=${reasoningHash} finishReason=${finishReason ?? '-'}`
+        })
+        bus.publish({
+            type: 'llm.reasoningOnly.body',
+            level: 'trace',
+            ...common,
+            message: () => `LLM reasoning-only body${debugLabel ? ` (${debugLabel})` : ''}: attempt=${attempt} reasoningHash=${reasoningHash} reasoningTail=${JSON.stringify(reasoningTail(acc.reasoning))}`
         })
         return EMPTY
     }
 
-    // One llm.usage per provider call — attached to the per-attempt stream so a
-    // length-cap retry (a second provider call) emits its own usage event.
     function publishAttemptUsage(acc, params, usageContext) {
         return finalize(() => {
             const context = usageContext || {}
@@ -206,6 +214,39 @@ function freshAcc() {
     }
 }
 
+// Splits messages into a cacheable system prefix and a churning body so
+// log consumers can see when the cached portion is stable across calls.
+function promptParts(messages, tools) {
+    const systemMessages = []
+    const bodyMessages = []
+    let stillLeading = true
+    for (const message of messages || []) {
+        if (stillLeading && message.role === 'system') systemMessages.push(message)
+        else { stillLeading = false; bodyMessages.push(message) }
+    }
+    return {
+        system: partAccounting(systemMessages),
+        body: partAccounting(bodyMessages),
+        tools: partAccounting(tools || [])
+    }
+}
+
+function partAccounting(value) {
+    const json = JSON.stringify(value ?? null)
+    return {bytes: Buffer.byteLength(json, 'utf8'), hash: shortHashOf(json)}
+}
+
+function describePromptParts(parts) {
+    return [
+        `systemBytes=${parts.system.bytes}`,
+        `systemHash=${parts.system.hash}`,
+        `bodyBytes=${parts.body.bytes}`,
+        `bodyHash=${parts.body.hash}`,
+        `toolsBytes=${parts.tools.bytes}`,
+        `toolsHash=${parts.tools.hash}`
+    ].join(' ')
+}
+
 const STANDARD_PARAM_KEYS = new Set(['model', 'messages', 'stream', 'tools', 'tool_choice', 'max_tokens', 'temperature'])
 
 function describeRequestParams(params) {
@@ -228,25 +269,41 @@ function toProviderTools(tools) {
     }))
 }
 
-function toProviderMessages(messages) {
-    return messages.flatMap(toProviderMessage)
+// Wire emission only — `reasoning_content` is a Qwen/LM-Studio extension
+// other OpenAI-compatible providers may reject. The domain message still
+// carries `reasoning` either way for the round-trip contract.
+const REASONING_CONTENT_PROVIDERS = new Set(['lmstudio'])
+
+function providerAcceptsReasoningContent(provider) {
+    return REASONING_CONTENT_PROVIDERS.has(provider)
 }
 
-function toProviderMessage(message) {
+function toProviderMessages(messages, {sendReasoning = false} = {}) {
+    return messages.flatMap(message => toProviderMessage(message, {sendReasoning}))
+}
+
+function toProviderMessage(message, {sendReasoning}) {
     const isToolCallMessage = message.role === 'assistant' && message.toolCalls
     const isToolResultMessage = message.role === 'tool'
     if (isToolCallMessage) {
-        return [toProviderToolCallMessage(message)]
+        return [toProviderToolCallMessage(message, {sendReasoning})]
     } else if (isToolResultMessage) {
         return toProviderToolResultMessages(message)
+    } else if (message.role === 'assistant') {
+        const willSendReasoning = sendReasoning && !!message.reasoning
+        const hasVisibleContent = typeof message.content === 'string' && message.content.trim().length > 0
+        if (!hasVisibleContent && !willSendReasoning) return []
+        return [{
+            role: 'assistant',
+            content: message.content,
+            ...(willSendReasoning ? {reasoning_content: message.reasoning} : {})
+        }]
     } else {
-        // Strip GUI-only fields (e.g. display descriptor) — the provider
-        // schema rejects extras, and the LLM only needs {role, content}.
         return [{role: message.role, content: message.content}]
     }
 }
 
-function toProviderToolCallMessage({content, toolCalls}) {
+function toProviderToolCallMessage({content, toolCalls, reasoning}, {sendReasoning}) {
     return {
         role: 'assistant',
         content: content?.trim() ? content : null,
@@ -254,13 +311,13 @@ function toProviderToolCallMessage({content, toolCalls}) {
             id: toolCall.id,
             type: 'function',
             function: {name: toolCall.name, arguments: JSON.stringify(toolCall.input ?? {})}
-        }))
+        })),
+        ...(sendReasoning && reasoning ? {reasoning_content: reasoning} : {})
     }
 }
 
-// One internal tool-result message carries every result; OpenAI wants one
-// role:'tool' message per result, hence the 1-to-N expansion. toolName is
-// folded into the content so the model can tell which tool produced it.
+// 1-to-N: one internal tool-result message expands into one role:'tool'
+// message per result, as OpenAI requires.
 function toProviderToolResultMessages({toolResults}) {
     return toolResults.map(toolResult => ({
         role: 'tool',
@@ -269,10 +326,8 @@ function toProviderToolResultMessages({toolResults}) {
     }))
 }
 
-// Translates OpenAI-compatible raw `usage` into the neutral usage shape that
-// usage.js consumes. Provider field names live here, in the adapter — not in
-// shared code. OpenAI prompt_tokens already counts cached tokens, and the API
-// has no cache-write concept. Returns null when the provider reported nothing.
+// OpenAI prompt_tokens already counts cached tokens; the API has no
+// cache-write concept. Returns null when the provider reports no usage.
 function neutralUsageFromOpenAi(raw) {
     if (!raw) return null
     const cachedInputTokens = raw.prompt_tokens_details?.cached_tokens ?? 0

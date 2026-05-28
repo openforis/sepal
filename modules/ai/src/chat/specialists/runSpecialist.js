@@ -8,7 +8,7 @@ const {
     publishSpecialistStall,
     publishSpecialistToolRequest,
     publishSpecialistToolResponse
-} = require('./specialistEvents')
+} = require('./specialistRuntimeEvents')
 
 const SPECIALIST_MAX_ROUNDS = 5
 const SPECIALIST_MAX_STALLS = 2
@@ -62,7 +62,7 @@ function createSpecialistRuntime({llm, bus, name, systemPrompt, tools, finishOnE
                     if (outcome.type === 'tool-requested') return runTools$(messages, outcome, round, stalls)
                     const directive = decideNext(outcome, stalls)
                     if (directive.type === 'stop') return of(stopResult(directive.reason, directive.finalText))
-                    return continueAfterStall$(directive.append, messages, promptMessages, round, stalls)
+                    return continueAfterStall$({messages, outcome, round, stalls, messageCount: promptMessages.length})
                 })
             )
         }
@@ -71,22 +71,27 @@ function createSpecialistRuntime({llm, bus, name, systemPrompt, tools, finishOnE
             if (outcome.type === 'answered') return stop('answered', outcome.text)
             if (finishOnEmpty?.(timeline.toolHistory())) return stop('finish-on-empty', outcome.text)
             if (stalls >= SPECIALIST_MAX_STALLS) return stop('capped', SPECIALIST_CAP_ANSWER)
-            return {type: 'continue', append: STALL_NUDGE_CONTENT}
+            return {type: 'continue'}
         }
 
-        function continueAfterStall$(append, messages, promptMessages, round, stalls) {
+        function continueAfterStall$({messages, outcome, round, stalls, messageCount}) {
             publishSpecialistStall({
                 bus, name, round, conversationId,
                 stallCount: stalls + 1,
-                messageCount: promptMessages.length,
+                messageCount,
                 toolNames: allowedSchemas.map(schema => schema.name)
             })
-            return runRound$(messages, {round, stalls: stalls + 1, transientAppend: append})
+            return runRound$(carrySilentReasoning(messages, outcome), {round, stalls: stalls + 1, transientAppend: STALL_NUDGE_CONTENT})
         }
 
         function runTools$(messages, outcome, round, stalls) {
             const canonicalCalls = outcome.calls.map(call => canonicalizeCall(call, context))
-            const assistantMessage = {role: 'assistant', content: outcome.text || '', toolCalls: canonicalCalls}
+            const assistantMessage = {
+                role: 'assistant',
+                content: outcome.text || '',
+                toolCalls: canonicalCalls,
+                ...(outcome.meta?.reasoning ? {reasoning: outcome.meta.reasoning} : {})
+            }
             const toolResults = []
             return concat(
                 from(canonicalCalls).pipe(
@@ -113,8 +118,6 @@ function createSpecialistRuntime({llm, bus, name, systemPrompt, tools, finishOnE
             )
         }
 
-        // Tools are canonicalized at the top of runTools$; guard/log/timeline
-        // all reason about the canonical call, never the raw model emission.
         function callTool$(canonical) {
             const blocked = guard.blockedRepeat(canonical)
             if (blocked) {
@@ -180,6 +183,12 @@ function classifyRound({text, toolCalls, responseMeta}) {
     if (toolCalls.length) return {type: 'tool-requested', text, calls: toolCalls, meta: responseMeta}
     if (text.trim()) return {type: 'answered', text, meta: responseMeta}
     return {type: 'silent', text, meta: responseMeta}
+}
+
+function carrySilentReasoning(messages, outcome) {
+    const reasoning = outcome.meta?.reasoning
+    if (!reasoning) return messages
+    return [...messages, {role: 'assistant', content: outcome.text || '', reasoning}]
 }
 
 function createTimeline() {

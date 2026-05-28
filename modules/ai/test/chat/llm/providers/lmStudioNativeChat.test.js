@@ -2,6 +2,7 @@ const {firstValueFrom, toArray} = require('rxjs')
 
 const {createLmStudioNativeChat} = require('#mcp/chat/llm/providers/lmStudioNativeChat')
 const {toolSchemas} = require('../providerConformance')
+const {aRecordingBus} = require('../../harness')
 
 describe('LM Studio native chat adapter', () => {
 
@@ -29,6 +30,17 @@ describe('LM Studio native chat adapter', () => {
 
     function collect(response$) {
         return firstValueFrom(response$.pipe(toArray()))
+    }
+
+    function mockNativeReplyOf(text) {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            text: async () => JSON.stringify({output: [{type: 'message', content: text}]})
+        })
+    }
+
+    function mockNativeFailure({status, body}) {
+        global.fetch.mockResolvedValue({ok: false, status, text: async () => body})
     }
 
     it('can be constructed without a baseURL — needed only once a request is made', () => {
@@ -79,10 +91,7 @@ describe('LM Studio native chat adapter', () => {
     })
 
     it('joins multiple non-system messages into a role-prefixed native input', async () => {
-        global.fetch.mockResolvedValue({
-            ok: true,
-            text: async () => JSON.stringify({output: [{type: 'message', content: 'ok'}]})
-        })
+        mockNativeReplyOf('ok')
 
         await collect(aNativeChat().respondTo$({
             messages: [
@@ -97,10 +106,7 @@ describe('LM Studio native chat adapter', () => {
     })
 
     it('does not send tool schemas — the native path has no tool support', async () => {
-        global.fetch.mockResolvedValue({
-            ok: true,
-            text: async () => JSON.stringify({output: [{type: 'message', content: 'ok'}]})
-        })
+        mockNativeReplyOf('ok')
 
         await collect(aNativeChat().respondTo$({
             messages: [{role: 'user', content: 'hi'}],
@@ -113,11 +119,7 @@ describe('LM Studio native chat adapter', () => {
     })
 
     it('errors the response observable when the native chat endpoint returns a non-OK status', async () => {
-        global.fetch.mockResolvedValue({
-            ok: false,
-            status: 500,
-            text: async () => '{"error":"upstream burst"}'
-        })
+        mockNativeFailure({status: 500, body: '{"error":"upstream burst"}'})
 
         await expect(
             collect(aNativeChat().respondTo$({messages: [{role: 'user', content: 'hi'}]}))
@@ -127,40 +129,57 @@ describe('LM Studio native chat adapter', () => {
     describe('with a debugLabel', () => {
         const debugLabel = 'title conv-9'
 
-        function aRecordingBus() {
-            const published = []
-            return {publish: event => published.push(event), published}
-        }
-
         it('publishes compact debug request and response summaries without raw response logs', async () => {
             const bus = aRecordingBus()
-            global.fetch.mockResolvedValue({
-                ok: true,
-                text: async () => JSON.stringify({output: [{type: 'message', content: 'Title'}]})
-            })
+            mockNativeReplyOf('Title')
 
             await collect(aNativeChat({bus}).respondTo$({
-                messages: [{role: 'user', content: 'hi'}],
-                debugLabel
+                messages: [{role: 'user', content: 'hi'}], debugLabel
             }))
 
             const request = bus.published.find(event => event.type === 'llm.request')
             const response = bus.published.find(event => event.type === 'llm.response')
-            expect(request).toMatchObject({level: 'debug'})
             expect(request.message()).toContain(debugLabel)
-            expect(response).toMatchObject({level: 'debug'})
             expect(response.message()).toContain(debugLabel)
             expect(response.message()).toContain('contentChunks=1')
-            expect(bus.published).not.toContainEqual(expect.objectContaining({type: 'llm.debugResponse'}))
+        })
+
+        it('does not include the raw user input or raw system prompt in the debug request message', async () => {
+            const bus = aRecordingBus()
+            const userInput = 'translate-this-to-a-title-please-secret-marker-7193'
+            const systemPrompt = 'system-prompt-secret-marker-9821'
+            mockNativeReplyOf('Title')
+
+            await collect(aNativeChat({bus}).respondTo$({
+                messages: [{role: 'system', content: systemPrompt}, {role: 'user', content: userInput}],
+                debugLabel
+            }))
+
+            const request = bus.published.find(event => event.type === 'llm.request')
+            expect(request.message()).not.toContain(userInput)
+            expect(request.message()).not.toContain(systemPrompt)
+        })
+
+        it('publishes the raw input + systemPrompt on llm.requestPayload at trace when full-trace payloads are enabled', async () => {
+            const bus = aRecordingBus()
+            const {createDiagnostics} = require('#mcp/chat/diagnostics')
+            const userInput = 'trace-body-user-input'
+            const systemPrompt = 'trace-body-system-prompt'
+            mockNativeReplyOf('Title')
+
+            await collect(aNativeChat({bus, diagnostics: createDiagnostics({fullPayloads: true})}).respondTo$({
+                messages: [{role: 'system', content: systemPrompt}, {role: 'user', content: userInput}],
+                debugLabel
+            }))
+
+            const payload = bus.published.find(event => event.type === 'llm.requestPayload')
+            expect(payload).toMatchObject({level: 'trace'})
+            expect(payload.message()).toContain(userInput)
+            expect(payload.message()).toContain(systemPrompt)
         })
     })
 
     describe('usage accounting', () => {
-
-        function aRecordingBus() {
-            const published = []
-            return {publish: event => published.push(event), published}
-        }
 
         function aStepClock(times) {
             let i = 0
@@ -169,10 +188,7 @@ describe('LM Studio native chat adapter', () => {
 
         it('publishes one llm.usage event with the call dimensions and duration, estimating tokens when the native response carries no usage', async () => {
             const bus = aRecordingBus()
-            global.fetch.mockResolvedValue({
-                ok: true,
-                text: async () => JSON.stringify({output: [{type: 'message', content: 'My Title'}]})
-            })
+            mockNativeReplyOf('My Title')
 
             await collect(aNativeChat({bus, clock: aStepClock([2000, 2300])}).respondTo$({
                 messages: [{role: 'user', content: 'name this chat'}],

@@ -6,7 +6,7 @@
 // explicit and stops `collectAppliedValues` from being the only nested loop
 // in the touched path.
 
-const {publishUpdateRecipeOutcome} = require('../specialistEvents')
+const {publishUpdateRecipeOutcome} = require('./updateRecipeEvents')
 
 const UPDATE_TOOL = 'update_recipe_values'
 
@@ -45,8 +45,22 @@ function publishOutcomeAndShape({outcome, answer, capped = false, bus, conversat
 //   UPDATE_NOT_ATTEMPTED  — residual: no call, no usable text. Capped runs
 //                           land here too: the cap text is a runtime sentinel,
 //                           not deliberate communication.
+//
+// Partial-success: succeeded=true with a trailing lastError means at least one
+// patch landed and a later call failed (typically the rescope retry that did
+// some of the work but couldn't finish). The envelope stays ok (we did change
+// the recipe), but carries partialFailure metadata so callers/the GUI can
+// surface that not everything the user asked for got applied.
 function buildEnvelope(outcome, answer, {capped = false} = {}) {
-    if (outcome.succeeded) return {ok: true, data: {answer}}
+    if (outcome.succeeded) {
+        return {
+            ok: true,
+            data: {
+                answer,
+                ...(outcome.lastError ? {partialFailure: outcome.lastError} : {})
+            }
+        }
+    }
     if (outcome.attempted) return {
         ok: false,
         error: {

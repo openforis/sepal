@@ -1,20 +1,4 @@
-// Per-conversation LLM/tool loop. Owns the mutable messages array,
-// runs each turn against the LLM and tools, and persists each
-// appended message through history.
-//
-// Each round classifies the LLM response into a RoundOutcome (answered /
-// tool-requested / silent), then a stop policy decides continue vs stop:
-// decideAfterStream$ after a no-tool round, decideAfterTools$ after a tool
-// round. This round/outcome/stop-policy shape is shared with runSpecialist$,
-// but the two loops do not share code — and diverge on nearly every concrete
-// axis: this loop streams channel events ({textDelta}/{toolStart}/{toolEnd})
-// and persists every message through the history port; the specialist loop
-// threads an immutable message list, keeps a tool timeline, and returns a
-// collected result. Continuation here also persists differently per outcome:
-// a tool round persists assistant + tool-result turns; the post-tool empty
-// retry rides a transient system hint (not persisted) and fires at most once.
-
-const {concat, concatMap, defer, filter, from, ignoreElements, mergeMap, of, tap} = require('rxjs')
+const {EMPTY, concat, concatMap, defer, filter, from, ignoreElements, mergeMap, of, tap} = require('rxjs')
 const {messagesForLlm} = require('./llmMessages')
 const {publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection, publishLlmRequest, publishOrchestratorPrompt, publishToolCall} = require('./conversationEvents')
 const {createTerminalNotices, consecutiveFailureBail, invalidArgsBail} = require('./terminalNotices')
@@ -36,7 +20,7 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
     return {runTurn$, runResumeTurn$, messagesSnapshot}
 
     function messagesSnapshot() {
-        return [...messages]
+        return messages.map(stripReasoning).filter(notEmptyAssistantTurn)
     }
 
     function runTurn$(text, {guiContext, toolContext} = {}) {
@@ -52,10 +36,6 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         )
     }
 
-    // Pending-action resume: run a single pre-determined tool round with no
-    // LLM call. handleToolCalls$ persists assistant+tool+directReply just like
-    // a normal tool round; decideAfterTools$ then short-circuits via the
-    // tool's directAnswer flag to stream user-facing text.
     function runResumeTurn$({toolCall, userAnswerText, toolContext}) {
         const turn = {
             toolContext,
@@ -69,46 +49,56 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         )
     }
 
-    function step$(turn, {round, retried, retryHint}) {
-        const acc = {text: '', toolCalls: []}
+    function step$(turn, {round, retried, retryHint, priorAssistantTurn}) {
+        const acc = {text: '', toolCalls: [], reasoning: ''}
         const {llmMessages: baseMessages, projection} = messagesForLlm({
             messages,
             contextMessage: turn.contextMessage,
             isolateHistory: round > 0
         })
-        const llmMessages = messagesWithHint(baseMessages, retryHint)
+        const llmMessages = applyTransientCarriers(baseMessages, {priorAssistantTurn, retryHint})
         const toolSchemas = tools.schemas()
         turn.lastExposedTools = toolSchemas.map(schema => schema.name)
-        publishHistoryProjection({bus, diagnostics, conversationId: id, projection})
-        publishLlmRequest({bus, diagnostics, conversationId: id, round, llmMessages, toolSchemas})
-        publishOrchestratorPrompt({bus, conversationId: id, round, llmMessages, toolSchemas})
+        publishStepDiagnostics({round, llmMessages, toolSchemas, projection})
         return concat(
             llmStream$(llmMessages, toolSchemas, acc, round),
             defer(() => decideAfterStream$(acc, turn, {round, retried}))
         )
     }
 
-    function messagesWithHint(baseMessages, retryHint) {
-        return retryHint
-            ? [...baseMessages, {role: 'system', content: retryHint}]
-            : baseMessages
+    function publishStepDiagnostics({round, llmMessages, toolSchemas, projection}) {
+        publishHistoryProjection({bus, diagnostics, conversationId: id, projection})
+        publishLlmRequest({bus, diagnostics, conversationId: id, round, llmMessages, toolSchemas})
+        publishOrchestratorPrompt({bus, conversationId: id, round, llmMessages, toolSchemas})
+    }
+
+    function applyTransientCarriers(baseMessages, {priorAssistantTurn, retryHint}) {
+        const withTurn = priorAssistantTurn ? [...baseMessages, priorAssistantTurn] : baseMessages
+        return retryHint ? [...withTurn, {role: 'system', content: retryHint}] : withTurn
     }
 
     function decideAfterStream$(acc, turn, {round, retried}) {
         const outcome = classifyRound(acc)
         if (outcome.type === 'tool-requested') {
-            return handleToolCalls$(outcome.text, outcome.calls, turn, {round})
+            return handleToolCalls$(outcome.text, outcome.calls, turn, {round, reasoning: outcome.reasoning})
         }
-        // Empty after a tool result usually means the model gave up without explanation.
-        // Retry once with a hint, tools still available — the guard blocks exact repeats so
-        // the model gets one structured chance to correct args or retry after validation.
         if (outcome.type === 'silent' && isPostToolRound() && !retried) {
             publishEmptyLlmRetry({
                 bus, conversationId: id, round, messages, exposedTools: turn.lastExposedTools
             })
-            return step$(turn, {round: round + 1, retried: true, retryHint: EMPTY_AFTER_TOOL_HINT})
+            return step$(turn, {
+                round: round + 1,
+                retried: true,
+                retryHint: EMPTY_AFTER_TOOL_HINT,
+                priorAssistantTurn: silentReasoningCarrier(outcome)
+            })
         }
-        return reply$(outcome.text, {round, turn})
+        return reply$(outcome.text, {round, turn, reasoning: outcome.reasoning})
+    }
+
+    function silentReasoningCarrier(outcome) {
+        if (!outcome.reasoning) return null
+        return {role: 'assistant', content: outcome.text || '', reasoning: outcome.reasoning}
     }
 
     function isPostToolRound() {
@@ -129,25 +119,32 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
                         acc.toolCalls = [...acc.toolCalls, event.toolCall]
                         publishToolCall({bus, diagnostics, conversationId: id, round, toolCall: event.toolCall})
                     }
+                    // Latest responseMeta wins — length-cap retries inside one
+                    // respondTo$ call emit one per attempt; an empty later
+                    // value must clear an earlier one.
+                    if (event.responseMeta) acc.reasoning = event.responseMeta.reasoning || ''
                 }),
                 filter(event => event.textDelta != null)
             )
         )
     }
 
-    function handleToolCalls$(text, toolCalls, turn, {round}) {
+    function handleToolCalls$(text, toolCalls, turn, {round, reasoning}) {
         const collected = {results: []}
+        const assistantMessage = {
+            role: 'assistant',
+            content: text || '',
+            toolCalls,
+            ...(reasoning ? {reasoning} : {})
+        }
         return concat(
-            append$({role: 'assistant', content: text || '', toolCalls}).pipe(ignoreElements()),
+            append$(assistantMessage).pipe(ignoreElements()),
             from(toolCalls).pipe(concatMap(toolCall => invokeTool$(toolCall, turn, collected))),
             defer(() => append$({role: 'tool', toolResults: collected.results}).pipe(ignoreElements())),
             defer(() => decideAfterTools$(collected, turn, {round}))
         )
     }
 
-    // Stop policy after a tool round: a single directAnswer tool short-circuits
-    // to its own prose; a guard bail or the round cap ends the turn with a
-    // terminal notice; otherwise continue into the next round.
     function decideAfterTools$(collected, turn, {round}) {
         const directAnswer = directToolAnswer(collected.results, tools)
         if (directAnswer) return directReply$(directAnswer)
@@ -171,8 +168,6 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
             stream$.pipe(
                 mergeMap(value => {
                     if (isChannelEmission(value)) return of(value)
-                    // collected.results is the persisted shape; the load path rebuilds from it.
-                    // toolStart/toolEnd carry input/data/error for live display only.
                     collected.results.push({...ref, result: value})
                     return concat(
                         of({toolEnd: {...ref, ok: value.ok, data: value.data, error: value.error}}),
@@ -190,15 +185,19 @@ function createConversationLoop({id, initialMessages = [], llm, history, tools, 
         )
     }
 
-    function reply$(text, {round, turn}) {
+    function reply$(text, {round, turn, reasoning}) {
         if (!hasVisibleText(text)) {
             publishEmptyLlmReply({
                 bus, conversationId: id, round, messages, exposedTools: turn.lastExposedTools
             })
+            return EMPTY
         }
-        return append$({role: 'assistant', content: text}).pipe(
-            ignoreElements()
-        )
+        const message = {
+            role: 'assistant',
+            content: text,
+            ...(reasoning ? {reasoning} : {})
+        }
+        return append$(message).pipe(ignoreElements())
     }
 
     function append$(message) {
@@ -215,19 +214,30 @@ function hasVisibleText(text) {
 }
 
 function classifyRound(acc) {
-    if (acc.toolCalls.length > 0) return {type: 'tool-requested', text: acc.text, calls: acc.toolCalls}
-    if (hasVisibleText(acc.text)) return {type: 'answered', text: acc.text}
-    return {type: 'silent', text: acc.text}
+    if (acc.toolCalls.length > 0) return {type: 'tool-requested', text: acc.text, calls: acc.toolCalls, reasoning: acc.reasoning}
+    if (hasVisibleText(acc.text)) return {type: 'answered', text: acc.text, reasoning: acc.reasoning}
+    return {type: 'silent', text: acc.text, reasoning: acc.reasoning}
 }
 
+function stripReasoning(message) {
+    if (!message || typeof message !== 'object' || message.reasoning === undefined) return message
+    const {reasoning: _reasoning, ...rest} = message
+    return rest
+}
+
+function notEmptyAssistantTurn(message) {
+    if (!message || message.role !== 'assistant') return true
+    if (message.toolCalls && message.toolCalls.length) return true
+    return hasVisibleText(message.content)
+}
+
+// A directAnswer tool streams its own user-facing text on both paths
+// (data.answer on success, error.answer on failure) instead of provoking an
+// orchestrator restate round.
 function directToolAnswer(toolResults, tools) {
     if (toolResults.length !== 1) return null
     const [result] = toolResults
     if (!tools.flag(result.toolName, 'directAnswer')) return null
-    // A directAnswer tool owns its user-facing prose on both paths: success
-    // streams data.answer; a failure that carries error.answer (e.g. an update
-    // rejected by validation) streams that reason straight to the user rather
-    // than provoking an orchestrator restate that can stall.
     const answer = result.result?.ok === true ? result.result?.data?.answer : result.result?.error?.answer
     return hasVisibleText(answer) ? answer.trim() : null
 }

@@ -17,7 +17,7 @@ const {
     publishUpdateRecipeValuesChanged,
     publishUpdateRecipeValuesProjection,
     publishUpdateRecipeValuesRequest
-} = require('../specialistEvents')
+} = require('./updateRecipeEvents')
 const {
     applyHandleValuesToModel, checkApplicability, checkInactiveValues,
     checkUnknownHandles, checkWritableScope,

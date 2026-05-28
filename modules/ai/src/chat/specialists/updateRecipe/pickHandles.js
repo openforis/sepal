@@ -2,7 +2,7 @@ const {catchError, of, defer} = require('rxjs')
 const {map, reduce, tap} = require('rxjs/operators')
 const {getRecipeHandles} = require('#recipes')
 const {specialistPrompt} = require('../../llmText/prompts')
-const {publishPickHandlesCompleted} = require('../specialistEvents')
+const {publishPickHandlesCompleted} = require('../recipeFlowEvents')
 
 const PICKER_MAX_TOKENS = 512
 

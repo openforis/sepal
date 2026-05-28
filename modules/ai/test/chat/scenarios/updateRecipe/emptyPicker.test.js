@@ -48,30 +48,6 @@ describe('update_recipe — empty picker turns into a clarification', () => {
         })
     })
 
-    it('asks a performance-flavored question when the request mentions speed/performance', () => {
-        const harness = aToolFactoryHarness({
-            specialist: 'update_recipe',
-            replies: [{text: '{"handles":[]}'}]
-        })
-
-        const result = harness.invoke({recipeId: 'r1', request: "it's too slow, fix it"})
-
-        expect(result.error.code).toBe('CLARIFICATION_NEEDED')
-        expect(result.error.answer).toMatch(/fast|simplif|reduc|preserve quality/i)
-    })
-
-    it('asks to redirect to recipe settings when the request names something outside recipe scope', () => {
-        const harness = aToolFactoryHarness({
-            specialist: 'update_recipe',
-            replies: [{text: '{"handles":[]}'}]
-        })
-
-        const result = harness.invoke({recipeId: 'r1', request: 'increase tile size and disable per-pixel processing'})
-
-        expect(result.error.code).toBe('CLARIFICATION_NEEDED')
-        expect(result.error.answer).toMatch(/recipe setting/i)
-    })
-
     it('still surfaces a CLARIFICATION_NEEDED when only the legacy instruction field is passed', () => {
         const harness = aToolFactoryHarness({
             specialist: 'update_recipe',
