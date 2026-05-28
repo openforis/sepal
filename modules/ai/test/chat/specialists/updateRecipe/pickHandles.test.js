@@ -147,6 +147,14 @@ describe('pickHandles$', () => {
         expect(prompt).toMatch(/performance:.*spatial|performance:.*expensive/i)
     })
 
+    it('the picker prompt carries picker-specific guidance without exposing value-selection payloads wholesale', () => {
+        const prompt = pickerSystemPrompt('MOSAIC')
+
+        expect(prompt).toMatch(/selection:.*LANDSAT_TM.*1990s/i)
+        expect(prompt).toMatch(/selection:.*bare-year/i)
+        expect(prompt).not.toMatch(/valueGuidance/i)
+    })
+
     it('the picker prompt instructs the model not to include rationale alongside the handles', () => {
         const prompt = pickerSystemPrompt('MOSAIC')
 

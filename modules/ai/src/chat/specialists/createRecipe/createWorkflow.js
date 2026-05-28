@@ -98,12 +98,22 @@ function createCreateWorkflow({llm, bus, innerTools}) {
             packet: state.packet,
             context: state.context
         }).pipe(
-            mergeMap(result => isChannelEmission(result) ? of(result) : of(done(finalize(state, result))))
+            mergeMap(result => {
+                if (isChannelEmission(result)) return of(result)
+                const timeline = combineTimelines(state.priorTimeline, result.timeline)
+                const outcome = projectCreateOutcome(timeline)
+                const missing = state.rescoped
+                    ? null
+                    : createRescopeCandidates({outcome, timeline, packet: state.packet, recipeType: state.recipeType})
+                if (missing) return rescopeAndRetry$(state, timeline, missing)
+                return of(done(finalize(state, result)))
+            })
         )
     }
 
     function finalize(state, result) {
-        const outcome = projectCreateOutcome(result.timeline)
+        const timeline = combineTimelines(state.priorTimeline, result.timeline)
+        const outcome = projectCreateOutcome(timeline)
         const rawAnswer = result?.answer || ''
         const capped = wasCapped(result)
         // Post-success empty/capped fallback. anyCreateApplied stops the
@@ -123,6 +133,33 @@ function createCreateWorkflow({llm, bus, innerTools}) {
         })
     }
 
+    function rescopeAndRetry$(state, priorTimeline, missingHandles) {
+        const pickedHandles = distinct([...(state.handles || []), ...missingHandles])
+        return prepareCreatePacket$({
+            bus,
+            recipeType: state.recipeType,
+            pickedHandles,
+            conversationId: state.context?.conversationId
+        }).pipe(
+            mergeMap(packet => {
+                if (isChannelEmission(packet)) return of(packet)
+                if (packet.ok === false) {
+                    return of(done(finalize(
+                        {...state, priorTimeline},
+                        {timeline: [], answer: PREPARE_FAILED_ANSWER}
+                    )))
+                }
+                return applyAndReport$({
+                    ...state,
+                    handles: pickedHandles,
+                    packet: packet.data,
+                    priorTimeline,
+                    rescoped: true
+                })
+            })
+        )
+    }
+
     // --- failure reporting -------------------------------------------------
 
     function fail(state, {code, message, answer}) {
@@ -137,6 +174,52 @@ function createCreateWorkflow({llm, bus, innerTools}) {
         })
         return {ok: false, error: {code, message, answer}}
     }
+}
+
+function createRescopeCandidates({outcome, timeline, packet, recipeType}) {
+    const direct = rescopeCandidates(outcome, packet, recipeType)
+    if (direct) return direct
+    if (outcome.succeeded || !outcome.attempted) return null
+    const validationError = lastValidationError(timeline)
+    if (!validationError) return null
+    return rescopeCandidates({
+        attempted: true,
+        succeeded: false,
+        lastError: validationError
+    }, packet, recipeType)
+}
+
+function rescopeCandidates(outcome, packet, recipeType) {
+    if (outcome.succeeded || !outcome.attempted) return null
+    const error = outcome.lastError
+    if (error?.code !== 'VALIDATION_FAILED') return null
+    if (!Array.isArray(error.handleErrors) || !error.handleErrors.length) return null
+    const handles = getRecipeHandles(recipeType)
+    if (!handles) return null
+    const known = new Set(handles.map(handle => handle.name))
+    const writable = new Set(packet.writableHandles)
+    const missing = distinct(
+        error.handleErrors
+            .map(entry => entry?.handle)
+            .filter(handle => typeof handle === 'string' && known.has(handle) && !writable.has(handle))
+    )
+    return missing.length ? missing : null
+}
+
+function lastValidationError(timeline) {
+    return [...(timeline || [])]
+        .reverse()
+        .map(entry => entry?.result?.error)
+        .find(error => error?.code === 'VALIDATION_FAILED')
+}
+
+function distinct(list) {
+    return [...new Set(list)]
+}
+
+function combineTimelines(priorTimeline, currentTimeline) {
+    if (!priorTimeline || !priorTimeline.length) return currentTimeline
+    return [...priorTimeline, ...currentTimeline]
 }
 
 function shouldFallback(rawAnswer, capped) {

@@ -52,6 +52,67 @@ describe('semantic create — instruction supplies AOI + handle tweaks, final mo
         expect(validateRecipe('MOSAIC', toEffectiveModel('MOSAIC', submittedModel))).toEqual([])
     })
 
+    it('rescopes datasets after validation catches date-incompatible defaults, then creates with historical Landsat TM', () => {
+        const setup = aLiveCreateSetup()
+        const firstCreateCall = {
+            id: 'tc1', name: 'create_recipe_values',
+            input: {
+                values: {
+                    aoi: POLYGON,
+                    targetDate: '1995-07-02',
+                    seasonStart: '1995-01-01',
+                    seasonEnd: '1996-01-01'
+                }
+            }
+        }
+        const retryCreateCall = {
+            id: 'tc2', name: 'create_recipe_values',
+            input: {
+                values: {
+                    aoi: POLYGON,
+                    datasets: {LANDSAT: ['LANDSAT_TM']},
+                    targetDate: '1995-07-02',
+                    seasonStart: '1995-01-01',
+                    seasonEnd: '1996-01-01'
+                }
+            }
+        }
+        const harness = aToolFactoryHarness({
+            specialist: 'create_recipe',
+            innerTools: setup.innerTools,
+            replies: [
+                {text: '{"handles":["targetDate","seasonStart","seasonEnd"]}'},
+                {toolCalls: [firstCreateCall]},
+                {text: "I couldn't create that with the current source defaults."},
+                {toolCalls: [retryCreateCall]},
+                {text: 'Created 1995 Landsat mosaic.'}
+            ]
+        })
+
+        const result = harness.invoke({
+            recipeType: 'MOSAIC',
+            instruction: 'Create a landsat image over this polygon, 1995',
+            projectId: 'p1',
+            name: 'Historical Landsat'
+        })
+
+        expect(result.ok).toBe(true)
+        expect(setup.createCalls).toHaveLength(1)
+        expect(setup.getSubmittedModel().sources.dataSets).toEqual({LANDSAT: ['LANDSAT_TM']})
+        expect(setup.getSubmittedModel().dates).toMatchObject({
+            targetDate: '1995-07-02',
+            seasonStart: '1995-01-01',
+            seasonEnd: '1996-01-01'
+        })
+        expect(setup.getSubmittedModel().aoi).toEqual(POLYGON)
+        expect(validateRecipe('MOSAIC', toEffectiveModel('MOSAIC', setup.getSubmittedModel()))).toEqual([])
+
+        const prepareEvents = harness.bus.published.filter(event => event.type === 'create_recipe.prepare.completed')
+        expect(prepareEvents).toHaveLength(2)
+        expect(prepareEvents[0].writableHandles).not.toContain('datasets')
+        expect(prepareEvents[1].writableHandles).toContain('datasets')
+    })
+
     it('clarifies when the instruction does not supply an AOI — and no GUI create-recipe call is made', () => {
         const setup = aLiveCreateSetup()
         const harness = aToolFactoryHarness({

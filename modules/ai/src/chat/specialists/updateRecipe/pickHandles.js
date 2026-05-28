@@ -119,6 +119,7 @@ function pickerSystemPromptFromHandles(recipeType, handles) {
 
 function renderHandleEntry(handle) {
     const parts = [`- ${handle.name} | ${handle.label} | ${handle.description}`]
+    if (handle.selectionGuidance) parts.push(`  selection: ${handle.selectionGuidance}`)
     if (handle.performanceNote) parts.push(`  performance: ${handle.performanceNote}`)
     return parts.join('\n')
 }
