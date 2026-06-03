@@ -14,7 +14,7 @@ const STATS_INTERVAL_MS = 60000
 const userHomeDir = async username =>
     await realpath(Path.join(homeDir, username))
 
-const createWatcher = async ({out$, stop$}) => {
+const createWatcher = async ({send, stop$}) => {
     const monitor$ = new Subject()
     const unmonitor$ = new Subject()
     const remove$ = new Subject()
@@ -65,7 +65,7 @@ const createWatcher = async ({out$, stop$}) => {
         return ({username, clientId})
     }
  
-    monitor$.pipe(
+    const monitorSubscription = monitor$.pipe(
         groupBy(({username, clientId}) => buildClientKey(username, clientId)),
         mergeMap(clientGroup$ => clientGroup$.pipe(
             groupBy(({subscriptionId}) => subscriptionId),
@@ -84,13 +84,16 @@ const createWatcher = async ({out$, stop$}) => {
             )),
             takeUntil(clientOffline$(parseClientKey(clientGroup$.key))),
             finalize(() => log.debug(`${clientTag(parseClientKey(clientGroup$.key))} offline`))
-        )),
-        takeUntil(stop$)
+        ))
     ).subscribe({
-        next: ({clientId, subscriptionId, data}) => out$.next({clientId, subscriptionId, data}),
+        next: ({clientId, subscriptionId, data}) => send({clientId, subscriptionId, data}),
         error: error => log.fatal('Unexpected monitor$ stream error', error),
         complete: () => log.fatal('Unexpected monitor$ stream complete')
     })
+
+    stop$.subscribe(
+        () => monitorSubscription.unsubscribe()
+    )
 
     remove$.pipe(
         mergeMap(({username, clientId, subscriptionId, remove}) =>

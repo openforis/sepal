@@ -1,16 +1,10 @@
-const {Subject, finalize, startWith, takeUntil} = require('rxjs')
-const _ = require('lodash')
 const {createAssetManager} = require('./assetManager')
 const {userTag, subscriptionTag} = require('./tag')
+const {moduleWs$} = require('#sepal/ws/module')
 const log = require('#sepal/log').getLogger('ws')
 
-const ws$ = in$ => {
-    log.info('Connected')
-
-    const out$ = new Subject()
-    const stop$ = new Subject()
-
-    const assetManager = createAssetManager({out$, stop$})
+const protocol = ({send, stop$}) => {
+    const assetManager = createAssetManager({send, stop$})
 
     const onUserUp = ({user}) => {
         log.debug(`${userTag(user.username)} up`)
@@ -77,11 +71,9 @@ const ws$ = in$ => {
         'subscriptionDown': onSubscriptionDown
     }
 
-    const processMessage = message => {
-        const {hb, event, user, data, clientId, subscriptionId} = message
-        if (hb) {
-            out$.next({hb})
-        } else if (event) {
+    return message => {
+        const {event, user, data, clientId, subscriptionId} = message
+        if (event) {
             const handler = EVENT_HANDLERS[event]
             if (handler) {
                 handler({user, clientId, subscriptionId})
@@ -103,19 +95,8 @@ const ws$ = in$ => {
             log.warn('Unsupported message:', message)
         }
     }
-    
-    in$.pipe(
-        takeUntil(stop$)
-    ).subscribe({
-        next: msg => processMessage(msg),
-        error: error => log.error('Connection error (unexpected)', error),
-        complete: () => log.info('Disconnected')
-    })
-
-    return out$.pipe(
-        startWith({ready: true}),
-        finalize(() => stop$.next())
-    )
 }
+
+const ws$ = moduleWs$(protocol)
 
 module.exports = ctx => ws$(ctx.arg$)
