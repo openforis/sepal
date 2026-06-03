@@ -37,7 +37,7 @@ const READY_STATE = new Boolean
 const EVENT_TYPE = new String
 const DATA = new Object
 
-// gateway <-> module
+// module <-> gateway: implemented by backend modules
 
 const MODULE_PROTOCOL = () => ({
     rx: [
