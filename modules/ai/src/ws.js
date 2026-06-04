@@ -83,6 +83,10 @@ const createWsHandler = ({config, registry, conversationStore}) => {
             clientDown: ({user: {username}, clientId}) => {
                 log.info(`Client down: ${clientId} (${username})`)
                 sessionHandler.removeClientSessions({clientId})
+            },
+            userDown: ({user: {username}}) => {
+                log.info(`User down: ${username}`)
+                sessionHandler.removeUserSessions({username})
             }
         }
 

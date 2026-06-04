@@ -1,12 +1,8 @@
 const log = require('#sepal/log').getLogger('session')
 
-const CLEANUP_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
-
 class SessionStore {
-    constructor({ttlMs = 30 * 60 * 1000} = {}) {
-        this.ttlMs = ttlMs
+    constructor() {
         this.sessions = {}
-        this.cleanupTimer = setInterval(() => this._cleanup(), CLEANUP_INTERVAL_MS)
     }
 
     _key({clientId, subscriptionId}) {
@@ -26,7 +22,6 @@ class SessionStore {
             // by the browser via 'context' messages; consumed when building
             // the system prompt for each round so the LLM sees fresh state.
             selection: null,
-            lastActivity: Date.now(),
             messageTimestamps: []
         }
         this.sessions[key] = session
@@ -36,11 +31,7 @@ class SessionStore {
 
     get({clientId, subscriptionId}) {
         const key = this._key({clientId, subscriptionId})
-        const session = this.sessions[key]
-        if (session) {
-            session.lastActivity = Date.now()
-        }
-        return session
+        return this.sessions[key]
     }
 
     remove({clientId, subscriptionId}) {
@@ -65,25 +56,21 @@ class SessionStore {
         }
     }
 
-    clear() {
-        this.sessions = {}
-        if (this.cleanupTimer) {
-            clearInterval(this.cleanupTimer)
-        }
-    }
-
-    _cleanup() {
-        const now = Date.now()
+    removeByUser({username}) {
         let count = 0
         Object.entries(this.sessions).forEach(([key, session]) => {
-            if (now - session.lastActivity > this.ttlMs) {
+            if (session.username === username) {
                 delete this.sessions[key]
                 count++
             }
         })
         if (count > 0) {
-            log.info(`TTL cleanup: removed ${count} expired sessions`)
+            log.info(`Removed ${count} sessions for user ${username}`)
         }
+    }
+
+    clear() {
+        this.sessions = {}
     }
 }
 

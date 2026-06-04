@@ -41,11 +41,15 @@ const createSessionHandler = ({response, conversationStore, sessionStore}) => {
         sessionStore.removeByClient({clientId})
     }
 
+    const removeUserSessions = ({username}) => {
+        sessionStore.removeByUser({username})
+    }
+
     const shutdown = () => {
         sessionStore.clear()
     }
 
-    return {createSession, removeSession, removeClientSessions, shutdown}
+    return {createSession, removeSession, removeClientSessions, removeUserSessions, shutdown}
 }
 
 module.exports = {createSessionHandler}

@@ -4,7 +4,7 @@ const {createConversationHandler} = require('./conversationHandler')
 const {createMessageHandler} = require('./messageHandler')
 
 const createOrchestrator = ({response, config, registry, conversationStore}) => {
-    const sessionStore = new SessionStore({ttlMs: config.sessionTtlMs})
+    const sessionStore = new SessionStore()
     const ephemeralConversations = new Set()
 
     const sessionHandler = createSessionHandler({response, conversationStore, sessionStore})

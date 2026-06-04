@@ -40,7 +40,7 @@ src/
   ws.js                       # WebSocket handler (lifecycle events, message routing)
   chat/                       # Chat Orchestrator Layer
     orchestrator.js            # Session mgmt, LLM conversation loop, tool execution
-    session.js                 # In-memory session store with TTL cleanup
+    session.js                 # In-memory session store (per-tab; cleaned up on subscription/client/user down)
     providers/
       provider.js              # Base LLM provider interface
       claude.js                # Claude API (Anthropic SDK, tool_use)

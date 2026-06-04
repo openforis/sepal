@@ -1,8 +1,6 @@
 const {Command, Option} = require('commander')
 const log = require('#sepal/log').getLogger('config')
 
-const DEFAULT_PORT = 80
-
 const fatalError = error => {
     log.fatal(error)
     process.exit(1)
@@ -62,12 +60,6 @@ try {
                 .makeOptionMandatory()
         )
         .addOption(
-            new Option('--session-ttl-minutes <number>', 'Chat session TTL in minutes')
-                .env('SESSION_TTL_MINUTES')
-                .argParser(v => parseInt(v))
-                .makeOptionMandatory()
-        )
-        .addOption(
             new Option('--port <number>')
                 .env('HTTP_PORT')
                 .argParser(v => parseInt(v))
@@ -88,8 +80,7 @@ const {
     llmApiKey,
     llmModel,
     llmBaseUrl,
-    rateLimit,
-    sessionTtlMinutes
+    rateLimit
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -104,6 +95,5 @@ module.exports = {
     llmApiKey,
     llmModel,
     llmBaseUrl,
-    rateLimit,
-    sessionTtlMs: sessionTtlMinutes * 60 * 1000
+    rateLimit
 }

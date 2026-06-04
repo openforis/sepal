@@ -42,7 +42,6 @@ services:
       REDIS_HOST: "ai-redis"
       CONVERSATION_TTL_DAYS: "${CONVERSATION_TTL_DAYS:-30}"
       RATE_LIMIT: "${RATE_LIMIT:-20}"
-      SESSION_TTL_MINUTES: "${SESSION_TTL_MINUTES:-30}"
     networks:
       - sepal
     extra_hosts:
