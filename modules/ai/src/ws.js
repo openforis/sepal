@@ -118,7 +118,7 @@ const createWsHandler = ({config, registry, conversationStore}) => {
                     if (type === 'gui-response') {
                         resolveRequest({requestId, success: data.success, data: data.data, error: data.error})
                     } else if (type === 'message') {
-                        messageHandler.handleMessage({username, clientId, subscriptionId, text, selection: data.selection})
+                        messageHandler.handleMessage({username, clientId, subscriptionId, text, conversationId, selection: data.selection})
                             .catch(error => log.error('Message handling error:', error))
                     } else if (type === 'abort') {
                         messageHandler.abort({clientId, subscriptionId})

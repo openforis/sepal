@@ -107,7 +107,27 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
         }
     }
 
-    const handleMessage = async ({username, clientId, subscriptionId, text, selection}) => {
+    // Reload a conversation into a session that no longer has it. Sessions are
+    // in-memory, so an ai-module or gateway restart recreates the session with
+    // no conversation while the browser still shows one; the client carries its
+    // conversationId on every message, letting us recover in-place. Stays silent
+    // (no conversation-loaded/claimed broadcast) — it patches the session mid-send
+    // rather than acting as a user-initiated select.
+    const rehydrateConversation = async ({session, username, conversationId}) => {
+        const result = conversationStore
+            ? await conversationStore.loadConversation({username, conversationId})
+            : null
+        session.conversationId = conversationId
+        session.messages = result ? result.messages : []
+        session.workflow = null
+        if (conversationStore && !result) {
+            // Unknown to the store (an ephemeral conversation lost on restart);
+            // the existing first-message path persists it below.
+            ephemeralConversations.add(conversationId)
+        }
+    }
+
+    const handleMessage = async ({username, clientId, subscriptionId, text, conversationId: requestedConversationId, selection}) => {
         const session = sessionStore.get({clientId, subscriptionId})
         if (!session) {
             log.warn(`No session for ${clientId}:${subscriptionId}`)
@@ -119,6 +139,12 @@ const createMessageHandler = ({response, config, registry, conversationStore, se
         // store it as the latest known context. Subsequent 'context' events overwrite it.
         if (selection !== undefined) {
             session.selection = selection
+        }
+
+        // Recover the active conversation if the session lost it (restart) or
+        // drifted from what the client is showing.
+        if (requestedConversationId && session.conversationId !== requestedConversationId) {
+            await rehydrateConversation({session, username, conversationId: requestedConversationId})
         }
 
         if (!session.conversationId) {

@@ -213,7 +213,7 @@ export const ChatPanel = ({className}) => {
     const handleSend = useCallback(text => {
         if (isConnected && activeConversationId) {
             dispatch({type: 'USER_SENT', text})
-            send({type: 'message', text, selection: currentSelection()})
+            send({type: 'message', text, conversationId: activeConversationId, selection: currentSelection()})
         }
     }, [dispatch, send, isConnected, activeConversationId])
 
