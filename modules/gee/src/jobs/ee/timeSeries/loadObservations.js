@@ -1,15 +1,18 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import {getCollection$} from '#sepal/ee/timeSeries/collection'
+import {toGeometry} from '#sepal/ee/aoi'
+import {map, mergeMap, of, switchMap, toArray} from 'rxjs'
+import ee from '#sepal/ee/ee'
+import _ from 'lodash'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const CHUNK_SIZE = 100
 
 const worker$ = ({
     requestArgs: {recipe, bands, latLng}
 }) => {
-    const {getCollection$} = require('#sepal/ee/timeSeries/collection')
-    const {toGeometry} = require('#sepal/ee/aoi')
-    const {map, mergeMap, of, switchMap, toArray} = require('rxjs')
-    const ee = require('#sepal/ee/ee')
-    const _ = require('lodash')
 
     const aoi = {type: 'POINT', ...latLng}
     const geometry = toGeometry(aoi)
@@ -57,7 +60,7 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Load observations',
     jobPath: __filename,
     worker$

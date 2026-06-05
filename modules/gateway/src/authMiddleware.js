@@ -1,9 +1,13 @@
-const {firstValueFrom, of, switchMap, tap} = require('rxjs')
-const {get$, post$} = require('#sepal/httpClient')
-const modules = require('../config/modules')
-const {usernameTag, urlTag} = require('./tag')
-const {getRequestUser, setRequestUser, setSessionUsername} = require('./user')
-const log = require('#sepal/log').getLogger('authMiddleware')
+import {firstValueFrom, of, switchMap, tap} from 'rxjs'
+
+import {get$, post$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+
+import modules from '../config/modules.json' with {type: 'json'}
+import {urlTag, usernameTag} from './tag.js'
+import {getRequestUser, setRequestUser, setSessionUsername} from './user.js'
+
+const log = getLogger('authMiddleware')
 
 const AUTHENTICATION_URL = `http://${modules.user}/authenticate`
 const API_KEY_AUTH_URL = `http://${modules.sepal}/api/sessions/api-key-authenticate`
@@ -178,4 +182,4 @@ const AuthMiddleware = userStore => {
     return {authMiddleware}
 }
 
-module.exports = {AuthMiddleware}
+export {AuthMiddleware}

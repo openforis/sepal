@@ -1,9 +1,6 @@
-const {pipe, map} = require('rxjs')
+import {pipe, map} from 'rxjs'
 
-module.exports = {
-    progress: ({defaultMessage, messageKey, messageArgs}) =>
+export const progress = ({defaultMessage, messageKey, messageArgs}) =>
         pipe(
             map(() => ({defaultMessage, messageKey, messageArgs}))
         )
-
-}

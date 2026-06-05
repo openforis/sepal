@@ -1,5 +1,5 @@
-const {program} = require('commander')
-const _ = require('lodash')
+import {program} from 'commander'
+import _ from 'lodash'
 
 program
     .option('--interactive')
@@ -20,7 +20,7 @@ const {
     sshCommandPath
 } = program.opts()
 
-module.exports = {
+export {
     interactive,
     username,
     userKeyFile,

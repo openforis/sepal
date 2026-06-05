@@ -1,9 +1,10 @@
-const {program} = require('commander')
-const Path = require('path')
-const log = require('#sepal/log').getLogger('config')
-const _ = require('lodash')
-const os = require('os')
-const {mkdirSync} = require('fs')
+import {program} from 'commander'
+import Path from 'path'
+import {getLogger} from '#sepal/log'
+const log = getLogger('config')
+import _ from 'lodash'
+import os from 'os'
+import {mkdirSync} from 'fs'
 
 const DEFAULT_HTTP_PORT = 80
 const DEFAULT_AUTO_UPDATE_INTERVAL_HOURS = 24
@@ -55,16 +56,20 @@ const platformReleaseLibPath = Path.join(libPath, platformVersion)
 mkdirSync(platformReleaseRepoPath, {recursive: true})
 mkdirSync(platformReleaseLibPath, {recursive: true})
 
-module.exports = {
+const LOCAL_CRAN_REPO = `http://localhost:${httpPort}`
+const CRAN_ROOT = Path.join(platformReleaseRepoPath, 'cranroot')
+const GITHUB_ROOT = Path.join(platformReleaseRepoPath, 'github')
+
+export {
     platformVersion,
     cranRepo,
-    repoPath: platformReleaseRepoPath,
-    libPath: platformReleaseLibPath,
+    platformReleaseRepoPath as repoPath,
+    platformReleaseLibPath as libPath,
     redisHost,
     httpPort,
     autoUpdateIntervalHours,
     updateNow,
-    LOCAL_CRAN_REPO: `http://localhost:${httpPort}`,
-    CRAN_ROOT: Path.join(platformReleaseRepoPath, 'cranroot'),
-    GITHUB_ROOT: Path.join(platformReleaseRepoPath, 'github')
+    LOCAL_CRAN_REPO,
+    CRAN_ROOT,
+    GITHUB_ROOT
 }

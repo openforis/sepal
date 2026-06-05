@@ -1,10 +1,13 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import {map} from 'rxjs'
+import * as http from '#sepal/httpClient'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const worker$ = ({
     credentials: {sepalUser: {googleTokens}}
 }) => {
-    const {map} = require('rxjs')
-    const http = require('#sepal/httpClient')
 
     if (!googleTokens) {
         throw Error('Requires a connected Google Account')
@@ -23,7 +26,7 @@ const worker$ = ({
     return cloudProjects$()
 }
 
-module.exports = job({
+export default job({
     jobName: 'EE projects',
     jobPath: __filename,
     worker$,

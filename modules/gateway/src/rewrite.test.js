@@ -1,4 +1,5 @@
-const {rewriteLocation} = require('./rewrite')
+import {rewriteLocation} from './rewrite.js'
+
 test('root of target', () => {
     const rewritten = rewriteLocation({
         path: '/a/b',

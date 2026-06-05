@@ -1,10 +1,11 @@
-const Path = require('path')
-const {opendir} = require('fs/promises')
-const {isChildOf, isFile} = require('./filesystem')
-const {GITHUB_ROOT, LOCAL_CRAN_REPO, libPath} = require('./config')
-const {runScript} = require('./script')
-const {makePackage, cleanupPackage} = require('./package')
-const log = require('#sepal/log').getLogger('github')
+import Path from 'path'
+import {opendir} from 'fs/promises'
+import {isChildOf, isFile} from './filesystem.js'
+import {GITHUB_ROOT, LOCAL_CRAN_REPO, libPath} from './config.js'
+import {runScript} from './script.js'
+import {makePackage, cleanupPackage} from './package.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('github')
 
 const SRC = 'src'
 const BIN = 'bin'
@@ -107,4 +108,4 @@ const scanDir = async (enqueueUpdateGitHubPackage, baseDir, dir = '') => {
     }
 }
 
-module.exports = {getGitHubRepoPath, getGitHubPackageInfo, getGitHubTarget, makeGitHubPackage, updateGitHubPackage, checkGitHubUpdates}
+export {getGitHubRepoPath, getGitHubPackageInfo, getGitHubTarget, makeGitHubPackage, updateGitHubPackage, checkGitHubUpdates}

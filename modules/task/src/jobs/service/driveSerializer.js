@@ -1,4 +1,4 @@
-const {LimiterService} = require('#sepal/service/limiter')
+import {LimiterService} from '#sepal/service/limiter'
 
 const options = {
     maxConcurrency: 1
@@ -6,4 +6,4 @@ const options = {
 
 const {limiterService: driveSerializerService, limiter$: driveSerializer$} = LimiterService('DriveSerializer', options)
 
-module.exports = {driveSerializerService, driveSerializer$}
+export {driveSerializerService, driveSerializer$}

@@ -2,6 +2,7 @@
     "name": "sepal-ee",
     "version": "1.0.0",
     "description": "",
+    "type": "module",
     "author": "",
     "license": "ISC",
     "dependencies": {

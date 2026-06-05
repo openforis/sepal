@@ -1,10 +1,12 @@
-const {v4: uuid} = require('uuid')
+import {catchError, debounceTime, EMPTY, filter, firstValueFrom, groupBy, interval, map, mergeMap, scan, Subject, takeUntil} from 'rxjs'
+import {v4 as uuid} from 'uuid'
 
-const {moduleTag, clientTag, userTag} = require('./tag')
-const {filter, interval, map, Subject, groupBy, mergeMap, debounceTime, takeUntil, scan, catchError, EMPTY, firstValueFrom} = require('rxjs')
-const {USER_UP, USER_DOWN, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN, CLIENT_VERSION_MISMATCH} = require('#sepal/event/definitions')
+import {CLIENT_DOWN, CLIENT_UP, CLIENT_VERSION_MISMATCH, SUBSCRIPTION_DOWN, SUBSCRIPTION_UP, USER_DOWN, USER_UP} from '#sepal/event/definitions'
+import {getLogger} from '#sepal/log'
 
-const log = require('#sepal/log').getLogger('websocket/downlink')
+import {clientTag, moduleTag, userTag} from './tag.js'
+
+const log = getLogger('websocket/downlink')
 
 const HEARTBEAT_INTERVAL_MS = 10 * 1000
 const BUILD_NUMBER = process.env.BUILD_NUMBER
@@ -213,4 +215,4 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
     )
 }
 
-module.exports = {initializeDownlink}
+export {initializeDownlink}

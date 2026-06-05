@@ -1,9 +1,10 @@
-const {subHours} = require('date-fns/subHours')
-const {from, expand, EMPTY, finalize, switchMap, lastValueFrom, filter, reduce, map, concatMap, catchError} = require('rxjs')
-const {formatInterval} = require('./time')
-const {getUpdates$} = require('./earthSearch')
-const {minHoursPublished} = require('./config')
-const log = require('#sepal/log').getLogger('stac')
+import {subHours} from 'date-fns/subHours'
+import {from, expand, EMPTY, finalize, switchMap, lastValueFrom, filter, reduce, map, concatMap, catchError} from 'rxjs'
+import {formatInterval} from './time.js'
+import {getUpdates$} from './earthSearch.js'
+import {minHoursPublished} from './config.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('stac')
 
 const updateTimestamp = (timestamp, mostRecentTimestamp) =>
     !timestamp || mostRecentTimestamp > timestamp
@@ -47,4 +48,4 @@ const updateFromStac$ = ({source, dataset, query, sceneMapper, redis, database, 
 const updateFromStac = async ({source, dataset, query, sceneMapper, redis, database, timestamp}) =>
     lastValueFrom(updateFromStac$({source, dataset, query, sceneMapper, redis, database, timestamp}))
 
-module.exports = {updateFromStac}
+export {updateFromStac}

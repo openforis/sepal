@@ -1,18 +1,21 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import logConfig from '#config/log.json' with {type: 'json'}
+import {configureServer} from '#sepal/log'
+configureServer(logConfig)
 
-const log = require('#sepal/log').getLogger('main')
+import {getLogger} from '#sepal/log'
+const log = getLogger('main')
 
-const _ = require('lodash')
+import _ from 'lodash'
 
-const {initMessageQueue} = require('#sepal/messageQueue')
-const server = require('#sepal/httpServer')
-const {amqpUri, port} = require('./config')
-const {scanComplete$, startStorageCheck} = require('./storageCheck')
-const {messageHandler} = require('./messageHandler')
-const {initializeDatabase} = require('./database')
-const {routes} = require('./routes')
-const {email$} = require('./email')
-const {startInactivityCheck} = require('./inactivityCheck')
+import {initMessageQueue} from '#sepal/messageQueue'
+import * as server from '#sepal/httpServer'
+import {amqpUri, port} from './config.js'
+import {scanComplete$, startStorageCheck} from './storageCheck.js'
+import {messageHandler} from './messageHandler.js'
+import {initializeDatabase} from './database.js'
+import {routes} from './routes.js'
+import {email$} from './email.js'
+import {startInactivityCheck} from './inactivityCheck.js'
 
 const main = async () => {
     await initMessageQueue(amqpUri, {

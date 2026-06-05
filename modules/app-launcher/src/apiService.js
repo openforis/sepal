@@ -1,7 +1,8 @@
-const {EMPTY, catchError, map} = require('rxjs')
-const {get$} = require('#sepal/httpClient')
-const {sepalHost, sepalAdminPassword, sepalAdminUsername} = require('./config')
-const log = require('#sepal/log').getLogger('apiService')
+import {EMPTY, catchError, map} from 'rxjs'
+import {get$} from '#sepal/httpClient'
+import {sepalHost, sepalAdminPassword, sepalAdminUsername} from './config.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('apiService')
 
 const fetchAppsFromApi$ = () => {
     const apiUrl = `https://${sepalHost}/api/apps/list`
@@ -26,7 +27,7 @@ const fetchCatalog$ = url =>
         })
     )
 
-module.exports = {
+export {
     fetchAppsFromApi$,
     fetchCatalog$
 }

@@ -1,32 +1,36 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import {RedisStore as RedisSessionStore} from 'connect-redis'
+import express from 'express'
+import Session from 'express-session'
+import micromatch from 'micromatch'
+import {createRequire} from 'module'
+import {createClient} from 'redis'
+import {firstValueFrom, Subject} from 'rxjs'
+import url from 'url'
+import {v4 as uuid} from 'uuid'
+import {WebSocketServer} from 'ws'
 
-const {amqpUri, redisUri, port} = require('./config')
-const {initializeWebSocketServer} = require('./websocket')
-const {isMatch} = require('micromatch')
-const express = require('express')
-const {createClient} = require('redis')
-const Session = require('express-session')
-const {v4: uuid} = require('uuid')
-const url = require('url')
-const {WebSocketServer} = require('ws')
-const {Subject, firstValueFrom} = require('rxjs')
+import logConfig from '#config/log.json' with {type: 'json'}
+import {configureServer, getLogger} from '#sepal/log'
+import {initMessageQueue} from '#sepal/messageQueue'
 
+import {webSocketPath} from '../config/endpoints.js'
+import {AuthMiddleware} from './authMiddleware.js'
+import {amqpUri, port, redisUri} from './config.js'
+import {initializeGoogleAccessTokenRefresher} from './googleAccessToken.js'
+import {GoogleAccessTokenMiddleware} from './googleAccessTokenMiddleware.js'
+import {Proxy} from './proxy.js'
+import {SessionManager} from './session.js'
+import {urlTag, usernameTag} from './tag.js'
+import {getSessionUsername, removeRequestUser, setRequestUser} from './user.js'
+import {UserStore} from './userStore.js'
+import {initializeWebSocketServer} from './websocket.js'
+
+const require = createRequire(import.meta.url)
 const apiMetrics = require('prometheus-api-metrics')
-const {RedisStore: RedisSessionStore} = require('connect-redis')
 
-const log = require('#sepal/log').getLogger('gateway')
+configureServer(logConfig)
 
-const {initMessageQueue} = require('#sepal/messageQueue')
-
-const {AuthMiddleware} = require('./authMiddleware')
-const {GoogleAccessTokenMiddleware} = require('./googleAccessTokenMiddleware')
-const {Proxy} = require('./proxy')
-const {SessionManager} = require('./session')
-const {setRequestUser, getSessionUsername, removeRequestUser} = require('./user')
-const {UserStore} = require('./userStore')
-const {initializeGoogleAccessTokenRefresher} = require('./googleAccessToken')
-const {usernameTag, urlTag} = require('./tag')
-const {webSocketPath} = require('../config/endpoints')
+const log = getLogger('gateway')
 
 const event$ = new Subject()
 
@@ -120,7 +124,7 @@ const main = async () => {
     }
 
     const handleProxiedWebSocket = (requestPath, req, socket, head, username) => {
-        const {proxy, target} = proxies.find(({path}) => !path || requestPath === path || isMatch(requestPath, `${path}/**`)) || {}
+        const {proxy, target} = proxies.find(({path}) => !path || requestPath === path || micromatch.isMatch(requestPath, `${path}/**`)) || {}
         if (proxy) {
             log.debug(`${usernameTag(username)} Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
             proxy.upgrade(req, socket, head)

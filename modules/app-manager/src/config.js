@@ -1,5 +1,6 @@
-const {Command, Option} = require('commander')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
+import {getLogger} from '#sepal/log'
+const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
 
@@ -30,12 +31,14 @@ try {
 
 const {
     port,
-    appsCatalogUrl
+    appsCatalogUrl: appsCatalogUrlArg
 } = program.opts()
 
 log.info('Configuration loaded')
 
-module.exports = {
+const appsCatalogUrl = appsCatalogUrlArg || null
+
+export {
     port,
-    appsCatalogUrl: appsCatalogUrl || null
+    appsCatalogUrl
 }

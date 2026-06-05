@@ -1,12 +1,15 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import {of, catchError, forkJoin, map, switchMap, throwError} from 'rxjs'
+import {ClientException, NotFoundException} from '#sepal/exception'
+import ee from '#sepal/ee/ee'
+import _ from 'lodash'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const worker$ = ({
     requestArgs: {asset, allowedTypes}
 }) => {
-    const {of, catchError, forkJoin, map, switchMap, throwError} = require('rxjs')
-    const {ClientException, NotFoundException} = require('#sepal/exception')
-    const ee = require('#sepal/ee/ee')
-    const _ = require('lodash')
 
     const addFirstImageMetadata$ = asset => {
         const collection = ee.ImageCollection(asset.id)
@@ -87,7 +90,7 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'EE asset metadata',
     jobPath: __filename,
     worker$

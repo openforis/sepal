@@ -1,6 +1,6 @@
-const fs = require('fs')
-const koaStatic = require('koa-static')
-const path = require('path')
+import fs from 'fs'
+import koaStatic from 'koa-static'
+import path from 'path'
 
 function getLabextensionsDir(appName) {
     const baseDir = '/usr/local/share/jupyter/current-kernels'
@@ -43,4 +43,4 @@ const staticLabextensionsMiddleware = async (ctx, next) => {
     }
 }
   
-module.exports = {staticLabextensionsMiddleware}
+export {staticLabextensionsMiddleware}

@@ -1,7 +1,8 @@
-const fs = require('fs').promises
-const log = require('#sepal/log').getLogger('git')
-const {ClientException} = require('#sepal/exception')
-const executeCommand = require('./terminal')
+import fs from 'fs/promises'
+import {getLogger} from '#sepal/log'
+const log = getLogger('git')
+import {ClientException} from '#sepal/exception'
+import executeCommand from './terminal.js'
 
 const MAX_RETRIES = 3
 const RETRY_DELAY_MS = 5000
@@ -214,7 +215,7 @@ const pullUpdates = async (appPath, branch) => {
     }
 }
 
-module.exports = {
+export {
     cloneOrPull,
     getRepoInfo,
     getCurrentCommitHash,

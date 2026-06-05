@@ -1,4 +1,4 @@
-const {getMostRecentEvents, getUserEvents} = require('./database')
+import {getMostRecentEvents, getUserEvents} from './database.js'
 
 const mostRecentEvents = async ctx =>
     ctx.body = await getMostRecentEvents()
@@ -12,4 +12,4 @@ const routes = router => router
     .get('/mostRecentEvents', async ctx => await mostRecentEvents(ctx))
     .get('/userEvents', async ctx => await userEvents(ctx))
 
-module.exports = {routes}
+export {routes}

@@ -1,19 +1,22 @@
-const {subHours} = require('date-fns/subHours')
-const {timer, exhaustMap, from, catchError, EMPTY} = require('rxjs')
-const {updateIntervalMinutes, minHoursPublished} = require('./config')
-const {initializeDatabase} = require('./database')
-const {downloadLandsat, loadLandsat} = require('./landsatCsv')
-const {updateLandsat} = require('./landsatStac')
-const {initializeRedis} = require('./redis')
-const {downloadSentinel2, loadSentinel2} = require('./sentinel2Csv')
-const {updateSentinel2} = require('./sentinel2Stac')
-const {formatInterval} = require('./time')
+import logConfig from '#config/log.json' with {type: 'json'}
+import {subHours} from 'date-fns/subHours'
+import {timer, exhaustMap, from, catchError, EMPTY} from 'rxjs'
+import {updateIntervalMinutes, minHoursPublished} from './config.js'
+import {initializeDatabase} from './database.js'
+import {downloadLandsat, loadLandsat} from './landsatCsv.js'
+import {updateLandsat} from './landsatStac.js'
+import {initializeRedis} from './redis.js'
+import {downloadSentinel2, loadSentinel2} from './sentinel2Csv.js'
+import {updateSentinel2} from './sentinel2Stac.js'
+import {formatInterval} from './time.js'
 
-require('#sepal/log').configureServer(require('#config/log.json'))
+import {configureServer} from '#sepal/log'
+configureServer(logConfig)
 
 const INITIAL_UPDATE_DELAY_SECONDS = 10
 
-const log = require('#sepal/log').getLogger('main')
+import {getLogger} from '#sepal/log'
+const log = getLogger('main')
 
 const download = async () => {
     log.debug('Downloading CSV files...')

@@ -1,8 +1,9 @@
-const {scene, getIdFromGranuleId, getAcquiredTimestampFromId} = require('./sentinel2')
-const {processCSV} = require('./csv')
-const {formatInterval} = require('./time')
-const {download} = require('./filesystem')
-const log = require('#sepal/log').getLogger('sentinel2')
+import {scene, getIdFromGranuleId, getAcquiredTimestampFromId} from './sentinel2.js'
+import {processCSV} from './csv.js'
+import {formatInterval} from './time.js'
+import {download} from './filesystem.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('sentinel2')
 
 const CSV_URL = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz'
 
@@ -40,4 +41,4 @@ const downloadSentinel2 = async () =>
         collection: 'sentinel-2',
     })
 
-module.exports = {downloadSentinel2, loadSentinel2}
+export {downloadSentinel2, loadSentinel2}

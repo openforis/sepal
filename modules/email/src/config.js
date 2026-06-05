@@ -1,5 +1,8 @@
-const {Command, Option} = require('commander')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
+
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
 const DEFAULT_CONCURRENCY = 4
@@ -107,18 +110,19 @@ const {
 
 log.info('Configuration loaded')
 
-module.exports = {
-    amqpUri: `amqp://${amqpHost}`,
-    redisHost,
-    port,
+const amqpUri = `amqp://${amqpHost}`
+
+export {
+    amqpUri,
     concurrency,
+    gatewayHost,
+    port,
+    redisHost,
+    sepalPassword,
+    sepalUsername,
+    smtpFromDomain,
     smtpHost,
+    smtpPassword,
     smtpPort,
     smtpSecure,
-    smtpUser,
-    smtpPassword,
-    smtpFromDomain,
-    gatewayHost,
-    sepalUsername,
-    sepalPassword
-}
+    smtpUser}

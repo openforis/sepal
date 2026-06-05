@@ -1,9 +1,9 @@
-const {firstValueFrom, from, switchMap, tap} = require('rxjs')
-const fs = require('fs')
-const os = require('os')
-const Path = require('path')
-const {ls$, mkdir$, mkdirSafe$} = require('./fileSystem')
-const {stream, emitsOne, emitsNothing, throwsError} = require('#sepal/test/rxjs')
+import {firstValueFrom, from, switchMap, tap} from 'rxjs'
+import fs from 'fs'
+import os from 'os'
+import Path from 'path'
+import {ls$, mkdir$, mkdirSafe$} from './fileSystem.js'
+import {stream, emitsOne, emitsNothing, throwsError} from '#sepal/test/rxjs'
 
 let emptyDirPath
 

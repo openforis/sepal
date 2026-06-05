@@ -1,8 +1,8 @@
-const {ceoUrl} = require('../config')
-const urljoin = require('url-join').default
-const {map, of, throwError, switchMap} = require('rxjs')
-const {get$} = require('#sepal/httpClient')
-const {ClientException} = require('#sepal/exception')
+import {ceoUrl} from '../config.js'
+import urljoin from 'url-join'
+import {map, of, throwError, switchMap} from 'rxjs'
+import {get$} from '#sepal/httpClient'
+import {ClientException} from '#sepal/exception'
 
 const getFromCeo$ = (ctx, {path, query}) => {
     const token = ctx.request.headers['x-ceo-token']
@@ -37,4 +37,4 @@ const validateToken$ = token =>
         })
     )
 
-module.exports = {getFromCeo$}
+export {getFromCeo$}

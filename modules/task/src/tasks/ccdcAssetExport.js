@@ -1,13 +1,11 @@
-const {exportImageToAsset$} = require('../jobs/export/toAsset')
-const {forkJoin, switchMap} = require('rxjs')
+import {exportImageToAsset$} from '../jobs/export/toAsset.js'
+import {forkJoin, switchMap} from 'rxjs'
+import ccdc from '#sepal/ee/timeSeries/ccdc'
+import {toVisualizationProperties} from '../ee/visualizations.js'
+import {formatProperties} from './formatProperties.js'
+import {setWorkloadTag} from './workloadTag.js'
 
-const ccdc = require('#sepal/ee/timeSeries/ccdc')
-const {toVisualizationProperties} = require('../ee/visualizations')
-const {formatProperties} = require('./formatProperties')
-const {setWorkloadTag} = require('./workloadTag')
-
-module.exports = {
-    submit$: (taskId, {image, description}) => {
+export const submit$ = (taskId, {image, description}) => {
         const {recipe, bands, scale, visualizations, properties, ...other} = image
         setWorkloadTag(recipe)
         const segments = ccdc(recipe, {selection: bands})
@@ -38,7 +36,6 @@ module.exports = {
             })
         )
     }
-}
 
 const getAllBands = bands => {
     const rmse = bands.map(band => `${band}_rmse`)

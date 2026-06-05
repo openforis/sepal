@@ -2,11 +2,12 @@
     "name": "sepal",
     "version": "1.0.0",
     "description": "",
+    "type": "module",
     "author": "",
     "license": "ISC",
     "scripts": {
-        "test": "jest",
-        "testWatch": "jest --watchAll"
+        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
     },
     "dependencies": {
         "@google/earthengine": "^1.7.29",

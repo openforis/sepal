@@ -1,16 +1,20 @@
-const _ = require('lodash')
-const {first} = require('rxjs')
-const service = require('#sepal/service')
+import {createRequire} from 'module'
+import _ from 'lodash'
+import {first, of} from 'rxjs'
+import * as service from '#sepal/service'
+
+const require = createRequire(import.meta.url)
 
 const contextService = {
     serviceName: 'ContextService',
     serviceHandler$: () => {
-        const {of} = require('rxjs')
         return of(require('#gee/config'))
     }
 }
 
-module.exports = {
+const getContext$ = () => service.submit$(contextService).pipe(first())
+
+export {
     contextService,
-    getContext$: () => service.submit$(contextService).pipe(first())
+    getContext$
 }

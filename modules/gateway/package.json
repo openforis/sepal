@@ -2,10 +2,11 @@
     "name": "gateway",
     "version": "1.0.0",
     "description": "",
+    "type": "module",
     "main": "main.js",
     "scripts": {
-        "test": "jest",
-        "testWatch": "jest --watchAll"
+        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
     },
     "author": "",
     "license": "ISC",

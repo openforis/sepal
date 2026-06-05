@@ -1,13 +1,14 @@
-const {createProxyMiddleware} = require('http-proxy-middleware')
-const {filter, from, map, switchMap, toArray} = require('rxjs')
-const url = require('url')
-const {isMatch} = require('micromatch')
-const {getRequestUser, setRequestUser} = require('./user')
-const {usernameTag, urlTag} = require('./tag')
-const {source$} = require('./apps')
-const {sepalHost} = require('./config')
+import {createProxyMiddleware} from 'http-proxy-middleware'
+import {filter, from, map, switchMap, toArray} from 'rxjs'
+import url from 'url'
+import micromatch from 'micromatch'
+import {getRequestUser, setRequestUser} from './user.js'
+import {usernameTag, urlTag} from './tag.js'
+import {source$} from './apps.js'
+import {sepalHost} from './config.js'
 
-const log = require('#sepal/log').getLogger('proxy')
+import {getLogger} from '#sepal/log'
+const log = getLogger('proxy')
 
 const proxyEndpoints$ = expressApp => source$().pipe(
     switchMap(({apps}) => from(apps)),
@@ -32,7 +33,7 @@ const registerUpgradeListener = (server, proxies) => {
         
         const proxyMatch = proxies
             .find(({path}) =>
-                !path || requestPath === path || isMatch(requestPath, `${path}/**`)
+                !path || requestPath === path || micromatch.isMatch(requestPath, `${path}/**`)
             )
         
         const username = user.username
@@ -47,7 +48,7 @@ const registerUpgradeListener = (server, proxies) => {
     })
 }
 
-module.exports = {proxyEndpoints$, registerUpgradeListener}
+export {proxyEndpoints$, registerUpgradeListener}
 
 const proxy = expressApp =>
     ({id, port}) => {

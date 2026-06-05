@@ -1,4 +1,11 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {catchError, from, map, switchMap, throwError} from 'rxjs'
+import {ClientException, ERROR_CODES} from '#sepal/exception'
+import {google} from 'googleapis'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const REQUIRED_SCOPES = [
     'https://www.googleapis.com/auth/cloudplatformprojects.readonly',
@@ -9,12 +16,8 @@ const REQUIRED_SCOPES = [
 const worker$ = ({
     credentials: {sepalUser}
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const {catchError, from, map, switchMap, throwError} = require('rxjs')
-    const {ClientException} = require('#sepal/exception')
-    const {ERROR_CODES: {EE_NOT_AVAILABLE, MISSING_OAUTH_SCOPES, MISSING_GOOGLE_TOKENS}} = require('#sepal/exception')
+    const {EE_NOT_AVAILABLE, MISSING_OAUTH_SCOPES, MISSING_GOOGLE_TOKENS} = ERROR_CODES
 
-    const {google} = require('googleapis')
 
     const accessToken = sepalUser?.googleTokens?.accessToken
     
@@ -44,7 +47,7 @@ const worker$ = ({
 
 }
 
-module.exports = job({
+export default job({
     jobName: 'EE check',
     jobPath: __filename,
     worker$

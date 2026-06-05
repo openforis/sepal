@@ -1,9 +1,9 @@
-const {ceoUrl} = require('../config')
-const {ClientException} = require('#sepal/exception')
-const urljoin = require('url-join').default
-const {map} = require('rxjs')
-const {post$} = require('#sepal/httpClient')
-const setCookieParser = require('set-cookie-parser')
+import {ceoUrl} from '../config.js'
+import {ClientException} from '#sepal/exception'
+import urljoin from 'url-join'
+import {map} from 'rxjs'
+import {post$} from '#sepal/httpClient'
+import setCookieParser from 'set-cookie-parser'
 
 const loginToken$ = ctx => {
     const {email, password} = ctx.request.body
@@ -41,4 +41,4 @@ const loginToken$ = ctx => {
     )
 }
 
-module.exports = {loginToken$}
+export {loginToken$}

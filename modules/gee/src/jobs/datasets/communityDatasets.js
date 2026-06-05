@@ -1,9 +1,10 @@
 // const Job = require('#sepal/worker/job')
-const {get$} = require('#sepal/httpClient')
-const {map, timer, tap, switchMap, catchError, EMPTY} = require('rxjs')
-const _ = require('lodash')
-const {escapeRegExp, simplifyString, splitString} = require('#sepal/string')
-const log = require('#sepal/log').getLogger('ee')
+import {get$} from '#sepal/httpClient'
+import {map, timer, tap, switchMap, catchError, EMPTY} from 'rxjs'
+import _ from 'lodash'
+import {escapeRegExp, simplifyString, splitString} from '#sepal/string'
+import {getLogger} from '#sepal/log'
+const log = getLogger('ee')
 
 const URL = 'https://raw.githubusercontent.com/samapriya/awesome-gee-community-datasets/master/community_datasets.json'
 const REFRESH_INTERVAL_HOURS = 24
@@ -95,4 +96,4 @@ timer(0, REFRESH_INTERVAL_HOURS * 3600000).pipe(
     complete: () => log.fatal('Unexpected Awesome GEE community stream completed')
 })
 
-module.exports = {getDatasets}
+export {getDatasets}

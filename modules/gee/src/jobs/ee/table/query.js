@@ -1,10 +1,13 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {map} from 'rxjs'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const worker$ = ({
     requestArgs: {select, from, where = [], distinct = [], orderBy = []}
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const {map} = require('rxjs')
 
     const collection = ee.FeatureCollection(from)
     const filtered = where.reduce((c, f) => c.filterMetadata(f[0], f[1], f[2]), collection)
@@ -28,7 +31,7 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Query EE Table',
     jobPath: __filename,
     worker$

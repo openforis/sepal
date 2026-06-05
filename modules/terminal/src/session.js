@@ -1,9 +1,10 @@
-const log = require('#sepal/log').getLogger('session')
-const pty = require('node-pty')
-const fs = require('fs')
-const path = require('path')
+import {getLogger} from '#sepal/log'
+const log = getLogger('session')
+import pty from 'node-pty'
+import fs from 'fs'
+import path from 'path'
 
-const {homeDir, sshScriptPath} = require('./config')
+import {homeDir, sshScriptPath} from './config.js'
 
 const sessions = {}
 
@@ -92,4 +93,4 @@ const remove = id => {
     }
 }
 
-module.exports = {get, remove}
+export {get, remove}

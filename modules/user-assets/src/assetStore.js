@@ -1,9 +1,10 @@
-const {formatDistanceToNowStrict} = require('date-fns')
+import {formatDistanceToNowStrict} from 'date-fns'
 
-const {redis, deserialize, serialize} = require('./redis')
-const {userTag} = require('./tag')
+import {redis, deserialize, serialize} from './redis.js'
+import {userTag} from './tag.js'
 
-const log = require('#sepal/log').getLogger('assetStore')
+import {getLogger} from '#sepal/log'
+const log = getLogger('assetStore')
 
 const assetsKey = username =>
     `assets:${username}`
@@ -70,4 +71,4 @@ const removeAssets = async (username, {allowMissing} = {}) => {
         })
 }
 
-module.exports = {setAssets, getAssets, expireAssets, removeAssets}
+export {setAssets, getAssets, expireAssets, removeAssets}

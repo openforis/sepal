@@ -1,14 +1,18 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import ImageFactory from '#sepal/ee/imageFactory'
+import {expand, forkJoin, last, map, switchMap, takeWhile} from 'rxjs'
+import {getRows$} from '#sepal/ee/table'
+import ee from '#sepal/ee/ee'
+import {EEException} from '#sepal/ee/exception'
+import {getLogger} from '#sepal/log'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const worker$ = ({
     requestArgs: {recipeToSample, count, scale, classBand, recipe, bands}
 }) => {
-    const ImageFactory = require('#sepal/ee/imageFactory')
-    const {expand, forkJoin, last, map, switchMap, takeWhile} = require('rxjs')
-    const {getRows$} = require('#sepal/ee/table')
-    const ee = require('#sepal/ee/ee')
-    const {EEException} = require('#sepal/ee/exception')
-    const log = require('#sepal/log').getLogger('ee')
+    const log = getLogger('ee')
 
     return forkJoin({
         image: ImageFactory(recipeToSample).getImage$(),
@@ -119,7 +123,7 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Sample image',
     jobPath: __filename,
     worker$

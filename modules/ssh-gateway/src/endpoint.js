@@ -1,11 +1,7 @@
-const {delete$, get$, post$} = require('#sepal/httpClient')
-const {filter, first, interval, map, switchMap} = require('rxjs')
-const {
-    username,
-    endpoint,
-    endpointPassword
-} = require('./config')
-const {println} = require('./console')
+import {filter, first, interval, map, switchMap} from 'rxjs'
+import {delete$, get$, post$} from '#sepal/httpClient'
+import {username, endpoint, endpointPassword} from './config.js'
+import {println} from './console.js'
 
 const WAIT_TIME = 5 * 1000
 
@@ -62,7 +58,7 @@ const createSession$ = instanceType => {
     )
 }
 
-module.exports = {
+export {
     createSession$,
     joinSession$,
     sandboxInfo$,

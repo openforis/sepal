@@ -1,7 +1,8 @@
-const {getRepoInfo, pullUpdates} = require('./git')
-const {pathExists, getContainerInfo, isContainerRunning, startContainer, buildAndRestart, restartContainer, getContainerLogs} = require('./docker')
-const {validateAppName, validateBranchName} = require('./validation')
-const log = require('#sepal/log').getLogger('appsService')
+import {getRepoInfo, pullUpdates} from './git.js'
+import {pathExists, getContainerInfo, isContainerRunning, startContainer, buildAndRestart, restartContainer, getContainerLogs} from './docker.js'
+import {validateAppName, validateBranchName} from './validation.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('appsService')
 
 const getAppPath = appName => `/var/lib/sepal/app-launcher/apps/${appName}`
 
@@ -247,7 +248,7 @@ const buildAndRestartApp = async ctx => {
     }
 }
 
-module.exports = {
+export {
     getAppStatus,
     getAppContainerStatus,
     getAppRepoInfo,

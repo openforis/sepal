@@ -1,4 +1,11 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import ImageFactory from '#sepal/ee/imageFactory'
+import ee from '#sepal/ee/ee'
+import {switchMap, tap} from 'rxjs'
+import {toGeometry} from '#sepal/ee/aoi'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const MAX_PIXELS = 1e5
 const MAX_VALUE_COUNT = 256
@@ -6,10 +13,6 @@ const MAX_VALUE_COUNT = 256
 const worker$ = ({
     requestArgs: {recipe, band, aoi, mapBounds}
 }) => {
-    const ImageFactory = require('#sepal/ee/imageFactory')
-    const ee = require('#sepal/ee/ee')
-    const {switchMap, tap} = require('rxjs')
-    const {toGeometry} = require('#sepal/ee/aoi')
 
     const {getImage$} = ImageFactory(recipe, {selection: [band]})
     const distinctValues = image => {
@@ -69,7 +72,7 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Distinct band values',
     jobPath: __filename,
     worker$

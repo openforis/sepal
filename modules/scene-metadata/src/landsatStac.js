@@ -1,6 +1,7 @@
-const {isSceneIncluded, getDataset, scene} = require('./landsat')
-const {updateFromStac} = require('./stac')
-const log = require('#sepal/log').getLogger('landsat')
+import {isSceneIncluded, getDataset, scene} from './landsat.js'
+import {updateFromStac} from './stac.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('landsat')
 
 const sceneMapper = ({
     id,
@@ -49,4 +50,4 @@ const updateLandsat = async ({redis, database, timestamp}) => {
     })
 }
 
-module.exports = {updateLandsat}
+export {updateLandsat}

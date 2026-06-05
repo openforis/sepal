@@ -1,14 +1,13 @@
-const {concat, forkJoin, switchMap} = require('rxjs')
-const moment = require('moment')
-const {mkdir$} = require('#task/rxjs/fileSystem')
-const {createVrt$, setBandNames$} = require('#sepal/gdal')
-const {exportImageToSepal$} = require('../jobs/export/toSepal')
-const ImageFactory = require('#sepal/ee/imageFactory')
-const {getCurrentContext$} = require('#task/jobs/service/context')
-const {setWorkloadTag} = require('./workloadTag')
+import {concat, forkJoin, switchMap} from 'rxjs'
+import moment from 'moment'
+import {mkdir$} from '#task/rxjs/fileSystem'
+import {createVrt$, setBandNames$} from '#sepal/gdal'
+import {exportImageToSepal$} from '../jobs/export/toSepal.js'
+import ImageFactory from '#sepal/ee/imageFactory'
+import {getCurrentContext$} from '#task/jobs/service/context'
+import {setWorkloadTag} from './workloadTag.js'
 
-module.exports = {
-    submit$: (taskId, {image: {recipe, workspacePath, bands, filenamePrefix, ...retrieveOptions}}) => {
+export const submit$ = (taskId, {image: {recipe, workspacePath, bands, filenamePrefix, ...retrieveOptions}}) => {
         setWorkloadTag(recipe)
         return getCurrentContext$().pipe(
             switchMap(({config}) => {
@@ -29,7 +28,6 @@ module.exports = {
             })
         )
     }
-}
 
 const export$ = (taskId, {description, exportPrefix, recipe, bands, scale, ...retrieveOptions}) => {
     const factory = ImageFactory(recipe, bands)

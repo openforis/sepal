@@ -1,10 +1,11 @@
-const {BehaviorSubject, timer, EMPTY, catchError, filter, switchMap, tap, map, pairwise} = require('rxjs')
-const fs = require('fs')
-const path = require('path')
-const {mkdir$} = require('#task/rxjs/fileSystem')
-const log = require('#sepal/log').getLogger('context')
-const _ = require('lodash')
-const config = require('./config')
+import {BehaviorSubject, timer, EMPTY, catchError, filter, switchMap, tap, map, pairwise} from 'rxjs'
+import fs from 'fs'
+import path from 'path'
+import {mkdir$} from '#task/rxjs/fileSystem'
+import {getLogger} from '#sepal/log'
+const log = getLogger('context')
+import _ from 'lodash'
+import * as config from './config.js'
 
 const CREDENTIALS_FILE = 'credentials'
 
@@ -80,4 +81,4 @@ const switchedToServiceAccount$ =
 
 monitorUserCredentials()
 
-module.exports = {getConfig, getContext$, switchedToServiceAccount$}
+export {getConfig, getContext$, switchedToServiceAccount$}

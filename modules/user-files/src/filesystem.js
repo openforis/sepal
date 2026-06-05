@@ -1,8 +1,9 @@
-const Path = require('path')
-const {createReadStream, realpathSync, createWriteStream} = require('fs')
-const {stat, readdir, realpath, mkdir, unlink, lstat, chown, chmod} = require('fs/promises')
-const {spawn} = require('child_process')
-const log = require('#sepal/log').getLogger('filesystem')
+import Path from 'path'
+import {createReadStream, realpathSync, createWriteStream} from 'fs'
+import {stat, readdir, realpath, mkdir, unlink, lstat, chown, chmod} from 'fs/promises'
+import {spawn} from 'child_process'
+import {getLogger} from '#sepal/log'
+const log = getLogger('filesystem')
 
 const resolvePath = (baseDir, path) => {
     const realBaseDir = realpathSync(baseDir)
@@ -422,5 +423,5 @@ const listFiles = async (homeDir, ctx) => {
     }
 }
 
-module.exports = {resolvePath, download, listFiles, setFile, createFolder}
+export {resolvePath, download, listFiles, setFile, createFolder}
 

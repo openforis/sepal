@@ -1,5 +1,6 @@
-const {proxyEndpoints$, registerUpgradeListener} = require('./proxy')
-const log = require('#sepal/log').getLogger('proxyManager')
+import {proxyEndpoints$, registerUpgradeListener} from './proxy.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('proxyManager')
 
 let appInstance = null
 let serverInstance = null
@@ -65,7 +66,7 @@ const areProxiesEqual = (oldProxies, newProxies) => {
            [...oldPaths].every(path => newPaths.has(path))
 }
 
-module.exports = {
+export {
     initialize,
     refreshProxyEndpoints
 }

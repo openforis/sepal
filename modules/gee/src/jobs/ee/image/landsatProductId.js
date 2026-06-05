@@ -1,10 +1,13 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {map} from 'rxjs'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const worker$ = ({
     requestArgs: {sceneId}
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const {map} = require('rxjs')
 
     return ee.getInfo$(
         ee.Image(sceneId).get('L1_LANDSAT_PRODUCT_ID')
@@ -13,7 +16,7 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Landsat Product ID',
     jobPath: __filename,
     worker$

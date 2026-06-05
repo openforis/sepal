@@ -1,4 +1,4 @@
-const {LimiterService} = require('#sepal/service/limiter')
+import {LimiterService} from '#sepal/service/limiter'
 
 const options = {
     rateWindowMs: 1000,
@@ -8,4 +8,4 @@ const options = {
 
 const {limiterService: exportLimiterService, limiter$: exportLimiter$} = LimiterService('ExportLimiter', options)
 
-module.exports = {exportLimiterService, exportLimiter$}
+export {exportLimiterService, exportLimiter$}

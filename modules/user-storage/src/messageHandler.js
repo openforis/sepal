@@ -1,10 +1,11 @@
-const _ = require('lodash')
-const log = require('#sepal/log').getLogger('messageQueue')
-const {scheduleStorageCheck} = require('./storageCheck')
-const {setSessionActive, setSessionInactive} = require('./kvstore')
-const {Subject, debounceTime, groupBy, mergeMap, switchMap, filter, catchError, EMPTY, from} = require('rxjs')
-const {scheduleInactivityCheck, cancelInactivityCheck} = require('./inactivityCheck')
-const {CLIENT_UP, USER_DOWN} = require('sepal/src/event/definitions')
+import _ from 'lodash'
+import {getLogger} from '#sepal/log'
+const log = getLogger('messageQueue')
+import {scheduleStorageCheck} from './storageCheck.js'
+import {setSessionActive, setSessionInactive} from './kvstore.js'
+import {Subject, debounceTime, groupBy, mergeMap, switchMap, filter, catchError, EMPTY, from} from 'rxjs'
+import {scheduleInactivityCheck, cancelInactivityCheck} from './inactivityCheck.js'
+import {CLIENT_UP, USER_DOWN} from 'sepal/src/event/definitions'
 
 const logError = (key, msg) =>
     log.error('Incoming message doesn\'t match expected shape', {key, msg})
@@ -116,4 +117,4 @@ const messageHandler = async (key, msg) => {
     return handler && await handler(key, msg)
 }
 
-module.exports = {messageHandler}
+export {messageHandler}

@@ -1,8 +1,9 @@
-const {firstValueFrom} = require('rxjs')
-const {sendFile} = require('./sendFile')
-const {staticLabextensionsMiddleware} = require('./labextensions')
-const {catalog$} = require('./apps')
-const log = require('#sepal/log').getLogger('routes')
+import {firstValueFrom} from 'rxjs'
+import {sendFile} from './sendFile.js'
+import {staticLabextensionsMiddleware} from './labextensions.js'
+import {catalog$} from './apps.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('routes')
 
 const sendApps = async ctx => {
     try {
@@ -17,7 +18,7 @@ const sendApps = async ctx => {
     }
 }
 
-module.exports = router =>
+export default router =>
     router
         .get('/list', sendApps)
         .get('/images/:filename', ctx => sendFile(ctx, `/var/lib/sepal/app-manager/images/${ctx.params.filename}`))

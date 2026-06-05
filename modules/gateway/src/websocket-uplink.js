@@ -1,13 +1,15 @@
-const {WebSocket} = require('ws')
-const {finalize, map, interval, merge} = require('rxjs')
-const {webSocket} = require('rxjs/webSocket')
+import {finalize, interval, map, merge} from 'rxjs'
+import {webSocket} from 'rxjs/webSocket'
+import {WebSocket} from 'ws'
 
-const {webSocketEndpoints} = require('../config/endpoints')
-const {autoRetry} = require('#sepal/rxjs')
-const {moduleTag, clientTag} = require('./tag')
-const {MODULE_UP, MODULE_DOWN} = require('#sepal/event/definitions')
+import {MODULE_DOWN, MODULE_UP} from '#sepal/event/definitions'
+import {getLogger} from '#sepal/log'
+import {autoRetry} from '#sepal/rxjs'
 
-const log = require('#sepal/log').getLogger('websocket/uplink')
+import {webSocketEndpoints} from '../config/endpoints.js'
+import {clientTag, moduleTag} from './tag.js'
+
+const log = getLogger('websocket/uplink')
 
 const HEARTBEAT_INTERVAL_MS = 1 * 1000
 
@@ -106,4 +108,4 @@ const initializeUplink = ({servers, clients, event$}) => {
     initializeWebSocketClients()
 }
 
-module.exports = {initializeUplink}
+export {initializeUplink}

@@ -1,8 +1,11 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import logConfig from '#config/log.json' with {type: 'json'}
+import {configureServer} from '#sepal/log'
+configureServer(logConfig)
 
-const log = require('#sepal/log').getLogger('main')
-const {initProxy} = require('./proxy')
-const {initQueue} = require('./queue')
+import {getLogger} from '#sepal/log'
+const log = getLogger('main')
+import {initProxy} from './proxy.js'
+import {initQueue} from './queue.js'
 
 const main = async () => {
     initProxy()

@@ -1,6 +1,7 @@
-const {EMPTY, catchError, map} = require('rxjs')
-const {get$} = require('#sepal/httpClient')
-const log = require('#sepal/log').getLogger('apiService')
+import {EMPTY, catchError, map} from 'rxjs'
+import {get$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+const log = getLogger('apiService')
 
 const fetchCatalog$ = url =>
     get$(url).pipe(
@@ -11,4 +12,4 @@ const fetchCatalog$ = url =>
         })
     )
 
-module.exports = {fetchCatalog$}
+export {fetchCatalog$}

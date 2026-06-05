@@ -1,4 +1,10 @@
-const Job = require('#sepal/worker/job')
+import {createRequire} from 'module'
+import Job from '#sepal/worker/job'
+import * as config from '#gee/config'
+import ee from '#sepal/ee/ee'
+
+// authenticate <-> job form a cycle; load it lazily (at job() call time) to break it.
+const require = createRequire(import.meta.url)
 
 const getSepalUser = ctx => {
     const sepalUser = ctx.request.headers['sepal-user']
@@ -8,7 +14,6 @@ const getSepalUser = ctx => {
 }
 
 const getCredentials = ctx => {
-    const config = require('#gee/config')
     const sepalUser = getSepalUser(ctx)
     const serviceAccountCredentials = config.serviceAccountCredentials
     return {
@@ -18,8 +23,7 @@ const getCredentials = ctx => {
     }
 }
 
-module.exports = {
-    job: ({
+const job = ({
         jobName,
         jobPath,
         initArgs,
@@ -27,7 +31,7 @@ module.exports = {
         minIdleCount,
         maxIdleMilliseconds,
         ctx,
-        before = [require('#gee/jobs/ee/authenticate')],
+        before = [require('#gee/jobs/ee/authenticate').default],
         services,
         args = ctx => ({
             requestArgs: {...ctx.request.query, ...ctx.request.body},
@@ -37,7 +41,6 @@ module.exports = {
         finalize$
     }) => {
         const workerWithWorkloadTag$ = (...args) => {
-            const ee = require('#sepal/ee/ee')
             const tag = `sepal-work-${jobName
                 .toLowerCase()
                 .replace(/[^a-z0-9_-]/g, '_')
@@ -61,4 +64,5 @@ module.exports = {
             finalize$
         })
     }
-}
+
+export {job}

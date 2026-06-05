@@ -1,11 +1,12 @@
-const {job} = require('#task/jobs/job')
-const {eeLimiterService} = require('#sepal/ee/eeLimiterService')
+import {job} from '#task/jobs/job'
+import {eeLimiterService} from '#sepal/ee/eeLimiterService'
+import {getLogger} from '#sepal/log'
+import {ReplaySubject, map, switchMap} from 'rxjs'
+import ee from '#sepal/ee/ee'
+import {getContext$, getCurrentContext$} from '#task/jobs/service/context'
 
 const worker$ = () => {
-    const log = require('#sepal/log').getLogger('ee')
-    const {ReplaySubject, map, switchMap} = require('rxjs')
-    const ee = require('#sepal/ee/ee')
-    const {getContext$, getCurrentContext$} = require('#task/jobs/service/context')
+    const log = getLogger('ee')
     
     const DEFAULT_MAX_RETRIES = 10
 
@@ -90,7 +91,7 @@ const worker$ = () => {
     return proceed$
 }
 
-module.exports = job({
+export default job({
     jobName: 'EE Initialization',
     services: [eeLimiterService],
     worker$

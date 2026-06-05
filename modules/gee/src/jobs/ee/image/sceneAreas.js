@@ -1,11 +1,14 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {toGeometry} from '#sepal/ee/aoi'
+import {map} from 'rxjs'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const worker$ = ({
     requestArgs: {aoi, source}
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const {toGeometry} = require('#sepal/ee/aoi')
-    const {map} = require('rxjs')
 
     const geometry = toGeometry(aoi)
     const table = {
@@ -34,7 +37,7 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Scene Areas',
     jobPath: __filename,
     worker$

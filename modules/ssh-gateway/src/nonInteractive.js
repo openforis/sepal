@@ -1,5 +1,5 @@
-const {of, switchMap} = require('rxjs')
-const {sandboxInfo$, createSession$, joinSession$} = require('./endpoint')
+import {of, switchMap} from 'rxjs'
+import {sandboxInfo$, createSession$, joinSession$} from './endpoint.js'
 
 const getSession$ = ({sessions, instanceTypes}) => {
     const findSession = (sessions, expectedStatus) =>
@@ -22,4 +22,4 @@ const nonInteractive$ = () => {
     )
 }
 
-module.exports = {nonInteractive$}
+export {nonInteractive$}

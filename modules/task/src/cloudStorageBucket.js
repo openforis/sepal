@@ -1,11 +1,12 @@
-const {defer, of, first, map, switchMap} = require('rxjs')
-const {autoRetry} = require('#sepal/rxjs')
-const {fromPromise} = require('#sepal/rxjs')
-const crypto = require('crypto')
-const http = require('#sepal/httpClient')
-const {getCurrentContext$} = require('#task/jobs/service/context')
-const {cloudStorage$} = require('./cloudStorage')
-const log = require('#sepal/log').getLogger('cloudStorage')
+import {defer, of, first, map, switchMap} from 'rxjs'
+import {autoRetry} from '#sepal/rxjs'
+import {fromPromise} from '#sepal/rxjs'
+import crypto from 'crypto'
+import * as http from '#sepal/httpClient'
+import {getCurrentContext$} from '#task/jobs/service/context'
+import {cloudStorage$} from './cloudStorage.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('cloudStorage')
 
 const RETRY_CONFIG = {
     maxRetries: 5,
@@ -152,4 +153,4 @@ const do$ = (description, promise) => defer(() => {
     )
 })
 
-module.exports = {initUserBucket$}
+export {initUserBucket$}

@@ -1,9 +1,12 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const worker$ = ({
     requestArgs: {tableId, columnName}
 }) => {
-    const ee = require('#sepal/ee/ee')
 
     return ee.getInfo$(
         ee.FeatureCollection(tableId)
@@ -14,7 +17,7 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Get EE Table column values',
     jobPath: __filename,
     worker$

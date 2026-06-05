@@ -1,10 +1,10 @@
-const {EMPTY, defer, first, interval, map, merge, of, switchMap, tap} = require('rxjs')
-const {sandboxInfo$, createSession$, joinSession$, terminateSession$} = require('./endpoint')
-const {table, th, tr, td} = require('./asciiTable')
-const {format, highlight, print, println, readLine$} = require('./console')
-const {fromNow} = require('./date')
-const moment = require('moment')
-const _ = require('lodash')
+import {EMPTY, defer, first, interval, map, merge, of, switchMap, tap} from 'rxjs'
+import {sandboxInfo$, createSession$, joinSession$, terminateSession$} from './endpoint.js'
+import {table, th, tr, td} from './asciiTable.js'
+import {format, highlight, print, println, readLine$} from './console.js'
+import {fromNow} from './date.js'
+import moment from 'moment'
+import _ from 'lodash'
 
 const PROGRESS_TIME = 5 * 1000
 const CONFIRM_WHEN_LESS_THAN_HOURS = 10
@@ -260,4 +260,4 @@ const interactive$ = () =>
         })
     )
 
-module.exports = {interactive$}
+export {interactive$}

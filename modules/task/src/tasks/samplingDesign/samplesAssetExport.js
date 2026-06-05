@@ -1,17 +1,16 @@
-const ImageFactory = require('#sepal/ee/imageFactory')
-const {toGeometry$} = require('#sepal/ee/aoi')
-const {setWorkloadTag} = require('../workloadTag')
-const {swallow} = require('#sepal/rxjs')
-const {concat, forkJoin, of, switchMap, tap} = require('rxjs')
-const {stratifiedSystematicSample, filterSamples} = require('./stratifiedSampling')
-const {exportLimiter$} = require('#task/jobs/service/exportLimiter')
-const {task$} = require('#task/ee/task')
-const ee = require('#sepal/ee/ee')
-const moment = require('moment')
-const _ = require('lodash')
+import ImageFactory from '#sepal/ee/imageFactory'
+import {toGeometry$} from '#sepal/ee/aoi'
+import {setWorkloadTag} from '../workloadTag.js'
+import {swallow} from '#sepal/rxjs'
+import {concat, forkJoin, of, switchMap, tap} from 'rxjs'
+import {stratifiedSystematicSample, filterSamples} from './stratifiedSampling.js'
+import {exportLimiter$} from '#task/jobs/service/exportLimiter'
+import {task$} from '#task/ee/task'
+import ee from '#sepal/ee/ee'
+import moment from 'moment'
+import _ from 'lodash'
 
-module.exports = {
-    submit$: (taskId, {description, recipe, assetId, strategy}) => {
+export const submit$ = (taskId, {description, recipe, assetId, strategy}) => {
         setWorkloadTag(recipe)
         const {model: {
             aoi,
@@ -79,7 +78,6 @@ module.exports = {
             })
         }
     }
-}
 
 const tableToAsset$ = ({taskId, collection, description, assetId, strategy}) => {
     const serverConfig = ee.batch.Export.convertToServerParams(

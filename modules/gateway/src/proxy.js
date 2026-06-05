@@ -1,11 +1,15 @@
-const {createProxyMiddleware} = require('http-proxy-middleware')
-const {Subject, catchError, mergeMap, EMPTY} = require('rxjs')
-const {rewriteLocation} = require('./rewrite')
-const {endpoints} = require('../config/endpoints')
-const {sepalHost} = require('./config')
-const {getRequestUser, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} = require('./user')
-const {usernameTag, urlTag} = require('./tag')
-const log = require('#sepal/log').getLogger('proxy')
+import {createProxyMiddleware} from 'http-proxy-middleware'
+import {catchError, EMPTY, mergeMap, Subject} from 'rxjs'
+
+import {getLogger} from '#sepal/log'
+
+import {endpoints} from '../config/endpoints.js'
+import {sepalHost} from './config.js'
+import {rewriteLocation} from './rewrite.js'
+import {urlTag, usernameTag} from './tag.js'
+import {getRequestUser, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} from './user.js'
+
+const log = getLogger('proxy')
 
 const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
 
@@ -136,4 +140,4 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
     return {proxyEndpoints}
 }
 
-module.exports = {Proxy}
+export {Proxy}

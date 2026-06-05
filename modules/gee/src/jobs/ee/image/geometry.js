@@ -1,11 +1,14 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import ImageFactory from '#sepal/ee/imageFactory'
+import {switchMap} from 'rxjs'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const worker$ = ({
     requestArgs: {recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const ImageFactory = require('#sepal/ee/imageFactory')
-    const {switchMap} = require('rxjs')
 
     const {getGeometry$} = ImageFactory(recipe)
     return getGeometry$().pipe(
@@ -16,7 +19,7 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Geometry',
     jobPath: __filename,
     worker$

@@ -1,11 +1,12 @@
-const {calculateUserStorage, scanUserHomes} = require('./filesystem')
-const {redisHost, scanMinDelay, scanMaxDelay, scanDelayIncreaseFactor, scanConcurrency, scanMaxRetries, scanInitialRetryDelay} = require('./config')
-const {getSessionStatus, getSetUserStorage, DB, getUserStorage} = require('./kvstore')
-const {Queue, QueueEvents, Worker, Job} = require('bullmq')
-const {formatDistanceToNow} = require('date-fns')
-const {Subject} = require('rxjs')
-const {Redis} = require('ioredis')
-const log = require('#sepal/log').getLogger('storageCheck')
+import {calculateUserStorage, scanUserHomes} from './filesystem.js'
+import {redisHost, scanMinDelay, scanMaxDelay, scanDelayIncreaseFactor, scanConcurrency, scanMaxRetries, scanInitialRetryDelay} from './config.js'
+import {getSessionStatus, getSetUserStorage, DB, getUserStorage} from './kvstore.js'
+import {Queue, QueueEvents, Worker, Job} from 'bullmq'
+import {formatDistanceToNow} from 'date-fns'
+import {Subject} from 'rxjs'
+import {Redis} from 'ioredis'
+import {getLogger} from '#sepal/log'
+const log = getLogger('storageCheck')
 
 const QUEUE = 'storage-check'
 
@@ -152,4 +153,4 @@ const startStorageCheck = async () => {
     })
 }
 
-module.exports = {scheduleStorageCheck, scanComplete$, startStorageCheck}
+export {scheduleStorageCheck, scanComplete$, startStorageCheck}

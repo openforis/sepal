@@ -1,7 +1,10 @@
-const log = require('#sepal/log').getLogger('session')
-const {toPromise} = require('#sepal/util')
-const {usernameTag} = require('./tag')
-const {getSessionUsername} = require('./user')
+import {getLogger} from '#sepal/log'
+import {toPromise} from '#sepal/util'
+
+import {usernameTag} from './tag.js'
+import {getSessionUsername} from './user.js'
+
+const log = getLogger('session')
 
 const SessionManager = sessionStore => {
     const getAllSessions = async () => {
@@ -94,4 +97,4 @@ const SessionManager = sessionStore => {
     }
 }
 
-module.exports = {SessionManager}
+export {SessionManager}

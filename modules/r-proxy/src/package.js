@@ -1,6 +1,7 @@
-const {libPath} = require('./config')
-const {runScript} = require('./script')
-const log = require('#sepal/log').getLogger('package')
+import {libPath} from './config.js'
+import {runScript} from './script.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('package')
 
 const bundlePackage = async (name, srcPath, binPath, tmpPath) => {
     try {
@@ -58,4 +59,4 @@ const makePackage = async (name, srcPath, binPath, tmpPath) => {
     return success
 }
 
-module.exports = {makePackage, cleanupPackage}
+export {makePackage, cleanupPackage}

@@ -1,7 +1,8 @@
-const {createAssetManager} = require('./assetManager')
-const {userTag, subscriptionTag} = require('./tag')
-const {moduleWs$} = require('#sepal/ws/module')
-const log = require('#sepal/log').getLogger('ws')
+import {createAssetManager} from './assetManager.js'
+import {userTag, subscriptionTag} from './tag.js'
+import {moduleWs$} from '#sepal/ws/module'
+import {getLogger} from '#sepal/log'
+const log = getLogger('ws')
 
 const protocol = ({send, stop$}) => {
     const assetManager = createAssetManager({send, stop$})
@@ -99,4 +100,4 @@ const protocol = ({send, stop$}) => {
 
 const ws$ = moduleWs$(protocol)
 
-module.exports = ctx => ws$(ctx.arg$)
+export default ctx => ws$(ctx.arg$)

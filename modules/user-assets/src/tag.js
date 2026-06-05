@@ -10,4 +10,4 @@ const clientTag = ({username = '?', clientId}) =>
 const subscriptionTag = ({username = '?', clientId, subscriptionId}) =>
     `Subscription<${join(username, clientId.slice(-4), subscriptionId?.slice(-4))}>`
 
-module.exports = {userTag, clientTag, subscriptionTag}
+export {userTag, clientTag, subscriptionTag}

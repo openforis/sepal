@@ -1,6 +1,6 @@
-const {map} = require('rxjs')
-const {Storage} = require('@google-cloud/storage')
-const {getCurrentContext$} = require('#task/jobs/service/context')
+import {map} from 'rxjs'
+import {Storage} from '@google-cloud/storage'
+import {getCurrentContext$} from '#task/jobs/service/context'
 
 const cloudStorage$ = () =>
     getCurrentContext$().pipe(
@@ -11,4 +11,4 @@ const cloudStorage$ = () =>
             }))
     )
 
-module.exports = {cloudStorage$}
+export {cloudStorage$}

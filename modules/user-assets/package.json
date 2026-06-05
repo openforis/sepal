@@ -4,8 +4,8 @@
     "description": "",
     "main": "main.js",
     "scripts": {
-        "test": "jest",
-        "testWatch": "jest --watchAll"
+        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
     },
     "author": "",
     "license": "ISC",
@@ -23,5 +23,6 @@
         "#sepal/*": "sepal/src/*.js",
         "#sepal/*.json": "sepal/src/*.json",
         "#config/*.json": "./config/*.json"
-    }
+    },
+    "type": "module"
 }

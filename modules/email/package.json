@@ -2,6 +2,7 @@
     "name": "email",
     "version": "1.0.0",
     "description": "",
+    "type": "module",
     "main": "main.js",
     "scripts": {
         "test": "jest",

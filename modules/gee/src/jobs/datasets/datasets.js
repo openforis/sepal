@@ -1,8 +1,7 @@
-const {of} = require('rxjs')
-const _ = require('lodash')
-
-const {getDatasets: getGeeDatasets} = require('./geeDatasets')
-const {getDatasets: getCommunityDatasets} = require('./communityDatasets')
+import {of} from 'rxjs'
+import _ from 'lodash'
+import {getDatasets as getGeeDatasets} from './geeDatasets.js'
+import {getDatasets as getCommunityDatasets} from './communityDatasets.js'
 
 const MAX_RESULTS = 10
 
@@ -34,4 +33,4 @@ const worker$ = ({text, allowedTypes}) => {
     })
 }
 
-module.exports = ctx => worker$(ctx.request.query)
+export default ctx => worker$(ctx.request.query)

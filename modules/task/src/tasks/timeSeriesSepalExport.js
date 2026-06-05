@@ -1,28 +1,28 @@
-const {toFeatureCollection} = require('#sepal/ee/aoi')
-const {hasImagery: hasOpticalImagery} = require('#sepal/ee/optical/collection')
-const {hasImagery: hasRadarImagery} = require('#sepal/ee/radar/collection')
-const {hasImagery: hasPlanetImagery} = require('#sepal/ee/planet/collection')
-const tile = require('#sepal/ee/tile')
-const {exportImageToSepal$} = require('../jobs/export/toSepal')
-const {mkdir$} = require('#task/rxjs/fileSystem')
-const {concat, forkJoin, from, of, map, mergeMap, scan, switchMap, tap} = require('rxjs')
-const {swallow} = require('#sepal/rxjs')
-const Path = require('path')
-const {terminal$} = require('#sepal/terminal')
-const {sequence} = require('#sepal/utils/array')
-const moment = require('moment')
-const ee = require('#sepal/ee/ee')
-const {getCurrentContext$} = require('#task/jobs/service/context')
-const {getCollection$} = require('#sepal/ee/timeSeries/collection')
-const _ = require('lodash')
-const log = require('#sepal/log').getLogger('task')
-const {setWorkloadTag} = require('./workloadTag')
+import {toFeatureCollection} from '#sepal/ee/aoi'
+import {hasImagery as hasOpticalImagery} from '#sepal/ee/optical/collection'
+import {hasImagery as hasRadarImagery} from '#sepal/ee/radar/collection'
+import {hasImagery as hasPlanetImagery} from '#sepal/ee/planet/collection'
+import tile from '#sepal/ee/tile'
+import {exportImageToSepal$} from '../jobs/export/toSepal.js'
+import {mkdir$} from '#task/rxjs/fileSystem'
+import {concat, forkJoin, from, of, map, mergeMap, scan, switchMap, tap} from 'rxjs'
+import {swallow} from '#sepal/rxjs'
+import Path from 'path'
+import {terminal$} from '#sepal/terminal'
+import {sequence} from '#sepal/utils/array'
+import moment from 'moment'
+import ee from '#sepal/ee/ee'
+import {getCurrentContext$} from '#task/jobs/service/context'
+import {getCollection$} from '#sepal/ee/timeSeries/collection'
+import _ from 'lodash'
+import {getLogger} from '#sepal/log'
+const log = getLogger('task')
+import {setWorkloadTag} from './workloadTag.js'
 
 const DATE_DELTA = 3
 const DATE_DELTA_UNIT = 'months'
 
-module.exports = {
-    submit$: (taskId, {description, image: {workspacePath, filenamePrefix, ...retrieveOptions}}) => {
+export const submit$ = (taskId, {description, image: {workspacePath, filenamePrefix, ...retrieveOptions}}) => {
         setWorkloadTag(retrieveOptions.recipe)
         return getCurrentContext$().pipe(
             switchMap(({config}) => {
@@ -39,7 +39,6 @@ module.exports = {
             })
         )
     }
-}
 
 const export$ = (taskId, {
     downloadDir,

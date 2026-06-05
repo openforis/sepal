@@ -1,14 +1,23 @@
-const {BehaviorSubject, concat, of, throwError, catchError, distinctUntilChanged, first, map, takeUntil, tap} = require('rxjs')
-const {finalizeObservable$} = require('#sepal/rxjs')
-const {job} = require('#task/jobs/job')
-const log = require('#sepal/log').getLogger('task')
-const _ = require('lodash')
+import {BehaviorSubject, concat, of, throwError, catchError, distinctUntilChanged, first, map, takeUntil, tap} from 'rxjs'
+import {finalizeObservable$} from '#sepal/rxjs'
+import {job} from '#task/jobs/job'
+import {getLogger} from '#sepal/log'
+import _ from 'lodash'
+import {contextService} from '#task/jobs/service/context'
+import {exportLimiterService} from '#task/jobs/service/exportLimiter'
+import {driveLimiterService} from '#task/jobs/service/driveLimiter'
+import {driveSerializerService} from '#task/jobs/service/driveSerializer'
+import {gcsSerializerService} from '#task/jobs/service/gcsSerializer'
+import {tag} from '#sepal/tag'
+import {createRequire} from 'module'
+import {fileURLToPath} from 'url'
 
-const {contextService} = require('#task/jobs/service/context')
-const {exportLimiterService} = require('#task/jobs/service/exportLimiter')
-const {driveLimiterService} = require('#task/jobs/service/driveLimiter')
-const {driveSerializerService} = require('#task/jobs/service/driveSerializer')
-const {gcsSerializerService} = require('#task/jobs/service/gcsSerializer')
+// Lazy task/job loading (require(esm)) defers loading and breaks cycles.
+const require = createRequire(import.meta.url)
+const __filename = fileURLToPath(import.meta.url)
+
+const log = getLogger('task')
+
 
 const tasks = {
     'image.GEE': () => require('./tasks/imageAssetExport'),
@@ -18,7 +27,6 @@ const tasks = {
     'ccdc.GEE': () => require('./tasks/ccdcAssetExport')
 }
 
-const {tag} = require('#sepal/tag')
 
 const taskTag = id => tag('Task', id)
 
@@ -102,10 +110,10 @@ const worker$ = ({
 // module.exports = executeTask$
 
 // Execute in worker
-module.exports = job({
+export default job({
     jobName: 'execute task',
     jobPath: __filename,
-    before: [require('#task/jobs/configure'), require('#task/jobs/ee/initialize')],
+    before: [require('#task/jobs/configure').default, require('#task/jobs/ee/initialize').default],
     services: [contextService, exportLimiterService, driveLimiterService, driveSerializerService, gcsSerializerService],
     args: ({task}) => ({task}),
     worker$

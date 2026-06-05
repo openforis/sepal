@@ -1,9 +1,10 @@
-const _ = require('lodash')
-const log = require('#sepal/log').getLogger('asset')
-const {get$, delete$, postJson$} = require('#sepal/httpClient')
+import _ from 'lodash'
+import {getLogger} from '#sepal/log'
+const log = getLogger('asset')
+import {get$, delete$, postJson$} from '#sepal/httpClient'
 
-const {map} = require('rxjs')
-const {userTag} = require('./tag')
+import {map} from 'rxjs'
+import {userTag} from './tag.js'
 
 const GEE_ENDPOINT = 'http://gee'
 const LIST_ASSETS_URL = `${GEE_ENDPOINT}/asset/descendants`
@@ -63,4 +64,4 @@ const serialize = value => {
     }
 }
     
-module.exports = {getAsset$, deleteAsset$, createFolder$}
+export {getAsset$, deleteAsset$, createFolder$}

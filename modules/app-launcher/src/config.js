@@ -1,5 +1,6 @@
-const {Command, Option} = require('commander')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
+import {getLogger} from '#sepal/log'
+const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
 const DEFAULT_MANAGEMENT_PORT = 8080
@@ -89,7 +90,9 @@ const {
 
 log.info('Configuration loaded')
 
-module.exports = {
+const resolvedAppsCatalogUrl = appsCatalogUrl || null
+
+export {
     port,
     managementPort,
     monitorEnabled,
@@ -100,5 +103,5 @@ module.exports = {
     geeKey,
     googleProjectId,
     deployEnvironment,
-    appsCatalogUrl: appsCatalogUrl || null
+    resolvedAppsCatalogUrl as appsCatalogUrl
 }

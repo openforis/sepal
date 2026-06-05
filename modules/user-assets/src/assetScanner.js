@@ -1,12 +1,13 @@
-const _ = require('lodash')
-const {userTag} = require('./tag')
-const log = require('#sepal/log').getLogger('assetScanner')
+import _ from 'lodash'
+import {userTag} from './tag.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('assetScanner')
 
-const {tap, map, mergeWith, of, switchMap, catchError, from, Subject, finalize, reduce, throwError} = require('rxjs')
-const {getUser} = require('./userStore')
-const {STree} = require('#sepal/tree/sTree')
-const {getAsset$} = require('./asset')
-const {Limiter} = require('./limiter')
+import {tap, map, mergeWith, of, switchMap, catchError, from, Subject, finalize, reduce, throwError} from 'rxjs'
+import {getUser} from './userStore.js'
+import {STree} from '#sepal/tree/sTree'
+import {getAsset$} from './asset.js'
+import {Limiter} from './limiter.js'
 
 const GLOBAL_CONCURRENCY = 10
 const USER_CONCURRENCY = 2
@@ -163,4 +164,4 @@ const scanNode$ = (username, path) => {
     )
 }
 
-module.exports = {scanTree$, scanNode$, busy$, isBusy}
+export {scanTree$, scanNode$, busy$, isBusy}

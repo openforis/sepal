@@ -1,12 +1,15 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {filterTable} from '#sepal/ee/table'
+import {forkJoin, map} from 'rxjs'
+import _ from 'lodash'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const worker$ = ({
     requestArgs: {tableId, columnName, columnValue, buffer, color = '#FFFFFF50', fillColor = '#FFFFFF08'}
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const {filterTable} = require('#sepal/ee/table')
-    const {forkJoin, map} = require('rxjs')
-    const _ = require('lodash')
 
     const bufferMeters = (buffer && _.toNumber(buffer)) * 1000
     const table = bufferMeters
@@ -25,7 +28,7 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Request EE Table map',
     jobPath: __filename,
     worker$

@@ -4,7 +4,7 @@ const usernameTag = username =>
 const urlTag = url =>
     `[${url}]`
     
-module.exports = {
+export {
     usernameTag,
     urlTag
 }

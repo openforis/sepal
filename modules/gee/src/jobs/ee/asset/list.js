@@ -1,14 +1,18 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import {map, merge, toArray, of, switchMap, mergeMap, catchError} from 'rxjs'
+import * as http from '#sepal/httpClient'
+import ee from '#sepal/ee/ee'
+import {getLogger} from '#sepal/log'
+import _ from 'lodash'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const worker$ = ({
     requestArgs: {id},
     credentials: {sepalUser: {username, googleTokens}}
 }) => {
-    const {map, merge, toArray, of, switchMap, mergeMap, catchError} = require('rxjs')
-    const http = require('#sepal/httpClient')
-    const ee = require('#sepal/ee/ee')
-    const log = require('#sepal/log').getLogger('ee')
-    const _ = require('lodash')
+    const log = getLogger('ee')
 
     if (!googleTokens) {
         throw Error('Requires a connected Google Account')
@@ -82,7 +86,7 @@ const worker$ = ({
 
 }
 
-module.exports = job({
+export default job({
     jobName: 'EE list assets',
     jobPath: __filename,
     worker$

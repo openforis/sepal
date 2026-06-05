@@ -1,11 +1,12 @@
-const {EMPTY, from, catchError, filter, map, concatMap, switchMap, of, repeat, defer} = require('rxjs')
-const log = require('#sepal/log').getLogger('apps')
-const {basename} = require('path')
-const {cloneOrPull} = require('./git')
-const {buildAndRestart, startContainer, isContainerRunning} = require('./docker')
-const {fetchAppsFromApi$, fetchCatalog$} = require('./apiService')
-const {refreshProxyEndpoints} = require('./proxyManager')
-const {appsCatalogUrl} = require('./config')
+import {EMPTY, from, catchError, filter, map, concatMap, switchMap, of, repeat, defer} from 'rxjs'
+import {getLogger} from '#sepal/log'
+const log = getLogger('apps')
+import {basename} from 'path'
+import {cloneOrPull} from './git.js'
+import {buildAndRestart, startContainer, isContainerRunning} from './docker.js'
+import {fetchAppsFromApi$, fetchCatalog$} from './apiService.js'
+import {refreshProxyEndpoints} from './proxyManager.js'
+import {appsCatalogUrl} from './config.js'
 
 const UPDATE_DELAY_SECONDS = 30
 
@@ -82,4 +83,4 @@ const refreshProxies = () => {
     )
 }
 
-module.exports = {monitorApps, apps$, source$}
+export {monitorApps, apps$, source$}

@@ -1,4 +1,4 @@
-const {parse} = require('url')
+import {parse} from 'url'
 
 const rewriteLocation = ({path, target, location}) => {
     const targetUrl = parse(target)
@@ -14,4 +14,4 @@ const rewriteLocation = ({path, target, location}) => {
     return path + relativeLocation
 }
 
-module.exports = {rewriteLocation}
+export {rewriteLocation}

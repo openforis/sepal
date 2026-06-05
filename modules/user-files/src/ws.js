@@ -1,7 +1,8 @@
-const {createWatcher} = require('./watcher')
-const {clientTag, subscriptionTag} = require('./tag')
-const {moduleWs$} = require('#sepal/ws/module')
-const log = require('#sepal/log').getLogger('ws')
+import {createWatcher} from './watcher.js'
+import {clientTag, subscriptionTag} from './tag.js'
+import {moduleWs$} from '#sepal/ws/module'
+import {getLogger} from '#sepal/log'
+const log = getLogger('ws')
 
 const protocol = async ({send, stop$}) => {
     const watcher = await createWatcher({send, stop$})
@@ -75,4 +76,4 @@ const protocol = async ({send, stop$}) => {
 
 const ws$ = moduleWs$(protocol)
 
-module.exports = ctx => ws$(ctx.arg$)
+export default ctx => ws$(ctx.arg$)

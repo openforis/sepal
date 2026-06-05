@@ -1,7 +1,7 @@
-const {stream} = require('#sepal/httpServer')
-const {ClientException} = require('#sepal/exception')
-const {getFromCeo$} = require('./handlers/getFromCeo')
-const {loginToken$} = require('./handlers/loginToken')
+import {stream} from '#sepal/httpServer'
+import {ClientException} from '#sepal/exception'
+import {getFromCeo$} from './handlers/getFromCeo.js'
+import {loginToken$} from './handlers/loginToken.js'
 const routes = router => router
     .post('/login-token', stream(ctx => loginToken$(ctx)))
     .get('/get-all-institutions', stream(ctx =>
@@ -41,4 +41,4 @@ const requiredQueryParam = (ctx, name) => {
     }
 }
 
-module.exports = {routes}
+export {routes}

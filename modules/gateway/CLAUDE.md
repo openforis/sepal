@@ -46,8 +46,8 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 
 ## Non-Obvious Conventions
 
-- **CommonJS**: Uses `require()`, not ESM.
-- **`#config/*` import map**: Config JSON files accessed via `require('#config/log.json')`.
+- **ESM**: Uses `import`/`export` (`"type": "module"`). JSON imports use import attributes (`import x from './foo.json' with {type: 'json'}`), and relative imports include the `.js` extension. A few CJS deps need workarounds: `prometheus-api-metrics` is loaded via `createRequire` (it reads `module.parent`, which is undefined under the ESM loader), and `micromatch`/`#sepal/rxjs` are default-imported then destructured (their named exports aren't statically detectable).
+- **`#config/*` import map**: Config JSON files accessed via `import logConfig from '#config/log.json' with {type: 'json'}`.
 - **Security headers**: Proxy sets CSP, HSTS, X-Content-Type-Options, Referrer-Policy on all responses.
 - **User header injection**: Downstream services receive authenticated user as JSON in `sepal-user` request header. The gateway strips any client-injected values first.
 - **`sepal-user-updated` response header**: When a downstream service sets this header, the gateway triggers a user refresh from the user module.

@@ -1,9 +1,10 @@
-const {parse} = require('date-fns')
-const {isSceneIncluded, getDataset, scene} = require('./landsat')
-const {processCSV} = require('./csv')
-const {formatInterval} = require('./time')
-const {download} = require('./filesystem')
-const log = require('#sepal/log').getLogger('landsat')
+import {parse} from 'date-fns'
+import {isSceneIncluded, getDataset, scene} from './landsat.js'
+import {processCSV} from './csv.js'
+import {formatInterval} from './time.js'
+import {download} from './filesystem.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('landsat')
 
 // Note: rows are NOT in chronological order by acquisition date
 
@@ -82,4 +83,4 @@ const downloadLandsat = async () =>
         downloadLandsatCollection({collection: 'landsat-ot'})
     ])
 
-module.exports = {downloadLandsat, loadLandsat}
+export {downloadLandsat, loadLandsat}

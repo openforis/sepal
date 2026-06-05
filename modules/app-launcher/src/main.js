@@ -1,18 +1,21 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import logConfig from '#config/log.json' with {type: 'json'}
+import {configureServer} from '#sepal/log'
+configureServer(logConfig)
 
-const express = require('express')
-const log = require('#sepal/log').getLogger('main')
-const _ = require('lodash')
-const {port, managementPort, monitorEnabled} = require('./config')
-const {proxyEndpoints$, registerUpgradeListener} = require('./proxy')
-const proxyManager = require('./proxyManager')
-const managementRoutes = require('./managementRoutes')
+import express from 'express'
+import {getLogger} from '#sepal/log'
+const log = getLogger('main')
+import _ from 'lodash'
+import {port, managementPort, monitorEnabled} from './config.js'
+import {proxyEndpoints$, registerUpgradeListener} from './proxy.js'
+import * as proxyManager from './proxyManager.js'
+import managementRoutes from './managementRoutes.js'
 
-const {createCredentialsFile} = require('./gee')
-const {monitorApps} = require('./apps')
-const server = require('#sepal/httpServer')
-const {createProxyMiddleware} = require('http-proxy-middleware')
-const {getRequestUser} = require('./user')
+import {createCredentialsFile} from './gee.js'
+import {monitorApps} from './apps.js'
+import * as server from '#sepal/httpServer'
+import {createProxyMiddleware} from 'http-proxy-middleware'
+import {getRequestUser} from './user.js'
 
 const startServer = () => {
     // This is the main server for the app launcher

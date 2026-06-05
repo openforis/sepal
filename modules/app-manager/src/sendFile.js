@@ -1,7 +1,7 @@
-const mime = require('mime-types')
-const fs = require('fs')
-const {stat} = require('fs/promises')
-const moment = require('moment')
+import mime from 'mime-types'
+import fs from 'fs'
+import {stat} from 'fs/promises'
+import moment from 'moment'
 
 const sendFile = (ctx, path) =>
     stat(path)
@@ -26,4 +26,4 @@ const sendFileNoCache = (ctx, path) => {
     ctx.body = fs.createReadStream(path)
 }
 
-module.exports = {sendFile, sendFileNoCache}
+export {sendFile, sendFileNoCache}

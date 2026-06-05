@@ -1,17 +1,18 @@
-const _ = require('lodash')
-const {formatDistanceStrict, formatDistanceToNowStrict} = require('date-fns')
+import _ from 'lodash'
+import {formatDistanceStrict, formatDistanceToNowStrict} from 'date-fns'
 
-const {userTag, subscriptionTag} = require('./tag')
-const {setAssets, getAssets, removeAssets, expireAssets} = require('./assetStore')
-const log = require('#sepal/log').getLogger('assetManager')
+import {userTag, subscriptionTag} from './tag.js'
+import {setAssets, getAssets, removeAssets, expireAssets} from './assetStore.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('assetManager')
 
-const {Subject, groupBy, mergeMap, map, tap, repeat, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race, defer, take, merge, share} = require('rxjs')
-const {setUser, getUser, removeUser} = require('./userStore')
-const {scanTree$, scanNode$, busy$, isBusy} = require('./assetScanner')
-const {pollIntervalMilliseconds} = require('./config')
-const {deleteAsset$, createFolder$} = require('./asset')
-const {STree} = require('#sepal/tree/sTree')
-const {autoRetry} = require('#sepal/rxjs')
+import {Subject, groupBy, mergeMap, map, tap, repeat, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race, defer, take, merge, share} from 'rxjs'
+import {setUser, getUser, removeUser} from './userStore.js'
+import {scanTree$, scanNode$, busy$, isBusy} from './assetScanner.js'
+import {pollIntervalMilliseconds} from './config.js'
+import {deleteAsset$, createFolder$} from './asset.js'
+import {STree} from '#sepal/tree/sTree'
+import {autoRetry} from '#sepal/rxjs'
 
 const MIN_RELOAD_DELAY_MS = 60 * 1000
 const MIN_RETRY_DELAY_MS = 2 * 1000
@@ -386,4 +387,4 @@ const createAssetManager = ({send, stop$}) => {
     return {userUp, userDown, googleAccessToken, subscriptionUp, subscriptionDown, reload, cancelReload, remove, createFolder}
 }
 
-module.exports = {createAssetManager}
+export {createAssetManager}

@@ -1,12 +1,16 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import logConfig from '#config/log.json' with {type: 'json'}
+import {configureServer, getLogger} from '#sepal/log'
+import * as server from '#sepal/httpServer'
+import {initScheduler} from '#sepal/worker/scheduler'
+import {STICKY} from '#sepal/worker/staticPool'
 
-const log = require('#sepal/log').getLogger('main')
+import {port, instances} from './config.js'
+import routes from './routes.js'
 
-const {port, instances} = require('./config')
-const routes = require('./routes')
-const server = require('#sepal/httpServer')
-const {initScheduler} = require('#sepal/worker/scheduler')
-const {STICKY} = require('#sepal/worker/staticPool')
+configureServer(logConfig)
+
+const log = getLogger('main')
+
 
 const main = async () => {
     await server.start({

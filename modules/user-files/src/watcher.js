@@ -1,12 +1,13 @@
-const Path = require('path')
-const {realpath, readdir, stat, rm} = require('fs/promises')
-const {catchError, timer, Subject, exhaustMap, distinctUntilChanged, takeUntil, switchMap, map, filter, mergeMap, groupBy, finalize, mergeWith, EMPTY, scan, throttleTime, of, first, repeat, from, reduce} = require('rxjs')
-const {minDuration$} = require('#sepal/rxjs')
-const _ = require('lodash')
-const {homeDir, pollIntervalMilliseconds} = require('./config')
-const {resolvePath} = require('./filesystem')
-const {subscriptionTag, clientTag} = require('./tag')
-const log = require('#sepal/log').getLogger('watcher')
+import Path from 'path'
+import {realpath, readdir, stat, rm} from 'fs/promises'
+import {catchError, timer, Subject, exhaustMap, distinctUntilChanged, takeUntil, switchMap, map, filter, mergeMap, groupBy, finalize, mergeWith, EMPTY, scan, throttleTime, of, first, repeat, from, reduce} from 'rxjs'
+import {minDuration$} from '#sepal/rxjs'
+import _ from 'lodash'
+import {homeDir, pollIntervalMilliseconds} from './config.js'
+import {resolvePath} from './filesystem.js'
+import {subscriptionTag, clientTag} from './tag.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('watcher')
 
 const REMOVE_COMFORT_DELAY_MS = 1000
 const STATS_INTERVAL_MS = 60000
@@ -264,4 +265,4 @@ const createWatcher = async ({send, stop$}) => {
     return {monitor, unmonitor, remove, unsubscribe, offline}
 }
 
-module.exports = {createWatcher}
+export {createWatcher}

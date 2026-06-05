@@ -1,19 +1,17 @@
-const ImageFactory = require('#sepal/ee/imageFactory')
-const {forkJoin, switchMap} = require('rxjs')
-const {exportImageToAsset$} = require('../jobs/export/toAsset')
-const {toVisualizationProperties} = require('../ee/visualizations')
-const {formatProperties} = require('./formatProperties')
-const {setWorkloadTag} = require('./workloadTag')
+import ImageFactory from '#sepal/ee/imageFactory'
+import {forkJoin, switchMap} from 'rxjs'
+import {exportImageToAsset$} from '../jobs/export/toAsset.js'
+import {toVisualizationProperties} from '../ee/visualizations.js'
+import {formatProperties} from './formatProperties.js'
+import {setWorkloadTag} from './workloadTag.js'
 
-module.exports = {
-    submit$: (taskId, {
+export const submit$ = (taskId, {
         image: {recipe, ...retrieveOptions}
     }) => {
         setWorkloadTag(recipe)
         const description = recipe.title || recipe.placeholder
         return export$(taskId, {description, recipe, ...retrieveOptions})
     }
-}
 
 const export$ = (taskId, {recipe, bands, visualizations, scale, properties, ...retrieveOptions}) => {
     const factory = ImageFactory(recipe, bands)

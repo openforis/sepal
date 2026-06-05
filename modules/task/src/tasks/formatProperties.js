@@ -1,7 +1,6 @@
-const _ = require('lodash')
+import _ from 'lodash'
 
-module.exports = {
-    formatProperties: properties => {
+export const formatProperties = properties => {
         const formatted = {}
         Object.keys(properties).forEach(key => {
             const value = properties[key]
@@ -9,4 +8,3 @@ module.exports = {
         })
         return formatted
     }
-}

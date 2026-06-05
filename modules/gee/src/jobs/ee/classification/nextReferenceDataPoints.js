@@ -1,4 +1,12 @@
-const {job} = require('#gee/jobs/job')
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {map, switchMap} from 'rxjs'
+import classify from '#sepal/ee/classification/classification'
+import {getRows$} from '#sepal/ee/table'
+import _ from 'lodash'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const PROBABILITY_THRESHOLD = 75
 const NUMBER_OF_POINTS = 5
@@ -6,11 +14,6 @@ const NUMBER_OF_POINTS = 5
 const worker$ = ({
     requestArgs: recipe
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const {map, switchMap} = require('rxjs')
-    const classify = require('#sepal/ee/classification/classification')
-    const {getRows$} = require('#sepal/ee/table')
-    const _ = require('lodash')
 
     const overrideClassifierType = () => {
         const type = recipe.model.classifier.type
@@ -42,7 +45,7 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'NextReferenceDataPoints',
     jobPath: __filename,
     worker$

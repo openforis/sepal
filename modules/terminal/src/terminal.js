@@ -1,7 +1,8 @@
-const {unlinkSync} = require('fs')
-const {interval, merge, Subject, map, filter, bufferTime} = require('rxjs')
-const Session = require('./session')
-const log = require('#sepal/log').getLogger('terminal')
+import {unlinkSync} from 'fs'
+import {interval, merge, Subject, map, filter, bufferTime} from 'rxjs'
+import * as Session from './session.js'
+import {getLogger} from '#sepal/log'
+const log = getLogger('terminal')
 
 const removeKeyFile = keyFile => {
     try {
@@ -91,4 +92,4 @@ const resize = (req, res) => {
     }
 }
 
-module.exports = {start, resize}
+export {start, resize}

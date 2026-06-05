@@ -1,7 +1,6 @@
 // const {setWorkloadTag} = require('../workloadTag')
 
-module.exports = {
-    submit$: (taskId, {workspacePath, description, ...retrieveOptions}) => {
+export const submit$ = (taskId, {workspacePath, description, ...retrieveOptions}) => {
         console.info('samplesSepalExport', {taskId, workspacePath, description, retrieveOptions})
         // setWorkloadTag(retrieveOptions.recipe)
         // return getCurrentContext$().pipe(
@@ -16,4 +15,3 @@ module.exports = {
         //     })
         // )
     }
-}

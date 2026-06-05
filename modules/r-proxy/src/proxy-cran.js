@@ -1,11 +1,12 @@
-const log = require('#sepal/log').getLogger('proxy/cran')
-const httpProxy = require('http-proxy')
-const fs = require('fs')
-const {mkdir} = require('fs/promises')
-const Path = require('path')
-const {getCranRepoPath, getCranTarget, toBinaryPackagePath, getCranPackageInfo} = require('./cran')
-const {enqueueBuildCranPackage} = require('./queue')
-const {serveFile, checkTarget, serveError} = require('./proxy-utils')
+import {getLogger} from '#sepal/log'
+const log = getLogger('proxy/cran')
+import httpProxy from 'http-proxy'
+import fs from 'fs'
+import {mkdir} from 'fs/promises'
+import Path from 'path'
+import {getCranRepoPath, getCranTarget, toBinaryPackagePath, getCranPackageInfo} from './cran.js'
+import {enqueueBuildCranPackage} from './queue.js'
+import {serveFile, checkTarget, serveError} from './proxy-utils.js'
 
 const isPackage = name =>
     name !== 'PACKAGES'
@@ -101,4 +102,4 @@ const serveProxied = async (req, res) => {
 const serveCran = async (req, res) =>
     await serveCached(req, res) || await serveProxied(req, res) || await serveError(req, res)
 
-module.exports = {serveCran}
+export {serveCran}

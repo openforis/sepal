@@ -1,8 +1,9 @@
-const {get$} = require('#sepal/httpClient')
-const {of, map, switchMap, mergeMap, toArray, timer, tap, catchError, EMPTY} = require('rxjs')
-const _ = require('lodash')
-const {escapeRegExp, simplifyString, splitString} = require('#sepal/string')
-const log = require('#sepal/log').getLogger('ee')
+import {get$} from '#sepal/httpClient'
+import {of, map, switchMap, mergeMap, toArray, timer, tap, catchError, EMPTY} from 'rxjs'
+import _ from 'lodash'
+import {escapeRegExp, simplifyString, splitString} from '#sepal/string'
+import {getLogger} from '#sepal/log'
+const log = getLogger('ee')
 
 const URL = 'https://earthengine-stac.storage.googleapis.com/catalog/catalog.json'
 const REFRESH_INTERVAL_HOURS = 24
@@ -117,4 +118,4 @@ timer(0, REFRESH_INTERVAL_HOURS * 3600000).pipe(
     complete: () => log.fatal('Unexpected GEE catalog stream completed')
 })
 
-module.exports = {getDatasets}
+export {getDatasets}

@@ -1,4 +1,4 @@
-const {getDayOfYear} = require('date-fns/getDayOfYear')
+import {getDayOfYear} from 'date-fns/getDayOfYear'
 
 const DATASET_BY_PREFIX = {
     LT04: 'LANDSAT_TM',
@@ -37,4 +37,4 @@ const scene = ({id, dataset, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sun
         sunElevation: parseFloat(sunElevation)
     }) : null
                 
-module.exports = {getDataset, isSceneIncluded, scene}
+export {getDataset, isSceneIncluded, scene}

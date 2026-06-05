@@ -1,13 +1,14 @@
-const Path = require('path')
-const {minimatch} = require('minimatch')
-const {isChildOf, isFile, getFiles} = require('./filesystem')
-const {cranRepo, CRAN_ROOT, libPath} = require('./config')
-const {runScript} = require('./script')
-const readline = require('readline')
-const https = require('https')
-const log = require('#sepal/log').getLogger('cran')
-const {compare} = require('compare-versions')
-const {makePackage, cleanupPackage} = require('./package')
+import Path from 'path'
+import {minimatch} from 'minimatch'
+import {isChildOf, isFile, getFiles} from './filesystem.js'
+import {cranRepo, CRAN_ROOT, libPath} from './config.js'
+import {runScript} from './script.js'
+import readline from 'readline'
+import https from 'https'
+import {getLogger} from '#sepal/log'
+const log = getLogger('cran')
+import {compare} from 'compare-versions'
+import {makePackage, cleanupPackage} from './package.js'
 
 const SRC = 'src/contrib'
 const BIN = 'bin/contrib'
@@ -234,4 +235,4 @@ const checkCranUpdates = async enqueueUpdateCranPackage => {
     })
 }
 
-module.exports = {getCranRepoPath, getCranPackageInfo, isUpdatable, toBinaryPackagePath, getCranTarget, makeCranPackage, updateCranPackage, checkCranUpdates}
+export {getCranRepoPath, getCranPackageInfo, isUpdatable, toBinaryPackagePath, getCranTarget, makeCranPackage, updateCranPackage, checkCranUpdates}
