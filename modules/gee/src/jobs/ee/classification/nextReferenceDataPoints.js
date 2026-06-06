@@ -1,10 +1,11 @@
-import {job} from '#gee/jobs/job'
-import ee from '#sepal/ee/ee'
-import {map, switchMap} from 'rxjs'
-import classify from '#sepal/ee/classification/classification'
-import {getRows$} from '#sepal/ee/table'
 import _ from 'lodash'
+import {map, switchMap} from 'rxjs'
 import {fileURLToPath} from 'url'
+
+import {job} from '#gee/jobs/job'
+import classify from '#sepal/ee/classification/classification'
+import ee from '#sepal/ee/ee'
+import {getRows$} from '#sepal/ee/table'
 
 const __filename = fileURLToPath(import.meta.url)
 

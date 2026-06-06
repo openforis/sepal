@@ -1,12 +1,13 @@
 import {getLogger} from '#sepal/log'
 const log = getLogger('proxy/github')
-import httpProxy from 'http-proxy'
 import fs from 'fs'
 import {mkdir} from 'fs/promises'
+import httpProxy from 'http-proxy'
 import Path from 'path'
-import {getGitHubRepoPath, getGitHubTarget, getGitHubPackageInfo} from './github.js'
+
+import {getGitHubPackageInfo, getGitHubRepoPath, getGitHubTarget} from './github.js'
+import {checkTarget, serveError, serveFile} from './proxy-utils.js'
 import {enqueueBuildGitHubPackage} from './queue.js'
-import {serveFile, checkTarget, serveError} from './proxy-utils.js'
 
 const buildBinaryPackage = req => {
     const requestData = getGitHubPackageInfo(req.url)

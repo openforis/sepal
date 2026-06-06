@@ -1,14 +1,15 @@
-import {Subject, takeWhile, concatMap, from, firstValueFrom, of, map, ReplaySubject} from 'rxjs'
-import {createGunzip} from 'zlib'
 import {parse} from 'csv-parse'
 import {stringify} from 'csv-stringify'
+import {createReadStream, createWriteStream} from 'fs'
+import {concatMap, firstValueFrom, from, map, of, ReplaySubject, Subject, takeWhile} from 'rxjs'
 import {Transform, Writable} from 'stream'
 import {pipeline} from 'stream/promises'
-import {createWriteStream, createReadStream} from 'fs'
+import {createGunzip} from 'zlib'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('csv')
-import {formatInterval} from './time.js'
 import {remove} from './filesystem.js'
+import {formatInterval} from './time.js'
 
 const getPath = filename =>
     `${process.env.MYSQL_FILES_DIR}/${filename}`

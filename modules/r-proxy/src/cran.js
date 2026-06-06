@@ -1,14 +1,17 @@
-import Path from 'path'
-import {minimatch} from 'minimatch'
-import {isChildOf, isFile, getFiles} from './filesystem.js'
-import {cranRepo, CRAN_ROOT, libPath} from './config.js'
-import {runScript} from './script.js'
-import readline from 'readline'
 import https from 'https'
+import {minimatch} from 'minimatch'
+import Path from 'path'
+import readline from 'readline'
+
 import {getLogger} from '#sepal/log'
+
+import {CRAN_ROOT, cranRepo, libPath} from './config.js'
+import {getFiles, isChildOf, isFile} from './filesystem.js'
+import {runScript} from './script.js'
 const log = getLogger('cran')
 import {compare} from 'compare-versions'
-import {makePackage, cleanupPackage} from './package.js'
+
+import {cleanupPackage, makePackage} from './package.js'
 
 const SRC = 'src/contrib'
 const BIN = 'bin/contrib'
@@ -235,4 +238,4 @@ const checkCranUpdates = async enqueueUpdateCranPackage => {
     })
 }
 
-export {getCranRepoPath, getCranPackageInfo, isUpdatable, toBinaryPackagePath, getCranTarget, makeCranPackage, updateCranPackage, checkCranUpdates}
+export {checkCranUpdates, getCranPackageInfo, getCranRepoPath, getCranTarget, isUpdatable, makeCranPackage, toBinaryPackagePath, updateCranPackage}

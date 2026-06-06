@@ -1,4 +1,5 @@
 import {Command, Option} from 'commander'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('config')
 
@@ -190,24 +191,23 @@ const inactivityUserStorageThreshold = inactivityUserStorageThresholdMb * 1024 *
 
 export {
     amqpUri,
-    redisHost,
     gatewayHost,
-    sepalUsername,
-    sepalPassword,
-    port,
     homeDir,
-    scanMinDelay,
-    scanMaxDelay,
-    scanDelayIncreaseFactor,
-    scanConcurrency,
-    scanMaxRetries,
-    scanInitialRetryDelay,
-    inactivityTimeout,
-    inactivityNotificationDelay,
-    inactivityGracePeriod,
-    inactivityMaxSpread,
     inactivityConcurrency,
-    inactivityMaxRetries,
+    inactivityGracePeriod,
     inactivityInitialRetryDelay,
-    inactivityUserStorageThreshold
-}
+    inactivityMaxRetries,
+    inactivityMaxSpread,
+    inactivityNotificationDelay,
+    inactivityTimeout,
+    inactivityUserStorageThreshold,
+    port,
+    redisHost,
+    scanConcurrency,
+    scanDelayIncreaseFactor,
+    scanInitialRetryDelay,
+    scanMaxDelay,
+    scanMaxRetries,
+    scanMinDelay,
+    sepalPassword,
+    sepalUsername}

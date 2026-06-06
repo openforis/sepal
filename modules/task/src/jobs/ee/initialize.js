@@ -1,8 +1,9 @@
-import {job} from '#task/jobs/job'
+import {map, ReplaySubject, switchMap} from 'rxjs'
+
+import ee from '#sepal/ee/ee'
 import {eeLimiterService} from '#sepal/ee/eeLimiterService'
 import {getLogger} from '#sepal/log'
-import {ReplaySubject, map, switchMap} from 'rxjs'
-import ee from '#sepal/ee/ee'
+import {job} from '#task/jobs/job'
 import {getContext$, getCurrentContext$} from '#task/jobs/service/context'
 
 const worker$ = () => {

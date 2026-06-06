@@ -1,10 +1,12 @@
 import fs from 'fs'
-import {Subject, EMPTY, concat, defer, of, catchError, expand, map, mergeMap, scan, switchMap} from 'rxjs'
-import {fromPromise, finalizeObservable, autoRetry, swallow} from '#sepal/rxjs'
-import {cloudStorage$} from './cloudStorage.js'
 import path from 'path'
-import * as format from './format.js'
+import {catchError, concat, defer, EMPTY, expand, map, mergeMap, of, scan, Subject, switchMap} from 'rxjs'
+
 import {getLogger} from '#sepal/log'
+import {autoRetry, finalizeObservable, fromPromise, swallow} from '#sepal/rxjs'
+
+import {cloudStorage$} from './cloudStorage.js'
+import * as format from './format.js'
 const log = getLogger('cloudStorage')
 
 const CHUNK_SIZE = 10 * 1024 * 1024
@@ -156,4 +158,4 @@ const isDownloaded = fileProgress =>
 const formatFileSize = bytes =>
     format.fileSize(bytes)
 
-export {download$, delete$}
+export {delete$, download$}

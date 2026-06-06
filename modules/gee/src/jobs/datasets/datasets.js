@@ -1,7 +1,8 @@
-import {of} from 'rxjs'
 import _ from 'lodash'
-import {getDatasets as getGeeDatasets} from './geeDatasets.js'
+import {of} from 'rxjs'
+
 import {getDatasets as getCommunityDatasets} from './communityDatasets.js'
+import {getDatasets as getGeeDatasets} from './geeDatasets.js'
 
 const MAX_RESULTS = 10
 

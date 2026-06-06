@@ -87,8 +87,7 @@ const validatePath = (basePath, filePath) => {
 }
 
 export {
-    validateBranchName,
-    validateRepository,
     validateAppName,
-    validatePath
-}
+    validateBranchName,
+    validatePath,
+    validateRepository}

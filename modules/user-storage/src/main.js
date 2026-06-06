@@ -7,15 +7,16 @@ const log = getLogger('main')
 
 import _ from 'lodash'
 
-import {initMessageQueue} from '#sepal/messageQueue'
 import * as server from '#sepal/httpServer'
+import {initMessageQueue} from '#sepal/messageQueue'
+
 import {amqpUri, port} from './config.js'
-import {scanComplete$, startStorageCheck} from './storageCheck.js'
-import {messageHandler} from './messageHandler.js'
 import {initializeDatabase} from './database.js'
-import {routes} from './routes.js'
 import {email$} from './email.js'
 import {startInactivityCheck} from './inactivityCheck.js'
+import {messageHandler} from './messageHandler.js'
+import {routes} from './routes.js'
+import {scanComplete$, startStorageCheck} from './storageCheck.js'
 
 const main = async () => {
     await initMessageQueue(amqpUri, {

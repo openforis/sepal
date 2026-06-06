@@ -1,15 +1,17 @@
-import ee from '#sepal/ee/ee'
-import {EMPTY, concat, defer, from, catchError, last, map, mergeMap, of, scan, switchMap, tap, throwError} from 'rxjs'
-import {swallow} from '#sepal/rxjs'
-import tile from '#sepal/ee/tile'
 import Path from 'path'
-import {exportLimiter$} from '#task/jobs/service/exportLimiter'
-import {task$} from '#task/ee/task'
-import {progress} from '#task/rxjs/operators'
+import {catchError, concat, defer, EMPTY, from, last, map, mergeMap, of, scan, switchMap, tap, throwError} from 'rxjs'
+
+import ee from '#sepal/ee/ee'
+import tile from '#sepal/ee/tile'
 import {getLogger} from '#sepal/log'
+import {swallow} from '#sepal/rxjs'
+import {task$} from '#task/ee/task'
+import {exportLimiter$} from '#task/jobs/service/exportLimiter'
+import {progress} from '#task/rxjs/operators'
 const log = getLogger('task')
-import * as http from '#sepal/httpClient'
 import _ from 'lodash'
+
+import * as http from '#sepal/httpClient'
 
 const exportImageToAsset$ = (taskId, {
     image,

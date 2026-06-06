@@ -1,5 +1,6 @@
 import {of, switchMap} from 'rxjs'
-import {sandboxInfo$, createSession$, joinSession$} from './endpoint.js'
+
+import {createSession$, joinSession$, sandboxInfo$} from './endpoint.js'
 
 const getSession$ = ({sessions, instanceTypes}) => {
     const findSession = (sessions, expectedStatus) =>

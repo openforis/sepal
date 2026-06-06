@@ -53,14 +53,13 @@ const removeRequestUser = req =>
     delete req.headers[SEPAL_USER_HEADER]
 
 export {
+    deserialize,
+    getRequestUser,
+    getSessionUsername,
+    removeRequestUser,
+    SEPAL_BUDGET_UPDATED_HEADER,
     SEPAL_USER_HEADER,
     SEPAL_USER_UPDATED_HEADER,
-    SEPAL_BUDGET_UPDATED_HEADER,
     serialize,
-    deserialize,
-    getSessionUsername,
-    setSessionUsername,
-    getRequestUser,
     setRequestUser,
-    removeRequestUser
-}
+    setSessionUsername}

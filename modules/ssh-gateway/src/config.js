@@ -21,10 +21,9 @@ const {
 } = program.opts()
 
 export {
-    interactive,
-    username,
-    userKeyFile,
     endpoint,
     endpointPassword,
-    sshCommandPath
-}
+    interactive,
+    sshCommandPath,
+    userKeyFile,
+    username}

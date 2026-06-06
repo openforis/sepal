@@ -1,10 +1,12 @@
-import {BehaviorSubject, timer, EMPTY, catchError, filter, switchMap, tap, map, pairwise} from 'rxjs'
 import fs from 'fs'
 import path from 'path'
-import {mkdir$} from '#task/rxjs/fileSystem'
+import {BehaviorSubject, catchError, EMPTY, filter, map, pairwise, switchMap, tap, timer} from 'rxjs'
+
 import {getLogger} from '#sepal/log'
+import {mkdir$} from '#task/rxjs/fileSystem'
 const log = getLogger('context')
 import _ from 'lodash'
+
 import * as configModule from './config.js'
 
 // Plain-object snapshot: the namespace from `import *` is embedded in the

@@ -1,8 +1,9 @@
+import {switchMap} from 'rxjs'
+import {fileURLToPath} from 'url'
+
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
-import {switchMap} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
 

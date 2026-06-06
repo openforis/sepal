@@ -5,10 +5,11 @@ configureServer(logConfig)
 import {getLogger} from '#sepal/log'
 const log = getLogger('main')
 
+import * as server from '#sepal/httpServer'
+
+import {monitorApps} from './apps.js'
 import {port} from './config.js'
 import routes from './routes.js'
-import * as server from '#sepal/httpServer'
-import {monitorApps} from './apps.js'
 
 const main = async () => {
     await server.start({

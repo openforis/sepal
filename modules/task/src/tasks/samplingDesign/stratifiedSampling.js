@@ -1,6 +1,6 @@
 import ee from '#sepal/ee/ee'
 
-export {stratifiedSystematicSample, filterSamples}
+export {filterSamples, stratifiedSystematicSample}
     
 function stratifiedSystematicSample(args) {
     var allocation = args.allocation

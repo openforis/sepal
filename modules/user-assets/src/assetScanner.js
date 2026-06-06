@@ -1,13 +1,17 @@
 import _ from 'lodash'
-import {userTag} from './tag.js'
+
 import {getLogger} from '#sepal/log'
+
+import {userTag} from './tag.js'
 const log = getLogger('assetScanner')
 
-import {tap, map, mergeWith, of, switchMap, catchError, from, Subject, finalize, reduce, throwError} from 'rxjs'
-import {getUser} from './userStore.js'
+import {catchError, finalize, from, map, mergeWith, of, reduce, Subject, switchMap, tap, throwError} from 'rxjs'
+
 import {STree} from '#sepal/tree/sTree'
+
 import {getAsset$} from './asset.js'
 import {Limiter} from './limiter.js'
+import {getUser} from './userStore.js'
 
 const GLOBAL_CONCURRENCY = 10
 const USER_CONCURRENCY = 2
@@ -164,4 +168,4 @@ const scanNode$ = (username, path) => {
     )
 }
 
-export {scanTree$, scanNode$, busy$, isBusy}
+export {busy$, isBusy, scanNode$, scanTree$}

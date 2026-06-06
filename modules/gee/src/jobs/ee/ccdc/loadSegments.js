@@ -1,11 +1,12 @@
+import _ from 'lodash'
+import {map, of, switchMap} from 'rxjs'
+import {fileURLToPath} from 'url'
+
 import {job} from '#gee/jobs/job'
 import {toGeometry} from '#sepal/ee/aoi'
-import {of, map, switchMap} from 'rxjs'
-import ccdc from '#sepal/ee/timeSeries/ccdc'
-import imageFactory from '#sepal/ee/imageFactory'
-import _ from 'lodash'
 import ee from '#sepal/ee/ee'
-import {fileURLToPath} from 'url'
+import imageFactory from '#sepal/ee/imageFactory'
+import ccdc from '#sepal/ee/timeSeries/ccdc'
 
 const __filename = fileURLToPath(import.meta.url)
 

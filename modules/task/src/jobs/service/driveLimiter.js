@@ -8,4 +8,4 @@ const options = {
 
 const {limiterService: driveLimiterService, limiter$: driveLimiter$} = LimiterService('DriveLimiter', options)
 
-export {driveLimiterService, driveLimiter$}
+export {driveLimiter$, driveLimiterService}

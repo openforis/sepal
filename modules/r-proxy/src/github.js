@@ -1,10 +1,12 @@
-import Path from 'path'
 import {opendir} from 'fs/promises'
-import {isChildOf, isFile} from './filesystem.js'
-import {GITHUB_ROOT, LOCAL_CRAN_REPO, libPath} from './config.js'
-import {runScript} from './script.js'
-import {makePackage, cleanupPackage} from './package.js'
+import Path from 'path'
+
 import {getLogger} from '#sepal/log'
+
+import {GITHUB_ROOT, libPath, LOCAL_CRAN_REPO} from './config.js'
+import {isChildOf, isFile} from './filesystem.js'
+import {cleanupPackage, makePackage} from './package.js'
+import {runScript} from './script.js'
 const log = getLogger('github')
 
 const SRC = 'src'
@@ -108,4 +110,4 @@ const scanDir = async (enqueueUpdateGitHubPackage, baseDir, dir = '') => {
     }
 }
 
-export {getGitHubRepoPath, getGitHubPackageInfo, getGitHubTarget, makeGitHubPackage, updateGitHubPackage, checkGitHubUpdates}
+export {checkGitHubUpdates, getGitHubPackageInfo, getGitHubRepoPath, getGitHubTarget, makeGitHubPackage, updateGitHubPackage}

@@ -1,7 +1,10 @@
-import logConfig from '#config/log.json' with {type: 'json'}
 import {subHours} from 'date-fns/subHours'
-import {timer, exhaustMap, from, catchError, EMPTY} from 'rxjs'
-import {updateIntervalMinutes, minHoursPublished} from './config.js'
+import {catchError, EMPTY, exhaustMap, from, timer} from 'rxjs'
+
+import logConfig from '#config/log.json' with {type: 'json'}
+import {configureServer} from '#sepal/log'
+
+import {minHoursPublished, updateIntervalMinutes} from './config.js'
 import {initializeDatabase} from './database.js'
 import {downloadLandsat, loadLandsat} from './landsatCsv.js'
 import {updateLandsat} from './landsatStac.js'
@@ -9,8 +12,6 @@ import {initializeRedis} from './redis.js'
 import {downloadSentinel2, loadSentinel2} from './sentinel2Csv.js'
 import {updateSentinel2} from './sentinel2Stac.js'
 import {formatInterval} from './time.js'
-
-import {configureServer} from '#sepal/log'
 configureServer(logConfig)
 
 const INITIAL_UPDATE_DELAY_SECONDS = 10

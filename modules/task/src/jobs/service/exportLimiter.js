@@ -8,4 +8,4 @@ const options = {
 
 const {limiterService: exportLimiterService, limiter$: exportLimiter$} = LimiterService('ExportLimiter', options)
 
-export {exportLimiterService, exportLimiter$}
+export {exportLimiter$, exportLimiterService}

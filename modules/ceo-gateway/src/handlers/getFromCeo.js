@@ -1,8 +1,10 @@
-import {ceoUrl} from '../config.js'
+import {map, of, switchMap, throwError} from 'rxjs'
 import urljoin from 'url-join'
-import {map, of, throwError, switchMap} from 'rxjs'
-import {get$} from '#sepal/httpClient'
+
 import {ClientException} from '#sepal/exception'
+import {get$} from '#sepal/httpClient'
+
+import {ceoUrl} from '../config.js'
 
 const getFromCeo$ = (ctx, {path, query}) => {
     const token = ctx.request.headers['x-ceo-token']

@@ -1,8 +1,10 @@
-import {wsStream} from '#sepal/httpServer'
-import ws$ from './ws.js'
 import koaBody from 'koa-body'
-import {download, listFiles, setFile, createFolder} from './filesystem.js'
+
+import {wsStream} from '#sepal/httpServer'
+
 import {homeDir} from './config.js'
+import {createFolder, download, listFiles, setFile} from './filesystem.js'
+import ws$ from './ws.js'
 
 const routes = router => router
     .get('/download', ctx => download(homeDir, ctx))

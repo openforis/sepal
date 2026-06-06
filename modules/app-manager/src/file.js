@@ -1,5 +1,5 @@
 import {readFile, stat} from 'fs/promises'
-import {from, of, catchError, map} from 'rxjs'
+import {catchError, from, map, of} from 'rxjs'
 
 const fileToJson$ = path =>
     from(readFile(path, 'utf8')).pipe(

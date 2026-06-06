@@ -1,16 +1,18 @@
-import ee from '#sepal/ee/ee'
 import {concat, defer, map, switchMap} from 'rxjs'
+
+import ee from '#sepal/ee/ee'
+import {getLogger} from '#sepal/log'
 import {finalizeObservable, swallow} from '#sepal/rxjs'
-import * as drive from '#task/drive'
 import {initUserBucket$} from '#task/cloudStorageBucket'
 import * as cloudStorage from '#task/cloudStorageDownload'
-import {getLogger} from '#sepal/log'
+import * as drive from '#task/drive'
 const log = getLogger('ee')
-import {getCurrentContext$} from '#task/jobs/service/context'
-import {exportLimiter$} from '#task/jobs/service/exportLimiter'
-import {driveSerializer$} from '#task/jobs/service/driveSerializer'
-import {gcsSerializer$} from '#task/jobs/service/gcsSerializer'
 import {task$} from '#task/ee/task'
+import {getCurrentContext$} from '#task/jobs/service/context'
+import {driveSerializer$} from '#task/jobs/service/driveSerializer'
+import {exportLimiter$} from '#task/jobs/service/exportLimiter'
+import {gcsSerializer$} from '#task/jobs/service/gcsSerializer'
+
 import {drivePath} from './driveUtils.js'
 
 const CONCURRENT_FILE_DOWNLOAD = 3

@@ -1,9 +1,10 @@
-import {job} from '#gee/jobs/job'
-import {of, catchError, forkJoin, map, switchMap, throwError} from 'rxjs'
-import {ClientException, NotFoundException} from '#sepal/exception'
-import ee from '#sepal/ee/ee'
 import _ from 'lodash'
+import {catchError, forkJoin, map, of, switchMap, throwError} from 'rxjs'
 import {fileURLToPath} from 'url'
+
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {ClientException, NotFoundException} from '#sepal/exception'
 
 const __filename = fileURLToPath(import.meta.url)
 

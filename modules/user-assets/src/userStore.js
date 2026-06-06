@@ -1,7 +1,7 @@
-import {redis, deserialize, serialize} from './redis.js'
-import {userTag} from './tag.js'
-
 import {getLogger} from '#sepal/log'
+
+import {deserialize, redis, serialize} from './redis.js'
+import {userTag} from './tag.js'
 const log = getLogger('userStore')
 
 const userKey = username =>
@@ -62,4 +62,4 @@ const removeUser = async username => {
 const isConnectedWithGoogle = user =>
     !!user.googleTokens
 
-export {getUser, setUser, removeUser, isConnectedWithGoogle}
+export {getUser, isConnectedWithGoogle, removeUser, setUser}

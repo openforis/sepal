@@ -6,4 +6,4 @@ const options = {
 
 const {limiterService: gcsSerializerService, limiter$: gcsSerializer$} = LimiterService('GCSSerializer', options)
 
-export {gcsSerializerService, gcsSerializer$}
+export {gcsSerializer$, gcsSerializerService}

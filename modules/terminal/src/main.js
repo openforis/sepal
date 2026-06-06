@@ -7,8 +7,9 @@ const log = getLogger('main')
 
 import express from 'express'
 import expressWs from 'express-ws'
-import * as Terminal from './terminal.js'
+
 import {ip, port} from './config.js'
+import * as Terminal from './terminal.js'
 
 const app = express()
 expressWs(app)

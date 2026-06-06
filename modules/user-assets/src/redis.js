@@ -1,7 +1,8 @@
 import Redis from 'ioredis'
-import {redisUri} from './config.js'
 
 import {getLogger} from '#sepal/log'
+
+import {redisUri} from './config.js'
 const log = getLogger('redis')
 
 const redis = new Redis(redisUri)
@@ -28,4 +29,4 @@ const deserialize = value => {
     }
 }
 
-export {redis, serialize, deserialize}
+export {deserialize, redis, serialize}

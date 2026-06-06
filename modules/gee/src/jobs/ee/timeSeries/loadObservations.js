@@ -1,10 +1,11 @@
-import {job} from '#gee/jobs/job'
-import {getCollection$} from '#sepal/ee/timeSeries/collection'
-import {toGeometry} from '#sepal/ee/aoi'
-import {map, mergeMap, of, switchMap, toArray} from 'rxjs'
-import ee from '#sepal/ee/ee'
 import _ from 'lodash'
+import {map, mergeMap, of, switchMap, toArray} from 'rxjs'
 import {fileURLToPath} from 'url'
+
+import {job} from '#gee/jobs/job'
+import {toGeometry} from '#sepal/ee/aoi'
+import ee from '#sepal/ee/ee'
+import {getCollection$} from '#sepal/ee/timeSeries/collection'
 
 const __filename = fileURLToPath(import.meta.url)
 

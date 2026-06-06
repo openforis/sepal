@@ -1,4 +1,4 @@
-import {getAppStatus, getAppContainerStatus, getAppRepoInfo, getAppLogs, restartApp, updateApp, pullUpdatesOnly, buildAndRestartApp} from './appsService.js'
+import {buildAndRestartApp, getAppContainerStatus, getAppLogs, getAppRepoInfo, getAppStatus, pullUpdatesOnly, restartApp, updateApp} from './appsService.js'
 
 export default router => router
     .get('/status/:appName', async ctx => await getAppStatus(ctx))

@@ -1,8 +1,9 @@
-import {get$} from '#sepal/httpClient'
-import {of, map, switchMap, mergeMap, toArray, timer, tap, catchError, EMPTY} from 'rxjs'
 import _ from 'lodash'
-import {escapeRegExp, simplifyString, splitString} from '#sepal/string'
+import {catchError, EMPTY, map, mergeMap, of, switchMap, tap, timer, toArray} from 'rxjs'
+
+import {get$} from '#sepal/httpClient'
 import {getLogger} from '#sepal/log'
+import {escapeRegExp, simplifyString, splitString} from '#sepal/string'
 const log = getLogger('ee')
 
 const URL = 'https://earthengine-stac.storage.googleapis.com/catalog/catalog.json'

@@ -49,4 +49,4 @@ const formatTime = ({hours, minutes, seconds = 0}, fmt = 'HH:mm') => {
     return format(date, fmt)
 }
 
-export {formatInterval, formatDuration, getMillisecondsUntilTime, parseTime, formatTime}
+export {formatDuration, formatInterval, formatTime, getMillisecondsUntilTime, parseTime}

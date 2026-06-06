@@ -1,12 +1,14 @@
-import Path from 'path'
-import {realpath, readdir, stat, rm} from 'fs/promises'
-import {catchError, timer, Subject, exhaustMap, distinctUntilChanged, takeUntil, switchMap, map, filter, mergeMap, groupBy, finalize, mergeWith, EMPTY, scan, throttleTime, of, first, repeat, from, reduce} from 'rxjs'
-import {minDuration$} from '#sepal/rxjs'
+import {readdir, realpath, rm, stat} from 'fs/promises'
 import _ from 'lodash'
+import Path from 'path'
+import {catchError, distinctUntilChanged, EMPTY, exhaustMap, filter, finalize, first, from, groupBy, map, mergeMap, mergeWith, of, reduce, repeat, scan, Subject, switchMap, takeUntil, throttleTime, timer} from 'rxjs'
+
+import {getLogger} from '#sepal/log'
+import {minDuration$} from '#sepal/rxjs'
+
 import {homeDir, pollIntervalMilliseconds} from './config.js'
 import {resolvePath} from './filesystem.js'
-import {subscriptionTag, clientTag} from './tag.js'
-import {getLogger} from '#sepal/log'
+import {clientTag, subscriptionTag} from './tag.js'
 const log = getLogger('watcher')
 
 const REMOVE_COMFORT_DELAY_MS = 1000

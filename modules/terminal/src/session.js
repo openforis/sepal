@@ -1,7 +1,7 @@
 import {getLogger} from '#sepal/log'
 const log = getLogger('session')
-import pty from 'node-pty'
 import fs from 'fs'
+import pty from 'node-pty'
 import path from 'path'
 
 import {homeDir, sshScriptPath} from './config.js'

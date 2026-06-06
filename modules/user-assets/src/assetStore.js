@@ -1,9 +1,9 @@
 import {formatDistanceToNowStrict} from 'date-fns'
 
-import {redis, deserialize, serialize} from './redis.js'
-import {userTag} from './tag.js'
-
 import {getLogger} from '#sepal/log'
+
+import {deserialize, redis, serialize} from './redis.js'
+import {userTag} from './tag.js'
 const log = getLogger('assetStore')
 
 const assetsKey = username =>
@@ -71,4 +71,4 @@ const removeAssets = async (username, {allowMissing} = {}) => {
         })
 }
 
-export {setAssets, getAssets, expireAssets, removeAssets}
+export {expireAssets, getAssets, removeAssets, setAssets}

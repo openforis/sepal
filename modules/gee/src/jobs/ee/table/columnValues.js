@@ -1,6 +1,7 @@
+import {fileURLToPath} from 'url'
+
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
-import {fileURLToPath} from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
 

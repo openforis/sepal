@@ -1,4 +1,4 @@
-import {scene, getIdFromDatastripId} from './sentinel2.js'
+import {getIdFromDatastripId, scene} from './sentinel2.js'
 import {updateFromStac} from './stac.js'
 
 const sceneMapper = ({

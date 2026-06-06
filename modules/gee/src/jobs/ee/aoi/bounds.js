@@ -1,8 +1,9 @@
-import {job} from '#gee/jobs/job'
-import ee from '#sepal/ee/ee'
-import {toGeometry} from '#sepal/ee/aoi'
 import {of} from 'rxjs'
 import {fileURLToPath} from 'url'
+
+import {job} from '#gee/jobs/job'
+import {toGeometry} from '#sepal/ee/aoi'
+import ee from '#sepal/ee/ee'
 
 const __filename = fileURLToPath(import.meta.url)
 

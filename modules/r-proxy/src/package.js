@@ -1,6 +1,7 @@
+import {getLogger} from '#sepal/log'
+
 import {libPath} from './config.js'
 import {runScript} from './script.js'
-import {getLogger} from '#sepal/log'
 const log = getLogger('package')
 
 const bundlePackage = async (name, srcPath, binPath, tmpPath) => {
@@ -59,4 +60,4 @@ const makePackage = async (name, srcPath, binPath, tmpPath) => {
     return success
 }
 
-export {makePackage, cleanupPackage}
+export {cleanupPackage, makePackage}

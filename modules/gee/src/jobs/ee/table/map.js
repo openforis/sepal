@@ -1,9 +1,10 @@
+import _ from 'lodash'
+import {forkJoin, map} from 'rxjs'
+import {fileURLToPath} from 'url'
+
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
 import {filterTable} from '#sepal/ee/table'
-import {forkJoin, map} from 'rxjs'
-import _ from 'lodash'
-import {fileURLToPath} from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
 

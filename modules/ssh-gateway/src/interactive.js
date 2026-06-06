@@ -1,10 +1,11 @@
-import {EMPTY, defer, first, interval, map, merge, of, switchMap, tap} from 'rxjs'
-import {sandboxInfo$, createSession$, joinSession$, terminateSession$} from './endpoint.js'
-import {table, th, tr, td} from './asciiTable.js'
+import _ from 'lodash'
+import moment from 'moment'
+import {defer, EMPTY, first, interval, map, merge, of, switchMap, tap} from 'rxjs'
+
+import {table, td, th, tr} from './asciiTable.js'
 import {format, highlight, print, println, readLine$} from './console.js'
 import {fromNow} from './date.js'
-import moment from 'moment'
-import _ from 'lodash'
+import {createSession$, joinSession$, sandboxInfo$, terminateSession$} from './endpoint.js'
 
 const PROGRESS_TIME = 5 * 1000
 const CONFIRM_WHEN_LESS_THAN_HOURS = 10

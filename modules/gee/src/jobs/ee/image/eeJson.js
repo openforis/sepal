@@ -1,8 +1,9 @@
-import {job} from '#gee/jobs/job'
-import {loadRecipe$} from '#sepal/ee/recipe'
-import ImageFactory from '#sepal/ee/imageFactory'
 import {map, switchMap} from 'rxjs'
 import {fileURLToPath} from 'url'
+
+import {job} from '#gee/jobs/job'
+import ImageFactory from '#sepal/ee/imageFactory'
+import {loadRecipe$} from '#sepal/ee/recipe'
 
 const __filename = fileURLToPath(import.meta.url)
 

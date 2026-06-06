@@ -1,4 +1,5 @@
 import {Command, Option} from 'commander'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('config')
 
@@ -47,4 +48,4 @@ log.fatal('Configuration loaded')
 
 const redisUri = `redis://${redisHost}`
 
-export {redisUri, updateIntervalMinutes, minHoursPublished}
+export {minHoursPublished, redisUri, updateIntervalMinutes}

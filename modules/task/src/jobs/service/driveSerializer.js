@@ -6,4 +6,4 @@ const options = {
 
 const {limiterService: driveSerializerService, limiter$: driveSerializer$} = LimiterService('DriveSerializer', options)
 
-export {driveSerializerService, driveSerializer$}
+export {driveSerializer$, driveSerializerService}

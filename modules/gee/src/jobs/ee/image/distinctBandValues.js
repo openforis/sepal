@@ -1,9 +1,10 @@
-import {job} from '#gee/jobs/job'
-import ImageFactory from '#sepal/ee/imageFactory'
-import ee from '#sepal/ee/ee'
 import {switchMap, tap} from 'rxjs'
-import {toGeometry} from '#sepal/ee/aoi'
 import {fileURLToPath} from 'url'
+
+import {job} from '#gee/jobs/job'
+import {toGeometry} from '#sepal/ee/aoi'
+import ee from '#sepal/ee/ee'
+import ImageFactory from '#sepal/ee/imageFactory'
 
 const __filename = fileURLToPath(import.meta.url)
 

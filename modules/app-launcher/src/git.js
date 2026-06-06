@@ -1,7 +1,9 @@
 import fs from 'fs/promises'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('git')
 import {ClientException} from '#sepal/exception'
+
 import executeCommand from './terminal.js'
 
 const MAX_RETRIES = 3
@@ -217,7 +219,7 @@ const pullUpdates = async (appPath, branch) => {
 
 export {
     cloneOrPull,
-    getRepoInfo,
     getCurrentCommitHash,
+    getRepoInfo,
     pullUpdates,
 }

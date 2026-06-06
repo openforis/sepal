@@ -1,10 +1,11 @@
 import {program} from 'commander'
 import Path from 'path'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('config')
+import {mkdirSync} from 'fs'
 import _ from 'lodash'
 import os from 'os'
-import {mkdirSync} from 'fs'
 
 const DEFAULT_HTTP_PORT = 80
 const DEFAULT_AUTO_UPDATE_INTERVAL_HOURS = 24
@@ -61,15 +62,14 @@ const CRAN_ROOT = Path.join(platformReleaseRepoPath, 'cranroot')
 const GITHUB_ROOT = Path.join(platformReleaseRepoPath, 'github')
 
 export {
-    platformVersion,
-    cranRepo,
-    platformReleaseRepoPath as repoPath,
-    platformReleaseLibPath as libPath,
-    redisHost,
-    httpPort,
     autoUpdateIntervalHours,
-    updateNow,
-    LOCAL_CRAN_REPO,
     CRAN_ROOT,
-    GITHUB_ROOT
-}
+    cranRepo,
+    GITHUB_ROOT,
+    httpPort,
+    platformReleaseLibPath as libPath,
+    LOCAL_CRAN_REPO,
+    platformVersion,
+    redisHost,
+    platformReleaseRepoPath as repoPath,
+    updateNow}

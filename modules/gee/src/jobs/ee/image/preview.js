@@ -1,10 +1,11 @@
-import {job} from '#gee/jobs/job'
-import ImageFactory from '#sepal/ee/imageFactory'
-import ee from '#sepal/ee/ee'
-import {switchMap} from 'rxjs'
-import {sequence} from '#sepal/utils/array'
 import _ from 'lodash'
+import {switchMap} from 'rxjs'
 import {fileURLToPath} from 'url'
+
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import ImageFactory from '#sepal/ee/imageFactory'
+import {sequence} from '#sepal/utils/array'
 
 const __filename = fileURLToPath(import.meta.url)
 
@@ -13,7 +14,6 @@ const worker$ = ({
 }) => {
 
     const TILE_SIZE = 256
-    
 
     const getRetiledMap$ = (image, retile = TILE_SIZE, visParams) =>
         ee.getMap$(retile === TILE_SIZE ? image : image.retile(retile), visParams, 'create preview map')

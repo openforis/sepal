@@ -1,6 +1,8 @@
 import {Redis} from 'ioredis'
-import {redisHost} from './config.js'
+
 import {getLogger} from '#sepal/log'
+
+import {redisHost} from './config.js'
 const log = getLogger('kvstore')
 
 const DB = {
@@ -63,4 +65,4 @@ const getUserStorage = async username => {
     return await redis.get(storageKey(username))
 }
 
-export {DB, getInitialized, setInitialized, setSessionActive, setSessionInactive, getSessionStatus, getSetUserStorage, getUserStorage}
+export {DB, getInitialized, getSessionStatus, getSetUserStorage, getUserStorage, setInitialized, setSessionActive, setSessionInactive}

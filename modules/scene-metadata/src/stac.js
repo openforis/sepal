@@ -1,9 +1,11 @@
 import {subHours} from 'date-fns/subHours'
-import {from, expand, EMPTY, finalize, switchMap, lastValueFrom, filter, reduce, map, concatMap, catchError} from 'rxjs'
-import {formatInterval} from './time.js'
-import {getUpdates$} from './earthSearch.js'
-import {minHoursPublished} from './config.js'
+import {catchError, concatMap, EMPTY, expand, filter, finalize, from, lastValueFrom, map, reduce, switchMap} from 'rxjs'
+
 import {getLogger} from '#sepal/log'
+
+import {minHoursPublished} from './config.js'
+import {getUpdates$} from './earthSearch.js'
+import {formatInterval} from './time.js'
 const log = getLogger('stac')
 
 const updateTimestamp = (timestamp, mostRecentTimestamp) =>

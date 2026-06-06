@@ -1,11 +1,13 @@
-import {EMPTY, defer, from, interval, catchError, defaultIfEmpty, delay, exhaustMap, filter, map, concatMap, switchMap, of} from 'rxjs'
+import {catchError, concatMap, defaultIfEmpty, defer, delay, EMPTY, exhaustMap, filter, from, interval, map, of, switchMap} from 'rxjs'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('apps')
-import {fileToJson$} from './file.js'
-import {fetchCatalog$} from './apiService.js'
-import {exec$} from './terminal.js'
 import {basename} from 'path'
+
+import {fetchCatalog$} from './apiService.js'
 import {appsCatalogUrl} from './config.js'
+import {fileToJson$} from './file.js'
+import {exec$} from './terminal.js'
 
 const APPS_FILE = '/var/lib/sepal/app-manager/apps.json'
 
@@ -73,4 +75,4 @@ const updateApp$ = app => {
 
 const catalog$ = () => source$()
 
-export {monitorApps, apps$, source$, catalog$}
+export {apps$, catalog$, monitorApps, source$}

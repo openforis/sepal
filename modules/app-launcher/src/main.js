@@ -3,18 +3,20 @@ import {configureServer} from '#sepal/log'
 configureServer(logConfig)
 
 import express from 'express'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('main')
+import {createProxyMiddleware} from 'http-proxy-middleware'
 import _ from 'lodash'
-import {port, managementPort, monitorEnabled} from './config.js'
+
+import * as server from '#sepal/httpServer'
+
+import {monitorApps} from './apps.js'
+import {managementPort, monitorEnabled, port} from './config.js'
+import {createCredentialsFile} from './gee.js'
+import managementRoutes from './managementRoutes.js'
 import {proxyEndpoints$, registerUpgradeListener} from './proxy.js'
 import * as proxyManager from './proxyManager.js'
-import managementRoutes from './managementRoutes.js'
-
-import {createCredentialsFile} from './gee.js'
-import {monitorApps} from './apps.js'
-import * as server from '#sepal/httpServer'
-import {createProxyMiddleware} from 'http-proxy-middleware'
 import {getRequestUser} from './user.js'
 
 const startServer = () => {

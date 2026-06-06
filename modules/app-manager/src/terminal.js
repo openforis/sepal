@@ -1,4 +1,5 @@
 import {Subject} from 'rxjs'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('terminal')
 import {spawn} from 'child_process'

@@ -1,8 +1,9 @@
-import {job} from '#task/jobs/job'
-import {configure} from '#sepal/context'
-import {getCurrentContext$, contextService} from '#task/jobs/service/context'
 import {tap} from 'rxjs'
+
+import {configure} from '#sepal/context'
 import {swallow} from '#sepal/rxjs'
+import {job} from '#task/jobs/job'
+import {contextService, getCurrentContext$} from '#task/jobs/service/context'
 
 const worker$ = () => {
     return getCurrentContext$().pipe(

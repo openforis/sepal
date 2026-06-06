@@ -1,11 +1,13 @@
 import _ from 'lodash'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('messageQueue')
-import {scheduleStorageCheck} from './storageCheck.js'
-import {setSessionActive, setSessionInactive} from './kvstore.js'
-import {Subject, debounceTime, groupBy, mergeMap, switchMap, filter, catchError, EMPTY, from} from 'rxjs'
-import {scheduleInactivityCheck, cancelInactivityCheck} from './inactivityCheck.js'
+import {catchError, debounceTime, EMPTY, filter, from, groupBy, mergeMap, Subject, switchMap} from 'rxjs'
 import {CLIENT_UP, USER_DOWN} from 'sepal/src/event/definitions'
+
+import {cancelInactivityCheck, scheduleInactivityCheck} from './inactivityCheck.js'
+import {setSessionActive, setSessionInactive} from './kvstore.js'
+import {scheduleStorageCheck} from './storageCheck.js'
 
 const logError = (key, msg) =>
     log.error('Incoming message doesn\'t match expected shape', {key, msg})

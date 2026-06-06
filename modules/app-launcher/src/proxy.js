@@ -1,13 +1,14 @@
 import {createProxyMiddleware} from 'http-proxy-middleware'
+import micromatch from 'micromatch'
 import {filter, from, map, switchMap, toArray} from 'rxjs'
 import url from 'url'
-import micromatch from 'micromatch'
-import {getRequestUser, setRequestUser} from './user.js'
-import {usernameTag, urlTag} from './tag.js'
-import {source$} from './apps.js'
-import {sepalHost} from './config.js'
 
 import {getLogger} from '#sepal/log'
+
+import {source$} from './apps.js'
+import {sepalHost} from './config.js'
+import {urlTag, usernameTag} from './tag.js'
+import {getRequestUser, setRequestUser} from './user.js'
 const log = getLogger('proxy')
 
 const proxyEndpoints$ = expressApp => source$().pipe(

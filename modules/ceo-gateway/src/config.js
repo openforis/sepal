@@ -1,4 +1,5 @@
 import {Command, Option} from 'commander'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('config')
 
@@ -38,6 +39,5 @@ const {
 log.info('Configuration loaded')
 
 export {
-    port,
-    ceoUrl
-}
+    ceoUrl,
+    port}

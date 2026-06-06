@@ -1,6 +1,8 @@
 import {filter, first, interval, map, switchMap} from 'rxjs'
+
 import {delete$, get$, post$} from '#sepal/httpClient'
-import {username, endpoint, endpointPassword} from './config.js'
+
+import {endpoint, endpointPassword, username} from './config.js'
 import {println} from './console.js'
 
 const WAIT_TIME = 5 * 1000

@@ -1,4 +1,5 @@
 import {Command, Option} from 'commander'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('config')
 
@@ -93,15 +94,14 @@ log.info('Configuration loaded')
 const resolvedAppsCatalogUrl = appsCatalogUrl || null
 
 export {
-    port,
-    managementPort,
-    monitorEnabled,
-    sepalHost,
-    sepalAdminUsername,
-    sepalAdminPassword,
+    resolvedAppsCatalogUrl as appsCatalogUrl,
+    deployEnvironment,
     geeEmail,
     geeKey,
     googleProjectId,
-    deployEnvironment,
-    resolvedAppsCatalogUrl as appsCatalogUrl
-}
+    managementPort,
+    monitorEnabled,
+    port,
+    sepalAdminPassword,
+    sepalAdminUsername,
+    sepalHost}

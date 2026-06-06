@@ -61,9 +61,8 @@ const amqpUri = `amqp://${amqpHost}`
 const redisUri = `redis://${redisHost}`
 
 export {
-    sepalHost,
-    sepalAppsHost,
     amqpUri,
+    port,
     redisUri,
-    port
-}
+    sepalAppsHost,
+    sepalHost}

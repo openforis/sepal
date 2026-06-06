@@ -1,5 +1,6 @@
 import {Command, Option} from 'commander'
 import _ from 'lodash'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('config')
 
@@ -81,11 +82,10 @@ const serviceAccountCredentials = {
 log.info('Configuration loaded')
 
 export {
-    sepalUsername,
-    sepalPassword,
-    sepalEndpoint,
     googleProjectId,
-    serviceAccountCredentials,
+    instances,
     port,
-    instances
-}
+    sepalEndpoint,
+    sepalPassword,
+    sepalUsername,
+    serviceAccountCredentials}

@@ -1,7 +1,9 @@
-import {EMPTY, catchError, map} from 'rxjs'
+import {catchError, EMPTY, map} from 'rxjs'
+
 import {get$} from '#sepal/httpClient'
-import {sepalHost, sepalAdminPassword, sepalAdminUsername} from './config.js'
 import {getLogger} from '#sepal/log'
+
+import {sepalAdminPassword, sepalAdminUsername, sepalHost} from './config.js'
 const log = getLogger('apiService')
 
 const fetchAppsFromApi$ = () => {

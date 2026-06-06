@@ -1,5 +1,5 @@
-import {defer, first, fromEvent, tap} from 'rxjs'
 import readline from 'readline'
+import {defer, first, fromEvent, tap} from 'rxjs'
 
 const readLine$ = () => {
     return defer(() => {

@@ -1,4 +1,4 @@
-import {submitTask, cancelTask} from './taskManager.js'
+import {cancelTask, submitTask} from './taskManager.js'
 
 export default router =>
     router

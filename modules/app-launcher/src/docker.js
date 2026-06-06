@@ -1,10 +1,11 @@
+import Docker from 'dockerode'
 import fs from 'fs/promises'
 import path from 'path'
-import Docker from 'dockerode'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('appsService')
-import executeCommand from './terminal.js'
 import {getCurrentCommitHash} from './git.js'
+import executeCommand from './terminal.js'
 
 const getAppPath = appName => `/var/lib/sepal/app-launcher/apps/${appName}`
 
@@ -298,11 +299,11 @@ const getContainerLogs = async (appName, options = {}) => {
 }
 
 export {
-    pathExists,
-    isContainerRunning,
-    startContainer,
-    restartContainer,
+    buildAndRestart,
     getContainerInfo,
     getContainerLogs,
-    buildAndRestart,
+    isContainerRunning,
+    pathExists,
+    restartContainer,
+    startContainer,
 }

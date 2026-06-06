@@ -1,8 +1,8 @@
 import {getLogger} from '#sepal/log'
 const log = getLogger('proxy')
-import https from 'https'
 import fs from 'fs'
 import {stat} from 'fs/promises'
+import https from 'https'
 import Path from 'path'
 
 const checkTarget = (url, {allowRedirect} = {}) =>
@@ -42,4 +42,4 @@ const serveError = async (req, res) => {
     return false
 }
 
-export {checkTarget, serveFile, serveError}
+export {checkTarget, serveError, serveFile}

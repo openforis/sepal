@@ -1,11 +1,13 @@
-import {defer, of, first, map, switchMap} from 'rxjs'
+import crypto from 'crypto'
+import {defer, first, map, of, switchMap} from 'rxjs'
+
+import * as http from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
 import {autoRetry} from '#sepal/rxjs'
 import {fromPromise} from '#sepal/rxjs'
-import crypto from 'crypto'
-import * as http from '#sepal/httpClient'
 import {getCurrentContext$} from '#task/jobs/service/context'
+
 import {cloudStorage$} from './cloudStorage.js'
-import {getLogger} from '#sepal/log'
 const log = getLogger('cloudStorage')
 
 const RETRY_CONFIG = {

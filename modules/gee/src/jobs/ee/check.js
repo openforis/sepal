@@ -1,9 +1,10 @@
+import {google} from 'googleapis'
+import {catchError, from, map, switchMap, throwError} from 'rxjs'
+import {fileURLToPath} from 'url'
+
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
-import {catchError, from, map, switchMap, throwError} from 'rxjs'
 import {ClientException, ERROR_CODES} from '#sepal/exception'
-import {google} from 'googleapis'
-import {fileURLToPath} from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
 
@@ -17,7 +18,6 @@ const worker$ = ({
     credentials: {sepalUser}
 }) => {
     const {EE_NOT_AVAILABLE, MISSING_OAUTH_SCOPES, MISSING_GOOGLE_TOKENS} = ERROR_CODES
-
 
     const accessToken = sepalUser?.googleTokens?.accessToken
     

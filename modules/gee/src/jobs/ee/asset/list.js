@@ -1,10 +1,11 @@
-import {job} from '#gee/jobs/job'
-import {map, merge, toArray, of, switchMap, mergeMap, catchError} from 'rxjs'
-import * as http from '#sepal/httpClient'
-import ee from '#sepal/ee/ee'
-import {getLogger} from '#sepal/log'
 import _ from 'lodash'
+import {catchError, map, merge, mergeMap, of, switchMap, toArray} from 'rxjs'
 import {fileURLToPath} from 'url'
+
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import * as http from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
 
 const __filename = fileURLToPath(import.meta.url)
 

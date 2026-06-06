@@ -5,6 +5,5 @@ const urlTag = url =>
     `[${url}]`
     
 export {
-    usernameTag,
-    urlTag
-}
+    urlTag,
+    usernameTag}

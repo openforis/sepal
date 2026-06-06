@@ -1,9 +1,11 @@
-import {ceoUrl} from '../config.js'
-import {ClientException} from '#sepal/exception'
-import urljoin from 'url-join'
 import {map} from 'rxjs'
-import {post$} from '#sepal/httpClient'
 import setCookieParser from 'set-cookie-parser'
+import urljoin from 'url-join'
+
+import {ClientException} from '#sepal/exception'
+import {post$} from '#sepal/httpClient'
+
+import {ceoUrl} from '../config.js'
 
 const loginToken$ = ctx => {
     const {email, password} = ctx.request.body

@@ -1,7 +1,8 @@
-import {defer, of, catchError, map, switchMap} from 'rxjs'
-import {fromPromise} from '#sepal/rxjs'
 import fs from 'fs'
 import Path from 'path'
+import {catchError, defer, map, of, switchMap} from 'rxjs'
+
+import {fromPromise} from '#sepal/rxjs'
 
 const ls$ = (path, options = {}) => defer(() =>
     fromPromise(fs.promises.readdir(path, options))

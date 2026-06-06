@@ -86,13 +86,12 @@ const {
 log.info('Configuration loaded')
 
 export {
+    autoRearmDelayHours,
+    emergencyNotificationRetryDelay,
+    emergencyNotificationRetryTimeout,
+    initialDelayMinutes,
+    notifyFrom,
+    port,
     pushoverApiKey,
     pushoverGroupKey,
-    port,
-    sepalServerLog,
-    initialDelayMinutes,
-    autoRearmDelayHours,
-    notifyFrom,
-    emergencyNotificationRetryDelay,
-    emergencyNotificationRetryTimeout
-}
+    sepalServerLog}

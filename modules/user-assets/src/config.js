@@ -1,4 +1,5 @@
 import {Command, Option} from 'commander'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('config')
 
@@ -48,4 +49,4 @@ log.info('Configuration loaded')
 const redisUri = `redis://${redisHost}`
 const pollIntervalMilliseconds = pollIntervalMinutes * 60000
 
-export {redisUri, port, pollIntervalMilliseconds}
+export {pollIntervalMilliseconds, port, redisUri}

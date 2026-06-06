@@ -1,8 +1,10 @@
 import {spawn} from 'child_process'
-import {homeDir} from './config.js'
-import path from 'path'
 import fs from 'fs'
+import path from 'path'
+
 import {getLogger} from '#sepal/log'
+
+import {homeDir} from './config.js'
 const log = getLogger('filesystem')
 
 const command = async callback =>
@@ -73,5 +75,5 @@ const eraseUserStorage = async username => {
 }
 
 export {
-    calculateUserStorage, scanUserHomes, eraseUserStorage
-}
+    calculateUserStorage, eraseUserStorage,
+    scanUserHomes}

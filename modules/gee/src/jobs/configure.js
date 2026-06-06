@@ -1,7 +1,8 @@
-import {job} from '#gee/jobs/job'
-import {configure} from '#sepal/context'
-import {contextService, getContext$} from '#gee/jobs/service/context'
 import {tap} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import {contextService, getContext$} from '#gee/jobs/service/context'
+import {configure} from '#sepal/context'
 import {swallow} from '#sepal/rxjs'
 
 const worker$ = () => {

@@ -1,6 +1,7 @@
 import fs from 'fs/promises'
 import {from, switchMap} from 'rxjs'
-import {interactive, userKeyFile, sshCommandPath} from './config.js'
+
+import {interactive, sshCommandPath, userKeyFile} from './config.js'
 import {interactive$} from './interactive.js'
 import {nonInteractive$} from './nonInteractive.js'
 

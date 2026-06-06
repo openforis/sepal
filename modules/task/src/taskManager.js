@@ -1,12 +1,14 @@
-import {Subject, EMPTY, merge, of, mergeMap, shareReplay, filter, tap, switchMap, catchError} from 'rxjs'
+import {catchError, EMPTY, filter, merge, mergeMap, of, shareReplay, Subject, switchMap, tap} from 'rxjs'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('task')
-import executeTask$ from './taskRunner.js'
-import {lastInWindow, repeating} from '#sepal/rxjs'
-import {post$} from '#sepal/httpClient'
-import {getConfig, switchedToServiceAccount$} from './context.js'
 import {errorReport} from '#sepal/exception'
+import {post$} from '#sepal/httpClient'
+import {lastInWindow, repeating} from '#sepal/rxjs'
 import {tag} from '#sepal/tag'
+
+import {getConfig, switchedToServiceAccount$} from './context.js'
+import executeTask$ from './taskRunner.js'
 
 const taskTag = id => tag('Task', id)
 
@@ -128,4 +130,4 @@ task$.pipe(
     complete: () => log.fatal('Task stream completed unexpectedly')
 })
 
-export {submitTask, cancelTask}
+export {cancelTask, submitTask}

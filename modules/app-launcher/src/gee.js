@@ -1,7 +1,9 @@
 import fs from 'fs/promises'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('main')
 import path from 'path'
+
 import {geeEmail, geeKey, googleProjectId} from './config.js'
 
 const credentialsPath = path.join('/var/lib/sepal/app-launcher/service-account-credentials.json')

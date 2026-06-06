@@ -1,11 +1,13 @@
-import {calculateUserStorage, scanUserHomes} from './filesystem.js'
-import {redisHost, scanMinDelay, scanMaxDelay, scanDelayIncreaseFactor, scanConcurrency, scanMaxRetries, scanInitialRetryDelay} from './config.js'
-import {getSessionStatus, getSetUserStorage, DB, getUserStorage} from './kvstore.js'
-import {Queue, QueueEvents, Worker, Job} from 'bullmq'
+import {Job, Queue, QueueEvents, Worker} from 'bullmq'
 import {formatDistanceToNow} from 'date-fns'
-import {Subject} from 'rxjs'
 import {Redis} from 'ioredis'
+import {Subject} from 'rxjs'
+
 import {getLogger} from '#sepal/log'
+
+import {redisHost, scanConcurrency, scanDelayIncreaseFactor, scanInitialRetryDelay, scanMaxDelay, scanMaxRetries, scanMinDelay} from './config.js'
+import {calculateUserStorage, scanUserHomes} from './filesystem.js'
+import {DB, getSessionStatus, getSetUserStorage, getUserStorage} from './kvstore.js'
 const log = getLogger('storageCheck')
 
 const QUEUE = 'storage-check'
@@ -153,4 +155,4 @@ const startStorageCheck = async () => {
     })
 }
 
-export {scheduleStorageCheck, scanComplete$, startStorageCheck}
+export {scanComplete$, scheduleStorageCheck, startStorageCheck}

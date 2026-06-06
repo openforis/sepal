@@ -1,8 +1,10 @@
 import {firstValueFrom} from 'rxjs'
-import {sendFile} from './sendFile.js'
-import {staticLabextensionsMiddleware} from './labextensions.js'
-import {catalog$} from './apps.js'
+
 import {getLogger} from '#sepal/log'
+
+import {catalog$} from './apps.js'
+import {staticLabextensionsMiddleware} from './labextensions.js'
+import {sendFile} from './sendFile.js'
 const log = getLogger('routes')
 
 const sendApps = async ctx => {

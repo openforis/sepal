@@ -1,21 +1,23 @@
-import {toFeatureCollection} from '#sepal/ee/aoi'
-import {hasImagery as hasOpticalImagery} from '#sepal/ee/optical/collection'
-import {hasImagery as hasRadarImagery} from '#sepal/ee/radar/collection'
-import {hasImagery as hasPlanetImagery} from '#sepal/ee/planet/collection'
-import tile from '#sepal/ee/tile'
-import {exportImageToSepal$} from '../jobs/export/toSepal.js'
-import {mkdir$} from '#task/rxjs/fileSystem'
-import {concat, forkJoin, from, of, map, mergeMap, scan, switchMap, tap} from 'rxjs'
-import {swallow} from '#sepal/rxjs'
+import _ from 'lodash'
+import moment from 'moment'
 import Path from 'path'
+import {concat, forkJoin, from, map, mergeMap, of, scan, switchMap, tap} from 'rxjs'
+
+import {toFeatureCollection} from '#sepal/ee/aoi'
+import ee from '#sepal/ee/ee'
+import {hasImagery as hasOpticalImagery} from '#sepal/ee/optical/collection'
+import {hasImagery as hasPlanetImagery} from '#sepal/ee/planet/collection'
+import {hasImagery as hasRadarImagery} from '#sepal/ee/radar/collection'
+import tile from '#sepal/ee/tile'
+import {getCollection$} from '#sepal/ee/timeSeries/collection'
+import {getLogger} from '#sepal/log'
+import {swallow} from '#sepal/rxjs'
 import {terminal$} from '#sepal/terminal'
 import {sequence} from '#sepal/utils/array'
-import moment from 'moment'
-import ee from '#sepal/ee/ee'
 import {getCurrentContext$} from '#task/jobs/service/context'
-import {getCollection$} from '#sepal/ee/timeSeries/collection'
-import _ from 'lodash'
-import {getLogger} from '#sepal/log'
+import {mkdir$} from '#task/rxjs/fileSystem'
+
+import {exportImageToSepal$} from '../jobs/export/toSepal.js'
 const log = getLogger('task')
 import {setWorkloadTag} from './workloadTag.js'
 
@@ -23,22 +25,22 @@ const DATE_DELTA = 3
 const DATE_DELTA_UNIT = 'months'
 
 export const submit$ = (taskId, {description, image: {workspacePath, filenamePrefix, ...retrieveOptions}}) => {
-        setWorkloadTag(retrieveOptions.recipe)
-        return getCurrentContext$().pipe(
-            switchMap(({config}) => {
-                const exportPrefix = filenamePrefix || description
-                const preferredDownloadDir = workspacePath
-                    ? `${config.homeDir}/${workspacePath}/`
-                    : `${config.homeDir}/downloads/${description}/`
-                    // the UI already validated the path here, no need to have mkdirsafe here
-                return mkdir$(preferredDownloadDir, {recursive: true}).pipe(
-                    switchMap(downloadDir => {
-                        return export$(taskId, {description: exportPrefix, downloadDir, ...retrieveOptions})
-                    })
-                )
-            })
-        )
-    }
+    setWorkloadTag(retrieveOptions.recipe)
+    return getCurrentContext$().pipe(
+        switchMap(({config}) => {
+            const exportPrefix = filenamePrefix || description
+            const preferredDownloadDir = workspacePath
+                ? `${config.homeDir}/${workspacePath}/`
+                : `${config.homeDir}/downloads/${description}/`
+            // the UI already validated the path here, no need to have mkdirsafe here
+            return mkdir$(preferredDownloadDir, {recursive: true}).pipe(
+                switchMap(downloadDir => {
+                    return export$(taskId, {description: exportPrefix, downloadDir, ...retrieveOptions})
+                })
+            )
+        })
+    )
+}
 
 const export$ = (taskId, {
     downloadDir,

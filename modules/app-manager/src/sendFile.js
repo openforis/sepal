@@ -1,6 +1,6 @@
-import mime from 'mime-types'
 import fs from 'fs'
 import {stat} from 'fs/promises'
+import mime from 'mime-types'
 import moment from 'moment'
 
 const sendFile = (ctx, path) =>

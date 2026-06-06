@@ -1,6 +1,8 @@
 import {createClient} from 'redis'
-import {redisUri} from './config.js'
+
 import {getLogger} from '#sepal/log'
+
+import {redisUri} from './config.js'
 const log = getLogger('redis')
 
 const initializeRedis = async () => {

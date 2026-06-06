@@ -1,12 +1,13 @@
 import {getLogger} from '#sepal/log'
 const log = getLogger('proxy/cran')
-import httpProxy from 'http-proxy'
 import fs from 'fs'
 import {mkdir} from 'fs/promises'
+import httpProxy from 'http-proxy'
 import Path from 'path'
-import {getCranRepoPath, getCranTarget, toBinaryPackagePath, getCranPackageInfo} from './cran.js'
+
+import {getCranPackageInfo, getCranRepoPath, getCranTarget, toBinaryPackagePath} from './cran.js'
+import {checkTarget, serveError, serveFile} from './proxy-utils.js'
 import {enqueueBuildCranPackage} from './queue.js'
-import {serveFile, checkTarget, serveError} from './proxy-utils.js'
 
 const isPackage = name =>
     name !== 'PACKAGES'

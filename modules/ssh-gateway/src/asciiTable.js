@@ -1,5 +1,6 @@
-import {format} from './console.js'
 import _ from 'lodash'
+
+import {format} from './console.js'
 
 const th = cells => ({type: 'hr', cells})
 const tr = cells => ({type: 'tr', cells})
@@ -123,4 +124,4 @@ class AsciiTable {
 
 }
 
-export {table, th, tr, td}
+export {table, td, th, tr}

@@ -1,4 +1,5 @@
 import {Command, Option} from 'commander'
+
 import {getLogger} from '#sepal/log'
 const log = getLogger('config')
 
@@ -47,6 +48,6 @@ log.info('Configuration loaded')
 
 export {
     homeDir,
-    port,
     pollIntervalMilliseconds,
+    port,
 }
