@@ -5,7 +5,12 @@ import {mkdir$} from '#task/rxjs/fileSystem'
 import {getLogger} from '#sepal/log'
 const log = getLogger('context')
 import _ from 'lodash'
-import * as config from './config.js'
+import * as configModule from './config.js'
+
+// Plain-object snapshot: the namespace from `import *` is embedded in the
+// context sent across the worker transport, and Module namespaces are not
+// structured-cloneable.
+const config = {...configModule}
 
 const CREDENTIALS_FILE = 'credentials'
 

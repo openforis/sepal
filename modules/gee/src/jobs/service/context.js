@@ -8,7 +8,9 @@ const require = createRequire(import.meta.url)
 const contextService = {
     serviceName: 'ContextService',
     serviceHandler$: () => {
-        return of(require('#gee/config'))
+        // Spread into a plain object: require(esm) returns a Module namespace,
+        // which is not structured-cloneable across the worker-thread transport.
+        return of({...require('#gee/config')})
     }
 }
 
