@@ -1,14 +1,14 @@
 import {catchError, EMPTY, filter, merge, mergeMap, of, shareReplay, Subject, switchMap, tap} from 'rxjs'
 
-import {getLogger} from '#sepal/log'
-const log = getLogger('task')
 import {errorReport} from '#sepal/exception'
 import {post$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
 import {lastInWindow, repeating} from '#sepal/rxjs'
 import {tag} from '#sepal/tag'
 
 import {getConfig, switchedToServiceAccount$} from './context.js'
 import executeTask$ from './taskRunner.js'
+const log = getLogger('task')
 
 const taskTag = id => tag('Task', id)
 

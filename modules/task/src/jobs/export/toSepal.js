@@ -6,7 +6,6 @@ import {finalizeObservable, swallow} from '#sepal/rxjs'
 import {initUserBucket$} from '#task/cloudStorageBucket'
 import * as cloudStorage from '#task/cloudStorageDownload'
 import * as drive from '#task/drive'
-const log = getLogger('ee')
 import {task$} from '#task/ee/task'
 import {getCurrentContext$} from '#task/jobs/service/context'
 import {driveSerializer$} from '#task/jobs/service/driveSerializer'
@@ -14,6 +13,7 @@ import {exportLimiter$} from '#task/jobs/service/exportLimiter'
 import {gcsSerializer$} from '#task/jobs/service/gcsSerializer'
 
 import {drivePath} from './driveUtils.js'
+const log = getLogger('ee')
 
 const CONCURRENT_FILE_DOWNLOAD = 3
 

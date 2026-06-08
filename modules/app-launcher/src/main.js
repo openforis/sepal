@@ -1,14 +1,10 @@
-import logConfig from '#config/log.json' with {type: 'json'}
-import {configureServer, getLogger} from '#sepal/log'
-configureServer(logConfig)
-
 import express from 'express'
-
-const log = getLogger('main')
 import {createProxyMiddleware} from 'http-proxy-middleware'
 import _ from 'lodash'
 
+import logConfig from '#config/log.json' with {type: 'json'}
 import * as server from '#sepal/httpServer'
+import {configureServer, getLogger} from '#sepal/log'
 
 import {monitorApps} from './apps.js'
 import {managementPort, monitorEnabled, port} from './config.js'
@@ -17,6 +13,9 @@ import managementRoutes from './managementRoutes.js'
 import {proxyEndpoints$, registerUpgradeListener} from './proxy.js'
 import * as proxyManager from './proxyManager.js'
 import {getRequestUser} from './user.js'
+configureServer(logConfig)
+
+const log = getLogger('main')
 
 const startServer = () => {
     // This is the main server for the app launcher

@@ -3,9 +3,10 @@ import fs from 'fs/promises'
 import path from 'path'
 
 import {getLogger} from '#sepal/log'
-const log = getLogger('appsService')
+
 import {getCurrentCommitHash} from './git.js'
 import executeCommand from './terminal.js'
+const log = getLogger('appsService')
 
 const getAppPath = appName => `/var/lib/sepal/app-launcher/apps/${appName}`
 

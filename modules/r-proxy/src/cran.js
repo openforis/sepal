@@ -1,3 +1,4 @@
+import {compare} from 'compare-versions'
 import https from 'https'
 import {minimatch} from 'minimatch'
 import Path from 'path'
@@ -7,11 +8,9 @@ import {getLogger} from '#sepal/log'
 
 import {CRAN_ROOT, cranRepo, libPath} from './config.js'
 import {getFiles, isChildOf, isFile} from './filesystem.js'
+import {cleanupPackage, makePackage} from './package.js'
 import {runScript} from './script.js'
 const log = getLogger('cran')
-import {compare} from 'compare-versions'
-
-import {cleanupPackage, makePackage} from './package.js'
 
 const SRC = 'src/contrib'
 const BIN = 'bin/contrib'

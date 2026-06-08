@@ -1,13 +1,13 @@
+import {basename} from 'path'
 import {catchError, concatMap, defaultIfEmpty, defer, delay, EMPTY, exhaustMap, filter, from, interval, map, of, switchMap} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
-const log = getLogger('apps')
-import {basename} from 'path'
 
 import {fetchCatalog$} from './apiService.js'
 import {appsCatalogUrl} from './config.js'
 import {fileToJson$} from './file.js'
 import {exec$} from './terminal.js'
+const log = getLogger('apps')
 
 const APPS_FILE = '/var/lib/sepal/app-manager/apps.json'
 

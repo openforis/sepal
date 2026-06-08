@@ -7,9 +7,10 @@ import {pipeline} from 'stream/promises'
 import {createGunzip} from 'zlib'
 
 import {getLogger} from '#sepal/log'
-const log = getLogger('csv')
+
 import {remove} from './filesystem.js'
 import {formatInterval} from './time.js'
+const log = getLogger('csv')
 
 const getPath = filename =>
     `${process.env.MYSQL_FILES_DIR}/${filename}`

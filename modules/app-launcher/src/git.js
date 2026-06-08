@@ -1,10 +1,10 @@
 import fs from 'fs/promises'
 
-import {getLogger} from '#sepal/log'
-const log = getLogger('git')
 import {ClientException} from '#sepal/exception'
+import {getLogger} from '#sepal/log'
 
 import executeCommand from './terminal.js'
+const log = getLogger('git')
 
 const MAX_RETRIES = 3
 const RETRY_DELAY_MS = 5000

@@ -4,8 +4,9 @@ import {Readable} from 'stream'
 import {pipeline} from 'stream/promises'
 
 import {getLogger} from '#sepal/log'
-const log = getLogger('filesystem')
+
 import {formatInterval} from './time.js'
+const log = getLogger('filesystem')
 
 const getPath = filename =>
     `${process.env.MYSQL_FILES_DIR}/${filename}`

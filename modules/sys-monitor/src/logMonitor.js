@@ -1,15 +1,13 @@
+import _ from 'lodash'
+import {debounceTime, groupBy, map, mergeMap, Subject, tap} from 'rxjs'
 import Tail from 'tail-file'
 
+import rules from '#config/logMonitor.json' with {type: 'json'}
 import {getLogger} from '#sepal/log'
 
 import {autoRearmDelayHours, sepalServerLog} from './config.js'
-const log = getLogger('logMonitor')
-import _ from 'lodash'
-import {debounceTime, groupBy, map, mergeMap, Subject, tap} from 'rxjs'
-
-import rules from '#config/logMonitor.json' with {type: 'json'}
-
 import {notify} from './pushover.js'
+const log = getLogger('logMonitor')
 
 const tag$ = new Subject()
 

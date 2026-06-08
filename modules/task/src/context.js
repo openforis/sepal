@@ -1,13 +1,13 @@
 import fs from 'fs'
+import _ from 'lodash'
 import path from 'path'
 import {BehaviorSubject, catchError, EMPTY, filter, map, pairwise, switchMap, tap, timer} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
 import {mkdir$} from '#task/rxjs/fileSystem'
-const log = getLogger('context')
-import _ from 'lodash'
 
 import * as configModule from './config.js'
+const log = getLogger('context')
 
 // Plain-object snapshot: the namespace from `import *` is embedded in the
 // context sent across the worker transport, and Module namespaces are not

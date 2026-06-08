@@ -1,12 +1,11 @@
 import _ from 'lodash'
-
-import {getLogger} from '#sepal/log'
-const log = getLogger('asset')
 import {map} from 'rxjs'
 
 import {delete$, get$, postJson$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
 
 import {userTag} from './tag.js'
+const log = getLogger('asset')
 
 const GEE_ENDPOINT = 'http://gee'
 const LIST_ASSETS_URL = `${GEE_ENDPOINT}/asset/descendants`

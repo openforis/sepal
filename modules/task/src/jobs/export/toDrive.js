@@ -4,13 +4,13 @@ import ee from '#sepal/ee/ee'
 import {getLogger} from '#sepal/log'
 import {swallow} from '#sepal/rxjs'
 import * as drive from '#task/drive'
-const log = getLogger('ee')
 import {task$} from '#task/ee/task'
 import {getCurrentContext$} from '#task/jobs/service/context'
 import {driveSerializer$} from '#task/jobs/service/driveSerializer'
 import {exportLimiter$} from '#task/jobs/service/exportLimiter'
 
 import {drivePath} from './driveUtils.js'
+const log = getLogger('ee')
 
 const createDriveFolder$ = folder =>
     defer(() => driveSerializer$(

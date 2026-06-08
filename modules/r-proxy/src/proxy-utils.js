@@ -1,9 +1,10 @@
-import {getLogger} from '#sepal/log'
-const log = getLogger('proxy')
 import fs from 'fs'
 import {stat} from 'fs/promises'
 import https from 'https'
 import Path from 'path'
+
+import {getLogger} from '#sepal/log'
+const log = getLogger('proxy')
 
 const checkTarget = (url, {allowRedirect} = {}) =>
     new Promise((resolve, reject) => {

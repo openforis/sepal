@@ -1,9 +1,9 @@
 import {program} from 'commander'
 import fs from 'fs'
+import _ from 'lodash'
 
 import {getLogger} from '#sepal/log'
 const log = getLogger('config')
-import _ from 'lodash'
 
 const DEFAULT_PORT = 80
 

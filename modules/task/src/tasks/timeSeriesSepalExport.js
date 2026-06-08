@@ -18,8 +18,8 @@ import {getCurrentContext$} from '#task/jobs/service/context'
 import {mkdir$} from '#task/rxjs/fileSystem'
 
 import {exportImageToSepal$} from '../jobs/export/toSepal.js'
-const log = getLogger('task')
 import {setWorkloadTag} from './workloadTag.js'
+const log = getLogger('task')
 
 const DATE_DELTA = 3
 const DATE_DELTA_UNIT = 'months'

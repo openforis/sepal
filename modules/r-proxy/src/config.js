@@ -1,11 +1,11 @@
 import {program} from 'commander'
+import {mkdirSync} from 'fs'
+import _ from 'lodash'
+import os from 'os'
 import Path from 'path'
 
 import {getLogger} from '#sepal/log'
 const log = getLogger('config')
-import {mkdirSync} from 'fs'
-import _ from 'lodash'
-import os from 'os'
 
 const DEFAULT_HTTP_PORT = 80
 const DEFAULT_AUTO_UPDATE_INTERVAL_HOURS = 24
