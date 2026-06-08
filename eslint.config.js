@@ -1,8 +1,8 @@
-const globals = require('globals')
-const js = require('@eslint/js')
-const stylistic = require('@stylistic/eslint-plugin')
-const simpleImportSort = require('eslint-plugin-simple-import-sort')
-const importPlugin = require('eslint-plugin-import-x')
+import js from '@eslint/js'
+import stylistic from '@stylistic/eslint-plugin'
+import importPlugin from 'eslint-plugin-import-x'
+import simpleImportSort from 'eslint-plugin-simple-import-sort'
+import globals from 'globals'
 
 const baseConfig = {
     files: ['**/*.js'],
@@ -53,4 +53,4 @@ const baseConfig = {
     }
 }
 
-module.exports = [baseConfig]
+export default [baseConfig]
