@@ -1,7 +1,6 @@
 {
     "port": 5000,
     "categories": {
-        "config": "info",
         "csv": "info",
         "database": "info",
         "filesystem": "info",

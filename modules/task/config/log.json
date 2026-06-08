@@ -4,7 +4,6 @@
         "channel-forward": "info",
         "channel-reverse": "info",
         "cloudStorage": "info",
-        "config": "info",
         "context": "info",
         "default": "info",
         "ee": "info",

@@ -2,7 +2,6 @@
     "port": 5000,
     "categories": {
         "cache": "info",
-        "config": "info",
         "email": "info",
         "emailQueue": "info",
         "http/server": "info",
