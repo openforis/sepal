@@ -46,6 +46,10 @@ const baseConfig = {
         'simple-import-sort/exports': 'error',
         'import/no-duplicates': 'error',
         'import/first': 'error',
+        'import/named': 'error',
+        'import/default': 'error',
+        'import/namespace': 'error',
+        'import/extensions': ['error', 'ignorePackages', {js: 'always'}],
     }
 }
 

@@ -20,11 +20,11 @@ const __filename = fileURLToPath(import.meta.url)
 const log = getLogger('task')
 
 const tasks = {
-    'image.GEE': () => require('./tasks/imageAssetExport'),
-    'image.SEPAL': () => require('./tasks/imageSepalExport'),
-    'image.DRIVE': () => require('./tasks/imageDriveExport'),
-    'timeseries.download': () => require('./tasks/timeSeriesSepalExport'),
-    'ccdc.GEE': () => require('./tasks/ccdcAssetExport')
+    'image.GEE': () => require('./tasks/imageAssetExport.js'),
+    'image.SEPAL': () => require('./tasks/imageSepalExport.js'),
+    'image.DRIVE': () => require('./tasks/imageDriveExport.js'),
+    'timeseries.download': () => require('./tasks/timeSeriesSepalExport.js'),
+    'ccdc.GEE': () => require('./tasks/ccdcAssetExport.js')
 }
 
 const taskTag = id => tag('Task', id)

@@ -2,7 +2,7 @@ import _ from 'lodash'
 import moment from 'moment'
 import {concat, forkJoin, of, switchMap, tap} from 'rxjs'
 
-import {toGeometry$} from '#sepal/ee/aoi'
+import {toGeometry} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {swallow} from '#sepal/rxjs'
@@ -38,11 +38,11 @@ export const submit$ = (taskId, {description, recipe, assetId, strategy}) => {
             : {type: 'ASSET', id: stratification.assetId}
         const bandName = stratification.band
         const stratification$ = ImageFactory(stratificationRecipe, {selection: [bandName]}).getImage$()
-        const geometry$ = toGeometry$(aoi)
+        const geometry = toGeometry(aoi)
 
         return forkJoin({
             stratification: stratification$,
-            region: geometry$
+            region: of(geometry)
         }).pipe(
             switchMap(({stratification, region}) => {
                 const samples = stratifiedSystematicSample({
