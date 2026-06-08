@@ -3,8 +3,7 @@ import {defer, first, map, of, switchMap} from 'rxjs'
 
 import * as http from '#sepal/httpClient'
 import {getLogger} from '#sepal/log'
-import {autoRetry} from '#sepal/rxjs'
-import {fromPromise} from '#sepal/rxjs'
+import {autoRetry, fromPromise} from '#sepal/rxjs'
 import {getCurrentContext$} from '#task/jobs/service/context'
 
 import {cloudStorage$} from './cloudStorage.js'

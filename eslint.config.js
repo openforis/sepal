@@ -2,6 +2,7 @@ const globals = require('globals')
 const js = require('@eslint/js')
 const stylistic = require('@stylistic/eslint-plugin')
 const simpleImportSort = require('eslint-plugin-simple-import-sort')
+const importPlugin = require('eslint-plugin-import-x')
 
 const baseConfig = {
     files: ['**/*.js'],
@@ -15,6 +16,7 @@ const baseConfig = {
     plugins: {
         '@stylistic': stylistic,
         'simple-import-sort': simpleImportSort,
+        'import': importPlugin,
     },
     rules: {
         ...js.configs.recommended.rules,
@@ -42,6 +44,7 @@ const baseConfig = {
         'no-unused-vars': ['error', {argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_'}],
         'simple-import-sort/imports': 'error',
         'simple-import-sort/exports': 'error',
+        'import/no-duplicates': 'error',
     }
 }
 

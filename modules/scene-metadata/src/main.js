@@ -2,7 +2,7 @@ import {subHours} from 'date-fns/subHours'
 import {catchError, EMPTY, exhaustMap, from, timer} from 'rxjs'
 
 import logConfig from '#config/log.json' with {type: 'json'}
-import {configureServer} from '#sepal/log'
+import {configureServer, getLogger} from '#sepal/log'
 
 import {minHoursPublished, updateIntervalMinutes} from './config.js'
 import {initializeDatabase} from './database.js'
@@ -16,7 +16,6 @@ configureServer(logConfig)
 
 const INITIAL_UPDATE_DELAY_SECONDS = 10
 
-import {getLogger} from '#sepal/log'
 const log = getLogger('main')
 
 const download = async () => {

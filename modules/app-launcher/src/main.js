@@ -1,10 +1,9 @@
 import logConfig from '#config/log.json' with {type: 'json'}
-import {configureServer} from '#sepal/log'
+import {configureServer, getLogger} from '#sepal/log'
 configureServer(logConfig)
 
 import express from 'express'
 
-import {getLogger} from '#sepal/log'
 const log = getLogger('main')
 import {createProxyMiddleware} from 'http-proxy-middleware'
 import _ from 'lodash'
