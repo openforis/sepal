@@ -83,14 +83,20 @@ const getRepoInfo = async appPath => {
     const {stdout: originUrlRaw} = await executeCommand(
         'git', ['config', '--get', 'remote.origin.url'], {cwd: appPath}
     )
-    const {stdout: rawBranch} = await executeCommand(
-        'git', ['rev-parse', '--abbrev-ref', 'HEAD'], {cwd: appPath}
-    )
     const originUrl = originUrlRaw.trim()
-    const detached = rawBranch.trim() === 'HEAD'
 
-    let branch = rawBranch.trim()
-    if (detached) {
+    let branch = null
+    let detached = false
+    try {
+        const {stdout: symref} = await executeCommand(
+            'git', ['symbolic-ref', '-q', '--short', 'HEAD'], {cwd: appPath}
+        )
+        branch = symref.trim() || null
+    } catch (_e) {
+        // exits non-zero on detached HEAD
+    }
+    if (!branch) {
+        detached = true
         branch = commitId.trim().slice(0, 7)
         try {
             const {stdout: containing} = await executeCommand(
