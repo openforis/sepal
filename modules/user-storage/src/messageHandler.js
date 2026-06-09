@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import {catchError, debounceTime, EMPTY, filter, from, groupBy, mergeMap, Subject, switchMap} from 'rxjs'
-import {CLIENT_UP, USER_DOWN} from 'sepal/src/event/definitions'
 
+import {CLIENT_UP, USER_DOWN} from '#sepal/event/definitions'
 import {getLogger} from '#sepal/log'
 
 import {cancelInactivityCheck, scheduleInactivityCheck} from './inactivityCheck.js'
