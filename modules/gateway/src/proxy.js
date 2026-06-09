@@ -87,11 +87,6 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                             proxyReq.setHeader('Cache-Control', 'no-cache, max-age=0')
                         }
                     },
-                    proxyReqWs: (proxyReq, _req, _socket, _options, _head) => {
-                        // HACK: this is a workaround for stripping the base path in the websocket case
-                        // https://github.com/chimurai/http-proxy-middleware/issues/978
-                        proxyReq.path = proxyReq.path.replace(path, '')
-                    },
                     proxyRes: (proxyRes, _req, _res) => {
                         if (rewrite) {
                             const location = proxyRes.headers['location']
