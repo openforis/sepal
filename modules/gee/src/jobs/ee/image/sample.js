@@ -1,5 +1,4 @@
 import {expand, forkJoin, last, map, switchMap, takeWhile} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
@@ -7,8 +6,7 @@ import {EEException} from '#sepal/ee/exception'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {getRows$} from '#sepal/ee/table'
 import {getLogger} from '#sepal/log'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {recipeToSample, count, scale, classBand, recipe, bands}
@@ -126,6 +124,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'Sample image',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

@@ -1,10 +1,8 @@
 import _ from 'lodash'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {id}
@@ -14,6 +12,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'EE delete asset',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

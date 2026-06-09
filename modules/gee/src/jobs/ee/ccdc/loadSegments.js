@@ -1,14 +1,12 @@
 import _ from 'lodash'
 import {map, of, switchMap} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import {toGeometry} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import imageFactory from '#sepal/ee/imageFactory'
 import ccdc from '#sepal/ee/timeSeries/ccdc'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {recipe, latLng, bands}
@@ -60,6 +58,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'LoadCCDCSegments',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

@@ -1,13 +1,11 @@
 import _ from 'lodash'
 import {map, mergeMap, of, switchMap, toArray} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import {toGeometry} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import {getCollection$} from '#sepal/ee/timeSeries/collection'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const CHUNK_SIZE = 100
 
@@ -63,6 +61,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'Load observations',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

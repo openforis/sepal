@@ -1,12 +1,10 @@
 import _ from 'lodash'
 import {catchError, forkJoin, map, of, switchMap, throwError} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
 import {ClientException, NotFoundException} from '#sepal/exception'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {asset, allowedTypes}
@@ -93,6 +91,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'EE asset metadata',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

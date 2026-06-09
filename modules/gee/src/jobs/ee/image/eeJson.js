@@ -1,11 +1,9 @@
 import {map, switchMap} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {loadRecipe$} from '#sepal/ee/recipe'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {recipeId}
@@ -19,6 +17,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'EE image JSON',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

@@ -1,13 +1,11 @@
 import _ from 'lodash'
 import {map, switchMap} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import classify from '#sepal/ee/classification/classification'
 import ee from '#sepal/ee/ee'
 import {getRows$} from '#sepal/ee/table'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const PROBABILITY_THRESHOLD = 75
 const NUMBER_OF_POINTS = 5
@@ -48,6 +46,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'NextReferenceDataPoints',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

@@ -1,14 +1,14 @@
-import {dirname, join} from 'path'
-import {fileURLToPath} from 'url'
+import {join} from 'path'
 
 import {createPool, initDatabase} from '#sepal/db/mysql'
 import {getLogger} from '#sepal/log'
+import {dirName} from '#sepal/path'
 const log = getLogger('database')
 
 const DATABASE_NAME = 'user_storage'
 const TABLE_NAME = 'history'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+const __dirname = dirName(import.meta.url)
 
 const state = {}
 

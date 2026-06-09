@@ -1,13 +1,11 @@
 import _ from 'lodash'
 import {catchError, map, merge, mergeMap, of, switchMap, toArray} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
 import * as http from '#sepal/httpClient'
 import {getLogger} from '#sepal/log'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {id},
@@ -89,6 +87,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'EE list assets',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

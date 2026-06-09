@@ -1,11 +1,9 @@
 import {of} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import {toGeometry} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {aoi}
@@ -27,6 +25,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'AOI Bounds',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

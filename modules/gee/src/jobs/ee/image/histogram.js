@@ -1,12 +1,10 @@
 import {switchMap} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import {toGeometry} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const MAX_BUCKETS = Math.pow(2, 8)
 const MAX_PIXELS = 1e5
@@ -49,6 +47,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'EE image histogram',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

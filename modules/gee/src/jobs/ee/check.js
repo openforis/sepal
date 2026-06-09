@@ -1,12 +1,10 @@
 import {google} from 'googleapis'
 import {catchError, from, map, switchMap, throwError} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
 import {ClientException, ERROR_CODES} from '#sepal/exception'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const REQUIRED_SCOPES = [
     'https://www.googleapis.com/auth/cloudplatformprojects.readonly',
@@ -49,6 +47,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'EE check',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

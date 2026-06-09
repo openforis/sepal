@@ -1,12 +1,10 @@
 import _ from 'lodash'
 import {forkJoin, map} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
 import {filterTable} from '#sepal/ee/table'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {tableId, columnName, columnValue, buffer, color = '#FFFFFF50', fillColor = '#FFFFFF08'}
@@ -31,6 +29,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'Request EE Table map',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

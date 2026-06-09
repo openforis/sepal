@@ -1,11 +1,9 @@
 import _ from 'lodash'
 import {map} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     credentials: {sepalUser: {googleTokens}}
@@ -27,6 +25,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'EE completed tasks',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

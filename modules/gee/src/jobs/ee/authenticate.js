@@ -1,17 +1,15 @@
 import {createRequire} from 'module'
 import {of, switchMap} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
 import {eeLimiterService} from '#sepal/ee/eeLimiterService'
 import {getLogger} from '#sepal/log'
+import {fileName} from '#sepal/path'
 import {swallow} from '#sepal/rxjs'
 import {tag} from '#sepal/tag'
 
 const require = createRequire(import.meta.url)
-const __filename = fileURLToPath(import.meta.url)
-
 const DEFAULT_MAX_RETRIES = 3
 
 /*
@@ -19,7 +17,7 @@ To use highvolume endpoint, configure initArgs in worker:
 
     export default job({
         jobName: 'Some job name',
-        jobPath: __filename,
+        jobPath: fileName(import.meta.url),
         initArgs: () => ({eeEndpoint: 'https://earthengine-highvolume.googleapis.com'}),
         worker$
     })

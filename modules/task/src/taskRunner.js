@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import {createRequire} from 'module'
 import {BehaviorSubject, catchError, concat, distinctUntilChanged, first, map, of, takeUntil, tap, throwError} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {getLogger} from '#sepal/log'
+import {fileName} from '#sepal/path'
 import {finalizeObservable$} from '#sepal/rxjs'
 import {tag} from '#sepal/tag'
 import {job} from '#task/jobs/job'
@@ -15,8 +15,6 @@ import {gcsSerializerService} from '#task/jobs/service/gcsSerializer'
 
 // Lazy task/job loading (require(esm)) defers loading and breaks cycles.
 const require = createRequire(import.meta.url)
-const __filename = fileURLToPath(import.meta.url)
-
 const log = getLogger('task')
 
 const tasks = {
@@ -111,7 +109,7 @@ const worker$ = ({
 // Execute in worker
 export default job({
     jobName: 'execute task',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     before: [require('#task/jobs/configure').default, require('#task/jobs/ee/initialize').default],
     services: [contextService, exportLimiterService, driveLimiterService, driveSerializerService, gcsSerializerService],
     args: ({task}) => ({task}),

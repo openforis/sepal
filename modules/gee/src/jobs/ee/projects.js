@@ -1,10 +1,8 @@
 import {map} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import * as http from '#sepal/httpClient'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     credentials: {sepalUser: {googleTokens}}
@@ -29,7 +27,7 @@ const worker$ = ({
 
 export default job({
     jobName: 'EE projects',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$,
     before: []
 })

@@ -1,12 +1,10 @@
 import {catchError, of, switchMap, throwError} from 'rxjs'
-import {fileURLToPath} from 'url'
 
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
 import {EEException} from '#sepal/ee/exception'
 import {ClientException, NotFoundException} from '#sepal/exception'
-
-const __filename = fileURLToPath(import.meta.url)
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {tableId}
@@ -61,6 +59,6 @@ const worker$ = ({
 
 export default job({
     jobName: 'Get table columns',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })
