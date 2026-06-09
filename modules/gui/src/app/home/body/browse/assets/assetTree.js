@@ -1,4 +1,4 @@
-import {STree} from '~/tree/sTree'
+import {STree} from '#sepal/tree/sTree'
 
 const create = () =>
     STree.createRoot({type: 'Folder', opened: true})
