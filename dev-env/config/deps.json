@@ -78,6 +78,9 @@
         "run": false
     },
     "gui": {
+        "lib": [
+            "shared"
+        ],
         "build": {},
         "run": [
             "logger"

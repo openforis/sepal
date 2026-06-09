@@ -4,6 +4,7 @@
     "private": true,
     "type": "module",
     "dependencies": {
+        "sepal": "../../lib/js/shared",
         "@casbin/expression-eval": "^5.3.0",
         "@codemirror/commands": "^6.10.3",
         "@codemirror/lang-javascript": "^6.2.5",
@@ -98,5 +99,9 @@
     "overrides": {
         "react": "$react",
         "react-dom": "$react-dom"
+    },
+    "imports": {
+        "#sepal/*": "sepal/src/*.js",
+        "#sepal/*.json": "sepal/src/*.json"
     }
 }
