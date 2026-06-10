@@ -3825,7 +3825,8 @@
               },
               "maxAngle": {
                 "label": ""
-              }
+              },
+              "minBeforeMax": ""
             },
             "spatialSpeckleFilter": {
               "label": "",
