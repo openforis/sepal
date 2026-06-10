@@ -1,4 +1,4 @@
-const {projectLoadedRecipe} = require('#mcp/chat/tools/recipeProjection')
+import {projectLoadedRecipe} from '#mcp/chat/tools/recipeProjection'
 
 describe('recipe projection', () => {
 

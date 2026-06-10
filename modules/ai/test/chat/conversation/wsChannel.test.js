@@ -1,10 +1,11 @@
-const {Subject} = require('rxjs')
-const {createWsChannel} = require('#mcp/chat/conversation/wsChannel')
-const {
+import {Subject} from 'rxjs'
+
+import {
     assistantNotice, chatResponseComplete, chatResponseDelta,
     conversationClaimed, conversationCreated, conversationDeleted, conversationLoaded,
-    conversationUpdated, conversationsList, guiAction, status, toolEnd, toolStart, userMessage
-} = require('#mcp/chat/channelEvents')
+    conversationsList, conversationUpdated, guiAction, status, toolEnd, toolStart, userMessage
+} from '#mcp/chat/channelEvents'
+import {createWsChannel} from '#mcp/chat/conversation/wsChannel'
 
 describe('WS channel adapter — dispatch', () => {
 

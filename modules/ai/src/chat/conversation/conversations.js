@@ -3,12 +3,12 @@
 // in memory, only written to Redis on first turn), and CRUD channel
 // events.
 
-const {EMPTY, concat, concatMap, defer, filter, from, of} = require('rxjs')
-const {
-    TARGETED,
-    conversationCreated, conversationClaimed, conversationLoaded,
-    conversationDeleted, conversationPendingActionCreated, conversationsList, status
-} = require('../channelEvents')
+import {concat, concatMap, defer, EMPTY, filter, from, of} from 'rxjs'
+
+import {
+    conversationClaimed, conversationCreated, conversationDeleted, conversationLoaded,
+    conversationPendingActionCreated, conversationsList, status,
+    TARGETED} from '../channelEvents.js'
 
 function createConversations({conversationsStore, conversationFor$, createId, clock, pendingActions}) {
     const instances = new Map()
@@ -115,4 +115,4 @@ function createConversations({conversationsStore, conversationFor$, createId, cl
     }
 }
 
-module.exports = {createConversations}
+export {createConversations}

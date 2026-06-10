@@ -1,6 +1,8 @@
-const {firstValueFrom} = require('rxjs')
-const {createRedisHistory} = require('#mcp/chat/conversation/redisHistory')
-const {aFakeRedis} = require('./fakeRedis')
+import {firstValueFrom} from 'rxjs'
+
+import {createRedisHistory} from '#mcp/chat/conversation/redisHistory'
+
+import {aFakeRedis} from './fakeRedis.js'
 
 describe('Redis history adapter', () => {
 

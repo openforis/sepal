@@ -99,4 +99,4 @@ function truncate(value, maxChars) {
     return value.length <= maxChars ? value : `${value.slice(0, maxChars)}...`
 }
 
-module.exports = {compactJson, handleValuesSummary, recipeStateSummary}
+export {compactJson, handleValuesSummary, recipeStateSummary}

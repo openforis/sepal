@@ -1,4 +1,4 @@
-const {cleanTitle} = require('#mcp/chat/conversation/cleanTitle')
+import {cleanTitle} from '#mcp/chat/conversation/cleanTitle'
 
 describe('cleanTitle', () => {
 

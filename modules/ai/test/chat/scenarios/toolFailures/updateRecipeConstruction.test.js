@@ -1,5 +1,6 @@
-const {throwError} = require('rxjs')
-const {aToolFactoryHarness, aFakeGuiRequests} = require('../../harness')
+import {throwError} from 'rxjs'
+
+import {aFakeGuiRequests, aToolFactoryHarness} from '../../harness.js'
 
 describe('update_recipe construction and preflight', () => {
 

@@ -48,4 +48,4 @@ function isObject(value) {
     return value !== null && typeof value === 'object'
 }
 
-module.exports = {parsePointer, resolvePointer, formatPointer, PointerNotFound}
+export {formatPointer, parsePointer, PointerNotFound, resolvePointer}

@@ -49,4 +49,4 @@ function aFakeRedis() {
     }
 }
 
-module.exports = {aFakeRedis}
+export {aFakeRedis}

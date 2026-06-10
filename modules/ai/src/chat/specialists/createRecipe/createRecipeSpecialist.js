@@ -1,6 +1,6 @@
-const {specialistPrompt} = require('../../llmText/prompts')
-const {createSpecialistRuntime} = require('../runSpecialist')
-const {scopeInnerTools} = require('../specialistScope')
+import {specialistPrompt} from '../../llmText/prompts.js'
+import {createSpecialistRuntime} from '../runSpecialist.js'
+import {scopeInnerTools} from '../specialistScope.js'
 
 const ALLOWED_INNER_TOOLS = ['create_recipe_values', 'aoi_list_countries', 'aoi_list_country_areas']
 
@@ -84,4 +84,4 @@ function narrowSchema(schema, hidden) {
     return {...schema, parameters: {...schema.parameters, properties, required}}
 }
 
-module.exports = {createCreateRecipeSpecialist}
+export {createCreateRecipeSpecialist}

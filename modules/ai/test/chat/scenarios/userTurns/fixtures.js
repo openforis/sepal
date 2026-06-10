@@ -9,4 +9,4 @@ const projectListSchema = {
     parameters: {type: 'object', properties: {}, additionalProperties: true}
 }
 
-module.exports = {recipeListSchema, projectListSchema}
+export {projectListSchema, recipeListSchema}

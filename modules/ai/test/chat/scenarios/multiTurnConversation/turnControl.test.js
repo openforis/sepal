@@ -1,5 +1,6 @@
-const {Subject} = require('rxjs')
-const {aUserChatHarness, aControllableLlm, run} = require('../../harness')
+import {Subject} from 'rxjs'
+
+import {aControllableLlm, aUserChatHarness, run} from '../../harness.js'
 
 describe('turn sequencing and abort', () => {
 

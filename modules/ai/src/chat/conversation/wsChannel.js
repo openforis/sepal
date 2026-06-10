@@ -50,4 +50,4 @@ function formatSummary(kind, payload) {
     return kind
 }
 
-module.exports = {createWsChannel}
+export {createWsChannel}

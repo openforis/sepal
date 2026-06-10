@@ -1,4 +1,4 @@
-const {parsePointer, resolvePointer, formatPointer} = require('#mcp/chat/tools/jsonPointer')
+import {formatPointer, parsePointer, resolvePointer} from '#mcp/chat/tools/jsonPointer'
 
 describe('JSON Pointer (RFC 6901)', () => {
 

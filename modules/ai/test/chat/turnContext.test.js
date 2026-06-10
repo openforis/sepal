@@ -1,4 +1,4 @@
-const {shapeTurnContext, turnContextMessage} = require('#mcp/chat/turnContext')
+import {shapeTurnContext, turnContextMessage} from '#mcp/chat/turnContext'
 
 describe('turn context', () => {
 

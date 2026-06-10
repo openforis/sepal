@@ -1,4 +1,4 @@
-const {Subject, catchError, defer, tap, throwError} = require('rxjs')
+import {catchError, defer, Subject, tap, throwError} from 'rxjs'
 
 function createEventBus({clock, createId} = {}) {
     const subject = new Subject()
@@ -76,4 +76,4 @@ function formatAttrs(attrs) {
     return entries.map(([k, v]) => `${k}=${v}`).join(' ') + ' '
 }
 
-module.exports = {createEventBus}
+export {createEventBus}

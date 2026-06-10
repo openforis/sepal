@@ -1,8 +1,12 @@
 // Loader for project prompt assets. Fails fast on missing or empty
 // files.
 
-const fs = require('fs')
-const path = require('path')
+import fs from 'fs'
+import path from 'path'
+
+import {dirName} from '#sepal/path'
+
+const __dirname = dirName(import.meta.url)
 
 function loadPromptFile(filePath) {
     const content = fs.readFileSync(filePath, 'utf8')
@@ -36,4 +40,4 @@ function updateSummarySystemPrompt() {
     return loadPrompt('updateSummary')
 }
 
-module.exports = {loadPromptFile, loadPrompt, specialistPrompt, mainSystemPrompt, titleSystemPrompt, emptyAfterToolHint, updateSummarySystemPrompt}
+export {emptyAfterToolHint, loadPrompt, loadPromptFile, mainSystemPrompt, specialistPrompt, titleSystemPrompt, updateSummarySystemPrompt}

@@ -58,4 +58,4 @@ function resolveRef(ref, root) {
     return segments.reduce((current, segment) => current[segment], root)
 }
 
-module.exports = {valueLabelsFromSchema}
+export {valueLabelsFromSchema}

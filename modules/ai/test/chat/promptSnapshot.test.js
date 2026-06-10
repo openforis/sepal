@@ -1,4 +1,5 @@
-const {renderPromptSnapshot} = require('#mcp/chat/promptSnapshot')
+import {renderPromptSnapshot} from '#mcp/chat/promptSnapshot'
+import {pickerSystemPrompt} from '#mcp/chat/specialists/updateRecipe/pickHandles'
 
 describe('renderPromptSnapshot', () => {
 
@@ -78,7 +79,6 @@ describe('renderPromptSnapshot', () => {
         })
 
         it('preserves real prompt content up to the snapshot cap (the picker prompt + full MOSAIC handle catalog survives intact)', () => {
-            const {pickerSystemPrompt} = require('#mcp/chat/specialists/updateRecipe/pickHandles')
             const realSystemPrompt = pickerSystemPrompt('MOSAIC')
 
             const out = renderPromptSnapshot({
@@ -133,7 +133,7 @@ describe('renderPromptSnapshot', () => {
             expect(out).toContain('"properties":{"recipeId":{"type":"string"}}')
         })
 
-        it("renders 'tools: (none)' when the tool list is empty", () => {
+        it('renders \'tools: (none)\' when the tool list is empty', () => {
             const out = renderPromptSnapshot({messages: [], tools: []})
 
             expect(out).toContain('tools: (none)')

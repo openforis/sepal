@@ -1,5 +1,6 @@
-const {of} = require('rxjs')
-const {aConversationHarness, collect, firstValue} = require('../../harness')
+import {of} from 'rxjs'
+
+import {aConversationHarness, collect, firstValue} from '../../harness.js'
 
 // Reasoning_content round-trips on assistant turns: it persists to history,
 // rides back to the LLM on the next round, and is stripped from the

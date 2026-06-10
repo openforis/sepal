@@ -1,11 +1,12 @@
 // OpenAI-compatible Chat Completions provider adapter. Unrolls the
 // streamed response into {textDelta, toolCall} events for the domain.
 
-const {EMPTY, concat, defer, filter, finalize, from, map, mergeMap, tap, timeout} = require('rxjs')
-const OpenAI = require('openai').default
-const {createDiagnostics, newCallId, shortHashOf} = require('../../diagnostics')
-const {publishResponseSummary} = require('../events')
-const {publishLlmUsage} = require('../usage')
+import OpenAI from 'openai'
+import {concat, defer, EMPTY, filter, finalize, from, map, mergeMap, tap, timeout} from 'rxjs'
+
+import {createDiagnostics, newCallId, shortHashOf} from '../../diagnostics.js'
+import {publishResponseSummary} from '../events.js'
+import {publishLlmUsage} from '../usage.js'
 
 const FIRST_CHUNK_TIMEOUT_MS = 60_000
 const BETWEEN_CHUNKS_TIMEOUT_MS = 30_000
@@ -415,4 +416,4 @@ function missingRequiredArgs(input, parameters) {
     return parameters.required.filter(key => !Object.prototype.hasOwnProperty.call(input, key))
 }
 
-module.exports = {createOpenAiChatCompletions}
+export {createOpenAiChatCompletions}

@@ -1,18 +1,19 @@
-const {of} = require('rxjs')
+import {jest} from '@jest/globals'
+import {of} from 'rxjs'
 
 const mockOpenAiRespondTo = jest.fn()
 const mockNativeRespondTo = jest.fn()
 
-jest.mock('#mcp/chat/llm/providers/openaiChatCompletions', () => ({
+jest.unstable_mockModule('#mcp/chat/llm/providers/openaiChatCompletions', () => ({
     createOpenAiChatCompletions: jest.fn(() => ({respondTo$: mockOpenAiRespondTo}))
 }))
-jest.mock('#mcp/chat/llm/providers/lmStudioNativeChat', () => ({
+jest.unstable_mockModule('#mcp/chat/llm/providers/lmStudioNativeChat', () => ({
     createLmStudioNativeChat: jest.fn(() => ({respondTo$: mockNativeRespondTo}))
 }))
 
-const {createLlm} = require('#mcp/chat/llm/index')
-const {createOpenAiChatCompletions} = require('#mcp/chat/llm/providers/openaiChatCompletions')
-const {createLmStudioNativeChat} = require('#mcp/chat/llm/providers/lmStudioNativeChat')
+const {createLlm} = await import('#mcp/chat/llm/index')
+const {createOpenAiChatCompletions} = await import('#mcp/chat/llm/providers/openaiChatCompletions')
+const {createLmStudioNativeChat} = await import('#mcp/chat/llm/providers/lmStudioNativeChat')
 
 describe('LLM provider selector', () => {
 

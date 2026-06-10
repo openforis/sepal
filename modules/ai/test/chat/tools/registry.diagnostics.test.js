@@ -1,6 +1,8 @@
-const {of} = require('rxjs')
-const {createToolRegistry} = require('#mcp/chat/tools/registry')
-const {aFakeBus, read} = require('../builders')
+import {of} from 'rxjs'
+
+import {createToolRegistry} from '#mcp/chat/tools/registry'
+
+import {aFakeBus, read} from '../builders.js'
 
 describe('tool registry — result diagnostics', () => {
 

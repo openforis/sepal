@@ -1,6 +1,7 @@
-const {aToolFactoryHarness} = require('../../harness')
-const {aFullMosaicModel, aLiveMosaicSetup} = require('./fixtures')
-const {toEffectiveModel, validateRecipe} = require('#recipes')
+import {toEffectiveModel, validateRecipe} from '#recipes'
+
+import {aToolFactoryHarness} from '../../harness.js'
+import {aFullMosaicModel, aLiveMosaicSetup} from './fixtures.js'
 
 // "There are still clouds, remove them" — semantic cloud-masking update.
 // Exercises picker → prepare → updater end-to-end through the real

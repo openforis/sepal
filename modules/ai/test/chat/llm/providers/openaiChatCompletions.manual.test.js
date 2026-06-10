@@ -1,5 +1,6 @@
-const {firstValueFrom, toArray} = require('rxjs')
-const {createOpenAiChatCompletions} = require('#mcp/chat/llm/providers/openaiChatCompletions')
+import {firstValueFrom, toArray} from 'rxjs'
+
+import {createOpenAiChatCompletions} from '#mcp/chat/llm/providers/openaiChatCompletions'
 
 const BASE_URL = process.env.LLM_BASE_URL ?? 'http://host.docker.internal:1234/v1'
 const API_KEY = process.env.LLM_API_KEY ?? 'lm-studio'

@@ -1,4 +1,4 @@
-const {fieldShapeAt} = require('#mcp/chat/tools/fieldShapeFromSchema')
+import {fieldShapeAt} from '#mcp/chat/tools/fieldShapeFromSchema'
 
 describe('fieldShapeAt', () => {
 

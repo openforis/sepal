@@ -1,8 +1,11 @@
-const {firstValueFrom, toArray} = require('rxjs')
+import {jest} from '@jest/globals'
+import {firstValueFrom, toArray} from 'rxjs'
 
-const {createLmStudioNativeChat} = require('#mcp/chat/llm/providers/lmStudioNativeChat')
-const {toolSchemas} = require('../providerConformance')
-const {aRecordingBus} = require('../../harness')
+import {createDiagnostics} from '#mcp/chat/diagnostics'
+import {createLmStudioNativeChat} from '#mcp/chat/llm/providers/lmStudioNativeChat'
+
+import {aRecordingBus} from '../../harness.js'
+import {toolSchemas} from '../providerConformance.js'
 
 describe('LM Studio native chat adapter', () => {
 
@@ -181,7 +184,6 @@ describe('LM Studio native chat adapter', () => {
 
         it('publishes the raw input + systemPrompt on llm.requestPayload at trace when full-trace payloads are enabled', async () => {
             const bus = aRecordingBus()
-            const {createDiagnostics} = require('#mcp/chat/diagnostics')
             const userInput = 'trace-body-user-input'
             const systemPrompt = 'trace-body-system-prompt'
             mockNativeReplyOf('Title')

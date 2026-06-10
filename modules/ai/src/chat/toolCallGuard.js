@@ -61,4 +61,4 @@ function canonicalJson(value) {
     return `{${keys.map(k => `${JSON.stringify(k)}:${canonicalJson(value[k])}`).join(',')}}`
 }
 
-module.exports = {createToolCallGuard}
+export {createToolCallGuard}

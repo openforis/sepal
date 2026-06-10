@@ -1,6 +1,8 @@
-const {of} = require('rxjs')
-const {aToolFactoryHarness, innerToolsImpl, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../harness')
-const {SPECIALIST_CAP_ANSWER} = require('#mcp/chat/specialists/runSpecialist')
+import {of} from 'rxjs'
+
+import {SPECIALIST_CAP_ANSWER} from '#mcp/chat/specialists/runSpecialist'
+
+import {AOI_INNER_TOOL_IMPLS, AOI_INNER_TOOL_SCHEMAS, aToolFactoryHarness, innerToolsImpl} from '../harness.js'
 
 // The specialist's productive-round budget must not be spent by empty-response
 // stalls. A mid-flow stall is a transient hiccup, not real work; charging it

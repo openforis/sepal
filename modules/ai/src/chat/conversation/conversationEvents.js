@@ -1,7 +1,7 @@
 // Bus event publishers for conversation telemetry.
 
-const {publishLoopPrompt} = require('../loopEvents')
-const {textChunk} = require('../diagnostics')
+import {textChunk} from '../diagnostics.js'
+import {publishLoopPrompt} from '../loopEvents.js'
 
 function publishOrchestratorPrompt({bus, conversationId, round, llmMessages, toolSchemas}) {
     publishLoopPrompt({bus, prefix: 'orchestrator', conversationId, round, messages: llmMessages, toolSchemas})
@@ -203,4 +203,4 @@ function isPlainObject(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
-module.exports = {publishOrchestratorPrompt, publishLlmRequest, publishToolCall, publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection}
+export {publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection, publishLlmRequest, publishOrchestratorPrompt, publishToolCall}

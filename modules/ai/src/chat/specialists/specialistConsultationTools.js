@@ -1,6 +1,6 @@
-const {specialistPrompt} = require('../llmText/prompts')
-const {createSpecialistRuntime, answerOnly} = require('./runSpecialist')
-const {scopeInnerTools} = require('./specialistScope')
+import {specialistPrompt} from '../llmText/prompts.js'
+import {answerOnly, createSpecialistRuntime} from './runSpecialist.js'
+import {scopeInnerTools} from './specialistScope.js'
 
 const MAP_SPECIALIST = {
     name: 'map',
@@ -40,4 +40,4 @@ function buildSpecialistTool({definition, llm, bus, innerTools}) {
     }
 }
 
-module.exports = {specialistConsultationTools}
+export {specialistConsultationTools}

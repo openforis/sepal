@@ -1,5 +1,6 @@
-const {guiContextTool} = require('#mcp/chat/tools/guiContextTool')
-const {read} = require('../builders')
+import {guiContextTool} from '#mcp/chat/tools/guiContextTool'
+
+import {read} from '../builders.js'
 
 describe('get_gui_context tool', () => {
 

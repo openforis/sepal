@@ -2,12 +2,13 @@
     "name": "ai",
     "version": "1.0.0",
     "description": "MCP and chat server for SEPAL recipe interaction via chat",
+    "type": "module",
     "main": "main.js",
     "scripts": {
-        "test": "jest",
-        "testWatch": "jest --watchAll",
-        "coverage": "jest --coverage",
-        "test:manual": "jest --testPathPattern=\\.manual\\.test\\.js$ --testPathIgnorePatterns=/node_modules/ --forceExit"
+        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll",
+        "coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+        "test:manual": "NODE_OPTIONS=--experimental-vm-modules jest --testPathPattern=\\.manual\\.test\\.js$ --testPathIgnorePatterns=/node_modules/ --forceExit"
     },
     "jest": {
         "collectCoverageFrom": [

@@ -3,10 +3,10 @@
 // debug-level; raw bodies live on the trace-level specialist.prompt event
 // emitted via loopEvents.publishLoopPrompt.
 
-const {publishLoopPrompt} = require('../loopEvents')
-const {textChunk} = require('../diagnostics')
-const {compactJson, recipeStateSummary} = require('./recipeStateDiagnostics')
-const {abbreviateHash, nameList, truncate} = require('./eventFormatting')
+import {textChunk} from '../diagnostics.js'
+import {publishLoopPrompt} from '../loopEvents.js'
+import {abbreviateHash, nameList, truncate} from './eventFormatting.js'
+import {compactJson, recipeStateSummary} from './recipeStateDiagnostics.js'
 
 function publishSpecialistPrompt({bus, name, round, conversationId, messages, toolSchemas}) {
     publishLoopPrompt({bus, prefix: 'specialist', name, conversationId, round, messages, toolSchemas})
@@ -161,7 +161,7 @@ function summariseToolShape(tool, data) {
     return typeof data
 }
 
-module.exports = {
+export {
     publishSpecialistPrompt,
     publishSpecialistRequest,
     publishSpecialistResponse,

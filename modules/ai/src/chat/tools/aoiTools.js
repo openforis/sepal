@@ -1,5 +1,5 @@
-const {mapData} = require('../channelEvents')
-const {guiProductRequest$} = require('./guiProductRequest')
+import {mapData} from '../channelEvents.js'
+import {guiProductRequest$} from './guiProductRequest.js'
 
 function aoiTools(guiRequests) {
     return [
@@ -56,4 +56,4 @@ function filterByLabel(rows, query) {
     return rows.filter(row => row?.label?.toLowerCase().includes(needle))
 }
 
-module.exports = {aoiTools, aoiListCountriesTool, aoiListCountryAreasTool}
+export {aoiListCountriesTool, aoiListCountryAreasTool, aoiTools}

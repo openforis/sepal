@@ -44,4 +44,4 @@ function stripPreamble(title) {
     return result
 }
 
-module.exports = {cleanTitle}
+export {cleanTitle}

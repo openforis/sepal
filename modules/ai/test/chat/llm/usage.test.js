@@ -1,4 +1,4 @@
-const {estimateUsage, resolveUsage, publishLlmUsage} = require('#mcp/chat/llm/usage')
+import {estimateUsage, publishLlmUsage, resolveUsage} from '#mcp/chat/llm/usage'
 
 // usage.js is provider-agnostic: it works on the neutral usage shape that
 // adapters produce, never on raw provider field names.

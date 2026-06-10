@@ -1,5 +1,6 @@
-const {of} = require('rxjs')
-const {aUserChatHarness, collect} = require('../../harness')
+import {of} from 'rxjs'
+
+import {aUserChatHarness, collect} from '../../harness.js'
 
 const CONVERSATION_ID = 'conv-1'
 const SUB = {clientId: 'c1', subscriptionId: 's1'}

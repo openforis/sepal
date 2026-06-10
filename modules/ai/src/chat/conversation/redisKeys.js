@@ -10,4 +10,4 @@ function ttlSeconds(ttlMs) {
     return Math.ceil(ttlMs / 1000)
 }
 
-module.exports = {conversationsKey, historyKey, ttlSeconds}
+export {conversationsKey, historyKey, ttlSeconds}

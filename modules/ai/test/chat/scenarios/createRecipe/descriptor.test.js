@@ -1,4 +1,4 @@
-const {aToolFactoryHarness} = require('../../harness')
+import {aToolFactoryHarness} from '../../harness.js'
 
 // Pin the orchestrator-facing surface of create_recipe: name, parameters,
 // supported-types enum, directAnswer flag, and the orchestrator-routing

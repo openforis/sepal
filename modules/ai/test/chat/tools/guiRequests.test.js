@@ -1,6 +1,7 @@
-const {Subject} = require('rxjs')
-const {createGuiRequests} = require('#mcp/chat/guiRequests')
-const {emitChannel, guiAction} = require('#mcp/chat/channelEvents')
+import {Subject} from 'rxjs'
+
+import {emitChannel, guiAction} from '#mcp/chat/channelEvents'
+import {createGuiRequests} from '#mcp/chat/guiRequests'
 
 describe('GUI request bridge — request lifecycle', () => {
 

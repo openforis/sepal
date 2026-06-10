@@ -4,7 +4,7 @@
 // an event with an unforgeable Symbol marker; isChannelEmission
 // detects the wrap. Pure-event streams carry bare events.
 
-const {map} = require('rxjs')
+import {map} from 'rxjs'
 
 const TARGETED = 'targeted'
 const BROADCAST = 'broadcast'
@@ -103,14 +103,13 @@ function withoutId({id: _id, ...rest}) {
     return rest
 }
 
-module.exports = {
-    TARGETED, BROADCAST, BROADCAST_EXCEPT,
-    emitChannel, isChannelEmission, mapData,
-    conversationCreated, conversationClaimed, conversationLoaded, conversationUpdated,
-    conversationDeleted, conversationsList,
-    chatResponseDelta, chatResponseComplete,
-    status, userMessage,
-    toolStart, toolEnd, assistantNotice,
-    guiAction,
-    conversationPendingActionCreated, conversationPendingActionCleared, pendingActionError
-}
+export {
+    assistantNotice,
+    BROADCAST, BROADCAST_EXCEPT,
+    chatResponseComplete,
+    chatResponseDelta, conversationClaimed, conversationCreated, conversationDeleted, conversationLoaded, conversationPendingActionCleared, conversationPendingActionCreated, conversationsList,
+    conversationUpdated,
+    emitChannel, guiAction,
+    isChannelEmission, mapData,
+    pendingActionError,
+    status, TARGETED, toolEnd, toolStart, userMessage}

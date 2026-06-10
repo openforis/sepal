@@ -1,4 +1,4 @@
-const {aToolFactoryHarness} = require('../../harness')
+import {aToolFactoryHarness} from '../../harness.js'
 
 // Empty picker means the request didn't map to any handle in the catalog.
 // That's a clarification opportunity, not an update failure: pendingActions
@@ -12,7 +12,7 @@ describe('update_recipe — empty picker turns into a clarification', () => {
             replies: [{text: '{"handles":[]}'}]
         })
 
-        const result = harness.invoke({recipeId: 'r1', request: "fix it"})
+        const result = harness.invoke({recipeId: 'r1', request: 'fix it'})
 
         expect(result.ok).toBe(false)
         expect(result.error.code).toBe('CLARIFICATION_NEEDED')
@@ -26,7 +26,7 @@ describe('update_recipe — empty picker turns into a clarification', () => {
             replies: [{text: '{"handles":[]}'}]
         })
 
-        const result = harness.invoke({recipeId: 'r1', request: "make it nicer"})
+        const result = harness.invoke({recipeId: 'r1', request: 'make it nicer'})
 
         expect(result.error.reason).toBe('PICKER_EMPTY')
     })
@@ -37,7 +37,7 @@ describe('update_recipe — empty picker turns into a clarification', () => {
             replies: [{text: '{"handles":[]}'}]
         })
 
-        harness.invoke({recipeId: 'r1', request: "do something"})
+        harness.invoke({recipeId: 'r1', request: 'do something'})
 
         const outcomes = harness.bus.events.filter(event => event.type === 'update_recipe.outcome')
         expect(outcomes).toHaveLength(1)

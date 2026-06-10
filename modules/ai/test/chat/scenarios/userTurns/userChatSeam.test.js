@@ -1,6 +1,8 @@
-const {of} = require('rxjs')
-const {emitChannel, guiAction} = require('#mcp/chat/channelEvents')
-const {aUserChatHarness, eventsOfKind, firstValue, run} = require('../../harness')
+import {of} from 'rxjs'
+
+import {emitChannel, guiAction} from '#mcp/chat/channelEvents'
+
+import {aUserChatHarness, eventsOfKind, firstValue, run} from '../../harness.js'
 
 const SUB = {clientId: 'c1', subscriptionId: 's1'}
 const echoSchema = {

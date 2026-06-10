@@ -2,13 +2,13 @@
 // specialistInnerTools() — full inner-loop tool registry. Each specialist
 // scopes this down to the tools it is allowed to call.
 
-const {guiContextTool} = require('./guiContextTool')
-const {aoiTools} = require('./aoiTools')
-const {mapTools} = require('./mapTools')
-const {projectTools} = require('./projectTools')
-const {recipeListTool, recipeOpenTool, recipeLoadTool} = require('./recipeTools')
-const {updateRecipeValuesTool} = require('../specialists/updateRecipe/updateRecipeValuesTool')
-const {createRecipeValuesTool} = require('../specialists/createRecipe/createRecipeValuesTool')
+import {createRecipeValuesTool} from '../specialists/createRecipe/createRecipeValuesTool.js'
+import {updateRecipeValuesTool} from '../specialists/updateRecipe/updateRecipeValuesTool.js'
+import {aoiTools} from './aoiTools.js'
+import {guiContextTool} from './guiContextTool.js'
+import {mapTools} from './mapTools.js'
+import {projectTools} from './projectTools.js'
+import {recipeListTool, recipeLoadTool, recipeOpenTool} from './recipeTools.js'
 
 function sepalTools({guiRequests}) {
     return [
@@ -35,4 +35,4 @@ function specialistInnerTools({guiRequests, bus}) {
     ]
 }
 
-module.exports = {sepalTools, specialistInnerTools}
+export {sepalTools, specialistInnerTools}

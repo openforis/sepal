@@ -1,5 +1,6 @@
-const {of, throwError} = require('rxjs')
-const {createEventBus} = require('#mcp/eventBus')
+import {of, throwError} from 'rxjs'
+
+import {createEventBus} from '#mcp/eventBus'
 
 describe('Event bus', () => {
 

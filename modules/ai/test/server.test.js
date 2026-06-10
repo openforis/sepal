@@ -1,4 +1,4 @@
-const {createServer} = require('#mcp/server')
+import {createServer} from '#mcp/server'
 
 describe('Server adapter', () => {
 

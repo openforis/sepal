@@ -1,10 +1,14 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import logConfig from '#config/log.json' with {type: 'json'}
+import * as log from '#sepal/log'
 
-const log = require('#sepal/log').getLogger('main')
-const config = require('./config')
-const {createApp} = require('./app')
+import {createApp} from './app.js'
+import * as config from './config.js'
+
+log.configureServer(logConfig)
+
+const logger = log.getLogger('main')
 
 createApp({config}).start().catch(error => {
-    log.fatal(error)
+    logger.fatal(error)
     process.exit(1)
 })

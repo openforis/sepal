@@ -12,4 +12,4 @@ function createServer({httpServer, bus, port, routes, wsHandler}) {
     }
 }
 
-module.exports = {createServer}
+export {createServer}

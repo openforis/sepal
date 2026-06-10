@@ -2,7 +2,7 @@
 // The two loops diverge substantially elsewhere; the per-round prompt
 // snapshot event is one of the few places they're structurally identical.
 
-const {renderPromptSnapshot} = require('./promptSnapshot')
+import {renderPromptSnapshot} from './promptSnapshot.js'
 
 // Publishes a trace-level prompt-snapshot event with a lazy message.
 // `prefix` becomes the event-type root (logListener routes by first dot
@@ -23,4 +23,4 @@ function publishLoopPrompt({bus, prefix, name, conversationId, round, messages, 
     bus.publish(event)
 }
 
-module.exports = {publishLoopPrompt}
+export {publishLoopPrompt}

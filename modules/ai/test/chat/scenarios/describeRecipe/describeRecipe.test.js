@@ -1,8 +1,9 @@
-const {of, throwError} = require('rxjs')
-const {
-    aToolFactoryHarness, aConversationHarness, aFakeGuiRequests,
-    collect, innerToolsWithSchemas
-} = require('../../harness')
+import {of, throwError} from 'rxjs'
+
+import {
+    aConversationHarness, aFakeGuiRequests,
+    aToolFactoryHarness, collect, innerToolsWithSchemas
+} from '../../harness.js'
 
 function metadataFor(metadata) {
     return aFakeGuiRequests(() => of(metadata))

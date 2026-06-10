@@ -1,13 +1,16 @@
+import {jest} from '@jest/globals'
+
+import {toolSchemas} from '../providerConformance.js'
+
 const mockCreate = jest.fn()
 
-jest.mock('openai', () => ({
+jest.unstable_mockModule('openai', () => ({
     default: jest.fn().mockImplementation(() => ({
         chat: {completions: {create: mockCreate}}
     }))
 }))
 
-const {anOpenAiChat, collect, contentEvents} = require('./openaiAdapterHarness')
-const {toolSchemas} = require('../providerConformance')
+const {anOpenAiChat, collect, contentEvents} = await import('./openaiAdapterHarness.js')
 
 describe('OpenAI adapter — streaming (provider chunks → domain events)', () => {
 

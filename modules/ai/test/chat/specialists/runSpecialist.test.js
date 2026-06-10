@@ -1,7 +1,9 @@
-const {of} = require('rxjs')
-const {createSpecialistRuntime, wasCapped} = require('#mcp/chat/specialists/runSpecialist')
-const {aFakeLlm, aRecordingBus} = require('../harness')
-const {read} = require('../builders')
+import {of} from 'rxjs'
+
+import {createSpecialistRuntime, wasCapped} from '#mcp/chat/specialists/runSpecialist'
+
+import {read} from '../builders.js'
+import {aFakeLlm, aRecordingBus} from '../harness.js'
 
 const loadCall = {id: 't1', name: 'recipe_load', input: {recipeId: 'r1'}}
 const loadResult = {ok: true, data: {id: 'r1', type: 'MOSAIC'}}

@@ -1,8 +1,9 @@
 // Redis adapter for one user's conversation metadata (id, title,
 // timestamps), stored as a hash and expiring as a whole via ttlMs.
 
-const {defer, from, map, concatMap, of} = require('rxjs')
-const {conversationsKey, historyKey, ttlSeconds} = require('./redisKeys')
+import {concatMap, defer, from, map, of} from 'rxjs'
+
+import {conversationsKey, historyKey, ttlSeconds} from './redisKeys.js'
 
 function createRedisConversationsStore({redis, username, ttlMs}) {
     const key = conversationsKey(username)
@@ -68,4 +69,4 @@ function mostRecentFirst(a, b) {
     return b.updatedAt.localeCompare(a.updatedAt)
 }
 
-module.exports = {createRedisConversationsStore}
+export {createRedisConversationsStore}

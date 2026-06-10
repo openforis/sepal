@@ -1,7 +1,7 @@
 // project_list tool: returns the user's saved projects via a GUI request.
 
-const {guiProductRequest$} = require('./guiProductRequest')
-const {mapData} = require('../channelEvents')
+import {mapData} from '../channelEvents.js'
+import {guiProductRequest$} from './guiProductRequest.js'
 
 function projectTools(guiRequests) {
     return [
@@ -25,4 +25,4 @@ function projectSummary(project) {
     return {id: project.id, name: project.name}
 }
 
-module.exports = {projectTools}
+export {projectTools}

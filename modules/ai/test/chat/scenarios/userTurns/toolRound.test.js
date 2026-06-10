@@ -1,7 +1,9 @@
-const {of} = require('rxjs')
-const {guiContextTool} = require('#mcp/chat/tools/guiContextTool')
-const {aConversationHarness, collect, firstValue} = require('../../harness')
-const {recipeListSchema, projectListSchema} = require('./fixtures')
+import {of} from 'rxjs'
+
+import {guiContextTool} from '#mcp/chat/tools/guiContextTool'
+
+import {aConversationHarness, collect, firstValue} from '../../harness.js'
+import {projectListSchema, recipeListSchema} from './fixtures.js'
 
 describe('tool round', () => {
 

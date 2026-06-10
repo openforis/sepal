@@ -1,6 +1,7 @@
-const {aToolFactoryHarness} = require('../../harness')
-const {aFullMosaicModel, aLiveMosaicSetup} = require('./fixtures')
-const {toEffectiveModel, validateRecipe} = require('#recipes')
+import {toEffectiveModel, validateRecipe} from '#recipes'
+
+import {aToolFactoryHarness} from '../../harness.js'
+import {aFullMosaicModel, aLiveMosaicSetup} from './fixtures.js'
 
 // Deterministic application smoke test for a selector-item swap. The picker
 // and updater replies are scripted, so this does NOT prove the model picks

@@ -1,8 +1,9 @@
-const {of} = require('rxjs')
-const {
-    aConversationHarness, aControllableLlm, createInMemoryHistory, collect, firstValue, run
-} = require('../../harness')
-const {recipeListSchema, projectListSchema} = require('./fixtures')
+import {of} from 'rxjs'
+
+import {
+    aControllableLlm, aConversationHarness, collect, createInMemoryHistory, firstValue, run
+} from '../../harness.js'
+import {projectListSchema, recipeListSchema} from './fixtures.js'
 
 describe('happy turn', () => {
 

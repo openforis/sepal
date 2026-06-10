@@ -1,14 +1,19 @@
+import {jest} from '@jest/globals'
+
+import {createDiagnostics} from '#mcp/chat/diagnostics'
+
+import {aRecordingBus} from '../../harness.js'
+import {toolSchemas} from '../providerConformance.js'
+
 const mockCreate = jest.fn()
 
-jest.mock('openai', () => ({
+jest.unstable_mockModule('openai', () => ({
     default: jest.fn().mockImplementation(() => ({
         chat: {completions: {create: mockCreate}}
     }))
 }))
 
-const {anOpenAiChat, collect} = require('./openaiAdapterHarness')
-const {aRecordingBus} = require('../../harness')
-const {toolSchemas} = require('../providerConformance')
+const {anOpenAiChat, collect} = await import('./openaiAdapterHarness.js')
 
 describe('OpenAI adapter — diagnostic bus events', () => {
 
@@ -145,7 +150,6 @@ describe('OpenAI adapter — diagnostic bus events', () => {
 
         it('captures reasoning_content deltas — debug carries counts, trace payload carries text', async () => {
             const bus = aRecordingBus()
-            const {createDiagnostics} = require('#mcp/chat/diagnostics')
             mockCreate.mockResolvedValue([
                 {choices: [{delta: {reasoning_content: 'Inner thought.'}}]},
                 {choices: [{delta: {content: 'Done.'}}]}

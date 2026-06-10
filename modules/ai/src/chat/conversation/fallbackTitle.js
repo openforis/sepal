@@ -1,7 +1,7 @@
 // Heuristic fallback title from the user/assistant text when the LLM
 // produces nothing usable.
 
-const {cleanTitle} = require('./cleanTitle')
+import {cleanTitle} from './cleanTitle.js'
 
 const LEADING_FILLER_RE = /^(?:please\s+)?(?:(?:can|could|would)\s+you\s+|how\s+(?:do|can)\s+i\s+|i\s+(?:want|need|would like)\s+to\s+|tell\s+me\s+(?:about\s+)?)/i
 const GREETING_RE = /^(hi|hello|hey|good\s+(morning|afternoon|evening))\b/i
@@ -29,4 +29,4 @@ function titleFromText(text) {
     return cleanTitle(words.join(' '))
 }
 
-module.exports = {fallbackTitle}
+export {fallbackTitle}

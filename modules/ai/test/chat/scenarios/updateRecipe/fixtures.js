@@ -9,10 +9,12 @@
 //                              handle-keyed updates flow through the real
 //                              update_recipe_values tool.
 
-const {of, throwError} = require('rxjs')
-const {aFakeGuiRequests, innerToolsImpl} = require('../../harness')
-const {updateRecipeValuesTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool')
-const {toEffectiveModel, validateRecipe} = require('#recipes')
+import {of, throwError} from 'rxjs'
+
+import {updateRecipeValuesTool} from '#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool'
+import {toEffectiveModel, validateRecipe} from '#recipes'
+
+import {aFakeGuiRequests, innerToolsImpl} from '../../harness.js'
 
 const mosaicMetadata = {id: 'r1', type: 'MOSAIC', name: 'Kenya mosaic', projectId: 'p1'}
 const unspeccedMetadata = {id: 'r-other', type: 'NOT_IN_REGISTRY', name: 'Other', projectId: 'p1'}
@@ -146,4 +148,4 @@ function removeAtPointer(model, tokens) {
     delete node[tokens[tokens.length - 1]]
 }
 
-module.exports = {metadataFor, mosaicMetadata, unspeccedMetadata, aFullMosaicModel, aLiveMosaicSetup}
+export {aFullMosaicModel, aLiveMosaicSetup, metadataFor, mosaicMetadata, unspeccedMetadata}

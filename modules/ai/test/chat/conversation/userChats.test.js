@@ -1,11 +1,12 @@
-const {createUserChats} = require('#mcp/chat/conversation/userChats')
-const {mainSystemPrompt} = require('#mcp/chat/llmText/prompts')
-const {createDiagnostics} = require('#mcp/chat/diagnostics')
-const {createToolRegistry} = require('#mcp/chat/tools/registry')
-const {
-    aFakeLlm, aRecordingBus, anAdvancingClock,
-    createInMemoryConversationsStore, createInMemoryHistory, run
-} = require('../harness')
+import {createUserChats} from '#mcp/chat/conversation/userChats'
+import {createDiagnostics} from '#mcp/chat/diagnostics'
+import {mainSystemPrompt} from '#mcp/chat/llmText/prompts'
+import {createToolRegistry} from '#mcp/chat/tools/registry'
+
+import {
+    aFakeLlm, anAdvancingClock,
+    aRecordingBus, createInMemoryConversationsStore, createInMemoryHistory, run
+} from '../harness.js'
 
 const SUB = {clientId: 'c1', subscriptionId: 's1'}
 const T0 = new Date(1700000000000).toISOString()

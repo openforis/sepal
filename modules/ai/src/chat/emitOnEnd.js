@@ -1,7 +1,7 @@
 // Emits `value` exactly once when the source completes or errors
 // (built-in endWith only fires on completion).
 
-const {Observable} = require('rxjs')
+import {Observable} from 'rxjs'
 
 function emitOnEnd(value) {
     return source$ => new Observable(subscriber => {
@@ -27,4 +27,4 @@ function emitOnEnd(value) {
     })
 }
 
-module.exports = {emitOnEnd}
+export {emitOnEnd}

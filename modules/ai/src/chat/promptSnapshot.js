@@ -8,7 +8,7 @@
 // schema) land intact. The cap still bounds individual chunks so a runaway
 // payload can't dump megabytes.
 
-const {truncateString} = require('./diagnostics')
+import {truncateString} from './diagnostics.js'
 
 const MAX_SNAPSHOT_CHARS = 100_000
 
@@ -71,4 +71,4 @@ function renderTool(tool) {
     ].join('\n')
 }
 
-module.exports = {renderPromptSnapshot}
+export {renderPromptSnapshot}

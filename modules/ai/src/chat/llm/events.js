@@ -1,5 +1,6 @@
-const {finalize} = require('rxjs')
-const {truncateString, createDiagnostics, shortHashOf} = require('../diagnostics')
+import {finalize} from 'rxjs'
+
+import {createDiagnostics, shortHashOf, truncateString} from '../diagnostics.js'
 
 const MAX_LOG_TEXT = 300
 const DEFAULT_DIAGNOSTICS = createDiagnostics()
@@ -55,4 +56,4 @@ function byteLengthOf(text) {
     return typeof text === 'string' ? Buffer.byteLength(text, 'utf8') : 0
 }
 
-module.exports = {publishResponseSummary}
+export {publishResponseSummary}

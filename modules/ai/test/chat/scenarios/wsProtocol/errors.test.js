@@ -1,6 +1,7 @@
-const {throwError} = require('rxjs')
-const {aWsHandlerHarness} = require('../../harness')
-const {alice} = require('./fixtures')
+import {throwError} from 'rxjs'
+
+import {aWsHandlerHarness} from '../../harness.js'
+import {alice} from './fixtures.js'
 
 describe('errors', () => {
 

@@ -6,7 +6,7 @@
 // explicit and stops `collectAppliedValues` from being the only nested loop
 // in the touched path.
 
-const {publishUpdateRecipeOutcome} = require('./updateRecipeEvents')
+import {publishUpdateRecipeOutcome} from './updateRecipeEvents.js'
 
 const UPDATE_TOOL = 'update_recipe_values'
 
@@ -85,7 +85,7 @@ function buildEnvelope(outcome, answer, {capped = false} = {}) {
             code: 'UPDATE_NOT_ATTEMPTED',
             message: 'The update specialist did not call update_recipe_values.',
             specialistAnswer: answer,
-            answer: answer || "I couldn't apply that update."
+            answer: answer || 'I couldn\'t apply that update.'
         }
     }
 }
@@ -130,4 +130,4 @@ function distinct(list) {
     return [...new Set(list)]
 }
 
-module.exports = {projectUpdateOutcome, publishOutcomeAndShape, buildEnvelope, failureAnswer}
+export {buildEnvelope, failureAnswer, projectUpdateOutcome, publishOutcomeAndShape}

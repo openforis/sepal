@@ -13,8 +13,9 @@
 //      value: undefined so the LLM sees a clean absent signal.
 //   3. CLASSIFICATION reference-data omission on the result.
 
-const {parsePointer, resolvePointer, formatPointer, PointerNotFound} = require('./jsonPointer')
-const {toEffectiveModel} = require('#recipes')
+import {toEffectiveModel} from '#recipes'
+
+import {formatPointer, parsePointer, PointerNotFound, resolvePointer} from './jsonPointer.js'
 
 function projectLoadedRecipe(recipe, pathString) {
     // modelHash is the optimistic-concurrency token for write-capable recipe
@@ -80,4 +81,4 @@ function isPlainObject(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
-module.exports = {projectLoadedRecipe}
+export {projectLoadedRecipe}

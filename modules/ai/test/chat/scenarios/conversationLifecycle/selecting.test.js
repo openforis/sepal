@@ -1,6 +1,7 @@
-const {Subject} = require('rxjs')
-const {aUserChatHarness, createInMemoryConversationsStore, eventsOfKind, run} = require('../../harness')
-const {ISO_T1} = require('./fixtures')
+import {Subject} from 'rxjs'
+
+import {aUserChatHarness, createInMemoryConversationsStore, eventsOfKind, run} from '../../harness.js'
+import {ISO_T1} from './fixtures.js'
 
 describe('selecting a conversation', () => {
 

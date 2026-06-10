@@ -1,4 +1,4 @@
-const {messagesForLlm} = require('#mcp/chat/conversation/llmMessages')
+import {messagesForLlm} from '#mcp/chat/conversation/llmMessages'
 
 describe('LLM message projection', () => {
 

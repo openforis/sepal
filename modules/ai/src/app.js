@@ -1,23 +1,24 @@
 // Composition root. Builds and wires every chat collaborator, then hands
 // the result to createServer. No domain logic lives here.
 
-const {of, timer} = require('rxjs')
-const {v4: uuid} = require('uuid')
-const Redis = require('ioredis')
-const httpServer = require('#sepal/httpServer')
-const {stream} = require('#sepal/httpServer')
+import Redis from 'ioredis'
+import {of, timer} from 'rxjs'
+import {v4 as uuid} from 'uuid'
 
-const {createGuiRequests} = require('./chat/guiRequests')
-const {createDiagnostics} = require('./chat/diagnostics')
-const {createRedisChatStorage} = require('./chat/conversation/redisChatStorage')
-const {createUserChats} = require('./chat/conversation/userChats')
-const {createWsHandler} = require('./chat/conversation/wsHandler')
-const {createOrchestratorToolRegistry} = require('./chat/orchestratorToolRegistry')
-const {createLlm} = require('./chat/llm')
-const {createEventBus} = require('./eventBus')
-const {subscribeLogListener} = require('./logListener')
-const {subscribeUsageRollups} = require('./chat/usageRollups')
-const {createServer} = require('./server')
+import * as httpServer from '#sepal/httpServer'
+import {stream} from '#sepal/httpServer'
+
+import {createRedisChatStorage} from './chat/conversation/redisChatStorage.js'
+import {createUserChats} from './chat/conversation/userChats.js'
+import {createWsHandler} from './chat/conversation/wsHandler.js'
+import {createDiagnostics} from './chat/diagnostics.js'
+import {createGuiRequests} from './chat/guiRequests.js'
+import {createLlm} from './chat/llm/index.js'
+import {createOrchestratorToolRegistry} from './chat/orchestratorToolRegistry.js'
+import {subscribeUsageRollups} from './chat/usageRollups.js'
+import {createEventBus} from './eventBus.js'
+import {subscribeLogListener} from './logListener.js'
+import {createServer} from './server.js'
 
 const GUI_REQUEST_TIMEOUT_MS = 30_000
 
@@ -62,4 +63,4 @@ function systemClock() {
     }
 }
 
-module.exports = {createApp}
+export {createApp}

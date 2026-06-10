@@ -1,5 +1,6 @@
-const {firstValueFrom, toArray} = require('rxjs')
-const {createOpenAiChatCompletions} = require('#mcp/chat/llm/providers/openaiChatCompletions')
+import {firstValueFrom, toArray} from 'rxjs'
+
+import {createOpenAiChatCompletions} from '#mcp/chat/llm/providers/openaiChatCompletions'
 
 function anOpenAiChat(overrides = {}) {
     return createOpenAiChatCompletions({
@@ -20,4 +21,4 @@ function contentEvents(events) {
     return events.filter(event => 'textDelta' in event || 'toolCall' in event)
 }
 
-module.exports = {anOpenAiChat, collect, contentEvents}
+export {anOpenAiChat, collect, contentEvents}

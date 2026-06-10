@@ -6,15 +6,17 @@
 // updater in handle terms; internal paths stay below the GUI/log boundary and
 // never reach the model-facing envelope.
 
-const {catchError, of} = require('rxjs')
-const {getRecipeHandles, getRecipeSpec, toEffectiveModel} = require('#recipes')
-const {guiProductRequest$} = require('../../tools/guiProductRequest')
-const {mapData} = require('../../channelEvents')
-const {
+import {catchError, of} from 'rxjs'
+
+import {getRecipeHandles, getRecipeSpec, toEffectiveModel} from '#recipes'
+
+import {mapData} from '../../channelEvents.js'
+import {guiProductRequest$} from '../../tools/guiProductRequest.js'
+import {
     applyHandleValuesToModel, checkApplicability, checkInactiveValues,
     checkUnknownHandles, checkWritableScope,
     invertByPath, mapErrorDetailsToHandles, toHandleError
-} = require('../handleValueIO')
+} from '../handleValueIO.js'
 
 function createRecipeValuesTool(guiRequests) {
     return {
@@ -128,4 +130,4 @@ function toErrorEnvelope(error, handlesByPath) {
     }
 }
 
-module.exports = {createRecipeValuesTool}
+export {createRecipeValuesTool}

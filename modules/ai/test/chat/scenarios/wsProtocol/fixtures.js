@@ -1,3 +1,3 @@
 const alice = {user: {username: 'alice'}, clientId: 'c1', subscriptionId: 's1'}
 
-module.exports = {alice}
+export {alice}

@@ -1,4 +1,4 @@
-const {valueLabelsFromSchema} = require('#mcp/chat/specialists/valueLabelsFromSchema')
+import {valueLabelsFromSchema} from '#mcp/chat/specialists/valueLabelsFromSchema'
 
 describe('valueLabelsFromSchema', () => {
 

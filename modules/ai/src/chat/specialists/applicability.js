@@ -9,7 +9,7 @@
 // the values being set in the same call (a write that fixes both handles
 // together is fine).
 
-const {parsePointer, resolvePointer, PointerNotFound} = require('../tools/jsonPointer')
+import {parsePointer, PointerNotFound, resolvePointer} from '../tools/jsonPointer.js'
 
 function scopeIndexFromHandles(handlesByName) {
     const index = new Map()
@@ -60,4 +60,4 @@ function isKeyedObject(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
-module.exports = {scopeIndexFromHandles, isSelectorHandle, applicabilityConflictFor, scopeValueIn}
+export {applicabilityConflictFor, isSelectorHandle, scopeIndexFromHandles, scopeValueIn}

@@ -1,5 +1,5 @@
-const {aToolFactoryHarness} = require('../../harness')
-const {metadataFor, mosaicMetadata, unspeccedMetadata} = require('./fixtures')
+import {aToolFactoryHarness} from '../../harness.js'
+import {metadataFor, mosaicMetadata, unspeccedMetadata} from './fixtures.js'
 
 // The new picker/updater prompts are split:
 // - picker prompt: recipe handle catalog (system), tool-free

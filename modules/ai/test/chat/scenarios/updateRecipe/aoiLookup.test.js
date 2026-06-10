@@ -1,10 +1,12 @@
-const {of} = require('rxjs')
-const {aFakeGuiRequests} = require('../../builders')
-const {aToolFactoryHarness, innerToolsImpl} = require('../../harness')
-const {aoiTools} = require('#mcp/chat/tools/aoiTools')
-const {updateRecipeValuesTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool')
-const {aFullMosaicModel} = require('./fixtures')
-const {toEffectiveModel, validateRecipe} = require('#recipes')
+import {of} from 'rxjs'
+
+import {updateRecipeValuesTool} from '#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool'
+import {aoiTools} from '#mcp/chat/tools/aoiTools'
+import {toEffectiveModel, validateRecipe} from '#recipes'
+
+import {aFakeGuiRequests} from '../../builders.js'
+import {aToolFactoryHarness, innerToolsImpl} from '../../harness.js'
+import {aFullMosaicModel} from './fixtures.js'
 
 // "Change the AOI to Italy" — AOI resolved through the specialist-private
 // lookup. The GUI-returned aoi object is used verbatim; the model never
@@ -99,7 +101,7 @@ describe('"Change the AOI to Italy" — AOI resolved via specialist-private look
             replies: [
                 {text: '{"handles":["aoi"]}'},
                 {toolCalls: [lookupCall]},
-                {text: "I couldn't find a country called Atlantis. Did you mean a different name, or do you want to send a polygon?"}
+                {text: 'I couldn\'t find a country called Atlantis. Did you mean a different name, or do you want to send a polygon?'}
             ]
         })
 

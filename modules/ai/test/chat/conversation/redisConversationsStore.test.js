@@ -1,6 +1,8 @@
-const {firstValueFrom} = require('rxjs')
-const {createRedisConversationsStore} = require('#mcp/chat/conversation/redisConversationsStore')
-const {aFakeRedis} = require('./fakeRedis')
+import {firstValueFrom} from 'rxjs'
+
+import {createRedisConversationsStore} from '#mcp/chat/conversation/redisConversationsStore'
+
+import {aFakeRedis} from './fakeRedis.js'
 
 describe('Redis ConversationsStore adapter', () => {
 

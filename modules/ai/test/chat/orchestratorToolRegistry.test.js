@@ -1,5 +1,6 @@
-const {createOrchestratorToolRegistry} = require('#mcp/chat/orchestratorToolRegistry')
-const {aFakeBus, aFakeGuiRequests, aFakeLlm} = require('./builders')
+import {createOrchestratorToolRegistry} from '#mcp/chat/orchestratorToolRegistry'
+
+import {aFakeBus, aFakeGuiRequests, aFakeLlm} from './builders.js'
 
 describe('orchestrator tool registry', () => {
 

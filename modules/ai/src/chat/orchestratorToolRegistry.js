@@ -1,12 +1,12 @@
 // Composes the orchestrator's tool surface and the inner registry
 // specialists see.
 
-const {createToolRegistry} = require('./tools/registry')
-const {sepalTools, specialistInnerTools} = require('./tools/sepalTools')
-const {describeRecipeTool} = require('./specialists/describeRecipe')
-const {updateRecipeTool} = require('./specialists/updateRecipe/updateRecipeTool')
-const {createRecipeTool} = require('./specialists/createRecipe/createRecipeTool')
-const {specialistConsultationTools} = require('./specialists/specialistConsultationTools')
+import {createRecipeTool} from './specialists/createRecipe/createRecipeTool.js'
+import {describeRecipeTool} from './specialists/describeRecipe.js'
+import {specialistConsultationTools} from './specialists/specialistConsultationTools.js'
+import {updateRecipeTool} from './specialists/updateRecipe/updateRecipeTool.js'
+import {createToolRegistry} from './tools/registry.js'
+import {sepalTools, specialistInnerTools} from './tools/sepalTools.js'
 
 function createOrchestratorToolRegistry({guiRequests, llm, bus, diagnostics}) {
     const innerTools = createToolRegistry({tools: specialistInnerTools({guiRequests, bus}), bus, diagnostics})
@@ -20,4 +20,4 @@ function createOrchestratorToolRegistry({guiRequests, llm, bus, diagnostics}) {
     return createToolRegistry({tools: orchestratorToolList, bus, diagnostics})
 }
 
-module.exports = {createOrchestratorToolRegistry}
+export {createOrchestratorToolRegistry}

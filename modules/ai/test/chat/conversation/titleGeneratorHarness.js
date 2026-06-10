@@ -1,6 +1,7 @@
-const {createTitleGenerator} = require('#mcp/chat/conversation/titleGenerator')
-const {createInMemoryConversationsStore} = require('./inMemoryConversationsStore')
-const {aFakeBus, aFakeLlm} = require('../builders')
+import {createTitleGenerator} from '#mcp/chat/conversation/titleGenerator'
+
+import {aFakeBus, aFakeLlm} from '../builders.js'
+import {createInMemoryConversationsStore} from './inMemoryConversationsStore.js'
 
 const UNTITLED_META = {
     id: 'conv-1', title: '',
@@ -26,4 +27,4 @@ function titleUpdates(events) {
         .map(event => ({id: event.payload.conversationId, title: event.payload.title}))
 }
 
-module.exports = {UNTITLED_META, aTitleGenFixture, aConversation, titleUpdates}
+export {aConversation, aTitleGenFixture, titleUpdates, UNTITLED_META}

@@ -7,4 +7,4 @@ function guiProductRequest$(guiRequests, context, action, params) {
     })
 }
 
-module.exports = {guiProductRequest$}
+export {guiProductRequest$}

@@ -1,6 +1,8 @@
-const {of, throwError} = require('rxjs')
-const {pickHandles$, pickerSystemPrompt} = require('#mcp/chat/specialists/updateRecipe/pickHandles')
-const {aFakeBus, aFakeLlm, expectNoHandlePathsIn, read, readError} = require('../../builders')
+import {of, throwError} from 'rxjs'
+
+import {pickerSystemPrompt, pickHandles$} from '#mcp/chat/specialists/updateRecipe/pickHandles'
+
+import {aFakeBus, aFakeLlm, expectNoHandlePathsIn, read, readError} from '../../builders.js'
 
 describe('pickHandles$', () => {
 

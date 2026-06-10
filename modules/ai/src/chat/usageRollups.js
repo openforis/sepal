@@ -118,4 +118,4 @@ function subscribeUsageRollups({bus}) {
     }
 }
 
-module.exports = {createUsageTally, subscribeUsageRollups}
+export {createUsageTally, subscribeUsageRollups}

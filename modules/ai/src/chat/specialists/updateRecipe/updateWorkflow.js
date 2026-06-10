@@ -1,22 +1,24 @@
-const {map, mergeMap, of} = require('rxjs')
-const {getRecipeHandles} = require('#recipes')
-const {wasCapped} = require('../runSpecialist')
-const {publishUpdateRecipeOutcome, publishUpdateRecipeRequest} = require('./updateRecipeEvents')
-const {lookupRecipeMetadata$} = require('../../tools/recipeMetadata')
-const {isChannelEmission} = require('../../channelEvents')
-const {pickHandles$} = require('./pickHandles')
-const {prepareHandlePacket$} = require('./prepareHandlePacket')
-const {projectUpdateOutcome, publishOutcomeAndShape} = require('./updateOutcome')
-const {summarizeUpdate$} = require('./updateSummary')
-const {createUpdateRecipeSpecialist} = require('./updateRecipeSpecialist')
-const {rescopeCandidates, appendRescopeContext, combineTimelines} = require('./rescope')
+import {map, mergeMap, of} from 'rxjs'
 
-const NOT_FOUND_ANSWER = "I couldn't find the recipe to update. It may have been closed, deleted, or not loaded in this session."
-const LOOKUP_FAILED_ANSWER = "I couldn't look up the recipe to update right now. Please try again."
-const PICKER_FAILED_ANSWER = "I couldn't figure out which recipe fields your request was about. Please try rephrasing."
-const PICKER_EMPTY_ANSWER = "I'm not sure which recipe setting to change for that. Do you want me to adjust inputs, dates, cloud masking, processing, or a specific setting?"
-const UNSUPPORTED_RECIPE_ANSWER = "This recipe type isn't supported by the chat updater yet."
-const PREPARE_FAILED_ANSWER = "I couldn't prepare that update right now. Please try again."
+import {getRecipeHandles} from '#recipes'
+
+import {isChannelEmission} from '../../channelEvents.js'
+import {lookupRecipeMetadata$} from '../../tools/recipeMetadata.js'
+import {wasCapped} from '../runSpecialist.js'
+import {pickHandles$} from './pickHandles.js'
+import {prepareHandlePacket$} from './prepareHandlePacket.js'
+import {appendRescopeContext, combineTimelines, rescopeCandidates} from './rescope.js'
+import {projectUpdateOutcome, publishOutcomeAndShape} from './updateOutcome.js'
+import {publishUpdateRecipeOutcome, publishUpdateRecipeRequest} from './updateRecipeEvents.js'
+import {createUpdateRecipeSpecialist} from './updateRecipeSpecialist.js'
+import {summarizeUpdate$} from './updateSummary.js'
+
+const NOT_FOUND_ANSWER = 'I couldn\'t find the recipe to update. It may have been closed, deleted, or not loaded in this session.'
+const LOOKUP_FAILED_ANSWER = 'I couldn\'t look up the recipe to update right now. Please try again.'
+const PICKER_FAILED_ANSWER = 'I couldn\'t figure out which recipe fields your request was about. Please try rephrasing.'
+const PICKER_EMPTY_ANSWER = 'I\'m not sure which recipe setting to change for that. Do you want me to adjust inputs, dates, cloud masking, processing, or a specific setting?'
+const UNSUPPORTED_RECIPE_ANSWER = 'This recipe type isn\'t supported by the chat updater yet.'
+const PREPARE_FAILED_ANSWER = 'I couldn\'t prepare that update right now. Please try again.'
 
 function createUpdateWorkflow({llm, bus, guiRequests, innerTools, updater = createUpdateRecipeSpecialist({llm, bus, innerTools})}) {
 
@@ -239,4 +241,4 @@ function distinct(list) {
     return [...new Set(list)]
 }
 
-module.exports = {createUpdateWorkflow}
+export {createUpdateWorkflow}

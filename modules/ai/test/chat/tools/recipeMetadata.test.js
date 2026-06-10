@@ -1,7 +1,9 @@
-const {concat, of, throwError, toArray} = require('rxjs')
-const {lookupRecipeMetadata$} = require('#mcp/chat/tools/recipeMetadata')
-const {emitChannel, guiAction, isChannelEmission} = require('#mcp/chat/channelEvents')
-const {aFakeGuiRequests, read} = require('../builders')
+import {concat, of, throwError, toArray} from 'rxjs'
+
+import {emitChannel, guiAction, isChannelEmission} from '#mcp/chat/channelEvents'
+import {lookupRecipeMetadata$} from '#mcp/chat/tools/recipeMetadata'
+
+import {aFakeGuiRequests, read} from '../builders.js'
 
 describe('lookupRecipeMetadata$', () => {
 

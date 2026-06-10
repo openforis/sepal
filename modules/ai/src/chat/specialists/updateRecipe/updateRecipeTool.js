@@ -9,7 +9,7 @@
 //   -> projectUpdateOutcome   (timeline → user-facing envelope + diagnostic)
 // JSON Pointer paths and RFC 6902 mechanics stay below the tool boundary.
 
-const {createUpdateWorkflow} = require('./updateWorkflow')
+import {createUpdateWorkflow} from './updateWorkflow.js'
 
 function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
     const workflow = createUpdateWorkflow({llm, bus, guiRequests, innerTools})
@@ -38,4 +38,4 @@ function updateRecipeTool({llm, bus, innerTools, guiRequests}) {
     }
 }
 
-module.exports = {updateRecipeTool}
+export {updateRecipeTool}

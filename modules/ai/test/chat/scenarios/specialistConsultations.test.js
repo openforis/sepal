@@ -1,5 +1,6 @@
-const {of} = require('rxjs')
-const {aToolFactoryHarness, aConversationHarness, collect, innerToolsImpl} = require('../harness')
+import {of} from 'rxjs'
+
+import {aConversationHarness, aToolFactoryHarness, collect, innerToolsImpl} from '../harness.js'
 
 // A consult_map whose map_area_list tool fails every call with the given
 // error code, across enough distinct calls to trip the anti-loop guard.

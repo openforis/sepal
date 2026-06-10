@@ -5,10 +5,12 @@
 // That keeps user-required-but-missing values visible to the updater so it
 // can ask one clarification question instead of inventing them.
 
-const {of} = require('rxjs')
-const {getRecipeHandles, getRecipeSpec, toEffectiveModel} = require('#recipes')
-const {publishPrepareHandlePacketCompleted} = require('../recipeFlowEvents')
-const {buildHandlePacket} = require('../handlePacket')
+import {of} from 'rxjs'
+
+import {getRecipeHandles, getRecipeSpec, toEffectiveModel} from '#recipes'
+
+import {buildHandlePacket} from '../handlePacket.js'
+import {publishPrepareHandlePacketCompleted} from '../recipeFlowEvents.js'
 
 function prepareCreatePacket$({recipeType, pickedHandles, bus, conversationId}) {
     const spec = getRecipeSpec(recipeType)
@@ -37,4 +39,4 @@ function publishOnSuccess({bus, conversationId, recipeType, packet}) {
     })
 }
 
-module.exports = {prepareCreatePacket$}
+export {prepareCreatePacket$}

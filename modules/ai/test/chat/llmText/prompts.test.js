@@ -1,8 +1,11 @@
-const fs = require('fs')
-const os = require('os')
-const path = require('path')
+import fs from 'fs'
+import os from 'os'
+import path from 'path'
 
-const {loadPromptFile, mainSystemPrompt, specialistPrompt, titleSystemPrompt} = require('#mcp/chat/llmText/prompts')
+import {loadPromptFile, mainSystemPrompt, specialistPrompt, titleSystemPrompt} from '#mcp/chat/llmText/prompts'
+import {dirName} from '#sepal/path'
+
+const __dirname = dirName(import.meta.url)
 
 describe('llmText prompts', () => {
 

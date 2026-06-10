@@ -76,4 +76,4 @@ function parsePointer(pointer) {
     return pointer.replace(/^\//, '').split('/').map(token => token.replace(/~1/g, '/').replace(/~0/g, '~'))
 }
 
-module.exports = {fieldShapeAt}
+export {fieldShapeAt}

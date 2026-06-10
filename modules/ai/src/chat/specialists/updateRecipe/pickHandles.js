@@ -1,8 +1,10 @@
-const {catchError, of, defer} = require('rxjs')
-const {map, reduce, tap} = require('rxjs/operators')
-const {getRecipeHandles} = require('#recipes')
-const {specialistPrompt} = require('../../llmText/prompts')
-const {publishPickHandlesCompleted} = require('../recipeFlowEvents')
+import {catchError, defer, of} from 'rxjs'
+import {map, reduce, tap} from 'rxjs/operators'
+
+import {getRecipeHandles} from '#recipes'
+
+import {specialistPrompt} from '../../llmText/prompts.js'
+import {publishPickHandlesCompleted} from '../recipeFlowEvents.js'
 
 const PICKER_MAX_TOKENS = 512
 
@@ -124,4 +126,4 @@ function renderHandleEntry(handle) {
     return parts.join('\n')
 }
 
-module.exports = {pickHandles$, pickerSystemPrompt}
+export {pickerSystemPrompt, pickHandles$}

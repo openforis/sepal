@@ -1,6 +1,7 @@
-const {EMPTY, of} = require('rxjs')
-const {createPendingActions} = require('#mcp/chat/conversation/pendingActions')
-const {isChannelEmission} = require('#mcp/chat/channelEvents')
+import {EMPTY, of} from 'rxjs'
+
+import {isChannelEmission} from '#mcp/chat/channelEvents'
+import {createPendingActions} from '#mcp/chat/conversation/pendingActions'
 
 const CONVERSATION_ID = 'conv-1'
 const PICKED_AT = '2026-05-26T10:00:00.000Z'

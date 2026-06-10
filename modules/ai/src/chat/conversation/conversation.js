@@ -2,9 +2,10 @@
 // conversationLoop with serialization so concurrent sends can't
 // interleave.
 
-const {EMPTY, Subject, catchError, concat, defer, finalize, ignoreElements, shareReplay, takeUntil} = require('rxjs')
-const {createConversationLoop} = require('./conversationLoop')
-const {createDiagnostics} = require('../diagnostics')
+import {catchError, concat, defer, EMPTY, finalize, ignoreElements, shareReplay, Subject, takeUntil} from 'rxjs'
+
+import {createDiagnostics} from '../diagnostics.js'
+import {createConversationLoop} from './conversationLoop.js'
 
 const DEFAULT_DIAGNOSTICS = createDiagnostics()
 
@@ -65,4 +66,4 @@ function createConversation({id, initialMessages = [], llm, history, tools, pend
     }
 }
 
-module.exports = {createConversation}
+export {createConversation}

@@ -2,11 +2,12 @@
 // {ok, data?, error?} envelopes (UNKNOWN_TOOL / INVALID_TOOL_ARGS /
 // TOOL_FAILED), and observability publishing.
 
-const {catchError, defer, map, of, tap} = require('rxjs')
-const Ajv = require('ajv')
-const addFormats = require('ajv-formats')
-const {createDiagnostics, truncateString} = require('../diagnostics')
-const {isChannelEmission} = require('../channelEvents')
+import Ajv from 'ajv'
+import addFormats from 'ajv-formats'
+import {catchError, defer, map, of, tap} from 'rxjs'
+
+import {isChannelEmission} from '../channelEvents.js'
+import {createDiagnostics, truncateString} from '../diagnostics.js'
 
 const NOOP_BUS = {publish() {}}
 const DEFAULT_DIAGNOSTICS = createDiagnostics()
@@ -153,4 +154,4 @@ function isPlainObject(value) {
     return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-module.exports = {createToolRegistry}
+export {createToolRegistry}

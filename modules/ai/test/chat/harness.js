@@ -3,20 +3,21 @@
 // Test bodies pin behaviour at the stable seam by writing then reading
 // the collectors — never via call-spying.
 
-const {Subject, defer, from, of, tap} = require('rxjs')
-const {createConversation} = require('#mcp/chat/conversation/conversation')
-const {createConversations} = require('#mcp/chat/conversation/conversations')
-const {createGuiContexts} = require('#mcp/chat/conversation/guiContexts')
-const {createMessageHandler} = require('#mcp/chat/conversation/messageHandler')
-const {createPendingActions, noPendingActions} = require('#mcp/chat/conversation/pendingActions')
-const {createTitleGenerator} = require('#mcp/chat/conversation/titleGenerator')
-const {createUserChat} = require('#mcp/chat/conversation/userChat')
-const {createWsHandler} = require('#mcp/chat/conversation/wsHandler')
-const {createToolRegistry} = require('#mcp/chat/tools/registry')
-const {specialistConsultationTools} = require('#mcp/chat/specialists/specialistConsultationTools')
-const {describeRecipeTool} = require('#mcp/chat/specialists/describeRecipe')
-const {updateRecipeTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeTool')
-const {createRecipeTool} = require('#mcp/chat/specialists/createRecipe/createRecipeTool')
+import {defer, from, of, Subject, tap} from 'rxjs'
+
+import {createConversation} from '#mcp/chat/conversation/conversation'
+import {createConversations} from '#mcp/chat/conversation/conversations'
+import {createGuiContexts} from '#mcp/chat/conversation/guiContexts'
+import {createMessageHandler} from '#mcp/chat/conversation/messageHandler'
+import {createPendingActions, noPendingActions} from '#mcp/chat/conversation/pendingActions'
+import {createTitleGenerator} from '#mcp/chat/conversation/titleGenerator'
+import {createUserChat} from '#mcp/chat/conversation/userChat'
+import {createWsHandler} from '#mcp/chat/conversation/wsHandler'
+import {createRecipeTool} from '#mcp/chat/specialists/createRecipe/createRecipeTool'
+import {describeRecipeTool} from '#mcp/chat/specialists/describeRecipe'
+import {specialistConsultationTools} from '#mcp/chat/specialists/specialistConsultationTools'
+import {updateRecipeTool} from '#mcp/chat/specialists/updateRecipe/updateRecipeTool'
+import {createToolRegistry} from '#mcp/chat/tools/registry'
 
 function aRegistryHarness({tools, bus = aRecordingBus()} = {}) {
     const registry = createToolRegistry({tools, bus})
@@ -623,27 +624,27 @@ function eventsOfKind(events, kind) {
     return events.filter(event => event.kind === kind)
 }
 
-module.exports = {
-    aRegistryHarness,
-    aToolFactoryHarness,
-    aConversationHarness,
-    aUserChatHarness,
-    aWsHandlerHarness,
-    aFakeLlm,
+export {
     aControllableLlm,
-    aStallingTitleGenerator,
+    aConversationHarness,
+    aFakeGuiRequests,
+    aFakeLlm,
+    anAdvancingClock,
+    AOI_INNER_TOOL_IMPLS,
+    AOI_INNER_TOOL_SCHEMAS,
     aRecordingBus,
     aRecordingGuiRequests,
-    aFakeGuiRequests,
-    anAdvancingClock,
-    createInMemoryHistory,
-    createInMemoryConversationsStore,
+    aRegistryHarness,
+    aStallingTitleGenerator,
+    aToolFactoryHarness,
+    aUserChatHarness,
+    aWsHandlerHarness,
     collect,
+    createInMemoryConversationsStore,
+    createInMemoryHistory,
     eventsOfKind,
-    innerToolsWithSchemas,
-    innerToolsImpl,
-    AOI_INNER_TOOL_SCHEMAS,
-    AOI_INNER_TOOL_IMPLS,
     firstValue,
+    innerToolsImpl,
+    innerToolsWithSchemas,
     run
 }

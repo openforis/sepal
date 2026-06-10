@@ -1,5 +1,5 @@
-const {aUserChatHarness, eventsOfKind, firstValue, run} = require('../../harness')
-const {ISO_T1} = require('./fixtures')
+import {aUserChatHarness, eventsOfKind, firstValue, run} from '../../harness.js'
+import {ISO_T1} from './fixtures.js'
 
 describe('when creating a conversation', () => {
     let harness

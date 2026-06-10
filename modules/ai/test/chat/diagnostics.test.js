@@ -1,4 +1,4 @@
-const {createDiagnostics, truncateString, MAX_DEBUG_TEXT} = require('#mcp/chat/diagnostics')
+import {createDiagnostics, MAX_DEBUG_TEXT, truncateString} from '#mcp/chat/diagnostics'
 
 describe('diagnostics', () => {
 

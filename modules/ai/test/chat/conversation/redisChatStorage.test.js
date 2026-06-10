@@ -1,6 +1,8 @@
-const {firstValueFrom} = require('rxjs')
-const {createRedisChatStorage} = require('#mcp/chat/conversation/redisChatStorage')
-const {aFakeRedis} = require('./fakeRedis')
+import {firstValueFrom} from 'rxjs'
+
+import {createRedisChatStorage} from '#mcp/chat/conversation/redisChatStorage'
+
+import {aFakeRedis} from './fakeRedis.js'
 
 describe('Redis chat storage port', () => {
     const metaAlice = {id: 'a', title: '', createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-01T00:00:00.000Z'}

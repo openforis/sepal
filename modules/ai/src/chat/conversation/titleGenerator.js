@@ -3,12 +3,13 @@
 // the title progresses; persists the final title through
 // conversationsStore.
 
-const {EMPTY, Subject, catchError, concatMap, defaultIfEmpty, defer, finalize, ignoreElements, last, map, merge, of, scan, tap, timeout} = require('rxjs')
-const {titleSystemPrompt} = require('../llmText/prompts')
-const {createDiagnostics, truncateString} = require('../diagnostics')
-const {cleanTitle} = require('./cleanTitle')
-const {fallbackTitle} = require('./fallbackTitle')
-const {conversationUpdated} = require('../channelEvents')
+import {catchError, concatMap, defaultIfEmpty, defer, EMPTY, finalize, ignoreElements, last, map, merge, of, scan, Subject, tap, timeout} from 'rxjs'
+
+import {conversationUpdated} from '../channelEvents.js'
+import {createDiagnostics, truncateString} from '../diagnostics.js'
+import {titleSystemPrompt} from '../llmText/prompts.js'
+import {cleanTitle} from './cleanTitle.js'
+import {fallbackTitle} from './fallbackTitle.js'
 
 const TITLE_MAX_TOKENS = 32
 const TITLE_TEMPERATURE = 0
@@ -217,4 +218,4 @@ function lastAssistantText(messages) {
     return null
 }
 
-module.exports = {createTitleGenerator}
+export {createTitleGenerator}

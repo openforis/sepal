@@ -1,6 +1,7 @@
-const {aToolFactoryHarness} = require('../../harness')
-const {aFullMosaicModel, aLiveMosaicSetup} = require('./fixtures')
-const {toEffectiveModel, validateRecipe} = require('#recipes')
+import {toEffectiveModel, validateRecipe} from '#recipes'
+
+import {aToolFactoryHarness} from '../../harness.js'
+import {aFullMosaicModel, aLiveMosaicSetup} from './fixtures.js'
 
 // "Now I only need Landsat. Do other tweaks to speed up rendering too" —
 // datasets + render-speed handles flow through update_recipe_values; final

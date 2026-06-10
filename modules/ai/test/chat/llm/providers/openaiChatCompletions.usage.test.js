@@ -1,14 +1,17 @@
+import {jest} from '@jest/globals'
+
+import {aRecordingBus} from '../../harness.js'
+import {toolSchemas} from '../providerConformance.js'
+
 const mockCreate = jest.fn()
 
-jest.mock('openai', () => ({
+jest.unstable_mockModule('openai', () => ({
     default: jest.fn().mockImplementation(() => ({
         chat: {completions: {create: mockCreate}}
     }))
 }))
 
-const {anOpenAiChat, collect} = require('./openaiAdapterHarness')
-const {aRecordingBus} = require('../../harness')
-const {toolSchemas} = require('../providerConformance')
+const {anOpenAiChat, collect} = await import('./openaiAdapterHarness.js')
 
 describe('OpenAI adapter — llm.usage accounting', () => {
 

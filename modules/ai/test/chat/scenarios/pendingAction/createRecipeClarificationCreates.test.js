@@ -1,7 +1,9 @@
-const {of} = require('rxjs')
-const {createPendingActions} = require('#mcp/chat/conversation/pendingActions')
-const {isChannelEmission} = require('#mcp/chat/channelEvents')
-const {aConversationHarness, collect} = require('../../harness')
+import {of} from 'rxjs'
+
+import {isChannelEmission} from '#mcp/chat/channelEvents'
+import {createPendingActions} from '#mcp/chat/conversation/pendingActions'
+
+import {aConversationHarness, collect} from '../../harness.js'
 
 const QUESTION = 'What area should this mosaic cover? Send me a polygon or pick a country/region.'
 

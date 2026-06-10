@@ -2,7 +2,7 @@
 // forced it (tool round cap, guard bail), plus the bail-display
 // factories the toolCallGuard calls.
 
-const {concat, ignoreElements, of} = require('rxjs')
+import {concat, ignoreElements, of} from 'rxjs'
 
 const TOOL_ROUND_CAP_MESSAGE = 'This is taking more steps than expected, so I\'ve stopped here. Please try rephrasing your request.'
 const TOOL_CONSECUTIVE_FAILURES_MESSAGE = 'Having repeated trouble with that tool. Please try a different approach.'
@@ -57,4 +57,4 @@ function createTerminalNotices({bus, conversationId, append$}) {
     }
 }
 
-module.exports = {createTerminalNotices, consecutiveFailureBail, invalidArgsBail}
+export {consecutiveFailureBail, createTerminalNotices, invalidArgsBail}

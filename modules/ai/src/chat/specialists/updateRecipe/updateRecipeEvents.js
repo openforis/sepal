@@ -2,9 +2,9 @@
 // per-call value submissions, projections, change diffs, and the terminal
 // outcome. Counts and hashes ride debug/info; raw user text rides trace.
 
-const {shortHashOf} = require('../../diagnostics')
-const {compactJson, handleValuesSummary, recipeStateSummary} = require('../recipeStateDiagnostics')
-const {nameList, truncate} = require('../eventFormatting')
+import {shortHashOf} from '../../diagnostics.js'
+import {nameList, truncate} from '../eventFormatting.js'
+import {compactJson, handleValuesSummary, recipeStateSummary} from '../recipeStateDiagnostics.js'
 
 function publishUpdateRecipeRequest({bus, conversationId, recipeId, request, contextText, guiContext}) {
     const recipeContext = recipeContextSummary(recipeId, guiContext)
@@ -138,10 +138,9 @@ function recipeIdMatch(recipeId, {selectedRecipeId, openRecipeIds}) {
     return selectedRecipeId || openRecipeIds.length ? 'not-current' : 'no-context'
 }
 
-module.exports = {
+export {
+    publishUpdateRecipeOutcome,
     publishUpdateRecipeRequest,
-    publishUpdateRecipeValuesRequest,
-    publishUpdateRecipeValuesProjection,
     publishUpdateRecipeValuesChanged,
-    publishUpdateRecipeOutcome
-}
+    publishUpdateRecipeValuesProjection,
+    publishUpdateRecipeValuesRequest}

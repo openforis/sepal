@@ -1,8 +1,10 @@
-const {of} = require('rxjs')
-const {createCreateRecipeSpecialist} = require('#mcp/chat/specialists/createRecipe/createRecipeSpecialist')
-const {specialistPrompt} = require('#mcp/chat/llmText/prompts')
-const {aFakeLlm, aFakeBus, expectNoHandlePathsIn} = require('../../builders')
-const {innerToolsImpl, innerToolsWithSchemas, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
+import {of} from 'rxjs'
+
+import {specialistPrompt} from '#mcp/chat/llmText/prompts'
+import {createCreateRecipeSpecialist} from '#mcp/chat/specialists/createRecipe/createRecipeSpecialist'
+
+import {aFakeBus, aFakeLlm, expectNoHandlePathsIn} from '../../builders.js'
+import {AOI_INNER_TOOL_IMPLS, AOI_INNER_TOOL_SCHEMAS, innerToolsImpl, innerToolsWithSchemas} from '../../harness.js'
 
 const CONTEXT = {conversationId: 'conv-1'}
 

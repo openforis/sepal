@@ -1,5 +1,6 @@
-const {of} = require('rxjs')
-const {aToolFactoryHarness, innerToolsWithSchemas, innerToolsImpl} = require('../../harness')
+import {of} from 'rxjs'
+
+import {aToolFactoryHarness, innerToolsImpl, innerToolsWithSchemas} from '../../harness.js'
 
 describe('update_recipe allowed-tool scoping', () => {
 

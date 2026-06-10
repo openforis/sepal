@@ -1,4 +1,4 @@
-const {aUserChatHarness, run} = require('../../harness')
+import {aUserChatHarness, run} from '../../harness.js'
 
 const SUB_A = {clientId: 'c1', subscriptionId: 's1'}
 const SUB_B = {clientId: 'c2', subscriptionId: 's2'}

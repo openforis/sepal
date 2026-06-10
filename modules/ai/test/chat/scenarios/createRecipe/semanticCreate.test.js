@@ -1,8 +1,10 @@
-const {of} = require('rxjs')
-const {aFakeGuiRequests} = require('../../builders')
-const {aToolFactoryHarness, innerToolsImpl} = require('../../harness')
-const {createRecipeValuesTool} = require('#mcp/chat/specialists/createRecipe/createRecipeValuesTool')
-const {toEffectiveModel, validateRecipe} = require('#recipes')
+import {of} from 'rxjs'
+
+import {createRecipeValuesTool} from '#mcp/chat/specialists/createRecipe/createRecipeValuesTool'
+import {toEffectiveModel, validateRecipe} from '#recipes'
+
+import {aFakeGuiRequests} from '../../builders.js'
+import {aToolFactoryHarness, innerToolsImpl} from '../../harness.js'
 
 const POLYGON = {type: 'POLYGON', path: [[36.7, -1.4], [37.0, -1.4], [37.0, -1.1]]}
 
@@ -83,7 +85,7 @@ describe('semantic create — instruction supplies AOI + handle tweaks, final mo
             replies: [
                 {text: '{"handles":["targetDate","seasonStart","seasonEnd"]}'},
                 {toolCalls: [firstCreateCall]},
-                {text: "I couldn't create that with the current source defaults."},
+                {text: 'I couldn\'t create that with the current source defaults.'},
                 {toolCalls: [retryCreateCall]},
                 {text: 'Created 1995 Landsat mosaic.'}
             ]

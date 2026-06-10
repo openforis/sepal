@@ -1,9 +1,9 @@
 // Recipe tools: recipe_list (saved recipes summary), recipe_open
 // (select one in the GUI), recipe_load (full recipe, specialist-private).
 
-const {projectLoadedRecipe} = require('./recipeProjection')
-const {guiProductRequest$} = require('./guiProductRequest')
-const {mapData} = require('../channelEvents')
+import {mapData} from '../channelEvents.js'
+import {guiProductRequest$} from './guiProductRequest.js'
+import {projectLoadedRecipe} from './recipeProjection.js'
 
 function recipeTools(guiRequests) {
     return [
@@ -80,4 +80,4 @@ function recipeName(recipe) {
     return recipe.name || recipe.title || recipe.placeholder
 }
 
-module.exports = {recipeTools, recipeListTool, recipeOpenTool, recipeLoadTool}
+export {recipeListTool, recipeLoadTool, recipeOpenTool, recipeTools}

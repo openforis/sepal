@@ -2,21 +2,21 @@
 // handler observable, wraps the work in a bus.track$ span, and warns
 // on unrecognised types.
 
-const {EMPTY} = require('rxjs')
+import {EMPTY} from 'rxjs'
 
 function createUserChat({conversations, guiContexts, messageHandler, pendingActions, bus}) {
     const dispatch = {
-        'create-conversation':      conversations.create$,
-        'select-conversation':      conversations.select$,
-        'delete-conversation':      conversations.delete$,
+        'create-conversation': conversations.create$,
+        'select-conversation': conversations.select$,
+        'delete-conversation': conversations.delete$,
         'delete-all-conversations': conversations.deleteAll$,
-        'list-conversations':       conversations.list$,
-        'message':                  messageHandler.handle$,
-        'abort':                    conversations.abort$,
-        'context':                  guiContexts.update$,
-        'clear-context':            guiContexts.clear$,
-        'answer-pending-action':    answerPendingAction$,
-        'cancel-pending-action':    pendingActions.cancel$
+        'list-conversations': conversations.list$,
+        'message': messageHandler.handle$,
+        'abort': conversations.abort$,
+        'context': guiContexts.update$,
+        'clear-context': guiContexts.clear$,
+        'answer-pending-action': answerPendingAction$,
+        'cancel-pending-action': pendingActions.cancel$
     }
 
     function answerPendingAction$(args) {
@@ -47,4 +47,4 @@ function createUserChat({conversations, guiContexts, messageHandler, pendingActi
     }
 }
 
-module.exports = {createUserChat}
+export {createUserChat}

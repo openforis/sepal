@@ -1,6 +1,8 @@
-const {of, throwError} = require('rxjs')
-const {createRecipeValuesTool} = require('#mcp/chat/specialists/createRecipe/createRecipeValuesTool')
-const {aFakeGuiRequests, expectNoHandlePathsIn, read} = require('../../builders')
+import {of, throwError} from 'rxjs'
+
+import {createRecipeValuesTool} from '#mcp/chat/specialists/createRecipe/createRecipeValuesTool'
+
+import {aFakeGuiRequests, expectNoHandlePathsIn, read} from '../../builders.js'
 
 const context = {clientId: 'c1', subscriptionId: 's1'}
 

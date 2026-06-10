@@ -2,15 +2,16 @@
 // Loads the main system prompt once and prepends it to each new
 // Conversation's initial messages.
 
-const {map} = require('rxjs')
-const {createConversation} = require('./conversation')
-const {createConversations} = require('./conversations')
-const {createGuiContexts} = require('./guiContexts')
-const {createTitleGenerator} = require('./titleGenerator')
-const {createMessageHandler} = require('./messageHandler')
-const {createPendingActions} = require('./pendingActions')
-const {createUserChat} = require('./userChat')
-const {mainSystemPrompt} = require('../llmText/prompts')
+import {map} from 'rxjs'
+
+import {mainSystemPrompt} from '../llmText/prompts.js'
+import {createConversation} from './conversation.js'
+import {createConversations} from './conversations.js'
+import {createGuiContexts} from './guiContexts.js'
+import {createMessageHandler} from './messageHandler.js'
+import {createPendingActions} from './pendingActions.js'
+import {createTitleGenerator} from './titleGenerator.js'
+import {createUserChat} from './userChat.js'
 
 function createUserChats({chatStorage, llm, tools, bus, clock, createId, diagnostics}) {
     const chats = new Map()
@@ -64,4 +65,4 @@ function createUserChats({chatStorage, llm, tools, bus, clock, createId, diagnos
     }
 }
 
-module.exports = {createUserChats}
+export {createUserChats}

@@ -1,8 +1,10 @@
-const {of} = require('rxjs')
-const {createRecipeTool} = require('#mcp/chat/specialists/createRecipe/createRecipeTool')
-const {createRecipeValuesTool} = require('#mcp/chat/specialists/createRecipe/createRecipeValuesTool')
-const {aFakeBus, aFakeLlm, aFakeGuiRequests, read} = require('../../builders')
-const {innerToolsImpl, innerToolsWithSchemas, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
+import {of} from 'rxjs'
+
+import {createRecipeTool} from '#mcp/chat/specialists/createRecipe/createRecipeTool'
+import {createRecipeValuesTool} from '#mcp/chat/specialists/createRecipe/createRecipeValuesTool'
+
+import {aFakeBus, aFakeGuiRequests, aFakeLlm, read} from '../../builders.js'
+import {AOI_INNER_TOOL_IMPLS, AOI_INNER_TOOL_SCHEMAS, innerToolsImpl, innerToolsWithSchemas} from '../../harness.js'
 
 const POLYGON = {type: 'POLYGON', path: [[36.7, -1.4], [37.0, -1.4], [37.0, -1.1]]}
 

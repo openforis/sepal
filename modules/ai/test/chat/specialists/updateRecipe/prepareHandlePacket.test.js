@@ -1,8 +1,10 @@
-const {concat, of, throwError, toArray} = require('rxjs')
-const {getRecipeHandles} = require('#recipes')
-const {prepareHandlePacket$} = require('#mcp/chat/specialists/updateRecipe/prepareHandlePacket')
-const {emitChannel, guiAction, isChannelEmission} = require('#mcp/chat/channelEvents')
-const {aFakeBus, aFakeGuiRequests, expectNoHandlePathsIn, read} = require('../../builders')
+import {concat, of, throwError, toArray} from 'rxjs'
+
+import {emitChannel, guiAction, isChannelEmission} from '#mcp/chat/channelEvents'
+import {prepareHandlePacket$} from '#mcp/chat/specialists/updateRecipe/prepareHandlePacket'
+import {getRecipeHandles} from '#recipes'
+
+import {aFakeBus, aFakeGuiRequests, expectNoHandlePathsIn, read} from '../../builders.js'
 
 const context = {clientId: 'c1', subscriptionId: 's1'}
 

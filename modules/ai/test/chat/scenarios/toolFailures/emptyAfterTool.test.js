@@ -1,5 +1,6 @@
-const {of} = require('rxjs')
-const {aConversationHarness, collect} = require('../../harness')
+import {of} from 'rxjs'
+
+import {aConversationHarness, collect} from '../../harness.js'
 
 const recipeListSchema = {
     name: 'recipe_list',

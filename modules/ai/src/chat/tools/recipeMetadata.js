@@ -4,9 +4,10 @@
 // describe_recipe / update_recipe / create_recipe to pick a per-type
 // specialist prompt before invoking the inner LLM.
 
-const {catchError, of} = require('rxjs')
-const {guiProductRequest$} = require('./guiProductRequest')
-const {mapData} = require('../channelEvents')
+import {catchError, of} from 'rxjs'
+
+import {mapData} from '../channelEvents.js'
+import {guiProductRequest$} from './guiProductRequest.js'
 
 function lookupRecipeMetadata$(guiRequests, context, recipeId) {
     return guiProductRequest$(guiRequests, context, 'recipe-metadata', {recipeId}).pipe(
@@ -15,4 +16,4 @@ function lookupRecipeMetadata$(guiRequests, context, recipeId) {
     )
 }
 
-module.exports = {lookupRecipeMetadata$}
+export {lookupRecipeMetadata$}

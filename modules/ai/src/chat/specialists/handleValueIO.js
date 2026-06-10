@@ -6,9 +6,10 @@
 // its own envelope shape over these primitives (success summary, optional
 // passthrough fields, etc.).
 
-const isEqual = require('lodash/isEqual')
-const {parsePointer, resolvePointer, PointerNotFound} = require('../tools/jsonPointer')
-const {applicabilityConflictFor, isSelectorHandle, scopeIndexFromHandles, scopeValueIn} = require('./applicability')
+import isEqual from 'lodash/isEqual.js'
+
+import {parsePointer, PointerNotFound, resolvePointer} from '../tools/jsonPointer.js'
+import {applicabilityConflictFor, isSelectorHandle, scopeIndexFromHandles, scopeValueIn} from './applicability.js'
 
 function checkWritableScope(values, writableHandles) {
     const writable = new Set(writableHandles)
@@ -160,7 +161,7 @@ function pathState(model, path) {
 function mapErrorDetailsToHandles(error, handlesByPath) {
     const sourceDetails = Array.isArray(error.errors) ? error.errors
         : Array.isArray(error.details) ? error.details
-        : null
+            : null
     if (!sourceDetails) return null
     return sourceDetails.map(detail => toHandleError(detail, handlesByPath))
 }
@@ -204,7 +205,7 @@ function handleFromAncestor(path, handlesByPath) {
     }
 }
 
-module.exports = {
+export {
     applyHandleValuesToModel,
     checkApplicability,
     checkInactiveValues,

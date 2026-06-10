@@ -8,7 +8,7 @@
 //   -> projectCreateOutcome      (timeline → user-facing envelope + diagnostic)
 // JSON Pointer paths and patch mechanics stay below the GUI/log boundary.
 
-const {createCreateWorkflow} = require('./createWorkflow')
+import {createCreateWorkflow} from './createWorkflow.js'
 
 const SUPPORTED_RECIPE_TYPES = ['MOSAIC']
 
@@ -35,4 +35,4 @@ function createRecipeTool({llm, bus, innerTools}) {
     }
 }
 
-module.exports = {createRecipeTool, SUPPORTED_RECIPE_TYPES}
+export {createRecipeTool, SUPPORTED_RECIPE_TYPES}

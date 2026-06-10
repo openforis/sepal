@@ -1,4 +1,4 @@
-const {createApp} = require('#mcp/app')
+import {createApp} from '#mcp/app'
 
 const PORT = 8080
 const BASE_URL = process.env.LLM_BASE_URL ?? 'http://host.docker.internal:1234/v1'

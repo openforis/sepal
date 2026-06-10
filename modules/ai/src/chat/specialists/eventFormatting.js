@@ -16,4 +16,4 @@ function abbreviateHash(hash) {
     return typeof hash === 'string' && hash.length > 12 ? hash.slice(0, 8) : (hash || '-')
 }
 
-module.exports = {nameList, truncate, abbreviateHash}
+export {abbreviateHash, nameList, truncate}

@@ -1,5 +1,8 @@
-const {Command, Option} = require('commander')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
+
+import * as logModule from '#sepal/log'
+
+const log = logModule.getLogger('config')
 
 const DEFAULT_PORT = 80
 
@@ -101,17 +104,20 @@ const {
 
 log.info('Configuration loaded')
 
-module.exports = {
-    port,
-    sepalEndpoint,
+const conversationTtlMs = conversationTtlDays * 24 * 60 * 60 * 1000
+const sessionTtlMs = sessionTtlMinutes * 60 * 1000
+const fullTracePayloads = aiFullTracePayloads
+
+export {
+    conversationTtlMs,
+    fullTracePayloads,
     geeEndpoint,
-    redisHost,
-    conversationTtlMs: conversationTtlDays * 24 * 60 * 60 * 1000,
-    llmProvider,
     llmApiKey,
-    llmModel,
     llmBaseUrl,
+    llmModel,
+    llmProvider,
+    port,
     rateLimit,
-    sessionTtlMs: sessionTtlMinutes * 60 * 1000,
-    fullTracePayloads: aiFullTracePayloads
-}
+    redisHost,
+    sepalEndpoint,
+    sessionTtlMs}

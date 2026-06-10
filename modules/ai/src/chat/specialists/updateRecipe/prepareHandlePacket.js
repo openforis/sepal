@@ -1,10 +1,12 @@
-const {catchError, of} = require('rxjs')
-const {map, tap} = require('rxjs/operators')
-const {toEffectiveModel} = require('#recipes')
-const {guiProductRequest$} = require('../../tools/guiProductRequest')
-const {mapData} = require('../../channelEvents')
-const {publishPrepareHandlePacketCompleted} = require('../recipeFlowEvents')
-const {buildHandlePacket} = require('../handlePacket')
+import {catchError, of} from 'rxjs'
+import {map, tap} from 'rxjs/operators'
+
+import {toEffectiveModel} from '#recipes'
+
+import {mapData} from '../../channelEvents.js'
+import {guiProductRequest$} from '../../tools/guiProductRequest.js'
+import {buildHandlePacket} from '../handlePacket.js'
+import {publishPrepareHandlePacketCompleted} from '../recipeFlowEvents.js'
 
 // Prepares one handle-keyed packet per update attempt. Loads the current
 // recipe via the GUI bridge, projects through toEffectiveModel, then delegates
@@ -38,4 +40,4 @@ function publishOnSuccess({bus, conversationId, recipeType, packet}) {
     })
 }
 
-module.exports = {prepareHandlePacket$}
+export {prepareHandlePacket$}

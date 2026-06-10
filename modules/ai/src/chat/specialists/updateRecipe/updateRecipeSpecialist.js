@@ -1,6 +1,6 @@
-const {specialistPrompt} = require('../../llmText/prompts')
-const {createSpecialistRuntime} = require('../runSpecialist')
-const {scopeInnerTools, bindToolsToRecipe} = require('../specialistScope')
+import {specialistPrompt} from '../../llmText/prompts.js'
+import {createSpecialistRuntime} from '../runSpecialist.js'
+import {bindToolsToRecipe, scopeInnerTools} from '../specialistScope.js'
 
 const ALLOWED_INNER_TOOLS = ['update_recipe_values', 'aoi_list_countries', 'aoi_list_country_areas']
 const RECIPE_BOUND_TOOLS = new Set(['update_recipe_values'])
@@ -76,4 +76,4 @@ function narrowSchema(schema, hidden) {
     return {...schema, parameters: {...schema.parameters, properties, required}}
 }
 
-module.exports = {createUpdateRecipeSpecialist}
+export {createUpdateRecipeSpecialist}

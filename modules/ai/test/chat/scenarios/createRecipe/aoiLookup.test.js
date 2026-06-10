@@ -1,9 +1,11 @@
-const {of} = require('rxjs')
-const {aFakeGuiRequests} = require('../../builders')
-const {aToolFactoryHarness, innerToolsImpl} = require('../../harness')
-const {aoiTools} = require('#mcp/chat/tools/aoiTools')
-const {createRecipeValuesTool} = require('#mcp/chat/specialists/createRecipe/createRecipeValuesTool')
-const {toEffectiveModel, validateRecipe} = require('#recipes')
+import {of} from 'rxjs'
+
+import {createRecipeValuesTool} from '#mcp/chat/specialists/createRecipe/createRecipeValuesTool'
+import {aoiTools} from '#mcp/chat/tools/aoiTools'
+import {toEffectiveModel, validateRecipe} from '#recipes'
+
+import {aFakeGuiRequests} from '../../builders.js'
+import {aToolFactoryHarness, innerToolsImpl} from '../../harness.js'
 
 // "Create a mosaic over Italy" — AOI resolved through the specialist-private
 // AOI lookup tool. The GUI-returned aoi object is used verbatim; the model
@@ -50,7 +52,7 @@ describe('"Create a mosaic over Italy" — AOI resolved via specialist-private l
             replies: [
                 {text: '{"handles":["aoi"]}'},
                 {toolCalls: [lookupCall]},
-                {text: "I couldn't find a country called Atlantis. Send a polygon or pick a known country/region."}
+                {text: 'I couldn\'t find a country called Atlantis. Send a polygon or pick a known country/region.'}
             ]
         })
 

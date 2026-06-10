@@ -1,5 +1,6 @@
-const {EMPTY, Subject, of, throwError, concat, takeUntil} = require('rxjs')
-const {emitOnEnd} = require('#mcp/chat/emitOnEnd')
+import {concat, EMPTY, of, Subject, takeUntil, throwError} from 'rxjs'
+
+import {emitOnEnd} from '#mcp/chat/emitOnEnd'
 
 describe('emitOnEnd', () => {
 

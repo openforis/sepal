@@ -1,4 +1,4 @@
-const {rescopeCandidates, appendRescopeContext, combineTimelines} = require('#mcp/chat/specialists/updateRecipe/rescope')
+import {appendRescopeContext, combineTimelines, rescopeCandidates} from '#mcp/chat/specialists/updateRecipe/rescope'
 
 const MOSAIC_PACKET = {writableHandles: ['cloudBuffer']}
 const RECIPE_TYPE = 'MOSAIC'

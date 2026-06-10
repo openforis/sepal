@@ -1,7 +1,9 @@
-const {concat, of, throwError, toArray} = require('rxjs')
-const {updateRecipeValuesTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool')
-const {emitChannel, guiAction, isChannelEmission} = require('#mcp/chat/channelEvents')
-const {aFakeGuiRequests, read} = require('../../builders')
+import {concat, of, throwError, toArray} from 'rxjs'
+
+import {emitChannel, guiAction, isChannelEmission} from '#mcp/chat/channelEvents'
+import {updateRecipeValuesTool} from '#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool'
+
+import {aFakeGuiRequests, read} from '../../builders.js'
 
 const context = {clientId: 'c1', subscriptionId: 's1'}
 
@@ -470,7 +472,7 @@ describe('update_recipe_values tool', () => {
         it('maps required-property messages back to the missing field handle when the bridge omitted missingProperty', () => {
             const validationError = Object.assign(new Error('bad'), {
                 code: 'VALIDATION_FAILED',
-                errors: [{path: '/compositeOptions', message: "must have required property 'brdfMultiplier'"}]
+                errors: [{path: '/compositeOptions', message: 'must have required property \'brdfMultiplier\''}]
             })
             const {handler} = aGuiHandler({recipe: aMosaicRecipe(), patchResponse: () => throwError(() => validationError)})
             const tool = updateRecipeValuesTool(aFakeGuiRequests(handler))
@@ -483,7 +485,7 @@ describe('update_recipe_values tool', () => {
 
             expect(result.ok).toBe(false)
             expect(result.error.handleErrors).toEqual([
-                {handle: 'brdfMultiplier', message: "must have required property 'brdfMultiplier'"}
+                {handle: 'brdfMultiplier', message: 'must have required property \'brdfMultiplier\''}
             ])
         })
 

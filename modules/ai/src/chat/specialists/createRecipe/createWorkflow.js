@@ -13,21 +13,23 @@
 //   -> projectCreateOutcome   (timeline → user-facing envelope + diagnostic)
 // JSON Pointer paths stay below the GUI/log boundary.
 
-const {map, mergeMap, of} = require('rxjs')
-const {getRecipeHandles, getRecipeSpec} = require('#recipes')
-const {wasCapped} = require('../runSpecialist')
-const {publishCreateRecipeOutcome} = require('./createRecipeEvents')
-const {isChannelEmission} = require('../../channelEvents')
-const {pickHandles$} = require('../updateRecipe/pickHandles')
-const {prepareCreatePacket$} = require('./prepareCreatePacket')
-const {projectCreateOutcome, publishOutcomeAndShape} = require('./createOutcome')
-const {createCreateRecipeSpecialist} = require('./createRecipeSpecialist')
+import {map, mergeMap, of} from 'rxjs'
+
+import {getRecipeHandles, getRecipeSpec} from '#recipes'
+
+import {isChannelEmission} from '../../channelEvents.js'
+import {wasCapped} from '../runSpecialist.js'
+import {pickHandles$} from '../updateRecipe/pickHandles.js'
+import {projectCreateOutcome, publishOutcomeAndShape} from './createOutcome.js'
+import {publishCreateRecipeOutcome} from './createRecipeEvents.js'
+import {createCreateRecipeSpecialist} from './createRecipeSpecialist.js'
+import {prepareCreatePacket$} from './prepareCreatePacket.js'
 
 // directAnswer tools carry user-facing prose even when the attempt short-
 // circuits, so the orchestrator can stream it without an answer-less restate.
-const UNSUPPORTED_RECIPE_ANSWER = "I can't create that recipe type yet — only MOSAIC is supported."
-const PICKER_FAILED_ANSWER = "I couldn't figure out which recipe fields your request was about. Please try rephrasing."
-const PREPARE_FAILED_ANSWER = "I couldn't prepare that create right now. Please try again."
+const UNSUPPORTED_RECIPE_ANSWER = 'I can\'t create that recipe type yet — only MOSAIC is supported.'
+const PICKER_FAILED_ANSWER = 'I couldn\'t figure out which recipe fields your request was about. Please try rephrasing.'
+const PREPARE_FAILED_ANSWER = 'I couldn\'t prepare that create right now. Please try again.'
 
 function createCreateWorkflow({llm, bus, innerTools}) {
     const specialist = createCreateRecipeSpecialist({llm, bus, innerTools})
@@ -263,4 +265,4 @@ function done(envelope) {
     return {done: envelope}
 }
 
-module.exports = {createCreateWorkflow}
+export {createCreateWorkflow}

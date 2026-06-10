@@ -3,12 +3,13 @@
 // persistOrTouch, turn-boundary channel events, conversation loop,
 // title generation off-tail.
 
-const {concat, concatMap, defer, from, of} = require('rxjs')
-const {emitOnEnd} = require('../emitOnEnd')
-const {
+import {concat, concatMap, defer, from, of} from 'rxjs'
+
+import {
     assistantNotice, chatResponseComplete, chatResponseDelta,
     isChannelEmission, status, toolEnd, toolStart, userMessage
-} = require('../channelEvents')
+} from '../channelEvents.js'
+import {emitOnEnd} from '../emitOnEnd.js'
 
 function createMessageHandler({conversations, guiContexts, titleGenerator, clock}) {
     return {handle$}
@@ -43,4 +44,4 @@ function routeTurnEvent(conversationId, value) {
     return chatResponseDelta(conversationId, value.textDelta)
 }
 
-module.exports = {createMessageHandler, routeTurnEvent}
+export {createMessageHandler, routeTurnEvent}

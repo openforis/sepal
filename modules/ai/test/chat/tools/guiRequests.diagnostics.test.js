@@ -1,5 +1,6 @@
-const {Subject} = require('rxjs')
-const {createGuiRequests} = require('#mcp/chat/guiRequests')
+import {Subject} from 'rxjs'
+
+import {createGuiRequests} from '#mcp/chat/guiRequests'
 
 describe('GUI request bridge — routing diagnostics', () => {
 

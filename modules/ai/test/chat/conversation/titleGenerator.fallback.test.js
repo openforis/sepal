@@ -1,7 +1,8 @@
-const {from, throwError} = require('rxjs')
-const {createInMemoryConversationsStore} = require('./inMemoryConversationsStore')
-const {aFakeLlm, run} = require('../builders')
-const {UNTITLED_META, aTitleGenFixture, aConversation, titleUpdates} = require('./titleGeneratorHarness')
+import {from, throwError} from 'rxjs'
+
+import {aFakeLlm, run} from '../builders.js'
+import {createInMemoryConversationsStore} from './inMemoryConversationsStore.js'
+import {aConversation, aTitleGenFixture, titleUpdates, UNTITLED_META} from './titleGeneratorHarness.js'
 
 describe('TitleGenerator — fallback and error paths', () => {
 

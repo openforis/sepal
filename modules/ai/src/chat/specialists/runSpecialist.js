@@ -1,14 +1,15 @@
-const {EMPTY, concat, concatMap, defer, from, ignoreElements, map, mergeMap, of, tap} = require('rxjs')
-const {createToolCallGuard} = require('../toolCallGuard')
-const {isChannelEmission} = require('../channelEvents')
-const {
+import {concat, concatMap, defer, EMPTY, from, ignoreElements, map, mergeMap, of, tap} from 'rxjs'
+
+import {isChannelEmission} from '../channelEvents.js'
+import {createToolCallGuard} from '../toolCallGuard.js'
+import {
     publishSpecialistPrompt,
     publishSpecialistRequest,
     publishSpecialistResponse,
     publishSpecialistStall,
     publishSpecialistToolRequest,
     publishSpecialistToolResponse
-} = require('./specialistRuntimeEvents')
+} from './specialistRuntimeEvents.js'
 
 const SPECIALIST_MAX_ROUNDS = 5
 const SPECIALIST_MAX_STALLS = 2
@@ -209,4 +210,4 @@ function invalidArgsBail(tool) {
     return `Specialist halted: invalid args on ${tool}.`
 }
 
-module.exports = {createSpecialistRuntime, answerOnly, wasCapped, SPECIALIST_MAX_ROUNDS, SPECIALIST_CAP_ANSWER}
+export {answerOnly, createSpecialistRuntime, SPECIALIST_CAP_ANSWER, SPECIALIST_MAX_ROUNDS, wasCapped}

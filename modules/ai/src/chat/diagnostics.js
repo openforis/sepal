@@ -2,6 +2,8 @@
 // shareable by default; AI_FULL_TRACE_PAYLOADS opts into full payloads
 // for deep debugging.
 
+import crypto from 'crypto'
+
 const MAX_DEBUG_TEXT = 4000
 
 function createDiagnostics({fullPayloads = false} = {}) {
@@ -116,7 +118,7 @@ function stableValue(value, seen) {
 // Per-LLM-call correlation id, surfaced on llm.request + llm.usage so a log
 // scanner can pair them without sequential guessing across interleaved calls.
 function newCallId() {
-    return require('crypto').randomBytes(4).toString('hex')
+    return crypto.randomBytes(4).toString('hex')
 }
 
 // FNV-1a 32-bit, hex slice. Stable, dependency-free, good enough to correlate
@@ -143,4 +145,4 @@ function hasVisibleText(value) {
     return typeof value === 'string' && value.trim().length > 0
 }
 
-module.exports = {createDiagnostics, truncateString, shortHashOf, newCallId, textChunk, MAX_DEBUG_TEXT}
+export {createDiagnostics, MAX_DEBUG_TEXT, newCallId, shortHashOf, textChunk, truncateString}

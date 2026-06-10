@@ -1,5 +1,6 @@
-const {of, throwError} = require('rxjs')
-const {aConversationHarness, aUserChatHarness, collect, eventsOfKind, firstValue, run} = require('../../harness')
+import {of, throwError} from 'rxjs'
+
+import {aConversationHarness, aUserChatHarness, collect, eventsOfKind, firstValue, run} from '../../harness.js'
 
 const recipeListSchema = {
     name: 'recipe_list',

@@ -1,10 +1,11 @@
 // LM Studio's native /api/v1/chat provider adapter. Used for tool-free calls
 // that explicitly disable reasoning.
 
-const {EMPTY, defer, finalize, from, mergeMap, tap} = require('rxjs')
-const {createDiagnostics, truncateString, shortHashOf, newCallId, MAX_DEBUG_TEXT} = require('../../diagnostics')
-const {publishResponseSummary} = require('../events')
-const {publishLlmUsage} = require('../usage')
+import {defer, EMPTY, finalize, from, mergeMap, tap} from 'rxjs'
+
+import {createDiagnostics, MAX_DEBUG_TEXT, newCallId, shortHashOf, truncateString} from '../../diagnostics.js'
+import {publishResponseSummary} from '../events.js'
+import {publishLlmUsage} from '../usage.js'
 
 const DEFAULT_DIAGNOSTICS = createDiagnostics()
 
@@ -147,4 +148,4 @@ function textFromResponse(response) {
         .join('')
 }
 
-module.exports = {createLmStudioNativeChat}
+export {createLmStudioNativeChat}

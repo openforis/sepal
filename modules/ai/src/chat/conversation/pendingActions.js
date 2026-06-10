@@ -4,18 +4,18 @@
 // Resume runs the original tool directly (no LLM round) with an augmented
 // instruction; the tool's directAnswer flag streams the result to the user.
 
-const {EMPTY, concat, defer, from, of} = require('rxjs')
-const {concatMap, map} = require('rxjs/operators')
-const {
+import {concat, defer, EMPTY, from, of} from 'rxjs'
+import {concatMap, map} from 'rxjs/operators'
+
+import {
     chatResponseComplete,
-    conversationPendingActionCreated,
     conversationPendingActionCleared,
+    conversationPendingActionCreated,
+    emitChannel,
     pendingActionError,
     status,
-    userMessage,
-    emitChannel
-} = require('../channelEvents')
-const {routeTurnEvent} = require('./messageHandler')
+    userMessage} from '../channelEvents.js'
+import {routeTurnEvent} from './messageHandler.js'
 
 // Tools whose CLARIFICATION_NEEDED outcome should be lifted into a
 // resumable pending action. Both update_recipe and create_recipe go through
@@ -169,4 +169,4 @@ const noPendingActions = {
     get() { return undefined }
 }
 
-module.exports = {createPendingActions, noPendingActions}
+export {createPendingActions, noPendingActions}

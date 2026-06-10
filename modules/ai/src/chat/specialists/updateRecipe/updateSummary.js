@@ -1,6 +1,7 @@
-const {catchError, defer, of} = require('rxjs')
-const {reduce} = require('rxjs/operators')
-const {updateSummarySystemPrompt} = require('../../llmText/prompts')
+import {catchError, defer, of} from 'rxjs'
+import {reduce} from 'rxjs/operators'
+
+import {updateSummarySystemPrompt} from '../../llmText/prompts.js'
 
 // One tool-free, reasoning-disabled LLM call that narrates a successful
 // update in user-facing prose when the specialist answered empty. Reads only
@@ -71,4 +72,4 @@ function anyKey(object) {
     return object && Object.keys(object).length > 0
 }
 
-module.exports = {summarizeUpdate$}
+export {summarizeUpdate$}

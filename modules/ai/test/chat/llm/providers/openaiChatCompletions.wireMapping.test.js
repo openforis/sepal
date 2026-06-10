@@ -1,13 +1,16 @@
+import {jest} from '@jest/globals'
+
+import {conversationWithToolRoundTrip, toolSchemas} from '../providerConformance.js'
+
 const mockCreate = jest.fn()
 
-jest.mock('openai', () => ({
+jest.unstable_mockModule('openai', () => ({
     default: jest.fn().mockImplementation(() => ({
         chat: {completions: {create: mockCreate}}
     }))
 }))
 
-const {anOpenAiChat, collect} = require('./openaiAdapterHarness')
-const {toolSchemas, conversationWithToolRoundTrip} = require('../providerConformance')
+const {anOpenAiChat, collect} = await import('./openaiAdapterHarness.js')
 
 describe('OpenAI adapter — wire mapping (input → provider request)', () => {
 

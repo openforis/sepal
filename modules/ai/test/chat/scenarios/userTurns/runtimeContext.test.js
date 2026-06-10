@@ -1,6 +1,7 @@
-const {of} = require('rxjs')
-const {aConversationHarness, collect, firstValue} = require('../../harness')
-const {recipeListSchema} = require('./fixtures')
+import {of} from 'rxjs'
+
+import {aConversationHarness, collect, firstValue} from '../../harness.js'
+import {recipeListSchema} from './fixtures.js'
 
 describe('runtime GUI context', () => {
 

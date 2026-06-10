@@ -1,6 +1,7 @@
-const {createDescribeWorkflow} = require('#mcp/chat/specialists/describeRecipe/describeWorkflow')
-const {aRecordingBus, aFakeLlm, aFakeGuiRequests} = require('../../harness')
-const {read} = require('../../builders')
+import {createDescribeWorkflow} from '#mcp/chat/specialists/describeRecipe/describeWorkflow'
+
+import {read} from '../../builders.js'
+import {aFakeGuiRequests, aFakeLlm, aRecordingBus} from '../../harness.js'
 
 describe('describe_recipe workflow', () => {
 

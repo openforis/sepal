@@ -1,7 +1,7 @@
 // log4js adapter for the event bus. Routes each bus event to a
 // log4js category derived from the event's type prefix.
 
-const {getLogger} = require('#sepal/log')
+import {getLogger} from '#sepal/log'
 
 // Un-prefixed event types that should still bucket to a named category.
 const UNPREFIXED_CATEGORY = {
@@ -82,9 +82,9 @@ function memoizedLoggerFor(resolve) {
 function fatal(reason, error) {
     const log = getLogger(FALLBACK_CATEGORY)
     log.error(`FATAL: ${reason}`, error)
-    // eslint-disable-next-line no-console
+     
     console.error(`FATAL: ${reason}`, error)
     process.exit(1)
 }
 
-module.exports = {subscribeLogListener, onEvent, categoryOf}
+export {categoryOf, onEvent, subscribeLogListener}

@@ -1,6 +1,8 @@
-const {of, throwError} = require('rxjs')
-const {mapTools} = require('#mcp/chat/tools/mapTools')
-const {aFakeGuiRequests, read, readError} = require('../builders')
+import {of, throwError} from 'rxjs'
+
+import {mapTools} from '#mcp/chat/tools/mapTools'
+
+import {aFakeGuiRequests, read, readError} from '../builders.js'
 
 describe('map tools', () => {
     const context = {conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}

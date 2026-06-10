@@ -89,4 +89,4 @@ function isEmpty(value) {
     return value === ''
 }
 
-module.exports = {shapeTurnContext, turnContextMessage}
+export {shapeTurnContext, turnContextMessage}

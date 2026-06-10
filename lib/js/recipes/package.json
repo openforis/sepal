@@ -2,12 +2,13 @@
     "name": "recipes",
     "version": "1.0.0",
     "description": "Shared recipe specs + validation. Browser-safe (no fs / no path). Consumed by the AI module (Node) and the GUI (Vite).",
+    "type": "module",
     "main": "src/index.js",
     "author": "",
     "license": "ISC",
     "scripts": {
-        "test": "jest",
-        "testWatch": "jest --watchAll"
+        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
     },
     "dependencies": {
         "ajv": "^8.20.0",

@@ -1,4 +1,4 @@
-const {defer, of} = require('rxjs')
+import {defer, of} from 'rxjs'
 
 function createInMemoryConversationsStore(initial = []) {
     const conversations = new Map(initial.map(meta => [meta.id, meta]))
@@ -44,4 +44,4 @@ function createInMemoryConversationsStore(initial = []) {
     }
 }
 
-module.exports = {createInMemoryConversationsStore}
+export {createInMemoryConversationsStore}

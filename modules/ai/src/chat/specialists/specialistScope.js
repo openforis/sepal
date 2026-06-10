@@ -1,4 +1,4 @@
-const {of} = require('rxjs')
+import {of} from 'rxjs'
 
 function scopeInnerTools({innerTools, allowed, label}) {
     const innerSchemas = innerTools.schemas()
@@ -33,4 +33,4 @@ function bindToolsToRecipe(invokeTool$, {boundTools}) {
     }
 }
 
-module.exports = {scopeInnerTools, bindToolsToRecipe}
+export {bindToolsToRecipe, scopeInnerTools}

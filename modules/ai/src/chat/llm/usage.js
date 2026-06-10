@@ -84,4 +84,4 @@ function byteLength(text) {
     return Buffer.byteLength(text || '', 'utf8')
 }
 
-module.exports = {estimateUsage, resolveUsage, publishLlmUsage}
+export {estimateUsage, publishLlmUsage, resolveUsage}

@@ -26,4 +26,4 @@ function outcomeMessage({recipeType, recipeId, attempted, succeeded, code, lastT
         : `${head}${tail}`
 }
 
-module.exports = {publishCreateRecipeOutcome}
+export {publishCreateRecipeOutcome}

@@ -6,7 +6,7 @@
 // generic, recipe-agnostic frame, and recipe metadata reaches the LLM
 // through the prepared handle packet instead.
 
-const {valueLabelsFromSchema} = require('./valueLabelsFromSchema')
+import {valueLabelsFromSchema} from './valueLabelsFromSchema.js'
 
 const PURPOSES = {
     describe: {factsMethod: 'describeFacts', sectionsFor: describeSections}
@@ -38,4 +38,4 @@ function describeSections(spec, facts) {
     return sections
 }
 
-module.exports = {assembleSpecialistPrompt}
+export {assembleSpecialistPrompt}

@@ -1,7 +1,9 @@
-const {of, throwError} = require('rxjs')
-const {aToolFactoryHarness, aConversationHarness, aFakeGuiRequests, collect, innerToolsImpl, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
-const {aFullMosaicModel} = require('./fixtures')
-const {updateRecipeValuesTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool')
+import {of, throwError} from 'rxjs'
+
+import {updateRecipeValuesTool} from '#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool'
+
+import {aConversationHarness, aFakeGuiRequests, AOI_INNER_TOOL_IMPLS, AOI_INNER_TOOL_SCHEMAS, aToolFactoryHarness, collect, innerToolsImpl} from '../../harness.js'
+import {aFullMosaicModel} from './fixtures.js'
 
 // A failed update is a directAnswer tool returning ok:false. The validation
 // reason must reach the user in the same orchestrator round — falling back

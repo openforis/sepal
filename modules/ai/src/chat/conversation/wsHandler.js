@@ -3,8 +3,9 @@
 // the subscription's UserChat, and routes gui-response messages back
 // to guiRequests.
 
-const {Subject, startWith} = require('rxjs')
-const {createWsChannel} = require('./wsChannel')
+import {startWith, Subject} from 'rxjs'
+
+import {createWsChannel} from './wsChannel.js'
 
 function createWsHandler({bus, userChatFor, guiRequests}) {
     return onConnection
@@ -178,4 +179,4 @@ function keyOf({clientId, subscriptionId}) {
     return `${clientId}:${subscriptionId}`
 }
 
-module.exports = {createWsHandler}
+export {createWsHandler}

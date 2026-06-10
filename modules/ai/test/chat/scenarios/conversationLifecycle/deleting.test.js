@@ -1,5 +1,6 @@
-const {Subject} = require('rxjs')
-const {aUserChatHarness, eventsOfKind, firstValue, run} = require('../../harness')
+import {Subject} from 'rxjs'
+
+import {aUserChatHarness, eventsOfKind, firstValue, run} from '../../harness.js'
 
 describe('deleting conversations', () => {
 

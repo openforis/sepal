@@ -1,4 +1,4 @@
-const {createToolCallGuard} = require('#mcp/chat/toolCallGuard')
+import {createToolCallGuard} from '#mcp/chat/toolCallGuard'
 
 describe('toolCallGuard', () => {
 

@@ -1,5 +1,6 @@
-const {of} = require('rxjs')
-const {aConversationHarness, collect, firstValue} = require('../harness')
+import {of} from 'rxjs'
+
+import {aConversationHarness, collect, firstValue} from '../harness.js'
 
 describe('conversation.resumePendingTool$', () => {
 

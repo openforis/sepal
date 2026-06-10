@@ -2,7 +2,7 @@
 // prepare.completed event per attempt; the `flow` argument selects which
 // recipe operation prefix the type/category resolves to.
 
-const {nameList} = require('./eventFormatting')
+import {nameList} from './eventFormatting.js'
 
 function publishPickHandlesCompleted({bus, conversationId, recipeType, pickedHandles, flow = 'update'}) {
     const type = `${flow}_recipe.picker.completed`
@@ -36,4 +36,4 @@ function publishPrepareHandlePacketCompleted({bus, conversationId, recipeType, p
     })
 }
 
-module.exports = {publishPickHandlesCompleted, publishPrepareHandlePacketCompleted}
+export {publishPickHandlesCompleted, publishPrepareHandlePacketCompleted}

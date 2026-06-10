@@ -7,7 +7,7 @@
 // a user retry; HANDLE_OUT_OF_SCOPE means the model invented handles;
 // TOOL_FAILED is opaque infrastructure failure.
 
-const {getRecipeHandles} = require('#recipes')
+import {getRecipeHandles} from '#recipes'
 
 function rescopeCandidates(outcome, packet, recipeType) {
     if (outcome.succeeded || !outcome.attempted) return null
@@ -46,4 +46,4 @@ function distinct(list) {
     return [...new Set(list)]
 }
 
-module.exports = {rescopeCandidates, appendRescopeContext, combineTimelines}
+export {appendRescopeContext, combineTimelines, rescopeCandidates}

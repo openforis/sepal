@@ -1,5 +1,5 @@
-const {aUserChatHarness, anAdvancingClock, eventsOfKind, firstValue, run} = require('../../harness')
-const {T1, T2, ISO_T1, ISO_T2} = require('./fixtures')
+import {anAdvancingClock, aUserChatHarness, eventsOfKind, firstValue, run} from '../../harness.js'
+import {ISO_T1, ISO_T2, T1, T2} from './fixtures.js'
 
 describe('conversation messaging and listing', () => {
 

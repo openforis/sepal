@@ -1,7 +1,9 @@
-const {of} = require('rxjs')
-const {createUpdateWorkflow} = require('#mcp/chat/specialists/updateRecipe/updateWorkflow')
-const {aRecordingBus, aFakeLlm, aFakeGuiRequests} = require('../../harness')
-const {read} = require('../../builders')
+import {of} from 'rxjs'
+
+import {createUpdateWorkflow} from '#mcp/chat/specialists/updateRecipe/updateWorkflow'
+
+import {read} from '../../builders.js'
+import {aFakeGuiRequests, aFakeLlm, aRecordingBus} from '../../harness.js'
 
 describe('update_recipe validation-rescope retry', () => {
 

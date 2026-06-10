@@ -1,17 +1,19 @@
-const {mergeMap, of} = require('rxjs')
-const {getRecipeSpec} = require('#recipes')
-const {specialistPrompt} = require('../llmText/prompts')
-const {createSpecialistRuntime, answerOnly} = require('./runSpecialist')
-const {scopeInnerTools, bindToolsToRecipe} = require('./specialistScope')
-const {assembleSpecialistPrompt} = require('./assembleSpecialistPrompt')
-const {lookupRecipeMetadata$} = require('../tools/recipeMetadata')
-const {isChannelEmission} = require('../channelEvents')
+import {mergeMap, of} from 'rxjs'
+
+import {getRecipeSpec} from '#recipes'
+
+import {isChannelEmission} from '../channelEvents.js'
+import {specialistPrompt} from '../llmText/prompts.js'
+import {lookupRecipeMetadata$} from '../tools/recipeMetadata.js'
+import {assembleSpecialistPrompt} from './assembleSpecialistPrompt.js'
+import {answerOnly, createSpecialistRuntime} from './runSpecialist.js'
+import {bindToolsToRecipe, scopeInnerTools} from './specialistScope.js'
 
 const ALLOWED_INNER_TOOLS = ['recipe_load']
 const RECIPE_BOUND_TOOLS = new Set(['recipe_load'])
 
-const NOT_FOUND_ANSWER = "I couldn't find that recipe. It may have been closed, deleted, or not loaded in this session."
-const LOOKUP_FAILED_ANSWER = "I couldn't look up that recipe right now. Please try again."
+const NOT_FOUND_ANSWER = 'I couldn\'t find that recipe. It may have been closed, deleted, or not loaded in this session.'
+const LOOKUP_FAILED_ANSWER = 'I couldn\'t look up that recipe right now. Please try again.'
 
 function describeRecipeTool({llm, bus, innerTools, guiRequests}) {
     const basePrompt = specialistPrompt('recipe')
@@ -65,4 +67,4 @@ function buildDescribeUserText({recipeId, question}) {
     return `recipeId: ${recipeId}\nquestion: ${question}`
 }
 
-module.exports = {describeRecipeTool}
+export {describeRecipeTool}

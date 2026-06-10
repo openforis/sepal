@@ -1,5 +1,5 @@
-const {aWsHandlerHarness} = require('../../harness')
-const {alice} = require('./fixtures')
+import {aWsHandlerHarness} from '../../harness.js'
+import {alice} from './fixtures.js'
 
 const aliceTargeted = {username: 'alice', clientId: 'c1', subscriptionId: 's1'}
 // Metadata a freshly created conversation carries before any title or

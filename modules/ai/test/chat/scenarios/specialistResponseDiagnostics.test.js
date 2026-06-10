@@ -1,4 +1,4 @@
-const {aToolFactoryHarness} = require('../harness')
+import {aToolFactoryHarness} from '../harness.js'
 
 // The provider attaches a counts-only per-call summary to each response; the
 // specialist runtime must thread it onto the round's specialist.response event

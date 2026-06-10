@@ -1,12 +1,13 @@
-const {EMPTY, concat, concatMap, defer, filter, from, ignoreElements, mergeMap, of, tap} = require('rxjs')
-const {messagesForLlm} = require('./llmMessages')
-const {publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection, publishLlmRequest, publishOrchestratorPrompt, publishToolCall} = require('./conversationEvents')
-const {createTerminalNotices, consecutiveFailureBail, invalidArgsBail} = require('./terminalNotices')
-const {createToolCallGuard} = require('../toolCallGuard')
-const {createDiagnostics} = require('../diagnostics')
-const {isChannelEmission} = require('../channelEvents')
-const {turnContextMessage} = require('../turnContext')
-const {emptyAfterToolHint} = require('../llmText/prompts')
+import {concat, concatMap, defer, EMPTY, filter, from, ignoreElements, mergeMap, of, tap} from 'rxjs'
+
+import {isChannelEmission} from '../channelEvents.js'
+import {createDiagnostics} from '../diagnostics.js'
+import {emptyAfterToolHint} from '../llmText/prompts.js'
+import {createToolCallGuard} from '../toolCallGuard.js'
+import {turnContextMessage} from '../turnContext.js'
+import {publishEmptyLlmReply, publishEmptyLlmRetry, publishHistoryProjection, publishLlmRequest, publishOrchestratorPrompt, publishToolCall} from './conversationEvents.js'
+import {messagesForLlm} from './llmMessages.js'
+import {consecutiveFailureBail, createTerminalNotices, invalidArgsBail} from './terminalNotices.js'
 
 const EMPTY_AFTER_TOOL_HINT = emptyAfterToolHint()
 const DEFAULT_DIAGNOSTICS = createDiagnostics()
@@ -242,4 +243,4 @@ function directToolAnswer(toolResults, tools) {
     return hasVisibleText(answer) ? answer.trim() : null
 }
 
-module.exports = {createConversationLoop, MAX_TOOL_ROUNDS}
+export {createConversationLoop, MAX_TOOL_ROUNDS}

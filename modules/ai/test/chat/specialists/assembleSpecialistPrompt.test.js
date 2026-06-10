@@ -1,4 +1,4 @@
-const {assembleSpecialistPrompt} = require('#mcp/chat/specialists/assembleSpecialistPrompt')
+import {assembleSpecialistPrompt} from '#mcp/chat/specialists/assembleSpecialistPrompt'
 
 const BASE = 'BASE PROMPT CONTENT'
 

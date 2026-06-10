@@ -1,6 +1,8 @@
-const {EMPTY, Subject, of, from, defer, throwError, catchError, map} = require('rxjs')
-const {createConversation} = require('#mcp/chat/conversation/conversation')
-const {createDiagnostics} = require('#mcp/chat/diagnostics')
+import {catchError, defer, EMPTY, from, map, of, Subject, throwError} from 'rxjs'
+
+import {createConversation} from '#mcp/chat/conversation/conversation'
+import {createDiagnostics} from '#mcp/chat/diagnostics'
+import {getRecipeHandles} from '#recipes'
 
 function aConversation({
     llm = aFakeLlm(),
@@ -246,7 +248,6 @@ function readError(observable) {
 // readable failure; ignore by passing the user-provided fields under `ignore`
 // (e.g. the original instruction prose).
 function expectNoHandlePathsIn(value, {recipeType = 'MOSAIC', ignore = []} = {}) {
-    const {getRecipeHandles} = require('#recipes')
     const handlePaths = (getRecipeHandles(recipeType) || []).map(handle => handle.path)
     const ignoreSet = new Set(ignore)
     const serialized = serializeFor(value, ignoreSet)
@@ -265,10 +266,10 @@ function aFakeDiagnostics(opts) {
     return createDiagnostics(opts)
 }
 
-module.exports = {
-    aConversation,
+export {
     aControllableLlm,
     aControllableTitleGenerator,
+    aConversation,
     aFakeBus,
     aFakeChannel,
     aFakeDiagnostics,

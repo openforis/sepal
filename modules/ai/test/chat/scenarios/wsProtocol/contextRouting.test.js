@@ -1,6 +1,7 @@
-const {EMPTY} = require('rxjs')
-const {aWsHandlerHarness} = require('../../harness')
-const {alice} = require('./fixtures')
+import {EMPTY} from 'rxjs'
+
+import {aWsHandlerHarness} from '../../harness.js'
+import {alice} from './fixtures.js'
 
 describe('context routing', () => {
     let handled, harness

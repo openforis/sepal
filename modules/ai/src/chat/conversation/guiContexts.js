@@ -1,6 +1,6 @@
 // Runtime GUI context cache, keyed by (clientId, subscriptionId).
 
-const {EMPTY, defer} = require('rxjs')
+import {defer, EMPTY} from 'rxjs'
 
 function createGuiContexts() {
     const contexts = new Map()
@@ -30,4 +30,4 @@ function keyOf({clientId, subscriptionId}) {
     return `${clientId}:${subscriptionId}`
 }
 
-module.exports = {createGuiContexts}
+export {createGuiContexts}

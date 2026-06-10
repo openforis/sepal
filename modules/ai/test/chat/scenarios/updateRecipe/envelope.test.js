@@ -1,5 +1,6 @@
-const {of} = require('rxjs')
-const {aToolFactoryHarness, innerToolsImpl, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
+import {of} from 'rxjs'
+
+import {AOI_INNER_TOOL_IMPLS, AOI_INNER_TOOL_SCHEMAS, aToolFactoryHarness, innerToolsImpl} from '../../harness.js'
 
 describe('update_recipe outer envelope reflects whether the update applied', () => {
 

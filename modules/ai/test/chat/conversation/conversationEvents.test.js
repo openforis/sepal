@@ -1,5 +1,6 @@
-const {publishToolCall} = require('#mcp/chat/conversation/conversationEvents')
-const {aFakeBus} = require('../builders')
+import {publishToolCall} from '#mcp/chat/conversation/conversationEvents'
+
+import {aFakeBus} from '../builders.js'
 
 describe('publishToolCall — orchestrator tool-call diagnostics', () => {
 

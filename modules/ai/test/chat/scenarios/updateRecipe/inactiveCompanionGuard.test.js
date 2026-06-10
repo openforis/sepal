@@ -1,8 +1,10 @@
-const {of} = require('rxjs')
-const {aToolFactoryHarness, innerToolsImpl, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
-const {updateRecipeValuesTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool')
-const {aFakeGuiRequests} = require('../../builders')
-const {mosaicMetadata} = require('./fixtures')
+import {of} from 'rxjs'
+
+import {updateRecipeValuesTool} from '#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool'
+
+import {aFakeGuiRequests} from '../../builders.js'
+import {AOI_INNER_TOOL_IMPLS, AOI_INNER_TOOL_SCHEMAS, aToolFactoryHarness, innerToolsImpl} from '../../harness.js'
+import {mosaicMetadata} from './fixtures.js'
 
 // "It's still too cloudy" shape, post-prepare. The picker selected
 // s2CloudProbabilityMax (among other cloud handles). The recipe's

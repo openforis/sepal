@@ -1,5 +1,5 @@
-const {aWsHandlerHarness} = require('../../harness')
-const {alice} = require('./fixtures')
+import {aWsHandlerHarness} from '../../harness.js'
+import {alice} from './fixtures.js'
 
 describe('GUI bridge', () => {
 

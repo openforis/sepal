@@ -1,5 +1,6 @@
-const {prepareCreatePacket$} = require('#mcp/chat/specialists/createRecipe/prepareCreatePacket')
-const {aFakeBus, read} = require('../../builders')
+import {prepareCreatePacket$} from '#mcp/chat/specialists/createRecipe/prepareCreatePacket'
+
+import {aFakeBus, read} from '../../builders.js'
 
 describe('prepareCreatePacket$', () => {
 

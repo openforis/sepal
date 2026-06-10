@@ -1,5 +1,6 @@
-const {throwError} = require('rxjs')
-const {aToolFactoryHarness, aConversationHarness, aFakeGuiRequests, collect} = require('../../harness')
+import {throwError} from 'rxjs'
+
+import {aConversationHarness, aFakeGuiRequests, aToolFactoryHarness, collect} from '../../harness.js'
 
 // When the recipe can't be resolved at preflight, update_recipe is a directAnswer
 // tool returning ok:false. It must carry a user-facing error.answer so the

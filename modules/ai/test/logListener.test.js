@@ -1,8 +1,12 @@
-jest.mock('#sepal/log', () => ({getLogger: jest.fn()}))
+import {jest} from '@jest/globals'
+import {Subject} from 'rxjs'
 
-const {Subject} = require('rxjs')
-const {onEvent, categoryOf, subscribeLogListener} = require('#mcp/logListener')
-const {getLogger} = require('#sepal/log')
+import logConfig from '#config/log.json' with {type: 'json'}
+
+jest.unstable_mockModule('#sepal/log', () => ({getLogger: jest.fn()}))
+
+const {onEvent, categoryOf, subscribeLogListener} = await import('#mcp/logListener')
+const {getLogger} = await import('#sepal/log')
 
 describe('Log listener', () => {
 
@@ -154,8 +158,6 @@ describe('Log listener', () => {
     })
 
     describe('log.json declares categories for every routed subsystem (so log level can be opted-into cleanly)', () => {
-
-        const logConfig = require('#config/log.json')
 
         it('declares orchestrator — orchestrator.prompt routes here and must be settable independently of conversation', () => {
             expect(logConfig.categories).toHaveProperty('orchestrator')

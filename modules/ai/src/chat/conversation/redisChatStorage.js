@@ -1,8 +1,8 @@
 // Redis port for chat persistence. Exposes conversationsFor(username)
 // and historyFor(username, conversationId).
 
-const {createRedisConversationsStore} = require('./redisConversationsStore')
-const {createRedisHistory} = require('./redisHistory')
+import {createRedisConversationsStore} from './redisConversationsStore.js'
+import {createRedisHistory} from './redisHistory.js'
 
 function createRedisChatStorage({redis, ttlMs}) {
     return {
@@ -15,4 +15,4 @@ function createRedisChatStorage({redis, ttlMs}) {
     }
 }
 
-module.exports = {createRedisChatStorage}
+export {createRedisChatStorage}

@@ -1,8 +1,10 @@
-const {of} = require('rxjs')
-const {aToolFactoryHarness, innerToolsImpl, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
-const {updateRecipeValuesTool} = require('#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool')
-const {metadataFor, mosaicMetadata, aFullMosaicModel} = require('./fixtures')
-const {aFakeGuiRequests} = require('../../builders')
+import {of} from 'rxjs'
+
+import {updateRecipeValuesTool} from '#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool'
+
+import {aFakeGuiRequests} from '../../builders.js'
+import {AOI_INNER_TOOL_IMPLS, AOI_INNER_TOOL_SCHEMAS, aToolFactoryHarness, innerToolsImpl} from '../../harness.js'
+import {aFullMosaicModel, metadataFor, mosaicMetadata} from './fixtures.js'
 
 // Closes the cloudMethods → corrections → brdfMultiplier detour. When the
 // picker selects only cloudMethods, prepare emits corrections + datasets as

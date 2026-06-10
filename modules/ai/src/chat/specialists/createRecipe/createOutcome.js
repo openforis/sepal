@@ -5,7 +5,7 @@
 // but tracks createdRecipeId rather than appliedHandles, since create's
 // success surface is identity, not a diff.
 
-const {publishCreateRecipeOutcome} = require('./createRecipeEvents')
+import {publishCreateRecipeOutcome} from './createRecipeEvents.js'
 
 const CREATE_TOOL = 'create_recipe_values'
 
@@ -69,7 +69,7 @@ function buildEnvelope(outcome, answer, {capped = false} = {}) {
             code: 'CREATE_NOT_ATTEMPTED',
             message: 'The create specialist did not call create_recipe_values.',
             specialistAnswer: answer,
-            answer: answer || "I couldn't create that recipe."
+            answer: answer || 'I couldn\'t create that recipe.'
         }
     }
 }
@@ -90,4 +90,4 @@ function lastOf(list) {
     return list.length ? list[list.length - 1] : null
 }
 
-module.exports = {projectCreateOutcome, publishOutcomeAndShape, buildEnvelope, failureAnswer}
+export {buildEnvelope, failureAnswer, projectCreateOutcome, publishOutcomeAndShape}

@@ -6,23 +6,25 @@
 // internal paths stay in logs and the wire envelope but never in handle-facing
 // messages.
 
-const {catchError, of} = require('rxjs')
-const {mergeMap} = require('rxjs/operators')
-const isEqual = require('lodash/isEqual')
-const {getRecipeHandles, toEffectiveModel} = require('#recipes')
-const {guiProductRequest$} = require('../../tools/guiProductRequest')
-const {isChannelEmission, mapData} = require('../../channelEvents')
-const {parsePointer, resolvePointer, PointerNotFound} = require('../../tools/jsonPointer')
-const {
-    publishUpdateRecipeValuesChanged,
-    publishUpdateRecipeValuesProjection,
-    publishUpdateRecipeValuesRequest
-} = require('./updateRecipeEvents')
-const {
+import isEqual from 'lodash/isEqual.js'
+import {catchError, of} from 'rxjs'
+import {mergeMap} from 'rxjs/operators'
+
+import {getRecipeHandles, toEffectiveModel} from '#recipes'
+
+import {isChannelEmission, mapData} from '../../channelEvents.js'
+import {guiProductRequest$} from '../../tools/guiProductRequest.js'
+import {parsePointer, PointerNotFound, resolvePointer} from '../../tools/jsonPointer.js'
+import {
     applyHandleValuesToModel, checkApplicability, checkInactiveValues,
     checkUnknownHandles, checkWritableScope,
     invertByPath, mapErrorDetailsToHandles, resolveHandle
-} = require('../handleValueIO')
+} from '../handleValueIO.js'
+import {
+    publishUpdateRecipeValuesChanged,
+    publishUpdateRecipeValuesProjection,
+    publishUpdateRecipeValuesRequest
+} from './updateRecipeEvents.js'
 
 // STALE_WRITE needs currentModelHash so the updater can decide whether to give
 // up; everything else path-bearing (errors, details) is stripped before the
@@ -174,4 +176,4 @@ function pathState(model, path) {
     }
 }
 
-module.exports = {updateRecipeValuesTool}
+export {updateRecipeValuesTool}

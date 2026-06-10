@@ -1,4 +1,4 @@
-const {aUserChatHarness, eventsOfKind, run} = require('../../harness')
+import {aUserChatHarness, eventsOfKind, run} from '../../harness.js'
 
 describe('first-turn lock cycle', () => {
     let harness

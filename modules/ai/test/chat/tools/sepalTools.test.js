@@ -1,6 +1,8 @@
-const {of} = require('rxjs')
-const {sepalTools, specialistInnerTools} = require('#mcp/chat/tools/sepalTools')
-const {aFakeGuiRequests} = require('../builders')
+import {of} from 'rxjs'
+
+import {sepalTools, specialistInnerTools} from '#mcp/chat/tools/sepalTools'
+
+import {aFakeGuiRequests} from '../builders.js'
 
 describe('sepal tools', () => {
 

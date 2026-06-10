@@ -1,6 +1,6 @@
 // Map-inspection tools: map_area_list, layer_list. Read-only.
 
-const {guiProductRequest$} = require('./guiProductRequest')
+import {guiProductRequest$} from './guiProductRequest.js'
 
 function mapTools(guiRequests) {
     return [
@@ -27,4 +27,4 @@ function layerListTool(guiRequests) {
     }
 }
 
-module.exports = {mapTools}
+export {mapTools}

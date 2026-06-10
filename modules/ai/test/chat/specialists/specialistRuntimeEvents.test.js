@@ -1,10 +1,11 @@
-const {
+import {
     publishSpecialistRequest,
     publishSpecialistResponse,
     publishSpecialistToolRequest,
     publishSpecialistToolResponse
-} = require('#mcp/chat/specialists/specialistRuntimeEvents')
-const {aRecordingBus} = require('../harness')
+} from '#mcp/chat/specialists/specialistRuntimeEvents'
+
+import {aRecordingBus} from '../harness.js'
 
 describe('publishSpecialistRequest', () => {
 

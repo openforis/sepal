@@ -1,4 +1,4 @@
-const recipes = require('#recipes')
+import * as recipes from '#recipes'
 
 describe('AI module -> #recipes import', () => {
 

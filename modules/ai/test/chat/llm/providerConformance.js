@@ -20,4 +20,4 @@ const conversationWithToolRoundTrip = [
     ]}
 ]
 
-module.exports = {toolSchemas, conversationWithToolRoundTrip}
+export {conversationWithToolRoundTrip, toolSchemas}

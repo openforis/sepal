@@ -1,4 +1,4 @@
-const {aUserChatHarness, aControllableLlm, aStallingTitleGenerator, eventsOfKind, firstValue, run} = require('../../harness')
+import {aControllableLlm, aStallingTitleGenerator, aUserChatHarness, eventsOfKind, firstValue, run} from '../../harness.js'
 
 describe('title generation', () => {
 

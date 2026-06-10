@@ -1,4 +1,4 @@
-const {aToolFactoryHarness, aConversationHarness, collect} = require('../../harness')
+import {aConversationHarness, aToolFactoryHarness, collect} from '../../harness.js'
 
 describe('update_recipe descriptor, seeding, and direct answer', () => {
 

@@ -2,8 +2,8 @@
 // from config.provider and exposes a single respondTo$ method so
 // Conversation and titleGenerator don't see provider differences.
 
-const {createOpenAiChatCompletions} = require('./providers/openaiChatCompletions')
-const {createLmStudioNativeChat} = require('./providers/lmStudioNativeChat')
+import {createLmStudioNativeChat} from './providers/lmStudioNativeChat.js'
+import {createOpenAiChatCompletions} from './providers/openaiChatCompletions.js'
 
 function createLlm({baseURL, apiKey, model, provider, bus, clock, diagnostics}) {
     const providerConfig = {baseURL, apiKey, model, provider, bus, clock, diagnostics}
@@ -54,4 +54,4 @@ function objectOrEmpty(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
 }
 
-module.exports = {createLlm}
+export {createLlm}

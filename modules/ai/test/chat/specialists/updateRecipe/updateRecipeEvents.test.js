@@ -1,11 +1,11 @@
-const {
+import {
+    publishUpdateRecipeOutcome,
     publishUpdateRecipeRequest,
-    publishUpdateRecipeValuesRequest,
-    publishUpdateRecipeValuesProjection,
     publishUpdateRecipeValuesChanged,
-    publishUpdateRecipeOutcome
-} = require('#mcp/chat/specialists/updateRecipe/updateRecipeEvents')
-const {aRecordingBus} = require('../../harness')
+    publishUpdateRecipeValuesProjection,
+    publishUpdateRecipeValuesRequest} from '#mcp/chat/specialists/updateRecipe/updateRecipeEvents'
+
+import {aRecordingBus} from '../../harness.js'
 
 describe('publishUpdateRecipeRequest', () => {
 

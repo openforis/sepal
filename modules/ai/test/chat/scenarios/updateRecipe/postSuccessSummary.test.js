@@ -1,5 +1,6 @@
-const {of} = require('rxjs')
-const {aToolFactoryHarness, aFakeLlm, innerToolsImpl, AOI_INNER_TOOL_SCHEMAS, AOI_INNER_TOOL_IMPLS} = require('../../harness')
+import {of} from 'rxjs'
+
+import {aFakeLlm, AOI_INNER_TOOL_IMPLS, AOI_INNER_TOOL_SCHEMAS, aToolFactoryHarness, innerToolsImpl} from '../../harness.js'
 
 // Local thinking models sometimes emit reasoning then end the turn with no
 // visible content after a successful update. The specialist's final answer is

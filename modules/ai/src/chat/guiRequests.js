@@ -2,8 +2,9 @@
 // channel event, then yields the matching gui-response when the GUI
 // replies. Subscription teardown cancels outstanding requests.
 
-const {Subject, concat, defer, finalize, map, merge, of, take} = require('rxjs')
-const {emitChannel, guiAction} = require('./channelEvents')
+import {concat, defer, finalize, map, merge, of, Subject, take} from 'rxjs'
+
+import {emitChannel, guiAction} from './channelEvents.js'
 
 function createGuiRequests({clock, createId, timeoutMs, bus}) {
     const pending = new Map()
@@ -109,4 +110,4 @@ function buildGuiError(error) {
     return new Error('GUI request failed')
 }
 
-module.exports = {createGuiRequests}
+export {createGuiRequests}

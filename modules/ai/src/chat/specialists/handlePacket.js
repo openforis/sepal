@@ -17,10 +17,11 @@
 // the picker's selection. JSON Pointer paths stay below this boundary; only
 // handle names cross it.
 
-const {getRecipeHandles, getRecipeLlmMetadata, getRecipeSpec} = require('#recipes')
-const {fieldShapeAt} = require('../tools/fieldShapeFromSchema')
-const {parsePointer, resolvePointer, PointerNotFound} = require('../tools/jsonPointer')
-const {applicabilityConflictFor, isSelectorHandle, scopeIndexFromHandles, scopeValueIn} = require('./applicability')
+import {getRecipeHandles, getRecipeLlmMetadata, getRecipeSpec} from '#recipes'
+
+import {fieldShapeAt} from '../tools/fieldShapeFromSchema.js'
+import {parsePointer, PointerNotFound, resolvePointer} from '../tools/jsonPointer.js'
+import {applicabilityConflictFor, isSelectorHandle, scopeIndexFromHandles, scopeValueIn} from './applicability.js'
 
 function buildHandlePacket({recipeType, effectiveModel, pickedHandles, requiredHandles = []}) {
     const handles = getRecipeHandles(recipeType)
@@ -435,4 +436,4 @@ function pathState(model, path) {
     }
 }
 
-module.exports = {buildHandlePacket}
+export {buildHandlePacket}

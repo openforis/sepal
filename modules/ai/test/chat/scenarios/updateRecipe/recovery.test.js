@@ -1,5 +1,6 @@
-const {of} = require('rxjs')
-const {aToolFactoryHarness} = require('../../harness')
+import {of} from 'rxjs'
+
+import {aToolFactoryHarness} from '../../harness.js'
 
 describe('update_recipe recovery and observability', () => {
 

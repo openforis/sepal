@@ -1,7 +1,9 @@
-const {of, throwError} = require('rxjs')
-const {aoiTools} = require('#mcp/chat/tools/aoiTools')
-const {sepalTools, specialistInnerTools} = require('#mcp/chat/tools/sepalTools')
-const {aFakeGuiRequests, read, readError} = require('../builders')
+import {of, throwError} from 'rxjs'
+
+import {aoiTools} from '#mcp/chat/tools/aoiTools'
+import {sepalTools, specialistInnerTools} from '#mcp/chat/tools/sepalTools'
+
+import {aFakeGuiRequests, read, readError} from '../builders.js'
 
 describe('aoi tools', () => {
     const context = {conversationId: 'conv1', clientId: 'c1', subscriptionId: 's1'}
