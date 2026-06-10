@@ -21,7 +21,7 @@ function watchRecipesLib() {
                 if (!file || !file.startsWith(recipesSrc)) return
                 clearTimeout(timer)
                 timer = setTimeout(() => {
-                    server.config.logger.info(`[recipes] source changed; restarting Vite to rebundle.`)
+                    server.config.logger.info('[recipes] source changed; restarting Vite to rebundle.')
                     server.restart()
                 }, 100)
             }
