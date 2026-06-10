@@ -17,7 +17,7 @@
 // the picker's selection. JSON Pointer paths stay below this boundary; only
 // handle names cross it.
 
-import {getRecipeHandles, getRecipeLlmMetadata, getRecipeSpec} from '#recipes'
+import {getRecipeHandles, getRecipeLlmMetadata, getRecipeSpec} from '#sepal/recipes'
 
 import {fieldShapeAt} from '../tools/fieldShapeFromSchema.js'
 import {parsePointer, PointerNotFound, resolvePointer} from '../tools/jsonPointer.js'

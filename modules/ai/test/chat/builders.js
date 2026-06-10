@@ -2,7 +2,7 @@ import {catchError, defer, EMPTY, from, map, of, Subject, throwError} from 'rxjs
 
 import {createConversation} from '#mcp/chat/conversation/conversation'
 import {createDiagnostics} from '#mcp/chat/diagnostics'
-import {getRecipeHandles} from '#recipes'
+import {getRecipeHandles} from '#sepal/recipes'
 
 function aConversation({
     llm = aFakeLlm(),

@@ -1,6 +1,6 @@
 import {map, mergeMap, of} from 'rxjs'
 
-import {getRecipeHandles} from '#recipes'
+import {getRecipeHandles} from '#sepal/recipes'
 
 import {isChannelEmission} from '../../channelEvents.js'
 import {lookupRecipeMetadata$} from '../../tools/recipeMetadata.js'

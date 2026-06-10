@@ -130,7 +130,7 @@ Everything else (code comments, log messages, internal errors, UI `name` labels)
 
 ## Conventions
 
-- **ES modules** — `import`/`export`, like all SEPAL Node modules. Relative imports need explicit extensions (`.js`, or `/index.js` for a directory); aliased specifiers (`#mcp/*`, `#sepal/*`, `#recipes`) don't. JSON imports use `with {type: 'json'}`. Jest runs with `NODE_OPTIONS=--experimental-vm-modules`: module mocks use `jest.unstable_mockModule` + `await import(...)` (not `jest.mock`), and `jest` must be imported from `@jest/globals` where used.
+- **ES modules** — `import`/`export`, like all SEPAL Node modules. Relative imports need explicit extensions (`.js`, or `/index.js` for a directory); aliased specifiers (`#mcp/*`, `#sepal/*`, `#sepal/recipes`) don't. JSON imports use `with {type: 'json'}`. Jest runs with `NODE_OPTIONS=--experimental-vm-modules`: module mocks use `jest.unstable_mockModule` + `await import(...)` (not `jest.mock`), and `jest` must be imported from `@jest/globals` where used.
 - **User-facing errors stay generic** — chat replies the user sees are generic ("an error occurred, please try again"); upstream/provider detail (status, message, stack) goes to the server log via the event bus, never the reply. Raw provider errors are operator-facing and unactionable for users. Applies to the chat error funnel.
 - **Subscription keying** — WS subscriptions keyed `clientId:subscriptionId` (one per browser tab).
 - **User chat ownership** — `userChats.js` keeps one in-memory `UserChat` per username; tabs for a user share live state. Redis persists metadata/history so list/select/send recover after restart. Runtime GUI context is cached per subscription.

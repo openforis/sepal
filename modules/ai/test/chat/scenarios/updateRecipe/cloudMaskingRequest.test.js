@@ -1,4 +1,4 @@
-import {toEffectiveModel, validateRecipe} from '#recipes'
+import {toEffectiveModel, validateRecipe} from '#sepal/recipes'
 
 import {aToolFactoryHarness} from '../../harness.js'
 import {aFullMosaicModel, aLiveMosaicSetup} from './fixtures.js'

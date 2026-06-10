@@ -7,7 +7,7 @@
 // a user retry; HANDLE_OUT_OF_SCOPE means the model invented handles;
 // TOOL_FAILED is opaque infrastructure failure.
 
-import {getRecipeHandles} from '#recipes'
+import {getRecipeHandles} from '#sepal/recipes'
 
 function rescopeCandidates(outcome, packet, recipeType) {
     if (outcome.succeeded || !outcome.attempted) return null

@@ -15,7 +15,7 @@
 
 import {map, mergeMap, of} from 'rxjs'
 
-import {getRecipeHandles, getRecipeSpec} from '#recipes'
+import {getRecipeHandles, getRecipeSpec} from '#sepal/recipes'
 
 import {isChannelEmission} from '../../channelEvents.js'
 import {wasCapped} from '../runSpecialist.js'

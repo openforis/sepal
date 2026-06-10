@@ -2,11 +2,11 @@
 
 Shared recipe specs + validation. Browser-safe (no `fs`, no `path`).
 
-Consumed by the AI module (Node, via the `#recipes` imports map — `import {x} from '#recipes'`)
-and the GUI (Vite, as a normal npm dep — `import {x} from 'recipes'`). The `#`
-prefix is a Node imports-map convention that doesn't carry to Vite, so the GUI
-uses the bare package name. Same package, byte-identical at both runtimes.
-Deps are limited to `ajv` + `ajv-formats`.
+Consumed as `#sepal/recipes` by both the AI module (Node, via the package
+`imports` map — `import {x} from '#sepal/recipes'`) and the GUI (Vite, via a
+resolve alias to the `recipes` package — `import {x} from '#sepal/recipes'`).
+Same package, byte-identical at both runtimes. Deps are limited to `ajv` +
+`ajv-formats`.
 
 Each spec exposes `{id, name, schema, rules, defaultModel(), toEffectiveModel(model), selectionFacts(), describeFacts(), editFacts(), llmMetadata(), knowledge(), updateManual(), validate(model)}`.
 Registry-level conveniences: `listRecipeSpecs()`, `getRecipeSpec(id)`,

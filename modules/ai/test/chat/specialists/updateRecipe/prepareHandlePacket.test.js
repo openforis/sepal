@@ -2,7 +2,7 @@ import {concat, of, throwError, toArray} from 'rxjs'
 
 import {emitChannel, guiAction, isChannelEmission} from '#mcp/chat/channelEvents'
 import {prepareHandlePacket$} from '#mcp/chat/specialists/updateRecipe/prepareHandlePacket'
-import {getRecipeHandles} from '#recipes'
+import {getRecipeHandles} from '#sepal/recipes'
 
 import {aFakeBus, aFakeGuiRequests, expectNoHandlePathsIn, read} from '../../builders.js'
 

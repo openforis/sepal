@@ -10,7 +10,7 @@ import isEqual from 'lodash/isEqual.js'
 import {catchError, of} from 'rxjs'
 import {mergeMap} from 'rxjs/operators'
 
-import {getRecipeHandles, toEffectiveModel} from '#recipes'
+import {getRecipeHandles, toEffectiveModel} from '#sepal/recipes'
 
 import {isChannelEmission, mapData} from '../../channelEvents.js'
 import {guiProductRequest$} from '../../tools/guiProductRequest.js'

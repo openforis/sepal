@@ -8,7 +8,7 @@
 
 import {catchError, of} from 'rxjs'
 
-import {getRecipeHandles, getRecipeSpec, toEffectiveModel} from '#recipes'
+import {getRecipeHandles, getRecipeSpec, toEffectiveModel} from '#sepal/recipes'
 
 import {mapData} from '../../channelEvents.js'
 import {guiProductRequest$} from '../../tools/guiProductRequest.js'

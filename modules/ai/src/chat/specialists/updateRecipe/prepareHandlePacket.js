@@ -1,7 +1,7 @@
 import {catchError, of} from 'rxjs'
 import {map, tap} from 'rxjs/operators'
 
-import {toEffectiveModel} from '#recipes'
+import {toEffectiveModel} from '#sepal/recipes'
 
 import {mapData} from '../../channelEvents.js'
 import {guiProductRequest$} from '../../tools/guiProductRequest.js'

@@ -12,7 +12,7 @@
 import {of, throwError} from 'rxjs'
 
 import {updateRecipeValuesTool} from '#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool'
-import {toEffectiveModel, validateRecipe} from '#recipes'
+import {toEffectiveModel, validateRecipe} from '#sepal/recipes'
 
 import {aFakeGuiRequests, innerToolsImpl} from '../../harness.js'
 

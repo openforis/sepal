@@ -7,7 +7,7 @@
 
 import {of} from 'rxjs'
 
-import {getRecipeHandles, getRecipeSpec, toEffectiveModel} from '#recipes'
+import {getRecipeHandles, getRecipeSpec, toEffectiveModel} from '#sepal/recipes'
 
 import {buildHandlePacket} from '../handlePacket.js'
 import {publishPrepareHandlePacketCompleted} from '../recipeFlowEvents.js'

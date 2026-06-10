@@ -1,6 +1,6 @@
 import {mergeMap, of} from 'rxjs'
 
-import {getRecipeSpec} from '#recipes'
+import {getRecipeSpec} from '#sepal/recipes'
 
 import {isChannelEmission} from '../channelEvents.js'
 import {specialistPrompt} from '../llmText/prompts.js'

@@ -1,7 +1,7 @@
 import {catchError, defer, of} from 'rxjs'
 import {map, reduce, tap} from 'rxjs/operators'
 
-import {getRecipeHandles} from '#recipes'
+import {getRecipeHandles} from '#sepal/recipes'
 
 import {specialistPrompt} from '../../llmText/prompts.js'
 import {publishPickHandlesCompleted} from '../recipeFlowEvents.js'

@@ -71,6 +71,11 @@ export default defineConfig({
     resolve: {
         alias: [
             {find: '~', replacement: fileURLToPath(new URL('./src', import.meta.url))},
+            // `#sepal/recipes` is the shared recipes package (not part of the
+            // shared lib's source tree), so it must match before the generic
+            // `#sepal/*` rules below — Vite uses the first matching alias.
+            {find: /^#sepal\/recipes$/, replacement: 'recipes'},
+            {find: /^#sepal\/recipes\/(.*)$/, replacement: 'recipes/src/$1'},
             {find: /^#sepal\/(.*\.json)$/, replacement: `${sharedSrc}/$1`},
             {find: /^#sepal\/(.*)$/, replacement: `${sharedSrc}/$1.js`},
         ]

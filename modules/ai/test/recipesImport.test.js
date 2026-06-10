@@ -1,4 +1,4 @@
-import * as recipes from '#recipes'
+import * as recipes from '#sepal/recipes'
 
 describe('AI module -> #recipes import', () => {
 

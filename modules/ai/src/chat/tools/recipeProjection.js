@@ -13,7 +13,7 @@
 //      value: undefined so the LLM sees a clean absent signal.
 //   3. CLASSIFICATION reference-data omission on the result.
 
-import {toEffectiveModel} from '#recipes'
+import {toEffectiveModel} from '#sepal/recipes'
 
 import {formatPointer, parsePointer, PointerNotFound, resolvePointer} from './jsonPointer.js'
 

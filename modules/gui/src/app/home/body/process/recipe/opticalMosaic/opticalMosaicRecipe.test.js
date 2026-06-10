@@ -1,4 +1,4 @@
-import {getRecipeSpec, validateRecipe} from 'recipes'
+import {getRecipeSpec, validateRecipe} from '#sepal/recipes'
 
 describe('GUI -> recipes shared import', () => {
 

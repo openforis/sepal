@@ -1,7 +1,7 @@
-import {getRecipeSpec, toEffectiveModel} from 'recipes'
 import _ from 'lodash'
 import {map, of, switchMap, tap} from 'rxjs'
 
+import {getRecipeSpec, toEffectiveModel} from '#sepal/recipes'
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
 import {registerGuiAction as registerAction} from '~/app/home/body/chat/guiActionRegistry'

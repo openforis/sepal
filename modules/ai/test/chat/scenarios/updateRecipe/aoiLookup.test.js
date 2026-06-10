@@ -2,7 +2,7 @@ import {of} from 'rxjs'
 
 import {updateRecipeValuesTool} from '#mcp/chat/specialists/updateRecipe/updateRecipeValuesTool'
 import {aoiTools} from '#mcp/chat/tools/aoiTools'
-import {toEffectiveModel, validateRecipe} from '#recipes'
+import {toEffectiveModel, validateRecipe} from '#sepal/recipes'
 
 import {aFakeGuiRequests} from '../../builders.js'
 import {aToolFactoryHarness, innerToolsImpl} from '../../harness.js'

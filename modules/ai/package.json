@@ -46,7 +46,9 @@
         "uuid": "^14.0.0"
     },
     "imports": {
-        "#recipes": "recipes",
+        "#sepal/recipes": "recipes",
+        "#sepal/recipes/*": "recipes/src/*.js",
+        "#sepal/recipes/*.json": "recipes/src/*.json",
         "#sepal/*": "sepal/src/*.js",
         "#sepal/*.json": "sepal/src/*.json",
         "#mcp/*": "./src/*.js",
