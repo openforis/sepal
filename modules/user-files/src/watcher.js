@@ -9,6 +9,7 @@ import {minDuration$} from '#sepal/rxjs'
 import {homeDir, pollIntervalMilliseconds} from './config.js'
 import {resolvePath} from './filesystem.js'
 import {clientTag, subscriptionTag} from './tag.js'
+
 const log = getLogger('watcher')
 
 const REMOVE_COMFORT_DELAY_MS = 1000

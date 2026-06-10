@@ -6,6 +6,7 @@ import {processCSV} from './csv.js'
 import {download} from './filesystem.js'
 import {getDataset, isSceneIncluded, scene} from './landsat.js'
 import {formatInterval} from './time.js'
+
 const log = getLogger('landsat')
 
 // Note: rows are NOT in chronological order by acquisition date

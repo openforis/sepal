@@ -2,6 +2,7 @@ import {getLogger} from '#sepal/log'
 
 import {deserialize, redis, serialize} from './redis.js'
 import {userTag} from './tag.js'
+
 const log = getLogger('userStore')
 
 const userKey = username =>

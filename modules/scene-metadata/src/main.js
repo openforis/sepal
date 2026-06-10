@@ -12,6 +12,7 @@ import {initializeRedis} from './redis.js'
 import {downloadSentinel2, loadSentinel2} from './sentinel2Csv.js'
 import {updateSentinel2} from './sentinel2Stac.js'
 import {formatInterval} from './time.js'
+
 configureServer(logConfig)
 
 const INITIAL_UPDATE_DELAY_SECONDS = 10

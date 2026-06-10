@@ -12,6 +12,7 @@ import {startInactivityCheck} from './inactivityCheck.js'
 import {messageHandler} from './messageHandler.js'
 import {routes} from './routes.js'
 import {scanComplete$, startStorageCheck} from './storageCheck.js'
+
 configureServer(logConfig)
 
 const log = getLogger('main')

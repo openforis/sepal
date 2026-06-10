@@ -3,6 +3,7 @@ import fs from 'fs'
 import _ from 'lodash'
 
 import {getLogger} from '#sepal/log'
+
 const log = getLogger('config')
 
 const DEFAULT_PORT = 80

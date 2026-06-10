@@ -4,6 +4,7 @@ import {configureServer, getLogger} from '#sepal/log'
 
 import {port} from './config.js'
 import {routes} from './routes.js'
+
 configureServer(logConfig)
 
 const log = getLogger('main')

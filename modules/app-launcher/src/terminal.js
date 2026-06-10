@@ -2,6 +2,7 @@ import {spawn} from 'child_process'
 
 import {ClientException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
+
 const log = getLogger('terminal')
 
 // taken from dev-env/src/terminal.js

@@ -4,6 +4,7 @@ import {catchError, EMPTY, map, mergeMap, of, switchMap, tap, timer, toArray} fr
 import {get$} from '#sepal/httpClient'
 import {getLogger} from '#sepal/log'
 import {escapeRegExp, simplifyString, splitString} from '#sepal/string'
+
 const log = getLogger('ee')
 
 const URL = 'https://earthengine-stac.storage.googleapis.com/catalog/catalog.json'

@@ -5,6 +5,7 @@ import path from 'path'
 import {getLogger} from '#sepal/log'
 
 import {homeDir, sshScriptPath} from './config.js'
+
 const log = getLogger('session')
 
 const sessions = {}

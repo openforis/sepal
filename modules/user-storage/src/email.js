@@ -1,6 +1,7 @@
 import {Subject} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
+
 const log = getLogger('email')
 
 const email$ = new Subject()

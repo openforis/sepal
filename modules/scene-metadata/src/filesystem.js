@@ -6,6 +6,7 @@ import {pipeline} from 'stream/promises'
 import {getLogger} from '#sepal/log'
 
 import {formatInterval} from './time.js'
+
 const log = getLogger('filesystem')
 
 const getPath = filename =>

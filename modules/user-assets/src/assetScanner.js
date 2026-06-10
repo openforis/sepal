@@ -8,6 +8,7 @@ import {getAsset$} from './asset.js'
 import {Limiter} from './limiter.js'
 import {userTag} from './tag.js'
 import {getUser} from './userStore.js'
+
 const log = getLogger('assetScanner')
 
 const GLOBAL_CONCURRENCY = 10

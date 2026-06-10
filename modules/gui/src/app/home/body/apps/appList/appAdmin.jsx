@@ -14,6 +14,7 @@ import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
 import styles from './appAdmin.module.css'
+
 const log = getLogger('appAdmin')
 
 export class AppAdmin extends React.Component {

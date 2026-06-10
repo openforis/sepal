@@ -1,6 +1,7 @@
 import {getDayOfYear} from 'date-fns'
 
 import {getLogger} from '#sepal/log'
+
 const log = getLogger('sentinel2')
 
 const PRODUCT_URI_MATCHER = /^S2[ABC]_(?:(?:OPER_PRD_)?MSI(L1C|L2A)_(?<acquisitionTimestamp>\d{8}T\d{6})_N\d{4}_R\d{3}_(?<sceneArea>T\d{2}[A-Z]{3})_\d{8}T\d{6}(?:\.SAFE)?)$/

@@ -3,6 +3,7 @@ import {stream} from '#sepal/httpServer'
 
 import {getFromCeo$} from './handlers/getFromCeo.js'
 import {loginToken$} from './handlers/loginToken.js'
+
 const routes = router => router
     .post('/login-token', stream(ctx => loginToken$(ctx)))
     .get('/get-all-institutions', stream(ctx =>

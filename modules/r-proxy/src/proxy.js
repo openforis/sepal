@@ -5,6 +5,7 @@ import {getLogger} from '#sepal/log'
 import {httpPort} from './config.js'
 import {serveCran} from './proxy-cran.js'
 import {serveGitHub} from './proxy-github.js'
+
 const log = getLogger('proxy')
 
 const handleRequest = async (req, res) => {

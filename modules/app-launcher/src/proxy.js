@@ -9,6 +9,7 @@ import {source$} from './apps.js'
 import {sepalHost} from './config.js'
 import {urlTag, usernameTag} from './tag.js'
 import {getRequestUser, setRequestUser} from './user.js'
+
 const log = getLogger('proxy')
 
 const proxyEndpoints$ = expressApp => source$().pipe(

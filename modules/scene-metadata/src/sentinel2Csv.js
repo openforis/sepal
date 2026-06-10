@@ -4,6 +4,7 @@ import {processCSV} from './csv.js'
 import {download} from './filesystem.js'
 import {getAcquiredTimestampFromId, getIdFromGranuleId, scene} from './sentinel2.js'
 import {formatInterval} from './time.js'
+
 const log = getLogger('sentinel2')
 
 const CSV_URL = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz'

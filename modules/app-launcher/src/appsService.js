@@ -3,6 +3,7 @@ import {getLogger} from '#sepal/log'
 import {buildAndRestart, getContainerInfo, getContainerLogs, isContainerRunning, pathExists, restartContainer, startContainer} from './docker.js'
 import {getRepoInfo, pullUpdates} from './git.js'
 import {validateAppName, validateBranchName} from './validation.js'
+
 const log = getLogger('appsService')
 
 const getAppPath = appName => `/var/lib/sepal/app-launcher/apps/${appName}`

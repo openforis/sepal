@@ -3,6 +3,7 @@ import {join} from 'path'
 import {createPool, initDatabase} from '#sepal/db/mysql'
 import {getLogger} from '#sepal/log'
 import {dirName} from '#sepal/path'
+
 const log = getLogger('database')
 
 const DATABASE_NAME = 'user_storage'

@@ -4,6 +4,7 @@ import {get$} from '#sepal/httpClient'
 import {getLogger} from '#sepal/log'
 
 import {gatewayHost, sepalPassword, sepalUsername} from './config.js'
+
 const log = getLogger('http')
 
 const mergeMostRecent = (...objects) =>

@@ -7,6 +7,7 @@ import {autoRetry, finalizeObservable, fromPromise, swallow} from '#sepal/rxjs'
 
 import {cloudStorage$} from './cloudStorage.js'
 import * as format from './format.js'
+
 const log = getLogger('cloudStorage')
 
 const CHUNK_SIZE = 10 * 1024 * 1024

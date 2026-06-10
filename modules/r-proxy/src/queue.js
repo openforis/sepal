@@ -6,6 +6,7 @@ import {getLogger} from '#sepal/log'
 import {autoUpdateIntervalHours, LOCAL_CRAN_REPO, platformVersion, redisHost, updateNow} from './config.js'
 import {checkCranUpdates, makeCranPackage, updateCranPackage} from './cran.js'
 import {checkGitHubUpdates, makeGitHubPackage, updateGitHubPackage} from './github.js'
+
 const log = getLogger('queue')
 
 const QUEUE = `build-queue-${platformVersion}`

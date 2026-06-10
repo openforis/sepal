@@ -2,6 +2,7 @@ import {spawn} from 'child_process'
 import Path from 'path'
 
 import {getLogger} from '#sepal/log'
+
 const log = getLogger('script')
 
 const runScript = (script, args, {showStdOut, showStdErr} = {}) =>

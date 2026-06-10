@@ -4,6 +4,7 @@ import {get$} from '#sepal/httpClient'
 import {getLogger} from '#sepal/log'
 
 import {sepalAdminPassword, sepalAdminUsername, sepalHost} from './config.js'
+
 const log = getLogger('apiService')
 
 const fetchAppsFromApi$ = () => {

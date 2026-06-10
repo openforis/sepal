@@ -5,6 +5,7 @@ import {configureServer, getLogger} from '#sepal/log'
 import {monitorApps} from './apps.js'
 import {port} from './config.js'
 import routes from './routes.js'
+
 configureServer(logConfig)
 
 const log = getLogger('main')

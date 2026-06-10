@@ -2,6 +2,7 @@ import {Command, Option} from 'commander'
 import _ from 'lodash'
 
 import {getLogger} from '#sepal/log'
+
 const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80

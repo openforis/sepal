@@ -6,6 +6,7 @@ import {getLogger} from '#sepal/log'
 import {minHoursPublished} from './config.js'
 import {getUpdates$} from './earthSearch.js'
 import {formatInterval} from './time.js'
+
 const log = getLogger('stac')
 
 const updateTimestamp = (timestamp, mostRecentTimestamp) =>

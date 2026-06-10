@@ -12,6 +12,7 @@ import {expireAssets, getAssets, removeAssets, setAssets} from './assetStore.js'
 import {pollIntervalMilliseconds} from './config.js'
 import {subscriptionTag, userTag} from './tag.js'
 import {getUser, removeUser, setUser} from './userStore.js'
+
 const log = getLogger('assetManager')
 
 const MIN_RELOAD_DELAY_MS = 60 * 1000

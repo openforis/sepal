@@ -8,6 +8,7 @@ import {getLogger} from '#sepal/log'
 import {redisHost, scanConcurrency, scanDelayIncreaseFactor, scanInitialRetryDelay, scanMaxDelay, scanMaxRetries, scanMinDelay} from './config.js'
 import {calculateUserStorage, scanUserHomes} from './filesystem.js'
 import {DB, getSessionStatus, getSetUserStorage, getUserStorage} from './kvstore.js'
+
 const log = getLogger('storageCheck')
 
 const QUEUE = 'storage-check'

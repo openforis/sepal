@@ -3,6 +3,7 @@ import _ from 'lodash'
 import {getLogger} from '#sepal/log'
 
 import {usernameTag} from './tag.js'
+
 const log = getLogger('user')
 
 const SEPAL_USER_HEADER = 'sepal-user'

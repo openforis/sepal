@@ -4,6 +4,7 @@ import https from 'https'
 import Path from 'path'
 
 import {getLogger} from '#sepal/log'
+
 const log = getLogger('proxy')
 
 const checkTarget = (url, {allowRedirect} = {}) =>

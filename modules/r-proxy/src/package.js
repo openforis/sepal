@@ -2,6 +2,7 @@ import {getLogger} from '#sepal/log'
 
 import {libPath} from './config.js'
 import {runScript} from './script.js'
+
 const log = getLogger('package')
 
 const bundlePackage = async (name, srcPath, binPath, tmpPath) => {

@@ -1,6 +1,7 @@
 import {getLogger} from '#sepal/log'
 
 import {proxyEndpoints$, registerUpgradeListener} from './proxy.js'
+
 const log = getLogger('proxyManager')
 
 let appInstance = null

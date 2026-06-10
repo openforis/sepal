@@ -55,6 +55,11 @@ export default [
             '@stylistic/no-multiple-empty-lines': ['error', {max: 1, maxBOF: 0, maxEOF: 1}],
             '@stylistic/no-trailing-spaces': ['error', {skipBlankLines: true, ignoreComments: false}],
             '@stylistic/object-curly-spacing': ['error', 'never'],
+            '@stylistic/padding-line-between-statements': [
+                'error',
+                {blankLine: 'always', prev: 'import', next: '*'},
+                {blankLine: 'any', prev: 'import', next: 'import'}
+            ],
             '@stylistic/quotes': ['error', 'single'],
             '@stylistic/semi': ['error', 'never'],
             '@stylistic/space-before-blocks': 'error',
