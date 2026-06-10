@@ -53,6 +53,25 @@ const worker$ = ({
                 )
             }
 
+            const sample = (numPixels, seed) => {
+                const toSample = bands
+                    ? image.select(bands)
+                    : image
+                log.info('sampling', numPixels)
+                return toSample.sample({
+                    region: geometry,
+                    scale: parseInt(scale),
+                    projection: 'EPSG:4326',
+                    numPixels: numPixels,
+                    seed: seed,
+                    // tileScale: 16,
+                    geometries: true
+                })
+            }
+
+            const sample$ = (n, i) =>
+                ee.getInfo$(sample(n, i), 'sample image chunk ' + i)
+
             const unstratifiedSample = () => {
                 const numPixels = parseInt(count)
                 const chunkSize = 5000
@@ -93,26 +112,6 @@ const worker$ = ({
                         return rows
                     })
                 )
-
-                function sample$(n, i) {
-                    return ee.getInfo$(sample(n, i), 'sample image chunk ' + i)
-                }
-
-                function sample(numPixels, seed) {
-                    const toSample = bands
-                        ? image.select(bands)
-                        : image
-                    log.info('sampling', numPixels)
-                    return toSample.sample({
-                        region: geometry,
-                        scale: parseInt(scale),
-                        projection: 'EPSG:4326',
-                        numPixels: numPixels,
-                        seed: seed,
-                        // tileScale: 16,
-                        geometries: true
-                    })
-                }
 
             }
             return classBand
