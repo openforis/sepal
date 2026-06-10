@@ -193,7 +193,7 @@ class _AssetBrowser extends React.Component {
         const {directories} = AssetTree.getSelectedItems(tree)
         const selectedFolder = directories.length === 1 ? directories[0] : null
         if (selectedFolder) {
-            const path = [...selectedFolder, ...folder.split('/')]
+            const path = [...selectedFolder, ...AssetTree.fromStringPath(folder, true)]
             if (path.length > 10) {
                 Notifications.error({
                     message: msg('browse.createFolder.tooDeep.error'),
