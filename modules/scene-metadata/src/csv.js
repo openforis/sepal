@@ -1,13 +1,16 @@
-const {Subject, takeWhile, concatMap, from, firstValueFrom, of, map, ReplaySubject} = require('rxjs')
-const {createGunzip} = require('zlib')
-const {parse} = require('csv-parse')
-const {stringify} = require('csv-stringify')
-const {Transform, Writable} = require('stream')
-const {pipeline} = require('stream/promises')
-const {createWriteStream, createReadStream} = require('fs')
-const log = require('#sepal/log').getLogger('csv')
-const {formatInterval} = require('./time')
-const {remove} = require('./filesystem')
+import {parse} from 'csv-parse'
+import {stringify} from 'csv-stringify'
+import {createReadStream, createWriteStream} from 'fs'
+import {concatMap, firstValueFrom, from, map, of, ReplaySubject, Subject, takeWhile} from 'rxjs'
+import {Transform, Writable} from 'stream'
+import {pipeline} from 'stream/promises'
+import {createGunzip} from 'zlib'
+
+import {getLogger} from '#sepal/log'
+
+import {remove} from './filesystem.js'
+import {formatInterval} from './time.js'
+const log = getLogger('csv')
 
 const getPath = filename =>
     `${process.env.MYSQL_FILES_DIR}/${filename}`
@@ -147,4 +150,4 @@ const processCSV = async ({collection, sceneMapper, redis: {setLastUpdate}, data
     await setLastUpdate(updatedTimestampByDataset)
 }
 
-module.exports = {processCSV}
+export {processCSV}

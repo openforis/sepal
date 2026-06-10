@@ -1,5 +1,7 @@
-const {Command, Option} = require('commander')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
+
+import {getLogger} from '#sepal/log'
+const log = getLogger('config')
 
 const DEFAULT_UPDATE_INTERVAL_MINUTES = 60
 const DEFAULT_MIN_HOURS_PUBLISHED = 24
@@ -44,8 +46,6 @@ const {
 
 log.fatal('Configuration loaded')
 
-module.exports = {
-    redisUri: `redis://${redisHost}`,
-    updateIntervalMinutes,
-    minHoursPublished
-}
+const redisUri = `redis://${redisHost}`
+
+export {minHoursPublished, redisUri, updateIntervalMinutes}

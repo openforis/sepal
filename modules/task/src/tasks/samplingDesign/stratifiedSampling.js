@@ -1,6 +1,6 @@
-const ee = require('#sepal/ee/ee')
+import ee from '#sepal/ee/ee'
 
-module.exports = {stratifiedSystematicSample, filterSamples}
+export {filterSamples, stratifiedSystematicSample}
     
 function stratifiedSystematicSample(args) {
     var allocation = args.allocation

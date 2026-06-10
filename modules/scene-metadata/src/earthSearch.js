@@ -1,6 +1,8 @@
-const {map, tap, EMPTY} = require('rxjs')
-const {postJson$} = require('#sepal/httpClient')
-const log = require('#sepal/log').getLogger('earthSearch')
+import {EMPTY, map, tap} from 'rxjs'
+
+import {postJson$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+const log = getLogger('earthSearch')
 
 const SEARCH_URL = 'https://earth-search.aws.element84.com/v1/search'
 
@@ -69,4 +71,4 @@ const getUpdates$ = ({source, dataset, query, sceneMapper, minTimestamp, maxTime
     }
 }
 
-module.exports = {getUpdates$}
+export {getUpdates$}

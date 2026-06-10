@@ -1,6 +1,8 @@
-const {moduleTag, eventTag} = require('./tag')
+import {getLogger} from '#sepal/log'
 
-const log = require('#sepal/log').getLogger('websocket/server')
+import {eventTag, moduleTag} from './tag.js'
+
+const log = getLogger('websocket/server')
 
 const Servers = () => {
     const servers = {}
@@ -70,4 +72,4 @@ const Servers = () => {
     return {add, remove, list, send, sendEvent, broadcastEvent}
 }
 
-module.exports = {Servers}
+export {Servers}

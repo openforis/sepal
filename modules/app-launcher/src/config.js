@@ -1,5 +1,7 @@
-const {Command, Option} = require('commander')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
+
+import {getLogger} from '#sepal/log'
+const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
 const DEFAULT_MANAGEMENT_PORT = 8080
@@ -64,6 +66,10 @@ try {
             new Option('--deploy-environment <value>')
                 .env('DEPLOY_ENVIRONMENT')
         )
+        .addOption(
+            new Option('--apps-catalog-url <value>')
+                .env('SEPAL_APPS_CATALOG_URL')
+        )
         .parse()
 } catch (error) {
     fatalError(error)
@@ -79,20 +85,23 @@ const {
     geeEmail,
     geeKey,
     googleProjectId,
-    deployEnvironment
+    deployEnvironment,
+    appsCatalogUrl
 } = program.opts()
 
 log.info('Configuration loaded')
 
-module.exports = {
-    port,
-    managementPort,
-    monitorEnabled,
-    sepalHost,
-    sepalAdminUsername,
-    sepalAdminPassword,
+const resolvedAppsCatalogUrl = appsCatalogUrl || null
+
+export {
+    resolvedAppsCatalogUrl as appsCatalogUrl,
+    deployEnvironment,
     geeEmail,
     geeKey,
     googleProjectId,
-    deployEnvironment
-}
+    managementPort,
+    monitorEnabled,
+    port,
+    sepalAdminPassword,
+    sepalAdminUsername,
+    sepalHost}

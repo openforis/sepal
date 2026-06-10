@@ -1,6 +1,7 @@
 {
     "name": "sepal",
     "version": "1.0.0",
+    "type": "module",
     "description": "",
     "author": "",
     "license": "ISC",
@@ -8,6 +9,7 @@
         "@eslint/js": "^10",
         "@stylistic/eslint-plugin": "^5",
         "eslint": "^10",
+        "eslint-plugin-import-x": "^4.16.2",
         "eslint-plugin-jest": "^29.15.0",
         "eslint-plugin-simple-import-sort": "^13.0.0",
         "globals": "^15.3.0",

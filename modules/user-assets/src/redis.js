@@ -1,7 +1,9 @@
-const Redis = require('ioredis')
-const {redisUri} = require('./config')
+import Redis from 'ioredis'
 
-const log = require('#sepal/log').getLogger('redis')
+import {getLogger} from '#sepal/log'
+
+import {redisUri} from './config.js'
+const log = getLogger('redis')
 
 const redis = new Redis(redisUri)
 
@@ -27,4 +29,4 @@ const deserialize = value => {
     }
 }
 
-module.exports = {redis, serialize, deserialize}
+export {deserialize, redis, serialize}

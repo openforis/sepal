@@ -1,11 +1,13 @@
-const Tail = require('tail-file')
-const {sepalServerLog, autoRearmDelayHours} = require('./config')
-const log = require('#sepal/log').getLogger('logMonitor')
-const {Subject, groupBy, debounceTime, mergeMap, map, tap} = require('rxjs')
-const _ = require('lodash')
-const {notify} = require('./pushover')
+import _ from 'lodash'
+import {debounceTime, groupBy, map, mergeMap, Subject, tap} from 'rxjs'
+import Tail from 'tail-file'
 
-const rules = require('#config/logMonitor.json')
+import rules from '#config/logMonitor.json' with {type: 'json'}
+import {getLogger} from '#sepal/log'
+
+import {autoRearmDelayHours, sepalServerLog} from './config.js'
+import {notify} from './pushover.js'
+const log = getLogger('logMonitor')
 
 const tag$ = new Subject()
 
@@ -83,4 +85,4 @@ const start = () => {
     notify({message: 'Log monitoring started', priority: -1})
 }
 
-module.exports = {start}
+export {start}

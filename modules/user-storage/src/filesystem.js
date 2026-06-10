@@ -1,8 +1,11 @@
-const {spawn} = require('child_process')
-const {homeDir} = require('./config')
-const path = require('path')
-const fs = require('fs')
-const log = require('#sepal/log').getLogger('filesystem')
+import {spawn} from 'child_process'
+import fs from 'fs'
+import path from 'path'
+
+import {getLogger} from '#sepal/log'
+
+import {homeDir} from './config.js'
+const log = getLogger('filesystem')
 
 const command = async callback =>
     new Promise((resolve, reject) => {
@@ -71,6 +74,6 @@ const eraseUserStorage = async username => {
     }
 }
 
-module.exports = {
-    calculateUserStorage, scanUserHomes, eraseUserStorage
-}
+export {
+    calculateUserStorage, eraseUserStorage,
+    scanUserHomes}

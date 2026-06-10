@@ -1,10 +1,14 @@
-const {Redis} = require('ioredis')
-const {Queue, QueueEvents, Worker} = require('bullmq')
-const {send, tag} = require('./email')
-const {redisHost, concurrency} = require('./config')
-const {filterEmailNotificationsEnabled} = require('./user')
-const log = require('#sepal/log').getLogger('emailQueue')
-const {default: ShortUniqueId} = require('short-unique-id')
+import {Queue, QueueEvents, Worker} from 'bullmq'
+import {Redis} from 'ioredis'
+import ShortUniqueId from 'short-unique-id'
+
+import {getLogger} from '#sepal/log'
+
+import {concurrency, redisHost} from './config.js'
+import {send, tag} from './email.js'
+import {filterEmailNotificationsEnabled} from './user.js'
+
+const log = getLogger('emailQueue')
 const uid = new ShortUniqueId()
 
 const QUEUE = 'email-queue'
@@ -102,4 +106,4 @@ const initQueue = async () => {
     })
 }
 
-module.exports = {enqueue, initQueue}
+export {enqueue, initQueue}

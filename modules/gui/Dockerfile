@@ -3,6 +3,7 @@ FROM node:24-alpine AS build
 
 ENV MODULE_NAME=gui
 ENV MODULE=/usr/local/src/sepal/modules/gui
+ENV SHARED=/usr/local/src/sepal/lib/js/shared
 
 WORKDIR ${MODULE}
 ADD modules/${MODULE_NAME}/.npmrc .
@@ -21,6 +22,9 @@ ADD modules/${MODULE_NAME}/.env ./.env
 ADD modules/${MODULE_NAME}/jsconfig.json ./jsconfig.json
 ADD modules/${MODULE_NAME}/index.html ./index.html
 ADD modules/${MODULE_NAME}/vite.config.js ./vite.config.js
+
+# shared library source, resolved by the #sepal/* alias in vite.config.js
+ADD lib/js/shared/src ${SHARED}/src
 
 ARG BUILD_NUMBER
 ENV BUILD_NUMBER=$BUILD_NUMBER

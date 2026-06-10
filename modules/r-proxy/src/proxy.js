@@ -1,9 +1,11 @@
-const log = require('#sepal/log').getLogger('proxy')
-const http = require('http')
-const {httpPort} = require('./config')
+import http from 'http'
 
-const {serveCran} = require('./proxy-cran')
-const {serveGitHub} = require('./proxy-github')
+import {getLogger} from '#sepal/log'
+
+import {httpPort} from './config.js'
+import {serveCran} from './proxy-cran.js'
+import {serveGitHub} from './proxy-github.js'
+const log = getLogger('proxy')
 
 const handleRequest = async (req, res) => {
     try {
@@ -24,4 +26,4 @@ const initProxy = () => {
     }
 }
 
-module.exports = {initProxy}
+export {initProxy}

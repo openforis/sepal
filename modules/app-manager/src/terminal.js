@@ -1,6 +1,8 @@
-const {Subject} = require('rxjs')
-const log = require('#sepal/log').getLogger('terminal')
-const {spawn} = require('child_process')
+import {spawn} from 'child_process'
+import {Subject} from 'rxjs'
+
+import {getLogger} from '#sepal/log'
+const log = getLogger('terminal')
 
 const exec$ = (workingDir, command, args) => {
     const result$ = new Subject()
@@ -27,4 +29,4 @@ const exec$ = (workingDir, command, args) => {
     return result$
 }
 
-module.exports = {exec$}
+export {exec$}

@@ -1,4 +1,4 @@
-const ee = require('#sepal/ee/ee')
+import ee from '#sepal/ee/ee'
 
 const setWorkloadTag = recipe => {
     const tag = `sepal-task-${recipe.type}`
@@ -8,4 +8,4 @@ const setWorkloadTag = recipe => {
     ee.data.setDefaultWorkloadTag(tag)
 }
 
-module.exports = {setWorkloadTag}
+export {setWorkloadTag}

@@ -1,11 +1,13 @@
-const {job} = require('#gee/jobs/job')
+import {map, switchMap} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import ImageFactory from '#sepal/ee/imageFactory'
+import {loadRecipe$} from '#sepal/ee/recipe'
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {recipeId}
 }) => {
-    const {loadRecipe$} = require('#sepal/ee/recipe')
-    const ImageFactory = require('#sepal/ee/imageFactory')
-    const {map, switchMap} = require('rxjs')
     
     return loadRecipe$(recipeId).pipe(
         switchMap(recipe => ImageFactory(recipe).getImage$()),
@@ -13,8 +15,8 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'EE image JSON',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

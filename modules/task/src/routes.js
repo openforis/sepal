@@ -1,6 +1,6 @@
-const {submitTask, cancelTask} = require('./taskManager')
+import {cancelTask, submitTask} from './taskManager.js'
 
-module.exports = router =>
+export default router =>
     router
         .get('/healthcheck', ctx => ctx.status = 200)
 

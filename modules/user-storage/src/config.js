@@ -1,5 +1,7 @@
-const {Command, Option} = require('commander')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
+
+import {getLogger} from '#sepal/log'
+const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
 
@@ -176,26 +178,36 @@ if (scanMaxDelaySeconds <= scanMinDelaySeconds) {
 
 log.info('Configuration loaded')
 
-module.exports = {
-    amqpUri: `amqp://${amqpHost}`,
-    redisHost,
+const amqpUri = `amqp://${amqpHost}`
+const scanMinDelay = scanMinDelaySeconds * 1000
+const scanMaxDelay = scanMaxDelaySeconds * 1000
+const scanInitialRetryDelay = scanInitialRetryDelaySeconds * 1000
+const inactivityTimeout = inactivityTimeoutDays * 24 * 60 * 60 * 1000
+const inactivityNotificationDelay = inactivityNotificationDelayDays * 24 * 60 * 60 * 1000
+const inactivityGracePeriod = inactivityGracePeriodDays * 24 * 60 * 60 * 1000
+const inactivityMaxSpread = inactivityMaxSpreadHours * 60 * 60 * 1000
+const inactivityInitialRetryDelay = inactivityInitialRetryDelaySeconds * 1000
+const inactivityUserStorageThreshold = inactivityUserStorageThresholdMb * 1024 * 1024
+
+export {
+    amqpUri,
     gatewayHost,
-    sepalUsername,
-    sepalPassword,
-    port,
     homeDir,
-    scanMinDelay: scanMinDelaySeconds * 1000,
-    scanMaxDelay: scanMaxDelaySeconds * 1000,
-    scanDelayIncreaseFactor,
-    scanConcurrency,
-    scanMaxRetries,
-    scanInitialRetryDelay: scanInitialRetryDelaySeconds * 1000,
-    inactivityTimeout: inactivityTimeoutDays * 24 * 60 * 60 * 1000,
-    inactivityNotificationDelay: inactivityNotificationDelayDays * 24 * 60 * 60 * 1000,
-    inactivityGracePeriod: inactivityGracePeriodDays * 24 * 60 * 60 * 1000,
-    inactivityMaxSpread: inactivityMaxSpreadHours * 60 * 60 * 1000,
     inactivityConcurrency,
+    inactivityGracePeriod,
+    inactivityInitialRetryDelay,
     inactivityMaxRetries,
-    inactivityInitialRetryDelay: inactivityInitialRetryDelaySeconds * 1000,
-    inactivityUserStorageThreshold: inactivityUserStorageThresholdMb * 1024 * 1024
-}
+    inactivityMaxSpread,
+    inactivityNotificationDelay,
+    inactivityTimeout,
+    inactivityUserStorageThreshold,
+    port,
+    redisHost,
+    scanConcurrency,
+    scanDelayIncreaseFactor,
+    scanInitialRetryDelay,
+    scanMaxDelay,
+    scanMaxRetries,
+    scanMinDelay,
+    sepalPassword,
+    sepalUsername}

@@ -1,4 +1,4 @@
-const moment = require('moment')
+import moment from 'moment'
 
 moment.relativeTimeThreshold('w', Number.MAX_SAFE_INTEGER)
 moment.relativeTimeThreshold('M', null)
@@ -24,4 +24,4 @@ moment.locale('compact', {
 const fromNow = date =>
     moment(date).fromNow(true)
 
-module.exports = {fromNow}
+export {fromNow}

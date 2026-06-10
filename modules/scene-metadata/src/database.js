@@ -1,6 +1,8 @@
-const {formatInterval} = require('./time')
-const {createPool} = require('#sepal/db/mysql')
-const log = require('#sepal/log').getLogger('database')
+import {createPool} from '#sepal/db/mysql'
+import {getLogger} from '#sepal/log'
+
+import {formatInterval} from './time.js'
+const log = getLogger('database')
 
 const CURRENT_DATABASE_NAME = 'sdms'
 const NEW_DATABASE_NAME = 'sdms_new'
@@ -185,4 +187,4 @@ const initializeDatabase = async () => {
     }
 }
 
-module.exports = {initializeDatabase}
+export {initializeDatabase}

@@ -1,5 +1,5 @@
-const {readFile, stat} = require('fs/promises')
-const {from, of, catchError, map} = require('rxjs')
+import {readFile, stat} from 'fs/promises'
+import {catchError, from, map, of} from 'rxjs'
 
 const fileToJson$ = path =>
     from(readFile(path, 'utf8')).pipe(
@@ -12,4 +12,4 @@ const lastModifiedDate$ = path =>
         catchError(() => of(null))
     )
 
-module.exports = {fileToJson$, lastModifiedDate$}
+export {fileToJson$, lastModifiedDate$}

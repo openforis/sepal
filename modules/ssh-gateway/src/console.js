@@ -1,5 +1,5 @@
-const {defer, first, fromEvent, tap} = require('rxjs')
-const readline = require('readline')
+import readline from 'readline'
+import {defer, first, fromEvent, tap} from 'rxjs'
 
 const readLine$ = () => {
     return defer(() => {
@@ -78,4 +78,4 @@ const format = (string, ...styles) =>
 const highlight = (text, style = 'YELLOW_INTENSE') =>
     format(text, style)
 
-module.exports = {format, highlight, print, println, readLine$}
+export {format, highlight, print, println, readLine$}

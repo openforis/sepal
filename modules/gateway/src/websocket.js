@@ -1,9 +1,10 @@
-const {initializeDownlink} = require('./websocket-downlink')
-const {initializeUplink} = require('./websocket-uplink')
-const {Servers} = require('./websocket-server')
-const {Clients} = require('./websocket-client')
-const {initializeEvents} = require('./websocket-events')
-const {USER_UP, USER_DOWN, USER_UPDATED, CLIENT_UP, CLIENT_DOWN, SUBSCRIPTION_UP, SUBSCRIPTION_DOWN} = require('#sepal/event/definitions')
+import {CLIENT_DOWN, CLIENT_UP, SUBSCRIPTION_DOWN, SUBSCRIPTION_UP, USER_DOWN, USER_UP, USER_UPDATED} from '#sepal/event/definitions'
+
+import {Clients} from './websocket-client.js'
+import {initializeDownlink} from './websocket-downlink.js'
+import {initializeEvents} from './websocket-events.js'
+import {Servers} from './websocket-server.js'
+import {initializeUplink} from './websocket-uplink.js'
 
 const initializeWebSocketServer = ({wss, userStore, event$}) => {
     const servers = Servers()
@@ -14,7 +15,7 @@ const initializeWebSocketServer = ({wss, userStore, event$}) => {
     initializeEvents({servers, clients, userStore, event$})
 }
 
-module.exports = {initializeWebSocketServer}
+export {initializeWebSocketServer}
 
 /* eslint-disable */
 

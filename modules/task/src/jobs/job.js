@@ -1,9 +1,7 @@
-const Job = require('#sepal/worker/job')
+import Job from '#sepal/worker/job'
 
-module.exports = {
-    job: config =>
-        Job({
-            ...config,
-            schedulerName: 'GoogleEarthEngine'
-        })
-}
+export const job = config =>
+    Job({
+        ...config,
+        schedulerName: 'GoogleEarthEngine'
+    })

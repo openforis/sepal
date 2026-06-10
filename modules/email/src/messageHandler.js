@@ -1,8 +1,12 @@
-const _ = require('lodash')
-const log = require('#sepal/log').getLogger('messageHandler')
-const {enqueue} = require('./emailQueue')
-const {setEmailNotificationsEnabled} = require('./cache')
-const {getUser} = require('./http')
+import _ from 'lodash'
+
+import {getLogger} from '#sepal/log'
+
+import {setEmailNotificationsEnabled} from './cache.js'
+import {enqueue} from './emailQueue.js'
+import {getUser} from './http.js'
+
+const log = getLogger('messageHandler')
 
 const logError = (key, msg) =>
     log.error('Incoming message doesn\'t match expected shape', {key, msg})
@@ -52,4 +56,4 @@ const messageHandler = async (key, msg) => {
     return handler && await handler(key, msg)
 }
 
-module.exports = {messageHandler}
+export {messageHandler}

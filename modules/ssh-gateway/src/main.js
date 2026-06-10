@@ -1,12 +1,9 @@
-const {from, switchMap} = require('rxjs')
-const fs = require('fs').promises
-const {
-    interactive,
-    userKeyFile,
-    sshCommandPath
-} = require('./config')
-const {interactive$} = require('./interactive')
-const {nonInteractive$} = require('./nonInteractive')
+import fs from 'fs/promises'
+import {from, switchMap} from 'rxjs'
+
+import {interactive, sshCommandPath, userKeyFile} from './config.js'
+import {interactive$} from './interactive.js'
+import {nonInteractive$} from './nonInteractive.js'
 
 process.on('uncaughtException', error => {
     console.error('Something went wrong, please try again', error)

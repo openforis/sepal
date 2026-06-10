@@ -1,8 +1,10 @@
-const {WebSocket} = require('ws')
+import {WebSocket} from 'ws'
 
-const {clientTag, eventTag, userTag} = require('./tag')
+import {getLogger} from '#sepal/log'
 
-const log = require('#sepal/log').getLogger('websocket/client')
+import {clientTag, eventTag, userTag} from './tag.js'
+
+const log = getLogger('websocket/client')
 
 const Clients = () => {
     const clients = {}
@@ -128,4 +130,4 @@ const Clients = () => {
     return {add, get, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendEventToUser, sendEventToClient, broadcastEvent}
 }
 
-module.exports = {Clients}
+export {Clients}

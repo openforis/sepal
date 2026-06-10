@@ -1,14 +1,17 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import _ from 'lodash'
 
-const log = require('#sepal/log').getLogger('main')
+import logConfig from '#config/log.json' with {type: 'json'}
+import * as server from '#sepal/httpServer'
+import {configureServer, getLogger} from '#sepal/log'
+import {initMessageQueue} from '#sepal/messageQueue'
 
-const _ = require('lodash')
+import {amqpUri, port} from './config.js'
+import {initQueue} from './emailQueue.js'
+import {messageHandler} from './messageHandler.js'
 
-const {initMessageQueue} = require('#sepal/messageQueue')
-const {amqpUri, port} = require('./config')
-const server = require('#sepal/httpServer')
-const {initQueue} = require('./emailQueue')
-const {messageHandler} = require('./messageHandler')
+configureServer(logConfig)
+
+const log = getLogger('main')
 
 const main = async () => {
     await initMessageQueue(amqpUri, {

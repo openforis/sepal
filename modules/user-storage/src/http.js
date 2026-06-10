@@ -1,7 +1,10 @@
-const {gatewayHost, sepalUsername, sepalPassword} = require('./config')
-const {get$} = require('#sepal/httpClient')
-const {forkJoin, map} = require('rxjs')
-const log = require('#sepal/log').getLogger('http')
+import {forkJoin, map} from 'rxjs'
+
+import {get$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+
+import {gatewayHost, sepalPassword, sepalUsername} from './config.js'
+const log = getLogger('http')
 
 const mergeMostRecent = (...objects) =>
     objects.reduce((acc, curr) => {
@@ -106,4 +109,4 @@ const getUser$ = username => {
     )
 }
 
-module.exports = {getMostRecentAccessByUser$, getMostRecentAccess$, getUser$}
+export {getMostRecentAccess$, getMostRecentAccessByUser$, getUser$}

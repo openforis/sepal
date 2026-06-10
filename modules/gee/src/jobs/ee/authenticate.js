@@ -1,15 +1,23 @@
-const {job} = require('#gee/jobs/job')
-const {eeLimiterService} = require('#sepal/ee/eeLimiterService')
-const {tag} = require('#sepal/tag')
+import {createRequire} from 'module'
+import {of, switchMap} from 'rxjs'
 
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {eeLimiterService} from '#sepal/ee/eeLimiterService'
+import {getLogger} from '#sepal/log'
+import {fileName} from '#sepal/path'
+import {swallow} from '#sepal/rxjs'
+import {tag} from '#sepal/tag'
+
+const require = createRequire(import.meta.url)
 const DEFAULT_MAX_RETRIES = 3
 
 /*
 To use highvolume endpoint, configure initArgs in worker:
 
-    module.exports = job({
+    export default job({
         jobName: 'Some job name',
-        jobPath: __filename,
+        jobPath: fileName(import.meta.url),
         initArgs: () => ({eeEndpoint: 'https://earthengine-highvolume.googleapis.com'}),
         worker$
     })
@@ -21,10 +29,7 @@ const worker$ = ({
     credentials: {sepalUser, serviceAccountCredentials, googleProjectId},
     initArgs: {eeEndpoint} = {}
 }) => {
-    const {switchMap, of} = require('rxjs')
-    const {swallow} = require('#sepal/rxjs')
-    const ee = require('#sepal/ee/ee')
-    const log = require('#sepal/log').getLogger('auth')
+    const log = getLogger('auth')
 
     if (sepalUser) {
         ee.setUsername(sepalUser.username)
@@ -101,9 +106,9 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'EE Authentication',
-    before: [require('#gee/jobs/configure')],
+    before: [require('#gee/jobs/configure').default],
     services: [eeLimiterService],
     worker$
 })

@@ -1,19 +1,19 @@
-const {forkJoin, switchMap} = require('rxjs')
-const {exportImageToDrive$} = require('../jobs/export/toDrive')
-const ImageFactory = require('#sepal/ee/imageFactory')
-const {getCurrentContext$} = require('#task/jobs/service/context')
-const {setWorkloadTag} = require('./workloadTag')
+import {forkJoin, switchMap} from 'rxjs'
 
-module.exports = {
-    submit$: (taskId, {image: {recipe, bands, driveFolder: folder, ...retrieveOptions}}) => {
-        setWorkloadTag(recipe)
-        return getCurrentContext$().pipe(
-            switchMap(() => {
-                const description = recipe.title || recipe.placeholder
-                return export$(taskId, {description, recipe, bands, folder, ...retrieveOptions})
-            })
-        )
-    }
+import ImageFactory from '#sepal/ee/imageFactory'
+import {getCurrentContext$} from '#task/jobs/service/context'
+
+import {exportImageToDrive$} from '../jobs/export/toDrive.js'
+import {setWorkloadTag} from './workloadTag.js'
+
+export const submit$ = (taskId, {image: {recipe, bands, driveFolder: folder, ...retrieveOptions}}) => {
+    setWorkloadTag(recipe)
+    return getCurrentContext$().pipe(
+        switchMap(() => {
+            const description = recipe.title || recipe.placeholder
+            return export$(taskId, {description, recipe, bands, folder, ...retrieveOptions})
+        })
+    )
 }
 
 const export$ = (taskId, {description, recipe, bands, scale, folder, ...retrieveOptions}) => {

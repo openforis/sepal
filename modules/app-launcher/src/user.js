@@ -1,6 +1,9 @@
-const log = require('#sepal/log').getLogger('user')
-const _ = require('lodash')
-const {usernameTag} = require('./tag')
+import _ from 'lodash'
+
+import {getLogger} from '#sepal/log'
+
+import {usernameTag} from './tag.js'
+const log = getLogger('user')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 
@@ -37,4 +40,4 @@ const setRequestUser = (req, user) => {
     req.headers[SEPAL_USER_HEADER] = serialize(userInfo)
 }
 
-module.exports = {SEPAL_USER_HEADER, getRequestUser, setRequestUser}
+export {getRequestUser, SEPAL_USER_HEADER, setRequestUser}

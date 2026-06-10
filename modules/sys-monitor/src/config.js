@@ -1,6 +1,7 @@
-const {Command, Option} = require('commander')
+import {Command, Option} from 'commander'
 
-const log = require('#sepal/log').getLogger('config')
+import {getLogger} from '#sepal/log'
+const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
 
@@ -84,14 +85,13 @@ const {
 
 log.info('Configuration loaded')
 
-module.exports = {
+export {
+    autoRearmDelayHours,
+    emergencyNotificationRetryDelay,
+    emergencyNotificationRetryTimeout,
+    initialDelayMinutes,
+    notifyFrom,
+    port,
     pushoverApiKey,
     pushoverGroupKey,
-    port,
-    sepalServerLog,
-    initialDelayMinutes,
-    autoRearmDelayHours,
-    notifyFrom,
-    emergencyNotificationRetryDelay,
-    emergencyNotificationRetryTimeout
-}
+    sepalServerLog}

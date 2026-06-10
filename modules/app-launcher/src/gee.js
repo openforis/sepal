@@ -1,7 +1,10 @@
-const fs = require('fs').promises
-const log = require('#sepal/log').getLogger('main')
-const path = require('path')
-const {geeEmail, geeKey, googleProjectId} = require('./config')
+import fs from 'fs/promises'
+import path from 'path'
+
+import {getLogger} from '#sepal/log'
+
+import {geeEmail, geeKey, googleProjectId} from './config.js'
+const log = getLogger('main')
 
 const credentialsPath = path.join('/var/lib/sepal/app-launcher/service-account-credentials.json')
 
@@ -34,6 +37,6 @@ function createCredentialsFile() {
     
 }
 
-module.exports = {
+export {
     createCredentialsFile
 }

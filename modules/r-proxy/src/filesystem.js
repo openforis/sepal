@@ -1,5 +1,5 @@
-const Path = require('path')
-const {stat, readdir} = require('fs/promises')
+import {readdir, stat} from 'fs/promises'
+import Path from 'path'
 
 const isChildOf = (parent, dir) => {
     const relative = Path.relative(parent, dir)
@@ -18,4 +18,4 @@ const isFile = async path => {
 const getFiles = async path =>
     await readdir(path)
 
-module.exports = {isChildOf, isFile, getFiles}
+export {getFiles, isChildOf, isFile}

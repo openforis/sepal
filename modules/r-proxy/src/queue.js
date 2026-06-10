@@ -1,9 +1,12 @@
-const {Redis} = require('ioredis')
-const {Queue, QueueEvents, Worker, Job} = require('bullmq')
-const {platformVersion, redisHost, autoUpdateIntervalHours, updateNow, LOCAL_CRAN_REPO} = require('./config')
-const log = require('#sepal/log').getLogger('queue')
-const {makeCranPackage, checkCranUpdates, updateCranPackage} = require('./cran')
-const {makeGitHubPackage, checkGitHubUpdates, updateGitHubPackage} = require('./github')
+import {Job, Queue, QueueEvents, Worker} from 'bullmq'
+import {Redis} from 'ioredis'
+
+import {getLogger} from '#sepal/log'
+
+import {autoUpdateIntervalHours, LOCAL_CRAN_REPO, platformVersion, redisHost, updateNow} from './config.js'
+import {checkCranUpdates, makeCranPackage, updateCranPackage} from './cran.js'
+import {checkGitHubUpdates, makeGitHubPackage, updateGitHubPackage} from './github.js'
+const log = getLogger('queue')
 
 const QUEUE = `build-queue-${platformVersion}`
 
@@ -183,4 +186,4 @@ const initQueue = async () => {
     })
 }
 
-module.exports = {enqueueBuildCranPackage, enqueueBuildGitHubPackage, initQueue}
+export {enqueueBuildCranPackage, enqueueBuildGitHubPackage, initQueue}

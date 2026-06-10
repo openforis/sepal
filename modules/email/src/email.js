@@ -1,11 +1,15 @@
-const log = require('#sepal/log').getLogger('email')
-const {smtpHost, smtpPort, smtpSecure, smtpUser, smtpPassword, smtpFromDomain} = require('./config')
-const fs = require('fs')
-const nodemailer = require('nodemailer')
-const Handlebars = require('handlebars')
-const {marked} = require('marked')
+import fs from 'fs'
+import Handlebars from 'handlebars'
+import {marked} from 'marked'
+import nodemailer from 'nodemailer'
 
-const EMAIL_TEMPLATE = fs.readFileSync(`${__dirname}/template.hbs`, {encoding: 'utf-8'})
+import {getLogger} from '#sepal/log'
+
+import {smtpFromDomain, smtpHost, smtpPassword, smtpPort, smtpSecure, smtpUser} from './config.js'
+
+const log = getLogger('email')
+
+const EMAIL_TEMPLATE = fs.readFileSync(new URL('./template.hbs', import.meta.url), {encoding: 'utf-8'})
 
 const template = Handlebars.compile(EMAIL_TEMPLATE)
 
@@ -70,4 +74,4 @@ const send = async ({id, email: {from: tentativeFrom, to, cc, bcc, subject = '',
     }
 }
 
-module.exports = {send, tag}
+export {send, tag}

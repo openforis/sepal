@@ -1,5 +1,5 @@
-const {scene, getIdFromDatastripId} = require('./sentinel2')
-const {updateFromStac} = require('./stac')
+import {getIdFromDatastripId, scene} from './sentinel2.js'
+import {updateFromStac} from './stac.js'
 
 const sceneMapper = ({
     properties: {
@@ -25,4 +25,4 @@ const updateSentinel2 = async ({redis, database, timestamp}) =>
         timestamp
     })
 
-module.exports = {updateSentinel2}
+export {updateSentinel2}

@@ -38,5 +38,5 @@ Consuming modules use two import maps:
 - **`tile.js`**: Splits AOI into tiles for parallel processing during exports.
 - **`eeLimiterService.js`**: Rate limiting for EE API calls to avoid quota issues.
 - **`recipeRef.js`**: Handles references between recipes (one recipe can reference another as input).
-- **CommonJS**: Uses `require()` / `module.exports`.
+- **ESM**: Native ESM (`"type": "module"`). Most processing modules `export default` a single function; import them with a default import (`import mosaic from './optical/mosaic.js'`). Relative imports include the `.js` extension. `imageFactory.js` keeps lazy, synchronous module loading via `createRequire` (a `load()` helper unwraps `.default`) to defer loading and break circular dependencies.
 - **No tests**: This library does not have its own test suite.

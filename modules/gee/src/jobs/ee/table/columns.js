@@ -1,12 +1,14 @@
-const {job} = require('#gee/jobs/job')
+import {catchError, of, switchMap, throwError} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {EEException} from '#sepal/ee/exception'
+import {ClientException, NotFoundException} from '#sepal/exception'
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {tableId}
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const {ClientException, NotFoundException} = require('#sepal/exception')
-    const {EEException} = require('#sepal/ee/exception')
-    const {throwError, of, switchMap, catchError} = require('rxjs')
 
     const handleError$ = error =>
         ee.getAsset$(tableId, 0).pipe(
@@ -55,8 +57,8 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Get table columns',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

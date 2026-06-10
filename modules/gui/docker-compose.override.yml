@@ -8,5 +8,11 @@ services:
       target: build
     user: "1000:1000"
     volumes:
+      # lib/shared
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared/package.json:/usr/local/src/sepal/lib/js/shared/package.json
+      - ${SEPAL_PROJECT_DIR}/modules/gui/lib/shared/package-lock.json:/usr/local/src/sepal/lib/js/shared/package-lock.json
+      - ${SEPAL_PROJECT_DIR}/modules/gui/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
+      # module
       - ${SEPAL_PROJECT_DIR}/modules/gui:/usr/local/src/sepal/modules/gui # To allow dynamic reloading in dev
       - ${SEPAL_PROJECT_DIR}/lib/js/recipes:/usr/local/src/sepal/lib/js/recipes:ro # recipes alias source + its node_modules (read-only)

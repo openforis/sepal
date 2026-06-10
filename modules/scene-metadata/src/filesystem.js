@@ -1,9 +1,12 @@
-const {Readable} = require('stream')
-const {pipeline} = require('stream/promises')
-const {createWriteStream} = require('fs')
-const {rm} = require('fs/promises')
-const log = require('#sepal/log').getLogger('filesystem')
-const {formatInterval} = require('./time')
+import {createWriteStream} from 'fs'
+import {rm} from 'fs/promises'
+import {Readable} from 'stream'
+import {pipeline} from 'stream/promises'
+
+import {getLogger} from '#sepal/log'
+
+import {formatInterval} from './time.js'
+const log = getLogger('filesystem')
 
 const getPath = filename =>
     `${process.env.MYSQL_FILES_DIR}/${filename}`
@@ -39,4 +42,4 @@ const remove = async file => {
     }
 }
 
-module.exports = {download, remove}
+export {download, remove}

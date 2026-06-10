@@ -1,23 +1,25 @@
-const {userTag, clientTag, subscriptionTag, moduleTag} = require('./tag')
-const {firstValueFrom} = require('rxjs')
+import {firstValueFrom} from 'rxjs'
 
-const log = require('#sepal/log').getLogger('websocket/event')
-
-const {
-    MODULE_UP,
-    MODULE_DOWN,
-    USER_UP,
-    USER_DOWN,
-    USER_UPDATED,
-    CLIENT_UP,
+import {
     CLIENT_DOWN,
+    CLIENT_UP,
     CLIENT_VERSION_MISMATCH,
-    SUBSCRIPTION_UP,
-    SUBSCRIPTION_DOWN,
     GOOGLE_ACCESS_TOKEN_ADDED,
-    GOOGLE_ACCESS_TOKEN_UPDATED,
     GOOGLE_ACCESS_TOKEN_REMOVED,
-} = require('#sepal/event/definitions')
+    GOOGLE_ACCESS_TOKEN_UPDATED,
+    MODULE_DOWN,
+    MODULE_UP,
+    SUBSCRIPTION_DOWN,
+    SUBSCRIPTION_UP,
+    USER_DOWN,
+    USER_UP,
+    USER_UPDATED,
+} from '#sepal/event/definitions'
+import {getLogger} from '#sepal/log'
+
+import {clientTag, moduleTag, subscriptionTag, userTag} from './tag.js'
+
+const log = getLogger('websocket/event')
 
 // const initializeEvents = ({servers, clients, userStore, event$, userUp$, userDown$, clientUp$, clientDown$}) => {
 const initializeEvents = ({servers, clients, userStore, event$}) => {
@@ -157,6 +159,6 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
     })
 }
 
-module.exports = {
+export {
     initializeEvents
 }

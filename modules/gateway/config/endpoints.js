@@ -1,5 +1,5 @@
-const {sepalAppsHost} = require('../src/config')
-const modules = require('./modules')
+import {sepalAppsHost} from '../src/config.js'
+import modules from './modules.json' with {type: 'json'}
 
 const endpoints = [
     {
@@ -205,4 +205,4 @@ const webSocketEndpoints = [
 
 const webSocketPath = '/api/ws'
 
-module.exports = {endpoints, webSocketEndpoints, webSocketPath}
+export {endpoints, webSocketEndpoints, webSocketPath}

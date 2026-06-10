@@ -1,10 +1,14 @@
-const log = require('#sepal/log').getLogger('database')
+import {join} from 'path'
 
-const {join} = require('path')
-const {initDatabase, createPool} = require('#sepal/db/mysql')
+import {createPool, initDatabase} from '#sepal/db/mysql'
+import {getLogger} from '#sepal/log'
+import {dirName} from '#sepal/path'
+const log = getLogger('database')
 
 const DATABASE_NAME = 'user_storage'
 const TABLE_NAME = 'history'
+
+const __dirname = dirName(import.meta.url)
 
 const state = {}
 
@@ -94,6 +98,6 @@ const getUserEvents = async username => {
     return results
 }
 
-module.exports = {
-    initializeDatabase, addEvent, getMostRecentEvents, getUserEvents
-}
+export {
+    addEvent, getMostRecentEvents, getUserEvents,
+    initializeDatabase}

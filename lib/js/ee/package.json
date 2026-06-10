@@ -2,10 +2,11 @@
     "name": "sepal-ee",
     "version": "1.0.0",
     "description": "",
+    "type": "module",
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@google/earthengine": "^1.7.25",
+        "@google/earthengine": "^1.7.30",
         "lodash": "^4.18.1",
         "moment": "^2.30.1",
         "rxjs": "^7.8.2",

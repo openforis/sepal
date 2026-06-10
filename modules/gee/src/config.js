@@ -1,6 +1,8 @@
-const {Command, Option} = require('commander')
-const _ = require('lodash')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
+import _ from 'lodash'
+
+import {getLogger} from '#sepal/log'
+const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
 const DEFAULT_INSTANCES = 3
@@ -79,12 +81,11 @@ const serviceAccountCredentials = {
 
 log.info('Configuration loaded')
 
-module.exports = {
-    sepalUsername,
-    sepalPassword,
-    sepalEndpoint,
+export {
     googleProjectId,
-    serviceAccountCredentials,
+    instances,
     port,
-    instances
-}
+    sepalEndpoint,
+    sepalPassword,
+    sepalUsername,
+    serviceAccountCredentials}

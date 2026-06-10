@@ -1,6 +1,10 @@
-const log = require('#sepal/log').getLogger('user')
-const _ = require('lodash')
-const {usernameTag} = require('./tag')
+import _ from 'lodash'
+
+import {getLogger} from '#sepal/log'
+
+import {usernameTag} from './tag.js'
+
+const log = getLogger('user')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 const SEPAL_USER_UPDATED_HEADER = 'sepal-user-updated'
@@ -48,15 +52,14 @@ const setRequestUser = (req, user) => {
 const removeRequestUser = req =>
     delete req.headers[SEPAL_USER_HEADER]
 
-module.exports = {
+export {
+    deserialize,
+    getRequestUser,
+    getSessionUsername,
+    removeRequestUser,
+    SEPAL_BUDGET_UPDATED_HEADER,
     SEPAL_USER_HEADER,
     SEPAL_USER_UPDATED_HEADER,
-    SEPAL_BUDGET_UPDATED_HEADER,
     serialize,
-    deserialize,
-    getSessionUsername,
-    setSessionUsername,
-    getRequestUser,
     setRequestUser,
-    removeRequestUser
-}
+    setSessionUsername}

@@ -4,24 +4,23 @@
     "description": "",
     "main": "src/main.js",
     "scripts": {
-        "test": "jest",
-        "testWatch": "jest --watchAll"
+        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
     },
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@google-cloud/storage": "^7.19.0",
-        "commander": "^14.0.3",
+        "@google-cloud/storage": "^7.21.0",
+        "commander": "^15.0.0",
         "fast-crc32c": "^2.0.0",
-        "googleapis": "^171.4.0",
+        "googleapis": "^173.0.0",
         "lodash": "^4.18.1",
         "moment": "^2.30.1",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
         "sepal-ee": "../../lib/js/ee"
     },
-    "devDependencies": {
-    },
+    "devDependencies": {},
     "jest": {
         "setupFilesAfterEnv": [
             "jest-expect-message"
@@ -35,5 +34,6 @@
         "#task/*": "./src/*.js",
         "#task/*.json": "./src/*.json",
         "#config/*.json": "./config/*.json"
-    }
+    },
+    "type": "module"
 }

@@ -1,13 +1,16 @@
-const ee = require('#sepal/ee/ee')
-const {concat, defer, map, switchMap, EMPTY} = require('rxjs')
-const {swallow} = require('#sepal/rxjs')
-const drive = require('#task/drive')
-const log = require('#sepal/log').getLogger('ee')
-const {getCurrentContext$} = require('#task/jobs/service/context')
-const {exportLimiter$} = require('#task/jobs/service/exportLimiter')
-const {driveSerializer$} = require('#task/jobs/service/driveSerializer')
-const {task$} = require('#task/ee/task')
-const {drivePath} = require('./driveUtils')
+import {concat, defer, EMPTY, map, switchMap} from 'rxjs'
+
+import ee from '#sepal/ee/ee'
+import {getLogger} from '#sepal/log'
+import {swallow} from '#sepal/rxjs'
+import * as drive from '#task/drive'
+import {task$} from '#task/ee/task'
+import {getCurrentContext$} from '#task/jobs/service/context'
+import {driveSerializer$} from '#task/jobs/service/driveSerializer'
+import {exportLimiter$} from '#task/jobs/service/exportLimiter'
+
+import {drivePath} from './driveUtils.js'
+const log = getLogger('ee')
 
 const createDriveFolder$ = folder =>
     defer(() => driveSerializer$(
@@ -135,4 +138,4 @@ const formatRegion$ = region =>
         map(geometry => ee.Geometry(geometry))
     )
 
-module.exports = {exportImageToDrive$}
+export {exportImageToDrive$}

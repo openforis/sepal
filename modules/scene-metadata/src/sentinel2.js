@@ -1,5 +1,7 @@
-const {getDayOfYear} = require('date-fns')
-const log = require('#sepal/log').getLogger('sentinel2')
+import {getDayOfYear} from 'date-fns'
+
+import {getLogger} from '#sepal/log'
+const log = getLogger('sentinel2')
 
 const PRODUCT_URI_MATCHER = /^S2[ABC]_(?:(?:OPER_PRD_)?MSI(L1C|L2A)_(?<acquisitionTimestamp>\d{8}T\d{6})_N\d{4}_R\d{3}_(?<sceneArea>T\d{2}[A-Z]{3})_\d{8}T\d{6}(?:\.SAFE)?)$/
 const SHORT_GRANULE_ID_MATCHER = /^(L1C|L2A)_T\d{2}[A-Z]{3}_A\d{6}_(?<processedTimestamp>\d{8}T\d{6})$/
@@ -70,4 +72,4 @@ const scene = ({id, productUri, acquiredTimestamp, cloudCover}) =>
         sunElevation: 0
     }) : null
 
-module.exports = {getAcquiredTimestampFromId, getIdFromDatastripId, getIdFromGranuleId, scene}
+export {getAcquiredTimestampFromId, getIdFromDatastripId, getIdFromGranuleId, scene}

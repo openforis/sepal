@@ -1,7 +1,8 @@
-const {defer, of, catchError, map, switchMap} = require('rxjs')
-const {fromPromise} = require('#sepal/rxjs')
-const fs = require('fs')
-const Path = require('path')
+import fs from 'fs'
+import Path from 'path'
+import {catchError, defer, map, of, switchMap} from 'rxjs'
+
+import {fromPromise} from '#sepal/rxjs'
 
 const ls$ = (path, options = {}) => defer(() =>
     fromPromise(fs.promises.readdir(path, options))
@@ -47,4 +48,4 @@ const mkdirSafe$ = (preferredPath, options = {}) => defer(() => {
     )
 })
 
-module.exports = {exists$, ls$, mkdir$, mkdirSafe$}
+export {exists$, ls$, mkdir$, mkdirSafe$}

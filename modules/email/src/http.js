@@ -1,7 +1,11 @@
-const {gatewayHost, sepalUsername, sepalPassword} = require('./config')
-const {get$} = require('#sepal/httpClient')
-const {firstValueFrom, map} = require('rxjs')
-const log = require('#sepal/log').getLogger('http/server')
+import {firstValueFrom, map} from 'rxjs'
+
+import {get$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+
+import {gatewayHost, sepalPassword, sepalUsername} from './config.js'
+
+const log = getLogger('http/server')
 
 const getEmailNotificationsEnabled = async emailAddress => {
     log.debug(() => `Getting email notifications preference for address <${emailAddress}> from origin`)
@@ -31,4 +35,4 @@ const getUser = async username => {
     )
 }
 
-module.exports = {getEmailNotificationsEnabled, getUser}
+export {getEmailNotificationsEnabled, getUser}

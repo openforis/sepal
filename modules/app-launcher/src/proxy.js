@@ -1,15 +1,17 @@
-const {createProxyMiddleware} = require('http-proxy-middleware')
-const {filter, from, map, switchMap, toArray} = require('rxjs')
-const url = require('url')
-const {isMatch} = require('micromatch')
-const {getRequestUser, setRequestUser} = require('./user')
-const {usernameTag, urlTag} = require('./tag')
-const {fetchAppsFromApi$} = require('./apiService')
-const {sepalHost} = require('./config')
+import {createProxyMiddleware} from 'http-proxy-middleware'
+import micromatch from 'micromatch'
+import {filter, from, map, switchMap, toArray} from 'rxjs'
+import url from 'url'
 
-const log = require('#sepal/log').getLogger('proxy')
+import {getLogger} from '#sepal/log'
 
-const proxyEndpoints$ = expressApp => fetchAppsFromApi$().pipe(
+import {source$} from './apps.js'
+import {sepalHost} from './config.js'
+import {urlTag, usernameTag} from './tag.js'
+import {getRequestUser, setRequestUser} from './user.js'
+const log = getLogger('proxy')
+
+const proxyEndpoints$ = expressApp => source$().pipe(
     switchMap(({apps}) => from(apps)),
     filter(({repository}) => repository),
     filter(({endpoint}) => endpoint === 'docker'),
@@ -32,7 +34,7 @@ const registerUpgradeListener = (server, proxies) => {
         
         const proxyMatch = proxies
             .find(({path}) =>
-                !path || requestPath === path || isMatch(requestPath, `${path}/**`)
+                !path || requestPath === path || micromatch.isMatch(requestPath, `${path}/**`)
             )
         
         const username = user.username
@@ -47,7 +49,7 @@ const registerUpgradeListener = (server, proxies) => {
     })
 }
 
-module.exports = {proxyEndpoints$, registerUpgradeListener}
+export {proxyEndpoints$, registerUpgradeListener}
 
 const proxy = expressApp =>
     ({id, port}) => {

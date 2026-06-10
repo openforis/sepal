@@ -1,11 +1,15 @@
-const {createProxyMiddleware} = require('http-proxy-middleware')
-const {Subject, catchError, mergeMap, EMPTY} = require('rxjs')
-const {rewriteLocation} = require('./rewrite')
-const {endpoints} = require('../config/endpoints')
-const {sepalHost} = require('./config')
-const {getRequestUser, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} = require('./user')
-const {usernameTag, urlTag} = require('./tag')
-const log = require('#sepal/log').getLogger('proxy')
+import {createProxyMiddleware} from 'http-proxy-middleware'
+import {catchError, EMPTY, mergeMap, Subject} from 'rxjs'
+
+import {getLogger} from '#sepal/log'
+
+import {endpoints} from '../config/endpoints.js'
+import {sepalHost} from './config.js'
+import {rewriteLocation} from './rewrite.js'
+import {urlTag, usernameTag} from './tag.js'
+import {getRequestUser, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} from './user.js'
+
+const log = getLogger('proxy')
 
 const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
 
@@ -27,10 +31,26 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
 
     const proxy = app =>
         ({path, target, proxyTimeout = 60 * 1000, timeout = 61 * 1000, authenticate, cache, noCache, rewrite, _ws = false}) => {
+            // http-proxy-middleware v4 (httpxy) re-injects '/' when the request URL has no path
+            // component, producing a stray slash when target.pathname is joined with a query-only
+            // request. Compose the upstream path here and send only target.origin so httpxy has
+            // nothing to join.
+            const targetUrl = new URL(target)
+            const targetPath = targetUrl.pathname === '/' ? '' : targetUrl.pathname
             const proxyMiddleware = createProxyMiddleware({
                 selfHandleResponse: false,
-                target,
-                pathRewrite: {'/': ''},
+                target: targetUrl.origin,
+                pathRewrite: (_p, req) => {
+                    // WebSocket upgrades bypass Express, so req.originalUrl is undefined; req.url is set by the raw HTTP parser.
+                    const originalUrl = req.originalUrl || req.url
+                    const rest = originalUrl.slice(path.length)
+                    const joinedPath = targetPath.endsWith('/') && rest.startsWith('/')
+                        ? targetPath + rest.slice(1)
+                        : targetPath + rest
+                    return joinedPath.startsWith('/')
+                        ? joinedPath
+                        : '/' + joinedPath
+                },
                 proxyTimeout,
                 timeout,
                 logger: log,
@@ -66,11 +86,6 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                             proxyReq.removeHeader('If-Modified-Since')
                             proxyReq.setHeader('Cache-Control', 'no-cache, max-age=0')
                         }
-                    },
-                    proxyReqWs: (proxyReq, _req, _socket, _options, _head) => {
-                        // HACK: this is a workaround for stripping the base path in the websocket case
-                        // https://github.com/chimurai/http-proxy-middleware/issues/978
-                        proxyReq.path = proxyReq.path.replace(path, '')
                     },
                     proxyRes: (proxyRes, _req, _res) => {
                         if (rewrite) {
@@ -120,4 +135,4 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
     return {proxyEndpoints}
 }
 
-module.exports = {Proxy}
+export {Proxy}

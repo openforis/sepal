@@ -4,7 +4,6 @@ const usernameTag = username =>
 const urlTag = url =>
     `[${url}]`
     
-module.exports = {
-    usernameTag,
-    urlTag
-}
+export {
+    urlTag,
+    usernameTag}

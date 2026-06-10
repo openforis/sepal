@@ -1,10 +1,18 @@
-const {BehaviorSubject, timer, EMPTY, catchError, filter, switchMap, tap, map, pairwise} = require('rxjs')
-const fs = require('fs')
-const path = require('path')
-const {mkdir$} = require('#task/rxjs/fileSystem')
-const log = require('#sepal/log').getLogger('context')
-const _ = require('lodash')
-const config = require('./config')
+import fs from 'fs'
+import _ from 'lodash'
+import path from 'path'
+import {BehaviorSubject, catchError, EMPTY, filter, map, pairwise, switchMap, tap, timer} from 'rxjs'
+
+import {getLogger} from '#sepal/log'
+import {mkdir$} from '#task/rxjs/fileSystem'
+
+import * as configModule from './config.js'
+const log = getLogger('context')
+
+// Plain-object snapshot: the namespace from `import *` is embedded in the
+// context sent across the worker transport, and Module namespaces are not
+// structured-cloneable.
+const config = {...configModule}
 
 const CREDENTIALS_FILE = 'credentials'
 
@@ -80,4 +88,4 @@ const switchedToServiceAccount$ =
 
 monitorUserCredentials()
 
-module.exports = {getConfig, getContext$, switchedToServiceAccount$}
+export {getConfig, getContext$, switchedToServiceAccount$}

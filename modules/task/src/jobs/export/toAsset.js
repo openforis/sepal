@@ -1,14 +1,16 @@
-const ee = require('#sepal/ee/ee')
-const {EMPTY, concat, defer, from, catchError, last, map, mergeMap, of, scan, switchMap, tap, throwError} = require('rxjs')
-const {swallow} = require('#sepal/rxjs')
-const tile = require('#sepal/ee/tile')
-const Path = require('path')
-const {exportLimiter$} = require('#task/jobs/service/exportLimiter')
-const {task$} = require('#task/ee/task')
-const {progress} = require('#task/rxjs/operators')
-const log = require('#sepal/log').getLogger('task')
-const http = require('#sepal/httpClient')
-const _ = require('lodash')
+import _ from 'lodash'
+import Path from 'path'
+import {catchError, concat, defer, EMPTY, from, last, map, mergeMap, of, scan, switchMap, tap, throwError} from 'rxjs'
+
+import ee from '#sepal/ee/ee'
+import tile from '#sepal/ee/tile'
+import * as http from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+import {swallow} from '#sepal/rxjs'
+import {task$} from '#task/ee/task'
+import {exportLimiter$} from '#task/jobs/service/exportLimiter'
+import {progress} from '#task/rxjs/operators'
+const log = getLogger('task')
 
 const exportImageToAsset$ = (taskId, {
     image,
@@ -289,4 +291,4 @@ const share$ = ({sharing, assetId}) =>
             )
         )
         : EMPTY)
-module.exports = {exportImageToAsset$}
+export {exportImageToAsset$}

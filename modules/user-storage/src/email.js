@@ -1,5 +1,7 @@
-const {Subject} = require('rxjs')
-const log = require('#sepal/log').getLogger('email')
+import {Subject} from 'rxjs'
+
+import {getLogger} from '#sepal/log'
+const log = getLogger('email')
 
 const email$ = new Subject()
 
@@ -13,4 +15,4 @@ const sendEmail = async ({username, subject, content}) => {
     })
 }
 
-module.exports = {email$, sendEmail}
+export {email$, sendEmail}

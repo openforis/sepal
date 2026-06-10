@@ -1,4 +1,10 @@
-const {job} = require('#gee/jobs/job')
+import {switchMap} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import {toGeometry} from '#sepal/ee/aoi'
+import ee from '#sepal/ee/ee'
+import ImageFactory from '#sepal/ee/imageFactory'
+import {fileName} from '#sepal/path'
 
 const MAX_BUCKETS = Math.pow(2, 8)
 const MAX_PIXELS = 1e5
@@ -6,10 +12,6 @@ const MAX_PIXELS = 1e5
 const worker$ = ({
     requestArgs: {recipe, band, aoi, mapBounds}
 }) => {
-    const ImageFactory = require('#sepal/ee/imageFactory')
-    const ee = require('#sepal/ee/ee')
-    const {switchMap} = require('rxjs')
-    const {toGeometry} = require('#sepal/ee/aoi')
 
     const {getImage$, histogramMaxPixels} = ImageFactory(recipe, {selection: [band]})
     const histogram = image => {
@@ -43,8 +45,8 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'EE image histogram',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

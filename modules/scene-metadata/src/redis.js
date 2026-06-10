@@ -1,6 +1,9 @@
-const {createClient} = require('redis')
-const {redisUri} = require('./config')
-const log = require('#sepal/log').getLogger('redis')
+import {createClient} from 'redis'
+
+import {getLogger} from '#sepal/log'
+
+import {redisUri} from './config.js'
+const log = getLogger('redis')
 
 const initializeRedis = async () => {
     const redis = await createClient({url: redisUri})
@@ -50,4 +53,4 @@ const initializeRedis = async () => {
     return {getInitialized, setInitialized, getLastUpdate, setLastUpdate}
 }
 
-module.exports = {initializeRedis}
+export {initializeRedis}

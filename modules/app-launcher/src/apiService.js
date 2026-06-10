@@ -1,7 +1,10 @@
-const {EMPTY, catchError, map} = require('rxjs')
-const {get$} = require('#sepal/httpClient')
-const {sepalHost, sepalAdminPassword, sepalAdminUsername} = require('./config')
-const log = require('#sepal/log').getLogger('apiService')
+import {catchError, EMPTY, map} from 'rxjs'
+
+import {get$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+
+import {sepalAdminPassword, sepalAdminUsername, sepalHost} from './config.js'
+const log = getLogger('apiService')
 
 const fetchAppsFromApi$ = () => {
     const apiUrl = `https://${sepalHost}/api/apps/list`
@@ -17,6 +20,16 @@ const fetchAppsFromApi$ = () => {
     )
 }
 
-module.exports = {
-    fetchAppsFromApi$
+const fetchCatalog$ = url =>
+    get$(url).pipe(
+        map(response => JSON.parse(response.body)),
+        catchError(error => {
+            log.error(`Failed to fetch apps catalog from ${url}:`, error)
+            return EMPTY
+        })
+    )
+
+export {
+    fetchAppsFromApi$,
+    fetchCatalog$
 }

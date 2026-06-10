@@ -61,9 +61,11 @@ const toHsv = (rgb, {bands, min, max, gamma = 1}, dataTypes) => {
 }
 
 const toCategorical = (rgb, visParams, dataTypes) => {
-    const paddedPalette = sequence(visParams.min, visParams.max).map(() => '#000000')
+    const min = visParams.min[0]
+    const max = visParams.max[0]
+    const paddedPalette = sequence(min, max).map(() => '#000000')
     visParams.values.forEach((value, i) => {
-        paddedPalette[value - visParams.min] = visParams.palette[i]
+        paddedPalette[value - min] = visParams.palette[i]
     })
     const continuous = toContinuous(rgb, {...visParams, palette: paddedPalette}, dataTypes)
     if (continuous.length && visParams.values) {
@@ -91,8 +93,8 @@ const toContinuous = (rgb, visParams, dataTypes) => {
 
         const fromValue = fromRgbValue.value
         const toValue = toRgbValue.value
-        const error = getError(channels)
         const weightedMeanFactor = getWeightedMeanFactor(channels)
+        const error = getError(channels, weightedMeanFactor)
         // const preciseValue = fromValue + weightedMeanFactor * (toValue - fromValue)
         // const value = selectFrom(dataTypes, [visParams.bands[0], 'precision']) === 'int'
         //     ? Math.round(parseFloat(preciseValue))
@@ -123,11 +125,14 @@ const toContinuous = (rgb, visParams, dataTypes) => {
     return []
 }
 
-// Calculate the error as the multidimensional color distance (1 to 3 bands)
-const getError = channels =>
+// Color distance between the cursor RGB and the point on the segment at `factor`.
+// Using a single factor (instead of each channel's own) ensures colors off the
+// segment line get a real non-zero error, instead of false-matching every color
+// inside the from→to RGB bounding box.
+const getError = (channels, factor) =>
     Math.sqrt(
         _.sum(
-            channels.map(({value, from, range, factor}) => {
+            channels.map(({value, from, range}) => {
                 const calculatedC = Math.round(from + factor * range)
                 return Math.pow(calculatedC - value, 2)
             })
@@ -137,5 +142,5 @@ const getError = channels =>
 const getWeightedMeanFactor = channels => {
     const numerator = _.sum(channels.map(({range, factor}) => Math.abs(range) * factor))
     const denominator = _.sum(channels.map(({range}) => Math.abs(range)))
-    return numerator / denominator
+    return denominator === 0 ? 0 : numerator / denominator
 }

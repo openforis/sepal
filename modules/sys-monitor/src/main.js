@@ -1,12 +1,15 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import _ from 'lodash'
 
-const log = require('#sepal/log').getLogger('main')
+import logConfig from '#config/log.json' with {type: 'json'}
+import * as server from '#sepal/httpServer'
+import {configureServer, getLogger} from '#sepal/log'
 
-const _ = require('lodash')
+import {initialDelayMinutes, notifyFrom, port} from './config.js'
+import {start} from './logMonitor.js'
 
-const {port, initialDelayMinutes, notifyFrom} = require('./config')
-const server = require('#sepal/httpServer')
-const {start} = require('./logMonitor')
+configureServer(logConfig)
+
+const log = getLogger('main')
 
 const main = async () => {
     await server.start({port})

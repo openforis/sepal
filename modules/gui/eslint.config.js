@@ -1,10 +1,10 @@
-const globals = require('globals')
-const js = require('@eslint/js')
-const stylistic = require('@stylistic/eslint-plugin')
-const reactPlugin = require('eslint-plugin-react')
-const simpleImportSort = require('eslint-plugin-simple-import-sort')
+import js from '@eslint/js'
+import stylistic from '@stylistic/eslint-plugin'
+import reactPlugin from 'eslint-plugin-react'
+import simpleImportSort from 'eslint-plugin-simple-import-sort'
+import globals from 'globals'
 
-module.exports = [
+export default [
     {
         files: ['**/*.test.js', '**/*.test.jsx', '**/*.spec.js', '**/*.spec.jsx'],
         languageOptions: {

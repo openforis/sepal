@@ -1,4 +1,6 @@
-const {ClientException} = require('#sepal/exception')
+import path from 'path'
+
+import {ClientException} from '#sepal/exception'
 
 const validateBranchName = branch => {
     if (!branch || typeof branch !== 'string') {
@@ -75,7 +77,6 @@ const validateAppName = appName => {
 }
 
 const validatePath = (basePath, filePath) => {
-    const path = require('path')
     const resolvedPath = path.resolve(basePath, filePath)
     
     if (!resolvedPath.startsWith(basePath)) {
@@ -85,9 +86,8 @@ const validatePath = (basePath, filePath) => {
     return resolvedPath
 }
 
-module.exports = {
-    validateBranchName,
-    validateRepository,
+export {
     validateAppName,
-    validatePath
-}
+    validateBranchName,
+    validatePath,
+    validateRepository}

@@ -1,14 +1,17 @@
-const {Redis} = require('ioredis')
-const {Queue, QueueEvents, Worker, Job} = require('bullmq')
-const {firstValueFrom} = require('rxjs')
-const {formatDistance} = require('date-fns')
-const {eraseUserStorage} = require('./filesystem')
-const {redisHost, inactivityTimeout, inactivityNotificationDelay, inactivityGracePeriod, inactivityMaxSpread, inactivityUserStorageThreshold, inactivityMaxRetries, inactivityInitialRetryDelay, inactivityConcurrency} = require('./config')
-const {sendEmail} = require('./email')
-const {addEvent} = require('./database')
-const {getMostRecentAccessByUser$, getMostRecentAccess$, getUser$} = require('./http')
-const {getUserStorage, DB, getInitialized, setInitialized} = require('./kvstore')
-const log = require('#sepal/log').getLogger('inactivityCheck')
+import {Job, Queue, QueueEvents, Worker} from 'bullmq'
+import {formatDistance} from 'date-fns'
+import {Redis} from 'ioredis'
+import {firstValueFrom} from 'rxjs'
+
+import {getLogger} from '#sepal/log'
+
+import {inactivityConcurrency, inactivityGracePeriod, inactivityInitialRetryDelay, inactivityMaxRetries, inactivityMaxSpread, inactivityNotificationDelay, inactivityTimeout, inactivityUserStorageThreshold, redisHost} from './config.js'
+import {addEvent} from './database.js'
+import {sendEmail} from './email.js'
+import {eraseUserStorage} from './filesystem.js'
+import {getMostRecentAccess$, getMostRecentAccessByUser$, getUser$} from './http.js'
+import {DB, getInitialized, getUserStorage, setInitialized} from './kvstore.js'
+const log = getLogger('inactivityCheck')
 
 const QUEUE = 'inactivity-check'
 
@@ -292,4 +295,4 @@ const startInactivityCheck = async () => {
     })
 }
 
-module.exports = {scheduleInactivityCheck, cancelInactivityCheck, startInactivityCheck}
+export {cancelInactivityCheck, scheduleInactivityCheck, startInactivityCheck}

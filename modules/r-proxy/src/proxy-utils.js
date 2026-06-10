@@ -1,8 +1,10 @@
-const log = require('#sepal/log').getLogger('proxy')
-const https = require('https')
-const fs = require('fs')
-const {stat} = require('fs/promises')
-const Path = require('path')
+import fs from 'fs'
+import {stat} from 'fs/promises'
+import https from 'https'
+import Path from 'path'
+
+import {getLogger} from '#sepal/log'
+const log = getLogger('proxy')
 
 const checkTarget = (url, {allowRedirect} = {}) =>
     new Promise((resolve, reject) => {
@@ -41,4 +43,4 @@ const serveError = async (req, res) => {
     return false
 }
 
-module.exports = {checkTarget, serveFile, serveError}
+export {checkTarget, serveError, serveFile}

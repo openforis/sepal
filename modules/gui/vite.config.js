@@ -3,6 +3,9 @@ import {fileURLToPath, URL} from 'url'
 import {defineConfig} from 'vite'
 
 const recipesSrc = fileURLToPath(new URL('../../lib/js/recipes/src', import.meta.url))
+const sharedSrc = fileURLToPath(new URL('../../lib/js/shared/src', import.meta.url))
+const guiRoot = fileURLToPath(new URL('.', import.meta.url))
+const guiImporter = fileURLToPath(new URL('./index.html', import.meta.url))
 
 // Pre-bundled deps live outside Vite's HMR graph and `node_modules` is ignored
 // by the default watcher, so edits to the linked `recipes` source don't reach
@@ -29,6 +32,21 @@ function watchRecipesLib() {
     }
 }
 
+// Files imported from the shared lib live outside the gui project, so bare
+// imports they make (lodash, rxjs, ...) would resolve against a node_modules
+// that doesn't exist next to them. Re-root any bare import coming from outside
+// the gui project to gui's own node_modules, so locally installed packages win.
+const resolveSharedDeps = {
+    name: 'sepal:resolve-shared-deps',
+    enforce: 'pre',
+    async resolveId(source, importer) {
+        if (importer && /^[a-zA-Z@]/.test(source) && !importer.startsWith(guiRoot)) {
+            return this.resolve(source, guiImporter, {skipSelf: true})
+        }
+        return null
+    }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
     define: {
@@ -39,7 +57,13 @@ export default defineConfig({
     server: {
         host: '0.0.0.0',
         port: 80,
-        allowedHosts: true
+        allowedHosts: true,
+        fs: {
+            allow: [
+                fileURLToPath(new URL('.', import.meta.url)),
+                fileURLToPath(new URL('../../lib/js/shared', import.meta.url))
+            ]
+        }
     },
     build: {
         sourcemap: true
@@ -47,22 +71,19 @@ export default defineConfig({
     resolve: {
         alias: [
             {find: '~', replacement: fileURLToPath(new URL('./src', import.meta.url))},
+            {find: /^#sepal\/(.*\.json)$/, replacement: `${sharedSrc}/$1`},
+            {find: /^#sepal\/(.*)$/, replacement: `${sharedSrc}/$1.js`},
         ]
     },
     optimizeDeps: {
         // `recipes` is a file: dep linked into node_modules via a symlink.
-        // Vite skips pre-bundling of linked packages by default (to keep HMR
-        // working on the linked source), but the recipes package is CJS, so
-        // without pre-bundling the browser sees raw `module.exports = {...}`
-        // and named imports fail. Force it through esbuild's CJS->ESM.
-        //
         // Changes in linked dependencies do not reliably invalidate Vite's
         // optimized-deps cache. Rebuild on dev-server start so GUI validation
         // uses the current shared recipe schema/projection code.
         include: ['recipes'],
         force: true
     },
-    plugins: [react(), watchRecipesLib()],
+    plugins: [resolveSharedDeps, react(), watchRecipesLib()],
     test: {
         globals: true,
         environment: 'happy-dom'

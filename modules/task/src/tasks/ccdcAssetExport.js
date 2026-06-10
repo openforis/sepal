@@ -1,43 +1,42 @@
-const {exportImageToAsset$} = require('../jobs/export/toAsset')
-const {forkJoin, switchMap} = require('rxjs')
+import {forkJoin, switchMap} from 'rxjs'
 
-const ccdc = require('#sepal/ee/timeSeries/ccdc')
-const {toVisualizationProperties} = require('../ee/visualizations')
-const {formatProperties} = require('./formatProperties')
-const {setWorkloadTag} = require('./workloadTag')
+import ccdc from '#sepal/ee/timeSeries/ccdc'
 
-module.exports = {
-    submit$: (taskId, {image, description}) => {
-        const {recipe, bands, scale, visualizations, properties, ...other} = image
-        setWorkloadTag(recipe)
-        const segments = ccdc(recipe, {selection: bands})
-        return forkJoin({
-            segments: segments.getImage$(),
-            geometry: segments.getGeometry$()
-        }).pipe(
-            switchMap(({segments, geometry}) => {
-                const formattedProperties = formatProperties({...properties, scale})
-                const allBands = getAllBands(bands)
-                return exportImageToAsset$(taskId, {
-                    ...other,
-                    description,
-                    image: segments,
-                    region: geometry.bounds(),
-                    scale,
-                    pyramidingPolicy: {'.default': 'sample'},
-                    maxPixels: 1e13,
-                    properties: {
-                        formattedProperties,
-                        startDate: recipe.model.dates.startDate,
-                        endDate: recipe.model.dates.endDate,
-                        dateFormat: recipe.model.ccdcOptions.dateFormat,
-                        surfaceReflectance: recipe.model.options.corrections?.includes('SR') && 1,
-                        ...toVisualizationProperties(visualizations, {selection: allBands})
-                    }
-                })
+import {toVisualizationProperties} from '../ee/visualizations.js'
+import {exportImageToAsset$} from '../jobs/export/toAsset.js'
+import {formatProperties} from './formatProperties.js'
+import {setWorkloadTag} from './workloadTag.js'
+
+export const submit$ = (taskId, {image, description}) => {
+    const {recipe, bands, scale, visualizations, properties, ...other} = image
+    setWorkloadTag(recipe)
+    const segments = ccdc(recipe, {selection: bands})
+    return forkJoin({
+        segments: segments.getImage$(),
+        geometry: segments.getGeometry$()
+    }).pipe(
+        switchMap(({segments, geometry}) => {
+            const formattedProperties = formatProperties({...properties, scale})
+            const allBands = getAllBands(bands)
+            return exportImageToAsset$(taskId, {
+                ...other,
+                description,
+                image: segments,
+                region: geometry.bounds(),
+                scale,
+                pyramidingPolicy: {'.default': 'sample'},
+                maxPixels: 1e13,
+                properties: {
+                    formattedProperties,
+                    startDate: recipe.model.dates.startDate,
+                    endDate: recipe.model.dates.endDate,
+                    dateFormat: recipe.model.ccdcOptions.dateFormat,
+                    surfaceReflectance: recipe.model.options.corrections?.includes('SR') && 1,
+                    ...toVisualizationProperties(visualizations, {selection: allBands})
+                }
             })
-        )
-    }
+        })
+    )
 }
 
 const getAllBands = bands => {

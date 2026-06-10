@@ -1,10 +1,12 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import logConfig from '#config/log.json' with {type: 'json'}
+import * as server from '#sepal/httpServer'
+import {configureServer, getLogger} from '#sepal/log'
 
-const log = require('#sepal/log').getLogger('main')
+import {port} from './config.js'
+import {routes, wsRoutes} from './routes.js'
+configureServer(logConfig)
 
-const {port} = require('./config')
-const {routes, wsRoutes} = require('./routes')
-const server = require('#sepal/httpServer')
+const log = getLogger('main')
 
 const main = async () => {
     await server.start({

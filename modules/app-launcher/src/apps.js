@@ -1,10 +1,14 @@
-const {EMPTY, from, catchError, filter, map, concatMap, switchMap, of, repeat, defer} = require('rxjs')
-const log = require('#sepal/log').getLogger('apps')
-const {basename} = require('path')
-const {cloneOrPull} = require('./git')
-const {buildAndRestart, startContainer, isContainerRunning} = require('./docker')
-const {fetchAppsFromApi$} = require('./apiService')
-const {refreshProxyEndpoints} = require('./proxyManager')
+import {basename} from 'path'
+import {catchError, concatMap, defer, EMPTY, filter, from, map, of, repeat, switchMap} from 'rxjs'
+
+import {getLogger} from '#sepal/log'
+
+import {fetchAppsFromApi$, fetchCatalog$} from './apiService.js'
+import {appsCatalogUrl} from './config.js'
+import {buildAndRestart, isContainerRunning, startContainer} from './docker.js'
+import {cloneOrPull} from './git.js'
+import {refreshProxyEndpoints} from './proxyManager.js'
+const log = getLogger('apps')
 
 const UPDATE_DELAY_SECONDS = 30
 
@@ -17,12 +21,16 @@ const monitorApps = () =>
         complete: () => log.fatal('Monitor unexpectedly completed')
     })
 
+const source$ = () => appsCatalogUrl
+    ? fetchCatalog$(appsCatalogUrl)
+    : fetchAppsFromApi$()
+
 const apps$ = () =>
-    fetchAppsFromApi$().pipe(
+    source$().pipe(
         switchMap(({apps}) => from(apps)),
         filter(({repository}) => repository),
         filter(({endpoint}) => endpoint === 'docker'),
-        map(({endpoint, label, repository, branch}) => {
+        map(({endpoint, label, repository, branch, commit}) => {
             const name = basename(repository).replace(/\.git$/, '')
             return {
                 endpoint,
@@ -30,7 +38,8 @@ const apps$ = () =>
                 label,
                 path: `/var/lib/sepal/app-launcher/apps/${name}`,
                 repository,
-                branch
+                branch,
+                commit: commit || null
             }
         }),
         catchError(error => {
@@ -39,8 +48,8 @@ const apps$ = () =>
         })
     )
 
-const updateApp$ = ({path, repository, branch, name}) =>
-    from(cloneOrPull({path, repository, branch})).pipe(
+const updateApp$ = ({path, repository, branch, commit, name}) =>
+    from(cloneOrPull({path, repository, branch, commit})).pipe(
         switchMap(({action}) => {
             log.info(`Git operation completed: ${action}`)
             if (action === 'cloned' || action === 'updated') {
@@ -76,4 +85,4 @@ const refreshProxies = () => {
     )
 }
 
-module.exports = {monitorApps}
+export {apps$, monitorApps, source$}

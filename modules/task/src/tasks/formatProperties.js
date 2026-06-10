@@ -1,12 +1,10 @@
-const _ = require('lodash')
+import _ from 'lodash'
 
-module.exports = {
-    formatProperties: properties => {
-        const formatted = {}
-        Object.keys(properties).forEach(key => {
-            const value = properties[key]
-            formatted[key] = _.isString(value) || _.isNumber(value) ? value : JSON.stringify(value)
-        })
-        return formatted
-    }
+export const formatProperties = properties => {
+    const formatted = {}
+    Object.keys(properties).forEach(key => {
+        const value = properties[key]
+        formatted[key] = _.isString(value) || _.isNumber(value) ? value : JSON.stringify(value)
+    })
+    return formatted
 }

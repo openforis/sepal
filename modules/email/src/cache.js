@@ -1,6 +1,10 @@
-const Redis = require('ioredis')
-const {redisHost} = require('./config')
-const log = require('#sepal/log').getLogger('cache')
+import Redis from 'ioredis'
+
+import {getLogger} from '#sepal/log'
+
+import {redisHost} from './config.js'
+
+const log = getLogger('cache')
 
 const redis = new Redis({
     host: redisHost,
@@ -47,4 +51,4 @@ const getEmailNotificationsEnabled = async emailAddress => {
     return toBoolean(await redis.get(emailNotificationsEnabledKey(emailAddress)))
 }
 
-module.exports = {setEmailNotificationsEnabled, getEmailNotificationsEnabled}
+export {getEmailNotificationsEnabled, setEmailNotificationsEnabled}

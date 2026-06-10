@@ -1,11 +1,14 @@
-const log = require('#sepal/log').getLogger('proxy/github')
-const httpProxy = require('http-proxy')
-const fs = require('fs')
-const {mkdir} = require('fs/promises')
-const Path = require('path')
-const {getGitHubRepoPath, getGitHubTarget, getGitHubPackageInfo} = require('./github')
-const {enqueueBuildGitHubPackage} = require('./queue')
-const {serveFile, checkTarget, serveError} = require('./proxy-utils')
+import fs from 'fs'
+import {mkdir} from 'fs/promises'
+import httpProxy from 'http-proxy'
+import Path from 'path'
+
+import {getLogger} from '#sepal/log'
+
+import {getGitHubPackageInfo, getGitHubRepoPath, getGitHubTarget} from './github.js'
+import {checkTarget, serveError, serveFile} from './proxy-utils.js'
+import {enqueueBuildGitHubPackage} from './queue.js'
+const log = getLogger('proxy/github')
 
 const buildBinaryPackage = req => {
     const requestData = getGitHubPackageInfo(req.url)
@@ -103,4 +106,4 @@ const serveGitHub = async (req, res) => {
     return await serveError(req, res)
 }
 
-module.exports = {serveGitHub}
+export {serveGitHub}

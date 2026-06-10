@@ -1,6 +1,6 @@
-const {getAppStatus, getAppContainerStatus, getAppRepoInfo, getAppLogs, restartApp, updateApp, pullUpdatesOnly, buildAndRestartApp} = require('./appsService')
+import {buildAndRestartApp, getAppContainerStatus, getAppLogs, getAppRepoInfo, getAppStatus, pullUpdatesOnly, restartApp, updateApp} from './appsService.js'
 
-module.exports = router => router
+export default router => router
     .get('/status/:appName', async ctx => await getAppStatus(ctx))
     .get('/container-status/:appName', async ctx => await getAppContainerStatus(ctx))
     .get('/repo-info/:appName', async ctx => await getAppRepoInfo(ctx))

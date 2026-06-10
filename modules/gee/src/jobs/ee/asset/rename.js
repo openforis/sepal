@@ -1,15 +1,17 @@
-const {job} = require('#gee/jobs/job')
+import _ from 'lodash'
+
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {sourceId, destinationId}
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const _ = require('lodash')
     return ee.renameAsset$(sourceId, destinationId)
 }
 
-module.exports = job({
+export default job({
     jobName: 'EE rename asset',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })
