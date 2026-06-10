@@ -84,6 +84,7 @@ final class WorkerTypes {
                             environment: [
                                     USER_PUBLIC_KEY: userPublicKey,
                                     SEPAL_API_KEY: apiKey ?: '',
+                                    SEPAL_HOST: config.sepalHost,
                                     NVIDIA_VISIBLE_DEVICES: 'all',
                                     NVIDIA_DRIVER_CAPABILITIES: 'all',
                             ],

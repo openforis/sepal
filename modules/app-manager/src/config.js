@@ -19,17 +19,23 @@ try {
                 .argParser(v => parseInt(v))
                 .default(DEFAULT_HTTP_PORT)
         )
+        .addOption(
+            new Option('--apps-catalog-url <value>')
+                .env('SEPAL_APPS_CATALOG_URL')
+        )
         .parse()
 } catch (error) {
     fatalError(error)
 }
 
 const {
-    port
+    port,
+    appsCatalogUrl
 } = program.opts()
 
 log.info('Configuration loaded')
 
 module.exports = {
-    port
+    port,
+    appsCatalogUrl: appsCatalogUrl || null
 }

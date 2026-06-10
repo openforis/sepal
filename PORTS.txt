@@ -7,6 +7,7 @@ Modules
     email           80
     gateway         80
     gee             80
+    gui             8080
     ldap            389, 636
     mysql           3306
     mysql-admin     8980

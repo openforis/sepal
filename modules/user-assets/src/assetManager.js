@@ -17,7 +17,7 @@ const MIN_RELOAD_DELAY_MS = 60 * 1000
 const MIN_RETRY_DELAY_MS = 2 * 1000
 const MAX_RETRY_DELAY_MS = 3660 * 1000
 
-const createAssetManager = ({out$, stop$}) => {
+const createAssetManager = ({send, stop$}) => {
 
     const userUp$ = new Subject()
     const userDown$ = new Subject()
@@ -217,7 +217,7 @@ const createAssetManager = ({out$, stop$}) => {
             })
         )
 
-    monitor$.pipe(
+    const monitorSubscription = monitor$.pipe(
         groupBy(({username}) => username),
         mergeMap(userGroup$ => userGroup$.pipe(
             exhaustMap(({username}) => {
@@ -234,12 +234,15 @@ const createAssetManager = ({out$, stop$}) => {
             }
             )
         )),
-        takeUntil(stop$),
         mergeMap(({username, tree}) => from(updateTree(username, tree))),
     ).subscribe({
         error: error => log.error('Unexpected monitor$ stream error', error),
         complete: () => log.error('Unexpected monitor$ stream complete')
     })
+
+    stop$.subscribe(
+        () => monitorSubscription.unsubscribe()
+    )
 
     const getAssetsReloadDelay = async username => {
         const {timestamp} = await getAssets(username, {allowMissing: true})
@@ -286,7 +289,7 @@ const createAssetManager = ({out$, stop$}) => {
             )
         ))
     ).subscribe({
-        next: ({clientId, subscriptionId, data}) => out$.next({clientId, subscriptionId, data}),
+        next: ({clientId, subscriptionId, data}) => send({clientId, subscriptionId, data}),
         error: error => log.error('Unexpected subscription stream error', error),
         complete: () => log.error('Unexpected subscription stream complete')
     })
@@ -342,7 +345,7 @@ const createAssetManager = ({out$, stop$}) => {
     busy$.pipe(
         map(({username, status}) => ({username, data: {status}}))
     ).subscribe({
-        next: ({username, data}) => out$.next({username, data}),
+        next: ({username, data}) => send({username, data}),
         error: error => log.error('Unexpected stream error', error),
         complete: () => log.error('Unexpected stream complete')
     })

@@ -83,11 +83,18 @@ const getRepoInfo = async appPath => {
     const {stdout: originUrlRaw} = await executeCommand(
         'git', ['config', '--get', 'remote.origin.url'], {cwd: appPath}
     )
-    const {stdout: branchName} = await executeCommand(
-        'git', ['rev-parse', '--abbrev-ref', 'HEAD'], {cwd: appPath}
-    )
     const originUrl = originUrlRaw.trim()
-  
+
+    let branch = null
+    try {
+        const {stdout} = await executeCommand(
+            'git', ['config', '--get', 'sepal.branch'], {cwd: appPath}
+        )
+        branch = stdout.trim() || null
+    } catch (_e) {
+        // not stamped yet (legacy clone); leave null
+    }
+
     let commitUrl = null
     if (originUrl.includes('github.com')) {
         let repoUrl = originUrl
@@ -96,23 +103,14 @@ const getRepoInfo = async appPath => {
         commitUrl = `${repoUrl}/commit/${commitId.trim()}`
     }
 
-    let updateAvailable = false
-    try {
-        await executeCommand('git', ['remote', 'update'], {cwd: appPath})
-        const {stdout: local} = await executeCommand('git', ['rev-parse', 'HEAD'], {cwd: appPath})
-        const {stdout: remote} = await executeCommand('git', ['rev-parse', '@{u}'], {cwd: appPath})
-        updateAvailable = local.trim() !== remote.trim()
-    } catch (warnErr) {
-        log.warn(`Could not check remote updates: ${warnErr.message}`)
-    }
-
     const appInfo = {
         lastCloneTimestamp: commitTimestamp.trim() || null,
         lastCommitId: commitId.trim(),
         url: originUrl,
         commitUrl,
-        branch: branchName.trim(),
-        updateAvailable
+        branch,
+        // Catalog is the only sanctioned source of updates; upstream branch tip is not actionable from the GUI.
+        updateAvailable: false
     }
 
     log.debug(`Repository info for ${appPath}:`, appInfo)
@@ -121,17 +119,54 @@ const getRepoInfo = async appPath => {
 
 }
 
-const cloneOrPull = async ({path: appPath, repository, branch}) => {
+const checkoutCommit = async (appPath, branch, commit) => {
+    log.info(`Pinning repository at ${appPath} to commit ${commit}`)
+    try {
+        await executeCommand('git', ['fetch', 'origin', branch], {cwd: appPath})
+        await executeCommand('git', ['checkout', '--detach', commit], {cwd: appPath})
+    } catch (err) {
+        log.error(`Failed to checkout commit '${commit}': ${err.message}`)
+        throw new ClientException(`Failed to checkout commit '${commit}': ${err.message}`)
+    }
+}
+
+const stampSepalBranch = async (appPath, branch) => {
+    try {
+        await executeCommand('git', ['config', '--local', 'sepal.branch', branch], {cwd: appPath})
+    } catch (err) {
+        log.warn(`Could not record sepal.branch at ${appPath}: ${err.message}`)
+    }
+}
+
+const cloneOrPull = async ({path: appPath, repository, branch, commit}) => {
     try {
         const exists = await pathExists(appPath)
         if (!exists) {
             log.info(`Path '${appPath}' not found → cloning`)
             await cloneRepository(repository, branch, appPath)
-            await checkoutBranch(appPath, branch)
+            if (commit) {
+                await checkoutCommit(appPath, branch, commit)
+            } else {
+                await checkoutBranch(appPath, branch)
+            }
+            await stampSepalBranch(appPath, branch)
             return {action: 'cloned', success: true}
         }
-        return await pullUpdates(appPath, branch)
-        
+        if (commit) {
+            const current = await getCurrentCommitHash(appPath)
+            if (current === commit) {
+                log.info(`No update needed for ${appPath}: already at ${commit}`)
+                await stampSepalBranch(appPath, branch)
+                return {action: 'none', success: true}
+            }
+            await checkoutCommit(appPath, branch, commit)
+            await stampSepalBranch(appPath, branch)
+            return {action: 'updated', success: true}
+        }
+        const result = await pullUpdates(appPath, branch)
+        await stampSepalBranch(appPath, branch)
+        return result
+
     } catch (err) {
         log.error(`Error in cloneOrPull: ${err.message}`)
         if (err.statusCode === 500) {

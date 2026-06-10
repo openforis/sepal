@@ -27,21 +27,44 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
 
     const proxy = app =>
         ({path, target, proxyTimeout = 60 * 1000, timeout = 61 * 1000, authenticate, cache, noCache, rewrite, _ws = false}) => {
+            // http-proxy-middleware v4 (httpxy) re-injects '/' when the request URL has no path
+            // component, producing a stray slash when target.pathname is joined with a query-only
+            // request. Compose the upstream path here and send only target.origin so httpxy has
+            // nothing to join.
+            const targetUrl = new URL(target)
+            const targetPath = targetUrl.pathname === '/' ? '' : targetUrl.pathname
             const proxyMiddleware = createProxyMiddleware({
                 selfHandleResponse: false,
-                target,
-                pathRewrite: {'/': ''},
+                target: targetUrl.origin,
+                pathRewrite: (_p, req) => {
+                    // WebSocket upgrades bypass Express, so req.originalUrl is undefined; req.url is set by the raw HTTP parser.
+                    const originalUrl = req.originalUrl || req.url
+                    const rest = originalUrl.slice(path.length)
+                    const joinedPath = targetPath.endsWith('/') && rest.startsWith('/')
+                        ? targetPath + rest.slice(1)
+                        : targetPath + rest
+                    return joinedPath.startsWith('/')
+                        ? joinedPath
+                        : '/' + joinedPath
+                },
                 proxyTimeout,
                 timeout,
                 logger: log,
                 on: {
-                    proxyReq: (proxyReq, req, _res) => {
+                    proxyReq: (proxyReq, req, res) => {
                         // Make sure the client doesn't inject the user header, and pretend to be another user.
                         const user = getRequestUser(req)
                         const username = user ? user.username : 'not-authenticated'
-                        req.socket.on('close', () => {
-                            log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Response closed`)
-                            proxyReq.destroy()
+                        // Listen on res (per-response), not req.socket: with HTTP keep-alive the socket is
+                        // shared across requests and accumulates listeners until MaxListeners fires.
+                        res.on('close', () => {
+                            if (!res.writableEnded) {
+                                log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Client closed before response completed`)
+                                proxyReq.destroy()
+                            }
+                            // httpxy adds a per-request 'timeout' listener via req.socket.setTimeout(msecs, cb)
+                            // that only auto-removes if it fires; clear it so it doesn't pile up on keep-alive.
+                            req.socket?.removeAllListeners('timeout')
                         })
                         if (authenticate && user) {
                             log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Setting sepal-user header`, user)
@@ -59,11 +82,6 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                             proxyReq.removeHeader('If-Modified-Since')
                             proxyReq.setHeader('Cache-Control', 'no-cache, max-age=0')
                         }
-                    },
-                    proxyReqWs: (proxyReq, _req, _socket, _options, _head) => {
-                        // HACK: this is a workaround for stripping the base path in the websocket case
-                        // https://github.com/chimurai/http-proxy-middleware/issues/978
-                        proxyReq.path = proxyReq.path.replace(path, '')
                     },
                     proxyRes: (proxyRes, _req, _res) => {
                         if (rewrite) {

@@ -21,6 +21,7 @@ services:
       - "${SEPAL_DATA_DIR}/app-manager/images:/var/lib/sepal/app-manager/images"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      SEPAL_APPS_CATALOG_URL: "${SEPAL_APPS_CATALOG_URL:-}"
     networks:
       - sepal
     healthcheck:

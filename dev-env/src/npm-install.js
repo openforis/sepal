@@ -1,10 +1,11 @@
-import {stopModule} from './stop.js'
-import {getModules, isNodeModule, showModuleStatus, MESSAGE, multi} from './utils.js'
-import {SEPAL_SRC, USER_GID, USER_UID} from './config.js'
-import {getLibDeps} from './deps.js'
 import {access} from 'fs/promises'
 import _ from 'lodash'
+
 import {compose} from './compose.js'
+import {SEPAL_SRC, USER_GID, USER_UID} from './config.js'
+import {getLibDeps} from './deps.js'
+import {stopModule} from './stop.js'
+import {getModules, isNodeModule, MESSAGE, multi, showModuleStatus} from './utils.js'
 
 const installLibPackages = async (module, lib, {clean, verbose, sequential}) => {
     const libPath = `${SEPAL_SRC}/lib/js/${lib}`
