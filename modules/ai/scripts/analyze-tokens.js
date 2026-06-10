@@ -12,7 +12,7 @@
 //   --since <iso-time>    drop lines with a timestamp before this
 //   --json                emit one JSON object per call instead of a table
 
-const readline = require('readline')
+import readline from 'readline'
 
 const ANSI = /\x1b\[[0-9;]*m/g
 

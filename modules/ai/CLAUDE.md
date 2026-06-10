@@ -20,7 +20,7 @@ The `ai` compose-run container has module-local Jest. Prefer the `sepal npm-test
 
 ## Architecture
 
-**Active path is a rewrite, not a refactor of the old orchestrator.** Entry `src/main.js` → `src/app.js`, wiring `src/chat/conversation/`, `src/chat/tools/`, `src/chat/specialists/`. The pre-rewrite implementation under `archive/pre-rewrite-chat/` is reference only — not imported, not active prompt/tool surface.
+**Active path is a rewrite, not a refactor of the old orchestrator.** Entry `src/main.js` → `src/app.js`, wiring `src/chat/conversation/`, `src/chat/tools/`, `src/chat/specialists/`.
 
 `createApp()` (`src/app.js`) is the composition root: event bus, tracer, LLM adapter, GUI request bridge, orchestrator tool registry, Redis chat storage, per-user `UserChats`, websocket handler, HTTP server. Conversation metadata + history persist in Redis; dynamic title generation runs after a successful assistant turn.
 
@@ -38,7 +38,6 @@ REST: `GET /healthcheck` → `{status:'ok'}`.
 ## Source structure
 
 ```
-archive/pre-rewrite-chat/     # old chat/tools/recipes — inactive reference
 src/
   main.js                     # entry
   app.js                      # composition root
