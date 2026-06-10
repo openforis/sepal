@@ -3,6 +3,7 @@ import {Redis} from 'ioredis'
 import {getLogger} from '#sepal/log'
 
 import {redisHost} from './config.js'
+
 const log = getLogger('kvstore')
 
 const DB = {

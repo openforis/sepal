@@ -9,19 +9,12 @@ const worker$ = ({
     requestArgs: {asset, recipe}
 }) => {
 
-    if (asset) {
-        return assetBands$()
-    } else {
-        return recipeBands$()
-    }
-
-    function assetBands$() {
-        return ImageFactory({type: 'ASSET', id: asset}).getImage$().pipe(
+    const assetBands$ = () =>
+        ImageFactory({type: 'ASSET', id: asset}).getImage$().pipe(
             switchMap(image => ee.getInfo$(image.bandNames(), 'asset band names'))
         )
-    }
 
-    function recipeBands$() {
+    const recipeBands$ = () => {
         const {getBands$, getImage$} = ImageFactory(recipe)
         return getBands$
             ? getBands$()
@@ -29,6 +22,10 @@ const worker$ = ({
                 switchMap(image => ee.getInfo$(image.bandNames(), 'image band names'))
             )
     }
+
+    return asset
+        ? assetBands$()
+        : recipeBands$()
 }
 
 export default job({

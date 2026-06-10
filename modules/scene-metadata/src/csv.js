@@ -10,6 +10,7 @@ import {getLogger} from '#sepal/log'
 
 import {remove} from './filesystem.js'
 import {formatInterval} from './time.js'
+
 const log = getLogger('csv')
 
 const getPath = filename =>

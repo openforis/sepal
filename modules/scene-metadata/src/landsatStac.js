@@ -2,6 +2,7 @@ import {getLogger} from '#sepal/log'
 
 import {getDataset, isSceneIncluded, scene} from './landsat.js'
 import {updateFromStac} from './stac.js'
+
 const log = getLogger('landsat')
 
 const sceneMapper = ({

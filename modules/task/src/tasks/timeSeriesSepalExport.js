@@ -19,6 +19,7 @@ import {mkdir$} from '#task/rxjs/fileSystem'
 
 import {exportImageToSepal$} from '../jobs/export/toSepal.js'
 import {setWorkloadTag} from './workloadTag.js'
+
 const log = getLogger('task')
 
 const DATE_DELTA = 3

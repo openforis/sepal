@@ -8,6 +8,7 @@ import {appsCatalogUrl} from './config.js'
 import {buildAndRestart, isContainerRunning, startContainer} from './docker.js'
 import {cloneOrPull} from './git.js'
 import {refreshProxyEndpoints} from './proxyManager.js'
+
 const log = getLogger('apps')
 
 const UPDATE_DELAY_SECONDS = 30

@@ -6,6 +6,7 @@ import {configureServer, getLogger} from '#sepal/log'
 
 import {ip, port} from './config.js'
 import * as Terminal from './terminal.js'
+
 configureServer(logConfig)
 
 const log = getLogger('main')

@@ -46,6 +46,7 @@ const baseConfig = {
         'simple-import-sort/exports': 'error',
         'import/no-duplicates': 'error',
         'import/first': 'error',
+        'import/newline-after-import': ['error', {count: 1}],
         'import/named': 'error',
         'import/default': 'error',
         'import/namespace': 'error',

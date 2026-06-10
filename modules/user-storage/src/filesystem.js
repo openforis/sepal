@@ -5,6 +5,7 @@ import path from 'path'
 import {getLogger} from '#sepal/log'
 
 import {homeDir} from './config.js'
+
 const log = getLogger('filesystem')
 
 const command = async callback =>

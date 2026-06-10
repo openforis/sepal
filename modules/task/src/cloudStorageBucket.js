@@ -7,6 +7,7 @@ import {autoRetry, fromPromise} from '#sepal/rxjs'
 import {getCurrentContext$} from '#task/jobs/service/context'
 
 import {cloudStorage$} from './cloudStorage.js'
+
 const log = getLogger('cloudStorage')
 
 const RETRY_CONFIG = {

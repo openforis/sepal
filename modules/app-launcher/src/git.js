@@ -4,6 +4,7 @@ import {ClientException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
 
 import executeCommand from './terminal.js'
+
 const log = getLogger('git')
 
 const MAX_RETRIES = 3

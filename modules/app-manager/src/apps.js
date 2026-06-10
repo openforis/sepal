@@ -7,6 +7,7 @@ import {fetchCatalog$} from './apiService.js'
 import {appsCatalogUrl} from './config.js'
 import {fileToJson$} from './file.js'
 import {exec$} from './terminal.js'
+
 const log = getLogger('apps')
 
 const APPS_FILE = '/var/lib/sepal/app-manager/apps.json'

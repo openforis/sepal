@@ -1,6 +1,7 @@
 import {Command, Option} from 'commander'
 
 import {getLogger} from '#sepal/log'
+
 const log = getLogger('config')
 
 const DEFAULT_UPDATE_INTERVAL_MINUTES = 60

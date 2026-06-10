@@ -2,6 +2,7 @@ import {EMPTY, map, tap} from 'rxjs'
 
 import {postJson$} from '#sepal/httpClient'
 import {getLogger} from '#sepal/log'
+
 const log = getLogger('earthSearch')
 
 const SEARCH_URL = 'https://earth-search.aws.element84.com/v1/search'

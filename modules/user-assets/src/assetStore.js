@@ -4,6 +4,7 @@ import {getLogger} from '#sepal/log'
 
 import {deserialize, redis, serialize} from './redis.js'
 import {userTag} from './tag.js'
+
 const log = getLogger('assetStore')
 
 const assetsKey = username =>

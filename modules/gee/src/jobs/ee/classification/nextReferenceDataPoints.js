@@ -35,7 +35,7 @@ const worker$ = ({
         ),
         switchMap(points =>
             getRows$(
-                points.map(function (point) {
+                points.map(point => {
                     const coordinates = point.geometry().coordinates()
                     return ee.Feature(null, {x: coordinates.getNumber(0), y: coordinates.getNumber(1)})
                 })

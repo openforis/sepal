@@ -4,6 +4,7 @@ import {chmod, chown, lstat, mkdir, readdir, realpath, stat, unlink} from 'fs/pr
 import Path from 'path'
 
 import {getLogger} from '#sepal/log'
+
 const log = getLogger('filesystem')
 
 const resolvePath = (baseDir, path) => {

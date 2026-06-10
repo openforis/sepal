@@ -4,6 +4,7 @@ import {bufferTime, filter, interval, map, merge, Subject} from 'rxjs'
 import {getLogger} from '#sepal/log'
 
 import * as Session from './session.js'
+
 const log = getLogger('terminal')
 
 const removeKeyFile = keyFile => {

@@ -3,6 +3,7 @@ import {moduleWs$} from '#sepal/ws/module'
 
 import {clientTag, subscriptionTag} from './tag.js'
 import {createWatcher} from './watcher.js'
+
 const log = getLogger('ws')
 
 const protocol = async ({send, stop$}) => {

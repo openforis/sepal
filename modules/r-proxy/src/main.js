@@ -3,6 +3,7 @@ import {configureServer, getLogger} from '#sepal/log'
 
 import {initProxy} from './proxy.js'
 import {initQueue} from './queue.js'
+
 configureServer(logConfig)
 
 const log = getLogger('main')

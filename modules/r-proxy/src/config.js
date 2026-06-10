@@ -5,6 +5,7 @@ import os from 'os'
 import Path from 'path'
 
 import {getLogger} from '#sepal/log'
+
 const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80

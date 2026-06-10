@@ -11,6 +11,7 @@ import {sendEmail} from './email.js'
 import {eraseUserStorage} from './filesystem.js'
 import {getMostRecentAccess$, getMostRecentAccessByUser$, getUser$} from './http.js'
 import {DB, getInitialized, getUserStorage, setInitialized} from './kvstore.js'
+
 const log = getLogger('inactivityCheck')
 
 const QUEUE = 'inactivity-check'

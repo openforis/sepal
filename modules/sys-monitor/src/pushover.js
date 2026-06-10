@@ -4,6 +4,7 @@ import {post$} from '#sepal/httpClient'
 import {getLogger} from '#sepal/log'
 
 import {emergencyNotificationRetryDelay, emergencyNotificationRetryTimeout, notifyFrom, pushoverApiKey, pushoverGroupKey} from './config.js'
+
 const log = getLogger('pushover')
 
 const PUSHOVER_URL = 'https://api.pushover.net/1/messages.json'

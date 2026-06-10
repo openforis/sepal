@@ -8,6 +8,7 @@ import {tag} from '#sepal/tag'
 
 import {getConfig, switchedToServiceAccount$} from './context.js'
 import executeTask$ from './taskRunner.js'
+
 const log = getLogger('task')
 
 const taskTag = id => tag('Task', id)

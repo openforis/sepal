@@ -4,6 +4,7 @@ import path from 'path'
 import {getLogger} from '#sepal/log'
 
 import {geeEmail, geeKey, googleProjectId} from './config.js'
+
 const log = getLogger('main')
 
 const credentialsPath = path.join('/var/lib/sepal/app-launcher/service-account-credentials.json')

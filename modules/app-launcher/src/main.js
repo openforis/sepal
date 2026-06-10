@@ -13,6 +13,7 @@ import managementRoutes from './managementRoutes.js'
 import {proxyEndpoints$, registerUpgradeListener} from './proxy.js'
 import * as proxyManager from './proxyManager.js'
 import {getRequestUser} from './user.js'
+
 configureServer(logConfig)
 
 const log = getLogger('main')

@@ -3,6 +3,7 @@ import Redis from 'ioredis'
 import {getLogger} from '#sepal/log'
 
 import {redisUri} from './config.js'
+
 const log = getLogger('redis')
 
 const redis = new Redis(redisUri)

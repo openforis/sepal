@@ -7,6 +7,7 @@ import {getLogger} from '#sepal/log'
 import {cancelInactivityCheck, scheduleInactivityCheck} from './inactivityCheck.js'
 import {setSessionActive, setSessionInactive} from './kvstore.js'
 import {scheduleStorageCheck} from './storageCheck.js'
+
 const log = getLogger('messageQueue')
 
 const logError = (key, msg) =>

@@ -7,6 +7,7 @@ import {getLogger} from '#sepal/log'
 
 import {autoRearmDelayHours, sepalServerLog} from './config.js'
 import {notify} from './pushover.js'
+
 const log = getLogger('logMonitor')
 
 const tag$ = new Subject()

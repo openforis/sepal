@@ -10,6 +10,7 @@ import {swallow} from '#sepal/rxjs'
 import {task$} from '#task/ee/task'
 import {exportLimiter$} from '#task/jobs/service/exportLimiter'
 import {progress} from '#task/rxjs/operators'
+
 const log = getLogger('task')
 
 const exportImageToAsset$ = (taskId, {

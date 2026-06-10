@@ -5,7 +5,6 @@ import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
 import {eeLimiterService} from '#sepal/ee/eeLimiterService'
 import {getLogger} from '#sepal/log'
-import {fileName} from '#sepal/path'
 import {swallow} from '#sepal/rxjs'
 import {tag} from '#sepal/tag'
 
