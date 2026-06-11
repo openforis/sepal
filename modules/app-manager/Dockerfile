@@ -6,7 +6,7 @@ ARG DEBIAN_FRONTEND noninteractive
 ENV MODULE_NAME app-manager
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
-ENV NODE_MAJOR=24
+ENV NODE_MAJOR=26
 
 ADD modules/${MODULE_NAME}/kernels /etc/sepal/app-manager/kernels-templates
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 51716619E084DAB9

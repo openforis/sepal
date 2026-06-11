@@ -5,7 +5,7 @@ EXPOSE 80
 ENV MODULE_NAME r-proxy
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
-ENV NODE_MAJOR=24
+ENV NODE_MAJOR=26
 
 # Install R packages
 RUN apt-get install -y \

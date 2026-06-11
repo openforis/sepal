@@ -1,5 +1,5 @@
 # Build stage: compile the React app
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 
 ENV MODULE_NAME=gui
 ENV MODULE=/usr/local/src/sepal/modules/gui

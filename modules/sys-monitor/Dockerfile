@@ -1,4 +1,4 @@
-FROM node:24-alpine
+FROM node:26-alpine
 
 ENV MODULE_NAME sys-monitor
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
