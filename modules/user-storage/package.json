@@ -10,7 +10,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bullmq": "^5.78.0",
+        "bullmq": "^5.78.1",
         "commander": "^15.0.0",
         "date-fns": "^4.4.0",
         "ioredis": "^5.11.1",
