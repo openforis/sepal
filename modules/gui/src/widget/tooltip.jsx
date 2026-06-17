@@ -29,7 +29,7 @@ class _Tooltip extends React.Component {
     }
 
     render() {
-        const {enabled, placement, disabled, delay, clickTrigger, hoverTrigger, focusTrigger, destroyTooltipOnHide, onVisibleChange, afterVisibleChange, children, ...otherProps} = this.props
+        const {enabled = true, placement, disabled, delay, clickTrigger, hoverTrigger, focusTrigger, destroyTooltipOnHide, onVisibleChange, afterVisibleChange, children, ...otherProps} = this.props
         const {visible} = this.state
         const trigger = _.compact([
             focusTrigger ? 'focus' : '',
