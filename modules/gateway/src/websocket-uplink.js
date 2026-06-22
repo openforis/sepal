@@ -2,7 +2,7 @@ import {finalize, interval, map, merge} from 'rxjs'
 import {webSocket} from 'rxjs/webSocket'
 import {WebSocket} from 'ws'
 
-import {MODULE_DOWN, MODULE_UP} from '#sepal/event/definitions'
+import {MODULE_DOWN, MODULE_UP, USER_UPDATED} from '#sepal/event/definitions'
 import {getLogger} from '#sepal/log'
 import {autoRetry} from '#sepal/rxjs'
 
@@ -21,12 +21,15 @@ const initializeUplink = ({servers, clients, event$}) => {
     }
     
     const onServerMessage = (msg, module, _upstream$) => {
-        const {hb, ready, data, ...other} = msg
+        const {hb, ready, data, event, ...other} = msg
         if (hb) {
             log.trace(`Received heartbeat from ${moduleTag(module)}:`, hb)
         } else if (ready) {
             log.info(`${moduleTag(module)} connected`)
             event$.next({type: MODULE_UP, data: {module}})
+        } else if (event === USER_UPDATED) {
+            // A module-originated user mutation (user-node pushes {event:'userUpdated', user}).
+            event$.next({type: event, data: other})
         } else if (data) {
             const {username, clientId, subscriptionId} = other
             if (clientId) {

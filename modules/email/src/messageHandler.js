@@ -13,9 +13,9 @@ const logError = (key, msg) =>
 
 const handlers = {
     'email.sendToAddress': async (key, msg) => {
-        const {from, to, cc, bcc, subject, content, contentType} = msg
+        const {from, to, cc, bcc, subject, content, contentType, forceEmailNotificationEnabled} = msg
         if ((to || cc || bcc) && (subject || content)) {
-            await enqueue({from, to, cc, bcc, subject, content, contentType})
+            await enqueue({from, to, cc, bcc, subject, content, contentType, forceEmailNotificationEnabled})
         } else {
             logError(key, msg)
         }

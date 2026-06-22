@@ -47,8 +47,6 @@ build sys-monitor
 build caddy
 build java
 build rabbitmq
-build ldap-backup
-build ldap
 build backup
 build mysql-backup
 build mysql
@@ -78,8 +76,6 @@ push sys-monitor
 push email
 push backup
 push rabbitmq
-push ldap
-push ldap-backup
 push user
 push user-storage
 push user-storage-backup

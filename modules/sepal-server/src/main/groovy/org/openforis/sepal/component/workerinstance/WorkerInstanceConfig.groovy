@@ -13,7 +13,6 @@ class WorkerInstanceConfig {
     final String sepalHttpsPort
     final String sepalHostDataDir
     final String sepalHostProjectDir
-    final String ldapPassword
     final int dockerPort
     final String dockerEntryPoint
     final String dockerRegistryHost
@@ -34,7 +33,6 @@ class WorkerInstanceConfig {
         sepalHttpsPort = c.string('sepalHttpsPort')
         sepalHostDataDir = c.string('sepalHostDataDir')
         sepalHostProjectDir = c.getProperty('sepalHostProjectDir')
-        ldapPassword = c.string('ldapPassword')
         dockerPort = c.integer('dockerPort')
         dockerEntryPoint = c.string('dockerEntryPoint')
         dockerRegistryHost = c.string('dockerRegistryHost')

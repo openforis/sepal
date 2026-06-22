@@ -94,7 +94,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install global npm packages
 
-RUN npm install -g madge npm-check-updates wscat touch @anthropic-ai/claude-code
+RUN npm install -g madge npm-check-updates wscat touch @anthropic-ai/claude-code @openai/codex
 
 # Create sepal user
 

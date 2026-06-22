@@ -1,0 +1,8 @@
+#!/bin/sh
+# sshd AuthorizedKeysCommand: print the user's authorized public key(s) from user-node.
+set -eu
+
+user_node="${USER_NODE_URL:-http://user-node}"
+[ -n "${1:-}" ] || exit 0
+
+curl -s --max-time 10 --get --data-urlencode "username=$1" "${user_node}/auth/authorized-keys" || exit 0

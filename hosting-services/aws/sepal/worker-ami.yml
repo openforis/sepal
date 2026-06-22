@@ -17,21 +17,6 @@
         path: "/data/sepal"
         state: directory
 
-    - name: Create /data/ldap
-      file:
-        path: "/data/sepal"
-        state: directory
-
-    - name: Create /data/ldap/certificates
-      file:
-        path: "/data/ldap/certificates"
-        state: directory
-
-    - name: Copy LDAP Certificate
-      copy:
-       src: "{{ config_home }}/certificates/ldap-ca.crt.pem"
-       dest: "/data/ldap/certificates/ldap-ca.crt.pem"
-
     # EFS setup
     - name: Install nfs-utils
       dnf:

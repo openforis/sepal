@@ -171,7 +171,7 @@
         "run": [
             "logger",
             "mysql",
-            "user",
+            "user-node",
             "rabbitmq"
         ],
         "gradle": true
@@ -183,7 +183,8 @@
         "build": {},
         "run": [
             "logger",
-            "ldap"
+            "user-node",
+            "rabbitmq"
         ]
     },
     "sys-monitor": {
@@ -233,6 +234,17 @@
         "build": {},
         "run": [
             "logger",
+            "rabbitmq"
+        ]
+    },
+    "user-node": {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger",
+            "mysql",
             "rabbitmq"
         ]
     },

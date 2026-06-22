@@ -12,5 +12,6 @@
   "user": "user",
   "userAssets": "user-assets",
   "userFiles": "user-files",
+  "userNode": "user-node",
   "userStorage": "user-storage"
 }

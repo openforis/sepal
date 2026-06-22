@@ -28,12 +28,6 @@ check program gee with path /usr/local/bin/dockercheck-gee
 check program gui with path /usr/local/bin/dockercheck-gui
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
-check program ldap with path /usr/local/bin/dockercheck-ldap
-    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
-
-check program ldap-backup with path /usr/local/bin/dockercheck-ldap-backup
-    if status != 0 then exec "/usr/local/bin/pushover-notify 0"
-
 check program logger with path /usr/local/bin/dockercheck-logger
     if status != 0 then exec "/usr/local/bin/pushover-notify 0"
 

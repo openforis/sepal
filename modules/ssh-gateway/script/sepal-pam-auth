@@ -1,0 +1,18 @@
+#!/bin/sh
+# PAM pam_exec auth: PAM_USER = username, password on stdin (expose_authtok).
+# POSTs to user-node/auth/password; exit 0 on HTTP 200 (authenticated), 1 otherwise.
+set -eu
+
+user_node="${USER_NODE_URL:-http://user-node}"
+[ -n "${PAM_USER:-}" ] || exit 1
+
+password=$(cat)
+code=$(curl -s -o /dev/null -w '%{http_code}' \
+    --max-time 10 \
+    -X POST \
+    --data-urlencode "username=${PAM_USER}" \
+    --data-urlencode "password=${password}" \
+    "${user_node}/auth/password" || echo 000)
+
+[ "${code}" = "200" ] || exit 1
+exit 0

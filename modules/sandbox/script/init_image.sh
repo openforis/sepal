@@ -20,10 +20,10 @@ sed -e '/PrintLastLog / s/^#*/#/' -i /etc/ssh/sshd_config
 # Prevent locale from being forwarded by client
 sed -e '/AcceptEnv / s/^#*/#/' -i /etc/ssh/sshd_config
 
-# Get authorized keys from LDAP, disable message of the day and last log printout, disable options for speeding up access
+# Disable message of the day and last log printout, disable options for speeding up access.
+# Authorized keys come from the per-user ~/.ssh/authorized_keys file (written from USER_PUBLIC_KEY at
+# container init); the old sss_ssh_authorizedkeys AuthorizedKeysCommand was dead config (LDAP removed).
 printf '%s\n' \
-    'AuthorizedKeysCommand /usr/bin/sss_ssh_authorizedkeys' \
-    'AuthorizedKeysCommandUser root' \
     'PrintMotd no' \
     'PrintLastLog no' \
     'UseDNS no' \

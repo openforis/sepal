@@ -25,6 +25,7 @@ services:
       - ~/.tmux.conf:/home/sepal/.tmux.conf
       - ~/.claude:/home/sepal/.claude
       - ~/.claude.json:/home/sepal/.claude.json
+      - ~/.codex:/home/sepal/.codex
     networks:
       - sepal
     environment:

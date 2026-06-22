@@ -9,9 +9,9 @@ import {getRequestUser, setRequestUser, setSessionUsername} from './user.js'
 
 const log = getLogger('authMiddleware')
 
-const AUTHENTICATION_URL = `http://${modules.user}/authenticate`
+const AUTHENTICATION_URL = `http://${modules.userNode}/authenticate`
 const API_KEY_AUTH_URL = `http://${modules.sepal}/api/sessions/api-key-authenticate`
-const USER_LOOKUP_URL = `http://${modules.user}/info`
+const USER_LOOKUP_URL = `http://${modules.userNode}/info`
 
 // sepal-user header the gateway sends itself to call [ADMIN] endpoints internally.
 const INTERNAL_ADMIN_HEADER = {

@@ -8,7 +8,6 @@
         "gateway",
         "gee",
         "gui",
-        "ldap",
         "logger",
         "mysql",
         "rabbitmq",
@@ -16,9 +15,9 @@
         "sepal-server",
         "ssh-gateway",
         "terminal",
-        "user",
         "user-assets",
         "user-files",
+        "user-node",
         "user-storage"
     ],
     "process": [
@@ -28,24 +27,22 @@
         "gateway",
         "gee",
         "gui",
-        "ldap",
         "mysql",
         "rabbitmq",
         "sepal-server",
-        "user"
+        "user-node"
     ],
     "apps": [
         "app-manager",
         "caddy",
         "gateway",
         "gui",
-        "ldap",
         "mysql",
         "rabbitmq",
         "sepal-server",
         "ssh-gateway",
         "terminal",
-        "user",
+        "user-node",
         "app-launcher"
     ],
     "node": [
@@ -64,6 +61,7 @@
         "terminal",
         "user-assets",
         "user-files",
+        "user-node",
         "user-storage"
     ]
 }

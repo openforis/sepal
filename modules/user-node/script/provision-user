@@ -1,0 +1,42 @@
+#!/bin/sh
+# provision-user <username> <id>
+# Creates the SSH home (+ RSA keypair) and the SEPAL data home for a user, owned by the user.
+# uid = gid = <id> (= sepal_user.id); the SEPAL data dir is group-owned by the local sepal group 9999.
+# Idempotent: an existing keypair is not regenerated. Prints the SSH public key to stdout.
+set -e
+
+username="$1"
+id="$2"
+sepal_gid=9999
+user_home="/home/$username"
+data_home="/sepal/home/$username"
+
+if [ -z "$username" ] || [ -z "$id" ]; then
+    echo "usage: provision-user <username> <id>" >&2
+    exit 2
+fi
+
+# Reject anything but a safe username (defense in depth — this runs as root via sudo).
+# Only [A-Za-z0-9_] allowed: blocks path traversal (/, ..), globs, spaces, and shell metacharacters.
+case "$username" in
+    "" | *[!A-Za-z0-9_]* ) echo "invalid username: $username" >&2; exit 2 ;;
+esac
+
+# SSH home + key pair
+mkdir -p "$user_home/.ssh"
+printf '%s\n' 'Host *' '    StrictHostKeyChecking no' '    UserKnownHostsFile /dev/null' '    LogLevel QUIET' \
+    > "$user_home/.ssh/config"
+if [ ! -f "$user_home/.ssh/id_rsa" ]; then
+    ssh-keygen -t rsa -b 4096 -C "Sandbox key for $username" -f "$user_home/.ssh/id_rsa" -N "" >/dev/null
+fi
+chmod -R 770 "$user_home"
+chown -R "$id:$id" "$user_home"
+chmod 400 "$user_home"/.ssh/*
+
+# SEPAL data home (group-owned by the sepal group, setgid)
+mkdir -p "$data_home/downloads"
+chown -R "$id:$sepal_gid" "$data_home"
+chmod -R 770 "$data_home"
+chmod -R g+s "$data_home"
+
+cat "$user_home/.ssh/id_rsa.pub"

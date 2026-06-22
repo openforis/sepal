@@ -55,23 +55,30 @@ const getFrom = from => {
     return `no-reply@${smtpFromDomain}`
 }
 
+const renderHtml = ({subject, content, contentType}) => {
+    const body = getBody(content, contentType)
+    // getBody returns a Handlebars.SafeString for text/html (an object, not a string), so normalise
+    // with toString() before checking for emptiness.
+    return body.toString().trim().length > 0
+        ? template({subject, body})
+        : ''
+}
+
 const send = async ({id, email: {from: tentativeFrom, to, cc, bcc, subject = '', content = '', contentType = 'text/plain'}}) => {
     await transport.verify()
     const from = getFrom(tentativeFrom)
     try {
-        const body = getBody(content, contentType)
-        const html = body.trim().length > 0
-            ? template({subject, body})
-            : ''
+        const html = renderHtml({subject, content, contentType})
         const email = {from, to, cc, bcc, subject, html}
         log.isTrace()
-            ? log.trace(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}\n`, body)
+            ? log.trace(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}\n`, html)
             : log.debug(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}`)
         const status = await transport.sendMail(email)
+        log.info(`<${id}> Email sent ${tag({from, to, cc, bcc, subject})}`)
         log.debug(() => [`<${id}> Email status:`, status])
     } catch (error) {
         log.warn(`<${id}> Ignoring email ${tag({from, to, cc, bcc, subject})}`, error)
     }
 }
 
-export {send, tag}
+export {renderHtml, send, tag}

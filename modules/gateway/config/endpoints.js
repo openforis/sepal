@@ -26,43 +26,43 @@ const endpoints = [
     {
         prefix: false,
         path: '/api/user/password/reset-request',
-        target: `http://${modules.user}/password/reset-request`,
+        target: `http://${modules.userNode}/password/reset-request`,
         authenticate: false
     },
     {
         prefix: false,
         path: '/api/user/password/reset',
-        target: `http://${modules.user}/password/reset`,
+        target: `http://${modules.userNode}/password/reset`,
         authenticate: false
     },
     {
         prefix: false,
         path: '/api/user/activate',
-        target: `http://${modules.user}/activate`,
+        target: `http://${modules.userNode}/activate`,
         authenticate: false
     },
     {
         prefix: false,
         path: '/api/user/validate',
-        target: `http://${modules.user}/validate`,
+        target: `http://${modules.userNode}/validate`,
         authenticate: false
     },
     {
         prefix: false,
         path: '/api/user/signup',
-        target: `http://${modules.user}/signup`,
+        target: `http://${modules.userNode}/signup`,
         authenticate: false
     },
     {
         prefix: false,
         path: '/api/user/google/access-request-callback',
-        target: `http://${modules.user}/google/access-request-callback`,
+        target: `http://${modules.userNode}/google/access-request-callback`,
         authenticate: false
     },
     {
         prefix: true,
         path: '/api/user',
-        target: `http://${modules.user}`,
+        target: `http://${modules.userNode}`,
         authenticate: true
     },
     {
@@ -190,6 +190,10 @@ const webSocketEndpoints = [
         module: 'user-assets',
         target: `ws://${modules.userAssets}/ws`,
         sendGoogleAccessToken: true
+    },
+    {
+        module: 'user-node',
+        target: `ws://${modules.userNode}/ws`
     }
 ]
 

@@ -1,0 +1,17 @@
+#!/bin/sh
+# deprovision-user <username> — remove the user's SSH home and SEPAL data home.
+set -e
+
+username="$1"
+if [ -z "$username" ]; then
+    echo "usage: deprovision-user <username>" >&2
+    exit 2
+fi
+
+# Reject anything but a safe username (defense in depth — this runs as root via sudo).
+# Only [A-Za-z0-9_] allowed: blocks path traversal (/, ..), globs, spaces, and shell metacharacters.
+case "$username" in
+    "" | *[!A-Za-z0-9_]* ) echo "invalid username: $username" >&2; exit 2 ;;
+esac
+
+rm -rf "/home/$username" "/sepal/home/$username"
