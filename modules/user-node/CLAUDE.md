@@ -3,10 +3,17 @@
 Node.js replacement for the Java `user` module. Owns users and their credentials
 (password hashes, SSH public keys) in the `sepal_user` MySQL database. Replaces LDAP.
 
-POSIX identity is derived, not stored: a user's `uid` and `gid` both equal
-`sepal_user.id` (the auto-increment PK, which starts at 10000). There is no separate
-group model — the only file-owning shared group, `sepal` (gid 9999), is a local OS
-group.
+POSIX identity is **stored**, not derived: `sepal_user` has `uid` and `gid` columns.
+For users migrated from LDAP they hold the real `uidNumber` and per-user-group
+`gidNumber` (each allocated from an independent ldapscripts sequence, so they differ
+from each other and from `sepal_user.id`; on-disk files are owned by these numbers).
+Users created by user-node get `uid = gid = id`, which is collision-free because the
+LDAP migration bumps the table `AUTO_INCREMENT` past every existing uid/gid. There is
+no shared group model — the only file-owning shared group, `sepal` (gid 9999), is a
+local OS group.
+
+> Note: this reverses design decision **D8** (which assumed `uid = gid = id`).
+> Production data showed `id ≠ uidNumber` for many users, so uid/gid are now stored.
 
 See the design spec: `docs/superpowers/specs/2026-06-16-ldap-removal-user-node-design.md`.
 

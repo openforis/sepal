@@ -314,7 +314,8 @@ const createInvitedUser = async ({username, name, email, organization, intendedU
     const lowered = (username || '').toLowerCase()
     const token = generateToken()
     const id = await repository.insertUser({username: lowered, name, email, organization, intendedUse, token})
-    const sshPublicKey = await provision(lowered, id)
+    // New users get uid = gid = id (set by insertUser); collision-free against migrated LDAP ids.
+    const sshPublicKey = await provision(lowered, id, id)
     await repository.updateSshPublicKey(lowered, sshPublicKey)
     const user = await repository.findByUsername(lowered)
     sendInvite(user, token)

@@ -8,6 +8,7 @@ const makeDeps = overrides => ({
     updatePassword: jest.fn(async () => {}),
     updateSshPublicKey: jest.fn(async () => {}),
     provision: jest.fn(async () => 'ssh-rsa AAAAKEY'),
+    assignDerivedPosixIds: jest.fn(async () => {}),
     hashPassword: jest.fn(() => '{SSHA}hashed'),
     readSecret: jest.fn(() => 's3cret'),
     ...overrides
@@ -26,10 +27,11 @@ test('populates credentials + provisions when password_hash is missing and secre
     })
     await createBootstrap(deps)()
     expect(deps.updatePassword).toHaveBeenCalledWith('sepaladmin', '{SSHA}hashed')
-    expect(deps.provision).toHaveBeenCalledWith('sepaladmin', 10000)
+    expect(deps.assignDerivedPosixIds).toHaveBeenCalledWith(10000)
+    expect(deps.provision).toHaveBeenCalledWith('sepaladmin', 10000, 10000)
     expect(deps.updateSshPublicKey).toHaveBeenCalledWith('sepaladmin', 'ssh-rsa AAAAKEY')
     expect(deps.updatePassword).toHaveBeenCalledWith('admin', '{SSHA}hashed')
-    expect(deps.provision).toHaveBeenCalledWith('admin', 10001)
+    expect(deps.provision).toHaveBeenCalledWith('admin', 10001, 10001)
     expect(deps.updatePassword).toHaveBeenCalledTimes(2)
 })
 

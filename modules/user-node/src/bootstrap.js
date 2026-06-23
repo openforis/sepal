@@ -16,7 +16,7 @@ const SYSTEM_USERS = [
 // Establish credentials (password_hash) + filesystem (home/keys -> ssh_public_key) for one seeded
 // admin user, ONLY when password_hash is missing. Idempotent: a fully-credentialed user is a no-op,
 // as is a missing secret or an unseeded row.
-const createBootstrap = ({findByUsername, updatePassword, updateSshPublicKey, provision, hashPassword, readSecret}) => {
+const createBootstrap = ({findByUsername, updatePassword, updateSshPublicKey, provision, assignDerivedPosixIds, hashPassword, readSecret}) => {
     const ensureCredentials = async ({username, secretEnv}) => {
         const user = await findByUsername(username)
         if (!user) {
@@ -32,10 +32,17 @@ const createBootstrap = ({findByUsername, updatePassword, updateSshPublicKey, pr
             log.warn(`Bootstrap: ${secretEnv} is unset; cannot establish credentials for '${username}'`)
             return
         }
+        // Fresh-install admins have no LDAP identity to migrate, so derive uid = gid = id. (On an
+        // existing install the migration has already set real uid/gid + password, so bootstrap skips
+        // these users above.) assignDerivedPosixIds only fills NULLs, so it never clobbers a migrated
+        // identity.
+        await assignDerivedPosixIds(user.id)
+        const uid = user.uid ?? user.id
+        const gid = user.gid ?? user.id
         // Write password_hash LAST: it is the idempotency sentinel, so any failure in provision or
         // the key write leaves it NULL and the whole step self-heals on the next start (provision is
         // idempotent and re-writing the same key is harmless).
-        const sshPublicKey = await provision(username, user.id)
+        const sshPublicKey = await provision(username, uid, gid)
         await updateSshPublicKey(username, sshPublicKey)
         await updatePassword(username, hashPassword(secret))
         log.info(`Bootstrap: established credentials and home for '${username}'`)
@@ -56,6 +63,7 @@ const bootstrap = createBootstrap({
     updatePassword: repository.updatePassword,
     updateSshPublicKey: repository.updateSshPublicKey,
     provision: defaultProvision,
+    assignDerivedPosixIds: repository.assignDerivedPosixIds,
     hashPassword: defaultHashPassword,
     readSecret: name => process.env[name]
 })

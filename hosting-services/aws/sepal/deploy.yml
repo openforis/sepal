@@ -283,6 +283,9 @@
     - { role: run-module, module: mysql }
     - { role: run-module, module: mysql-backup }
     - { role: run-module, module: gee}
+    # Transitional: LDAP must stay up so user-node's startup credential migration has a source to
+    # read from. Decommission (remove these two) only in design phase 6, after migration is verified.
+    - { role: run-module, module: ldap }
     - { role: run-module, module: user-node }
     - { role: run-module, module: app-manager }
     - { role: run-module, module: sepal-server }

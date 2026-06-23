@@ -1,21 +1,23 @@
 import {renderGroup, renderPasswd, snapshotVersion} from './nss.js'
 
+// uid and gid are the real POSIX numbers (may differ from each other and from id); the NSS lines use
+// them, never id.
 const ids = [
-    {id: 10000, username: 'sepaladmin', name: 'Sepal Admin'},
-    {id: 10042, username: 'alice', name: 'Alice: the Great\nHacker'}
+    {id: 10000, uid: 10000, gid: 10000, username: 'sepaladmin', name: 'Sepal Admin'},
+    {id: 10042, uid: 10020, gid: 10031, username: 'alice', name: 'Alice: the Great\nHacker'}
 ]
 
-test('renderPasswd emits name:x:id:id:gecos:/home/name:/usr/bin/bash, gecos sanitized', () => {
+test('renderPasswd emits name:x:uid:gid:gecos:/home/name:/usr/bin/bash, gecos sanitized', () => {
     expect(renderPasswd(ids)).toBe(
         'sepaladmin:x:10000:10000:Sepal Admin:/home/sepaladmin:/usr/bin/bash\n' +
-        'alice:x:10042:10042:Alice the Great Hacker:/home/alice:/usr/bin/bash\n'
+        'alice:x:10020:10031:Alice the Great Hacker:/home/alice:/usr/bin/bash\n'
     )
 })
 
-test('renderGroup emits one name:x:id: line per identity', () => {
+test('renderGroup emits one name:x:gid: line per identity', () => {
     expect(renderGroup(ids)).toBe(
         'sepaladmin:x:10000:\n' +
-        'alice:x:10042:\n'
+        'alice:x:10031:\n'
     )
 })
 

@@ -34,6 +34,8 @@ const rowToUser = row => {
     const admin = !!row.admin
     return {
         id: row.id,
+        uid: row.uid,
+        gid: row.gid,
         name: row.name,
         username: row.username,
         email: row.email,

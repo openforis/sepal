@@ -1,6 +1,9 @@
-// One-shot, idempotent migration of credentials (password hash + SSH public key) from LDAP into
-// the sepal_user DB. POSIX uid/gid are NOT migrated — they are derived as uid = gid = sepal_user.id
-// (which already equals the LDAP uidNumber; this is asserted before writing). Pure helpers are kept
+// One-shot, idempotent migration from LDAP into the sepal_user DB of: password hash, SSH public key,
+// and POSIX uid/gid. uid (LDAP uidNumber) and gid (the entry's per-user-group gidNumber) are stored
+// verbatim because on-disk files are owned by those numbers, and they do NOT equal sepal_user.id —
+// the DB auto-increment and the ldapscripts uid/gid sequences drifted apart independently. After
+// migrating, the table AUTO_INCREMENT is bumped past every existing uid/gid so future user-node
+// users (which get uid = gid = id) cannot collide with a migrated identity. Pure helpers are kept
 // separate from IO so they can be unit-tested in isolation.
 
 import {getLogger} from '#sepal/log'
@@ -34,16 +37,6 @@ const reconcile = (ldapUsernames, dbUsernames) => {
     }
 }
 
-// Safety check for the uid = gid = id model: on-disk files are owned by the LDAP uidNumber, so the
-// DB id must equal it for every matched user. Returns the offending {username, id, uid} list (empty
-// when all match). dbByLowerName maps a lowercased username to its {id, username} DB row.
-const idMismatches = (ldapUsers, dbByLowerName) =>
-    ldapUsers
-        .map(user => ({user, db: dbByLowerName.get(user.username.toLowerCase())}))
-        .filter(({db}) => db)
-        .filter(({user, db}) => user.uid !== db.id)
-        .map(({user, db}) => ({username: db.username, id: db.id, uid: user.uid}))
-
 const ldapConfig = () => ({
     host: process.env.LDAP_HOST || 'ldap',
     bindDn: process.env.LDAP_ADMIN_DN || 'cn=admin,dc=sepal,dc=org',
@@ -61,12 +54,34 @@ const updateUserCredentials = async (pool, user) => {
     if (!passwordHash) {
         log.warn(`No userPassword for '${user.username}' — leaving password_hash NULL`)
     }
+    const uid = Number.isInteger(user.uid) ? user.uid : null
+    const gid = Number.isInteger(user.gid) ? user.gid : null
+    if (uid === null || gid === null) {
+        log.warn(`Missing uidNumber/gidNumber for '${user.username}' (uid=${user.uid}, gid=${user.gid}) — leaving uid/gid NULL`)
+    }
     await pool.query(
         `UPDATE ${DATABASE_NAME}.sepal_user
-         SET password_hash = ?, ssh_public_key = ?
+         SET password_hash = ?, ssh_public_key = ?, uid = ?, gid = ?
          WHERE LOWER(username) = LOWER(?)`,
-        [passwordHash, user.sshPublicKey, user.username]
+        [passwordHash, user.sshPublicKey, uid, gid, user.username]
     )
+}
+
+// Bump the table's AUTO_INCREMENT above every existing id/uid/gid so future user-node users (which
+// get uid = gid = id) cannot collide with a migrated LDAP identity in the uid or gid namespace.
+// MySQL ignores an AUTO_INCREMENT lower than the current value, so this only ever raises it.
+const reserveIdRangeAboveExisting = async pool => {
+    const [[{nextId}]] = await pool.query(
+        `SELECT GREATEST(
+                    COALESCE(MAX(id), 0),
+                    COALESCE(MAX(uid), 0),
+                    COALESCE(MAX(gid), 0)
+                ) + 1 AS nextId
+         FROM ${DATABASE_NAME}.sepal_user`
+    )
+    const next = parseInt(nextId, 10)
+    await pool.query(`ALTER TABLE ${DATABASE_NAME}.sepal_user AUTO_INCREMENT = ${next}`)
+    log.info(`Reserved id range: AUTO_INCREMENT set to ${next} (above all existing id/uid/gid)`)
 }
 
 const migrate = async () => {
@@ -80,7 +95,6 @@ const migrate = async () => {
         await ldap.connect()
         const ldapUsers = await ldap.searchUsers()
         const dbUsers = await loadDbUsers(pool)
-        const dbByLowerName = new Map(dbUsers.map(user => [user.username.toLowerCase(), user]))
 
         const {matched, ldapOnly, dbOnly} = reconcile(
             ldapUsers.map(user => user.username),
@@ -89,19 +103,11 @@ const migrate = async () => {
         const matchedSet = new Set(matched.map(name => name.toLowerCase()))
         const matchedLdapUsers = ldapUsers.filter(user => matchedSet.has(user.username.toLowerCase()))
 
-        // Guard the uid = gid = id assumption: refuse to migrate if any DB id != on-disk uidNumber.
-        const mismatches = idMismatches(matchedLdapUsers, dbByLowerName)
-        if (mismatches.length) {
-            throw new Error(
-                `id != uidNumber for ${mismatches.length} user(s) — uid=gid=id is unsafe ` +
-                '(on-disk ownership mismatch): ' +
-                mismatches.map(m => `${m.username}(id=${m.id}, uid=${m.uid})`).join(', ')
-            )
-        }
-
         for (const user of matchedLdapUsers) {
             await updateUserCredentials(pool, user)
         }
+
+        await reserveIdRangeAboveExisting(pool)
 
         log.info(`Migration summary: ${matched.length} users updated, ` +
             `${ldapOnly.length} LDAP-only skipped, ${dbOnly.length} DB-only untouched`)
@@ -130,4 +136,4 @@ if (isMainModule) {
         })
 }
 
-export {decodeHash, idMismatches, migrate, reconcile}
+export {decodeHash, migrate, reconcile}

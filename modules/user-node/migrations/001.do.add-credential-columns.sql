@@ -25,5 +25,7 @@ END;
 
 CALL sepal_user.AddColumnIfNotExists('sepal_user', 'password_hash', 'password_hash VARCHAR(255) NULL');
 CALL sepal_user.AddColumnIfNotExists('sepal_user', 'ssh_public_key', 'ssh_public_key TEXT NULL');
+CALL sepal_user.AddColumnIfNotExists('sepal_user', 'uid', 'uid INT NULL');
+CALL sepal_user.AddColumnIfNotExists('sepal_user', 'gid', 'gid INT NULL');
 
 DROP PROCEDURE IF EXISTS sepal_user.AddColumnIfNotExists;

@@ -16,11 +16,14 @@ const findByToken = async token => {
     return rowToUser(rows[0])
 }
 
-// Non-PENDING identities (ACTIVE + LOCKED) with an id-based POSIX identity, for the NSS snapshot.
-// PENDING users (no uid/home yet) are excluded; locking is enforced at auth, not in NSS.
+// Non-PENDING identities (ACTIVE + LOCKED) that have a POSIX uid/gid, for the NSS snapshot. PENDING
+// users (no uid/home yet) are excluded, as are any rows still missing uid/gid; locking is enforced
+// at auth, not in NSS. uid/gid are the real POSIX numbers (migrated from LDAP, or = id for users
+// created by user-node) — not derived from id.
 const listIdentities = async () => {
     const [rows] = await getPool().query(
-        `SELECT id, username, name FROM ${TABLE} WHERE status <> 'PENDING' AND id >= 10000 ORDER BY id`
+        `SELECT id, username, name, uid, gid FROM ${TABLE}
+         WHERE status <> 'PENDING' AND uid IS NOT NULL AND uid >= 10000 ORDER BY uid`
     )
     return rows
 }
@@ -140,7 +143,9 @@ const findByEmail = async email => {
     return rowToUser(rows[0])
 }
 
-// Inserts a PENDING user with an activation token; returns the new auto-increment id (= uid = gid).
+// Inserts a PENDING user with an activation token, then derives its POSIX identity as uid = gid = id.
+// This is collision-free against migrated LDAP identities because migrate-ldap bumps the table's
+// AUTO_INCREMENT past every existing uid/gid. Returns the new auto-increment id (= uid = gid).
 const insertUser = async ({username, name, email, organization, intendedUse, token}) => {
     const [result] = await getPool().query(
         `INSERT INTO ${TABLE}
@@ -150,7 +155,17 @@ const insertUser = async ({username, name, email, organization, intendedUse, tok
          VALUES (?, ?, ?, ?, ?, 1, 0, ?, NOW(), 0, 0, 'PENDING', NOW(), NOW())`,
         [username, name, email, organization, intendedUse ?? null, token]
     )
+    await assignDerivedPosixIds(result.insertId)
     return result.insertId
+}
+
+// Set uid = gid = id for a row that has none yet (a user-node-created user, or a fresh-install admin
+// with no LDAP identity to migrate). Idempotent: only fills NULLs, so it never overwrites a uid/gid
+// migrated from LDAP.
+const assignDerivedPosixIds = async id => {
+    await getPool().query(
+        `UPDATE ${TABLE} SET uid = id, gid = id WHERE id = ? AND (uid IS NULL OR gid IS NULL)`, [id]
+    )
 }
 
 const updateSshPublicKey = async (username, sshPublicKey) => {
@@ -162,6 +177,7 @@ const updateSshPublicKey = async (username, sshPublicKey) => {
 
 export {
     acceptPrivacyPolicy,
+    assignDerivedPosixIds,
     emailNotificationsEnabled,
     findByEmail,
     findByToken,

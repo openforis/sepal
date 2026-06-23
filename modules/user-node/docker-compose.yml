@@ -26,6 +26,7 @@ services:
       SEPAL_HOST: "${SEPAL_HOST}"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       SEPAL_ADMIN_WEB_PASSWORD: "${SEPAL_ADMIN_WEB_PASSWORD}"
+      LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}" # Transitional: enables the one-shot LDAP->DB credential migration at startup. Remove once LDAP is decommissioned (design phase 6).
     volumes:
       - "${SEPAL_DATA_DIR}/user/home:/home"        # user SSH home dirs (shared with ssh-gateway)
       - "${SEPAL_DATA_DIR}/sepal/home:/sepal/home" # user SEPAL data dirs
