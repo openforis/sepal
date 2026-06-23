@@ -57,6 +57,9 @@ build geospatial-toolkit
 build sandbox
 build task
 build gee
+    # Transitional: LDAP must stay up so user-node's startup credential migration has a source to
+    # read from. Decommission (remove these two) only in design phase 6, after migration is verified.
+build ldap
 build user-node
 build user-storage
 build user-storage-backup
@@ -76,6 +79,9 @@ push sys-monitor
 push email
 push backup
 push rabbitmq
+    # Transitional: LDAP must stay up so user-node's startup credential migration has a source to
+    # read from. Decommission (remove these two) only in design phase 6, after migration is verified.
+push ldap
 push user-node
 push user-storage
 push user-storage-backup
