@@ -61,7 +61,7 @@ check program sys-monitor with path /usr/local/bin/dockercheck-sys-monitor
 check program terminal with path /usr/local/bin/dockercheck-terminal
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
-check program user with path /usr/local/bin/dockercheck-user
+check program user-node with path /usr/local/bin/dockercheck-user-node
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 
 check program user-assets with path /usr/local/bin/dockercheck-user-assets
