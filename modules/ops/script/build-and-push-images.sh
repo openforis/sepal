@@ -57,7 +57,7 @@ build geospatial-toolkit
 build sandbox
 build task
 build gee
-build user
+build user-node
 build user-storage
 build user-storage-backup
 build user-assets
@@ -76,7 +76,7 @@ push sys-monitor
 push email
 push backup
 push rabbitmq
-push user
+push user-node
 push user-storage
 push user-storage-backup
 push app-launcher
