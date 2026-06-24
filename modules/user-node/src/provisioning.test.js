@@ -8,11 +8,3 @@ test('provision shells out to sudo provision-user with username + uid + gid and 
     expect(calls).toEqual([['sudo', ['/usr/local/bin/provision-user', 'lookap1', '10006', '10031']]])
     expect(pubkey).toBe('ssh-rsa AAAAKEY comment')
 })
-
-test('deprovision shells out to sudo deprovision-user with the username', async () => {
-    const calls = []
-    const exec = async (cmd, args) => { calls.push([cmd, args]); return {stdout: '', stderr: ''} }
-    const {deprovision} = createProvisioning(exec)
-    await deprovision('lookap1')
-    expect(calls).toEqual([['sudo', ['/usr/local/bin/deprovision-user', 'lookap1']]])
-})

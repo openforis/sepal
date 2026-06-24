@@ -30,10 +30,9 @@ ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
 
 # privileged provisioning scripts (invoked by the non-root node user via sudo)
 ADD --chmod=0755 modules/${MODULE_NAME}/script/provision-user /usr/local/bin/provision-user
-ADD --chmod=0755 modules/${MODULE_NAME}/script/deprovision-user /usr/local/bin/deprovision-user
 ADD --chmod=0755 modules/${MODULE_NAME}/script/save-credentials /usr/local/bin/save-credentials
 ADD --chmod=0755 modules/${MODULE_NAME}/script/delete-credentials /usr/local/bin/delete-credentials
-RUN printf '%s\n' 'node ALL=(root) NOPASSWD: /usr/local/bin/provision-user, /usr/local/bin/deprovision-user, /usr/local/bin/save-credentials, /usr/local/bin/delete-credentials' > /etc/sudoers.d/user-node \
+RUN printf '%s\n' 'node ALL=(root) NOPASSWD: /usr/local/bin/provision-user, /usr/local/bin/save-credentials, /usr/local/bin/delete-credentials' > /etc/sudoers.d/user-node \
     && chmod 0440 /etc/sudoers.d/user-node
 
 # run

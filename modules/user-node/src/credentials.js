@@ -18,14 +18,13 @@ const createCredentials = (exec = execFile) => ({
         }
         const child = exec('sudo', [SAVE, username], err => err ? reject(err) : resolve())
         child.stdin.end(credentialsJson(tokens))
-    }),
-    deleteCredentials: username => deleteCredentialsWith(exec, username)
+    })
 })
 
 const deleteCredentialsWith = (exec, username) => new Promise((resolve, reject) => {
     exec('sudo', [DELETE, username], err => err ? reject(err) : resolve())
 })
 
-const {saveCredentials, deleteCredentials} = createCredentials()
+const {saveCredentials} = createCredentials()
 
-export {createCredentials, credentialsJson, deleteCredentials, saveCredentials}
+export {saveCredentials}
