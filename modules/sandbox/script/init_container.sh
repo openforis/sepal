@@ -52,6 +52,10 @@ printf '%s\n' \
 cp /etc/environment /etc/R/Renviron.site
 sed -i -e 's/\/usr\/lib\/x86_64-linux-gnu/\/usr\/lib\/x86_64-linux-gnu:\/lib\/x86_64-linux-gnu/g' /usr/lib/R/etc/ldpaths
 
+printf '%s\n' \
+    "SEPAL_HOST=$SEPAL_HOST" \
+    >> /etc/environment
+
 userHome=/home/$sandbox_user
 cp -n /etc/skel/.bashrc "$userHome"
 cp -n /etc/skel/.profile "$userHome"
