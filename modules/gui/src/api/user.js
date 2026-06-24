@@ -122,11 +122,6 @@ export default {
     getBudgetReport$: () =>
         get$('/api/budget/report'),
 
-    inviteUser$: userDetails =>
-        post$('/api/user/invite', {
-            body: userDetails
-        }),
-
     updateUser$: userDetails =>
         post$('/api/user/details', {
             body: userDetails

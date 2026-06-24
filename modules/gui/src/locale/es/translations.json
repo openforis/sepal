@@ -5299,9 +5299,6 @@
         }
       }
     },
-    "invite": {
-      "label": "Invitar a un nuevo usuario"
-    },
     "page": "Página {pageNumber} de {pageCount}"
   },
   "widget": {

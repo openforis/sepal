@@ -302,7 +302,7 @@ const validateEmail = async ctx => {
     ctx.body = {valid: Boolean(valid)}
 }
 
-// Validate signup/invite input the way the Java endpoints did: username format,
+// Validate signup input the way the Java endpoint did: username format,
 // non-blank name, email format. Returns true if the (lowercased) username is valid.
 const isValidNewUser = ({username, name, email}) =>
     isValidUsername((username || '').toLowerCase()) && Boolean(name) && isValidEmail(email)
@@ -337,18 +337,6 @@ const signup = async ctx => {
     }
     await createInvitedUser({username, name, email, organization, intendedUse: null})
     ctx.body = {status: 'success', message: 'Signup succeeded'}
-}
-
-// POST /invite (ADMIN) {username, name, email, organization} -> userToMap.
-const invite = async ctx => {
-    const {username, name, email, organization} = readBody(ctx)
-    if (!isValidNewUser({username, name, email})) {
-        ctx.status = 400
-        ctx.body = {message: 'Invalid request'}
-        return
-    }
-    const user = await createInvitedUser({username, name, email, organization, intendedUse: null})
-    ctx.body = userToMap(user)
 }
 
 // POST /password/reset-request (NO_AUTH) {email, recaptchaToken}. Always returns the same
@@ -496,7 +484,6 @@ export {
     googleAccessRequestCallback,
     googleAccessRequestUrl,
     info,
-    invite,
     list,
     lock,
     mostRecentLogin,

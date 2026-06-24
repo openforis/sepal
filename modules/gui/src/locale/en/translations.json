@@ -5300,9 +5300,6 @@
         }
       }
     },
-    "invite": {
-      "label": "Invite a new user"
-    },
     "page": "Page {pageNumber} of {pageCount}"
   },
   "widget": {

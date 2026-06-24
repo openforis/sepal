@@ -56,14 +56,14 @@ const fields = {
 
 const mapStateToProps = (state, ownProps) => {
     const {userDetails} = ownProps
-    const {id, newUser, username, name, email, organization, intendedUse, admin = false} = userDetails
+    const {id, username, name, email, organization, intendedUse, admin = false} = userDetails
     const {quota: {budget: {instanceSpending, storageSpending, storageQuota} = {}, budgetUpdateRequest}} = userDetails
     const userRequestInstanceSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageQuotaState = budgetUpdateRequest ? null : false
     return {
         values: {
-            id, newUser, username, name, email, organization, intendedUse, admin, instanceSpending, storageSpending, storageQuota,
+            id, username, name, email, organization, intendedUse, admin, instanceSpending, storageSpending, storageQuota,
             userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState
         }
     }
@@ -90,7 +90,6 @@ class _UserDetails extends React.Component {
 
     render() {
         const {form, inputs: {username, name, email, organization, intendedUse, instanceSpending, storageSpending, storageQuota, admin}} = this.props
-        const newUser = !this.props.userDetails.username
         return (
             <Form.Panel
                 className={styles.panel}
@@ -123,17 +122,16 @@ class _UserDetails extends React.Component {
                         <Form.Input
                             label={msg('user.userDetails.form.username.label')}
                             input={username}
-                            disabled={!newUser}
+                            disabled
                             autoComplete={false}
                             spellCheck={false}
-                            autoFocus={newUser}
                         />
                         <Form.Input
                             label={msg('user.userDetails.form.name.label')}
                             input={name}
                             autoComplete={false}
                             spellCheck={false}
-                            autoFocus={!newUser}
+                            autoFocus
                         />
                         <Form.Input
                             label={msg('user.userDetails.form.email.label')}

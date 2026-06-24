@@ -34,7 +34,6 @@ const routes = router => router
     .post('/google/project', requireAuth, api.updateGoogleProject)
     // ADMIN
     .post('/details', requireAdmin, api.updateDetails)
-    .post('/invite', requireAdmin, api.invite)
     .post('/lock', requireAdmin, api.lock)
     .post('/unlock', requireAdmin, api.unlock)
     .get('/info', requireAdmin, api.info)
