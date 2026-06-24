@@ -6,6 +6,9 @@ echo "***************************"
 echo "*** Installing GPU libs ***"
 echo "***************************"
 
+# Mainly for local envs: large CUDA wheel downloads can time out.
+export UV_HTTP_TIMEOUT=600
+
 # Tensorflow version compatibility: 
 #   https://www.tensorflow.org/install/source#gpu
 
