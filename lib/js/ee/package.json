@@ -6,7 +6,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@google/earthengine": "^1.7.31",
+        "@google/earthengine": "^1.7.32",
         "lodash": "^4.18.1",
         "moment": "^2.30.1",
         "rxjs": "^7.8.2",
