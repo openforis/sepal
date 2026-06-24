@@ -8,7 +8,6 @@ const log = getLogger('database')
 
 const DATABASE_NAME = 'sepal_user'
 const BASE_TABLE = 'sepal_user'
-const SCHEMA_TABLE = 'schema_version_user_node'
 
 const WAIT_INTERVAL_MS = 2000
 const WAIT_TIMEOUT_MS = 5 * 60 * 1000
@@ -53,7 +52,7 @@ const waitForBaseTable = async () => {
 
 const initializeDatabase = async () => {
     await waitForBaseTable()
-    await initDatabase(DATABASE_NAME, migrationsPath, {schemaTable: SCHEMA_TABLE})
+    await initDatabase(DATABASE_NAME, migrationsPath)
     state.pool = await createPool(DATABASE_NAME)
     log.info('Database initialized')
 }

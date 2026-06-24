@@ -19,7 +19,7 @@ See the design spec: `docs/superpowers/specs/2026-06-16-ldap-removal-user-node-d
 
 ## Schema ownership
 
-`user-node` migrates `sepal_user` via Postgrator using the history table
-`schema_version_user_node`, coexisting with the Java `user` module's Flyway
-(`schema_version`) during the transition. It waits for the base `sepal_user` table
-to exist before migrating.
+`user-node` migrates `sepal_user` via Postgrator using the default history table
+`schema_version`. The Java `user` module's previous Flyway history table has been
+renamed to `schema_version_old`. It waits for the base `sepal_user` table to exist
+before migrating.
