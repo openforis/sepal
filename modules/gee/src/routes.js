@@ -1,42 +1,45 @@
-const {stream} = require('#sepal/httpServer')
+import datasets$ from '#gee/jobs/datasets/datasets'
+import aoiBounds$ from '#gee/jobs/ee/aoi/bounds'
+import createFolder$ from '#gee/jobs/ee/asset/createFolder'
+import deleteAsset$ from '#gee/jobs/ee/asset/delete'
+import listAssets$ from '#gee/jobs/ee/asset/list'
+import assetMetadata$ from '#gee/jobs/ee/asset/metadata'
+import renameAsset$ from '#gee/jobs/ee/asset/rename'
+import batchTable$ from '#gee/jobs/ee/batch/table'
+import loadCCDCSegments$ from '#gee/jobs/ee/ccdc/loadSegments'
+import check$ from '#gee/jobs/ee/check'
+import nextReferenceDataPoints$ from '#gee/jobs/ee/classification/nextReferenceDataPoints'
+import imageBands$ from '#gee/jobs/ee/image/bands'
+import imageBounds$ from '#gee/jobs/ee/image/bounds'
+import distinctBandValues$ from '#gee/jobs/ee/image/distinctBandValues'
+import imageJson$ from '#gee/jobs/ee/image/eeJson'
+import imageGeometry$ from '#gee/jobs/ee/image/geometry'
+import imageHistogram$ from '#gee/jobs/ee/image/histogram'
+import landsatProductId$ from '#gee/jobs/ee/image/landsatProductId'
+import preview$ from '#gee/jobs/ee/image/preview'
+import sampleImage$ from '#gee/jobs/ee/image/sample'
+import sceneAreas$ from '#gee/jobs/ee/image/sceneAreas'
+import projects$ from '#gee/jobs/ee/projects'
+import areaPerStratum$ from '#gee/jobs/ee/samplingDesign/areaPerStratum'
+import probabilityPerStratum$ from '#gee/jobs/ee/samplingDesign/probabilityPerStratum'
+import tableColumns$ from '#gee/jobs/ee/table/columns'
+import tableColumnValues$ from '#gee/jobs/ee/table/columnValues'
+import tableMap$ from '#gee/jobs/ee/table/map'
+import tableQuery$ from '#gee/jobs/ee/table/query'
+import tableRows$ from '#gee/jobs/ee/table/rows'
+import listCompletedTasks$ from '#gee/jobs/ee/task/listCompleted'
+import loadTimeSeriesbservations$ from '#gee/jobs/ee/timeSeries/loadObservations'
+import {stream} from '#sepal/httpServer'
 
-const sceneAreas$ = require('#gee/jobs/ee/image/sceneAreas')
-const preview$ = require('#gee/jobs/ee/image/preview')
-const loadCCDCSegments$ = require('#gee/jobs/ee/ccdc/loadSegments')
-const loadTimeSeriesbservations$ = require('#gee/jobs/ee/timeSeries/loadObservations')
-const nextReferenceDataPoints$ = require('#gee/jobs/ee/classification/nextReferenceDataPoints')
-const assetVisualizations$ = require('#gee/jobs/ee/image/assetVisualizations')
-const imageBands$ = require('#gee/jobs/ee/image/bands')
-const imageHistogram$ = require('#gee/jobs/ee/image/histogram')
-const distinctBandValues$ = require('#gee/jobs/ee/image/distinctBandValues')
-const assetMetadata$ = require('#gee/jobs/ee/asset/metadata')
-const projects$ = require('#gee/jobs/ee/projects')
-const listAssets$ = require('#gee/jobs/ee/asset/list')
-const createFolder$ = require('#gee/jobs/ee/asset/createFolder')
-const renameAsset$ = require('#gee/jobs/ee/asset/rename')
-const deleteAsset$ = require('#gee/jobs/ee/asset/delete')
-const listCompletedTasks$ = require('#gee/jobs/ee/task/listCompleted')
-const imageBounds$ = require('#gee/jobs/ee/image/bounds')
-const imageGeometry$ = require('#gee/jobs/ee/image/geometry')
-const sampleImage$ = require('#gee/jobs/ee/image/sample')
-const aoiBounds$ = require('#gee/jobs/ee/aoi/bounds')
-const tableColumns$ = require('#gee/jobs/ee/table/columns')
-const tableColumnValues$ = require('#gee/jobs/ee/table/columnValues')
-const tableRows$ = require('#gee/jobs/ee/table/rows')
-const tableQuery$ = require('#gee/jobs/ee/table/query')
-const tableMap$ = require('#gee/jobs/ee/table/map')
-const datasets$ = require('#gee/jobs/datasets/datasets')
-const check$ = require('#gee/jobs/ee/check')
-const batchTable$ = require('#gee/jobs/ee/batch/table')
-const areaPerStratum$ = require('#gee/jobs/ee/samplingDesign/areaPerStratum')
-const probabilityPerStratum$ = require('#gee/jobs/ee/samplingDesign/probabilityPerStratum')
-
-module.exports = router =>
+export default router =>
     router
         .post('/sceneareas', stream(ctx => sceneAreas$(ctx)))
         .post('/preview', stream(ctx => preview$(ctx)))
         .post('/bands', stream(ctx => imageBands$(ctx)))
-        .post('/image/assetVisualizations', stream(ctx => assetVisualizations$(ctx)))
+        .get('/image/json', stream(ctx => {
+            ctx.type = 'application/json'
+            return imageJson$(ctx)
+        }))
         .post('/image/histogram', stream(ctx => imageHistogram$(ctx)))
         .post('/image/distinctBandValues', stream(ctx => distinctBandValues$(ctx)))
         .post('/image/sample', stream(ctx => sampleImage$(ctx)))
@@ -63,4 +66,5 @@ module.exports = router =>
         .post('/samplingDesign/estimateProbability', stream(ctx => batchTable$(ctx)))
         .post('/samplingDesign/sample', stream(ctx => batchTable$(ctx)))
         .get('/datasets', stream(ctx => datasets$(ctx)))
+        .get('/landsatProductId', stream(ctx => landsatProductId$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))

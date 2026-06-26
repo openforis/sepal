@@ -5,7 +5,7 @@ import _ from 'lodash'
 import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {injectIntl, IntlProvider} from 'react-intl'
+import {IntlProvider, useIntl} from 'react-intl'
 
 import en from '~/locale/en/translations.json'
 import es from '~/locale/es/translations.json'
@@ -124,38 +124,16 @@ export class TranslationProvider extends React.Component {
     }
 }
 
-class IntlInitializer extends React.Component {
-    constructor(props) {
-        super(props)
-        initIntl(this.props.intl)
-    }
-
-    render() {
-        return this.props.children
-    }
-
-    componentDidUpdate() {
-        initIntl(this.props.intl)
-    }
+const IntlInit = ({children}) => {
+    const intlInstance = useIntl()
+    initIntl(intlInstance)
+    return children
 }
 
-class IntlInitializerEn extends React.Component {
-    constructor(props) {
-        super(props)
-        initIntlEn(this.props.intl)
-    }
-
-    render() {
-        return this.props.children
-    }
+const IntlInitEn = ({children}) => {
+    const intlInstance = useIntl()
+    initIntlEn(intlInstance)
+    return children
 }
-
-IntlInitializer.propTypes = {
-    children: PropTypes.any,
-    intl: PropTypes.object
-}
-
-const IntlInit = injectIntl(IntlInitializer)
-const IntlInitEn = injectIntl(IntlInitializerEn)
 
 // Read language from local storage, fallback to default

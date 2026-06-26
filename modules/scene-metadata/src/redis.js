@@ -1,6 +1,10 @@
-const {createClient} = require('redis')
-const {redisUri} = require('./config')
-const log = require('#sepal/log').getLogger('redis')
+import {createClient} from 'redis'
+
+import {getLogger} from '#sepal/log'
+
+import {redisUri} from './config.js'
+
+const log = getLogger('redis')
 
 const initializeRedis = async () => {
     const redis = await createClient({url: redisUri})
@@ -21,24 +25,33 @@ const initializeRedis = async () => {
         log.info('Setting initialized:', timestamp)
     }
 
-    const getLastUpdate = async collection => {
-        log.debug(`Getting last update for collection ${collection}...`)
-        const lastUpdate = await redis.get(collection)
-        log.info(`Got last update for collection ${collection}:`, lastUpdate)
+    const getLastUpdate = async dataset => {
+        log.debug(`Getting last update for dataset ${dataset}...`)
+        const lastUpdate = await redis.get(`lastUpdate:${dataset}`)
+        log.info(`Got last update for dataset ${dataset}:`, lastUpdate)
         return lastUpdate
     }
 
-    const setLastUpdate = async (collection, lastUpdate) => {
-        log.debug(`Setting last update for collection ${collection}...`)
-        if (lastUpdate) {
-            await redis.set(collection, lastUpdate)
+    const setLastUpdate = async lastUpdateByDataset => {
+        log.debug('Setting last update:', lastUpdateByDataset)
+        if (lastUpdateByDataset) {
+            await redis.mSet(
+                Object.fromEntries(
+                    Object.entries(lastUpdateByDataset).map(
+                        ([key, value]) => [`lastUpdate:${key}`, value]
+                    )
+                )
+            )
         } else {
-            await redis.del(collection)
+            const keys = await redis.keys('lastUpdate:*')
+            if (keys.length > 0) {
+                await redis.del(keys)
+            }
         }
-        log.info(`Set last update for collection ${collection}:`, lastUpdate)
+        log.info('Set last update:', lastUpdateByDataset)
     }
 
     return {getInitialized, setInitialized, getLastUpdate, setLastUpdate}
 }
 
-module.exports = {initializeRedis}
+export {initializeRedis}

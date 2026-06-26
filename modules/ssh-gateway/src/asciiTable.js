@@ -1,5 +1,6 @@
-const {format} = require('./console')
-const _ = require('lodash')
+import _ from 'lodash'
+
+import {format} from './console.js'
 
 const th = cells => ({type: 'hr', cells})
 const tr = cells => ({type: 'tr', cells})
@@ -123,4 +124,4 @@ class AsciiTable {
 
 }
 
-module.exports = {table, th, tr, td}
+export {table, td, th, tr}

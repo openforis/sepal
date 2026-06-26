@@ -8,6 +8,7 @@ import React from 'react'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
+import {withEnabled} from '~/enabled'
 import {isMobile} from '~/widget/userAgent'
 
 import {DEFAULT_PORTAL_CONTAINER_ID} from './portal'
@@ -28,7 +29,7 @@ class _Tooltip extends React.Component {
     }
 
     render() {
-        const {placement, disabled, delay, clickTrigger, hoverTrigger, focusTrigger, destroyTooltipOnHide, onVisibleChange, afterVisibleChange, children, ...otherProps} = this.props
+        const {enabled = true, placement, disabled, delay, clickTrigger, hoverTrigger, focusTrigger, destroyTooltipOnHide, onVisibleChange, afterVisibleChange, children, ...otherProps} = this.props
         const {visible} = this.state
         const trigger = _.compact([
             focusTrigger ? 'focus' : '',
@@ -36,7 +37,7 @@ class _Tooltip extends React.Component {
             hoverTrigger && !isMobile() ? 'hover' : ''
         ])
         const msg = this.getMsg()
-        return msg && !disabled && visible
+        return msg && !disabled && visible && enabled
             ? (
                 <RcTooltip
                     overlay={msg}
@@ -89,6 +90,7 @@ class _Tooltip extends React.Component {
 
 export const Tooltip = compose(
     _Tooltip,
+    withEnabled(),
     asFunctionalComponent({
         clickTrigger: false,
         hoverTrigger: true,
@@ -120,5 +122,4 @@ Tooltip.propTypes = {
     topLeft: PropTypes.bool,
     topRight: PropTypes.bool,
     onVisibleChange: PropTypes.func
-
 }

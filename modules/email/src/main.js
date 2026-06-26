@@ -1,26 +1,30 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import _ from 'lodash'
 
-const log = require('#sepal/log').getLogger('main')
+import logConfig from '#config/log.json' with {type: 'json'}
+import * as server from '#sepal/httpServer'
+import {configureServer, getLogger} from '#sepal/log'
+import {initMessageQueue} from '#sepal/messageQueue'
 
-const _ = require('lodash')
+import {amqpUri, port} from './config.js'
+import {initQueue} from './emailQueue.js'
+import {messageHandler} from './messageHandler.js'
 
-const {initMessageQueue} = require('#sepal/messageQueue')
-const {amqpUri, port} = require('./config')
-const server = require('#sepal/httpServer')
-const {logStats} = require('./emailQueue')
-const {messageHandler} = require('./messageHandler')
+configureServer(logConfig)
+
+const log = getLogger('main')
 
 const main = async () => {
     await initMessageQueue(amqpUri, {
         subscribers: [
-            {queue: 'email.send', topic: 'email.send', handler: messageHandler},
+            {queue: 'email.sendToAddress', topic: 'email.sendToAddress', handler: messageHandler},
+            {queue: 'email.sendToUser', topic: 'email.sendToUser', handler: messageHandler},
             {queue: 'email.emailNotificationsEnabled', topic: 'user.emailNotificationsEnabled', handler: messageHandler}
         ]
     })
 
     await server.start({port})
 
-    await logStats()
+    await initQueue()
     
     log.info('Initialized')
 }

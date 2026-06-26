@@ -33,3 +33,27 @@ const SCENE_PREVIEW_URL = {
 
 export const getScenePreviewUrl = ({id, dataSet}) =>
     SCENE_PREVIEW_URL[dataSet] && SCENE_PREVIEW_URL[dataSet](id)
+
+export const usgsLandsatPreview = landsatProductId => {
+    const base = 'https://landsatlook.usgs.gov/gen-browse'
+    const args = [
+        'size=rrb',
+        'type=refl',
+        `product_id=${landsatProductId}`
+    ].join('&')
+    return `${base}?${args}`
+}
+
+const LANDSAT_PRODUCT_ID_MATCHER = /^(L[COTEM]0[1-9])_L(\d)\w+_(\d{6})_(\d{8})_\d{2}_(T1|T2|RT)$/
+
+export const toGEEImageId = productId => {
+    const match = productId?.match(LANDSAT_PRODUCT_ID_MATCHER)
+    if (match) {
+        const [, satellite, level, pathrow, date, tier] = match
+        const collection = 'C02'
+        const geeId = `LANDSAT/${satellite}/${collection}/${tier}_L${level}/${satellite}_${pathrow}_${date}`
+        return geeId
+    } else {
+        throw new Error('Invalid Landsat Product ID format')
+    }
+}

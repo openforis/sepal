@@ -2,7 +2,6 @@ import React from 'react'
 
 import api from '~/apiRegistry'
 import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {ScenePreview} from '~/app/home/body/process/recipe/opticalMosaic/scenePreview'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {isPartiallyEqual} from '~/hash'
@@ -42,10 +41,11 @@ class _SceneSelection extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
-        this.state = {
-            scenes: []
-        }
         this.recipeActions = RecipeActions(recipeId)
+    }
+
+    state = {
+        scenes: []
     }
 
     getAvailableScenes() {
@@ -63,36 +63,38 @@ class _SceneSelection extends React.Component {
             .filter(scene => scene)
     }
 
+    isSceneSelected(scene) {
+        const {inputs: {selectedScenes}} = this.props
+        return !!selectedScenes.value.find(selectedScene => selectedScene.id === scene.id)
+    }
+
     render() {
-        const {recipeId, dates: {targetDate}, form, activatable: {deactivate}, stream} = this.props
+        const {form, activatable: {deactivate}, stream} = this.props
         const loading = stream('LOAD_SCENES').active
         return (
-            <React.Fragment>
-                <ScenePreview recipeId={recipeId} targetDate={targetDate}/>
-                <Form.Panel
-                    policy={policy}
-                    className={styles.panel}
-                    form={form}
-                    type='center'
-                    onApply={({selectedScenes}) => this.onApply(selectedScenes)}
-                    onCancel={() => this.deselectSceneArea()}
-                    onClose={deactivate}>
-                    <Panel.Header
-                        icon='images'
-                        title={msg('process.mosaic.panel.autoSelectScenes.form.selectScenes')}/>
+            <Form.Panel
+                className={styles.panel}
+                placement='modal'
+                form={form}
+                policy={policy}
+                onApply={({selectedScenes}) => this.onApply(selectedScenes)}
+                onCancel={() => this.deselectSceneArea()}
+                onClose={deactivate}>
+                <Panel.Header
+                    icon='images'
+                    title={msg('process.mosaic.panel.autoSelectScenes.form.selectScenes')}/>
 
-                    <Panel.Content className={loading ? styles.loading : null}
-                        scrollable={false}
-                        noVerticalPadding
-                    >
-                        {loading
-                            ? this.renderProgress()
-                            : this.renderScenes()}
-                    </Panel.Content>
+                <Panel.Content className={loading ? styles.loading : null}
+                    scrollable={false}
+                    noVerticalPadding
+                >
+                    {loading
+                        ? this.renderProgress()
+                        : this.renderScenes()}
+                </Panel.Content>
 
-                    <Form.PanelButtons/>
-                </Form.Panel>
-            </React.Fragment>
+                <Form.PanelButtons/>
+            </Form.Panel>
         )
     }
 
@@ -152,7 +154,6 @@ class _SceneSelection extends React.Component {
                 selected={selected}
                 onAdd={() => this.addScene(scene)}
                 onRemove={() => this.removeScene(scene)}
-                onPreview={(() => this.previewScene(scene))}
             />
         )
     }
@@ -199,10 +200,6 @@ class _SceneSelection extends React.Component {
     removeScene(sceneToRemove) {
         const {inputs: {selectedScenes}} = this.props
         selectedScenes.set(selectedScenes.value.filter(scene => scene.id !== sceneToRemove.id))
-    }
-
-    previewScene(scene) {
-        this.recipeActions.setSceneToPreview(scene).dispatch()
     }
 
     setScenes(scenes) {

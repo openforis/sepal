@@ -4,26 +4,27 @@
     "description": "",
     "main": "main.js",
     "scripts": {
-        "test": "jest",
-        "testWatch": "jest --watchAll"
+        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
     },
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bull": "^4.16.5",
-        "commander": "^14.0.1",
+        "bullmq": "^5.78.1",
+        "commander": "^15.0.0",
         "compare-versions": "^6.1.1",
         "http-proxy": "^1.18.1",
-        "lodash": "^4.17.21",
+        "ioredis": "^5.11.1",
+        "lodash": "^4.18.1",
         "log4js": "^6.9.1",
-        "minimatch": "^10.0.3",
+        "minimatch": "^10.2.5",
         "sepal": "../../lib/js/shared"
     },
-    "devDependencies": {
-    },
+    "devDependencies": {},
     "imports": {
         "#sepal/*": "sepal/src/*.js",
         "#sepal/*.json": "sepal/src/*.json",
         "#config/*.json": "./config/*.json"
-    }
+    },
+    "type": "module"
 }

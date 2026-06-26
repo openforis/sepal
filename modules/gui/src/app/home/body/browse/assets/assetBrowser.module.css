@@ -57,6 +57,7 @@
 
 .fileList li > div.adding {
     animation: adding var(--animation-duration) ease-in-out forwards;
+    pointer-events: none;
 }
 
 @keyframes adding {
@@ -68,8 +69,8 @@
 .fileList li > div.removing,
 .fileList li > div.removing:hover,
 .fileList li > div.removing + ul li > div {
-    /* background-color: var(--remove-color); */
     animation: removing var(--animation-duration) ease-in-out forwards;
+    pointer-events: none;
 }
 
 @keyframes removing {
@@ -77,19 +78,6 @@
         background-color: var(--remove-color);
     }
 }
-
-/* .fileList li > div.removed,
-.fileList li > div.removed:hover,
-.fileList li > div.removed + ul li > div {
-    background-color: var(--remove-color);
-    animation: removed var(--animation-duration) ease-in-out forwards;
-}
-
-@keyframes removed {
-    100% {
-        opacity: 0;
-    }
-} */
 
 .fileName {
     display: inline-block;

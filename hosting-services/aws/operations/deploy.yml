@@ -52,7 +52,7 @@
 
     - name: Copy docker-registry certificate
       copy:
-        src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
+        src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
     - name: Install docker
@@ -68,10 +68,19 @@
         name: requests
         executable: pip3
 
-    - file: path="/usr/local/lib/docker/cli-plugins" state=directory
+    - file:
+        path: "/usr/local/lib/docker/cli-plugins"
+        state: directory
+
     - uri:
-        url: https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64
+        url: https://github.com/docker/compose/releases/download/{{ lookup('env', 'DOCKER_COMPOSE_VERSION') }}/docker-compose-linux-x86_64
         dest: /usr/local/lib/docker/cli-plugins/docker-compose
+        mode: +x
+        status_code: [200, 304]
+
+    - uri:
+        url: https://github.com/docker/buildx/releases/download/{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
+        dest: /usr/libexec/docker/cli-plugins/docker-buildx
         mode: +x
         status_code: [200, 304]
 
@@ -90,7 +99,11 @@
         enabled: yes
         masked: no
 
-    - docker_network: name=sepal
+    - docker_network:
+        name: sepal
+        ipam_config:
+          - subnet: 172.20.0.0/16
+            iprange: 172.20.0.0/24
     
     - name: Create /etc/sepal
       file:
@@ -102,8 +115,15 @@
         src: "{{ env_file }}"
         dest: "/etc/sepal/env"
 
+    - name: Copy scripts to /usr/local/bin
+      copy:
+        src: scripts/
+        dest: /usr/local/bin
+        owner: root
+        group: root
+        mode: +x
+
   roles:
     - { role: live-patching }
-    - { role: build-module, module: haproxy-acme }
     - { role: build-module, module: ops }
     - { role: run-module, module: ops }

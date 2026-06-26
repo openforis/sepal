@@ -3,6 +3,10 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+      args:
+        - USER_UID=${USER_UID}
+        - USER_GID=${USER_GID}
+        - DOCKER_GID=${DOCKER_GID}
       ulimits:
         nofile:
           soft: 65536
@@ -14,10 +18,18 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /:/host:ro
-      - ..:/usr/local/src/sepal
+      - ..:/home/sepal/sepal
       - ${SEPAL_CONFIG:-~/.sepal}:/etc/sepal/config
+      - ~/.gitconfig:/home/sepal/.gitconfig
+      - ~/.ssh:/home/sepal/.ssh:ro
+      - ~/.tmux.conf:/home/sepal/.tmux.conf
+      - ~/.claude:/home/sepal/.claude
+      - ~/.claude.json:/home/sepal/.claude.json
     networks:
       - sepal
+    environment:
+      - USER_UID=${USER_UID}
+      - USER_GID=${USER_GID}
 
 networks:
   sepal:

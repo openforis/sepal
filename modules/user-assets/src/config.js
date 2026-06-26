@@ -1,7 +1,10 @@
-const {program} = require('commander')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
 
-const DEFAULT_PORT = 80
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('config')
+
+const DEFAULT_HTTP_PORT = 80
 const DEFAULT_POLL_INTERVAL_MINUTES = 1
 
 const fatalError = error => {
@@ -9,28 +12,42 @@ const fatalError = error => {
     process.exit(1)
 }
 
-program.exitOverride()
+const program = new Command()
 
 try {
     program
-        .requiredOption('--redis-uri <value>', 'Redis URI')
-        .option('--port <number>', 'Port', DEFAULT_PORT)
-        .option('--poll-interval-minutes <number>', 'Poll interval (min)', DEFAULT_POLL_INTERVAL_MINUTES)
-        .parse(process.argv)
+        .exitOverride()
+        .addOption(
+            new Option('--redis-host <value>')
+                .env('REDIS_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--poll-interval-minutes <number>')
+                .env('POLL_INTERVAL_MINUTES')
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_POLL_INTERVAL_MINUTES)
+        )
+        .addOption(
+            new Option('--port <number>')
+                .env('HTTP_PORT')
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_HTTP_PORT)
+        )
+        .parse()
 } catch (error) {
     fatalError(error)
 }
 
 const {
-    redisUri,
+    redisHost,
     port,
     pollIntervalMinutes
 } = program.opts()
 
 log.info('Configuration loaded')
 
-module.exports = {
-    redisUri,
-    port,
-    pollIntervalMilliseconds: pollIntervalMinutes * 60000
-}
+const redisUri = `redis://${redisHost}`
+const pollIntervalMilliseconds = pollIntervalMinutes * 60000
+
+export {pollIntervalMilliseconds, port, redisUri}

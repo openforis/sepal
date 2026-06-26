@@ -1,18 +1,18 @@
-const {job} = require('#gee/jobs/job')
-const contextService = require('#gee/jobs/service/context').contextService
+import {tap} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import {contextService, getContext$} from '#gee/jobs/service/context'
+import {configure} from '#sepal/context'
+import {swallow} from '#sepal/rxjs'
 
 const worker$ = () => {
-    const {configure} = require('#sepal/context')
-    const {getContext$} = require('#gee/jobs/service/context')
-    const {tap} = require('rxjs')
-    const {swallow} = require('#sepal/rxjs')
     return getContext$().pipe(
         tap(context => configure(context)),
         swallow()
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Configure shared library',
     before: [],
     services: [contextService],

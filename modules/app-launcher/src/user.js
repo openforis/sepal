@@ -1,26 +1,32 @@
-const log = require('#sepal/log').getLogger('user')
-const _ = require('lodash')
-const {usernameTag} = require('./tag')
+import _ from 'lodash'
+
+import {getLogger} from '#sepal/log'
+
+import {usernameTag} from './tag.js'
+
+const log = getLogger('user')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 
 const serialize = value => {
     try {
-        return _.isNil(value)
+        return value === null || value === undefined
             ? null
             : JSON.stringify(value)
-    } catch (error) {
+    } catch (_error) {
         log.warn('Cannot serialize value:', value)
+        return null
     }
 }
 
 const deserialize = value => {
     try {
-        return _.isNil(value)
+        return value === null || value === undefined
             ? null
             : JSON.parse(value)
-    } catch (error) {
+    } catch (_error) {
         log.warn('Cannot deserialize value:', value)
+        return null
     }
 }
 
@@ -35,4 +41,4 @@ const setRequestUser = (req, user) => {
     req.headers[SEPAL_USER_HEADER] = serialize(userInfo)
 }
 
-module.exports = {SEPAL_USER_HEADER, getRequestUser, setRequestUser}
+export {getRequestUser, SEPAL_USER_HEADER, setRequestUser}

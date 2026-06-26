@@ -1,28 +1,33 @@
-const Redis = require('ioredis')
-const {redisUri} = require('./config')
+import Redis from 'ioredis'
 
-const log = require('#sepal/log').getLogger('redis')
+import {getLogger} from '#sepal/log'
+
+import {redisUri} from './config.js'
+
+const log = getLogger('redis')
 
 const redis = new Redis(redisUri)
 
 const serialize = value => {
     try {
-        return value !== undefined
-            ? JSON.stringify(value)
-            : null
-    } catch (error) {
+        return value === null || value === undefined
+            ? null
+            : JSON.stringify(value)
+    } catch (_error) {
         log.warn('Cannot serialize value:', value)
+        return null
     }
 }
 
 const deserialize = value => {
     try {
-        return value !== undefined
-            ? JSON.parse(value)
-            : null
-    } catch (error) {
+        return value === null || value === undefined
+            ? null
+            : JSON.parse(value)
+    } catch (_error) {
         log.warn('Cannot deserialize value:', value)
+        return null
     }
 }
 
-module.exports = {redis, serialize, deserialize}
+export {deserialize, redis, serialize}

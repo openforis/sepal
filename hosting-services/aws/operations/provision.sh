@@ -23,6 +23,8 @@ export DEPLOY_ENVIRONMENT="OPS"
 
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_CONFIG=../ansible.cfg
+export DOCKER_COMPOSE_VERSION=v5.1.3
+export DOCKER_BUILDX_VERSION=v0.33.0
 
 source ../export-aws-keys.sh $CONFIG_HOME/secret.yml
 
@@ -34,4 +36,4 @@ ansible-playbook provision.yml \
 ansible-playbook deploy.yml \
     -i "$(../inventory.sh Operations)" \
     --private-key=$PRIVATE_KEY \
-    --extra-vars "env_file=$CONFIG_HOME/env CONFIG_HOME=$CONFIG_HOME VERSION=$VERSION git_commit=nan"
+    --extra-vars "env_file=$CONFIG_HOME/env config_home=$CONFIG_HOME version=$VERSION git_commit=nan"

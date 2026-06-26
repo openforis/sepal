@@ -1,19 +1,21 @@
-const {job} = require('#gee/jobs/job')
-const {drive} = require('./drive')
+import moment from 'moment'
+import {interval, map, switchMap, takeLast, takeWhile} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {fileName} from '#sepal/path'
+
+import {drive} from './drive.js'
 
 const worker$ = (requestParams, {sepalUser}) => {
     // TODO: Only do this if there are free slots available to export
     // TODO: Make sure task is canceled when request is cancelled
     // TODO: Handle errrors
-    const ee = require('#sepal/ee/ee')
-    const {interval, map, switchMap, takeLast, takeWhile} = require('rxjs')
-    const moment = require('moment')
-
     const activeTasks = ee.data.listOperations(10)
         .filter(function (operation) {
             return !operation.done
         })
-    console.log(activeTasks.length)
+    console.info(activeTasks.length)
 
     const image = ee.Image('projects/sepal-dev-342113/assets/sudan-dynamic-world-2023')
     const reduced = image.reduceRegion({
@@ -60,7 +62,7 @@ const worker$ = (requestParams, {sepalUser}) => {
         const task = ee.batch.Export.table.toDrive(
             collection, description, folder, fileNamePrefix, fileFormat, selectors, maxVertices, priority
         )
-    
+
         task.start()
         const eeTaskId = task.id
         return interval(2 * 1000).pipe(
@@ -77,8 +79,8 @@ const worker$ = (requestParams, {sepalUser}) => {
     }
 }
 
-module.exports = job({
+export default job({
     jobName: 'Batch get EE Table rows',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

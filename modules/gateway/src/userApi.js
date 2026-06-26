@@ -1,11 +1,14 @@
-const {map, catchError, tap, switchMap, of} = require('rxjs')
-const modules = require('../config/modules')
-const {postJson$, get$} = require('#sepal/httpClient')
-const {SEPAL_USER_HEADER} = require('./user')
-const {userTag} = require('./tag')
-const {formatDistanceStrict} = require('date-fns/formatDistanceStrict')
+import {formatDistanceStrict} from 'date-fns/formatDistanceStrict'
+import {catchError, map, of, switchMap, tap} from 'rxjs'
 
-const log = require('#sepal/log').getLogger('userApi')
+import {get$, postJson$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+
+import modules from '../config/modules.json' with {type: 'json'}
+import {userTag} from './tag.js'
+import {SEPAL_USER_HEADER} from './user.js'
+
+const log = getLogger('userApi')
 
 const CURRENT_USER_URL = `http://${modules.user}/current`
 const REFRESH_GOOGLE_ACCESS_TOKEN_URL = `http://${modules.user}/google/refresh-access-token`
@@ -51,6 +54,9 @@ const updateGoogleAccessToken$ = user => {
     return refreshGoogleAccessToken$(user).pipe(
         switchMap(({googleTokens, statusCode}) => {
             if (statusCode !== 204) {
+                if (!googleTokens) {
+                    throw new Error(`${userTag(user.username)} Google access token refresh returned empty response`)
+                }
                 const expiration = formatDistanceStrict(googleTokens.accessTokenExpiryDate, Date.now(), {addSuffix: true})
                 log.info(`${userTag(user.username)} Google access token updated, expiring ${expiration}`)
                 return of({...user, googleTokens})
@@ -65,4 +71,4 @@ const updateGoogleAccessToken$ = user => {
     )
 }
 
-module.exports = {loadUser$, revokeGoogleAccess$, updateGoogleAccessToken$}
+export {loadUser$, revokeGoogleAccess$, updateGoogleAccessToken$}

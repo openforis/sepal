@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
 
-python3 -m pip install opensartoolkit
+uv pip install --system opensartoolkit

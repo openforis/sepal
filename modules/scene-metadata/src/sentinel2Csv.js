@@ -1,28 +1,29 @@
-const {scene, getIdFromGranuleId} = require('./sentinel2')
-const {processCSV, isInTimeRange} = require('./csv')
-const {formatInterval} = require('./time')
-const {download} = require('./filesystem')
-const log = require('#sepal/log').getLogger('sentinel2')
+import {getLogger} from '#sepal/log'
+
+import {processCSV} from './csv.js'
+import {download} from './filesystem.js'
+import {getAcquiredTimestampFromId, getIdFromGranuleId, scene} from './sentinel2.js'
+import {formatInterval} from './time.js'
+
+const log = getLogger('sentinel2')
 
 const CSV_URL = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz'
 
 const sceneMapper = ({
-    row: {
-        'GRANULE_ID': granuleId,
-        'PRODUCT_ID': productUri,
-        'CLOUD_COVER': cloudCover,
-        'SENSING_TIME': acquiredTimestamp
-    },
-    minTimestamp,
-    maxTimestamp
+    'GRANULE_ID': granuleId,
+    'PRODUCT_ID': productUri,
+    'CLOUD_COVER': cloudCover,
+    'SENSING_TIME': sensingTime
 }) => {
     const id = getIdFromGranuleId(productUri, granuleId)
-    return id && isInTimeRange(acquiredTimestamp, minTimestamp, maxTimestamp)
-        ? scene({id, productUri, acquiredTimestamp, cloudCover})
-        : null
+    if (id) {
+        const acquiredTimestamp = sensingTime || getAcquiredTimestampFromId(id)
+        return scene({id, productUri, acquiredTimestamp, cloudCover})
+    }
+    return null
 }
 
-const loadSentinel2 = async ({redis, database, maxTimestamp, timestamp, update}) => {
+const loadSentinel2 = async ({redis, database, maxTimestamp, timestamp}) => {
     log.debug('Loading Sentinel-2 data from CSV...')
     const t0 = Date.now()
     await processCSV({
@@ -31,8 +32,7 @@ const loadSentinel2 = async ({redis, database, maxTimestamp, timestamp, update})
         redis,
         database,
         maxTimestamp,
-        timestamp,
-        update
+        timestamp
     }).catch(err => log.error('Error:', err))
     log.info(`Loaded Sentinel-2 data from CSV (${formatInterval(t0)})`)
 }
@@ -43,4 +43,4 @@ const downloadSentinel2 = async () =>
         collection: 'sentinel-2',
     })
 
-module.exports = {downloadSentinel2, loadSentinel2}
+export {downloadSentinel2, loadSentinel2}

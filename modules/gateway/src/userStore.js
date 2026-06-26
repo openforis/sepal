@@ -1,11 +1,14 @@
-const _ = require('lodash')
-const log = require('#sepal/log').getLogger('userStore')
-const {usernameTag, userTag} = require('./tag')
-const {catchError, from, switchMap, EMPTY, throwError, map, tap, of, firstValueFrom} = require('rxjs')
-const {removeRequestUser} = require('./user')
-const {getSessionUsername, setRequestUser} = require('./user')
-const {loadUser$} = require('./userApi')
-const {USER_UPDATED, GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED, GOOGLE_ACCESS_TOKEN_UPDATED} = require('./websocket-events')
+import _ from 'lodash'
+import {catchError, defer, EMPTY, firstValueFrom, from, map, of, switchMap, tap, throwError} from 'rxjs'
+
+import {GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED, GOOGLE_ACCESS_TOKEN_UPDATED, USER_UPDATED} from '#sepal/event/definitions'
+import {getLogger} from '#sepal/log'
+
+import {usernameTag, userTag} from './tag.js'
+import {getSessionUsername, removeRequestUser, setRequestUser} from './user.js'
+import {loadUser$} from './userApi.js'
+
+const log = getLogger('userStore')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 const USER_PREFIX = 'user'
@@ -22,7 +25,7 @@ const UserStore = (redis, event$) => {
         from(redis.get(userKey(username))).pipe(
             switchMap(serializedUser =>
                 serializedUser
-                    ? of(JSON.parse(serializedUser)).pipe(
+                    ? defer(() => of(JSON.parse(serializedUser))).pipe(
                         tap(() => log.debug(`${userTag(username)} retrieved`)),
                         catchError(error =>
                             throwError(() => new Error(`${userTag(username)} could not be deserialized`, {cause: error}))
@@ -93,7 +96,7 @@ const UserStore = (redis, event$) => {
                 })
                 .catch(err => {
                     log.warn(`${usernameTag(username)} Cannot get user for injecting into request headers`, err)
-                    next()
+                    next(err)
                 })
         } else {
             next()
@@ -105,7 +108,7 @@ const UserStore = (redis, event$) => {
     }
 }
 
-module.exports = {
+export {
     SEPAL_USER_HEADER,
     UserStore
 }

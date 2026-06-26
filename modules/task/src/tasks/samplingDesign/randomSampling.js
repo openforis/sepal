@@ -1,9 +1,8 @@
-const ee = require('#sepal/ee/ee')
-const {toId, toColor} = require('./featureProperties')
+import ee from '#sepal/ee/ee'
 
-module.exports = {stratifiedRandomSample}
+import {toColor, toId} from './featureProperties.js'
 
-function stratifiedRandomSample(args) {
+export function stratifiedRandomSample(args) {
     var allocation = args.allocation
     var stratification = args.stratification.select([0], ['stratum'])
     var region = args.region
@@ -12,7 +11,7 @@ function stratifiedRandomSample(args) {
     var crs = args.crs || 'EPSG:3410'
     var crsTransform = args.crsTransform || undefined
     var seed = ee.Number(args.seed || 1)
-    
+
     var projection = crs
         ? ee.Projection(crs, crsTransform)
         : null
@@ -22,7 +21,6 @@ function stratifiedRandomSample(args) {
     return samples
 
     function noMinDistanceSample() {
-        console.log('random noMinDistanceSample')
         var classValues = allocation.map(function (allocation) {
             return allocation.stratum
         })
@@ -55,9 +53,8 @@ function stratifiedRandomSample(args) {
                     .set('color', toColor({sample, allocationCollection}))
             })
     }
-    
+
     function minDistanceSample() {
-        console.log('random minDistanceSample')
         return ee.FeatureCollection(
             allocation.map(sampleStratum)
         ).flatten()
@@ -102,11 +99,11 @@ function stratifiedRandomSample(args) {
                 .limit(stratum.sampleSize)
                 .select(['id', 'stratum', 'color'])
         }
-      
+
         function hexGrid(proj) {
             var diameter = 1 // Use nominal scale of projection
             var size = ee.Number(diameter).divide(Math.sqrt(3)) // Distance from center to vertex
-          
+
             var coords = ee.Image.pixelCoordinates(proj)
             var vals = {
             // Switch x and y here to get flat top instead of pointy top hexagons.
@@ -117,20 +114,20 @@ function stratifiedRandomSample(args) {
             }
             var i = ee.Image().expression('floor((floor(u - v) + floor(x / r))/3)', vals)
             var j = ee.Image().expression('floor((floor(u + v) + floor(v - u))/3)', vals)
-          
+
             var cells = i.long().leftShift(32).add(j.long()).rename('hexgrid')
-          
+
             var mask = i.mod(2).and(j.mod(2)) // Introduces gap - reduces count by 4x
             return cells.updateMask(mask)
         }
-        
+
         function createSamplesImage(cells, seed, mask) {
             var random = ee.Image.random(seed).multiply(1e6).int()
                 .multiply(mask) // Make sure we pick points in the mask
             var maximum = cells.addBands(random).reduceConnectedComponents(ee.Reducer.max())
             return random.eq(maximum).selfMask().rename('sample')
         }
-        
+
         // Translates a projection by a random amount between 0 and 1 in projection units.
         function randomOffset(projection, seed) {
             var values = ee.FeatureCollection([ee.Feature(null, null)])

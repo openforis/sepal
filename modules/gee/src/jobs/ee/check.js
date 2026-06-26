@@ -1,4 +1,10 @@
-const {job} = require('#gee/jobs/job')
+import {google} from 'googleapis'
+import {catchError, from, map, switchMap, throwError} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {ClientException, ERROR_CODES} from '#sepal/exception'
+import {fileName} from '#sepal/path'
 
 const REQUIRED_SCOPES = [
     'https://www.googleapis.com/auth/cloudplatformprojects.readonly',
@@ -9,12 +15,7 @@ const REQUIRED_SCOPES = [
 const worker$ = ({
     credentials: {sepalUser}
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const {catchError, from, map, switchMap, throwError} = require('rxjs')
-    const {ClientException} = require('#sepal/exception')
-    const {ERROR_CODES: {EE_NOT_AVAILABLE, MISSING_OAUTH_SCOPES, MISSING_GOOGLE_TOKENS}} = require('#sepal/exception')
-
-    const {google} = require('googleapis')
+    const {EE_NOT_AVAILABLE, MISSING_OAUTH_SCOPES, MISSING_GOOGLE_TOKENS} = ERROR_CODES
 
     const accessToken = sepalUser?.googleTokens?.accessToken
     
@@ -31,7 +32,7 @@ const worker$ = ({
     
         return from(oAuth2Client.getTokenInfo(accessToken)).pipe(
             switchMap(({scopes}) => {
-                const hasAllScopes = scopes.every(scope => REQUIRED_SCOPES.includes(scope))
+                const hasAllScopes = REQUIRED_SCOPES.every(requiredScope => scopes.includes(requiredScope))
                 return hasAllScopes
                     ? testEEInteraction()
                     : throwError(() => new ClientException('Doesn\'t have all scopes', {errorCode: MISSING_OAUTH_SCOPES}))
@@ -44,8 +45,8 @@ const worker$ = ({
 
 }
 
-module.exports = job({
+export default job({
     jobName: 'EE check',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

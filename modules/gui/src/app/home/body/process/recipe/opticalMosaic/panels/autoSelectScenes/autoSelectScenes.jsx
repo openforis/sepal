@@ -26,8 +26,8 @@ class _AutoSelectScenes extends React.Component {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                isActionForm
                 placement='top-right'
+                isActionForm
                 onApply={values => this.recipeActions.autoSelectScenes(values).dispatch()}>
                 <Panel.Header
                     icon='wand-sparkles'

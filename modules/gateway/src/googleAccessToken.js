@@ -1,10 +1,14 @@
-const {groupBy, mergeMap, tap, takeUntil, filter, timer, switchMap, defer, map, repeat, takeWhile, take, finalize, exhaustMap, share} = require('rxjs')
-const {userTag} = require('./tag')
-const {USER_UP, USER_DOWN, GOOGLE_ACCESS_TOKEN_UPDATED, GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED} = require('./websocket-events')
-const {updateGoogleAccessToken$} = require('./userApi')
-const log = require('#sepal/log').getLogger('googleAccessToken')
-const {formatDistanceStrict} = require('date-fns')
-const {autoRetry} = require('#sepal/rxjs')
+import {formatDistanceStrict} from 'date-fns'
+import {defer, exhaustMap, filter, finalize, groupBy, map, mergeMap, repeat, share, switchMap, take, takeUntil, takeWhile, tap, timer} from 'rxjs'
+
+import {GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED, GOOGLE_ACCESS_TOKEN_UPDATED, USER_DOWN, USER_UP} from '#sepal/event/definitions'
+import {getLogger} from '#sepal/log'
+import {autoRetry} from '#sepal/rxjs'
+
+import {userTag} from './tag.js'
+import {updateGoogleAccessToken$} from './userApi.js'
+
+const log = getLogger('googleAccessToken')
 
 const REFRESH_IF_EXPIRES_IN_MINUTES = 10
 const MIN_RETRY_DELAY_MS = 2 * 1000 // 2 seconds
@@ -88,4 +92,4 @@ const initializeGoogleAccessTokenRefresher = ({userStore, event$}) => {
     })
 }
 
-module.exports = {initializeGoogleAccessTokenRefresher, isRefreshRequired}
+export {initializeGoogleAccessTokenRefresher, isRefreshRequired}

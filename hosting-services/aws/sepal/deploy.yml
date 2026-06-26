@@ -6,9 +6,16 @@
 
   pre_tasks:
     - set_fact:
-        SEPAL_IP: "{{ ec2_private_ip_address }}"
-        SEPAL_SSH_IP: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
-        SYSLOG_ADDRESS: "udp://{{ ec2_private_ip_address }}"
+        sepal_ip: "{{ ec2_private_ip_address }}"
+        sepal_ssh_ip: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
+        syslog_address: "udp://{{ ec2_private_ip_address }}"
+
+    # syslog address
+    - name: Write syslog_address to /tmp/syslog-address
+      copy:
+        dest: /tmp/syslog-address
+        content: "{{ syslog_address }}"
+      delegate_to: localhost
 
     # bash prompt
     - name: Set bash prompt
@@ -35,11 +42,6 @@
       with_items:
         - "vm.max_map_count=1048576"
 
-    # monit
-    # - name: Install EPEL repository
-    #   yum:
-    #     name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
-
     - name: Install monit
       yum:
         name: 'monit'
@@ -53,7 +55,7 @@
 
     - name: Configure monit/1
       copy:
-        src: "monit/monit.d/"
+        src: "monit/sepal/monit.d/"
         dest: "/etc/monit.d/"
         owner: "root"
         group: "root"
@@ -69,7 +71,7 @@
 
     - name: Configure monit/3
       copy:
-        src: "monit/check/"
+        src: "monit/sepal/check/"
         dest: "/usr/local/bin/"
         owner: "root"
         group: "root"
@@ -104,33 +106,6 @@
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
 
-    # Transitional: remove previously installed configuration
-    - name: Remove /etc/rsyslog.d/docker.conf
-      file:
-        path: "/etc/rsyslog.d/docker.conf"
-        state: absent
-    
-    # Transitional: remove previously installed configuration
-    - name: Remove /etc/rsyslog.d/worker-instance.conf
-      file:
-        path: "/etc/rsyslog.d/worker-instance.conf"
-        state: absent
-    
-    - name: Start rsyslog
-      service: name=rsyslog state=restarted
-
-    # Transitional: remove previously installed configuration
-    - name: Remove /etc/logrotate.d/docker
-      file:
-        path: "/etc/logrotate.d/docker"
-        state: absent
-    
-    # Transitional: remove previously installed configuration
-    - name: Remove /etc/logrotate.d/worker-instance
-      file:
-        path: "/etc/logrotate.d/worker-instance"
-        state: absent
-    
     # Install multitail
     - name: Install multitail
       yum:
@@ -166,7 +141,7 @@
 
     - name: Copy docker-registry certificate
       copy:
-        src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
+        src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
     - name: Install docker
@@ -206,16 +181,60 @@
         name: requests
         executable: pip3
 
+    - name: pip install docker
+      pip:
+        name: docker
+        executable: pip3
+
+    - name: Init a new swarm with default parameters
+      docker_swarm:
+        advertise_addr: "{{ sepal_ip }}"
+      register: swarm_init
+
+    - debug:
+        msg: "swarm worker join token: {{ swarm_init.swarm_facts.JoinTokens.Worker }}"
+
+    - name: Wait for swarm leader
+      command: docker node ls
+      register: node
+      retries: 15
+      delay: 2
+      until: node.stdout is search("Leader")      
+
+    - name: Write token to /tmp/swarm-token
+      copy:
+        dest: /tmp/swarm-token
+        content: "{{ swarm_init.swarm_facts.JoinTokens.Worker }}"
+      delegate_to: localhost
+
     - docker_network:
         name: sepal
+        driver: overlay
+        attachable: yes
         ipam_config:
           - subnet: 172.20.0.0/16
             iprange: 172.20.0.0/24
 
-    - file: path="/usr/local/lib/docker/cli-plugins" state=directory
+    - name: Wait for overlay ready
+      command: docker network inspect sepal --format '{{ "{{" }} .Containers {{ "}}" }}'
+      register: network
+      retries: 15
+      delay: 2
+      until: network.stdout != "null"            
+
+    - file:
+        path: "/usr/local/lib/docker/cli-plugins"
+        state: directory
+
     - uri:
-        url: https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64
+        url: https://github.com/docker/compose/releases/download/{{ lookup('env', 'DOCKER_COMPOSE_VERSION') }}/docker-compose-linux-x86_64
         dest: /usr/local/lib/docker/cli-plugins/docker-compose
+        mode: +x
+        status_code: [200, 304]
+
+    - uri:
+        url: https://github.com/docker/buildx/releases/download/{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
+        dest: /usr/libexec/docker/cli-plugins/docker-buildx
         mode: +x
         status_code: [200, 304]
 
@@ -229,10 +248,10 @@
       copy:
         dest: "/etc/sepal/env.d/env-current"
         content: |
-          SEPAL_VERSION={{ VERSION }}
-          SEPAL_IP={{ SEPAL_IP }}
-          SEPAL_SSH_IP={{ SEPAL_SSH_IP }}
-          SYSLOG_ADDRESS={{ SYSLOG_ADDRESS }}
+          SEPAL_VERSION={{ version }}
+          SEPAL_IP={{ sepal_ip }}
+          SEPAL_SSH_IP={{ sepal_ssh_ip }}
+          SYSLOG_ADDRESS={{ syslog_address }}
 
     - name: Assemble a single env file
       ansible.builtin.assemble:
@@ -276,7 +295,6 @@
     - { role: run-module, module: ssh-gateway }
     - { role: run-module, module: terminal }
     - { role: run-module, module: gateway }
-    - { role: run-module, module: letsencrypt }
-    - { role: run-module, module: haproxy }
+    - { role: run-module, module: caddy }
     - { role: run-module, module: sys-monitor }
     - { role: run-module, module: scene-metadata }

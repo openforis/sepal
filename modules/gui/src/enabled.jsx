@@ -60,7 +60,7 @@ Enabled.propTypes = {
     enabledClassName: PropTypes.string
 }
 
-const withEnabled = () =>
+export const withEnabled = () =>
     WrappedComponent =>
         class WithEnabledHoC extends React.Component {
             constructor(props) {

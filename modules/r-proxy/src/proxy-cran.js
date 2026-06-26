@@ -1,20 +1,27 @@
-const log = require('#sepal/log').getLogger('proxy/cran')
-const httpProxy = require('http-proxy')
-const fs = require('fs')
-const {mkdir} = require('fs/promises')
-const Path = require('path')
-const {getCranRepoPath, getCranTarget, toBinaryPackagePath, getCranPackageInfo} = require('./cran')
-const {enqueueBuildCranPackage} = require('./queue')
-const {serveFile, checkTarget, serveError} = require('./proxy-utils')
+import fs from 'fs'
+import {mkdir} from 'fs/promises'
+import httpProxy from 'http-proxy'
+import Path from 'path'
+
+import {getLogger} from '#sepal/log'
+
+import {getCranPackageInfo, getCranRepoPath, getCranTarget, toBinaryPackagePath} from './cran.js'
+import {checkTarget, serveError, serveFile} from './proxy-utils.js'
+import {enqueueBuildCranPackage} from './queue.js'
+
+const log = getLogger('proxy/cran')
+
+const isPackage = name =>
+    name !== 'PACKAGES'
 
 const buildBinaryPackage = req => {
     const requestData = getCranPackageInfo(req.url)
     if (requestData) {
         const {name, path, version} = requestData
-        if (name !== 'PACKAGES') {
+        if (isPackage(name)) {
             enqueueBuildCranPackage(name, path, version)
         } else {
-            log.debug(`Skipping ${name}`)
+            log.debug(`Skipping non-package ${name}`)
         }
     }
 }
@@ -35,7 +42,7 @@ proxy.on('proxyRes', (proxyRes, req, res, _options) => {
     if (proxyRes.statusCode === 200) {
         mkdir(repoDir, {recursive: true})
             .then(() => {
-                if (name !== 'PACKAGES') {
+                if (isPackage(name)) {
                     const stream = fs.createWriteStream(tmpPath)
                     stream.on('finish', () => {
                         log.debug('Moving to', repoPath)
@@ -50,7 +57,11 @@ proxy.on('proxyRes', (proxyRes, req, res, _options) => {
             })
             .catch(error => log.error('Cannot create dir:', error))
     } else {
-        log.debug(`Failed proxy request (${proxyRes.statusCode}):`, req.url)
+        log.warn(`Failed proxy request (${proxyRes.statusCode}):`, req.url)
+        res.writeHead(500, {
+            'Content-Type': 'text/plain'
+        })
+        res.end('Something went wrong.')
     }
 })
 
@@ -67,9 +78,11 @@ const serveCachedBinary = async (req, res) =>
 
 const serveCachedSource = async (req, res) =>
     await serveFile({res, path: getCranRepoPath(req.url), type: 'CRAN/source'})
-    
-const serveCached = async (req, res) =>
-    await serveCachedBinary(req, res) || await serveCachedSource(req, res)
+
+const serveCached = async (req, res) => {
+    const {name} = getCranPackageInfo(req.url)
+    return isPackage(name) && (await serveCachedBinary(req, res) || await serveCachedSource(req, res))
+}
 
 const serveProxiedFile = async (req, res, target) => {
     if (await checkTarget(target, {allowRedirect: false})) {
@@ -86,9 +99,10 @@ const serveProxied = async (req, res) => {
     const {base, name} = getCranPackageInfo(req.url)
     return await serveProxiedFile(req, res, getCranTarget(base, name, {archive: false}))
         || await serveProxiedFile(req, res, getCranTarget(base, name, {archive: true}))
+        || await serveProxiedFile(req, res, getCranTarget(base, name, {transit: true}))
 }
 
 const serveCran = async (req, res) =>
     await serveCached(req, res) || await serveProxied(req, res) || await serveError(req, res)
 
-module.exports = {serveCran}
+export {serveCran}

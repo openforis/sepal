@@ -1,6 +1,7 @@
-import {compose} from './compose.js'
-import {isModule, isRunnable, isRunning, showModuleStatus, MESSAGE} from './utils.js'
 import _ from 'lodash'
+
+import {compose} from './compose.js'
+import {isModule, isRunnable, isRunning, MESSAGE, showModuleStatus} from './utils.js'
 
 const SHELL = 'sh'
 

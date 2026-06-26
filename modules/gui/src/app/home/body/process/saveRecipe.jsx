@@ -73,9 +73,9 @@ class _SaveRecipe extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                placement='modal'
                 form={form}
-                isActionForm={true}
-                modal>
+                isActionForm={true}>
                 <Panel.Header
                     icon='save'
                     title={msg('process.saveRecipe.title')}/>

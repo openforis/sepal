@@ -1,5 +1,6 @@
-import {deps} from './config.js'
 import _ from 'lodash'
+
+import {deps} from './config.js'
 
 export const getLibDeps = module =>
     (deps[module] || {}).lib || []
@@ -62,3 +63,6 @@ export const getRunDependencyMap = modules =>
 
 export const isWatchable = module =>
     deps[module]?.watch
+
+export const allowsProductionMode = module =>
+    deps[module]?.allowProductionMode === true

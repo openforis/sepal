@@ -1,67 +1,66 @@
-const {job} = require('#gee/jobs/job')
+import _ from 'lodash'
+import {map, mergeMap, of, switchMap, toArray} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import {toGeometry} from '#sepal/ee/aoi'
+import ee from '#sepal/ee/ee'
+import {getCollection$} from '#sepal/ee/timeSeries/collection'
+import {fileName} from '#sepal/path'
 
 const CHUNK_SIZE = 100
 
 const worker$ = ({
     requestArgs: {recipe, bands, latLng}
 }) => {
-    const {getCollection$} = require('#sepal/ee/timeSeries/collection')
-    const {toGeometry$} = require('#sepal/ee/aoi')
-    const {map, mergeMap, of, switchMap, toArray} = require('rxjs')
-    const ee = require('#sepal/ee/ee')
-    const _ = require('lodash')
 
     const aoi = {type: 'POINT', ...latLng}
-    
+    const geometry = toGeometry(aoi)
+
     const band = bands[0]
 
-    return toGeometry$(aoi).pipe(
-        switchMap(geometry => {
-            const timeSeriesForPixel$ = collection =>
-                ee.getInfo$(collection
-                    .select(band)
-                    .map(image =>
-                        image.addBands(
-                            ee.Image(image.date().millis()).int64()
-                        )
-                    )
-                    .toArray()
-                    .reduceRegion({
-                        reducer: ee.Reducer.first(),
-                        geometry,
-                        scale: 10,
-                        tileScale: 16
-                    })
-                    .get('array'), 'Extract chunk'
+    const timeSeriesForPixel$ = collection =>
+        ee.getInfo$(collection
+            .select(band)
+            .map(image =>
+                image.addBands(
+                    ee.Image(image.date().millis()).int64()
                 )
-            
-            return getCollection$({recipe, bands, geometry}).pipe(
-                switchMap(collection => ee.getInfo$(collection.aggregate_array('system:index')).pipe(
-                    switchMap(indexes => of(..._.chunk(indexes, CHUNK_SIZE))),
-                    mergeMap(indexChunk =>
-                        timeSeriesForPixel$(
-                            collection.filter(ee.Filter.inList('system:index', indexChunk))
-                        )
-                    , 4),
-                    toArray(),
-                    map(observations => {
-                        return ({
-                            features: observations.filter(chunk => chunk).flat(1).map(([value, date]) => ({
-                                properties: {
-                                    date: {value: date},
-                                    value
-                                }
-                            }))
-                        })
-                    })
-                ))
             )
-        })
+            .toArray()
+            .reduceRegion({
+                reducer: ee.Reducer.first(),
+                geometry,
+                scale: 10,
+                tileScale: 16
+            })
+            .get('array'), 'Extract chunk'
+        )
+    
+    return getCollection$({recipe, bands, geometry}).pipe(
+        switchMap(collection => ee.getInfo$(collection.aggregate_array('system:index')).pipe(
+            switchMap(indexes => of(..._.chunk(indexes, CHUNK_SIZE))),
+            mergeMap(indexChunk =>
+                timeSeriesForPixel$(
+                    collection.filter(ee.Filter.inList('system:index', indexChunk))
+                )
+            , 4),
+            toArray(),
+            map(observations => {
+                return ({
+                    features: observations.filter(chunk => chunk).flat(1).map(([value, date]) => ({
+                        properties: {
+                            date: {value: date},
+                            value
+                        }
+                    }))
+                })
+            })
+        ))
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Load observations',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

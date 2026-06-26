@@ -1,25 +1,20 @@
-const {job} = require('#gee/jobs/job')
+import {switchMap} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import ImageFactory from '#sepal/ee/imageFactory'
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {asset, recipe}
 }) => {
-    const ImageFactory = require('#sepal/ee/imageFactory')
-    const ee = require('#sepal/ee/ee')
-    const {switchMap} = require('rxjs')
 
-    if (asset) {
-        return assetBands$()
-    } else {
-        return recipeBands$()
-    }
-
-    function assetBands$() {
-        return ImageFactory({type: 'ASSET', id: asset}).getImage$().pipe(
+    const assetBands$ = () =>
+        ImageFactory({type: 'ASSET', id: asset}).getImage$().pipe(
             switchMap(image => ee.getInfo$(image.bandNames(), 'asset band names'))
         )
-    }
 
-    function recipeBands$() {
+    const recipeBands$ = () => {
         const {getBands$, getImage$} = ImageFactory(recipe)
         return getBands$
             ? getBands$()
@@ -27,10 +22,14 @@ const worker$ = ({
                 switchMap(image => ee.getInfo$(image.bandNames(), 'image band names'))
             )
     }
+
+    return asset
+        ? assetBands$()
+        : recipeBands$()
 }
 
-module.exports = job({
+export default job({
     jobName: 'EE image bands',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

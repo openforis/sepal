@@ -77,7 +77,7 @@ class _Activator extends React.Component {
         const updateActivatables = updates => {
             const updatedActivatables = _.transform(updates, (activatables, {id, active}) => {
                 const activatable = activatables[id]
-                if (!activatable || activatable.active !== active) {
+                if (activatable && activatable.active !== active) {
                     const updatedActive = active && activationAllowed(id, activatables)
                     activatable.active = updatedActive
                     activatable.justActivated = updatedActive

@@ -15,8 +15,9 @@ services:
     init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      SEPAL_ENDPOINT: "${SEPAL_ENDPOINT}"
+      SEPAL_ADMIN_USERNAME: "sepalAdmin"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      SEPAL_ENDPOINT: "${SEPAL_ENDPOINT}"
       GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
       EE_ACCOUNT: "${EE_ACCOUNT}"
       EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
@@ -25,9 +26,11 @@ services:
       - sepal
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "80"]
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
     restart: always
     ulimits:
       core: 0

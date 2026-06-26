@@ -1,12 +1,15 @@
-const _ = require('lodash')
-const {userTag} = require('./tag')
-const log = require('#sepal/log').getLogger('assetScanner')
+import _ from 'lodash'
+import {catchError, finalize, from, map, mergeWith, of, reduce, Subject, switchMap, tap, throwError} from 'rxjs'
 
-const {tap, map, mergeWith, of, switchMap, catchError, from, Subject, finalize, reduce, throwError} = require('rxjs')
-const {getUser} = require('./userStore')
-const {STree} = require('#sepal/tree/sTree')
-const {getAsset$} = require('./asset')
-const {Limiter} = require('./limiter')
+import {getLogger} from '#sepal/log'
+import {STree} from '#sepal/tree/sTree'
+
+import {getAsset$} from './asset.js'
+import {Limiter} from './limiter.js'
+import {userTag} from './tag.js'
+import {getUser} from './userStore.js'
+
+const log = getLogger('assetScanner')
 
 const GLOBAL_CONCURRENCY = 10
 const USER_CONCURRENCY = 2
@@ -120,7 +123,7 @@ const loadNodeValidUser$ = (user, path, id) => {
 
 const loadNodeMissingUser$ = (username, path) =>
     of([]).pipe(
-        log.warn(`${userTag(username)} skipped: ${STree.toStringPath(path) || 'roots'} - user unavailable`)
+        tap(() => log.warn(`${userTag(username)} skipped: ${STree.toStringPath(path) || 'roots'} - user unavailable`))
     )
 
 const loadNode$ = (username, path = [], node = {}) =>
@@ -163,4 +166,4 @@ const scanNode$ = (username, path) => {
     )
 }
 
-module.exports = {scanTree$, scanNode$, busy$, isBusy}
+export {busy$, isBusy, scanNode$, scanTree$}

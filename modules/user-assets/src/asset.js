@@ -1,9 +1,12 @@
-const _ = require('lodash')
-const log = require('#sepal/log').getLogger('asset')
-const {get$, delete$, postJson$} = require('#sepal/httpClient')
+import _ from 'lodash'
+import {map} from 'rxjs'
 
-const {map} = require('rxjs')
-const {userTag} = require('./tag')
+import {delete$, get$, postJson$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+
+import {userTag} from './tag.js'
+
+const log = getLogger('asset')
 
 const GEE_ENDPOINT = 'http://gee'
 const LIST_ASSETS_URL = `${GEE_ENDPOINT}/asset/descendants`
@@ -54,12 +57,13 @@ const getSepalUserHeader = user =>
             
 const serialize = value => {
     try {
-        return _.isNil(value)
+        return value === null || value === undefined
             ? null
             : JSON.stringify(value)
-    } catch (error) {
+    } catch (_error) {
         log.warn('Cannot serialize value:', value)
+        return null
     }
 }
     
-module.exports = {getAsset$, deleteAsset$, createFolder$}
+export {createFolder$, deleteAsset$, getAsset$}

@@ -1,8 +1,11 @@
-const Path = require('path')
-const {createReadStream, realpathSync, createWriteStream} = require('fs')
-const {stat, readdir, realpath, mkdir, unlink, lstat, chown, chmod} = require('fs/promises')
-const {spawn} = require('child_process')
-const log = require('#sepal/log').getLogger('filesystem')
+import {spawn} from 'child_process'
+import {createReadStream, createWriteStream, realpathSync} from 'fs'
+import {chmod, chown, lstat, mkdir, readdir, realpath, stat, unlink} from 'fs/promises'
+import Path from 'path'
+
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('filesystem')
 
 const resolvePath = (baseDir, path) => {
     const realBaseDir = realpathSync(baseDir)
@@ -42,7 +45,7 @@ const getUserInfo = async username => {
         const [uid, gid] = stdout.trim().split(' ').map(Number)
         return {uid, gid}
     } catch (error) {
-        throw new Error(`User directory not found: ${username}`)
+        throw new Error(`User directory not found: ${username}`, {cause: error})
     }
 }
 
@@ -108,10 +111,10 @@ async function resolvePathForWrite(baseDir, relPath, username, op, recursive = f
             if (!firstMissing) firstMissing = current
             if (!isLast) {
                 if (operation === 'writeFile') {
-                    throw new Error(`Parent directory does not exist: ${current}`)
+                    throw new Error(`Parent directory does not exist: ${current}`, {cause: err})
                 }
                 if (!recursive) {
-                    throw new Error(`Parent directory does not exist (enable recursive): ${current}`)
+                    throw new Error(`Parent directory does not exist (enable recursive): ${current}`, {cause: err})
                 }
             } else {
                 return {targetAbs: current, userInfo, existed: false, firstMissing}
@@ -185,19 +188,20 @@ const download = async (homeDir, ctx) => {
             const filename = Path.parse(absolutePath).base
             const stats = await stat(absolutePath)
             if (stats.isFile()) {
-                log.debug(() => `Downloading: ${absolutePath}`)
+                log.debug(`Downloading: ${absolutePath}`)
                 ctx.body = createReadStream(absolutePath)
                 ctx.attachment(filename)
             } else {
-                log.warn(() => `Cannot download - non-file: ${absolutePath}`)
+                log.warn(`Cannot download - non-file: ${absolutePath}`)
                 ctx.response.status = 400
                 ctx.body = {error: 'Cannot download - non-file, only files are supported'}
             }
         } catch (error) {
+            log.warn('Cannot download', error)
             ctx.response.status = 404
         }
     } else {
-        log.warn(() => 'Cannot download - unauthenticated user')
+        log.warn('Cannot download - unauthenticated user')
         ctx.response.status = 401
     }
 }
@@ -409,7 +413,11 @@ const listFiles = async (homeDir, ctx) => {
             ? a.name.localeCompare(b.name)
             : (a.type === 'directory' ? -1 : 1))
 
-        ctx.body = {path: Path.relative(userHomeDir, absolutePath), files}
+        ctx.body = {
+            path: Path.relative(userHomeDir, absolutePath),
+            files,
+            count: files.length
+        }
     } catch (error) {
         log.error(() => `Error listing directory: ${error.message}`)
         ctx.response.status = 500
@@ -417,5 +425,5 @@ const listFiles = async (homeDir, ctx) => {
     }
 }
 
-module.exports = {resolvePath, download, listFiles, setFile, createFolder}
+export {createFolder, download, listFiles, resolvePath, setFile}
 

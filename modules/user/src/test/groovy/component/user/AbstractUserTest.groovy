@@ -34,7 +34,6 @@ class AbstractUserTest extends Specification {
     final messageBroker = new FakeMessageBroker()
     final eventDispatcher = new SynchronousEventDispatcher()
     final googleOAuthClient = new FakeGoogleOAuthClient()
-    final googleEarthEngineWhitelistChecker = new FakeGoogleEarthEngineWhitelistChecker()
     final changeListener = new FakeUserChangeListener()
     final clock = new FakeClock()
     final homeDirectory = File.createTempDir()
@@ -47,7 +46,6 @@ class AbstractUserTest extends Specification {
             messageBroker,
             eventDispatcher,
             googleOAuthClient,
-            googleEarthEngineWhitelistChecker,
             new FakeGoogleAccessTokenFileGateway(homeDirectory.absolutePath),
             changeListener,
             clock,

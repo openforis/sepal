@@ -1,16 +1,23 @@
-const _ = require('lodash')
-const {first} = require('rxjs')
-const service = require('#sepal/service')
+import _ from 'lodash'
+import {createRequire} from 'module'
+import {first, of} from 'rxjs'
+
+import * as service from '#sepal/service'
+
+const require = createRequire(import.meta.url)
 
 const contextService = {
     serviceName: 'ContextService',
     serviceHandler$: () => {
-        const {of} = require('rxjs')
-        return of(require('#gee/config'))
+        // Spread into a plain object: require(esm) returns a Module namespace,
+        // which is not structured-cloneable across the worker-thread transport.
+        return of({...require('#gee/config')})
     }
 }
 
-module.exports = {
+const getContext$ = () => service.submit$(contextService).pipe(first())
+
+export {
     contextService,
-    getContext$: () => service.submit$(contextService).pipe(first())
+    getContext$
 }

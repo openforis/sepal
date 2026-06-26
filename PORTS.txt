@@ -2,13 +2,13 @@ Modules
 
     app-launcher    8680:80
     app-manager     80
+    caddy           80, 443
     ceo-gateway     80
     email           80
     gateway         80
     gee             80
-    haproxy         80, 443
+    gui             8080
     ldap            389, 636
-    letsencrypt     80
     mysql           3306
     mysql-admin     8980
     prometheus      9090

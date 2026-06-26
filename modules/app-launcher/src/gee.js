@@ -1,7 +1,11 @@
-const log = require('#sepal/log').getLogger('main')
-const path = require('path')
-const executeCommand = require('./terminal')
-const {geeEmail, geeKey, googleProjectId, geeClientId} = require('./config')
+import fs from 'fs/promises'
+import path from 'path'
+
+import {getLogger} from '#sepal/log'
+
+import {geeEmail, geeKey, googleProjectId} from './config.js'
+
+const log = getLogger('main')
 
 const credentialsPath = path.join('/var/lib/sepal/app-launcher/service-account-credentials.json')
 
@@ -15,23 +19,16 @@ function createCredentialsFile() {
         client_email: geeEmail,
         private_key: get_ee_key(),
         private_key_id: '',
-        client_id: geeClientId,
         auth_uri: 'https://accounts.google.com/o/oauth2/auth',
         token_uri: 'https://oauth2.googleapis.com/token'
     }
 
     const credentialsJson = JSON.stringify(credentials, null, 2)
 
-    // Write credentials to file
     const writeCredentials = async (credentialsJson, credentialsPath) => {
-        // Escape single quotes in JSON to prevent shell syntax errors
-        const escapedJson = credentialsJson.replace(/'/g, '\'\\\'\'')
-        const command = `echo '${escapedJson}' > '${credentialsPath}'`
-        
         try {
-            await executeCommand(command, {cwd: '/'})
+            await fs.writeFile(credentialsPath, credentialsJson, 'utf8')
             log.info('Credentials written successfully')
-            log.info('Write operation completed.')
         } catch (err) {
             log.error('Error writing credentials:', err)
         }
@@ -41,6 +38,6 @@ function createCredentialsFile() {
     
 }
 
-module.exports = {
+export {
     createCredentialsFile
 }

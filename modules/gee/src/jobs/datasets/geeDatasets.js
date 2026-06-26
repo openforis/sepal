@@ -1,8 +1,11 @@
-const { get$ } = require('#sepal/httpClient')
-const { of, map, switchMap, mergeMap, toArray, timer, tap } = require('rxjs')
-const _ = require('lodash')
-const { escapeRegExp, simplifyString, splitString } = require('#sepal/string')
-const log = require('#sepal/log').getLogger('ee')
+import _ from 'lodash'
+import {catchError, EMPTY, map, mergeMap, of, switchMap, tap, timer, toArray} from 'rxjs'
+
+import {get$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+import {escapeRegExp, simplifyString, splitString} from '#sepal/string'
+
+const log = getLogger('ee')
 
 const URL = 'https://earthengine-stac.storage.googleapis.com/catalog/catalog.json'
 const REFRESH_INTERVAL_HOURS = 24
@@ -12,8 +15,12 @@ let datasets = []
 
 const getNode$ = (url = URL) =>
     get$(url).pipe(
-        map(({ body }) => JSON.parse(body)),
-        switchMap(({ type, title, id, 'gee:type': geeType, links, providers }) =>
+        catchError(error => {
+            log.error('Error while downloading GEE catalog - ', error)
+            return EMPTY
+        }),
+        map(({body}) => JSON.parse(body)),
+        switchMap(({type, title, id, 'gee:type': geeType, links, providers}) =>
             type === 'Catalog'
                 ? getChildNodes$(links).pipe(
                     mergeMap(url => getNode$(url), CONCURRENCY)
@@ -33,20 +40,20 @@ const getChildNodes$ = links =>
 
 const getChildNodes = links =>
     links
-        .filter(({ rel }) => rel === 'child')
-        .map(({ href }) => href)
+        .filter(({rel}) => rel === 'child')
+        .map(({href}) => href)
 
 const TYPE_MAP = {
     'image': 'Image',
     'image_collection': 'ImageCollection',
     'table': 'Table'
 }
-
+    
 const mapType = type =>
     TYPE_MAP[type]
 
 const getUrl = providers =>
-    providers.find(({ roles }) => roles.includes('host'))?.url
+    providers.find(({roles}) => roles.includes('host'))?.url
 
 const sortByDeprecationAndTitle = (a, b) => {
     const aTitle = a.title
@@ -65,14 +72,14 @@ const sortByDeprecationAndTitle = (a, b) => {
 }
 const getDatasets = (text, allowedTypes) =>
     datasets
-        .filter(({ type }) => isMatchingAllowedTypes(type, allowedTypes))
+        .filter(({type}) => isMatchingAllowedTypes(type, allowedTypes))
         .filter(dataset => isMatchingText(dataset, getSearchElements(text)))
-        .map(({ title, id, type, url }) => ({ title, id, type, url }))
+        .map(({title, id, type, url}) => ({title, id, type, url}))
         .toSorted(sortByDeprecationAndTitle)
 
 const getSearchElements = text =>
     splitString(escapeRegExp(text))
-
+    
 const isMatchingAllowedTypes = (type, allowedTypes) =>
     !allowedTypes || allowedTypes.includes(type)
 
@@ -89,7 +96,7 @@ const propertyMatchers = {
     searchTitle: search => simplifyString(search),
     id: search => search
 }
-
+    
 const propertyMatcher = (property, search) =>
     RegExp(propertyMatchers[property](search), 'i')
 
@@ -97,14 +104,20 @@ timer(0, REFRESH_INTERVAL_HOURS * 3600000).pipe(
     tap(() => log.info('Loading GEE catalog')),
     switchMap(() =>
         getNode$().pipe(
-            toArray()
+            toArray(),
+            catchError(error => {
+                log.error('Error while loading GEE catalog - ', error)
+                return EMPTY
+            })
         )
     )
 ).subscribe({
     next: content => {
         datasets = content
         log.info(`GEE catalog loaded, ${datasets.length} datasets`)
-    }
+    },
+    error: error => log.fatal('Unexpected GEE catalog stream error:', error),
+    complete: () => log.fatal('Unexpected GEE catalog stream completed')
 })
 
-module.exports = { getDatasets }
+export {getDatasets}

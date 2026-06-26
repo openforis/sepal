@@ -1,31 +1,40 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import _ from 'lodash'
 
-const log = require('#sepal/log').getLogger('main')
+import logConfig from '#config/log.json' with {type: 'json'}
+import * as server from '#sepal/httpServer'
+import {configureServer, getLogger} from '#sepal/log'
+import {initMessageQueue} from '#sepal/messageQueue'
 
-const _ = require('lodash')
+import {amqpUri, port} from './config.js'
+import {initializeDatabase} from './database.js'
+import {email$} from './email.js'
+import {startInactivityCheck} from './inactivityCheck.js'
+import {messageHandler} from './messageHandler.js'
+import {routes} from './routes.js'
+import {scanComplete$, startStorageCheck} from './storageCheck.js'
 
-const {initMessageQueue} = require('#sepal/messageQueue')
-const {amqpUri, port} = require('./config')
-const {scheduleFullScan} = require('./scan')
-const {scanComplete$, logStats} = require('./jobQueue')
-const {messageHandler} = require('./messageHandler')
-const server = require('#sepal/httpServer')
+configureServer(logConfig)
+
+const log = getLogger('main')
 
 const main = async () => {
     await initMessageQueue(amqpUri, {
         publishers: [
-            {key: 'userStorage.size', publish$: scanComplete$}
+            {key: 'userStorage.size', publish$: scanComplete$},
+            {key: 'email.sendToUser', publish$: email$}
         ],
         subscribers: [
-            {queue: 'userStorage.workerSession', topic: 'workerSession.#', handler: messageHandler},
-            {queue: 'userStorage.files', topic: 'files.#', handler: messageHandler}
-        ]
+            {queue: 'userStorage.systemEvent', topic: 'systemEvent'},
+            {queue: 'userStorage.workerSession', topic: 'workerSession.#'},
+            {queue: 'userStorage.files', topic: 'files.#'},
+        ],
+        handler: messageHandler
     })
 
-    await server.start({port})
-
-    await scheduleFullScan()
-    await logStats()
+    await initializeDatabase()
+    await server.start({port, routes})
+    await startStorageCheck()
+    await startInactivityCheck()
 
     log.info('Initialized')
 }

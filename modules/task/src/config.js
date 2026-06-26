@@ -1,7 +1,10 @@
-const {program} = require('commander')
-const fs = require('fs')
-const log = require('#sepal/log').getLogger('config')
-const _ = require('lodash')
+import {program} from 'commander'
+import fs from 'fs'
+import _ from 'lodash'
+
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('config')
 
 const DEFAULT_PORT = 80
 
@@ -39,7 +42,7 @@ const readFile = path => {
     try {
         return fs.readFileSync(path, {encoding: 'utf8'})
     } catch (error) {
-        log.warn(`Cannot read GEE key: ${path}`)
+        log.warn(`Cannot read GEE key: ${path}`, error)
         return null
     }
 }
@@ -53,15 +56,14 @@ const serviceAccountCredentials = {
 
 log.info('Configuration loaded')
 
-module.exports = {
+export {
     googleProjectId,
     googleRegion,
-    serviceAccountCredentials,
-    sepalHost,
-    sepalEndpoint,
-    sepalUsername,
-    sepalPassword,
     homeDir,
-    username,
-    port
-}
+    port,
+    sepalEndpoint,
+    sepalHost,
+    sepalPassword,
+    sepalUsername,
+    serviceAccountCredentials,
+    username}

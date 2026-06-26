@@ -21,12 +21,11 @@ const clientTag = (username, clientId) =>
 const subscriptionTag = (username = '?', clientId, subscriptionId) =>
     `Subscription<${username}:${clientId.slice(-4)}:${subscriptionId?.slice(-4)}>`
 
-module.exports = {
-    usernameTag,
-    urlTag,
+export {
+    clientTag,
     eventTag,
     moduleTag,
-    userTag,
-    clientTag,
-    subscriptionTag
-}
+    subscriptionTag,
+    urlTag,
+    usernameTag,
+    userTag}

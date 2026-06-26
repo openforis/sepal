@@ -29,6 +29,7 @@ class _LegendLayer extends React.Component {
 
     constructor(props) {
         super(props)
+        this.onResize = this.onResize.bind(this)
         this.ref = React.createRef()
         const {cursorValue$, addSubscription} = props
         addSubscription(
@@ -73,7 +74,7 @@ class _LegendLayer extends React.Component {
                     msg={this.renderFullLegend()}
                     placement='top'
                     clickTrigger={isMobile()}>
-                    <ElementResizeDetector targetRef={this.ref} onResize={({width}) => this.setState({paletteWidth: width})}>
+                    <ElementResizeDetector targetRef={this.ref} onResize={this.onResize}>
                         <div ref={this.ref} className={styles.legend}>
                             {this.renderPalette({values, palette})}
                             {this.renderCursorValues({labels, values})}
@@ -100,6 +101,10 @@ class _LegendLayer extends React.Component {
                 </div>
             </Scrollable>
         )
+    }
+
+    onResize({width}) {
+        this.setState({paletteWidth: width})
     }
 }
 

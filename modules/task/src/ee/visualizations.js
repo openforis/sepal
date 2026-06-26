@@ -1,4 +1,4 @@
-const _ = require('lodash')
+import _ from 'lodash'
 
 const toVisualizationProperties = (visualizations = [], bands) => {
     const filteredVisualizations = visualizations
@@ -26,4 +26,4 @@ const encode = value =>
         ? value.replace(/,/g, '\\,')
         : value
 
-module.exports = {toVisualizationProperties}
+export {toVisualizationProperties}

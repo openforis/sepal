@@ -36,8 +36,8 @@ class _Legend extends React.Component {
     render() {
         return (
             <RecipeFormPanel
-                placement='bottom-right'
-                className={styles.panel}>
+                className={styles.panel}
+                placement='bottom-right'>
                 <Panel.Header
                     icon='list'
                     title={msg('process.remapping.panel.legend.title')}

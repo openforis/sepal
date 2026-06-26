@@ -9,15 +9,8 @@ then
     --watch "${MODULE}/config" \
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9229 \
-    src/main.js \
-    --ip '0.0.0.0' \
-    --home-dir '/sepalUsers' \
-    --ssh-script-path '/usr/local/bin/ssh_gateway.sh'
+    src/main.js
 else
   echo "Starting node"
-  exec node \
-    src/main.js \
-    --ip '0.0.0.0' \
-    --home-dir '/sepalUsers' \
-    --ssh-script-path '/usr/local/bin/ssh_gateway.sh'
+  exec node src/main.js
 fi

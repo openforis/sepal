@@ -1,0 +1,59 @@
+- name: Provision (common)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+
+    - name: Create Sepal-Swarm security group
+      ec2_group:
+        name: "Sepal-Swarm"
+        description: The Sepal-Swarm Security Group
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        rules:
+          - proto: tcp
+            from_port: 7946
+            to_port: 7946
+            group_name: "Sepal-Swarm"
+            rule_desc: 'Docker swarm container discovery (TCP)'
+          - proto: udp
+            from_port: 7946
+            to_port: 7946
+            group_name: "Sepal-Swarm"
+            rule_desc: 'Docker swarm container discovery (UDP)'
+          - proto: udp
+            from_port: 4789
+            to_port: 4789
+            group_name: "Sepal-Swarm"
+            rule_desc: 'Docker swarm VXLAN overlay data'
+        rules_egress:
+          - proto: all
+            from_port: 0
+            to_port: 65535
+            cidr_ip: 0.0.0.0/0
+      register: sepal_swarm_group
+
+    - name: Create Sepal-Swarm-Manager security group
+      ec2_group:
+        name: "Sepal-Swarm-Manager"
+        description: The Sepal-Swarm-Manager Security Group
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        rules:
+          - proto: tcp
+            from_port: 2377
+            to_port: 2377
+            group_name: "Sepal-Swarm"
+            rule_desc: 'Docker swarm management'
+        rules_egress:
+          - proto: all
+            from_port: 0
+            to_port: 65535
+            cidr_ip: 0.0.0.0/0
+      register: sepal_swarm_manager_group
+
+    - name: Create Sepal-Developers security group
+      ec2_group:
+        name: "Sepal-Developers"
+        description: The Sepal-Developers Group
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        purge_rules: false

@@ -1,6 +1,7 @@
-import {compose} from './compose.js'
-import {isModule, isRunnable, showModuleStatus, MESSAGE, getModules} from './utils.js'
 import _ from 'lodash'
+
+import {compose} from './compose.js'
+import {getModules, isModule, isRunnable, MESSAGE, showModuleStatus} from './utils.js'
 
 const logsModule = async (module, options) => {
     if (isModule(module)) {
@@ -12,8 +13,7 @@ const logsModule = async (module, options) => {
                 args: [
                     tail || recent || follow ? '--follow' : null,
                     tail ? '--since=0s' : null,
-                    // recent ? '--since=5m' : null,
-                    recent ? '--tail=10' : null,
+                    recent ? '--tail=20' : null,
                     since ? `--since=${since}` : null,
                     until ? `--until=${until}` : null
                 ],

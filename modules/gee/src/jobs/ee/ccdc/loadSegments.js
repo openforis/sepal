@@ -1,33 +1,31 @@
-const {job} = require('#gee/jobs/job')
+import _ from 'lodash'
+import {map, of, switchMap} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import {toGeometry} from '#sepal/ee/aoi'
+import ee from '#sepal/ee/ee'
+import imageFactory from '#sepal/ee/imageFactory'
+import ccdc from '#sepal/ee/timeSeries/ccdc'
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {recipe, latLng, bands}
 }) => {
-    const {toGeometry$} = require('#sepal/ee/aoi')
-    const {of, map, switchMap} = require('rxjs')
-    const ccdc = require('#sepal/ee/timeSeries/ccdc')
-    const imageFactory = require('#sepal/ee/imageFactory')
-    const _ = require('lodash')
-    const ee = require('#sepal/ee/ee')
 
     const aoi = {type: 'POINT', ...latLng}
+    const geometry = toGeometry(aoi)
 
     const segmentsForPixel$ = segments$ =>
         segments$.pipe(
             switchMap(segments =>
-                toGeometry$(aoi).pipe(
-                    switchMap(geometry =>
-                        ee.getInfo$(
-                            segments.reduceRegion({
-                                reducer: ee.Reducer.first(),
-                                geometry,
-                                scale: 10,
-                                tileScale: 16
-                            }),
-                            `Get CCDC segments for pixel (${latLng})`
-                        )
-        
-                    )
+                ee.getInfo$(
+                    segments.reduceRegion({
+                        reducer: ee.Reducer.first(),
+                        geometry,
+                        scale: 10,
+                        tileScale: 16
+                    }),
+                    `Get CCDC segments for pixel (${latLng})`
                 )
             ),
             map(segments => _.mapValues(segments, value => value || []))
@@ -58,8 +56,8 @@ const worker$ = ({
     return segmentsForPixel$(segments$)
 }
 
-module.exports = job({
+export default job({
     jobName: 'LoadCCDCSegments',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

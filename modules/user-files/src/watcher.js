@@ -1,12 +1,16 @@
-const Path = require('path')
-const {realpath, readdir, stat, rm} = require('fs/promises')
-const {catchError, timer, Subject, exhaustMap, distinctUntilChanged, takeUntil, switchMap, map, filter, mergeMap, groupBy, finalize, mergeWith, EMPTY, scan, throttleTime, of, first, repeat, from, reduce} = require('rxjs')
-const {minDuration$} = require('#sepal/rxjs')
-const _ = require('lodash')
-const {homeDir, pollIntervalMilliseconds} = require('./config')
-const {resolvePath} = require('./filesystem')
-const {subscriptionTag, clientTag} = require('./tag')
-const log = require('#sepal/log').getLogger('watcher')
+import {readdir, realpath, rm, stat} from 'fs/promises'
+import _ from 'lodash'
+import Path from 'path'
+import {catchError, distinctUntilChanged, EMPTY, exhaustMap, filter, finalize, first, from, groupBy, map, mergeMap, mergeWith, of, reduce, repeat, scan, Subject, switchMap, takeUntil, throttleTime, timer} from 'rxjs'
+
+import {getLogger} from '#sepal/log'
+import {minDuration$} from '#sepal/rxjs'
+
+import {homeDir, pollIntervalMilliseconds} from './config.js'
+import {resolvePath} from './filesystem.js'
+import {clientTag, subscriptionTag} from './tag.js'
+
+const log = getLogger('watcher')
 
 const REMOVE_COMFORT_DELAY_MS = 1000
 const STATS_INTERVAL_MS = 60000
@@ -14,7 +18,7 @@ const STATS_INTERVAL_MS = 60000
 const userHomeDir = async username =>
     await realpath(Path.join(homeDir, username))
 
-const createWatcher = async ({out$, stop$}) => {
+const createWatcher = async ({send, stop$}) => {
     const monitor$ = new Subject()
     const unmonitor$ = new Subject()
     const remove$ = new Subject()
@@ -65,7 +69,7 @@ const createWatcher = async ({out$, stop$}) => {
         return ({username, clientId})
     }
  
-    monitor$.pipe(
+    const monitorSubscription = monitor$.pipe(
         groupBy(({username, clientId}) => buildClientKey(username, clientId)),
         mergeMap(clientGroup$ => clientGroup$.pipe(
             groupBy(({subscriptionId}) => subscriptionId),
@@ -84,17 +88,19 @@ const createWatcher = async ({out$, stop$}) => {
             )),
             takeUntil(clientOffline$(parseClientKey(clientGroup$.key))),
             finalize(() => log.debug(`${clientTag(parseClientKey(clientGroup$.key))} offline`))
-        )),
-        takeUntil(stop$),
-        catchError(error => log.error(error))
+        ))
     ).subscribe({
-        next: ({clientId, subscriptionId, data}) => out$.next({clientId, subscriptionId, data}),
-        error: error => log.error('Unexpected stream error', error),
-        complete: () => log.error('Unexpected stream complete')
+        next: ({clientId, subscriptionId, data}) => send({clientId, subscriptionId, data}),
+        error: error => log.fatal('Unexpected monitor$ stream error', error),
+        complete: () => log.fatal('Unexpected monitor$ stream complete')
     })
 
+    stop$.subscribe(
+        () => monitorSubscription.unsubscribe()
+    )
+
     remove$.pipe(
-        switchMap(({username, clientId, subscriptionId, remove}) =>
+        mergeMap(({username, clientId, subscriptionId, remove}) =>
             minDuration$(
                 from(removePath({username, clientId, subscriptionId, path: remove})),
                 REMOVE_COMFORT_DELAY_MS
@@ -104,8 +110,8 @@ const createWatcher = async ({out$, stop$}) => {
         )
     ).subscribe({
         next: ({username, clientId, subscriptionId}) => trigger$.next({username, clientId, subscriptionId}),
-        error: error => log.error('Unexpected stream error', error),
-        complete: () => log.error('Unexpected stream complete')
+        error: error => log.fatal('Unexpected remove$ stream error', error),
+        complete: () => log.fatal('Unexpected remove$ stream complete')
     })
     
     stats$.pipe(
@@ -120,8 +126,8 @@ const createWatcher = async ({out$, stop$}) => {
         repeat()
     ).subscribe({
         next: ({clients, scans}) => log.info(`Stats: ${scans} scans by ${clients} clients`),
-        error: error => log.error('Unexpected stream error', error),
-        complete: () => log.error('Unexpected stream complete')
+        error: error => log.fatal('Unexpected stats$ stream error', error),
+        complete: () => log.fatal('Unexpected stats$ stream complete')
     })
 
     const scanDir$ = ({username, clientId, subscriptionId, path}) =>
@@ -262,4 +268,4 @@ const createWatcher = async ({out$, stop$}) => {
     return {monitor, unmonitor, remove, unsubscribe, offline}
 }
 
-module.exports = {createWatcher}
+export {createWatcher}

@@ -1,9 +1,9 @@
-const {addDays} = require('date-fns/addDays')
-const {differenceInMilliseconds} = require('date-fns/differenceInMilliseconds')
-const {format} = require('date-fns/format')
-const {intervalToDuration} = require('date-fns/intervalToDuration')
-const {parse} = require('date-fns/parse')
-const {set} = require('date-fns/set')
+import {addDays} from 'date-fns/addDays'
+import {differenceInMilliseconds} from 'date-fns/differenceInMilliseconds'
+import {format} from 'date-fns/format'
+import {intervalToDuration} from 'date-fns/intervalToDuration'
+import {parse} from 'date-fns/parse'
+import {set} from 'date-fns/set'
 
 const formatDurationShort = duration => {
     const parts = []
@@ -49,4 +49,4 @@ const formatTime = ({hours, minutes, seconds = 0}, fmt = 'HH:mm') => {
     return format(date, fmt)
 }
 
-module.exports = {formatInterval, formatDuration, getMillisecondsUntilTime, parseTime, formatTime}
+export {formatDuration, formatInterval, formatTime, getMillisecondsUntilTime, parseTime}

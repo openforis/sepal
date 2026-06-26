@@ -1,4 +1,6 @@
 #!/bin/bash
 set -e
 
-python3 -m pip install "sepal-ui==2.20.0" "rasterio==1.3.10"
+apt remove -y python3-blinker # We have conflicts with debian packages
+python3 -m pip uninstall -y earthengine-api # Ensure we get the forked version by re-installing
+uv pip install --system -r /script/requirements.txt

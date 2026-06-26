@@ -1,14 +1,17 @@
-const {job} = require('#gee/jobs/job')
+import {expand, forkJoin, last, map, switchMap, takeWhile} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import {EEException} from '#sepal/ee/exception'
+import ImageFactory from '#sepal/ee/imageFactory'
+import {getRows$} from '#sepal/ee/table'
+import {getLogger} from '#sepal/log'
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {recipeToSample, count, scale, classBand, recipe, bands}
 }) => {
-    const ImageFactory = require('#sepal/ee/imageFactory')
-    const {expand, forkJoin, last, map, switchMap, takeWhile} = require('rxjs')
-    const {getRows$} = require('#sepal/ee/table')
-    const ee = require('#sepal/ee/ee')
-    const {EEException} = require('#sepal/ee/exception')
-    const log = require('#sepal/log').getLogger('ee')
+    const log = getLogger('ee')
 
     return forkJoin({
         image: ImageFactory(recipeToSample).getImage$(),
@@ -42,13 +45,32 @@ const worker$ = ({
                         scale: parseInt(scale),
                         region: geometry,
                         geometries: true,
-                        tileScale: 16
+                        // tileScale: 16
                     })
                 return getRows$(
                     bands ? samples.select(bands) : samples.select(image.bandNames()),
                     'sample image'
                 )
             }
+
+            const sample = (numPixels, seed) => {
+                const toSample = bands
+                    ? image.select(bands)
+                    : image
+                log.info('sampling', numPixels)
+                return toSample.sample({
+                    region: geometry,
+                    scale: parseInt(scale),
+                    projection: 'EPSG:4326',
+                    numPixels: numPixels,
+                    seed: seed,
+                    // tileScale: 16,
+                    geometries: true
+                })
+            }
+
+            const sample$ = (n, i) =>
+                ee.getInfo$(sample(n, i), 'sample image chunk ' + i)
 
             const unstratifiedSample = () => {
                 const numPixels = parseInt(count)
@@ -91,28 +113,7 @@ const worker$ = ({
                     })
                 )
 
-                function sample$(n, i) {
-                    return ee.getInfo$(sample(n, i), 'sample image chunk ' + i)
-                }
-
-                function sample(numPixels, seed) {
-                    const toSample = bands
-                        ? image.select(bands)
-                        : image
-                    log.info('sampling', numPixels)
-                    return toSample.sample({
-                        region: geometry,
-                        scale: parseInt(scale),
-                        projection: 'EPSG:4326',
-                        numPixels: numPixels,
-                        seed: seed,
-                        tileScale: 16,
-                        geometries: true
-                    })
-                }
-
             }
-
             return classBand
                 ? stratifiedSample()
                 : unstratifiedSample()
@@ -120,8 +121,8 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Sample image',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

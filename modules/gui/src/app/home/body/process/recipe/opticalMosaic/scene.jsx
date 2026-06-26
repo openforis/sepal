@@ -1,29 +1,46 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import {catchError, first, of, Subject, switchMap} from 'rxjs'
 
+import api from '~/apiRegistry'
+import {compose} from '~/compose'
 import format from '~/format'
-import {msg} from '~/translate'
+import {withSubscriptions} from '~/subscription'
 import {Button} from '~/widget/button'
-import {ButtonGroup} from '~/widget/buttonGroup'
-import {HoverDetector, HoverOverlay} from '~/widget/hover'
 import {Icon} from '~/widget/icon'
 
 import daysBetween from './daysBetween'
-import {getScenePreviewUrl} from './scenePreviewUrl'
-import styles from './sceneSelection.module.css'
+import styles from './scene.module.css'
+import {ScenePreview} from './scenePreview'
+import {getScenePreviewUrl, toGEEImageId, usgsLandsatPreview} from './scenePreviewUrl'
 import {getDataSet} from './sources'
 
-export class Scene extends React.Component {
+class _Scene extends React.Component {
+    image$ = new Subject()
+
+    state = {
+        loaded: false,
+        failed: false,
+        url: null,
+        preview: false
+    }
+
     render() {
-        const {className} = this.props
+        const {className, selected} = this.props
         return (
-            <HoverDetector className={[styles.scene, className].join(' ')}>
+            <div
+                className={[
+                    styles.scene,
+                    selected ? styles.selected : '',
+                    className
+                ].join(' ')}
+                style={{cursor: 'pointer'}}
+                onClick={() => this.setState({preview: true})}>
                 {this.renderThumbnail()}
                 {this.renderDetails()}
-                <HoverOverlay>
-                    {this.renderSceneOverlay()}
-                </HoverOverlay>
-            </HoverDetector>
+                {this.renderSceneOverlay()}
+                {this.renderPreview()}
+            </div>
         )
     }
 
@@ -32,15 +49,41 @@ export class Scene extends React.Component {
         const imageUrl = getScenePreviewUrl(scene)
         return (
             <div className={styles.thumbnail}>
-                <Icon name='spinner'/>
-                {this.renderImage(imageUrl)}
+                {this.renderLoading()}
+                {this.renderResult(imageUrl)}
             </div>
         )
     }
 
-    renderImage(url) {
+    renderLoading() {
+        const {loaded, failed} = this.state
+        return loaded || failed
+            ? null
+            : <Icon className={styles.icon} name='spinner'/>
+    }
+
+    renderResult(imageUrl) {
+        const {failed} = this.state
+        return failed
+            ? this.renderFailed()
+            : this.renderImage(imageUrl)
+    }
+
+    renderImage() {
+        const {url} = this.state
         return (
-            <div className={styles.image} style={{'--image': `url("${url}")`}}/>
+            <img
+                className={styles.image}
+                src={url}
+                onLoad={() => this.image$.next(true)}
+                onError={() => this.image$.next(false)}
+            />
+        )
+    }
+
+    renderFailed() {
+        return (
+            <Icon className={styles.icon} name='times'/>
         )
     }
 
@@ -60,10 +103,11 @@ export class Scene extends React.Component {
             </div>
         )
     }
+
     renderInfo(dataSet, date) {
         return (
-            <div className={styles.date}>
-                <div className={[styles.info, styles.dataSet].join(' ')}>
+            <div>
+                <div className={styles.info}>
                     <Icon name='satellite-dish'/>
                     {getDataSet(dataSet).shortName}
                 </div>
@@ -104,59 +148,89 @@ export class Scene extends React.Component {
 
     renderSceneOverlay() {
         const {selected} = this.props
-        return selected
-            ? this.renderSelectedSceneOverlay()
-            : this.renderAvailableSceneOverlay()
-    }
-
-    renderAvailableSceneOverlay() {
-        const {scene, onAdd, onPreview} = this.props
         return (
-            <ButtonGroup
-                className={styles.overlayControls}
-                layout='vertical'
-                alignment='fill'>
-                <Button
-                    look='add'
-                    icon='plus'
-                    label={msg('button.add')}
-                    onClick={() => onAdd(scene)}/>
-                <Button
-                    look='default'
-                    icon='eye'
-                    label={msg('process.mosaic.panel.sceneSelection.preview.label')}
-                    onClick={() => onPreview(scene)}/>
-            </ButtonGroup>
+            <div className={styles.overlay}>
+                {selected
+                    ? this.renderRemoveButton()
+                    : this.renderAddButton()}
+            </div>
+
         )
     }
 
-    renderSelectedSceneOverlay() {
-        const {scene, onRemove, onPreview} = this.props
+    renderAddButton() {
+        const {scene, onAdd} = this.props
         return (
-            <ButtonGroup
-                className={styles.overlayControls}
-                layout='horizontal'
-                alignment='fill'>
-                <Button
-                    look='cancel'
-                    icon='minus'
-                    label={msg('button.remove')}
-                    onClick={() => onRemove(scene)}/>
-                <Button
-                    look='default'
-                    icon='eye'
-                    label={msg('process.mosaic.panel.sceneSelection.preview.label')}
-                    onClick={() => onPreview(scene)}/>
-            </ButtonGroup>
+            <Button
+                look='add'
+                icon='plus'
+                air='less'
+                onClick={() => onAdd(scene)}/>
+        )
+    }
+
+    renderRemoveButton() {
+        const {scene, onRemove} = this.props
+        return (
+            <Button
+                look='cancel'
+                icon='minus'
+                air='less'
+                onClick={() => onRemove(scene)}/>
+        )
+    }
+
+    renderPreview() {
+        const {scene, selected, targetDate, onAdd, onRemove} = this.props
+        const {url, preview} = this.state
+        return preview ? (
+            <ScenePreview
+                scene={scene}
+                selected={selected}
+                imageUrl={url}
+                targetDate={targetDate}
+                onAdd={() => onAdd(scene)}
+                onRemove={() => onRemove(scene)}
+                onClose={() => this.setState({preview: false})}
+            />
+        ) : null
+    }
+
+    setImage$(url) {
+        this.setState({url})
+        return this.image$.pipe(first())
+    }
+
+    componentDidMount() {
+        const {scene, addSubscription} = this.props
+
+        addSubscription(
+            this.setImage$(getScenePreviewUrl(scene)).pipe(
+                switchMap(success => success
+                    ? of(true)
+                    : api.gee.landsatProductId$({sceneId: toGEEImageId(scene.id)}).pipe(
+                        switchMap(({landsatProductId}) =>
+                            this.setImage$(usgsLandsatPreview(landsatProductId))
+                        ),
+                        catchError(() => of(false))
+                    )
+                )
+            ).subscribe({
+                next: success => this.setState({loaded: success, failed: !success})
+            })
         )
     }
 }
+
+export const Scene = compose(
+    _Scene,
+    withSubscriptions()
+)
 
 Scene.propTypes = {
     scene: PropTypes.object,
     selected: PropTypes.bool,
     targetDate: PropTypes.string,
     onAdd: PropTypes.func,
-    onPreview: PropTypes.func,
     onRemove: PropTypes.func
 }

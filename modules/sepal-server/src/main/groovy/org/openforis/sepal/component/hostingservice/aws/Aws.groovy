@@ -7,6 +7,7 @@ import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.adapter.DockerInstanceProvisioner
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
+import org.openforis.sepal.component.workerinstance.api.SandboxSessionApiKey
 import org.openforis.sepal.util.ExecutorServiceBasedJobScheduler
 import org.openforis.sepal.util.NamedThreadFactory
 
@@ -15,6 +16,11 @@ import java.util.concurrent.Executors
 class Aws implements HostingServiceAdapter {
     private final config = new AwsConfig()
     private final double storageCostPerGbMonth = 0.33d // EFS pricing
+    private SandboxSessionApiKey sandboxSessionApiKey
+
+    void setSandboxSessionApiKey(SandboxSessionApiKey apiKey) {
+        this.sandboxSessionApiKey = apiKey
+    }
     // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/InstanceType.html
     //https://aws.amazon.com/es/ec2/pricing/on-demand/
     
@@ -99,6 +105,6 @@ class Aws implements HostingServiceAdapter {
     }
 
     InstanceProvisioner getInstanceProvisioner() {
-        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, config.syslogAddress)
+        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, config.syslogAddress, sandboxSessionApiKey)
     }
 }

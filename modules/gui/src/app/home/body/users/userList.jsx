@@ -20,6 +20,7 @@ import {SearchBox} from '~/widget/searchBox'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {SortButton} from '~/widget/sortButton'
 
+import {UserActivity} from './userActivity'
 import styles from './userList.module.css'
 import {UserStatus} from './userStatus'
 
@@ -73,9 +74,10 @@ export class UserList extends React.Component {
 
     getUsers() {
         const {users} = this.props
-        const {sortingOrder, sortingDirection} = this.state
+        const {sortingOrder, sortingDirection, textFilterValues} = this.state
+        const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
         return _.chain(users)
-            .filter(user => this.userMatchesFilters(user))
+            .filter(user => this.userMatchesFilters(user, searchMatchers))
             .orderBy(user => {
                 const item = _.get(user, sortingOrder)
                 return _.isString(item) ? simplifyString(item).toUpperCase() : item
@@ -83,15 +85,13 @@ export class UserList extends React.Component {
             .value()
     }
 
-    userMatchesFilters(user) {
-        return this.userMatchesTextFilter(user) && this.userMatchesStatusFilter(user)
+    userMatchesFilters(user, searchMatchers) {
+        return this.userMatchesTextFilter(user, searchMatchers) && this.userMatchesStatusFilter(user)
     }
 
-    userMatchesTextFilter(user) {
-        const {textFilterValues} = this.state
-        const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
+    userMatchesTextFilter(user, searchMatchers) {
         const searchProperties = ['name', 'username', 'email', 'organization', 'intendedUse']
-        return textFilterValues
+        return searchMatchers.length
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
                     matcher.test(simplifyString(user[property]))
@@ -109,6 +109,12 @@ export class UserList extends React.Component {
                 return UserStatus.isActive(user.status)
             case 'LOCKED':
                 return UserStatus.isLocked(user.status)
+            case 'INACTIVE':
+                return UserActivity.isInactiveHigh(user)
+            case 'NOTIFIED':
+                return UserActivity.isNotified(user)
+            case 'PURGED':
+                return UserActivity.isPurged(user)
             case 'OVERBUDGET':
                 return this.isUserOverBudget(user)
             case 'BUDGET_UPDATE':
@@ -179,10 +185,10 @@ export class UserList extends React.Component {
                     classNames: [styles.name]
                 })}
                 {this.renderColumnHeader({
-                    column: 'status',
-                    label: msg('user.status.label'),
+                    column: 'activity.event',
+                    label: msg('user.activity.label'),
                     defaultSortingDirection: 1,
-                    classNames: [styles.status]
+                    classNames: [styles.activity]
                 })}
                 {this.renderColumnHeader({
                     column: 'updateTime',
@@ -253,6 +259,15 @@ export class UserList extends React.Component {
         }, {
             label: msg('users.filter.status.locked.label'),
             value: 'LOCKED'
+        }, {
+            label: msg('users.filter.status.inactive.label'),
+            value: 'INACTIVE'
+        }, {
+            label: msg('users.filter.status.notified.label'),
+            value: 'NOTIFIED'
+        }, {
+            label: msg('users.filter.status.purged.label'),
+            value: 'PURGED'
         }, {
             label: msg('users.filter.status.overbudget.label'),
             value: 'OVERBUDGET'
@@ -369,22 +384,28 @@ class UserItem extends React.PureComponent {
                     hovered ? lookStyles.hoverForcedOn : null
                 ].join(' ')}
                 onClick={this.onClick}>
-                {this.renderUsername(username, admin)}
+                {this.renderUsername(username, admin, status, googleUser)}
                 {this.renderName(name)}
-                {this.renderStatus(status, googleUser)}
-                {this.renderLastUpdate(updateTime)}
-                {this.renderBudgetUpdateRequest(budgetUpdateRequest)}
-                {this.renderInstanceSpending(budget, current)}
-                {this.renderStorageSpending(budget, current)}
-                {this.renderStorageQuota(budget, current)}
+                {this.renderActivity(user)}
+                {this.renderLastUpdate(updateTime, budgetUpdateRequest)}
+                {this.renderInstanceSpendingMax(budget)}
+                {this.renderInstanceSpendingUsed(budget, current)}
+                {this.renderStorageSpendingMax(budget)}
+                {this.renderStorageSpendingUsed(budget, current)}
+                {this.renderStorageQuotaMax(budget)}
+                {this.renderStorageQuotaUsed(budget, current)}
             </div>
         )
     }
 
-    renderUsername(username, admin) {
+    renderUsername(username, admin, status, googleUser) {
         const {highlight} = this.props
         return (
-            <div className={[admin ? styles.admin : styles.username]}>
+            <div className={[
+                styles.username,
+                admin ? styles.admin : null
+            ].join(' ')}>
+                {status ? this.renderDefinedStatus(status, googleUser) : this.renderUndefinedStatus() }
                 <Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{username}</Highlight>
             </div>
         )
@@ -393,23 +414,13 @@ class UserItem extends React.PureComponent {
     renderName(name) {
         const {highlight} = this.props
         return (
-            <div>
-                <Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{name}</Highlight>
-            </div>
+            <Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{name}</Highlight>
         )
     }
 
-    renderStatus(status, isGoogleUser) {
+    renderDefinedStatus(status, googleUser) {
         return (
-            <div>
-                {status ? this.renderDefinedStatus(status, isGoogleUser) : this.renderUndefinedStatus() }
-            </div>
-        )
-    }
-
-    renderDefinedStatus(status, isGoogleUser) {
-        return (
-            <UserStatus status={status} isGoogleUser={isGoogleUser}/>
+            <UserStatus status={status} googleUser={googleUser}/>
         )
     }
 
@@ -419,9 +430,10 @@ class UserItem extends React.PureComponent {
         )
     }
 
-    renderLastUpdate(updateTime) {
+    renderLastUpdate(updateTime, budgetUpdateRequest) {
         return (
-            <div>
+            <div className={styles.lastUpdate}>
+                {this.renderBudgetUpdateRequest(budgetUpdateRequest)}
                 {moment(updateTime).fromNow()}
             </div>
         )
@@ -435,48 +447,63 @@ class UserItem extends React.PureComponent {
         )
     }
 
-    renderInstanceSpending(budget = {}, current = {}) {
+    renderInstanceSpendingMax(budget = {}) {
         return (
-            <React.Fragment>
-                <div className={styles.number}>
-                    {format.dollars(budget.instanceSpending)}
-                </div>
-                <UserResourceUsage
-                    currentValue={current.instanceSpending}
-                    budgetValue={budget.instanceSpending}
-                    formattedValue={format.dollars(current.instanceSpending)}
-                />
-            </React.Fragment>
+            <div className={styles.number}>
+                {format.dollars(budget.instanceSpending)}
+            </div>
         )
     }
 
-    renderStorageSpending(budget = {}, current = {}) {
+    renderInstanceSpendingUsed(budget = {}, current = {}) {
         return (
-            <React.Fragment>
-                <div className={styles.number}>
-                    {format.dollars(budget.storageSpending)}
-                </div>
-                <UserResourceUsage
-                    currentValue={current.storageSpending}
-                    budgetValue={budget.storageSpending}
-                    formattedValue={format.dollars(current.storageSpending)}
-                />
-            </React.Fragment>
+            <UserResourceUsage
+                currentValue={current.instanceSpending}
+                budgetValue={budget.instanceSpending}
+                formattedValue={format.dollars(current.instanceSpending)}
+            />
         )
     }
 
-    renderStorageQuota(budget = {}, current = {}) {
+    renderActivity(user) {
         return (
-            <React.Fragment>
-                <div className={styles.number}>
-                    {format.fileSize(budget.storageQuota, {scale: 'G'})}
-                </div>
-                <UserResourceUsage
-                    currentValue={current.storageQuota}
-                    budgetValue={budget.storageQuota}
-                    formattedValue={format.fileSize(current.storageQuota, {scale: 'G'})}
-                />
-            </React.Fragment>
+            <UserActivity user={user}/>
+        )
+    }
+
+    renderStorageSpendingMax(budget = {}) {
+        return (
+            <div className={styles.number}>
+                {format.dollars(budget.storageSpending)}
+            </div>
+        )
+    }
+
+    renderStorageSpendingUsed(budget = {}, current = {}) {
+        return (
+            <UserResourceUsage
+                currentValue={current.storageSpending}
+                budgetValue={budget.storageSpending}
+                formattedValue={format.dollars(current.storageSpending)}
+            />
+        )
+    }
+
+    renderStorageQuotaMax(budget = {}) {
+        return (
+            <div className={styles.number}>
+                {format.fileSize(budget.storageQuota, {scale: 'G'})}
+            </div>
+        )
+    }
+
+    renderStorageQuotaUsed(budget = {}, current = {}) {
+        return (
+            <UserResourceUsage
+                currentValue={current.storageQuota}
+                budgetValue={budget.storageQuota}
+                formattedValue={format.fileSize(current.storageQuota, {scale: 'G'})}
+            />
         )
     }
 }

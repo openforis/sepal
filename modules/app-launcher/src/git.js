@@ -1,7 +1,11 @@
-const fs = require('fs').promises
-const log = require('#sepal/log').getLogger('git')
-const {ClientException} = require('#sepal/exception')
-const executeCommand = require('./terminal')
+import fs from 'fs/promises'
+
+import {ClientException} from '#sepal/exception'
+import {getLogger} from '#sepal/log'
+
+import executeCommand from './terminal.js'
+
+const log = getLogger('git')
 
 const MAX_RETRIES = 3
 const RETRY_DELAY_MS = 5000
@@ -26,7 +30,7 @@ const cloneRepository = async (repository, branch, appPath) => {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
             await executeCommand(
-                `git clone --branch=${branch} ${repository} ${appPath}`
+                'git', ['clone', `--branch=${branch}`, repository, appPath]
             )
             return
         } catch (err) {
@@ -48,7 +52,7 @@ const checkBranchExists = async (repository, branch) => {
     log.debug(`Checking branch ${branch} in ${repository}`)
     try {
         await executeCommand(
-            `git ls-remote --exit-code --heads ${repository} ${branch}`
+            'git', ['ls-remote', '--exit-code', '--heads', repository, branch]
         )
         return true
     } catch (err) {
@@ -64,8 +68,8 @@ const checkBranchExists = async (repository, branch) => {
 const checkoutBranch = async (appPath, branch) => {
     try {
         log.info(`Setting repository to branch '${branch}' (fetching from remote)`)
-        await executeCommand(`git -C ${appPath} fetch origin ${branch}`)
-        await executeCommand(`git -C ${appPath} checkout ${branch}`)
+        await executeCommand('git', ['fetch', 'origin', branch], {cwd: appPath})
+        await executeCommand('git', ['checkout', branch], {cwd: appPath})
         
     } catch (err) {
         log.error(`Failed to checkout branch '${branch}': ${err.message}`)
@@ -75,19 +79,26 @@ const checkoutBranch = async (appPath, branch) => {
 
 const getRepoInfo = async appPath => {
     const {stdout: commitTimestamp} = await executeCommand(
-        `git -C ${appPath} log -1 --format=%cI`
+        'git', ['log', '-1', '--format=%cI'], {cwd: appPath}
     )
     const {stdout: commitId} = await executeCommand(
-        `git -C ${appPath} log -1 --format=%H`
+        'git', ['log', '-1', '--format=%H'], {cwd: appPath}
     )
     const {stdout: originUrlRaw} = await executeCommand(
-        `git -C ${appPath} config --get remote.origin.url`
-    )
-    const {stdout: branchName} = await executeCommand(
-        `git -C ${appPath} rev-parse --abbrev-ref HEAD`
+        'git', ['config', '--get', 'remote.origin.url'], {cwd: appPath}
     )
     const originUrl = originUrlRaw.trim()
-  
+
+    let branch = null
+    try {
+        const {stdout} = await executeCommand(
+            'git', ['config', '--get', 'sepal.branch'], {cwd: appPath}
+        )
+        branch = stdout.trim() || null
+    } catch (_e) {
+        // not stamped yet (legacy clone); leave null
+    }
+
     let commitUrl = null
     if (originUrl.includes('github.com')) {
         let repoUrl = originUrl
@@ -96,23 +107,14 @@ const getRepoInfo = async appPath => {
         commitUrl = `${repoUrl}/commit/${commitId.trim()}`
     }
 
-    let updateAvailable = false
-    try {
-        await executeCommand(`git -C ${appPath} remote update`)
-        const {stdout: local} = await executeCommand(`git -C ${appPath} rev-parse HEAD`)
-        const {stdout: remote} = await executeCommand(`git -C ${appPath} rev-parse @{u}`)
-        updateAvailable = local.trim() !== remote.trim()
-    } catch (warnErr) {
-        log.warn(`Could not check remote updates: ${warnErr.message}`)
-    }
-
     const appInfo = {
         lastCloneTimestamp: commitTimestamp.trim() || null,
         lastCommitId: commitId.trim(),
         url: originUrl,
         commitUrl,
-        branch: branchName.trim(),
-        updateAvailable
+        branch,
+        // Catalog is the only sanctioned source of updates; upstream branch tip is not actionable from the GUI.
+        updateAvailable: false
     }
 
     log.debug(`Repository info for ${appPath}:`, appInfo)
@@ -121,17 +123,54 @@ const getRepoInfo = async appPath => {
 
 }
 
-const cloneOrPull = async ({path: appPath, repository, branch}) => {
+const checkoutCommit = async (appPath, branch, commit) => {
+    log.info(`Pinning repository at ${appPath} to commit ${commit}`)
+    try {
+        await executeCommand('git', ['fetch', 'origin', branch], {cwd: appPath})
+        await executeCommand('git', ['checkout', '--detach', commit], {cwd: appPath})
+    } catch (err) {
+        log.error(`Failed to checkout commit '${commit}': ${err.message}`)
+        throw new ClientException(`Failed to checkout commit '${commit}': ${err.message}`)
+    }
+}
+
+const stampSepalBranch = async (appPath, branch) => {
+    try {
+        await executeCommand('git', ['config', '--local', 'sepal.branch', branch], {cwd: appPath})
+    } catch (err) {
+        log.warn(`Could not record sepal.branch at ${appPath}: ${err.message}`)
+    }
+}
+
+const cloneOrPull = async ({path: appPath, repository, branch, commit}) => {
     try {
         const exists = await pathExists(appPath)
         if (!exists) {
             log.info(`Path '${appPath}' not found → cloning`)
             await cloneRepository(repository, branch, appPath)
-            await checkoutBranch(appPath, branch)
+            if (commit) {
+                await checkoutCommit(appPath, branch, commit)
+            } else {
+                await checkoutBranch(appPath, branch)
+            }
+            await stampSepalBranch(appPath, branch)
             return {action: 'cloned', success: true}
         }
-        return await pullUpdates(appPath, branch)
-        
+        if (commit) {
+            const current = await getCurrentCommitHash(appPath)
+            if (current === commit) {
+                log.info(`No update needed for ${appPath}: already at ${commit}`)
+                await stampSepalBranch(appPath, branch)
+                return {action: 'none', success: true}
+            }
+            await checkoutCommit(appPath, branch, commit)
+            await stampSepalBranch(appPath, branch)
+            return {action: 'updated', success: true}
+        }
+        const result = await pullUpdates(appPath, branch)
+        await stampSepalBranch(appPath, branch)
+        return result
+
     } catch (err) {
         log.error(`Error in cloneOrPull: ${err.message}`)
         if (err.statusCode === 500) {
@@ -143,7 +182,7 @@ const cloneOrPull = async ({path: appPath, repository, branch}) => {
 
 const getCurrentCommitHash = async appPath => {
     try {
-        const {stdout: commitHash} = await executeCommand(`git -C ${appPath} rev-parse HEAD`)
+        const {stdout: commitHash} = await executeCommand('git', ['rev-parse', 'HEAD'], {cwd: appPath})
         return commitHash.trim()
     } catch (err) {
         log.error(`Failed to get current commit hash: ${err.message}`)
@@ -160,7 +199,7 @@ const pullUpdates = async (appPath, branch) => {
         
         if (updateAvailable) {
             log.info(`Updates available for ${appPath} → pulling`)
-            await executeCommand(`git -C ${appPath} pull origin ${branch}`)
+            await executeCommand('git', ['pull', 'origin', branch], {cwd: appPath})
             log.info(`Successfully pulled updates for ${appPath}`)
             return {action: 'updated', success: true}
         }
@@ -172,9 +211,9 @@ const pullUpdates = async (appPath, branch) => {
     }
 }
 
-module.exports = {
+export {
     cloneOrPull,
-    getRepoInfo,
     getCurrentCommitHash,
+    getRepoInfo,
     pullUpdates,
 }

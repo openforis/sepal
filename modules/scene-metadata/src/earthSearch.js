@@ -1,6 +1,9 @@
-const {map, tap, EMPTY} = require('rxjs')
-const {postJson$} = require('#sepal/httpClient')
-const log = require('#sepal/log').getLogger('earthSearch')
+import {EMPTY, map, tap} from 'rxjs'
+
+import {postJson$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('earthSearch')
 
 const SEARCH_URL = 'https://earth-search.aws.element84.com/v1/search'
 
@@ -42,16 +45,17 @@ const getCollection = source => {
     return collection
 }
 
-const getUpdates$ = ({source, sceneMapper, minTimestamp, maxTimestamp, token}) => {
+const getUpdates$ = ({source, dataset, query, sceneMapper, minTimestamp, maxTimestamp, token}) => {
     const collection = getCollection(source)
     if (maxTimestamp >= minTimestamp) {
-        log.info(token ? `Retrieving ${collection} scenes, token: ${token}` : `Getting ${collection} scenes between ${minTimestamp} and ${maxTimestamp}`)
+        log.info(token ? `Retrieving ${collection}/${dataset} scenes, token: ${token}` : `Getting ${collection}/${dataset} scenes between ${minTimestamp} and ${maxTimestamp}`)
         return postJson$(SEARCH_URL, {
             body: {
                 collections: [collection],
                 datetime: `${minTimestamp}/${maxTimestamp}`,
                 sortby: '+properties.datetime',
                 limit: BLOCK_SIZE[source],
+                query,
                 next: token
             },
             retry: {
@@ -60,7 +64,7 @@ const getUpdates$ = ({source, sceneMapper, minTimestamp, maxTimestamp, token}) =
         }).pipe(
             map(({body}) => JSON.parse(body)),
             map(response => getResponse(response, sceneMapper)),
-            tap(({scenes}) => log.info(scenes.length ? `Retrieved ${collection} scenes: ${scenes.length}` : `No more ${collection} scenes`))
+            tap(({scenes}) => log.info(scenes.length ? `Retrieved ${collection}/${dataset} scenes: ${scenes.length}` : `No more ${collection}/${dataset} scenes`))
         )
     } else {
         log.info(`No scenes to retrieve between ${minTimestamp} and ${maxTimestamp}`)
@@ -68,4 +72,4 @@ const getUpdates$ = ({source, sceneMapper, minTimestamp, maxTimestamp, token}) =
     }
 }
 
-module.exports = {getUpdates$}
+export {getUpdates$}

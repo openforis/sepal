@@ -1,4 +1,4 @@
-const parseGroups = csv => {
+export const parseGroups = csv => {
     const groups = JSON.parse(
         csv.split('\n')[1]
             .replaceAll('"', '')
@@ -6,5 +6,3 @@ const parseGroups = csv => {
     )
     return {groups}
 }
-
-module.exports = {parseGroups}

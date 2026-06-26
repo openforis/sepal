@@ -1,4 +1,5 @@
-const modules = require('./modules')
+import {sepalAppsHost} from '../src/config.js'
+import modules from './modules.json' with {type: 'json'}
 
 const endpoints = [
     {
@@ -91,6 +92,13 @@ const endpoints = [
     },
     {
         prefix: true,
+        path: '/api/user-storage',
+        target: `http://${modules.userStorage}`,
+        ws: false,
+        authenticate: true
+    },
+    {
+        prefix: true,
         path: '/api/tasks',
         target: `http://${modules.sepal}/api/tasks`,
         authenticate: true
@@ -142,7 +150,7 @@ const endpoints = [
     {
         prefix: true,
         path: '/api/app-launcher',
-        target: `http://${process.env.APP_LAUNCHER_HOST || modules.appLauncher}`,
+        target: `http://${sepalAppsHost || modules.appLauncher}`,
         authenticate: true,
         rewrite: false
     },
@@ -187,4 +195,4 @@ const webSocketEndpoints = [
 
 const webSocketPath = '/api/ws'
 
-module.exports = {endpoints, webSocketEndpoints, webSocketPath}
+export {endpoints, webSocketEndpoints, webSocketPath}

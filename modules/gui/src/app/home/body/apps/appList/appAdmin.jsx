@@ -14,6 +14,7 @@ import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
 import styles from './appAdmin.module.css'
+
 const log = getLogger('appAdmin')
 
 export class AppAdmin extends React.Component {
@@ -54,7 +55,10 @@ export class AppAdmin extends React.Component {
     render() {
         const {app, onClose} = this.props
         return (
-            <Panel className={styles.panel} type='modal'>
+            <Panel
+                className={styles.panel}
+                placement='modal'
+                onBackdropClick={onClose}>
                 <Panel.Header
                     icon='info-circle'
                     title={msg('apps.admin.title', {app: app.id || 'Unknown'})}
@@ -86,6 +90,11 @@ export class AppAdmin extends React.Component {
         this.statusInterval = setInterval(() => this.loadContainerStatus(), 10000)
     }
 
+    containerAppName() {
+        const {app} = this.props
+        return app.containerApp || app.id
+    }
+
     componentWillUnmount() {
         const statusInterval = this.statusInterval
         if (statusInterval) {
@@ -94,11 +103,10 @@ export class AppAdmin extends React.Component {
     }
         
     loadLogs() {
-        const {app} = this.props
         this.setState({
             loadingLogs: true
         })
-        api.appLauncher.getAppLogs$(app.id).subscribe(
+        api.appLauncher.getAppLogs$(this.containerAppName()).subscribe(
             response => {
                 this.setState({
                     logs: response.logs || [],
@@ -116,10 +124,9 @@ export class AppAdmin extends React.Component {
     }
 
     loadRepoInfo() {
-        const {app} = this.props
         this.setState({loadingRepo: true})
-        
-        api.appLauncher.getAppRepoInfo$(app.id).subscribe(
+
+        api.appLauncher.getAppRepoInfo$(this.containerAppName()).subscribe(
             info => {
                 this.setState({
                     loadingRepo: false,
@@ -145,12 +152,11 @@ export class AppAdmin extends React.Component {
     }
 
     loadContainerStatus() {
-        const {app} = this.props
         this.setState({
             loadingContainer: true
         })
-        
-        api.appLauncher.getAppContainerStatus$(app.id).subscribe(
+
+        api.appLauncher.getAppContainerStatus$(this.containerAppName()).subscribe(
             info => {
                 this.setState({
                     loadingContainer: false,
@@ -185,11 +191,10 @@ export class AppAdmin extends React.Component {
     }
     
     restartApp() {
-        const {app} = this.props
         this.setState({restarting: true, logs: []})
         this.loadContainerStatus()
-        
-        api.appLauncher.restartApp$(app.id).subscribe(
+
+        api.appLauncher.restartApp$(this.containerAppName()).subscribe(
             response => {
                 this.setState({restarting: false})
                 this.loadContainerStatus()
@@ -206,11 +211,10 @@ export class AppAdmin extends React.Component {
     }
     
     buildAndRestartApp() {
-        const {app} = this.props
         this.setState({buildingAndRestarting: true, logs: []})
         this.loadContainerStatus()
-        
-        api.appLauncher.buildAndRestartApp$(app.id).subscribe(
+
+        api.appLauncher.buildAndRestartApp$(this.containerAppName()).subscribe(
             response => {
                 this.setState({buildingAndRestarting: false})
                 this.loadContainerStatus()
@@ -227,10 +231,9 @@ export class AppAdmin extends React.Component {
     }
     
     updateApp() {
-        const {app} = this.props
         const {branch} = this.state.repo
         this.setState({updatingRepo: true})
-        api.appLauncher.pullUpdatesOnly$(app.id, branch).subscribe(
+        api.appLauncher.pullUpdatesOnly$(this.containerAppName(), branch).subscribe(
             response => {
                 this.setState({updatingRepo: false})
                 this.loadRepoInfo()
@@ -283,9 +286,9 @@ export class AppAdmin extends React.Component {
                     <div style={{position: 'relative'}}>
                         {loadingLogs && (
                             <div style={{
-                                position: 'absolute', 
-                                top: '8px', 
-                                right: '8px', 
+                                position: 'absolute',
+                                top: '8px',
+                                right: '8px',
                                 zIndex: 1,
                                 background: 'rgba(255,255,255,0.9)',
                                 padding: '4px',
@@ -424,7 +427,7 @@ export class AppAdmin extends React.Component {
                                 className={statusClass}
                             />
                             <span>
-                                {status 
+                                {status
                                     ? msg(`apps.admin.status.${status}`)
                                     : msg('apps.admin.status.loading')}
                             </span>
@@ -442,7 +445,7 @@ export class AppAdmin extends React.Component {
                                 className={healthClass}
                             />
                             <span>
-                                {healthStatus 
+                                {healthStatus
                                     ? msg(`apps.admin.health.${healthStatus}`)
                                     : msg('apps.admin.status.loading')}
                             </span>
@@ -456,7 +459,7 @@ export class AppAdmin extends React.Component {
                         <span className={styles.statusRow}>
                             {loadingContainer && <Icon name='spinner' className={styles.statusSpinner}/>}
                             <span>
-                                {containerStats 
+                                {containerStats
                                     ? `${containerStats.memoryUsage} / ${containerStats.memoryLimit} (${containerStats.memoryPercent})`
                                     : msg('apps.admin.status.loading')
                                 }
@@ -471,7 +474,7 @@ export class AppAdmin extends React.Component {
                         <span className={styles.statusRow}>
                             {loadingContainer && <Icon name='spinner' className={styles.statusSpinner}/>}
                             <span>
-                                {containerStats 
+                                {containerStats
                                     ? containerStats.cpuPercent
                                     : msg('apps.admin.status.loading')
                                 }
@@ -486,7 +489,7 @@ export class AppAdmin extends React.Component {
                         <span className={styles.statusRow}>
                             {loadingContainer && <Icon name='spinner' className={styles.statusSpinner}/>}
                             <span>
-                                {this.state.resourcez.websockets 
+                                {this.state.resourcez.websockets
                                     ? this.state.resourcez.websockets.open
                                     : msg('apps.admin.status.loading')
                                 }

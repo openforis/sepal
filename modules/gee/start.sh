@@ -14,23 +14,8 @@ then
     --watch "${SHARED}" \
     --watch "${EE}" \
     --inspect=0.0.0.0:9229 \
-    src/main.js \
-    --gee-email "$EE_ACCOUNT" \
-    --gee-key "$EE_PRIVATE_KEY" \
-    --google-project-id "$GOOGLE_PROJECT_ID" \
-    --sepal-endpoint "$SEPAL_ENDPOINT" \
-    --sepal-username "sepalAdmin" \
-    --sepal-password "$SEPAL_ADMIN_PASSWORD" \
-    --instances "$INSTANCES"
+    src/main.js
 else
   echo "Starting node"
-  exec node \
-    src/main.js \
-    --gee-email "$EE_ACCOUNT" \
-    --gee-key "$EE_PRIVATE_KEY" \
-    --google-project-id "$GOOGLE_PROJECT_ID" \
-    --sepal-endpoint "$SEPAL_ENDPOINT" \
-    --sepal-username "sepalAdmin" \
-    --sepal-password "$SEPAL_ADMIN_PASSWORD" \
-    --instances "$INSTANCES"
+  exec node src/main.js
 fi

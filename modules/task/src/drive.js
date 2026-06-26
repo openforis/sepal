@@ -1,15 +1,19 @@
-const {defer, EMPTY, ReplaySubject, concat, from, of, throwError, catchError, expand, filter, map, mergeMap, mergeScan, scan, switchMap} = require('rxjs')
-const {google} = require('googleapis')
-const {NotFoundException} = require('#sepal/exception')
-const log = require('#sepal/log').getLogger('drive')
-const {getCurrentContext$} = require('#task/jobs/service/context')
-const fs = require('fs')
-const Path = require('path')
-const {autoRetry, swallow} = require('#sepal/rxjs')
-const {mkdir$} = require('./rxjs/fileSystem')
-const {driveLimiter$} = require('./jobs/service/driveLimiter')
-const format = require('./format')
-const moment = require('moment')
+import fs from 'fs'
+import {google} from 'googleapis'
+import moment from 'moment'
+import Path from 'path'
+import {catchError, concat, defer, EMPTY, expand, filter, finalize, from, map, mergeMap, mergeScan, of, scan, Subject, switchMap, throwError} from 'rxjs'
+
+import {NotFoundException} from '#sepal/exception'
+import {getLogger} from '#sepal/log'
+import {autoRetry, swallow} from '#sepal/rxjs'
+import {getCurrentContext$} from '#task/jobs/service/context'
+
+import * as format from './format.js'
+import {driveLimiter$} from './jobs/service/driveLimiter.js'
+import {mkdir$} from './rxjs/fileSystem.js'
+
+const log = getLogger('drive')
 
 const RETRY_CONFIG = {
     maxRetries: 5,
@@ -226,13 +230,11 @@ const getFilesByPath = ({path, pageToken}) =>
 const removeFolderByPath$ = ({path}) =>
     do$(`Remove folder by path: ${path}`,
         getFolderByPath$({path}).pipe(
-            catchError(e => {
-                if (e instanceof NotFoundException) {
-                    return EMPTY
-                } else {
-                    throwError(() => e)
-                }
-            }),
+            catchError(e =>
+                e instanceof NotFoundException
+                    ? EMPTY
+                    : throwError(() => e)
+            ),
             switchMap(({id}) => remove$({id})),
             catchError(e => {
                 log.warn(`Failed to remove ${path}`, e)
@@ -266,19 +268,40 @@ const getFolderTotalsByPath$ = path =>
  * @return {Observable} Emits bytes downloaded for each fragment downloaded
  */
 const downloadFile$ = (id, destinationStream) =>
-    drive$(`Download file by id: ${id}`, drive =>
-        drive.files.get(
-            {fileId: id, alt: 'media'},
-            {responseType: 'stream'}
+    defer(() =>
+        drive$(`Download file by id: ${id}`, drive =>
+            drive.files.get(
+                {fileId: id, alt: 'media'},
+                {responseType: 'stream'}
+            )
         )
     ).pipe(
         switchMap(stream => {
-            const stream$ = new ReplaySubject()
-            stream.on('data', data => stream$.next(data.length))
-            stream.on('error', error => stream.error(error))
-            stream.on('end', () => stream$.complete())
+            const stream$ = new Subject()
+
+            const onData = data => {
+                stream$.next(data.length)
+            }
+            const onError = error => {
+                destinationStream.close()
+                stream$.error(error)
+            }
+            const onEnd = () => {
+                stream$.complete()
+            }
+
+            stream.on('data', onData)
+            stream.on('error', onError)
+            stream.on('end', onEnd)
             stream.pipe(destinationStream)
-            return stream$
+
+            return stream$.pipe(
+                finalize(() => {
+                    stream.off('data', onData)
+                    stream.off('error', onError)
+                    stream.off('end', onEnd)
+                })
+            )
         })
     )
 
@@ -339,4 +362,4 @@ const downloadProgress$ = ({bytes, files}) => {
         messageArgs: {bytes: formattedBytes, files}
     })
 }
-module.exports = {getFolderByPath$, removeFolderByPath$, downloadSingleFolderByPath$}
+export {downloadSingleFolderByPath$, getFolderByPath$, removeFolderByPath$}

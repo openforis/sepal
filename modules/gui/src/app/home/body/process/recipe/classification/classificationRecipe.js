@@ -1,10 +1,8 @@
 import _ from 'lodash'
 
-import api from '~/apiRegistry'
 import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
-import {publishEvent} from '~/eventPublisher'
+import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 
@@ -164,45 +162,11 @@ export const supportRegression = classifierType =>
 export const supportProbability = classifierType =>
     ['RANDOM_FOREST', 'GRADIENT_TREE_BOOST', 'CART', 'SVM', 'NAIVE_BAYES'].includes(classifierType)
 
-const submitRetrieveRecipeTask = recipe => {
-    const name = recipe.title || recipe.placeholder
-    const bands = recipe.ui.retrieveOptions.bands
-    const destination = recipe.ui.retrieveOptions.destination
-    const taskTitle = msg(['process.retrieve.form.task', destination], {name})
-    const pyramidingPolicy = {}
-    bands.forEach(band => pyramidingPolicy[band] = band === 'class' ? 'mode' : 'mean')
-    const operation = `image.${destination}`
-    const recipeProperties = {
-        recipe_id: recipe.id,
-        recipe_projectId: recipe.projectId,
-        recipe_type: recipe.type,
-        recipe_title: recipe.title || recipe.placeholder,
-        ..._(recipe.model)
-            .mapValues(value => JSON.stringify(value))
-            .mapKeys((_value, key) => `recipe_${key}`)
-            .value()
-    }
-    const task = {
-        operation,
-        params: {
-            title: taskTitle,
-            description: name,
-            image: {
-                ...recipe.ui.retrieveOptions,
-                recipe: _.omit(recipe, ['ui']),
-                bands: {selection: bands},
-                visualizations: getAllVisualizations(recipe),
-                pyramidingPolicy,
-                properties: recipeProperties,
-            }
-        }
-    }
-    publishEvent('submit_task', {
-        recipe_type: recipe.type,
-        destination
+const submitRetrieveRecipeTask = recipe =>
+    submitTask(recipe, {
+        pyramidingPolicy: pyramidingPolicies.classBased,
+        includeTimeRange: false
     })
-    return api.tasks.submit$(task).subscribe()
-}
 
 export const hasTrainingData = recipe => {
     const hasRecipeDataType = recipe.model.trainingData.dataSets.find(({type}) => type === 'RECIPE')

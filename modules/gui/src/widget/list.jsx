@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {distinctUntilChanged, fromEvent, merge, sample, Subject} from 'rxjs'
+import {distinctUntilChanged, fromEvent, merge, sample, Subject, throttleTime} from 'rxjs'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
@@ -397,6 +397,8 @@ class _List extends React.Component {
         const mouseActivity$ = merge(
             fromEvent(document, 'mousemove'),
             fromEvent(document, 'wheel')
+        ).pipe(
+            throttleTime(16) // limit mouse events to 60Hz
         )
         const mouseOption$ = this.mouseOption$.pipe(
             sample(mouseActivity$),

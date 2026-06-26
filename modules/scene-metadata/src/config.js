@@ -1,36 +1,52 @@
-const {program} = require('commander')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
 
-const UPDATE_TIME = '00:00'
-const MIN_DAYS_PUBLISHED = 3
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('config')
+
+const DEFAULT_UPDATE_INTERVAL_MINUTES = 60
+const DEFAULT_MIN_HOURS_PUBLISHED = 24
 
 const fatalError = error => {
     log.fatal(error)
     process.exit(1)
 }
 
-program.exitOverride()
+const program = new Command()
 
 try {
     program
-        .requiredOption('--redis-uri <value>', 'Redis URI')
-        .option('--update-time <string>', 'Update hours (h)', UPDATE_TIME)
-        .option('--min-days-published <number>', 'Min days published (days)', MIN_DAYS_PUBLISHED)
-        .parse(process.argv)
+        .exitOverride()
+        .addOption(
+            new Option('--redis-host <value>')
+                .env('REDIS_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--update-interval-minutes <number>')
+                .env('UPDATE_INTERVAL_MINUTES')
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_UPDATE_INTERVAL_MINUTES)
+        )
+        .addOption(
+            new Option('--min-hours-published <number>')
+                .env('MIN_HOURS_PUBLISHED')
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_MIN_HOURS_PUBLISHED)
+        )
+        .parse()
 } catch (error) {
     fatalError(error)
 }
 
 const {
-    redisUri,
-    updateTime,
-    minDaysPublished
+    redisHost,
+    updateIntervalMinutes,
+    minHoursPublished
 } = program.opts()
 
-log.info('Configuration loaded')
+log.fatal('Configuration loaded')
 
-module.exports = {
-    redisUri,
-    updateTime,
-    minDaysPublished
-}
+const redisUri = `redis://${redisHost}`
+
+export {minHoursPublished, redisUri, updateIntervalMinutes}

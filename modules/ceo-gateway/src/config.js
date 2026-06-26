@@ -1,20 +1,33 @@
-const {program} = require('commander')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
 
-const DEFAULT_PORT = 80
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('config')
+
+const DEFAULT_HTTP_PORT = 80
 
 const fatalError = error => {
     log.fatal(error)
     process.exit(1)
 }
 
-program.exitOverride()
+const program = new Command()
 
 try {
     program
-        .requiredOption('--ceo-url <value>', 'URL of CEO')
-        .option('--port <number>', 'Port', DEFAULT_PORT)
-        .parse(process.argv)
+        .exitOverride()
+        .addOption(
+            new Option('--ceo-url <value>')
+                .env('CEO_URL')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--port <number>')
+                .env('HTTP_PORT')
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_HTTP_PORT)
+        )
+        .parse()
 } catch (error) {
     fatalError(error)
 }
@@ -26,7 +39,6 @@ const {
 
 log.info('Configuration loaded')
 
-module.exports = {
-    port,
-    ceoUrl
-}
+export {
+    ceoUrl,
+    port}

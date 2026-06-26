@@ -21,14 +21,17 @@ import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
-import {UserMessage} from './userMessage'
+import {EditUserMessage, ShowUserMessage} from './userMessage'
 import styles from './userMessages.module.css'
+
+const isAdmin = user =>
+    user.roles && user.roles.includes('application_admin')
 
 const mapStateToProps = state => {
     const currentUser = state.user.currentUser
     const userMessages = state.user.userMessages
     return {
-        isAdmin: currentUser.roles && currentUser.roles.includes('application_admin'),
+        isAdmin: isAdmin(currentUser),
         userMessages
     }
 }
@@ -48,7 +51,8 @@ const unreadMessagesCount = userMessages =>
 
 class _UserMessages extends React.Component {
     state = {
-        selectedMessage: null
+        editMessage: null,
+        showMessage: null
     }
 
     constructor(props) {
@@ -68,7 +72,7 @@ class _UserMessages extends React.Component {
             },
             error => Notifications.error({message: msg('userMessage.update.error'), error})
         )
-        this.editMessage(null)
+        this.closeMessage()
     }
 
     removeMessage(message) {
@@ -137,7 +141,7 @@ class _UserMessages extends React.Component {
 
     isUnread() {
         const {userMessages} = this.props
-        return unreadMessagesCount(userMessages)
+        return unreadMessagesCount(userMessages) > 0
     }
 
     newMessage() {
@@ -146,7 +150,20 @@ class _UserMessages extends React.Component {
 
     editMessage(userMessage) {
         this.setState({
-            selectedMessage: userMessage
+            editMessage: userMessage
+        })
+    }
+
+    showMessage(userMessage) {
+        this.setState({
+            showMessage: userMessage
+        })
+    }
+
+    closeMessage() {
+        this.setState({
+            editMessage: null,
+            showMessage: null
         })
     }
 
@@ -156,7 +173,7 @@ class _UserMessages extends React.Component {
             const sortedUserMessages = _.orderBy(userMessages, userMessage => moment(userMessage.message.creationTime) || moment(), 'desc')
             return (
                 <Layout type='vertical' spacing='tight'>
-                    {sortedUserMessages.map((userMessage, index) => this.renderMessage(userMessage, index))}
+                    {sortedUserMessages.map(userMessage => this.renderMessage(userMessage))}
                 </Layout>
             )
         } else {
@@ -184,17 +201,17 @@ class _UserMessages extends React.Component {
         )
     }
 
-    renderMessage(userMessage, index) {
+    renderMessage(userMessage) {
         const {isAdmin} = this.props
         const message = userMessage.message
         const author = userMessage.message.username
         const creationTime = userMessage.message.creationTime
+        const updateTime = userMessage.message.updateTime
+        const id = `${author}-${creationTime}-${updateTime}`
         return (
             <ListItem
-                key={index}
-                expansion={this.renderMessageBody(userMessage.message.contents)}
-                clickToToggle
-                onExpandDelayed={() => this.setReadState(userMessage, 'READ')}>
+                key={id}
+                onClick={() => this.setState({showMessage: userMessage})}>
                 <CrudItem
                     title={<Msg id='userMessages.author' author={author}/>}
                     description={userMessage.message.subject}
@@ -223,7 +240,8 @@ class _UserMessages extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                type='modal'>
+                placement='modal'
+                onBackdropClick={() => isClosable ? deactivate() : null}>
                 <Panel.Header
                     icon='bell'
                     title={msg('userMessages.title')}/>
@@ -250,22 +268,31 @@ class _UserMessages extends React.Component {
         )
     }
 
-    renderMessagePanel(message) {
-        return (
-            <UserMessage
+    renderMessagePanel(message, edit) {
+        return edit ? (
+            <EditUserMessage
                 message={message}
                 onApply={message => this.updateMessage(message)}
-                onCancel={() => this.editMessage()}/>
+                onCancel={() => this.closeMessage()}
+            />
+        ) : (
+            <ShowUserMessage
+                message={message}
+                onCancel={() => {
+                    this.setReadState(message)
+                    this.closeMessage()
+                }}
+            />
         )
     }
 
     render() {
         const {userMessages} = this.props
-        const {selectedMessage} = this.state
+        const {editMessage, showMessage} = this.state
         if (userMessages) {
-            return selectedMessage
-                ? this.renderMessagePanel(selectedMessage)
-                : this.renderMessagesPanel()
+            if (editMessage) return this.renderMessagePanel(editMessage, true)
+            if (showMessage) return this.renderMessagePanel(showMessage, false)
+            return this.renderMessagesPanel()
         } else {
             return null
         }
@@ -320,7 +347,7 @@ class _UserMessagesButton extends React.Component {
     componentDidUpdate() {
         const {user, unreadUserMessages, activator: {activatables: {userMessages}}} = this.props
         const {shown} = this.state
-        if (user.privacyPolicyAccepted && unreadUserMessages && !shown && userMessages.canActivate) {
+        if (user.privacyPolicyAccepted && unreadUserMessages && !isAdmin(user) && !shown && userMessages.canActivate) {
             userMessages.activate()
             this.setState({shown: true})
         }

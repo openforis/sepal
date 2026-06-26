@@ -16,25 +16,26 @@ services:
       - 80:80
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - "${SEPAL_DATA_DIR}/sepal/shared/apps:/var/lib/sepal/app-manager/apps"
       - "${SEPAL_DATA_DIR}/app-launcher:/var/lib/sepal/app-launcher"
     init: true
     environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       DOCKER_REGISTRY_HOST: "${DOCKER_REGISTRY_HOST}"
       SEPAL_HOST: "${SEPAL_HOST}"
+      SEPAL_ADMIN_USERNAME: "sepalAdmin"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
-      EE_CREDENTIALS_PATH: "${SEPAL_DATA_DIR}/app-launcher/service-account-credentials.json"
-      SEPAL_DATA_DIR: "${SEPAL_DATA_DIR}"
-      DEPLOY_ENVIRONMENT : "${DEPLOY_ENVIRONMENT}"
-      EE_CLIENT_ID: "${EE_CLIENT_ID}"
       EE_ACCOUNT: "${EE_ACCOUNT}"
       EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
+      EE_CREDENTIALS_PATH: "${SEPAL_DATA_DIR}/app-launcher/service-account-credentials.json"
       GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
+      SEPAL_APPS_CATALOG_URL: "${SEPAL_APPS_CATALOG_URL:-}"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "80"]
-      timeout: 60s
-      interval: 1s
-      retries: 60
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
     networks:
       - sepal
     restart: always

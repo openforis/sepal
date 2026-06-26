@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, switchMap} from 'rxjs'
+import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, skipUntil, switchMap, throttleTime, timer} from 'rxjs'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
@@ -13,6 +13,7 @@ import {isOverElement} from './dom'
 import {withEventShield} from './eventShield'
 
 const ANIMATION_DURATION_MS = 250
+const SKIP_INITIAL_EVENTS_MS = 100
 
 const Context = React.createContext()
 
@@ -43,6 +44,7 @@ class _BlurDetector extends React.Component {
                 ref={this.ref}
                 className={[
                     className,
+                    styles.container,
                     fadeOut ? styles.fadeOut : null
                 ].join(' ')}
                 style={{...style, '--animation-duration-ms': ANIMATION_DURATION_MS}}
@@ -73,16 +75,22 @@ class _BlurDetector extends React.Component {
             addSubscription(
                 merge(
                     fromEvent(document, 'mousedown', {capture: true}),
-                    fromEvent(document, 'touchstart', {capture: true}),
-                    fromEvent(document, 'focus', {capture: true}),
+                    // Explicitly set passive: false for touchstart events (default is true)
+                    // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
+                    fromEvent(document, 'touchstart', {capture: true, passive: false}),
+                    fromEvent(document, 'focus', {capture: true})
                 ).pipe(
+                    skipUntil(timer(SKIP_INITIAL_EVENTS_MS)),
                     filter(this.isEnabled),
-                    map(e => this.isOver(e)),
-                    filter(over => !over)
-                ).subscribe(this.onBlur)
+                    filter(e => !this.isOver(e))
+                ).subscribe(e => {
+                    e.preventDefault()
+                    this.onBlur(e)
+                })
             )
             if (autoBlurTimeout) {
                 const over$ = fromEvent(document, 'mousemove').pipe(
+                    throttleTime(16),
                     map(e => this.isOver(e)),
                     distinctUntilChanged(),
                     shareReplay({bufferSize: 1, refCount: true})

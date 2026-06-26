@@ -19,6 +19,7 @@ const fields = {
     contents: new Form.Field()
         .notBlank('userMessage.form.contents.required')
 }
+
 const mapStateToProps = (state, ownProps) => {
     const user = state.user.currentUser
     const message = ownProps.message
@@ -34,7 +35,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-class _UserMessage extends React.Component {
+class _EditUserMessage extends React.Component {
     renderPreview() {
         const {inputs: {contents}} = this.props
         return (
@@ -78,10 +79,10 @@ class _UserMessage extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                placement='modal'
                 form={form}
                 isActionForm={true}
                 statePath='userMessage'
-                modal
                 onApply={message => onApply(message)}
                 onCancel={onCancel}>
                 <Panel.Header
@@ -93,13 +94,47 @@ class _UserMessage extends React.Component {
     }
 }
 
-export const UserMessage = compose(
-    _UserMessage,
+export const EditUserMessage = compose(
+    _EditUserMessage,
     withForm({fields, mapStateToProps})
 )
 
-UserMessage.propTypes = {
+EditUserMessage.propTypes = {
     message: PropTypes.object.isRequired,
-    onApply: PropTypes.func.isRequired,
+    onApply: PropTypes.func,
+    onCancel: PropTypes.func.isRequired
+}
+
+export class ShowUserMessage extends React.Component {
+    render() {
+        const {message: {message: {subject, contents}, username}, onCancel} = this.props
+        return (
+            <Panel
+                className={styles.panel}
+                placement='modal'
+                onBackdropClick={onCancel}>
+                <Panel.Header
+                    icon='envelope'
+                    title={subject}
+                    label={username}
+                />
+                <Panel.Content>
+                    <Markdown className={styles.contents} source={contents}/>
+                </Panel.Content>
+                <Panel.Buttons>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Close
+                            keybinding={['Enter', 'Escape']}
+                            onClick={onCancel}
+                        />
+                    </Panel.Buttons.Main>
+                </Panel.Buttons>
+            </Panel>
+        )
+    }
+}
+
+ShowUserMessage.propTypes = {
+    message: PropTypes.object.isRequired,
     onCancel: PropTypes.func.isRequired
 }

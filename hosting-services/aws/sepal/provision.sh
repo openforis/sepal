@@ -26,7 +26,22 @@ export AWS_POLL_DELAY_SECONDS=60
 
 inventory=$(../inventory.sh Sepal)
 
-ansible-playbook provision.yml \
+ansible-playbook provision-common.yml \
+    -i "$inventory" \
+    --private-key="${PRIVATE_KEY}" \
+    --extra-vars "env_file=$CONFIG_HOME/env local_ip_address=$LOCAL_IP_ADDRESS"
+
+ansible-playbook provision-sepal.yml \
+    -i "$inventory" \
+    --private-key="${PRIVATE_KEY}" \
+    --extra-vars "env_file=$CONFIG_HOME/env local_ip_address=$LOCAL_IP_ADDRESS"
+
+ansible-playbook provision-sepal-storage.yml \
+    -i "$inventory" \
+    --private-key="${PRIVATE_KEY}" \
+    --extra-vars "env_file=$CONFIG_HOME/env local_ip_address=$LOCAL_IP_ADDRESS"
+
+ansible-playbook provision-sepal-apps.yml \
     -i "$inventory" \
     --private-key="${PRIVATE_KEY}" \
     --extra-vars "env_file=$CONFIG_HOME/env local_ip_address=$LOCAL_IP_ADDRESS"

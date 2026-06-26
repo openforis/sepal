@@ -1,32 +1,30 @@
-const {job} = require('#gee/jobs/job')
- 
+import {of} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import {toGeometry} from '#sepal/ee/aoi'
+import ee from '#sepal/ee/ee'
+import {fileName} from '#sepal/path'
+
 const worker$ = ({
     requestArgs: {aoi}
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const {toGeometry$} = require('#sepal/ee/aoi')
-    const {of, switchMap} = require('rxjs')
 
-    return toGeometry$(aoi).pipe(
-        switchMap(geometry => {
-            if (geometry) {
-                const boundsPolygon = ee.List(geometry.bounds().coordinates().get(0))
-                const bounds = ee.Algorithms.If(
-                    geometry.isUnbounded(),
-                    [[-180, -90], [180, 90]],
-                    [boundsPolygon.get(0), boundsPolygon.get(2)]
-                )
-                return ee.getInfo$(bounds, 'get bounds')
-            } else {
-                return of(null)
-            }
-        })
-    )
-
+    const geometry = toGeometry(aoi)
+    if (geometry) {
+        const boundsPolygon = ee.List(geometry.bounds().coordinates().get(0))
+        const bounds = ee.Algorithms.If(
+            geometry.isUnbounded(),
+            [[-180, -90], [180, 90]],
+            [boundsPolygon.get(0), boundsPolygon.get(2)]
+        )
+        return ee.getInfo$(bounds, 'get bounds')
+    } else {
+        return of(null)
+    }
 }
 
-module.exports = job({
+export default job({
     jobName: 'AOI Bounds',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

@@ -42,6 +42,7 @@ class _ChartPixel extends React.Component {
         this.cancel$ = new Subject()
         this.state = {}
         this.recipeActions = RecipeActions(props.recipeId)
+        this.close = this.close.bind(this)
     }
 
     render() {
@@ -59,7 +60,7 @@ class _ChartPixel extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                type='center'>
+                placement='center'>
                 <Panel.Header
                     icon='chart-area'
                     title={`${latLng.lat}, ${latLng.lng}`}/>
@@ -77,7 +78,7 @@ class _ChartPixel extends React.Component {
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close
                             keybinding='Escape'
-                            onClick={() => this.close()}
+                            onClick={this.close}
                         />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>

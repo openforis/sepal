@@ -1,11 +1,15 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import express from 'express'
+import expressWs from 'express-ws'
 
-const log = require('#sepal/log').getLogger('main')
+import logConfig from '#config/log.json' with {type: 'json'}
+import {configureServer, getLogger} from '#sepal/log'
 
-const express = require('express')
-const expressWs = require('express-ws')
-const Terminal = require('./terminal')
-const {ip, port} = require('./config')
+import {ip, port} from './config.js'
+import * as Terminal from './terminal.js'
+
+configureServer(logConfig)
+
+const log = getLogger('main')
 
 const app = express()
 expressWs(app)

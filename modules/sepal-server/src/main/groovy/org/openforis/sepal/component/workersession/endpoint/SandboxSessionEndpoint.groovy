@@ -12,7 +12,7 @@ import org.openforis.sepal.component.workersession.command.CloseUserSessions
 import org.openforis.sepal.component.workersession.command.Heartbeat
 import org.openforis.sepal.component.workersession.command.RequestSession
 import org.openforis.sepal.component.workersession.command.SetEarliestTimeoutTime
-import org.openforis.sepal.component.workersession.query.GenerateUserSessionReport
+import org.openforis.sepal.component.workersession.query.*
 import org.openforis.sepal.util.Clock
 
 import java.time.Duration
@@ -38,6 +38,12 @@ class SandboxSessionEndpoint {
             }
             get('/sessions/{username}/report', [ADMIN]) {
                 otherUser(requestContext).generateReport()
+            }
+            get('/sessions/mostRecentlyClosedByUser', [ADMIN]) {
+                currentUser(requestContext).mostRecentlyClosedByUser()
+            }
+            get('/sessions/mostRecentlyClosed', [ADMIN]) {
+                otherUser(requestContext).mostRecentlyClosed()
             }
 
 
@@ -73,6 +79,23 @@ class SandboxSessionEndpoint {
                 otherUser(requestContext).closeUserSessions()
                 send toJson(status: 'OK')
             }
+
+            post('/sessions/api-key-authenticate', [ADMIN]) {
+                response.contentType = 'application/json'
+                def apiKey = params['apiKey'] as String
+                if (!apiKey) {
+                    response.status = 400
+                    send toJson([error: 'apiKey required'])
+                    return
+                }
+                def username = component.submit(new FindUsernameByApiKey(apiKey: apiKey))
+                if (!username) {
+                    response.status = 401
+                    send toJson([:])
+                    return
+                }
+                send toJson([username: username])
+            }
         }
     }
 
@@ -91,7 +114,7 @@ class SandboxSessionEndpoint {
 
         private Handler(RequestContext context, String username, boolean forCurrentUser) {
             this.context = context
-            this.username = username
+            this.username = username?.toLowerCase()
             this.forCurrentUser = forCurrentUser
         }
 
@@ -100,9 +123,32 @@ class SandboxSessionEndpoint {
                 response.contentType = 'application/json'
                 def report = component.submit(new GenerateUserSessionReport(
                         username: username,
-                        workerType: SANDBOX))
+                        workerType: SANDBOX
+                ))
                 def map = reportAsMap(report)
                 send toJson(map)
+            }
+        }
+        
+        void mostRecentlyClosedByUser() {
+            context.with {
+                response.contentType = 'application/json'
+                def mostRecentlyClosedByUser = component.submit(
+                    new MostRecentlyClosedSessionByUser()
+                )
+                send toJson(mostRecentlyClosedByUser)
+            }
+        }
+
+        void mostRecentlyClosed() {
+            context.with {
+                response.contentType = 'application/json'
+                def result = component.submit(
+                    new MostRecentlyClosedSession(
+                        username: username
+                    )
+                )
+                send toJson(result)
             }
         }
 
@@ -169,7 +215,7 @@ class SandboxSessionEndpoint {
             context.with {
                 response.status = 204
                 component.submit(new CloseUserSessions(
-                        username: params.required('username')
+                        username: params.required('username')?.toLowerCase()
                 ))
             }
         }

@@ -1,5 +1,5 @@
-const {getEmailNotificationsEnabled: getEmailNotificationsEnabledCache, setEmailNotificationsEnabled: setEmailNotificationsEnabledCache} = require('./cache')
-const {getEmailNotificationsEnabled: getEmailNotificationsEnabledRemote} = require('./http')
+import {getEmailNotificationsEnabled as getEmailNotificationsEnabledCache, setEmailNotificationsEnabled as setEmailNotificationsEnabledCache} from './cache.js'
+import {getEmailNotificationsEnabled as getEmailNotificationsEnabledRemote} from './http.js'
 
 const getEmailNotificationsEnabled = async emailAddress => {
     const emailNotificationsEnabledCache = await getEmailNotificationsEnabledCache(emailAddress)
@@ -7,12 +7,12 @@ const getEmailNotificationsEnabled = async emailAddress => {
         return emailNotificationsEnabledCache
     } else {
         const emailNotificationsEnabledRemote = await getEmailNotificationsEnabledRemote(emailAddress)
-        setEmailNotificationsEnabledCache(emailAddress, emailNotificationsEnabledRemote)
+        await setEmailNotificationsEnabledCache(emailAddress, emailNotificationsEnabledRemote)
         return emailNotificationsEnabledRemote
     }
 }
 
-const filterEmailNotificationsEnabled = async emailAddressOrAddresses => {
+const filterEmailNotificationsEnabled = async (emailAddressOrAddresses, forceEmailNotificationEnabled) => {
     if (!emailAddressOrAddresses) {
         return []
     }
@@ -21,11 +21,11 @@ const filterEmailNotificationsEnabled = async emailAddressOrAddresses => {
     const emailAddressesEnabled = await Promise.all(
         emailAddresses.map(async emailAddress => ({
             emailAddress,
-            enabled: await getEmailNotificationsEnabled(emailAddress)
+            enabled: forceEmailNotificationEnabled || await getEmailNotificationsEnabled(emailAddress)
         }))
     )
 
     return emailAddressesEnabled.filter(({enabled}) => enabled).map(({emailAddress}) => emailAddress)
 }
 
-module.exports = {getEmailNotificationsEnabled, filterEmailNotificationsEnabled}
+export {filterEmailNotificationsEnabled, getEmailNotificationsEnabled}

@@ -1,30 +1,68 @@
-const {program} = require('commander')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
 
-const DEFAULT_PORT = 80
+import {getLogger} from '#sepal/log'
 
-program
-    .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
-    .requiredOption('--redis-uri <value>', 'Redis URI')
-    .option('--port <number>', 'Port', DEFAULT_PORT)
-    .option('--sepalHost <value>', 'Sepal host', 'localhost')
-    .option('--secure', 'Secure', false)
-    .parse(process.argv)
+const log = getLogger('config')
+
+const DEFAULT_HTTP_PORT = 80
+
+const fatalError = error => {
+    log.fatal(error)
+    process.exit(1)
+}
+
+const program = new Command()
+
+try {
+    program
+        .exitOverride()
+        .addOption(
+            new Option('--sepal-host <value>')
+                .env('SEPAL_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--sepal-apps-host <value>')
+                .env('SEPAL_APPS_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--amqp-host <value>')
+                .env('RABBITMQ_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--redis-host <value>')
+                .env('REDIS_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--port <number>')
+                .env('HTTP_PORT')
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_HTTP_PORT)
+        )
+        .parse()
+} catch (error) {
+    fatalError(error)
+}
 
 const {
-    amqpUri,
-    redisUri,
-    port,
     sepalHost,
-    secure
+    sepalAppsHost,
+    amqpHost,
+    redisHost,
+    port
 } = program.opts()
 
 log.info('Configuration loaded')
 
-module.exports = {
+const amqpUri = `amqp://${amqpHost}`
+const redisUri = `redis://${redisHost}`
+
+export {
     amqpUri,
-    redisUri,
     port,
-    sepalHost,
-    secure
-}
+    redisUri,
+    sepalAppsHost,
+    sepalHost}

@@ -14,6 +14,7 @@ import {ModalConfirmationButton} from '~/widget/modalConfirmationButton'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
+import {UserActivity} from './userActivity'
 import styles from './userDetails.module.css'
 import {UserStatus} from './userStatus'
 
@@ -93,9 +94,9 @@ class _UserDetails extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                placement='modal'
                 form={form}
                 statePath='userDetails'
-                modal
                 confirmation={
                     admin.isDirty() ?
                         ({confirm, cancel}) =>
@@ -111,10 +112,14 @@ class _UserDetails extends React.Component {
                 <Panel.Header
                     icon='user'
                     title={msg('user.userDetails.title')}
-                    label={this.renderHeaderButtons()}
+                    label={this.renderUserRoleButtons()}
                 />
                 <Panel.Content>
                     <Layout>
+                        <Layout type='horizontal' alignment='spaced' framed>
+                            {this.renderStatus()}
+                            {this.renderActivity()}
+                        </Layout>
                         <Form.Input
                             label={msg('user.userDetails.form.username.label')}
                             input={username}
@@ -268,20 +273,17 @@ class _UserDetails extends React.Component {
         }
     }
 
-    renderHeaderButtons() {
+    renderStatus() {
+        const {userDetails: {status, googleUser}} = this.props
         return (
-            <Layout type='horizontal-nowrap'>
-                {this.renderStatus()}
-                {this.renderUserRoleButtons()}
-            </Layout>
+            <UserStatus status={status} googleUser={googleUser} showLabel={true}/>
         )
     }
 
-    renderStatus() {
-        const {userDetails: {status, googleTokens}} = this.props
-        const isGoogleUser = !!googleTokens
+    renderActivity() {
+        const {userDetails} = this.props
         return (
-            <UserStatus status={status} isGoogleUser={isGoogleUser}/>
+            <UserActivity user={userDetails}/>
         )
     }
 

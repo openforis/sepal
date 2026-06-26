@@ -9,15 +9,8 @@ then
     --watch "${MODULE}/config" \
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9229 \
-    src/main.js \
-    --redis-uri "redis://scene-metadata-redis" \
-    --update-time ${UPDATE_TIME} \
-    --min-days-published ${MIN_DAYS_PUBLISHED}
+    src/main.js
 else
   echo "Starting node"
-  exec node \
-    src/main.js \
-    --redis-uri "redis://scene-metadata-redis" \
-    --update-time ${UPDATE_TIME} \
-    --min-days-published ${MIN_DAYS_PUBLISHED}
+  exec node src/main.js
 fi

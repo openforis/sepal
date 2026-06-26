@@ -35,6 +35,7 @@ abstract class AbstractWorkerSessionTest extends Specification {
     final budgetManager = new FakeBudgetManager()
     final googleOAuthGateway = new FakeGoogleOAuthGateway()
     final clock = new FakeClock()
+    final apiKeyGenerator = new FakeApiKeyGenerator()
     final component = new WorkerSessionComponent(
             connectionManager,
             eventDispatcher,
@@ -43,6 +44,7 @@ abstract class AbstractWorkerSessionTest extends Specification {
             googleOAuthGateway,
             [new InstanceType(id: testInstanceType, name: testInstanceType, hourlyCost: 123d, idleCount: 1)],
             clock,
+            apiKeyGenerator,
             workDir,
             new FakeTopic()
     )

@@ -1,22 +1,43 @@
-const {program} = require('commander')
-const log = require('#sepal/log').getLogger('config')
+import {Command, Option} from 'commander'
 
-const DEFAULT_PORT = 80
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('config')
+
+const DEFAULT_HTTP_PORT = 80
 
 const fatalError = error => {
     log.fatal(error)
     process.exit(1)
 }
 
-program.exitOverride()
+const program = new Command()
 
 try {
     program
-        .requiredOption('--ip <value>', 'IP address')
-        .option('--port <number>', 'Port', DEFAULT_PORT)
-        .requiredOption('--home-dir <value>', 'Base directory of user homes')
-        .requiredOption('--ssh-script-path <value>', 'SSH script path')
-        .parse(process.argv)
+        .exitOverride()
+        .addOption(
+            new Option('--ip <value>')
+                .env('IP')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--home-dir <value>')
+                .env('HOME_DIR')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--ssh-script-path <value>')
+                .env('SSH_SCRIPT_PATH')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--port <number>')
+                .env('HTTP_PORT')
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_HTTP_PORT)
+        )
+        .parse()
 } catch (error) {
     fatalError(error)
 }
@@ -30,9 +51,9 @@ const {
 
 log.info('Configuration loaded')
 
-module.exports = {
+export {
+    homeDir,
     ip,
     port,
-    homeDir,
     sshScriptPath
 }

@@ -6,6 +6,7 @@ import groovyx.net.http.RESTClient
 import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
+import org.openforis.sepal.component.workerinstance.api.SandboxSessionApiKey
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.util.Is
 import org.openforis.sepal.workertype.Image
@@ -24,17 +25,19 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     private final WorkerInstanceConfig config
     private final Map<String, InstanceType> instanceTypeById
     private final String syslogAddress
+    private final SandboxSessionApiKey sandboxSessionApiKey
 
-    DockerInstanceProvisioner(WorkerInstanceConfig config, List<InstanceType> instanceTypes, String syslogAddress) {
+    DockerInstanceProvisioner(WorkerInstanceConfig config, List<InstanceType> instanceTypes, String syslogAddress, SandboxSessionApiKey sandboxSessionApiKey) {
         this.config = config
         this.instanceTypeById = instanceTypes.collectEntries { [(it.id): it] }
         this.syslogAddress = syslogAddress
+        this.sandboxSessionApiKey = sandboxSessionApiKey
     }
 
     void provisionInstance(WorkerInstance instance) {
         waitUntilDockerIsAvailable(instance)
         deleteExistingContainers(instance)
-        def workerType = workerType(instance)
+        def workerType = workerType(instance, sandboxSessionApiKey.apiKeyForInstance(instance.id))
         workerType.images.each { image ->
             createContainer(instance, image)
             startContainer(instance, image)
@@ -172,8 +175,8 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         }
     }
 
-    private WorkerType workerType(WorkerInstance instance) {
-        def workerType = WorkerTypes.create(instance.reservation.workerType, instance, config)
+    private WorkerType workerType(WorkerInstance instance, String apiKey = null) {
+        def workerType = WorkerTypes.create(instance.reservation.workerType, instance, config, apiKey)
         Is.notNull(workerType, "No worker type with id ${instance.reservation.workerType}")
         return workerType
     }

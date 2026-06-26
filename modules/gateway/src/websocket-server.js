@@ -1,6 +1,8 @@
-const {moduleTag, eventTag} = require('./tag')
+import {getLogger} from '#sepal/log'
 
-const log = require('#sepal/log').getLogger('websocket/server')
+import {eventTag, moduleTag} from './tag.js'
+
+const log = getLogger('websocket/server')
 
 const Servers = () => {
     const servers = {}
@@ -23,10 +25,18 @@ const Servers = () => {
         }
     }
 
+    const unsubscribe = subscription => {
+        try {
+            subscription.unsubscribe()
+        } catch (error) {
+            log.error(`Cannot unsubscribe - ${error.message}`)
+        }
+    }
+
     const remove = module => {
         try {
             const {subscriptions} = get(module)
-            subscriptions.forEach(subscription => subscription.unsubscribe())
+            subscriptions.forEach(subscription => unsubscribe(subscription))
             delete servers[module]
             log.debug(`${moduleTag(module)} removed from servers, now ${Object.keys(servers).length}`)
         } catch (error) {
@@ -62,4 +72,4 @@ const Servers = () => {
     return {add, remove, list, send, sendEvent, broadcastEvent}
 }
 
-module.exports = {Servers}
+export {Servers}

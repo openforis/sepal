@@ -1,17 +1,22 @@
-require('#sepal/log').configureServer(require('#config/log.json'))
+import express from 'express'
+import {createProxyMiddleware} from 'http-proxy-middleware'
+import _ from 'lodash'
 
-const express = require('express')
-const log = require('#sepal/log').getLogger('main')
-const _ = require('lodash')
-const {port, managementPort, monitorEnabled} = require('./config')
-const {proxyEndpoints$, registerUpgradeListener} = require('./proxy')
-const proxyManager = require('./proxyManager')
-const managementRoutes = require('./managementRoutes')
+import logConfig from '#config/log.json' with {type: 'json'}
+import * as server from '#sepal/httpServer'
+import {configureServer, getLogger} from '#sepal/log'
 
-const {createCredentialsFile} = require('./gee')
-const {monitorApps} = require('./apps')
-const server = require('#sepal/httpServer')
-const {createProxyMiddleware} = require('http-proxy-middleware')
+import {monitorApps} from './apps.js'
+import {managementPort, monitorEnabled, port} from './config.js'
+import {createCredentialsFile} from './gee.js'
+import managementRoutes from './managementRoutes.js'
+import {proxyEndpoints$, registerUpgradeListener} from './proxy.js'
+import * as proxyManager from './proxyManager.js'
+import {getRequestUser} from './user.js'
+
+configureServer(logConfig)
+
+const log = getLogger('main')
 
 const startServer = () => {
     // This is the main server for the app launcher
@@ -20,6 +25,15 @@ const startServer = () => {
     // for managemente requests we use a proxy to the management server
     app.use(
         '/management',
+        (req, res, next) => {
+            const user = getRequestUser(req)
+            if (user && user.admin) {
+                next()
+            } else {
+                log.warn(`[management] unauthorized access attempt for ${req.originalUrl}`)
+                res.status(403).send('Forbidden: Admin access required')
+            }
+        },
         createProxyMiddleware({
             target: `http://localhost:${managementPort}`,
             changeOrigin: true,

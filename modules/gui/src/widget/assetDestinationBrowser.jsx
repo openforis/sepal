@@ -59,10 +59,10 @@ class _AssetDestinationBrowser extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                placement='modal'
                 form={form}
                 onApply={this.onApply}
-                onCancel={deactivate}
-                modal>
+                onCancel={deactivate}>
                 <Panel.Header
                     title={msg('asset.browser.title')}
                     label={ this.renderReloadButton() }
@@ -124,7 +124,7 @@ class _AssetDestinationBrowser extends React.Component {
     createFolder(folder) {
         const {assets: {createFolder, isExistingPath}} = this.props
         const {selectedFolder} = this.state
-        const path = [...selectedFolder, ...folder.split('/')]
+        const path = [...selectedFolder, ...AssetTree.fromStringPath(folder, true)]
         if (isExistingPath(path)) {
             Notifications.error({
                 message: msg('browse.createFolder.existing.error'),

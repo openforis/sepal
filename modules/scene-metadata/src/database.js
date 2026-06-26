@@ -1,6 +1,9 @@
-const mysql = require('mysql2/promise')
-const {formatInterval} = require('./time')
-const log = require('#sepal/log').getLogger('database')
+import {createPool} from '#sepal/db/mysql'
+import {getLogger} from '#sepal/log'
+
+import {formatInterval} from './time.js'
+
+const log = getLogger('database')
 
 const CURRENT_DATABASE_NAME = 'sdms'
 const NEW_DATABASE_NAME = 'sdms_new'
@@ -14,13 +17,7 @@ const transaction = {
 }
 
 const initializeDatabase = async () => {
-    const pool = mysql.createPool({
-        host: process.env.MYSQL_HOST,
-        user: process.env.MYSQL_USER,
-        password: process.env.MYSQL_PASSWORD,
-        database: CURRENT_DATABASE_NAME,
-        connectionLimit: 5,
-    })
+    const pool = await createPool(CURRENT_DATABASE_NAME)
 
     const dropDatabase = async name => {
         log.debug(`Dropping database ${name}...`)
@@ -71,10 +68,10 @@ const initializeDatabase = async () => {
         log.info('Prepared database')
     }
     
-    const ingest = async (csvFile, timestamp, update = false) => {
+    const ingest = async (csvFile, timestamp) => {
         log.debug(`Ingesting data from file ${csvFile}`)
         const updateTime = timestamp.toISOString()
-        const table = `${update ? CURRENT_DATABASE_NAME : NEW_DATABASE_NAME}.${TABLE_NAME}`
+        const table = `${NEW_DATABASE_NAME}.${TABLE_NAME}`
         const t0 = Date.now()
         try {
             await pool.query(`
@@ -127,8 +124,8 @@ const initializeDatabase = async () => {
         process.exit()
     })
 
-    const mapValues = ({id, source, dataSet, sceneAreaId, acquiredTimestamp, dayOfYear, cloudCover, sunAzimuth, sunElevation}, timestamp) =>
-        ([id, source, dataSet, sceneAreaId, new Date(acquiredTimestamp), dayOfYear, cloudCover, sunAzimuth, sunElevation, timestamp])
+    const mapValues = ({id, source, dataset, sceneAreaId, acquiredTimestamp, dayOfYear, cloudCover, sunAzimuth, sunElevation}, timestamp) =>
+        ([id, source, dataset, sceneAreaId, new Date(acquiredTimestamp), dayOfYear, cloudCover, sunAzimuth, sunElevation, timestamp])
 
     const beginTransaction = async () => {
         if (transaction.connection) {
@@ -191,4 +188,4 @@ const initializeDatabase = async () => {
     }
 }
 
-module.exports = {initializeDatabase}
+export {initializeDatabase}

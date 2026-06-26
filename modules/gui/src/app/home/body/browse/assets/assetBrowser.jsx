@@ -1,3 +1,4 @@
+import memoizeOne from 'memoize-one'
 import moment from 'moment'
 import {orderBy} from 'natural-orderby'
 import PropTypes from 'prop-types'
@@ -29,6 +30,49 @@ import {AssetTree} from './assetTree'
 const log = getLogger('browse')
 
 const ANIMATION_DURATION_MS = 1000
+
+const getSorter = memoizeOne((splitDirs, sortingOrder, sortingDirection) => {
+    const orderMap = {
+        '-1': 'desc',
+        '1': 'asc'
+    }
+
+    const dirSorter = {
+        order: splitDirs ? ([_, node]) => AssetTree.isDirectory(node) : null,
+        direction: splitDirs ? 'desc' : null
+    }
+
+    const nameSorter = {
+        order: ([key]) => key,
+        direction: orderMap[sortingDirection]
+    }
+
+    const dateSorter = {
+        order: ([_, node]) => AssetTree.getUpdateTime(node),
+        direction: orderMap[-sortingDirection]
+    }
+
+    const naturalSortingDirectoriesFirst = items =>
+        orderBy(
+            items,
+            [dirSorter.order, nameSorter.order].filter(Boolean),
+            [dirSorter.direction, nameSorter.direction].filter(Boolean)
+        )
+
+    const dateSortingDirectoriesFirst = items =>
+        orderBy(
+            items,
+            [dirSorter.order, dateSorter.order].filter(Boolean),
+            [dirSorter.direction, dateSorter.direction].filter(Boolean)
+        )
+
+    const sortingMap = {
+        name: naturalSortingDirectoriesFirst,
+        date: dateSortingDirectoriesFirst
+    }
+
+    return sortingMap[sortingOrder]
+})
 
 class _AssetBrowser extends React.Component {
 
@@ -93,44 +137,33 @@ class _AssetBrowser extends React.Component {
     }
 
     onTree(treeUpdate) {
-        const {tree} = this.state
-        this.setState({tree: AssetTree.updateTree(tree, treeUpdate)})
+        this.setState(({tree}) => ({tree: AssetTree.updateTree(tree, treeUpdate)}))
     }
 
     onNode(nodeUpdate) {
-        const {tree} = this.state
-        this.setState({tree: AssetTree.updateTree(tree, nodeUpdate)})
+        this.setState(({tree}) => ({tree: AssetTree.updateTree(tree, nodeUpdate)}))
     }
 
     onStatus(status) {
         this.setState({status})
     }
 
-    getOpenDirectories(path = []) {
-        const {tree} = this.state
-        return AssetTree.getOpenDirectories(tree, path)
-    }
-
     expandDirectory(node) {
-        const {tree} = this.state
         const path = AssetTree.getPath(node)
-        this.setState({tree: AssetTree.expandDirectory(tree, path)})
+        this.setState(({tree}) => ({tree: AssetTree.expandDirectory(tree, path)}))
     }
 
     expandAllDirectories() {
-        const {tree} = this.state
-        this.setState({tree: AssetTree.expandAllDirectories(tree)})
+        this.setState(({tree}) => ({tree: AssetTree.expandAllDirectories(tree)}))
     }
 
     collapseDirectory(node) {
-        const {tree} = this.state
         const path = AssetTree.getPath(node)
-        this.setState({tree: AssetTree.collapseDirectory(tree, path)})
+        this.setState(({tree}) => ({tree: AssetTree.collapseDirectory(tree, path)}))
     }
 
     collapseAllDirectories() {
-        const {tree} = this.state
-        this.setState({tree: AssetTree.collapseAllDirectories(tree)})
+        this.setState(({tree}) => ({tree: AssetTree.collapseAllDirectories(tree)}))
     }
 
     toggleSelected(node) {
@@ -142,20 +175,17 @@ class _AssetBrowser extends React.Component {
     }
 
     selectItem(node) {
-        const {tree} = this.state
         const path = AssetTree.getPath(node)
-        this.setState({tree: AssetTree.selectItem(tree, path)})
+        this.setState(({tree}) => ({tree: AssetTree.selectItem(tree, path)}))
     }
 
     deselectItem(node) {
-        const {tree} = this.state
         const path = AssetTree.getPath(node)
-        this.setState({tree: AssetTree.deselectItem(tree, path)})
+        this.setState(({tree}) => ({tree: AssetTree.deselectItem(tree, path)}))
     }
 
     clearSelection() {
-        const {tree} = this.state
-        this.setState({tree: AssetTree.deselectDescendants(tree, [])})
+        this.setState(({tree}) => ({tree: AssetTree.deselectDescendants(tree, [])}))
     }
 
     createFolder(folder) {
@@ -163,7 +193,7 @@ class _AssetBrowser extends React.Component {
         const {directories} = AssetTree.getSelectedItems(tree)
         const selectedFolder = directories.length === 1 ? directories[0] : null
         if (selectedFolder) {
-            const path = [...selectedFolder, ...folder.split('/')]
+            const path = [...selectedFolder, ...AssetTree.fromStringPath(folder, true)]
             if (path.length > 10) {
                 Notifications.error({
                     message: msg('browse.createFolder.tooDeep.error'),
@@ -184,8 +214,7 @@ class _AssetBrowser extends React.Component {
     }
 
     removePaths(paths) {
-        const {tree} = this.state
-        this.setState({tree: AssetTree.setRemoving(tree, paths)})
+        this.setState(({tree}) => ({tree: AssetTree.setRemoving(tree, paths)}))
         this.remove(paths)
     }
 
@@ -346,7 +375,8 @@ class _AssetBrowser extends React.Component {
     }
 
     renderListItems(items) {
-        const sorter = this.getSorter()
+        const {splitDirs, sorting: {sortingOrder, sortingDirection}} = this.state
+        const sorter = getSorter(splitDirs, sortingOrder, sortingDirection)
         return sorter(Object.entries(items))
             .map(([key, node]) => this.renderListItem(key, node))
     }
@@ -384,50 +414,6 @@ class _AssetBrowser extends React.Component {
                 {this.renderList(node)}
             </li>
         )
-    }
-
-    getSorter() {
-        const {splitDirs, sorting: {sortingOrder, sortingDirection}} = this.state
-        const orderMap = {
-            '-1': 'desc',
-            '1': 'asc'
-        }
-
-        const dirSorter = {
-            order: splitDirs ? ([_, node]) => AssetTree.isDirectory(node) : null,
-            direction: splitDirs ? 'desc' : null
-        }
-
-        const nameSorter = {
-            order: ([key]) => key,
-            direction: orderMap[sortingDirection]
-        }
-
-        const dateSorter = {
-            order: ([_, node]) => AssetTree.getUpdateTime(node),
-            direction: orderMap[-sortingDirection]
-        }
-
-        const naturalSortingDirectoriesFirst = items =>
-            orderBy(
-                items,
-                [dirSorter.order, nameSorter.order].filter(Boolean),
-                [dirSorter.direction, nameSorter.direction].filter(Boolean)
-            )
-
-        const dateSortingDirectoriesFirst = items =>
-            orderBy(
-                items,
-                [dirSorter.order, dateSorter.order].filter(Boolean),
-                [dirSorter.direction, dateSorter.direction].filter(Boolean)
-            )
-
-        const sortingMap = {
-            name: naturalSortingDirectoriesFirst,
-            date: dateSortingDirectoriesFirst
-        }
-
-        return sortingMap[sortingOrder]
     }
 
     renderActionButtons() {
@@ -509,7 +495,7 @@ class _AssetBrowser extends React.Component {
         return (
             <SectionLayout>
                 <Content className={styles.browse} menuPadding horizontalPadding verticalPadding>
-                    {this.renderTooolbar()}
+                    {this.renderToolbar()}
                     {this.renderHeader()}
                     {this.renderTree()}
                 </Content>
@@ -517,7 +503,7 @@ class _AssetBrowser extends React.Component {
         )
     }
 
-    renderTooolbar() {
+    renderToolbar() {
         return (
             <Layout type='horizontal' spacing='compact'>
                 {this.renderActionsToolbar()}

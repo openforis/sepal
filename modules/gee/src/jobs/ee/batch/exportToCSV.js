@@ -1,9 +1,11 @@
-const {drive} = require('./drive')
-const ee = require('#sepal/ee/ee')
-const {interval, map, switchMap, takeLast, takeWhile} = require('rxjs')
-const moment = require('moment')
+import moment from 'moment'
+import {interval, map, switchMap, takeLast, takeWhile} from 'rxjs'
 
-const exportToCSV$ = ({
+import ee from '#sepal/ee/ee'
+
+import {drive} from './drive.js'
+
+export const exportToCSV$ = ({
     collection,
     description,
     selectors,
@@ -60,5 +62,3 @@ function exportTableToDrive$({
         takeLast(1),
     )
 }
-
-module.exports = {exportToCSV$}

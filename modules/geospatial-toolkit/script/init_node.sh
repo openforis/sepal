@@ -8,7 +8,7 @@ echo "**************************"
 
 # Install node.js
 
-NODE_MAJOR=22
+NODE_MAJOR=26
 
 apt-get -y update && apt-get install -y ca-certificates
 mkdir -p /etc/apt/keyrings

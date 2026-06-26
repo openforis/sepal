@@ -1,10 +1,14 @@
-const fs = require('fs')
-const {Subject, EMPTY, concat, defer, of, catchError, expand, map, mergeMap, scan, switchMap} = require('rxjs')
-const {fromPromise, finalizeObservable, autoRetry, swallow} = require('#sepal/rxjs')
-const {cloudStorage$} = require('./cloudStorage')
-const path = require('path')
-const format = require('./format')
-const log = require('#sepal/log').getLogger('cloudStorage')
+import fs from 'fs'
+import path from 'path'
+import {catchError, concat, defer, EMPTY, expand, map, mergeMap, of, scan, Subject, switchMap} from 'rxjs'
+
+import {getLogger} from '#sepal/log'
+import {autoRetry, finalizeObservable, fromPromise, swallow} from '#sepal/rxjs'
+
+import {cloudStorage$} from './cloudStorage.js'
+import * as format from './format.js'
+
+const log = getLogger('cloudStorage')
 
 const CHUNK_SIZE = 10 * 1024 * 1024
 const CONCURRENT_FILE_DOWNLOAD = 1
@@ -155,4 +159,4 @@ const isDownloaded = fileProgress =>
 const formatFileSize = bytes =>
     format.fileSize(bytes)
 
-module.exports = {download$, delete$}
+export {delete$, download$}

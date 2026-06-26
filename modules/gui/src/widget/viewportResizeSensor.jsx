@@ -15,13 +15,15 @@ export const ViewportResizeSensor = () => {
     useEffect(() => {
         const viewportResize$ = new Subject()
         updateDimensions()
-        window.onresize = () => viewportResize$.next()
+        const onResize = () => viewportResize$.next()
+        window.addEventListener('resize', onResize)
         const subscription = viewportResize$.pipe(
             throttleTime(100, null, {leading: true, trailing: true})
         ).subscribe({
             next: () => updateDimensions()
         })
         return () => {
+            window.removeEventListener('resize', onResize)
             subscription.unsubscribe()
         }
     }, [])

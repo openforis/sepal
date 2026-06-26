@@ -1,30 +1,35 @@
-const {BehaviorSubject, concat, of, throwError, catchError, distinctUntilChanged, first, map, takeUntil, tap} = require('rxjs')
-const {finalizeObservable$} = require('#sepal/rxjs')
-const {job} = require('#task/jobs/job')
-const log = require('#sepal/log').getLogger('task')
-const _ = require('lodash')
+import _ from 'lodash'
+import {createRequire} from 'module'
+import {BehaviorSubject, catchError, concat, distinctUntilChanged, first, map, of, takeUntil, tap, throwError} from 'rxjs'
 
-const {contextService} = require('#task/jobs/service/context')
-const {exportLimiterService} = require('#task/jobs/service/exportLimiter')
-const {driveLimiterService} = require('#task/jobs/service/driveLimiter')
-const {driveSerializerService} = require('#task/jobs/service/driveSerializer')
-const {gcsSerializerService} = require('#task/jobs/service/gcsSerializer')
+import {getLogger} from '#sepal/log'
+import {fileName} from '#sepal/path'
+import {finalizeObservable$} from '#sepal/rxjs'
+import {tag} from '#sepal/tag'
+import {job} from '#task/jobs/job'
+import {contextService} from '#task/jobs/service/context'
+import {driveLimiterService} from '#task/jobs/service/driveLimiter'
+import {driveSerializerService} from '#task/jobs/service/driveSerializer'
+import {exportLimiterService} from '#task/jobs/service/exportLimiter'
+import {gcsSerializerService} from '#task/jobs/service/gcsSerializer'
+
+// Lazy task/job loading (require(esm)) defers loading and breaks cycles.
+const require = createRequire(import.meta.url)
+const log = getLogger('task')
 
 const tasks = {
-    'image.GEE': () => require('./tasks/imageAssetExport'),
-    'image.SEPAL': () => require('./tasks/imageSepalExport'),
-    'image.DRIVE': () => require('./tasks/imageDriveExport'),
-    'timeseries.download': () => require('./tasks/timeSeriesSepalExport'),
-    'ccdc.GEE': () => require('./tasks/ccdcAssetExport'),
-    'samplingDesign.GEE': () => require('./tasks/samplingDesign/samplesAssetExport'),
-    'samplingDesign.SEPAL': () => require('./tasks/samplingDesign/samplesSepalExport'),
+    'image.GEE': () => require('./tasks/imageAssetExport.js'),
+    'image.SEPAL': () => require('./tasks/imageSepalExport.js'),
+    'image.DRIVE': () => require('./tasks/imageDriveExport.js'),
+    'timeseries.download': () => require('./tasks/timeSeriesSepalExport.js'),
+    'ccdc.GEE': () => require('./tasks/ccdcAssetExport.js'),
+    'samplingDesign.GEE': () => require('./tasks/samplingDesign/samplesAssetExport.js'),
+    'samplingDesign.SEPAL': () => require('./tasks/samplingDesign/samplesSepalExport.js')
 }
-
-const {tag} = require('#sepal/tag')
 
 const taskTag = id => tag('Task', id)
 
-const msg = (id, msg) => `${taskTag, id}: ${msg}`
+const msg = (id, msg) => `${taskTag(id)}: ${msg}`
 
 const worker$ = ({
     task: {id, name, params},
@@ -104,10 +109,10 @@ const worker$ = ({
 // module.exports = executeTask$
 
 // Execute in worker
-module.exports = job({
+export default job({
     jobName: 'execute task',
-    jobPath: __filename,
-    before: [require('#task/jobs/configure'), require('#task/jobs/ee/initialize')],
+    jobPath: fileName(import.meta.url),
+    before: [require('#task/jobs/configure').default, require('#task/jobs/ee/initialize').default],
     services: [contextService, exportLimiterService, driveLimiterService, driveSerializerService, gcsSerializerService],
     args: ({task}) => ({task}),
     worker$

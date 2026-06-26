@@ -83,7 +83,6 @@ class _AppInstance extends React.Component {
         const {app: {id, endpoint, path}, tab: {busy}, stream} = this.props
         if (endpoint === 'docker') {
             busy.set(id, true)
-            this.setState({appState: 'INITIALIZED'})
             publishEvent('launch_app', {app: id})
             stream('RUN_APP',
                 get$(`${path}`, {
@@ -92,7 +91,7 @@ class _AppInstance extends React.Component {
                         maxRetries: 9
                     }
                 }).pipe(
-                    map(srcDoc => ({srcDoc}))
+                    map(() => ({appState: 'INITIALIZED', src: path}))
                 ),
                 result => this.setState(result),
                 error => this.onError(error)
@@ -122,7 +121,7 @@ class _AppInstance extends React.Component {
 
     useIFrameSrc() {
         const {app: {endpoint}} = this.props
-        return !endpoint || ['rstudio', 'shiny'].includes(endpoint)
+        return !endpoint || ['rstudio', 'shiny', 'docker'].includes(endpoint)
     }
 
     iFrameLoaded() {
@@ -131,6 +130,22 @@ class _AppInstance extends React.Component {
         if (this.useIFrameSrc() && src) {
             busy.set(id, false)
             this.setState({appState: 'READY'})
+        }
+    }
+
+    componentWillUnmount() {
+        this.unloadIFrame()
+    }
+
+    unloadIFrame() {
+        const iFrame = this.iFrameRef.current
+        if (!iFrame?.contentWindow) {
+            return
+        }
+        try {
+            iFrame.contentWindow.dispatchEvent(new Event('beforeunload'))
+        } catch (_error) {
+            // iframe may already be destroyed
         }
     }
 

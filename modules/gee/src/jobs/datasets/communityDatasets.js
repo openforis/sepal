@@ -1,9 +1,12 @@
 // const Job = require('#sepal/worker/job')
-const {get$} = require('#sepal/httpClient')
-const {map, timer, tap, switchMap, catchError, EMPTY} = require('rxjs')
-const _ = require('lodash')
-const {escapeRegExp, simplifyString, splitString} = require('#sepal/string')
-const log = require('#sepal/log').getLogger('ee')
+import _ from 'lodash'
+import {catchError, EMPTY, map, switchMap, tap, timer} from 'rxjs'
+
+import {get$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+import {escapeRegExp, simplifyString, splitString} from '#sepal/string'
+
+const log = getLogger('ee')
 
 const URL = 'https://raw.githubusercontent.com/samapriya/awesome-gee-community-datasets/master/community_datasets.json'
 const REFRESH_INTERVAL_HOURS = 24
@@ -80,12 +83,19 @@ const propertyMatcher = (property, search) =>
 
 timer(0, REFRESH_INTERVAL_HOURS * 3600000).pipe(
     tap(() => log.info('Loading Awesome GEE community datasets')),
-    switchMap(() => getDatasets$())
+    switchMap(() => getDatasets$().pipe(
+        catchError(error => {
+            log.error('Error while loading Awesome GEE community datasets - ', error)
+            return EMPTY
+        })
+    ))
 ).subscribe({
     next: content => {
         datasets = content
         log.info(`Awesome GEE community datasets loaded, ${datasets.length} datasets`)
-    }
+    },
+    error: error => log.fatal('Unexpected Awesome GEE community stream error:', error),
+    complete: () => log.fatal('Unexpected Awesome GEE community stream completed')
 })
 
-module.exports = {getDatasets}
+export {getDatasets}

@@ -1,12 +1,15 @@
-const {job} = require('#gee/jobs/job')
+import {map} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import {toGeometry} from '#sepal/ee/aoi'
+import ee from '#sepal/ee/ee'
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {aoi, source}
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const {toGeometry$} = require('#sepal/ee/aoi')
-    const {map, switchMap} = require('rxjs')
 
+    const geometry = toGeometry(aoi)
     const table = {
         LANDSAT: {
             id: 'users/wiell/SepalResources/landsatSceneAreas',
@@ -17,14 +20,13 @@ const worker$ = ({
             idColumn: 'name'
         }
     }[source]
-    return toGeometry$(aoi).pipe(
-        switchMap(geometry => ee.getInfo$(
-            ee.FeatureCollection(table.id)
-                .filterBounds(geometry)
-                .reduceColumns(ee.Reducer.toList(2), ['.geo', table.idColumn])
-                .get('list'),
-            'scene areas'
-        )),
+    return ee.getInfo$(
+        ee.FeatureCollection(table.id)
+            .filterBounds(geometry)
+            .reduceColumns(ee.Reducer.toList(2), ['.geo', table.idColumn])
+            .get('list'),
+        'scene areas'
+    ).pipe(
         map(sceneAreas =>
             sceneAreas.map(sceneArea => ({
                 id: sceneArea[1],
@@ -34,8 +36,8 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Scene Areas',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

@@ -1,19 +1,45 @@
-const {program} = require('commander')
-const log = require('#sepal/log').getLogger('config')
-const _ = require('lodash')
+import {Command, Option} from 'commander'
 
-const DEFAULT_PORT = 80
+import {getLogger} from '#sepal/log'
 
-program
-    .option('--port <number>', 'Port', DEFAULT_PORT)
-    .parse(process.argv)
+const log = getLogger('config')
+
+const DEFAULT_HTTP_PORT = 80
+
+const fatalError = error => {
+    log.fatal(error)
+    process.exit(1)
+}
+
+const program = new Command()
+
+try {
+    program
+        .exitOverride()
+        .addOption(
+            new Option('--port <number>')
+                .env('HTTP_PORT')
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_HTTP_PORT)
+        )
+        .addOption(
+            new Option('--apps-catalog-url <value>')
+                .env('SEPAL_APPS_CATALOG_URL')
+        )
+        .parse()
+} catch (error) {
+    fatalError(error)
+}
 
 const {
-    port
+    port,
+    appsCatalogUrl: appsCatalogUrlArg
 } = program.opts()
 
 log.info('Configuration loaded')
 
-module.exports = {
-    port
-}
+const appsCatalogUrl = appsCatalogUrlArg || null
+
+export {
+    appsCatalogUrl,
+    port}

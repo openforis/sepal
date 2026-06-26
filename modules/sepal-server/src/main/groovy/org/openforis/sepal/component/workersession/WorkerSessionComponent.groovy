@@ -10,9 +10,11 @@ import org.openforis.sepal.component.workersession.adapter.BudgetComponentAdapte
 import org.openforis.sepal.component.workersession.adapter.InstanceComponentAdapter
 import org.openforis.sepal.component.workersession.adapter.JdbcWorkerSessionRepository
 import org.openforis.sepal.component.workersession.adapter.RestGoogleOAuthGateway
+import org.openforis.sepal.component.workersession.api.ApiKeyGenerator
 import org.openforis.sepal.component.workersession.api.BudgetManager
 import org.openforis.sepal.component.workersession.api.GoogleOAuthGateway
 import org.openforis.sepal.component.workersession.api.InstanceManager
+import org.openforis.sepal.component.workersession.api.SecureRandomApiKeyGenerator
 import org.openforis.sepal.component.workersession.command.*
 import org.openforis.sepal.component.workersession.endpoint.SandboxSessionEndpoint
 import org.openforis.sepal.component.workersession.query.*
@@ -54,6 +56,7 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
                 new RestGoogleOAuthGateway(config.googleOAuthEndpoint),
                 hostingServiceAdapter.instanceTypes,
                 new SystemClock(),
+                new SecureRandomApiKeyGenerator(),
                 new File('/data/home'),
                 new RabbitMQTopic('user', config.rabbitMQHost, config.rabbitMQPort)
         )
@@ -67,6 +70,7 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
             GoogleOAuthGateway googleOAuthGateway,
             List<InstanceType> instanceTypes,
             Clock clock,
+            ApiKeyGenerator apiKeyGenerator,
             File homeDir,
             Topic userTopic
         ) {
@@ -76,7 +80,7 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         this.userTopic = userTopic
         def sessionRepository = new JdbcWorkerSessionRepository(connectionManager, clock)
 
-        command(RequestSession, new RequestSessionHandler(sessionRepository, budgetManager, instanceManager, clock))
+        command(RequestSession, new RequestSessionHandler(sessionRepository, budgetManager, instanceManager, clock, apiKeyGenerator))
         def closeSessionHandler = new CloseSessionHandler(sessionRepository, instanceManager, connectionManager, eventDispatcher)
         command(CloseSession, closeSessionHandler)
         command(CloseTimedOutSessions, new CloseTimedOutSessionsHandler(sessionRepository, closeSessionHandler, connectionManager))
@@ -97,6 +101,9 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         query(FindSessionById, new FindSessionByIdHandler(sessionRepository))
         query(FindPendingOrActiveSession, new FindPendingOrActiveSessionHandler(sessionRepository))
         query(GenerateUserSessionReport, new GenerateUserSessionReportHandler(sessionRepository, instanceManager, budgetManager))
+        query(MostRecentlyClosedSessionByUser, new MostRecentlyClosedSessionByUserHandler(sessionRepository))
+        query(MostRecentlyClosedSession, new MostRecentlyClosedSessionHandler(sessionRepository))
+        query(FindUsernameByApiKey, new FindUsernameByApiKeyHandler(sessionRepository))
 
         instanceManager.onInstanceActivated { submit(new ActivatePendingSessionOnInstance(instance: it)) }
         instanceManager.onFailedToProvisionInstance {

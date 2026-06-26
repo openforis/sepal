@@ -1,8 +1,10 @@
-const {wsStream} = require('#sepal/httpServer')
-const ws$ = require('./ws')
-const koaBody = require('koa-body').default
-const {download, listFiles, setFile, createFolder} = require('./filesystem')
-const {homeDir} = require('./config')
+import koaBody from 'koa-body'
+
+import {wsStream} from '#sepal/httpServer'
+
+import {homeDir} from './config.js'
+import {createFolder, download, listFiles, setFile} from './filesystem.js'
+import ws$ from './ws.js'
 
 const routes = router => router
     .get('/download', ctx => download(homeDir, ctx))
@@ -24,4 +26,4 @@ const wsRoutes = {
     '/ws': wsStream(ctx => ws$(ctx))
 }
 
-module.exports = {routes, wsRoutes}
+export {routes, wsRoutes}

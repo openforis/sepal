@@ -1,11 +1,14 @@
-const {google} = require('googleapis')
-const {from, of, throwError, catchError, map, switchMap, tap} = require('rxjs')
-const {NotFoundException} = require('#sepal/exception')
-const {autoRetry} = require('#sepal/rxjs')
-const moment = require('moment')
-const log = require('#sepal/log').getLogger('drive')
+import {google} from 'googleapis'
+import moment from 'moment'
+import {catchError, from, map, of, switchMap, throwError} from 'rxjs'
 
-const drive = ({sepalUser}) => {
+import {NotFoundException} from '#sepal/exception'
+import {getLogger} from '#sepal/log'
+import {autoRetry} from '#sepal/rxjs'
+
+const log = getLogger('drive')
+
+export const drive = ({sepalUser}) => {
     const {googleTokens: {accessToken, accessTokenExpiryDate}} = sepalUser
     const RETRY_CONFIG = {
         maxRetries: 5,
@@ -20,7 +23,7 @@ const drive = ({sepalUser}) => {
 
     const createFolder$ = ({path}) =>
         getFolderByPath$({path, create: true})
-    
+
     const readFile$ = ({path}) =>
         getFilesByPath$({path}).pipe(
             switchMap(({files: [{id}]}) => readFileById$(id))
@@ -30,7 +33,7 @@ const drive = ({sepalUser}) => {
         getFolderByPath$({path}).pipe(
             switchMap(({id}) => removeById$({id}))
         )
-        
+
     /**
      * Get a folder by path
      * @param {string} path Path of folder
@@ -105,7 +108,7 @@ const drive = ({sepalUser}) => {
                     )
             )
         )
-    
+
     /**
      * Create a folder with name under a given folder id
      * @param {string} name Folder name
@@ -166,7 +169,7 @@ const drive = ({sepalUser}) => {
                 {fileId: id, alt: 'media'}
             )
         )
-    
+
     /**
      * Remove a folder by id
      * @param {string} id Folder id
@@ -178,7 +181,7 @@ const drive = ({sepalUser}) => {
                 fileId: id
             })
         )
-        
+
     const auth = () => {
         const oAuth2Client = new google.auth.OAuth2()
         const expiration = moment(accessTokenExpiryDate)
@@ -215,5 +218,3 @@ const drive = ({sepalUser}) => {
 
     return {createFolder$, readFile$, removeFolder$}
 }
-
-module.exports = {drive}

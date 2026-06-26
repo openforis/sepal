@@ -1,6 +1,9 @@
-const {isSceneIncluded, getDataset, scene} = require('./landsat')
-const {updateFromStac} = require('./stac')
-const log = require('#sepal/log').getLogger('landsat')
+import {getLogger} from '#sepal/log'
+
+import {getDataset, isSceneIncluded, scene} from './landsat.js'
+import {updateFromStac} from './stac.js'
+
+const log = getLogger('landsat')
 
 const sceneMapper = ({
     id,
@@ -14,23 +17,39 @@ const sceneMapper = ({
         'datetime': acquiredTimestamp,
     }
 }) => {
-    const dataSet = getDataset(id)
-    if (dataSet) {
-        if (isSceneIncluded({dataSet, collectionCategory, cloudCover})) {
-            return scene({id, dataSet, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sunAzimuth, sunElevation})
+    const dataset = getDataset(id)
+    if (dataset) {
+        if (isSceneIncluded({dataset, collectionCategory, cloudCover})) {
+            return scene({id, dataset, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sunAzimuth, sunElevation})
         }
     } else {
         log.debug(`Ignoring unexpected id: ${id}`)
     }
 }
 
-const updateLandsat = async ({redis, database, timestamp}) =>
+const updateLandsat = async ({redis, database, timestamp}) => {
     await updateFromStac({
         source: 'landsat-ot',
+        dataset: 'LANDSAT_8',
+        query: {
+            'platform': {'eq': 'landsat-8'}
+        },
         sceneMapper,
         redis,
         database,
         timestamp
     })
+    await updateFromStac({
+        source: 'landsat-ot',
+        dataset: 'LANDSAT_9',
+        query: {
+            'platform': {'eq': 'landsat-9'}
+        },
+        sceneMapper,
+        redis,
+        database,
+        timestamp
+    })
+}
 
-module.exports = {updateLandsat}
+export {updateLandsat}

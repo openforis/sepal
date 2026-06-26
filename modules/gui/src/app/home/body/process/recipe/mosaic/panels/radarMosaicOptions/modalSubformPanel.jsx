@@ -6,7 +6,7 @@ import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Panel} from '~/widget/panel/panel'
 
-export const modalSubformPanel = ({id, toTitle, toClassName, fields}) =>
+export const modalSubformPanel = ({id, toTitle, toClassName, fields, constraints}) =>
     WrappedComponent => {
         class ModalSubformPanel extends React.Component {
             constructor(props) {
@@ -19,8 +19,8 @@ export const modalSubformPanel = ({id, toTitle, toClassName, fields}) =>
                 const {form} = this.props
                 return (
                     <Form.Panel
-                        type='modal'
                         className={toClassName()}
+                        placement='modal'
                         form={form}
                         onApply={this.update}
                         onCancel={this.cancel}>
@@ -59,7 +59,7 @@ export const modalSubformPanel = ({id, toTitle, toClassName, fields}) =>
 
         return compose(
             ModalSubformPanel,
-            withForm({fields}),
+            withForm({fields, constraints}),
             withActivatable({id, policy, alwaysAllow: true})
         )
     }

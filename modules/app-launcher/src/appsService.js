@@ -1,11 +1,15 @@
-const {getRepoInfo, pullUpdates} = require('./git')
-const {pathExists, getContainerInfo, isContainerRunning, startContainer, buildAndRestart, restartContainer, getContainerLogs} = require('./docker')
-const log = require('#sepal/log').getLogger('appsService')
+import {getLogger} from '#sepal/log'
 
-const getAppPath = appName => `/var/lib/sepal/app-manager/apps/${appName}`
+import {buildAndRestart, getContainerInfo, getContainerLogs, isContainerRunning, pathExists, restartContainer, startContainer} from './docker.js'
+import {getRepoInfo, pullUpdates} from './git.js'
+import {validateAppName, validateBranchName} from './validation.js'
+
+const log = getLogger('appsService')
+
+const getAppPath = appName => `/var/lib/sepal/app-launcher/apps/${appName}`
 
 const getAppStatus = async ctx => {
-    const {appName} = ctx.params
+    const appName = validateAppName(ctx.params.appName)
     const appPath = getAppPath(appName)
 
     if (!await pathExists(appPath)) {
@@ -30,7 +34,7 @@ const getAppStatus = async ctx => {
 }
 
 const getAppContainerStatus = async ctx => {
-    const {appName} = ctx.params
+    const appName = validateAppName(ctx.params.appName)
     const appPath = getAppPath(appName)
 
     if (!await pathExists(appPath)) {
@@ -53,7 +57,7 @@ const getAppContainerStatus = async ctx => {
 }
 
 const getAppRepoInfo = async ctx => {
-    const {appName} = ctx.params
+    const appName = validateAppName(ctx.params.appName)
     const appPath = getAppPath(appName)
 
     if (!await pathExists(appPath)) {
@@ -76,7 +80,7 @@ const getAppRepoInfo = async ctx => {
 }
 
 const getAppLogs = async ctx => {
-    const {appName} = ctx.params
+    const appName = validateAppName(ctx.params.appName)
     const {query} = ctx.request
     const appPath = getAppPath(appName)
     const {lines = 50} = query || {}
@@ -105,7 +109,7 @@ const getAppLogs = async ctx => {
 }
 
 const restartApp = async ctx => {
-    const {appName} = ctx.params
+    const appName = validateAppName(ctx.params.appName)
     const appPath = getAppPath(appName)
     
     if (!await pathExists(appPath)) {
@@ -131,8 +135,8 @@ const restartApp = async ctx => {
  * then buildAndRestartApp() to rebuild and restart containers if needed.
  */
 const updateApp = async ctx => {
-    const {appName} = ctx.params
-    const {branch} = ctx.query
+    const appName = validateAppName(ctx.params.appName)
+    const branch = validateBranchName(ctx.query.branch)
     const appPath = getAppPath(appName)
     
     log.debug(`Updating app ${appName} at path ${appPath} on branch ${branch}`)
@@ -146,7 +150,7 @@ const updateApp = async ctx => {
     let gitAction
     try {
         const result = await pullUpdates(appPath, branch)
-        gitAction = result.gitAction
+        gitAction = result.action
     } catch (gitError) {
         log.error(`Git operation failed: ${gitError.message}`)
         ctx.status = 500
@@ -187,8 +191,8 @@ const updateApp = async ctx => {
 }
 
 const pullUpdatesOnly = async ctx => {
-    const {appName} = ctx.params
-    const {branch} = ctx.query
+    const appName = validateAppName(ctx.params.appName)
+    const branch = validateBranchName(ctx.query.branch)
     const appPath = getAppPath(appName)
     
     log.debug(`Pulling updates for app ${appName} at path ${appPath} on branch ${branch}`)
@@ -218,7 +222,7 @@ const pullUpdatesOnly = async ctx => {
 }
 
 const buildAndRestartApp = async ctx => {
-    const {appName} = ctx.params
+    const appName = validateAppName(ctx.params.appName)
     const appPath = getAppPath(appName)
     
     log.debug(`Building and restarting app ${appName} at path ${appPath}`)
@@ -246,13 +250,13 @@ const buildAndRestartApp = async ctx => {
     }
 }
 
-module.exports = {
-    getAppStatus,
+export {
+    buildAndRestartApp,
     getAppContainerStatus,
-    getAppRepoInfo,
     getAppLogs,
+    getAppRepoInfo,
+    getAppStatus,
+    pullUpdatesOnly,
     restartApp,
     updateApp,
-    pullUpdatesOnly,
-    buildAndRestartApp,
 }

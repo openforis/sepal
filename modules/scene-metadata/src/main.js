@@ -1,19 +1,23 @@
-const {subDays} = require('date-fns/subDays')
-const {updateTime, minDaysPublished} = require('./config')
-const {initializeDatabase} = require('./database')
-const {downloadLandsat, loadLandsat} = require('./landsatCsv')
-const {updateLandsat} = require('./landsatStac')
-const {initializeRedis} = require('./redis')
-const {downloadSentinel2, loadSentinel2} = require('./sentinel2Csv')
-const {updateSentinel2} = require('./sentinel2Stac')
-const {getMillisecondsUntilTime, formatInterval, formatTime, parseTime} = require('./time')
-const {timer, exhaustMap, from, merge, of, EMPTY} = require('rxjs')
+import {subHours} from 'date-fns/subHours'
+import {catchError, EMPTY, exhaustMap, from, timer} from 'rxjs'
 
-require('#sepal/log').configureServer(require('#config/log.json'))
+import logConfig from '#config/log.json' with {type: 'json'}
+import {configureServer, getLogger} from '#sepal/log'
 
-const MAX_INITIAL_DELAY_MS = 3600 * 1000 // 1 hour
+import {minHoursPublished, updateIntervalMinutes} from './config.js'
+import {initializeDatabase} from './database.js'
+import {downloadLandsat, loadLandsat} from './landsatCsv.js'
+import {updateLandsat} from './landsatStac.js'
+import {initializeRedis} from './redis.js'
+import {downloadSentinel2, loadSentinel2} from './sentinel2Csv.js'
+import {updateSentinel2} from './sentinel2Stac.js'
+import {formatInterval} from './time.js'
 
-const log = require('#sepal/log').getLogger('main')
+configureServer(logConfig)
+
+const INITIAL_UPDATE_DELAY_SECONDS = 10
+
+const log = getLogger('main')
 
 const download = async () => {
     log.debug('Downloading CSV files...')
@@ -25,9 +29,9 @@ const download = async () => {
     log.info(`Downloaded CSV files (${formatInterval(t0)})`)
 }
 
-const load = async ({redis, database, update, maxTimestamp, timestamp}) => {
-    await loadLandsat({redis, database, maxTimestamp, timestamp, update})
-    await loadSentinel2({redis, database, maxTimestamp, timestamp, update})
+const load = async ({redis, database, maxTimestamp, timestamp}) => {
+    await loadLandsat({redis, database, maxTimestamp, timestamp})
+    await loadSentinel2({redis, database, maxTimestamp, timestamp})
 }
 
 const initializeData = async ({redis, database}) => {
@@ -35,13 +39,13 @@ const initializeData = async ({redis, database}) => {
     if (initialized) {
         log.info('Skipped initialization from CSV files')
     } else {
-        const maxTimestamp = subDays(new Date(), minDaysPublished).toISOString()
+        const maxTimestamp = subHours(new Date(), minHoursPublished).toISOString()
         const timestamp = new Date()
         log.info(`Initializing database (timestamp: ${timestamp.toISOString()})`)
         const t0 = Date.now()
         await database.prepare()
         await download()
-        await load({redis, database, update: false, maxTimestamp, timestamp})
+        await load({redis, database, maxTimestamp, timestamp})
         await database.finalize()
         await redis.setInitialized(timestamp.toISOString())
         log.info(`Initialized database (${formatInterval(t0)})`)
@@ -57,33 +61,21 @@ const updateData = async ({redis, database}) => {
     log.info(`Updated database (${formatInterval(t0)})`)
 }
 
-const initialUpdate$ = initialDelay => {
-    if (initialDelay > MAX_INITIAL_DELAY_MS) {
-        log.info('Running initial update before scheduled time')
-        return of(true)
-    } else {
-        log.info('Skipping initial update, will run at scheduled time')
-        return EMPTY
-    }
-}
-
-const dailyUpdate$ = initialDelay =>
-    timer(initialDelay, 86400 * 1000) // 24 hours
-
 const scheduleUpdates = ({redis, database}) => {
-    const {hours, minutes} = parseTime(updateTime)
-    const initialDelay = getMillisecondsUntilTime(hours, minutes)
-
-    log.info(`Scheduling daily updates at ${formatTime({hours, minutes})}`)
-    merge(
-        initialUpdate$(initialDelay),
-        dailyUpdate$(initialDelay)
-    ).pipe(
-        exhaustMap(() => from(updateData({redis, database})))
+    log.info(`Running updates every ${updateIntervalMinutes} minutes`)
+    timer(INITIAL_UPDATE_DELAY_SECONDS * 1000, updateIntervalMinutes * 60 * 1000).pipe(
+        exhaustMap(() =>
+            from(updateData({redis, database})).pipe(
+                catchError(error => {
+                    log.error('Error during scheduled update:', error)
+                    return EMPTY
+                })
+            )
+        )
     ).subscribe({
         next: () => log.debug('Running scheduled updates'),
-        error: error => log.error('Error while running scheduled updates:', error),
-        complete: () => log.fatal('Unexpected stream complete')
+        error: error => log.fatal('Unexpected update scheduler stream error:', error),
+        complete: () => log.fatal('Unexpected update scheduler stream complete')
     })
 }
 

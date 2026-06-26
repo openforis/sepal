@@ -66,3 +66,7 @@ node_modules/
 sepal-data/
 
 supervisord.pid
+
+.RData
+
+TODO.md

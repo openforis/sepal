@@ -1,9 +1,8 @@
-const ee = require('#sepal/ee/ee')
-const {toId, toColor} = require('./featureProperties')
+import ee from '#sepal/ee/ee'
 
-module.exports = {stratifiedSystematicSample, filterSamples}
-    
-function stratifiedSystematicSample(args) {
+import {toColor, toId} from './featureProperties.js'
+
+export function stratifiedSystematicSample(args) {
     var allocation = args.allocation
     var region = args.region
     var stratification = args.stratification.clip(region)
@@ -13,7 +12,7 @@ function stratifiedSystematicSample(args) {
 
     var samplesImage = createSamplesImage()
     return samplesImageToCollection(samplesImage)
-    
+
     function samplesImageToCollection(samplesImage) {
         return samplesImage
             .reduceToVectors({
@@ -25,7 +24,7 @@ function stratifiedSystematicSample(args) {
                 maxPixels: 1e13
             })
     }
-    
+
     function createSamplesImage() {
         return ee.ImageCollection(allocation
             .map(function (stratum) {
@@ -45,35 +44,35 @@ function stratifiedSystematicSample(args) {
                     diameter: diameter,
                     scale: scale
                 })
-          
+
                 return stratumSamplesImage
                     .addBands(stratification)
                     .updateMask(stratumMask)
             })
         ).mosaic()
     }
-    
+
     function createHexSamplesImage(args) {
         var diameter = args.diameter
         var scale = args.scale
         var proj = args.proj || ee.Projection('EPSG:3410')
-      
+
         var nominalScale = proj.nominalScale()
         var distance = ee.Number(diameter).divide(nominalScale)
         var dx = distance.multiply(Math.sqrt(3))
         var dy = distance.multiply(1.5)
-      
+
         var coords = ee.Image.pixelCoordinates(proj)
         var i = coords.select('x').divide(dx).floor().int32().rename('i')
         var j = coords.select('y').divide(dy).floor().int32().rename('j')
-      
+
         var xOffset = j.mod(2).multiply(dx.divide(2))
         var xPos = coords.select('x').subtract(xOffset)
         var yPos = coords.select('y')
-            
+
         var xMinDistance = xPos.mod(dx).abs()
         var yMinDistance = yPos.mod(dy).abs()
-      
+
         // 1.42 is sqrt(2) rounded a bit up.
         // It ensures that for worst case scenario, where the centroid falls exactly between 4 pixels.
         // we cover the majority of the pixels. This will potentially shift the centroid
@@ -104,21 +103,21 @@ function stratifiedSystematicSample(args) {
             .addBands(level)
             .updateMask(sample)
     }
-      
+
     function include(i, j, n) {
         return mod(i, 2).and(mod(j, 4))
             .or(mod(i.subtract(n), 2).and(mod(j, 4).not()))
             .and(mod(j, 2))
             .or(n.eq(0))
             .byte()
-          
+
         function mod(value, k) {
             return value.mod(n.multiply(k)).abs().eq(0)
         }
     }
 }
 
-function filterSamples(args) {
+export function filterSamples(args) {
     var region = args.region
     var samples = args.samples.filterBounds(region)
     var allocation = args.allocation
@@ -130,7 +129,7 @@ function filterSamples(args) {
             return ee.Feature(null, stratum)
         })
     )
-    
+
     var counts = toFeatureCollection(
         samples
             .reduceColumns(
@@ -180,7 +179,7 @@ function filterSamples(args) {
             ).select(['id', 'stratum', 'color'])
         })
     ).flatten().map(setProperties)
-    
+
     function setProperties(sample) {
         return sample
             .set('id', toId({sample}))
@@ -197,4 +196,3 @@ function toFeatureCollection(dictList) {
         })
     )
 }
-  

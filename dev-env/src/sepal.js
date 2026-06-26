@@ -1,20 +1,22 @@
 #!/usr/bin/node
 
-import {program, Option} from 'commander'
-import {showStatus, exit} from './utils.js'
+import {Option, program} from 'commander'
+
 import {build} from './build.js'
 import {buildRestart} from './buildRestart.js'
+import {eslint} from './eslint.js'
+import {log} from './log.js'
+import {logs} from './logs.js'
+import {npmAudit} from './npm-audit.js'
+import {npmInstall} from './npm-install.js'
+import {npmTest} from './npm-test.js'
+import {npmUpdate} from './npm-update.js'
+import {restart} from './restart.js'
+import {shell} from './shell.js'
 import {start} from './start.js'
 import {stop} from './stop.js'
-import {restart} from './restart.js'
-import {logs} from './logs.js'
-import {shell} from './shell.js'
-import {log} from './log.js'
-import {npmUpdate} from './npm-update.js'
-import {npmInstall} from './npm-install.js'
-import {npmAudit} from './npm-audit.js'
-import {npmTest} from './npm-test.js'
-import {eslint} from './eslint.js'
+import {tail} from './tail.js'
+import {exit, showStatus} from './utils.js'
 
 const main = async () => {
     process.on('SIGINT', () => exit({interrupted: true}))
@@ -41,6 +43,7 @@ const main = async () => {
         .option('--nc, --no-cache', 'No cache')
         .option('-r, --recursive', 'Recursive')
         .option('-q, --quiet', 'Quiet')
+        .option('-v, --verbose', 'Verbose')
         .argument('[module...]', 'Modules to build')
         .action(build)
     
@@ -51,6 +54,7 @@ const main = async () => {
         .option('-d, --dependencies', 'Restart dependencies')
         .option('-l, --log', 'Show log')
         .option('-f, --log-follow', 'Full log and log')
+        .option('-p, --production', 'Start in production mode, when supported by the module')
         .option('-r, --log-recent', 'Recent log and follow')
         .option('-t, --log-tail', 'Log tail only')
         .option('-s, --sequential', 'Sequential start')
@@ -74,6 +78,7 @@ const main = async () => {
         .option('-q, --quiet', 'Quiet')
         .option('-l, --log', 'Show log')
         .option('-f, --log-follow', 'Full log and log')
+        .option('-p, --production', 'Start in production mode, when supported by the module')
         .option('-r, --log-recent', 'Recent log and follow')
         .option('-t, --log-tail', 'Log tail only')
         .option('-s, --sequential', 'Sequential start')
@@ -87,6 +92,7 @@ const main = async () => {
         .option('-q, --quiet', 'Quiet')
         .option('-l, --log', 'Show log')
         .option('-f, --log-follow', 'Full log and log')
+        .option('-p, --production', 'Start in production mode, when supported by the module')
         .option('-r, --log-recent', 'Recent log and follow')
         .option('-t, --log-tail', 'Log tail only')
         .option('-s, --sequential', 'Sequential start')
@@ -97,12 +103,23 @@ const main = async () => {
         .description('Show module log')
         .option('-l, --log', 'Show low (no-op, for consistency)')
         .option('-f, --follow', 'Follow')
-        .option('-r, --recent', 'Recent (shortcut for --follow --since 5m)')
+        .option('-r, --recent', 'Last 20 lines and follow')
         .option('-t, --tail', 'Tail (shortcut for --follow --since 0)')
         .option('-s, --since <time>', 'Since relative or absolute time')
         .option('-u, --until <time>', 'Until relative or absolute time')
         .argument('[module...]', 'Modules')
         .action(logs)
+    
+    program.command('tail')
+        .description('Show multi-module log tail')
+        .option('-f, --follow', 'Follow')
+        .option('-r, --recent', 'Last 20 lines and follow')
+        .option('-t, --tail', 'Tail (shortcut for --follow --since 0)')
+        .option('-s, --since <time>', 'Since relative or absolute time')
+        .option('-u, --until <time>', 'Until relative or absolute time')
+        .option('-m, --merge', 'Merge all streams into a single one')
+        .argument('[module...]', 'Modules')
+        .action(tail)
     
     program.command('shell')
         .description('Start module shell')
@@ -122,6 +139,7 @@ const main = async () => {
         .description('Install npm modules')
         .option('-v, --verbose', 'Verbose')
         .option('-c, --clean', 'Clean package-lock.json and node_modules')
+        .option('-s, --sequential', 'Sequential install')
         .argument('[module...]', 'Modules to install')
         .action(npmInstall)
 

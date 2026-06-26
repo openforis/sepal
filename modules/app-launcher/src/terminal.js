@@ -1,6 +1,9 @@
-const {spawn} = require('child_process')
-const log = require('#sepal/log').getLogger('terminal')
-const {ClientException} = require('#sepal/exception')
+import {spawn} from 'child_process'
+
+import {ClientException} from '#sepal/exception'
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('terminal')
 
 // taken from dev-env/src/terminal.js
 const exec = ({command, args, cwd, env, detached, enableStdIn, showStdOut, showStdErr}) =>
@@ -54,22 +57,19 @@ const exec = ({command, args, cwd, env, detached, enableStdIn, showStdOut, showS
         }
     })
 
-const executeCommand = async (command, options = {}) => {
+const executeCommand = async (command, args = [], options = {}) => {
     try {
-        log.debug(() => `Executing command: ${command}`)
-        if (options.cwd) {
-            log.debug(() => `Working directory: ${options.cwd}`)
-        }
-        
+        log.debug(() => `Executing: ${command} ${args.join(' ')}`)
+
         const {stdout, stderr} = await exec({
-            command: '/bin/sh',
-            args: ['-c', command],
+            command,
+            args,
             cwd: options.cwd,
             env: options.env,
             showStdOut: options.showStdOut !== false,
             showStdErr: options.showStdErr !== false
         })
-        
+
         return {stdout, stderr}
     } catch (error) {
         log.error(`Command execution failed: ${error.message || error.stderr || 'Unknown error'}`)
@@ -79,4 +79,4 @@ const executeCommand = async (command, options = {}) => {
     }
 }
 
-module.exports = executeCommand
+export default executeCommand

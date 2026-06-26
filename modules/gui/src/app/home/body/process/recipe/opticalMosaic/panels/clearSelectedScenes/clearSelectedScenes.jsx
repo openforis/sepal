@@ -23,8 +23,8 @@ class _ClearSelectedScenes extends React.Component {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                isActionForm
                 placement='top-right'
+                isActionForm
                 onApply={() => this.recipeActions.setSelectedScenes({}).dispatch()}>
                 <Panel.Header
                     icon='trash'

@@ -218,4 +218,14 @@ export default {
         postJson$('/api/gee/samplingDesign/probabilityPerStratum', {
             body: {aoi, stratification, stratificationBand, probability, probabilityBand, scale, batch}
         }),
+
+    landsatProductId$: ({sceneId}) =>
+        get$('/api/gee/landsatProductId', {
+            query: {
+                sceneId
+            },
+            retry: {
+                maxRetries: 0
+            }
+        }),
 }

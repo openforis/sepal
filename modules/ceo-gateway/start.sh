@@ -9,11 +9,8 @@ then
     --watch "${MODULE}/config" \
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9229 \
-    src/main.js \
-    --ceo-url "${CEO_URL}"
+    src/main.js
 else
   echo "Starting node"
-  exec node \
-    src/main.js \
-    --ceo-url "${CEO_URL}"
+  exec node src/main.js
 fi

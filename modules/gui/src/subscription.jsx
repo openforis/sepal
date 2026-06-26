@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react'
+import React, {useCallback, useEffect, useRef} from 'react'
 
 export const withSubscriptions = () =>
     WrappedComponent =>
@@ -40,15 +40,17 @@ export const withSubscriptions = () =>
         }
 
 export const useSubscriptions = () => {
-    const subscriptions = []
-        
-    const addSubscription = subscription =>
-        subscription && subscriptions.push(subscription)
+    const subscriptionsRef = useRef([])
 
-    const addSubscriptions = (...currentSubscriptions) =>
+    const addSubscription = useCallback(subscription =>
+        subscription && subscriptionsRef.current.push(subscription)
+    , [])
+
+    const addSubscriptions = useCallback((...currentSubscriptions) =>
         currentSubscriptions.forEach(
             subscription => addSubscription(subscription)
         )
+    , [addSubscription])
 
     const unsubscribe = subscription => {
         if (typeof subscription === 'function') {
@@ -59,12 +61,12 @@ export const useSubscriptions = () => {
         }
         console.error('Cannot unsubscribe unsupported subscription', subscription)
     }
-        
+
     useEffect(() => {
         return () => {
-            subscriptions.forEach(subscription => unsubscribe(subscription))
+            subscriptionsRef.current.forEach(subscription => unsubscribe(subscription))
         }
     }, [])
-        
+
     return [addSubscriptions]
 }

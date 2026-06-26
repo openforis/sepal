@@ -1,9 +1,13 @@
-const {firstValueFrom, switchMap, catchError, tap, of} = require('rxjs')
-const {usernameTag, urlTag} = require('./tag')
-const {getRequestUser, setRequestUser} = require('./user')
-const {updateGoogleAccessToken$} = require('./userApi')
-const {isRefreshRequired} = require('./googleAccessToken')
-const log = require('#sepal/log').getLogger('googleAccessTokenMiddleware')
+import {catchError, firstValueFrom, of, switchMap, tap} from 'rxjs'
+
+import {getLogger} from '#sepal/log'
+
+import {isRefreshRequired} from './googleAccessToken.js'
+import {urlTag, usernameTag} from './tag.js'
+import {getRequestUser, setRequestUser} from './user.js'
+import {updateGoogleAccessToken$} from './userApi.js'
+
+const log = getLogger('googleAccessTokenMiddleware')
 
 const INTERNAL_SERVER_ERROR = 500
 
@@ -44,6 +48,7 @@ const GoogleAccessTokenMiddleware = userStore => {
                 refreshGoogleTokensIfNeeded$().pipe(
                     catchError(error => {
                         log.warn(`${usernameTag(user.username)} Failed to refresh Google tokens`, error)
+                        return of(true)
                     })
                 )
             )
@@ -59,4 +64,4 @@ const GoogleAccessTokenMiddleware = userStore => {
     return {googleAccessTokenMiddleware}
 }
 
-module.exports = {GoogleAccessTokenMiddleware}
+export {GoogleAccessTokenMiddleware}

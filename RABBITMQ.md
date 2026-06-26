@@ -1,6 +1,13 @@
 RabbitMQ "sepal.topic" exchange documentation
 
-- email.send: {from, to, cc, bcc, subject, content, contentType}
+- email.sendToAddress: {from, to, cc, bcc, subject, content, contentType}
+    - pub: <none>
+    - sub: email
+
+- email.sendToUser: {from, username, subject, content, contentType}
+    - pub: user-storage
+    - sub: email
+
 - files.FilesDeleted: {username, path}
     - pub: sepal-server
     - sub: user-storage
@@ -20,6 +27,14 @@ RabbitMQ "sepal.topic" exchange documentation
 - user.UserUpdated: {user}
     - pub: user
     - sub: <none>
+
+- user.UserUp: {user}
+    - pub: gateway
+    - sub: user-storage
+
+- user.UserDown: {user}
+    - pub: gateway
+    - sub: user-storage
 
 - userStorage.size: {username, size}
     - pub: user-storage

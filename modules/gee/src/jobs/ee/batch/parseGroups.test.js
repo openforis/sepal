@@ -1,4 +1,4 @@
-const {parseGroups} = require('./parse')
+import {parseGroups} from './parse.js'
 
 it('parses empty groups', () => {
     expect(

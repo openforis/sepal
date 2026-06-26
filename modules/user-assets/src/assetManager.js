@@ -1,23 +1,25 @@
-const _ = require('lodash')
-const {formatDistanceStrict, formatDistanceToNowStrict} = require('date-fns')
+import {formatDistanceStrict, formatDistanceToNowStrict} from 'date-fns'
+import _ from 'lodash'
+import {catchError, concat, defer, EMPTY, exhaustMap, filter, finalize, from, groupBy, map, merge, mergeMap, of, race, repeat, share, Subject, switchMap, take, takeUntil, tap, timer} from 'rxjs'
 
-const {userTag, subscriptionTag} = require('./tag')
-const {setAssets, getAssets, removeAssets, expireAssets} = require('./assetStore')
-const log = require('#sepal/log').getLogger('assetManager')
+import {getLogger} from '#sepal/log'
+import {autoRetry} from '#sepal/rxjs'
+import {STree} from '#sepal/tree/sTree'
 
-const {Subject, groupBy, mergeMap, map, tap, repeat, exhaustMap, timer, takeUntil, finalize, filter, switchMap, catchError, from, of, EMPTY, concat, race, defer, take, merge, share} = require('rxjs')
-const {setUser, getUser, removeUser} = require('./userStore')
-const {scanTree$, scanNode$, busy$, isBusy} = require('./assetScanner')
-const {pollIntervalMilliseconds} = require('./config')
-const {deleteAsset$, createFolder$} = require('./asset')
-const {STree} = require('#sepal/tree/sTree')
-const {autoRetry} = require('#sepal/rxjs')
+import {createFolder$, deleteAsset$} from './asset.js'
+import {busy$, isBusy, scanNode$, scanTree$} from './assetScanner.js'
+import {expireAssets, getAssets, removeAssets, setAssets} from './assetStore.js'
+import {pollIntervalMilliseconds} from './config.js'
+import {subscriptionTag, userTag} from './tag.js'
+import {getUser, removeUser, setUser} from './userStore.js'
+
+const log = getLogger('assetManager')
 
 const MIN_RELOAD_DELAY_MS = 60 * 1000
 const MIN_RETRY_DELAY_MS = 2 * 1000
 const MAX_RETRY_DELAY_MS = 3660 * 1000
 
-const createAssetManager = ({out$, stop$}) => {
+const createAssetManager = ({send, stop$}) => {
 
     const userUp$ = new Subject()
     const userDown$ = new Subject()
@@ -50,8 +52,10 @@ const createAssetManager = ({out$, stop$}) => {
         const prevUser = await getUser(user.username, {allowMissing: true})
         await setUser(user)
         if (prevUser) {
-            const projectIdChanged = prevUser.googleTokens.projectId !== user.googleTokens.projectId
-            const accessTokenChanged = prevUser.googleTokens.accessToken !== user.googleTokens.accessToken
+            const prevTokens = prevUser.googleTokens
+            const currTokens = user.googleTokens
+            const projectIdChanged = prevTokens?.projectId !== currTokens?.projectId
+            const accessTokenChanged = prevTokens?.accessToken !== currTokens?.accessToken
             if (projectIdChanged) {
                 log.debug(`${userTag(user.username)} connected to Google project:`, user.googleTokens.projectId)
                 await expireAssets(user.username)
@@ -182,7 +186,7 @@ const createAssetManager = ({out$, stop$}) => {
 
     const saveAssets = async (username, assets) => {
         if (!STree.isLeaf(assets)) {
-            return await setAssets(username, assets)
+            await setAssets(username, assets)
         } else {
             log.info(`${userTag(username)} assets not saved (empty)`)
         }
@@ -215,7 +219,7 @@ const createAssetManager = ({out$, stop$}) => {
             })
         )
 
-    monitor$.pipe(
+    const monitorSubscription = monitor$.pipe(
         groupBy(({username}) => username),
         mergeMap(userGroup$ => userGroup$.pipe(
             exhaustMap(({username}) => {
@@ -225,19 +229,22 @@ const createAssetManager = ({out$, stop$}) => {
                     take(1),
                     repeat({delay: 0}),
                     takeUntil(unmonitorCurrentUser$(username).pipe(
-                        switchMap(() => from(removeUser(username, {allowMissing: true})))
+                        switchMap(() => from(removeUser(username)))
                     )),
                     finalize(() => log.info(`${userTag(username)} unmonitoring assets`))
                 )
             }
             )
         )),
-        takeUntil(stop$),
         mergeMap(({username, tree}) => from(updateTree(username, tree))),
     ).subscribe({
         error: error => log.error('Unexpected monitor$ stream error', error),
         complete: () => log.error('Unexpected monitor$ stream complete')
     })
+
+    stop$.subscribe(
+        () => monitorSubscription.unsubscribe()
+    )
 
     const getAssetsReloadDelay = async username => {
         const {timestamp} = await getAssets(username, {allowMissing: true})
@@ -284,7 +291,7 @@ const createAssetManager = ({out$, stop$}) => {
             )
         ))
     ).subscribe({
-        next: ({clientId, subscriptionId, data}) => out$.next({clientId, subscriptionId, data}),
+        next: ({clientId, subscriptionId, data}) => send({clientId, subscriptionId, data}),
         error: error => log.error('Unexpected subscription stream error', error),
         complete: () => log.error('Unexpected subscription stream complete')
     })
@@ -340,7 +347,7 @@ const createAssetManager = ({out$, stop$}) => {
     busy$.pipe(
         map(({username, status}) => ({username, data: {status}}))
     ).subscribe({
-        next: ({username, data}) => out$.next({username, data}),
+        next: ({username, data}) => send({username, data}),
         error: error => log.error('Unexpected stream error', error),
         complete: () => log.error('Unexpected stream complete')
     })
@@ -381,4 +388,4 @@ const createAssetManager = ({out$, stop$}) => {
     return {userUp, userDown, googleAccessToken, subscriptionUp, subscriptionDown, reload, cancelReload, remove, createFolder}
 }
 
-module.exports = {createAssetManager}
+export {createAssetManager}

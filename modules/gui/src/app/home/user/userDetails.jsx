@@ -164,9 +164,9 @@ class _UserDetails extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                placement='modal'
                 form={form}
                 statePath='userDetails'
-                modal
                 onApply={userDetails => this.updateUserDetails(userDetails)}
                 onClose={deactivate}>
                 {this.renderPanel()}

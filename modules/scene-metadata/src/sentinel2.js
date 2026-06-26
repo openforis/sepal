@@ -1,5 +1,8 @@
-const {getDayOfYear} = require('date-fns')
-const log = require('#sepal/log').getLogger('sentinel2')
+import {getDayOfYear} from 'date-fns'
+
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('sentinel2')
 
 const PRODUCT_URI_MATCHER = /^S2[ABC]_(?:(?:OPER_PRD_)?MSI(L1C|L2A)_(?<acquisitionTimestamp>\d{8}T\d{6})_N\d{4}_R\d{3}_(?<sceneArea>T\d{2}[A-Z]{3})_\d{8}T\d{6}(?:\.SAFE)?)$/
 const SHORT_GRANULE_ID_MATCHER = /^(L1C|L2A)_T\d{2}[A-Z]{3}_A\d{6}_(?<processedTimestamp>\d{8}T\d{6})$/
@@ -36,19 +39,38 @@ const getIdFromDatastripId = (productUri, datastripId) => {
     }
 }
 
-const getSceneAreaId = productUri =>
-    productUri.substring(39, 39 + 5)
+const getSceneAreaId = productUri => {
+    const match = productUri.match(PRODUCT_URI_MATCHER)
+    if (match) {
+        return match.groups.sceneArea.substring(1)
+    } else {
+        log.debug('Unexpected product uri format:', productUri)
+    }
+}
 
-const scene = ({id, productUri, acquiredTimestamp, cloudCover}) => ({
-    id,
-    source: 'SENTINEL_2',
-    dataSet: 'SENTINEL_2',
-    sceneAreaId: getSceneAreaId(productUri),
-    acquiredTimestamp,
-    dayOfYear: getDayOfYear(acquiredTimestamp),
-    cloudCover: parseFloat(cloudCover),
-    sunAzimuth: 0,
-    sunElevation: 0
-})
+const parseCompactTimestamp = timestamp =>
+    new Date(timestamp.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/, '$1-$2-$3T$4:$5:$6')).toISOString()
 
-module.exports = {getIdFromDatastripId, getIdFromGranuleId, scene}
+const getAcquiredTimestampFromId = id => {
+    const acquiredTimestamp = parseCompactTimestamp(id.substring(0, 15))
+    log.trace(`Inferred timestamp from id ${id}: ${acquiredTimestamp}`)
+    return acquiredTimestamp
+}
+
+const getCloudCover = cloudCover =>
+    cloudCover !== null && cloudCover !== '' ? parseFloat(cloudCover) : 100
+
+const scene = ({id, productUri, acquiredTimestamp, cloudCover}) =>
+    id && productUri && acquiredTimestamp ? ({
+        id,
+        source: 'SENTINEL_2',
+        dataset: 'SENTINEL_2',
+        sceneAreaId: getSceneAreaId(productUri),
+        acquiredTimestamp,
+        dayOfYear: getDayOfYear(acquiredTimestamp),
+        cloudCover: getCloudCover(cloudCover),
+        sunAzimuth: 0,
+        sunElevation: 0
+    }) : null
+
+export {getAcquiredTimestampFromId, getIdFromDatastripId, getIdFromGranuleId, scene}

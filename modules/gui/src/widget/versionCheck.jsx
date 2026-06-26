@@ -9,17 +9,17 @@ import {Button} from './button'
 import {Notifications} from './notifications'
 
 export const VersionCheck = () => {
-    const [addSubscription] = useSubscriptions()
+    const [addSubscriptions] = useSubscriptions()
 
     useEffect(() => {
-        addSubscription(
+        addSubscriptions(
             event$.pipe(
                 filter(({type}) => type === 'clientVersionMismatch')
             ).subscribe(
                 () => notify()
             )
         )
-    }, [])
+    }, [addSubscriptions])
 
     const reload = () =>
         window.location.replace('/')

@@ -1,47 +1,108 @@
-const {program} = require('commander')
-const _ = require('lodash')
+import {Command, Option} from 'commander'
 
-const DEFAULT_PORT = 80
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('config')
+
+const DEFAULT_HTTP_PORT = 80
 const DEFAULT_MANAGEMENT_PORT = 8080
-const MONITOR_ENABLED = true
+const DEFAULT_MONITOR_ENABLED = true
 
-program
-    .option('--port <number>', 'Port', DEFAULT_PORT)
-    .option('--management-port <number>', 'Management port', DEFAULT_MANAGEMENT_PORT)
-    .option('--monitor-enabled <value>', 'Enable app monitoring', MONITOR_ENABLED)
-    .option('--sepal-host <value>')
-    .option('--sepal-admin-password <value>')
-    .option('--gee-email <value>')
-    .option('--gee-key <value>')
-    .option('--google-project-id <value>')
-    .option('--gee-client-id <value>')
-    .option('--deploy-environment <value>')
-    .parse(process.argv)
+const fatalError = error => {
+    log.fatal(error)
+    process.exit(1)
+}
+
+const program = new Command()
+
+try {
+    program
+        .exitOverride()
+        .addOption(
+            new Option('--sepal-host <value>')
+                .env('SEPAL_HOST')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--sepal-admin-username <value>')
+                .env('SEPAL_ADMIN_USERNAME')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--sepal-admin-password <value>')
+                .env('SEPAL_ADMIN_PASSWORD')
+                .makeOptionMandatory()
+        )
+        .addOption(
+            new Option('--port <number>')
+                .env('HTTP_PORT')
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_HTTP_PORT)
+        )
+        .addOption(
+            new Option('--management-port <number>')
+                .env('MANAGEMENT_PORT')
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_MANAGEMENT_PORT)
+        )
+        .addOption(
+            new Option('--monitor-enabled <boolean>')
+                .env('MONITOR_ENABLED')
+                .argParser(v => v === 'true')
+                .default(DEFAULT_MONITOR_ENABLED)
+        )
+        .addOption(
+            new Option('--gee-email <value>')
+                .env('EE_ACCOUNT')
+        )
+        .addOption(
+            new Option('--gee-key <value>')
+                .env('EE_PRIVATE_KEY')
+        )
+        .addOption(
+            new Option('--google-project-id <value>')
+                .env('GOOGLE_PROJECT_ID')
+        )
+        .addOption(
+            new Option('--deploy-environment <value>')
+                .env('DEPLOY_ENVIRONMENT')
+        )
+        .addOption(
+            new Option('--apps-catalog-url <value>')
+                .env('SEPAL_APPS_CATALOG_URL')
+        )
+        .parse()
+} catch (error) {
+    fatalError(error)
+}
 
 const {
     port,
     managementPort,
     monitorEnabled,
     sepalHost,
+    sepalAdminUsername,
     sepalAdminPassword,
     geeEmail,
     geeKey,
     googleProjectId,
-    geeClientId,
-    deployEnvironment
+    deployEnvironment,
+    appsCatalogUrl
 } = program.opts()
 
-const config = {
-    port,
-    managementPort,
-    monitorEnabled,
-    sepalHost,
-    sepalAdminPassword,
+log.info('Configuration loaded')
+
+const resolvedAppsCatalogUrl = appsCatalogUrl || null
+
+export {
+    resolvedAppsCatalogUrl as appsCatalogUrl,
+    deployEnvironment,
     geeEmail,
     geeKey,
     googleProjectId,
-    geeClientId,
-    deployEnvironment
-    
-}
-module.exports = config
+    managementPort,
+    monitorEnabled,
+    port,
+    sepalAdminPassword,
+    sepalAdminUsername,
+    sepalHost}

@@ -1,0 +1,8 @@
+sepal_ui==3.0.1
+
+########  Google Earthengine  ########
+numpy<2
+oauth2client
+google-api-python-client
+oeel
+git+https://github.com/openforis/earthengine-api.git@v1.6.14#egg=earthengine-api&subdirectory=python

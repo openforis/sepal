@@ -35,6 +35,15 @@ chown -R $sandbox_user_id:$home_group_id /home/$sandbox_user/.shiny
 
 rm -rf /templates
 
+# Unset after writing so supervisord (PID 1, exec'd below) and its children don't inherit the key.
+if [ -n "$SEPAL_API_KEY" ]; then
+    umask 077
+    printf '%s' "$SEPAL_API_KEY" > /var/run/sepal-api-key
+    chown ${sandbox_user_id}:${home_group_id} /var/run/sepal-api-key
+    chmod 0600 /var/run/sepal-api-key
+    unset SEPAL_API_KEY
+fi
+
 printf '%s\n' \
     "R_LIBS_USER=/home/$sandbox_user/.R/library" \
     "R_LIBS_SITE=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library:/shiny/library" \
@@ -43,37 +52,9 @@ printf '%s\n' \
 cp /etc/environment /etc/R/Renviron.site
 sed -i -e 's/\/usr\/lib\/x86_64-linux-gnu/\/usr\/lib\/x86_64-linux-gnu:\/lib\/x86_64-linux-gnu/g' /usr/lib/R/etc/ldpaths
 
-TOT_MEM=$(awk '/MemFree/ { printf "%i\n", $2/1024 }' /proc/meminfo)
-if [[ (TOT_MEM -lt 3000) ]] ;then
-  GPT_MAX_MEM=1024
-  GPT_MIN_MEM=1024
-elif [[ (TOT_MEM -ge 3000) && (TOT_MEM -lt 10000) ]] ;then
-  GPT_MAX_MEM=2048
-  GPT_MIN_MEM=2048
-elif [[ (TOT_MEM -ge 10000) && (TOT_MEM -lt 20000) ]] ;then
-  GPT_MAX_MEM=8192
-  GPT_MIN_MEM=8192
-elif [[ (TOT_MEM -ge 20000) ]] ;then
-  GPT_MAX_MEM=16384
-  GPT_MIN_MEM=16384
-else
-  GPT_MAX_MEM=1024
-  GPT_MIN_MEM=1024
-fi
 printf '%s\n' \
-    "-Xmx${GPT_MAX_MEM}m" \
-    "-Xms${GPT_MIN_MEM}m" \
-    "-XX:+AggressiveOpts" \
-    "-Xverify:none" \
-    "-Dsnap.log.level=ERROR"
-
-printf '%s\n' \
-    "-Xmx${GPT_MAX_MEM}m" \
-    "-Xms${GPT_MIN_MEM}m" \
-    "-XX:+AggressiveOpts" \
-    "-Xverify:none" \
-    "-Dsnap.log.level=ERROR" \
-    > /usr/local/snap/bin/gpt.vmoptions
+    "SEPAL_HOST=$SEPAL_HOST" \
+    >> /etc/environment
 
 userHome=/home/$sandbox_user
 cp -n /etc/skel/.bashrc "$userHome"

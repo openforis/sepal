@@ -1,8 +1,10 @@
-const {WebSocket} = require('ws')
+import {WebSocket} from 'ws'
 
-const {clientTag, eventTag, userTag} = require('./tag')
+import {getLogger} from '#sepal/log'
 
-const log = require('#sepal/log').getLogger('websocket/client')
+import {clientTag, eventTag, userTag} from './tag.js'
+
+const log = getLogger('websocket/client')
 
 const Clients = () => {
     const clients = {}
@@ -90,20 +92,27 @@ const Clients = () => {
             .forEach(clientId => send(clientId, {module, ...message}))
     }
 
-    const sendEvent = (username, type, data) => {
+    const sendEventToUser = (username, type, data) => {
         log.debug(`Sending ${eventTag(type)} to ${userTag(username)}`)
-        Object.entries(clients)
-            .filter(([_, {username: currentUsername}]) => currentUsername === username)
-            .map(([clientId]) => clientId)
-            .forEach(clientId => send(clientId, {event: {type, data}}))
+        sendEvent({type, data, username})
+    }
+
+    const sendEventToClient = (username, clientId, type, data) => {
+        log.debug(`Sending ${eventTag(type)} to ${clientTag(username, clientId)}`)
+        sendEvent({type, data, username, clientId})
     }
 
     const broadcastEvent = (type, data) => {
         log.debug(`Sending ${eventTag(type)} to all clients`)
+        sendEvent({type, data})
+    }
+
+    const sendEvent = ({type, data, username, clientId}) =>
         Object.entries(clients)
+            .filter(([currentClientId, {username: currentUsername}]) =>
+                (!clientId || currentClientId === clientId) && (!username || currentUsername === username))
             .map(([clientId]) => clientId)
             .forEach(clientId => send(clientId, {event: {type, data}}))
-    }
 
     const forEach = callback => {
         log.debug('Iterating clients')
@@ -118,7 +127,7 @@ const Clients = () => {
         return usernames.forEach(username => callback(username))
     }
 
-    return {add, get, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendEvent, broadcastEvent}
+    return {add, get, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendEventToUser, sendEventToClient, broadcastEvent}
 }
 
-module.exports = {Clients}
+export {Clients}

@@ -30,6 +30,8 @@ import {RecipeListConfirm} from './recipeListConfirm'
 import {NO_PROJECT_OPTION, NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeListConstants'
 import {SelectProject} from './selectProject'
 
+const EMPTY_ARRAY = []
+
 const mapStateToProps = () => ({
     projects: select('process.projects'),
     projectId: select('process.projectId'),
@@ -37,9 +39,9 @@ const mapStateToProps = () => ({
     sortingOrder: select('process.sortingOrder') ?? 'updateTime',
     sortingDirection: select('process.sortingDirection') ?? -1,
     filterValue: select('process.filterValue'),
-    filterValues: select('process.filterValues') ?? [],
-    selectedIds: select('process.selectedIds') ?? [],
-    filteredRecipes: select('process.filteredRecipes') ?? []
+    filterValues: select('process.filterValues') ?? EMPTY_ARRAY,
+    selectedIds: select('process.selectedIds') ?? EMPTY_ARRAY,
+    filteredRecipes: select('process.filteredRecipes') ?? EMPTY_ARRAY
 })
 
 const getHighlightMatcher = memoizeOne(
@@ -83,7 +85,8 @@ class _RecipeList extends React.Component {
     renderList() {
         const {filteredRecipes} = this.props
         const {edit, move, remove} = this.state
-        const itemKey = recipe => `${recipe.id}|${edit}|${this.getHighlightMatcher()}`
+        const highlightKey = this.getHighlightMatcher().toString()
+        const itemKey = recipe => `${recipe.id}|${edit}|${highlightKey}`
         return (
             <Layout type='vertical' spacing='compact'>
                 {this.renderHeader1()}
@@ -392,9 +395,12 @@ class _RecipeList extends React.Component {
     }
 
     setSelectedIds(selectedIds) {
-        actionBuilder('SET_SELECTED_IDS', {selectedIds})
-            .set(['process.selectedIds'], selectedIds)
-            .dispatch()
+        const {selectedIds: prevSelectedIds} = this.props
+        if (selectedIds.length !== prevSelectedIds.length || !_.isEqual(selectedIds, prevSelectedIds)) {
+            actionBuilder('SET_SELECTED_IDS', {selectedIds})
+                .set(['process.selectedIds'], selectedIds)
+                .dispatch()
+        }
     }
 
     isConfirmed(recipeId) {
@@ -466,10 +472,9 @@ class _RecipeList extends React.Component {
             : true
     }
 
-    recipeMatchesFilter(recipe, filterValues) {
-        const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
+    recipeMatchesFilter(recipe, searchMatchers) {
         const searchProperties = ['project', 'name']
-        return filterValues
+        return searchMatchers.length
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
                     matcher.test(simplifyString(recipe[property], {
@@ -505,12 +510,13 @@ class _RecipeList extends React.Component {
     updateFilteredRecipes() {
         const {projects = [], recipes, filterValues, selectedIds} = this.props
         const {sortingOrder, sortingDirection} = this.props
+        const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
         const filteredRecipes = _.chain(recipes)
             .map(recipe => {
                 const project = projects.find(project => project.id === recipe.projectId)
                 return {...recipe, project: project?.name}
             })
-            .filter(recipe => this.recipeMatchesProject(recipe) && this.recipeMatchesFilter(recipe, filterValues))
+            .filter(recipe => this.recipeMatchesProject(recipe) && this.recipeMatchesFilter(recipe, searchMatchers))
             .orderBy(recipe => this.getSorter(recipe, sortingOrder), sortingDirection === 1 ? 'asc' : 'desc')
             .value()
         actionBuilder('SET_FILTERED_RECIPES', {filteredRecipes})
@@ -526,7 +532,17 @@ class _RecipeList extends React.Component {
     }
     
     componentDidUpdate(prevProps) {
-        if (!_.isEqual(this.props, prevProps)) {
+        const {recipes, projects, filterValues, projectId,
+            sortingOrder, sortingDirection, selectedIds} = this.props
+        if (
+            recipes !== prevProps.recipes
+            || projects !== prevProps.projects
+            || filterValues !== prevProps.filterValues
+            || projectId !== prevProps.projectId
+            || sortingOrder !== prevProps.sortingOrder
+            || sortingDirection !== prevProps.sortingDirection
+            || selectedIds !== prevProps.selectedIds
+        ) {
             this.updateFilteredRecipes()
         }
     }

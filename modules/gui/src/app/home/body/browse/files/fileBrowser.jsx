@@ -1,3 +1,4 @@
+import memoizeOne from 'memoize-one'
 import moment from 'moment'
 import {orderBy} from 'natural-orderby'
 import Path from 'path'
@@ -29,6 +30,49 @@ const log = getLogger('browse')
 import styles from './fileBrowser.module.css'
 
 const ANIMATION_DURATION_MS = 1000
+
+const getSorter = memoizeOne((splitDirs, sortingOrder, sortingDirection) => {
+    const orderMap = {
+        '-1': 'desc',
+        '1': 'asc'
+    }
+
+    const dirSorter = {
+        order: splitDirs ? ([_, node]) => FileTree.isDirectory(node) : null,
+        direction: splitDirs ? 'desc' : null
+    }
+
+    const nameSorter = {
+        order: ([key]) => key,
+        direction: orderMap[sortingDirection]
+    }
+
+    const dateSorter = {
+        order: ([_, node]) => FileTree.getMTime(node),
+        direction: orderMap[-sortingDirection]
+    }
+
+    const naturalSortingDirectoriesFirst = items =>
+        orderBy(
+            items,
+            [dirSorter.order, nameSorter.order].filter(Boolean),
+            [dirSorter.direction, nameSorter.direction].filter(Boolean)
+        )
+
+    const dateSortingDirectoriesFirst = items =>
+        orderBy(
+            items,
+            [dirSorter.order, dateSorter.order].filter(Boolean),
+            [dirSorter.direction, dateSorter.direction].filter(Boolean)
+        )
+
+    const sortingMap = {
+        name: naturalSortingDirectoriesFirst,
+        date: dateSortingDirectoriesFirst
+    }
+
+    return sortingMap[sortingOrder]
+})
 
 class _FileBrowser extends React.Component {
 
@@ -105,8 +149,7 @@ class _FileBrowser extends React.Component {
     }
 
     onUpdate({path, items}) {
-        const {tree} = this.state
-        this.setState({tree: FileTree.updateItem(tree, FileTree.fromStringPath(path), items)})
+        this.setState(({tree}) => ({tree: FileTree.updateItem(tree, FileTree.fromStringPath(path), items)}))
     }
 
     enabled(enabled) {
@@ -123,23 +166,20 @@ class _FileBrowser extends React.Component {
     }
 
     expandDirectory(node) {
-        const {tree} = this.state
         const path = FileTree.getPath(node)
-        this.setState({tree: FileTree.expandDirectory(tree, path)}, () => {
+        this.setState(({tree}) => ({tree: FileTree.expandDirectory(tree, path)}), () => {
             this.monitor(this.getOpenDirectories(path))
         })
     }
 
     collapseDirectory(node) {
-        const {tree} = this.state
         const path = FileTree.getPath(node)
-        this.setState({tree: FileTree.collapseDirectory(tree, path)})
+        this.setState(({tree}) => ({tree: FileTree.collapseDirectory(tree, path)}))
         this.unmonitor([path])
     }
 
     collapseAllDirectories() {
-        const {tree} = this.state
-        this.setState({tree: FileTree.collapseAllDirectories(tree)})
+        this.setState(({tree}) => ({tree: FileTree.collapseAllDirectories(tree)}))
     }
 
     toggleSelected(node) {
@@ -149,25 +189,21 @@ class _FileBrowser extends React.Component {
     }
 
     selectItem(node) {
-        const {tree} = this.state
         const path = FileTree.getPath(node)
-        this.setState({tree: FileTree.selectItem(tree, path)})
+        this.setState(({tree}) => ({tree: FileTree.selectItem(tree, path)}))
     }
 
     deselectItem(node) {
-        const {tree} = this.state
         const path = FileTree.getPath(node)
-        this.setState({tree: FileTree.deselectItem(tree, path)})
+        this.setState(({tree}) => ({tree: FileTree.deselectItem(tree, path)}))
     }
 
     clearSelection() {
-        const {tree} = this.state
-        this.setState({tree: FileTree.deselectDescendants(tree, [])})
+        this.setState(({tree}) => ({tree: FileTree.deselectDescendants(tree, [])}))
     }
 
     removePaths(paths) {
-        const {tree} = this.state
-        this.setState({tree: FileTree.setRemoving(tree, paths)})
+        this.setState(({tree}) => ({tree: FileTree.setRemoving(tree, paths)}))
         this.remove(paths)
     }
 
@@ -277,9 +313,11 @@ class _FileBrowser extends React.Component {
     }
 
     renderIcon(key, node) {
-        return FileTree.isDirectory(node)
-            ? this.renderDirectoryIcon(node)
-            : this.renderFileIcon(key)
+        return FileTree.isAdding(node) || FileTree.isRemoving(node)
+            ? this.renderSpinner()
+            : FileTree.isDirectory(node)
+                ? this.renderDirectoryIcon(node)
+                : this.renderFileIcon(key)
     }
 
     toggleDirectory(e, node) {
@@ -336,8 +374,8 @@ class _FileBrowser extends React.Component {
     }
 
     renderListItems(items) {
-        const {showDotFiles} = this.state
-        const sorter = this.getSorter()
+        const {showDotFiles, splitDirs, sorting: {sortingOrder, sortingDirection}} = this.state
+        const sorter = getSorter(splitDirs, sortingOrder, sortingDirection)
         return sorter(Object.entries(items))
             .filter(([fileName]) => showDotFiles || !fileName.startsWith('.'))
             .map(([key, node]) => this.renderListItem(key, node))
@@ -352,11 +390,10 @@ class _FileBrowser extends React.Component {
                 <div
                     className={[
                         lookStyles.look,
-                        selected ? lookStyles.highlight : lookStyles.transparent,
-                        selected ? null : lookStyles.chromeless,
+                        selected ? lookStyles.highlight : [lookStyles.transparent, lookStyles.chromeless],
                         adding ? styles.adding : null,
                         removing ? styles.removing : null
-                    ].join(' ')}
+                    ].flat().join(' ')}
                     style={{
                         '--depth': FileTree.getDepth(node),
                         '--animation-duration-ms': ANIMATION_DURATION_MS
@@ -370,50 +407,6 @@ class _FileBrowser extends React.Component {
                 {this.renderList(node)}
             </li>
         )
-    }
-
-    getSorter() {
-        const {splitDirs, sorting: {sortingOrder, sortingDirection}} = this.state
-        const orderMap = {
-            '-1': 'desc',
-            '1': 'asc'
-        }
-
-        const dirSorter = {
-            order: splitDirs ? ([_, node]) => FileTree.isDirectory(node) : null,
-            direction: splitDirs ? 'desc' : null
-        }
-
-        const nameSorter = {
-            order: ([key]) => key,
-            direction: orderMap[sortingDirection]
-        }
-
-        const dateSorter = {
-            order: ([_, node]) => FileTree.getMTime(node),
-            direction: orderMap[-sortingDirection]
-        }
-
-        const naturalSortingDirectoriesFirst = items =>
-            orderBy(
-                items,
-                [dirSorter.order, nameSorter.order].filter(Boolean),
-                [dirSorter.direction, nameSorter.direction].filter(Boolean)
-            )
-
-        const dateSortingDirectoriesFirst = items =>
-            orderBy(
-                items,
-                [dirSorter.order, dateSorter.order].filter(Boolean),
-                [dirSorter.direction, dateSorter.direction].filter(Boolean)
-            )
-
-        const sortingMap = {
-            name: naturalSortingDirectoriesFirst,
-            date: dateSortingDirectoriesFirst
-        }
-
-        return sortingMap[sortingOrder]
     }
 
     renderActionButtons() {
@@ -448,7 +441,7 @@ class _FileBrowser extends React.Component {
                 <Button
                     chromeless
                     shape='circle'
-                    icon='rotate-left'
+                    icon='times'
                     tooltip={msg('browse.controls.clearSelection.tooltip')}
                     tooltipPlacement='bottom'
                     disabled={nothingSelected}

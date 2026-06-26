@@ -34,9 +34,7 @@ export class Terminal extends React.Component {
 
 class _TerminalSession extends React.Component {
     terminalContainer = React.createRef()
-    terminal = new Xterm({
-        rendererType: 'canvas'
-    })
+    terminal = new Xterm()
     fitAddon = new FitAddon()
     webSocket = null
     enabled$ = new Subject()

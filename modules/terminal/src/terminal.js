@@ -1,8 +1,23 @@
-const log = require('#sepal/log').getLogger('terminal')
-const {exec} = require('child_process')
-const {interval, merge, Subject, map, filter, bufferTime} = require('rxjs')
+import {unlinkSync} from 'fs'
+import {bufferTime, filter, interval, map, merge, Subject} from 'rxjs'
 
-const Session = require('./session')
+import {getLogger} from '#sepal/log'
+
+import * as Session from './session.js'
+
+const log = getLogger('terminal')
+
+const removeKeyFile = keyFile => {
+    try {
+        log.debug('Removing keyfile:', keyFile)
+        unlinkSync(keyFile)
+        log.info('Removed keyfile:', keyFile)
+    } catch (err) {
+        if (err.code !== 'ENOENT') {
+            log.error('Failed to remove keyfile:', err)
+        }
+    }
+}
 
 const start = (websocket, req) => {
     try {
@@ -14,7 +29,7 @@ const start = (websocket, req) => {
     
         websocket.on('close', () => {
             terminal.kill()
-            exec(`rm -f ${session.tempKeyFile}`)
+            removeKeyFile(session.tempKeyFile)
             subscriptions.forEach(subscription =>
                 subscription.unsubscribe()
             )
@@ -73,10 +88,11 @@ const resize = (req, res) => {
         const rows = parseInt(req.query.rows)
         session.terminal.resize(cols, rows)
         log.info(`Resized session: ${session.id}, cols: ${cols}, rows: ${rows}`)
-        res.end()
+        res.status(200).end()
     } catch (error) {
         log.error('Cannot resize session', error)
+        res.status(500).end()
     }
 }
 
-module.exports = {start, resize}
+export {resize, start}

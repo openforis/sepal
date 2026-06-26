@@ -1,7 +1,11 @@
-const {Subject, mergeMap, catchError, of, map} = require('rxjs')
-const {pushoverApiKey, pushoverGroupKey, notifyFrom, emergencyNotificationRetryDelay, emergencyNotificationRetryTimeout} = require('./config')
-const {post$} = require('#sepal/httpClient')
-const log = require('#sepal/log').getLogger('pushover')
+import {catchError, map, mergeMap, of, Subject} from 'rxjs'
+
+import {post$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+
+import {emergencyNotificationRetryDelay, emergencyNotificationRetryTimeout, notifyFrom, pushoverApiKey, pushoverGroupKey} from './config.js'
+
+const log = getLogger('pushover')
 
 const PUSHOVER_URL = 'https://api.pushover.net/1/messages.json'
 const PUSHOVER_CONCURRENCY = 2 // max allowed by Pushover
@@ -34,4 +38,4 @@ notification$.pipe(
 const notify = ({message, priority}) =>
     notification$.next({message, priority})
 
-module.exports = {notify}
+export {notify}

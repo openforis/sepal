@@ -34,7 +34,8 @@ class ActivatePendingSessionOnInstanceHandler implements CommandHandler<Void, Ac
 
         def activatedSession = session.activate()
         sessionRepository.update(activatedSession)
-        eventDispatcher.publish(new WorkerSessionActivated(activatedSession.username, activatedSession))
+        // Strip apiKey — event is serialised to RabbitMQ.
+        eventDispatcher.publish(new WorkerSessionActivated(activatedSession.username, activatedSession.withApiKey(null)))
         return null
     }
 }

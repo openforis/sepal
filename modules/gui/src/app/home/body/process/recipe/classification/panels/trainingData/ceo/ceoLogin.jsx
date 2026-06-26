@@ -36,9 +36,9 @@ export class _CeoLogin extends React.Component {
         return (
             <Form.Panel
                 className={styles.panel}
+                placement='modal'
                 form={form}
                 isActionForm
-                modal
                 onApply={this.login$}
                 onClose={this.close}>
                 <Panel.Header

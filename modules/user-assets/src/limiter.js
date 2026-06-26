@@ -1,5 +1,8 @@
-const {Subject, ReplaySubject, groupBy, mergeMap, map, catchError, take, finalize, EMPTY, takeUntil} = require('rxjs')
-const log = require('#sepal/log').getLogger('limiter')
+import {catchError, EMPTY, finalize, groupBy, map, mergeMap, ReplaySubject, Subject, take, takeUntil} from 'rxjs'
+
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('limiter')
 
 const Limiter = ({name, concurrency, group = () => true}) => {
     const request$ = new Subject()
@@ -38,4 +41,4 @@ const Limiter = ({name, concurrency, group = () => true}) => {
     }
 }
 
-module.exports = {Limiter}
+export {Limiter}

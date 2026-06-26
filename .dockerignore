@@ -19,3 +19,5 @@ modules/**/target
 
 .DS_Store
 .node-xmlhttprequest-*
+
+.RData

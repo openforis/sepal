@@ -5,7 +5,6 @@
 .scrollable {
     /* Enable momentum scrolling on iDevices */
     -webkit-overflow-scrolling: touch;
-    user-select: none;
     pointer-events: all;
 }
 

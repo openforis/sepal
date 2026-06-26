@@ -1,9 +1,12 @@
-const log = require('#sepal/log').getLogger('session')
-const {toPromise} = require('#sepal/util')
-const {usernameTag} = require('./tag')
-const {getSessionUsername} = require('./user')
+import {getLogger} from '#sepal/log'
+import {toPromise} from '#sepal/util'
 
-const SessionManager = (sessionStore, userStore) => {
+import {usernameTag} from './tag.js'
+import {getSessionUsername} from './user.js'
+
+const log = getLogger('session')
+
+const SessionManager = sessionStore => {
     const getAllSessions = async () => {
         const [sessions] = await toPromise(
             callback => sessionStore.all(callback)
@@ -32,7 +35,6 @@ const SessionManager = (sessionStore, userStore) => {
                 async sessionId => await removeSession(sessionId)
             )
         ).then(async () => {
-            await userStore.removeUser(username)
             return true
         })
     }
@@ -53,7 +55,9 @@ const SessionManager = (sessionStore, userStore) => {
 
     const logout = async (req, res, _next) => {
         const username = getSessionUsername(req)
-        req.session.destroy()
+        await new Promise((resolve, reject) =>
+            req.session.destroy(err => err ? reject(err) : resolve())
+        )
         
         if (username) {
             const userSessionIds = await getSessionIdsByUsername(username)
@@ -73,7 +77,6 @@ const SessionManager = (sessionStore, userStore) => {
                 .forEach(cookie => res.cookie(cookie, '', {maxAge: 0}))
         }
         res.status(200).send({status: 'success', message: 'logout'})
-        res.end()
     }
 
     const invalidateOtherSessions = async (req, res, _next) => {
@@ -87,7 +90,6 @@ const SessionManager = (sessionStore, userStore) => {
         )
 
         res.status(200).send({status: 'success', message: 'other sessions invalidated'})
-        res.end()
     }
     
     return {
@@ -95,4 +97,4 @@ const SessionManager = (sessionStore, userStore) => {
     }
 }
 
-module.exports = {SessionManager}
+export {SessionManager}

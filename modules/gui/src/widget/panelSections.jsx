@@ -64,10 +64,10 @@ class _PanelSections extends React.Component {
             return (
                 <Form.PanelButtons
                     id={'panelSections'}
-                    closable
                     wizard={['panelSections']}
                     first={first}
                     last={last}
+                    closable
                     onBack={() => step.set(step.value - 1)}
                     onNext={() => step.set(step.value + 1)}
                 />

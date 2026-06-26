@@ -42,6 +42,7 @@ ADD modules/${MODULE_NAME}/script/init_quarto.sh /script/
 RUN chmod u+x /script/init_quarto.sh && sync && /script/init_quarto.sh
 
 ADD modules/${MODULE_NAME}/script/init_sepal_ui.sh /script/
+ADD modules/${MODULE_NAME}/script/requirements.txt /script/
 RUN chmod u+x /script/init_sepal_ui.sh && sync && /script/init_sepal_ui.sh
 
 ENV USER=sepal-user

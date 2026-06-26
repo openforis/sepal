@@ -44,7 +44,7 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
     }
 }
 
-module.exports = {
+export {
     fileSize,
     number
 }

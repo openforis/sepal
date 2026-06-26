@@ -1,5 +1,5 @@
 {
-  "appLauncher" : "app-launcher:80",
+  "appLauncher" : "app-launcher",
   "appManager": "app-manager",
   "ceoGateway": "ceo-gateway",
   "email": "email",
@@ -11,5 +11,6 @@
   "terminal": "terminal",
   "user": "user",
   "userAssets": "user-assets",
-  "userFiles": "user-files"
+  "userFiles": "user-files",
+  "userStorage": "user-storage"
 }

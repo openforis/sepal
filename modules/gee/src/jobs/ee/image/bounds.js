@@ -1,12 +1,13 @@
-const {job} = require('#gee/jobs/job')
+import {of, switchMap} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import ImageFactory from '#sepal/ee/imageFactory'
+import {fileName} from '#sepal/path'
 
 const worker$ = ({
     requestArgs: {recipe}
 }) => {
-    const ee = require('#sepal/ee/ee')
-    const ImageFactory = require('#sepal/ee/imageFactory')
-    const {of} = require('rxjs')
-    const {switchMap} = require('rxjs')
 
     const {getGeometry$} = ImageFactory(recipe)
     return getGeometry$().pipe(
@@ -26,8 +27,8 @@ const worker$ = ({
     )
 }
 
-module.exports = job({
+export default job({
     jobName: 'Bounds',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

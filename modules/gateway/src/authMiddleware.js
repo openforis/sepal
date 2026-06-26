@@ -1,11 +1,27 @@
-const {firstValueFrom, of, switchMap, tap} = require('rxjs')
-const {post$} = require('#sepal/httpClient')
-const modules = require('../config/modules')
-const {usernameTag, urlTag} = require('./tag')
-const {getRequestUser, setRequestUser, setSessionUsername} = require('./user')
-const log = require('#sepal/log').getLogger('authMiddleware')
+import {firstValueFrom, of, switchMap, tap} from 'rxjs'
+
+import {get$, post$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+
+import modules from '../config/modules.json' with {type: 'json'}
+import {urlTag, usernameTag} from './tag.js'
+import {getRequestUser, setRequestUser, setSessionUsername} from './user.js'
+
+const log = getLogger('authMiddleware')
 
 const AUTHENTICATION_URL = `http://${modules.user}/authenticate`
+const API_KEY_AUTH_URL = `http://${modules.sepal}/api/sessions/api-key-authenticate`
+const USER_LOOKUP_URL = `http://${modules.user}/info`
+
+// sepal-user header the gateway sends itself to call [ADMIN] endpoints internally.
+const INTERNAL_ADMIN_HEADER = {
+    'sepal-user': JSON.stringify({
+        username: 'sepal-gateway',
+        roles: ['application_admin'],
+        status: 'ACTIVE',
+        systemUser: true
+    })
+}
 
 const OK = 200
 const UNAUTHORIZED = 401
@@ -66,12 +82,20 @@ const AuthMiddleware = userStore => {
                 return of(INTERNAL_SERVER_ERROR)
             }
 
-            const authenticate$ = () => {
+            const getRequestHeaderCredentials = () => {
                 const header = req.get('Authorization')
                 const basicAuth = Buffer.from(header.substring('basic '.length), 'base64').toString()
-                const [rawUsername, password] = basicAuth.split(':')
-                const username = rawUsername.toLowerCase()
-                if (username && password) {
+                const [, rawUsername, password] = basicAuth.match(/([^:]*):(.*)/) || []
+                const username = rawUsername?.toLowerCase()
+                return {username, password}
+            }
+
+            const authenticate$ = () => {
+                const {username, password} = getRequestHeaderCredentials()
+                if (!password) {
+                    log.warn(`${usernameTag(username)} Missing credentials`)
+                    return unauthorized$(username)
+                } else if (username) {
                     log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticating user`)
                     return post$(AUTHENTICATION_URL, {
                         body: {username, password},
@@ -87,10 +111,44 @@ const AuthMiddleware = userStore => {
                         })
                     )
                 } else {
-                    log.warn(`${usernameTag(username)} Missing credentials`)
-                    return unauthorized$(username)
+                    log.trace(`${urlTag(req.originalUrl)} Authenticating via API key`)
+                    return authenticateApiKey$(password)
                 }
             }
+
+            const authenticateApiKey$ = apiKey =>
+                post$(API_KEY_AUTH_URL, {
+                    body: {apiKey},
+                    headers: INTERNAL_ADMIN_HEADER,
+                    validStatuses: [OK, UNAUTHORIZED]
+                }).pipe(switchMap(response => {
+                    const {statusCode} = response
+                    switch (statusCode) {
+                        case OK: {
+                            const {username} = JSON.parse(response.body)
+                            return loadUser$(username)
+                        }
+                        case UNAUTHORIZED: return unauthorized$('')
+                        default: return failure$('', response)
+                    }
+                }))
+
+            const loadUser$ = username =>
+                get$(USER_LOOKUP_URL, {
+                    query: {username},
+                    headers: INTERNAL_ADMIN_HEADER,
+                    validStatuses: [OK, UNAUTHORIZED]
+                }).pipe(switchMap(response => {
+                    const {statusCode} = response
+                    switch (statusCode) {
+                        case OK: {
+                            const user = JSON.parse(response.body)
+                            return authenticatedNonGuiRequest$(username, user)
+                        }
+                        case UNAUTHORIZED: return unauthorized$(username)
+                        default: return failure$(username, response)
+                    }
+                }))
     
             const missingAuthHeader$ = () => {
                 if (!req.get('No-auth-challenge')) {
@@ -124,4 +182,4 @@ const AuthMiddleware = userStore => {
     return {authMiddleware}
 }
 
-module.exports = {AuthMiddleware}
+export {AuthMiddleware}

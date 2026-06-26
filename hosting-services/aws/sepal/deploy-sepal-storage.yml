@@ -5,9 +5,6 @@
   gather_facts: true
 
   pre_tasks:
-    - set_fact:
-        SYSLOG_ADDRESS: "udp://{{ ec2_private_ip_address }}"
-
     # bash prompt
     - name: Set bash prompt
       blockinfile:
@@ -24,6 +21,53 @@
       with_items:
         - "LANG=en_US.utf-8"
         - "LC_ALL=en_US.utf-8"
+
+    - name: Install spal-release
+      dnf:
+        name: 'spal-release'
+
+    - name: Install monit
+      yum:
+        name: 'monit'
+
+    - name: Stop monit
+      systemd:
+        name: monit
+        state: stopped
+        enabled: yes
+        masked: no
+
+    - name: Configure monit/1
+      copy:
+        src: "monit/sepal-storage/monit.d/"
+        dest: "/etc/monit.d/"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: Configure monit/2
+      template:
+        src: "monit/config.template"
+        dest: "/etc/monit.d/config"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: Configure monit/3
+      copy:
+        src: "monit/sepal-storage/check/"
+        dest: "/usr/local/bin/"
+        owner: "root"
+        group: "root"
+        mode: "0755"
+
+    - name: Configure monit/4
+      template:
+        src: "monit/pushover-notify.template"
+        dest: "/usr/local/bin/pushover-notify"
+        owner: "root"
+        group: "root"
+        mode: "0755"
 
     - file: path="/data/sepal/etc" state=directory
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
@@ -55,7 +99,7 @@
 
     - name: Copy docker-registry certificate
       copy:
-        src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
+        src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
     - name: Create /etc/docker
@@ -77,6 +121,29 @@
         state: started
         enabled: yes
         masked: no
+
+    # - name: Update python3-docker via yum
+    #   yum:
+    #     name: python3-docker
+    #     state: latest
+
+    - ec2_instance_info:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        filters:
+          tag:Type: "Sepal"
+          tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+          instance-state-name: running
+      delegate_to: localhost
+      register: ec2_sepal
+
+    - set_fact:
+        sepal_private_ip: "{{ ec2_sepal.instances[0].private_ip_address }}"
+
+    - name: Join the swarm as a worker
+      docker_swarm:
+        state: join
+        join_token: "{{ swarm_token }}"
+        remote_addrs: ["{{ sepal_private_ip }}:2377"]
 
     # EFS
     - name: Install amazon-efs-utils
@@ -108,16 +175,19 @@
         dump: 0
         passno: 0
 
-    - docker_network:
-        name: sepal
-        ipam_config:
-          - subnet: 172.20.0.0/16
-            iprange: 172.20.0.0/24
+    - file:
+        path: "/usr/local/lib/docker/cli-plugins"
+        state: directory
 
-    - file: path="/usr/local/lib/docker/cli-plugins" state=directory
     - uri:
-        url: https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64
+        url: https://github.com/docker/compose/releases/download/{{ lookup('env', 'DOCKER_COMPOSE_VERSION') }}/docker-compose-linux-x86_64
         dest: /usr/local/lib/docker/cli-plugins/docker-compose
+        mode: +x
+        status_code: [200, 304]
+
+    - uri:
+        url: https://github.com/docker/buildx/releases/download/{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
+        dest: /usr/libexec/docker/cli-plugins/docker-buildx
         mode: +x
         status_code: [200, 304]
 
@@ -131,8 +201,8 @@
       copy:
         dest: "/etc/sepal/env.d/env-current"
         content: |
-          SEPAL_VERSION={{ VERSION }}
-          SYSLOG_ADDRESS={{ SYSLOG_ADDRESS }}
+          SEPAL_VERSION={{ version }}
+          SYSLOG_ADDRESS={{ syslog_address }}
 
     - name: Assemble a single env file
       ansible.builtin.assemble:
@@ -144,8 +214,15 @@
         src: "{{ lookup('env', 'PROJECT_DIR') }}/modules/docker-compose.logger.yml"
         dest: "/var/lib/sepal/modules/"
 
+  post_tasks:
+    - name: Start monit
+      systemd:
+        name: monit
+        state: started
+        enabled: yes
+        masked: no
+
   roles:
-    # - { role: live-patching }
     - { role: docker-login }
-    - { role: run-module, module: logger }
+    # - { role: run-module, module: logger }
     - { role: run-module, module: user-storage }

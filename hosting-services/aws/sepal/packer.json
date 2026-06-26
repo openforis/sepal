@@ -61,7 +61,7 @@
       "playbook_file": "worker-ami.yml",
       "extra_arguments": [
         "--extra-vars",
-        "env_file={{user `CONFIG_HOME`}}/env CONFIG_HOME={{user `CONFIG_HOME`}} VERSION={{user `VERSION`}} "
+        "env_file={{user `CONFIG_HOME`}}/env config_home={{user `CONFIG_HOME`}} version={{user `VERSION`}} "
       ],
       "user": "ec2-user"
     }

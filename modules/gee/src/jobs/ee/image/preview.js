@@ -1,16 +1,17 @@
-const {job} = require('#gee/jobs/job')
+import _ from 'lodash'
+import {switchMap} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import ee from '#sepal/ee/ee'
+import ImageFactory from '#sepal/ee/imageFactory'
+import {fileName} from '#sepal/path'
+import {sequence} from '#sepal/utils/array'
 
 const worker$ = ({
     requestArgs: {recipe, visParams, bands, ...otherArgs}
 }) => {
-    const ImageFactory = require('#sepal/ee/imageFactory')
 
     const TILE_SIZE = 256
-    
-    const ee = require('#sepal/ee/ee')
-    const {switchMap} = require('rxjs')
-    const {sequence} = require('#sepal/utils/array')
-    const _ = require('lodash')
 
     const getRetiledMap$ = (image, retile = TILE_SIZE, visParams) =>
         ee.getMap$(retile === TILE_SIZE ? image : image.retile(retile), visParams, 'create preview map')
@@ -116,7 +117,7 @@ const worker$ = ({
                 switchMap(visParams =>
                     visParams.hsv
                         ? ee.getMap$(hsvToRgb(image, visParams), null, 'create preview map')
-                        : ee.getMap$(image, visParams), null, 'create preview map')
+                        : ee.getMap$(image, visParams, 'create preview map'))
             ))
         )
     }
@@ -124,8 +125,8 @@ const worker$ = ({
 
 const distinct = array => [...new Set(array)]
 
-module.exports = job({
+export default job({
     jobName: 'Preview',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

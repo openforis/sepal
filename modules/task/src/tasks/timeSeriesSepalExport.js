@@ -1,41 +1,46 @@
-const {toFeatureCollection} = require('#sepal/ee/aoi')
-const {hasImagery: hasOpticalImagery} = require('#sepal/ee/optical/collection')
-const {hasImagery: hasRadarImagery} = require('#sepal/ee/radar/collection')
-const {hasImagery: hasPlanetImagery} = require('#sepal/ee/planet/collection')
-const tile = require('#sepal/ee/tile')
-const {exportImageToSepal$} = require('../jobs/export/toSepal')
-const {mkdirSafe$} = require('#task/rxjs/fileSystem')
-const {concat, forkJoin, from, of, map, mergeMap, scan, switchMap, tap} = require('rxjs')
-const {swallow} = require('#sepal/rxjs')
-const Path = require('path')
-const {terminal$} = require('#sepal/terminal')
-const {sequence} = require('#sepal/utils/array')
-const moment = require('moment')
-const ee = require('#sepal/ee/ee')
-const {getCurrentContext$} = require('#task/jobs/service/context')
-const {getCollection$} = require('#sepal/ee/timeSeries/collection')
-const _ = require('lodash')
-const log = require('#sepal/log').getLogger('task')
-const {setWorkloadTag} = require('./workloadTag')
+import _ from 'lodash'
+import moment from 'moment'
+import Path from 'path'
+import {concat, forkJoin, from, map, mergeMap, of, scan, switchMap, tap} from 'rxjs'
+
+import {toFeatureCollection} from '#sepal/ee/aoi'
+import ee from '#sepal/ee/ee'
+import {hasImagery as hasOpticalImagery} from '#sepal/ee/optical/collection'
+import {hasImagery as hasPlanetImagery} from '#sepal/ee/planet/collection'
+import {hasImagery as hasRadarImagery} from '#sepal/ee/radar/collection'
+import tile from '#sepal/ee/tile'
+import {getCollection$} from '#sepal/ee/timeSeries/collection'
+import {getLogger} from '#sepal/log'
+import {swallow} from '#sepal/rxjs'
+import {terminal$} from '#sepal/terminal'
+import {sequence} from '#sepal/utils/array'
+import {getCurrentContext$} from '#task/jobs/service/context'
+import {mkdir$} from '#task/rxjs/fileSystem'
+
+import {exportImageToSepal$} from '../jobs/export/toSepal.js'
+import {setWorkloadTag} from './workloadTag.js'
+
+const log = getLogger('task')
 
 const DATE_DELTA = 3
 const DATE_DELTA_UNIT = 'months'
 
-module.exports = {
-    submit$: (taskId, {workspacePath, description, ...retrieveOptions}) => {
-        setWorkloadTag(retrieveOptions.recipe)
-        return getCurrentContext$().pipe(
-            switchMap(({config}) => {
-                const preferredDownloadDir = workspacePath
-                    ? `${config.homeDir}/${workspacePath}/`
-                    : `${config.homeDir}/downloads/${description}/`
-                return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
-                    switchMap(downloadDir => export$(taskId, {description, downloadDir, ...retrieveOptions})
-                    )
-                )
-            })
-        )
-    }
+export const submit$ = (taskId, {description, image: {workspacePath, filenamePrefix, ...retrieveOptions}}) => {
+    setWorkloadTag(retrieveOptions.recipe)
+    return getCurrentContext$().pipe(
+        switchMap(({config}) => {
+            const exportPrefix = filenamePrefix || description
+            const preferredDownloadDir = workspacePath
+                ? `${config.homeDir}/${workspacePath}/`
+                : `${config.homeDir}/downloads/${description}/`
+            // the UI already validated the path here, no need to have mkdirsafe here
+            return mkdir$(preferredDownloadDir, {recursive: true}).pipe(
+                switchMap(downloadDir => {
+                    return export$(taskId, {description: exportPrefix, downloadDir, ...retrieveOptions})
+                })
+            )
+        })
+    )
 }
 
 const export$ = (taskId, {

@@ -6,6 +6,7 @@ import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
+import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
 import {getAllVisualizations as recipeVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {publishEvent} from '~/eventPublisher'
@@ -192,7 +193,9 @@ export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
-    const title = msg(['process.retrieve.form.task.GEE'], {name})
+    const bands = recipe.ui.retrieveOptions.bands
+    const destination = 'GEE'
+    const taskTitle = msg(['process.retrieve.form.task.GEE'], {name})
     const visualizations = getAllVisualizations(recipe)
     const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
     const operation = 'ccdc.GEE'
@@ -209,13 +212,20 @@ const submitRetrieveRecipeTask = recipe => {
     const task = {
         operation,
         params: {
-            title,
+            title: taskTitle,
             description: name,
-            recipe: _.omit(recipe, ['ui']),
-            ...recipe.ui.retrieveOptions,
-            bands: recipe.ui.retrieveOptions.bands,
-            visualizations,
-            properties: {...recipeProperties, 'system:time_start': timeStart, 'system:time_end': timeEnd}
+            image: {
+                ...recipe.ui.retrieveOptions,
+                recipe: _.omit(recipe, ['ui']),
+                bands,
+                visualizations,
+                properties: {...recipeProperties, 'system:time_start': timeStart, 'system:time_end': timeEnd}
+            },
+            taskInfo: getTaskInfo({
+                recipe,
+                destination,
+                retrieveOptions: recipe.ui.retrieveOptions
+            })
         }
     }
     publishEvent('submit_task', {

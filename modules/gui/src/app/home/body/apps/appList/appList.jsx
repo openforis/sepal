@@ -197,11 +197,13 @@ class _AppList extends React.Component {
 
     renderTagFilter(tags) {
         const {tagFilter} = this.props
-        const toOption = ({label, value}) => ({
+        const toOption = ({label, value, icon, tooltip}) => ({
             label: label[getLanguage()]
                 || label['en']
                 || Object.values(label)[0],
-            value
+            value,
+            ...(icon ? {icon} : {}),
+            ...(tooltip ? {tooltip} : {})
         })
         const options = [
             {
@@ -283,7 +285,10 @@ class _AppList extends React.Component {
                 <Tag
                     key={'noInstanceRequiredChip'}
                     size='small'
+                    icon='bolt'
                     label={msg('apps.noInstanceRequired')}
+                    tooltip={msg('apps.noInstanceRequiredTooltip')}
+                    tooltipPlacement='left'
                 />
             )
             : null
@@ -349,7 +354,7 @@ class _AppList extends React.Component {
     }
 
     isDockerApp(app) {
-        return app.endpoint && app.endpoint.includes('docker')
+        return (app.endpoint && app.endpoint.includes('docker')) || !!app.containerApp
     }
 
     isUserAdmin() {
@@ -366,10 +371,11 @@ class _AppList extends React.Component {
     }
 
     getApps() {
-        const {apps} = this.props
+        const {apps, filterValues} = this.props
+        const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
         return _.chain(apps)
             .filter(({hidden}) => !hidden)
-            .filter(app => this.appMatchesFilters(app))
+            .filter(app => this.appMatchesFilters(app, searchMatchers))
             .map(app => ({...app, running: this.isRunning(app)}))
             .value()
     }
@@ -379,8 +385,8 @@ class _AppList extends React.Component {
         return _.find(tabs, tab => tab.path === app.path)
     }
 
-    appMatchesFilters(app) {
-        return this.appMatchesFilterValues(app) && this.appMatchesTagFilter(app) && this.appMatchesGoogleAccountFilter(app)
+    appMatchesFilters(app, searchMatchers) {
+        return this.appMatchesFilterValues(app, searchMatchers) && this.appMatchesTagFilter(app) && this.appMatchesGoogleAccountFilter(app)
     }
 
     appMatchesTagFilter(app) {
@@ -388,11 +394,9 @@ class _AppList extends React.Component {
         return tagFilter === IGNORE || app.tags.includes(tagFilter)
     }
 
-    appMatchesFilterValues(app) {
-        const {filterValues} = this.props
-        const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
+    appMatchesFilterValues(app, searchMatchers) {
         const searchProperties = ['label', 'tagline']
-        return filterValues
+        return searchMatchers.length
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
                     matcher.test(simplifyString(app[property]))

@@ -1,9 +1,12 @@
-const ee = require('#sepal/ee/ee')
-const {interval, of, throwError, catchError, distinctUntilChanged, map, exhaustMap, switchMap, takeWhile, tap} = require('rxjs')
-const {finalizeObservable} = require('#sepal/rxjs')
+import {catchError, distinctUntilChanged, exhaustMap, interval, map, of, switchMap, takeWhile, tap, throwError} from 'rxjs'
+
+import ee from '#sepal/ee/ee'
+import {getLogger} from '#sepal/log'
+import {finalizeObservable} from '#sepal/rxjs'
+
 const MONITORING_FREQUENCY = 10000
 const {UNSUBMITTED, READY, RUNNING, FAILED} = ee.data.ExportState
-const log = require('#sepal/log').getLogger('ee')
+const log = getLogger('ee')
 
 const task$ = (taskId, task, description) => {
     const start$ = task =>
@@ -116,4 +119,4 @@ const task$ = (taskId, task, description) => {
     )
 }
 
-module.exports = {task$}
+export {task$}

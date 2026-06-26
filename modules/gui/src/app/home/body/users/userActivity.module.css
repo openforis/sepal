@@ -1,0 +1,11 @@
+.item {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+}
+
+.history {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}

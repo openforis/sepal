@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import memoizeOne from 'memoize-one'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -12,6 +13,11 @@ import {msg} from '../../translate'
 import {Buttons} from '../buttons'
 import {Constraint} from './constraint'
 import styles from './imageConstraints.module.css'
+
+const getBooleanOperatorsOptions = memoizeOne(() => [
+    {value: 'and', label: msg('process.asset.panel.mask.booleanOperator.and')},
+    {value: 'or', label: msg('process.asset.panel.mask.booleanOperator.or')}
+])
 
 class _ImageConstraints extends React.Component {
     state = {
@@ -34,7 +40,10 @@ class _ImageConstraints extends React.Component {
         const invalid = this.isInvalid()
         return constraints
             ? (
-                <Panel type='modal' className={styles.panel}>
+                <Panel
+                    className={styles.panel}
+                    placement='modal'
+                    onBackdropClick={this.close}>
                     <Panel.Header
                         icon={icon}
                         title={title}
@@ -71,10 +80,7 @@ class _ImageConstraints extends React.Component {
             <Buttons
                 selected={booleanOperator}
                 alignment='right'
-                options={[
-                    {value: 'and', label: 'and', tooltip: msg('widget.imageConstraints.logicalAnd.tooltip')},
-                    {value: 'or', label: 'or', tooltip: msg('widget.imageConstraints.logicalOr.tooltip')}
-                ]}
+                options={getBooleanOperatorsOptions()}
                 onChange={booleanOperator => this.changeBooleanOperator(booleanOperator)}
             />
         )

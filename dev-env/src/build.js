@@ -1,12 +1,13 @@
-import {compose} from './compose.js'
-import {start} from './start.js'
-import {exec} from './exec.js'
-import {getModules, isModule, showModuleStatus, MESSAGE, firstLine, isNodeModule} from './utils.js'
-import {getBuildDeps, getBuildRunDeps, getLibDeps} from './deps.js'
-import {log} from './log.js'
 import _ from 'lodash'
+
+import {compose} from './compose.js'
 import {SEPAL_SRC} from './config.js'
+import {allowsProductionMode, getBuildDeps, getBuildRunDeps, getLibDeps} from './deps.js'
+import {exec} from './exec.js'
+import {log} from './log.js'
 import {npmInstall} from './npm-install.js'
+import {start} from './start.js'
+import {firstLine, getModules, isModule, isNodeModule, MESSAGE, showModuleStatus} from './utils.js'
 
 const ensurePackageLockExists = async (modulePath, lib) => {
     const path = lib ? `${modulePath}/lib/${lib}` : modulePath
@@ -44,6 +45,24 @@ const updateModule = async module => {
     }
 }
 
+const composeBuild = async ({module, gitCommit, options, pull, noOverride}) =>
+    await compose({
+        module,
+        command: 'build',
+        args: [
+            !options.cache ? '--no-cache' : null,
+            !options.cache && pull ? '--pull' : null,
+        ],
+        env: {
+            ...process.env,
+            BUILD_NUMBER: 'latest',
+            GIT_COMMIT: gitCommit
+        },
+        noOverride,
+        showStdOut: !options.quiet,
+        showStdErr: true
+    })
+
 const buildModule = async (module, options = {}, pull) => {
     if (isModule(module)) {
         showModuleStatus(module, MESSAGE.BUILDING)
@@ -60,21 +79,13 @@ const buildModule = async (module, options = {}, pull) => {
 
         await updateModule(module)
 
-        await compose({
-            module,
-            command: 'build',
-            args: [
-                !options.cache ? '--no-cache' : null,
-                !options.cache && pull ? '--pull' : null,
-            ],
-            env: {
-                ...process.env,
-                BUILD_NUMBER: 'latest',
-                GIT_COMMIT: gitCommit
-            },
-            showStdOut: !options.quiet
-        })
-            
+        if (allowsProductionMode(module)) {
+            await composeBuild({module, gitCommit, options, pull, noOverride: true})
+            await composeBuild({module, gitCommit, options, pull: false})
+        } else {
+            await composeBuild({module, gitCommit, options, pull})
+        }
+
         showModuleStatus(module, MESSAGE.BUILT)
     }
 }

@@ -1,9 +1,10 @@
-import {exec} from './exec.js'
-import {getModules, isNodeModule, showModuleStatus, MESSAGE} from './utils.js'
+import _ from 'lodash'
+import Path from 'path'
+
 import {SEPAL_SRC} from './config.js'
 import {getLibDepList} from './deps.js'
-import Path from 'path'
-import _ from 'lodash'
+import {exec} from './exec.js'
+import {getModules, isNodeModule, MESSAGE, showModuleStatus} from './utils.js'
 
 const runEslint = async (module, modulePath, {fix}) => {
     showModuleStatus(module, MESSAGE.VALIDATING_SOURCES)

@@ -1,16 +1,18 @@
-const {job} = require('#gee/jobs/job')
+import {map, switchMap} from 'rxjs'
+
+import {job} from '#gee/jobs/job'
+import {toGeometry$} from '#sepal/ee/aoi'
+import ee from '#sepal/ee/ee'
+import imageFactory from '#sepal/ee/imageFactory'
+import {fileName} from '#sepal/path'
+
+import {exportToCSV$} from '../batch/exportToCSV.js'
+import {parseGroups} from '../batch/parse.js'
 
 const worker$ = ({
     requestArgs: {aoi, stratification, band, scale, crs, batch},
     credentials: {sepalUser}
 }) => {
-    const {map, switchMap} = require('rxjs')
-    const {toGeometry$} = require('#sepal/ee/aoi')
-    const {exportToCSV$} = require('../batch/exportToCSV')
-    const {parseGroups} = require('../batch/parse')
-    const imageFactory = require('#sepal/ee/imageFactory')
-    const ee = require('#sepal/ee/ee')
-
     const description = 'area-per-stratum'
     return toGeometry$(aoi).pipe(
         switchMap(geometry =>
@@ -49,8 +51,8 @@ const worker$ = ({
     }
 }
 
-module.exports = job({
+export default job({
     jobName: 'Calculate area per stratum',
-    jobPath: __filename,
+    jobPath: fileName(import.meta.url),
     worker$
 })

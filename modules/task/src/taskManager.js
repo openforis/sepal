@@ -1,11 +1,15 @@
-const {Subject, EMPTY, merge, of, mergeMap, shareReplay, filter, tap, switchMap, catchError} = require('rxjs')
-const log = require('#sepal/log').getLogger('task')
-const executeTask$ = require('./taskRunner')
-const {lastInWindow, repeating} = require('#sepal/rxjs')
-const {post$} = require('#sepal/httpClient')
-const {getConfig, switchedToServiceAccount$} = require('./context')
-const {errorReport} = require('#sepal/exception')
-const {tag} = require('#sepal/tag')
+import {catchError, EMPTY, filter, merge, mergeMap, of, shareReplay, Subject, switchMap, tap} from 'rxjs'
+
+import {errorReport} from '#sepal/exception'
+import {post$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+import {lastInWindow, repeating} from '#sepal/rxjs'
+import {tag} from '#sepal/tag'
+
+import {getConfig, switchedToServiceAccount$} from './context.js'
+import executeTask$ from './taskRunner.js'
+
+const log = getLogger('task')
 
 const taskTag = id => tag('Task', id)
 
@@ -127,4 +131,4 @@ task$.pipe(
     complete: () => log.fatal('Task stream completed unexpectedly')
 })
 
-module.exports = {submitTask, cancelTask}
+export {cancelTask, submitTask}

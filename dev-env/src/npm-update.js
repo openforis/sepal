@@ -1,10 +1,11 @@
-import {exec} from './exec.js'
-import {getModules, isNodeModule, showModuleStatus, MESSAGE} from './utils.js'
-import {SEPAL_SRC} from './config.js'
-import {getLibDepList} from './deps.js'
-import Path from 'path'
 import {access} from 'fs/promises'
 import _ from 'lodash'
+import Path from 'path'
+
+import {SEPAL_SRC} from './config.js'
+import {getLibDepList} from './deps.js'
+import {exec} from './exec.js'
+import {getModules, isNodeModule, MESSAGE, showModuleStatus} from './utils.js'
 
 const updatePackageList = async (module, path, {upgrade, target}) => {
     const modulePath = Path.join(SEPAL_SRC, path)
