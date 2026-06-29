@@ -34,7 +34,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
             UsernamePasswordVerifier usernamePasswordVerifier,
             ExternalUserDataGateway externalUserDataGateway,
             ServerConfig serverConfig) {
-        def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile(SCHEMA))
+        def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile(SCHEMA), false)
         return new UserComponent(
                 connectionManager,
                 externalUserDataGateway,
