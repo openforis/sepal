@@ -34,13 +34,23 @@ function start {
   docker compose --file ${MODULE_DIR}/docker-compose.yml up -d
 }
 
+function restart {
+  local MODULE=$1
+  local MODULE_DIR=${WORKSPACE}/modules/${MODULE}
+  echo
+  echo "******* Restarting ${MODULE} *******"
+  cd ${MODULE_DIR}
+  docker compose --file ${MODULE_DIR}/docker-compose.yml down
+  docker compose --file ${MODULE_DIR}/docker-compose.yml up -d
+}
+
 # build logger
 start logger
 
 build sandbox-base
 
 build r-proxy
-start r-proxy
+restart r-proxy
 
 build email
 build sys-monitor
