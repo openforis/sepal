@@ -194,6 +194,7 @@ class _SampleAllocation extends React.Component {
                 placeholder={msg(estimateSampleSize.value ? 'Margin of Error...' : 'Sample size...')}
                 tooltip={msg('process.samplingDesign.panel.sampleAllocation.form.marginOfError.tooltip')}
                 input={estimateSampleSize.value ? marginOfError : sampleSize}
+                autoFocus={!estimateSampleSize.value}
                 errorMessage={[marginOfError, 'noNaN']}
                 validate='onChange'
                 type='number'

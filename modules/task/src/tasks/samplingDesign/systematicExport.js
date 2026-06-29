@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {catchError, concat, filter, forkJoin, switchMap, throwError} from 'rxjs'
+import {catchError, concat, EMPTY, filter, forkJoin, switchMap, throwError} from 'rxjs'
 
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
@@ -87,6 +87,9 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
     }
 
     function deleteUnfilteredSamples$() {
-        return ee.deleteAsset$(tempAssetId).pipe(swallow())
+        return ee.deleteAsset$(tempAssetId).pipe(
+            catchError(() => EMPTY),
+            swallow()
+        )
     }
 }

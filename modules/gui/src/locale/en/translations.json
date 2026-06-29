@@ -4995,7 +4995,7 @@
             "minSamplesPerStratum": {
               "label": "Min samples/stratum",
               "placeholder": "Min samples...",
-              "tooltip": "Specify the minimum number of samples per stratum."
+              "tooltip": "Ensure each stratum receives at least this many samples while keeping the total sample size. If the total is too small, increase it or lower this minimum."
             },
             "relativeMarginOfError": {
               "label": "Margin of error",

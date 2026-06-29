@@ -37,6 +37,7 @@ final class WorkerTypes {
             if (config.deployEnvironment == 'DEV') { // Allow hot-reload of task in DEV
                 volumes["${config.sepalHostProjectDir}/modules/task/src"] = '/usr/local/src/sepal/modules/task/src'
                 volumes["${config.sepalHostProjectDir}/lib/js/shared/src"] = '/usr/local/src/sepal/lib/js/shared/src'
+                volumes["${config.sepalHostProjectDir}/lib/js/ee/src"] = '/usr/local/src/sepal/lib/js/ee/src'
             }
             def task = new Image(
                     name: 'task',
