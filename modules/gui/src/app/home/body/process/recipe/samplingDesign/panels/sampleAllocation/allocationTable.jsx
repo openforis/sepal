@@ -13,12 +13,18 @@ export const AllocationTable = ({allocation, sampleSize, marginOfError, relative
         <div className={styles.allocation}>
             <NestedForms arrayInput={allocation} idPropName='stratum'>
                 <Header relativeMarginOfError={relativeMarginOfError} noProportions={noProportions}/>
-                {allocation.value.map(entry => manual
+                {allocation.value.map((entry, index) => manual
                     ? (
                         <AllocationForm
                             key={entry.stratum}
-                            entry={entry}
+                            // Ensure the row carries a `sampleSize` key before the nested form mounts:
+                            // withNestedForm only propagates fields already present on the entity, so a
+                            // strata-built row (unstratified/no-proportions) without it would never write
+                            // the typed value back to the parent. Blank (not 1) keeps Apply disabled until
+                            // the user enters a count; an existing value is preserved.
+                            entry={{sampleSize: '', ...entry}}
                             relativeMarginOfError={relativeMarginOfError}
+                            autoFocus={manual && index === 0}
                             onChange={onChange}
                         />
                     )

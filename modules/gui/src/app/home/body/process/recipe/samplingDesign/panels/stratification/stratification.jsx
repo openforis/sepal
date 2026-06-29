@@ -54,8 +54,9 @@ const fields = {
         .notBlank('process.samplingDesign.panel.stratification.form.scale.required'),
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
-        .skip((_value, {skip}) => skip.length)
-        .notEmpty('process.samplingDesign.panel.stratification.form.band.required'),
+        // Required even when skipped: unstratified mode still needs a computed single stratum carrying
+        // the AOI area, so an empty strata (e.g. while the area is still computing or failed) is invalid.
+        .notEmpty('process.samplingDesign.panel.stratification.form.strata.required'),
 }
 
 class _Stratification extends React.Component {
@@ -465,20 +466,38 @@ class _Stratification extends React.Component {
     }
 
     onBandChanged() {
-        setImmediate(() => this.calculateAreaPerStratum())
+        this.scheduleAreaPerStratum()
     }
 
     onScaleChanged() {
-        setImmediate(() => this.calculateAreaPerStratum())
+        this.scheduleAreaPerStratum()
     }
 
     onEEStrategyChanged() {
-        setImmediate(() => this.calculateAreaPerStratum())
+        this.scheduleAreaPerStratum()
     }
 
     onAreaPerStratumLoaded(areaPerStratum) {
-        const {inputs: {band, strata}} = this.props
+        const {inputs: {skip, band, strata}} = this.props
         const {prevStrata, entriesByBand} = this.state
+        if (skip.value?.length) {
+            const area = Array.isArray(areaPerStratum)
+                ? areaPerStratum.reduce((acc, stratum) => acc + (stratum?.area || 0), 0)
+                : 0
+            // Only accept a finite, positive AOI area; an empty/malformed response leaves strata empty
+            // so validation keeps Apply disabled.
+            if (Number.isFinite(area) && area > 0) {
+                strata.set([{
+                    color: '#000000',
+                    label: msg('process.samplingDesign.panel.stratification.unstratified'),
+                    value: 1,
+                    stratum: 1,
+                    area,
+                    weight: 1
+                }])
+            }
+            return
+        }
         const totalArea = areaPerStratum.reduce((acc, {area}) => acc + area, 0)
         const entries = entriesByBand[band.value] || []
         const labeledStrata = areaPerStratum.map(({stratum, area}) => {
@@ -494,24 +513,46 @@ class _Stratification extends React.Component {
         strata.set(labeledStrata)
     }
 
-    onSkipToggled(skip) {
-        const isSkipped = !!skip?.length
-        if (!isSkipped) {
-            this.calculateAreaPerStratum()
+    onSkipToggled() {
+        this.scheduleAreaPerStratum()
+    }
+
+    // Invalidate any current strata, then (re)compute. Clearing immediately disables Apply while the new
+    // area/strata calculation is pending, so stale rows can never be applied or carried across modes
+    // (e.g. toggling Skip). The recompute is deferred so the changed form value has settled first.
+    scheduleAreaPerStratum() {
+        this.invalidateStrata()
+        setImmediate(() => this.calculateAreaPerStratum())
+    }
+
+    invalidateStrata() {
+        const {inputs: {skip, strata}} = this.props
+        // Preserve label/color of genuine stratified rows for the next computation, but never carry the
+        // synthetic unstratified row (skip mode) forward as prevStrata. `skip.value` here still reflects
+        // the mode of the rows currently in `strata` (the toggle hasn't settled yet).
+        if (strata.value && !skip.value?.length) {
+            this.setState({prevStrata: strata.value})
         }
+        strata.set(null)
     }
 
     calculateAreaPerStratum() {
-        const {aoi, stream, inputs: {scale, type, assetId, recipeId, band, eeStrategy}} = this.props
+        const {aoi, stream, inputs: {skip, scale, type, assetId, recipeId, band, eeStrategy}} = this.props
+        const isSkipped = !!skip.value?.length
 
-        const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
-        if (!scale.value || !id || !band.value) {
-            return
-        }
-        
-        const stratification = {
-            type: type.value === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
-            id,
+        let stratification
+        if (isSkipped) {
+            // Unstratified: compute the bare AOI area, no stratification image/band required.
+            stratification = null
+        } else {
+            const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
+            if (!scale.value || !id || !band.value) {
+                return
+            }
+            stratification = {
+                type: type.value === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
+                id,
+            }
         }
 
         if (stream('AREA_PER_STRATUM').active) {
@@ -522,8 +563,8 @@ class _Stratification extends React.Component {
             api.gee.areaPerStratum$({
                 aoi,
                 stratification,
-                band: band.value,
-                scale: parseInt(scale.value),
+                band: isSkipped ? null : band.value,
+                scale: parseInt(scale.value) || 30,
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
                 takeUntil(this.cancel$)
@@ -566,6 +607,26 @@ class _Stratification extends React.Component {
     }
 }
 
+// Unstratified mode persists the single computed stratum carrying the AOI area. If the area hasn't
+// been computed (or failed), persist no strata so validation blocks export rather than emitting a row
+// with a missing/invalid area.
+const unstratifiedStrata = strata => {
+    // Accept only a single computed row with a finite, positive area. More than one row means stale
+    // stratified data leaked across modes and must not be treated as an unstratified result.
+    const computed = strata?.length === 1 ? strata[0] : null
+    if (!computed || !Number.isFinite(computed.area) || computed.area <= 0) {
+        return []
+    }
+    return [{
+        color: computed.color || '#000000',
+        label: computed.label || msg('process.samplingDesign.panel.stratification.unstratified'),
+        value: 1,
+        stratum: 1,
+        area: computed.area,
+        weight: 1
+    }]
+}
+
 const valuesToModel = values => {
     const isSkipped = !!values.skip?.length
     return {
@@ -576,12 +637,7 @@ const valuesToModel = values => {
         recipeId: values.recipeId,
         band: values.band,
         strata: isSkipped
-            ? [{
-                color: '#000000',
-                label: msg('process.samplingDesign.panel.stratification.unstratified'),
-                value: 1,
-                weight: 1
-            }]
+            ? unstratifiedStrata(values.strata)
             : values.strata,
         eeStrategy: values.eeStrategy
     }

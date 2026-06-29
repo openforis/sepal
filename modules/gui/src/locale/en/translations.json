@@ -4835,6 +4835,7 @@
             },
             "strata": {
               "label": "Strata",
+              "required": "Strata must be computed before continuing.",
               "select": "Select stratification and band.",
               "loading": "Calculating strata weights...",
               "noData": "No strata found in your AOI.",
@@ -4856,7 +4857,7 @@
               }
             }
           },
-          "unstratified": "Unstratified",
+          "unstratified": "Area of interest",
           "loadError": "Failed to calculate strata weights.",
           "title": "Stratification",
           "tooltip": "Select if and/or how how to stratification the sampling"

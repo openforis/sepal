@@ -109,6 +109,26 @@ describe('toTaskAllocation - mixed-shape transition', () => {
     })
 })
 
+describe('toTaskAllocation - unstratified (single synthetic stratum)', () => {
+    it('carries the AOI area onto the single allocation row', () => {
+        const unstratifiedModel = {
+            stratification: {
+                skip: true,
+                strata: [{value: 1, stratum: 1, label: 'Unstratified', color: '#000000', area: 1.2e9, weight: 1}]
+            },
+            proportions: {skip: true},
+            sampleAllocation: {
+                manual: [true],
+                allocation: [{stratum: 1, sampleSize: 100}]
+            }
+        }
+        const rows = toTaskAllocation(unstratifiedModel)
+        expect(rows).toHaveLength(1)
+        expect(rows[0]).toMatchObject({stratum: 1, sampleSize: 100, area: 1.2e9, weight: 1})
+        expect(Number.isFinite(rows[0].area)).toBe(true)
+    })
+})
+
 describe('toTaskAllocation - clean derived shape', () => {
     it('uses the clean allocation view when samplingDesignDerived is present (no joined allocation)', () => {
         const cleanModel = {

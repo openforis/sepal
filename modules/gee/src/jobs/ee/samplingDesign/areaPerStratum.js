@@ -1,4 +1,4 @@
-import {map, switchMap} from 'rxjs'
+import {map, of, switchMap} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
 import {toGeometry$} from '#sepal/ee/aoi'
@@ -16,8 +16,8 @@ const worker$ = ({
     const description = 'area-per-stratum'
     return toGeometry$(aoi).pipe(
         switchMap(geometry =>
-            imageFactory(stratification).getImage$().pipe(
-                map(eeStratification => reduceRegion(eeStratification, geometry)),
+            eeStrata$().pipe(
+                map(strata => reduceRegion(strata, geometry)),
             )
         ),
         switchMap(eeDictionary => batch
@@ -34,8 +34,17 @@ const worker$ = ({
         map(o => o.groups)
     )
 
-    function reduceRegion(eeImage, geometry) {
-        const strata = eeImage.select(band)
+    // Unstratified (stratification: null): a single constant stratum covering the whole AOI, so the AOI
+    // area is returned as [{stratum: 1, area}]. Mirrors probabilityPerStratum.js's constant-stratum path.
+    function eeStrata$() {
+        return stratification
+            ? imageFactory(stratification).getImage$().pipe(
+                map(eeImage => eeImage.select(band).rename('stratum'))
+            )
+            : of(ee.Image(1).rename('stratum'))
+    }
+
+    function reduceRegion(strata, geometry) {
         return ee.Image.pixelArea()
             .updateMask(strata.mask())
             .addBands(strata)
