@@ -1,5 +1,5 @@
 import {getPool} from './db.js'
-import {rowToUser, toISOStringJava} from './user.js'
+import {rowToUser, toISOString} from './user.js'
 
 const TABLE = 'sepal_user.sepal_user'
 
@@ -51,7 +51,7 @@ const mostRecentLogin = async username => {
         `SELECT last_login_time FROM ${TABLE}
          WHERE LOWER(username) = LOWER(?) AND last_login_time IS NOT NULL`, [username]
     )
-    return rows.length ? {timestamp: toISOStringJava(rows[0].last_login_time)} : {}
+    return rows.length ? {timestamp: toISOString(rows[0].last_login_time)} : {}
 }
 
 // {username: ISO string, ...} for every non-system user that has logged in.
@@ -61,7 +61,7 @@ const mostRecentLoginByUser = async () => {
         `SELECT username, last_login_time FROM ${TABLE} WHERE last_login_time IS NOT NULL AND system_user = 0`
     )
     return Object.fromEntries(
-        rows.map(row => [row.username.toLowerCase(), toISOStringJava(row.last_login_time)])
+        rows.map(row => [row.username.toLowerCase(), toISOString(row.last_login_time)])
     )
 }
 

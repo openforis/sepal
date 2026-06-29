@@ -15,8 +15,8 @@ const user = {
     roles: ['application_admin'],
     systemUser: false,
     admin: true,
-    creationTime: '2024-01-02T03:04:05+0000',
-    updateTime: '2024-02-02T03:04:05+0000'
+    creationTime: '2024-01-02T03:04:05.000Z',
+    updateTime: '2024-02-02T03:04:05.000Z'
 }
 
 test('userToEventMap matches the Java User.toMap shape (no googleUser/admin; 4-field googleTokens)', () => {
@@ -34,8 +34,8 @@ test('userToEventMap matches the Java User.toMap shape (no googleUser/admin; 4-f
         status: 'ACTIVE',
         roles: ['application_admin'],
         systemUser: false,
-        creationTime: '2024-01-02T03:04:05+0000',
-        updateTime: '2024-02-02T03:04:05+0000'
+        creationTime: '2024-01-02T03:04:05.000Z',
+        updateTime: '2024-02-02T03:04:05.000Z'
     })
 })
 

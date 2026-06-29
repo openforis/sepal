@@ -1,13 +1,9 @@
-// Maps a sepal_user DB row to an internal user object, and that object to the exact API JSON the
-// Java `user` module produced (userToMap). Dates are emitted as ISO-8601 strings with +0000 suffix
-// to match the Jackson/Java format: "2025-05-28T21:38:19+0000".
+// Maps a sepal_user DB row to an internal user object, and that object to the public API JSON
+// (userToMap). Dates are emitted as standard ISO-8601 strings: "2025-05-28T21:38:19.000Z".
 
-// Produces an ISO-8601 string matching Java's DateTimeFormatter output: no millis, "+0000" suffix.
-const toISOStringJava = value => {
+const toISOString = value => {
     if (value == null) return null
-    const d = new Date(value)
-    // toISOString() gives "2025-05-28T21:38:19.000Z"; strip millis and replace Z with +0000
-    return d.toISOString().replace(/\.\d{3}Z$/, '+0000')
+    return new Date(value).toISOString()
 }
 
 const toMillis = value =>
@@ -49,8 +45,8 @@ const rowToUser = row => {
         roles: admin ? ['application_admin'] : [],
         systemUser: !!row.system_user,
         admin,
-        creationTime: toISOStringJava(row.creation_time),
-        updateTime: toISOStringJava(row.update_time),
+        creationTime: toISOString(row.creation_time),
+        updateTime: toISOString(row.update_time),
         lastLoginTime: toMillis(row.last_login_time),
         token: row.token,
         tokenGenerationTime: toMillis(row.token_generation_time),
@@ -87,4 +83,4 @@ const userToMap = (user, withGoogleTokens = true) => ({
     admin: user.admin
 })
 
-export {rowToUser, toISOStringJava, userToMap}
+export {rowToUser, toISOString, userToMap}

@@ -65,7 +65,7 @@ test('rowToUser builds googleTokens when a refresh token is present', () => {
     })
 })
 
-test('userToMap reproduces the Java contract (dates as ISO-8601 +0000 strings, no credentials)', () => {
+test('userToMap reproduces the public API contract (dates as ISO-8601 strings, no credentials)', () => {
     const map = userToMap(rowToUser(baseRow))
     expect(map).toEqual({
         id: 10006,
@@ -82,8 +82,8 @@ test('userToMap reproduces the Java contract (dates as ISO-8601 +0000 strings, n
         status: 'ACTIVE',
         roles: [],
         systemUser: false,
-        creationTime: '2024-01-02T03:04:05+0000',
-        updateTime: '2024-02-02T03:04:05+0000',
+        creationTime: '2024-01-02T03:04:05.000Z',
+        updateTime: '2024-02-02T03:04:05.000Z',
         admin: false
     })
     expect('passwordHash' in map).toBe(false)
