@@ -9,6 +9,9 @@ export function stratifiedSystematicSample(args) {
     var scale = ee.Number(args.scale)
     var minDistance = ee.Number(args.minDistance || scale.multiply(2))
         .max(scale.multiply(2)) // At least 2xscale as min distance
+    // Densify the base grid by lowering the exponent (smaller cells), clamped at minExponent so the
+    // configured minimum distance is never violated. 0 = the area-based first guess.
+    var densityOffset = args.densityOffset || 0
 
     var samplesImage = createSamplesImage()
     return samplesImageToCollection(samplesImage)
@@ -29,14 +32,26 @@ export function stratifiedSystematicSample(args) {
         return ee.ImageCollection(allocation
             .map(function (stratum) {
                 var targetDiameter = ee.Number(
-                    // To reduce chance of not finding enough samples in stratum,
-                    // only 50% of the expected diameter is used in calclation
+                    // The `diameter` size parameter of createHexSamplesImage()'s lattice, chosen so the
+                    // base grid yields one sample per cell of area stratum.area / sampleSize. In that
+                    // lattice the nearest center-to-center spacing is sqrt(3) * diameter, so the area per
+                    // point is (3*sqrt(3)/2) * diameter^2; setting that equal to area / sampleSize gives
+                    // diameter = sqrt(2 * area / (3*sqrt(3) * sampleSize)), which the expression below
+                    // equals. The 0.5 is part of that conversion to the internal diameter variable - it
+                    // is NOT an intentional densification; the grid produces ~sampleSize points, and the
+                    // nested levels / filterSamples thin to coarser subsets (denser grids come from the
+                    // densityOffset).
                     0.5 * Math.sqrt(
                         8 * stratum.area / (3 * Math.sqrt(3) * stratum.sampleSize)
                     )
                 )
-                var minExponent = minDistance.log().divide(ee.Number(2).log()).ceil()
+                // minDistance is the minimum center-to-center spacing; nearest hex-cell centers are
+                // ~sqrt(3) * diameter apart, so the smallest allowed internal diameter is
+                // minDistance / sqrt(3). Derive minExponent from that diameter, not from minDistance.
+                var minDiameter = minDistance.divide(Math.sqrt(3))
+                var minExponent = minDiameter.log().divide(ee.Number(2).log()).ceil()
                 var exponent = targetDiameter.log().divide(ee.Number(2).log()).floor()
+                    .subtract(densityOffset)
                     .max(minExponent)
                 var diameter = ee.Number(2).pow(exponent)
                 var stratumMask = stratification.eq(stratum.stratum)
@@ -174,6 +189,7 @@ export function filterSamples(args) {
             return (strategy === 'EXACT'
                 ? filtered
                     .randomColumn('random', seed)
+                    .sort('random')
                     .limit(stratum.sampleSize)
                 : filtered
             ).select(['id', 'stratum', 'color'])

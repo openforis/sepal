@@ -16,6 +16,9 @@ export const tableToAsset$ = ({taskId, collection, description, assetId, strateg
 
     return exportLimiter$(
         concat(
+            // Create any missing parent asset folders (mirrors image asset export); otherwise a valid
+            // destination path that includes a new folder fails.
+            ee.createParentFolder$(assetId, 1).pipe(swallow()),
             strategy === 'replace'
                 ? ee.deleteAssetRecursive$(assetId, {include: ['ImageCollection', 'Image', 'Table']}).pipe(swallow())
                 : of(),
