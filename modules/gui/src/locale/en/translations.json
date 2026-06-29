@@ -4780,6 +4780,16 @@
       "bands": {},
       "create": "Sampling design",
       "description": "Create a sampling design.",
+      "retrieve": {
+        "invalid": "The sampling design is incomplete and can't be retrieved",
+        "invalid.noStrata": "No strata have been computed. Open Stratification and compute the strata.",
+        "invalid.strataAreaMissing": "A stratum is missing its area. Recompute the strata in Stratification.",
+        "invalid.proportionsRequired": "The chosen allocation needs anticipated proportions. Provide proportions, or switch to Equal/Proportional allocation with a fixed sample size.",
+        "invalid.noAllocation": "No sample allocation has been computed. Open Sample Allocation and set the allocation.",
+        "invalid.sampleSizeInvalid": "An allocation row has an invalid sample size. Enter a positive whole number of samples for every stratum.",
+        "invalid.areaMissing": "An allocation row is missing its area. Recompute the strata in Stratification.",
+        "invalid.noTaskAllocation": "The allocation has no samples to retrieve. Set a sample size greater than zero."
+      },
       "panel": {
         "stratification": {
           "button": "STR",

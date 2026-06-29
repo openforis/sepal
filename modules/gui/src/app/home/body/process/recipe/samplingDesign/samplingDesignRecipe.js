@@ -4,8 +4,10 @@ import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
+import {Notifications} from '~/widget/notifications'
 
 import {toTaskAllocation} from './sampling/taskAllocation'
+import {validateRetrieve} from './sampling/validateRetrieve'
 
 export const defaultModel = {
     stratification: {
@@ -55,6 +57,20 @@ const taskProperties = recipe => ({
 })
 
 const submitRetrieveRecipeTask = recipe => {
+    // Preflight the persisted design and block submission with a clear notification if it's incomplete
+    // or inconsistent (e.g. missing area, invalid sample size, proportion-dependent strategy without
+    // proportions). retrieveState is write-only, so simply not submitting leaves the UI usable.
+    const errors = validateRetrieve(recipe.model)
+    if (errors.length) {
+        const [{code}] = errors
+        Notifications.error({
+            message: msg('process.samplingDesign.retrieve.invalid'),
+            error: msg(`process.samplingDesign.retrieve.invalid.${code}`),
+            group: true,
+            timeout: 0
+        })
+        return
+    }
     // Submit the materialized task recipe so both the payload and the recipe_* properties reflect the
     // canonical allocation rather than the editor's persisted (possibly old-shape) allocation.
     const taskRecipe = toTaskRecipe(recipe)

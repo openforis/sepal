@@ -12,7 +12,7 @@ const fields = {
     sampleSize: new Form.Field()
         .notBlank()
         .int()
-        .min(0)
+        .min(1)
 }
 
 class _AllocationForm extends React.Component {
