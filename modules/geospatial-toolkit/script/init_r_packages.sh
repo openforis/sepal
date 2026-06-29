@@ -303,4 +303,4 @@ R -e "remotes::install_url(c(\
     ), repos='http://localhost:8180/', build = FALSE)"
 
 
-R -e "torch::install_torch(cuda_version = '12.8')"
+R -e "options(timeout = 7200); torch::install_torch(cuda_version = '12.8')"
