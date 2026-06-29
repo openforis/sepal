@@ -39,7 +39,7 @@ start logger
 
 build sandbox-base
 
-# build r-proxy
+build r-proxy
 start r-proxy
 
 build email
