@@ -2,6 +2,7 @@ import _ from 'lodash'
 
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
+import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
 import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
@@ -78,6 +79,13 @@ const submitRetrieveRecipeTask = recipe => {
     const operation = `samplingDesign.${destination}`
     const name = taskRecipe.title || taskRecipe.placeholder
     const title = msg([`process.retrieve.form.task.${destination}`], {name})
+    // Normalized metadata the task list/details UI renders (recipe type, project, destination, output
+    // path, sharing). Custom submitters must add this like the generic retrieve submitter does.
+    const taskInfo = getTaskInfo({
+        recipe: taskRecipe,
+        destination,
+        retrieveOptions: taskRecipe.ui.retrieveOptions
+    })
     const task = {
         operation,
         params: {
@@ -85,6 +93,7 @@ const submitRetrieveRecipeTask = recipe => {
             description: name,
             recipe: taskRecipe,
             properties: taskProperties(taskRecipe),
+            taskInfo,
             ...taskRecipe.ui.retrieveOptions
         }
     }
