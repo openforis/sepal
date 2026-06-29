@@ -1,4 +1,3 @@
-// import Color from 'color'
 import Color from 'color'
 import _ from 'lodash'
 import React from 'react'
@@ -43,8 +42,6 @@ const constraints = {
 }
 
 class _StratumForm extends React.Component {
-    state = {invalid: true}
-
     render() {
         const {stratum, showHexColorCode} = this.props
         return (

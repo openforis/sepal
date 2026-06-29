@@ -63,7 +63,7 @@ export class StrataTable extends React.Component {
             {...stratum2, color: color1}
         ]
         const updatedStrata = strata.value.map(entry =>
-            updatedEntries.find(({id}) => id === entry.id) || entry
+            updatedEntries.find(({value}) => value === entry.value) || entry
         )
         strata.set(updatedStrata)
     }

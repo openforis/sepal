@@ -5,6 +5,8 @@ import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
 
+import {toTaskAllocation} from './sampling/taskAllocation'
+
 export const defaultModel = {
     stratification: {
         scale: 30,
@@ -17,7 +19,7 @@ export const RecipeActions = id => {
 
     return {
         retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_MOSAIC_RETRIEVAL', {retrieveOptions})
+            return actionBuilder('REQUEST_SAMPLES_RETRIEVAL', {retrieveOptions})
                 .setAll({
                     'ui.retrieveState': 'SUBMITTED',
                     'ui.retrieveOptions': retrieveOptions
@@ -28,41 +30,52 @@ export const RecipeActions = id => {
     }
 }
 
-const submitRetrieveRecipeTask = recipe => {
-    const destination = recipe.ui.retrieveOptions.destination
-    const operation = `samplingDesign.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
-    const name = recipe.title || recipe.placeholder
-    const title = msg(['process.retrieve.form.task.SEPAL'], {name})
-    const properties = {
-        recipe_id: recipe.id,
-        recipe_projectId: recipe.projectId,
-        recipe_type: recipe.type,
-        recipe_title: recipe.title || recipe.placeholder,
-        ..._(recipe.model)
-            .mapValues(value => JSON.stringify(value))
-            .mapKeys((_value, key) => `recipe_${key}`)
-            .value()
+// Shape the task payload: replace the persisted allocation with the canonical, normalized allocation
+// rows the backend samplers consume ({stratum, sampleSize, area, color, ...}). Pure and testable.
+export const toTaskRecipe = recipe => ({
+    ...recipe,
+    model: {
+        ...recipe.model,
+        sampleAllocation: {
+            ...recipe.model?.sampleAllocation,
+            allocation: toTaskAllocation(recipe.model)
+        }
     }
+})
+
+const taskProperties = recipe => ({
+    recipe_id: recipe.id,
+    recipe_projectId: recipe.projectId,
+    recipe_type: recipe.type,
+    recipe_title: recipe.title || recipe.placeholder,
+    ..._(recipe.model)
+        .mapValues(value => JSON.stringify(value))
+        .mapKeys((_value, key) => `recipe_${key}`)
+        .value()
+})
+
+const submitRetrieveRecipeTask = recipe => {
+    // Submit the materialized task recipe so both the payload and the recipe_* properties reflect the
+    // canonical allocation rather than the editor's persisted (possibly old-shape) allocation.
+    const taskRecipe = toTaskRecipe(recipe)
+    const destination = taskRecipe.ui.retrieveOptions.destination
+    const operation = `samplingDesign.${destination}`
+    const name = taskRecipe.title || taskRecipe.placeholder
+    const title = msg([`process.retrieve.form.task.${destination}`], {name})
     const task = {
         operation,
         params: {
             title,
             description: name,
-            recipe,
-            properties,
-            ...recipe.ui.retrieveOptions
+            recipe: taskRecipe,
+            properties: taskProperties(taskRecipe),
+            ...taskRecipe.ui.retrieveOptions
         }
     }
     publishEvent('submit_task', {
-        recipe_type: recipe.type,
-        destination: 'SEPAL',
-        data_set_type: recipe.model.dataSetType
+        recipe_type: taskRecipe.type,
+        destination
     })
     return api.tasks.submit$(task).subscribe()
 }
-
-export const loadObservations$ = ({recipe, latLng, bands}) =>
-    api.gee.loadTimeSeriesObservations$({
-        recipe, latLng, bands
-    })
 

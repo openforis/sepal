@@ -20,6 +20,7 @@ import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
+import {maxAnticipatedTargetProportion, smartRound, toProportions} from '../../sampling/proportionMath'
 import styles from './proportions.module.css'
 import {ProportionTable} from './proportionTable'
 
@@ -469,7 +470,7 @@ class _Proportions extends React.Component {
     onImageLoaded(bands, visualizations) {
         const {inputs: {band}} = this.props
         this.setState({bands, visualizations})
-        const defaultBand = bands.lenght === 1
+        const defaultBand = bands.length === 1
             ? bands[0]
             : null
         const updateBand = defaultBand && defaultBand !== band.value
@@ -555,21 +556,7 @@ class _Proportions extends React.Component {
 
     calculateMaxAnticipatedTargetProportion() {
         const {strata, inputs: {probabilityPerStratum}} = this.props
-        
-        if (!probabilityPerStratum.value) {
-            return 100
-        } else {
-            const maxStratumProportion = _.max(
-                probabilityPerStratum.value.map(({probability}) => probability)
-            )
-            const overallProportion = _.sum(
-                probabilityPerStratum.value.map(({stratum, probability}) => {
-                    const weight = strata.find(({value}) => value === stratum).weight
-                    return weight * probability
-                })
-            )
-            return _.ceil(100 * overallProportion / maxStratumProportion, 2)
-        }
+        return maxAnticipatedTargetProportion({strata, probabilityPerStratum: probabilityPerStratum.value})
     }
 
     calculateAnticipatedProportions() {
@@ -634,7 +621,7 @@ class _Proportions extends React.Component {
             return // Ignore the result when manual
         }
         const adjustedPercentage = this.isPercentage()
-            || _.maxBy(loadedProbabilityPerStratum, 'probability').probability > 1
+            || _.maxBy(loadedProbabilityPerStratum, 'probability')?.probability > 1
         if (adjustedPercentage && !this.isPercentage()) {
             this.setPercentage(true)
         }
@@ -650,30 +637,11 @@ class _Proportions extends React.Component {
 
     probabilitiesToProportions({percentage, targetOverallProportion, strata, probabilityPerStratum}) {
         const adjustedPercentage = percentage
-            || _.maxBy(probabilityPerStratum, 'probability').probability > 1
+            || _.maxBy(probabilityPerStratum, 'probability')?.probability > 1
         if (adjustedPercentage && !percentage) {
             setImmediate(() => this.setPercentage(true))
         }
-        const weightedProbabilities = strata.map(({value, weight}) => {
-            const probability = probabilityPerStratum.find(({stratum}) => stratum === value)?.probability || 0
-            return weight * probability
-        })
-        const overallProbability = _.sum(weightedProbabilities)
-        const probabilityFactor = targetOverallProportion >= 0
-            ? targetOverallProportion / overallProbability
-            : adjustedPercentage ? 1 : 100
-        return strata.map(({label, color, value, area, weight}) => {
-            const probability = probabilityPerStratum.find(({stratum}) => stratum === value)?.probability || 0
-            const proportion = probability * probabilityFactor
-            return ({
-                stratum: value,
-                label,
-                color,
-                weight,
-                area: smartRound(area),
-                proportion: smartRound(proportion),
-            })
-        })
+        return toProportions({percentage: adjustedPercentage, targetOverallProportion, strata, probabilityPerStratum})
     }
 
     updateImageLayerSources(source) {
@@ -750,18 +718,4 @@ export const Proportions = compose(
 
 Proportions.propTypes = {
     recipeId: PropTypes.string
-}
-
-function smartRound(num) {
-    if (num === 0) return 0
-    if (!num) return num
-    const abs = Math.abs(num)
-    const basePrecision = 2
-    const rounded = Number(num.toFixed(basePrecision))
-    if (rounded !== 0) return rounded
-
-    const extraPrecision = Math.ceil(-Math.log10(abs))
-    const totalPrecision = Math.min(extraPrecision + 1, 15)
-
-    return Number(num.toFixed(totalPrecision))
 }

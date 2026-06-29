@@ -111,6 +111,11 @@ const powerAllocation = ({sampleSize, strata, tuningConstant}) => {
         })
     })
     const sum = _.sumBy(nominators, 'nominator')
+    if (!sum) {
+        // No variation to weight strata by (e.g. every proportion is 0); fall back to equal
+        // allocation rather than dividing by zero and producing NaN sample sizes.
+        return equalAllocation({sampleSize, strata})
+    }
     return nominators.map(stratum => ({
         ..._.omit(stratum, ['nominator']),
         sampleSize: Math.round(sampleSize * stratum.nominator / sum)

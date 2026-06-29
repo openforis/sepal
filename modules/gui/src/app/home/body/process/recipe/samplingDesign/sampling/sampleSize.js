@@ -1,5 +1,3 @@
-import _ from 'lodash'
-
 import {calculateMarginOfError} from './marginOfError'
 import {findRoot} from './solve'
 
@@ -18,5 +16,11 @@ export const calculateSampleSize = ({
         }) - marginOfError
     const max = 1e12
     const min = Math.max(1, minSamplesPerStratum * strata.length)
-    return findRoot({fun, min, max})
+    const sampleSize = findRoot({fun, min, max})
+    // Infeasible (e.g. relative margin of error at a zero overall proportion, or a target unreachable
+    // within the range): the found size does not actually meet the target. Signal with Infinity so the
+    // panel's validation can reject it rather than presenting a bogus minimum sample size.
+    return Number.isFinite(sampleSize) && fun(sampleSize) <= 0
+        ? sampleSize
+        : Infinity
 }

@@ -441,7 +441,7 @@ class _Stratification extends React.Component {
         this.setState({bands})
         const categoricalVisualizations = visualizations
             .filter(({type}) => type === 'categorical')
-        const defaultBand = bands.lenght === 1
+        const defaultBand = bands.length === 1
             ? bands[0]
             : categoricalVisualizations.length === 1
                 ? categoricalVisualizations[0].bands[0]

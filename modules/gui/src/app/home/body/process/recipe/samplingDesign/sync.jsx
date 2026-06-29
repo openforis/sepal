@@ -57,13 +57,8 @@ class _Sync extends React.Component {
         if (Object.values(changedByProp).some(changed => changed)) {
             this.removeSelectedSamples()
             const requiresUpdates = this.updateRequiresUpdates(changedByProp)
-            if (!requiresUpdates.length) {
-                console.log('does not require updates')
-                if (this.isCompleteModel()) {
-                    this.selectSamples()
-                }
-            } else {
-                console.log('requires update')
+            if (!requiresUpdates.length && this.isCompleteModel()) {
+                this.selectSamples()
             }
         }
     }
@@ -76,7 +71,7 @@ class _Sync extends React.Component {
     }
 
     selectSamples() {
-        console.log('selecting samples')
+        // TODO: trigger sample selection on the backend (BUG-2 / orchestrator, deferred to Phase 3)
     }
 
     updateRequiresUpdates(changedByProp) {

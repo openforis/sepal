@@ -4,7 +4,6 @@ import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import format from '~/format'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
@@ -13,12 +12,12 @@ import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
-import {allocate} from './allocate'
+import {allocate} from '../../sampling/allocate'
+import {calculateBounds} from '../../sampling/confidenceInterval'
+import {boundsToMarginOfError, calculateMarginOfError} from '../../sampling/marginOfError'
+import {calculateSampleSize} from '../../sampling/sampleSize'
 import {AllocationTable} from './allocationTable'
-import {calculateBounds} from './confidenceInterval'
-import {calculateMarginOfError} from './marginOfError'
 import styles from './sampleAllocation.module.css'
-import {calculateSampleSize} from './sampleSize'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -62,14 +61,18 @@ const fields = {
 const enoughSamplesToCoverMin = ({sampleSize, minSamplesPerStratum, allocation}) =>
     !sampleSize || !minSamplesPerStratum || !allocation || minSamplesPerStratum * allocation.length <= sampleSize
 
-const noNaNs = ({allocation, sampleSize, minSamplesPerStratum}) =>
-    !sampleSize
-        || !enoughSamplesToCoverMin({allocation, sampleSize, minSamplesPerStratum})
-        || !allocation || !allocation.find(({sampleSize}) => isNaN(sampleSize))
+const allOutcomesFinite = ({allocation, sampleSize, minSamplesPerStratum, marginOfError}) => {
+    if (!sampleSize || !enoughSamplesToCoverMin({allocation, sampleSize, minSamplesPerStratum})) {
+        return true
+    }
+    const allocationFinite = !allocation || allocation.every(({sampleSize}) => Number.isFinite(Number(sampleSize)))
+    const marginFinite = marginOfError == null || marginOfError === '' || Number.isFinite(Number(marginOfError))
+    return allocationFinite && marginFinite
+}
 
 const constraints = {
     noNaN: new Form.Constraint(['marginOfError', 'relativeMarginOfError', 'allocationStrategy', 'allocation'])
-        .predicate(noNaNs,
+        .predicate(allOutcomesFinite,
             'process.samplingDesign.panel.sampleAllocation.form.allocation.tooBig'
         ),
     enoughSamples: new Form.Constraint(['sampleSize', 'minSamplesPerStratum'])
@@ -320,7 +323,10 @@ class _SampleAllocation extends React.Component {
         estimateSampleSize.value || estimateSampleSize.set(false)
         confidenceLevel.value || confidenceLevel.set(95)
         marginOfError.value || marginOfError.set(50)
-        relativeMarginOfError.value || relativeMarginOfError.set(true)
+        // Default to relative only when unset; a saved explicit `false` (absolute) must be preserved.
+        if (relativeMarginOfError.value === '' || relativeMarginOfError.value == null) {
+            relativeMarginOfError.set(true)
+        }
         anticipatedProportions
             ? allocationStrategy.value || allocationStrategy.set('OPTIMAL')
             : ['EQUAL', 'PROPORTIONAL', 'BALANCED'].includes(allocationStrategy.value) || allocationStrategy.set('BALANCED')
@@ -357,14 +363,11 @@ class _SampleAllocation extends React.Component {
 
     updateMarginOfError() {
         const {inputs: {allocation, marginOfError, relativeMarginOfError, confidenceLevel}} = this.props
-        const [lower, proportion, upper] = calculateBounds({
+        const bounds = calculateBounds({
             confidenceLevel: confidenceLevel.value / 100,
             allocation: allocation.value.map(entry => ({...entry, sampleSize: parseInt(entry.sampleSize)}))
         })
-        const estimatedMarginOfError = Math.max(proportion - lower, upper - proportion)
-        const calculatedMarginOfError = relativeMarginOfError
-            ? estimatedMarginOfError / proportion
-            : estimatedMarginOfError
+        const calculatedMarginOfError = boundsToMarginOfError({bounds, relative: relativeMarginOfError.value})
         const updatedMarginOfError = relativeMarginOfError.value ? calculatedMarginOfError * 100 : calculatedMarginOfError
         marginOfError.set(updatedMarginOfError)
     }

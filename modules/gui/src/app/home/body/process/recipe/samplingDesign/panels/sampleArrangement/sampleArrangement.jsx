@@ -32,17 +32,13 @@ const fields = {
         .notBlank(),
     crsTransform: new Form.Field(),
     seed: new Form.Field()
-        .skip((_seed, {arrangementStrategy, sampleSizeStrategy}) => includeSeed(arrangementStrategy, sampleSizeStrategy))
+        .skip((_seed, values) => !includeSeed(values))
         .notBlank()
         .int(),
 }
 
 class _SampleArrangement extends React.Component {
     state = {more: false}
-
-    constructor(props) {
-        super(props)
-    }
 
     render() {
         const {more} = this.state
@@ -138,7 +134,6 @@ class _SampleArrangement extends React.Component {
                 input={scale}
                 type='number'
                 suffix={msg('process.samplingDesign.panel.stratification.form.scale.suffix')}
-                onChange={this.onScaleChanged}
             />
         )
     }
@@ -221,6 +216,7 @@ class _SampleArrangement extends React.Component {
         minDistance.value || minDistance.set(this.props.scale * 2)
         scale.value || scale.set(this.props.scale)
         crs.value || crs.set('EPSG:4326')
+        seed.value || seed.set(1)
     }
 }
 

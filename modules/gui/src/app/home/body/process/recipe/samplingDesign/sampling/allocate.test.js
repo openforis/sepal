@@ -130,3 +130,42 @@ it('when asking from 10 samples for 2 stratums with a min samples of 8, error is
         ]
     })).toThrowError('minSamplesPerStratum')
 })
+
+it('power allocation with all-zero proportions falls back to equal allocation (no NaN)', () => {
+    expect(allocate({
+        sampleSize: 10,
+        strategy: 'POWER',
+        tuningConstant: 0.5,
+        strata: [
+            {stratum: 1, weight: 0.5, proportion: 0},
+            {stratum: 2, weight: 0.5, proportion: 0},
+        ]
+    })).toMatchObject([
+        {stratum: 1, sampleSize: 5},
+        {stratum: 2, sampleSize: 5},
+    ])
+})
+
+it('optimal allocation with all-zero proportions falls back to equal allocation (no NaN)', () => {
+    expect(allocate({
+        sampleSize: 10,
+        strategy: 'OPTIMAL',
+        strata: [
+            {stratum: 1, weight: 0.5, proportion: 0},
+            {stratum: 2, weight: 0.5, proportion: 0},
+        ]
+    })).toMatchObject([
+        {stratum: 1, sampleSize: 5},
+        {stratum: 2, sampleSize: 5},
+    ])
+})
+
+it('equal allocation of a single stratum assigns the whole sample size', () => {
+    expect(allocate({
+        sampleSize: 10,
+        strategy: 'EQUAL',
+        strata: [{stratum: 1}]
+    })).toMatchObject([
+        {stratum: 1, sampleSize: 10},
+    ])
+})

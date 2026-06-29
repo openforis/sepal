@@ -5042,7 +5042,13 @@
             },
             "allocation": {
               "label": "Allocation",
-              "tooBig": "Too many samples are being allocated. Increase the margin of error."
+              "tooBig": "Too many samples are being allocated. Increase the margin of error.",
+              "table": {
+                "marginOfError": "Margin of error (ha)",
+                "relativeMarginOfError": "Relative margin of error",
+                "samples": "Samples",
+                "overall": "Overall"
+              }
             }
           },
           "title": "Sample Allocation",

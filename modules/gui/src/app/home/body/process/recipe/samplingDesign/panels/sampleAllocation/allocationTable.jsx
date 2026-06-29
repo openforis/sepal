@@ -40,19 +40,18 @@ export const AllocationTable = ({allocation, sampleSize, marginOfError, relative
     )
 }
 
-// TODO: Use msg for header
 const Header = ({relativeMarginOfError, noProportions}) => (
     <div className={styles.header}>
         <div className={styles.stratum}/>
-        <div className={styles.area}>{noProportions ? '' : relativeMarginOfError ? 'Relative margin of error' : 'Margin of error (ha)'}</div>
-        <div className={styles.weight}>Samples</div>
+        <div className={styles.area}>{noProportions ? '' : relativeMarginOfError ? msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.relativeMarginOfError') : msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.marginOfError')}</div>
+        <div className={styles.weight}>{msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.samples')}</div>
     </div>
 )
 
 const Footer = ({sampleSize, marginOfError, relativeMarginOfError, noProportions}) => {
     return (
         <div className={styles.footer}>
-            <div className={styles.overall}>Overall</div>
+            <div className={styles.overall}>{msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.overall')}</div>
             <div className={styles.number}>{noProportions ? '' : renderMaginOfError({marginOfError, relativeMarginOfError})}</div>
             <div className={styles.number}>{renderSampleSize(sampleSize)}</div>
         </div>
@@ -73,12 +72,12 @@ const Allocation = ({entry: {label, color, sampleSize}}) => {
 }
 
 const renderSampleSize = sampleSize =>
-    isNaN(sampleSize)
+    !isFinite(sampleSize)
         ? <div className={styles.nan}>NaN</div>
         : format.integer(sampleSize)
 
 const renderMaginOfError = ({marginOfError, relativeMarginOfError}) =>
-    isNaN(marginOfError) || _.isNil(marginOfError)
+    _.isNil(marginOfError) || !isFinite(marginOfError)
         ? <div className={styles.nan}>NaN</div>
         : `${smartRound(marginOfError)}${relativeMarginOfError ? '%' : ''}`
 
