@@ -3,12 +3,12 @@ import {catchError, concat, EMPTY, filter, forkJoin, switchMap, throwError} from
 
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
-import ImageFactory from '#sepal/ee/imageFactory'
 import {swallow} from '#sepal/rxjs'
 import {tableToAsset$} from '#task/jobs/export/tableToAsset'
 import {tableToSepal$} from '#task/jobs/export/tableToSepal'
 
 import {formatProperties} from '../formatProperties.js'
+import {stratificationImage$} from './stratificationImage.js'
 import {filterSamples, stratifiedSystematicSample} from './systematicSampling.js'
 
 export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId, strategy, properties, destination, format}) => {
@@ -19,11 +19,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
         sampleArrangement
     }} = recipe
     const tempAssetId = `${assetId}_${moment().format('YYYYMMDDHHmmssSSS')}`
-    const bandName = stratification.band
-    const stratificationRecipe = stratification.type === 'RECIPE'
-        ? {type: 'RECIPE_REF', id: stratification.recipeId}
-        : {type: 'ASSET', id: stratification.assetId}
-    const eeStratification$ = ImageFactory(stratificationRecipe, {selection: [bandName]}).getImage$()
+    const eeStratification$ = stratificationImage$(stratification)
     const eeGeometry$ = toGeometry$(aoi)
 
     return forkJoin({
@@ -46,7 +42,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
     function exportUnfilteredSamples$({eeStratification, eeGeometry}) {
         const samples = stratifiedSystematicSample({
             allocation: allocation,
-            stratification: eeStratification.select(bandName).rename('stratum'),
+            stratification: eeStratification,
             region: eeGeometry,
             minDistance: sampleArrangement.minDistance,
             scale: sampleArrangement.scale,

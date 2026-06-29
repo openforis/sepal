@@ -1,12 +1,12 @@
 import {forkJoin, switchMap} from 'rxjs'
 
 import {toGeometry$} from '#sepal/ee/aoi'
-import ImageFactory from '#sepal/ee/imageFactory'
 import {tableToAsset$} from '#task/jobs/export/tableToAsset'
 import {tableToSepal$} from '#task/jobs/export/tableToSepal'
 
 import {formatProperties} from '../formatProperties.js'
 import {stratifiedRandomSample} from './randomSampling.js'
+import {stratificationImage$} from './stratificationImage.js'
 
 export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, strategy, destination, format, properties = {}}) => {
     const {model: {
@@ -21,22 +21,17 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
             seed
         }
     }} = recipe
-    const stratificationRecipe = stratification.type === 'RECIPE'
-        ? {type: 'RECIPE_REF', id: stratification.recipeId}
-        : {type: 'ASSET', id: stratification.assetId}
-
-    const bandName = stratification.band
-    const stratification$ = ImageFactory(stratificationRecipe, {selection: [bandName]}).getImage$()
+    const stratification$ = stratificationImage$(stratification)
     const geometry$ = toGeometry$(aoi)
 
     return forkJoin({
-        stratification: stratification$,
+        eeStratification: stratification$,
         region: geometry$
     }).pipe(
-        switchMap(({stratification, region}) => {
+        switchMap(({eeStratification, region}) => {
             var samples = stratifiedRandomSample({
                 allocation,
-                stratification: stratification.select(bandName),
+                stratification: eeStratification,
                 region,
                 scale,
                 minDistance,
