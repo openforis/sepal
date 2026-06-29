@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {catchError, concat, EMPTY, filter, forkJoin, switchMap, throwError} from 'rxjs'
+import {catchError, concat, EMPTY, filter, forkJoin, map, of, switchMap, throwError} from 'rxjs'
 
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
@@ -11,35 +11,55 @@ import {formatProperties} from '../formatProperties.js'
 import {stratificationImage$} from './stratificationImage.js'
 import {filterSamples, stratifiedSystematicSample} from './systematicSampling.js'
 
-export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId, strategy, properties, destination, format}) => {
+// Systematic sampling materializes the unfiltered samples to a temporary EE table asset, then reads it
+// back to filter. GEE asset export derives the temp id from the target assetId; SEPAL export has no
+// assetId, so create a temp id under the user's first EE asset root (same discovery as toAsset.js) with
+// a safe generated name - never the user-facing description.
+const tempTableAssetId$ = (taskId, assetId) => {
+    const timestamp = moment().format('YYYYMMDDHHmmssSSS')
+    if (assetId) {
+        return of(`${assetId}_${timestamp}`)
+    }
+    return ee.listBuckets$('projects/earthengine-legacy').pipe(
+        map(({assets}) => {
+            if (!assets?.length) {
+                throw new Error('EE account has no asset roots')
+            }
+            return `${assets[0].id}/sampling_design_tmp_${taskId}_${timestamp}`
+        })
+    )
+}
+
+export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId, strategy, properties, destination, workspacePath, filenamePrefix, fileFormat}) => {
     const {model: {
         aoi,
         stratification,
         sampleAllocation: {allocation},
         sampleArrangement
     }} = recipe
-    const tempAssetId = `${assetId}_${moment().format('YYYYMMDDHHmmssSSS')}`
     const eeStratification$ = stratificationImage$(stratification)
     const eeGeometry$ = toGeometry$(aoi)
 
-    return forkJoin({
-        eeStratification: eeStratification$,
-        eeGeometry: eeGeometry$
-    }).pipe(
-        switchMap(({eeStratification, eeGeometry}) => concat(
-            exportUnfilteredSamples$({eeStratification, eeGeometry}),
-            exportFilteredSamples$({eeGeometry}),
-            deleteUnfilteredSamples$()
-        ),
-        ),
-        catchError(error => concat(
-            deleteUnfilteredSamples$(),
-            throwError(() => error)
-        )
+    return tempTableAssetId$(taskId, assetId).pipe(
+        switchMap(tempAssetId =>
+            forkJoin({
+                eeStratification: eeStratification$,
+                eeGeometry: eeGeometry$
+            }).pipe(
+                switchMap(({eeStratification, eeGeometry}) => concat(
+                    exportUnfilteredSamples$({eeStratification, eeGeometry, tempAssetId}),
+                    exportFilteredSamples$({eeGeometry, tempAssetId}),
+                    deleteUnfilteredSamples$(tempAssetId)
+                )),
+                catchError(error => concat(
+                    deleteUnfilteredSamples$(tempAssetId),
+                    throwError(() => error)
+                ))
+            )
         )
     )
 
-    function exportUnfilteredSamples$({eeStratification, eeGeometry}) {
+    function exportUnfilteredSamples$({eeStratification, eeGeometry, tempAssetId}) {
         const samples = stratifiedSystematicSample({
             allocation: allocation,
             stratification: eeStratification,
@@ -58,7 +78,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
         )
     }
 
-    function exportFilteredSamples$({eeGeometry}) {
+    function exportFilteredSamples$({eeGeometry, tempAssetId}) {
         const filteredSamples = filterSamples({
             region: eeGeometry,
             samples: ee.FeatureCollection(tempAssetId),
@@ -67,11 +87,13 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
             seed: sampleArrangement.seed
         }).set(formatProperties(properties))
         return destination === 'SEPAL'
-            ? tableToSepal$({ // TODO: Figure out the parameters
-                taskId,
+            ? tableToSepal$(taskId, {
                 collection: filteredSamples,
                 description,
-                format
+                workspacePath,
+                filenamePrefix,
+                fileFormat,
+                selectors: ['id', 'stratum', 'color']
             })
             : tableToAsset$({
                 taskId,
@@ -82,7 +104,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
             })
     }
 
-    function deleteUnfilteredSamples$() {
+    function deleteUnfilteredSamples$(tempAssetId) {
         return ee.deleteAsset$(tempAssetId).pipe(
             catchError(() => EMPTY),
             swallow()

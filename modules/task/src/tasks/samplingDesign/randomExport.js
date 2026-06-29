@@ -8,7 +8,7 @@ import {formatProperties} from '../formatProperties.js'
 import {stratifiedRandomSample} from './randomSampling.js'
 import {stratificationImage$} from './stratificationImage.js'
 
-export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, strategy, destination, format, properties = {}}) => {
+export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, strategy, destination, workspacePath, filenamePrefix, fileFormat, properties = {}}) => {
     const {model: {
         aoi,
         stratification,
@@ -41,11 +41,13 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
             }).set(formatProperties(properties))
 
             return destination === 'SEPAL'
-                ? tableToSepal$({ // TODO: Figure out the parameters
-                    taskId,
+                ? tableToSepal$(taskId, {
                     collection: samples,
                     description,
-                    format
+                    workspacePath,
+                    filenamePrefix,
+                    fileFormat,
+                    selectors: ['id', 'stratum', 'color']
                 })
                 : tableToAsset$({
                     taskId,
