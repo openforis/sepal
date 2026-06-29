@@ -296,15 +296,26 @@ class _AssetDestination extends React.Component {
     }
 
     startValidation() {
-        const {assetInput} = this.props
+        const {assetInput, strategyInput} = this.props
         this.validationSequence += 1
-        assetInput.setInvalid(null)
+        // Reset stale destination state so the componentDidUpdate branch that clears the error
+        // (currentType && strategyInput.value && assetInput.error) can't fire during the pending window
+        // and reintroduce the flicker.
+        strategyInput.set(null)
+        this.setState({currentType: null})
+        // Mark invalid immediately so Apply/Retrieve is disabled from the first render after validation
+        // starts; validateConflict()/completeValidation() decide the final state once metadata loads.
+        assetInput.setInvalid(msg('widget.assetDestination.validating'))
         this.setChecking(true)
         return this.validationSequence
     }
 
     cancelValidation() {
+        const {assetInput} = this.props
         this.validationSequence += 1
+        // Drop the pending-invalid state so the field's own validation (e.g. notBlank when cleared)
+        // governs instead of the lingering "validating" message.
+        assetInput.setInvalid(null)
         this.setChecking(false)
     }
 
