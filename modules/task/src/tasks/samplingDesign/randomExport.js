@@ -7,6 +7,7 @@ import {tableToSepal$} from '#task/jobs/export/tableToSepal'
 
 import {formatProperties} from '../formatProperties.js'
 import {randomSampleCandidates, stratifiedRandomSample, thinToAllocation} from './randomSampling.js'
+import {addReproductionMetadata, addSampleProperties, EXPORT_PROPERTY_NAMES} from './sampleProperties.js'
 import {stratificationImage$} from './stratificationImage.js'
 import {findShortfalls, getSampleCounts$, validateSampleCounts$} from './validateSampleCounts.js'
 
@@ -36,12 +37,30 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
     }).pipe(
         switchMap(({eeStratification, region}) => {
             const sampleArgs = {allocation, stratification: eeStratification, region, scale, minDistance, crs, crsTransform, seed}
-            const rawSamples$ = minDistance
+            const gridCrs = crs || 'EPSG:3410'
+            const gridCrsTransform = crsTransform || ''
+            const sample$ = minDistance
                 ? adaptiveMinDistanceSamples$(sampleArgs)
-                : of(stratifiedRandomSample(sampleArgs))
-            return rawSamples$.pipe(
-                switchMap(rawSamples => {
-                    const samples = rawSamples.set(formatProperties(properties))
+                : of({rawSamples: stratifiedRandomSample(sampleArgs), densityFactor: null})
+            return sample$.pipe(
+                switchMap(({rawSamples, densityFactor}) => {
+                    const metadata = {
+                        arrangementStrategy: 'RANDOM',
+                        sampleSizeStrategy: null,
+                        seed,
+                        minDistance: minDistance || null,
+                        scale,
+                        crs: gridCrs,
+                        crsTransform: gridCrsTransform,
+                        gridCrs,
+                        gridCrsTransform,
+                        selectedDensityFactor: densityFactor,
+                        selectedDensityOffset: null
+                    }
+                    const samples = addReproductionMetadata(
+                        addSampleProperties(rawSamples, allocation),
+                        metadata
+                    ).set(formatProperties(properties))
                     const export$ = destination === 'SEPAL'
                         ? tableToSepal$(taskId, {
                             collection: samples,
@@ -49,7 +68,7 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
                             workspacePath,
                             filenamePrefix,
                             fileFormat,
-                            selectors: ['id', 'stratum', 'color']
+                            selectors: EXPORT_PROPERTY_NAMES
                         })
                         : tableToAsset$({
                             taskId,
@@ -72,13 +91,14 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
     // to its requested count (or spacing reaches minDistance). Then thin deterministically.
     function adaptiveMinDistanceSamples$(sampleArgs) {
         const attempt$ = index => {
-            const candidates = randomSampleCandidates(sampleArgs, DENSITY_FACTORS[index])
+            const densityFactor = DENSITY_FACTORS[index]
+            const candidates = randomSampleCandidates(sampleArgs, densityFactor)
             const lastAttempt = index === DENSITY_FACTORS.length - 1
             return getSampleCounts$(candidates).pipe(
                 switchMap(counts =>
                     !lastAttempt && findShortfalls(counts, allocation).length
                         ? attempt$(index + 1)
-                        : of(thinToAllocation(candidates, allocation))
+                        : of({rawSamples: thinToAllocation(candidates, allocation), densityFactor})
                 )
             )
         }

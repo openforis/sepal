@@ -9,6 +9,9 @@ export function stratifiedSystematicSample(args) {
     var scale = ee.Number(args.scale)
     var minDistance = ee.Number(args.minDistance || scale.multiply(2))
         .max(scale.multiply(2)) // At least 2xscale as min distance
+    var crs = args.crs || 'EPSG:3410'
+    var crsTransform = args.crsTransform || undefined
+    var projection = ee.Projection(crs, crsTransform)
     // Densify the base grid by lowering the exponent (smaller cells), clamped at minExponent so the
     // configured minimum distance is never violated. 0 = the area-based first guess.
     var densityOffset = args.densityOffset || 0
@@ -57,7 +60,8 @@ export function stratifiedSystematicSample(args) {
                 var stratumMask = stratification.eq(stratum.stratum)
                 var stratumSamplesImage = createHexSamplesImage({
                     diameter: diameter,
-                    scale: scale
+                    scale: scale,
+                    proj: projection
                 })
 
                 return stratumSamplesImage

@@ -8,6 +8,7 @@ import {tableToAsset$} from '#task/jobs/export/tableToAsset'
 import {tableToSepal$} from '#task/jobs/export/tableToSepal'
 
 import {formatProperties} from '../formatProperties.js'
+import {addReproductionMetadata, addSampleProperties, EXPORT_PROPERTY_NAMES} from './sampleProperties.js'
 import {stratificationImage$} from './stratificationImage.js'
 import {filterSamples, stratifiedSystematicSample} from './systematicSampling.js'
 import {findShortfalls, getSampleCounts$, validateSampleCounts$} from './validateSampleCounts.js'
@@ -68,6 +69,8 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
     // also catches the OVER-collapses-to-empty case).
     const requireFull = sampleArrangement.sampleSizeStrategy !== 'CLOSEST'
     const densityOffsets = systematicDensityOffsets(allocation, sampleArrangement)
+    const gridCrs = sampleArrangement.crs || 'EPSG:3410'
+    const gridCrsTransform = sampleArrangement.crsTransform || ''
 
     return tempTableAssetId$(taskId, assetId).pipe(
         switchMap(tempAssetId =>
@@ -77,9 +80,9 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
             }).pipe(
                 switchMap(({eeStratification, eeGeometry}) =>
                     chooseUnfilteredSamples$(eeStratification, eeGeometry).pipe(
-                        switchMap(unfilteredSamples => concat(
+                        switchMap(({unfilteredSamples, densityOffset}) => concat(
                             exportUnfilteredSamples$({unfilteredSamples, tempAssetId}),
-                            exportFilteredSamples$({eeGeometry, tempAssetId}),
+                            exportFilteredSamples$({eeGeometry, tempAssetId, densityOffset}),
                             deleteUnfilteredSamples$(tempAssetId)
                         ))
                     )
@@ -108,13 +111,14 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
     // suffices, fall through to the densest grid and let the final guard fail.
     function chooseByCandidateCount$(eeStratification, eeGeometry) {
         const attempt$ = index => {
-            const unfilteredSamples = sampleAt(eeStratification, eeGeometry, densityOffsets[index])
+            const densityOffset = densityOffsets[index]
+            const unfilteredSamples = sampleAt(eeStratification, eeGeometry, densityOffset)
             const lastAttempt = index === densityOffsets.length - 1
             return getSampleCounts$(unfilteredSamples).pipe(
                 switchMap(counts =>
                     !lastAttempt && findShortfalls(counts, allocation).length
                         ? attempt$(index + 1)
-                        : of(unfilteredSamples)
+                        : of({unfilteredSamples, densityOffset})
                 )
             )
         }
@@ -129,9 +133,10 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
     function chooseSmallestOversample$(eeStratification, eeGeometry) {
         const evaluate$ = (index, best, densest) => {
             if (index >= densityOffsets.length) {
-                return of(best ? best.unfilteredSamples : densest)
+                return of(best || densest)
             }
-            const unfilteredSamples = sampleAt(eeStratification, eeGeometry, densityOffsets[index])
+            const densityOffset = densityOffsets[index]
+            const unfilteredSamples = sampleAt(eeStratification, eeGeometry, densityOffset)
             const filtered = filterSamples({
                 region: eeGeometry,
                 samples: unfilteredSamples,
@@ -147,9 +152,9 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                         0
                     )
                     const nextBest = allMet && (!best || surplus < best.surplus)
-                        ? {unfilteredSamples, surplus}
+                        ? {unfilteredSamples, densityOffset, surplus}
                         : best
-                    return evaluate$(index + 1, nextBest, unfilteredSamples)
+                    return evaluate$(index + 1, nextBest, {unfilteredSamples, densityOffset})
                 })
             )
         }
@@ -164,9 +169,10 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
     function chooseClosest$(eeStratification, eeGeometry) {
         const evaluate$ = (index, best, densest) => {
             if (index >= densityOffsets.length) {
-                return of(best ? best.unfilteredSamples : densest)
+                return of(best || densest)
             }
-            const unfilteredSamples = sampleAt(eeStratification, eeGeometry, densityOffsets[index])
+            const densityOffset = densityOffsets[index]
+            const unfilteredSamples = sampleAt(eeStratification, eeGeometry, densityOffset)
             const filtered = filterSamples({
                 region: eeGeometry,
                 samples: unfilteredSamples,
@@ -182,9 +188,9 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                         0
                     )
                     const nextBest = allNonEmpty && (!best || totalDiff < best.totalDiff)
-                        ? {unfilteredSamples, totalDiff}
+                        ? {unfilteredSamples, densityOffset, totalDiff}
                         : best
-                    return evaluate$(index + 1, nextBest, unfilteredSamples)
+                    return evaluate$(index + 1, nextBest, {unfilteredSamples, densityOffset})
                 })
             )
         }
@@ -198,6 +204,8 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
             region: eeGeometry,
             minDistance: sampleArrangement.minDistance,
             scale: sampleArrangement.scale,
+            crs: gridCrs,
+            crsTransform: gridCrsTransform,
             densityOffset
         })
     }
@@ -213,14 +221,33 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
         )
     }
 
-    function exportFilteredSamples$({eeGeometry, tempAssetId}) {
-        const filteredSamples = filterSamples({
-            region: eeGeometry,
-            samples: ee.FeatureCollection(tempAssetId),
-            allocation,
-            strategy: sampleArrangement.sampleSizeStrategy,
-            seed: sampleArrangement.seed
-        }).set(formatProperties(properties))
+    function exportFilteredSamples$({eeGeometry, tempAssetId, densityOffset}) {
+        const metadata = {
+            arrangementStrategy: 'SYSTEMATIC',
+            sampleSizeStrategy: sampleArrangement.sampleSizeStrategy,
+            seed: sampleArrangement.seed,
+            minDistance: sampleArrangement.minDistance,
+            scale: sampleArrangement.scale,
+            crs: gridCrs,
+            crsTransform: gridCrsTransform,
+            gridCrs,
+            gridCrsTransform,
+            selectedDensityFactor: null,
+            selectedDensityOffset: densityOffset
+        }
+        const filteredSamples = addReproductionMetadata(
+            addSampleProperties(
+                filterSamples({
+                    region: eeGeometry,
+                    samples: ee.FeatureCollection(tempAssetId),
+                    allocation,
+                    strategy: sampleArrangement.sampleSizeStrategy,
+                    seed: sampleArrangement.seed
+                }),
+                allocation
+            ),
+            metadata
+        ).set(formatProperties(properties))
         const export$ = destination === 'SEPAL'
             ? tableToSepal$(taskId, {
                 collection: filteredSamples,
@@ -228,7 +255,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                 workspacePath,
                 filenamePrefix,
                 fileFormat,
-                selectors: ['id', 'stratum', 'color']
+                selectors: EXPORT_PROPERTY_NAMES
             })
             : tableToAsset$({
                 taskId,
