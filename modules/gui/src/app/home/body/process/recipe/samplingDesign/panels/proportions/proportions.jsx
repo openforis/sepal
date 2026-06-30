@@ -15,7 +15,7 @@ import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
-import {isNumericClassValue} from '../../sampling/categoricalLegend'
+import {isNumericClassValue, toClassOptions} from '../../sampling/categoricalLegend'
 import {maxAnticipatedTargetProportion, smartRound, toProportions} from '../../sampling/proportionMath'
 import {AnticipationStrategy, ImageSelection, OverallProportionInput, ProportionsHeaderButtons, StrataProportion} from './proportionControls'
 import styles from './proportions.module.css'
@@ -72,8 +72,10 @@ const fields = {
 
 class _Proportions extends React.Component {
     cancel$ = new Subject()
+    cancelClassValues$ = new Subject()
     state = {
-        bands: undefined
+        bands: undefined,
+        distinctClassOptions: undefined
     }
 
     constructor(props) {
@@ -89,6 +91,7 @@ class _Proportions extends React.Component {
         this.onOverallProportionChanged = this.onOverallProportionChanged.bind(this)
         this.onProbabilitiyPerStratumCalculated = this.onProbabilitiyPerStratumCalculated.bind(this)
         this.onSkipToggled = this.onSkipToggled.bind(this)
+        this.loadClassValues = this.loadClassValues.bind(this)
     }
 
     render() {
@@ -156,12 +159,17 @@ class _Proportions extends React.Component {
     }
 
     renderImageSelection() {
-        const {bands = []} = this.state
-        const {visualizations = []} = this.state
+        const {bands = [], visualizations = [], distinctClassOptions} = this.state
+        const {stream, inputs: {type, assetId, recipeId, band}} = this.props
+        const sourceReady = type.value === 'RECIPE' ? !!recipeId.value : !!assetId.value
         return <ImageSelection
             inputs={this.props.inputs}
             bands={bands}
             visualizations={visualizations}
+            distinctClassOptions={distinctClassOptions}
+            loadingClassValues={stream('DISTINCT_CLASS_VALUES').active}
+            canLoadClassValues={sourceReady && !!band.value}
+            onLoadClassValues={this.loadClassValues}
             onTypeChanged={this.onTypeChanged}
             onImageChanged={this.onImageChanged}
             onImageLoading={this.onImageLoading}
@@ -218,6 +226,9 @@ class _Proportions extends React.Component {
             }
             targetClass.value == null || targetClass.set(null)
             anticipatedProportions.set(null)
+            // Discovered class options are band-specific; clear them here too (the band combo's onChange,
+            // which also clears them, is deferred and would briefly show stale options for the new band).
+            this.clearClassValues()
             return
         }
         if (!_.isEqual(proportionsDeps(prevProps), proportionsDeps(this.props))) {
@@ -231,12 +242,14 @@ class _Proportions extends React.Component {
         assetId.set(null)
         band.set(null)
         anticipatedProportions.set(null)
+        this.clearClassValues()
     }
 
     onImageChanged() {
         const {inputs: {band, targetClass}} = this.props
         band.set(null)
         targetClass.set(null)
+        this.clearClassValues()
     }
 
     onAnticipationStrategyChanged(strategy) {
@@ -247,8 +260,9 @@ class _Proportions extends React.Component {
             // Categorical proportions are fractions, so the percentage interpretation must not carry over.
             percentage.set([])
         } else {
-            // Don't let a stale target class linger into the probability path.
+            // Don't let a stale target class (or discovered class options) linger into the probability path.
             targetClass.set(null)
+            this.clearClassValues()
         }
     }
 
@@ -300,6 +314,7 @@ class _Proportions extends React.Component {
         const {visualizations = []} = this.state
         // Classes are band-specific, so a class chosen for a previous band must not silently carry over.
         targetClass.set(null)
+        this.clearClassValues()
         const minMax = visualizations.map(({bands, min, max}) => {
             const index = bands.indexOf(band.value)
             if (index >= 0) {
@@ -368,6 +383,49 @@ class _Proportions extends React.Component {
             // this.cancel$.next()
         } else {
             this.onManualToggled(this.isManual())
+        }
+    }
+
+    // User-triggered discovery of class values for categorical bands without legend metadata. Not started
+    // automatically (it's expensive EE work). Stale loads are cancelled when the image/band/strategy
+    // changes via clearClassValues().
+    loadClassValues() {
+        const {aoi, stream, inputs: {type, assetId, recipeId, band}} = this.props
+        const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
+        if (!id || !band.value) {
+            return
+        }
+        const recipe = type.value === 'RECIPE'
+            ? {type: 'RECIPE_REF', id}
+            : {type: 'ASSET', id}
+        this.cancelClassValues$.next()
+        stream('DISTINCT_CLASS_VALUES',
+            api.gee.distinctBandValues$({
+                recipe,
+                band: band.value,
+                aoi: aoi?.type ? aoi : undefined
+            }).pipe(
+                takeUntil(this.cancelClassValues$)
+            ),
+            values => this.setState({distinctClassOptions: toClassOptions(values)}),
+            error => {
+                const errorMessage = error?.response?.messageKey
+                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                    : error
+                Notifications.error({
+                    message: msg('process.samplingDesign.panel.proportions.form.targetClass.loadError'),
+                    error: errorMessage,
+                    group: true,
+                    timeout: 0
+                })
+            }
+        )
+    }
+
+    clearClassValues() {
+        this.cancelClassValues$.next()
+        if (this.state.distinctClassOptions !== undefined) {
+            this.setState({distinctClassOptions: undefined})
         }
     }
 

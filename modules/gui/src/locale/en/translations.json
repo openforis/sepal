@@ -4938,7 +4938,10 @@
               "placeholder": "Class value...",
               "tooltip": "The class value of your reporting category in the categorical image. The proportion is estimated per stratum as the fraction of sampled pixels/cells (at the chosen scale) equal to this class - approximately the area fraction for equal-area projections.",
               "required": "You must specify the class value",
-              "numeric": "The class value must be a number"
+              "numeric": "The class value must be a number",
+              "loadValues": "Load values",
+              "loadingValues": "Loading values...",
+              "loadError": "Failed to load class values"
             },
             "scale": {
               "label": "Scale",

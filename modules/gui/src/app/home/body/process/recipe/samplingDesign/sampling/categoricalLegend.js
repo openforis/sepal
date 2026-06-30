@@ -3,6 +3,11 @@
 export const isNumericClassValue = value =>
     value != null && String(value).trim() !== '' && Number.isFinite(Number(value))
 
+// Combo options from raw distinct band values (the EE distinct-values fallback when there's no
+// categorical metadata): numeric values, labelled by the value as a string.
+export const toClassOptions = values =>
+    (values || []).map(value => ({value, label: String(value)}))
+
 // Categorical class options ({value, label}) for a band, extracted from a recipe/asset's visualizations.
 // Returns [] when the band has no categorical visualization, so the caller can fall back to a numeric
 // class input. Pure - no GUI/EE deps.

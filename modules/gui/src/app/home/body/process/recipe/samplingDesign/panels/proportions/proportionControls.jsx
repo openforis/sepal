@@ -1,6 +1,7 @@
 import _ from 'lodash'
 
 import {msg} from '~/translate'
+import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {Form} from '~/widget/form'
 import {FormCombo} from '~/widget/form/combo'
@@ -68,6 +69,10 @@ export const ImageSelection = ({
     inputs: {type, assetId, recipeId, band, targetClass, percentage, probabilityPerStratum, anticipationStrategy, scale},
     bands,
     visualizations,
+    distinctClassOptions,
+    loadingClassValues,
+    canLoadClassValues,
+    onLoadClassValues,
     onTypeChanged,
     onImageChanged,
     onImageLoading,
@@ -114,6 +119,10 @@ export const ImageSelection = ({
                     band={band}
                     targetClass={targetClass}
                     visualizations={visualizations}
+                    distinctClassOptions={distinctClassOptions}
+                    loading={loadingClassValues}
+                    canLoad={canLoadClassValues}
+                    onLoad={onLoadClassValues}
                 />
                 : null}
         </>
@@ -263,33 +272,52 @@ const ScaleInput = ({scale}) =>
         suffix={msg('process.samplingDesign.panel.proportions.form.scale.suffix')}
     />
 
-const TargetClassInput = ({band, targetClass, visualizations = []}) => {
-    const entries = categoricalLegendEntries(visualizations, band.value)
+const TargetClassInput = ({band, targetClass, visualizations = [], distinctClassOptions, loading, canLoad, onLoad}) => {
     const label = msg('process.samplingDesign.panel.proportions.form.targetClass.label')
     const placeholder = msg('process.samplingDesign.panel.proportions.form.targetClass.placeholder')
     const tooltip = msg('process.samplingDesign.panel.proportions.form.targetClass.tooltip')
-    // Prefer the band's categorical legend values when available; otherwise a numeric class input.
-    return entries.length
-        ? (
+    // 1. Prefer the band's categorical legend metadata (no EE work needed).
+    const entries = categoricalLegendEntries(visualizations, band.value)
+    // 2. Otherwise use values discovered from the image band, once the user loads them.
+    const options = entries.length ? entries : distinctClassOptions
+    if (options?.length) {
+        return (
             <FormCombo
                 className={styles.targetClass}
                 input={targetClass}
-                options={entries}
+                options={options}
                 label={label}
                 placeholder={placeholder}
                 tooltip={tooltip}
             />
         )
-        : (
-            <Form.Input
-                className={styles.targetClass}
-                input={targetClass}
-                type='number'
-                label={label}
-                placeholder={placeholder}
-                tooltip={tooltip}
-            />
-        )
+    }
+    // 3. Fallback: a numeric class input with a user-triggered "Load values" action.
+    const loadButton = (
+        <Button
+            key='loadClassValues'
+            shape='pill'
+            air='less'
+            size='x-small'
+            icon={loading ? 'spinner' : 'rotate'}
+            label={msg(loading
+                ? 'process.samplingDesign.panel.proportions.form.targetClass.loadingValues'
+                : 'process.samplingDesign.panel.proportions.form.targetClass.loadValues')}
+            disabled={!canLoad || loading}
+            onClick={() => onLoad()}
+        />
+    )
+    return (
+        <Form.Input
+            className={styles.targetClass}
+            input={targetClass}
+            type='number'
+            label={label}
+            placeholder={placeholder}
+            tooltip={tooltip}
+            buttons={[loadButton]}
+        />
+    )
 }
 
 const EEStrategyButtons = ({eeStrategy}) =>

@@ -1,4 +1,4 @@
-import {categoricalLegendEntries, isNumericClassValue} from './categoricalLegend'
+import {categoricalLegendEntries, isNumericClassValue, toClassOptions} from './categoricalLegend'
 
 const visualizations = [
     {type: 'continuous', bands: ['probability'], min: [0], max: [1]},
@@ -53,5 +53,20 @@ describe('isNumericClassValue', () => {
         expect(isNumericClassValue('   ')).toBe(false)
         expect(isNumericClassValue(null)).toBe(false)
         expect(isNumericClassValue(undefined)).toBe(false)
+    })
+})
+
+describe('toClassOptions', () => {
+    it('maps distinct values to {value, label} options', () => {
+        expect(toClassOptions([0, 1, 2])).toEqual([
+            {value: 0, label: '0'},
+            {value: 1, label: '1'},
+            {value: 2, label: '2'}
+        ])
+    })
+
+    it('returns [] for empty/missing input', () => {
+        expect(toClassOptions([])).toEqual([])
+        expect(toClassOptions(undefined)).toEqual([])
     })
 })
