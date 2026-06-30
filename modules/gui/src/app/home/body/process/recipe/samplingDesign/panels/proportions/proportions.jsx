@@ -20,6 +20,7 @@ import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
+import {categoricalLegendEntries, isNumericClassValue} from '../../sampling/categoricalLegend'
 import {maxAnticipatedTargetProportion, smartRound, toProportions} from '../../sampling/proportionMath'
 import styles from './proportions.module.css'
 import {ProportionTable} from './proportionTable'
@@ -42,30 +43,29 @@ const fields = {
     anticipationStrategy: new Form.Field(),
     type: new Form.Field(),
     assetId: new Form.Field()
-        .skip((_value, {skip, manual, anticipationStrategy, type}) =>
-            skip.length
-                || manual.length
-                || ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy) || type !== 'ASSET')
+        .skip((_value, {skip, manual, type}) =>
+            skip.length || manual.length || type !== 'ASSET')
         .notBlank('process.samplingDesign.panel.proportions.form.asset.required'),
     recipeId: new Form.Field()
-        .skip((_value, {skip, manual, anticipationStrategy, type}) =>
-            skip.length
-                || manual.length
-                || ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy) || type !== 'RECIPE')
+        .skip((_value, {skip, manual, type}) =>
+            skip.length || manual.length || type !== 'RECIPE')
         .notBlank('process.samplingDesign.panel.proportions.form.recipe.required'),
     band: new Form.Field()
-        .skip((_value, {skip, anticipationStrategy, type, assetId, recipeId}) =>
+        .skip((_value, {skip, manual, type, assetId, recipeId}) =>
             skip.length
-                || ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy)
+                || manual.length
                 || (type === 'ASSET' && !assetId)
                 || (type === 'RECIPE' && !recipeId))
         .notBlank('process.samplingDesign.panel.proportions.form.band.required'),
+    targetClass: new Form.Field()
+        .skip((_value, {skip, manual, anticipationStrategy}) =>
+            skip.length || manual.length || anticipationStrategy !== 'CATEGORICAL')
+        .notBlank('process.samplingDesign.panel.proportions.form.targetClass.required')
+        .predicate(value => isNumericClassValue(value), 'process.samplingDesign.panel.proportions.form.targetClass.numeric'),
     percentage: new Form.Field(),
     scale: new Form.Field()
-        .skip((_value, {skip, manual, anticipationStrategy}) =>
-            skip.length
-                || manual.length
-                || ['PROBABILITY', 'CATEGORICAL'].includes(anticipationStrategy))
+        .skip((_value, {skip, manual}) =>
+            skip.length || manual.length)
         .notBlank('process.samplingDesign.panel.proportions.form.scale.required'),
     eeStrategy: new Form.Field(),
     anticipatedOverallProportion: new Form.Field(),
@@ -89,6 +89,7 @@ class _Proportions extends React.Component {
         this.onAssetLoaded = this.onAssetLoaded.bind(this)
         this.onRecipeLoaded = this.onRecipeLoaded.bind(this)
         this.onBandChanged = this.onBandChanged.bind(this)
+        this.onAnticipationStrategyChanged = this.onAnticipationStrategyChanged.bind(this)
         this.onPercentageChanged = this.onPercentageChanged.bind(this)
         this.onOverallProportionChanged = this.onOverallProportionChanged.bind(this)
         this.onProbabilitiyPerStratumCalculated = this.onProbabilitiyPerStratumCalculated.bind(this)
@@ -200,7 +201,7 @@ class _Proportions extends React.Component {
     }
 
     renderImageSelection() {
-        const {inputs: {type}} = this.props
+        const {inputs: {type, anticipationStrategy}} = this.props
         return (
             <>
                 {type.value === 'ASSET' ? this.renderAsset() : null}
@@ -209,8 +210,40 @@ class _Proportions extends React.Component {
                     {this.renderBand()}
                     {this.renderScale()}
                 </Layout>
+                {anticipationStrategy.value === 'CATEGORICAL' ? this.renderTargetClass() : null}
             </>
         )
+    }
+
+    renderTargetClass() {
+        const {inputs: {band, targetClass}} = this.props
+        const {visualizations = []} = this.state
+        const entries = categoricalLegendEntries(visualizations, band.value)
+        const label = msg('process.samplingDesign.panel.proportions.form.targetClass.label')
+        const placeholder = msg('process.samplingDesign.panel.proportions.form.targetClass.placeholder')
+        const tooltip = msg('process.samplingDesign.panel.proportions.form.targetClass.tooltip')
+        // Prefer the band's categorical legend values when available; otherwise a numeric class input.
+        return entries.length
+            ? (
+                <FormCombo
+                    className={styles.targetClass}
+                    input={targetClass}
+                    options={entries}
+                    label={label}
+                    placeholder={placeholder}
+                    tooltip={tooltip}
+                />
+            )
+            : (
+                <Form.Input
+                    className={styles.targetClass}
+                    input={targetClass}
+                    type='number'
+                    label={label}
+                    placeholder={placeholder}
+                    tooltip={tooltip}
+                />
+            )
     }
 
     renderAsset() {
@@ -274,12 +307,14 @@ class _Proportions extends React.Component {
     }
     
     renderBand() {
-        const {inputs: {band, percentage, probabilityPerStratum}} = this.props
+        const {inputs: {band, percentage, probabilityPerStratum, anticipationStrategy}} = this.props
         const {bands = []} = this.state
 
         const options = bands
             .map(band => ({value: band, label: band}))
 
+        // CATEGORICAL proportions are fractions [0,1] from the reducer, so the percentage toggle doesn't apply.
+        const categorical = anticipationStrategy.value === 'CATEGORICAL'
         const forcePercentage = _.maxBy(probabilityPerStratum.value, 'probability')?.probability > 1
 
         const percentageButton = (
@@ -308,7 +343,7 @@ class _Proportions extends React.Component {
                 label={msg('process.samplingDesign.panel.proportions.form.band.label')}
                 placeholder={msg('process.samplingDesign.panel.proportions.form.band.placeholder')}
                 tooltip={msg('process.samplingDesign.panel.proportions.form.band.tooltip')}
-                buttons={[percentageButton]}
+                buttons={categorical ? [] : [percentageButton]}
                 onChange={this.onBandChanged}
             />
         )
@@ -419,6 +454,20 @@ class _Proportions extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
+        const {stream, inputs: {anticipationStrategy, band, targetClass, anticipatedProportions}} = this.props
+        // FormCombo sets the band synchronously but fires its onChange in setImmediate, so this update
+        // can see the new band while the (band-specific) target class is still the old one. Invalidate
+        // here, BEFORE any recompute, so a stale class can't start a GEE request for the new band - and
+        // cancel any request already in flight. The subsequent targetClass change re-triggers the normal
+        // (now safely blank) recompute path.
+        if (anticipationStrategy.value === 'CATEGORICAL' && prevProps.inputs.band.value !== band.value) {
+            if (stream('PROBABILITY_PER_STRATUM').active) {
+                this.cancel$.next()
+            }
+            targetClass.value == null || targetClass.set(null)
+            anticipatedProportions.set(null)
+            return
+        }
         if (!_.isEqual(proportionsDeps(prevProps), proportionsDeps(this.props))) {
             this.calculateAnticipatedProportions()
         }
@@ -433,8 +482,22 @@ class _Proportions extends React.Component {
     }
 
     onImageChanged() {
-        const {inputs: {band}} = this.props
+        const {inputs: {band, targetClass}} = this.props
         band.set(null)
+        targetClass.set(null)
+    }
+
+    onAnticipationStrategyChanged(strategy) {
+        const {inputs: {anticipatedProportions, percentage, targetClass}} = this.props
+        // Clear stale results; recompute is triggered by the dependency change in componentDidUpdate.
+        anticipatedProportions.set(null)
+        if (strategy === 'CATEGORICAL') {
+            // Categorical proportions are fractions, so the percentage interpretation must not carry over.
+            percentage.set([])
+        } else {
+            // Don't let a stale target class linger into the probability path.
+            targetClass.set(null)
+        }
     }
 
     onImageLoading() {
@@ -481,8 +544,10 @@ class _Proportions extends React.Component {
     }
 
     onBandChanged() {
-        const {inputs: {band}} = this.props
+        const {inputs: {band, targetClass}} = this.props
         const {visualizations = []} = this.state
+        // Classes are band-specific, so a class chosen for a previous band must not silently carry over.
+        targetClass.set(null)
         const minMax = visualizations.map(({bands, min, max}) => {
             const index = bands.indexOf(band.value)
             if (index >= 0) {
@@ -562,7 +627,7 @@ class _Proportions extends React.Component {
     calculateAnticipatedProportions() {
         const {aoi, stream,
             unstratified, stratificationType, stratificationRecipeId, stratificationAssetId, stratificationBand,
-            inputs: {manual, scale, type, assetId, recipeId, band, eeStrategy, anticipatedProportions}
+            inputs: {manual, anticipationStrategy, scale, type, assetId, recipeId, band, targetClass, eeStrategy, anticipatedProportions}
         } = this.props
         if (manual.value?.length) {
             return
@@ -572,7 +637,11 @@ class _Proportions extends React.Component {
         if (!scale.value || !id || !band.value) {
             return
         }
-        
+        const categorical = anticipationStrategy.value === 'CATEGORICAL'
+        if (categorical && (targetClass.value == null || targetClass.value === '')) {
+            return
+        }
+
         anticipatedProportions.set(null)
         const stratification = unstratified
             ? null
@@ -595,6 +664,8 @@ class _Proportions extends React.Component {
                 stratificationBand: stratificationBand,
                 probability,
                 probabilityBand: band.value,
+                mode: anticipationStrategy.value,
+                targetClass: categorical ? Number(targetClass.value) : undefined,
                 scale: parseInt(scale.value),
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
@@ -616,12 +687,14 @@ class _Proportions extends React.Component {
     }
 
     onProbabilitiyPerStratumCalculated(loadedProbabilityPerStratum) {
-        const {strata, inputs: {probabilityPerStratum, anticipatedOverallProportion, anticipatedProportions}} = this.props
+        const {strata, inputs: {anticipationStrategy, probabilityPerStratum, anticipatedOverallProportion, anticipatedProportions}} = this.props
         if (this.isManual()) {
             return // Ignore the result when manual
         }
-        const adjustedPercentage = this.isPercentage()
-            || _.maxBy(loadedProbabilityPerStratum, 'probability')?.probability > 1
+        // Categorical proportions are fractions [0,1] - never interpret them as percentages.
+        const adjustedPercentage = anticipationStrategy.value !== 'CATEGORICAL'
+            && (this.isPercentage()
+                || _.maxBy(loadedProbabilityPerStratum, 'probability')?.probability > 1)
         if (adjustedPercentage && !this.isPercentage()) {
             this.setPercentage(true)
         }
@@ -668,8 +741,8 @@ class _Proportions extends React.Component {
 }
 
 const proportionsDeps = props => {
-    const {inputs: {manual, anticipationStrategy, type, assetId, recipeId, band, scale, eeStrategy}} = props
-    return [manual, anticipationStrategy, type, assetId, recipeId, band, scale, eeStrategy]
+    const {inputs: {manual, anticipationStrategy, type, assetId, recipeId, band, targetClass, scale, eeStrategy}} = props
+    return [manual, anticipationStrategy, type, assetId, recipeId, band, targetClass, scale, eeStrategy]
         .map(input => input?.value)
 }
 

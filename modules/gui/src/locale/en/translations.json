@@ -4897,7 +4897,7 @@
               },
               "CATEGORICAL": {
                 "label": "Categorical image",
-                "tooltip": "Anticipate proportion based on the area of a your reporting category in a categorical image. You probably don't want to use this method when you have a stratification containing the reporting category as a stratum."
+                "tooltip": "Estimate the reporting category proportion from the fraction of pixels equal to a selected class in a categorical image (e.g. a classification band). You probably don't want to use this method when you have a stratification containing the reporting category as a stratum."
               }
             },
             "image": {
@@ -4932,6 +4932,13 @@
               "placeholder": "Select a band...",
               "tooltip": "Select the band containing the strata",
               "required": "You must select a band"
+            },
+            "targetClass": {
+              "label": "Class",
+              "placeholder": "Class value...",
+              "tooltip": "The class value of your reporting category in the categorical image. The proportion is estimated per stratum as the fraction of sampled pixels/cells (at the chosen scale) equal to this class - approximately the area fraction for equal-area projections.",
+              "required": "You must specify the class value",
+              "numeric": "The class value must be a number"
             },
             "scale": {
               "label": "Scale",

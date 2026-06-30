@@ -10,7 +10,7 @@ import {exportToCSV$} from '../batch/exportToCSV.js'
 import {parseGroups} from '../batch/parse.js'
 
 const worker$ = ({
-    requestArgs: {aoi, stratification, stratificationBand = 'constant', probability, probabilityBand, scale, crs, batch},
+    requestArgs: {aoi, stratification, stratificationBand = 'constant', probability, probabilityBand, mode = 'PROBABILITY', targetClass, scale, crs, batch},
     credentials: {sepalUser}
 }) => {
     const description = 'probability-per-stratum'
@@ -38,7 +38,16 @@ const worker$ = ({
     )
 
     function reduceRegion({eeGeometry, eeStratification, eeProbability}) {
-        return eeProbability.select(probabilityBand)
+        const band = eeProbability.select(probabilityBand)
+        // CATEGORICAL: mean of a 0/1 mask = fraction of sampled pixels (cells at `scale`) equal to the
+        // target class. This is a PIXEL fraction, not strictly an area fraction - it approximates the
+        // area fraction for equal-area projections, but not for arbitrary geographic/non-equal-area ones.
+        // PROBABILITY: mean of the band value (probability/fraction image). Both are grouped by stratum
+        // into a per-stratum target proportion, so the downstream toProportions pipeline is unchanged.
+        const probabilityImage = mode === 'CATEGORICAL'
+            ? band.eq(targetClass)
+            : band
+        return probabilityImage
             .addBands(eeStratification.select(stratificationBand))
             .reduceRegion({
                 reducer: ee.Reducer.mean()

@@ -214,9 +214,9 @@ export default {
             }
         }),
 
-    probabilityPerStratum$: ({aoi, stratification, stratificationBand, probability, probabilityBand, scale, batch}) =>
+    probabilityPerStratum$: ({aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, batch}) =>
         postJson$('/api/gee/samplingDesign/probabilityPerStratum', {
-            body: {aoi, stratification, stratificationBand, probability, probabilityBand, scale, batch}
+            body: {aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, batch}
         }),
 
     landsatProductId$: ({sceneId}) =>
