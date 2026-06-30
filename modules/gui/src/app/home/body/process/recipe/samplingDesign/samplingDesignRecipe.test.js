@@ -1,4 +1,4 @@
-import {toTaskRecipe} from './samplingDesignRecipe'
+import {normalizeSavedLayers, toTaskRecipe} from './samplingDesignRecipe'
 
 const recipe = {
     id: 'r1',
@@ -37,5 +37,42 @@ describe('toTaskRecipe', () => {
         const before = recipe.model.sampleAllocation.allocation
         toTaskRecipe(recipe)
         expect(recipe.model.sampleAllocation.allocation).toBe(before)
+    })
+})
+
+describe('normalizeSavedLayers', () => {
+    it('passes through when there are no saved areas', () => {
+        expect(normalizeSavedLayers(undefined)).toBeUndefined()
+        expect(normalizeSavedLayers({mode: 'grid'})).toEqual({mode: 'grid'})
+    })
+
+    it('remaps a this-recipe area image layer to Google Satellite', () => {
+        const savedLayers = {
+            mode: 'grid',
+            areas: {center: {id: 'a', imageLayer: {sourceId: 'this-recipe'}, featureLayers: [{sourceId: 'aoi'}]}}
+        }
+        const normalized = normalizeSavedLayers(savedLayers)
+        expect(normalized.areas.center.imageLayer.sourceId).toBe('google-satellite')
+        expect(normalized.areas.center.featureLayers).toEqual([{sourceId: 'aoi'}])
+        expect(normalized.mode).toBe('grid')
+    })
+
+    it('remaps this-recipe across all areas in split mode and preserves others', () => {
+        const savedLayers = {
+            mode: 'stack',
+            areas: {
+                left: {imageLayer: {sourceId: 'this-recipe'}},
+                right: {imageLayer: {sourceId: 'google-satellite'}}
+            }
+        }
+        const normalized = normalizeSavedLayers(savedLayers)
+        expect(normalized.areas.left.imageLayer.sourceId).toBe('google-satellite')
+        expect(normalized.areas.right.imageLayer.sourceId).toBe('google-satellite')
+    })
+
+    it('does not mutate the input', () => {
+        const savedLayers = {areas: {center: {imageLayer: {sourceId: 'this-recipe'}}}}
+        normalizeSavedLayers(savedLayers)
+        expect(savedLayers.areas.center.imageLayer.sourceId).toBe('this-recipe')
     })
 })

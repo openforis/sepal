@@ -33,6 +33,24 @@ export const RecipeActions = id => {
     }
 }
 
+// Sampling Design initializes layers with skipThis, so there's no "this-recipe" image source. Older
+// in-development recipes may have saved areas pointing at it; remap those to the Google Satellite
+// basemap so the map/menu don't dereference a missing source. All other saved layer state (feature
+// layers, split mode) is preserved. Pure and testable.
+export const normalizeSavedLayers = savedLayers => {
+    if (!savedLayers?.areas) {
+        return savedLayers
+    }
+    return {
+        ...savedLayers,
+        areas: _.mapValues(savedLayers.areas, area =>
+            area?.imageLayer?.sourceId === 'this-recipe'
+                ? {...area, imageLayer: {...area.imageLayer, sourceId: 'google-satellite'}}
+                : area
+        )
+    }
+}
+
 // Shape the task payload: replace the persisted allocation with the canonical, normalized allocation
 // rows the backend samplers consume ({stratum, sampleSize, area, color, ...}). Pure and testable.
 export const toTaskRecipe = recipe => ({

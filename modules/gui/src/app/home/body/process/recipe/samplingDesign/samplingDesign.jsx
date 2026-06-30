@@ -11,7 +11,7 @@ import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {getAvailableBands} from './bands'
 import {SamplingDesignToolbar} from './panels/samplingDesignToolbar'
-import {defaultModel, RecipeActions} from './samplingDesignRecipe'
+import {defaultModel, normalizeSavedLayers, RecipeActions} from './samplingDesignRecipe'
 import {Sync} from './sync'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -27,7 +27,20 @@ class _SamplingDesign extends React.Component {
         super(props)
         const {savedLayers, recipeId} = props
         this.recipeActions = RecipeActions(recipeId)
-        initializeLayers({recipeId, savedLayers, defaultGoogleSatellite: true})
+        // Sampling Design has no image output, so there's no "This Recipe" image layer. Default to the
+        // Google Satellite basemap and expose a server-rendered sample preview as a feature layer.
+        initializeLayers({
+            recipeId,
+            savedLayers: normalizeSavedLayers(savedLayers),
+            skipThis: true,
+            defaultGoogleSatellite: true,
+            additionalFeatureLayerSources: [{
+                id: 'samplingDesignSamples',
+                type: 'SamplingDesignSamples',
+                description: msg('featureLayerSources.SamplingDesignSamples.description'),
+                defaultEnabled: false
+            }]
+        })
     }
 
     render() {

@@ -9,6 +9,7 @@ import {LabelsLayer} from '~/app/home/map/labelsLayer'
 import {compose} from '~/compose'
 
 import {ReferenceDataLayer} from '../body/process/recipe/classification/referenceDataLayer'
+import {SamplingDesignSamplesLayer} from '../body/process/recipe/samplingDesign/samplingDesignSamplesLayer'
 import {LegendLayer} from './legendLayer'
 import {PaletteLayer} from './paletteLayer'
 import {ValuesLayer} from './valuesLayer'
@@ -68,6 +69,15 @@ class _FeatureLayer extends React.Component {
                 return <SceneAreasLayer map={map}/>
             case 'ReferenceData':
                 return <ReferenceDataLayer map={map}/>
+            case 'SamplingDesignSamples':
+                return (
+                    <SamplingDesignSamplesLayer
+                        id={id}
+                        layerIndex={layerIndex}
+                        recipe={recipe}
+                        map={map}
+                    />
+                )
             default:
                 throw Error(`Unsupported feature layer type: ${source.type}`)
         }

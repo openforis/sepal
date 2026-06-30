@@ -844,6 +844,10 @@
       "type": "Values",
       "description": "Display approximate band values for the pixel under the mouse cursor."
     },
+    "SamplingDesignSamples": {
+      "type": "Samples",
+      "description": "Preview sampling design points"
+    },
     "SceneAreas": {
       "type": "Scene Areas",
       "description": "Select scenes to use in mosaic"
