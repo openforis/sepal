@@ -1,6 +1,8 @@
 import ee from '#sepal/ee/ee'
 
 // Bump when the draw algorithm changes in a way that affects reproducibility.
+// v1: seeded systematic origin uses a seed-derived root-lattice phase reduced modulo the current spacing
+//     (consistent across compatible densities) plus integer nested level / half-level coset shifts.
 export const ALGORITHM_VERSION = 'samplingDesign-v1'
 
 // Per-sample analysis properties (besides geometry): stratum/sample metadata for downstream analysis.

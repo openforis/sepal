@@ -2,6 +2,11 @@ import ee from '#sepal/ee/ee'
 
 import {toColor, toId} from './featureProperties.js'
 
+// Root period for the seeded lattice phase. The lattice diameters are powers of two in meters; choosing a
+// root exponent above any realistic Earth-scale spacing lets every generated diameter divide the root
+// period, so seeded phases are compatible across densities without an arbitrary projection-unit range.
+const ROOT_DIAMETER_EXPONENT = 32
+
 // Builds a nested systematic lattice. The base lattice is hexagonal/triangular (one point per cell), and
 // each point is tagged with a nested "level"; filterSamples() then selects a level per stratum to get
 // close to the requested count. Higher levels skip rows, so they remain systematic nested-lattice samples
@@ -20,14 +25,23 @@ export function stratifiedSystematicSample(args) {
     // Densify the base grid by lowering the exponent (smaller cells), clamped at minExponent so the
     // configured minimum distance is never violated. 0 = the area-based first guess.
     var densityOffset = args.densityOffset || 0
-    // Grid origin: FIXED keeps the unshifted global grid (current behavior); SEEDED applies a
-    // reproducible global phase shift within one cell, derived ONLY from the seed (and applied per cell
-    // size below). Same seed + CRS + density => the same shifted grid everywhere; AOIs only clip it.
+    // Grid origin: FIXED keeps the unshifted global lattice (current behavior); SEEDED defines ONE global
+    // lattice origin from the seed and clips it to the AOI. The phase has two parts:
+    //   - x,y: seed-derived fractions of a fixed, Earth-scale root lattice period. Each density reduces
+    //          that root phase modulo its own spacing - see createHexSamplesImage. Because the same root
+    //          phase is reused for every density, compatible power-of-two spacings stay phase compatible
+    //          (a fraction-of-current-cell offset would NOT - it moves the origin per density).
+    //   - i,j: integer cell-coset offset over the coarsest nested period (i: 16 cells, j: 32 cells),
+    //          which shifts WHICH nested level / half-level coset is selected.
+    // All seed-only: derived from the seed alone, never from the AOI/selected level/task/date/cell size.
+    // FIXED uses an all-zero phase, so its locations are unchanged. NOTE: an exact shared subset across
+    // runs still requires compatible selected density/level/strategy - this only guarantees a common
+    // global origin, not that any two runs pick the same nested coset.
     var gridOrigin = args.gridOrigin || 'FIXED'
     var seed = ee.Number(args.seed || 0)
-    var originFraction = gridOrigin === 'SEEDED'
-        ? seedGridFraction(seed)
-        : {x: ee.Number(0), y: ee.Number(0)}
+    var originPhase = gridOrigin === 'SEEDED'
+        ? seedOriginPhase(seed)
+        : {x: ee.Number(0), y: ee.Number(0), i: ee.Number(0), j: ee.Number(0)}
 
     var samplesImage = createSamplesImage()
     return samplesImageToCollection(samplesImage)
@@ -96,16 +110,26 @@ export function stratifiedSystematicSample(args) {
         var dx = distance.multiply(Math.sqrt(3))
         var dy = distance.multiply(1.5)
 
-        // Seeded global phase shift, within one cell (zero for FIXED). The fraction is seed-only and the
-        // absolute shift scales with this density's cell size, so the same seed/CRS/density yields the
-        // same shifted lattice everywhere.
-        var offsetX = originFraction.x.multiply(dx)
-        var offsetY = originFraction.y.multiply(dy)
+        // Seeded continuous phase: draw once inside a fixed root lattice period, then reduce that root
+        // phase modulo this density's spacing (zero for FIXED). The root period is expressed in the same
+        // projection grid units as dx/dy, and all supported power-of-two spacings divide it.
+        var rootDistance = ee.Number(2).pow(ROOT_DIAMETER_EXPONENT).divide(nominalScale)
+        var rootDx = rootDistance.multiply(Math.sqrt(3))
+        var rootDy = rootDistance.multiply(1.5)
+        var offsetX = originPhase.x.multiply(rootDx).mod(dx)
+        var offsetY = originPhase.y.multiply(rootDy).mod(dy)
         var coords = ee.Image.pixelCoordinates(proj)
         var cx = coords.select('x').subtract(offsetX)
         var cy = coords.select('y').subtract(offsetY)
         var i = cx.divide(dx).floor().int32().rename('i')
         var j = cy.divide(dy).floor().int32().rename('j')
+
+        // Cell-coset indices for the nested level computation: the centroid mask below uses the true
+        // i/j (so cell centers are identified correctly), while the level/coset is computed from the
+        // seed-shifted indices. This globally translates the selected nested coset (and half-level
+        // row-skipping phase) by whole cells - zero for FIXED, so the level pattern is unchanged there.
+        var iLevel = i.add(originPhase.i)
+        var jLevel = j.add(originPhase.j)
 
         var xOffset = j.mod(2).multiply(dx.divide(2))
         var xPos = cx.subtract(xOffset)
@@ -127,12 +151,12 @@ export function stratifiedSystematicSample(args) {
                 function (n, acc) {
                     n = ee.Number(n).byte()
                     var m = ee.Number(2).pow(n.subtract(1))
-                    var included = include(i, j, m)
+                    var included = include(iLevel, jLevel, m)
                     return ee.Image(acc)
                         .addBands(
                             included.multiply(n)
                                 .add(
-                                    j.mod(ee.Number(2).pow(n.add(1))).abs().eq(0)
+                                    jLevel.mod(ee.Number(2).pow(n.add(1))).abs().eq(0)
                                         .multiply(0.5)
                                 )
                         )
@@ -157,14 +181,26 @@ export function stratifiedSystematicSample(args) {
         }
     }
 
-    // Deterministic [0,1) cell fractions from the seed alone (a single null feature - no geometry, so no
-    // dependence on AOI/stratum/task/date). x and y use distinct seeds to decorrelate the two axes.
-    function seedGridFraction(seed) {
+    // Deterministic global phase from the seed alone (a single null feature - no geometry, so no
+    // dependence on AOI/stratum/task/date). Four decorrelated draws (distinct sub-seeds):
+    //   - x,y: fractions in [0, 1) of the fixed root lattice period. The root period is converted to the
+    //          active projection grid units where used, then reduced modulo the current spacing.
+    //   - i,j: integer cell offset uniform over the coarsest nested period - i over 16 cells, j over 32
+    //          cells (all per-level moduli divide these), so every selectable level/half-level coset is
+    //          shifted uniformly. floor(fraction * period) yields a uniform integer in [0, period).
+    function seedOriginPhase(seed) {
         var values = ee.FeatureCollection([ee.Feature(null, null)])
             .randomColumn('x', seed)
             .randomColumn('y', seed.add(1))
+            .randomColumn('i', seed.add(2))
+            .randomColumn('j', seed.add(3))
             .first()
-        return {x: ee.Number(values.get('x')), y: ee.Number(values.get('y'))}
+        return {
+            x: ee.Number(values.get('x')),
+            y: ee.Number(values.get('y')),
+            i: ee.Number(values.get('i')).multiply(16).floor(),
+            j: ee.Number(values.get('j')).multiply(32).floor()
+        }
     }
 }
 
