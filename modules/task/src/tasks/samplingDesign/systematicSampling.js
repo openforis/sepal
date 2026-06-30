@@ -2,6 +2,11 @@ import ee from '#sepal/ee/ee'
 
 import {toColor, toId} from './featureProperties.js'
 
+// Builds a nested systematic lattice. The base lattice is hexagonal/triangular (one point per cell), and
+// each point is tagged with a nested "level"; filterSamples() then selects a level per stratum to get
+// close to the requested count. Higher levels skip rows, so they remain systematic nested-lattice samples
+// but are not strictly isotropic hexagonal - hence "lattice"/"base lattice" rather than "hex grid" in the
+// user-facing wording and exported metadata (selectedLevel).
 export function stratifiedSystematicSample(args) {
     var allocation = args.allocation
     var region = args.region
@@ -79,6 +84,8 @@ export function stratifiedSystematicSample(args) {
         ).mosaic()
     }
 
+    // Builds the hexagonal/triangular BASE lattice (one point per cell) and tags each point with its
+    // nested level; the name is kept to limit churn, but it is the base lattice, not the final samples.
     function createHexSamplesImage(args) {
         var diameter = args.diameter
         var scale = args.scale
@@ -221,7 +228,14 @@ export function filterSamples(args) {
                     .sort('random')
                     .limit(stratum.sampleSize)
                 : filtered
-            ).select(['id', 'stratum', 'color'])
+            )
+                .select(['id', 'stratum', 'color'])
+                // The nested-lattice level actually used for this stratum. Higher levels skip rows
+                // (denser->sparser), so half-levels are still systematic nested-lattice samples but not
+                // strictly isotropic hexagonal. Exported per row so the thinning is auditable.
+                .map(function (sample) {
+                    return sample.set('selectedLevel', level)
+                })
         })
     ).flatten().map(setProperties)
 

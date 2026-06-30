@@ -5085,7 +5085,7 @@
               },
               "SYSTEMATIC": {
                 "label": "Systematic",
-                "tooltip": "Select samples from a discrete grid within each stratum"
+                "tooltip": "Select samples from a nested systematic lattice within each stratum. The base lattice is hexagonal/triangular; some count strategies may use nested row-skipping levels to get closer to the requested sample count."
               }
             },
             "sampleSizeStrategy": {

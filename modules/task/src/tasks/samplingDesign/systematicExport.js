@@ -8,7 +8,7 @@ import {tableToAsset$} from '#task/jobs/export/tableToAsset'
 import {tableToSepal$} from '#task/jobs/export/tableToSepal'
 
 import {formatProperties} from '../formatProperties.js'
-import {addReproductionMetadata, addSampleProperties, EXPORT_PROPERTY_NAMES} from './sampleProperties.js'
+import {addReproductionMetadata, addSampleProperties, SYSTEMATIC_EXPORT_PROPERTY_NAMES} from './sampleProperties.js'
 import {stratificationImage$} from './stratificationImage.js'
 import {filterSamples, stratifiedSystematicSample} from './systematicSampling.js'
 import {findShortfalls, getSampleCounts$, validateSampleCounts$} from './validateSampleCounts.js'
@@ -258,7 +258,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                 workspacePath,
                 filenamePrefix,
                 fileFormat,
-                selectors: EXPORT_PROPERTY_NAMES
+                selectors: SYSTEMATIC_EXPORT_PROPERTY_NAMES
             })
             : tableToAsset$({
                 taskId,

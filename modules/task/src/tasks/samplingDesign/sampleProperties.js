@@ -41,6 +41,10 @@ export const REPRODUCTION_PROPERTY_NAMES = [
 // All exported property names, used as the SEPAL table/CSV selectors (tableToSepal$ appends `.geo`).
 export const EXPORT_PROPERTY_NAMES = [...SAMPLE_PROPERTY_NAMES, ...REPRODUCTION_PROPERTY_NAMES]
 
+// Systematic exports additionally carry the nested-lattice level actually used per stratum (set per row
+// in filterSamples), so the row-skipping thinning is auditable alongside selectedDensityOffset.
+export const SYSTEMATIC_EXPORT_PROPERTY_NAMES = [...EXPORT_PROPERTY_NAMES, 'selectedLevel']
+
 // Attaches stratum/sample analysis metadata to every feature of a FINALIZED sample collection. `allocation`
 // (client-side) is the authoritative source for label/color/area/weight/requested counts; actualSampleSize
 // is the count actually selected per stratum (from the collection itself), so the expansion area and
