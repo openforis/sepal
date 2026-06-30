@@ -5,3 +5,5 @@ services:
       service: logger
     volumes:  # To allow dynamic reloading in dev
       - ${SEPAL_PROJECT_DIR}/modules/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    environment:
+      SELF_SIGNED_TLS_CERTIFICATE: "${SELF_SIGNED_TLS_CERTIFICATE}"
