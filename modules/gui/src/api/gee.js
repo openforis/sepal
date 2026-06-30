@@ -219,6 +219,15 @@ export default {
             body: {aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, batch}
         }),
 
+    // `recipe` MUST be the canonical task recipe (toTaskRecipe(recipe)), the same shape export submits,
+    // so preview samples the identical allocation rows. The preview layer must also skip calling this when
+    // validateRetrieve(recipe.model) fails - the endpoint runs the export count guard and will error on an
+    // incomplete/under-produced design, and EarthEngineTableLayer can't handle a null map response.
+    samplingDesignSamplesMap$: ({recipe}) =>
+        postJson$('/api/gee/samplingDesign/samplesMap', {
+            body: {recipe}
+        }),
+
     landsatProductId$: ({sceneId}) =>
         get$('/api/gee/landsatProductId', {
             query: {

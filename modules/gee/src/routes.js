@@ -22,6 +22,7 @@ import sceneAreas$ from '#gee/jobs/ee/image/sceneAreas'
 import projects$ from '#gee/jobs/ee/projects'
 import areaPerStratum$ from '#gee/jobs/ee/samplingDesign/areaPerStratum'
 import probabilityPerStratum$ from '#gee/jobs/ee/samplingDesign/probabilityPerStratum'
+import samplingDesignSamplesMap$ from '#gee/jobs/ee/samplingDesign/samplesMap'
 import tableColumns$ from '#gee/jobs/ee/table/columns'
 import tableColumnValues$ from '#gee/jobs/ee/table/columnValues'
 import tableMap$ from '#gee/jobs/ee/table/map'
@@ -63,6 +64,7 @@ export default router =>
         .get('/table/map', stream(ctx => tableMap$(ctx)))
         .post('/samplingDesign/areaPerStratum', stream(ctx => areaPerStratum$(ctx)))
         .post('/samplingDesign/probabilityPerStratum', stream(ctx => probabilityPerStratum$(ctx)))
+        .post('/samplingDesign/samplesMap', stream(ctx => samplingDesignSamplesMap$(ctx)))
         .post('/samplingDesign/estimateProbability', stream(ctx => batchTable$(ctx)))
         .post('/samplingDesign/sample', stream(ctx => batchTable$(ctx)))
         .get('/datasets', stream(ctx => datasets$(ctx)))
