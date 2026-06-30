@@ -23,6 +23,7 @@ export const SAMPLE_PROPERTY_NAMES = [
 export const REPRODUCTION_PROPERTY_NAMES = [
     'arrangementStrategy',
     'sampleSizeStrategy',
+    'gridOrigin',
     'seed',
     'minDistance',
     'scale',

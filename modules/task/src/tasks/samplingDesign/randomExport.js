@@ -47,6 +47,7 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
                     const metadata = {
                         arrangementStrategy: 'RANDOM',
                         sampleSizeStrategy: null,
+                        gridOrigin: null,
                         seed,
                         minDistance: minDistance || null,
                         scale,

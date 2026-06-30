@@ -4788,7 +4788,8 @@
         "invalid.noAllocation": "No sample allocation has been computed. Open Sample Allocation and set the allocation.",
         "invalid.sampleSizeInvalid": "An allocation row has an invalid sample size. Enter a positive whole number of samples for every stratum.",
         "invalid.areaMissing": "An allocation row is missing its area. Recompute the strata in Stratification.",
-        "invalid.noTaskAllocation": "The allocation has no samples to retrieve. Set a sample size greater than zero."
+        "invalid.noTaskAllocation": "The allocation has no samples to retrieve. Set a sample size greater than zero.",
+        "invalid.seedMissing": "A seed is required for this arrangement. Enter a whole-number seed in Sample Arrangement."
       },
       "panel": {
         "stratification": {
@@ -5096,6 +5097,18 @@
                 "tooltip": "(Not a purely systematic arrangement) Randomly removes samples to reach the requested sample allocation. Note that there still no guarantee that sample size reached, but an effort is made to reach it."
               }
             },
+            "gridOrigin": {
+              "label": "Grid origin",
+              "tooltip": "Fixed uses the same unshifted global grid; Seeded applies a reproducible global offset based on the seed.",
+              "FIXED": {
+                "label": "Fixed",
+                "tooltip": "Use the same unshifted global grid. Reproducible and reusable across areas of interest."
+              },
+              "SEEDED": {
+                "label": "Seeded",
+                "tooltip": "Apply a reproducible global offset derived from the seed. The same seed, CRS and density shift the global grid identically everywhere; areas of interest only clip it."
+              }
+            },
             "minDistance": {
               "label": "Min distance",
               "placeholder": "Min distance...",
@@ -5276,6 +5289,7 @@
         "PHENOLOGY": "Phenology",
         "MASKING": "Masking",
         "ASSET_MOSAIC": "Asset Mosaic",
+        "SAMPLING_DESIGN": "Sampling Design",
         "RECIPE_REF": "Recipe Reference",
         "ASSET": "Asset"
       }

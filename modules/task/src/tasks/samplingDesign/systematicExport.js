@@ -206,6 +206,8 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
             scale: sampleArrangement.scale,
             crs: gridCrs,
             crsTransform: gridCrsTransform,
+            gridOrigin: sampleArrangement.gridOrigin,
+            seed: sampleArrangement.seed,
             densityOffset
         })
     }
@@ -225,6 +227,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
         const metadata = {
             arrangementStrategy: 'SYSTEMATIC',
             sampleSizeStrategy: sampleArrangement.sampleSizeStrategy,
+            gridOrigin: sampleArrangement.gridOrigin || 'FIXED',
             seed: sampleArrangement.seed,
             minDistance: sampleArrangement.minDistance,
             scale: sampleArrangement.scale,

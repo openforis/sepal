@@ -15,6 +15,14 @@ export function stratifiedSystematicSample(args) {
     // Densify the base grid by lowering the exponent (smaller cells), clamped at minExponent so the
     // configured minimum distance is never violated. 0 = the area-based first guess.
     var densityOffset = args.densityOffset || 0
+    // Grid origin: FIXED keeps the unshifted global grid (current behavior); SEEDED applies a
+    // reproducible global phase shift within one cell, derived ONLY from the seed (and applied per cell
+    // size below). Same seed + CRS + density => the same shifted grid everywhere; AOIs only clip it.
+    var gridOrigin = args.gridOrigin || 'FIXED'
+    var seed = ee.Number(args.seed || 0)
+    var originFraction = gridOrigin === 'SEEDED'
+        ? seedGridFraction(seed)
+        : {x: ee.Number(0), y: ee.Number(0)}
 
     var samplesImage = createSamplesImage()
     return samplesImageToCollection(samplesImage)
@@ -81,13 +89,20 @@ export function stratifiedSystematicSample(args) {
         var dx = distance.multiply(Math.sqrt(3))
         var dy = distance.multiply(1.5)
 
+        // Seeded global phase shift, within one cell (zero for FIXED). The fraction is seed-only and the
+        // absolute shift scales with this density's cell size, so the same seed/CRS/density yields the
+        // same shifted lattice everywhere.
+        var offsetX = originFraction.x.multiply(dx)
+        var offsetY = originFraction.y.multiply(dy)
         var coords = ee.Image.pixelCoordinates(proj)
-        var i = coords.select('x').divide(dx).floor().int32().rename('i')
-        var j = coords.select('y').divide(dy).floor().int32().rename('j')
+        var cx = coords.select('x').subtract(offsetX)
+        var cy = coords.select('y').subtract(offsetY)
+        var i = cx.divide(dx).floor().int32().rename('i')
+        var j = cy.divide(dy).floor().int32().rename('j')
 
         var xOffset = j.mod(2).multiply(dx.divide(2))
-        var xPos = coords.select('x').subtract(xOffset)
-        var yPos = coords.select('y')
+        var xPos = cx.subtract(xOffset)
+        var yPos = cy
 
         var xMinDistance = xPos.mod(dx).abs()
         var yMinDistance = yPos.mod(dy).abs()
@@ -133,6 +148,16 @@ export function stratifiedSystematicSample(args) {
         function mod(value, k) {
             return value.mod(n.multiply(k)).abs().eq(0)
         }
+    }
+
+    // Deterministic [0,1) cell fractions from the seed alone (a single null feature - no geometry, so no
+    // dependence on AOI/stratum/task/date). x and y use distinct seeds to decorrelate the two axes.
+    function seedGridFraction(seed) {
+        var values = ee.FeatureCollection([ee.Feature(null, null)])
+            .randomColumn('x', seed)
+            .randomColumn('y', seed.add(1))
+            .first()
+        return {x: ee.Number(values.get('x')), y: ee.Number(values.get('y'))}
     }
 }
 

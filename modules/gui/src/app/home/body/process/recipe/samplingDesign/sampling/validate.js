@@ -38,7 +38,10 @@ export const validateSamplingDesign = model => {
     }
 
     const arrangement = model?.sampleArrangement || {}
-    const seedRelevant = arrangement.arrangementStrategy === 'RANDOM' || arrangement.sampleSizeStrategy === 'EXACT'
+    // Seed drives random draws, EXACT thinning, and the SEEDED systematic grid offset.
+    const seedRelevant = arrangement.arrangementStrategy === 'RANDOM'
+        || arrangement.sampleSizeStrategy === 'EXACT'
+        || (arrangement.arrangementStrategy === 'SYSTEMATIC' && arrangement.gridOrigin === 'SEEDED')
     if (seedRelevant && !Number.isFinite(arrangement.seed)) {
         add('sampleArrangement', 'seedMissing')
     }

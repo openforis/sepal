@@ -13,6 +13,10 @@ const isPositiveInteger = value =>
 const hasFiniteArea = value =>
     value != null && value !== '' && Number.isFinite(Number(value)) && Number(value) > 0
 
+// Matches the panel's seed field: a non-negative integer.
+const isNonNegativeInteger = value =>
+    value != null && value !== '' && /^\d+$/.test(String(value))
+
 export const validateRetrieve = model => {
     const errors = []
     const add = (section, code) => errors.push({section, code})
@@ -52,6 +56,15 @@ export const validateRetrieve = model => {
         if (taskRows.some(row => !isPositiveInteger(row.sampleSize))) {
             add('sampleAllocation', 'sampleSizeInvalid')
         }
+    }
+
+    // Seed drives random draws, EXACT thinning, and the SEEDED systematic grid offset - require it there.
+    const arrangement = model?.sampleArrangement || {}
+    const seedRequired = arrangement.arrangementStrategy === 'RANDOM'
+        || arrangement.sampleSizeStrategy === 'EXACT'
+        || (arrangement.arrangementStrategy === 'SYSTEMATIC' && arrangement.gridOrigin === 'SEEDED')
+    if (seedRequired && !isNonNegativeInteger(arrangement.seed)) {
+        add('sampleArrangement', 'seedMissing')
     }
 
     const seen = new Set()

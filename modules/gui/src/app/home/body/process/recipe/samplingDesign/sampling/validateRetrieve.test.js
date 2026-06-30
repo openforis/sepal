@@ -119,3 +119,29 @@ it('reports a single section:code at most once', () => {
     const keys = result.map(({section, code}) => `${section}:${code}`)
     expect(keys.length).toBe(new Set(keys).size)
 })
+
+const withArrangement = sampleArrangement => ({...stratifiedValid, sampleArrangement})
+
+it('requires a seed for RANDOM arrangement', () => {
+    expect(codes(withArrangement({arrangementStrategy: 'RANDOM'}))).toContain('seedMissing')
+})
+
+it('requires a seed for SYSTEMATIC/EXACT thinning', () => {
+    expect(codes(withArrangement({arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'EXACT'}))).toContain('seedMissing')
+})
+
+it('requires a seed for SYSTEMATIC with a seeded grid origin', () => {
+    expect(codes(withArrangement({arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'SEEDED'}))).toContain('seedMissing')
+})
+
+it('does not require a seed for SYSTEMATIC/OVER with a fixed grid origin', () => {
+    expect(codes(withArrangement({arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED'}))).not.toContain('seedMissing')
+})
+
+it('accepts a valid integer seed when one is required', () => {
+    expect(codes(withArrangement({arrangementStrategy: 'RANDOM', seed: 1}))).not.toContain('seedMissing')
+})
+
+it('rejects a non-integer seed when one is required', () => {
+    expect(codes(withArrangement({arrangementStrategy: 'RANDOM', seed: 1.5}))).toContain('seedMissing')
+})

@@ -68,6 +68,22 @@ it('does not require a seed for SYSTEMATIC/OVER', () => {
     expect(codes(validateSamplingDesign(baseModel))).not.toContain('seedMissing')
 })
 
+it('requires a seed for SYSTEMATIC with a seeded grid origin', () => {
+    const result = validateSamplingDesign({
+        ...baseModel,
+        sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'SEEDED'}
+    })
+    expect(codes(result)).toContain('seedMissing')
+})
+
+it('does not require a seed for SYSTEMATIC/OVER with a fixed grid origin', () => {
+    const result = validateSamplingDesign({
+        ...baseModel,
+        sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED'}
+    })
+    expect(codes(result)).not.toContain('seedMissing')
+})
+
 it('skips proportion validation when proportions are skipped', () => {
     const result = validateSamplingDesign({
         ...baseModel,
