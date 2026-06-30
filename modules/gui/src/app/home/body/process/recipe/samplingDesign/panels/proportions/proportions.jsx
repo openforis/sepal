@@ -214,18 +214,30 @@ class _Proportions extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {stream, inputs: {anticipationStrategy, band, targetClass, anticipatedProportions}} = this.props
+        const {inputs: {anticipationStrategy, band, percentage, targetClass}} = this.props
+        if (prevProps.inputs.anticipationStrategy.value !== anticipationStrategy.value) {
+            this.invalidateCalculatedProportions()
+            if (anticipationStrategy.value === 'CATEGORICAL') {
+                // Entering categorical mode needs an explicit class selection; never reuse a probability result.
+                percentage.set([])
+                targetClass.value == null || targetClass.set(null)
+                return
+            }
+            if (targetClass.value != null) {
+                targetClass.set(null)
+                this.clearClassValues()
+                return
+            }
+            this.clearClassValues()
+        }
         // FormCombo sets the band synchronously but fires its onChange in setImmediate, so this update
         // can see the new band while the (band-specific) target class is still the old one. Invalidate
         // here, BEFORE any recompute, so a stale class can't start a GEE request for the new band - and
         // cancel any request already in flight. The subsequent targetClass change re-triggers the normal
         // (now safely blank) recompute path.
         if (anticipationStrategy.value === 'CATEGORICAL' && prevProps.inputs.band.value !== band.value) {
-            if (stream('PROBABILITY_PER_STRATUM').active) {
-                this.cancel$.next()
-            }
+            this.invalidateCalculatedProportions()
             targetClass.value == null || targetClass.set(null)
-            anticipatedProportions.set(null)
             // Discovered class options are band-specific; clear them here too (the band combo's onChange,
             // which also clears them, is deferred and would briefly show stale options for the new band).
             this.clearClassValues()
@@ -237,11 +249,12 @@ class _Proportions extends React.Component {
     }
 
     onTypeChanged() {
-        const {inputs: {assetId, recipeId, band, anticipatedProportions}} = this.props
+        const {inputs: {assetId, recipeId, band, targetClass}} = this.props
         recipeId.set(null)
         assetId.set(null)
         band.set(null)
-        anticipatedProportions.set(null)
+        targetClass.set(null)
+        this.invalidateCalculatedProportions()
         this.clearClassValues()
     }
 
@@ -249,16 +262,18 @@ class _Proportions extends React.Component {
         const {inputs: {band, targetClass}} = this.props
         band.set(null)
         targetClass.set(null)
+        this.invalidateCalculatedProportions()
         this.clearClassValues()
     }
 
     onAnticipationStrategyChanged(strategy) {
-        const {inputs: {anticipatedProportions, percentage, targetClass}} = this.props
+        const {inputs: {percentage, targetClass}} = this.props
         // Clear stale results; recompute is triggered by the dependency change in componentDidUpdate.
-        anticipatedProportions.set(null)
+        this.invalidateCalculatedProportions()
         if (strategy === 'CATEGORICAL') {
             // Categorical proportions are fractions, so the percentage interpretation must not carry over.
             percentage.set([])
+            targetClass.set(null)
         } else {
             // Don't let a stale target class (or discovered class options) linger into the probability path.
             targetClass.set(null)
@@ -313,6 +328,7 @@ class _Proportions extends React.Component {
         const {inputs: {band, targetClass}} = this.props
         const {visualizations = []} = this.state
         // Classes are band-specific, so a class chosen for a previous band must not silently carry over.
+        this.invalidateCalculatedProportions()
         targetClass.set(null)
         this.clearClassValues()
         const minMax = visualizations.map(({bands, min, max}) => {
@@ -427,6 +443,15 @@ class _Proportions extends React.Component {
         if (this.state.distinctClassOptions !== undefined) {
             this.setState({distinctClassOptions: undefined})
         }
+    }
+
+    invalidateCalculatedProportions() {
+        const {stream, inputs: {probabilityPerStratum, anticipatedProportions}} = this.props
+        if (stream('PROBABILITY_PER_STRATUM').active) {
+            this.cancel$.next()
+        }
+        probabilityPerStratum.set(null)
+        anticipatedProportions.set(null)
     }
 
     calculateMaxAnticipatedTargetProportion() {

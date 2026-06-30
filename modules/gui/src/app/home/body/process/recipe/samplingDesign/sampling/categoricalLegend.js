@@ -21,6 +21,11 @@ export const categoricalLegendEntries = (visualizations, band) => {
     }
     return (visualization.values || []).map((value, i) => {
         const label = visualization.labels?.[i]
-        return {value, label: label != null && label !== '' ? `${value} - ${label}` : String(value)}
+        const color = visualization.palette?.[i]
+        return {
+            value,
+            label: label != null && label !== '' ? `${value} - ${label}` : String(value),
+            color
+        }
     })
 }

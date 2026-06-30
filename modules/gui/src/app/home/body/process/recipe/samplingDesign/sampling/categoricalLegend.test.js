@@ -2,22 +2,22 @@ import {categoricalLegendEntries, isNumericClassValue, toClassOptions} from './c
 
 const visualizations = [
     {type: 'continuous', bands: ['probability'], min: [0], max: [1]},
-    {type: 'categorical', bands: ['class'], values: [1, 2, 3], labels: ['Forest', 'Water', '']},
+    {type: 'categorical', bands: ['class'], values: [1, 2, 3], labels: ['Forest', 'Water', ''], palette: ['#008000', '#0000ff', '#999999']},
     {type: 'categorical', bands: ['change'], values: [0, 1]}
 ]
 
-it('returns value/label options for a categorical band, combining value and label', () => {
+it('returns value/label/color options for a categorical band, combining value and label', () => {
     expect(categoricalLegendEntries(visualizations, 'class')).toEqual([
-        {value: 1, label: '1 - Forest'},
-        {value: 2, label: '2 - Water'},
-        {value: 3, label: '3'}
+        {value: 1, label: '1 - Forest', color: '#008000'},
+        {value: 2, label: '2 - Water', color: '#0000ff'},
+        {value: 3, label: '3', color: '#999999'}
     ])
 })
 
 it('falls back to the value as label when labels are missing', () => {
     expect(categoricalLegendEntries(visualizations, 'change')).toEqual([
-        {value: 0, label: '0'},
-        {value: 1, label: '1'}
+        {value: 0, label: '0', color: undefined},
+        {value: 1, label: '1', color: undefined}
     ])
 })
 

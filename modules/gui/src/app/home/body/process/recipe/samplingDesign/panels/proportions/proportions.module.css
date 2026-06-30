@@ -21,3 +21,17 @@
     color: #a0a0a0;
     font-size: .9rem;
 }
+
+.classOption {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.classOptionColor {
+    width: .9rem;
+    height: .9rem;
+    flex: 0 0 .9rem;
+    border: 1px solid rgba(255, 255, 255, .35);
+    background-color: var(--class-color);
+}

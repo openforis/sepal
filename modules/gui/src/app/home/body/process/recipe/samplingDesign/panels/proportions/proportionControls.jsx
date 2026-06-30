@@ -279,7 +279,9 @@ const TargetClassInput = ({band, targetClass, visualizations = [], distinctClass
     // 1. Prefer the band's categorical legend metadata (no EE work needed).
     const entries = categoricalLegendEntries(visualizations, band.value)
     // 2. Otherwise use values discovered from the image band, once the user loads them.
-    const options = entries.length ? entries : distinctClassOptions
+    const options = entries.length
+        ? entries.map(withClassOptionRender)
+        : distinctClassOptions
     if (options?.length) {
         return (
             <FormCombo
@@ -319,6 +321,19 @@ const TargetClassInput = ({band, targetClass, visualizations = [], distinctClass
         />
     )
 }
+
+const withClassOptionRender = option => ({
+    ...option,
+    render: option.color
+        ? () => <ClassOption option={option}/>
+        : undefined
+})
+
+const ClassOption = ({option: {color, label}}) =>
+    <div className={styles.classOption}>
+        <span className={styles.classOptionColor} style={{'--class-color': color}}/>
+        <span>{label}</span>
+    </div>
 
 const EEStrategyButtons = ({eeStrategy}) =>
     <Form.Buttons
