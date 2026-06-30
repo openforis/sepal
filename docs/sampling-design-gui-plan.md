@@ -271,3 +271,40 @@ Pin behavior before moving anything.
   export-only? Phase 3 needs that answer (the `/samplingDesign/sample` + `estimateProbability` routes currently
   point at the WIP `batch/table.js` scratch job — backend isn't ready either).
 - Phases 0–1 deliver a correct, demoable feature independently; 2–4 are the quality investment and can be paced.
+
+## Sample arrangement: CRS, distance, and seeded grid origin
+
+These notes describe the semantics of the Sample Arrangement options as currently implemented (no
+behavior changes implied here — this is reference for users and maintainers).
+
+### Arrangement CRS
+
+- The arrangement CRS (Sample Arrangement → "More" → CRS, default `EPSG:3410`) is the projection used to
+  **build the systematic sampling lattice** and to **evaluate distances** (including min distance). It is
+  the grid/lattice CRS, distinct from the Retrieve panel's output CRS.
+- Sample density is **area-based**, so an **equal-area CRS is recommended**. `EPSG:3410` (an equal-area
+  projection in meters) is the default; using a non-equal-area / geographic CRS will bias density across
+  the area of interest.
+- `crsTransform` is an optional transform applied to that grid CRS.
+- Exported metadata records both the requested arrangement `crs`/`crsTransform` and the `gridCrs`/
+  `gridCrsTransform` actually used to build the grid.
+
+### Projected vs geodesic distance
+
+- Min distance is enforced as a **minimum spacing in the selected projected CRS**, not as a guaranteed
+  geodesic (on-the-ground) distance everywhere. The true ground distance for a given projected spacing
+  varies with the projection and across the AOI extent. Choosing an appropriate equal-area CRS keeps
+  sample density area-balanced, but ground-distance distortion remains projection-dependent.
+
+### `gridOrigin: SEEDED` reproducibility
+
+- `FIXED` uses the same unshifted global lattice (the historical behavior).
+- `SEEDED` derives **one global lattice origin from the seed alone** — independent of AOI, task id, or
+  date. The same seed + same CRS/settings therefore place the **same global lattice everywhere**; an AOI
+  simply clips that global design. A different seed normally produces a different global phase.
+- **Subset/nesting caveat:** a shared global origin does **not** by itself guarantee that two different
+  requests draw the same samples. Exact subset/nesting across different requested sample sizes or AOIs is
+  only guaranteed when the **selected density, selected level, and sample size strategy are compatible**.
+  The same seed/CRS gives a common origin to build from; the adaptive density/level/strategy selection
+  determines which nested subset of that lattice each run actually picks. Exported `gridOrigin`, `seed`,
+  `selectedDensityOffset`, and `selectedLevel` make the chosen subset auditable.

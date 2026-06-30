@@ -197,7 +197,7 @@ class _SampleArrangement extends React.Component {
             <Form.Input
                 label={msg('process.retrieve.form.crs.label')}
                 placeholder={msg('process.retrieve.form.crs.placeholder')}
-                tooltip={msg('process.retrieve.form.crs.tooltip')}
+                tooltip={msg('process.samplingDesign.panel.sampleArrangement.form.crs.tooltip')}
                 input={crs}
             />
         )
@@ -209,7 +209,7 @@ class _SampleArrangement extends React.Component {
             <Form.Input
                 label={msg('process.retrieve.form.crsTransform.label')}
                 placeholder={msg('process.retrieve.form.crsTransform.placeholder')}
-                tooltip={msg('process.retrieve.form.crsTransform.tooltip')}
+                tooltip={msg('process.samplingDesign.panel.sampleArrangement.form.crsTransform.tooltip')}
                 input={crsTransform}
             />
         )

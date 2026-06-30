@@ -5106,20 +5106,26 @@
             },
             "gridOrigin": {
               "label": "Grid origin",
-              "tooltip": "Fixed uses the same unshifted global grid; Seeded applies a reproducible global offset based on the seed.",
+              "tooltip": "Fixed uses the same unshifted global grid; Seeded shifts the global grid by a reproducible offset based on the seed.",
               "FIXED": {
                 "label": "Fixed",
                 "tooltip": "Use the same unshifted global grid. Reproducible and reusable across areas of interest."
               },
               "SEEDED": {
                 "label": "Seeded",
-                "tooltip": "Apply a reproducible global offset derived from the seed. The same seed, CRS and density shift the global grid identically everywhere; areas of interest only clip it."
+                "tooltip": "Place the grid using a reproducible offset from the seed. The same seed and CRS/settings use the same global grid everywhere; the area of interest just clips it. Whether two different requests share the exact same samples also depends on the chosen density and sample size strategy."
               }
+            },
+            "crs": {
+              "tooltip": "The CRS used to build the sampling grid and to measure distances. Use an equal-area CRS (the default, EPSG:3410) so sample density is balanced by area."
+            },
+            "crsTransform": {
+              "tooltip": "Optional transform applied to the grid's CRS."
             },
             "minDistance": {
               "label": "Min distance",
               "placeholder": "Min distance...",
-              "tooltip": "The minimum distance between samples. For random arrangement, it only guarantees minimum distance within each stratum"
+              "tooltip": "Minimum spacing between samples, measured in the selected CRS. The actual distance on the ground can vary with the projection and across the area of interest. For random arrangement it only guarantees minimum distance within each stratum."
             },
             "seed": {
               "label": "Seed",
