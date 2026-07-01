@@ -26,12 +26,14 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     private final Map<String, InstanceType> instanceTypeById
     private final String syslogAddress
     private final SandboxSessionApiKey sandboxSessionApiKey
+    private final List<String> extraHosts
 
-    DockerInstanceProvisioner(WorkerInstanceConfig config, List<InstanceType> instanceTypes, String syslogAddress, SandboxSessionApiKey sandboxSessionApiKey) {
+    DockerInstanceProvisioner(WorkerInstanceConfig config, List<InstanceType> instanceTypes, String syslogAddress, SandboxSessionApiKey sandboxSessionApiKey, List<String> extraHosts = []) {
         this.config = config
         this.instanceTypeById = instanceTypes.collectEntries { [(it.id): it] }
         this.syslogAddress = syslogAddress
         this.sandboxSessionApiKey = sandboxSessionApiKey
+        this.extraHosts = extraHosts
     }
 
     void provisionInstance(WorkerInstance instance) {
@@ -97,6 +99,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                         Links: image.links.collect { "$it.key:$it.value" },
                         Tmpfs: ['/ram': "rw,exec,nosuid,size=${(long) instanceType.ramBytes / 2}"],
                         LogConfig: logConfig,
+                        ExtraHosts: extraHosts,
                         Devices: (instanceType.devices ?: []).collect {
                             [PathOnHost: it, PathInContainer: it, CgroupPermissions: 'mrw']
                         },

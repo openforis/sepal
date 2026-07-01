@@ -76,6 +76,9 @@ class Local implements HostingServiceAdapter {
 
     InstanceProvisioner getInstanceProvisioner() {
         // Provide logger container static IP address
-        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, 'udp://172.20.128.2', sandboxSessionApiKey)
+        def workerInstanceConfig = new WorkerInstanceConfig()
+        // Worker containers reach SEPAL at $SEPAL_HOST, which has no DNS entry on a local dev host, so pin it to the Docker host
+        def extraHosts = ["${workerInstanceConfig.sepalHost}:host-gateway" as String]
+        new DockerInstanceProvisioner(workerInstanceConfig, instanceTypes, 'udp://172.20.128.2', sandboxSessionApiKey, extraHosts)
     }
 }
