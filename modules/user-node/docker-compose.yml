@@ -1,0 +1,49 @@
+services:
+  user-node:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
+    build:
+      context: ../..
+      dockerfile: ./modules/user-node/Dockerfile
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/user-node:${SEPAL_VERSION:-latest}"
+    container_name: user-node
+    init: true
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      MYSQL_HOST: "mysql"
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      RABBITMQ_HOST: "rabbitmq"
+      HTTP_PORT: "80"
+      GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
+      GOOGLE_OAUTH_CLIENT_ID: "${GOOGLE_OAUTH_CLIENT_ID}"
+      GOOGLE_OAUTH_CLIENT_SECRET: "${GOOGLE_OAUTH_CLIENT_SECRET}"
+      GOOGLE_OAUTH_CALLBACK_BASE_URL: "${GOOGLE_OAUTH_CALLBACK_BASE_URL}"
+      GOOGLE_RECAPTCHA_ENTERPRISE_API_KEY: "${GOOGLE_RECAPTCHA_ENTERPRISE_API_KEY}"
+      GOOGLE_RECAPTCHA_ENTERPRISE_SITE_KEY: "${GOOGLE_RECAPTCHA_ENTERPRISE_SITE_KEY}"
+      GOOGLE_RECAPTCHA_ENTERPRISE_MIN_SCORE: "${GOOGLE_RECAPTCHA_ENTERPRISE_MIN_SCORE}"
+      SEPAL_HOST: "${SEPAL_HOST}"
+      SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      SEPAL_ADMIN_WEB_PASSWORD: "${SEPAL_ADMIN_WEB_PASSWORD}"
+      LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}" # Transitional: enables the one-shot LDAP->DB credential migration at startup. Remove once LDAP is decommissioned (design phase 6).
+    volumes:
+      - "${SEPAL_DATA_DIR}/user/home:/home"        # user SSH home dirs (shared with ssh-gateway)
+      - "${SEPAL_DATA_DIR}/sepal/home:/sepal/home" # user SEPAL data dirs
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sepal
+    restart: always
+    ulimits:
+      core: 0
+    platform: linux/amd64 # Required for macOS builds
+
+networks:
+  sepal:
+    external: true

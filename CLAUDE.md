@@ -169,6 +169,13 @@ Tests use Spock Framework 1.2 in `src/test/groovy/`.
 
 See `PORTS.txt` for complete port mapping. Key ports: Caddy 80/443, MySQL 3306, RabbitMQ 5672, LDAP 389/636, Prometheus 9090. Most application modules expose port 80 internally. JVM debug: 5005, Node debug: 9229.
 
+## Deployment
+
+When adding a new deployable module (or renaming an existing one), you MUST update
+`modules/ops/script/build-and-push-images.sh` to include `build <module>` and `push <module>`
+entries for it. This script builds and pushes all production Docker images; a module missing
+from it will not be deployed.
+
 ## Contributing
 
 - Discuss changes via issue before submitting PRs

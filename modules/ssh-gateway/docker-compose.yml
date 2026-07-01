@@ -14,7 +14,6 @@ services:
     container_name: ssh-gateway
     volumes:
       - "${SEPAL_DATA_DIR}/ssh-gateway:/data"
-      - "${SEPAL_DATA_DIR}/ldap/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
       - "${SEPAL_DATA_DIR}/user/home:/home" # Users home directories with ssh keys
     ports:
       - "${SEPAL_SSH_IP}:${SEPAL_SSH_PORT_1:-22}:22"
@@ -24,7 +23,7 @@ services:
     environment:
       SEPAL_HOST: "${SEPAL_HOST}"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
-      LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
+      RABBITMQ_HOST: "rabbitmq"
     healthcheck:
       test: bash -c "exec 6<> /dev/tcp/localhost/22"
       start_period: 60s

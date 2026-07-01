@@ -51,7 +51,6 @@ class _UserBrowser extends React.Component {
         this.editUser = this.editUser.bind(this)
         this.cancelUser = this.cancelUser.bind(this)
         this.updateUser = this.updateUser.bind(this)
-        this.inviteUser = this.inviteUser.bind(this)
         this.lockUser = this.lockUser.bind(this)
         this.unlockUser = this.unlockUser.bind(this)
     }
@@ -116,21 +115,6 @@ class _UserBrowser extends React.Component {
         this.setState({userId})
     }
 
-    inviteUser() {
-        this.setState({
-            userDetails: {
-                newUser: true,
-                quota: {
-                    budget: {
-                        instanceSpending: 1,
-                        storageSpending: 1,
-                        storageQuota: 20
-                    }
-                }
-            }
-        })
-    }
-
     updateUserDetails(userDetails, merge = false) {
         const users = [...this.props.users || []]
         if (userDetails) {
@@ -167,14 +151,10 @@ class _UserBrowser extends React.Component {
     }
 
     updateUser(userDetails) {
-        const updateUserDetails$ = ({newUser, username, name, email, organization, intendedUse, admin}) =>
-            newUser
-                ? api.user.inviteUser$({username, name, email, organization, intendedUse, admin}).pipe(
-                    tap(() => publishEvent('user_invited'))
-                )
-                : api.user.updateUser$({username, name, email, organization, intendedUse, admin}).pipe(
-                    tap(() => publishEvent('user_updated'))
-                )
+        const updateUserDetails$ = ({username, name, email, organization, intendedUse, admin}) =>
+            api.user.updateUser$({username, name, email, organization, intendedUse, admin}).pipe(
+                tap(() => publishEvent('user_updated'))
+            )
 
         const updateUserBudget$ = ({username, instanceSpending, storageSpending, storageQuota}) =>
             api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})

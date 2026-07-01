@@ -21,6 +21,7 @@ Modules
     user            80
     user-assets     80
     user-files      80
+    user-node       80
     user-storage    80
 
     sandbox proxy   9191

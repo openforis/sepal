@@ -9,6 +9,7 @@ echo "*****************************"
 export JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current
 export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
 export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
+export R_DEFAULT_INTERNET_TIMEOUT=7200
 
 R -e "install.packages('remotes', dependencies=TRUE, repos='http://localhost:8180/')"
 
@@ -301,6 +302,5 @@ R -e "remotes::install_url(c(\
         'http://localhost:8180/github/azvoleff/gfcanalysis/archive/refs/heads/master.tar.gz',\
         'http://localhost:8180/github/jreiche/bayts/archive/refs/heads/master.tar.gz'\
     ), repos='http://localhost:8180/', build = FALSE)"
-
 
 R -e "torch::install_torch(cuda_version = '12.8')"

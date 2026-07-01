@@ -10,9 +10,9 @@ import {SEPAL_USER_HEADER} from './user.js'
 
 const log = getLogger('userApi')
 
-const CURRENT_USER_URL = `http://${modules.user}/current`
-const REFRESH_GOOGLE_ACCESS_TOKEN_URL = `http://${modules.user}/google/refresh-access-token`
-const REVOKE_GOOGLE_ACCESS_URL = `http://${modules.user}/google/revoke-access`
+const CURRENT_USER_URL = `http://${modules.userNode}/current`
+const REFRESH_GOOGLE_ACCESS_TOKEN_URL = `http://${modules.userNode}/google/refresh-access-token`
+const REVOKE_GOOGLE_ACCESS_URL = `http://${modules.userNode}/google/revoke-access`
 
 const loadUser$ = username => {
     log.trace(`${userTag(username)} Loading user...`)

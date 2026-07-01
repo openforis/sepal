@@ -24,8 +24,8 @@ printf '%s\n' \
     'PYTHONPATH=/usr/local/lib/orfeo/lib/otb/python' \
     'LD_LIBRARY_PATH=/lib/:/lib/x86_64-linux-gnu/:/lib32/:/usr/lib/x86_64-linux-gnu/libfakeroot/:/usr/local/cuda/targets/x86_64-linux/lib/:/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib:/usr/local/lib/TensorRT/lib:/usr/local/lib/orfeo/lib:' \
     'GMTSAR=/usr/local/GMTSAR' \
-    "PIP_BREAK_SYSTEM_PACKAGES=1" \
-    "UV_BREAK_SYSTEM_PACKAGES=1" \
+    'PIP_BREAK_SYSTEM_PACKAGES=1' \
+    'UV_BREAK_SYSTEM_PACKAGES=1' \
     >> /etc/environment
 
 # Remove redundant files

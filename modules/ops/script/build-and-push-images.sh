@@ -34,21 +34,29 @@ function start {
   docker compose --file ${MODULE_DIR}/docker-compose.yml up -d
 }
 
+function restart {
+  local MODULE=$1
+  local MODULE_DIR=${WORKSPACE}/modules/${MODULE}
+  echo
+  echo "******* Restarting ${MODULE} *******"
+  cd ${MODULE_DIR}
+  docker compose --file ${MODULE_DIR}/docker-compose.yml down
+  docker compose --file ${MODULE_DIR}/docker-compose.yml up -d
+}
+
 # build logger
 start logger
 
 build sandbox-base
 
-# build r-proxy
-start r-proxy
+build r-proxy
+restart r-proxy
 
 build email
 build sys-monitor
 build caddy
 build java
 build rabbitmq
-build ldap-backup
-build ldap
 build backup
 build mysql-backup
 build mysql
@@ -59,7 +67,10 @@ build geospatial-toolkit
 build sandbox
 build task
 build gee
-build user
+    # Transitional: LDAP must stay up so user-node's startup credential migration has a source to
+    # read from. Decommission (remove these two) only in design phase 6, after migration is verified.
+build ldap
+build user-node
 build user-storage
 build user-storage-backup
 build user-assets
@@ -78,9 +89,10 @@ push sys-monitor
 push email
 push backup
 push rabbitmq
+    # Transitional: LDAP must stay up so user-node's startup credential migration has a source to
+    # read from. Decommission (remove these two) only in design phase 6, after migration is verified.
 push ldap
-push ldap-backup
-push user
+push user-node
 push user-storage
 push user-storage-backup
 push app-launcher

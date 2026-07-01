@@ -18,6 +18,11 @@
 	#}
 	#log_skip /healthcheck
 
+	# Use Caddy's internal (self-signed) CA instead of ACME when running without
+	# a public DNS name (e.g. dev-env on a personal computer).
+    # To enable it 
+	{$TLS_INTERNAL_DIRECTIVE}
+
 	# Block TRACE and TRACK methods
 	@trace_track method TRACE TRACK
 	respond @trace_track 405

@@ -15,7 +15,12 @@ class SqlConnectionManager implements SqlConnectionProvider, TransactionManager,
     }
 
     static SqlConnectionManager create(DatabaseConfig config) {
-        new DatabaseMigration(config).migrate()
+        create(config, true)
+    }
+
+    static SqlConnectionManager create(DatabaseConfig config, boolean migrate) {
+        if (migrate)
+            new DatabaseMigration(config).migrate()
         return new SqlConnectionManager(config.createSchemaDataSource())
     }
 

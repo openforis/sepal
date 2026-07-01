@@ -61,6 +61,10 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
     }
 
     const userUpdated = ({user}) => {
+        if (!user) {
+            log.warn('Ignoring userUpdated with no user')
+            return
+        }
         log.debug(`${userTag(user.username)} updated`)
         servers.broadcastEvent(USER_UPDATED, {user})
         clients.sendEventToUser(user.username, USER_UPDATED)
