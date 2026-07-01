@@ -57,12 +57,17 @@ printf '%s\n' \
     >> /etc/environment
 
 userHome=/home/$sandbox_user
-cp -n /etc/skel/.bashrc "$userHome"
-cp -n /etc/skel/.profile "$userHome"
-cp -n /etc/skel/.bash_logout "$userHome"
 
+cp -n /etc/skel/.bashrc "$userHome"
+chown $sandbox_user_id:$home_group_id "$userHome/.bashrc"
 chmod g+w "$userHome/.bashrc"
+
+cp -n /etc/skel/.profile "$userHome"
+chown $sandbox_user_id:$home_group_id "$userHome/.profile"
 chmod g+w "$userHome/.profile"
+
+cp -n /etc/skel/.bash_logout "$userHome"
+chown $sandbox_user_id:$home_group_id "$userHome/.bash_logout"
 chmod g+w "$userHome/.bash_logout"
 
 exportEnvironment
