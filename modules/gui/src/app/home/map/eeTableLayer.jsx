@@ -17,7 +17,12 @@ class _EETableLayer extends React.Component {
         this.setLayer()
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
+        const {id, map} = this.props
+        // Drop the previous layer if the id changed under us, so a reused component can't strand tiles.
+        if (prevProps.id !== id) {
+            map.removeLayer(prevProps.id)
+        }
         this.setLayer()
     }
 
@@ -35,15 +40,15 @@ class _EETableLayer extends React.Component {
     }
 
     createLayer() {
-        const {tableId, columnName, columnValue, buffer, color, fillColor, layerIndex, map, tab: {busy}} = this.props
+        const {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, layerIndex, map, tab: {busy}} = this.props
         return tableId
             ? new EarthEngineTableLayer({
                 map,
                 mapId$: api.gee.eeTableMap$({
-                    tableId, columnName, columnValue, buffer, color, fillColor
+                    tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width
                 }),
                 layerIndex,
-                watchedProps: {tableId, columnName, columnValue, buffer},
+                watchedProps: {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width},
                 busy
             })
             : null
@@ -59,9 +64,13 @@ export const EETableLayer = compose(
 EETableLayer.propTypes = {
     id: PropTypes.string.isRequired,
     buffer: PropTypes.number,
+    color: PropTypes.string,
     columnName: PropTypes.string,
     columnValue: PropTypes.any,
+    fillColor: PropTypes.string,
     layerIndex: PropTypes.number,
     map: PropTypes.any,
-    tableId: PropTypes.string
+    pointSize: PropTypes.number,
+    tableId: PropTypes.string,
+    width: PropTypes.number
 }

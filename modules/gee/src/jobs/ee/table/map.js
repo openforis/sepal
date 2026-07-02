@@ -7,7 +7,7 @@ import {filterTable} from '#sepal/ee/table'
 import {fileName} from '#sepal/path'
 
 const worker$ = ({
-    requestArgs: {tableId, columnName, columnValue, buffer, color = '#FFFFFF50', fillColor = '#FFFFFF08'}
+    requestArgs: {tableId, columnName, columnValue, buffer, color = '#FFFFFF50', fillColor = '#FFFFFF08', pointSize, width}
 }) => {
 
     const bufferMeters = (buffer && _.toNumber(buffer)) * 1000
@@ -19,9 +19,17 @@ const worker$ = ({
         ? table.geometry().bounds(bufferMeters / 10).buffer(ee.Number(bufferMeters), bufferMeters / 10).bounds(bufferMeters / 10)
         : table.geometry().bounds()
     const boundsPolygon = ee.List(bounds.coordinates().get(0))
+    // Only add pointSize/width when supplied, so existing callers (e.g. AOI) keep EE's default styling.
+    const style = {color, fillColor}
+    if (pointSize != null) {
+        style.pointSize = _.toNumber(pointSize)
+    }
+    if (width != null) {
+        style.width = _.toNumber(width)
+    }
     return forkJoin({
         bounds: ee.getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)]), 'get bounds'),
-        eeMap: ee.getMap$(table.style({color, fillColor}), null, 'create ee table map')
+        eeMap: ee.getMap$(table.style(style), null, 'create ee table map')
     }).pipe(
         map(({bounds, eeMap}) => ({bounds, ...eeMap}))
     )

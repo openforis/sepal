@@ -1,0 +1,25 @@
+.featureSource {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.featureSource::before {
+    content: '';
+    flex: 0 0 1rem;
+}
+
+.featureSource > * {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.imageSource,
+.removableImageSource {
+    flex-grow: 1;
+}
+
+.removableImageSource {
+    padding-left: .25rem;
+}

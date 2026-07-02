@@ -56,10 +56,15 @@ class _MapAreaLayout extends React.Component {
     updateFeatureLayers() {
         const {recipeActionBuilder, featureLayerSources, mapArea: {area}, areas} = this.props
         const featureLayers = areas[area].featureLayers
-        const nextFeatureLayers = featureLayerSources.map(({id, defaultEnabled}) =>
-            featureLayers.find(({sourceId}) => sourceId === id)
-                || {sourceId: id, disabled: !defaultEnabled}
-        )
+        const sourceIds = featureLayerSources.map(({id}) => id)
+        // Preserve the persisted order (kept entries stay by reference so the isEqual guard below still
+        // short-circuits and we don't loop), drop entries whose source is gone, and append new sources.
+        const kept = featureLayers.filter(({sourceId}) => sourceIds.includes(sourceId))
+        const keptIds = kept.map(({sourceId}) => sourceId)
+        const appended = featureLayerSources
+            .filter(({id}) => !keptIds.includes(id))
+            .map(({id, defaultEnabled}) => ({sourceId: id, disabled: !defaultEnabled}))
+        const nextFeatureLayers = [...kept, ...appended]
         if (!_.isEqual(featureLayers, nextFeatureLayers)) {
             recipeActionBuilder('SET_FEATURE_LAYERS', {sourceIds: nextFeatureLayers, area})
                 .set(['layers.areas', area, 'featureLayers'], nextFeatureLayers)

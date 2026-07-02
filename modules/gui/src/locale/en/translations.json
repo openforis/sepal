@@ -688,6 +688,8 @@
             "description": "Add an Earth Engine asset",
             "form": {
               "asset.label": "Earth Engine Asset",
+              "label.label": "Label",
+              "label.placeholder": "Optional display label",
               "loadError": "Unable to read asset"
             },
             "presets": "Pre-sets"
@@ -819,6 +821,10 @@
     "Aoi": {
       "type": "AOI",
       "description": "Area of Interest"
+    },
+    "EETableAsset": {
+      "type": "EE Table",
+      "description": "Earth Engine table asset"
     },
     "Labels": {
       "type": "Labels",

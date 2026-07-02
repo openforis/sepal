@@ -27,19 +27,14 @@ class _SamplingDesign extends React.Component {
         super(props)
         const {savedLayers, recipeId} = props
         this.recipeActions = RecipeActions(recipeId)
-        // Sampling Design has no image output, so there's no "This Recipe" image layer. Default to the
-        // Google Satellite basemap and expose a server-rendered sample preview as a feature layer.
+        // Sampling Design has no image output, so there's no "This Recipe" image layer - default to the
+        // Google Satellite basemap. The live sample preview is disabled: direct procedural sampling isn't
+        // reliable enough to render on the fly. Exported designs are added as generic EE table overlays.
         initializeLayers({
             recipeId,
             savedLayers: normalizeSavedLayers(savedLayers),
             skipThis: true,
-            defaultGoogleSatellite: true,
-            additionalFeatureLayerSources: [{
-                id: 'samplingDesignSamples',
-                type: 'SamplingDesignSamples',
-                description: msg('featureLayerSources.SamplingDesignSamples.description'),
-                defaultEnabled: false
-            }]
+            defaultGoogleSatellite: true
         })
     }
 

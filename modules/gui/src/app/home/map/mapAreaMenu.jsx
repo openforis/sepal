@@ -71,10 +71,10 @@ class _MapAreaMenuPanel extends React.Component {
             .filter(({disabled}) => disabled !== true)
             .map(({sourceId}) => sourceId)
 
-        const options = featureLayerSources.map(({id, type, description}) => ({
+        const options = featureLayerSources.map(({id, type, description, sourceConfig}) => ({
             value: id,
-            label: msg(`featureLayerSources.${type}.type`),
-            tooltip: description
+            label: sourceConfig?.label || msg(`featureLayerSources.${type}.type`),
+            tooltip: sourceConfig?.description || description
         }))
 
         return (
@@ -91,14 +91,22 @@ class _MapAreaMenuPanel extends React.Component {
     }
 
     setFeatureLayers(enabledSourceIds) {
-        const {recipeId, area, featureLayerSources} = this.props
+        const {recipeId, area, featureLayerSources, layers: {areas}} = this.props
+        const enabledIds = enabledSourceIds.map(({sourceId}) => sourceId)
+        const sourceIds = featureLayerSources.map(({id}) => id)
+        // Preserve the persisted order and any per-layer config; only flip the disabled flag. Drop
+        // orphaned entries and append newly-available sources at the end rather than rebuilding.
+        const kept = (areas[area].featureLayers || [])
+            .filter(({sourceId}) => sourceIds.includes(sourceId))
+            .map(featureLayer => ({...featureLayer, disabled: !enabledIds.includes(featureLayer.sourceId)}))
+        const keptIds = kept.map(({sourceId}) => sourceId)
+        const appended = featureLayerSources
+            .filter(({id}) => !keptIds.includes(id))
+            .map(({id}) => ({sourceId: id, disabled: !enabledIds.includes(id)}))
         actionBuilder('SET_FEATURE_LAYERS', {sourceIds: enabledSourceIds, area})
             .set(
                 [recipePath(recipeId), 'layers.areas', area, 'featureLayers'],
-                featureLayerSources.map(({id}) => ({
-                    sourceId: id,
-                    disabled: !enabledSourceIds.map(({sourceId}) => sourceId).includes(id)
-                }))
+                [...kept, ...appended]
             )
             .dispatch()
     }

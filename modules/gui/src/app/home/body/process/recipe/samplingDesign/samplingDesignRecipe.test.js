@@ -75,4 +75,12 @@ describe('normalizeSavedLayers', () => {
         normalizeSavedLayers(savedLayers)
         expect(savedLayers.areas.center.imageLayer.sourceId).toBe('this-recipe')
     })
+
+    it('removes stale samplingDesignSamples feature layer entries', () => {
+        const savedLayers = {
+            areas: {center: {imageLayer: {sourceId: 'google-satellite'}, featureLayers: [{sourceId: 'aoi'}, {sourceId: 'samplingDesignSamples'}]}}
+        }
+        const normalized = normalizeSavedLayers(savedLayers)
+        expect(normalized.areas.center.featureLayers).toEqual([{sourceId: 'aoi'}])
+    })
 })

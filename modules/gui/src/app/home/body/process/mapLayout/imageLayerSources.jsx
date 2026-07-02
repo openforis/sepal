@@ -16,21 +16,43 @@ import {Scrollable} from '~/widget/scrollable'
 
 import {getImageLayerSource} from '../imageLayerSourceRegistry'
 import {withLayers} from '../withLayers'
+import styles from './imageLayerSources.module.css'
 import {removeArea} from './layerAreas'
 
 export class _ImageLayerSources extends React.Component {
     render() {
-        const {standardImageLayerSources, additionalImageLayerSources} = this.props
+        const {standardImageLayerSources, additionalImageLayerSources, additionalFeatureLayerSources = []} = this.props
         return (
             <Scrollable direction='y'>
                 <Padding noHorizontal>
                     <Layout type='vertical' spacing='tight'>
                         {standardImageLayerSources.map(source => this.renderSource({source, removable: false}))}
                         {additionalImageLayerSources.map(source => this.renderSource({source, removable: true}))}
+                        {additionalFeatureLayerSources.map(source => this.renderFeatureSource(source))}
                     </Layout>
                 </Padding>
             </Scrollable>
         )
+    }
+
+    renderFeatureSource(source) {
+        const {recipeId} = this.props
+        const {sourceConfig: {label, asset, description} = {}} = source
+        // Feature sources render last, aren't draggable (no drag$), and only support removal.
+        return source && source.id
+            ? (
+                <ListItem key={source.id}>
+                    <div className={styles.featureSource}>
+                        <CrudItem
+                            title={label || asset}
+                            description={description}
+                            removeTooltip={msg('map.layout.layer.remove.tooltip')}
+                            onRemove={() => removeFeatureLayerSource({sourceId: source.id, recipeId})}
+                        />
+                    </div>
+                </ListItem>
+            )
+            : null
     }
 
     renderSource({source, removable}) {
@@ -46,13 +68,15 @@ export class _ImageLayerSources extends React.Component {
                         imageLayer: {sourceId: source.id},
                         featureLayers: []
                     }}>
-                    <CrudItem
-                        key={source.id}
-                        title={msg(`imageLayerSources.${source.type}.label`)}
-                        description={description}
-                        removeTooltip={msg('map.layout.layer.remove.tooltip')}
-                        onRemove={removable ? () => this.removeSource(source.id) : null}
-                    />
+                    <div className={removable ? styles.removableImageSource : styles.imageSource}>
+                        <CrudItem
+                            key={source.id}
+                            title={msg(`imageLayerSources.${source.type}.label`)}
+                            description={description}
+                            removeTooltip={msg('map.layout.layer.remove.tooltip')}
+                            onRemove={removable ? () => this.removeSource(source.id) : null}
+                        />
+                    </div>
                 </ListItem>
             )
             : null
@@ -95,6 +119,20 @@ export const removeImageLayerSource = ({sourceId, recipeId}) => {
     actionBuilder('REMOVE_IMAGE_LAYER_SOURCE')
         .del(['layers.additionalImageLayerSources', {id: sourceId}])
         .set('layers.areas', removeAreaBySource(areas, sourceId))
+        .dispatch()
+}
+
+export const removeFeatureLayerSource = ({sourceId, recipeId}) => {
+    const areas = select(recipePath(recipeId, 'layers.areas'))
+    // Drop the source and any per-area references to it, leaving the rest of each area's order intact.
+    const updatedAreas = _.mapValues(areas, area => ({
+        ...area,
+        featureLayers: (area.featureLayers || []).filter(({sourceId: id}) => id !== sourceId)
+    }))
+    const actionBuilder = recipeActionBuilder(recipeId)
+    actionBuilder('REMOVE_FEATURE_LAYER_SOURCE')
+        .del(['layers.additionalFeatureLayerSources', {id: sourceId}])
+        .set('layers.areas', updatedAreas)
         .dispatch()
 }
 

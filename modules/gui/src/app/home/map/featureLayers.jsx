@@ -5,6 +5,7 @@ import {SceneAreasLayer} from '~/app/home/body/process/recipe/opticalMosaic/scen
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {withLayers} from '~/app/home/body/process/withLayers'
 import {AoiLayer} from '~/app/home/map/aoiLayer'
+import {EETableAssetLayer} from '~/app/home/map/eeTableAssetLayer'
 import {LabelsLayer} from '~/app/home/map/labelsLayer'
 import {compose} from '~/compose'
 
@@ -24,7 +25,7 @@ const _FeatureLayers = ({featureLayerSources, featureLayers, map}) =>
                     source
                         ? (
                             <FeatureLayer
-                                key={i}
+                                key={layer.sourceId}
                                 id={source.type}
                                 source={source}
                                 layerConfig={layer.layerConfig}
@@ -69,6 +70,14 @@ class _FeatureLayer extends React.Component {
                 return <SceneAreasLayer map={map}/>
             case 'ReferenceData':
                 return <ReferenceDataLayer map={map}/>
+            case 'EETableAsset':
+                return (
+                    <EETableAssetLayer
+                        source={source}
+                        layerIndex={layerIndex}
+                        map={map}
+                    />
+                )
             case 'SamplingDesignSamples':
                 return (
                     <SamplingDesignSamplesLayer

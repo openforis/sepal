@@ -35,19 +35,28 @@ export const RecipeActions = id => {
 
 // Sampling Design initializes layers with skipThis, so there's no "this-recipe" image source. Older
 // in-development recipes may have saved areas pointing at it; remap those to the Google Satellite
-// basemap so the map/menu don't dereference a missing source. All other saved layer state (feature
-// layers, split mode) is preserved. Pure and testable.
+// basemap so the map/menu don't dereference a missing source. Now that the live sample preview is
+// gone, also drop any stale 'samplingDesignSamples' feature layer entries. All other saved layer
+// state (feature layers, split mode) is preserved. Pure and testable.
 export const normalizeSavedLayers = savedLayers => {
     if (!savedLayers?.areas) {
         return savedLayers
     }
     return {
         ...savedLayers,
-        areas: _.mapValues(savedLayers.areas, area =>
-            area?.imageLayer?.sourceId === 'this-recipe'
-                ? {...area, imageLayer: {...area.imageLayer, sourceId: 'google-satellite'}}
-                : area
-        )
+        areas: _.mapValues(savedLayers.areas, area => {
+            if (!area) {
+                return area
+            }
+            const normalized = {...area}
+            if (area.imageLayer?.sourceId === 'this-recipe') {
+                normalized.imageLayer = {...area.imageLayer, sourceId: 'google-satellite'}
+            }
+            if (area.featureLayers) {
+                normalized.featureLayers = area.featureLayers.filter(({sourceId}) => sourceId !== 'samplingDesignSamples')
+            }
+            return normalized
+        })
     }
 }
 
