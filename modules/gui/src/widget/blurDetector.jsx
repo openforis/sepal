@@ -78,7 +78,12 @@ class _BlurDetector extends React.Component {
                     // Explicitly set passive: false for touchstart events (default is true)
                     // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
                     fromEvent(document, 'touchstart', {capture: true, passive: false}),
-                    fromEvent(document, 'focus', {capture: true})
+                    fromEvent(document, 'focus', {capture: true}).pipe(
+                        // Focus events without relatedTarget are fired when the window itself
+                        // regains focus (e.g. switching browser tab and back), as opposed to
+                        // the user moving focus within the page. Ignore them.
+                        filter(e => !!e.relatedTarget)
+                    )
                 ).pipe(
                     skipUntil(timer(SKIP_INITIAL_EVENTS_MS)),
                     filter(this.isEnabled),
