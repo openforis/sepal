@@ -49,6 +49,7 @@ class FileSystem {
 
     private static void illegalArgument(String error) {
         LOG.error(error)
+        throw new IllegalArgumentException(error)
     }
 
     static Double getFileSize(File file) {
