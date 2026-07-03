@@ -1,26 +1,23 @@
 # Sampling Design Roadmap
 
-Last updated: 2026-07-01
+Last updated: 2026-07-03
 
-This is a working decision log for Sampling Design. It captures agreed behavior, pending implementation slices, and options we have discussed so the context does not depend on chat history.
+This is a working decision log for Sampling Design. It captures agreed behavior, deferred implementation slices, and options we have discussed so the context does not depend on chat history.
 
 ## Current Direction
 
-- Sampling Design preview should be an explicit feature layer source, not the normal "This Recipe" image layer.
-- Sample generation logic should live in `lib/js/ee/src/samplingDesign`, shared by preview and export.
-- Export remains the authoritative strict path. Preview may use cheaper approximations where documented, but it must not fetch sample features into browser memory.
-- Systematic preview should avoid vectorizing large sample collections for map rendering. The current direction is raster preview for systematic samples and table/feature rendering only where it stays cheap.
+- Sampling Design has no normal "This Recipe" image layer and no live procedural sample preview.
+- Sample generation logic lives in `lib/js/ee/src/samplingDesign`, shared by export and any backend sampling utilities.
+- Export/retrieve remains the authoritative path for exact sample points. Users inspect sample locations by rendering materialized EE table assets as generic feature overlays.
 - Random and systematic exports should carry enough metadata to reproduce and audit results: seed, arrangement strategy, sample-size strategy, CRS/transform, grid origin, selected density, selected level, and algorithm version.
 
 ## Implemented Foundation
 
 - Shared sampling modules were moved into `lib/js/ee/src/samplingDesign`.
 - Task exporters call the shared sampling logic and keep task-specific export orchestration in `modules/task`.
-- The GUI preview endpoint is `POST /api/gee/samplingDesign/samplesMap`.
-- The GUI layer must call `api.gee.samplingDesignSamplesMap$({recipe: toTaskRecipe(recipe)})`, not the raw editor recipe.
-- GUI preview is gated by `validateRetrieve(recipe.model)` before creating/updating the map layer.
+- Sampling Design recipes use `skipThis: true` and `defaultGoogleSatellite: true`.
 - Saved Sampling Design layers that referenced the old `this-recipe` image source are normalized to Google Satellite.
-- Systematic sample preview now uses a raster path rather than styling a large vector collection.
+- Exported EE table assets can be added manually through the generic "Add Earth Engine asset" flow and rendered as `EETableAsset` overlays.
 
 ## Systematic Design Decisions
 
@@ -39,11 +36,10 @@ Systematic density selection is expensive because each candidate density needs a
 - Evaluate candidate density offsets against selected-level summaries rather than full filtered feature collections.
 - Use `maxRetries=0` for exploratory density count calls.
 - Keep best-effort behavior: if a later exploratory count fails and a valid best density exists, use the best; if no valid best exists, fail clearly.
-- For `CLOSEST`, stop early when a later density improves by less than the configured threshold.
+- For `CLOSEST`, stop early when a later accepted density is equal/worse than the current best, or when it improves by less than the configured threshold.
 
-Pending refinement:
+Potential optimization:
 
-- For `CLOSEST`, stop immediately when a later accepted density is equal or worse than the current best.
 - Consider evidence-based jumps over offsets only when the current density is clearly too sparse.
 
 Proposed jump heuristic:
@@ -62,24 +58,12 @@ Use the maximum relevant stratum ratio, and only jump when one of these is true:
 
 Do not jump aggressively for `OVER` until we have more runtime evidence. `OVER` is optimizing smallest oversample, and skipped offsets may hide the best surplus.
 
-## Preview Roadmap
+## Visualization Direction
 
-Short term:
-
-- Confirm systematic raster preview returns promptly on large designs.
-- Confirm systematic preview dots align with exported sample locations for `CLOSEST`, `OVER`, and `EXACT`.
-- Confirm random preview remains cheap enough on realistic designs.
-- Keep `modules/gee/config/log.json` debug/trace changes out of commits unless intentionally needed.
-
-Known caveat:
-
-- Systematic `EXACT` raster preview cannot represent the seeded random thinning step exactly unless it vectorizes or materializes the final thinned table. It may show the selected level set, which is a superset of the exact export.
-
-Options if raster preview is not practical:
-
-- Materialize preview samples to a temporary table asset and render that.
-- Use a table asset or FeatureView style workflow for long-lived preview/cache behavior.
-- Cache the selected density/level metadata in the recipe model so repeated preview/export can skip density search when relevant inputs are unchanged.
+- Do not expose procedural sample preview in the GUI.
+- Do not fetch generated sample features into browser memory.
+- Use materialized EE table assets for map inspection. This avoids per-tile recomputation of the sampling graph and matches the export result.
+- Until automatic add-on-success exists, users can manually add exported EE table assets through the generic feature overlay flow.
 
 ## Export Roadmap
 
@@ -109,7 +93,5 @@ Potential refactor:
 
 ## Open Questions
 
-- Should selected density/level decisions be persisted automatically after preview, export, or only after a successful explicit "Apply" style action?
-- Should preview failures surface as map-layer errors in the GUI, notifications, or both?
+- Should selected density/level decisions be persisted automatically after export, or only after a successful explicit "Apply" style action?
 - Should multi-stratum `CLOSEST` fail when one stratum is empty, or allow partial output when the whole collection is non-empty?
-- Should the GUI expose a warning when `EXACT` preview is a superset rather than the exact thinned export?

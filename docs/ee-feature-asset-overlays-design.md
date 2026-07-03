@@ -1,8 +1,8 @@
 # Earth Engine Feature Asset Overlays
 
-Last updated: 2026-07-02
+Last updated: 2026-07-03
 
-This document captures the planned design for visualizing Earth Engine feature collection assets as generic map overlays. The immediate driver is Sampling Design: live procedural sample preview is not reliable enough, but users still need to inspect exported sample points on the map.
+This document captures the design for visualizing Earth Engine feature collection assets as generic map overlays. The immediate driver is Sampling Design: live procedural sample preview is not reliable enough, but users still need to inspect exported sample points on the map.
 
 ## Goals
 
@@ -11,7 +11,6 @@ This document captures the planned design for visualizing Earth Engine feature c
 - Keep the Layers panel compact on small screens.
 - Make feature overlays available in every map area without making them draggable image-layer sources.
 - Allow per-map-area visibility, ordering, opacity, and styling for feature overlays.
-- Automatically add and show Sampling Design GEE table exports as feature overlays.
 
 ## Non-Goals
 
@@ -30,7 +29,7 @@ The recipe can therefore have no image output and no live sample preview. Users 
 
 Layer state remains under `recipe.layers`, not `recipe.model`.
 
-Current image sources use `layers.additionalImageLayerSources`. Add a parallel root for user-added feature sources:
+Current image sources use `layers.additionalImageLayerSources`. User-added feature sources use a parallel root:
 
 ```js
 layers: {
@@ -88,7 +87,7 @@ layers: {
 
 Source lists describe what overlays are available. `layers.areas[area].featureLayers` describes the order, visibility, and per-area configuration for a map area.
 
-`withLayers()` should merge:
+`withLayers()` merges:
 
 ```js
 [
@@ -99,7 +98,7 @@ Source lists describe what overlays are available. `layers.areas[area].featureLa
 ]
 ```
 
-`MapAreaLayout.updateFeatureLayers()` should preserve existing feature layer order/config and append missing sources with their default enabled state/config. It must not reorder existing configured overlays just because the source list order changes.
+`MapAreaLayout.updateFeatureLayers()` preserves existing feature layer order/config and appends missing sources with their default enabled state/config. It must not reorder existing configured overlays just because the source list order changes. EE table asset overlays are kept as a single contiguous band so the popup selector and map draw order stay aligned.
 
 ## Layers Panel
 
@@ -199,44 +198,34 @@ Defer:
 
 ## Map Area Overlay Selector
 
-The current map-area popup feature buttons should evolve into a compact overlay selector, conceptually similar to a combo but for ordered multi-selection.
+The map-area popup contains a compact ordered overlay selector. It uses the existing SEPAL `ListItem`/`CrudItem` row style.
 
-Collapsed state:
+Expanded popover shape:
 
 ```text
-AOI, South Sudan samples, Labels
+☑ AOI
+☑ South Sudan samples      ⚙
+☐ Validation points        ⚙
+☑ Labels
 ```
 
 Rules:
 
-- Show enabled overlays only.
 - Preserve the order from `layers.areas[area].featureLayers`.
-- Use short labels.
-- Truncate when needed, for example `AOI, Samples +2`.
+- Built-in overlays keep their fixed relative order and support enable/disable only.
+- EE table asset overlays form one contiguous reorderable band. They support enable/disable, drag sorting relative to other asset overlays, and an options button.
+- Drag handles use the standard `ListItem` internal drag handle, matching the Layers panel image-source rows.
+- The options button opens a modal/panel for visualization settings. For `EETableAsset`, use the styling model above.
+- Whole-layer opacity is edited in the options modal with the other feature-layer style controls.
+- Long labels use the existing `CrudItem` behavior and should remain compact in the popup.
 
-Expanded popover:
-
-```text
-☑ AOI
-☑ South Sudan samples      ⚙   opacity
-☐ Validation points        ⚙   opacity
-☑ Labels                   ⚙   opacity
-```
-
-Rows should support:
-
-- enable/disable,
-- drag sorting,
-- opacity control,
-- optional options button for configurable overlays.
-
-The options button opens a modal/panel for visualization settings. For `EETableAsset`, use the styling model above.
+A collapsed text summary of enabled overlays can be considered later. The current trigger remains the map-area popup button.
 
 The same mechanism can later configure built-ins. For example, Google Map labels can eventually expose options for which label categories to show.
 
 ## Rendering
 
-Add a generic `EETableAsset` feature source type.
+Generic EE table overlays use the `EETableAsset` feature source type.
 
 Rendering should use the existing EE table map machinery:
 
@@ -322,8 +311,8 @@ Sampling Design GEE table exports already include recipe provenance through the 
 
 ## Remaining Roadmap
 
-1. Replace the current feature-layer button group with the compact ordered overlay selector when styling/order editing needs a proper UI. It should show enabled overlays in order when collapsed, support enable/disable, drag sorting, opacity, and an options button.
-2. Automatically add Sampling Design GEE table exports as `EETableAsset` overlays after successful task completion, when there is a clean task-to-recipe metadata/update mechanism. The first fallback remains manually adding the exported EE table asset through the generic "Add Earth Engine asset" flow.
+1. Automatically add Sampling Design GEE table exports as `EETableAsset` overlays after successful task completion, when there is a clean task-to-recipe metadata/update mechanism. The first fallback remains manually adding the exported EE table asset through the generic "Add Earth Engine asset" flow.
+2. Consider a collapsed overlay summary in the map-area trigger if the current button is not enough once users commonly manage several overlays.
 3. Consider click inspection later as a server-query feature. Do not build hover interaction while EE table overlays render as raster tiles.
 
 ## Design Decisions
