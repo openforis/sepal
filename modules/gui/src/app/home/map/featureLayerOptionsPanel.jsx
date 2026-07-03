@@ -127,6 +127,7 @@ class _FeatureLayerOptionsPanel extends React.Component {
                 {this.renderSlider('width', 1, 10, 0)}
                 {this.renderSlider('pointSize', 1, 20, 0)}
                 {this.renderPercentSlider('fillOpacity')}
+                {this.renderPercentSlider('opacity')}
                 {this.renderColorMode()}
                 {style.colorMode === 'ONE_COLOR' ? this.renderColor() : null}
                 {style.colorMode === 'COLORS_FROM_PROPERTY' ? this.renderColorProperty() : null}

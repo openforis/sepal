@@ -8,6 +8,7 @@ import {SplitOverlay} from '~/widget/split/splitOverlay'
 
 import {withRecipe} from '../body/process/recipeContext'
 import {withLayers} from '../body/process/withLayers'
+import {canonicalizeFeatureLayerOrder} from './featureLayerOrder'
 import {FeatureLayers} from './featureLayers'
 import {withMapArea} from './mapAreaContext'
 import {MapAreaMenu} from './mapAreaMenu'
@@ -64,7 +65,10 @@ class _MapAreaLayout extends React.Component {
         const appended = featureLayerSources
             .filter(({id}) => !keptIds.includes(id))
             .map(({id, defaultEnabled}) => ({sourceId: id, disabled: !defaultEnabled}))
-        const nextFeatureLayers = [...kept, ...appended]
+        // Keep all EE table asset overlays as one contiguous band (appended sources can otherwise
+        // interleave a built-in between assets), so the map stack and the overlay selector stay aligned.
+        const assetSourceIds = featureLayerSources.filter(({type}) => type === 'EETableAsset').map(({id}) => id)
+        const nextFeatureLayers = canonicalizeFeatureLayerOrder([...kept, ...appended], assetSourceIds)
         if (!_.isEqual(featureLayers, nextFeatureLayers)) {
             recipeActionBuilder('SET_FEATURE_LAYERS', {sourceIds: nextFeatureLayers, area})
                 .set(['layers.areas', area, 'featureLayers'], nextFeatureLayers)

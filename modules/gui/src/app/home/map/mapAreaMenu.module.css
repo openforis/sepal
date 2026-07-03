@@ -25,10 +25,3 @@
 .buttonContainer > * {
     pointer-events: all;
 }
-
-.featureLayerLabel {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}

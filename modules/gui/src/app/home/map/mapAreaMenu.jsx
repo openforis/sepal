@@ -1,28 +1,57 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import {filter, map, Subject, switchMap, takeUntil} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
-import {Buttons} from '~/widget/buttons'
 import {CrudItem} from '~/widget/crudItem'
 import {FloatingBox} from '~/widget/floatingBox'
 import {Keybinding} from '~/widget/keybinding'
 import {Layout} from '~/widget/layout'
+import {ListItem} from '~/widget/listItem'
 import {Panel} from '~/widget/panel/panel'
-import {Slider} from '~/widget/slider'
 
 import {getImageLayerSource} from '../body/process/imageLayerSourceRegistry'
 import {recipePath} from '../body/process/recipe'
 import {withRecipe} from '../body/process/recipeContext'
 import {withLayers} from '../body/process/withLayers'
-import {resolveFeatureLayerStyle} from './featureLayerStyle'
+import {reorderAssetsByPointer, withFeatureLayerDisabled, withReorderedAssets} from './featureLayerOrder'
 import styles from './mapAreaMenu.module.css'
 
 class _MapAreaMenuPanel extends React.Component {
+    assetsRef = React.createRef()
+    assetRowRefs = {}
+    drag$ = new Subject()
+
+    // In-list reorder for asset overlays (built-ins are not draggable). ListItem emits drag events on
+    // drag$; we capture each asset row's center at drag start and compute the new order from the pointer,
+    // persisting on release. No live list preview - ListItem's own drag clone is the feedback.
+    componentDidMount() {
+        const {addSubscription} = this.props
+        const release$ = this.drag$.pipe(filter(({dragging}) => dragging === false))
+        const start$ = this.drag$.pipe(filter(({dragging}) => dragging === true))
+        const move$ = start$.pipe(
+            switchMap(({value}) =>
+                this.drag$.pipe(
+                    takeUntil(release$),
+                    map(({coords}) => coords),
+                    filter(Boolean),
+                    map(coords => ({sourceId: value, coords}))
+                )
+            )
+        )
+        addSubscription(
+            start$.subscribe(({value}) => this.onAssetDragStart(value)),
+            move$.subscribe(({sourceId, coords}) => this.onAssetDragMove(sourceId, coords)),
+            release$.subscribe(() => this.onAssetDragEnd())
+        )
+    }
+
     render() {
         const {element, activatable: {deactivate}} = this.props
         return (
@@ -41,8 +70,7 @@ class _MapAreaMenuPanel extends React.Component {
                     <Panel.Content>
                         <Layout>
                             {this.renderImageLayerForm()}
-                            {this.renderFeatureLayers()}
-                            {this.renderFeatureLayerOptions()}
+                            {this.renderOverlays()}
                         </Layout>
                     </Panel.Content>
                     <Keybinding keymap={{'Escape': deactivate}}/>
@@ -67,110 +95,191 @@ class _MapAreaMenuPanel extends React.Component {
         return form
     }
 
-    renderFeatureLayers() {
-        const {area, featureLayerSources, layers: {areas}} = this.props
-        const {featureLayers} = areas[area]
-        const selectedSourceIds = featureLayers
-            .filter(({disabled}) => disabled !== true)
-            .map(({sourceId}) => sourceId)
-
-        const options = featureLayerSources.map(({id, type, description, sourceConfig}) => ({
-            value: id,
-            label: sourceConfig?.label || msg(`featureLayerSources.${type}.type`),
-            tooltip: sourceConfig?.description || description
-        }))
-
-        return (
-            <Buttons
-                alignment='fill'
-                multiple
-                selected={selectedSourceIds}
-                options={options}
-                onChange={sourceIds =>
-                    this.setFeatureLayers(sourceIds.map(sourceId => ({sourceId})))
-                }
-            />
-        )
-    }
-
-    // Layer controls for configurable feature overlays (EE table assets). Enable/disable stays in the
-    // buttons above; each configurable overlay gets a compact block with a whole-layer opacity slider
-    // (persisted immediately) and an options button that opens the per-area FeatureLayerOptionsPanel.
-    renderFeatureLayerOptions() {
-        const {featureLayerSources} = this.props
-        const configurable = featureLayerSources.filter(({type}) => type === 'EETableAsset')
-        return configurable.length
-            ? (
-                <Layout type='vertical' spacing='normal'>
-                    {configurable.map(source => this.renderFeatureLayer(source))}
+    // Overlay selector: all feature overlays for this area in actual draw order (the featureLayers order,
+    // matching the rendered stack). Built-ins have fixed order and enable/disable only; the contiguous
+    // asset band (user-added EE table overlays) is draggable. Rendering the band in place - rather than
+    // grouping all assets - keeps the popup order aligned with the map, even when built-ins (e.g. legend)
+    // follow the assets.
+    renderOverlays() {
+        const rows = this.overlayRows()
+        if (!rows.length) {
+            return null
+        }
+        const firstAsset = rows.findIndex(({orderable}) => orderable)
+        if (firstAsset === -1) {
+            return (
+                <Layout type='vertical' spacing='none'>
+                    {rows.map(row => this.renderBuiltInOverlay(row))}
                 </Layout>
             )
-            : null
-    }
-
-    renderFeatureLayer(source) {
-        const {area, layers: {areas}, activatable: {deactivate}, activator: {activatables: {featureLayerOptions}}} = this.props
-        const featureLayer = (areas[area].featureLayers || []).find(({sourceId}) => sourceId === source.id)
-        const {opacity} = resolveFeatureLayerStyle({layerConfig: featureLayer && featureLayer.layerConfig, source})
+        }
+        const lastAsset = rows.map(({orderable}) => orderable).lastIndexOf(true)
         return (
-            <Layout key={source.id} type='vertical' spacing='none'>
-                <Layout type='horizontal-nowrap' spacing='tight' alignment='spread'>
-                    <div className={styles.featureLayerLabel}>{source.sourceConfig?.label || source.sourceConfig?.asset}</div>
-                    <Button
-                        chromeless
-                        shape='circle'
-                        icon='palette'
-                        tooltip={msg('map.featureLayerStyle.tooltip')}
-                        onClick={() => {
-                            featureLayerOptions.activate({source})
-                            deactivate()
-                        }}
-                    />
-                </Layout>
-                <Slider
-                    label={msg('map.featureLayerStyle.opacity')}
-                    value={Math.round(opacity * 100)}
-                    minValue={0}
-                    maxValue={100}
-                    onChange={value => this.setFeatureLayerOpacity(source.id, value / 100)}
-                />
+            <Layout type='vertical' spacing='none'>
+                {rows.slice(0, firstAsset).map(row => this.renderBuiltInOverlay(row))}
+                {this.renderAssetOverlays(rows.slice(firstAsset, lastAsset + 1))}
+                {rows.slice(lastAsset + 1).map(row => this.renderBuiltInOverlay(row))}
             </Layout>
         )
     }
 
-    setFeatureLayerOpacity(sourceId, opacity) {
-        const {recipeId, area} = this.props
-        actionBuilder('SET_FEATURE_LAYER_OPACITY', {sourceId, area})
-            .set([recipePath(recipeId), 'layers.areas', area, 'featureLayers', {sourceId}, 'layerConfig.style.opacity'], opacity)
-            .dispatch()
+    overlayRows() {
+        const {featureLayerSources, area, layers: {areas}} = this.props
+        const featureLayers = (areas[area] && areas[area].featureLayers) || []
+        return featureLayers
+            .map(featureLayer => {
+                const source = featureLayerSources.find(({id}) => id === featureLayer.sourceId)
+                return source
+                    ? {featureLayer, source, orderable: source.type === 'EETableAsset'}
+                    : null
+            })
+            .filter(Boolean)
     }
 
-    setFeatureLayers(enabledSourceIds) {
-        const {recipeId, area, featureLayerSources, layers: {areas}} = this.props
-        const enabledIds = enabledSourceIds.map(({sourceId}) => sourceId)
-        const sourceIds = featureLayerSources.map(({id}) => id)
-        // Preserve the persisted order and any per-layer config; only flip the disabled flag. Drop
-        // orphaned entries and append newly-available sources at the end rather than rebuilding.
-        const kept = (areas[area].featureLayers || [])
-            .filter(({sourceId}) => sourceIds.includes(sourceId))
-            .map(featureLayer => ({...featureLayer, disabled: !enabledIds.includes(featureLayer.sourceId)}))
-        const keptIds = kept.map(({sourceId}) => sourceId)
-        const appended = featureLayerSources
-            .filter(({id}) => !keptIds.includes(id))
-            .map(({id}) => ({sourceId: id, disabled: !enabledIds.includes(id)}))
-        actionBuilder('SET_FEATURE_LAYERS', {sourceIds: enabledSourceIds, area})
+    // Non-draggable ListItem: no drag$, so no handle (matches the image layer source list's standard rows).
+    renderBuiltInOverlay({featureLayer, source}) {
+        return (
+            <ListItem key={source.id}>
+                {this.renderOverlayItem(featureLayer, source)}
+            </ListItem>
+        )
+    }
+
+    renderAssetOverlays(assets) {
+        if (!assets.length) {
+            return null
+        }
+        return (
+            <div ref={this.assetsRef}>
+                {assets.map(row => this.renderAssetOverlay(row))}
+            </div>
+        )
+    }
+
+    // Draggable ListItem: drag$/dragValue render the standard ListItem handle inside the row. The Layer
+    // options button is a row action; opacity and other detailed controls live in the options modal.
+    renderAssetOverlay({featureLayer, source}) {
+        return (
+            <div key={source.id} ref={element => this.setAssetRowRef(source.id, element)}>
+                <ListItem drag$={this.drag$} dragValue={source.id}>
+                    {this.renderOverlayItem(featureLayer, source, this.renderOptionsButton(source))}
+                </ListItem>
+            </div>
+        )
+    }
+
+    renderOverlayItem(featureLayer, source, inlineComponents) {
+        return (
+            <CrudItem
+                title={this.overlayLabel(source)}
+                selected={featureLayer.disabled !== true}
+                selectTooltip={this.overlayLabel(source)}
+                onSelect={enabled => this.toggleOverlay(source.id, enabled)}
+                inlineComponents={inlineComponents}
+            />
+        )
+    }
+
+    renderOptionsButton(source) {
+        return (
+            <Button
+                key='options'
+                chromeless
+                shape='circle'
+                size='small'
+                icon='cog'
+                tooltip={msg('map.featureLayerStyle.tooltip')}
+                onClick={() => this.openOptions(source)}
+            />
+        )
+    }
+
+    overlayLabel(source) {
+        return source.type === 'EETableAsset'
+            ? source.sourceConfig?.label || source.sourceConfig?.asset
+            : msg(`featureLayerSources.${source.type}.type`)
+    }
+
+    openOptions(source) {
+        const {activatable: {deactivate}, activator: {activatables: {featureLayerOptions}}} = this.props
+        featureLayerOptions.activate({source})
+        deactivate()
+    }
+
+    toggleOverlay(sourceId, enabled) {
+        const {recipeId, area, layers: {areas}} = this.props
+        const featureLayers = (areas[area] && areas[area].featureLayers) || []
+        actionBuilder('TOGGLE_FEATURE_LAYER', {sourceId, area})
             .set(
                 [recipePath(recipeId), 'layers.areas', area, 'featureLayers'],
-                [...kept, ...appended]
+                withFeatureLayerDisabled(featureLayers, sourceId, !enabled)
             )
             .dispatch()
     }
 
-    selectImageLayer(sourceId) {
-        const {recipeId, area} = this.props
-        actionBuilder('SELECT_IMAGE_LAYER', {sourceId, area})
-            .set(recipePath(recipeId, ['layers.areas', area, 'imageLayer']), {sourceId})
+    setAssetRowRef(sourceId, element) {
+        if (element) {
+            this.assetRowRefs[sourceId] = element
+        } else {
+            delete this.assetRowRefs[sourceId]
+        }
+    }
+
+    onAssetDragStart(draggedId) {
+        this.draggedId = draggedId
+        this.dragStartOrder = this.assetOrder()
+        this.pendingOrder = this.dragStartOrder
+        this.assetCenters = this.measureAssetCenters()
+        this.listRect = this.assetsRef.current?.getBoundingClientRect()
+    }
+
+    onAssetDragMove(draggedId, coords) {
+        if (this.draggedId !== draggedId) {
+            return
+        }
+        const inside = this.listRect && coords.y >= this.listRect.top && coords.y <= this.listRect.bottom
+        this.pendingOrder = reorderAssetsByPointer({
+            assetIds: this.dragStartOrder,
+            draggedId,
+            pointerY: inside ? coords.y : null,
+            centers: this.assetCenters
+        })
+    }
+
+    onAssetDragEnd() {
+        if (this.draggedId == null) {
+            return
+        }
+        const {pendingOrder, dragStartOrder} = this
+        this.draggedId = this.assetCenters = this.listRect = null
+        if (pendingOrder.join('\0') !== dragStartOrder.join('\0')) {
+            this.persistAssetOrder(pendingOrder)
+        }
+    }
+
+    persistAssetOrder(orderedAssetIds) {
+        const {recipeId, area, featureLayerSources, layers: {areas}} = this.props
+        const featureLayers = (areas[area] && areas[area].featureLayers) || []
+        const assetSourceIds = featureLayerSources.filter(({type}) => type === 'EETableAsset').map(({id}) => id)
+        actionBuilder('REORDER_FEATURE_LAYERS', {area})
+            .set(
+                [recipePath(recipeId), 'layers.areas', area, 'featureLayers'],
+                withReorderedAssets(featureLayers, assetSourceIds, orderedAssetIds)
+            )
             .dispatch()
+    }
+
+    assetOrder() {
+        return this.overlayRows().filter(({orderable}) => orderable).map(({source}) => source.id)
+    }
+
+    measureAssetCenters() {
+        const centers = {}
+        Object.entries(this.assetRowRefs).forEach(([sourceId, element]) => {
+            const {top, bottom} = element.getBoundingClientRect()
+            centers[sourceId] = (top + bottom) / 2
+        })
+        return centers
     }
 }
 
@@ -182,6 +291,7 @@ const MapAreaMenuPanel = compose(
     _MapAreaMenuPanel,
     withLayers(),
     withRecipe(recipe => ({recipe})),
+    withSubscriptions(),
     withActivators({
         featureLayerOptions: ({area}) => `featureLayerOptions-${area}`
     }),
