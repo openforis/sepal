@@ -13,11 +13,13 @@ import {FloatingBox} from '~/widget/floatingBox'
 import {Keybinding} from '~/widget/keybinding'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
+import {Slider} from '~/widget/slider'
 
 import {getImageLayerSource} from '../body/process/imageLayerSourceRegistry'
 import {recipePath} from '../body/process/recipe'
 import {withRecipe} from '../body/process/recipeContext'
 import {withLayers} from '../body/process/withLayers'
+import {resolveFeatureLayerStyle} from './featureLayerStyle'
 import styles from './mapAreaMenu.module.css'
 
 class _MapAreaMenuPanel extends React.Component {
@@ -40,6 +42,7 @@ class _MapAreaMenuPanel extends React.Component {
                         <Layout>
                             {this.renderImageLayerForm()}
                             {this.renderFeatureLayers()}
+                            {this.renderFeatureLayerOptions()}
                         </Layout>
                     </Panel.Content>
                     <Keybinding keymap={{'Escape': deactivate}}/>
@@ -90,6 +93,58 @@ class _MapAreaMenuPanel extends React.Component {
         )
     }
 
+    // Layer controls for configurable feature overlays (EE table assets). Enable/disable stays in the
+    // buttons above; each configurable overlay gets a compact block with a whole-layer opacity slider
+    // (persisted immediately) and an options button that opens the per-area FeatureLayerOptionsPanel.
+    renderFeatureLayerOptions() {
+        const {featureLayerSources} = this.props
+        const configurable = featureLayerSources.filter(({type}) => type === 'EETableAsset')
+        return configurable.length
+            ? (
+                <Layout type='vertical' spacing='normal'>
+                    {configurable.map(source => this.renderFeatureLayer(source))}
+                </Layout>
+            )
+            : null
+    }
+
+    renderFeatureLayer(source) {
+        const {area, layers: {areas}, activatable: {deactivate}, activator: {activatables: {featureLayerOptions}}} = this.props
+        const featureLayer = (areas[area].featureLayers || []).find(({sourceId}) => sourceId === source.id)
+        const {opacity} = resolveFeatureLayerStyle({layerConfig: featureLayer && featureLayer.layerConfig, source})
+        return (
+            <Layout key={source.id} type='vertical' spacing='none'>
+                <Layout type='horizontal-nowrap' spacing='tight' alignment='spread'>
+                    <div className={styles.featureLayerLabel}>{source.sourceConfig?.label || source.sourceConfig?.asset}</div>
+                    <Button
+                        chromeless
+                        shape='circle'
+                        icon='palette'
+                        tooltip={msg('map.featureLayerStyle.tooltip')}
+                        onClick={() => {
+                            featureLayerOptions.activate({source})
+                            deactivate()
+                        }}
+                    />
+                </Layout>
+                <Slider
+                    label={msg('map.featureLayerStyle.opacity')}
+                    value={Math.round(opacity * 100)}
+                    minValue={0}
+                    maxValue={100}
+                    onChange={value => this.setFeatureLayerOpacity(source.id, value / 100)}
+                />
+            </Layout>
+        )
+    }
+
+    setFeatureLayerOpacity(sourceId, opacity) {
+        const {recipeId, area} = this.props
+        actionBuilder('SET_FEATURE_LAYER_OPACITY', {sourceId, area})
+            .set([recipePath(recipeId), 'layers.areas', area, 'featureLayers', {sourceId}, 'layerConfig.style.opacity'], opacity)
+            .dispatch()
+    }
+
     setFeatureLayers(enabledSourceIds) {
         const {recipeId, area, featureLayerSources, layers: {areas}} = this.props
         const enabledIds = enabledSourceIds.map(({sourceId}) => sourceId)
@@ -127,6 +182,9 @@ const MapAreaMenuPanel = compose(
     _MapAreaMenuPanel,
     withLayers(),
     withRecipe(recipe => ({recipe})),
+    withActivators({
+        featureLayerOptions: ({area}) => `featureLayerOptions-${area}`
+    }),
     withActivatable({
         id: ({area}) => `mapAreaMenu-${area}`,
         policy,

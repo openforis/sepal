@@ -47,7 +47,7 @@ layers: {
         label: 'South Sudan samples',
         description: 'projects/.../assets/south_sudan_samples',
         defaultStyle: {
-          colorMode: 'SINGLE',
+          colorMode: 'ONE_COLOR',
           color: '#00ffff',
           pointSize: 4,
           width: 1,
@@ -71,7 +71,7 @@ layers: {
           disabled: true,
           layerConfig: {
             style: {
-              colorMode: 'SINGLE',
+              colorMode: 'ONE_COLOR',
               color: '#00ffff',
               pointSize: 4,
               width: 1,
@@ -121,7 +121,7 @@ Feature row display:
 
 ## Add Earth Engine Asset Flow
 
-The existing "Add an Earth Engine asset" flow should become type-aware.
+The "Add an Earth Engine asset" flow is type-aware.
 
 1. User enters or selects an EE asset ID.
 2. GUI resolves metadata.
@@ -155,21 +155,21 @@ Do not try to hide controls based on geometry in the first slice. EE table asset
 
 Color should be the only property-dependent styling dimension initially. Other styling options (`width`, `fillOpacity`, `pointSize`) apply to all features in the layer.
 
-Supported color modes:
+Supported color modes (UI labels in parentheses):
 
-- `SINGLE`: use one global color for every feature.
-- `COLOR_COLUMN`: read color values directly from a feature property. If the table has a property named `color`, default to this mode with `colorColumn: 'color'`. Sampling Design exports already include a `color` property, so exported samples should style correctly without duplicating the palette in layer state.
-- `CATEGORICAL`: choose a property and map distinct values to colors. This should behave like existing legend color editing/import, including import options where practical. Categorical styling controls color only.
+- `ONE_COLOR` ("One color"): use one global color for every feature.
+- `COLORS_FROM_PROPERTY` ("From property"): read color values directly from a feature property. If the table has a property named `color`, default to this mode with `colorProperty: 'color'`. Sampling Design exports already include a `color` property, so exported samples should style correctly without duplicating the palette in layer state.
+- `COLORS_BY_VALUE` ("By value"): choose a property and map distinct values to colors. This should behave like existing legend color editing/import, including import options where practical. Only features whose value is in the list are drawn (no global "other" color); by-value styling controls color only.
 
 Suggested shape:
 
 ```js
 style: {
-  colorMode: 'SINGLE' | 'COLOR_COLUMN' | 'CATEGORICAL',
+  colorMode: 'ONE_COLOR' | 'COLORS_FROM_PROPERTY' | 'COLORS_BY_VALUE',
   color: '#00ffff',
-  colorColumn: 'color',
-  categoryProperty: 'stratum',
-  categories: {
+  colorProperty: 'color',
+  valueProperty: 'stratum',
+  valueColors: {
     '1': '#e41a1c',
     '2': '#377eb8'
   },
@@ -180,9 +180,9 @@ style: {
 }
 ```
 
-If a `COLOR_COLUMN` value is missing or invalid, fall back to the global `color`.
+If a `COLORS_FROM_PROPERTY` value is missing or null, fall back to the global `color`.
 
-When rendering polygons or point shapes, the fill color should use the selected feature color with `fillOpacity` applied where that is practical in EE. If combining a dynamic color column with dynamic alpha becomes awkward, it is acceptable for the first implementation to apply the color column to stroke/point outline color and use a global fill color derived from the fallback color.
+When rendering polygons or point shapes, the fill color uses the selected feature color with `fillOpacity` applied. For `COLORS_FROM_PROPERTY`, the per-feature color is applied server-side: hex color values get `fillOpacity` alpha, and non-hex color strings pass through unchanged.
 
 Earth Engine's `FeatureCollection.style()` supports collection-wide and feature-specific style dictionaries with `color`, `pointSize`, `pointShape`, `width`, `fillColor`, `styleProperty`, `neighborhood`, and `lineType`. `fillColor` fills polygons and point shapes; when feature-specific styles use larger `pointSize` or `width`, `neighborhood` must cover the maximum `pointSize + width` to avoid tiling artifacts.
 
@@ -269,12 +269,7 @@ Click inspection can be considered later as a separate server-query feature: on 
 
 Sampling Design should not expose a live "Samples" preview layer.
 
-Implementation consequences:
-
-- Remove or hide the Sampling Design `SamplingDesignSamples` feature-layer source from GUI initialization.
-- Keep `skipThis: true` and `defaultGoogleSatellite: true`; Sampling Design has no normal "This Recipe" image layer.
-- Normalize saved Sampling Design layers by removing/disabling stale `SamplingDesignSamples` entries.
-- Keep export/retrieve as the authoritative way to produce exact sample points.
+Keep `skipThis: true` and `defaultGoogleSatellite: true`; Sampling Design has no normal "This Recipe" image layer. Keep export/retrieve as the authoritative way to produce exact sample points.
 
 ### Auto-Adding Exported Assets
 
@@ -325,20 +320,20 @@ This lets the GUI hide previous Sampling Design exports for the same recipe when
 
 Sampling Design GEE table exports already include recipe provenance through the existing task/export property flow. The feature-overlay design should preserve that behavior and treat those properties as provenance for the exported snapshot, not as a live link to the current recipe settings.
 
-## Migration / Cleanup
+## Remaining Roadmap
 
-- Remove stale Sampling Design live-preview feature sources from saved layer state.
-- Keep generic user-added `EETableAsset` feature sources untouched.
-- Existing AOI/Labels/Reference Data feature layers should continue to work.
-- Existing image layer behavior should not change except for optional user labels on asset rows.
+1. Replace the current feature-layer button group with the compact ordered overlay selector when styling/order editing needs a proper UI. It should show enabled overlays in order when collapsed, support enable/disable, drag sorting, opacity, and an options button.
+2. Automatically add Sampling Design GEE table exports as `EETableAsset` overlays after successful task completion, when there is a clean task-to-recipe metadata/update mechanism. The first fallback remains manually adding the exported EE table asset through the generic "Add Earth Engine asset" flow.
+3. Consider click inspection later as a server-query feature. Do not build hover interaction while EE table overlays render as raster tiles.
 
 ## Design Decisions
 
 - Sampling Design exported assets should be enabled in all map areas when they are added.
 - The exported asset label should use the recipe title as a human-friendly snapshot name. The full asset ID remains available as description/tooltip. If the recipe title is missing, fall back to the asset basename. Do not label exported assets "This Recipe".
 - Recipes that do not produce image output should not have a "This Recipe" image layer source.
-- Do not add a task details "Add to map" action in the first slice. Start with automatic behavior only.
-- Keep feature styling simple: property-dependent styling is color-only, either from a color column or categorical value-to-color mapping. Width, fill opacity, and point size apply globally to the layer.
+- Do not add a task details "Add to map" action unless automatic add-on-success proves impractical. The preferred behavior is automatic when a clean task-to-recipe update path exists; until then, users can manually add exported EE table assets.
+- Keep feature styling simple: property-dependent styling is color-only, either from a color property or a value-to-color mapping. Width, fill opacity, and point size apply globally to the layer.
+- Fill opacity applies in every color mode, including `COLORS_FROM_PROPERTY`: the control is shown for all modes, and the GEE path applies the configured alpha to hex color-property values (non-hex color strings pass through unchanged).
 - Do not infer geometry type in the first styling slice; show the same compact controls for all EE table overlays and accept geometry-specific no-ops.
 - Do not support hover effects for EE table overlays while rendering through raster EE tiles. Click inspection is a separate future feature.
-- If automatic add-on-success requires task completion code to update recipe layer state, defer it until we have a clean generic task-to-recipe metadata/update mechanism. In that case, the first slice can support manually adding exported EE table assets through the generic "Add Earth Engine asset" flow.
+- If automatic add-on-success requires task completion code to update recipe layer state, defer it until there is a clean generic task-to-recipe metadata/update mechanism.

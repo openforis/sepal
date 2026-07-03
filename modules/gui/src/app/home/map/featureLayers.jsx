@@ -74,6 +74,7 @@ class _FeatureLayer extends React.Component {
                 return (
                     <EETableAssetLayer
                         source={source}
+                        layerConfig={layerConfig}
                         layerIndex={layerIndex}
                         map={map}
                     />

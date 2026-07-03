@@ -16,7 +16,8 @@ export class EarthEngineTableLayer extends TileLayer {
         mapId$,
         watchedProps,
         minZoom,
-        maxZoom
+        maxZoom,
+        opacity = 1
     }) {
         super()
         this.map = map
@@ -26,6 +27,7 @@ export class EarthEngineTableLayer extends TileLayer {
         this.watchedProps = watchedProps
         this.minZoom = minZoom
         this.maxZoom = maxZoom
+        this.opacity = opacity
     }
 
     createTileProvider = urlTemplate => {
@@ -40,9 +42,9 @@ export class EarthEngineTableLayer extends TileLayer {
     }
 
     createOverlay = tileProvider => {
-        const {map, minZoom, maxZoom} = this
+        const {map, minZoom, maxZoom, opacity} = this
         const {google} = map.getGoogle()
-        return new GoogleMapsOverlay({name: 'EarthEngineTableLayer', tileProvider, google, minZoom, maxZoom})
+        return new GoogleMapsOverlay({name: 'EarthEngineTableLayer', tileProvider, google, minZoom, maxZoom, opacity})
     }
 
     addToMap$ = () => {

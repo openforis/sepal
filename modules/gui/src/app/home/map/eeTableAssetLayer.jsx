@@ -1,34 +1,29 @@
 import PropTypes from 'prop-types'
 
 import {EETableLayer} from './eeTableLayer'
+import {resolveFeatureLayerStyle} from './featureLayerStyle'
 
-// Renders a generic Earth Engine FeatureCollection/table asset as a feature overlay. Tiles are
-// rendered server-side via EETableLayer/eeTableMap$ from the asset id - features are never fetched
-// into browser memory. Styling is fixed for now; a persisted per-layer styling model (color, opacity,
-// etc.) is deferred until the design is settled.
-const COLOR = '#00ffff'
-const FILL_COLOR = '#00ffff80'
-const POINT_SIZE = 4
-const WIDTH = 1
-
-export const EETableAssetLayer = ({source, layerIndex, map}) => {
+// Renders a generic Earth Engine FeatureCollection/table asset as a feature overlay. Tiles are rendered
+// server-side via EETableLayer/eeTableMap$ from the asset id - features are never fetched into browser
+// memory. Style comes from the per-area layerConfig, falling back to the source default. Whole-layer
+// opacity is applied client-side by the tile overlay, so it's kept out of the server style payload.
+export const EETableAssetLayer = ({source, layerConfig, layerIndex, map}) => {
     const {asset} = source.sourceConfig
+    const {opacity, ...style} = resolveFeatureLayerStyle({layerConfig, source})
     return (
         <EETableLayer
             id={source.id}
             map={map}
             tableId={asset}
-            color={COLOR}
-            fillColor={FILL_COLOR}
-            pointSize={POINT_SIZE}
-            width={WIDTH}
+            style={style}
+            opacity={opacity}
             layerIndex={layerIndex}
-            watchedProps={{asset}}
         />
     )
 }
 
 EETableAssetLayer.propTypes = {
+    layerConfig: PropTypes.object,
     layerIndex: PropTypes.number,
     map: PropTypes.any,
     source: PropTypes.object

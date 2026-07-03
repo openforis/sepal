@@ -385,7 +385,8 @@
     "table": {
       "error": {
         "notATable": "Not a Table",
-        "notFound": "Table not found"
+        "notFound": "Table not found",
+        "tooManyValues": "Too many distinct values in property ''{columnName}'' (limit {max}). Pick a categorical property."
       }
     }
   },
@@ -584,6 +585,40 @@
       "bounds": "Bounds",
       "copy": "Copy to clipboard",
       "coordinatesCopied": "Coordinates copied to the clipboard"
+    },
+    "featureLayerStyle": {
+      "title": "Layer options",
+      "tooltip": "Layer options",
+      "colorMode": {
+        "label": "Color mode",
+        "ONE_COLOR": "One color",
+        "COLORS_FROM_PROPERTY": "From property",
+        "COLORS_BY_VALUE": "By value"
+      },
+      "color": "Color",
+      "colorProperty": {
+        "label": "Color property"
+      },
+      "valueProperty": {
+        "label": "Value property"
+      },
+      "property": {
+        "placeholder": "Select a property"
+      },
+      "valueColors": {
+        "label": "Values and colors",
+        "loadDistinctValues": "Distinct values from property",
+        "loadError": "Failed to load distinct property values",
+        "blankValues": "Values cannot be blank.",
+        "noEntries": "No values added",
+        "value": {
+          "placeholder": "Value..."
+        }
+      },
+      "width": "Line/outline width",
+      "fillOpacity": "Fill opacity",
+      "pointSize": "Point size",
+      "opacity": "Layer opacity"
     },
     "legendBuilder": {
       "addEntry": {

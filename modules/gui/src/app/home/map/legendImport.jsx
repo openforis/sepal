@@ -25,11 +25,13 @@ import {getDefaults, getValidMappings} from './legendImportDefaults'
 const fields = {
     rows: new Form.Field()
         .notEmpty(),
+    importMode: new Form.Field(),
     name: new Form.Field()
         .notBlank(),
     valueColumn: new Form.Field()
         .notBlank(),
     labelColumn: new Form.Field()
+        .skip((v, {importMode}) => importMode === 'featureLayerValueColors')
         .notBlank(),
     colorColumnType: new Form.Field()
         .notBlank(),
@@ -118,7 +120,7 @@ class _LegendImport extends React.Component {
                     )}
                 <Layout type='horizontal'>
                     {this.renderMapping('valueColumn')}
-                    {this.renderMapping('labelColumn')}
+                    {this.isFeatureLayerCategoryImport() ? null : this.renderMapping('labelColumn')}
                 </Layout>
             </React.Fragment>
         )
@@ -212,6 +214,10 @@ class _LegendImport extends React.Component {
         )
     }
 
+    componentDidMount() {
+        this.props.inputs.importMode.set(this.importMode())
+    }
+
     componentDidUpdate(prevProps, prevState) {
         const {rows: prevRows} = prevState
         const {rows} = this.state
@@ -285,6 +291,15 @@ class _LegendImport extends React.Component {
             .dispatch()
         deactivate()
     }
+
+    importMode() {
+        const {activatable} = this.props
+        return activatable.mode || 'legend'
+    }
+
+    isFeatureLayerCategoryImport() {
+        return this.importMode() === 'featureLayerValueColors'
+    }
 }
 
 const policy = () => ({_: 'allow'})
@@ -301,4 +316,3 @@ export const LegendImport = compose(
     withRecipe(),
     withForm({fields}),
 )
-

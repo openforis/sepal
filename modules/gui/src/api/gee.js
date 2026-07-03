@@ -128,9 +128,9 @@ export default {
             }
         }),
 
-    eeTableMap$: ({tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width}) =>
+    eeTableMap$: ({tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style}) =>
         get$('/api/gee/table/map', {
-            query: {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width},
+            query: {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style: style ? JSON.stringify(style) : undefined},
             retry: {
                 maxRetries: 0
             }

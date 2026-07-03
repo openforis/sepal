@@ -40,15 +40,16 @@ class _EETableLayer extends React.Component {
     }
 
     createLayer() {
-        const {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, layerIndex, map, tab: {busy}} = this.props
+        const {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style, opacity, layerIndex, map, tab: {busy}} = this.props
         return tableId
             ? new EarthEngineTableLayer({
                 map,
                 mapId$: api.gee.eeTableMap$({
-                    tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width
+                    tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style
                 }),
+                opacity,
                 layerIndex,
-                watchedProps: {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width},
+                watchedProps: {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style, opacity},
                 busy
             })
             : null
@@ -70,7 +71,9 @@ EETableLayer.propTypes = {
     fillColor: PropTypes.string,
     layerIndex: PropTypes.number,
     map: PropTypes.any,
+    opacity: PropTypes.number,
     pointSize: PropTypes.number,
+    style: PropTypes.object,
     tableId: PropTypes.string,
     width: PropTypes.number
 }

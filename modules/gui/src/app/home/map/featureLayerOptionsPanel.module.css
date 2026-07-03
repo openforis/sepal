@@ -1,0 +1,22 @@
+.panel {
+    width: 25rem;
+}
+
+.entry {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.colorText {
+    width: 5rem;
+}
+
+.value {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.palettePreSets {
+    flex-shrink: 0;
+}

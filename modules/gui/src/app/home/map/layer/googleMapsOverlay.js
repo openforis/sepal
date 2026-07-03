@@ -9,12 +9,14 @@ export class GoogleMapsOverlay {
         google,
         name,
         minZoom = 0,
-        maxZoom = MAX_ZOOM
+        maxZoom = MAX_ZOOM,
+        opacity = 1
     }) {
         this.tileProvider = tileProvider
         this.name = name
         this.minZoom = minZoom
         this.maxZoom = maxZoom
+        this.opacity = opacity
         this.tileSize = new google.maps.core.Size(
             tileProvider.tileSize || 256,
             tileProvider.tileSize || 256
@@ -25,6 +27,10 @@ export class GoogleMapsOverlay {
     getTile({x, y}, zoom, doc) {
         const request = this._toTileRequest({x, y, zoom, minZoom: this.minZoom, doc})
         const element = request.element
+        // Whole-layer tile opacity: applied per tile element, uniform across the layer (tiles don't overlap).
+        if (this.opacity !== 1) {
+            element.style.opacity = this.opacity
+        }
         if (request.outOfBounds) {
             return element
         }

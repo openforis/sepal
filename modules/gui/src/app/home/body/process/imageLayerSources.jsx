@@ -53,7 +53,7 @@ export const registerImageLayerSources = () => {
     )
 
     addImageLayerSource('Asset', ({source, layerConfig, map, boundsChanged$, dragging$, cursor$}) => ({
-        description: source.sourceConfig.asset,
+        description: source.sourceConfig.label || source.sourceConfig.asset,
         layerComponent: (
             <AssetImageLayer
                 source={source}
