@@ -18,6 +18,7 @@ import landsatProductId$ from '#gee/jobs/ee/image/landsatProductId'
 import preview$ from '#gee/jobs/ee/image/preview'
 import sampleImage$ from '#gee/jobs/ee/image/sample'
 import sceneAreas$ from '#gee/jobs/ee/image/sceneAreas'
+import loadLandTrendrSegments$ from '#gee/jobs/ee/landTrendr/loadSegments'
 import projects$ from '#gee/jobs/ee/projects'
 import tableColumns$ from '#gee/jobs/ee/table/columns'
 import tableColumnValues$ from '#gee/jobs/ee/table/columnValues'
@@ -51,6 +52,7 @@ export default router =>
         .post('/recipe/bounds', stream(ctx => imageBounds$(ctx)))
         .post('/aoi/bounds', stream(ctx => aoiBounds$(ctx)))
         .post('/ccdc/loadSegments', stream(ctx => loadCCDCSegments$(ctx)))
+        .post('/landTrendr/loadSegments', stream(ctx => loadLandTrendrSegments$(ctx)))
         .post('/timeSeries/loadObservations', stream(ctx => loadTimeSeriesbservations$(ctx)))
         .post('/nextReferenceDataPoints', stream(ctx => nextReferenceDataPoints$(ctx)))
         .get('/table/rows', stream(ctx => tableRows$(ctx)))

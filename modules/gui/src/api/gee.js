@@ -160,6 +160,14 @@ export default {
             }
         }),
 
+    loadLandTrendrSegments$: ({recipe, latLng}) =>
+        postJson$('/api/gee/landTrendr/loadSegments', {
+            body: {recipe, latLng},
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
     nextReferenceDataPoints$: recipe =>
         postJson$('/api/gee/nextReferenceDataPoints', {
             body: recipe,

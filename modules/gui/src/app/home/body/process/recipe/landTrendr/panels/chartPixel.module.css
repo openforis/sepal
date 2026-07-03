@@ -1,0 +1,20 @@
+.panel {
+}
+
+.spinner {
+    flex-grow: 1;
+    display: flex;
+    align-self: center;
+    justify-content: space-around;
+    flex-direction: column;
+    color: #ccc;
+}
+
+.noData {
+    flex-grow: 1;
+    display: flex;
+    align-self: center;
+    justify-content: space-around;
+    flex-direction: column;
+    color: #ccc;
+}

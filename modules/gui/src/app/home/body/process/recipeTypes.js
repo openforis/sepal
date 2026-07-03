@@ -8,6 +8,7 @@ import changeAlerts from './recipe/changeAlerts/changeAlerts'
 import classChange from './recipe/classChange/classChange'
 import classification from './recipe/classification/classification'
 import indexChange from './recipe/indexChange/indexChange'
+import landTrendr from './recipe/landTrendr/landTrendr'
 import masking from './recipe/masking/masking'
 import opticalMosaic from './recipe/opticalMosaic/opticalMosaic'
 import phenology from './recipe/phenology/phenology'
@@ -39,6 +40,7 @@ export const registerRecipeTypes = () => {
     addRecipeType(baytsHistorical())
     addRecipeType(baytsAlerts())
     addRecipeType(phenology())
+    addRecipeType(landTrendr())
     addRecipeType(masking())
     addRecipeType(asset())
 }
