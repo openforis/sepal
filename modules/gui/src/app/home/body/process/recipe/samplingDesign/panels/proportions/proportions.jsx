@@ -19,6 +19,7 @@ import {isNumericClassValue, toClassOptions} from '../../sampling/categoricalLeg
 import {maxAnticipatedTargetProportion, smartRound, toProportions} from '../../sampling/proportionMath'
 import {AnticipationStrategy, ImageSelection, OverallProportionInput, ProportionsHeaderButtons, StrataProportion} from './proportionControls'
 import styles from './proportions.module.css'
+import {proportionsCalculationErrorMessage, toErrorMessage} from './proportionsError'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -75,7 +76,8 @@ class _Proportions extends React.Component {
     cancelClassValues$ = new Subject()
     state = {
         bands: undefined,
-        distinctClassOptions: undefined
+        distinctClassOptions: undefined,
+        proportionsCalculationError: null
     }
 
     constructor(props) {
@@ -89,6 +91,7 @@ class _Proportions extends React.Component {
         this.onAnticipationStrategyChanged = this.onAnticipationStrategyChanged.bind(this)
         this.onPercentageChanged = this.onPercentageChanged.bind(this)
         this.onOverallProportionChanged = this.onOverallProportionChanged.bind(this)
+        this.onEEStrategyChanged = this.onEEStrategyChanged.bind(this)
         this.onProbabilitiyPerStratumCalculated = this.onProbabilitiyPerStratumCalculated.bind(this)
         this.onSkipToggled = this.onSkipToggled.bind(this)
         this.loadClassValues = this.loadClassValues.bind(this)
@@ -195,6 +198,8 @@ class _Proportions extends React.Component {
             anticipatedProportions={anticipatedProportions}
             manual={this.isManual()}
             streamActive={this.props.stream('PROBABILITY_PER_STRATUM').active}
+            calculationError={this.state.proportionsCalculationError}
+            onEEStrategyChanged={this.onEEStrategyChanged}
         />
     }
 
@@ -279,6 +284,13 @@ class _Proportions extends React.Component {
             targetClass.set(null)
             this.clearClassValues()
         }
+    }
+
+    onEEStrategyChanged() {
+        // Explicit Online/Batch recompute: invalidate cancels any in-flight request and clears stale
+        // results/error, then defer so the changed eeStrategy value has settled before recalculating.
+        this.invalidateCalculatedProportions()
+        setImmediate(() => this.calculateAnticipatedProportions())
     }
 
     onImageLoading() {
@@ -377,6 +389,7 @@ class _Proportions extends React.Component {
     onManualToggled(manual) {
         const {strata, inputs: {anticipatedProportions}} = this.props
         // manual && this.cancel$.next()
+        this.clearProportionsCalculationError()
         if (manual && !anticipatedProportions.value) {
             const initialProportions = strata.map(stratum => ({
                 color: stratum.color,
@@ -450,8 +463,18 @@ class _Proportions extends React.Component {
         if (stream('PROBABILITY_PER_STRATUM').active) {
             this.cancel$.next()
         }
+        this.clearProportionsCalculationError()
         probabilityPerStratum.set(null)
         anticipatedProportions.set(null)
+    }
+
+    // The EE calculation error is kept in component state rather than the `anticipatedProportions` form
+    // field, so it never collides with that field's `.notBlank` required message: the required message keeps
+    // gating Apply/export while the friendly select/empty body copy still shows for ordinary empty state.
+    clearProportionsCalculationError() {
+        if (this.state.proportionsCalculationError) {
+            this.setState({proportionsCalculationError: null})
+        }
     }
 
     calculateMaxAnticipatedTargetProportion() {
@@ -464,6 +487,7 @@ class _Proportions extends React.Component {
             unstratified, stratificationType, stratificationRecipeId, stratificationAssetId, stratificationBand,
             inputs: {manual, anticipationStrategy, scale, type, assetId, recipeId, band, targetClass, eeStrategy, anticipatedProportions}
         } = this.props
+        this.clearProportionsCalculationError()
         if (manual.value?.length) {
             return
         }
@@ -508,12 +532,14 @@ class _Proportions extends React.Component {
             ),
             this.onProbabilitiyPerStratumCalculated,
             error => {
-                const errorMessage = error?.response?.messageKey
-                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                    : error
+                const proportionsError = proportionsCalculationErrorMessage({error, eeStrategy: eeStrategy.value})
+                if (proportionsError) {
+                    this.setState({proportionsCalculationError: proportionsError})
+                    return
+                }
                 Notifications.error({
                     message: msg('process.samplingDesign.panel.proportions.loadError'),
-                    error: errorMessage,
+                    error: toErrorMessage(error),
                     group: true,
                     timeout: 0
                 })
@@ -523,6 +549,7 @@ class _Proportions extends React.Component {
 
     onProbabilitiyPerStratumCalculated(loadedProbabilityPerStratum) {
         const {strata, inputs: {anticipationStrategy, probabilityPerStratum, anticipatedOverallProportion, anticipatedProportions}} = this.props
+        this.clearProportionsCalculationError()
         if (this.isManual()) {
             return // Ignore the result when manual
         }
@@ -575,9 +602,11 @@ class _Proportions extends React.Component {
     }
 }
 
+// eeStrategy is intentionally excluded: the Online/Batch toggle recomputes explicitly via
+// onEEStrategyChanged, so including it here would trigger a second recomputation.
 const proportionsDeps = props => {
-    const {inputs: {manual, anticipationStrategy, type, assetId, recipeId, band, targetClass, scale, eeStrategy}} = props
-    return [manual, anticipationStrategy, type, assetId, recipeId, band, targetClass, scale, eeStrategy]
+    const {inputs: {manual, anticipationStrategy, type, assetId, recipeId, band, targetClass, scale}} = props
+    return [manual, anticipationStrategy, type, assetId, recipeId, band, targetClass, scale]
         .map(input => input?.value)
 }
 

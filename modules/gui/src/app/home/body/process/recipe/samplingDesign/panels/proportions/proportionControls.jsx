@@ -141,7 +141,7 @@ export const OverallProportionInput = ({anticipatedOverallProportion, onChange})
         onChange={onChange}
     />
 
-export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, streamActive}) => {
+export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, streamActive, calculationError, onEEStrategyChanged}) => {
     const overallProportion = _.sum(
         anticipatedProportions.value?.map(({weight, proportion}) => {
             return weight * proportion
@@ -150,7 +150,7 @@ export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, st
     return (
         <Widget
             label={msg('process.samplingDesign.panel.proportions.form.strataProportion.label')}
-            labelButtons={manual ? [] : [<EEStrategyButtons key='eeStrategy' eeStrategy={eeStrategy}/>]}>
+            labelButtons={manual ? [] : [<EEStrategyButtons key='eeStrategy' eeStrategy={eeStrategy} onChange={onEEStrategyChanged}/>]}>
             {anticipatedProportions.value
                 ? <ProportionTable
                     proportions={anticipatedProportions}
@@ -169,7 +169,7 @@ export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, st
                     />
                     : <NoData
                         alignment='left'
-                        message={msg('Select image and band.')}
+                        message={calculationError || msg('Select image and band.')}
                     />}
         </Widget>
     )
@@ -335,7 +335,7 @@ const ClassOption = ({option: {color, label}}) =>
         <span>{label}</span>
     </div>
 
-const EEStrategyButtons = ({eeStrategy}) =>
+const EEStrategyButtons = ({eeStrategy, onChange}) =>
     <Form.Buttons
         spacing='none'
         groupSpacing='none'
@@ -354,4 +354,5 @@ const EEStrategyButtons = ({eeStrategy}) =>
                 tooltip: msg('process.samplingDesign.panel.proportions.form.eeStrategy.batch.tooltip')
             },
         ]}
+        onChange={onChange}
     />
