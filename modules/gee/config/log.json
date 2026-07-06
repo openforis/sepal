@@ -5,7 +5,7 @@
         "default": "info",
         "channel-forward": "info",
         "channel-reverse": "info",
-        "ee": "trace",
+        "ee": "info",
         "factory": "info",
         "http/client": "info",
         "http/server": "info",
