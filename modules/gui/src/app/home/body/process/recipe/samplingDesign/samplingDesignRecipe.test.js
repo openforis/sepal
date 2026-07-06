@@ -1,4 +1,5 @@
-import {normalizeSavedLayers, toTaskRecipe} from './samplingDesignRecipe'
+import {defaultModel, normalizeSavedLayers, toTaskRecipe} from './samplingDesignRecipe'
+import {shouldShowMore} from './panels/sampleArrangement/showMore'
 
 const recipe = {
     id: 'r1',
@@ -37,6 +38,25 @@ describe('toTaskRecipe', () => {
         const before = recipe.model.sampleAllocation.allocation
         toTaskRecipe(recipe)
         expect(recipe.model.sampleAllocation.allocation).toBe(before)
+    })
+})
+
+describe('defaultModel.sampleArrangement', () => {
+    it('provides a complete set of Sample Arrangement defaults', () => {
+        expect(defaultModel.sampleArrangement).toEqual({
+            requiresUpdate: false,
+            arrangementStrategy: 'RANDOM',
+            sampleSizeStrategy: 'OVER',
+            gridOrigin: 'FIXED',
+            minDistance: 60,
+            scale: 30,
+            crs: 'EPSG:3410',
+            seed: 1
+        })
+    })
+
+    it('opens the Sample Arrangement "More" section collapsed', () => {
+        expect(shouldShowMore(defaultModel.sampleArrangement)).toBe(false)
     })
 })
 

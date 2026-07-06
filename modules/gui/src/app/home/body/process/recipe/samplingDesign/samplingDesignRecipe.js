@@ -7,6 +7,7 @@ import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
+import {DEFAULT_CRS, DEFAULT_SEED} from './panels/sampleArrangement/showMore'
 import {toTaskAllocation} from './sampling/taskAllocation'
 import {validateRetrieve} from './sampling/validateRetrieve'
 
@@ -14,6 +15,20 @@ export const defaultModel = {
     stratification: {
         scale: 30,
         type: 'ASSET'
+    },
+    // Complete Sample Arrangement defaults so a new recipe opens the panel clean (not dirty). These mirror
+    // the mount-time fallbacks in sampleArrangement.jsx (minDistance = stratification scale * 2, scale =
+    // stratification scale). requiresUpdate must be present so the unconditional requiresUpdate.set(false)
+    // on mount is a no-op rather than a change that dirties the form.
+    sampleArrangement: {
+        requiresUpdate: false,
+        arrangementStrategy: 'RANDOM',
+        sampleSizeStrategy: 'OVER',
+        gridOrigin: 'FIXED',
+        minDistance: 60,
+        scale: 30,
+        crs: DEFAULT_CRS,
+        seed: DEFAULT_SEED
     }
 }
 

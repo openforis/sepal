@@ -11,6 +11,7 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
 import styles from './sampleArrangement.module.css'
+import {isSeedRelevantValues, shouldShowMore} from './showMore'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -232,13 +233,19 @@ class _SampleArrangement extends React.Component {
 
     componentDidMount() {
         const {inputs: {requiresUpdate, arrangementStrategy, sampleSizeStrategy, gridOrigin, minDistance, scale, seed, crs, crsTransform}} = this.props
-        // Auto-open "More" when the seed materially affects the result (systematic seeded origin or
-        // exact), so the enabled seed control is visible.
-        const more = (crs.value && crs.value !== 'EPSG:3410')
-            || (crsTransform.value)
-            || (parseInt(seed.value) !== 1)
-            || isSeedRelevant(this.props)
-        this.setState({more})
+        // Open "More" only when a saved recipe carries non-default advanced values (so they're visible).
+        // shouldShowMore applies the same effective defaults set below, so it's safe that they aren't set
+        // yet - a new recipe (all undefined) opens collapsed.
+        this.setState({
+            more: shouldShowMore({
+                crs: crs.value,
+                crsTransform: crsTransform.value,
+                seed: seed.value,
+                arrangementStrategy: arrangementStrategy.value,
+                sampleSizeStrategy: sampleSizeStrategy.value,
+                gridOrigin: gridOrigin.value
+            })
+        })
         requiresUpdate.set(false)
         arrangementStrategy.value || arrangementStrategy.set('RANDOM')
         sampleSizeStrategy.value || sampleSizeStrategy.set('OVER')
@@ -262,11 +269,12 @@ class _SampleArrangement extends React.Component {
     }
 }
 
-// Whether the seed materially affects a systematic draw (seeded grid origin or exact thinning), used to
-// auto-reveal the seed control. (Random always uses the seed, but keeps its existing collapsed default.)
 const isSeedRelevant = ({inputs: {arrangementStrategy, sampleSizeStrategy, gridOrigin}}) =>
-    arrangementStrategy.value === 'SYSTEMATIC'
-        && (gridOrigin.value === 'SEEDED' || sampleSizeStrategy.value === 'EXACT')
+    isSeedRelevantValues({
+        arrangementStrategy: arrangementStrategy.value,
+        sampleSizeStrategy: sampleSizeStrategy.value,
+        gridOrigin: gridOrigin.value
+    })
 
 const includeSeed = ({arrangementStrategy, sampleSizeStrategy, gridOrigin}) =>
     arrangementStrategy === 'RANDOM'
