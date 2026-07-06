@@ -3269,6 +3269,15 @@
                 "required": "Recipe must be selected"
               },
               "title": "Select SEPAL Recipe"
+            },
+            "source": {
+              "title": "From asset or recipe",
+              "label": "Asset or recipe",
+              "type": {
+                "ASSET": "Asset",
+                "RECIPE": "Recipe",
+                "required": "A source type must be selected"
+              }
             }
           },
           "title": "Area of interest",

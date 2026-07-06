@@ -104,6 +104,14 @@ export default {
             }
         }),
 
+    aoiGeometry$: ({aoi, color, fillColor}) =>
+        postJson$('/api/gee/aoi/geometry', {
+            body: {aoi, color, fillColor},
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
     loadEETableColumns$: tableId =>
         get$('/api/gee/table/columns', {
             query: {tableId},

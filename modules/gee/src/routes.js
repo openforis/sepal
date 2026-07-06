@@ -1,5 +1,6 @@
 import datasets$ from '#gee/jobs/datasets/datasets'
 import aoiBounds$ from '#gee/jobs/ee/aoi/bounds'
+import aoiGeometry$ from '#gee/jobs/ee/aoi/geometry'
 import createFolder$ from '#gee/jobs/ee/asset/createFolder'
 import deleteAsset$ from '#gee/jobs/ee/asset/delete'
 import listAssets$ from '#gee/jobs/ee/asset/list'
@@ -54,6 +55,7 @@ export default router =>
         .post('/recipe/geometry', stream(ctx => imageGeometry$(ctx)))
         .post('/recipe/bounds', stream(ctx => imageBounds$(ctx)))
         .post('/aoi/bounds', stream(ctx => aoiBounds$(ctx)))
+        .post('/aoi/geometry', stream(ctx => aoiGeometry$(ctx)))
         .post('/ccdc/loadSegments', stream(ctx => loadCCDCSegments$(ctx)))
         .post('/timeSeries/loadObservations', stream(ctx => loadTimeSeriesbservations$(ctx)))
         .post('/nextReferenceDataPoints', stream(ctx => nextReferenceDataPoints$(ctx)))

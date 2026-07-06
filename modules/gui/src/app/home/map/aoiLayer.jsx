@@ -1,3 +1,4 @@
+import {AoiGeometryLayer} from './aoiGeometryLayer'
 import {EETableLayer} from './eeTableLayer'
 import {PolygonLayer} from './polygonLayer'
 import {RecipeGeometryLayer} from './recipeGeometryLayer'
@@ -60,6 +61,17 @@ export const AoiLayer = ({id, layerConfig = {}, layerIndex, map, recipe}) => {
                 fill={false}
                 color={color}
                 fillColor={fillColor}
+            />
+        )
+        case 'ASSET':
+        case 'RECIPE': return (
+            <AoiGeometryLayer
+                id={id}
+                map={map}
+                aoi={aoi}
+                color={color}
+                fillColor={fillColor}
+                layerIndex={layerIndex}
             />
         )
         default: return (

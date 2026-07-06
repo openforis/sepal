@@ -21,12 +21,8 @@ export class SectionSelection extends React.Component {
                 label: msg('process.mosaic.panel.areaOfInterest.form.eeTable.title')
             },
             {
-                value: 'ASSET',
-                label: msg('process.mosaic.panel.areaOfInterest.form.asset.title')
-            },
-            {
-                value: 'RECIPE',
-                label: msg('process.mosaic.panel.areaOfInterest.form.recipe.title')
+                value: 'SOURCE',
+                label: msg('process.mosaic.panel.areaOfInterest.form.source.title')
             },
             {
                 value: 'POLYGON',
