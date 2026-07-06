@@ -52,7 +52,7 @@ function exportTableToDrive$({
     const eeTaskId = task.id
     return interval(2 * 1000).pipe(
         switchMap(() => ee.$({
-            description: 'doing some batch stuff',
+            description: `poll ${description} export task status`,
             operation: (resolve, reject) =>
                 ee.data.getTaskStatus(eeTaskId,
                     (status, error) => error ? reject(error) : resolve(status)
