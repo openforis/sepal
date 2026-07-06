@@ -12,6 +12,7 @@ import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
 import {categoricalLegendEntries} from '../../sampling/categoricalLegend'
+import {CalculationErrorContent} from '../calculationErrorContent'
 import styles from './proportions.module.css'
 import {ProportionTable} from './proportionTable'
 
@@ -141,7 +142,7 @@ export const OverallProportionInput = ({anticipatedOverallProportion, onChange})
         onChange={onChange}
     />
 
-export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, streamActive, calculationError, onEEStrategyChanged}) => {
+export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, streamActive, calculationError, onEEStrategyChanged, onRetryCalculation, onUseBatch}) => {
     const overallProportion = _.sum(
         anticipatedProportions.value?.map(({weight, proportion}) => {
             return weight * proportion
@@ -167,10 +168,21 @@ export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, st
                             </div>
                         )}
                     />
-                    : <NoData
-                        alignment='left'
-                        message={calculationError || msg('Select image and band.')}
-                    />}
+                    : calculationError
+                        ? <NoData
+                            alignment='left'
+                            message={
+                                <CalculationErrorContent
+                                    error={calculationError}
+                                    onRetry={onRetryCalculation}
+                                    onUseBatch={onUseBatch}
+                                />
+                            }
+                        />
+                        : <NoData
+                            alignment='left'
+                            message={msg('Select image and band.')}
+                        />}
         </Widget>
     )
 }

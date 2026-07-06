@@ -4834,6 +4834,11 @@
       "bands": {},
       "create": "Sampling design",
       "description": "Create a sampling design.",
+      "calculationError": {
+        "retryOnline": "Retry online",
+        "submitBatchAgain": "Submit Batch again",
+        "useBatch": "Use Batch"
+      },
       "retrieve": {
         "invalid": "The sampling design is incomplete and can't be retrieved",
         "invalid.noStrata": "No strata have been computed. Open Stratification and compute the strata.",
@@ -4905,8 +4910,10 @@
               "loading": "Calculating strata weights...",
               "noData": "No strata found in your AOI.",
               "error": {
-                "eeOnline": "Earth Engine failed to calculate the strata: {error} If Online was used, try Batch. Batch submits the calculation as an Earth Engine task, which can handle larger calculations. If you have other export tasks queued or running, the batch task might not start until after they complete.",
-                "eeBatch": "Earth Engine failed to calculate the strata: {error} Batch submits the calculation as an Earth Engine task. If you have other export tasks queued or running, the batch task might not start until after they complete."
+                "eeOnline": "Earth Engine failed to calculate the strata online: {error} You can retry online, or use Batch. Batch submits the calculation as an Earth Engine task, which can handle larger calculations, but if you have other export tasks queued or running it might not start until they complete.",
+                "eeBatch": "Earth Engine failed to calculate the strata with Batch: {error} Batch submits the calculation as an Earth Engine task; if you have other export tasks queued or running it might not have started until they complete. You can submit it again.",
+                "genericWithDetail": "Failed to calculate the strata weights: {error} You can try again.",
+                "generic": "Failed to calculate the strata weights. You can try again."
               },
               "table": {
                 "value": "Value",
@@ -4927,7 +4934,6 @@
             }
           },
           "unstratified": "Area of interest",
-          "loadError": "Failed to calculate strata weights.",
           "title": "Stratification",
           "tooltip": "Select if and/or how how to stratification the sampling"
         },
@@ -5017,8 +5023,10 @@
             "strataProportion": {
               "label": "Anticipated proportion per stratum",
               "error": {
-                "eeOnline": "Earth Engine failed to calculate anticipated proportions: {error} If Online was used, try Batch. Batch submits the calculation as an Earth Engine task, which can handle larger calculations. If you have other export tasks queued or running, the batch task might not start until after they complete.",
-                "eeBatch": "Earth Engine failed to calculate anticipated proportions: {error} Batch submits the calculation as an Earth Engine task. If you have other export tasks queued or running, the batch task might not start until after they complete."
+                "eeOnline": "Earth Engine failed to calculate the anticipated proportions online: {error} You can retry online, or use Batch. Batch submits the calculation as an Earth Engine task, which can handle larger calculations, but if you have other export tasks queued or running it might not start until they complete.",
+                "eeBatch": "Earth Engine failed to calculate the anticipated proportions with Batch: {error} Batch submits the calculation as an Earth Engine task; if you have other export tasks queued or running it might not have started until they complete. You can submit it again.",
+                "genericWithDetail": "Failed to calculate the anticipated proportions: {error} You can try again.",
+                "generic": "Failed to calculate the anticipated proportions. You can try again."
               }
             },
             "anticipatedProportions": {
@@ -5038,8 +5046,7 @@
           },
           "info": "Select one reporting category to focus on, and estimate its proportion within each stratum. This enables additional allocation strategies and allows SEPAL to estimate your sampling error.",
           "title": "Anticipate proportion",
-          "tooltip": "Anticipate proportion of target reporting category. This is used in sample size calculations and when performing optimal sample allocation.",
-          "loadError": "Failed to calculate anticipated proportions."
+          "tooltip": "Anticipate proportion of target reporting category. This is used in sample size calculations and when performing optimal sample allocation."
         },
         "sampleAllocation": {
           "button": "ALO",

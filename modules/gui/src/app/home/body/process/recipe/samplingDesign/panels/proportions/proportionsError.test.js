@@ -1,9 +1,11 @@
 import {describe, expect, it} from 'vitest'
 
-import {proportionsCalculationErrorMessage} from './proportionsError'
+import {CALCULATION_ERROR} from '../eeCalculationError'
+import {proportionsCalculationError} from './proportionsError'
 
 const eeError = {
     response: {
+        errorType: 'EARTH_ENGINE',
         messageKey: 'gee.error.earthEngineException',
         messageArgs: {earthEngineMessage: 'Computation timed out.'},
         defaultMessage: 'Earth Engine: Computation timed out.'
@@ -12,35 +14,37 @@ const eeError = {
 
 const messages = {
     'gee.error.earthEngineException': 'Earth Engine: {earthEngineMessage}',
-    'process.samplingDesign.panel.proportions.form.strataProportion.error.eeOnline': 'Earth Engine failed to calculate anticipated proportions: {error} If Online was used, try Batch. Batch submits the calculation as an Earth Engine task, which can handle larger calculations. If you have other export tasks queued or running, the batch task might not start until after they complete.',
-    'process.samplingDesign.panel.proportions.form.strataProportion.error.eeBatch': 'Earth Engine failed to calculate anticipated proportions: {error} Batch submits the calculation as an Earth Engine task. If you have other export tasks queued or running, the batch task might not start until after they complete.'
+    'process.samplingDesign.panel.proportions.form.strataProportion.error.eeOnline': 'Earth Engine failed to calculate the anticipated proportions online: {error} You can retry online, or use Batch.',
+    'process.samplingDesign.panel.proportions.form.strataProportion.error.eeBatch': 'Earth Engine failed to calculate the anticipated proportions with Batch: {error} You can submit it again.',
+    'process.samplingDesign.panel.proportions.form.strataProportion.error.genericWithDetail': 'Failed to calculate the anticipated proportions: {error} You can try again.',
+    'process.samplingDesign.panel.proportions.form.strataProportion.error.generic': 'Failed to calculate the anticipated proportions. You can try again.'
 }
 
 const format = (key, args, defaultMessage) =>
     (messages[key] || defaultMessage || key)
         .replaceAll(/\{(\w+)}/g, (_match, key) => args?.[key])
 
-describe('proportionsError', () => {
-    it('builds an online EE error with batch guidance', () => {
-        const message = proportionsCalculationErrorMessage({error: eeError, eeStrategy: 'ONLINE', format})
+describe('proportionsCalculationError', () => {
+    it('builds an EE Online proportions error with the EE detail', () => {
+        const {type, strategy, message} = proportionsCalculationError({error: eeError, strategy: 'ONLINE', format})
+        expect(type).toEqual(CALCULATION_ERROR.EARTH_ENGINE)
+        expect(strategy).toEqual('ONLINE')
+        expect(message).toContain('anticipated proportions online')
         expect(message).toContain('Earth Engine: Computation timed out.')
-        expect(message).toContain('try Batch')
-        expect(message).toContain('Earth Engine task')
-        expect(message).toContain('other export tasks')
     })
 
-    it('builds a batch EE error without telling the user to switch to batch', () => {
-        const message = proportionsCalculationErrorMessage({error: eeError, eeStrategy: 'BATCH', format})
-        expect(message).toContain('Earth Engine: Computation timed out.')
-        expect(message).not.toContain('try Batch')
-        expect(message).toContain('Earth Engine task')
+    it('builds an EE Batch proportions error without online wording', () => {
+        const {message} = proportionsCalculationError({error: eeError, strategy: 'BATCH', format})
+        expect(message).toContain('anticipated proportions with Batch')
+        expect(message).not.toContain('proportions online')
     })
 
-    it('returns null for non-EE errors', () => {
-        expect(proportionsCalculationErrorMessage({
-            error: {response: {messageKey: 'error.internal', defaultMessage: 'Internal error'}},
-            eeStrategy: 'ONLINE',
+    it('classifies an untyped Ajax 500 as REQUEST, not EE', () => {
+        const {type} = proportionsCalculationError({
+            error: {status: 500, message: 'ajax error 500'},
+            strategy: 'ONLINE',
             format
-        })).toBeNull()
+        })
+        expect(type).toEqual(CALCULATION_ERROR.REQUEST)
     })
 })

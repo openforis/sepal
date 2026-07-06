@@ -1,28 +1,45 @@
 import {describe, expect, it} from 'vitest'
 
-import {eeCalculationErrorMessage, toErrorMessage} from './eeCalculationError'
+import {CALCULATION_ERROR, calculationError, toErrorMessage} from './eeCalculationError'
 
 const eeError = {
     response: {
+        errorType: 'EARTH_ENGINE',
         messageKey: 'gee.error.earthEngineException',
         messageArgs: {earthEngineMessage: 'Computation timed out.'},
         defaultMessage: 'Earth Engine: Computation timed out.'
     }
 }
 
+const backendError = {
+    response: {
+        messageKey: 'error.internal',
+        defaultMessage: 'Internal error'
+    }
+}
+
+const ajax500 = {status: 500, message: 'ajax error 500'}
+
 const messages = {
     'gee.error.earthEngineException': 'Earth Engine: {earthEngineMessage}',
-    'test.online': 'Online: {error} If Online was used, try Batch.',
-    'test.batch': 'Batch: {error}'
+    'test.eeOnline': 'EE online: {error} You can retry online or use Batch.',
+    'test.eeBatch': 'EE batch: {error}',
+    'test.genericWithDetail': 'The calculation failed: {error} You can try again.',
+    'test.generic': 'The calculation failed. You can try again.'
 }
 
 const format = (key, args, defaultMessage) =>
     (messages[key] || defaultMessage || key)
         .replaceAll(/\{(\w+)}/g, (_match, key) => args?.[key])
 
-const ajax500 = {status: 500, message: 'ajax error 500'}
+const messageKeys = {
+    eeOnline: 'test.eeOnline',
+    eeBatch: 'test.eeBatch',
+    genericWithDetail: 'test.genericWithDetail',
+    generic: 'test.generic'
+}
 
-const keys = {onlineKey: 'test.online', batchKey: 'test.batch'}
+const build = (error, strategy) => calculationError({error, strategy, messageKeys, format})
 
 describe('eeCalculationError', () => {
     describe('toErrorMessage', () => {
@@ -34,65 +51,61 @@ describe('eeCalculationError', () => {
             expect(toErrorMessage('Boom', format)).toEqual('Boom')
         })
 
-        it('does not return a raw object for message-less errors', () => {
-            expect(toErrorMessage({some: 'object'}, format)).toBeUndefined()
-        })
-
         it('returns a useful string for an untyped Ajax 500', () => {
             expect(toErrorMessage(ajax500, format)).toEqual('ajax error 500')
         })
 
-        it('falls back to HTTP <status> for a message-less server error', () => {
-            expect(toErrorMessage({status: 500}, format)).toEqual('HTTP 500')
+        it('does not return a raw object for message-less errors', () => {
+            expect(toErrorMessage({some: 'object'}, format)).toBeUndefined()
         })
     })
 
-    describe('eeCalculationErrorMessage', () => {
-        it('uses onlineKey with the translated EE detail and Online guidance', () => {
-            const message = eeCalculationErrorMessage({error: eeError, eeStrategy: 'ONLINE', ...keys, format})
-            expect(message).toContain('Earth Engine: Computation timed out.')
-            expect(message).toContain('Online:')
-            expect(message).toContain('try Batch')
+    describe('calculationError classification', () => {
+        it('classifies a typed EARTH_ENGINE response as EE', () => {
+            expect(build(eeError, 'ONLINE').type).toEqual(CALCULATION_ERROR.EARTH_ENGINE)
         })
 
-        it('uses batchKey with the translated EE detail and not the Online message', () => {
-            const message = eeCalculationErrorMessage({error: eeError, eeStrategy: 'BATCH', ...keys, format})
-            expect(message).toContain('Earth Engine: Computation timed out.')
-            expect(message).toContain('Batch:')
-            expect(message).not.toContain('Online:')
-            expect(message).not.toContain('try Batch')
+        it('classifies a typed non-EE response with messageKey as BACKEND, not EE', () => {
+            expect(build(backendError, 'ONLINE').type).toEqual(CALCULATION_ERROR.BACKEND)
         })
 
-        it('returns null for non-EE responses', () => {
-            expect(eeCalculationErrorMessage({
-                error: {response: {messageKey: 'error.internal', defaultMessage: 'Internal error'}},
-                eeStrategy: 'ONLINE',
-                ...keys,
-                format
-            })).toBeNull()
+        it('classifies an untyped Ajax 500 as REQUEST, not EE (no status inference)', () => {
+            expect(build(ajax500, 'ONLINE').type).toEqual(CALCULATION_ERROR.REQUEST)
+        })
+    })
+
+    describe('calculationError message + strategy', () => {
+        it('EE Online carries the EE detail, ONLINE strategy, and batch-capable wording', () => {
+            const result = build(eeError, 'ONLINE')
+            expect(result.strategy).toEqual('ONLINE')
+            expect(result.message).toContain('EE online:')
+            expect(result.message).toContain('Earth Engine: Computation timed out.')
         })
 
-        it('targets an untyped Ajax 500 Online with the error detail and Batch guidance', () => {
-            const message = eeCalculationErrorMessage({error: ajax500, eeStrategy: 'ONLINE', ...keys, format})
-            expect(message).toContain('ajax error 500')
-            expect(message).toContain('Online:')
-            expect(message).toContain('try Batch')
+        it('EE Batch uses the batch message and BATCH strategy, not the online wording', () => {
+            const result = build(eeError, 'BATCH')
+            expect(result.strategy).toEqual('BATCH')
+            expect(result.message).toContain('EE batch:')
+            expect(result.message).not.toContain('EE online:')
         })
 
-        it('targets an untyped Ajax 500 Batch without the Online message', () => {
-            const message = eeCalculationErrorMessage({error: ajax500, eeStrategy: 'BATCH', ...keys, format})
-            expect(message).toContain('ajax error 500')
-            expect(message).toContain('Batch:')
-            expect(message).not.toContain('try Batch')
+        it('BACKEND error uses the generic message with backend detail, no EE wording', () => {
+            const result = build(backendError, 'ONLINE')
+            expect(result.message).toContain('The calculation failed:')
+            expect(result.message).toContain('Internal error')
+            expect(result.message).not.toContain('EE online:')
         })
 
-        it('returns null for an untyped non-500 error', () => {
-            expect(eeCalculationErrorMessage({
-                error: {status: 404, message: 'Not found'},
-                eeStrategy: 'ONLINE',
-                ...keys,
-                format
-            })).toBeNull()
+        it('untyped Ajax 500 uses the generic message with the request detail', () => {
+            const result = build(ajax500, 'BATCH')
+            expect(result.message).toContain('The calculation failed:')
+            expect(result.message).toContain('ajax error 500')
+        })
+
+        it('a detail-less request error uses the plain generic message', () => {
+            const result = build({some: 'object'}, 'ONLINE')
+            expect(result.type).toEqual(CALCULATION_ERROR.REQUEST)
+            expect(result.message).toEqual('The calculation failed. You can try again.')
         })
     })
 })

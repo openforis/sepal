@@ -1,12 +1,11 @@
-import {eeCalculationErrorMessage, toErrorMessage} from '../eeCalculationError'
+import {calculationError} from '../eeCalculationError'
 
-export {toErrorMessage}
+const messageKeys = {
+    eeOnline: 'process.samplingDesign.panel.stratification.form.strata.error.eeOnline',
+    eeBatch: 'process.samplingDesign.panel.stratification.form.strata.error.eeBatch',
+    genericWithDetail: 'process.samplingDesign.panel.stratification.form.strata.error.genericWithDetail',
+    generic: 'process.samplingDesign.panel.stratification.form.strata.error.generic'
+}
 
-export const strataCalculationErrorMessage = ({error, eeStrategy, format}) =>
-    eeCalculationErrorMessage({
-        error,
-        eeStrategy,
-        onlineKey: 'process.samplingDesign.panel.stratification.form.strata.error.eeOnline',
-        batchKey: 'process.samplingDesign.panel.stratification.form.strata.error.eeBatch',
-        format
-    })
+export const strataCalculationError = ({error, strategy, format}) =>
+    calculationError({error, strategy, messageKeys, format})

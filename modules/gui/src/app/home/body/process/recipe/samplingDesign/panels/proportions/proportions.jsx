@@ -19,7 +19,7 @@ import {isNumericClassValue, toClassOptions} from '../../sampling/categoricalLeg
 import {maxAnticipatedTargetProportion, smartRound, toProportions} from '../../sampling/proportionMath'
 import {AnticipationStrategy, ImageSelection, OverallProportionInput, ProportionsHeaderButtons, StrataProportion} from './proportionControls'
 import styles from './proportions.module.css'
-import {proportionsCalculationErrorMessage, toErrorMessage} from './proportionsError'
+import {proportionsCalculationError as toProportionsCalculationError} from './proportionsError'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -200,6 +200,8 @@ class _Proportions extends React.Component {
             streamActive={this.props.stream('PROBABILITY_PER_STRATUM').active}
             calculationError={this.state.proportionsCalculationError}
             onEEStrategyChanged={this.onEEStrategyChanged}
+            onRetryCalculation={() => this.scheduleAnticipatedProportions()}
+            onUseBatch={() => this.useBatch()}
         />
     }
 
@@ -287,10 +289,22 @@ class _Proportions extends React.Component {
     }
 
     onEEStrategyChanged() {
-        // Explicit Online/Batch recompute: invalidate cancels any in-flight request and clears stale
-        // results/error, then defer so the changed eeStrategy value has settled before recalculating.
+        this.scheduleAnticipatedProportions()
+    }
+
+    // Explicit recompute: invalidate cancels any in-flight request and clears stale results/error, then
+    // defer so a just-changed input value (e.g. eeStrategy) has settled before recalculating.
+    scheduleAnticipatedProportions() {
         this.invalidateCalculatedProportions()
         setImmediate(() => this.calculateAnticipatedProportions())
+    }
+
+    useBatch() {
+        const {inputs: {eeStrategy}} = this.props
+        eeStrategy.set('BATCH')
+        // set() doesn't fire the eeStrategy onChange (UI-only callback), so schedule explicitly. The
+        // deferred recompute sees eeStrategy.value settled to BATCH.
+        this.scheduleAnticipatedProportions()
     }
 
     onImageLoading() {
@@ -337,10 +351,9 @@ class _Proportions extends React.Component {
     }
 
     onBandChanged() {
-        const {inputs: {band, targetClass}} = this.props
+        const {inputs: {anticipationStrategy, band, targetClass}} = this.props
         const {visualizations = []} = this.state
         // Classes are band-specific, so a class chosen for a previous band must not silently carry over.
-        this.invalidateCalculatedProportions()
         targetClass.set(null)
         this.clearClassValues()
         const minMax = visualizations.map(({bands, min, max}) => {
@@ -355,6 +368,17 @@ class _Proportions extends React.Component {
         const max = _.maxBy(minMax, 'max')?.max
         if (min >= 0) {
             this.setPercentage(max > 1)
+        }
+        if (anticipationStrategy.value === 'CATEGORICAL') {
+            // Categorical needs an explicit target class before it can calculate; just drop stale results.
+            // The recompute happens later when targetClass is selected (via proportionsDeps).
+            this.invalidateCalculatedProportions()
+        } else {
+            // Probability mode has everything it needs once the band is set. Schedule the recompute
+            // explicitly: band is excluded from proportionsDeps, and FormCombo fires this onChange deferred,
+            // so a dependency-triggered request would be started early and then cancelled by the
+            // invalidation below.
+            this.scheduleAnticipatedProportions()
         }
     }
 
@@ -531,19 +555,9 @@ class _Proportions extends React.Component {
                 takeUntil(this.cancel$)
             ),
             this.onProbabilitiyPerStratumCalculated,
-            error => {
-                const proportionsError = proportionsCalculationErrorMessage({error, eeStrategy: eeStrategy.value})
-                if (proportionsError) {
-                    this.setState({proportionsCalculationError: proportionsError})
-                    return
-                }
-                Notifications.error({
-                    message: msg('process.samplingDesign.panel.proportions.loadError'),
-                    error: toErrorMessage(error),
-                    group: true,
-                    timeout: 0
-                })
-            }
+            error => this.setState({
+                proportionsCalculationError: toProportionsCalculationError({error, strategy: eeStrategy.value})
+            })
         )
     }
 
@@ -602,11 +616,13 @@ class _Proportions extends React.Component {
     }
 }
 
-// eeStrategy is intentionally excluded: the Online/Batch toggle recomputes explicitly via
-// onEEStrategyChanged, so including it here would trigger a second recomputation.
+// eeStrategy and band are intentionally excluded: both recompute explicitly (the Online/Batch toggle via
+// onEEStrategyChanged, band via onBandChanged). Including them would trigger a second recomputation - and
+// for band, FormCombo's deferred onChange means the dependency-triggered request would be started and then
+// cancelled by onBandChanged's invalidation, leaving the table empty.
 const proportionsDeps = props => {
-    const {inputs: {manual, anticipationStrategy, type, assetId, recipeId, band, targetClass, scale}} = props
-    return [manual, anticipationStrategy, type, assetId, recipeId, band, targetClass, scale]
+    const {inputs: {manual, anticipationStrategy, type, assetId, recipeId, targetClass, scale}} = props
+    return [manual, anticipationStrategy, type, assetId, recipeId, targetClass, scale]
         .map(input => input?.value)
 }
 

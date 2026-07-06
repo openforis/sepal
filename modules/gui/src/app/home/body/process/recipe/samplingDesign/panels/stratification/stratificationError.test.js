@@ -1,9 +1,11 @@
 import {describe, expect, it} from 'vitest'
 
-import {strataCalculationErrorMessage} from './stratificationError'
+import {CALCULATION_ERROR} from '../eeCalculationError'
+import {strataCalculationError} from './stratificationError'
 
 const eeError = {
     response: {
+        errorType: 'EARTH_ENGINE',
         messageKey: 'gee.error.earthEngineException',
         messageArgs: {earthEngineMessage: 'Computation timed out.'},
         defaultMessage: 'Earth Engine: Computation timed out.'
@@ -12,35 +14,37 @@ const eeError = {
 
 const messages = {
     'gee.error.earthEngineException': 'Earth Engine: {earthEngineMessage}',
-    'process.samplingDesign.panel.stratification.form.strata.error.eeOnline': 'Earth Engine failed to calculate the strata: {error} If Online was used, try Batch. Batch submits the calculation as an Earth Engine task, which can handle larger calculations. If you have other export tasks queued or running, the batch task might not start until after they complete.',
-    'process.samplingDesign.panel.stratification.form.strata.error.eeBatch': 'Earth Engine failed to calculate the strata: {error} Batch submits the calculation as an Earth Engine task. If you have other export tasks queued or running, the batch task might not start until after they complete.'
+    'process.samplingDesign.panel.stratification.form.strata.error.eeOnline': 'Earth Engine failed to calculate the strata online: {error} You can retry online, or use Batch.',
+    'process.samplingDesign.panel.stratification.form.strata.error.eeBatch': 'Earth Engine failed to calculate the strata with Batch: {error} You can submit it again.',
+    'process.samplingDesign.panel.stratification.form.strata.error.genericWithDetail': 'Failed to calculate the strata weights: {error} You can try again.',
+    'process.samplingDesign.panel.stratification.form.strata.error.generic': 'Failed to calculate the strata weights. You can try again.'
 }
 
 const format = (key, args, defaultMessage) =>
     (messages[key] || defaultMessage || key)
         .replaceAll(/\{(\w+)}/g, (_match, key) => args?.[key])
 
-describe('stratificationError', () => {
-    it('builds an online EE error with batch guidance', () => {
-        const message = strataCalculationErrorMessage({error: eeError, eeStrategy: 'ONLINE', format})
+describe('strataCalculationError', () => {
+    it('builds an EE Online strata error with the EE detail', () => {
+        const {type, strategy, message} = strataCalculationError({error: eeError, strategy: 'ONLINE', format})
+        expect(type).toEqual(CALCULATION_ERROR.EARTH_ENGINE)
+        expect(strategy).toEqual('ONLINE')
+        expect(message).toContain('strata online')
         expect(message).toContain('Earth Engine: Computation timed out.')
-        expect(message).toContain('try Batch')
-        expect(message).toContain('Earth Engine task')
-        expect(message).toContain('other export tasks')
     })
 
-    it('builds a batch EE error without telling the user to switch to batch', () => {
-        const message = strataCalculationErrorMessage({error: eeError, eeStrategy: 'BATCH', format})
-        expect(message).toContain('Earth Engine: Computation timed out.')
-        expect(message).not.toContain('try Batch')
-        expect(message).toContain('Earth Engine task')
+    it('builds an EE Batch strata error without online wording', () => {
+        const {message} = strataCalculationError({error: eeError, strategy: 'BATCH', format})
+        expect(message).toContain('strata with Batch')
+        expect(message).not.toContain('strata online')
     })
 
-    it('returns null for non-EE errors', () => {
-        expect(strataCalculationErrorMessage({
+    it('classifies a non-EE typed error as BACKEND', () => {
+        const {type} = strataCalculationError({
             error: {response: {messageKey: 'error.internal', defaultMessage: 'Internal error'}},
-            eeStrategy: 'ONLINE',
+            strategy: 'ONLINE',
             format
-        })).toBeNull()
+        })
+        expect(type).toEqual(CALCULATION_ERROR.BACKEND)
     })
 })

@@ -1,12 +1,11 @@
-import {eeCalculationErrorMessage, toErrorMessage} from '../eeCalculationError'
+import {calculationError} from '../eeCalculationError'
 
-export {toErrorMessage}
+const messageKeys = {
+    eeOnline: 'process.samplingDesign.panel.proportions.form.strataProportion.error.eeOnline',
+    eeBatch: 'process.samplingDesign.panel.proportions.form.strataProportion.error.eeBatch',
+    genericWithDetail: 'process.samplingDesign.panel.proportions.form.strataProportion.error.genericWithDetail',
+    generic: 'process.samplingDesign.panel.proportions.form.strataProportion.error.generic'
+}
 
-export const proportionsCalculationErrorMessage = ({error, eeStrategy, format}) =>
-    eeCalculationErrorMessage({
-        error,
-        eeStrategy,
-        onlineKey: 'process.samplingDesign.panel.proportions.form.strataProportion.error.eeOnline',
-        batchKey: 'process.samplingDesign.panel.proportions.form.strataProportion.error.eeBatch',
-        format
-    })
+export const proportionsCalculationError = ({error, strategy, format}) =>
+    calculationError({error, strategy, messageKeys, format})

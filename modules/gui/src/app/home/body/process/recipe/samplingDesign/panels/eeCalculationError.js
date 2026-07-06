@@ -1,31 +1,48 @@
 import {msg} from '~/translate'
 
-const EE_ERROR_MESSAGE_KEY = 'gee.error.earthEngineException'
+// Machine-readable classification of a Sampling Design calculation failure. Behavior (wording, recovery
+// actions) branches on this; user-facing text still comes from messageKey/defaultMessage/messageArgs.
+export const CALCULATION_ERROR = {
+    EARTH_ENGINE: 'EARTH_ENGINE',
+    BACKEND: 'BACKEND',
+    REQUEST: 'REQUEST'
+}
 
-// The backend sometimes surfaces an EE exception as a typed response, but a timed-out/overloaded Online
-// calculation can also reach the GUI as an untyped RxJS AjaxError ("ajax error 500") with no parsed
-// messageKey. Both are treated as EE calculation failures here (scoped to Sampling Design callers only).
-const isEETypedError = error =>
-    error?.response?.messageKey === EE_ERROR_MESSAGE_KEY
+const EARTH_ENGINE_ERROR_TYPE = 'EARTH_ENGINE'
 
-const isUntypedServerError = error =>
-    error?.status === 500 && !error?.response?.messageKey
+// Only a typed backend response carrying errorType: 'EARTH_ENGINE' is treated as an EE failure. A typed
+// backend response with any other messageKey is a generic backend error, and anything without a parsed
+// response (e.g. an untyped "ajax error 500" from a server reload/proxy interruption) is a request error.
+// Raw HTTP status is deliberately NOT used to infer EE.
+const classify = error =>
+    error?.response?.errorType === EARTH_ENGINE_ERROR_TYPE
+        ? CALCULATION_ERROR.EARTH_ENGINE
+        : error?.response?.messageKey
+            ? CALCULATION_ERROR.BACKEND
+            : CALCULATION_ERROR.REQUEST
 
 export const toErrorMessage = (error, format = msg) => {
     if (error?.response?.messageKey) {
         return format(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
     }
     const message = error?.response?.defaultMessage || error?.message || error?.statusText || error
-    if (typeof message === 'string') {
-        return message
-    }
-    return error?.status ? `HTTP ${error.status}` : undefined
+    return typeof message === 'string' ? message : undefined
 }
 
-// Targeted guidance for EE exceptions from a per-stratum calculation, covering both typed EE responses and
-// untyped 500 failures. Returns null for any other error so the caller can fall back to its generic
-// notification. The Online variant also suggests trying Batch.
-export const eeCalculationErrorMessage = ({error, eeStrategy, onlineKey, batchKey, format = msg}) =>
-    isEETypedError(error) || isUntypedServerError(error)
-        ? format(eeStrategy === 'ONLINE' ? onlineKey : batchKey, {error: toErrorMessage(error, format)})
-        : null
+// Builds the structured inline failed-state for a calculation error. `messageKeys` supplies the domain
+// wording (strata vs proportions); `type` + `strategy` let the caller choose recovery actions. Returns
+// {type, strategy, message}.
+export const calculationError = ({error, strategy, messageKeys, format = msg}) => {
+    const type = classify(error)
+    const detail = toErrorMessage(error, format)
+    const messageKey = type === CALCULATION_ERROR.EARTH_ENGINE
+        ? (strategy === 'ONLINE' ? messageKeys.eeOnline : messageKeys.eeBatch)
+        : detail
+            ? messageKeys.genericWithDetail
+            : messageKeys.generic
+    return {
+        type,
+        strategy,
+        message: format(messageKey, detail ? {error: detail} : undefined)
+    }
+}

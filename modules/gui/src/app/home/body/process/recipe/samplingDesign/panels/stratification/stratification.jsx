@@ -18,14 +18,14 @@ import {FormCombo} from '~/widget/form/combo'
 import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
-import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
+import {CalculationErrorContent} from '../calculationErrorContent'
 import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
-import {strataCalculationErrorMessage, toErrorMessage} from './stratificationError'
+import {strataCalculationError as toStrataCalculationError} from './stratificationError'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -334,13 +334,7 @@ class _Stratification extends React.Component {
             )
         }
         if (strataCalculationError) {
-            return (
-                <NoData
-                    className={styles.noData}
-                    alignment='left'
-                    message={strataCalculationError}
-                />
-            )
+            return this.renderStrataError(strataCalculationError)
         }
         if (strata.value?.length && band.value) {
             return (
@@ -361,6 +355,30 @@ class _Stratification extends React.Component {
                 )}
             />
         )
+    }
+
+    renderStrataError(error) {
+        return (
+            <NoData
+                className={styles.noData}
+                alignment='left'
+                message={
+                    <CalculationErrorContent
+                        error={error}
+                        onRetry={() => this.scheduleAreaPerStratum()}
+                        onUseBatch={() => this.useBatch()}
+                    />
+                }
+            />
+        )
+    }
+
+    useBatch() {
+        const {inputs: {eeStrategy}} = this.props
+        eeStrategy.set('BATCH')
+        // set() doesn't fire the eeStrategy onChange (that's a UI-only callback), so schedule explicitly.
+        // scheduleAreaPerStratum defers via setImmediate, by which point eeStrategy.value has settled to BATCH.
+        this.scheduleAreaPerStratum()
     }
 
     componentDidMount() {
@@ -598,20 +616,9 @@ class _Stratification extends React.Component {
                 takeUntil(this.cancel$)
             ),
             this.onAreaPerStratumLoaded,
-            error => {
-                const strataError = strataCalculationErrorMessage({error, eeStrategy: eeStrategy.value})
-                if (strataError) {
-                    this.setState({strataCalculationError: strataError})
-                    return
-                }
-                const errorMessage = toErrorMessage(error)
-                Notifications.error({
-                    message: msg('process.samplingDesign.panel.stratification.loadError'),
-                    error: errorMessage,
-                    group: true,
-                    timeout: 0
-                })
-            }
+            error => this.setState({
+                strataCalculationError: toStrataCalculationError({error, strategy: eeStrategy.value})
+            })
         )
     }
 
