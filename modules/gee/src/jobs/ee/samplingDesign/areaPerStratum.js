@@ -29,7 +29,9 @@ const worker$ = ({
             }).pipe(
                 map(parseGroups)
             )
-            : ee.getInfo$(eeDictionary, description)
+            // Interactive Online path: no retry, so an EE timeout fails fast and the GUI can show the
+            // inline Online->Batch guidance instead of retrying past the HTTP request timeout.
+            : ee.getInfo$(eeDictionary, description, 0)
         ),
         map(o => o.groups)
     )

@@ -20,6 +20,8 @@ const format = (key, args, defaultMessage) =>
     (messages[key] || defaultMessage || key)
         .replaceAll(/\{(\w+)}/g, (_match, key) => args?.[key])
 
+const ajax500 = {status: 500, message: 'ajax error 500'}
+
 const keys = {onlineKey: 'test.online', batchKey: 'test.batch'}
 
 describe('eeCalculationError', () => {
@@ -34,6 +36,14 @@ describe('eeCalculationError', () => {
 
         it('does not return a raw object for message-less errors', () => {
             expect(toErrorMessage({some: 'object'}, format)).toBeUndefined()
+        })
+
+        it('returns a useful string for an untyped Ajax 500', () => {
+            expect(toErrorMessage(ajax500, format)).toEqual('ajax error 500')
+        })
+
+        it('falls back to HTTP <status> for a message-less server error', () => {
+            expect(toErrorMessage({status: 500}, format)).toEqual('HTTP 500')
         })
     })
 
@@ -56,6 +66,29 @@ describe('eeCalculationError', () => {
         it('returns null for non-EE responses', () => {
             expect(eeCalculationErrorMessage({
                 error: {response: {messageKey: 'error.internal', defaultMessage: 'Internal error'}},
+                eeStrategy: 'ONLINE',
+                ...keys,
+                format
+            })).toBeNull()
+        })
+
+        it('targets an untyped Ajax 500 Online with the error detail and Batch guidance', () => {
+            const message = eeCalculationErrorMessage({error: ajax500, eeStrategy: 'ONLINE', ...keys, format})
+            expect(message).toContain('ajax error 500')
+            expect(message).toContain('Online:')
+            expect(message).toContain('try Batch')
+        })
+
+        it('targets an untyped Ajax 500 Batch without the Online message', () => {
+            const message = eeCalculationErrorMessage({error: ajax500, eeStrategy: 'BATCH', ...keys, format})
+            expect(message).toContain('ajax error 500')
+            expect(message).toContain('Batch:')
+            expect(message).not.toContain('try Batch')
+        })
+
+        it('returns null for an untyped non-500 error', () => {
+            expect(eeCalculationErrorMessage({
+                error: {status: 404, message: 'Not found'},
                 eeStrategy: 'ONLINE',
                 ...keys,
                 format

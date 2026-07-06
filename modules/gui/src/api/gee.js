@@ -217,14 +217,21 @@ export default {
     areaPerStratum$: ({aoi, stratification, band, scale, batch}) =>
         postJson$('/api/gee/samplingDesign/areaPerStratum', {
             body: {aoi, stratification, band, scale, batch},
+            // No HTTP retry: Online should surface EE failures promptly, and Batch task submission should
+            // not be repeated by the client.
             retry: {
-                maxRetries: 1
+                maxRetries: 0
             }
         }),
 
     probabilityPerStratum$: ({aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, batch}) =>
         postJson$('/api/gee/samplingDesign/probabilityPerStratum', {
-            body: {aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, batch}
+            body: {aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, batch},
+            // No HTTP retry: Online should surface EE failures promptly, and Batch task submission should
+            // not be repeated by the client.
+            retry: {
+                maxRetries: 0
+            }
         }),
 
     // `recipe` MUST be the canonical task recipe (toTaskRecipe(recipe)), the same shape export submits,
