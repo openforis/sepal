@@ -4904,6 +4904,10 @@
               "select": "Select stratification and band.",
               "loading": "Calculating strata weights...",
               "noData": "No strata found in your AOI.",
+              "error": {
+                "eeOnline": "Earth Engine failed to calculate the strata: {error} If Online was used, try Batch. Batch submits the calculation as an Earth Engine task, which can handle larger calculations. If you have other export tasks queued or running, the batch task might not start until after they complete.",
+                "eeBatch": "Earth Engine failed to calculate the strata: {error} Batch submits the calculation as an Earth Engine task. If you have other export tasks queued or running, the batch task might not start until after they complete."
+              },
               "table": {
                 "value": "Value",
                 "area": "Area (ha)",

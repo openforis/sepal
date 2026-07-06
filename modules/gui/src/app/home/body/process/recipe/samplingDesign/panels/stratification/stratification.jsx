@@ -25,6 +25,7 @@ import {Widget} from '~/widget/widget'
 
 import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
+import {strataCalculationErrorMessage, toErrorMessage} from './stratificationError'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -65,7 +66,8 @@ class _Stratification extends React.Component {
         bands: undefined,
         prevStrata: [],
         entriesByBand: {},
-        showHexColorCode: false
+        showHexColorCode: false,
+        strataCalculationError: null
     }
 
     constructor(props) {
@@ -267,7 +269,7 @@ class _Stratification extends React.Component {
     }
 
     renderStrata() {
-        const {stream, inputs: {band, eeStrategy, strata}} = this.props
+        const {stream, inputs: {eeStrategy, strata}} = this.props
         const {showHexColorCode} = this.state
         const hexCodeButton = (
             <Button
@@ -301,6 +303,7 @@ class _Stratification extends React.Component {
                         tooltip: msg('process.samplingDesign.panel.stratification.form.eeStrategy.batch.tooltip')
                     },
                 ]}
+                onChange={this.onEEStrategyChanged}
             />
         )
 
@@ -308,43 +311,55 @@ class _Stratification extends React.Component {
             <Widget
                 label={msg('process.samplingDesign.panel.stratification.form.strata.label')}
                 labelButtons={[hexCodeButton, eeStrategyButtons]}>
-                {this.props.stream('AREA_PER_STRATUM').active
-                    ? (
-                        <NoData
-                            className={styles.noData}
-                            alignment='left'
-                            message={(
-                                <div>
-                                    <Icon name='spinner'/>
-                                    {' ' + msg('process.samplingDesign.panel.stratification.form.strata.loading')}
-                                </div>
-                            )}
-                        />
-                    )
-                    : strata.value?.length && band.value
-                        ? (
-                            <StrataTable
-                                strata={strata}
-                                showHexColorCode={showHexColorCode}
-                            />
-                        )
-                        : !band.value
-                            ? (
-                                <NoData
-                                    className={styles.noData}
-                                    alignment='left'
-                                    message={msg('process.samplingDesign.panel.stratification.form.strata.select')}
-                                />
-                            )
-                            : (
-                                <NoData
-                                    className={styles.noData}
-                                    alignment='left'
-                                    message={msg('process.samplingDesign.panel.stratification.form.strata.noData')}
-                                />
-                            )
-                }
+                {this.renderStrataContent()}
             </Widget>
+        )
+    }
+
+    renderStrataContent() {
+        const {stream, inputs: {band, strata}} = this.props
+        const {showHexColorCode, strataCalculationError} = this.state
+        if (stream('AREA_PER_STRATUM').active) {
+            return (
+                <NoData
+                    className={styles.noData}
+                    alignment='left'
+                    message={(
+                        <div>
+                            <Icon name='spinner'/>
+                            {' ' + msg('process.samplingDesign.panel.stratification.form.strata.loading')}
+                        </div>
+                    )}
+                />
+            )
+        }
+        if (strataCalculationError) {
+            return (
+                <NoData
+                    className={styles.noData}
+                    alignment='left'
+                    message={strataCalculationError}
+                />
+            )
+        }
+        if (strata.value?.length && band.value) {
+            return (
+                <StrataTable
+                    strata={strata}
+                    showHexColorCode={showHexColorCode}
+                />
+            )
+        }
+        return (
+            <NoData
+                className={styles.noData}
+                alignment='left'
+                message={msg(
+                    band.value
+                        ? 'process.samplingDesign.panel.stratification.form.strata.noData'
+                        : 'process.samplingDesign.panel.stratification.form.strata.select'
+                )}
+            />
         )
     }
 
@@ -394,6 +409,7 @@ class _Stratification extends React.Component {
         if (strata.value) {
             this.setState({prevStrata: strata.value})
         }
+        this.clearStrataCalculationError()
         strata.set(null)
     }
 
@@ -403,6 +419,7 @@ class _Stratification extends React.Component {
         if (strata.value) {
             this.setState({prevStrata: strata.value})
         }
+        this.clearStrataCalculationError()
         strata.set(null)
     }
 
@@ -480,6 +497,7 @@ class _Stratification extends React.Component {
     onAreaPerStratumLoaded(areaPerStratum) {
         const {inputs: {skip, band, strata}} = this.props
         const {prevStrata, entriesByBand} = this.state
+        this.clearStrataCalculationError()
         if (skip.value?.length) {
             const area = Array.isArray(areaPerStratum)
                 ? areaPerStratum.reduce((acc, stratum) => acc + (stratum?.area || 0), 0)
@@ -533,7 +551,17 @@ class _Stratification extends React.Component {
         if (strata.value && !skip.value?.length) {
             this.setState({prevStrata: strata.value})
         }
+        this.clearStrataCalculationError()
         strata.set(null)
+    }
+
+    // The EE calculation error is kept in component state rather than the `strata` form field, so it never
+    // collides with the field's `.notEmpty` required message: the required message keeps gating Apply while
+    // the friendly select/no-data body copy still shows for ordinary empty state.
+    clearStrataCalculationError() {
+        if (this.state.strataCalculationError) {
+            this.setState({strataCalculationError: null})
+        }
     }
 
     calculateAreaPerStratum() {
@@ -571,9 +599,12 @@ class _Stratification extends React.Component {
             ),
             this.onAreaPerStratumLoaded,
             error => {
-                const errorMessage = error?.response?.messageKey
-                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                    : error
+                const strataError = strataCalculationErrorMessage({error, eeStrategy: eeStrategy.value})
+                if (strataError) {
+                    this.setState({strataCalculationError: strataError})
+                    return
+                }
+                const errorMessage = toErrorMessage(error)
                 Notifications.error({
                     message: msg('process.samplingDesign.panel.stratification.loadError'),
                     error: errorMessage,
