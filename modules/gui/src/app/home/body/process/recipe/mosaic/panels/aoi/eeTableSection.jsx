@@ -29,6 +29,7 @@ class _EETableSection extends React.Component {
         const {recipeId} = props
         this.eeTableChanged$ = new Subject()
         this.eeTableColumnChanged$ = new Subject()
+        this.boundsChanged$ = new Subject()
         this.recipeActions = RecipeActions(recipeId)
     }
 
@@ -208,8 +209,20 @@ class _EETableSection extends React.Component {
     }
 
     setOverlay() {
-        const {stream, inputs: {eeTable, eeTableColumn, eeTableRow, buffer}} = this.props
-        if (!eeTableRow.value) {
+        const {stream, overlay: prevOverlay, featureLayerSources, recipeActionBuilder, inputs: {eeTable, eeTableColumn, eeTableRow, eeTableRowSelection, buffer}} = this.props
+        // Only a FILTER selection previews a single row. INCLUDE_ALL leaves eeTableRow.value untouched, so
+        // treat any non-FILTER selection as incomplete to avoid rendering the previously selected row.
+        const isFilteredRow = eeTableRowSelection.value === 'FILTER'
+        if (!isFilteredRow || !eeTableRow.value) {
+            // No single-row selection (e.g. after changing table/column or switching to INCLUDE_ALL): drop
+            // any stale overlay/bounds and cancel a pending request.
+            if (prevOverlay) {
+                this.boundsChanged$.next()
+                recipeActionBuilder('CLEAR_MAP_OVERLAY')
+                    .del('layers.overlay')
+                    .del('ui.overlay.bounds')
+                    .dispatch()
+            }
             return
         }
 
@@ -220,7 +233,6 @@ class _EETableSection extends React.Component {
             key: eeTableRow.value,
             buffer: buffer.value
         }
-        const {overlay: prevOverlay, featureLayerSources, recipeActionBuilder} = this.props
         const aoiLayerSource = featureLayerSources.find(({type}) => type === 'Aoi')
         const overlay = {
             featureLayers: [
@@ -230,12 +242,17 @@ class _EETableSection extends React.Component {
                 }
             ]
         }
-        if (!_.isEqual(overlay, prevOverlay) && !stream('LOAD_BOUNDS').active) {
+        if (!_.isEqual(overlay, prevOverlay)) {
+            // Cancel any in-flight bounds request so a late response for the previous row can't overwrite
+            // the bounds for this newer one.
+            this.boundsChanged$.next()
             recipeActionBuilder('DELETE_MAP_OVERLAY_BOUNDS')
                 .del('ui.overlay.bounds')
                 .dispatch()
             stream('LOAD_BOUNDS',
-                api.gee.aoiBounds$(aoi),
+                api.gee.aoiBounds$(aoi).pipe(
+                    takeUntil(this.boundsChanged$)
+                ),
                 bounds => {
                     recipeActionBuilder('SET_MAP_OVERLAY_BOUNDS')
                         .set('ui.overlay.bounds', bounds)
@@ -250,6 +267,8 @@ class _EETableSection extends React.Component {
 
     componentWillUnmount() {
         const {recipeActionBuilder} = this.props
+        this.boundsChanged$.next()
+        this.boundsChanged$.complete()
         recipeActionBuilder('REMOVE_MAP_OVERLAY')
             .del('layers.overlay')
             .dispatch()

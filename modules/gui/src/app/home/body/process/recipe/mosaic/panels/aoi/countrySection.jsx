@@ -79,6 +79,7 @@ class _CountrySection extends React.Component {
     constructor(props) {
         super(props)
         this.aoiChanged$ = new Subject()
+        this.boundsChanged$ = new Subject()
     }
 
     loadCountryAreas(countryId) {
@@ -191,8 +192,16 @@ class _CountrySection extends React.Component {
     }
 
     setOverlay() {
-        const {stream, inputs: {country, area, buffer}} = this.props
+        const {stream, overlay: prevOverlay, featureLayerSources, recipeActionBuilder, inputs: {country, area, buffer}} = this.props
         if (!country.value && !area.value) {
+            // No selection (e.g. initial state): drop any stale overlay/bounds and cancel a pending request.
+            if (prevOverlay) {
+                this.boundsChanged$.next()
+                recipeActionBuilder('CLEAR_MAP_OVERLAY')
+                    .del('layers.overlay')
+                    .del('ui.overlay.bounds')
+                    .dispatch()
+            }
             return
         }
         const aoi = {
@@ -201,7 +210,6 @@ class _CountrySection extends React.Component {
             areaCode: area.value,
             buffer: buffer.value
         }
-        const {overlay: prevOverlay, featureLayerSources, recipeActionBuilder} = this.props
         const aoiLayerSource = featureLayerSources.find(({type}) => type === 'Aoi')
         const overlay = {
             featureLayers: [
@@ -211,12 +219,17 @@ class _CountrySection extends React.Component {
                 }
             ]
         }
-        if (!_.isEqual(overlay, prevOverlay) && !stream('LOAD_BOUNDS').active) {
+        if (!_.isEqual(overlay, prevOverlay)) {
+            // Cancel any in-flight bounds request so a late response for the previous selection can't
+            // overwrite the bounds for this newer one.
+            this.boundsChanged$.next()
             recipeActionBuilder('DELETE_MAP_OVERLAY_BOUNDS')
                 .del('ui.overlay.bounds')
                 .dispatch()
             stream('LOAD_MAP_OVERLAY_BOUNDS',
-                api.gee.aoiBounds$(countryToEETable(aoi)),
+                api.gee.aoiBounds$(countryToEETable(aoi)).pipe(
+                    takeUntil(this.boundsChanged$)
+                ),
                 bounds => {
                     recipeActionBuilder('SET_MAP_OVERLAY_BOUNDS')
                         .set('ui.overlay.bounds', bounds)
@@ -231,6 +244,8 @@ class _CountrySection extends React.Component {
 
     componentWillUnmount() {
         const {recipeActionBuilder} = this.props
+        this.boundsChanged$.next()
+        this.boundsChanged$.complete()
         recipeActionBuilder('REMOVE_MAP_OVERLAY')
             .del('layers.overlay')
             .dispatch()
