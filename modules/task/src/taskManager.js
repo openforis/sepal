@@ -7,6 +7,7 @@ import {lastInWindow, repeating} from '#sepal/rxjs'
 import {tag} from '#sepal/tag'
 
 import {getConfig, switchedToServiceAccount$} from './context.js'
+import {taskFailureStatus} from './taskFailureStatus.js'
 import executeTask$ from './taskRunner.js'
 
 const log = getLogger('task')
@@ -74,11 +75,7 @@ const taskProgressed$ = (id, progress) => {
 
 const taskFailed$ = (id, error) => {
     log.error(msg(id, errorReport(error)))
-    return taskStateChanged$(id, 'FAILED', {
-        defaultMessage: 'Failed to execute task: ',
-        messageKey: 'tasks.status.failed',
-        messageArgs: {error: String(error)}
-    })
+    return taskStateChanged$(id, 'FAILED', taskFailureStatus(error))
 }
 
 const taskCompleted$ = id =>

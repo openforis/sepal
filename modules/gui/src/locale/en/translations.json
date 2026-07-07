@@ -5408,6 +5408,7 @@
       "EEException": "Earth Engine: {error}",
       "executing": "Executing...",
       "failed": "{error}",
+      "failedGeneric": "The task failed. Check the logs for details.",
       "initializing": "Initializing..."
     }
   },
