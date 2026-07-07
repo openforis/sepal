@@ -17,6 +17,7 @@ import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
 import styles from './taskDetails.module.css'
+import {taskStatusDescription} from './taskStatusDescription'
 
 const mapStateToProps = () => ({
     projects: select('process.projects')
@@ -287,6 +288,8 @@ class _TaskDetails extends React.Component {
             return null
         }
 
+        const description = taskStatusDescription(task)
+
         return (
             <Widget label={msg('tasks.details.section.progress')} framed>
                 <div className={styles.row}>
@@ -295,6 +298,9 @@ class _TaskDetails extends React.Component {
                         {task.status}
                     </div>
                 </div>
+                {description && (
+                    <div className={styles.description}>{description}</div>
+                )}
             </Widget>
         )
     }
@@ -302,8 +308,7 @@ class _TaskDetails extends React.Component {
 
 _TaskDetails.propTypes = {
     taskId: PropTypes.string.isRequired,
-    onClose: PropTypes.func.isRequired,
-    description: PropTypes.string
+    onClose: PropTypes.func.isRequired
 }
 
 export const TaskDetails = compose(

@@ -17,5 +17,5 @@ export const taskFailureStatus = error =>
         }
         : {
             messageKey: 'tasks.status.failedGeneric',
-            defaultMessage: 'The task failed. Check the logs for details.'
+            defaultMessage: 'The task failed. Try running it again. If the problem persists, contact the SEPAL team.'
         }

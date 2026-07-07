@@ -54,7 +54,7 @@ describe('taskFailureStatus', () => {
     it('uses a generic task-failure descriptor (no raw text) for an error with no userMessage', () => {
         const status = taskFailureStatus(new Error('boom'))
         expect(status.messageKey).toBe('tasks.status.failedGeneric')
-        expect(status.defaultMessage).toBe('The task failed. Check the logs for details.')
+        expect(status.defaultMessage).toBe('The task failed. Try running it again. If the problem persists, contact the SEPAL team.')
         expect(JSON.stringify(status)).not.toContain('boom')
     })
 

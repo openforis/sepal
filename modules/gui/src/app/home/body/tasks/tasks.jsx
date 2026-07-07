@@ -22,6 +22,7 @@ import {Shape} from '~/widget/shape'
 
 import {TaskDetails} from './taskDetails'
 import styles from './tasks.module.css'
+import {taskStatusDescription} from './taskStatusDescription'
 
 const getHighlightMatcher = memoizeOne(
     highlightValues => highlightValues.length
@@ -145,6 +146,7 @@ class _Tasks extends React.Component {
                     icon={icon}
                     iconSize='xl'
                     iconVariant={iconVariant}
+                    iconTooltip={taskStatusDescription(task)}
                     inlineComponents={[
                         this.renderDuration(task),
                         this.renderStopButton(task),
@@ -296,7 +298,6 @@ class _Tasks extends React.Component {
         return (
             <TaskDetails
                 taskId={selectedTask.id}
-                description={this.getDescription(selectedTask)}
                 onClose={this.closeTaskDetails}
             />
         )
@@ -369,24 +370,6 @@ class _Tasks extends React.Component {
                 <div className={styles.duration}>{`${msg('tasks.duration.label')}: ${durationLabel}`}</div>
             </Layout>
         )
-    }
-
-    getDescription(task) {
-        let description
-        try {
-            description = JSON.parse(task.statusDescription)
-        } catch(_error) {
-            description = task.statusDescription
-        }
-        if (typeof description === 'string') {
-            return description
-        } else if (description.messageKey) {
-            return msg(description.messageKey, description.messageArgs, description.defaultMessage)
-        } else if (description.defaultMessage) {
-            return description.defaultMessage
-        } else {
-            return msg('tasks.status.executing')
-        }
     }
 
     componentDidUpdate(prevProps) {
