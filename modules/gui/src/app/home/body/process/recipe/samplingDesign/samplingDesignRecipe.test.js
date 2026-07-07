@@ -1,5 +1,5 @@
-import {defaultModel, normalizeSavedLayers, toTaskRecipe} from './samplingDesignRecipe'
 import {shouldShowMore} from './panels/sampleArrangement/showMore'
+import {defaultModel, normalizeSavedLayers, toTaskRecipe} from './samplingDesignRecipe'
 
 const recipe = {
     id: 'r1',

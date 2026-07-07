@@ -1,15 +1,15 @@
 import moment from 'moment'
-import {interval, map, switchMap, takeLast, takeWhile} from 'rxjs'
+import {map, switchMap} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
 import {fileName} from '#sepal/path'
 
 import {drive} from './drive.js'
+import {exportTableToDrive$} from './exportTask.js'
 
 const worker$ = (requestParams, {sepalUser}) => {
     // TODO: Only do this if there are free slots available to export
-    // TODO: Make sure task is canceled when request is cancelled
     // TODO: Handle errrors
     const activeTasks = ee.data.listOperations(10)
         .filter(function (operation) {
@@ -48,35 +48,6 @@ const worker$ = (requestParams, {sepalUser}) => {
             )
         )
     )
-
-    function exportTableToDrive$({
-        collection,
-        description,
-        folder,
-        fileNamePrefix,
-        fileFormat,
-        selectors,
-        maxVertices,
-        priority
-    }) {
-        const task = ee.batch.Export.table.toDrive(
-            collection, description, folder, fileNamePrefix, fileFormat, selectors, maxVertices, priority
-        )
-
-        task.start()
-        const eeTaskId = task.id
-        return interval(2 * 1000).pipe(
-            switchMap(() => ee.$({
-                description: `poll ${description} export task status`,
-                operation: (resolve, reject) =>
-                    ee.data.getTaskStatus(eeTaskId,
-                        (status, error) => error ? reject(error) : resolve(status)
-                    )
-            })),
-            takeWhile(([{state}]) => ['UNSUBMITTED', 'READY', 'RUNNING'].includes(state), true),
-            takeLast(1),
-        )
-    }
 }
 
 export default job({
