@@ -67,6 +67,10 @@ class _AssetDestination extends React.Component {
                 placeholder={placeholder}
                 autoFocus={autoFocus}
                 busyMessage={!assetRoots || checking}
+                // While validation is pending the field is kept invalid (to gate Retrieve/Apply) but shown
+                // as busy, not red. Suppressing the message here keeps form.isInvalid() true without the
+                // "validating" text rendering as a field error. Real failures render once checking clears.
+                errorMessage={checking ? false : true}
                 preferredTypes={[type]}
                 buttons={[
                     this.renderCopyIdButton(),

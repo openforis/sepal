@@ -22,7 +22,7 @@ class _FormAssetInput extends React.Component {
     }
 
     render() {
-        const {className, input, label, labelButtons, buttons, placeholder, tooltip, autoFocus, busyMessage, disabled} = this.props
+        const {className, input, label, labelButtons, buttons, placeholder, tooltip, autoFocus, busyMessage, disabled, errorMessage} = this.props
         const {loading} = this.state
         return (
             <FormInput
@@ -37,6 +37,7 @@ class _FormAssetInput extends React.Component {
                 spellCheck={false}
                 busyMessage={(busyMessage || loading) && msg('widget.loading')}
                 disabled={disabled}
+                errorMessage={errorMessage}
             />
         )
     }
@@ -131,6 +132,7 @@ FormAssetInput.propTypes = {
     buttons: PropTypes.any,
     className: PropTypes.any,
     disabled: PropTypes.any,
+    errorMessage: PropTypes.any,
     expectedType: PropTypes.any,
     label: PropTypes.any,
     labelButtons: PropTypes.any,
