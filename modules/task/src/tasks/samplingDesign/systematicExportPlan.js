@@ -1,10 +1,17 @@
 import {concat, switchMap, throwError} from 'rxjs'
 
-import {nonRepairableStrata, repairOffset, underproducingStrata, underproductionDetails, underproductionMessage} from '#sepal/ee/samplingDesign/systematicRepair'
+import {ClientException} from '#sepal/exception'
+import {nonRepairableStrata, repairOffset, underproducingStrata, underproductionDetails, underproductionUserMessage} from '#sepal/ee/samplingDesign/systematicRepair'
 import {swallow} from '#sepal/rxjs'
 
-const underproductionError = ({summary, strata, reason}) =>
-    new Error(underproductionMessage({details: underproductionDetails({summary, strata}), reason}))
+// Underproduction is a user/design constraint (too many samples requested for the available area at the
+// minimum distance), not an internal fault - a ClientException carrying a structured userMessage, so the
+// task status shows the localized guidance without a technical exception prefix.
+const underproductionError = ({summary, strata, reason}) => {
+    const userMessage = underproductionUserMessage({details: underproductionDetails({summary, strata}), reason})
+    const resolved = userMessage.message.replace('{strata}', userMessage.args.strata)
+    return new ClientException(resolved, {userMessage})
+}
 
 // Base + at-most-one-repair + final export orchestration for systematic sampling. Materialize a
 // conservative base candidate set, count it over the materialized asset, and only if some strata

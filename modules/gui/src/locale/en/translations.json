@@ -5401,6 +5401,14 @@
         "tiling": "Tiling AOI..."
       }
     },
+    "samplingDesign": {
+      "systematic": {
+        "underproduced": {
+          "minDistanceLimit": "Sampling could not create enough sample candidates while respecting the minimum distance. Affected strata: {strata}. Try reducing the sample size for those strata, reducing the minimum distance, setting the sample size strategy to Closest, or checking whether the area of interest has enough usable area for those classes.",
+          "repairExhausted": "Sampling could not create enough sample candidates, even after creating additional candidates. Affected strata: {strata}. Try reducing the sample size for those strata, reducing the minimum distance, setting the sample size strategy to Closest, or checking whether the area of interest has enough usable area for those classes."
+        }
+      }
+    },
     "status": {
       "canceled": "Stopped",
       "canceling": "Stopping",

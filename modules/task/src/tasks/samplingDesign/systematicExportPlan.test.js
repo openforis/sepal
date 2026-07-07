@@ -81,9 +81,9 @@ describe('systematicExportPlan$', () => {
         // Single subscription: the observable is cold and side-effecting, so capture the error once.
         const error = await lastValueFrom(result$).then(() => null, e => e)
         expect(error).toBeInstanceOf(Error)
-        expect(error.message).toMatch(/already at the minimum-distance limit/)
-        // The message names the failing stratum with its available/requested counts (no label in this test).
-        expect(error.message).toMatch(/stratum 1: 40 available \/ 100 requested/)
+        // Structured user message (min-distance-limit), naming the failing stratum with available/requested.
+        expect(error.userMessage.key).toBe('tasks.samplingDesign.systematic.underproduced.minDistanceLimit')
+        expect(error.userMessage.args.strata).toContain('stratum 1: 40 available / 100 requested')
         expect(exportUnfiltered$.calls.map(([{assetId}]) => assetId)).toEqual(['t_base'])
         expect(finalExport$.calls).toHaveLength(0)
     })
@@ -95,8 +95,9 @@ describe('systematicExportPlan$', () => {
         })
         const error = await lastValueFrom(result$).then(() => null, e => e)
         expect(error).toBeInstanceOf(Error)
-        expect(error.message).toMatch(/already at the minimum-distance limit/)
-        expect(error.message).toMatch(/stratum 1: 40 available \/ 100 requested/)
+        expect(error.userMessage.key).toBe('tasks.samplingDesign.systematic.underproduced.minDistanceLimit')
+        // Only the non-repairable stratum is named.
+        expect(error.userMessage.args.strata).toBe('stratum 1: 40 available / 100 requested')
         // No repair export was attempted - only the base export ran.
         expect(exportUnfiltered$.calls.map(([{assetId}]) => assetId)).toEqual(['t_base'])
         expect(finalExport$.calls).toHaveLength(0)
@@ -106,7 +107,9 @@ describe('systematicExportPlan$', () => {
         const {finalExport$, result$} = run({
             countByAsset: () => summary({1: 40, 2: 50}) // still short on the repair asset too
         })
-        await expect(lastValueFrom(result$)).rejects.toThrow(/after one denser repair export/)
+        const error = await lastValueFrom(result$).then(() => null, e => e)
+        expect(error.userMessage.key).toBe('tasks.samplingDesign.systematic.underproduced.repairExhausted')
+        expect(error.userMessage.args.strata).toContain('stratum 1: 40 available / 100 requested')
         expect(finalExport$.calls).toHaveLength(0)
     })
 
