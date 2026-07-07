@@ -13,6 +13,9 @@ import {formatProperties} from '../formatProperties.js'
 
 export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, strategy, destination, workspacePath, filenamePrefix, fileFormat, properties = {}}) => {
     const {model: {aoi, stratification, sampleAllocation: {allocation}, sampleArrangement}} = recipe
+    // Asset exports keep rows minimal + collection-level metadata; SEPAL/CSV keeps full per-row columns
+    // (collection-level metadata sidecars for SEPAL are a follow-up).
+    const rowMetadata = destination === 'SEPAL'
 
     return forkJoin({
         eeStratification: stratificationImage$(stratification),
@@ -20,7 +23,7 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
     }).pipe(
         switchMap(({eeStratification, region}) =>
             // Shared generation: adaptive density, thinning, sample + reproduction metadata.
-            randomSamples$({allocation, eeStratification, region, sampleArrangement}).pipe(
+            randomSamples$({allocation, eeStratification, region, sampleArrangement, rowMetadata}).pipe(
                 switchMap(featureCollection => {
                     const samples = featureCollection.set(formatProperties(properties))
                     const export$ = destination === 'SEPAL'

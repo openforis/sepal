@@ -137,7 +137,11 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
             // export was used, repaired strata were drawn from a denser internal repair grid that is not
             // represented per row in the current export schema. Therefore selectedDensityOffset alone is not
             // a complete reproduction recipe for repaired rows.
-            const samples = finalizeSystematicSamples({filteredSamples, allocation, sampleArrangement, densityOffset})
+            //
+            // Asset exports keep rows minimal (id/stratum/selectedLevel) with reproduction/allocation
+            // metadata at the collection level; SEPAL/CSV keeps full per-row columns (sidecars are a
+            // follow-up).
+            const samples = finalizeSystematicSamples({filteredSamples, allocation, sampleArrangement, densityOffset, rowMetadata: destination === 'SEPAL'})
                 .set(formatProperties(properties))
             // No final validateSampleCounts$: proving the filtered count would re-run the heavy computation
             // and can time out. Sufficiency was already checked over the materialized candidate assets.
