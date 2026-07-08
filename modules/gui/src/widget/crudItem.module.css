@@ -90,7 +90,4 @@
 .icon {
     margin-left: calc(var(--item-spacing) - .5rem);
     /* make left-right spacing the same */
-    /* .item disables pointer-events; re-enable on the icon so its tooltip wrapper receives hover (row
-       click still works via event bubbling). */
-    pointer-events: all;
 }

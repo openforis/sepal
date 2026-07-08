@@ -5328,8 +5328,15 @@
       "origin": "Origin",
       "recipeType": "Recipe Type",
       "recipeId": "Recipe ID",
-      "creationTime": "Start Time",
-      "updateTime": "Last Update",
+      "creationTime": "Submitted at",
+      "updateTime": {
+        "lastProgress": "Last progress",
+        "cancelRequested": "Cancel requested",
+        "completed": "Completed",
+        "failed": "Failed",
+        "canceled": "Canceled",
+        "lastUpdate": "Last update"
+      },
       "duration": "Duration",
       "description": "Description",
       "workspacePath": "Output path",

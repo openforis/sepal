@@ -192,3 +192,32 @@ test('format.round(${JSON.stringify(fractionalYears)}) === ${result}')
         {fractionalYears: 2020.5, result: new Date('2020-07-02')},
         {fractionalYears: 2020.99999, result: new Date('2020-12-31')},
     )
+
+const SECOND = 1000
+const MINUTE = 60 * SECOND
+const HOUR = 60 * MINUTE
+const DAY = 24 * HOUR
+
+test('format.duration(${JSON.stringify(ms)}) === "${result}"')
+    .assert(({ms, result}) => expect(format.duration(ms)).toEqual(result))
+    .where(
+        {ms: 0, result: '< 1 minute'},
+        {ms: 30 * SECOND, result: '< 1 minute'},
+        {ms: -5 * MINUTE, result: '--'},
+        {ms: undefined, result: '--'},
+        {ms: null, result: '--'},
+        {ms: NaN, result: '--'},
+        {ms: Infinity, result: '--'},
+        {ms: -Infinity, result: '--'},
+        {ms: MINUTE, result: '1 minute'},
+        {ms: 2 * MINUTE, result: '2 minutes'},
+        {ms: 59 * MINUTE, result: '59 minutes'},
+        {ms: HOUR, result: '1 hour'},
+        {ms: HOUR + 5 * MINUTE, result: '1 hour 5 minutes'},
+        {ms: 2 * HOUR + MINUTE, result: '2 hours 1 minute'},
+        {ms: DAY, result: '1 day'},
+        {ms: DAY + 2 * HOUR, result: '1 day 2 hours'},
+        {ms: 3 * DAY + 4 * HOUR, result: '3 days 4 hours'},
+        // At most two units: day + hours, dropping the trailing 30 minutes.
+        {ms: DAY + 2 * HOUR + 30 * MINUTE, result: '1 day 2 hours'},
+    )

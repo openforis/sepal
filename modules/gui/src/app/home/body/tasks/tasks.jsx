@@ -6,6 +6,7 @@ import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from '~/app/home/body/proce
 import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import format from '~/format'
 import {escapeRegExp, simplifyString, splitString} from '~/string'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -146,9 +147,8 @@ class _Tasks extends React.Component {
                     icon={icon}
                     iconSize='xl'
                     iconVariant={iconVariant}
-                    iconTooltip={taskStatusDescription(task)}
                     inlineComponents={[
-                        this.renderDuration(task),
+                        this.renderTaskMetadata(task),
                         this.renderStopButton(task),
                         this.renderCopyButton(task)
                     ]}
@@ -355,7 +355,19 @@ class _Tasks extends React.Component {
         return [projectName, recipeName].join(PROJECT_RECIPE_SEPARATOR)
     }
 
-    renderDuration(task) {
+    // Right-side one-line row metadata: current localized status/progress for a running task, or the final
+    // duration for a terminal one. Long running-status text is truncated with ellipsis (see .taskMetadata in
+    // tasks.module.css); the full text is in Task Details.
+    renderTaskMetadata(task) {
+        const value = this.isRunning(task)
+            ? taskStatusDescription(task)
+            : this.getDurationLabel(task)
+        return value
+            ? <div key='metadata' className={styles.taskMetadata}>{value}</div>
+            : null
+    }
+
+    getDurationLabel(task) {
         if (!task.creationTime) {
             return null
         }
@@ -363,13 +375,7 @@ class _Tasks extends React.Component {
         const end = this.isRunning(task)
             ? new Date()
             : (task.updateTime ? new Date(task.updateTime) : new Date())
-        const minutes = Math.floor((end - start) / (1000 * 60))
-        const durationLabel = minutes < 1 ? '< 1m' : `${minutes}m`
-        return (
-            <Layout key='duration' type='horizontal-nowrap' spacing='none'>
-                <div className={styles.duration}>{`${msg('tasks.duration.label')}: ${durationLabel}`}</div>
-            </Layout>
-        )
+        return format.duration(end - start)
     }
 
     componentDidUpdate(prevProps) {

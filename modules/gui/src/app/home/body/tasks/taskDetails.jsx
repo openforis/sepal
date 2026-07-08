@@ -18,6 +18,7 @@ import {Widget} from '~/widget/widget'
 
 import {isTaskRunning, mergeTask} from './mergeTask'
 import styles from './taskDetails.module.css'
+import {updateTimeLabelKey} from './taskLabels'
 import {taskStatusDescription} from './taskStatusDescription'
 
 const mapStateToProps = (state, {taskId}) => ({
@@ -87,33 +88,15 @@ class _TaskDetails extends React.Component {
     }
 
     calculateDuration(task) {
-        if (!task || !task.creationTime) {
+        if (!task) {
             return '--'
         }
-
-        const start = new Date(task.creationTime)
+        const start = new Date(task.creationTime).getTime()
         const end = isTaskRunning(task)
-            ? new Date()
-            : (task.updateTime ? new Date(task.updateTime) : new Date())
-
-        const durationMs = end - start
-        
-        // Format duration
-        if (durationMs < 0) {
-            return '--'
-        }
-        
-        const seconds = Math.floor(durationMs / 1000) % 60
-        const minutes = Math.floor(durationMs / (1000 * 60)) % 60
-        const hours = Math.floor(durationMs / (1000 * 60 * 60))
-        
-        if (hours > 0) {
-            return `${hours}h ${minutes}m ${seconds}s`
-        } else if (minutes > 0) {
-            return `${minutes}m ${seconds}s`
-        } else {
-            return `${seconds}s`
-        }
+            ? Date.now()
+            : (task.updateTime ? new Date(task.updateTime).getTime() : Date.now())
+        // format.duration renders '--' for a missing creationTime (NaN span), or a negative/non-finite span.
+        return format.duration(end - start)
     }
     
     render() {
@@ -164,7 +147,7 @@ class _TaskDetails extends React.Component {
                 </div>
 
                 <div className={styles.row}>
-                    <Label className={styles.fieldLabel} msg={msg('tasks.details.updateTime')}/>
+                    <Label className={styles.fieldLabel} msg={msg(updateTimeLabelKey(task.status))}/>
                     <div className={styles.fieldValue}>{task.updateTime ? format.fullDateTime(task.updateTime) : '--'}</div>
                 </div>
             </Widget>
