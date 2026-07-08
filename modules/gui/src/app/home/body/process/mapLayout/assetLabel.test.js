@@ -1,4 +1,4 @@
-import {defaultAssetLabel, resolveAssetLabel} from './assetLabel'
+import {assetDisplayLabel, defaultAssetLabel, resolveAssetLabel} from './assetLabel'
 
 describe('defaultAssetLabel', () => {
     it('prefers system:title', () => {
@@ -12,6 +12,39 @@ describe('defaultAssetLabel', () => {
     it('falls back to the asset basename', () => {
         expect(defaultAssetLabel('projects/p/assets/foo_bar', {})).toBe('foo_bar')
         expect(defaultAssetLabel('projects/p/assets/foo_bar', undefined)).toBe('foo_bar')
+    })
+})
+
+describe('assetDisplayLabel', () => {
+    const asset = 'projects/my-project/assets/some_collection/foo_bar'
+
+    it('prefers an explicit non-blank label', () => {
+        expect(assetDisplayLabel({label: 'My layer', asset})).toBe('My layer')
+    })
+
+    it('trims and ignores a blank label, falling back', () => {
+        expect(assetDisplayLabel({label: '   ', asset})).toBe('foo_bar')
+        expect(assetDisplayLabel({label: undefined, asset})).toBe('foo_bar')
+    })
+
+    it('falls back to the metadata title (legacy source without a label)', () => {
+        expect(assetDisplayLabel({asset, metadata: {properties: {'system:title': 'Nice title'}}})).toBe('Nice title')
+        expect(assetDisplayLabel({asset, metadata: {title: 'The title'}})).toBe('The title')
+    })
+
+    it('falls back to the asset basename, never the full EE asset id', () => {
+        const label = assetDisplayLabel({asset})
+        expect(label).toBe('foo_bar')
+        expect(label).not.toContain('/')
+    })
+
+    it('returns an asset with no slash as-is', () => {
+        expect(assetDisplayLabel({asset: 'bare_name'})).toBe('bare_name')
+    })
+
+    it('handles a missing asset without throwing', () => {
+        expect(assetDisplayLabel({})).toBe('')
+        expect(assetDisplayLabel()).toBe('')
     })
 })
 

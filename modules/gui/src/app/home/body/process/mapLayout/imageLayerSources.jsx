@@ -16,6 +16,7 @@ import {Scrollable} from '~/widget/scrollable'
 
 import {getImageLayerSource} from '../imageLayerSourceRegistry'
 import {withLayers} from '../withLayers'
+import {assetDisplayLabel} from './assetLabel'
 import styles from './imageLayerSources.module.css'
 import {removeArea} from './layerAreas'
 
@@ -37,15 +38,16 @@ export class _ImageLayerSources extends React.Component {
 
     renderFeatureSource(source) {
         const {recipeId} = this.props
-        const {sourceConfig: {label, asset, description} = {}} = source
-        // Feature sources render last, aren't draggable (no drag$), and only support removal.
+        const {sourceConfig: {label, asset} = {}} = source
+        // Feature sources render last, aren't draggable (no drag$), and only support removal. Show the
+        // user-facing asset name (falling back to the basename for legacy sources saved without a label);
+        // the description is dropped as it only ever held the full asset id.
         return source && source.id
             ? (
                 <ListItem key={source.id}>
                     <div className={styles.featureSource}>
                         <CrudItem
-                            title={label || asset}
-                            description={description}
+                            title={assetDisplayLabel({label, asset})}
                             removeTooltip={msg('map.layout.layer.remove.tooltip')}
                             onRemove={() => removeFeatureLayerSource({sourceId: source.id, recipeId})}
                         />

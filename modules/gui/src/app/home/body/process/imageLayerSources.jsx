@@ -8,6 +8,7 @@ import {createPaletteFeatureLayerSource} from '~/app/home/map/paletteFeatureLaye
 import {createValuesFeatureLayerSource} from '~/app/home/map/valuesFeatureLayerSource'
 
 import {addImageLayerSource} from './imageLayerSourceRegistry'
+import {assetDisplayLabel} from './mapLayout/assetLabel'
 import {RecipeImageLayer} from './recipe/recipeImageLayer'
 import {RecipeImageLayerSource} from './recipe/recipeImageLayerSource'
 
@@ -53,7 +54,13 @@ export const registerImageLayerSources = () => {
     )
 
     addImageLayerSource('Asset', ({source, layerConfig, map, boundsChanged$, dragging$, cursor$}) => ({
-        description: source.sourceConfig.label || source.sourceConfig.asset,
+        // Show the user-facing asset name; legacy sources without a label fall back to the basename via
+        // metadata/asset, never the full EE asset id.
+        description: assetDisplayLabel({
+            label: source.sourceConfig.label,
+            asset: source.sourceConfig.asset,
+            metadata: source.sourceConfig.metadata
+        }),
         layerComponent: (
             <AssetImageLayer
                 source={source}

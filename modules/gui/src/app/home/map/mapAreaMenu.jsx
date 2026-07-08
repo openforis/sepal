@@ -18,6 +18,7 @@ import {Panel} from '~/widget/panel/panel'
 import {ScrubControl} from '~/widget/scrubControl'
 
 import {getImageLayerSource} from '../body/process/imageLayerSourceRegistry'
+import {assetDisplayLabel} from '../body/process/mapLayout/assetLabel'
 import {recipePath} from '../body/process/recipe'
 import {withRecipe} from '../body/process/recipeContext'
 import {withLayers} from '../body/process/withLayers'
@@ -230,7 +231,7 @@ class _MapAreaMenuPanel extends React.Component {
 
     overlayLabel(source) {
         return source.type === 'EETableAsset'
-            ? source.sourceConfig?.label || source.sourceConfig?.asset
+            ? assetDisplayLabel({label: source.sourceConfig?.label, asset: source.sourceConfig?.asset})
             : msg(`featureLayerSources.${source.type}.type`)
     }
 
