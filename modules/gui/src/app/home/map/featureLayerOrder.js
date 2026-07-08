@@ -45,6 +45,15 @@ export const withReorderedAssets = (featureLayers, assetSourceIds, orderedAssetI
 export const canonicalizeFeatureLayerOrder = (featureLayers, assetSourceIds) =>
     withReorderedAssets(featureLayers, assetSourceIds, [])
 
+// Split overlay rows for the map-area popup: fixed built-in rows first, draggable asset rows last. This is a
+// DISPLAY-only regrouping (the persisted featureLayers order and map draw order are untouched); it just moves
+// any built-in that sits after an asset (e.g. Legend) above the draggable asset band. Relative order within
+// the built-ins and within the assets is preserved. `rows` carry an `orderable` flag (asset rows).
+export const splitOverlayRowsForMenu = (rows = []) => ({
+    builtInRows: rows.filter(row => !row.orderable),
+    assetRows: rows.filter(row => row.orderable)
+})
+
 // Compute the asset order while dragging `draggedId`: place it at the slot its pointer is over, based on
 // each asset row's vertical center (top-to-bottom). `pointerY` null (e.g. released outside the list) keeps
 // the current order. Operates only on asset ids, so built-ins are never introduced.

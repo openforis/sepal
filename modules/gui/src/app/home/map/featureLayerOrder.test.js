@@ -1,4 +1,4 @@
-import {canonicalizeFeatureLayerOrder, reorderAssetsByPointer, withFeatureLayerDisabled, withReorderedAssets} from './featureLayerOrder'
+import {canonicalizeFeatureLayerOrder, reorderAssetsByPointer, splitOverlayRowsForMenu, withFeatureLayerDisabled, withReorderedAssets} from './featureLayerOrder'
 
 const featureLayers = () => [
     {sourceId: 'aoi'},
@@ -106,5 +106,40 @@ describe('reorderAssetsByPointer', () => {
     it('returns only the given asset ids (never introduces built-ins)', () => {
         const result = reorderAssetsByPointer({assetIds: ['a1', 'a2'], draggedId: 'a2', pointerY: 5, centers})
         expect(result).toEqual(['a2', 'a1'])
+    })
+})
+
+describe('splitOverlayRowsForMenu', () => {
+    const row = (id, orderable) => ({source: {id}, orderable})
+    const ids = rows => rows.map(({source}) => source.id)
+
+    it('moves a trailing built-in above the asset rows for menu display', () => {
+        const rows = [row('aoi', false), row('a1', true), row('a2', true), row('legend', false)]
+        const {builtInRows, assetRows} = splitOverlayRowsForMenu(rows)
+        expect(ids(builtInRows)).toEqual(['aoi', 'legend'])
+        expect(ids(assetRows)).toEqual(['a1', 'a2'])
+    })
+
+    it('renders built-ins first and assets last when they interleave', () => {
+        const rows = [row('a1', true), row('legend', false), row('a2', true), row('labels', false)]
+        const {builtInRows, assetRows} = splitOverlayRowsForMenu(rows)
+        expect(ids(builtInRows)).toEqual(['legend', 'labels'])
+        expect(ids(assetRows)).toEqual(['a1', 'a2'])
+    })
+
+    it('preserves relative order within built-ins and within assets', () => {
+        const rows = [row('b1', false), row('a1', true), row('b2', false), row('a2', true), row('a3', true)]
+        const {builtInRows, assetRows} = splitOverlayRowsForMenu(rows)
+        expect(ids(builtInRows)).toEqual(['b1', 'b2'])
+        expect(ids(assetRows)).toEqual(['a1', 'a2', 'a3'])
+    })
+
+    it('handles all-built-in and all-asset row sets', () => {
+        expect(ids(splitOverlayRowsForMenu([row('aoi', false), row('legend', false)]).assetRows)).toEqual([])
+        expect(ids(splitOverlayRowsForMenu([row('a1', true), row('a2', true)]).builtInRows)).toEqual([])
+    })
+
+    it('returns empty groups for no rows', () => {
+        expect(splitOverlayRowsForMenu()).toEqual({builtInRows: [], assetRows: []})
     })
 })

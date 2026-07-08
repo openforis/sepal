@@ -20,7 +20,7 @@ import {getImageLayerSource} from '../body/process/imageLayerSourceRegistry'
 import {recipePath} from '../body/process/recipe'
 import {withRecipe} from '../body/process/recipeContext'
 import {withLayers} from '../body/process/withLayers'
-import {reorderAssetsByPointer, withFeatureLayerDisabled, withReorderedAssets} from './featureLayerOrder'
+import {reorderAssetsByPointer, splitOverlayRowsForMenu, withFeatureLayerDisabled, withReorderedAssets} from './featureLayerOrder'
 import styles from './mapAreaMenu.module.css'
 
 class _MapAreaMenuPanel extends React.Component {
@@ -95,30 +95,20 @@ class _MapAreaMenuPanel extends React.Component {
         return form
     }
 
-    // Overlay selector: all feature overlays for this area in actual draw order (the featureLayers order,
-    // matching the rendered stack). Built-ins have fixed order and enable/disable only; the contiguous
-    // asset band (user-added EE table overlays) is draggable. Rendering the band in place - rather than
-    // grouping all assets - keeps the popup order aligned with the map, even when built-ins (e.g. legend)
-    // follow the assets.
+    // Overlay selector: the popup no longer mirrors the map draw order. It groups the fixed built-in overlays
+    // (enable/disable only) first, then the draggable EE table asset overlays as one list at the bottom, so a
+    // built-in like Legend never appears below user-added asset rows. Each group keeps its persisted relative
+    // order; the persisted featureLayers order and map draw order are unchanged.
     renderOverlays() {
         const rows = this.overlayRows()
         if (!rows.length) {
             return null
         }
-        const firstAsset = rows.findIndex(({orderable}) => orderable)
-        if (firstAsset === -1) {
-            return (
-                <Layout type='vertical' spacing='none'>
-                    {rows.map(row => this.renderBuiltInOverlay(row))}
-                </Layout>
-            )
-        }
-        const lastAsset = rows.map(({orderable}) => orderable).lastIndexOf(true)
+        const {builtInRows, assetRows} = splitOverlayRowsForMenu(rows)
         return (
             <Layout type='vertical' spacing='none'>
-                {rows.slice(0, firstAsset).map(row => this.renderBuiltInOverlay(row))}
-                {this.renderAssetOverlays(rows.slice(firstAsset, lastAsset + 1))}
-                {rows.slice(lastAsset + 1).map(row => this.renderBuiltInOverlay(row))}
+                {builtInRows.map(row => this.renderBuiltInOverlay(row))}
+                {this.renderAssetOverlays(assetRows)}
             </Layout>
         )
     }
