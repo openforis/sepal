@@ -5402,7 +5402,21 @@
       }
     },
     "samplingDesign": {
+      "random": {
+        "progress": {
+          "prepareCandidates": "Preparing random sample candidates",
+          "checkCandidates": "Checking random sample candidates",
+          "exportFinal": "Exporting final sample design"
+        }
+      },
       "systematic": {
+        "progress": {
+          "prepareBaseCandidates": "Preparing sample candidates",
+          "checkBaseCandidates": "Checking sample candidates",
+          "prepareRepairCandidates": "Preparing additional sample candidates",
+          "checkRepairCandidates": "Checking additional sample candidates",
+          "exportFinal": "Exporting final sample design"
+        },
         "underproduced": {
           "minDistanceLimit": "Sampling could not create enough sample candidates while respecting the minimum distance. Affected strata: {strata}. Try reducing the sample size for those strata, reducing the minimum distance, setting the sample size strategy to Closest, or checking whether the area of interest has enough usable area for those classes.",
           "repairExhausted": "Sampling could not create enough sample candidates, even after creating additional candidates. Affected strata: {strata}. Try reducing the sample size for those strata, reducing the minimum distance, setting the sample size strategy to Closest, or checking whether the area of interest has enough usable area for those classes."

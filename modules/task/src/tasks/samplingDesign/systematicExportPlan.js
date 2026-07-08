@@ -1,8 +1,22 @@
-import {concat, switchMap, throwError} from 'rxjs'
+import {concat, of, switchMap, throwError} from 'rxjs'
 
 import {ClientException} from '#sepal/exception'
 import {nonRepairableStrata, repairOffset, underproducingStrata, underproductionDetails, underproductionUserMessage} from '#sepal/ee/samplingDesign/systematicRepair'
-import {swallow} from '#sepal/rxjs'
+import {progress} from '#task/rxjs/operators'
+
+// Stage-level task progress for the systematic base + optional-repair + final flow. Emitted so the task
+// status shows meaningful steps instead of a silent "Executing..." (the temp candidate exports' own EE
+// progress is also passed through - see below). Sampling-Design-specific text lives here, not in the
+// generic table-export helpers.
+const PROGRESS = {
+    prepareBase: {messageKey: 'tasks.samplingDesign.systematic.progress.prepareBaseCandidates', defaultMessage: 'Preparing sample candidates'},
+    checkBase: {messageKey: 'tasks.samplingDesign.systematic.progress.checkBaseCandidates', defaultMessage: 'Checking sample candidates'},
+    prepareRepair: {messageKey: 'tasks.samplingDesign.systematic.progress.prepareRepairCandidates', defaultMessage: 'Preparing additional sample candidates'},
+    checkRepair: {messageKey: 'tasks.samplingDesign.systematic.progress.checkRepairCandidates', defaultMessage: 'Checking additional sample candidates'},
+    exportFinal: {messageKey: 'tasks.samplingDesign.systematic.progress.exportFinal', defaultMessage: 'Exporting final sample design'}
+}
+
+const stage$ = descriptor => of(undefined).pipe(progress(descriptor))
 
 // Underproduction is a user/design constraint (too many samples requested for the available area at the
 // minimum distance), not an internal fault - a ClientException carrying a structured userMessage, so the
@@ -19,57 +33,71 @@ const underproductionError = ({summary, strata, reason}) => {
 // final export uses repair candidates for repaired strata and base candidates for the rest. EXACT/OVER fail
 // clearly if a stratum can't reach the requested count and can't be densified further; CLOSEST proceeds with
 // the best available. All EE effects are injected so the flow is testable without EE:
-//   exportUnfiltered$({assetId, densityOffset, allocation}) -> Observable (materialize candidates)
+//   exportUnfiltered$({assetId, densityOffset, allocation}) -> Observable (materialize candidates; its EE
+//       progress is passed through, not swallowed)
 //   count$({assetId, allocation}) -> Observable<{raw, actual, levels}> (getInfo over the materialized asset)
 //   candidatesOf({baseAssetId, repairAssetId, repairedStrata}) -> EE candidates for the final filter/export
 //   finalExport$({candidates, densityOffset}) -> Observable (filter + export)
+//
+// Progress vs data separation: each count summary is consumed INSIDE a switchMap and never emitted onward,
+// while stage progress and the temp exports' progress are emitted via concat - so a progress object can
+// never be mistaken for a count summary by the underproduction logic.
 export const systematicExportPlan$ = ({
     allocation, baseOffset, maxOffsetOf, requireFull, baseAssetId, repairAssetId,
     exportUnfiltered$, count$, candidatesOf, finalExport$
 }) => {
-    const materializeAndCount$ = ({assetId, densityOffset, strata}) =>
+    const finalStage$ = candidates =>
         concat(
-            exportUnfiltered$({assetId, densityOffset, allocation: strata}).pipe(swallow()),
-            count$({assetId, allocation: strata})
+            stage$(PROGRESS.exportFinal),
+            finalExport$({candidates, densityOffset: baseOffset})
         )
 
-    return materializeAndCount$({assetId: baseAssetId, densityOffset: baseOffset, strata: allocation}).pipe(
-        switchMap(summary => {
-            const underproducing = underproducingStrata({summary, allocation})
-            if (!underproducing.length) {
-                return finalExport$({candidates: candidatesOf({baseAssetId}), densityOffset: baseOffset})
+    const afterBaseCount = summary => {
+        const underproducing = underproducingStrata({summary, allocation})
+        if (!underproducing.length) {
+            return finalStage$(candidatesOf({baseAssetId}))
+        }
+        // requireFull (EXACT/OVER): if ANY failing stratum is already at its minimum-distance limit, no
+        // repair can make the requested counts reachable - fail now rather than spend a repair export that's
+        // guaranteed to leave that stratum short (which would also mislabel the failure as "after one denser
+        // repair export").
+        if (requireFull) {
+            const nonRepairable = nonRepairableStrata({underproducing, baseOffset, maxOffsetOf})
+            if (nonRepairable.length) {
+                return throwError(() => underproductionError({summary, strata: nonRepairable, reason: 'minDistanceLimit'}))
             }
-            // requireFull (EXACT/OVER): if ANY failing stratum is already at its minimum-distance limit, no
-            // repair can make the requested counts reachable - fail now rather than spend a repair export
-            // that's guaranteed to leave that stratum short (which would also mislabel the failure as
-            // "after one denser repair export").
-            if (requireFull) {
-                const nonRepairable = nonRepairableStrata({underproducing, baseOffset, maxOffsetOf})
-                if (nonRepairable.length) {
-                    return throwError(() => underproductionError({summary, strata: nonRepairable, reason: 'minDistanceLimit'}))
-                }
-            }
-            const offset = repairOffset({underproducing, summary, baseOffset, maxOffsetOf})
-            if (offset <= baseOffset) {
-                // No failing stratum can be densified past its own minimum-distance limit (CLOSEST reaches
-                // here; requireFull was already handled above): CLOSEST uses the best available base
-                // candidates, and the requireFull branch is a defensive fallback.
-                return requireFull
-                    ? throwError(() => underproductionError({summary, strata: underproducing, reason: 'minDistanceLimit'}))
-                    : finalExport$({candidates: candidatesOf({baseAssetId}), densityOffset: baseOffset})
-            }
-            return materializeAndCount$({assetId: repairAssetId, densityOffset: offset, strata: underproducing}).pipe(
+        }
+        const offset = repairOffset({underproducing, summary, baseOffset, maxOffsetOf})
+        if (offset <= baseOffset) {
+            // No failing stratum can be densified past its own minimum-distance limit (CLOSEST reaches here;
+            // requireFull was already handled above): CLOSEST uses the best available base candidates, and
+            // the requireFull branch is a defensive fallback.
+            return requireFull
+                ? throwError(() => underproductionError({summary, strata: underproducing, reason: 'minDistanceLimit'}))
+                : finalStage$(candidatesOf({baseAssetId}))
+        }
+        return concat(
+            stage$(PROGRESS.prepareRepair),
+            exportUnfiltered$({assetId: repairAssetId, densityOffset: offset, allocation: underproducing}),
+            stage$(PROGRESS.checkRepair),
+            count$({assetId: repairAssetId, allocation: underproducing}).pipe(
                 switchMap(repairSummary => {
                     const stillShort = underproducingStrata({summary: repairSummary, allocation: underproducing})
                     if (requireFull && stillShort.length) {
                         return throwError(() => underproductionError({summary: repairSummary, strata: stillShort, reason: 'repairExhausted'}))
                     }
-                    return finalExport$({
-                        candidates: candidatesOf({baseAssetId, repairAssetId, repairedStrata: underproducing}),
-                        densityOffset: baseOffset
-                    })
+                    return finalStage$(candidatesOf({baseAssetId, repairAssetId, repairedStrata: underproducing}))
                 })
             )
-        })
+        )
+    }
+
+    return concat(
+        stage$(PROGRESS.prepareBase),
+        exportUnfiltered$({assetId: baseAssetId, densityOffset: baseOffset, allocation}),
+        stage$(PROGRESS.checkBase),
+        count$({assetId: baseAssetId, allocation}).pipe(
+            switchMap(afterBaseCount)
+        )
     )
 }
