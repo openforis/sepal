@@ -5407,6 +5407,10 @@
           "prepareCandidates": "Preparing random sample candidates",
           "checkCandidates": "Checking random sample candidates",
           "exportFinal": "Exporting final sample design"
+        },
+        "underproduced": {
+          "minDistance": "Random sampling could not create enough samples while respecting the minimum distance. Affected strata: {strata}. Try reducing the sample size for those strata, reducing the minimum distance, or checking whether the area of interest has enough usable area for those classes.",
+          "insufficientArea": "Random sampling could not create enough samples. Affected strata: {strata}. Try reducing the sample size for those strata or checking whether the area of interest has enough usable area for those classes."
         }
       },
       "systematic": {

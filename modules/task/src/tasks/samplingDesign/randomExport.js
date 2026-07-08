@@ -4,12 +4,13 @@ import {toGeometry$} from '#sepal/ee/aoi'
 import {EXPORT_PROPERTY_NAMES} from '#sepal/ee/samplingDesign/sampleProperties'
 import {randomSamples$} from '#sepal/ee/samplingDesign/samples'
 import {stratificationImage$} from '#sepal/ee/samplingDesign/stratificationImage'
-import {validateSampleCounts$} from '#sepal/ee/samplingDesign/validateSampleCounts'
+import {getSampleCounts$} from '#sepal/ee/samplingDesign/validateSampleCounts'
 import {tableToAsset$} from '#task/jobs/export/tableToAsset'
 import {tableToSepal$} from '#task/jobs/export/tableToSepal'
 
 import {formatProperties} from '../formatProperties.js'
 import {randomExportPlan$} from './randomExportPlan.js'
+import {validateRandomCounts} from './randomUnderproduction.js'
 
 export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, strategy, destination, workspacePath, filenamePrefix, fileFormat, properties = {}}) => {
     const {model: {aoi, stratification, sampleAllocation: {allocation}, sampleArrangement}} = recipe
@@ -17,8 +18,13 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
     // (collection-level metadata sidecars for SEPAL are a follow-up).
     const rowMetadata = destination === 'SEPAL'
 
-    // Final guard: min-distance thinning caps at the requested count, so any shortfall is real.
-    const validate$ = samples => validateSampleCounts$(samples, allocation)
+    // Final guard: min-distance thinning caps at the requested count, so any shortfall is real. Map a
+    // successfully-computed shortfall to a structured, actionable ClientException (EE/getInfo failures still
+    // propagate as their own errors).
+    const validate$ = samples =>
+        getSampleCounts$(samples, 'final validation count').pipe(
+            validateRandomCounts({allocation, hasMinDistance: !!sampleArrangement.minDistance})
+        )
 
     const export$ = samples => destination === 'SEPAL'
         ? tableToSepal$(taskId, {
