@@ -25,3 +25,13 @@
 .buttonContainer > * {
     pointer-events: all;
 }
+
+/* Feature overlay row label: truncate long asset labels with an ellipsis instead of wrapping/shifting the
+   row, and re-enable pointer events (CrudItem's .item disables them) so the full-label tooltip can hover. */
+.overlayTitle {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: auto;
+}

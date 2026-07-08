@@ -34,6 +34,7 @@ class _MapAreaMenuPanel extends React.Component {
     assetsRef = React.createRef()
     assetRowRefs = {}
     drag$ = new Subject()
+    state = {dragging: false}
 
     // In-list reorder for asset overlays (built-ins are not draggable). ListItem emits drag events on
     // drag$; we capture each asset row's center at drag start and compute the new order from the pointer,
@@ -195,9 +196,14 @@ class _MapAreaMenuPanel extends React.Component {
     }
 
     renderOverlayItem(featureLayer, source, inlineComponents) {
+        const label = this.overlayLabel(source)
         return (
             <CrudItem
-                title={this.overlayLabel(source)}
+                title={label}
+                titleClassName={styles.overlayTitle}
+                titleTooltip={label}
+                titleTooltipDisabled={this.state.dragging}
+                titleTooltipPlacement='top'
                 selected={featureLayer.disabled !== true}
                 selectTooltip={msg(overlayToggleTooltipKey(featureLayer))}
                 tooltipPlacement={OVERLAY_ACTION_TOOLTIP_PLACEMENT}
@@ -272,6 +278,8 @@ class _MapAreaMenuPanel extends React.Component {
         this.pendingOrder = this.dragStartOrder
         this.assetCenters = this.measureAssetCenters()
         this.listRect = this.assetsRef.current?.getBoundingClientRect()
+        // Suppress the label tooltip while dragging so it can't linger over the moving row.
+        this.setState({dragging: true})
     }
 
     onAssetDragMove(draggedId, coords) {
@@ -288,6 +296,7 @@ class _MapAreaMenuPanel extends React.Component {
     }
 
     onAssetDragEnd() {
+        this.setState({dragging: false})
         if (this.draggedId == null) {
             return
         }
