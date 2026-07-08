@@ -145,3 +145,34 @@ it('accepts a valid integer seed when one is required', () => {
 it('rejects a non-integer seed when one is required', () => {
     expect(codes(withArrangement({arrangementStrategy: 'RANDOM', seed: 1.5}))).toContain('seedMissing')
 })
+
+describe('stale sections (requiresUpdate)', () => {
+    const stale = section => ({
+        ...stratifiedValid,
+        [section]: {...(stratifiedValid[section] || {}), requiresUpdate: true}
+    })
+
+    it.each(['stratification', 'proportions', 'sampleAllocation', 'sampleArrangement'])(
+        'reports requiresUpdate for a stale %s section',
+        section => {
+            expect(validateRetrieve(stale(section))).toContainEqual({section, code: 'requiresUpdate'})
+        }
+    )
+
+    it('accepts a complete design with all requiresUpdate flags false', () => {
+        const model = {
+            ...stratifiedValid,
+            stratification: {...stratifiedValid.stratification, requiresUpdate: false},
+            proportions: {...stratifiedValid.proportions, requiresUpdate: false},
+            sampleAllocation: {...stratifiedValid.sampleAllocation, requiresUpdate: false},
+            sampleArrangement: {requiresUpdate: false}
+        }
+        expect(validateRetrieve(model)).toEqual([])
+    })
+
+    it('rejects a stale but otherwise-complete design, reporting the stale section first', () => {
+        const model = {...stratifiedValid, stratification: {...stratifiedValid.stratification, requiresUpdate: true}}
+        expect(validateRetrieve(model)).not.toEqual([])
+        expect(validateRetrieve(model)[0]).toEqual({section: 'stratification', code: 'requiresUpdate'})
+    })
+})

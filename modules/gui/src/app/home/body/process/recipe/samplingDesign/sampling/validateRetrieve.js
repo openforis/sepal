@@ -17,9 +17,20 @@ const hasFiniteArea = value =>
 const isNonNegativeInteger = value =>
     value != null && value !== '' && /^\d+$/.test(String(value))
 
+// Sections whose persisted `requiresUpdate` flag means their computed output is stale relative to upstream
+// edits. Checked first so a stale section reports a clear "update this first" instead of a downstream
+// stale-data symptom.
+const REQUIRES_UPDATE_SECTIONS = ['stratification', 'proportions', 'sampleAllocation', 'sampleArrangement']
+
 export const validateRetrieve = model => {
     const errors = []
     const add = (section, code) => errors.push({section, code})
+
+    REQUIRES_UPDATE_SECTIONS.forEach(section => {
+        if (model?.[section]?.requiresUpdate === true) {
+            add(section, 'requiresUpdate')
+        }
+    })
 
     const strata = model?.stratification?.strata
     if (!strata?.length) {

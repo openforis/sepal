@@ -11,6 +11,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {retrieveButtonState} from '../sampling/retrieveButtonState'
 import {RecipeActions} from '../samplingDesignRecipe'
 import {Proportions} from './proportions/proportions'
 import {Retrieve} from './retrieve/retrieve'
@@ -19,14 +20,23 @@ import {SampleArrangement} from './sampleArrangement/sampleArrangement'
 import styles from './samplingDesignToolbar.module.css'
 import {Stratification} from './stratification/stratification'
 
-const mapRecipeToProps = recipe => ({
-    recipeId: recipe.id,
-    initialized: selectFrom(recipe, 'ui.initialized'),
-    stratificationRequiresUpdate: selectFrom(recipe, 'model.stratification.requiresUpdate'),
-    proportionsRequiresUpdate: selectFrom(recipe, 'model.proportions.requiresUpdate'),
-    sampleAllocationRequiresUpdate: selectFrom(recipe, 'model.sampleAllocation.requiresUpdate'),
-    sampleArrangementRequiresUpdate: selectFrom(recipe, 'model.sampleArrangement.requiresUpdate'),
-})
+const mapRecipeToProps = recipe => {
+    const {disabled, code} = retrieveButtonState(recipe.model)
+    return {
+        recipeId: recipe.id,
+        initialized: selectFrom(recipe, 'ui.initialized'),
+        stratificationRequiresUpdate: selectFrom(recipe, 'model.stratification.requiresUpdate'),
+        proportionsRequiresUpdate: selectFrom(recipe, 'model.proportions.requiresUpdate'),
+        sampleAllocationRequiresUpdate: selectFrom(recipe, 'model.sampleAllocation.requiresUpdate'),
+        sampleArrangementRequiresUpdate: selectFrom(recipe, 'model.sampleArrangement.requiresUpdate'),
+        retrieveDisabled: disabled,
+        // Same invalid message as the submit preflight, plus the first error's detail, as one string
+        // (RetrieveButton.getTooltip wraps it). Undefined when retrievable, so the default tooltip shows.
+        retrieveTooltip: code
+            ? `${msg('process.samplingDesign.retrieve.invalid')} ${msg(`process.samplingDesign.retrieve.invalid.${code}`)}`
+            : undefined
+    }
+}
 
 class _SamplingDesignToolbar extends React.Component {
     constructor(props) {
@@ -35,7 +45,7 @@ class _SamplingDesignToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized, stratificationRequiresUpdate, proportionsRequiresUpdate, sampleAllocationRequiresUpdate, sampleArrangementRequiresUpdate} = this.props
+        const {recipeId, initialized, stratificationRequiresUpdate, proportionsRequiresUpdate, sampleAllocationRequiresUpdate, sampleArrangementRequiresUpdate, retrieveDisabled, retrieveTooltip} = this.props
         return (
             <PanelWizard
                 panels={['aoi', 'stratification']}
@@ -52,7 +62,7 @@ class _SamplingDesignToolbar extends React.Component {
                     vertical
                     placement='top-right'
                     className={styles.top}>
-                    <RetrieveButton/>
+                    <RetrieveButton disabled={retrieveDisabled} tooltip={retrieveTooltip}/>
                 </Toolbar>
                 <Toolbar
                     vertical
