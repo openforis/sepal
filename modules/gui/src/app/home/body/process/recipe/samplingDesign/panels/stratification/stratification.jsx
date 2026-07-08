@@ -26,6 +26,7 @@ import {CalculationErrorContent} from '../calculationErrorContent'
 import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
 import {strataCalculationError as toStrataCalculationError} from './stratificationError'
+import {modelToValues, valuesToModel} from './stratificationModel'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -642,55 +643,6 @@ class _Stratification extends React.Component {
     importLegend() {
         const {activator: {activatables: {legendImport}}} = this.props
         legendImport.activate()
-    }
-}
-
-// Unstratified mode persists the single computed stratum carrying the AOI area. If the area hasn't
-// been computed (or failed), persist no strata so validation blocks export rather than emitting a row
-// with a missing/invalid area.
-const unstratifiedStrata = strata => {
-    // Accept only a single computed row with a finite, positive area. More than one row means stale
-    // stratified data leaked across modes and must not be treated as an unstratified result.
-    const computed = strata?.length === 1 ? strata[0] : null
-    if (!computed || !Number.isFinite(computed.area) || computed.area <= 0) {
-        return []
-    }
-    return [{
-        color: computed.color || '#000000',
-        label: computed.label || msg('process.samplingDesign.panel.stratification.unstratified'),
-        value: 1,
-        stratum: 1,
-        area: computed.area,
-        weight: 1
-    }]
-}
-
-const valuesToModel = values => {
-    const isSkipped = !!values.skip?.length
-    return {
-        skip: isSkipped,
-        scale: parseFloat(values.scale),
-        type: values.type,
-        assetId: values.assetId,
-        recipeId: values.recipeId,
-        band: values.band,
-        strata: isSkipped
-            ? unstratifiedStrata(values.strata)
-            : values.strata,
-        eeStrategy: values.eeStrategy
-    }
-}
-
-const modelToValues = model => {
-    return {
-        skip: model.skip ? [true] : [],
-        scale: model.scale,
-        type: model.type,
-        assetId: model.assetId,
-        recipeId: model.recipeId,
-        band: model.band,
-        strata: model.strata,
-        eeStrategy: model.eeStrategy
     }
 }
 
