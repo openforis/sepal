@@ -15,12 +15,14 @@ import {Keybinding} from '~/widget/keybinding'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {Panel} from '~/widget/panel/panel'
+import {ScrubControl} from '~/widget/scrubControl'
 
 import {getImageLayerSource} from '../body/process/imageLayerSourceRegistry'
 import {recipePath} from '../body/process/recipe'
 import {withRecipe} from '../body/process/recipeContext'
 import {withLayers} from '../body/process/withLayers'
 import {reorderAssetsByPointer, splitOverlayRowsForMenu, withFeatureLayerDisabled, withReorderedAssets} from './featureLayerOrder'
+import {resolveFeatureLayerStyle, withUpdatedOpacity} from './featureLayerStyle'
 import styles from './mapAreaMenu.module.css'
 
 class _MapAreaMenuPanel extends React.Component {
@@ -146,16 +148,44 @@ class _MapAreaMenuPanel extends React.Component {
         )
     }
 
-    // Draggable ListItem: drag$/dragValue render the standard ListItem handle inside the row. The Layer
-    // options button is a row action; opacity and other detailed controls live in the options modal.
+    // Draggable ListItem: drag$/dragValue render the standard ListItem handle inside the row. Row actions are
+    // the compact opacity scrub control followed by the Layer options button; other detailed style controls
+    // live in the options modal.
     renderAssetOverlay({featureLayer, source}) {
         return (
             <div key={source.id} ref={element => this.setAssetRowRef(source.id, element)}>
                 <ListItem drag$={this.drag$} dragValue={source.id}>
-                    {this.renderOverlayItem(featureLayer, source, this.renderOptionsButton(source))}
+                    {this.renderOverlayItem(featureLayer, source, [
+                        this.renderOpacityControl(featureLayer, source),
+                        this.renderOptionsButton(source)
+                    ])}
                 </ListItem>
             </div>
         )
+    }
+
+    renderOpacityControl(featureLayer, source) {
+        const {opacity} = resolveFeatureLayerStyle({layerConfig: featureLayer.layerConfig, source})
+        // Generic scrub control configured for 0..1 layer opacity: bare 0-100 row text and a 0<->100 toggle
+        // (the ScrubControl min/max default). Preview restyles the live tiles; change persists style.opacity.
+        return (
+            <ScrubControl
+                key='opacity'
+                value={opacity}
+                formatValue={value => Math.round(value * 100)}
+                tooltip={value => msg('map.featureLayerStyle.opacityControl.tooltip', {percent: Math.round(value * 100)})}
+                onPreview={value => this.previewOverlayOpacity(source, value)}
+                onChange={value => this.setOverlayOpacity(featureLayer, source, value)}
+            />
+        )
+    }
+
+    // Live, client-side-only opacity feedback while scrubbing: restyle the mounted tiles via the existing map
+    // layer instance. No Redux dispatch and no eeTableMap$/tile refetch. No-op if the layer isn't mounted
+    // (e.g. hidden overlay); the persisted value is still written on release by setOverlayOpacity.
+    previewOverlayOpacity(source, opacity) {
+        const {map} = this.props
+        map?.getLayer(source.id)?.setOpacity?.(opacity)
     }
 
     renderOverlayItem(featureLayer, source, inlineComponents) {
@@ -203,6 +233,19 @@ class _MapAreaMenuPanel extends React.Component {
             .set(
                 [recipePath(recipeId), 'layers.areas', area, 'featureLayers'],
                 withFeatureLayerDisabled(featureLayers, sourceId, !enabled)
+            )
+            .dispatch()
+    }
+
+    // Persist a row-level opacity change (committed once on pointer release, not per move). Writes the full
+    // resolved style with the new opacity so other style fields are preserved, matching how the options modal
+    // persists. EETableAsset opacity is applied client-side by the map layer, so this doesn't refetch tiles.
+    setOverlayOpacity(featureLayer, source, opacity) {
+        const {recipeId, area} = this.props
+        actionBuilder('SET_FEATURE_LAYER_OPACITY', {sourceId: source.id, area})
+            .set(
+                [recipePath(recipeId), 'layers.areas', area, 'featureLayers', {sourceId: source.id}, 'layerConfig.style'],
+                withUpdatedOpacity({layerConfig: featureLayer.layerConfig, source, opacity})
             )
             .dispatch()
     }
@@ -322,9 +365,9 @@ class _MapAreaMenu extends React.Component {
     }
 
     renderPanel() {
-        const {area, form} = this.props
+        const {area, form, map} = this.props
         return (
-            <MapAreaMenuPanel area={area} form={form} element={this.ref.current}/>
+            <MapAreaMenuPanel area={area} form={form} map={map} element={this.ref.current}/>
         )
     }
 
@@ -352,5 +395,6 @@ export const MapAreaMenu = compose(
 
 MapAreaMenu.propTypes = {
     area: PropTypes.string,
-    form: PropTypes.object
+    form: PropTypes.object,
+    map: PropTypes.object
 }

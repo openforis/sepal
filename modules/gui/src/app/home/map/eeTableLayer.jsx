@@ -18,10 +18,17 @@ class _EETableLayer extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {id, map} = this.props
+        const {id, map, opacity} = this.props
         // Drop the previous layer if the id changed under us, so a reused component can't strand tiles.
         if (prevProps.id !== id) {
             map.removeLayer(prevProps.id)
+        }
+        // Opacity is client-side only and deliberately excluded from watchedProps, so an opacity-only change
+        // leaves the layer equal (no recreation, no eeTableMap$/map-id refetch). Push the new opacity onto the
+        // live layer's tiles directly. If other inputs also changed, setLayer() below recreates the layer with
+        // the current opacity anyway.
+        if (prevProps.opacity !== opacity) {
+            map.getLayer(id)?.setOpacity?.(opacity)
         }
         this.setLayer()
     }
@@ -49,7 +56,9 @@ class _EETableLayer extends React.Component {
                 }),
                 opacity,
                 layerIndex,
-                watchedProps: {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style, opacity},
+                // opacity is intentionally excluded: it's applied client-side (setOpacity), so an opacity-only
+                // change stays equal and doesn't recreate the layer or refetch the map id.
+                watchedProps: {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style},
                 busy
             })
             : null

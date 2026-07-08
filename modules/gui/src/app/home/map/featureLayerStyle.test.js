@@ -1,4 +1,4 @@
-import {DEFAULT_FEATURE_LAYER_STYLE, isFeatureLayerStyleValid, resolveFeatureLayerStyle, styleAfterColumnsLoaded} from './featureLayerStyle'
+import {DEFAULT_FEATURE_LAYER_STYLE, isFeatureLayerStyleValid, resolveFeatureLayerStyle, styleAfterColumnsLoaded, withUpdatedOpacity} from './featureLayerStyle'
 
 const sourceWithColumns = columns => ({sourceConfig: {columns}})
 
@@ -107,6 +107,34 @@ describe('styleAfterColumnsLoaded', () => {
         })
         expect(resolved.colorMode).toBe('ONE_COLOR')
         expect(resolved.color).toBe('#123456')
+    })
+})
+
+describe('withUpdatedOpacity', () => {
+    it('changes only opacity and preserves every other style field', () => {
+        const style = {
+            colorMode: 'COLORS_BY_VALUE',
+            valueProperty: 'stratum',
+            valueColors: {'1': '#ff0000', '2': '#00ff00'},
+            width: 3,
+            pointSize: 8,
+            fillOpacity: 0.5,
+            opacity: 1,
+            color: '#123456',
+            colorProperty: 'color'
+        }
+        const result = withUpdatedOpacity({layerConfig: {style}, source: {sourceConfig: {}}, opacity: 0.3})
+        expect(result.opacity).toBe(0.3)
+        expect({...result, opacity: 1}).toEqual(style)
+    })
+
+    it('materializes the resolved style (with new opacity) when the layer had no explicit style', () => {
+        const source = {sourceConfig: {columns: ['color']}}
+        const result = withUpdatedOpacity({source, opacity: 0.4})
+        // The color-property default is preserved, not clobbered, and only opacity reflects the change.
+        expect(result.colorMode).toBe('COLORS_FROM_PROPERTY')
+        expect(result.colorProperty).toBe('color')
+        expect(result.opacity).toBe(0.4)
     })
 })
 

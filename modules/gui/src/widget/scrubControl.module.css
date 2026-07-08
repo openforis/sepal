@@ -1,0 +1,37 @@
+.control {
+    --size: 1.75rem;
+    box-sizing: border-box;
+    /* Reset native button chrome; the styling below is intentional. */
+    appearance: none;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    width: var(--size);
+    height: var(--size);
+    min-width: var(--size);
+    min-height: var(--size);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: ns-resize;
+    user-select: none;
+    /* Own the vertical drag gesture: no scrolling/zoom hijack, and keep it off the row's drag recognizer. */
+    touch-action: none;
+    font-size: .65rem;
+    font-variant-numeric: tabular-nums;
+    /* Neutral treatment - brighter with higher value, dimmer with lower. No red/green. */
+    color: hsl(0, 0%, calc(45% + var(--scrub-level, 1) * 45%));
+    border: 1px solid hsla(0, 0%, 100%, calc(.15 + var(--scrub-level, 1) * .35));
+    background-color: hsla(0, 0%, 100%, calc(var(--scrub-level, 1) * .18));
+}
+
+.control:hover {
+    background-color: hsla(0, 0%, 100%, calc(.08 + var(--scrub-level, 1) * .2));
+}
+
+.control:focus-visible {
+    outline: 1px solid hsla(0, 0%, 100%, .6);
+    outline-offset: 1px;
+}

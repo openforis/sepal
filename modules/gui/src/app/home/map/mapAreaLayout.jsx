@@ -25,7 +25,7 @@ class _MapAreaLayout extends React.Component {
         
         return (
             <SplitOverlay area={area}>
-                <MapAreaMenu area={area} form={form}/>
+                <MapAreaMenu area={area} form={form} map={map}/>
                 <FeatureLayers featureLayers={areas[area].featureLayers} map={map}/>
             </SplitOverlay>
         )

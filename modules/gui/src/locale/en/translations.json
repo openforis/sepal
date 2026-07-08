@@ -618,7 +618,10 @@
       "width": "Line/outline width",
       "fillOpacity": "Fill opacity",
       "pointSize": "Point size",
-      "opacity": "Layer opacity"
+      "opacity": "Layer opacity",
+      "opacityControl": {
+        "tooltip": "Opacity {percent}%. Drag up/down to change. Click to toggle."
+      }
     },
     "legendBuilder": {
       "addEntry": {

@@ -70,6 +70,14 @@ export const resolveFeatureLayerStyle = ({layerConfig, source} = {}) => {
     }
 }
 
+// The full effective style with only `opacity` replaced, for persisting a row-level opacity change. Built
+// from the resolved style (not a bare {opacity}) so color mode, valueColors, width, pointSize and
+// fillOpacity are all preserved rather than clobbered when the layer had no explicit style yet.
+export const withUpdatedOpacity = ({layerConfig, source, opacity}) => ({
+    ...resolveFeatureLayerStyle({layerConfig, source}),
+    opacity
+})
+
 // After a source's schema is lazily loaded, adopt the resolved default (which may switch to color-property
 // mode). "Untouched" means the current style still equals what we resolved before the schema loaded - any
 // in-modal edit (even within ONE_COLOR mode) makes it touched, so it's preserved rather than re-resolved and

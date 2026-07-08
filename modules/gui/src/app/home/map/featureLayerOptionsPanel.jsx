@@ -127,7 +127,6 @@ class _FeatureLayerOptionsPanel extends React.Component {
                 {this.renderSlider('width', 1, 10, 0)}
                 {this.renderSlider('pointSize', 1, 20, 0)}
                 {this.renderPercentSlider('fillOpacity')}
-                {this.renderPercentSlider('opacity')}
                 {this.renderColorMode()}
                 {style.colorMode === 'ONE_COLOR' ? this.renderColor() : null}
                 {style.colorMode === 'COLORS_FROM_PROPERTY' ? this.renderColorProperty() : null}
@@ -355,6 +354,8 @@ class _FeatureLayerOptionsPanel extends React.Component {
     apply() {
         const {recipeId, area, activatable: {source, deactivate}} = this.props
         const {style, entries} = this.state
+        // `style` still carries the resolved layer opacity (now edited row-level in the map-area popup, not
+        // here), so writing it back preserves the current opacity rather than resetting it.
         const nextStyle = {...style, valueColors: entriesToValueColors(entries)}
         recipeActionBuilder(recipeId)('SET_FEATURE_LAYER_STYLE', {area, sourceId: source.id})
             .set(['layers.areas', area, 'featureLayers', {sourceId: source.id}, 'layerConfig.style'], nextStyle)

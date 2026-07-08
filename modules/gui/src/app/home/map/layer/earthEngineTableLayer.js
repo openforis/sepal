@@ -47,6 +47,13 @@ export class EarthEngineTableLayer extends TileLayer {
         return new GoogleMapsOverlay({name: 'EarthEngineTableLayer', tileProvider, google, minZoom, maxZoom, opacity})
     }
 
+    // Client-side opacity update: keep our own field current (so a later recreation initializes correctly)
+    // and restyle the mounted tiles via the overlay, without refetching tiles or the map id.
+    setOpacity = opacity => {
+        this.opacity = opacity
+        this.overlay?.setOpacity(opacity)
+    }
+
     addToMap$ = () => {
         const id = `EarthEngineTableLayer-${uuid()}`
         this.busy.set(id, true)
