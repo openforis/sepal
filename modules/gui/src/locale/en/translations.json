@@ -586,6 +586,12 @@
       "copy": "Copy to clipboard",
       "coordinatesCopied": "Coordinates copied to the clipboard"
     },
+    "featureLayer": {
+      "toggle": {
+        "show": "Show layer",
+        "hide": "Hide layer"
+      }
+    },
     "featureLayerStyle": {
       "title": "Layer options",
       "tooltip": "Layer options",

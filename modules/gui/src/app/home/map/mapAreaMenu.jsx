@@ -24,6 +24,11 @@ import {withLayers} from '../body/process/withLayers'
 import {reorderAssetsByPointer, splitOverlayRowsForMenu, withFeatureLayerDisabled, withReorderedAssets} from './featureLayerOrder'
 import {resolveFeatureLayerStyle, withUpdatedOpacity} from './featureLayerStyle'
 import styles from './mapAreaMenu.module.css'
+import {overlayToggleTooltipKey} from './overlayToggleTooltip'
+
+// Shared placement for the feature overlay row action cluster (options, opacity, on/off), so their tooltips
+// feel consistent.
+const OVERLAY_ACTION_TOOLTIP_PLACEMENT = 'right'
 
 class _MapAreaMenuPanel extends React.Component {
     assetsRef = React.createRef()
@@ -149,15 +154,15 @@ class _MapAreaMenuPanel extends React.Component {
     }
 
     // Draggable ListItem: drag$/dragValue render the standard ListItem handle inside the row. Row actions are
-    // the compact opacity scrub control followed by the Layer options button; other detailed style controls
-    // live in the options modal.
+    // the Layer options button then the compact opacity scrub control (CrudItem renders the on/off checkbox
+    // after these), so the order reads options -> opacity -> on/off. Detailed style controls live in the modal.
     renderAssetOverlay({featureLayer, source}) {
         return (
             <div key={source.id} ref={element => this.setAssetRowRef(source.id, element)}>
                 <ListItem drag$={this.drag$} dragValue={source.id}>
                     {this.renderOverlayItem(featureLayer, source, [
-                        this.renderOpacityControl(featureLayer, source),
-                        this.renderOptionsButton(source)
+                        this.renderOptionsButton(source),
+                        this.renderOpacityControl(featureLayer, source)
                     ])}
                 </ListItem>
             </div>
@@ -174,6 +179,7 @@ class _MapAreaMenuPanel extends React.Component {
                 value={opacity}
                 formatValue={value => Math.round(value * 100)}
                 tooltip={value => msg('map.featureLayerStyle.opacityControl.tooltip', {percent: Math.round(value * 100)})}
+                tooltipPlacement={OVERLAY_ACTION_TOOLTIP_PLACEMENT}
                 onPreview={value => this.previewOverlayOpacity(source, value)}
                 onChange={value => this.setOverlayOpacity(featureLayer, source, value)}
             />
@@ -193,7 +199,8 @@ class _MapAreaMenuPanel extends React.Component {
             <CrudItem
                 title={this.overlayLabel(source)}
                 selected={featureLayer.disabled !== true}
-                selectTooltip={this.overlayLabel(source)}
+                selectTooltip={msg(overlayToggleTooltipKey(featureLayer))}
+                tooltipPlacement={OVERLAY_ACTION_TOOLTIP_PLACEMENT}
                 onSelect={enabled => this.toggleOverlay(source.id, enabled)}
                 inlineComponents={inlineComponents}
             />
@@ -209,6 +216,7 @@ class _MapAreaMenuPanel extends React.Component {
                 size='small'
                 icon='cog'
                 tooltip={msg('map.featureLayerStyle.tooltip')}
+                tooltipPlacement={OVERLAY_ACTION_TOOLTIP_PLACEMENT}
                 onClick={() => this.openOptions(source)}
             />
         )

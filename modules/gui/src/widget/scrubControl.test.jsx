@@ -2,6 +2,16 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+// Capture what ScrubControl hands to the shared Tooltip (a passthrough avoids the real Tooltip's store deps).
+const {tooltipProps} = vi.hoisted(() => ({tooltipProps: []}))
+vi.mock('~/widget/tooltip', () => ({
+    Tooltip: ({msg, placement, children}) => {
+        tooltipProps.push({msg, placement})
+        return children
+    }
+}))
+const tooltipMsgs = () => tooltipProps.map(({msg}) => msg)
+
 import {ScrubControl} from './scrubControl'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -28,7 +38,7 @@ describe('ScrubControl', () => {
         const onChange = vi.fn()
         const onPreview = vi.fn()
         act(() => {
-            root.render(<ScrubControl value={0.5} onChange={onChange} onPreview={onPreview} {...props}/>)
+            root.render(<ScrubControl value={0.5} tooltip='scrub' onChange={onChange} onPreview={onPreview} {...props}/>)
         })
         const button = container.querySelector('button')
         let unmounted = false
@@ -145,12 +155,25 @@ describe('ScrubControl', () => {
         expect(onChange).toHaveBeenCalledWith(0)
     })
 
-    it('renders the formatted value and calls tooltip with the live value', () => {
+    it('renders the formatted value, sets an accessible label, and feeds the shared tooltip the live value', () => {
+        tooltipProps.length = 0
         const tooltip = vi.fn(value => `v=${value}`)
         const {button} = mount({value: 0.5, formatValue: value => Math.round(value * 100), tooltip})
         expect(button.textContent).toBe('50')
-        expect(button.getAttribute('title')).toBe('v=0.5')
+        // No native title tooltip; accessible label instead, and the shared Tooltip gets the same string.
+        expect(button.getAttribute('title')).toBeNull()
+        expect(button.getAttribute('aria-label')).toBe('v=0.5')
         expect(tooltip).toHaveBeenCalledWith(0.5)
+        expect(tooltipMsgs()).toContain('v=0.5')
+    })
+
+    it('forwards tooltipPlacement to the shared tooltip (default top)', () => {
+        tooltipProps.length = 0
+        mount({value: 0.5, tooltip: 'tip'})
+        expect(tooltipProps.at(-1).placement).toBe('top')
+        tooltipProps.length = 0
+        mount({value: 0.5, tooltip: 'tip', tooltipPlacement: 'left'})
+        expect(tooltipProps.at(-1).placement).toBe('left')
     })
 
     it('supports a custom min/max range for the displayed value', () => {

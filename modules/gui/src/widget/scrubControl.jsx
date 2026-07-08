@@ -4,6 +4,7 @@ import {animationFrames, distinctUntilChanged, filter, fromEvent, map, merge, sa
 
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
+import {Tooltip} from '~/widget/tooltip'
 
 import styles from './scrubControl.module.css'
 import {toggleMinMax, valueFromVerticalDrag} from './scrubValue'
@@ -33,22 +34,24 @@ class _ScrubControl extends React.Component {
     }
 
     render() {
-        const {min = 0, max = 1, formatValue = identity, tooltip} = this.props
+        const {min = 0, max = 1, formatValue = identity, tooltip, tooltipPlacement = 'top'} = this.props
         const value = this.currentValue()
         const level = max > min ? (value - min) / (max - min) : 0
-        const title = typeof tooltip === 'function' ? tooltip(value) : tooltip
-        return (
+        const label = typeof tooltip === 'function' ? tooltip(value) : tooltip
+        const button = (
             <button
                 type='button'
                 ref={this.ref}
                 className={styles.control}
                 style={{'--scrub-level': level}}
-                title={title}
-                aria-label={title}
+                aria-label={label}
                 onKeyDown={this.onKeyDown}>
                 {formatValue(value)}
             </button>
         )
+        // Shared SEPAL tooltip UI (hover) rather than a native title. The ref/native pointer listeners stay on
+        // the inner button, so drag/pointer-capture is unaffected.
+        return label != null ? <Tooltip msg={label} placement={tooltipPlacement}>{button}</Tooltip> : button
     }
 
     currentValue() {
@@ -191,5 +194,6 @@ ScrubControl.propTypes = {
     sensitivity: PropTypes.number,
     toggleValue: PropTypes.func,
     tooltip: PropTypes.oneOfType([PropTypes.func, PropTypes.string]),
+    tooltipPlacement: PropTypes.string,
     onPreview: PropTypes.func
 }
