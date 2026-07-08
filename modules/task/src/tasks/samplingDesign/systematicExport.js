@@ -13,14 +13,16 @@ import {tableToSepal$} from '#task/jobs/export/tableToSepal'
 
 import {formatProperties} from '../formatProperties.js'
 import {systematicExportPlan$} from './systematicExportPlan.js'
+import {candidateAssetId, candidateDescription} from './systematicExportNames.js'
 
 // Systematic export materializes unfiltered candidate samples to temporary EE table assets, then reads them
-// back to filter. GEE asset export derives the temp id from the target assetId; SEPAL export has no assetId,
-// so create a temp id under the user's first EE asset root with a safe generated name.
+// back to filter. GEE asset export derives the temp prefix from the target assetId; SEPAL export has no
+// assetId, so create a temp prefix under the user's first EE asset root. The prefix is clearly temporary and
+// unique (timestamp / task id); candidateAssetId adds a plain per-kind suffix.
 const tempTableAssetId$ = (taskId, assetId) => {
     const timestamp = moment().format('YYYYMMDDHHmmssSSS')
     if (assetId) {
-        return of(`${assetId}_${timestamp}`)
+        return of(`${assetId}_tmp_${timestamp}`)
     }
     return ee.listBuckets$('projects/earthengine-legacy').pipe(
         map(({assets}) => {
@@ -54,20 +56,22 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                 eeStratification: stratificationImage$(stratification),
                 eeGeometry: toGeometry$(aoi)
             }).pipe(
-                switchMap(({eeStratification, eeGeometry}) =>
-                    systematicExportPlan$({
+                switchMap(({eeStratification, eeGeometry}) => {
+                    const baseAssetId = candidateAssetId(tempAssetId, 'base')
+                    const repairAssetId = candidateAssetId(tempAssetId, 'repair')
+                    return systematicExportPlan$({
                         allocation,
                         baseOffset,
                         maxOffsetOf,
                         requireFull,
-                        baseAssetId: `${tempAssetId}_base`,
-                        repairAssetId: `${tempAssetId}_repair`,
-                        exportUnfiltered$: exportUnfiltered$({eeStratification, eeGeometry}),
+                        baseAssetId,
+                        repairAssetId,
+                        exportUnfiltered$: exportUnfiltered$({eeStratification, eeGeometry, baseAssetId}),
                         count$: countSummary$,
                         candidatesOf,
                         finalExport$: finalExport$({eeGeometry})
                     })
-                )
+                })
             )
         ),
         // Backstop cleanup registered under taskId so the task runner waits for it even on cancellation:
@@ -82,20 +86,25 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
             : EMPTY
     }
 
-    function exportUnfiltered$({eeStratification, eeGeometry}) {
-        return ({assetId: unfilteredAssetId, densityOffset, allocation: strata}) => defer(() => {
-            // Track before starting the export: a cancel mid-export could still leave a partial asset, and
-            // deleteTempAsset$ tolerates a missing asset.
-            materializedAssetIds.add(unfilteredAssetId)
-            return tableToAsset$({
-                taskId,
-                collection: systematicUnfilteredSamples({allocation: strata, eeStratification, region: eeGeometry, sampleArrangement, densityOffset}),
-                description: `${description}_unfiltered_${densityOffset}`,
-                assetId: unfilteredAssetId
-            })
-        }).pipe(
-            filter(({state}) => state !== 'COMPLETED')
-        )
+    function exportUnfiltered$({eeStratification, eeGeometry, baseAssetId}) {
+        return ({assetId: unfilteredAssetId, densityOffset, allocation: strata}) => {
+            // The base asset carries all strata; anything else is the (denser) repair export. densityOffset
+            // drives the sampling but is kept out of the user-visible EE task description / asset id.
+            const kind = unfilteredAssetId === baseAssetId ? 'base' : 'repair'
+            return defer(() => {
+                // Track before starting the export: a cancel mid-export could still leave a partial asset,
+                // and deleteTempAsset$ tolerates a missing asset.
+                materializedAssetIds.add(unfilteredAssetId)
+                return tableToAsset$({
+                    taskId,
+                    collection: systematicUnfilteredSamples({allocation: strata, eeStratification, region: eeGeometry, sampleArrangement, densityOffset}),
+                    description: candidateDescription(description, kind),
+                    assetId: unfilteredAssetId
+                })
+            }).pipe(
+                filter(({state}) => state !== 'COMPLETED')
+            )
+        }
     }
 
     // Selected-level counts read from a MATERIALIZED candidate asset's FeatureCollection (a cheap grouped
