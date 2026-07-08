@@ -16,11 +16,14 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
+import {isTaskRunning, mergeTask} from './mergeTask'
 import styles from './taskDetails.module.css'
 import {taskStatusDescription} from './taskStatusDescription'
 
-const mapStateToProps = () => ({
-    projects: select('process.projects')
+const mapStateToProps = (state, {taskId}) => ({
+    projects: select('process.projects'),
+    // The live task from the list's Redux state, so an open panel follows status/progress updates.
+    liveTask: (state.tasks || []).find(task => task.id === taskId)
 })
 
 class _TaskDetails extends React.Component {
@@ -28,13 +31,24 @@ class _TaskDetails extends React.Component {
         super(props)
         this.state = {
             task: null,
-            duration: null
+            tick: 0
         }
         this.intervalId = null
     }
 
     componentDidMount() {
         this.loadTaskDetails()
+        this.updateTicker()
+    }
+
+    componentDidUpdate() {
+        // Live status may have changed via Redux - start/stop the duration ticker accordingly.
+        this.updateTicker()
+    }
+
+    // The full loaded task with live fields (status/statusDescription/updateTime) overlaid from Redux.
+    getTask() {
+        return mergeTask(this.state.task, this.props.liveTask)
     }
 
     loadTaskDetails() {
@@ -42,19 +56,7 @@ class _TaskDetails extends React.Component {
 
         addSubscription(
             api.tasks.loadDetails$(taskId).subscribe({
-                next: task => {
-                    this.setState({
-                        task,
-                        duration: this.calculateDuration(task)
-                    })
-
-                    // Set up interval only if task is still running
-                    if (['ACTIVE', 'PENDING', 'CANCELING'].includes(task.status)) {
-                        this.intervalId = setInterval(() => {
-                            this.setState({duration: this.calculateDuration(task)})
-                        }, 1000)
-                    }
-                },
+                next: task => this.setState({task}),
                 error: error => {
                     console.error('Failed to load task details:', error)
                 }
@@ -62,23 +64,38 @@ class _TaskDetails extends React.Component {
         )
     }
 
-    componentWillUnmount() {
-        if (this.intervalId) {
-            clearInterval(this.intervalId)
+    // Re-render every second only while the (merged) task is running, so the live duration keeps counting;
+    // once it reaches a terminal state the ticker stops and the duration freezes.
+    updateTicker() {
+        const running = isTaskRunning(this.getTask())
+        if (running && !this.intervalId) {
+            this.intervalId = setInterval(() => this.setState(({tick}) => ({tick: tick + 1})), 1000)
+        } else if (!running && this.intervalId) {
+            this.stopTicker()
         }
     }
 
+    stopTicker() {
+        if (this.intervalId) {
+            clearInterval(this.intervalId)
+            this.intervalId = null
+        }
+    }
+
+    componentWillUnmount() {
+        this.stopTicker()
+    }
+
     calculateDuration(task) {
-        const taskData = task || this.state.task
-        if (!taskData || !taskData.creationTime) {
+        if (!task || !task.creationTime) {
             return '--'
         }
-        
-        const start = new Date(taskData.creationTime)
-        const end = ['ACTIVE', 'PENDING', 'CANCELING'].includes(taskData.status)
+
+        const start = new Date(task.creationTime)
+        const end = isTaskRunning(task)
             ? new Date()
-            : (taskData.updateTime ? new Date(taskData.updateTime) : new Date())
-        
+            : (task.updateTime ? new Date(task.updateTime) : new Date())
+
         const durationMs = end - start
         
         // Format duration
@@ -101,12 +118,12 @@ class _TaskDetails extends React.Component {
     
     render() {
         const {onClose} = this.props
-        const {task} = this.state
-        
+        const task = this.getTask()
+
         if (!task) {
             return null
         }
-        
+
         return (
             <Panel className={styles.panel} placement='modal' onBackdropClick={onClose}>
                 <Panel.Header
@@ -115,10 +132,10 @@ class _TaskDetails extends React.Component {
                 />
                 <Panel.Content scrollable>
                     <Layout type='vertical' spacing='compact'>
-                        {this.renderStatus()}
-                        {this.renderConfiguration()}
-                        {this.renderLocation()}
-                        {this.renderProgress()}
+                        {this.renderStatus(task)}
+                        {this.renderConfiguration(task)}
+                        {this.renderLocation(task)}
+                        {this.renderProgress(task)}
                     </Layout>
                 </Panel.Content>
                 <Panel.Buttons>
@@ -132,15 +149,13 @@ class _TaskDetails extends React.Component {
             </Panel>
         )
     }
-    
-    renderStatus() {
-        const {task, duration} = this.state
 
+    renderStatus(task) {
         return (
             <Widget label={msg('tasks.details.section.status')} framed>
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel} msg={msg('tasks.details.duration')}/>
-                    <div className={styles.fieldValue}>{duration}</div>
+                    <div className={styles.fieldValue}>{this.calculateDuration(task)}</div>
                 </div>
 
                 <div className={styles.row}>
@@ -156,9 +171,8 @@ class _TaskDetails extends React.Component {
         )
     }
     
-    renderConfiguration() {
+    renderConfiguration(task) {
         const {projects} = this.props
-        const {task} = this.state
         const taskInfo = task.params?.taskInfo
         const image = task.params?.image
         const recipe = image?.recipe
@@ -189,8 +203,7 @@ class _TaskDetails extends React.Component {
         )
     }
     
-    renderLocation() {
-        const {task} = this.state
+    renderLocation(task) {
         const taskInfo = task.params?.taskInfo
         
         if (['FAILED', 'CANCELED'].includes(task.status)) {
@@ -269,8 +282,7 @@ class _TaskDetails extends React.Component {
         }
     }
 
-    getStatusClass() {
-        const {task} = this.state
+    getStatusClass(task) {
         switch (task?.status) {
             case 'PENDING': return styles.pending
             case 'CANCELING': return styles.canceling
@@ -281,9 +293,7 @@ class _TaskDetails extends React.Component {
         }
     }
 
-    renderProgress() {
-        const {task} = this.state
-
+    renderProgress(task) {
         if (!task?.status) {
             return null
         }
@@ -294,7 +304,7 @@ class _TaskDetails extends React.Component {
             <Widget label={msg('tasks.details.section.progress')} framed>
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel} msg={msg('tasks.details.status')}/>
-                    <div className={this.getStatusClass()}>
+                    <div className={this.getStatusClass(task)}>
                         {task.status}
                     </div>
                 </div>
@@ -308,7 +318,9 @@ class _TaskDetails extends React.Component {
 
 _TaskDetails.propTypes = {
     taskId: PropTypes.string.isRequired,
-    onClose: PropTypes.func.isRequired
+    onClose: PropTypes.func.isRequired,
+    liveTask: PropTypes.object,
+    projects: PropTypes.array
 }
 
 export const TaskDetails = compose(
