@@ -1,6 +1,7 @@
 import React from 'react'
 
 import api from '~/apiRegistry'
+import {parseFeatureLayerAssetStyle} from '~/app/home/map/featureLayerAssetStyleParser'
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
@@ -150,6 +151,10 @@ class _SelectAsset extends React.Component {
         if (isFeatureCollection(metadata)) {
             // Persist the schema; the color-property default is derived from it in resolveFeatureLayerStyle.
             const columns = Array.isArray(tableColumns) ? tableColumns : []
+            // A categorical "By value" style parsed from the asset's `<property>_class_*` metadata (e.g.
+            // Sampling Design's stratum_class_values/palette) becomes the source default, outranking the
+            // color-column heuristic. Null when the asset carries no such convention.
+            const defaultStyle = parseFeatureLayerAssetStyle({properties: metadata?.properties, columns})
             recipeActionBuilder('ADD_EE_TABLE_FEATURE_LAYER_SOURCE')
                 .push('layers.additionalFeatureLayerSources', {
                     id: `ee-table:${uuid()}`,
@@ -159,7 +164,8 @@ class _SelectAsset extends React.Component {
                         asset,
                         label: assetLabel,
                         description: asset,
-                        columns
+                        columns,
+                        ...(defaultStyle ? {defaultStyle} : {})
                     }
                 })
                 .dispatch()

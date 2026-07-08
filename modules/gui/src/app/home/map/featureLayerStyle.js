@@ -51,17 +51,20 @@ const hasColorProperty = source =>
     !!(source && source.sourceConfig && Array.isArray(source.sourceConfig.columns) && source.sourceConfig.columns.includes('color'))
 
 // Resolve the effective style: defaults <- source default <- color-property default <- per-area override.
-// When the source's schema has a `color` property and there's no explicit per-area style, default to
-// COLORS_FROM_PROPERTY mode (so exports like Sampling Design style by their `color` column out of the box).
-// An explicit per-area layerConfig.style always wins and is never clobbered.
+// A source's `sourceConfig.defaultStyle` (e.g. the categorical "By value" style parsed from an asset's
+// `<property>_class_*` metadata) outranks the `color`-property heuristic, so a table carrying both a `color`
+// column and `stratum_class_*` metadata defaults to COLORS_BY_VALUE, not COLORS_FROM_PROPERTY. Absent a
+// defaultStyle, a `color` column still defaults to COLORS_FROM_PROPERTY. An explicit per-area
+// layerConfig.style always wins and is never clobbered.
 export const resolveFeatureLayerStyle = ({layerConfig, source} = {}) => {
     const explicitStyle = layerConfig && layerConfig.style
-    const colorPropertyDefault = !explicitStyle && hasColorProperty(source)
+    const defaultStyle = source && source.sourceConfig && source.sourceConfig.defaultStyle
+    const colorPropertyDefault = !explicitStyle && !defaultStyle && hasColorProperty(source)
         ? {colorMode: 'COLORS_FROM_PROPERTY', colorProperty: 'color'}
         : {}
     return {
         ...DEFAULT_FEATURE_LAYER_STYLE,
-        ...(source && source.sourceConfig && source.sourceConfig.defaultStyle),
+        ...defaultStyle,
         ...colorPropertyDefault,
         ...explicitStyle
     }

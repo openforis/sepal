@@ -90,4 +90,26 @@ describe('collectionMetadata', () => {
             expect(['string', 'number', 'boolean']).toContain(typeof value)
         )
     })
+
+    describe('stratum categorical style convention', () => {
+        it('writes stratum_class_values/palette/names matching the allocation strata', () => {
+            expect(metadata.stratum_class_values).toBe('1,2')
+            expect(metadata.stratum_class_palette).toBe('#0a0,#000000')
+            expect(metadata.stratum_class_names).toBe('Forest,2')
+        })
+
+        it('keeps the class metadata as comma-separated scalar strings', () => {
+            ['stratum_class_values', 'stratum_class_palette', 'stratum_class_names'].forEach(name =>
+                expect(typeof metadata[name]).toBe('string')
+            )
+        })
+
+        it('escapes commas in labels so they survive the comma-separated names', () => {
+            const commaLabeled = collectionMetadata({
+                allocation: [{stratum: 1, label: 'Forest, dense', color: '#0a0', area: 300, weight: 0.3, sampleSize: 30}],
+                reproduction
+            })
+            expect(commaLabeled.stratum_class_names).toBe('Forest\\, dense')
+        })
+    })
 })

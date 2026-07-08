@@ -37,6 +37,30 @@ describe('resolveFeatureLayerStyle', () => {
         expect(resolved.valueProperty).toBe('stratum')
     })
 
+    it('lets sourceConfig.defaultStyle win over the color-property heuristic', () => {
+        const resolved = resolveFeatureLayerStyle({
+            source: {sourceConfig: {
+                columns: ['color', 'stratum'],
+                defaultStyle: {colorMode: 'COLORS_BY_VALUE', valueProperty: 'stratum', valueColors: {'1': '#ff0000'}}
+            }}
+        })
+        expect(resolved.colorMode).toBe('COLORS_BY_VALUE')
+        expect(resolved.valueProperty).toBe('stratum')
+        expect(resolved.valueColors).toEqual({'1': '#ff0000'})
+    })
+
+    it('lets a per-area layerConfig.style win over sourceConfig.defaultStyle', () => {
+        const resolved = resolveFeatureLayerStyle({
+            source: {sourceConfig: {
+                columns: ['stratum'],
+                defaultStyle: {colorMode: 'COLORS_BY_VALUE', valueProperty: 'stratum', valueColors: {'1': '#ff0000'}}
+            }},
+            layerConfig: {style: {colorMode: 'ONE_COLOR', color: '#123456'}}
+        })
+        expect(resolved.colorMode).toBe('ONE_COLOR')
+        expect(resolved.color).toBe('#123456')
+    })
+
 })
 
 describe('styleAfterColumnsLoaded', () => {
