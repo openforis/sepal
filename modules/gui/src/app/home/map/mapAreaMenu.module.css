@@ -26,6 +26,47 @@
     pointer-events: all;
 }
 
+/* Map-area overlay rows only: tighten the label's left inset. These reach into ListItem's internal row
+   markup by structure (the module-scoped class names aren't visible here): the outer .overlayRow element
+   contains .horizontalWrapper > .main, and .main's first child is the drag handle (asset rows) or content.
+   Keep in sync if ListItem's row markup changes. Nothing outside this panel is affected.
+
+   1) Remove .main's left padding so the handle/label sits flush to the row's inner edge. */
+.overlayRow > div > div:first-child {
+    padding-left: 0;
+}
+
+/* 2) Narrow the drag handle (its width sets where the label starts) and its grip glyph. The glyph is kept
+      narrower than the handle so a small gap remains between the grip dots and the label; the glyph is
+      absolutely positioned to .main, so it's pinned left and sized independently. */
+.assetOverlayRow > div > div:first-child > :first-child {
+    width: 1.1rem;
+}
+
+.assetOverlayRow > div > div:first-child > :first-child::before {
+    width: .6rem;
+    left: 0;
+}
+
+/* Non-draggable built-in overlay rows: a leading spacer matching the asset rows' narrowed 1.1rem handle
+   width, so built-in labels line up with the labels of draggable asset rows in this panel. */
+.builtInOverlay {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.builtInOverlay::before {
+    content: '';
+    flex: 0 0 1.1rem;
+}
+
+.builtInOverlay > * {
+    flex-grow: 1;
+    min-width: 0;
+}
+
 /* Feature overlay row label: truncate long asset labels with an ellipsis instead of wrapping/shifting the
    row, and re-enable pointer events (CrudItem's .item disables them) so the full-label tooltip can hover. */
 .overlayTitle {

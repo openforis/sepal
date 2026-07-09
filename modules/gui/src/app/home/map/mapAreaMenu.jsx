@@ -135,11 +135,14 @@ class _MapAreaMenuPanel extends React.Component {
             .filter(Boolean)
     }
 
-    // Non-draggable ListItem: no drag$, so no handle (matches the image layer source list's standard rows).
+    // Non-draggable ListItem: no drag$, so no handle. The builtInOverlay spacer stands in for the asset rows'
+    // (narrowed) drag handle width, so built-in labels line up with draggable asset labels in this panel.
     renderBuiltInOverlay({featureLayer, source}) {
         return (
-            <ListItem key={source.id}>
-                {this.renderOverlayItem(featureLayer, source)}
+            <ListItem key={source.id} className={styles.overlayRow}>
+                <div className={styles.builtInOverlay}>
+                    {this.renderOverlayItem(featureLayer, source)}
+                </div>
             </ListItem>
         )
     }
@@ -161,7 +164,7 @@ class _MapAreaMenuPanel extends React.Component {
     renderAssetOverlay({featureLayer, source}) {
         return (
             <div key={source.id} ref={element => this.setAssetRowRef(source.id, element)}>
-                <ListItem drag$={this.drag$} dragValue={source.id}>
+                <ListItem drag$={this.drag$} dragValue={source.id} className={`${styles.overlayRow} ${styles.assetOverlayRow}`}>
                     {this.renderOverlayItem(featureLayer, source, [
                         this.renderOptionsButton(source),
                         this.renderOpacityControl(featureLayer, source)
