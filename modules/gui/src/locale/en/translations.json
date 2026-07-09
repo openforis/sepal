@@ -5187,15 +5187,15 @@
               }
             },
             "gridOrigin": {
-              "label": "Grid origin",
-              "tooltip": "Fixed uses the same unshifted global grid; Seeded shifts the global grid by a reproducible offset based on the seed.",
+              "label": "Grid start",
+              "tooltip": "Where the systematic grid starts. Fixed uses the same start each time; Random picks the start from the seed.",
               "FIXED": {
                 "label": "Fixed",
-                "tooltip": "Use the same unshifted global grid. Reproducible and reusable across areas of interest."
+                "tooltip": "Use the same grid start every time for the same settings, so the result is reproducible."
               },
               "SEEDED": {
-                "label": "Seeded",
-                "tooltip": "Place the grid using a reproducible offset from the seed. The same seed and CRS/settings use the same global grid everywhere; the area of interest just clips it. Whether two different requests share the exact same samples also depends on the chosen density and sample size strategy."
+                "label": "Random",
+                "tooltip": "Pick the grid start from the seed. Changing the seed moves where the grid starts, while keeping the same systematic spacing."
               }
             },
             "crs": {
