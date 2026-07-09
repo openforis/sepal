@@ -646,8 +646,9 @@ class _Stratification extends React.Component {
     }
 }
 
+// Only add the Legend Import exception; let recipeFormPanel's default `_` flow through, so a clean panel
+// allows switching directly to other panels (allow-then-deactivate) while a dirty panel stays blocked.
 const additionalPolicy = () => ({
-    _: 'disallow',
     legendImport: 'allow'
 })
 
