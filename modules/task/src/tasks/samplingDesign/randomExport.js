@@ -4,6 +4,7 @@ import {toGeometry$} from '#sepal/ee/aoi'
 import {EXPORT_PROPERTY_NAMES} from '#sepal/ee/samplingDesign/sampleProperties'
 import {randomSamples$} from '#sepal/ee/samplingDesign/samples'
 import {stratificationImage$} from '#sepal/ee/samplingDesign/stratificationImage'
+import {unstratifiedAllocation$} from '#sepal/ee/samplingDesign/unstratifiedArea'
 import {getSampleCounts$} from '#sepal/ee/samplingDesign/validateSampleCounts'
 import {tableToAsset$} from '#task/jobs/export/tableToAsset'
 import {tableToSepal$} from '#task/jobs/export/tableToSepal'
@@ -21,9 +22,9 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
     // Final guard: min-distance thinning caps at the requested count, so any shortfall is real. Map a
     // successfully-computed shortfall to a structured, actionable ClientException (EE/getInfo failures still
     // propagate as their own errors).
-    const validate$ = samples =>
+    const validate$ = resolvedAllocation => samples =>
         getSampleCounts$(samples, 'final validation count').pipe(
-            validateRandomCounts({allocation, hasMinDistance: !!sampleArrangement.minDistance})
+            validateRandomCounts({allocation: resolvedAllocation, hasMinDistance: !!sampleArrangement.minDistance})
         )
 
     const export$ = samples => destination === 'SEPAL'
@@ -47,15 +48,21 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
         eeStratification: stratificationImage$(stratification),
         region: toGeometry$(aoi)
     }).pipe(
+        // Unstratified designs carry no per-stratum area; inject the AOI geometry area into the single row
+        // before generating candidates or writing metadata. Stratified allocation passes through unchanged.
         switchMap(({eeStratification, region}) =>
-            randomExportPlan$({
-                // Shared generation: adaptive density, thinning, sample + reproduction metadata.
-                samples$: randomSamples$({allocation, eeStratification, region, sampleArrangement, rowMetadata}).pipe(
-                    map(featureCollection => featureCollection.set(formatProperties(properties)))
-                ),
-                validate$,
-                export$
-            })
+            unstratifiedAllocation$({allocation, stratification, geometry: region}).pipe(
+                switchMap(resolvedAllocation =>
+                    randomExportPlan$({
+                        // Shared generation: adaptive density, thinning, sample + reproduction metadata.
+                        samples$: randomSamples$({allocation: resolvedAllocation, eeStratification, region, sampleArrangement, rowMetadata}).pipe(
+                            map(featureCollection => featureCollection.set(formatProperties(properties)))
+                        ),
+                        validate$: validate$(resolvedAllocation),
+                        export$
+                    })
+                )
+            )
         )
     )
 }

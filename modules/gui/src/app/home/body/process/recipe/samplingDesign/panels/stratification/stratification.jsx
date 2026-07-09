@@ -26,7 +26,7 @@ import {CalculationErrorContent} from '../calculationErrorContent'
 import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
 import {strataCalculationError as toStrataCalculationError} from './stratificationError'
-import {modelToValues, valuesToModel} from './stratificationModel'
+import {modelToValues, syntheticUnstratifiedStratum, valuesToModel} from './stratificationModel'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -56,8 +56,8 @@ const fields = {
         .notBlank('process.samplingDesign.panel.stratification.form.scale.required'),
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
-        // Required even when skipped: unstratified mode still needs a computed single stratum carrying
-        // the AOI area, so an empty strata (e.g. while the area is still computing or failed) is invalid.
+        // Required even when skipped: unstratified mode still needs the single synthetic stratum (area is
+        // filled at the export boundary), so an empty strata is invalid.
         .notEmpty('process.samplingDesign.panel.stratification.form.strata.required'),
 }
 
@@ -391,12 +391,25 @@ class _Stratification extends React.Component {
         eeStrategy.value || eeStrategy.set('ONLINE')
 
         if (stratificationRequiresUpdate) {
-            if (strata.value) {
-                this.setState({prevStrata: strata.value})
+            if (skip.value?.length) {
+                // Unstratified: recompute is instant - just the synthetic row, no EE area request.
+                strata.set([this.unstratifiedStratum()])
+            } else {
+                if (strata.value) {
+                    this.setState({prevStrata: strata.value})
+                }
+                strata.set(null)
+                this.calculateAreaPerStratum()
             }
-            strata.set(null)
-            this.calculateAreaPerStratum()
+        } else if (skip.value?.length && !strata.value?.length) {
+            // Saved/incomplete unstratified model without strata (e.g. persisted before this change): make it
+            // valid immediately with the synthetic row, and never call areaPerStratum$.
+            strata.set([this.unstratifiedStratum()])
         }
+    }
+
+    unstratifiedStratum() {
+        return syntheticUnstratifiedStratum(msg('process.samplingDesign.panel.stratification.unstratified'))
     }
 
     componentDidUpdate(prevProps) {
@@ -513,28 +526,11 @@ class _Stratification extends React.Component {
         this.scheduleAreaPerStratum()
     }
 
+    // Stratified only - unstratified mode never runs areaPerStratum$ (its synthetic row is set directly).
     onAreaPerStratumLoaded(areaPerStratum) {
-        const {inputs: {skip, band, strata}} = this.props
+        const {inputs: {band, strata}} = this.props
         const {prevStrata, entriesByBand} = this.state
         this.clearStrataCalculationError()
-        if (skip.value?.length) {
-            const area = Array.isArray(areaPerStratum)
-                ? areaPerStratum.reduce((acc, stratum) => acc + (stratum?.area || 0), 0)
-                : 0
-            // Only accept a finite, positive AOI area; an empty/malformed response leaves strata empty
-            // so validation keeps Apply disabled.
-            if (Number.isFinite(area) && area > 0) {
-                strata.set([{
-                    color: '#000000',
-                    label: msg('process.samplingDesign.panel.stratification.unstratified'),
-                    value: 1,
-                    stratum: 1,
-                    area,
-                    weight: 1
-                }])
-            }
-            return
-        }
         const totalArea = areaPerStratum.reduce((acc, {area}) => acc + area, 0)
         const entries = entriesByBand[band.value] || []
         const labeledStrata = areaPerStratum.map(({stratum, area}) => {
@@ -550,8 +546,22 @@ class _Stratification extends React.Component {
         strata.set(labeledStrata)
     }
 
-    onSkipToggled() {
-        this.scheduleAreaPerStratum()
+    // Form.Buttons calls onChange(nextSkip) AFTER input.set(nextSkip); skip.value can still be stale here, so
+    // we branch on the passed nextSkip, never on skip.value.
+    onSkipToggled(nextSkip) {
+        const {inputs: {strata}} = this.props
+        const unstratified = !!nextSkip?.length
+        // Entering unstratified means the current rows are stratified and worth preserving as prevStrata;
+        // leaving means they're the synthetic row and must not be. Runs synchronously, keyed off nextSkip.
+        this.invalidateStrata(unstratified)
+        if (unstratified) {
+            // Valid immediately: synthetic single stratum, NO areaPerStratum$ request (the export boundary
+            // computes the AOI area from geometry). Set directly, without a later stale prop read.
+            strata.set([this.unstratifiedStratum()])
+        } else {
+            // Stratified: recompute after the form value settles (image/band/scale area path).
+            setImmediate(() => this.calculateAreaPerStratum())
+        }
     }
 
     // Invalidate any current strata, then (re)compute. Clearing immediately disables Apply while the new
@@ -562,12 +572,13 @@ class _Stratification extends React.Component {
         setImmediate(() => this.calculateAreaPerStratum())
     }
 
-    invalidateStrata() {
+    // Preserve label/color of genuine stratified rows for the next computation, but never carry the synthetic
+    // unstratified row forward as prevStrata. `preserveStrata` is passed explicitly during a skip toggle (when
+    // skip.value can be stale); otherwise it's inferred from the settled skip.value for in-mode recomputes.
+    invalidateStrata(preserveStrata) {
         const {inputs: {skip, strata}} = this.props
-        // Preserve label/color of genuine stratified rows for the next computation, but never carry the
-        // synthetic unstratified row (skip mode) forward as prevStrata. `skip.value` here still reflects
-        // the mode of the rows currently in `strata` (the toggle hasn't settled yet).
-        if (strata.value && !skip.value?.length) {
+        const preserve = preserveStrata === undefined ? !skip.value?.length : preserveStrata
+        if (strata.value && preserve) {
             this.setState({prevStrata: strata.value})
         }
         this.clearStrataCalculationError()
@@ -583,23 +594,17 @@ class _Stratification extends React.Component {
         }
     }
 
+    // Stratified area per stratum. Unstratified mode never calls this - it sets the synthetic row directly
+    // and the AOI area is computed at the export boundary.
     calculateAreaPerStratum() {
-        const {aoi, stream, inputs: {skip, scale, type, assetId, recipeId, band, eeStrategy}} = this.props
-        const isSkipped = !!skip.value?.length
-
-        let stratification
-        if (isSkipped) {
-            // Unstratified: compute the bare AOI area, no stratification image/band required.
-            stratification = null
-        } else {
-            const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
-            if (!scale.value || !id || !band.value) {
-                return
-            }
-            stratification = {
-                type: type.value === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
-                id,
-            }
+        const {aoi, stream, inputs: {scale, type, assetId, recipeId, band, eeStrategy}} = this.props
+        const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
+        if (!scale.value || !id || !band.value) {
+            return
+        }
+        const stratification = {
+            type: type.value === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
+            id,
         }
 
         if (stream('AREA_PER_STRATUM').active) {
@@ -610,7 +615,7 @@ class _Stratification extends React.Component {
             api.gee.areaPerStratum$({
                 aoi,
                 stratification,
-                band: isSkipped ? null : band.value,
+                band: band.value,
                 scale: parseInt(scale.value) || 30,
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(

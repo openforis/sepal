@@ -2,7 +2,7 @@ import {describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/translate', () => ({msg: id => id}))
 
-const {modelToValues, valuesToModel} = await import('./stratificationModel')
+const {modelToValues, syntheticUnstratifiedStratum, unstratifiedStrata, valuesToModel} = await import('./stratificationModel')
 
 // A canonical saved stratification model: the exact shape valuesToModel produces (no transient requiresUpdate).
 const savedModel = {
@@ -50,5 +50,37 @@ describe('valuesToModel', () => {
 describe('round trip', () => {
     it('valuesToModel(modelToValues(savedModel)) preserves the canonical saved model shape', () => {
         expect(valuesToModel(modelToValues(savedModel))).toEqual(savedModel)
+    })
+})
+
+describe('syntheticUnstratifiedStratum', () => {
+    it('is a single synthetic row with no area (area is filled at the export boundary)', () => {
+        const row = syntheticUnstratifiedStratum('Area of interest')
+        expect(row).toEqual({color: '#000000', label: 'Area of interest', value: 1, stratum: 1, weight: 1})
+        expect('area' in row).toBe(false)
+    })
+})
+
+describe('unstratifiedStrata', () => {
+    it('accepts the synthetic row without requiring an area (unstratified is valid before area is computed)', () => {
+        const result = unstratifiedStrata([{color: '#000000', label: 'AOI', value: 1, stratum: 1, weight: 1}])
+        expect(result).toEqual([{color: '#000000', label: 'AOI', value: 1, stratum: 1, weight: 1}])
+        expect('area' in result[0]).toBe(false)
+    })
+
+    it('carries a finite positive area through when one is present', () => {
+        expect(unstratifiedStrata([{label: 'AOI', area: 1.2e9}])[0].area).toBe(1.2e9)
+    })
+
+    it('does not treat stale multi-row stratified data as a valid unstratified result', () => {
+        expect(unstratifiedStrata([{value: 1, area: 3e8}, {value: 2, area: 7e8}])).toEqual([])
+    })
+
+    it('round-trips an unstratified model (skip) with no area', () => {
+        const values = {skip: [true], scale: 30, type: 'ASSET', strata: [{label: 'AOI', color: '#000000', value: 1, stratum: 1, weight: 1}]}
+        const model = valuesToModel(values)
+        expect(model.skip).toBe(true)
+        expect(model.strata).toEqual([{color: '#000000', label: 'AOI', value: 1, stratum: 1, weight: 1}])
+        expect('area' in model.strata[0]).toBe(false)
     })
 })

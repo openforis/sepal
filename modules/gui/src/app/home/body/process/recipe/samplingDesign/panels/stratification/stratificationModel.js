@@ -1,22 +1,28 @@
 import {msg} from '~/translate'
 
-// Unstratified mode persists the single computed stratum carrying the AOI area. Accept only a single row with
-// a finite, positive area: more than one row means stale stratified data leaked across modes and must not be
-// treated as an unstratified result. If the area hasn't been computed (or failed), persist no strata so
-// validation blocks export rather than emitting a row with a missing/invalid area.
+// The single synthetic stratum for unstratified mode. Area is intentionally omitted here: the export
+// boundary computes it from the AOI geometry, so the panel is valid immediately without a hidden EE area
+// request.
+export const syntheticUnstratifiedStratum = label => ({
+    color: '#000000',
+    label,
+    value: 1,
+    stratum: 1,
+    weight: 1
+})
+
+// Normalize the persisted unstratified strata. Accept only a single row: more than one row means stale
+// stratified data leaked across modes and must not be treated as an unstratified result. Area is optional
+// at this stage (the export boundary fills it from the AOI geometry); carry it through only when already a
+// finite, positive value.
 export const unstratifiedStrata = strata => {
     const computed = strata?.length === 1 ? strata[0] : null
-    if (!computed || !Number.isFinite(computed.area) || computed.area <= 0) {
+    if (!computed) {
         return []
     }
-    return [{
-        color: computed.color || '#000000',
-        label: computed.label || msg('process.samplingDesign.panel.stratification.unstratified'),
-        value: 1,
-        stratum: 1,
-        area: computed.area,
-        weight: 1
-    }]
+    const row = syntheticUnstratifiedStratum(computed.label || msg('process.samplingDesign.panel.stratification.unstratified'))
+    row.color = computed.color || '#000000'
+    return [Number.isFinite(computed.area) && computed.area > 0 ? {...row, area: computed.area} : row]
 }
 
 export const valuesToModel = values => {

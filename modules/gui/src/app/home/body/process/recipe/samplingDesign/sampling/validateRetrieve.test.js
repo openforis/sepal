@@ -41,9 +41,23 @@ it('reports noStrata when stratification has no strata', () => {
     expect(codes({...stratifiedValid, stratification: {}})).toContain('noStrata')
 })
 
-it('reports strataAreaMissing when a stratum lacks a finite area', () => {
+it('reports strataAreaMissing when a STRATIFIED stratum lacks a finite area', () => {
     const model = {...stratifiedValid, stratification: {strata: [{value: 1, weight: 1}]}}
     expect(codes(model)).toContain('strataAreaMissing')
+})
+
+it('accepts an UNSTRATIFIED design (skip) whose synthetic stratum/allocation have no area yet', () => {
+    // Area is filled at the export boundary from the AOI geometry, so a missing area must not block Done.
+    const unstratifiedNoArea = {
+        stratification: {skip: true, strata: [{value: 1, stratum: 1, label: 'Area of interest', color: '#000000', weight: 1}]},
+        proportions: {skip: true},
+        sampleAllocation: {
+            manual: [true],
+            allocationStrategy: 'EQUAL',
+            allocation: [{stratum: 1, label: 'Area of interest', color: '#000000', weight: 1, sampleSize: 100}]
+        }
+    }
+    expect(validateRetrieve(unstratifiedNoArea)).toEqual([])
 })
 
 it('reports noAllocation when there is no allocation', () => {

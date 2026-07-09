@@ -64,19 +64,31 @@ describe('shouldShowMore', () => {
         })).toBe(false)
     })
 
-    it('is expanded for SYSTEMATIC + SEEDED grid origin', () => {
+    it('stays collapsed for SYSTEMATIC + SEEDED grid start at the default seed (Random must not force More open)', () => {
         expect(shouldShowMore({
             ...base,
             arrangementStrategy: 'SYSTEMATIC',
-            gridOrigin: 'SEEDED'
-        })).toBe(true)
+            sampleSizeStrategy: 'OVER',
+            gridOrigin: 'SEEDED',
+            seed: 1
+        })).toBe(false)
     })
 
-    it('is expanded for SYSTEMATIC + EXACT sample size', () => {
+    it('stays collapsed for SYSTEMATIC + EXACT at the default seed', () => {
         expect(shouldShowMore({
             ...base,
             arrangementStrategy: 'SYSTEMATIC',
-            sampleSizeStrategy: 'EXACT'
+            sampleSizeStrategy: 'EXACT',
+            seed: 1
+        })).toBe(false)
+    })
+
+    it('expands when the seed is non-default, regardless of SEEDED grid start', () => {
+        expect(shouldShowMore({
+            ...base,
+            arrangementStrategy: 'SYSTEMATIC',
+            gridOrigin: 'SEEDED',
+            seed: 2
         })).toBe(true)
     })
 })

@@ -11,7 +11,7 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
 import styles from './sampleArrangement.module.css'
-import {isSeedRelevantValues, shouldShowMore} from './showMore'
+import {shouldShowMore} from './showMore'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -240,10 +240,7 @@ class _SampleArrangement extends React.Component {
             more: shouldShowMore({
                 crs: crs.value,
                 crsTransform: crsTransform.value,
-                seed: seed.value,
-                arrangementStrategy: arrangementStrategy.value,
-                sampleSizeStrategy: sampleSizeStrategy.value,
-                gridOrigin: gridOrigin.value
+                seed: seed.value
             })
         })
         requiresUpdate.set(false)
@@ -259,22 +256,7 @@ class _SampleArrangement extends React.Component {
         seed.value || seed.set(1)
     }
 
-    componentDidUpdate(prevProps) {
-        // Reveal the (now enabled) seed control when the user switches to a seed-affecting systematic
-        // option while the panel is open and "More" is collapsed. Only react to the transition, so the
-        // user can still collapse "More" afterwards.
-        if (!isSeedRelevant(prevProps) && isSeedRelevant(this.props) && !this.state.more) {
-            this.setState({more: true})
-        }
-    }
 }
-
-const isSeedRelevant = ({inputs: {arrangementStrategy, sampleSizeStrategy, gridOrigin}}) =>
-    isSeedRelevantValues({
-        arrangementStrategy: arrangementStrategy.value,
-        sampleSizeStrategy: sampleSizeStrategy.value,
-        gridOrigin: gridOrigin.value
-    })
 
 const includeSeed = ({arrangementStrategy, sampleSizeStrategy, gridOrigin}) =>
     arrangementStrategy === 'RANDOM'

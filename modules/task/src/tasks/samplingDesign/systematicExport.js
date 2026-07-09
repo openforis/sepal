@@ -7,13 +7,14 @@ import {SYSTEMATIC_EXPORT_PROPERTY_NAMES} from '#sepal/ee/samplingDesign/sampleP
 import {finalizeSystematicSamples, mergeRepairedCandidates, systematicStratumMaxOffset, systematicUnfilteredSamples, toDensitySummary} from '#sepal/ee/samplingDesign/samples'
 import {stratificationImage$} from '#sepal/ee/samplingDesign/stratificationImage'
 import {filterSamples, selectSystematicLevels, systematicSelectionSummary} from '#sepal/ee/samplingDesign/systematicSampling'
+import {unstratifiedAllocation$} from '#sepal/ee/samplingDesign/unstratifiedArea'
 import {finalizeObservable, swallow} from '#sepal/rxjs'
 import {tableToAsset$} from '#task/jobs/export/tableToAsset'
 import {tableToSepal$} from '#task/jobs/export/tableToSepal'
 
 import {formatProperties} from '../formatProperties.js'
-import {systematicExportPlan$} from './systematicExportPlan.js'
 import {candidateAssetId, candidateDescription} from './systematicExportNames.js'
+import {systematicExportPlan$} from './systematicExportPlan.js'
 
 // Systematic export materializes unfiltered candidate samples to temporary EE table assets, then reads them
 // back to filter. GEE asset export derives the temp prefix from the target assetId; SEPAL export has no
@@ -42,10 +43,6 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
     const requireFull = densityStrategy !== 'CLOSEST'
     // The base density is the area-tuned first guess; repair densifies only underproducing strata.
     const baseOffset = 0
-    // Each stratum's own densest allowed offset - the repair decision clamps per failing stratum, so a
-    // stratum already at its minimum-distance limit is recognised as non-repairable rather than dragged
-    // denser by another stratum's headroom.
-    const maxOffsetOf = stratum => systematicStratumMaxOffset(stratum, sampleArrangement)
     // Every temp candidate asset we attempt to materialize; the task-runner-aware backstop below deletes all
     // of them on success, error, and cancellation (idempotent).
     const materializedAssetIds = new Set()
@@ -56,22 +53,32 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                 eeStratification: stratificationImage$(stratification),
                 eeGeometry: toGeometry$(aoi)
             }).pipe(
-                switchMap(({eeStratification, eeGeometry}) => {
-                    const baseAssetId = candidateAssetId(tempAssetId, 'base')
-                    const repairAssetId = candidateAssetId(tempAssetId, 'repair')
-                    return systematicExportPlan$({
-                        allocation,
-                        baseOffset,
-                        maxOffsetOf,
-                        requireFull,
-                        baseAssetId,
-                        repairAssetId,
-                        exportUnfiltered$: exportUnfiltered$({eeStratification, eeGeometry, baseAssetId}),
-                        count$: countSummary$,
-                        candidatesOf,
-                        finalExport$: finalExport$({eeGeometry})
-                    })
-                })
+                // Unstratified designs carry no per-stratum area; inject the AOI geometry area into the single
+                // row before generating candidates or writing metadata. Stratified allocation is unchanged.
+                switchMap(({eeStratification, eeGeometry}) =>
+                    unstratifiedAllocation$({allocation, stratification, geometry: eeGeometry}).pipe(
+                        switchMap(resolvedAllocation => {
+                            const baseAssetId = candidateAssetId(tempAssetId, 'base')
+                            const repairAssetId = candidateAssetId(tempAssetId, 'repair')
+                            // Density/max-offset decisions read stratum.area, so maxOffsetOf must operate on the
+                            // RESOLVED allocation - a no-area unstratified row would collapse the max offset to 0
+                            // and silently cap densification. Defined here so it's tied to resolvedAllocation.
+                            const maxOffsetOf = stratum => systematicStratumMaxOffset(stratum, sampleArrangement)
+                            return systematicExportPlan$({
+                                allocation: resolvedAllocation,
+                                baseOffset,
+                                maxOffsetOf,
+                                requireFull,
+                                baseAssetId,
+                                repairAssetId,
+                                exportUnfiltered$: exportUnfiltered$({eeStratification, eeGeometry, baseAssetId}),
+                                count$: countSummary$,
+                                candidatesOf,
+                                finalExport$: finalExport$({eeGeometry, allocation: resolvedAllocation})
+                            })
+                        })
+                    )
+                )
             )
         ),
         // Backstop cleanup registered under taskId so the task runner waits for it even on cancellation:
@@ -133,7 +140,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
             : baseSamples
     }
 
-    function finalExport$({eeGeometry}) {
+    function finalExport$({eeGeometry, allocation}) {
         return ({candidates, densityOffset}) => {
             const filteredSamples = filterSamples({
                 region: eeGeometry,

@@ -32,10 +32,15 @@ export const validateRetrieve = model => {
         }
     })
 
+    // Unstratified designs (stratification.skip) carry a single synthetic stratum with no area yet - the
+    // export boundary computes it from the AOI geometry - so area checks are skipped for them. Stratified
+    // designs still require a finite, positive per-stratum area.
+    const isUnstratified = model?.stratification?.skip === true
+
     const strata = model?.stratification?.strata
     if (!strata?.length) {
         add('stratification', 'noStrata')
-    } else if (strata.some(stratum => !hasFiniteArea(stratum.area))) {
+    } else if (!isUnstratified && strata.some(stratum => !hasFiniteArea(stratum.area))) {
         add('stratification', 'strataAreaMissing')
     }
 
@@ -61,7 +66,7 @@ export const validateRetrieve = model => {
     if (!taskRows?.length) {
         add('sampleAllocation', 'noTaskAllocation')
     } else {
-        if (taskRows.some(row => !hasFiniteArea(row.area))) {
+        if (!isUnstratified && taskRows.some(row => !hasFiniteArea(row.area))) {
             add('sampleAllocation', 'areaMissing')
         }
         if (taskRows.some(row => !isPositiveInteger(row.sampleSize))) {
