@@ -7,7 +7,8 @@ import {Layout} from '~/widget/layout'
 import {CALCULATION_ERROR} from './eeCalculationError'
 
 // Renders a failed Sampling Design calculation inline: the classified message plus recovery actions. Retry
-// reruns the current strategy; "Use Batch" is only offered for a true EE failure that was running Online.
+// reruns the current strategy; "Use queued" is only offered for a true EE failure that was running the
+// direct (ONLINE) strategy.
 export const CalculationErrorContent = ({error: {type, strategy, message}, onRetry, onUseBatch}) => {
     const retryLabel = strategy === 'ONLINE'
         ? msg('process.samplingDesign.calculationError.retryOnline')

@@ -41,17 +41,19 @@ describe('randomUnderproductionUserMessage', () => {
         {stratum: 7, available: 0, requested: 100}
     ]
 
-    it('uses the minimum-distance wording and key when minDistance is configured', () => {
+    const STRATA_DETAIL = 'trees (stratum 1): 231 available / 373 requested; stratum 7: 0 available / 100 requested'
+
+    it('routes to the minDistance key with a {strata} template and the per-stratum detail in args', () => {
         const {key, message, args} = randomUnderproductionUserMessage({details, hasMinDistance: true})
         expect(key).toBe('tasks.samplingDesign.random.underproduced.minDistance')
-        expect(message).toContain('while respecting the minimum distance')
         expect(message).toContain('{strata}')
-        expect(args.strata).toBe('trees (stratum 1): 231 available / 373 requested; stratum 7: 0 available / 100 requested')
+        expect(args.strata).toBe(STRATA_DETAIL)
     })
 
-    it('uses the no-minimum-distance wording and key when minDistance is not configured', () => {
-        const {key, message} = randomUnderproductionUserMessage({details, hasMinDistance: false})
+    it('routes to a different (insufficientArea) key with the same {strata} template and detail when minDistance is not configured', () => {
+        const {key, message, args} = randomUnderproductionUserMessage({details, hasMinDistance: false})
         expect(key).toBe('tasks.samplingDesign.random.underproduced.insufficientArea')
-        expect(message).not.toContain('minimum distance')
+        expect(message).toContain('{strata}')
+        expect(args.strata).toBe(STRATA_DETAIL)
     })
 })

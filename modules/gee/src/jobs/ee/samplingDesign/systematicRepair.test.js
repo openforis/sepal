@@ -134,15 +134,15 @@ describe('underproductionUserMessage', () => {
     it('uses the min-distance-limit key and a {strata} template with each failing stratum in args', () => {
         const {key, message, args} = underproductionUserMessage({details, reason: 'minDistanceLimit'})
         expect(key).toBe('tasks.samplingDesign.systematic.underproduced.minDistanceLimit')
-        expect(message).toContain('while respecting the minimum distance')
         expect(message).toContain('{strata}')
         expect(args.strata).toBe('trees (stratum 1): 231 available / 373 requested; bare (stratum 7): 900 available / 2164 requested')
     })
 
-    it('uses the repair-exhausted key', () => {
+    it('routes a repair-exhausted reason to a different key with the same {strata} template', () => {
         const {key, message} = underproductionUserMessage({details: [details[0]], reason: 'repairExhausted'})
         expect(key).toBe('tasks.samplingDesign.systematic.underproduced.repairExhausted')
-        expect(message).toContain('after creating additional candidates')
+        expect(key).not.toBe('tasks.samplingDesign.systematic.underproduced.minDistanceLimit')
+        expect(message).toContain('{strata}')
     })
 
     it('falls back to "stratum N" in args when a label is missing', () => {

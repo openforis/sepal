@@ -20,17 +20,18 @@ const backendError = {
 
 const ajax500 = {status: 500, message: 'ajax error 500'}
 
-const messages = {
-    'gee.error.earthEngineException': 'Earth Engine: {earthEngineMessage}',
-    'test.eeOnline': 'EE online: {error} You can retry online or use Batch.',
-    'test.eeBatch': 'EE batch: {error}',
-    'test.genericWithDetail': 'The calculation failed: {error} You can try again.',
-    'test.generic': 'The calculation failed. You can try again.'
+// Key-marker formatter: encode the chosen key + interpolated {error} rather than any English copy, so the
+// tests assert message routing and detail flow. `gee.*`/default keys resolve to their detail (as the real
+// msg would), so toErrorMessage still yields the underlying error text.
+const format = (key, args, defaultMessage) => {
+    if (key === 'gee.error.earthEngineException') {
+        return `Earth Engine: ${args?.earthEngineMessage}`
+    }
+    if (key.startsWith('test.')) {
+        return `message:${key}:${args?.error ?? ''}`
+    }
+    return defaultMessage || key
 }
-
-const format = (key, args, defaultMessage) =>
-    (messages[key] || defaultMessage || key)
-        .replaceAll(/\{(\w+)}/g, (_match, key) => args?.[key])
 
 const messageKeys = {
     eeOnline: 'test.eeOnline',
@@ -75,37 +76,39 @@ describe('eeCalculationError', () => {
     })
 
     describe('calculationError message + strategy', () => {
-        it('EE Online carries the EE detail, ONLINE strategy, and batch-capable wording', () => {
+        it('routes an ONLINE EE failure to the eeOnline key, carrying the EE detail and ONLINE strategy', () => {
             const result = build(eeError, 'ONLINE')
             expect(result.strategy).toEqual('ONLINE')
-            expect(result.message).toContain('EE online:')
+            expect(result.message).toContain('test.eeOnline')
+            expect(result.message).not.toContain('test.eeBatch')
             expect(result.message).toContain('Earth Engine: Computation timed out.')
         })
 
-        it('EE Batch uses the batch message and BATCH strategy, not the online wording', () => {
+        it('routes a BATCH EE failure to the eeBatch key (not the eeOnline one), preserving BATCH strategy', () => {
             const result = build(eeError, 'BATCH')
             expect(result.strategy).toEqual('BATCH')
-            expect(result.message).toContain('EE batch:')
-            expect(result.message).not.toContain('EE online:')
+            expect(result.message).toContain('test.eeBatch')
+            expect(result.message).not.toContain('test.eeOnline')
         })
 
-        it('BACKEND error uses the generic message with backend detail, no EE wording', () => {
+        it('BACKEND error uses the genericWithDetail key with the backend detail, no EE key', () => {
             const result = build(backendError, 'ONLINE')
-            expect(result.message).toContain('The calculation failed:')
+            expect(result.message).toContain('test.genericWithDetail')
             expect(result.message).toContain('Internal error')
-            expect(result.message).not.toContain('EE online:')
+            expect(result.message).not.toContain('test.eeOnline')
         })
 
-        it('untyped Ajax 500 uses the generic message with the request detail', () => {
+        it('untyped Ajax 500 uses the genericWithDetail key with the request detail', () => {
             const result = build(ajax500, 'BATCH')
-            expect(result.message).toContain('The calculation failed:')
+            expect(result.message).toContain('test.genericWithDetail')
             expect(result.message).toContain('ajax error 500')
         })
 
-        it('a detail-less request error uses the plain generic message', () => {
+        it('a detail-less request error uses the plain generic key', () => {
             const result = build({some: 'object'}, 'ONLINE')
             expect(result.type).toEqual(CALCULATION_ERROR.REQUEST)
-            expect(result.message).toEqual('The calculation failed. You can try again.')
+            expect(result.message).toContain('test.generic')
+            expect(result.message).not.toContain('test.genericWithDetail')
         })
     })
 })

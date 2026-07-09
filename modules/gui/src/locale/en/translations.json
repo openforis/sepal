@@ -4844,9 +4844,9 @@
       "create": "Sampling design",
       "description": "Create a sampling design.",
       "calculationError": {
-        "retryOnline": "Retry online",
-        "submitBatchAgain": "Submit Batch again",
-        "useBatch": "Use Batch"
+        "retryOnline": "Retry direct",
+        "submitBatchAgain": "Submit again",
+        "useBatch": "Use queued"
       },
       "retrieve": {
         "invalid": "The sampling design is incomplete and can't be retrieved",
@@ -4920,8 +4920,8 @@
               "loading": "Calculating strata weights...",
               "noData": "No strata found in your AOI.",
               "error": {
-                "eeOnline": "Earth Engine failed to calculate the strata online: {error} You can retry online, or use Batch. Batch submits the calculation as an Earth Engine task, which can handle larger calculations, but if you have other export tasks queued or running it might not start until they complete.",
-                "eeBatch": "Earth Engine failed to calculate the strata with Batch: {error} Batch submits the calculation as an Earth Engine task; if you have other export tasks queued or running it might not have started until they complete. You can submit it again.",
+                "eeOnline": "The strata calculation failed in Earth Engine: {error} You can retry directly, or use Queued for larger calculations.",
+                "eeBatch": "The Earth Engine task for the strata failed: {error} You can submit it again. If you have other Earth Engine tasks queued or running, this task may wait until they finish.",
                 "genericWithDetail": "Failed to calculate the strata weights: {error} You can try again.",
                 "generic": "Failed to calculate the strata weights. You can try again."
               },
@@ -4934,12 +4934,12 @@
             },
             "eeStrategy": {
               "batch": {
-                "label": "Batch",
-                "tooltip": "Calculate the stratum areas using batch processing in Earth Engine. It will export the areas using an EE batch task, which allows for larger areas and smaller scale. If you already have export tasks in EE, it might take a long time for this to execute."
+                "label": "Queued",
+                "tooltip": "Submit an Earth Engine task. This can handle larger calculations, but it may wait until your other Earth Engine tasks finish."
               },
               "online": {
-                "label": "Online",
-                "tooltip": "Calculate the stratum areas using online processing in Earth Engine. For large areas or small scale, this might fail. If so, switch to batch."
+                "label": "Direct",
+                "tooltip": "Calculate directly in Earth Engine. This avoids creating a task, but large calculations can time out."
               }
             }
           },
@@ -5033,8 +5033,8 @@
             "strataProportion": {
               "label": "Anticipated proportion per stratum",
               "error": {
-                "eeOnline": "Earth Engine failed to calculate the anticipated proportions online: {error} You can retry online, or use Batch. Batch submits the calculation as an Earth Engine task, which can handle larger calculations, but if you have other export tasks queued or running it might not start until they complete.",
-                "eeBatch": "Earth Engine failed to calculate the anticipated proportions with Batch: {error} Batch submits the calculation as an Earth Engine task; if you have other export tasks queued or running it might not have started until they complete. You can submit it again.",
+                "eeOnline": "The anticipated proportions calculation failed in Earth Engine: {error} You can retry directly, or use Queued for larger calculations.",
+                "eeBatch": "The Earth Engine task for the anticipated proportions failed: {error} You can submit it again. If you have other Earth Engine tasks queued or running, this task may wait until they finish.",
                 "genericWithDetail": "Failed to calculate the anticipated proportions: {error} You can try again.",
                 "generic": "Failed to calculate the anticipated proportions. You can try again."
               }
@@ -5045,12 +5045,12 @@
             },
             "eeStrategy": {
               "batch": {
-                "label": "Batch",
-                "tooltip": "Calculate the anticipated proportions using batch processing in Earth Engine. It will export the proportions using an EE batch task, which allows for larger areas and smaller scale. If you already have export tasks in EE, it might take a long time for this to execute."
+                "label": "Queued",
+                "tooltip": "Submit an Earth Engine task. This can handle larger calculations, but it may wait until your other Earth Engine tasks finish."
               },
               "online": {
-                "label": "Online",
-                "tooltip": "Calculate the anticipated proportions using online processing in Earth Engine. For large areas or small scale, this might fail. If so, switch to batch."
+                "label": "Direct",
+                "tooltip": "Calculate directly in Earth Engine. This avoids creating a task, but large calculations can time out."
               }
             }
           },

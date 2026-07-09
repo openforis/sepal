@@ -24,12 +24,18 @@ describe('candidateAssetId', () => {
 })
 
 describe('candidateDescription', () => {
-    it('produces a plain user-facing base description', () => {
-        expect(candidateDescription('My sample design', 'base')).toBe('Prepare sample candidates: My sample design')
+    const description = 'My sample design'
+
+    it('includes the user-provided design description in the base description', () => {
+        expect(candidateDescription(description, 'base')).toContain(description)
     })
 
-    it('produces a plain user-facing repair description', () => {
-        expect(candidateDescription('My sample design', 'repair')).toBe('Prepare additional sample candidates: My sample design')
+    it('includes the user-provided design description in the repair description', () => {
+        expect(candidateDescription(description, 'repair')).toContain(description)
+    })
+
+    it('produces distinct base and repair descriptions', () => {
+        expect(candidateDescription(description, 'base')).not.toBe(candidateDescription(description, 'repair'))
     })
 
     it('does not expose implementation jargon in the description', () => {

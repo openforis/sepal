@@ -616,7 +616,7 @@ class _Proportions extends React.Component {
     }
 }
 
-// eeStrategy and band are intentionally excluded: both recompute explicitly (the Online/Batch toggle via
+// eeStrategy and band are intentionally excluded: both recompute explicitly (the Direct/Queued strategy toggle via
 // onEEStrategyChanged, band via onBandChanged). Including them would trigger a second recomputation - and
 // for band, FormCombo's deferred onChange means the dependency-triggered request would be started and then
 // cancelled by onBandChanged's invalidation, leaving the table empty.

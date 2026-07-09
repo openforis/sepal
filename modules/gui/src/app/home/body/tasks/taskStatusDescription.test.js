@@ -70,7 +70,9 @@ describe('taskStatusDescription', () => {
             defaultMessage: 'Sampling could not create enough sample candidates while respecting the minimum distance. Affected strata: {strata}. Try reducing the sample size for those strata.'
         })
         const result = taskStatusDescription({statusDescription})
-        expect(result).toContain('Affected strata: trees (stratum 1): 231 available / 373 requested')
+        // The interpolated per-stratum detail is present (surrounding prose may change freely)...
+        expect(result).toContain('trees (stratum 1): 231 available / 373 requested')
+        // ...and no raw JSON / messageKey / uninterpolated placeholder leaks through.
         expect(result).not.toContain('messageKey')
         expect(result).not.toContain('{"')
         expect(result).not.toContain('{strata}')
