@@ -9,6 +9,7 @@ import {
     unstratifiedLatticeDiameter,
     unstratifiedLatticeExponent,
     unstratifiedLatticeLayout,
+    unstratifiedMaxDensityOffset,
     unstratifiedMinExponent
 } from '#sepal/ee/samplingDesign/systematicLatticeMath'
 
@@ -81,6 +82,28 @@ describe('analytical vs raster spacing contracts are distinct', () => {
         expect(minLatticeExponent({minDistance: undefined, scale: 30})).toBe(6)
         expect(minLatticeExponent({minDistance: 10, scale: 30})).toBe(6)
         expect(minLatticeExponent({minDistance: 60, scale: 30})).toBe(6)
+    })
+})
+
+describe('unstratifiedMaxDensityOffset', () => {
+    it('uses minDistance as the analytical densification floor, not scale', () => {
+        // scale 30 would floor the raster path at exponent 6; the analytical path with minDistance 10 can
+        // densify to exponent 3 instead.
+        expect(unstratifiedMaxDensityOffset({area: AREA, sampleSize: 1000, minDistance: 10})).toBe(15)
+        expect(unstratifiedMaxDensityOffset({area: AREA, sampleSize: 1000, minDistance: 60})).toBe(12)
+    })
+
+    it('allows the bounded maximum densification when no minDistance is configured', () => {
+        expect(unstratifiedMaxDensityOffset({area: AREA, sampleSize: 1000})).toBe(24)
+    })
+
+    it('returns zero when the base grid is already at the minDistance limit', () => {
+        expect(unstratifiedMaxDensityOffset({area: AREA, sampleSize: 1000, minDistance: 10 ** 9})).toBe(0)
+    })
+
+    it('returns zero for invalid area/sample-size inputs', () => {
+        expect(unstratifiedMaxDensityOffset({area: undefined, sampleSize: 1000, minDistance: 60})).toBe(0)
+        expect(unstratifiedMaxDensityOffset({area: AREA, sampleSize: undefined, minDistance: 60})).toBe(0)
     })
 })
 

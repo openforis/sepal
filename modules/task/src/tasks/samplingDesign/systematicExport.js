@@ -3,11 +3,15 @@ import {catchError, concat, defer, EMPTY, filter, forkJoin, map, of, switchMap} 
 
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
+import {toId} from '#sepal/ee/samplingDesign/featureProperties'
 import {SYSTEMATIC_EXPORT_PROPERTY_NAMES} from '#sepal/ee/samplingDesign/sampleProperties'
 import {finalizeSystematicSamples, mergeRepairedCandidates, systematicStratumMaxOffset, systematicUnfilteredSamples, toDensitySummary} from '#sepal/ee/samplingDesign/samples'
 import {stratificationImage$} from '#sepal/ee/samplingDesign/stratificationImage'
+import {isStratificationSkipped} from '#sepal/ee/samplingDesign/stratificationSkip'
+import {unstratifiedMaxDensityOffset} from '#sepal/ee/samplingDesign/systematicLatticeMath'
 import {filterSamples, selectSystematicLevels, systematicSelectionSummary} from '#sepal/ee/samplingDesign/systematicSampling'
 import {unstratifiedAllocation$} from '#sepal/ee/samplingDesign/unstratifiedArea'
+import {materializeSystematicIndexGeometry, unstratifiedSystematicIndexCandidates} from '#sepal/ee/samplingDesign/unstratifiedSystematicSampling'
 import {finalizeObservable, swallow} from '#sepal/rxjs'
 import {tableToAsset$} from '#task/jobs/export/tableToAsset'
 import {tableToSepal$} from '#task/jobs/export/tableToSepal'
@@ -38,6 +42,7 @@ const tempTableAssetId$ = (taskId, assetId) => {
 export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId, strategy, properties, destination, workspacePath, filenamePrefix, fileFormat}) => {
     const {model: {aoi, stratification, sampleAllocation: {allocation}, sampleArrangement}} = recipe
     const densityStrategy = sampleArrangement.sampleSizeStrategy
+    const unstratified = isStratificationSkipped(stratification)
     // CLOSEST may intentionally land below the target; EXACT/OVER must reach the requested count (and fail
     // clearly if even the densest allowed grid can't).
     const requireFull = densityStrategy !== 'CLOSEST'
@@ -62,8 +67,11 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                             const repairAssetId = candidateAssetId(tempAssetId, 'repair')
                             // Density/max-offset decisions read stratum.area, so maxOffsetOf must operate on the
                             // RESOLVED allocation - a no-area unstratified row would collapse the max offset to 0
-                            // and silently cap densification. Defined here so it's tied to resolvedAllocation.
-                            const maxOffsetOf = stratum => systematicStratumMaxOffset(stratum, sampleArrangement)
+                            // and silently cap densification. Unstratified analytical candidates are exact
+                            // points, so their max offset is constrained only by minDistance (not by scale).
+                            const maxOffsetOf = stratum => unstratified
+                                ? unstratifiedMaxDensityOffset({...stratum, minDistance: sampleArrangement.minDistance})
+                                : systematicStratumMaxOffset(stratum, sampleArrangement)
                             return systematicExportPlan$({
                                 allocation: resolvedAllocation,
                                 baseOffset,
@@ -72,7 +80,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                                 baseAssetId,
                                 repairAssetId,
                                 exportUnfiltered$: exportUnfiltered$({eeStratification, eeGeometry, baseAssetId}),
-                                count$: countSummary$,
+                                count$: countSummary$({eeGeometry}),
                                 candidatesOf,
                                 finalExport$: finalExport$({eeGeometry, allocation: resolvedAllocation})
                             })
@@ -102,9 +110,23 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                 // Track before starting the export: a cancel mid-export could still leave a partial asset,
                 // and deleteTempAsset$ tolerates a missing asset.
                 materializedAssetIds.add(unfilteredAssetId)
+                const collection = unstratified
+                    ? unstratifiedSystematicIndexCandidates({
+                        allocation: strata,
+                        region: eeGeometry,
+                        sampleArrangement,
+                        densityOffset
+                    })
+                    : systematicUnfilteredSamples({
+                        allocation: strata,
+                        eeStratification,
+                        region: eeGeometry,
+                        sampleArrangement,
+                        densityOffset
+                    })
                 return tableToAsset$({
                     taskId,
-                    collection: systematicUnfilteredSamples({allocation: strata, eeStratification, region: eeGeometry, sampleArrangement, densityOffset}),
+                    collection,
                     description: candidateDescription(description, kind),
                     assetId: unfilteredAssetId
                 })
@@ -117,20 +139,35 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
     // Selected-level counts read from a MATERIALIZED candidate asset's FeatureCollection (a cheap grouped
     // aggregate over the vector table), NOT the raster sample image - so it can't time out generating
     // candidates live.
-    function countSummary$({assetId: countAssetId, allocation: strata}) {
-        return ee.getInfo$(
-            systematicSelectionSummary(
-                selectSystematicLevels({
-                    samples: ee.FeatureCollection(countAssetId),
+    function countSummary$({eeGeometry}) {
+        return ({assetId: countAssetId, allocation: strata, densityOffset}) => {
+            const candidates = ee.FeatureCollection(countAssetId)
+            // Unstratified temp assets store cheap index cells over a padded projected rectangle. Convert them
+            // to their exact lattice points before counting so polygon/AOI boundaries are respected. This is
+            // still much cheaper than the old fine-raster reduceToVectors path and avoids a final-count proof.
+            const samples = unstratified
+                ? materializeSystematicIndexGeometry({
+                    candidates,
                     allocation: strata,
-                    strategy: densityStrategy
+                    region: eeGeometry,
+                    sampleArrangement,
+                    densityOffset
                 })
-            ),
-            'selected-level summary count',
-            0
-        ).pipe(
-            map(toDensitySummary)
-        )
+                : candidates
+            return ee.getInfo$(
+                systematicSelectionSummary(
+                    selectSystematicLevels({
+                        samples,
+                        allocation: strata,
+                        strategy: densityStrategy
+                    })
+                ),
+                'selected-level summary count',
+                0
+            ).pipe(
+                map(toDensitySummary)
+            )
+        }
     }
 
     function candidatesOf({baseAssetId, repairAssetId, repairedStrata}) {
@@ -141,14 +178,24 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
     }
 
     function finalExport$({eeGeometry, allocation}) {
-        return ({candidates, densityOffset}) => {
-            const filteredSamples = filterSamples({
-                region: eeGeometry,
-                samples: candidates,
-                allocation,
-                strategy: densityStrategy,
-                seed: sampleArrangement.seed
-            })
+        return ({candidates, densityOffset, candidateDensityOffset = densityOffset, levelsByStratum}) => {
+            const filteredSamples = unstratified
+                ? filterUnstratifiedIndexSamples({
+                    region: eeGeometry,
+                    candidates,
+                    allocation,
+                    strategy: densityStrategy,
+                    seed: sampleArrangement.seed,
+                    densityOffset: candidateDensityOffset,
+                    levelsByStratum
+                })
+                : filterSamples({
+                    region: eeGeometry,
+                    samples: candidates,
+                    allocation,
+                    strategy: densityStrategy,
+                    seed: sampleArrangement.seed
+                })
             // selectedDensityOffset is collection-level metadata and records the base offset. If a repair
             // export was used, repaired strata were drawn from a denser internal repair grid that is not
             // represented per row in the current export schema. Therefore selectedDensityOffset alone is not
@@ -178,6 +225,48 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                     strategy
                 })
         }
+    }
+
+    function filterUnstratifiedIndexSamples({region, candidates, allocation, strategy, seed, densityOffset, levelsByStratum}) {
+        const filteredByLevel = ee.FeatureCollection(allocation
+            .map(stratum => {
+                const level = ee.Number(levelsByStratum?.[String(stratum.stratum)])
+                return candidates
+                    .filter(ee.Filter.eq('stratum', stratum.stratum))
+                    .filter(ee.Filter.gte('level', level))
+                    .map(sample => sample.set('selectedLevel', level))
+            })
+        ).flatten()
+        const insideAoi = materializeSystematicIndexGeometry({
+            candidates: filteredByLevel,
+            allocation,
+            region,
+            sampleArrangement,
+            densityOffset
+        })
+        const selected = strategy === 'EXACT'
+            ? ee.FeatureCollection(allocation
+                .map(stratum =>
+                    insideAoi
+                        .filter(ee.Filter.eq('stratum', stratum.stratum))
+                        .randomColumn('random', seed, 'uniform', ['idkey'])
+                        .sort('random')
+                        .limit(stratum.sampleSize)
+                )
+            ).flatten()
+            : insideAoi
+        return selected.map(sample =>
+            sample
+                .set('id', toId({sample}))
+                // Keep helper-only properties out of row-metadata exports; asset exports would select them
+                // away anyway, but SEPAL/CSV row metadata should stay aligned with the existing selectors.
+                .set('i', null)
+                .set('j', null)
+                .set('idkey', null)
+                .set('level', null)
+                .set('sample', null)
+                .set('random', null)
+        )
     }
 
     function deleteTempAsset$(id) {

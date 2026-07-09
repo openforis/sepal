@@ -1,7 +1,7 @@
 import {map} from 'rxjs'
 
-import {ClientException} from '#sepal/exception'
 import {randomUnderproductionUserMessage, shortfallDetails} from '#sepal/ee/samplingDesign/underproduction'
+import {ClientException} from '#sepal/exception'
 
 // A random shortfall is a user/design constraint (too many samples requested for the available area at the
 // minimum distance), not an internal fault - a ClientException carrying a structured userMessage so the task

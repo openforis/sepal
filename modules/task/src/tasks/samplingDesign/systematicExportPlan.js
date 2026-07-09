@@ -1,7 +1,7 @@
 import {concat, of, switchMap, throwError} from 'rxjs'
 
-import {ClientException} from '#sepal/exception'
 import {nonRepairableStrata, repairOffset, underproducingStrata, underproductionDetails, underproductionUserMessage} from '#sepal/ee/samplingDesign/systematicRepair'
+import {ClientException} from '#sepal/exception'
 import {progress} from '#task/rxjs/operators'
 
 // Stage-level task progress for the systematic base + optional-repair + final flow. Emitted so the task
@@ -35,9 +35,9 @@ const underproductionError = ({summary, strata, reason}) => {
 // the best available. All EE effects are injected so the flow is testable without EE:
 //   exportUnfiltered$({assetId, densityOffset, allocation}) -> Observable (materialize candidates; its EE
 //       progress is passed through, not swallowed)
-//   count$({assetId, allocation}) -> Observable<{raw, actual, levels}> (getInfo over the materialized asset)
+//   count$({assetId, allocation, densityOffset}) -> Observable<{raw, actual, levels}> (getInfo over the materialized asset)
 //   candidatesOf({baseAssetId, repairAssetId, repairedStrata}) -> EE candidates for the final filter/export
-//   finalExport$({candidates, densityOffset}) -> Observable (filter + export)
+//   finalExport$({candidates, densityOffset, candidateDensityOffset, levelsByStratum}) -> Observable (filter + export)
 //
 // Progress vs data separation: each count summary is consumed INSIDE a switchMap and never emitted onward,
 // while stage progress and the temp exports' progress are emitted via concat - so a progress object can
@@ -46,16 +46,22 @@ export const systematicExportPlan$ = ({
     allocation, baseOffset, maxOffsetOf, requireFull, baseAssetId, repairAssetId,
     exportUnfiltered$, count$, candidatesOf, finalExport$
 }) => {
-    const finalStage$ = candidates =>
+    const finalStage$ = ({candidates, candidateDensityOffset = baseOffset, levelsByStratum}) =>
         concat(
             stage$(PROGRESS.exportFinal),
-            finalExport$({candidates, densityOffset: baseOffset})
+            finalExport$({candidates, densityOffset: baseOffset, candidateDensityOffset, levelsByStratum})
+        )
+
+    const levelsForRepair = ({baseLevels, repairLevels, repairedStrata}) =>
+        repairedStrata.reduce(
+            (acc, {stratum}) => ({...acc, [String(stratum)]: repairLevels[String(stratum)]}),
+            {...baseLevels}
         )
 
     const afterBaseCount = summary => {
         const underproducing = underproducingStrata({summary, allocation})
         if (!underproducing.length) {
-            return finalStage$(candidatesOf({baseAssetId}))
+            return finalStage$({candidates: candidatesOf({baseAssetId}), levelsByStratum: summary.levels})
         }
         // requireFull (EXACT/OVER): if ANY failing stratum is already at its minimum-distance limit, no
         // repair can make the requested counts reachable - fail now rather than spend a repair export that's
@@ -74,19 +80,27 @@ export const systematicExportPlan$ = ({
             // the requireFull branch is a defensive fallback.
             return requireFull
                 ? throwError(() => underproductionError({summary, strata: underproducing, reason: 'minDistanceLimit'}))
-                : finalStage$(candidatesOf({baseAssetId}))
+                : finalStage$({candidates: candidatesOf({baseAssetId}), levelsByStratum: summary.levels})
         }
         return concat(
             stage$(PROGRESS.prepareRepair),
             exportUnfiltered$({assetId: repairAssetId, densityOffset: offset, allocation: underproducing}),
             stage$(PROGRESS.checkRepair),
-            count$({assetId: repairAssetId, allocation: underproducing}).pipe(
+            count$({assetId: repairAssetId, allocation: underproducing, densityOffset: offset}).pipe(
                 switchMap(repairSummary => {
                     const stillShort = underproducingStrata({summary: repairSummary, allocation: underproducing})
                     if (requireFull && stillShort.length) {
                         return throwError(() => underproductionError({summary: repairSummary, strata: stillShort, reason: 'repairExhausted'}))
                     }
-                    return finalStage$(candidatesOf({baseAssetId, repairAssetId, repairedStrata: underproducing}))
+                    return finalStage$({
+                        candidates: candidatesOf({baseAssetId, repairAssetId, repairedStrata: underproducing}),
+                        candidateDensityOffset: offset,
+                        levelsByStratum: levelsForRepair({
+                            baseLevels: summary.levels,
+                            repairLevels: repairSummary.levels,
+                            repairedStrata: underproducing
+                        })
+                    })
                 })
             )
         )
@@ -96,7 +110,7 @@ export const systematicExportPlan$ = ({
         stage$(PROGRESS.prepareBase),
         exportUnfiltered$({assetId: baseAssetId, densityOffset: baseOffset, allocation}),
         stage$(PROGRESS.checkBase),
-        count$({assetId: baseAssetId, allocation}).pipe(
+        count$({assetId: baseAssetId, allocation, densityOffset: baseOffset}).pipe(
             switchMap(afterBaseCount)
         )
     )

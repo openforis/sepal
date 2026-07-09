@@ -17,7 +17,7 @@ const allocation = [
     {stratum: 2, sampleSize: 50}
 ]
 
-const summary = raw => ({raw, actual: raw, levels: {}})
+const summary = raw => ({raw, actual: raw, levels: Object.fromEntries(Object.keys(raw).map(stratum => [stratum, Number(stratum)]))})
 
 // candidatesOf returns a marker describing what would be assembled, so the test can assert the final export
 // used base-only vs repaired candidates without any EE.
@@ -71,6 +71,8 @@ describe('systematicExportPlan$', () => {
         expect(emissions.at(-1)).toBe('exported')
         expect(exportUnfiltered$.calls.map(([{assetId}]) => assetId)).toEqual(['t_base'])
         expect(finalExport$.calls[0][0].candidates).toEqual({baseAssetId: 't_base', repairAssetId: undefined, repaired: undefined})
+        expect(finalExport$.calls[0][0]).toMatchObject({densityOffset: 0, candidateDensityOffset: 0})
+        expect(finalExport$.calls[0][0].levelsByStratum).toEqual({'1': 1, '2': 2})
     })
 
     it('repair: prepare base -> check base -> prepare repair -> check repair -> export final', async () => {
@@ -90,6 +92,59 @@ describe('systematicExportPlan$', () => {
         expect(exportUnfiltered$.calls[1][0].allocation.map(({stratum}) => stratum)).toEqual([1])
         expect(exportUnfiltered$.calls[1][0].densityOffset).toBeGreaterThan(0)
         expect(finalExport$.calls[0][0].candidates).toEqual({baseAssetId: 't_base', repairAssetId: 't_repair', repaired: [1]})
+        expect(finalExport$.calls[0][0].densityOffset).toBe(0)
+        expect(finalExport$.calls[0][0].candidateDensityOffset).toBe(exportUnfiltered$.calls[1][0].densityOffset)
+        expect(finalExport$.calls[0][0].levelsByStratum).toEqual({'1': 1, '2': 2})
+    })
+
+    it('uses repair-selected levels only for repaired strata', async () => {
+        const finalExport$ = spy(() => of('exported'))
+        const result$ = systematicExportPlan$({
+            allocation,
+            baseOffset: 0,
+            maxOffsetOf: () => 5,
+            requireFull: true,
+            baseAssetId: 't_base',
+            repairAssetId: 't_repair',
+            exportUnfiltered$: spy(),
+            count$: spy(({assetId}) => of(assetId === 't_base'
+                ? {raw: {1: 40, 2: 50}, actual: {1: 40, 2: 50}, levels: {1: 0, 2: 2}}
+                : {raw: {1: 100}, actual: {1: 100}, levels: {1: 3}}
+            )),
+            candidatesOf,
+            finalExport$
+        })
+        const {error} = await collect(result$)
+        expect(error).toBeNull()
+        expect(finalExport$.calls[0][0].levelsByStratum).toEqual({1: 3, 2: 2})
+    })
+
+    it('passes the candidate density offset to both count stages', async () => {
+        const countCalls = []
+        const count$ = spy(args => {
+            countCalls.push(args)
+            return of(args.assetId === 't_base'
+                ? summary({1: 40, 2: 50})
+                : summary({1: 100})
+            )
+        })
+        const result$ = systematicExportPlan$({
+            allocation,
+            baseOffset: 0,
+            maxOffsetOf: () => 5,
+            requireFull: true,
+            baseAssetId: 't_base',
+            repairAssetId: 't_repair',
+            exportUnfiltered$: spy(),
+            count$,
+            candidatesOf,
+            finalExport$: spy(() => of('exported'))
+        })
+        const {error} = await collect(result$)
+        expect(error).toBeNull()
+        expect(countCalls[0]).toMatchObject({assetId: 't_base', densityOffset: 0})
+        expect(countCalls[1].assetId).toBe('t_repair')
+        expect(countCalls[1].densityOffset).toBeGreaterThan(0)
     })
 
     it('passes through the temp export EE progress (does not swallow it)', async () => {
@@ -158,5 +213,6 @@ describe('systematicExportPlan$', () => {
         expect(emissions.at(-1)).toBe('exported')
         expect(exportUnfiltered$.calls.map(([{assetId}]) => assetId)).toEqual(['t_base'])
         expect(finalExport$.calls[0][0].candidates).toEqual({baseAssetId: 't_base', repairAssetId: undefined, repaired: undefined})
+        expect(finalExport$.calls[0][0]).toMatchObject({densityOffset: 0, candidateDensityOffset: 0})
     })
 })

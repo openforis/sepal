@@ -73,7 +73,7 @@ describe('repairOffset', () => {
         expect(repairOffset({underproducing: under, summary: summaryOf({1: 50}), baseOffset: 2, maxOffsetOf})).toBe(4) // 2 + 1 + 1
     })
 
-    it("clamps each stratum's target to that stratum's own max offset", () => {
+    it('clamps each stratum\'s target to that stratum\'s own max offset', () => {
         const under = [{stratum: 1, sampleSize: 100}]
         expect(repairOffset({underproducing: under, summary: summaryOf({1: 1}), baseOffset: 0, maxOffsetOf: () => 2})).toBe(2)
     })
