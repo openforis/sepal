@@ -17,7 +17,7 @@ const isValidColor = color => {
 // (renderer-level), separate from `fillOpacity` which affects polygon/point fill.
 export const DEFAULT_FEATURE_LAYER_STYLE = {
     colorMode: 'ONE_COLOR',
-    color: '#00ffff',
+    color: '#FFD166',
     colorProperty: 'color',
     valueProperty: '',
     valueColors: {},
