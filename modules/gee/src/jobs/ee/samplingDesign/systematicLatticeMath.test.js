@@ -1,6 +1,7 @@
 import {
     exactLatticePoint,
     fixedOriginPhase,
+    isExactMembershipMatch,
     latticeCellLabel,
     latticeIdKey,
     latticeSpacing,
@@ -200,5 +201,25 @@ describe('latticeCellLabel (int64 i*2^32+j; the pre-vectorization numeric label)
         expect(latticeCellLabel(3000000, 1)).toBe('12884901888000001')
         expect(latticeCellLabel(3000000, 1)).not.toBe(String(3000000 * 2 ** 32 + 1))
         expect(latticeCellLabel(3000000, 1)).not.toBe(latticeCellLabel(3000000, 0))
+    })
+})
+
+describe('isExactMembershipMatch (exact-point stratification membership)', () => {
+    it('keeps a candidate whose exact-point class equals its stratum (including class 0)', () => {
+        expect(isExactMembershipMatch(3, 3)).toBe(true)
+        expect(isExactMembershipMatch(0, 0)).toBe(true)
+        expect(isExactMembershipMatch('2', 2)).toBe(true) // reduceRegion may return a numeric-valued string
+    })
+
+    it('drops a class mismatch', () => {
+        expect(isExactMembershipMatch(2, 3)).toBe(false)
+        expect(isExactMembershipMatch(0, 3)).toBe(false)
+    })
+
+    it('drops null/undefined no-data, never matching - even for stratum 0', () => {
+        expect(isExactMembershipMatch(null, 3)).toBe(false)
+        expect(isExactMembershipMatch(undefined, 3)).toBe(false)
+        expect(isExactMembershipMatch(null, 0)).toBe(false)
+        expect(isExactMembershipMatch(undefined, 0)).toBe(false)
     })
 })

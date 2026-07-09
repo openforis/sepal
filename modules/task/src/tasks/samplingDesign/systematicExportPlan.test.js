@@ -73,6 +73,8 @@ describe('systematicExportPlan$', () => {
         expect(finalExport$.calls[0][0].candidates).toEqual({baseAssetId: 't_base', repairAssetId: undefined, repaired: undefined})
         expect(finalExport$.calls[0][0]).toMatchObject({densityOffset: 0, candidateDensityOffset: 0})
         expect(finalExport$.calls[0][0].levelsByStratum).toEqual({'1': 1, '2': 2})
+        // Base-only: no strata were repaired, so exact geometry uses the base offset for every stratum.
+        expect(finalExport$.calls[0][0].repairedStrata).toEqual([])
     })
 
     it('repair: prepare base -> check base -> prepare repair -> check repair -> export final', async () => {
@@ -95,6 +97,9 @@ describe('systematicExportPlan$', () => {
         expect(finalExport$.calls[0][0].densityOffset).toBe(0)
         expect(finalExport$.calls[0][0].candidateDensityOffset).toBe(exportUnfiltered$.calls[1][0].densityOffset)
         expect(finalExport$.calls[0][0].levelsByStratum).toEqual({'1': 1, '2': 2})
+        // Only the repaired stratum is flagged, so the finalizer materializes it at the repair offset and the
+        // rest at the base offset.
+        expect(finalExport$.calls[0][0].repairedStrata.map(({stratum}) => stratum)).toEqual([1])
     })
 
     it('uses repair-selected levels only for repaired strata', async () => {

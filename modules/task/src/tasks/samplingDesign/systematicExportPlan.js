@@ -46,10 +46,13 @@ export const systematicExportPlan$ = ({
     allocation, baseOffset, maxOffsetOf, requireFull, baseAssetId, repairAssetId,
     exportUnfiltered$, count$, candidatesOf, finalExport$
 }) => {
-    const finalStage$ = ({candidates, candidateDensityOffset = baseOffset, levelsByStratum}) =>
+    // repairedStrata lets the stratified exact finalizer materialize each stratum with the density offset it
+    // was generated at (repaired strata at the repair offset, the rest at the base offset); base-only exports
+    // pass none. The unstratified finalizer ignores it.
+    const finalStage$ = ({candidates, candidateDensityOffset = baseOffset, levelsByStratum, repairedStrata = []}) =>
         concat(
             stage$(PROGRESS.exportFinal),
-            finalExport$({candidates, densityOffset: baseOffset, candidateDensityOffset, levelsByStratum})
+            finalExport$({candidates, densityOffset: baseOffset, candidateDensityOffset, levelsByStratum, repairedStrata})
         )
 
     const levelsForRepair = ({baseLevels, repairLevels, repairedStrata}) =>
@@ -99,7 +102,8 @@ export const systematicExportPlan$ = ({
                             baseLevels: summary.levels,
                             repairLevels: repairSummary.levels,
                             repairedStrata: underproducing
-                        })
+                        }),
+                        repairedStrata: underproducing
                     })
                 })
             )
