@@ -136,7 +136,7 @@ class _Stratification extends React.Component {
                 options={[
                     {
                         value: true,
-                        icon: 'ban',
+                        icon: 'minus-circle',
                         label: msg('process.samplingDesign.panel.stratification.form.skip.label'),
                         tooltip: msg('process.samplingDesign.panel.stratification.form.skip.tooltip')
                     },

@@ -37,7 +37,7 @@ export const ProportionsHeaderButtons = ({skip, manual, onManualToggled, onSkipT
             options={[
                 {
                     value: true,
-                    icon: 'ban',
+                    icon: 'minus-circle',
                     label: msg('process.samplingDesign.panel.proportions.form.skip.label'),
                     tooltip: msg('process.samplingDesign.panel.proportions.form.skip.tooltip')
                 },

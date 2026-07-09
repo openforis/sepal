@@ -4865,8 +4865,8 @@
           "button": "STR",
           "form": {
             "skip": {
-              "label": "Skip",
-              "tooltip": "Determine if the sampling determine should be stratified or unstratified.",
+              "label": "Unstratified",
+              "tooltip": "Use an unstratified sampling design.",
               "message": "You’ve chosen an unstratified sampling design, meaning samples will be drawn without considering variation across map classes or regions. To achieve the same level of confidence in your area estimates, more samples may be needed compared to a stratified design, which can target areas with higher variability more efficiently."
             },
             "type": {
@@ -4951,8 +4951,8 @@
           "button": "PRO",
           "form": {
             "skip": {
-              "label": "Skip",
-              "tooltip": "Don't anticipate proportions. Some allocation strategies will not be available and SEPAL cannot estimate your sampling error.",
+              "label": "No proportions",
+              "tooltip": "Do not use anticipated proportions.",
               "message": "Creating a sampling design without anticipated proportions. Some allocation strategies will not be available and SEPAL cannot estimate your sampling error."
             },
             "manual": {
