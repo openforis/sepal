@@ -18,3 +18,5 @@ services:
       - ${SEPAL_PROJECT_DIR}/modules/gee:/usr/local/src/sepal/modules/gee
     environment:
       INSTANCES: "3"
+    extra_hosts:
+      - '${SEPAL_HOST}:host-gateway'
