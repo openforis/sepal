@@ -6,10 +6,10 @@ import {publishUserLocked, publishUserUpdated} from './events.js'
 import {googleOAuth} from './googleOAuth.js'
 import {googleService} from './googleService.js'
 import {renderGroup, renderPasswd, snapshotVersion} from './nss.js'
-import {provision} from './provisioning.js'
 import {recaptcha} from './recaptcha.js'
 import {generateToken, getOrGenerateToken, isExpired} from './tokens.js'
 import {userToMap} from './user.js'
+import {ensureProvisioned} from './userProvisioning.js'
 import * as repository from './userRepository.js'
 import {isValidEmail, isValidUsername} from './validation.js'
 
@@ -245,7 +245,9 @@ const activate = async ctx => {
     await repository.updatePassword(user.username, hashPassword(password))
     await repository.updateStatus(user.username, 'ACTIVE')
     await repository.invalidateToken(token)
-    const activated = await repository.findByUsername(user.username)
+    // Leaving PENDING: guarantee complete provisioning (home dir, data home, keypair) — it is
+    // skipped at invite/signup so never-activated users cost no filesystem resources.
+    const activated = await ensureProvisioned(await repository.findByUsername(user.username))
     publishUserUpdated(activated)
     ctx.body = userToMap(activated)
 }
@@ -275,10 +277,17 @@ const resetPassword = async ctx => {
         ctx.body = {message: 'Account locked'}
         return
     }
+    const wasPending = user.status === 'PENDING'
     await repository.updatePassword(user.username, hashPassword(password))
     await repository.updateStatus(user.username, 'ACTIVE')
     await repository.invalidateToken(token)
-    const updated = await repository.findByUsername(user.username)
+    // Leaving PENDING (covers unlock: LOCKED -> PENDING -> reset link) must guarantee complete
+    // provisioning; a keyless user is healed too. Routine resets of provisioned users skip it —
+    // provision recursively chowns the data home, too expensive for a request that needs neither.
+    const reloaded = await repository.findByUsername(user.username)
+    const updated = wasPending || !reloaded.sshPublicKey
+        ? await ensureProvisioned(reloaded)
+        : reloaded
     publishUserUpdated(updated)
     ctx.body = userToMap(updated)
 }
@@ -307,16 +316,14 @@ const validateEmail = async ctx => {
 const isValidNewUser = ({username, name, email}) =>
     isValidUsername((username || '').toLowerCase()) && Boolean(name) && isValidEmail(email)
 
-// Create a PENDING user, provision its filesystem (uid=gid=id), store the generated public key,
-// send the invitation email, and publish UserUpdated. Returns the reloaded user.
-// If provision fails after insert, the PENDING row remains without an ssh_public_key (no rollback).
+// Create a PENDING user, send the invitation email, and publish UserUpdated. Returns the reloaded
+// user. No filesystem/SSH provisioning here: that happens lazily when the user leaves PENDING
+// (activate / password reset), so users who never activate cost no filesystem resources. New users
+// get uid = gid = id (set by insertUser); collision-free against migrated LDAP ids.
 const createInvitedUser = async ({username, name, email, organization, intendedUse}) => {
     const lowered = (username || '').toLowerCase()
     const token = generateToken()
-    const id = await repository.insertUser({username: lowered, name, email, organization, intendedUse, token})
-    // New users get uid = gid = id (set by insertUser); collision-free against migrated LDAP ids.
-    const sshPublicKey = await provision(lowered, id, id)
-    await repository.updateSshPublicKey(lowered, sshPublicKey)
+    await repository.insertUser({username: lowered, name, email, organization, intendedUse, token})
     const user = await repository.findByUsername(lowered)
     sendInvite(user, token)
     publishUserUpdated(user)

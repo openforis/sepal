@@ -23,6 +23,19 @@ const decodeHash = value => {
     return string.length ? string : null
 }
 
+// LDAP sshPublicKey is multi-valued: ldapts yields a string for one value, an array otherwise
+// (including [] when the attribute is present but empty — which mysql2 would expand to invalid
+// SQL if passed through). Normalize to a list of non-empty key strings.
+const decodeSshPublicKeys = value => {
+    if (value == null) {
+        return []
+    }
+    return (Array.isArray(value) ? value : [value])
+        .map(key => Buffer.isBuffer(key) ? key.toString('utf8') : String(key))
+        .map(key => key.trim())
+        .filter(key => key.length)
+}
+
 // Partition LDAP people against existing DB users, matching case-insensitively because the
 // sepal_user table stores usernames lowercased (see the V13 username-case migration).
 // matched/ldapOnly preserve the LDAP spelling; dbOnly preserves the DB spelling.
@@ -54,6 +67,10 @@ const updateUserCredentials = async (pool, user) => {
     if (!passwordHash) {
         log.warn(`No userPassword for '${user.username}' — leaving password_hash NULL`)
     }
+    const sshPublicKeys = decodeSshPublicKeys(user.sshPublicKey)
+    if (sshPublicKeys.length > 1) {
+        log.warn(`User ${user.username} has more than one public key`)
+    }
     const uid = Number.isInteger(user.uid) ? user.uid : null
     const gid = Number.isInteger(user.gid) ? user.gid : null
     if (uid === null || gid === null) {
@@ -63,7 +80,7 @@ const updateUserCredentials = async (pool, user) => {
         `UPDATE ${DATABASE_NAME}.sepal_user
          SET password_hash = ?, ssh_public_key = ?, uid = ?, gid = ?
          WHERE LOWER(username) = LOWER(?)`,
-        [passwordHash, user.sshPublicKey, uid, gid, user.username]
+        [passwordHash, sshPublicKeys[0] || null, uid, gid, user.username]
     )
 }
 
@@ -103,8 +120,12 @@ const migrate = async () => {
         const matchedSet = new Set(matched.map(name => name.toLowerCase()))
         const matchedLdapUsers = ldapUsers.filter(user => matchedSet.has(user.username.toLowerCase()))
 
+        let migrated = 0
         for (const user of matchedLdapUsers) {
             await updateUserCredentials(pool, user)
+            if (++migrated % 100 === 0) {
+                log.info(`Migration progress: ${migrated}/${matchedLdapUsers.length} users`)
+            }
         }
 
         await reserveIdRangeAboveExisting(pool)
@@ -136,4 +157,4 @@ if (isMainModule) {
         })
 }
 
-export {decodeHash, migrate, reconcile}
+export {decodeHash, decodeSshPublicKeys, migrate, reconcile}
