@@ -33,7 +33,7 @@ RUN chmod +x /usr/local/lib/sepal/python/shared/stack_time_series.py && \
 ADD modules/${MODULE_NAME}/script/init_ost.sh /script/
 RUN chmod u+x /script/init_ost.sh && sync && /script/init_ost.sh
 
-RUN apt-get update && apt-get install -y htop ncdu
+RUN apt-get update && apt-get install -y htop ncdu tippecanoe
 
 ADD modules/${MODULE_NAME}/script/init_clojure.sh /script/
 RUN chmod u+x /script/init_clojure.sh && sync && /script/init_clojure.sh
