@@ -1,17 +1,22 @@
 export const DEFAULT_CRS = 'EPSG:3410'
 export const DEFAULT_SEED = 1
 
-// Pure decision for opening "More" on mount: true only when an advanced value (CRS, CRS transform, or seed)
-// differs from its effective default. A new recipe (all fields undefined) opens collapsed, and so does a
-// saved recipe that only uses Grid start: Random (SEEDED) or EXACT thinning at the DEFAULT seed - the seed
-// stays an advanced setting the user opens "More" to reach. Applying the effective defaults here makes it
-// safe to run before the form defaults are set.
-export const shouldShowMore = ({crs, crsTransform, seed}) => {
+// Unstratified when stratification is skipped (boolean true, or a non-empty skip array). Gates the grid
+// CRS/transform and the More button - this panel owns the grid only for unstratified designs.
+export const isSkipped = skip => skip === true || (Array.isArray(skip) && skip.length > 0)
+
+// Seed is relevant (shown inline) only for random sampling, systematic EXACT thinning, or a random/SEEDED grid
+// start; hidden otherwise.
+export const includeSeed = ({arrangementStrategy, sampleSizeStrategy, gridOrigin}) =>
+    arrangementStrategy === 'RANDOM'
+        || sampleSizeStrategy === 'EXACT'
+        || gridOrigin === 'SEEDED'
+
+// Pure decision for opening "More" on mount: true only when an advanced GRID value (CRS or CRS transform)
+// differs from its effective default. More reveals only CRS/transform now - seed moved inline (shown whenever
+// relevant), so it no longer opens More. A new recipe (all fields undefined) opens collapsed. Applying the
+// effective CRS default here makes it safe to run before the form defaults are set.
+export const shouldShowMore = ({crs, crsTransform}) => {
     const effectiveCrs = crs || DEFAULT_CRS
-    const effectiveSeed = seed === undefined || seed === null || seed === ''
-        ? DEFAULT_SEED
-        : parseInt(seed)
-    return effectiveCrs !== DEFAULT_CRS
-        || !!crsTransform
-        || effectiveSeed !== DEFAULT_SEED
+    return effectiveCrs !== DEFAULT_CRS || !!crsTransform
 }

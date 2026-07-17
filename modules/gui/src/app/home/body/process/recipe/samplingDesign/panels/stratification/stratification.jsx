@@ -26,7 +26,7 @@ import {CalculationErrorContent} from '../calculationErrorContent'
 import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
 import {strataCalculationError as toStrataCalculationError} from './stratificationError'
-import {modelToValues, syntheticUnstratifiedStratum, valuesToModel} from './stratificationModel'
+import {isValidTransform, modelToValues, syntheticUnstratifiedStratum, valuesToModel} from './stratificationModel'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -52,13 +52,24 @@ const fields = {
                 || (type === 'RECIPE' && !recipeId))
         .notBlank('process.samplingDesign.panel.stratification.form.band.required'),
     scale: new Form.Field()
-        .skip((_value, {skip}) => skip.length)
+        .skip((_value, {skip, crsTransform}) => skip.length || !!crsTransform)
         .notBlank('process.samplingDesign.panel.stratification.form.scale.required'),
+    crs: new Form.Field()
+        .skip((_value, {skip}) => skip.length)
+        .notBlank('process.samplingDesign.panel.stratification.form.crs.required'),
+    crsTransform: new Form.Field(),
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
         // Required even when skipped: unstratified mode still needs the single synthetic stratum (area is
         // filled at the export boundary), so an empty strata is invalid.
         .notEmpty('process.samplingDesign.panel.stratification.form.strata.required'),
+}
+
+const constraints = {
+    validCrsTransform: new Form.Constraint(['crsTransform', 'skip'])
+        .skip(({skip}) => skip.length)
+        .predicate(({crsTransform}) => isValidTransform(crsTransform),
+            'process.samplingDesign.panel.stratification.form.crsTransform.invalid'),
 }
 
 class _Stratification extends React.Component {
@@ -68,7 +79,8 @@ class _Stratification extends React.Component {
         prevStrata: [],
         entriesByBand: {},
         showHexColorCode: false,
-        strataCalculationError: null
+        strataCalculationError: null,
+        more: false
     }
 
     constructor(props) {
@@ -86,6 +98,8 @@ class _Stratification extends React.Component {
     }
 
     render() {
+        const {inputs: {skip}} = this.props
+        const {more} = this.state
         return (
             <RecipeFormPanel
                 placement='bottom-right'
@@ -94,12 +108,18 @@ class _Stratification extends React.Component {
                     icon='map'
                     label={this.renderHeaderButtons()}
                     title={msg('process.samplingDesign.panel.stratification.title')}/>
-            
+
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
 
                 <Form.PanelButtons>
+                    {!skip.value?.length ? (
+                        <Button
+                            label={more ? msg('button.less') : msg('button.more')}
+                            onClick={() => this.setState({more: !more})}
+                        />
+                    ) : null}
                     {this.renderImportButton()}
                 </Form.PanelButtons>
             </RecipeFormPanel>
@@ -108,6 +128,7 @@ class _Stratification extends React.Component {
 
     renderContent() {
         const {inputs: {type, skip}} = this.props
+        const {more} = this.state
         return !skip.value?.length
             ? (
                 <Layout>
@@ -117,6 +138,12 @@ class _Stratification extends React.Component {
                         {this.renderBand()}
                         {this.renderScale()}
                     </Layout>
+                    {more ? (
+                        <Layout type='horizontal' alignment='left'>
+                            {this.renderCrs()}
+                            {this.renderCrsTransform()}
+                        </Layout>
+                    ) : null}
                     {this.renderStrata()}
                 </Layout>
             )
@@ -254,7 +281,7 @@ class _Stratification extends React.Component {
     }
     
     renderScale() {
-        const {inputs: {scale}} = this.props
+        const {inputs: {scale, crsTransform}} = this.props
         return (
             <Form.Input
                 className={styles.scale}
@@ -264,6 +291,33 @@ class _Stratification extends React.Component {
                 input={scale}
                 type='number'
                 suffix={msg('process.samplingDesign.panel.stratification.form.scale.suffix')}
+                disabled={!!crsTransform.value}
+                onChange={this.onScaleChanged}
+            />
+        )
+    }
+
+    renderCrs() {
+        const {inputs: {crs}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.samplingDesign.panel.stratification.form.crs.label')}
+                placeholder={msg('process.samplingDesign.panel.stratification.form.crs.placeholder')}
+                tooltip={msg('process.samplingDesign.panel.stratification.form.crs.tooltip')}
+                input={crs}
+                onChange={this.onScaleChanged}
+            />
+        )
+    }
+
+    renderCrsTransform() {
+        const {inputs: {crsTransform}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.samplingDesign.panel.stratification.form.crsTransform.label')}
+                placeholder={msg('process.samplingDesign.panel.stratification.form.crsTransform.placeholder')}
+                tooltip={msg('process.samplingDesign.panel.stratification.form.crsTransform.tooltip')}
+                input={crsTransform}
                 onChange={this.onScaleChanged}
             />
         )
@@ -383,16 +437,17 @@ class _Stratification extends React.Component {
     }
 
     componentDidMount() {
-        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, type, eeStrategy, strata}} = this.props
+        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, crs, crsTransform, type, eeStrategy, strata}} = this.props
         requiresUpdate.set(false)
         skip.value || skip.set([])
-        scale.value || scale.set('30')
+        // A transform-defined grid has no scale value; defaulting it here would dirty the form on open.
+        crsTransform.value || scale.value || scale.set('30')
+        crs.value || crs.set('EPSG:3410')
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
 
         if (stratificationRequiresUpdate) {
             if (skip.value?.length) {
-                // Unstratified: recompute is instant - just the synthetic row, no EE area request.
                 strata.set([this.unstratifiedStratum()])
             } else {
                 if (strata.value) {
@@ -402,8 +457,6 @@ class _Stratification extends React.Component {
                 this.calculateAreaPerStratum()
             }
         } else if (skip.value?.length && !strata.value?.length) {
-            // Saved/incomplete unstratified model without strata (e.g. persisted before this change): make it
-            // valid immediately with the synthetic row, and never call areaPerStratum$.
             strata.set([this.unstratifiedStratum()])
         }
     }
@@ -551,30 +604,22 @@ class _Stratification extends React.Component {
     onSkipToggled(nextSkip) {
         const {inputs: {strata}} = this.props
         const unstratified = !!nextSkip?.length
-        // Entering unstratified means the current rows are stratified and worth preserving as prevStrata;
-        // leaving means they're the synthetic row and must not be. Runs synchronously, keyed off nextSkip.
+        // nextSkip is the only reliable mode signal during the toggle callback.
         this.invalidateStrata(unstratified)
         if (unstratified) {
-            // Valid immediately: synthetic single stratum, NO areaPerStratum$ request (the export boundary
-            // computes the AOI area from geometry). Set directly, without a later stale prop read.
             strata.set([this.unstratifiedStratum()])
         } else {
-            // Stratified: recompute after the form value settles (image/band/scale area path).
             setImmediate(() => this.calculateAreaPerStratum())
         }
     }
 
-    // Invalidate any current strata, then (re)compute. Clearing immediately disables Apply while the new
-    // area/strata calculation is pending, so stale rows can never be applied or carried across modes
-    // (e.g. toggling Skip). The recompute is deferred so the changed form value has settled first.
+    // Clear first so stale strata cannot be applied while the replacement calculation is pending.
     scheduleAreaPerStratum() {
         this.invalidateStrata()
         setImmediate(() => this.calculateAreaPerStratum())
     }
 
-    // Preserve label/color of genuine stratified rows for the next computation, but never carry the synthetic
-    // unstratified row forward as prevStrata. `preserveStrata` is passed explicitly during a skip toggle (when
-    // skip.value can be stale); otherwise it's inferred from the settled skip.value for in-mode recomputes.
+    // Preserve label/color for real strata, never for the synthetic unstratified row.
     invalidateStrata(preserveStrata) {
         const {inputs: {skip, strata}} = this.props
         const preserve = preserveStrata === undefined ? !skip.value?.length : preserveStrata
@@ -597,9 +642,11 @@ class _Stratification extends React.Component {
     // Stratified area per stratum. Unstratified mode never calls this - it sets the synthetic row directly
     // and the AOI area is computed at the export boundary.
     calculateAreaPerStratum() {
-        const {aoi, stream, inputs: {scale, type, assetId, recipeId, band, eeStrategy}} = this.props
+        const {aoi, stream, inputs: {scale, crs, crsTransform, type, assetId, recipeId, band, eeStrategy}} = this.props
         const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
-        if (!scale.value || !id || !band.value) {
+        // onChange fires while typing; block invalid intermediate grid values before calling EE.
+        const hasValidGrid = crsTransform.value ? isValidTransform(crsTransform.value) : !!scale.value
+        if (!hasValidGrid || !id || !band.value) {
             return
         }
         const stratification = {
@@ -616,7 +663,9 @@ class _Stratification extends React.Component {
                 aoi,
                 stratification,
                 band: band.value,
-                scale: parseInt(scale.value) || 30,
+                scale: crsTransform.value ? undefined : (parseInt(scale.value) || 30),
+                crs: crs.value || 'EPSG:3410',
+                crsTransform: crsTransform.value || '',
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
                 takeUntil(this.cancel$)
@@ -659,7 +708,7 @@ const additionalPolicy = () => ({
 
 export const Stratification = compose(
     _Stratification,
-    recipeFormPanel({id: 'stratification', fields, mapRecipeToProps, additionalPolicy, modelToValues, valuesToModel}),
+    recipeFormPanel({id: 'stratification', fields, constraints, mapRecipeToProps, additionalPolicy, modelToValues, valuesToModel}),
     withActivators('legendImport')
 )
 

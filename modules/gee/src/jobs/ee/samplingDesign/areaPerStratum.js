@@ -4,13 +4,14 @@ import {job} from '#gee/jobs/job'
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import imageFactory from '#sepal/ee/imageFactory'
+import {crsGridArgs} from '#sepal/ee/samplingDesign/systematicLatticeMath'
 import {fileName} from '#sepal/path'
 
 import {exportToCSV$} from '../batch/exportToCSV.js'
 import {parseGroups} from '../batch/parse.js'
 
 const worker$ = ({
-    requestArgs: {aoi, stratification, band, scale, crs, batch},
+    requestArgs: {aoi, stratification, band, scale, crs, crsTransform, batch},
     credentials: {sepalUser}
 }) => {
     const description = 'area-per-stratum'
@@ -47,6 +48,9 @@ const worker$ = ({
     }
 
     function reduceRegion(strata, geometry) {
+        // This image mixes pixelArea and strata projections; an unset CRS falls back to WGS84. Use the same
+        // explicit grid the sampler uses for exact-point class membership; crsGridArgs sends scale XOR
+        // crsTransform (never both) so a transform-defined grid can't also send scale.
         return ee.Image.pixelArea()
             .updateMask(strata.mask())
             .addBands(strata)
@@ -55,8 +59,7 @@ const worker$ = ({
                     .setOutputs(['area'])
                     .group(1, 'stratum'),
                 geometry,
-                scale,
-                crs,
+                ...crsGridArgs({crs, scale, crsTransform}),
                 maxPixels: 1e13,
             })
     }

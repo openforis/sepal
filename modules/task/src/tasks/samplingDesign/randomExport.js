@@ -1,6 +1,7 @@
 import {forkJoin, map, switchMap} from 'rxjs'
 
 import {toGeometry$} from '#sepal/ee/aoi'
+import {effectiveArrangement} from '#sepal/ee/samplingDesign/effectiveArrangement'
 import {EXPORT_PROPERTY_NAMES} from '#sepal/ee/samplingDesign/sampleProperties'
 import {randomSamples$} from '#sepal/ee/samplingDesign/samples'
 import {stratificationImage$} from '#sepal/ee/samplingDesign/stratificationImage'
@@ -14,9 +15,9 @@ import {randomExportPlan$} from './randomExportPlan.js'
 import {validateRandomCounts} from './randomUnderproduction.js'
 
 export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, strategy, destination, workspacePath, filenamePrefix, fileFormat, properties = {}}) => {
-    const {model: {aoi, stratification, sampleAllocation: {allocation}, sampleArrangement}} = recipe
-    // Asset exports keep rows minimal + collection-level metadata; SEPAL/CSV keeps full per-row columns
-    // (collection-level metadata sidecars for SEPAL are a follow-up).
+    const {model: {aoi, stratification, sampleAllocation: {allocation}}} = recipe
+    const sampleArrangement = effectiveArrangement(recipe.model)
+    // Asset exports keep rows minimal + collection-level metadata; SEPAL/CSV keeps full per-row columns.
     const rowMetadata = destination === 'SEPAL'
 
     // Final guard: min-distance thinning caps at the requested count, so any shortfall is real. Map a

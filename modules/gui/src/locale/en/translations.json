@@ -4909,6 +4909,18 @@
               "suffix": "meters",
               "tooltip": "The scale to use when calculating stratum areas and allocating the samples"
             },
+            "crs": {
+              "label": "CRS",
+              "placeholder": "CRS...",
+              "required": "You must specify the CRS",
+              "tooltip": "The CRS of the grid used to calculate stratum areas and to assign each systematic sample's stratum"
+            },
+            "crsTransform": {
+              "label": "CRS transform",
+              "placeholder": "e.g. [30,0,0,0,-30,0]",
+              "tooltip": "Optional expert grid alignment: a north-up, square 6-number affine transform ([xScale,0,xOrigin,0,yScale,yOrigin]) for the stratification grid. When set it replaces the scale above. Leave empty to use the CRS at the scale.",
+              "invalid": "Enter a north-up, square transform: [xScale, 0, xOrigin, 0, yScale, yOrigin] with |xScale| = |yScale| and no rotation/shear."
+            },
             "hexButton": {
               "label": "HEX",
               "tooltip": "Toggle display of stratum color hex codes"

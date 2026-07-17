@@ -214,9 +214,9 @@ export default {
             }
         }),
 
-    areaPerStratum$: ({aoi, stratification, band, scale, batch}) =>
+    areaPerStratum$: ({aoi, stratification, band, scale, crs, crsTransform, batch}) =>
         postJson$('/api/gee/samplingDesign/areaPerStratum', {
-            body: {aoi, stratification, band, scale, batch},
+            body: {aoi, stratification, band, scale, crs, crsTransform, batch},
             // No HTTP retry: Online should surface EE failures promptly, and Batch task submission should
             // not be repeated by the client.
             retry: {

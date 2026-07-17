@@ -2,12 +2,14 @@ import {describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/translate', () => ({msg: id => id}))
 
-const {modelToValues, syntheticUnstratifiedStratum, unstratifiedStrata, valuesToModel} = await import('./stratificationModel')
+const {isValidTransform, modelToValues, syntheticUnstratifiedStratum, unstratifiedStrata, valuesToModel} = await import('./stratificationModel')
 
 // A canonical saved stratification model: the exact shape valuesToModel produces (no transient requiresUpdate).
 const savedModel = {
     skip: false,
     scale: 30,
+    crs: 'EPSG:3410',
+    crsTransform: '',
     type: 'ASSET',
     assetId: 'users/test/strata',
     recipeId: undefined,
@@ -34,12 +36,37 @@ describe('modelToValues', () => {
     it('keeps scale as-is (no numeric/string coercion that would mismatch the model)', () => {
         expect(modelToValues({...savedModel, scale: 30}).scale).toBe(30)
     })
+
+    it('defaults the stratification grid crs to EPSG:3410 for a recipe saved before it existed', () => {
+        expect(modelToValues({...savedModel, crs: undefined}).crs).toBe('EPSG:3410')
+        expect(modelToValues({...savedModel, crs: 'EPSG:32633'}).crs).toBe('EPSG:32633')
+    })
+
+    it('defaults crsTransform to empty and round-trips a set value', () => {
+        expect(modelToValues({...savedModel, crsTransform: undefined}).crsTransform).toBe('')
+        expect(modelToValues({...savedModel, crsTransform: '[30,0,0,0,-30,0]'}).crsTransform).toBe('[30,0,0,0,-30,0]')
+    })
 })
 
 describe('valuesToModel', () => {
     it('parses scale to a number for both numeric and string form values', () => {
         expect(valuesToModel({scale: 30}).scale).toBe(30)
         expect(valuesToModel({scale: '30'}).scale).toBe(30)
+    })
+
+    it('stores the stratification grid crs, defaulting to EPSG:3410', () => {
+        expect(valuesToModel({scale: 30, crs: 'EPSG:32633'}).crs).toBe('EPSG:32633')
+        expect(valuesToModel({scale: 30, crs: undefined}).crs).toBe('EPSG:3410')
+    })
+
+    it('stores the stratification grid crsTransform, defaulting to empty', () => {
+        expect(valuesToModel({scale: 30, crsTransform: '[30,0,0,0,-30,0]'}).crsTransform).toBe('[30,0,0,0,-30,0]')
+        expect(valuesToModel({scale: 30, crsTransform: undefined}).crsTransform).toBe('')
+    })
+
+    it('drops scale when a crsTransform defines the grid (mutually exclusive)', () => {
+        expect(valuesToModel({scale: 30, crsTransform: '[30,0,0,0,-30,0]'}).scale).toBeUndefined()
+        expect(valuesToModel({scale: 30, crsTransform: ''}).scale).toBe(30)
     })
 
     it('does not carry the transient requiresUpdate flag into the model', () => {
@@ -82,5 +109,25 @@ describe('unstratifiedStrata', () => {
         expect(model.skip).toBe(true)
         expect(model.strata).toEqual([{color: '#000000', label: 'AOI', value: 1, stratum: 1, weight: 1}])
         expect('area' in model.strata[0]).toBe(false)
+    })
+})
+
+// Mirrors systematicLatticeMath.test.js's isAxisAlignedTransform cases so the GUI validator and the backend
+// can't drift into accepting/rejecting different transforms.
+describe('isValidTransform', () => {
+    it('accepts empty (no transform) and north-up square transforms', () => {
+        expect(isValidTransform('')).toBe(true)
+        expect(isValidTransform(undefined)).toBe(true)
+        expect(isValidTransform('[30,0,15,0,-30,15]')).toBe(true)
+        expect(isValidTransform('30, 0, 0, 0, 30, 0')).toBe(true)
+    })
+
+    it('rejects wrong-length, shear/rotation, non-square, and zero pixels', () => {
+        expect(isValidTransform('30,0,0')).toBe(false)
+        expect(isValidTransform('[30,1,0,0,-30,0]')).toBe(false) // shear b != 0
+        expect(isValidTransform('[30,0,0,2,-30,0]')).toBe(false) // shear d != 0
+        expect(isValidTransform('[30,0,0,0,-60,0]')).toBe(false) // non-square |a| != |e|
+        expect(isValidTransform('[0,0,0,0,-30,0]')).toBe(false) // zero x pixel
+        expect(isValidTransform('[30,0,0,0,-30,x]')).toBe(false) // non-numeric
     })
 })

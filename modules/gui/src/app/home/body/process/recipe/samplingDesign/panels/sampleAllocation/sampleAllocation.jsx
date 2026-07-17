@@ -18,6 +18,7 @@ import {boundsToMarginOfError, calculateMarginOfError} from '../../sampling/marg
 import {calculateSampleSize} from '../../sampling/sampleSize'
 import {AllocationTable} from './allocationTable'
 import styles from './sampleAllocation.module.css'
+import {isPositiveIntegerSampleSize, shouldDeferFixedSampleSizeAllocation} from './sampleAllocationState'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -69,36 +70,34 @@ const effectiveMinSamplesPerStratum = ({allocationStrategy, minSamplesPerStratum
         : (minSamplesPerStratum ? parseInt(minSamplesPerStratum) : 0)
 
 const enoughSamplesToCoverMin = ({sampleSize, minSamplesPerStratum, allocationStrategy, allocation}) => {
-    if (!sampleSize || !allocation) {
+    if (!isPositiveIntegerSampleSize(sampleSize) || !allocation) {
         return true
     }
     const min = effectiveMinSamplesPerStratum({allocationStrategy, minSamplesPerStratum})
     return !min || min * allocation.length <= sampleSize
 }
 
-// Mirrors the nested row validator (.notBlank().int().min(0)): a valid sample size is a non-empty,
-// non-negative integer.
-const isValidSampleSize = value =>
-    value != null && value !== '' && /^\d+$/.test(String(value))
-
 // Active in every mode (NestedForms only propagates a row's error after that row updates, so the parent
 // needs its own guard): every allocation row must carry a valid integer sample size. Margin of error is
 // optional - null/blank when proportions are skipped or it isn't displayed - but must be finite when
 // present. The not-enough-samples case is reported by the dedicated `enoughSamples` constraint, so it's
 // deferred here rather than double-flagged as "too big".
-const allOutcomesFinite = ({allocation, sampleSize, minSamplesPerStratum, allocationStrategy, marginOfError}) => {
+const allOutcomesFinite = ({manual, estimateSampleSize, allocation, sampleSize, minSamplesPerStratum, allocationStrategy, marginOfError}) => {
     const marginFinite = marginOfError == null || marginOfError === '' || Number.isFinite(Number(marginOfError))
     if (!marginFinite) {
         return false
     }
-    if (sampleSize && !enoughSamplesToCoverMin({allocation, sampleSize, minSamplesPerStratum, allocationStrategy})) {
+    if (shouldDeferFixedSampleSizeAllocation({manual, estimateSampleSize, sampleSize})) {
         return true
     }
-    return !allocation || allocation.every(({sampleSize}) => isValidSampleSize(sampleSize))
+    if (!manual?.length && !estimateSampleSize && sampleSize && !enoughSamplesToCoverMin({allocation, sampleSize, minSamplesPerStratum, allocationStrategy})) {
+        return true
+    }
+    return !allocation || allocation.every(({sampleSize}) => isPositiveIntegerSampleSize(sampleSize))
 }
 
 const constraints = {
-    noNaN: new Form.Constraint(['marginOfError', 'relativeMarginOfError', 'allocationStrategy', 'allocation'])
+    noNaN: new Form.Constraint(['manual', 'estimateSampleSize', 'sampleSize', 'marginOfError', 'relativeMarginOfError', 'allocationStrategy', 'allocation'])
         .predicate(allOutcomesFinite,
             'process.samplingDesign.panel.sampleAllocation.form.allocation.tooBig'
         ),
@@ -113,9 +112,14 @@ const constraints = {
 }
 
 class _SampleAllocation extends React.Component {
+    state = {
+        sampleSizeBlurred: false
+    }
+
     constructor(props) {
         super(props)
         this.updateMarginOfError = this.updateMarginOfError.bind(this)
+        this.onSampleSizeBlur = this.onSampleSizeBlur.bind(this)
     }
 
     render() {
@@ -193,6 +197,9 @@ class _SampleAllocation extends React.Component {
     renderTarget() {
         const {noProportions, inputs: {estimateSampleSize, sampleSize, marginOfError}} = this.props
         // TODO: Update messages -> target
+        const sampleSizeErrorMessage = this.state.sampleSizeBlurred
+            ? [sampleSize, 'enoughSamples', 'noNaN']
+            : undefined
 
         const estimateSampleSizeButtons = (
             <Form.Buttons
@@ -228,7 +235,8 @@ class _SampleAllocation extends React.Component {
                 autoFocus={!this.isManual()}
                 errorMessage={estimateSampleSize.value
                     ? [marginOfError, 'noNaN']
-                    : [sampleSize, 'enoughSamples', 'noNaN']}
+                    : sampleSizeErrorMessage}
+                onBlur={estimateSampleSize.value ? undefined : this.onSampleSizeBlur}
                 validate='onChange'
                 type='number'
                 suffix={estimateSampleSize.value ? '%' : undefined}
@@ -245,7 +253,7 @@ class _SampleAllocation extends React.Component {
                 tooltip={msg('process.samplingDesign.panel.sampleAllocation.form.confidenceLevel.tooltip')}
                 input={confidenceLevel}
                 type='number'
-                errorMessage={[confidenceLevel, 'noNaN']}
+                errorMessage={confidenceLevel}
                 suffix={msg('process.samplingDesign.panel.sampleAllocation.form.confidenceLevel.suffix')}
             />
         )
@@ -411,6 +419,10 @@ class _SampleAllocation extends React.Component {
         }
     }
 
+    onSampleSizeBlur() {
+        this.setState({sampleSizeBlurred: true})
+    }
+
     updateMarginOfError() {
         const {inputs: {allocation, marginOfError, relativeMarginOfError, confidenceLevel}} = this.props
         if (!this.hasProportions()) {
@@ -463,7 +475,10 @@ class _SampleAllocation extends React.Component {
             sampleSize.set(calculatedSampleSize)
             updateAllocation(calculatedSampleSize)
         } else {
-            if (sampleSize.value < minSamples * allocation.value.length) {
+            if (!isPositiveIntegerSampleSize(sampleSize.value)) {
+                allocation.set(strata)
+                marginOfError.set(null)
+            } else if (sampleSize.value < minSamples * allocation.value.length) {
                 const undefinedAllocation = allocation.value.map(stratum => ({
                     ...stratum,
                     sampleSize: NaN

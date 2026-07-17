@@ -78,9 +78,11 @@ const Allocation = ({entry: {label, color, sampleSize}}) => {
 }
 
 const renderSampleSize = sampleSize =>
-    !isFinite(sampleSize)
-        ? <div className={styles.nan}>NaN</div>
-        : format.integer(sampleSize)
+    sampleSize == null || sampleSize === ''
+        ? ''
+        : !isFinite(sampleSize)
+            ? <div className={styles.nan}>NaN</div>
+            : format.integer(sampleSize)
 
 const renderMaginOfError = ({marginOfError, relativeMarginOfError}) =>
     _.isNil(marginOfError) || !isFinite(marginOfError)

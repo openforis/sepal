@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {shouldShowMore} from './showMore'
+import {includeSeed, isSkipped, shouldShowMore} from './showMore'
 
 const base = {
     crs: undefined,
@@ -16,18 +16,11 @@ describe('shouldShowMore', () => {
         expect(shouldShowMore(base)).toBe(false)
     })
 
-    it('is collapsed for a missing seed', () => {
+    it('ignores seed entirely (seed is inline now, so it never opens More)', () => {
         expect(shouldShowMore({...base, seed: undefined})).toBe(false)
-    })
-
-    it('is collapsed for the default seed (number and string)', () => {
         expect(shouldShowMore({...base, seed: 1})).toBe(false)
-        expect(shouldShowMore({...base, seed: '1'})).toBe(false)
-    })
-
-    it('is expanded for a non-default seed (number and string)', () => {
-        expect(shouldShowMore({...base, seed: 2})).toBe(true)
-        expect(shouldShowMore({...base, seed: '2'})).toBe(true)
+        expect(shouldShowMore({...base, seed: 2})).toBe(false)
+        expect(shouldShowMore({...base, seed: '2'})).toBe(false)
     })
 
     it('is collapsed for a missing CRS', () => {
@@ -83,12 +76,37 @@ describe('shouldShowMore', () => {
         })).toBe(false)
     })
 
-    it('expands when the seed is non-default, regardless of SEEDED grid start', () => {
+    it('stays collapsed for a non-default seed (seed is inline, never behind More)', () => {
         expect(shouldShowMore({
             ...base,
             arrangementStrategy: 'SYSTEMATIC',
             gridOrigin: 'SEEDED',
             seed: 2
-        })).toBe(true)
+        })).toBe(false)
+    })
+})
+
+// isSkipped drives which panel owns the grid: this (Arrangement) panel shows CRS/transform + the More button
+// only for unstratified (skipped) designs.
+describe('isSkipped', () => {
+    it('is true for boolean-true and non-empty-array skip, false otherwise', () => {
+        expect(isSkipped(true)).toBe(true)
+        expect(isSkipped([true])).toBe(true)
+        expect(isSkipped(false)).toBe(false)
+        expect(isSkipped([])).toBe(false)
+        expect(isSkipped(undefined)).toBe(false)
+    })
+})
+
+// includeSeed drives inline seed visibility: shown only when a seed actually affects the draw.
+describe('includeSeed', () => {
+    it('shows seed for random sampling, systematic EXACT, and SEEDED grid start', () => {
+        expect(includeSeed({arrangementStrategy: 'RANDOM'})).toBe(true)
+        expect(includeSeed({arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'EXACT'})).toBe(true)
+        expect(includeSeed({arrangementStrategy: 'SYSTEMATIC', gridOrigin: 'SEEDED'})).toBe(true)
+    })
+
+    it('hides seed for systematic OVER at a FIXED grid start', () => {
+        expect(includeSeed({arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED'})).toBe(false)
     })
 })

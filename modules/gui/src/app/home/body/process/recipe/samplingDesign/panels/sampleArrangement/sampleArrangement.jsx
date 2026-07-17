@@ -11,11 +11,12 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
 import styles from './sampleArrangement.module.css'
-import {shouldShowMore} from './showMore'
+import {includeSeed, isSkipped, shouldShowMore} from './showMore'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
     scale: selectFrom(recipe, 'model.stratification.scale') || 10,
+    unstratified: isSkipped(selectFrom(recipe, 'model.stratification.skip')),
 })
 
 const fields = {
@@ -44,6 +45,7 @@ class _SampleArrangement extends React.Component {
     state = {more: false}
 
     render() {
+        const {unstratified} = this.props
         const {more} = this.state
         return (
             <RecipeFormPanel
@@ -58,18 +60,21 @@ class _SampleArrangement extends React.Component {
                 </Panel.Content>
 
                 <Form.PanelButtons>
-                    <Button
-                        label={more ? msg('button.less') : msg('button.more')}
-                        onClick={() => this.setState({more: !more})}
-                    />
+                    {unstratified ? (
+                        <Button
+                            label={more ? msg('button.less') : msg('button.more')}
+                            onClick={() => this.setState({more: !more})}
+                        />
+                    ) : null}
                 </Form.PanelButtons>
             </RecipeFormPanel>
         )
     }
 
     renderContent() {
-        const {inputs: {arrangementStrategy}} = this.props
+        const {unstratified, inputs: {arrangementStrategy, sampleSizeStrategy, gridOrigin}} = this.props
         const {more} = this.state
+        const showSeed = includeSeed({arrangementStrategy: arrangementStrategy.value, sampleSizeStrategy: sampleSizeStrategy.value, gridOrigin: gridOrigin.value})
         return (
             <Layout>
                 <Layout type='horizontal'>
@@ -79,13 +84,14 @@ class _SampleArrangement extends React.Component {
                 {arrangementStrategy.value === 'SYSTEMATIC' ? this.renderGridOrigin() : null}
                 <Layout type='horizontal'>
                     {this.renderMinDistance()}
-                    {more ? this.renderScale() : null}
-                    {more ? this.renderSeed() : null}
+                    {showSeed ? this.renderSeed() : null}
                 </Layout>
-                <Layout type='horizontal'>
-                    {more ? this.renderCrs() : null}
-                    {more ? this.renderCrsTransform() : null}
-                </Layout>
+                {more && unstratified ? (
+                    <Layout type='horizontal' alignment='left'>
+                        {this.renderCrs()}
+                        {this.renderCrsTransform()}
+                    </Layout>
+                ) : null}
             </Layout>
         )
     }
@@ -217,7 +223,7 @@ class _SampleArrangement extends React.Component {
     }
 
     renderSeed() {
-        const {inputs: {seed, arrangementStrategy, sampleSizeStrategy, gridOrigin}} = this.props
+        const {inputs: {seed}} = this.props
         return (
             <Form.Input
                 className={styles.number}
@@ -225,7 +231,6 @@ class _SampleArrangement extends React.Component {
                 tooltip={msg('process.samplingDesign.panel.sampleArrangement.form.seed.tooltip')}
                 placeholder={msg('process.samplingDesign.panel.sampleArrangement.form.seed.placeholder')}
                 input={seed}
-                disabled={!includeSeed({arrangementStrategy: arrangementStrategy.value, sampleSizeStrategy: sampleSizeStrategy.value, gridOrigin: gridOrigin.value})}
                 type='number'
             />
         )
@@ -233,9 +238,7 @@ class _SampleArrangement extends React.Component {
 
     componentDidMount() {
         const {inputs: {requiresUpdate, arrangementStrategy, sampleSizeStrategy, gridOrigin, minDistance, scale, seed, crs, crsTransform}} = this.props
-        // Open "More" only when a saved recipe carries non-default advanced values (so they're visible).
-        // shouldShowMore applies the same effective defaults set below, so it's safe that they aren't set
-        // yet - a new recipe (all undefined) opens collapsed.
+        // Saved non-default advanced grid settings should be visible on open.
         this.setState({
             more: shouldShowMore({
                 crs: crs.value,
@@ -249,19 +252,12 @@ class _SampleArrangement extends React.Component {
         gridOrigin.value || gridOrigin.set('FIXED')
         minDistance.value || minDistance.set(this.props.scale * 2)
         scale.value || scale.set(this.props.scale)
-        // The arrangement/grid CRS is used for distance/area logic, so default to the equal-area
-        // EPSG:3410 (the prior hardcoded grid projection), not a geographic CRS. The Retrieve panel's
-        // output CRS default is separate and unchanged.
+        // Use an equal-area sampling CRS by default; Retrieve output CRS is separate.
         crs.value || crs.set('EPSG:3410')
         seed.value || seed.set(1)
     }
 
 }
-
-const includeSeed = ({arrangementStrategy, sampleSizeStrategy, gridOrigin}) =>
-    arrangementStrategy === 'RANDOM'
-        || sampleSizeStrategy === 'EXACT'
-        || gridOrigin === 'SEEDED'
 
 const valuesToModel = values => {
     return {
