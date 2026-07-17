@@ -4810,6 +4810,22 @@
           "title": "LandTrendr options",
           "tooltip": "Configure the LandTrendr segmentation algorithm",
           "form": {
+            "changeDirection": {
+              "label": "Show",
+              "tooltip": "Which change segment to report per pixel",
+              "GREATEST": {
+                "label": "Greatest change",
+                "tooltip": "Report the segment with the largest change in either direction (loss or gain)"
+              },
+              "LOSS": {
+                "label": "Loss only",
+                "tooltip": "Report only the segment with the largest loss/disturbance; pixels with no loss are masked out"
+              },
+              "GAIN": {
+                "label": "Gain only",
+                "tooltip": "Report only the segment with the largest gain/recovery; pixels with no gain are masked out"
+              }
+            },
             "maxSegments": {
               "label": "Max segments",
               "tooltip": "Maximum number of segments to fit onto the time series for each pixel"

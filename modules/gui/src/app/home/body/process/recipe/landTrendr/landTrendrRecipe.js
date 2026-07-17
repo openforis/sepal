@@ -29,7 +29,8 @@ export const defaultModel = {
         recoveryThreshold: 0.25,
         pvalThreshold: 0.05,
         bestModelProportion: 0.75,
-        minObservationsNeeded: 6
+        minObservationsNeeded: 6,
+        changeDirection: 'GREATEST'
     }
 }
 

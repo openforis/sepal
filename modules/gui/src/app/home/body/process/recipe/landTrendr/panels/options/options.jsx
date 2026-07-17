@@ -10,6 +10,8 @@ import {Panel} from '~/widget/panel/panel'
 import styles from './options.module.css'
 
 const fields = {
+    changeDirection: new Form.Field()
+        .notBlank(),
     maxSegments: new Form.Field()
         .int()
         .greaterThan(0),
@@ -28,7 +30,7 @@ class _Options extends React.Component {
     render() {
         const {
             inputs: {
-                maxSegments, spikeThreshold, vertexCountOvershoot, preventOneYearRecovery,
+                changeDirection, maxSegments, spikeThreshold, vertexCountOvershoot, preventOneYearRecovery,
                 recoveryThreshold, pvalThreshold, bestModelProportion, minObservationsNeeded
             }
         } = this.props
@@ -41,6 +43,29 @@ class _Options extends React.Component {
                     title={msg('process.landTrendr.panel.options.title')}/>
                 <Panel.Content>
                     <Layout>
+                        <Form.Buttons
+                            label={msg('process.landTrendr.panel.options.form.changeDirection.label')}
+                            tooltip={msg('process.landTrendr.panel.options.form.changeDirection.tooltip')}
+                            input={changeDirection}
+                            multiple={false}
+                            options={[
+                                {
+                                    value: 'GREATEST',
+                                    label: msg('process.landTrendr.panel.options.form.changeDirection.GREATEST.label'),
+                                    tooltip: msg('process.landTrendr.panel.options.form.changeDirection.GREATEST.tooltip')
+                                },
+                                {
+                                    value: 'LOSS',
+                                    label: msg('process.landTrendr.panel.options.form.changeDirection.LOSS.label'),
+                                    tooltip: msg('process.landTrendr.panel.options.form.changeDirection.LOSS.tooltip')
+                                },
+                                {
+                                    value: 'GAIN',
+                                    label: msg('process.landTrendr.panel.options.form.changeDirection.GAIN.label'),
+                                    tooltip: msg('process.landTrendr.panel.options.form.changeDirection.GAIN.tooltip')
+                                }
+                            ]}
+                        />
                         <Form.Input
                             label={msg('process.landTrendr.panel.options.form.maxSegments.label')}
                             tooltip={msg('process.landTrendr.panel.options.form.maxSegments.tooltip')}
@@ -102,6 +127,7 @@ class _Options extends React.Component {
 }
 
 const valuesToModel = values => ({
+    changeDirection: values.changeDirection,
     maxSegments: parseInt(values.maxSegments),
     spikeThreshold: parseFloat(values.spikeThreshold),
     vertexCountOvershoot: parseInt(values.vertexCountOvershoot),
