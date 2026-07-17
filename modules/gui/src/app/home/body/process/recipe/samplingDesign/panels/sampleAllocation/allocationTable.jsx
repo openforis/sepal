@@ -4,6 +4,7 @@ import format from '~/format'
 import {msg} from '~/translate'
 import {ColorElement} from '~/widget/colorElement'
 import {NestedForms} from '~/widget/form/nestedForms'
+import {Tooltip} from '~/widget/tooltip'
 
 import {AllocationForm} from './allocationForm'
 import styles from './allocationTable.module.css'
@@ -20,8 +21,8 @@ export const AllocationTable = ({allocation, sampleSize, marginOfError, relative
                             // Ensure the row carries a `sampleSize` key before the nested form mounts:
                             // withNestedForm only propagates fields already present on the entity, so a
                             // strata-built row (unstratified/no-proportions) without it would never write
-                            // the typed value back to the parent. Blank (not 1) keeps Apply disabled until
-                            // the user enters a count; an existing value is preserved.
+                            // the typed value back to the parent. Blank keeps Apply disabled until the user
+                            // enters a count; an existing value is preserved.
                             entry={{sampleSize: '', ...entry}}
                             relativeMarginOfError={relativeMarginOfError}
                             autoFocus={manual && index === 0}
@@ -50,7 +51,9 @@ const Header = ({relativeMarginOfError, noProportions}) => (
     <div className={styles.header}>
         <div className={styles.stratum}/>
         <div className={styles.area}>{noProportions ? '' : relativeMarginOfError ? msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.relativeMarginOfError') : msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.marginOfError')}</div>
-        <div className={styles.weight}>{msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.samples')}</div>
+        <Tooltip msg={msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.samplesTooltip')}>
+            <div className={styles.weight}>{msg('process.samplingDesign.panel.sampleAllocation.form.allocation.table.samples')}</div>
+        </Tooltip>
     </div>
 )
 

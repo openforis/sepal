@@ -9,6 +9,7 @@ const validModel = {
     proportions: {anticipatedProportions: [{stratum: 1, proportion: 0.48}, {stratum: 2, proportion: 0.08}]},
     sampleAllocation: {
         allocationStrategy: 'OPTIMAL',
+        minSamplesPerStratum: 2,
         allocation: [
             {stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 0.3, proportion: 0.48, sampleSize: 30},
             {stratum: 2, label: 'Non-forest', color: '#a00', area: 7e8, weight: 0.7, proportion: 0.08, sampleSize: 70}

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
+import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import api from '~/apiRegistry'
 import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
@@ -29,6 +30,7 @@ const mapRecipeToProps = recipe => ({
     stratificationRecipeId: selectFrom(recipe, 'model.stratification.recipeId'),
     stratificationBand: selectFrom(recipe, 'model.stratification.band'),
     stratificationScale: selectFrom(recipe, 'model.stratification.scale'),
+    stratificationCrs: selectFrom(recipe, 'model.stratification.crs') || DEFAULT_SAMPLING_GRID_CRS,
     strata: selectFrom(recipe, 'model.stratification.strata')
 })
 
@@ -508,7 +510,7 @@ class _Proportions extends React.Component {
 
     calculateAnticipatedProportions() {
         const {aoi, stream,
-            unstratified, stratificationType, stratificationRecipeId, stratificationAssetId, stratificationBand,
+            unstratified, stratificationType, stratificationRecipeId, stratificationAssetId, stratificationBand, stratificationCrs,
             inputs: {manual, anticipationStrategy, scale, type, assetId, recipeId, band, targetClass, eeStrategy, anticipatedProportions}
         } = this.props
         this.clearProportionsCalculationError()
@@ -549,7 +551,10 @@ class _Proportions extends React.Component {
                 probabilityBand: band.value,
                 mode: anticipationStrategy.value,
                 targetClass: categorical ? Number(targetClass.value) : undefined,
+                // Proportions uses an independent scale for the speed/detail tradeoff, so it inherits only
+                // Stratification's CRS, not its transform.
                 scale: parseInt(scale.value),
+                crs: stratificationCrs,
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
                 takeUntil(this.cancel$)
@@ -621,9 +626,13 @@ class _Proportions extends React.Component {
 // for band, FormCombo's deferred onChange means the dependency-triggered request would be started and then
 // cancelled by onBandChanged's invalidation, leaving the table empty.
 const proportionsDeps = props => {
-    const {inputs: {manual, anticipationStrategy, type, assetId, recipeId, targetClass, scale}} = props
-    return [manual, anticipationStrategy, type, assetId, recipeId, targetClass, scale]
-        .map(input => input?.value)
+    const {stratificationCrs, inputs: {manual, anticipationStrategy, type, assetId, recipeId, targetClass, scale}} = props
+    return [
+        ...[manual, anticipationStrategy, type, assetId, recipeId, targetClass, scale].map(input => input?.value),
+        // The inherited grid CRS changes the estimate, so it must invalidate it. The Stratification transform
+        // is deliberately not inherited, so it is deliberately not a dependency.
+        stratificationCrs
+    ]
 }
 
 const valuesToModel = values => {

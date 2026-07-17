@@ -4,14 +4,12 @@ import {
     fixedOriginPhase,
     gridPixelSize,
     isAxisAlignedTransform,
-    isExactMembershipMatch,
     latticeCellLabel,
     latticeIdKey,
     latticeSpacing,
     minLatticeExponent,
     nestedLevel,
     parseCrsTransform,
-    stratifiedCandidateLabel,
     unstratifiedLatticeDiameter,
     unstratifiedLatticeExponent,
     unstratifiedLatticeLayout,
@@ -19,7 +17,7 @@ import {
     unstratifiedMinExponent
 } from '#sepal/ee/samplingDesign/systematicLatticeMath'
 
-// Near-global EPSG:3410 reference area.
+// Near-global equal-area reference area.
 const AREA = 499525934079679
 
 describe('unstratifiedLatticeLayout / diameter / spacing (analytical, minDistance-only)', () => {
@@ -129,13 +127,15 @@ describe('parseCrsTransform (crsTransform text/array -> 6-number array or null)'
     })
 })
 
-describe('isAxisAlignedTransform (north-up, square, unrotated only)', () => {
-    it('accepts north-up square transforms (positive or flipped y)', () => {
+describe('isAxisAlignedTransform (north-up, axis-aligned, square, non-zero)', () => {
+    it('accepts a north-up square transform (a > 0, e < 0, a === -e, no shear)', () => {
         expect(isAxisAlignedTransform([30, 0, 15, 0, -30, 15])).toBe(true)
-        expect(isAxisAlignedTransform([30, 0, 0, 0, 30, 0])).toBe(true)
+        expect(isAxisAlignedTransform([10, 0, 0, 0, -10, 0])).toBe(true)
     })
 
-    it('rejects shear/rotation, non-square, and zero pixels', () => {
+    it('rejects south-up, negative-a, shear, non-square and zero pixels', () => {
+        expect(isAxisAlignedTransform([30, 0, 0, 0, 30, 0])).toBe(false) // south-up (e > 0)
+        expect(isAxisAlignedTransform([-30, 0, 0, 0, -30, 0])).toBe(false) // negative x pixel (a < 0)
         expect(isAxisAlignedTransform([30, 1, 0, 0, -30, 0])).toBe(false) // shear (b != 0)
         expect(isAxisAlignedTransform([30, 0, 0, 2, -30, 0])).toBe(false) // shear (d != 0)
         expect(isAxisAlignedTransform([30, 0, 0, 0, -60, 0])).toBe(false) // non-square |a| != |e|
@@ -157,19 +157,21 @@ describe('gridPixelSize (derived pixel size, scale XOR transform)', () => {
 
 describe('crsGridArgs (reduceRegion grid: scale XOR crsTransform)', () => {
     it('sends the parsed transform and NO scale when transform-defined', () => {
-        const args = crsGridArgs({crs: 'EPSG:3410', scale: 300, crsTransform: '[30,0,15,0,-30,15]'})
-        expect(args).toEqual({crs: 'EPSG:3410', crsTransform: [30, 0, 15, 0, -30, 15]})
+        const args = crsGridArgs({crs: 'EPSG:6933', scale: 300, crsTransform: '[30,0,15,0,-30,15]'})
+        expect(args).toEqual({crs: 'EPSG:6933', crsTransform: [30, 0, 15, 0, -30, 15]})
         expect('scale' in args).toBe(false)
     })
 
     it('sends scale and NO crsTransform when there is no transform', () => {
-        const args = crsGridArgs({crs: 'EPSG:3410', scale: 300, crsTransform: ''})
-        expect(args).toEqual({crs: 'EPSG:3410', scale: 300})
+        const args = crsGridArgs({crs: 'EPSG:6933', scale: 300, crsTransform: ''})
+        expect(args).toEqual({crs: 'EPSG:6933', scale: 300})
         expect('crsTransform' in args).toBe(false)
     })
 
-    it('defaults crs to EPSG:3410', () => {
-        expect(crsGridArgs({scale: 30}).crs).toBe('EPSG:3410')
+    // The CRS default and its EE resolution belong to the shared catalog; this helper must not invent one.
+    it('passes the caller-supplied crs through without inventing a default', () => {
+        expect(crsGridArgs({crs: 'EPSG:6933', scale: 30}).crs).toBe('EPSG:6933')
+        expect(crsGridArgs({scale: 30}).crs).toBeUndefined()
     })
 })
 
@@ -265,50 +267,5 @@ describe('latticeCellLabel (int64 i*2^32+j; the pre-vectorization numeric label)
         expect(latticeCellLabel(3000000, 1)).toBe('12884901888000001')
         expect(latticeCellLabel(3000000, 1)).not.toBe(String(3000000 * 2 ** 32 + 1))
         expect(latticeCellLabel(3000000, 1)).not.toBe(latticeCellLabel(3000000, 0))
-    })
-})
-
-describe('isExactMembershipMatch (exact-point stratification membership)', () => {
-    it('keeps a candidate whose exact-point class equals its stratum (including class 0)', () => {
-        expect(isExactMembershipMatch(3, 3)).toBe(true)
-        expect(isExactMembershipMatch(0, 0)).toBe(true)
-        expect(isExactMembershipMatch('2', 2)).toBe(true) // reduceRegion may return a numeric-valued string
-    })
-
-    it('drops a class mismatch', () => {
-        expect(isExactMembershipMatch(2, 3)).toBe(false)
-        expect(isExactMembershipMatch(0, 3)).toBe(false)
-    })
-
-    it('drops null/undefined no-data, never matching - even for stratum 0', () => {
-        expect(isExactMembershipMatch(null, 3)).toBe(false)
-        expect(isExactMembershipMatch(undefined, 3)).toBe(false)
-        expect(isExactMembershipMatch(null, 0)).toBe(false)
-        expect(isExactMembershipMatch(undefined, 0)).toBe(false)
-    })
-})
-
-describe('stratifiedCandidateLabel (single-pass mosaic label: stratum + local cell)', () => {
-    it('distinguishes the same local cell across strata (the collision that would merge components)', () => {
-        expect(stratifiedCandidateLabel(0, 5, 7)).not.toBe(stratifiedCandidateLabel(1, 5, 7))
-        expect(latticeCellLabel(5, 7)).toBe(latticeCellLabel(5, 7)) // the old per-stratum key WOULD collide here
-    })
-
-    it('is injective across a mixed-sign grid and several strata', () => {
-        const vals = [-1000000, -2, -1, 0, 1, 2, 1000000]
-        const labels = new Set()
-        for (let s = 0; s < 5; s++) {
-            for (const i of vals) {
-                for (const j of vals) {
-                    labels.add(stratifiedCandidateLabel(s, i, j))
-                }
-            }
-        }
-        expect(labels.size).toBe(5 * vals.length * vals.length)
-    })
-
-    it('stays exact beyond 2^53 (decimal string, not a lossy Number)', () => {
-        expect(stratifiedCandidateLabel(3, 1000000, 1)).toMatch(/^\d+$/)
-        expect(stratifiedCandidateLabel(3, 1000000, 1)).not.toBe(stratifiedCandidateLabel(3, 1000000, 0))
     })
 })

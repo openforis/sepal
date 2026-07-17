@@ -1,3 +1,5 @@
+import {isValidMinSamplesPerStratum, isValidStratumSampleSize, usesConfiguredMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
+
 import {toTaskAllocation} from './taskAllocation'
 
 // Pure retrieve preflight over the CURRENT persisted (joined-array) Sampling Design model - NOT the
@@ -5,10 +7,12 @@ import {toTaskAllocation} from './taskAllocation'
 // the design is ready to submit. The final row checks reuse toTaskAllocation(model) so they validate
 // exactly what the task will receive. No GUI/React deps: the caller maps codes to messages.
 
-// Sampling divides by the per-stratum sample size (systematic hex spacing, random min-distance), so
-// every submitted row needs a strictly positive integer count - zero is not a valid "skip this stratum".
+// Sampling divides by the per-stratum sample size (systematic hex spacing, random min-distance), so every
+// submitted row needs an integer count - and the statistical floor means it can never be below
+// MIN_SAMPLES_PER_STRATUM. Shares the contract the task preflight re-checks, so the GUI cannot approve a
+// design the backend rejects.
 const isPositiveInteger = value =>
-    value != null && value !== '' && /^\d+$/.test(String(value)) && Number(value) > 0
+    value != null && value !== '' && /^\d+$/.test(String(value)) && isValidStratumSampleSize(value)
 
 const hasFiniteArea = value =>
     value != null && value !== '' && Number.isFinite(Number(value)) && Number(value) > 0
@@ -53,12 +57,19 @@ export const validateRetrieve = model => {
         add('sampleAllocation', 'proportionsRequired')
     }
 
+    // Automatic allocation must state the minimum it was built with; EQUAL and manual carry the implicit
+    // statistical floor instead, so they don't expose the field.
+    if (usesConfiguredMinSamplesPerStratum(model?.sampleAllocation || {})
+        && !isValidMinSamplesPerStratum(model?.sampleAllocation?.minSamplesPerStratum)) {
+        add('sampleAllocation', 'minSamplesPerStratumInvalid')
+    }
+
     const allocation = model?.sampleAllocation?.allocation
     if (!allocation?.length) {
         add('sampleAllocation', 'noAllocation')
     } else if (allocation.some(row => !isPositiveInteger(row.sampleSize))) {
-        // Raw rows: normalization turns a blank or zero sample size into 0, which the backend can't
-        // divide by - so reject it here before it's flattened.
+        // Raw rows: normalization turns a blank or zero sample size into 0, and any row below
+        // MIN_SAMPLES_PER_STRATUM cannot be sampled - reject both before the rows are flattened.
         add('sampleAllocation', 'sampleSizeInvalid')
     }
 

@@ -6,6 +6,7 @@ import ee from '#sepal/ee/ee'
 import imageFactory from '#sepal/ee/imageFactory'
 import {crsGridArgs} from '#sepal/ee/samplingDesign/systematicLatticeMath'
 import {fileName} from '#sepal/path'
+import {resolveSamplingGrid} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
 import {exportToCSV$} from '../batch/exportToCSV.js'
 import {parseGroups} from '../batch/parse.js'
@@ -59,7 +60,9 @@ const worker$ = ({
                     .setOutputs(['area'])
                     .group(1, 'stratum'),
                 geometry,
-                ...crsGridArgs({crs, scale, crsTransform}),
+                // Resolve at the GEE boundary, not in the GUI: non-GUI callers hit this API too, and EE
+                // cannot parse the literal EPSG:6933.
+                ...crsGridArgs(resolveSamplingGrid({crs, scale, crsTransform})),
                 maxPixels: 1e13,
             })
     }

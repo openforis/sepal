@@ -1,6 +1,8 @@
 import _ from 'lodash'
 
-export const allocate = ({sampleSize, minSamplesPerStratum = 1, strategy, strata, tuningConstant}) => {
+import {MIN_SAMPLES_PER_STRATUM} from '#sepal/recipe/samplingDesign/minSamples'
+
+export const allocate = ({sampleSize, minSamplesPerStratum = MIN_SAMPLES_PER_STRATUM, strategy, strata, tuningConstant}) => {
     if (minSamplesPerStratum > sampleSize / strata.length) {
         throw new Error('Unable to meet minSamplesPerStratum with provided sampleSize and number of strata')
     }
@@ -40,9 +42,8 @@ const adjustToSampleSize = ({sampleSize, minSamplesPerStratum, allocation}) => {
         return allocation.reduce(
             ({adjustment, adjustedStrata}, stratum) => {
                 const sampleSize = Math.max(1, stratum.sampleSize + step)
-                return adjustment === diff
-                    && sampleSize >= minSamplesPerStratum
-                    && !stratum.adjusted
+                const canAdjust = step > 0 || sampleSize >= minSamplesPerStratum
+                return adjustment === diff || !canAdjust
                     ? {
                         adjustment,
                         adjustedStrata: [
@@ -131,4 +132,3 @@ const balancedAllocation = ({sampleSize, strata}) => {
             sampleSize: Math.round((proportionalStratum.sampleSize + equalStratum.sampleSize) / 2)
         }))
 }
-

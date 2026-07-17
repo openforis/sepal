@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import React from 'react'
 
+import {MIN_SAMPLES_PER_STRATUM} from '#sepal/recipe/samplingDesign/minSamples'
 import {compose} from '~/compose'
 import {ColorElement} from '~/widget/colorElement'
 import {Form} from '~/widget/form'
@@ -12,7 +13,7 @@ const fields = {
     sampleSize: new Form.Field()
         .notBlank()
         .int()
-        .min(1)
+        .min(MIN_SAMPLES_PER_STRATUM)
 }
 
 class _AllocationForm extends React.Component {

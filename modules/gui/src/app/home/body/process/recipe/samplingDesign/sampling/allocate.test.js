@@ -146,6 +146,29 @@ it('power allocation with all-zero proportions falls back to equal allocation (n
     ])
 })
 
+it('remainder adjustment preserves the requested total after applying per-stratum minimums', () => {
+    const allocation = allocate({
+        sampleSize: 34,
+        strategy: 'POWER',
+        minSamplesPerStratum: 8,
+        tuningConstant: 0.5,
+        strata: [
+            {stratum: 0, weight: 0.01, proportion: 0.02},
+            {stratum: 1, weight: 0.19, proportion: 0.1},
+            {stratum: 2, weight: 0.3, proportion: 0.2},
+            {stratum: 3, weight: 0.5, proportion: 0.4},
+        ]
+    })
+
+    expect(allocation.reduce((total, stratum) => total + stratum.sampleSize, 0)).toBe(34)
+    expect(allocation).toMatchObject([
+        {stratum: 0, sampleSize: 9},
+        {stratum: 1, sampleSize: 8},
+        {stratum: 2, sampleSize: 8},
+        {stratum: 3, sampleSize: 9},
+    ])
+})
+
 it('optimal allocation with all-zero proportions falls back to equal allocation (no NaN)', () => {
     expect(allocate({
         sampleSize: 10,

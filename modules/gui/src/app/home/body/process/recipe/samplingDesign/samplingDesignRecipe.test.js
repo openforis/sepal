@@ -50,7 +50,7 @@ describe('defaultModel.sampleArrangement', () => {
             gridOrigin: 'FIXED',
             minDistance: 60,
             scale: 30,
-            crs: 'EPSG:3410',
+            crs: 'EPSG:6933',
             seed: 1
         })
     })

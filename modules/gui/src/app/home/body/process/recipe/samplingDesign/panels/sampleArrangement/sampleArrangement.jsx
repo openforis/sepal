@@ -1,16 +1,20 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
+import {FormCombo} from '~/widget/form/combo'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
+import {samplingGridCrsOptions} from '../../samplingGridCrsOptions'
 import styles from './sampleArrangement.module.css'
+import {crsTransformField} from './sampleArrangementForm'
 import {includeSeed, isSkipped, shouldShowMore} from './showMore'
 
 const mapRecipeToProps = recipe => ({
@@ -34,7 +38,7 @@ const fields = {
         .greaterThan(0),
     crs: new Form.Field()
         .notBlank(),
-    crsTransform: new Form.Field(),
+    crsTransform: crsTransformField,
     seed: new Form.Field()
         .skip((_seed, values) => !includeSeed(values))
         .notBlank()
@@ -201,11 +205,11 @@ class _SampleArrangement extends React.Component {
     renderCrs() {
         const {inputs: {crs}} = this.props
         return (
-            <Form.Input
+            <FormCombo
                 label={msg('process.retrieve.form.crs.label')}
-                placeholder={msg('process.retrieve.form.crs.placeholder')}
                 tooltip={msg('process.samplingDesign.panel.sampleArrangement.form.crs.tooltip')}
                 input={crs}
+                options={samplingGridCrsOptions()}
             />
         )
     }
@@ -253,7 +257,7 @@ class _SampleArrangement extends React.Component {
         minDistance.value || minDistance.set(this.props.scale * 2)
         scale.value || scale.set(this.props.scale)
         // Use an equal-area sampling CRS by default; Retrieve output CRS is separate.
-        crs.value || crs.set('EPSG:3410')
+        crs.value || crs.set(DEFAULT_SAMPLING_GRID_CRS)
         seed.value || seed.set(1)
     }
 

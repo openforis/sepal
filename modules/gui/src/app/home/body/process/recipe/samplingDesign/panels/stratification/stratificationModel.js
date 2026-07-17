@@ -1,16 +1,5 @@
+import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import {msg} from '~/translate'
-
-// Empty is valid (no transform); otherwise the exact-first raster-mask path needs a north-up, square 6-number
-// affine (no shear, non-zero, |xScale| = |yScale|). Mirrors the backend isAxisAlignedTransform so the GUI can't
-// accept a transform the task rejects. (The GUI build can't import the lib/js/ee helper, hence the parallel copy.)
-export const isValidTransform = value => {
-    if (!value || !String(value).trim()) {
-        return true
-    }
-    const parts = String(value).replace(/[[\]]/g, '').split(',').map(part => Number(part.trim()))
-    return parts.length === 6 && parts.every(Number.isFinite)
-        && parts[1] === 0 && parts[3] === 0 && parts[0] !== 0 && Math.abs(parts[0]) === Math.abs(parts[4])
-}
 
 // The single synthetic stratum for unstratified mode. Area is intentionally omitted here: the export
 // boundary computes it from the AOI geometry, so the panel is valid immediately without a hidden EE area
@@ -47,7 +36,7 @@ export const valuesToModel = values => {
         // read, so area/weights and membership stay consistent. crsTransform is '' unless an expert alignment
         // is set.
         scale: values.crsTransform ? undefined : parseFloat(values.scale),
-        crs: values.crs || 'EPSG:3410',
+        crs: values.crs || DEFAULT_SAMPLING_GRID_CRS,
         crsTransform: values.crsTransform || '',
         type: values.type,
         assetId: values.assetId,
@@ -68,9 +57,9 @@ export const modelToValues = model => ({
     requiresUpdate: !!model.requiresUpdate,
     skip: model.skip ? [true] : [],
     scale: model.scale,
-    // Default EPSG:3410 for recipes saved before the stratification CRS existed, so crs.set('EPSG:3410') on
-    // mount is a no-op rather than a dirtying ''->'EPSG:3410' change. crsTransform defaults to '' likewise.
-    crs: model.crs || 'EPSG:3410',
+    // Default the curated grid for recipes saved before the stratification CRS existed, so the panel's mount
+    // default is a no-op rather than a dirtying ''->id change. crsTransform defaults to '' likewise.
+    crs: model.crs || DEFAULT_SAMPLING_GRID_CRS,
     crsTransform: model.crsTransform || '',
     type: model.type,
     assetId: model.assetId,

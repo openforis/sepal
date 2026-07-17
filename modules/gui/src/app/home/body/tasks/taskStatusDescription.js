@@ -12,6 +12,16 @@ const looksTechnical = text =>
         || /\n\s*at\s/.test(text)
         || /^\s*[[{]/.test(text)
 
+// Structured underproduction advice arrives as messageArgs.advice: an ordered list of groups, each with a
+// diagnosis and its recommended actions, every sentence carrying its own translation key + arguments. Render
+// each through msg() so non-English users get localized guidance rather than the English `details` fallback.
+const renderAdvice = advice =>
+    advice
+        .map(({diagnosis, actions = []}) => [diagnosis, ...actions]
+            .map(({key, args, message}) => msg(key, args, message))
+            .join(' '))
+        .join('\n\n')
+
 // Localized, user-facing task status/failure text from the backend `statusDescription`, which is either a
 // plain string or a JSON {messageKey, messageArgs, defaultMessage} descriptor. Never returns raw JSON or
 // technical prefixes: curated structured descriptors (e.g. Sampling Design guidance, Earth Engine errors)
@@ -32,7 +42,11 @@ export const taskStatusDescription = task => {
             return msg(GENERIC_FAILURE_KEY)
         }
         if (description.messageKey) {
-            return msg(description.messageKey, description.messageArgs, description.defaultMessage)
+            const {advice, ...args} = description.messageArgs || {}
+            // Localize each advice sentence, then localize the outer message around the composed details.
+            return advice?.length
+                ? msg(description.messageKey, {...args, details: renderAdvice(advice)}, description.defaultMessage)
+                : msg(description.messageKey, description.messageArgs, description.defaultMessage)
         }
         if (description.defaultMessage) {
             return looksTechnical(description.defaultMessage) ? msg(GENERIC_FAILURE_KEY) : description.defaultMessage

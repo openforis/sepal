@@ -14,7 +14,7 @@ const baseModel = {
         estimateSampleSize: false,
         sampleSize: 100,
         allocationStrategy: 'PROPORTIONAL',
-        minSamplesPerStratum: 1,
+        minSamplesPerStratum: 2,
         confidenceLevel: 95,
         marginOfError: 50,
         relativeMarginOfError: true,
@@ -99,7 +99,7 @@ it('accepts a no-proportions design with PROPORTIONAL allocation and a fixed sam
         proportions: {skip: true},
         sampleAllocation: {
             manual: false, estimateSampleSize: false, sampleSize: 100,
-            allocationStrategy: 'PROPORTIONAL', minSamplesPerStratum: 1
+            allocationStrategy: 'PROPORTIONAL', minSamplesPerStratum: 2
         },
         sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER'},
         samplingDesignDerived: {areaByStratum: {1: 300, 2: 700}}
@@ -114,10 +114,45 @@ it('rejects a no-proportions design that asks for OPTIMAL allocation', () => {
         proportions: {skip: true},
         sampleAllocation: {
             manual: false, estimateSampleSize: false, sampleSize: 100,
-            allocationStrategy: 'OPTIMAL', minSamplesPerStratum: 1
+            allocationStrategy: 'OPTIMAL', minSamplesPerStratum: 2
         },
         sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER'},
         samplingDesignDerived: {areaByStratum: {1: 300, 2: 700}}
     })
     expect(codes(result)).toContain('allocationInvalid')
+})
+
+// The derived view applies the effective floor, so an invalid configured minimum must be caught explicitly -
+// otherwise the clean model reports valid while validateRetrieve and the task preflight reject it.
+describe('configured minimum on the clean model', () => {
+    const automatic = minSamplesPerStratum => ({
+        stratification: {legendByStratum: {1: {label: 'Forest', color: '#0a0'}, 2: {label: 'Non-forest', color: '#a00'}}},
+        proportions: {skip: true},
+        sampleAllocation: {
+            manual: false, estimateSampleSize: false, sampleSize: 100,
+            allocationStrategy: 'PROPORTIONAL', minSamplesPerStratum
+        },
+        sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER'},
+        samplingDesignDerived: {areaByStratum: {1: 300, 2: 700}}
+    })
+    const codesOf = model => validateSamplingDesign(model).errors.map(({code}) => code)
+
+    it('rejects a configured minimum of 1 for automatic allocation', () => {
+        expect(codesOf(automatic(1))).toContain('minSamplesPerStratumInvalid')
+    })
+
+    it('rejects a missing configured minimum for automatic allocation', () => {
+        expect(codesOf(automatic(undefined))).toContain('minSamplesPerStratumInvalid')
+    })
+
+    it('accepts a configured minimum of 2', () => {
+        expect(codesOf(automatic(2))).not.toContain('minSamplesPerStratumInvalid')
+    })
+
+    it('exempts EQUAL and manual allocation, which carry the implicit floor', () => {
+        const equal = {...automatic(undefined), sampleAllocation: {...automatic(undefined).sampleAllocation, allocationStrategy: 'EQUAL'}}
+        expect(codesOf(equal)).not.toContain('minSamplesPerStratumInvalid')
+        const manual = {...automatic(undefined), sampleAllocation: {...automatic(undefined).sampleAllocation, manual: true}}
+        expect(codesOf(manual)).not.toContain('minSamplesPerStratumInvalid')
+    })
 })

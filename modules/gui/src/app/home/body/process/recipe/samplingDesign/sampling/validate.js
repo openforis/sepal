@@ -1,3 +1,5 @@
+import {isValidMinSamplesPerStratum, isValidStratumSampleSize, usesConfiguredMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
+
 import {selectAllocationView, selectProportionView, selectStrataView} from './selectors'
 
 // Central, pure validation of a Sampling Design model in the clean shape. Returns
@@ -28,12 +30,22 @@ export const validateSamplingDesign = model => {
         }
     }
 
+    // Automatic allocation must explicitly carry a valid minimum. The derived view applies the effective
+    // floor, so an invalid configured minimum would otherwise be silently corrected here and reported valid
+    // while validateRetrieve and the task preflight reject it. EQUAL and manual carry the implicit floor and
+    // expose no field, so they're exempt.
+    const allocationModel = model?.sampleAllocation || {}
+    if (usesConfiguredMinSamplesPerStratum(allocationModel)
+        && !isValidMinSamplesPerStratum(allocationModel.minSamplesPerStratum)) {
+        add('sampleAllocation', 'minSamplesPerStratumInvalid')
+    }
+
     const allocationView = selectAllocationView(model)
     if (!allocationView) {
         add('sampleAllocation', 'allocationNotComputed')
-    } else if (allocationView.some(({sampleSize}) => !Number.isInteger(sampleSize) || sampleSize < 0)) {
-        // Catches the infeasible cases (NaN/Infinity from an unreachable relative margin of error) as
-        // well as negative/fractional sizes.
+    } else if (allocationView.some(({sampleSize}) => !isValidStratumSampleSize(sampleSize))) {
+        // Catches the infeasible cases (NaN/Infinity from an unreachable relative margin of error) as well
+        // as negative/fractional sizes and any row below the statistical floor.
         add('sampleAllocation', 'allocationInvalid')
     }
 

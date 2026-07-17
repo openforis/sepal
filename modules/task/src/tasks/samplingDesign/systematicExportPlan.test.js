@@ -1,5 +1,6 @@
 import {EMPTY, of} from 'rxjs'
 
+import {finalCountError} from './finalValidationGate.js'
 import {systematicExportPlan$} from './systematicExportPlan.js'
 
 const spy = (impl = () => EMPTY) => {
@@ -42,7 +43,11 @@ const stageKeys = emissions => emissions
     .filter(value => value?.messageKey?.startsWith(PROGRESS_PREFIX))
     .map(value => value.messageKey.slice(PROGRESS_PREFIX.length))
 
-const run = ({countByAsset, requireFull = true, maxOffsetOf = () => 5, exportUnfiltered$ = spy()}) => {
+const CONFIG = {
+    arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', effectiveMinimum: 2, minDistance: 60, pixelSize: 10
+}
+
+const run = ({countByAsset, requireFull = true, maxOffsetOf = () => 5, exportUnfiltered$ = spy(), config = CONFIG}) => {
     const count$ = spy(({assetId}) => of(countByAsset(assetId)))
     const finalExport$ = spy(() => of('exported'))
     const result$ = systematicExportPlan$({
@@ -55,7 +60,8 @@ const run = ({countByAsset, requireFull = true, maxOffsetOf = () => 5, exportUnf
         exportUnfiltered$,
         count$,
         candidatesOf,
-        finalExport$
+        finalExport$,
+        underproductionError: ({counts, strata}) => finalCountError({counts, allocation: strata, config})
     })
     return {exportUnfiltered$, finalExport$, result$}
 }
@@ -73,8 +79,6 @@ describe('systematicExportPlan$', () => {
         expect(finalExport$.calls[0][0].candidates).toEqual({baseAssetId: 't_base', repairAssetId: undefined, repaired: undefined})
         expect(finalExport$.calls[0][0]).toMatchObject({densityOffset: 0, candidateDensityOffset: 0})
         expect(finalExport$.calls[0][0].levelsByStratum).toEqual({'1': 1, '2': 2})
-        // Base-only: no strata were repaired, so exact geometry uses the base offset for every stratum.
-        expect(finalExport$.calls[0][0].repairedStrata).toEqual([])
     })
 
     it('repair: prepare base -> check base -> prepare repair -> check repair -> export final', async () => {
@@ -97,9 +101,6 @@ describe('systematicExportPlan$', () => {
         expect(finalExport$.calls[0][0].densityOffset).toBe(0)
         expect(finalExport$.calls[0][0].candidateDensityOffset).toBe(exportUnfiltered$.calls[1][0].densityOffset)
         expect(finalExport$.calls[0][0].levelsByStratum).toEqual({'1': 1, '2': 2})
-        // Only the repaired stratum is flagged, so the finalizer materializes it at the repair offset and the
-        // rest at the base offset.
-        expect(finalExport$.calls[0][0].repairedStrata.map(({stratum}) => stratum)).toEqual([1])
     })
 
     it('uses repair-selected levels only for repaired strata', async () => {
@@ -171,8 +172,9 @@ describe('systematicExportPlan$', () => {
         expect(error).toBeInstanceOf(Error)
         // Progress up to the check, then the failure - no repair or final stage.
         expect(stageKeys(emissions)).toEqual(['prepareBaseCandidates', 'checkBaseCandidates'])
-        expect(error.userMessage.key).toBe('tasks.samplingDesign.systematic.underproduced.minDistanceLimit')
-        expect(error.userMessage.args.strata).toContain('stratum 1: 40 available / 100 requested')
+        expect(error.userMessage.key).toBe('tasks.samplingDesign.underproduction.message')
+        expect(error.userMessage.args.advice.flatMap(({strata}) => strata))
+            .toEqual([{stratum: 1, label: undefined, actual: 40, requested: 100, kind: 'requestedAllocation'}])
         expect(exportUnfiltered$.calls.map(([{assetId}]) => assetId)).toEqual(['t_base'])
         expect(finalExport$.calls).toHaveLength(0)
     })
@@ -185,9 +187,9 @@ describe('systematicExportPlan$', () => {
         const {emissions, error} = await collect(result$)
         expect(error).toBeInstanceOf(Error)
         expect(stageKeys(emissions)).toEqual(['prepareBaseCandidates', 'checkBaseCandidates'])
-        expect(error.userMessage.key).toBe('tasks.samplingDesign.systematic.underproduced.minDistanceLimit')
-        // Only the non-repairable stratum is named.
-        expect(error.userMessage.args.strata).toBe('stratum 1: 40 available / 100 requested')
+        expect(error.userMessage.key).toBe('tasks.samplingDesign.underproduction.message')
+        // Only the non-repairable stratum is reported.
+        expect(error.userMessage.args.advice.flatMap(({strata}) => strata.map(({stratum}) => stratum))).toEqual([1])
         // No repair export was attempted - only the base export ran.
         expect(exportUnfiltered$.calls.map(([{assetId}]) => assetId)).toEqual(['t_base'])
         expect(finalExport$.calls).toHaveLength(0)
@@ -201,8 +203,9 @@ describe('systematicExportPlan$', () => {
         expect(stageKeys(emissions)).toEqual([
             'prepareBaseCandidates', 'checkBaseCandidates', 'prepareRepairCandidates', 'checkRepairCandidates'
         ])
-        expect(error.userMessage.key).toBe('tasks.samplingDesign.systematic.underproduced.repairExhausted')
-        expect(error.userMessage.args.strata).toContain('stratum 1: 40 available / 100 requested')
+        expect(error.userMessage.key).toBe('tasks.samplingDesign.underproduction.message')
+        expect(error.userMessage.args.advice.flatMap(({strata}) => strata.map(({stratum, actual}) => [stratum, actual])))
+            .toEqual([[1, 40]])
         expect(finalExport$.calls).toHaveLength(0)
     })
 

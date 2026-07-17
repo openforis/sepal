@@ -19,6 +19,28 @@ describe('taskFailureStatus', () => {
         })
     })
 
+    // Underproduction advice is a nested array of {key, args, message} entries. The GUI renderer translates
+    // each entry by key, so it must survive serialization intact - a flattened or dropped `advice` silently
+    // degrades every non-English user to the English `details` fallback.
+    it('preserves nested underproduction advice across the worker boundary', () => {
+        const advice = [{
+            kind: 'statisticalMinimum',
+            strata: [{stratum: 1, label: 'snow', actual: 1, requested: 100, kind: 'statisticalMinimum'}],
+            diagnosis: {key: 'k.diagnosis.statisticalMinimum', message: 'Too few for {strata}.', args: {strata: 'snow (1)', minimum: 2}},
+            actions: [
+                {key: 'k.reduceSystematicMinDistance', message: 'Reduce to {threshold} m.', args: {minDistance: 60, threshold: 55.4}},
+                {key: 'k.switchToRandom', message: 'Use Random.', args: {}}
+            ]
+        }]
+        const error = new ClientException('technical detail', {
+            userMessage: {key: 'k.message', message: 'Outer. {details}', args: {details: 'ENGLISH', advice}}
+        })
+        const {messageArgs} = taskFailureStatus(crossWorkerBoundary(error))
+        expect(messageArgs.advice).toEqual(advice)
+        expect(messageArgs.advice[0].actions[0].args).toEqual({minDistance: 60, threshold: 55.4})
+        expect(messageArgs.details).toBe('ENGLISH')
+    })
+
     it('preserves an explicit userMessage across the worker boundary (real ClientException)', () => {
         const error = new ClientException('technical detail', {
             userMessage: {key: 'some.key', message: 'A {thing} failed', args: {thing: 'stratum'}}

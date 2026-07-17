@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
+import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import api from '~/apiRegistry'
 import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
@@ -22,11 +23,13 @@ import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
+import {samplingGridCrsOptions} from '../../samplingGridCrsOptions'
+import {isValidGridScale, isValidGridTransform} from '../../samplingGridValidation'
 import {CalculationErrorContent} from '../calculationErrorContent'
 import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
 import {strataCalculationError as toStrataCalculationError} from './stratificationError'
-import {isValidTransform, modelToValues, syntheticUnstratifiedStratum, valuesToModel} from './stratificationModel'
+import {modelToValues, syntheticUnstratifiedStratum, valuesToModel} from './stratificationModel'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -53,23 +56,20 @@ const fields = {
         .notBlank('process.samplingDesign.panel.stratification.form.band.required'),
     scale: new Form.Field()
         .skip((_value, {skip, crsTransform}) => skip.length || !!crsTransform)
-        .notBlank('process.samplingDesign.panel.stratification.form.scale.required'),
+        .notBlank('process.samplingDesign.panel.stratification.form.scale.required')
+        .number()
+        .greaterThan(0),
     crs: new Form.Field()
         .skip((_value, {skip}) => skip.length)
         .notBlank('process.samplingDesign.panel.stratification.form.crs.required'),
-    crsTransform: new Form.Field(),
+    crsTransform: new Form.Field()
+        .skip((_value, {skip}) => skip.length)
+        .predicate(isValidGridTransform, 'process.samplingDesign.panel.stratification.form.crsTransform.invalid'),
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
         // Required even when skipped: unstratified mode still needs the single synthetic stratum (area is
         // filled at the export boundary), so an empty strata is invalid.
         .notEmpty('process.samplingDesign.panel.stratification.form.strata.required'),
-}
-
-const constraints = {
-    validCrsTransform: new Form.Constraint(['crsTransform', 'skip'])
-        .skip(({skip}) => skip.length)
-        .predicate(({crsTransform}) => isValidTransform(crsTransform),
-            'process.samplingDesign.panel.stratification.form.crsTransform.invalid'),
 }
 
 class _Stratification extends React.Component {
@@ -139,7 +139,7 @@ class _Stratification extends React.Component {
                         {this.renderScale()}
                     </Layout>
                     {more ? (
-                        <Layout type='horizontal' alignment='left'>
+                        <Layout type='horizontal'>
                             {this.renderCrs()}
                             {this.renderCrsTransform()}
                         </Layout>
@@ -268,7 +268,7 @@ class _Stratification extends React.Component {
             .map(band => ({value: band, label: band}))
         return (
             <FormCombo
-                className={styles.band}
+                className={styles.wideField}
                 input={band}
                 disabled={!bands.length}
                 options={options}
@@ -284,7 +284,7 @@ class _Stratification extends React.Component {
         const {inputs: {scale, crsTransform}} = this.props
         return (
             <Form.Input
-                className={styles.scale}
+                className={styles.compactField}
                 label={msg('process.samplingDesign.panel.stratification.form.scale.label')}
                 placeholder={msg('process.samplingDesign.panel.stratification.form.scale.placeholder')}
                 tooltip={msg('process.samplingDesign.panel.stratification.form.scale.tooltip')}
@@ -300,11 +300,12 @@ class _Stratification extends React.Component {
     renderCrs() {
         const {inputs: {crs}} = this.props
         return (
-            <Form.Input
+            <FormCombo
+                className={styles.wideField}
                 label={msg('process.samplingDesign.panel.stratification.form.crs.label')}
-                placeholder={msg('process.samplingDesign.panel.stratification.form.crs.placeholder')}
                 tooltip={msg('process.samplingDesign.panel.stratification.form.crs.tooltip')}
                 input={crs}
+                options={samplingGridCrsOptions()}
                 onChange={this.onScaleChanged}
             />
         )
@@ -314,6 +315,7 @@ class _Stratification extends React.Component {
         const {inputs: {crsTransform}} = this.props
         return (
             <Form.Input
+                className={styles.compactField}
                 label={msg('process.samplingDesign.panel.stratification.form.crsTransform.label')}
                 placeholder={msg('process.samplingDesign.panel.stratification.form.crsTransform.placeholder')}
                 tooltip={msg('process.samplingDesign.panel.stratification.form.crsTransform.tooltip')}
@@ -442,7 +444,7 @@ class _Stratification extends React.Component {
         skip.value || skip.set([])
         // A transform-defined grid has no scale value; defaulting it here would dirty the form on open.
         crsTransform.value || scale.value || scale.set('30')
-        crs.value || crs.set('EPSG:3410')
+        crs.value || crs.set(DEFAULT_SAMPLING_GRID_CRS)
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
 
@@ -645,7 +647,7 @@ class _Stratification extends React.Component {
         const {aoi, stream, inputs: {scale, crs, crsTransform, type, assetId, recipeId, band, eeStrategy}} = this.props
         const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
         // onChange fires while typing; block invalid intermediate grid values before calling EE.
-        const hasValidGrid = crsTransform.value ? isValidTransform(crsTransform.value) : !!scale.value
+        const hasValidGrid = crsTransform.value ? isValidGridTransform(crsTransform.value) : isValidGridScale(scale.value)
         if (!hasValidGrid || !id || !band.value) {
             return
         }
@@ -664,7 +666,7 @@ class _Stratification extends React.Component {
                 stratification,
                 band: band.value,
                 scale: crsTransform.value ? undefined : (parseInt(scale.value) || 30),
-                crs: crs.value || 'EPSG:3410',
+                crs: crs.value || DEFAULT_SAMPLING_GRID_CRS,
                 crsTransform: crsTransform.value || '',
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
@@ -708,7 +710,7 @@ const additionalPolicy = () => ({
 
 export const Stratification = compose(
     _Stratification,
-    recipeFormPanel({id: 'stratification', fields, constraints, mapRecipeToProps, additionalPolicy, modelToValues, valuesToModel}),
+    recipeFormPanel({id: 'stratification', fields, mapRecipeToProps, additionalPolicy, modelToValues, valuesToModel}),
     withActivators('legendImport')
 )
 

@@ -1,3 +1,5 @@
+import {MIN_SAMPLES_PER_STRATUM, minimumTotalSampleSize} from '#sepal/recipe/samplingDesign/minSamples'
+
 import {calculateMarginOfError} from './marginOfError'
 import {findRoot} from './solve'
 
@@ -5,7 +7,7 @@ export const calculateSampleSize = ({
     marginOfError,
     relativeMarginOfError,
     strategy,
-    minSamplesPerStratum = 0,
+    minSamplesPerStratum = MIN_SAMPLES_PER_STRATUM,
     strata,
     tuningConstant,
     confidenceLevel
@@ -15,7 +17,7 @@ export const calculateSampleSize = ({
             sampleSize, relativeMarginOfError, confidenceLevel, strategy, minSamplesPerStratum, strata, tuningConstant
         }) - marginOfError
     const max = 1e12
-    const min = Math.max(1, minSamplesPerStratum * strata.length)
+    const min = Math.max(MIN_SAMPLES_PER_STRATUM, minimumTotalSampleSize({effectiveMinimum: minSamplesPerStratum, strataCount: strata.length}))
     const sampleSize = findRoot({fun, min, max})
     // Infeasible (e.g. relative margin of error at a zero overall proportion, or a target unreachable
     // within the range): the found size does not actually meet the target. Signal with Infinity so the

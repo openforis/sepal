@@ -1,7 +1,6 @@
 import {concat, of, switchMap, throwError} from 'rxjs'
 
-import {nonRepairableStrata, repairOffset, underproducingStrata, underproductionDetails, underproductionUserMessage} from '#sepal/ee/samplingDesign/systematicRepair'
-import {ClientException} from '#sepal/exception'
+import {nonRepairableStrata, repairOffset, underproducingStrata} from '#sepal/ee/samplingDesign/systematicRepair'
 import {progress} from '#task/rxjs/operators'
 
 // Stage-level task progress for the systematic base + optional-repair + final flow. Emitted so the task
@@ -18,15 +17,6 @@ const PROGRESS = {
 
 const stage$ = descriptor => of(undefined).pipe(progress(descriptor))
 
-// Underproduction is a user/design constraint (too many samples requested for the available area at the
-// minimum distance), not an internal fault - a ClientException carrying a structured userMessage, so the
-// task status shows the localized guidance without a technical exception prefix.
-const underproductionError = ({summary, strata, reason}) => {
-    const userMessage = underproductionUserMessage({details: underproductionDetails({summary, strata}), reason})
-    const resolved = userMessage.message.replace('{strata}', userMessage.args.strata)
-    return new ClientException(resolved, {userMessage})
-}
-
 // Base + at-most-one-repair + final export orchestration for systematic sampling. Materialize a
 // conservative base candidate set, count it over the materialized asset, and only if some strata
 // underproduce, materialize one denser repair set for just those strata (a single repair, no loop). The
@@ -42,17 +32,18 @@ const underproductionError = ({summary, strata, reason}) => {
 // Progress vs data separation: each count summary is consumed INSIDE a switchMap and never emitted onward,
 // while stage progress and the temp exports' progress are emitted via concat - so a progress object can
 // never be mistaken for a count summary by the underproduction logic.
+// `underproductionError({counts, strata})` is injected so an abort before the final gate reports the SAME
+// classification and configuration-aware guidance the final gate would give, from the candidate counts.
 export const systematicExportPlan$ = ({
     allocation, baseOffset, maxOffsetOf, requireFull, baseAssetId, repairAssetId,
-    exportUnfiltered$, count$, candidatesOf, finalExport$
+    exportUnfiltered$, count$, candidatesOf, finalExport$, underproductionError
 }) => {
-    // repairedStrata lets the stratified exact finalizer materialize each stratum with the density offset it
-    // was generated at (repaired strata at the repair offset, the rest at the base offset); base-only exports
-    // pass none. The unstratified finalizer ignores it.
-    const finalStage$ = ({candidates, candidateDensityOffset = baseOffset, levelsByStratum, repairedStrata = []}) =>
+    // The stratified finalizer consumes already-materialized candidate geometry, so it needs only the merged
+    // candidates + their selected levels. candidateDensityOffset is still threaded for the unstratified finalizer.
+    const finalStage$ = ({candidates, candidateDensityOffset = baseOffset, levelsByStratum}) =>
         concat(
             stage$(PROGRESS.exportFinal),
-            finalExport$({candidates, densityOffset: baseOffset, candidateDensityOffset, levelsByStratum, repairedStrata})
+            finalExport$({candidates, densityOffset: baseOffset, candidateDensityOffset, levelsByStratum})
         )
 
     const levelsForRepair = ({baseLevels, repairLevels, repairedStrata}) =>
@@ -73,7 +64,7 @@ export const systematicExportPlan$ = ({
         if (requireFull) {
             const nonRepairable = nonRepairableStrata({underproducing, baseOffset, maxOffsetOf})
             if (nonRepairable.length) {
-                return throwError(() => underproductionError({summary, strata: nonRepairable, reason: 'minDistanceLimit'}))
+                return throwError(() => underproductionError({counts: summary.raw, strata: nonRepairable}))
             }
         }
         const offset = repairOffset({underproducing, summary, baseOffset, maxOffsetOf})
@@ -82,7 +73,7 @@ export const systematicExportPlan$ = ({
             // requireFull was already handled above): CLOSEST uses the best available base candidates, and
             // the requireFull branch is a defensive fallback.
             return requireFull
-                ? throwError(() => underproductionError({summary, strata: underproducing, reason: 'minDistanceLimit'}))
+                ? throwError(() => underproductionError({counts: summary.raw, strata: underproducing}))
                 : finalStage$({candidates: candidatesOf({baseAssetId}), levelsByStratum: summary.levels})
         }
         return concat(
@@ -93,7 +84,7 @@ export const systematicExportPlan$ = ({
                 switchMap(repairSummary => {
                     const stillShort = underproducingStrata({summary: repairSummary, allocation: underproducing})
                     if (requireFull && stillShort.length) {
-                        return throwError(() => underproductionError({summary: repairSummary, strata: stillShort, reason: 'repairExhausted'}))
+                        return throwError(() => underproductionError({counts: repairSummary.raw, strata: stillShort}))
                     }
                     return finalStage$({
                         candidates: candidatesOf({baseAssetId, repairAssetId, repairedStrata: underproducing}),
@@ -102,8 +93,7 @@ export const systematicExportPlan$ = ({
                             baseLevels: summary.levels,
                             repairLevels: repairSummary.levels,
                             repairedStrata: underproducing
-                        }),
-                        repairedStrata: underproducing
+                        })
                     })
                 })
             )

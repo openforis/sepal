@@ -1,22 +1,29 @@
 import moment from 'moment'
-import {catchError, concat, defer, EMPTY, filter, forkJoin, map, of, switchMap} from 'rxjs'
+import {catchError, concat, defer, EMPTY, filter, forkJoin, map, of, switchMap, throwError} from 'rxjs'
 
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
+import {effectiveArrangement} from '#sepal/ee/samplingDesign/effectiveArrangement'
 import {toId} from '#sepal/ee/samplingDesign/featureProperties'
 import {SYSTEMATIC_EXPORT_PROPERTY_NAMES} from '#sepal/ee/samplingDesign/sampleProperties'
-import {finalizeSystematicSamples, mergeRepairedCandidates, systematicStratumMaxOffset, systematicUnfilteredSamples, toDensitySummary} from '#sepal/ee/samplingDesign/samples'
+import {finalizeSystematicSamples, mergeRepairedCandidates, systematicStratumMaxOffset, toDensitySummary} from '#sepal/ee/samplingDesign/samples'
 import {stratificationImage$} from '#sepal/ee/samplingDesign/stratificationImage'
 import {isStratificationSkipped} from '#sepal/ee/samplingDesign/stratificationSkip'
-import {unstratifiedMaxDensityOffset} from '#sepal/ee/samplingDesign/systematicLatticeMath'
-import {filterToExactStratificationMembership, materializeStratifiedExactGeometry, selectSystematicLevels, systematicSelectionSummary} from '#sepal/ee/samplingDesign/systematicSampling'
+import {gridPixelSize, unstratifiedMaxDensityOffset} from '#sepal/ee/samplingDesign/systematicLatticeMath'
+import {selectSystematicLevels, stratifiedSystematicExactCandidates, stratifiedSystematicFinalSamples, systematicSelectionSummary} from '#sepal/ee/samplingDesign/systematicSampling'
 import {unstratifiedAllocation$} from '#sepal/ee/samplingDesign/unstratifiedArea'
 import {materializeSystematicIndexGeometry, unstratifiedSystematicIndexCandidates} from '#sepal/ee/samplingDesign/unstratifiedSystematicSampling'
+import {getSampleCounts$} from '#sepal/ee/samplingDesign/validateSampleCounts'
+import {effectiveMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
+import {resolveSamplingGrid} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import {finalizeObservable, swallow} from '#sepal/rxjs'
 import {tableToAsset$} from '#task/jobs/export/tableToAsset'
 import {tableToSepal$} from '#task/jobs/export/tableToSepal'
 
 import {formatProperties} from '../formatProperties.js'
+import {finalCountError, gateFinalExport$} from './finalValidationGate.js'
+import {stratifiedGridError, unstratifiedSystematicGridError} from './samplingGridValidation.js'
+import {samplingDesignPreflightError} from './samplingPreflight.js'
 import {candidateAssetId, candidateDescription} from './systematicExportNames.js'
 import {systematicExportPlan$} from './systematicExportPlan.js'
 
@@ -39,71 +46,11 @@ const tempTableAssetId$ = (taskId, assetId) => {
     )
 }
 
-// Stratified exact candidates: replace the raster-snapped centroids of these candidates with the exact
-// analytical lattice point (per-stratum layout for `densityOffset`), drop any that leave the AOI, then keep
-// only those whose EXACT-point stratification class matches their stratum (pre-count membership). Shared by
-// the count and final stages so the two never diverge. `scale` is the class-read scale (sampleArrangement.scale).
-const stratifiedExactMembers = ({candidates, allocation, region, eeStratification, sampleArrangement, densityOffset}) =>
-    filterToExactStratificationMembership({
-        samples: materializeStratifiedExactGeometry({candidates, allocation, sampleArrangement, densityOffset}).filterBounds(region),
-        stratification: eeStratification,
-        scale: sampleArrangement.scale
-    })
-
-// Final filter for the stratified exact path. Uses the membership-aware `levelsByStratum` from the count stage
-// (never recomputed here), filters candidates to those levels, materializes exact geometry per-stratum at the
-// offset each stratum was generated at (repaired strata at the repair offset, the rest at the base offset -
-// the merged base+repair asset carries both densities), keeps AOI + exact-membership matches, then for EXACT
-// thins AFTER membership keyed by the final exact geometry-derived id (stratified candidates have no idkey).
-// Sets the exported id from the exact geometry and strips helper fields so they never reach row-metadata
-// (SEPAL/CSV) exports.
-const filterStratifiedExactSamples = ({region, candidates, allocation, strategy, seed, baseOffset, repairOffset, repairedStrata, levelsByStratum, eeStratification, sampleArrangement}) => {
-    const repaired = new Set((repairedStrata || []).map(({stratum}) => stratum))
-    const filteredByLevel = ee.FeatureCollection(allocation
-        .map(stratum => {
-            const level = ee.Number(levelsByStratum?.[String(stratum.stratum)])
-            return candidates
-                .filter(ee.Filter.eq('stratum', stratum.stratum))
-                .filter(ee.Filter.gte('level', level))
-                .map(sample => sample.set('selectedLevel', level))
-        })
-    ).flatten()
-    // Materialize each density group with its own offset, then merge (only non-empty groups, so an
-    // empty base or repair subset never forces a schemaless empty-collection merge).
-    const members = [
-        [allocation.filter(({stratum}) => !repaired.has(stratum)), baseOffset],
-        [allocation.filter(({stratum}) => repaired.has(stratum)), repairOffset]
-    ]
-        .filter(([strata]) => strata.length)
-        .map(([strata, densityOffset]) => stratifiedExactMembers({candidates: filteredByLevel, allocation: strata, region, eeStratification, sampleArrangement, densityOffset}))
-        .reduce((merged, group) => merged ? merged.merge(group) : group)
-    const selected = strategy === 'EXACT'
-        ? ee.FeatureCollection(allocation
-            .map(stratum =>
-                members
-                    .filter(ee.Filter.eq('stratum', stratum.stratum))
-                    .map(sample => sample.set('id', toId({sample})))
-                    .randomColumn('random', seed, 'uniform', ['id'])
-                    .sort('random')
-                    .limit(stratum.sampleSize)
-            )
-        ).flatten()
-        : members
-    return selected.map(sample =>
-        sample
-            .set('id', toId({sample}))
-            .set('i', null)
-            .set('j', null)
-            .set('level', null)
-            .set('sample', null)
-            .set('random', null)
-    )
-}
-
 export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId, strategy, properties, destination, workspacePath, filenamePrefix, fileFormat}) => {
-    const {model: {aoi, stratification, sampleAllocation: {allocation}, sampleArrangement}} = recipe
-    const densityStrategy = sampleArrangement.sampleSizeStrategy
+    const {model: {aoi, stratification, sampleAllocation: {allocation}}} = recipe
     const unstratified = isStratificationSkipped(stratification)
+    const configuredArrangement = effectiveArrangement(recipe.model)
+    const densityStrategy = configuredArrangement.sampleSizeStrategy
     // CLOSEST may intentionally land below the target; EXACT/OVER must reach the requested count (and fail
     // clearly if even the densest allowed grid can't).
     const requireFull = densityStrategy !== 'CLOSEST'
@@ -112,6 +59,39 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
     // Every temp candidate asset we attempt to materialize; the task-runner-aware backstop below deletes all
     // of them on success, error, and cancellation (idempotent).
     const materializedAssetIds = new Set()
+
+    // Enforce the sampling-grid CRS/transform contract BEFORE any EE graph is built, with a structured error.
+    // The lattice assumes projected metre coordinates; the candidate function stays projection-agnostic, so this
+    // boundary is where unsupported CRSs / malformed transforms are rejected. Stratified needs exactly one grid
+    // definition; unstratified is analytical, so it only needs a supported CRS and an optional valid transform.
+    const gridError = unstratified
+        ? unstratifiedSystematicGridError(configuredArrangement)
+        : stratifiedGridError(configuredArrangement)
+    if (gridError) {
+        return throwError(() => gridError)
+    }
+
+    // Validated as configured (option ids); resolved to EE-ready CRS for every graph built below.
+    const sampleArrangement = resolveSamplingGrid(configuredArrangement)
+
+    // Enforce the minimum-sample contract on the submitted recipe BEFORE resolving temp asset ids or building
+    // any EE graph, so an impossible design fails immediately instead of after an expensive export.
+    const preflightError = samplingDesignPreflightError(recipe)
+    if (preflightError) {
+        return throwError(() => preflightError)
+    }
+
+    // Resolved configuration the final-count advice reasons about: only actions that can actually help are
+    // recommended, so the advice needs the real spacing and grid the design was submitted with.
+    const validationConfig = {
+        arrangementStrategy: 'SYSTEMATIC',
+        sampleSizeStrategy: densityStrategy,
+        allocationStrategy: recipe.model.sampleAllocation?.allocationStrategy,
+        effectiveMinimum: effectiveMinSamplesPerStratum(recipe.model.sampleAllocation || {}),
+        minDistance: configuredArrangement.minDistance,
+        pixelSize: gridPixelSize(configuredArrangement),
+        unstratified
+    }
 
     return tempTableAssetId$(taskId, assetId).pipe(
         switchMap(tempAssetId =>
@@ -126,10 +106,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                         switchMap(resolvedAllocation => {
                             const baseAssetId = candidateAssetId(tempAssetId, 'base')
                             const repairAssetId = candidateAssetId(tempAssetId, 'repair')
-                            // Density/max-offset decisions read stratum.area, so maxOffsetOf must operate on the
-                            // RESOLVED allocation - a no-area unstratified row would collapse the max offset to 0
-                            // and silently cap densification. Unstratified analytical candidates are exact
-                            // points, so their max offset is constrained only by minDistance (not by scale).
+                            // Unstratified area is injected above; maxOffsetOf depends on stratum.area.
                             const maxOffsetOf = stratum => unstratified
                                 ? unstratifiedMaxDensityOffset({...stratum, minDistance: sampleArrangement.minDistance})
                                 : systematicStratumMaxOffset(stratum, sampleArrangement)
@@ -141,9 +118,11 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                                 baseAssetId,
                                 repairAssetId,
                                 exportUnfiltered$: exportUnfiltered$({eeStratification, eeGeometry, baseAssetId}),
-                                count$: countSummary$({eeGeometry, eeStratification}),
+                                count$: countSummary$({eeGeometry}),
                                 candidatesOf,
-                                finalExport$: finalExport$({eeGeometry, allocation: resolvedAllocation, eeStratification})
+                                finalExport$: finalExport$({eeGeometry, allocation: resolvedAllocation}),
+                                underproductionError: ({counts, strata}) =>
+                                    finalCountError({counts, allocation: strata, config: validationConfig})
                             })
                         })
                     )
@@ -178,11 +157,12 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                         sampleArrangement,
                         densityOffset
                     })
-                    : systematicUnfilteredSamples({
+                    : stratifiedSystematicExactCandidates({
                         allocation: strata,
-                        eeStratification,
+                        stratification: eeStratification,
                         region: eeGeometry,
-                        sampleArrangement,
+                        grid: {crs: sampleArrangement.crs, scale: sampleArrangement.scale, crsTransform: sampleArrangement.crsTransform},
+                        sampleArrangement: {minDistance: sampleArrangement.minDistance, gridOrigin: sampleArrangement.gridOrigin, seed: sampleArrangement.seed},
                         densityOffset
                     })
                 return tableToAsset$({
@@ -197,20 +177,13 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
         }
     }
 
-    // Selected-level counts read from a MATERIALIZED candidate asset's FeatureCollection (a cheap grouped
-    // aggregate over the vector table), NOT the raster sample image - so it can't time out generating
-    // candidates live.
-    function countSummary$({eeGeometry, eeStratification}) {
+    // Counts read from materialized candidate assets, not from live raster generation.
+    function countSummary$({eeGeometry}) {
         return ({assetId: countAssetId, allocation: strata, densityOffset}) => {
             const candidates = ee.FeatureCollection(countAssetId)
-            // Convert candidates to their EXACT lattice points before counting so counts/levels reflect the
-            // exported locations, not raster-snapped centroids. Unstratified: index cells over a padded
-            // rectangle -> exact points (respects AOI). Stratified: raster candidates -> exact points, then
-            // exact-point stratification membership (pre-count, so EXACT/OVER counts stay correct). Both count
-            // over the already-MATERIALIZED candidate asset (a cheap getInfo, no final-count proof). Only the
-            // unstratified GENERATION got cheaper (analytical index candidates); the stratified candidate asset
-            // is still generated through the raster systematicUnfilteredSamples/reduceToVectors path, and this
-            // stage adds the exact-membership work on top of it.
+            // The stratified candidate asset already carries exact geometry, exact-in-AOI membership and the
+            // persisted nested level, so counting reads its level/stratum columns directly - no geometry
+            // materialization and no re-filtering. Unstratified still materializes its index geometry.
             const samples = unstratified
                 ? materializeSystematicIndexGeometry({
                     candidates,
@@ -219,14 +192,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                     sampleArrangement,
                     densityOffset
                 })
-                : stratifiedExactMembers({
-                    candidates,
-                    allocation: strata,
-                    region: eeGeometry,
-                    eeStratification,
-                    sampleArrangement,
-                    densityOffset
-                })
+                : candidates
             return ee.getInfo$(
                 systematicSelectionSummary(
                     selectSystematicLevels({
@@ -250,8 +216,11 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
             : baseSamples
     }
 
-    function finalExport$({eeGeometry, allocation, eeStratification}) {
-        return ({candidates, densityOffset, candidateDensityOffset = densityOffset, levelsByStratum, repairedStrata}) => {
+    function finalExport$({eeGeometry, allocation}) {
+        return ({candidates, densityOffset, candidateDensityOffset = densityOffset, levelsByStratum}) => {
+            // Stratified: select over the persisted candidate asset (already exact geometry, exact-in-AOI, with
+            // persisted level) using the levels the count/repair stage supplied. Repaired candidates already
+            // carry geometry at their repair density, so no region/offset/repairedStrata are threaded here.
             const filteredSamples = unstratified
                 ? filterUnstratifiedIndexSamples({
                     region: eeGeometry,
@@ -262,32 +231,17 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                     densityOffset: candidateDensityOffset,
                     levelsByStratum
                 })
-                : filterStratifiedExactSamples({
-                    region: eeGeometry,
+                : stratifiedSystematicFinalSamples({
                     candidates,
                     allocation,
                     strategy: densityStrategy,
                     seed: sampleArrangement.seed,
-                    baseOffset: densityOffset,
-                    repairOffset: candidateDensityOffset,
-                    repairedStrata,
-                    levelsByStratum,
-                    eeStratification,
-                    sampleArrangement
+                    levelsByStratum
                 })
-            // selectedDensityOffset is collection-level metadata and records the base offset. If a repair
-            // export was used, repaired strata were drawn from a denser internal repair grid that is not
-            // represented per row in the current export schema. Therefore selectedDensityOffset alone is not
-            // a complete reproduction recipe for repaired rows.
-            //
-            // Asset exports keep rows minimal (id/stratum/selectedLevel) with reproduction/allocation
-            // metadata at the collection level; SEPAL/CSV keeps full per-row columns (sidecars are a
-            // follow-up).
+            // selectedDensityOffset records the base offset; repaired strata may come from a denser asset.
             const samples = finalizeSystematicSamples({filteredSamples, allocation, sampleArrangement, densityOffset, rowMetadata: destination === 'SEPAL'})
                 .set(formatProperties(properties))
-            // No final validateSampleCounts$: proving the filtered count would re-run the heavy computation
-            // and can time out. Sufficiency was already checked over the materialized candidate assets.
-            return destination === 'SEPAL'
+            const export$ = destination === 'SEPAL'
                 ? tableToSepal$(taskId, {
                     collection: samples,
                     description,
@@ -303,6 +257,15 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                     assetId,
                     strategy
                 })
+            // Final safety guard for both stratified and unstratified systematic: count the SELECTED final
+            // collection and gate the export on the minimum-sample contract, so validation always happens
+            // before the export starts.
+            return gateFinalExport$({
+                counts$: getSampleCounts$(filteredSamples, 'systematic final validation count'),
+                allocation,
+                config: validationConfig,
+                export$
+            })
         }
     }
 
@@ -337,8 +300,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
         return selected.map(sample =>
             sample
                 .set('id', toId({sample}))
-                // Keep helper-only properties out of row-metadata exports; asset exports would select them
-                // away anyway, but SEPAL/CSV row metadata should stay aligned with the existing selectors.
+                // Keep helper-only candidate fields out of row-metadata exports.
                 .set('i', null)
                 .set('j', null)
                 .set('idkey', null)

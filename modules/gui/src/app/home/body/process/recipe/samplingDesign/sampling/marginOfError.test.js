@@ -27,7 +27,7 @@ it('calculateMarginOfError is Infinity (not NaN) for relative MOE at all-zero pr
         relativeMarginOfError: true,
         confidenceLevel: 0.95,
         strategy: 'EQUAL',
-        minSamplesPerStratum: 1,
+        minSamplesPerStratum: 2,
         strata: [
             {stratum: 1, weight: 0.5, proportion: 0},
             {stratum: 2, weight: 0.5, proportion: 0},

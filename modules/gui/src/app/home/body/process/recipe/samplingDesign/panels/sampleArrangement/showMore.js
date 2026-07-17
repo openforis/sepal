@@ -1,4 +1,6 @@
-export const DEFAULT_CRS = 'EPSG:3410'
+import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
+
+export const DEFAULT_CRS = DEFAULT_SAMPLING_GRID_CRS
 export const DEFAULT_SEED = 1
 
 // Unstratified when stratification is skipped (boolean true, or a non-empty skip array). Gates the grid

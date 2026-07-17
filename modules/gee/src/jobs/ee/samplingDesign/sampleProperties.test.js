@@ -14,9 +14,9 @@ const reproduction = {
     seed: 1,
     minDistance: 60,
     scale: 30,
-    crs: 'EPSG:3410',
+    crs: 'EPSG:6933',
     crsTransform: '',
-    gridCrs: 'EPSG:3410',
+    gridCrs: 'EPSG:6933',
     gridCrsTransform: '',
     selectedDensityFactor: null,
     selectedDensityOffset: 0

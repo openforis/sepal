@@ -22,6 +22,7 @@ const stratifiedValid = {
     proportions: {anticipatedProportions: [{stratum: 1, proportion: 0.48}, {stratum: 2, proportion: 0.08}]},
     sampleAllocation: {
         allocationStrategy: 'OPTIMAL',
+        minSamplesPerStratum: 2,
         allocation: [
             {stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 0.3, proportion: 0.48, sampleSize: 30},
             {stratum: 2, label: 'Non-forest', color: '#a00', area: 7e8, weight: 0.7, proportion: 0.08, sampleSize: 70}
@@ -31,6 +32,48 @@ const stratifiedValid = {
 
 it('accepts a valid unstratified, no-proportions, manual design', () => {
     expect(validateRetrieve(unstratifiedValid)).toEqual([])
+})
+
+// The statistical floor, enforced at the same boundary the task preflight re-checks: the GUI must never
+// approve a design the backend immediately rejects.
+describe('minimum samples per stratum', () => {
+    const withRow = sampleSize => ({
+        ...stratifiedValid,
+        sampleAllocation: {
+            ...stratifiedValid.sampleAllocation,
+            allocation: stratifiedValid.sampleAllocation.allocation.map((row, index) =>
+                index === 0 ? {...row, sampleSize} : row)
+        }
+    })
+
+    it('rejects a stratum allocated a single sample', () => {
+        expect(codes(withRow(1))).toContain('sampleSizeInvalid')
+    })
+
+    it('rejects a stratum allocated zero samples', () => {
+        expect(codes(withRow(0))).toContain('sampleSizeInvalid')
+    })
+
+    it('accepts a stratum allocated exactly the floor of two', () => {
+        expect(codes(withRow(2))).not.toContain('sampleSizeInvalid')
+    })
+
+    it('rejects a missing minimum for automatic allocation', () => {
+        const {minSamplesPerStratum: _omitted, ...withoutMinimum} = stratifiedValid.sampleAllocation
+        expect(codes({...stratifiedValid, sampleAllocation: withoutMinimum}))
+            .toContain('minSamplesPerStratumInvalid')
+    })
+
+    it('rejects a configured minimum below the floor for automatic allocation', () => {
+        expect(codes({...stratifiedValid, sampleAllocation: {...stratifiedValid.sampleAllocation, minSamplesPerStratum: 1}}))
+            .toContain('minSamplesPerStratumInvalid')
+    })
+
+    it('does not require a configured minimum for EQUAL or manual allocation, which floor at two', () => {
+        expect(codes(unstratifiedValid)).not.toContain('minSamplesPerStratumInvalid')
+        expect(codes({...stratifiedValid, sampleAllocation: {...stratifiedValid.sampleAllocation, allocationStrategy: 'EQUAL', minSamplesPerStratum: undefined}}))
+            .not.toContain('minSamplesPerStratumInvalid')
+    })
 })
 
 it('accepts a valid stratified design with proportions', () => {

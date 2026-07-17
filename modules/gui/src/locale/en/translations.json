@@ -4855,7 +4855,8 @@
         "invalid.strataAreaMissing": "A stratum is missing its area. Recompute the strata in Stratification.",
         "invalid.proportionsRequired": "The chosen allocation needs anticipated proportions. Provide proportions, or switch to Equal/Proportional allocation with a fixed sample size.",
         "invalid.noAllocation": "No sample allocation has been computed. Open Sample Allocation and set the allocation.",
-        "invalid.sampleSizeInvalid": "An allocation row has an invalid sample size. Enter a positive whole number of samples for every stratum.",
+        "invalid.sampleSizeInvalid": "An allocation row has an invalid sample size. Every stratum needs a whole number of at least 2 samples.",
+        "invalid.minSamplesPerStratumInvalid": "Minimum samples per stratum must be a whole number of at least 2.",
         "invalid.areaMissing": "An allocation row is missing its area. Recompute the strata in Stratification.",
         "invalid.noTaskAllocation": "The allocation has no samples to retrieve. Set a sample size greater than zero.",
         "invalid.seedMissing": "A seed is required for this arrangement. Enter a whole-number seed in Sample Arrangement."
@@ -4913,7 +4914,7 @@
               "label": "CRS",
               "placeholder": "CRS...",
               "required": "You must specify the CRS",
-              "tooltip": "The CRS of the grid used to calculate stratum areas and to assign each systematic sample's stratum"
+              "tooltip": "The equal-area grid used to measure areas, space samples and place them. The global grid suits most areas of interest; use North or South for polar areas."
             },
             "crsTransform": {
               "label": "CRS transform",
@@ -5034,7 +5035,7 @@
               "placeholder": "Scale...",
               "required": "You must specify the scale",
               "suffix": "meters",
-              "tooltip": "The scale to use when calculating stratum areas and allocating the samples"
+              "tooltip": "Processing scale used to estimate proportions. Increase it for faster, less detailed estimates."
             },
             "overallProportion": {
               "label": "Anticipated overall proportion",
@@ -5108,7 +5109,7 @@
             "minSamplesPerStratum": {
               "label": "Min samples/stratum",
               "placeholder": "Min samples...",
-              "tooltip": "Ensure each stratum receives at least this many samples while keeping the total sample size. If the total is too small, increase it or lower this minimum."
+              "tooltip": "Ensure each stratum receives at least this many samples while keeping the total sample size. At least 2 samples per stratum are always required, so this cannot be lower. If the total is too small, increase it or lower this minimum."
             },
             "relativeMarginOfError": {
               "label": "Margin of error",
@@ -5159,7 +5160,8 @@
               "table": {
                 "marginOfError": "Margin of error (ha)",
                 "relativeMarginOfError": "Relative margin of error",
-                "samples": "Samples",
+                "samples": "Sample size",
+                "samplesTooltip": "Number of samples allocated to this stratum.",
                 "overall": "Overall"
               }
             }
@@ -5211,10 +5213,11 @@
               }
             },
             "crs": {
-              "tooltip": "The CRS used to build the sampling grid and to measure distances. Use an equal-area CRS (the default, EPSG:3410) so sample density is balanced by area."
+              "tooltip": "The equal-area grid used to measure areas, space samples and place them. The global grid suits most areas of interest; use North or South for polar areas."
             },
             "crsTransform": {
-              "tooltip": "Optional transform applied to the grid's CRS."
+              "tooltip": "Optional transform applied to the grid's CRS.",
+              "invalid": "Enter a north-up, square transform: [xScale, 0, xOrigin, 0, yScale, yOrigin] with |xScale| = |yScale| and no rotation/shear."
             },
             "minDistance": {
               "label": "Min distance",
@@ -5249,7 +5252,12 @@
           }
         }
       },
-      "tabPlaceholder": "Sampling_design"
+      "tabPlaceholder": "Sampling_design",
+      "crs": {
+        "easeGrid2Global": "EPSG:6933 - EASE-Grid 2.0 Global",
+        "easeGrid2North": "EPSG:6931 - EASE-Grid 2.0 North",
+        "easeGrid2South": "EPSG:6932 - EASE-Grid 2.0 South"
+      }
     }
   },
   "sources": {
@@ -5436,10 +5444,6 @@
           "prepareCandidates": "Preparing random sample candidates",
           "checkCandidates": "Checking random sample candidates",
           "exportFinal": "Exporting final sample design"
-        },
-        "underproduced": {
-          "minDistance": "Random sampling could not create enough samples while respecting the minimum distance. Affected strata: {strata}. Try reducing the sample size for those strata, reducing the minimum distance, or checking whether the area of interest has enough usable area for those classes.",
-          "insufficientArea": "Random sampling could not create enough samples. Affected strata: {strata}. Try reducing the sample size for those strata or checking whether the area of interest has enough usable area for those classes."
         }
       },
       "systematic": {
@@ -5450,10 +5454,38 @@
           "checkRepairCandidates": "Checking additional sample candidates",
           "exportFinal": "Exporting final sample design"
         },
-        "underproduced": {
-          "minDistanceLimit": "Sampling could not create enough sample candidates while respecting the minimum distance. Affected strata: {strata}. Try reducing the sample size for those strata, reducing the minimum distance, setting the sample size strategy to Closest, or checking whether the area of interest has enough usable area for those classes.",
-          "repairExhausted": "Sampling could not create enough sample candidates, even after creating additional candidates. Affected strata: {strata}. Try reducing the sample size for those strata, reducing the minimum distance, setting the sample size strategy to Closest, or checking whether the area of interest has enough usable area for those classes."
+        "grid": {
+          "unsupportedCrs": "The sampling grid coordinate system \"{crs}\" is not supported. Systematic sampling requires a supported projected, metre-based coordinate system ({supported}). Change the sampling grid CRS.",
+          "invalidTransform": "The sampling grid transform is invalid. A grid transform must be north-up, axis-aligned, square and non-zero, and cannot be combined with a scale. Provide a valid transform or use a scale instead.",
+          "invalidScale": "The sampling grid scale is invalid. Provide a positive scale in metres, or a valid grid transform instead."
         }
+      },
+      "preflight": {
+        "invalidMinimum": "Minimum samples per stratum is {value}. It must be a whole number of at least {floor}.",
+        "noStrata": "The sampling design has no strata to sample. Open Stratification and Sample Allocation to define the design.",
+        "belowStatisticalMinimum": "Every stratum needs at least {floor} samples, but {strata} requests fewer. Increase the sample size, or merge these strata in Stratification.",
+        "unstratifiedBelowMinimum": "The total sample size is {value}. An unstratified design needs at least {floor} samples.",
+        "belowConfiguredMinimum": "Minimum samples per stratum is {minimum}, but {strata} requests fewer. Increase the sample size, or lower the minimum to {value} or less (never below {floor})."
+      },
+      "underproduction": {
+        "message": "The sampling design could not be produced as configured. {details}",
+        "diagnosis": {
+          "statisticalMinimum": "Too few sample locations were found for {strata}. Every class needs at least {minimum} samples.",
+          "statisticalMinimumNoDistance": "Fewer than {minimum} sample locations could be placed for {strata} anywhere in the area of interest.",
+          "configuredMinimum": "Fewer samples than the minimum of {minimum} per class were produced for {strata}.",
+          "requestedAllocation": "Fewer samples than requested were produced for {strata}. The minimum of {minimum} per class was met."
+        },
+        "reduceSystematicMinDistance": "Minimum distance is {minDistance} m. In Sample Arrangement, reduce it to about {threshold} m or less to fit more sample locations into the grid.",
+        "atGridFloor": "Reducing minimum distance will not add more sample locations. The {pixelSize} m stratification grid already sets the closest spacing available.",
+        "reduceRandomMinDistance": "Minimum distance is {minDistance} m. In Sample Arrangement, reduce or clear it to allow more sample locations.",
+        "switchToRandom": "In Sample Arrangement, set Arrangement to Random to place samples more freely.",
+        "reviseStratification": "Open Stratification and check that this class really occurs in the area of interest and has usable pixels there - it may have been excluded from sampling. If it only covers small scattered patches, combine it with a similar class, update the stratification, then recompute the areas and allocation.",
+        "enlargeOrMerge": "Enlarge the area of interest, or combine this class with a similar one so it covers more ground.",
+        "lowerConfiguredMinimum": "In Sample Allocation, lower Minimum samples per stratum to {value} or less, but not below {floor}.",
+        "minimumNotSufficient": "Lowering the minimum on its own is not enough here, because the requested sample size was not reached either.",
+        "reduceRequestedOrClosest": "In Sample Allocation, reduce the sample size, or in Sample Arrangement set Sample size strategy to Closest to accept the closest achievable count.",
+        "avoidEqualAllocation": "Equal allocation requests the same count from every stratum. Use Proportional, Power, Optimal, or manual allocation to request fewer samples from rare strata.",
+        "reduceRequestedRandom": "In Sample Allocation, reduce the sample size for these classes."
       }
     },
     "status": {

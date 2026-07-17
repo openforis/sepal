@@ -9,22 +9,22 @@ describe('effectiveArrangement', () => {
     }
 
     describe('stratified', () => {
-        const stratification = {skip: false, scale: 300, crs: 'EPSG:3410'}
+        const stratification = {skip: false, scale: 300, crs: 'EPSG:6933'}
 
         it('takes the grid scale + crs from stratification (no transform), NOT the arrangement', () => {
             const result = effectiveArrangement({stratification, sampleArrangement})
             expect(result.scale).toBe(300)
-            expect(result.crs).toBe('EPSG:3410')
+            expect(result.crs).toBe('EPSG:6933')
             expect(result.crsTransform).toBe('')
         })
 
         it('takes crs + crsTransform from stratification and DROPS scale when a transform defines the grid', () => {
             const result = effectiveArrangement({
-                stratification: {skip: false, scale: 300, crs: 'EPSG:3410', crsTransform: '[300,0,15,0,-300,15]'},
+                stratification: {skip: false, scale: 300, crs: 'EPSG:6933', crsTransform: '[300,0,15,0,-300,15]'},
                 sampleArrangement
             })
             expect(result.crsTransform).toBe('[300,0,15,0,-300,15]')
-            expect(result.crs).toBe('EPSG:3410')
+            expect(result.crs).toBe('EPSG:6933')
             expect(result.scale).toBeUndefined() // mutually exclusive - transform is the only grid definition
         })
 
@@ -40,8 +40,9 @@ describe('effectiveArrangement', () => {
             expect(result.sampleSizeStrategy).toBe('OVER')
         })
 
-        it('defaults the grid crs to EPSG:3410 for a stratification without one', () => {
-            expect(effectiveArrangement({stratification: {skip: false, scale: 30}, sampleArrangement}).crs).toBe('EPSG:3410')
+        it('defaults the grid crs to EPSG:6933 for a stratification without one, and carries an explicit choice through', () => {
+            expect(effectiveArrangement({stratification: {skip: false, scale: 30}, sampleArrangement}).crs).toBe('EPSG:6933')
+            expect(effectiveArrangement({stratification: {skip: false, scale: 30, crs: 'EPSG:6931'}, sampleArrangement}).crs).toBe('EPSG:6931')
         })
     })
 
@@ -65,8 +66,9 @@ describe('effectiveArrangement', () => {
             expect(result.scale).toBe(100)
         })
 
-        it('defaults crs to EPSG:3410 when the arrangement has none', () => {
-            expect(effectiveArrangement({stratification: {skip: [true]}, sampleArrangement: {...sampleArrangement, crs: undefined}}).crs).toBe('EPSG:3410')
+        it('defaults crs to EPSG:6933 when the arrangement has none, and carries an explicit choice through', () => {
+            expect(effectiveArrangement({stratification: {skip: [true]}, sampleArrangement: {...sampleArrangement, crs: undefined}}).crs).toBe('EPSG:6933')
+            expect(effectiveArrangement({stratification: {skip: [true]}, sampleArrangement: {...sampleArrangement, crs: 'EPSG:6932'}}).crs).toBe('EPSG:6932')
         })
     })
 })

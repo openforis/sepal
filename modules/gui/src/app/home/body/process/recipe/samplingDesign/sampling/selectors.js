@@ -1,3 +1,5 @@
+import {effectiveMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
+
 import {allocate} from './allocate'
 import {toProportions} from './proportionMath'
 import {calculateSampleSize} from './sampleSize'
@@ -91,7 +93,7 @@ export const selectAllocationView = model => {
         return strata.map(stratum => ({...stratum, sampleSize: byStratum[stratum.stratum] ?? 0}))
     }
     const strategy = allocation.allocationStrategy
-    const minSamplesPerStratum = allocation.minSamplesPerStratum ?? 0
+    const minSamplesPerStratum = effectiveMinSamplesPerStratum(allocation)
     const tuningConstant = allocation.powerTuningConstant
     if (proportionsSkipped && requiresProportions(allocation)) {
         // The chosen strategy/estimation can't be evaluated without proportions; surface NaN sizes so

@@ -2,6 +2,13 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {
+    effectiveMinSamplesPerStratum as sharedEffectiveMinSamplesPerStratum,
+    isValidStratumSampleSize,
+    MIN_SAMPLES_PER_STRATUM,
+    minimumTotalSampleSize,
+    usesConfiguredMinSamplesPerStratum
+} from '#sepal/recipe/samplingDesign/minSamples'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -50,9 +57,10 @@ const fields = {
     relativeMarginOfError: new Form.Field(),
     allocationStrategy: new Form.Field(),
     minSamplesPerStratum: new Form.Field()
-        .skip((_minSamplesPerStratum, {manual, allocationStrategy}) => manual.length || allocationStrategy === 'EQUAL')
+        .skip((_minSamplesPerStratum, {manual, allocationStrategy}) => !usesConfiguredMinSamplesPerStratum({allocationStrategy, manual}))
         .notBlank()
-        .min(0),
+        .int()
+        .min(MIN_SAMPLES_PER_STRATUM),
     powerTuningConstant: new Form.Field()
         .skip((_powerTuningConstant, {manual, allocationStrategy}) => manual.length || allocationStrategy !== 'POWER')
         .notBlank()
@@ -61,20 +69,17 @@ const fields = {
         .notBlank()
 }
 
-// EQUAL hides/disables the min-samples field, but the allocator still needs at least one sample per
-// stratum - so EQUAL enforces a minimum of 1 regardless of the (hidden) field value. Other strategies
-// honor the configured minimum.
+// Strategies without a configurable minimum still floor at the statistical minimum; the rest raise it to the
+// configured value. The policy itself lives in the shared contract.
 const effectiveMinSamplesPerStratum = ({allocationStrategy, minSamplesPerStratum}) =>
-    allocationStrategy === 'EQUAL'
-        ? 1
-        : (minSamplesPerStratum ? parseInt(minSamplesPerStratum) : 0)
+    sharedEffectiveMinSamplesPerStratum({allocationStrategy, minSamplesPerStratum})
 
 const enoughSamplesToCoverMin = ({sampleSize, minSamplesPerStratum, allocationStrategy, allocation}) => {
     if (!isPositiveIntegerSampleSize(sampleSize) || !allocation) {
         return true
     }
     const min = effectiveMinSamplesPerStratum({allocationStrategy, minSamplesPerStratum})
-    return !min || min * allocation.length <= sampleSize
+    return minimumTotalSampleSize({effectiveMinimum: min, strataCount: allocation.length}) <= sampleSize
 }
 
 // Active in every mode (NestedForms only propagates a row's error after that row updates, so the parent
@@ -93,7 +98,7 @@ const allOutcomesFinite = ({manual, estimateSampleSize, allocation, sampleSize, 
     if (!manual?.length && !estimateSampleSize && sampleSize && !enoughSamplesToCoverMin({allocation, sampleSize, minSamplesPerStratum, allocationStrategy})) {
         return true
     }
-    return !allocation || allocation.every(({sampleSize}) => isPositiveIntegerSampleSize(sampleSize))
+    return !allocation || allocation.every(({sampleSize}) => isValidStratumSampleSize(sampleSize))
 }
 
 const constraints = {
@@ -101,9 +106,9 @@ const constraints = {
         .predicate(allOutcomesFinite,
             'process.samplingDesign.panel.sampleAllocation.form.allocation.tooBig'
         ),
-    // The min-samples field is hidden in manual mode, so don't enforce it there. EQUAL allocation keeps
-    // the guard: the allocator still requires at least one sample per stratum (sample size >= number of
-    // strata), so a too-small total must be rejected rather than producing a non-finite allocation.
+    // The min-samples field is hidden in manual mode, so don't enforce it there. EQUAL allocation keeps the
+    // guard: every stratum still needs the statistical minimum (total >= 2 * number of strata), so a
+    // too-small total must be rejected rather than producing a non-finite allocation.
     enoughSamples: new Form.Constraint(['sampleSize', 'minSamplesPerStratum'])
         .skip(({manual}) => manual?.length)
         .predicate(enoughSamplesToCoverMin,
@@ -299,8 +304,8 @@ class _SampleAllocation extends React.Component {
     }
 
     renderMinSamplesPerStratum() {
-        const {inputs: {minSamplesPerStratum, allocationStrategy}} = this.props
-        const disabled = allocationStrategy.value === 'EQUAL'
+        const {inputs: {manual, minSamplesPerStratum, allocationStrategy}} = this.props
+        const disabled = !usesConfiguredMinSamplesPerStratum({allocationStrategy: allocationStrategy.value, manual: manual.value})
         return (
             <Form.Input
                 label={msg('process.samplingDesign.panel.sampleAllocation.form.minSamplesPerStratum.label')}
@@ -388,7 +393,7 @@ class _SampleAllocation extends React.Component {
         } else {
             ['EQUAL', 'PROPORTIONAL', 'BALANCED'].includes(allocationStrategy.value) || allocationStrategy.set('BALANCED')
         }
-        minSamplesPerStratum.value || minSamplesPerStratum.set('1')
+        minSamplesPerStratum.value || minSamplesPerStratum.set(String(MIN_SAMPLES_PER_STRATUM))
         allocationStrategy.value || allocationStrategy.set('EQUAL')
         powerTuningConstant.value || powerTuningConstant.set('0.5')
 
@@ -411,7 +416,7 @@ class _SampleAllocation extends React.Component {
     onManualToggled(manual) {
         const {inputs: {allocation}} = this.props
         if (manual) {
-            const updatedAllocation = allocation.value.map(entry => ({...entry, sampleSize: entry.sampleSize || 1}))
+            const updatedAllocation = allocation.value.map(entry => ({...entry, sampleSize: entry.sampleSize || MIN_SAMPLES_PER_STRATUM}))
             allocation.set(updatedAllocation)
             setImmediate(() => this.updateMarginOfError())
         } else {
@@ -447,7 +452,6 @@ class _SampleAllocation extends React.Component {
         }
         const hasProportions = this.hasProportions()
         const strata = this.allocationStrata()
-        // EQUAL ignores the hidden min-samples field and uses a floor of one sample per stratum.
         const minSamples = effectiveMinSamplesPerStratum({
             allocationStrategy: allocationStrategy.value,
             minSamplesPerStratum: minSamplesPerStratum.value

@@ -260,7 +260,7 @@ const BandInput = ({band, percentage, probabilityPerStratum, anticipationStrateg
     )
     return (
         <FormCombo
-            className={styles.band}
+            className={styles.wideField}
             input={band}
             disabled={!bands.length}
             options={options}
@@ -275,7 +275,7 @@ const BandInput = ({band, percentage, probabilityPerStratum, anticipationStrateg
 
 const ScaleInput = ({scale}) =>
     <Form.Input
-        className={styles.scale}
+        className={styles.compactField}
         label={msg('process.samplingDesign.panel.proportions.form.scale.label')}
         placeholder={msg('process.samplingDesign.panel.proportions.form.scale.placeholder')}
         tooltip={msg('process.samplingDesign.panel.proportions.form.scale.tooltip')}

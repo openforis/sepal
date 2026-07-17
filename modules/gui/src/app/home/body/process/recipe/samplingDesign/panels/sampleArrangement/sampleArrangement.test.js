@@ -1,6 +1,9 @@
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
-import {includeSeed, isSkipped, shouldShowMore} from './showMore'
+vi.mock('~/translate', () => ({msg: id => id}))
+
+const {includeSeed, isSkipped, shouldShowMore} = await import('./showMore')
+const {crsTransformField} = await import('./sampleArrangementForm')
 
 const base = {
     crs: undefined,
@@ -28,7 +31,13 @@ describe('shouldShowMore', () => {
     })
 
     it('is collapsed for the default CRS', () => {
-        expect(shouldShowMore({...base, crs: 'EPSG:3410'})).toBe(false)
+        expect(shouldShowMore({...base, crs: 'EPSG:6933'})).toBe(false)
+    })
+
+    // The polar variants are non-default selections, so a saved polar recipe must reopen More.
+    it('is expanded for a polar EASE-Grid 2.0 selection', () => {
+        expect(shouldShowMore({...base, crs: 'EPSG:6931'})).toBe(true)
+        expect(shouldShowMore({...base, crs: 'EPSG:6932'})).toBe(true)
     })
 
     it('is expanded for a non-default CRS', () => {
@@ -108,5 +117,25 @@ describe('includeSeed', () => {
 
     it('hides seed for systematic OVER at a FIXED grid start', () => {
         expect(includeSeed({arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED'})).toBe(false)
+    })
+})
+
+// check() returns '' when valid and the message id when invalid.
+describe('crsTransform field validation', () => {
+    const check = crsTransform => crsTransformField.check('crsTransform', {crsTransform})
+
+    it('accepts empty (no transform) and a north-up, square transform', () => {
+        expect(check('')).toBe('')
+        expect(check(undefined)).toBe('')
+        expect(check('[10,0,0,0,-10,0]')).toBe('')
+    })
+
+    it('rejects a south-up transform with the invalid-transform message', () => {
+        expect(check('[10,0,0,0,10,0]')).toBe('process.samplingDesign.panel.sampleArrangement.form.crsTransform.invalid')
+    })
+
+    it('rejects a sheared and a non-square transform', () => {
+        expect(check('[10,1,0,0,-10,0]')).toBe('process.samplingDesign.panel.sampleArrangement.form.crsTransform.invalid')
+        expect(check('[10,0,0,0,-20,0]')).toBe('process.samplingDesign.panel.sampleArrangement.form.crsTransform.invalid')
     })
 })

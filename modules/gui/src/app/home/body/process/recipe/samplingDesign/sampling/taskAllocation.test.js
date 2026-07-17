@@ -136,7 +136,7 @@ describe('toTaskAllocation - clean derived shape', () => {
             proportions: {manual: false, percentage: false, anticipatedOverallProportion: 0.2},
             sampleAllocation: {
                 manual: false, estimateSampleSize: false, sampleSize: 100, allocationStrategy: 'PROPORTIONAL',
-                minSamplesPerStratum: 1, confidenceLevel: 95, marginOfError: 50, relativeMarginOfError: true, powerTuningConstant: 0.5
+                minSamplesPerStratum: 2, confidenceLevel: 95, marginOfError: 50, relativeMarginOfError: true, powerTuningConstant: 0.5
             },
             samplingDesignDerived: {areaByStratum: {1: 300, 2: 700}, probabilityByStratum: {1: 0.6, 2: 0.1}}
         }

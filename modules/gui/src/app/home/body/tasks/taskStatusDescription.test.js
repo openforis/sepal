@@ -65,16 +65,57 @@ describe('taskStatusDescription', () => {
 
     it('renders a structured Sampling Design failure as clean text, not raw JSON', () => {
         const statusDescription = JSON.stringify({
-            messageKey: 'tasks.samplingDesign.systematic.underproduced.minDistanceLimit',
-            messageArgs: {strata: 'trees (stratum 1): 231 available / 373 requested'},
-            defaultMessage: 'Sampling could not create enough sample candidates while respecting the minimum distance. Affected strata: {strata}. Try reducing the sample size for those strata.'
+            messageKey: 'tasks.samplingDesign.preflight.belowStatisticalMinimum',
+            messageArgs: {floor: 2, strata: 'snow (1)'},
+            defaultMessage: 'Every stratum needs at least {floor} samples, but {strata} requests fewer.'
         })
         const result = taskStatusDescription({statusDescription})
         // The interpolated per-stratum detail is present (surrounding prose may change freely)...
-        expect(result).toContain('trees (stratum 1): 231 available / 373 requested')
+        expect(result).toContain('snow (1)')
         // ...and no raw JSON / messageKey / uninterpolated placeholder leaks through.
         expect(result).not.toContain('messageKey')
         expect(result).not.toContain('{"')
         expect(result).not.toContain('{strata}')
+    })
+
+    // Underproduction advice arrives as a structured list: every diagnosis/action must be translated by its
+    // own key, not dumped as the pre-rendered English `details`.
+    describe('structured underproduction advice', () => {
+        const withAdvice = advice => ({statusDescription: JSON.stringify({
+            messageKey: 'tasks.samplingDesign.underproduction.message',
+            messageArgs: {details: 'ENGLISH FALLBACK DETAILS', advice},
+            defaultMessage: 'The sampling design could not be produced as configured. {details}'
+        })})
+
+        it('translates each diagnosis and action by key instead of using the English details', () => {
+            const result = taskStatusDescription(withAdvice([{
+                kind: 'statisticalMinimum',
+                diagnosis: {key: 'tasks.samplingDesign.underproduction.diagnosis.statisticalMinimum', args: {strata: 'snow (1)', minimum: 2}, message: 'D {strata} {minimum}'},
+                actions: [{key: 'tasks.samplingDesign.underproduction.switchToRandom', args: {}, message: 'A'}]
+            }]))
+            expect(result).not.toContain('ENGLISH FALLBACK DETAILS')
+            expect(result).toContain('snow (1)')
+            expect(result).not.toContain('{strata}')
+            expect(result).not.toContain('{details}')
+        })
+
+        it('composes several groups, each with its diagnosis followed by its actions', () => {
+            const result = taskStatusDescription(withAdvice([
+                {kind: 'statisticalMinimum', diagnosis: {key: 'k.a', args: {}, message: 'DIAG-A'}, actions: [{key: 'k.a1', args: {}, message: 'ACT-A1'}]},
+                {kind: 'requestedAllocation', diagnosis: {key: 'k.b', args: {}, message: 'DIAG-B'}, actions: [{key: 'k.b1', args: {}, message: 'ACT-B1'}]}
+            ]))
+            expect(result).toContain('DIAG-A ACT-A1')
+            expect(result).toContain('DIAG-B ACT-B1')
+            expect(result.indexOf('DIAG-A')).toBeLessThan(result.indexOf('DIAG-B'))
+        })
+
+        it('falls back to the plain message when no advice is attached', () => {
+            const statusDescription = JSON.stringify({
+                messageKey: 'tasks.samplingDesign.underproduction.message',
+                messageArgs: {details: 'PLAIN DETAILS'},
+                defaultMessage: 'Outer. {details}'
+            })
+            expect(taskStatusDescription({statusDescription})).toContain('PLAIN DETAILS')
+        })
     })
 })

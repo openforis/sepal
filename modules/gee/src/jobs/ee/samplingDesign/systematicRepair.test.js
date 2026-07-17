@@ -1,4 +1,4 @@
-import {nonRepairableStrata, repairExtraOffsets, repairOffset, underproducingStrata, underproductionDetails, underproductionUserMessage} from '#sepal/ee/samplingDesign/systematicRepair'
+import {nonRepairableStrata, repairExtraOffsets, repairOffset, underproducingStrata} from '#sepal/ee/samplingDesign/systematicRepair'
 
 const allocation = [
     {stratum: 1, sampleSize: 100},
@@ -106,47 +106,5 @@ describe('nonRepairableStrata', () => {
     it('returns none when every failing stratum can still be densified', () => {
         const under = [{stratum: 1, sampleSize: 100}]
         expect(nonRepairableStrata({underproducing: under, baseOffset: 0, maxOffsetOf: () => 3})).toEqual([])
-    })
-})
-
-describe('underproductionDetails', () => {
-    it('reports available (raw), requested, label, and stratum', () => {
-        const strata = [{stratum: 1, label: 'trees', sampleSize: 373}]
-        expect(underproductionDetails({summary: summaryOf({1: 231}), strata})).toEqual([
-            {stratum: 1, label: 'trees', available: 231, requested: 373}
-        ])
-    })
-
-    it('treats a missing raw count as 0 available', () => {
-        const strata = [{stratum: 7, label: 'bare', sampleSize: 2164}]
-        expect(underproductionDetails({summary: summaryOf({}), strata})).toEqual([
-            {stratum: 7, label: 'bare', available: 0, requested: 2164}
-        ])
-    })
-})
-
-describe('underproductionUserMessage', () => {
-    const details = [
-        {stratum: 1, label: 'trees', available: 231, requested: 373},
-        {stratum: 7, label: 'bare', available: 900, requested: 2164}
-    ]
-
-    it('uses the min-distance-limit key and a {strata} template with each failing stratum in args', () => {
-        const {key, message, args} = underproductionUserMessage({details, reason: 'minDistanceLimit'})
-        expect(key).toBe('tasks.samplingDesign.systematic.underproduced.minDistanceLimit')
-        expect(message).toContain('{strata}')
-        expect(args.strata).toBe('trees (stratum 1): 231 available / 373 requested; bare (stratum 7): 900 available / 2164 requested')
-    })
-
-    it('routes a repair-exhausted reason to a different key with the same {strata} template', () => {
-        const {key, message} = underproductionUserMessage({details: [details[0]], reason: 'repairExhausted'})
-        expect(key).toBe('tasks.samplingDesign.systematic.underproduced.repairExhausted')
-        expect(key).not.toBe('tasks.samplingDesign.systematic.underproduced.minDistanceLimit')
-        expect(message).toContain('{strata}')
-    })
-
-    it('falls back to "stratum N" in args when a label is missing', () => {
-        const {args} = underproductionUserMessage({details: [{stratum: 5, available: 0, requested: 10}], reason: 'repairExhausted'})
-        expect(args.strata).toBe('stratum 5: 0 available / 10 requested')
     })
 })

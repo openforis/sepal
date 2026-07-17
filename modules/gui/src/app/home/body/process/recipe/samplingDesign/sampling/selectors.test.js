@@ -18,7 +18,7 @@ const model = {
         estimateSampleSize: false,
         sampleSize: 100,
         allocationStrategy: 'PROPORTIONAL',
-        minSamplesPerStratum: 1,
+        minSamplesPerStratum: 2,
         confidenceLevel: 95,
         marginOfError: 50,
         relativeMarginOfError: true,
@@ -95,7 +95,7 @@ describe('selectAllocationView - proportions skipped', () => {
     const skippedModel = {
         stratification: {legendByStratum: {1: {label: 'Forest', color: '#0a0'}, 2: {label: 'Non-forest', color: '#a00'}}},
         proportions: {skip: true},
-        sampleAllocation: {manual: false, estimateSampleSize: false, sampleSize: 100, minSamplesPerStratum: 1},
+        sampleAllocation: {manual: false, estimateSampleSize: false, sampleSize: 100, minSamplesPerStratum: 2},
         samplingDesignDerived: {areaByStratum: {1: 300, 2: 700}}
     }
     const withStrategy = allocationStrategy => ({
