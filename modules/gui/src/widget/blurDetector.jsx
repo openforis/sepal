@@ -15,6 +15,12 @@ import {withEventShield} from './eventShield'
 const ANIMATION_DURATION_MS = 250
 const SKIP_INITIAL_EVENTS_MS = 100
 
+// Mount-ordered stack of all BlurDetectors, so that only the top-most one (i.e. the most
+// recently mounted overlay) reacts to blur events. This covers stacked overlays that are
+// not nested in the React tree (e.g. a modal confirmation on top of a modal panel), which
+// the context-based parent disabling cannot reach.
+const blurDetectorStack = []
+
 const Context = React.createContext()
 
 const withBlurDetector = withContext(Context, 'blurDetector')
@@ -70,6 +76,7 @@ class _BlurDetector extends React.Component {
 
     componentDidMount() {
         const {autoBlurTimeout, fadeOut, onBlur, addSubscription, eventShield} = this.props
+        blurDetectorStack.push(this)
         this.setParentEnabled(false)
         if (onBlur) {
             addSubscription(
@@ -78,7 +85,12 @@ class _BlurDetector extends React.Component {
                     // Explicitly set passive: false for touchstart events (default is true)
                     // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
                     fromEvent(document, 'touchstart', {capture: true, passive: false}),
-                    fromEvent(document, 'focus', {capture: true})
+                    fromEvent(document, 'focus', {capture: true}).pipe(
+                        // Focus events without relatedTarget are fired when the window itself
+                        // regains focus (e.g. switching browser tab and back), as opposed to
+                        // the user moving focus within the page. Ignore them.
+                        filter(e => !!e.relatedTarget)
+                    )
                 ).pipe(
                     skipUntil(timer(SKIP_INITIAL_EVENTS_MS)),
                     filter(this.isEnabled),
@@ -132,6 +144,7 @@ class _BlurDetector extends React.Component {
     }
 
     componentWillUnmount() {
+        _.pull(blurDetectorStack, this)
         this.setParentEnabled(true)
     }
 
@@ -150,7 +163,11 @@ class _BlurDetector extends React.Component {
     }
 
     isEnabled() {
-        return this.enabled
+        return this.enabled && this.isTopMost()
+    }
+
+    isTopMost() {
+        return _.last(blurDetectorStack) === this
     }
     
     isOver(e) {

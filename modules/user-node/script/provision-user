@@ -4,7 +4,9 @@
 # <uid>/<gid> are the real POSIX numbers (migrated from LDAP, or = sepal_user.id for users created by
 # user-node); they may differ from each other and from the DB id. The SEPAL data dir is group-owned
 # by the local sepal group 9999.
-# Idempotent: an existing keypair is not regenerated. Prints the SSH public key to stdout.
+# Idempotent and non-destructive: user data is never deleted — the keypair is not regenerated and a
+# lost id_rsa.pub is recovered from the private key. The ssh config is system-managed and rewritten
+# on every run; ownership/permissions are (re)applied. Prints the SSH public key to stdout.
 set -e
 
 username="$1"
@@ -34,6 +36,10 @@ printf '%s\n' 'Host *' '    StrictHostKeyChecking no' '    UserKnownHostsFile /d
     > "$user_home/.ssh/config"
 if [ ! -f "$user_home/.ssh/id_rsa" ]; then
     ssh-keygen -t rsa -b 4096 -C "Sandbox key for $username" -f "$user_home/.ssh/id_rsa" -N "" >/dev/null
+fi
+# Recover a lost public key from the private key (never regenerate the pair).
+if [ ! -f "$user_home/.ssh/id_rsa.pub" ]; then
+    ssh-keygen -y -f "$user_home/.ssh/id_rsa" > "$user_home/.ssh/id_rsa.pub"
 fi
 chmod -R 770 "$user_home"
 chown -R "$uid:$gid" "$user_home"
