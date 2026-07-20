@@ -1,5 +1,5 @@
 .panel {
-    max-width: 28rem;
+    max-width: 21rem;
 }
 
 .scale {
@@ -10,4 +10,8 @@
 
 .number input {
     width: 3rem !important
+}
+
+.minDistance input {
+    width: 8rem !important;
 }

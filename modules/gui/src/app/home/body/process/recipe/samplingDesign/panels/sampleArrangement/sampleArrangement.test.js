@@ -2,7 +2,7 @@ import {describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/translate', () => ({msg: id => id}))
 
-const {includeSeed, isSkipped, shouldShowMore} = await import('./showMore')
+const {includeMinDistance, includeSeed, isSkipped, shouldShowMore} = await import('./showMore')
 const {crsTransformField} = await import('./sampleArrangementForm')
 
 const base = {
@@ -137,5 +137,18 @@ describe('crsTransform field validation', () => {
     it('rejects a sheared and a non-square transform', () => {
         expect(check('[10,1,0,0,-10,0]')).toBe('process.samplingDesign.panel.sampleArrangement.form.crsTransform.invalid')
         expect(check('[10,0,0,0,-20,0]')).toBe('process.samplingDesign.panel.sampleArrangement.form.crsTransform.invalid')
+    })
+})
+
+// Minimum distance constrains systematic grid spacing only; random sampling has no such setting. The same
+// predicate drives field applicability and rendering, so the field cannot validate while hidden.
+describe('includeMinDistance', () => {
+    it('is true for systematic and false for random', () => {
+        expect(includeMinDistance({arrangementStrategy: 'SYSTEMATIC'})).toBe(true)
+        expect(includeMinDistance({arrangementStrategy: 'RANDOM'})).toBe(false)
+    })
+
+    it('is false for an unset arrangement', () => {
+        expect(includeMinDistance({})).toBe(false)
     })
 })

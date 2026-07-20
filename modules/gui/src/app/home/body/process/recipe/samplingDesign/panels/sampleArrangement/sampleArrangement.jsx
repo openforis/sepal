@@ -15,7 +15,7 @@ import {Panel} from '~/widget/panel/panel'
 import {samplingGridCrsOptions} from '../../samplingGridCrsOptions'
 import styles from './sampleArrangement.module.css'
 import {crsTransformField} from './sampleArrangementForm'
-import {includeSeed, isSkipped, shouldShowMore} from './showMore'
+import {includeMinDistance, includeSeed, isSkipped, shouldShowMore} from './showMore'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
@@ -31,6 +31,7 @@ const fields = {
     gridOrigin: new Form.Field()
         .skip((_value, {arrangementStrategy}) => arrangementStrategy !== 'SYSTEMATIC'),
     minDistance: new Form.Field()
+        .skip((_minDistance, values) => !includeMinDistance(values))
         .number()
         .min(0),
     scale: new Form.Field()
@@ -79,6 +80,7 @@ class _SampleArrangement extends React.Component {
         const {unstratified, inputs: {arrangementStrategy, sampleSizeStrategy, gridOrigin}} = this.props
         const {more} = this.state
         const showSeed = includeSeed({arrangementStrategy: arrangementStrategy.value, sampleSizeStrategy: sampleSizeStrategy.value, gridOrigin: gridOrigin.value})
+        const showMinDistance = includeMinDistance({arrangementStrategy: arrangementStrategy.value})
         return (
             <Layout>
                 <Layout type='horizontal'>
@@ -87,7 +89,7 @@ class _SampleArrangement extends React.Component {
                 {arrangementStrategy.value === 'SYSTEMATIC' ? this.renderSampleSizeStrategy() : null}
                 {arrangementStrategy.value === 'SYSTEMATIC' ? this.renderGridOrigin() : null}
                 <Layout type='horizontal'>
-                    {this.renderMinDistance()}
+                    {showMinDistance ? this.renderMinDistance() : null}
                     {showSeed ? this.renderSeed() : null}
                 </Layout>
                 {more && unstratified ? (
@@ -126,7 +128,7 @@ class _SampleArrangement extends React.Component {
         const {inputs: {minDistance}} = this.props
         return (
             <Form.Input
-                className={styles.number}
+                className={styles.minDistance}
                 label={msg('process.samplingDesign.panel.sampleArrangement.form.minDistance.label')}
                 tooltip={msg('process.samplingDesign.panel.sampleArrangement.form.minDistance.tooltip')}
                 placeholder={msg('process.samplingDesign.panel.sampleArrangement.form.minDistance.placeholder')}

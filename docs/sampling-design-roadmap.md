@@ -28,6 +28,13 @@ This is a working decision log for Sampling Design. It captures agreed behavior,
 - Exact subset guarantees across different AOI sizes require compatible selected density/level/strategy. A shared origin alone does not guarantee that a coarse design is a subset of a denser design.
 - The arrangement CRS is the grid/distance CRS. Equal-area is recommended for balanced density by area, but ground-distance distortion remains projection-dependent.
 
+## Sampling-grid CRS Policy Roadmap
+
+- Production use is currently restricted to `EPSG:3410` at the task boundary; other CRS values are rejected with a structured, actionable error before the EE graph is built. The candidate-generation function stays projection-agnostic (no EE projection introspection).
+- The supported-CRS decision is a policy list compared by exact value (`lib/js/ee/src/samplingDesign/samplingGridCrs.js`), deliberately not an EPSG-only regex, so a vetted opaque WKT string (e.g. EASE-Grid 2.0 Global) can be added later without changing candidate generation.
+- Deferred: a curated CRS selector in the GUI and EASE-Grid 2.0 Global WKT support. The GUI build cannot import `lib/js/ee` (`#sepal/*` resolves to `lib/js/shared`), so a future GUI-shared CRS catalog must live under `lib/js/shared`.
+- Transform-defined grids are supported only for metre-based projected CRSs (transform coefficients in metres); a geographic-CRS transform cannot be validated in the synchronous candidate-graph builder and is out of contract.
+
 ## Density Search Behavior
 
 Systematic density selection is expensive because each candidate density needs an Earth Engine count. The current strategy:

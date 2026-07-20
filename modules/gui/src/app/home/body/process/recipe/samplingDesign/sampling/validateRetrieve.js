@@ -7,7 +7,7 @@ import {toTaskAllocation} from './taskAllocation'
 // the design is ready to submit. The final row checks reuse toTaskAllocation(model) so they validate
 // exactly what the task will receive. No GUI/React deps: the caller maps codes to messages.
 
-// Sampling divides by the per-stratum sample size (systematic hex spacing, random min-distance), so every
+// Sampling divides by the per-stratum sample size (systematic hex spacing, random draw counts), so every
 // submitted row needs an integer count - and the statistical floor means it can never be below
 // MIN_SAMPLES_PER_STRATUM. Shares the contract the task preflight re-checks, so the GUI cannot approve a
 // design the backend rejects.

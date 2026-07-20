@@ -14,6 +14,11 @@ export const includeSeed = ({arrangementStrategy, sampleSizeStrategy, gridOrigin
         || sampleSizeStrategy === 'EXACT'
         || gridOrigin === 'SEEDED'
 
+// Minimum distance is a Systematic-only setting: it constrains the systematic grid spacing and has no meaning
+// for random sampling. One predicate drives both field applicability and rendering, so they cannot diverge.
+export const includeMinDistance = ({arrangementStrategy}) =>
+    arrangementStrategy === 'SYSTEMATIC'
+
 // Pure decision for opening "More" on mount: true only when an advanced GRID value (CRS or CRS transform)
 // differs from its effective default. More reveals only CRS/transform now - seed moved inline (shown whenever
 // relevant), so it no longer opens More. A new recipe (all fields undefined) opens collapsed. Applying the

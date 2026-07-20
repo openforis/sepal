@@ -18,7 +18,6 @@ const reproduction = {
     crsTransform: '',
     gridCrs: 'EPSG:6933',
     gridCrsTransform: '',
-    selectedDensityFactor: null,
     selectedDensityOffset: 0
 }
 
@@ -64,8 +63,15 @@ describe('collectionMetadata', () => {
         expect(metadata.algorithmVersion).toBe(ALGORITHM_VERSION)
     })
 
-    it('scalarizes null values to empty string', () => {
-        expect(metadata.selectedDensityFactor).toBe('')
+    // Random explicitly nulls the systematic-only strategy fields; those scalarize to blank, while a real 0
+    // must survive as 0 rather than being blanked.
+    it('scalarizes null values to empty string and preserves zero', () => {
+        const randomShaped = collectionMetadata({
+            allocation,
+            reproduction: {...reproduction, arrangementStrategy: 'RANDOM', sampleSizeStrategy: null, gridOrigin: null}
+        })
+        expect(randomShaped.sampleSizeStrategy).toBe('')
+        expect(randomShaped.gridOrigin).toBe('')
         expect(metadata.selectedDensityOffset).toBe(0)
     })
 

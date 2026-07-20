@@ -20,31 +20,32 @@ const noWkt = metadata =>
 
 describe('randomReproductionMetadata CRS', () => {
     it('records the configured EPSG:6933 id, never the resolved WKT', () => {
-        const metadata = randomReproductionMetadata(resolvedArrangement({crs: 'EPSG:6933'}), 4)
+        const metadata = randomReproductionMetadata(resolvedArrangement({crs: 'EPSG:6933'}))
         expect(metadata.crs).toBe('EPSG:6933')
         expect(metadata.gridCrs).toBe('EPSG:6933')
         expect(noWkt(metadata)).toBe(true)
     })
 
     it('keeps the other reproduction fields intact alongside the id', () => {
-        const metadata = randomReproductionMetadata(resolvedArrangement({crs: 'EPSG:6933'}), 4)
+        const metadata = randomReproductionMetadata(resolvedArrangement({crs: 'EPSG:6933'}))
         expect(metadata).toMatchObject({
             arrangementStrategy: 'RANDOM',
             sampleSizeStrategy: null,
             gridOrigin: null,
             seed: 6,
-            minDistance: 300,
             scale: 100,
             crsTransform: '',
             gridCrsTransform: '',
-            selectedDensityFactor: 4,
             selectedDensityOffset: null
         })
+        // minDistance is Systematic-only, and the adaptive density factor no longer exists.
+        expect('minDistance' in metadata).toBe(false)
+        expect('selectedDensityFactor' in metadata).toBe(false)
     })
 
     it('records a transform-defined grid unchanged', () => {
         const metadata = randomReproductionMetadata(
-            resolvedArrangement({crs: 'EPSG:6933', scale: undefined, crsTransform: '[100,0,0,0,-100,0]'}), 1)
+            resolvedArrangement({crs: 'EPSG:6933', scale: undefined, crsTransform: '[100,0,0,0,-100,0]'}))
         expect(metadata.crsTransform).toBe('[100,0,0,0,-100,0]')
         expect(metadata.gridCrsTransform).toBe('[100,0,0,0,-100,0]')
         expect(metadata.crs).toBe('EPSG:6933')
@@ -52,7 +53,7 @@ describe('randomReproductionMetadata CRS', () => {
     })
 
     it('records a polar option as its configured id', () => {
-        expect(randomReproductionMetadata(resolvedArrangement({crs: 'EPSG:6932'}), 1).crs).toBe('EPSG:6932')
+        expect(randomReproductionMetadata(resolvedArrangement({crs: 'EPSG:6932'})).crs).toBe('EPSG:6932')
     })
 })
 
@@ -75,9 +76,9 @@ describe('systematicReproductionMetadata CRS', () => {
             scale: 100,
             crsTransform: '',
             gridCrsTransform: '',
-            selectedDensityFactor: null,
             selectedDensityOffset: 2
         })
+        expect('selectedDensityFactor' in metadata).toBe(false)
     })
 
     it('records a transform-defined grid unchanged', () => {

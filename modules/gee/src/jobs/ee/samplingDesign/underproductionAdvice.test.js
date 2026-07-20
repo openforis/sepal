@@ -64,10 +64,11 @@ describe('statisticalMinimum advice', () => {
         expect(decision.actionArgs.atGridFloor).toEqual({pixelSize: 10})
     })
 
-    it('does not offer Random when arrangement is already Random', () => {
+    // Minimum distance is Systematic-only, so random advice never mentions spacing - even if a stale value
+    // is still on the recipe - and never suggests switching to Random when Random is already selected.
+    it('gives random only class/AOI actions, with no spacing action and no switch-to-Random', () => {
         const [decision] = decisionsFor({...oneStratum(1), ...RANDOM, minDistance: 60})
-        expect(decision.actions).toEqual(['reduceRandomMinDistance', 'reviseStratification', 'enlargeOrMerge'])
-        expect(decision.actionArgs.reduceRandomMinDistance).toEqual({minDistance: 60})
+        expect(decision.actions).toEqual(['reviseStratification', 'enlargeOrMerge'])
     })
 
     it('gives only class/AOI actions for random without a distance, and blames the class only then', () => {

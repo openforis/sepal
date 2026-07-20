@@ -72,3 +72,33 @@ describe('effectiveArrangement', () => {
         })
     })
 })
+
+// minDistance is a Systematic-only setting. The model keeps it dormant so switching back to Systematic has a
+// usable default, so a stale value on a RANDOM recipe must not reach the draw - otherwise the same recipe
+// would sample differently depending on a setting the user cannot see.
+describe('minDistance applicability by arrangement', () => {
+    const stratification = {skip: false, scale: 300, crs: 'EPSG:6933'}
+    const random = {arrangementStrategy: 'RANDOM', minDistance: 5000, seed: 1}
+    const systematic = {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', minDistance: 5000, seed: 1}
+
+    it('omits a stale minDistance for stratified RANDOM', () => {
+        const result = effectiveArrangement({stratification, sampleArrangement: random})
+        expect('minDistance' in result).toBe(false)
+    })
+
+    it('omits a stale minDistance for unstratified RANDOM', () => {
+        const result = effectiveArrangement({stratification: {skip: [true]}, sampleArrangement: random})
+        expect('minDistance' in result).toBe(false)
+    })
+
+    it('preserves minDistance for SYSTEMATIC in both modes', () => {
+        expect(effectiveArrangement({stratification, sampleArrangement: systematic}).minDistance).toBe(5000)
+        expect(effectiveArrangement({stratification: {skip: [true]}, sampleArrangement: systematic}).minDistance).toBe(5000)
+    })
+
+    it('produces an identical RANDOM arrangement whether or not the recipe carries a stale minDistance', () => {
+        const {minDistance: _stale, ...withoutStale} = random
+        expect(effectiveArrangement({stratification, sampleArrangement: random}))
+            .toEqual(effectiveArrangement({stratification, sampleArrangement: withoutStale}))
+    })
+})

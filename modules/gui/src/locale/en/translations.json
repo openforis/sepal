@@ -5222,7 +5222,7 @@
             "minDistance": {
               "label": "Min distance",
               "placeholder": "Min distance...",
-              "tooltip": "Minimum spacing between samples, measured in the selected CRS. The actual distance on the ground can vary with the projection and across the area of interest. For random arrangement it only guarantees minimum distance within each stratum."
+              "tooltip": "Minimum spacing between systematic samples, measured in the sampling grid CRS. The actual distance on the ground can vary with the projection and across the area of interest."
             },
             "seed": {
               "label": "Seed",
@@ -5477,7 +5477,6 @@
         },
         "reduceSystematicMinDistance": "Minimum distance is {minDistance} m. In Sample Arrangement, reduce it to about {threshold} m or less to fit more sample locations into the grid.",
         "atGridFloor": "Reducing minimum distance will not add more sample locations. The {pixelSize} m stratification grid already sets the closest spacing available.",
-        "reduceRandomMinDistance": "Minimum distance is {minDistance} m. In Sample Arrangement, reduce or clear it to allow more sample locations.",
         "switchToRandom": "In Sample Arrangement, set Arrangement to Random to place samples more freely.",
         "reviseStratification": "Open Stratification and check that this class really occurs in the area of interest and has usable pixels there - it may have been excluded from sampling. If it only covers small scattered patches, combine it with a similar class, update the stratification, then recompute the areas and allocation.",
         "enlargeOrMerge": "Enlarge the area of interest, or combine this class with a similar one so it covers more ground.",

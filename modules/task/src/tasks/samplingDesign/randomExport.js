@@ -5,8 +5,6 @@ import {effectiveArrangement} from '#sepal/ee/samplingDesign/effectiveArrangemen
 import {EXPORT_PROPERTY_NAMES} from '#sepal/ee/samplingDesign/sampleProperties'
 import {randomSamples$} from '#sepal/ee/samplingDesign/samples'
 import {stratificationImage$} from '#sepal/ee/samplingDesign/stratificationImage'
-import {isStratificationSkipped} from '#sepal/ee/samplingDesign/stratificationSkip'
-import {gridPixelSize} from '#sepal/ee/samplingDesign/systematicLatticeMath'
 import {unstratifiedAllocation$} from '#sepal/ee/samplingDesign/unstratifiedArea'
 import {getSampleCounts$} from '#sepal/ee/samplingDesign/validateSampleCounts'
 import {effectiveMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
@@ -35,19 +33,17 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
     const preflightError = samplingDesignPreflightError(recipe)
 
     // Resolved configuration the final-count advice reasons about; random sampling has no systematic
-    // sample-size strategy, so requested counts are always required.
+    // sample-size strategy, so requested counts are always required. Spacing and grid settings are
+    // Systematic-only, so the advice has none of them to reason about here.
     const validationConfig = {
         arrangementStrategy: 'RANDOM',
         allocationStrategy: recipe.model.sampleAllocation?.allocationStrategy,
-        effectiveMinimum: effectiveMinSamplesPerStratum(recipe.model.sampleAllocation || {}),
-        minDistance: configuredArrangement.minDistance,
-        pixelSize: gridPixelSize(configuredArrangement),
-        unstratified: isStratificationSkipped(stratification)
+        effectiveMinimum: effectiveMinSamplesPerStratum(recipe.model.sampleAllocation || {})
     }
 
-    // Final guard: min-distance thinning caps at the requested count, so any shortfall is real. The counted
-    // final collection is classified against the same minimum-sample contract the systematic routes use, and
-    // randomExportPlan$ runs this before the export, so a failing design never starts one.
+    // Final guard: stratifiedSample draws at most the requested count per stratum, so any shortfall is real.
+    // The counted final collection is classified against the same minimum-sample contract the systematic
+    // routes use, and randomExportPlan$ runs this before the export, so a failing design never starts one.
     const validate$ = resolvedAllocation => samples =>
         getSampleCounts$(samples, 'final validation count').pipe(
             map(counts => {
