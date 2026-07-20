@@ -15,7 +15,6 @@ const mapRecipeToProps = recipe => ({
 })
 
 // TODO: Deal with validation here? Or where should it be done?
-// TODO: Trigger sampleSelection on the backend
 
 class _Sync extends React.Component {
     constructor(props) {
@@ -27,8 +26,6 @@ class _Sync extends React.Component {
         return null
     }
 
-    // TODO: If all data is specified, something changed, and data is valid (consistent) between "panels"
-
     // If AOI updates, STR becomes invalid
     // If STR updates, PRO becomes invalid
     // If PRO updates, SMP becomes invalid
@@ -36,9 +33,6 @@ class _Sync extends React.Component {
     // When a section updates, that sections automatically becomes valid
     // Valid state must be persisted as part of the recipe
     // Maybe call it "requiresUpdate"
-    // Any update should remove previously selected samples
-
-    // TODO: Add randomSeed to samplingArrangement
 
     componentDidUpdate(prevProps) {
         const changed = propName =>
@@ -55,32 +49,17 @@ class _Sync extends React.Component {
             sampleArrangement: changed('sampleArrangement'),
         }
         if (Object.values(changedByProp).some(changed => changed)) {
-            this.removeSelectedSamples()
-            const requiresUpdates = this.updateRequiresUpdates(changedByProp)
-            if (!requiresUpdates.length && this.isCompleteModel()) {
-                this.selectSamples()
-            }
+            this.updateRequiresUpdates(changedByProp)
         }
     }
 
-    isCompleteModel() {
-        const {stratification, proportions, sampleAllocation} = this.props
-        return stratification.strata
-            && proportions.anticipatedProportions
-            && sampleAllocation.allocation
-    }
-
-    selectSamples() {
-        // TODO: trigger sample selection on the backend (BUG-2 / orchestrator, deferred to Phase 3)
-    }
-
     updateRequiresUpdates(changedByProp) {
-        return Object.keys(changedByProp)
-            .filter(propName =>
-                changedByProp[propName] && this.requiresUpdate(propName)
-            )
+        Object.keys(changedByProp)
+            .filter(propName => changedByProp[propName])
+            .forEach(propName => this.requiresUpdate(propName))
     }
 
+    // A changed section becomes valid itself, and invalidates the section that depends on it.
     requiresUpdate(propName) {
         const dependentPropName = DEPENDENCIES[propName]
         this.actionBuilder('RESET_REQUIRE_UPDATE', {propName})
@@ -90,16 +69,7 @@ class _Sync extends React.Component {
             this.actionBuilder('REQUIRE_UPDATE', {dependentPropName})
                 .set(['model', dependentPropName, 'requiresUpdate'], true)
                 .dispatch()
-            return true
-        } else {
-            return false
         }
-    }
-
-    removeSelectedSamples() {
-        this.actionBuilder('REMOVE_SELECTED_SAMPLES')
-            .del('model.selectedSamples')
-            .dispatch()
     }
 
 }

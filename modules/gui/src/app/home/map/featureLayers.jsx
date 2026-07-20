@@ -10,7 +10,6 @@ import {LabelsLayer} from '~/app/home/map/labelsLayer'
 import {compose} from '~/compose'
 
 import {ReferenceDataLayer} from '../body/process/recipe/classification/referenceDataLayer'
-import {SamplingDesignSamplesLayer} from '../body/process/recipe/samplingDesign/samplingDesignSamplesLayer'
 import {LegendLayer} from './legendLayer'
 import {PaletteLayer} from './paletteLayer'
 import {ValuesLayer} from './valuesLayer'
@@ -76,15 +75,6 @@ class _FeatureLayer extends React.Component {
                         source={source}
                         layerConfig={layerConfig}
                         layerIndex={layerIndex}
-                        map={map}
-                    />
-                )
-            case 'SamplingDesignSamples':
-                return (
-                    <SamplingDesignSamplesLayer
-                        id={id}
-                        layerIndex={layerIndex}
-                        recipe={recipe}
                         map={map}
                     />
                 )
