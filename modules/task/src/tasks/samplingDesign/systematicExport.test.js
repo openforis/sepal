@@ -40,7 +40,7 @@ describe('exportSystematicToAssets$ stratified minimum-distance gate', () => {
         // stratificationImage$, toGeometry$ ...) and attempt EE rather than emitting this structured error.
         const error = await runExport(recipe('EPSG:6933', {minDistance: 5, scale: 10}))
         expect(error?.userMessage?.key).toBe('tasks.samplingDesign.systematic.grid.minDistanceBelowGrid')
-        expect(error?.userMessage?.args).toEqual({minimum: 20, pixelSize: 10})
+        expect(error?.userMessage?.args).toEqual({value: 5, pixelSize: 10, minimum: 20})
     })
 
     it('does not apply the raster floor to unstratified systematic, which is analytical', async () => {

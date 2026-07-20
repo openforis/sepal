@@ -1,3 +1,4 @@
+import {effectiveArrangement} from '#sepal/ee/samplingDesign/effectiveArrangement'
 import {randomReproductionMetadata, systematicReproductionMetadata} from '#sepal/ee/samplingDesign/samples'
 import {resolveSamplingGrid} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
@@ -93,5 +94,24 @@ describe('systematicReproductionMetadata CRS', () => {
         const metadata = systematicReproductionMetadata(resolvedArrangement({crs: 'EPSG:6931'}), 0)
         expect(metadata.crs).toBe('EPSG:6931')
         expect(metadata.gridCrs).toBe('EPSG:6931')
+    })
+})
+
+// Minimum distance is optional and resolved at the effective-arrangement boundary, so a blank stratified
+// systematic design must reproduce as the floor it actually sampled with - never as null.
+describe('systematicReproductionMetadata records the resolved minimum distance', () => {
+    const arrangementFor = ({minDistance, scale}) => effectiveArrangement({
+        stratification: {skip: false, scale, crs: 'EPSG:6933', crsTransform: ''},
+        sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', seed: 6, ...(minDistance === undefined ? {} : {minDistance})}
+    })
+
+    it('records the grid floor when the recipe leaves the distance blank', () => {
+        expect(systematicReproductionMetadata(arrangementFor({scale: 10}), 0).minDistance).toBe(20)
+        expect(systematicReproductionMetadata(arrangementFor({scale: 30}), 0).minDistance).toBe(60)
+    })
+
+    it('records an explicit distance unchanged, including one below the floor', () => {
+        expect(systematicReproductionMetadata(arrangementFor({minDistance: 60, scale: 10}), 0).minDistance).toBe(60)
+        expect(systematicReproductionMetadata(arrangementFor({minDistance: 1, scale: 10}), 0).minDistance).toBe(1)
     })
 })

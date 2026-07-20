@@ -13,6 +13,7 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
 import {samplingGridCrsOptions} from '../../samplingGridCrsOptions'
+import {formatDistance, minDistanceFloorViolation, minDistanceGridFloor, minDistancePixelSize} from './minDistanceValidation'
 import styles from './sampleArrangement.module.css'
 import {crsTransformField} from './sampleArrangementForm'
 import {includeMinDistance, includeSeed, isSkipped, shouldShowMore} from './showMore'
@@ -21,6 +22,10 @@ const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
     scale: selectFrom(recipe, 'model.stratification.scale') || 10,
     unstratified: isSkipped(selectFrom(recipe, 'model.stratification.skip')),
+    stratificationGrid: {
+        scale: selectFrom(recipe, 'model.stratification.scale'),
+        crsTransform: selectFrom(recipe, 'model.stratification.crsTransform')
+    }
 })
 
 const fields = {
@@ -34,6 +39,8 @@ const fields = {
         .skip((_minDistance, values) => !includeMinDistance(values))
         .number()
         .min(0),
+    // The sampling grid, used ONLY for unstratified designs: there is no stratification to take it from, so
+    // this panel owns it. Stratified designs read the grid from Stratification instead and ignore these.
     scale: new Form.Field()
         .number()
         .greaterThan(0),
@@ -124,14 +131,22 @@ class _SampleArrangement extends React.Component {
         )
     }
 
+    // Blank means different things per mode: a stratified grid has a hard floor to fall back to, while
+    // unstratified is analytical and simply applies no extra constraint.
     renderMinDistance() {
         const {inputs: {minDistance}} = this.props
+        const minimum = this.gridFloor()
+        const key = 'process.samplingDesign.panel.sampleArrangement.form.minDistance'
         return (
             <Form.Input
-                className={styles.minDistance}
-                label={msg('process.samplingDesign.panel.sampleArrangement.form.minDistance.label')}
-                tooltip={msg('process.samplingDesign.panel.sampleArrangement.form.minDistance.tooltip')}
-                placeholder={msg('process.samplingDesign.panel.sampleArrangement.form.minDistance.placeholder')}
+                label={msg(`${key}.label`)}
+                tooltip={minimum === null
+                    ? msg(`${key}.tooltip.optional`)
+                    : msg(`${key}.tooltip.gridFloor`, {
+                        minimum: formatDistance(minimum),
+                        pixelSize: formatDistance(minDistancePixelSize(this.minDistanceContext()))
+                    })}
+                placeholder={minimum === null ? msg(`${key}.placeholder`) : String(formatDistance(minimum))}
                 input={minDistance}
                 type='number'
                 suffix={msg('process.samplingDesign.panel.stratification.form.scale.suffix')}
@@ -243,7 +258,7 @@ class _SampleArrangement extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {requiresUpdate, arrangementStrategy, sampleSizeStrategy, gridOrigin, minDistance, scale, seed, crs, crsTransform}} = this.props
+        const {inputs: {requiresUpdate, arrangementStrategy, sampleSizeStrategy, gridOrigin, scale, seed, crs, crsTransform}} = this.props
         // Saved non-default advanced grid settings should be visible on open.
         this.setState({
             more: shouldShowMore({
@@ -256,11 +271,45 @@ class _SampleArrangement extends React.Component {
         arrangementStrategy.value || arrangementStrategy.set('RANDOM')
         sampleSizeStrategy.value || sampleSizeStrategy.set('OVER')
         gridOrigin.value || gridOrigin.set('FIXED')
-        minDistance.value || minDistance.set(this.props.scale * 2)
         scale.value || scale.set(this.props.scale)
         // Use an equal-area sampling CRS by default; Retrieve output CRS is separate.
         crs.value || crs.set(DEFAULT_SAMPLING_GRID_CRS)
         seed.value || seed.set(1)
+        this.validateMinDistance()
+    }
+
+    // Derived validation, not derived state: setInvalid writes only the error, so revalidating on an external
+    // grid change (or a mode switch) never marks the panel dirty or disturbs unrelated unsaved edits.
+    componentDidUpdate() {
+        this.validateMinDistance()
+    }
+
+    validateMinDistance() {
+        const {inputs: {minDistance}} = this.props
+        const violation = minDistanceFloorViolation(this.minDistanceContext())
+        const floorError = violation
+            ? msg('process.samplingDesign.panel.sampleArrangement.form.minDistance.belowGridFloor', violation)
+            : ''
+        // Fall back to the field's own validators when the floor rule is satisfied or does not apply, so
+        // clearing the derived error can never hide a .number()/.min() error and leave Apply blocked silently.
+        const error = floorError || minDistance.isInvalid() || ''
+        if ((minDistance.error || '') !== error) {
+            minDistance.setInvalid(error)
+        }
+    }
+
+    minDistanceContext() {
+        const {unstratified, stratificationGrid, inputs: {minDistance, arrangementStrategy}} = this.props
+        return {
+            minDistance: minDistance.value,
+            unstratified,
+            arrangementStrategy: arrangementStrategy.value,
+            stratificationGrid
+        }
+    }
+
+    gridFloor() {
+        return minDistanceGridFloor(this.minDistanceContext())
     }
 
 }
@@ -271,7 +320,7 @@ const valuesToModel = values => {
         arrangementStrategy: values.arrangementStrategy,
         sampleSizeStrategy: values.sampleSizeStrategy,
         gridOrigin: values.gridOrigin,
-        minDistance: parseFloat(values.minDistance),
+        minDistance: values.minDistance === '' || values.minDistance == null ? null : parseFloat(values.minDistance),
         scale: parseFloat(values.scale),
         crs: values.crs,
         crsTransform: values.crsTransform,

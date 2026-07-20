@@ -1,15 +1,20 @@
 import {isAxisAlignedTransform, parseCrsTransform} from '#sepal/ee/samplingDesign/systematicLatticeMath'
 import {ClientException} from '#sepal/exception'
-import {gridPixelSize, isValidMinDistanceForGrid, requiredMinDistance} from '#sepal/recipe/samplingDesign/samplingGrid'
+import {gridPixelSize, isMinDistanceUnset, isValidMinDistanceForGrid, requiredMinDistance} from '#sepal/recipe/samplingDesign/samplingGrid'
 import {isSupportedSamplingGridCrs, supportedSamplingGridCrsNames} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
 const UNSUPPORTED_CRS = 'The selected sampling grid is not supported. Choose one of: {supported}.'
 const INVALID_TRANSFORM = 'The sampling grid transform is invalid. A grid transform must be north-up, axis-aligned, square and non-zero, and cannot be combined with a scale. Provide a valid transform or use a scale instead.'
 const INVALID_SCALE = 'The sampling grid scale is invalid. Provide a positive scale in metres, or a valid grid transform instead.'
-const MIN_DISTANCE_BELOW_GRID = 'Minimum distance must be at least {minimum} m for the current {pixelSize} m stratification grid. Increase Minimum distance, or use a finer Scale in Stratification.'
+const INVALID_MIN_DISTANCE = 'The minimum distance is not a number. Provide a distance in metres, or leave it unset to use the smallest distance the sampling grid allows.'
+const MIN_DISTANCE_BELOW_GRID = 'Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.'
+
+// Distances are metres derived from a grid size, so trim floating-point noise without forcing fixed decimals.
+const formatDistance = value => Number(Number(value).toFixed(4))
 
 const structured = ({key, message, args = {}}) => {
-    const resolved = Object.keys(args).reduce((text, name) => text.replace(`{${name}}`, args[name]), message)
+    // Replace EVERY occurrence: a message may reference the same argument more than once.
+    const resolved = message.replace(/{(\w+)}/g, (match, name) => name in args ? String(args[name]) : match)
     return new ClientException(resolved, {userMessage: {key, message, args}})
 }
 
@@ -74,12 +79,24 @@ export const unstratifiedSystematicGridError = ({crs, crsTransform} = {}) => {
 // against the raster floor. Run this only for stratified systematic recipes, after the grid itself is valid.
 export const stratifiedMinDistanceError = ({minDistance, scale, crsTransform} = {}) => {
     const grid = {scale, crsTransform}
+    // A non-numeric value has no magnitude to compare, so report it as malformed rather than rendering "NaN m".
+    // Recipes can arrive through non-GUI paths, so this cannot rely on the panel's own field validation.
+    if (!isMinDistanceUnset(minDistance) && !Number.isFinite(Number(minDistance))) {
+        return structured({
+            key: 'tasks.samplingDesign.systematic.grid.invalidMinDistance',
+            message: INVALID_MIN_DISTANCE
+        })
+    }
     if (isValidMinDistanceForGrid({minDistance, ...grid})) {
         return null
     }
     return structured({
         key: 'tasks.samplingDesign.systematic.grid.minDistanceBelowGrid',
         message: MIN_DISTANCE_BELOW_GRID,
-        args: {minimum: requiredMinDistance(grid), pixelSize: gridPixelSize(grid)}
+        args: {
+            value: formatDistance(minDistance),
+            pixelSize: formatDistance(gridPixelSize(grid)),
+            minimum: formatDistance(requiredMinDistance(grid))
+        }
     })
 }

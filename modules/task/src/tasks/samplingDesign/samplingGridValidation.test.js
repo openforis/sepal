@@ -121,7 +121,7 @@ describe('stratifiedMinDistanceError', () => {
     it('rejects a distance below two pixels of a scale grid', () => {
         const error = stratifiedMinDistanceError({minDistance: 19, scale: 10})
         expect(key(error)).toBe(BELOW_GRID)
-        expect(error.userMessage.args).toEqual({minimum: 20, pixelSize: 10})
+        expect(error.userMessage.args).toEqual({value: 19, pixelSize: 10, minimum: 20})
     })
 
     it('accepts a distance at or above the floor', () => {
@@ -136,7 +136,7 @@ describe('stratifiedMinDistanceError', () => {
 
     it('reports the floor for the coarser grid when the grid changes', () => {
         const error = stratifiedMinDistanceError({minDistance: 20, scale: 30})
-        expect(error.userMessage.args).toEqual({minimum: 60, pixelSize: 30})
+        expect(error.userMessage.args).toEqual({value: 20, pixelSize: 30, minimum: 60})
     })
 
     it('defers to the grid-definition error when the grid is indeterminate', () => {
@@ -144,10 +144,29 @@ describe('stratifiedMinDistanceError', () => {
         expect(stratifiedMinDistanceError({minDistance: 1})).toBeNull()
     })
 
-    // One focused check that the message interpolates its computed arguments.
-    it('renders the computed minimum and pixel size in the message', () => {
-        const error = stratifiedMinDistanceError({minDistance: 5, scale: 10})
-        expect(error.message).toContain('at least 20 m')
-        expect(error.message).toContain('10 m stratification grid')
+    // Recipes arrive through non-GUI paths too, so a malformed value must be reported as malformed rather
+    // than compared numerically and rendered as "NaN m".
+    it('rejects a non-numeric distance with its own structured error, before the floor rule', () => {
+        const error = stratifiedMinDistanceError({minDistance: 'abc', scale: 10})
+        expect(key(error)).toBe('tasks.samplingDesign.systematic.grid.invalidMinDistance')
+        expect(error.message).not.toContain('NaN')
+    })
+
+    it('treats an unset distance as valid: it resolves to the floor', () => {
+        expect(stratifiedMinDistanceError({scale: 10})).toBeNull()
+        expect(stratifiedMinDistanceError({minDistance: '', scale: 10})).toBeNull()
+    })
+
+    it('formats decimals without floating-point noise', () => {
+        expect(stratifiedMinDistanceError({minDistance: 0.1, scale: 0.15}).userMessage.args)
+            .toEqual({value: 0.1, pixelSize: 0.15, minimum: 0.3})
+    })
+
+    // One focused check that the message interpolates its numeric arguments.
+    it('renders the exact numbers in the message', () => {
+        const error = stratifiedMinDistanceError({minDistance: 1, scale: 10})
+        expect(error.userMessage.args).toEqual({value: 1, pixelSize: 10, minimum: 20})
+        expect(error.message).toBe('Minimum distance is 1 m, but the current stratification grid uses 10 m pixels '
+            + 'and requires at least 20 m. Enter 20 m or more, or leave the field empty to use 20 m automatically.')
     })
 })

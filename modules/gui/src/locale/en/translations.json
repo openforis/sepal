@@ -5218,8 +5218,12 @@
             },
             "minDistance": {
               "label": "Min distance",
-              "placeholder": "Min distance...",
-              "tooltip": "Minimum spacing between systematic samples, measured in the sampling grid CRS. The actual distance on the ground can vary with the projection and across the area of interest."
+              "placeholder": "Optional",
+              "tooltip": {
+                "gridFloor": "Minimum spacing between systematic samples. Leave blank to use {minimum} m, the minimum supported by the current {pixelSize} m stratification grid.",
+                "optional": "Minimum spacing between systematic samples. Leave blank to apply no additional minimum-distance constraint."
+              },
+              "belowGridFloor": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically."
             },
             "seed": {
               "label": "Seed",
@@ -5455,7 +5459,8 @@
           "unsupportedCrs": "The sampling grid coordinate system \"{crs}\" is not supported. Systematic sampling requires a supported projected, metre-based coordinate system ({supported}). Change the sampling grid CRS.",
           "invalidTransform": "The sampling grid transform is invalid. A grid transform must be north-up, axis-aligned, square and non-zero, and cannot be combined with a scale. Provide a valid transform or use a scale instead.",
           "invalidScale": "The sampling grid scale is invalid. Provide a positive scale in metres, or a valid grid transform instead.",
-          "minDistanceBelowGrid": "Minimum distance must be at least {minimum} m for the current {pixelSize} m stratification grid. Increase Minimum distance, or use a finer Scale in Stratification."
+          "minDistanceBelowGrid": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.",
+          "invalidMinDistance": "The minimum distance is not a number. Provide a distance in metres, or leave it unset to use the smallest distance the sampling grid allows."
         }
       },
       "preflight": {
