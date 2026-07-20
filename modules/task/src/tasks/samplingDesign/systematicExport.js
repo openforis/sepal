@@ -22,7 +22,7 @@ import {tableToSepal$} from '#task/jobs/export/tableToSepal'
 
 import {formatProperties} from '../formatProperties.js'
 import {finalCountError, gateFinalExport$} from './finalValidationGate.js'
-import {stratifiedGridError, unstratifiedSystematicGridError} from './samplingGridValidation.js'
+import {stratifiedGridError, stratifiedMinDistanceError, unstratifiedSystematicGridError} from './samplingGridValidation.js'
 import {samplingDesignPreflightError} from './samplingPreflight.js'
 import {candidateAssetId, candidateDescription} from './systematicExportNames.js'
 import {systematicExportPlan$} from './systematicExportPlan.js'
@@ -69,6 +69,13 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
         : stratifiedGridError(configuredArrangement)
     if (gridError) {
         return throwError(() => gridError)
+    }
+
+    // The raster spacing floor applies to STRATIFIED systematic only: the lattice sits on the stratification
+    // grid. Checked after the grid definition is known valid, so one bad grid raises one error.
+    const minDistanceError = unstratified ? null : stratifiedMinDistanceError(configuredArrangement)
+    if (minDistanceError) {
+        return throwError(() => minDistanceError)
     }
 
     // Validated as configured (option ids); resolved to EE-ready CRS for every graph built below.

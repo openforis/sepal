@@ -156,3 +156,53 @@ describe('configured minimum on the clean model', () => {
         expect(codesOf(manual)).not.toContain('minSamplesPerStratumInvalid')
     })
 })
+
+// A stratified systematic lattice sits on the stratification grid, so samples can never be closer than two grid
+// pixels. The candidate generator clamps internally, so without this the user's value would be silently raised.
+describe('stratified systematic minimum distance vs the stratification grid', () => {
+    const model = ({minDistance, scale = 10, crsTransform = '', skip = false, arrangementStrategy = 'SYSTEMATIC'}) => ({
+        stratification: {skip, scale, crsTransform, legendByStratum: {1: {label: 'Forest', color: '#0a0'}}},
+        proportions: {skip: true},
+        sampleAllocation: {
+            manual: false, estimateSampleSize: false, sampleSize: 100,
+            allocationStrategy: 'PROPORTIONAL', minSamplesPerStratum: 2
+        },
+        sampleArrangement: {arrangementStrategy, sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance, seed: 1},
+        samplingDesignDerived: {areaByStratum: {1: 1000}}
+    })
+    const codesOf = args => validateSamplingDesign(model(args)).errors.map(({code}) => code)
+
+    it('rejects below the floor and accepts at or above it on a 10 m scale grid', () => {
+        expect(codesOf({minDistance: 19})).toContain('minDistanceBelowGrid')
+        expect(codesOf({minDistance: 20})).not.toContain('minDistanceBelowGrid')
+        expect(codesOf({minDistance: 60})).not.toContain('minDistanceBelowGrid')
+    })
+
+    it('applies the same floor to an equivalent transform grid', () => {
+        expect(codesOf({minDistance: 19, crsTransform: '[10,0,0,0,-10,0]'})).toContain('minDistanceBelowGrid')
+        expect(codesOf({minDistance: 20, crsTransform: '[10,0,0,0,-10,0]'})).not.toContain('minDistanceBelowGrid')
+    })
+
+    it('invalidates a previously valid distance when the grid coarsens', () => {
+        expect(codesOf({minDistance: 20, scale: 10})).not.toContain('minDistanceBelowGrid')
+        expect(codesOf({minDistance: 20, scale: 30})).toContain('minDistanceBelowGrid')
+    })
+
+    it('does not apply the raster floor to unstratified systematic, which is analytical', () => {
+        expect(codesOf({minDistance: 5, skip: true})).not.toContain('minDistanceBelowGrid')
+    })
+
+    // Both skip representations must be read identically: a legacy [] means STRATIFIED, so the floor applies.
+    it('reads every skip representation consistently', () => {
+        for (const skip of [false, [], undefined]) {
+            expect(codesOf({minDistance: 19, skip})).toContain('minDistanceBelowGrid')
+        }
+        for (const skip of [true, [true]]) {
+            expect(codesOf({minDistance: 19, skip})).not.toContain('minDistanceBelowGrid')
+        }
+    })
+
+    it('leaves random sampling unaffected', () => {
+        expect(codesOf({minDistance: 5, arrangementStrategy: 'RANDOM'})).not.toContain('minDistanceBelowGrid')
+    })
+})

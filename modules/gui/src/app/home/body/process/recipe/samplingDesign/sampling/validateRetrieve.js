@@ -1,4 +1,6 @@
 import {isValidMinSamplesPerStratum, isValidStratumSampleSize, usesConfiguredMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
+import {isValidMinDistanceForGrid} from '#sepal/recipe/samplingDesign/samplingGrid'
+import {isStratificationSkipped} from '#sepal/recipe/samplingDesign/stratificationSkip'
 
 import {toTaskAllocation} from './taskAllocation'
 
@@ -39,7 +41,7 @@ export const validateRetrieve = model => {
     // Unstratified designs (stratification.skip) carry a single synthetic stratum with no area yet - the
     // export boundary computes it from the AOI geometry - so area checks are skipped for them. Stratified
     // designs still require a finite, positive per-stratum area.
-    const isUnstratified = model?.stratification?.skip === true
+    const isUnstratified = isStratificationSkipped(model?.stratification)
 
     const strata = model?.stratification?.strata
     if (!strata?.length) {
@@ -92,6 +94,14 @@ export const validateRetrieve = model => {
         || (arrangement.arrangementStrategy === 'SYSTEMATIC' && arrangement.gridOrigin === 'SEEDED')
     if (seedRequired && !isNonNegativeInteger(arrangement.seed)) {
         add('sampleArrangement', 'seedMissing')
+    }
+
+    // A stratified systematic lattice sits on the stratification grid, so samples can never be closer than two
+    // grid pixels. Unstratified systematic is analytical and random has no minimum distance, so neither applies.
+    const stratificationGrid = model?.stratification || {}
+    if (arrangement.arrangementStrategy === 'SYSTEMATIC' && !isUnstratified
+        && !isValidMinDistanceForGrid({minDistance: arrangement.minDistance, scale: stratificationGrid.scale, crsTransform: stratificationGrid.crsTransform})) {
+        add('sampleArrangement', 'minDistanceBelowGrid')
     }
 
     const seen = new Set()

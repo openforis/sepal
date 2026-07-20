@@ -233,3 +233,42 @@ describe('stale sections (requiresUpdate)', () => {
         expect(validateRetrieve(model)[0]).toEqual({section: 'stratification', code: 'requiresUpdate'})
     })
 })
+
+// Same raster floor at the submission boundary, so the GUI cannot approve a design the task rejects.
+describe('stratified systematic minimum distance vs the stratification grid', () => {
+    const withGrid = ({minDistance, scale = 10, crsTransform = '', skip, arrangementStrategy = 'SYSTEMATIC'}) => ({
+        ...stratifiedValid,
+        stratification: {...stratifiedValid.stratification, scale, crsTransform, skip},
+        sampleArrangement: {arrangementStrategy, sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance, seed: 1}
+    })
+
+    it('rejects below the floor and accepts at or above it', () => {
+        expect(codes(withGrid({minDistance: 19}))).toContain('minDistanceBelowGrid')
+        expect(codes(withGrid({minDistance: 20}))).not.toContain('minDistanceBelowGrid')
+    })
+
+    it('applies the same floor to an equivalent transform grid', () => {
+        expect(codes(withGrid({minDistance: 19, crsTransform: '[10,0,0,0,-10,0]'}))).toContain('minDistanceBelowGrid')
+        expect(codes(withGrid({minDistance: 20, crsTransform: '[10,0,0,0,-10,0]'}))).not.toContain('minDistanceBelowGrid')
+    })
+
+    it('invalidates a previously valid distance when the grid coarsens', () => {
+        expect(codes(withGrid({minDistance: 20, scale: 30}))).toContain('minDistanceBelowGrid')
+    })
+
+    it('does not apply the raster floor to unstratified systematic or to random', () => {
+        expect(codes(withGrid({minDistance: 5, skip: true}))).not.toContain('minDistanceBelowGrid')
+        expect(codes(withGrid({minDistance: 5, arrangementStrategy: 'RANDOM'}))).not.toContain('minDistanceBelowGrid')
+    })
+
+    // Both skip representations must be read identically: a legacy [true] means UNSTRATIFIED, so the floor
+    // must not fail an otherwise valid unstratified export.
+    it('reads every skip representation consistently', () => {
+        for (const skip of [false, [], undefined]) {
+            expect(codes(withGrid({minDistance: 19, skip}))).toContain('minDistanceBelowGrid')
+        }
+        for (const skip of [true, [true]]) {
+            expect(codes(withGrid({minDistance: 19, skip}))).not.toContain('minDistanceBelowGrid')
+        }
+    })
+})

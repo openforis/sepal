@@ -3,14 +3,19 @@ import {lastValueFrom} from 'rxjs'
 import {exportSystematicToAssets$} from './systematicExport.js'
 
 // Minimal stratified recipe whose sampling-grid CRS comes from the Stratification panel.
-const recipe = crs => ({
+const recipe = (crs, {minDistance = 60, scale = 10, skip = false} = {}) => ({
     model: {
         aoi: {type: 'ASSET', id: 'users/x/aoi'},
-        stratification: {skip: false, scale: 10, crs, crsTransform: '', strata: [{stratum: 1, weight: 1, area: 1}]},
+        stratification: {skip, scale, crs, crsTransform: '', strata: [{stratum: 1, weight: 1, area: 1}]},
         sampleAllocation: {allocation: [{stratum: 1, label: 'a', area: 1, sampleSize: 10, weight: 1}]},
-        sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', minDistance: 60, gridOrigin: 'FIXED', seed: 1}
+        sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', minDistance, gridOrigin: 'FIXED', seed: 1}
     }
 })
+
+const runExport = recipeModel => lastValueFrom(exportSystematicToAssets$({
+    taskId: 't1', description: 'd', recipe: recipeModel,
+    assetId: 'users/x/out', strategy: 'create', destination: 'GEE'
+})).catch(e => e)
 
 describe('exportSystematicToAssets$ sampling-grid CRS gate', () => {
     it('emits the structured unsupported-CRS error for an uncurated grid CRS, before any EE graph / asset resolution', async () => {
@@ -24,5 +29,22 @@ describe('exportSystematicToAssets$ sampling-grid CRS gate', () => {
         const error = await lastValueFrom(result$).catch(e => e)
         expect(error?.userMessage?.key).toBe('tasks.samplingDesign.systematic.grid.unsupportedCrs')
         expect(error?.userMessage?.args?.supported).toContain('EPSG:6933 - EASE-Grid 2.0 Global')
+    })
+})
+
+// A direct API/task recipe must not bypass the raster spacing floor: the stratified lattice sits on the
+// stratification grid, so two samples can never be closer than two grid pixels.
+describe('exportSystematicToAssets$ stratified minimum-distance gate', () => {
+    it('emits the structured error before any temp-asset resolution or candidate graph construction', async () => {
+        // If the gate were not wired, subscribing would enter the export pipeline (tempTableAssetId$,
+        // stratificationImage$, toGeometry$ ...) and attempt EE rather than emitting this structured error.
+        const error = await runExport(recipe('EPSG:6933', {minDistance: 5, scale: 10}))
+        expect(error?.userMessage?.key).toBe('tasks.samplingDesign.systematic.grid.minDistanceBelowGrid')
+        expect(error?.userMessage?.args).toEqual({minimum: 20, pixelSize: 10})
+    })
+
+    it('does not apply the raster floor to unstratified systematic, which is analytical', async () => {
+        const error = await runExport(recipe('EPSG:6933', {minDistance: 5, scale: 10, skip: [true]}))
+        expect(error?.userMessage?.key).not.toBe('tasks.samplingDesign.systematic.grid.minDistanceBelowGrid')
     })
 })

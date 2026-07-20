@@ -163,3 +163,30 @@ describe('underproductionUserMessage', () => {
         expect(renderAdvice([])).toBe('')
     })
 })
+
+// The stratified lattice cannot place samples closer than two grid pixels, so a reduce-distance recommendation
+// must never name a value the design could not actually use.
+describe('spacing advice never suggests an impossible stratified distance', () => {
+    it('keeps every suggested threshold at or above two grid pixels', () => {
+        for (const pixelSize of [1, 10, 30, 100]) {
+            for (const minDistance of [0, 5, 20, 25, 30, 60, 100, 250, 1000, 5000]) {
+                const threshold = nextDenserMinDistance({minDistance, pixelSize})
+                if (threshold !== null) {
+                    expect(threshold).toBeGreaterThanOrEqual(2 * pixelSize)
+                }
+            }
+        }
+    })
+
+    it('omits the distance-reduction action at the raster floor but keeps the other actions', () => {
+        const [decision] = decisionsFor({...oneStratum(1), ...SYSTEMATIC, minDistance: 20, pixelSize: 10})
+        expect(decision.actions).not.toContain('reduceSystematicMinDistance')
+        expect(decision.actions).toContain('atGridFloor')
+        expect(decision.actions).toEqual(expect.arrayContaining(['reviseStratification', 'enlargeOrMerge']))
+    })
+
+    // Unstratified spacing is analytical, so it may still be reduced below a raster floor.
+    it('still suggests smaller analytical distances for unstratified systematic', () => {
+        expect(nextDenserMinDistance({minDistance: 60, pixelSize: 30, unstratified: true})).toBeLessThan(60)
+    })
+})

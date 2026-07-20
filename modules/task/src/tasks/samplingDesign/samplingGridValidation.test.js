@@ -1,6 +1,6 @@
 import {EASE_GRID_2_GLOBAL_WKT} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
-import {stratifiedGridError, unstratifiedSystematicGridError} from './samplingGridValidation.js'
+import {stratifiedGridError, stratifiedMinDistanceError, unstratifiedSystematicGridError} from './samplingGridValidation.js'
 
 const key = error => error?.userMessage?.key
 const UNSUPPORTED = 'tasks.samplingDesign.systematic.grid.unsupportedCrs'
@@ -109,5 +109,45 @@ describe('unstratifiedSystematicGridError', () => {
     it('rejects a south-up or malformed transform', () => {
         expect(key(unstratifiedSystematicGridError({crs: 'EPSG:6933', crsTransform: '[10,0,0,0,10,0]'}))).toBe(INVALID_TRANSFORM)
         expect(key(unstratifiedSystematicGridError({crs: 'EPSG:6933', crsTransform: 'nonsense'}))).toBe(INVALID_TRANSFORM)
+    })
+})
+
+// The stratified systematic lattice sits on the stratification grid, so samples can never be closer than two
+// grid pixels. Kept separate from the grid-definition errors: random validates its grid with those but has no
+// minimum distance, and unstratified systematic is analytical.
+describe('stratifiedMinDistanceError', () => {
+    const BELOW_GRID = 'tasks.samplingDesign.systematic.grid.minDistanceBelowGrid'
+
+    it('rejects a distance below two pixels of a scale grid', () => {
+        const error = stratifiedMinDistanceError({minDistance: 19, scale: 10})
+        expect(key(error)).toBe(BELOW_GRID)
+        expect(error.userMessage.args).toEqual({minimum: 20, pixelSize: 10})
+    })
+
+    it('accepts a distance at or above the floor', () => {
+        expect(stratifiedMinDistanceError({minDistance: 20, scale: 10})).toBeNull()
+        expect(stratifiedMinDistanceError({minDistance: 60, scale: 10})).toBeNull()
+    })
+
+    it('applies the same floor to an equivalent transform grid', () => {
+        expect(key(stratifiedMinDistanceError({minDistance: 19, crsTransform: '[10,0,0,0,-10,0]'}))).toBe(BELOW_GRID)
+        expect(stratifiedMinDistanceError({minDistance: 20, crsTransform: '[10,0,0,0,-10,0]'})).toBeNull()
+    })
+
+    it('reports the floor for the coarser grid when the grid changes', () => {
+        const error = stratifiedMinDistanceError({minDistance: 20, scale: 30})
+        expect(error.userMessage.args).toEqual({minimum: 60, pixelSize: 30})
+    })
+
+    it('defers to the grid-definition error when the grid is indeterminate', () => {
+        expect(stratifiedMinDistanceError({minDistance: 1, scale: 0})).toBeNull()
+        expect(stratifiedMinDistanceError({minDistance: 1})).toBeNull()
+    })
+
+    // One focused check that the message interpolates its computed arguments.
+    it('renders the computed minimum and pixel size in the message', () => {
+        const error = stratifiedMinDistanceError({minDistance: 5, scale: 10})
+        expect(error.message).toContain('at least 20 m')
+        expect(error.message).toContain('10 m stratification grid')
     })
 })

@@ -4855,7 +4855,8 @@
         "invalid.minSamplesPerStratumInvalid": "Minimum samples per stratum must be a whole number of at least 2.",
         "invalid.areaMissing": "An allocation row is missing its area. Recompute the strata in Stratification.",
         "invalid.noTaskAllocation": "The allocation has no samples to retrieve. Set a sample size greater than zero.",
-        "invalid.seedMissing": "A seed is required for this arrangement. Enter a whole-number seed in Sample Arrangement."
+        "invalid.seedMissing": "A seed is required for this arrangement. Enter a whole-number seed in Sample Arrangement.",
+        "invalid.minDistanceBelowGrid": "Minimum distance is too small for the stratification grid. Samples cannot be closer than two grid pixels. Increase Minimum distance, or use a finer Scale in Stratification."
       },
       "panel": {
         "stratification": {
@@ -5453,7 +5454,8 @@
         "grid": {
           "unsupportedCrs": "The sampling grid coordinate system \"{crs}\" is not supported. Systematic sampling requires a supported projected, metre-based coordinate system ({supported}). Change the sampling grid CRS.",
           "invalidTransform": "The sampling grid transform is invalid. A grid transform must be north-up, axis-aligned, square and non-zero, and cannot be combined with a scale. Provide a valid transform or use a scale instead.",
-          "invalidScale": "The sampling grid scale is invalid. Provide a positive scale in metres, or a valid grid transform instead."
+          "invalidScale": "The sampling grid scale is invalid. Provide a positive scale in metres, or a valid grid transform instead.",
+          "minDistanceBelowGrid": "Minimum distance must be at least {minimum} m for the current {pixelSize} m stratification grid. Increase Minimum distance, or use a finer Scale in Stratification."
         }
       },
       "preflight": {

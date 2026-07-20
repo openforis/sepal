@@ -1,4 +1,6 @@
 import {isValidMinSamplesPerStratum, isValidStratumSampleSize, usesConfiguredMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
+import {isValidMinDistanceForGrid} from '#sepal/recipe/samplingDesign/samplingGrid'
+import {isStratificationSkipped} from '#sepal/recipe/samplingDesign/stratificationSkip'
 
 import {selectAllocationView, selectProportionView, selectStrataView} from './selectors'
 
@@ -56,6 +58,14 @@ export const validateSamplingDesign = model => {
         || (arrangement.arrangementStrategy === 'SYSTEMATIC' && arrangement.gridOrigin === 'SEEDED')
     if (seedRelevant && !Number.isFinite(arrangement.seed)) {
         add('sampleArrangement', 'seedMissing')
+    }
+
+    // A stratified systematic lattice sits on the stratification grid, so samples can never be closer than two
+    // grid pixels. Unstratified systematic is analytical and random has no minimum distance, so neither applies.
+    const stratification = model?.stratification || {}
+    if (arrangement.arrangementStrategy === 'SYSTEMATIC' && !isStratificationSkipped(stratification)
+        && !isValidMinDistanceForGrid({minDistance: arrangement.minDistance, scale: stratification.scale, crsTransform: stratification.crsTransform})) {
+        add('sampleArrangement', 'minDistanceBelowGrid')
     }
 
     return {valid: errors.length === 0, errors}

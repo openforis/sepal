@@ -1,11 +1,11 @@
 import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
+import {isSkipped} from '#sepal/recipe/samplingDesign/stratificationSkip'
 
 export const DEFAULT_CRS = DEFAULT_SAMPLING_GRID_CRS
 export const DEFAULT_SEED = 1
 
-// Unstratified when stratification is skipped (boolean true, or a non-empty skip array). Gates the grid
-// CRS/transform and the More button - this panel owns the grid only for unstratified designs.
-export const isSkipped = skip => skip === true || (Array.isArray(skip) && skip.length > 0)
+// Gates the grid CRS/transform and the More button - this panel owns the grid only for unstratified designs.
+export {isSkipped}
 
 // Seed is relevant (shown inline) only for random sampling, systematic EXACT thinning, or a random/SEEDED grid
 // start; hidden otherwise.
