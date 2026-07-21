@@ -7,13 +7,15 @@ import {ColorElement} from '~/widget/colorElement'
 import {Form} from '~/widget/form'
 import {withNestedForm} from '~/widget/form/nestedForms'
 
+import {isValidProportionPercentage} from '../../sampling/numericRanges'
 import styles from './proportionTable.module.css'
 
 const fields = {
     proportion: new Form.Field()
         .notBlank()
         .number()
-        .max(100)
+        .predicate(isValidProportionPercentage,
+            'process.samplingDesign.panel.proportions.form.proportion.range')
 }
 
 class _ProportionForm extends React.Component {

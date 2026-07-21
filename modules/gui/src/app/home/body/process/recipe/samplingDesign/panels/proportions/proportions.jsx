@@ -17,6 +17,7 @@ import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import {isNumericClassValue, toClassOptions} from '../../sampling/categoricalLegend'
+import {isValidOptionalProportionPercentage} from '../../sampling/numericRanges'
 import {maxAnticipatedTargetProportion, smartRound, toProportions} from '../../sampling/proportionMath'
 import {AnticipationStrategy, ImageSelection, OverallProportionInput, ProportionsHeaderButtons, StrataProportion} from './proportionControls'
 import styles from './proportions.module.css'
@@ -66,7 +67,10 @@ const fields = {
             skip.length || manual.length)
         .notBlank('process.samplingDesign.panel.proportions.form.scale.required'),
     eeStrategy: new Form.Field(),
-    anticipatedOverallProportion: new Form.Field(),
+    anticipatedOverallProportion: new Form.Field()
+        // Blank is valid (no override); a supplied value is a percentage.
+        .predicate(isValidOptionalProportionPercentage,
+            'process.samplingDesign.panel.proportions.form.proportion.range'),
     probabilityPerStratum: new Form.Field(),
     anticipatedProportions: new Form.Field()
         .skip((_value, {skip}) => skip.length)

@@ -101,10 +101,10 @@ const submitRetrieveRecipeTask = recipe => {
     // proportions). retrieveState is write-only, so simply not submitting leaves the UI usable.
     const errors = validateRetrieve(recipe.model)
     if (errors.length) {
-        const [{code}] = errors
+        const [{code, args}] = errors
         Notifications.error({
             message: msg('process.samplingDesign.retrieve.invalid'),
-            error: msg(`process.samplingDesign.retrieve.invalid.${code}`),
+            error: msg(`process.samplingDesign.retrieve.invalid.${code}`, args),
             group: true,
             timeout: 0
         })

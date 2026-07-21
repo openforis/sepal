@@ -1,13 +1,14 @@
 import {isValidMinSamplesPerStratum, isValidStratumSampleSize, usesConfiguredMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
-import {isValidMinDistanceForGrid} from '#sepal/recipe/samplingDesign/samplingGrid'
+import {formatDistance, gridPixelSize, isValidMinDistanceForGrid, requiredMinDistance} from '#sepal/recipe/samplingDesign/samplingGrid'
 import {isStratificationSkipped} from '#sepal/recipe/samplingDesign/stratificationSkip'
 
 import {toTaskAllocation} from './taskAllocation'
 
 // Pure retrieve preflight over the CURRENT persisted (joined-array) Sampling Design model - NOT the
-// clean selector shape. Returns an ordered, de-duplicated array of {section, code}; an empty array means
-// the design is ready to submit. The final row checks reuse toTaskAllocation(model) so they validate
-// exactly what the task will receive. No GUI/React deps: the caller maps codes to messages.
+// clean selector shape. Returns an ordered, de-duplicated array of {section, code, args?}; an empty array
+// means the design is ready to submit. `args` is present only when the error has exact values to report, so
+// the caller can localize a specific message. The final row checks reuse toTaskAllocation(model) so they
+// validate exactly what the task will receive. No GUI/React deps: the caller maps codes to messages.
 
 // Sampling divides by the per-stratum sample size (systematic hex spacing, random draw counts), so every
 // submitted row needs an integer count - and the statistical floor means it can never be below
@@ -30,7 +31,8 @@ const REQUIRES_UPDATE_SECTIONS = ['stratification', 'proportions', 'sampleAlloca
 
 export const validateRetrieve = model => {
     const errors = []
-    const add = (section, code) => errors.push({section, code})
+    // `args` is optional: an error carries message arguments only when it has exact values to report.
+    const add = (section, code, args) => errors.push(args ? {section, code, args} : {section, code})
 
     REQUIRES_UPDATE_SECTIONS.forEach(section => {
         if (model?.[section]?.requiresUpdate === true) {
@@ -99,9 +101,15 @@ export const validateRetrieve = model => {
     // A stratified systematic lattice sits on the stratification grid, so samples can never be closer than two
     // grid pixels. Unstratified systematic is analytical and random has no minimum distance, so neither applies.
     const stratificationGrid = model?.stratification || {}
+    const grid = {scale: stratificationGrid.scale, crsTransform: stratificationGrid.crsTransform}
     if (arrangement.arrangementStrategy === 'SYSTEMATIC' && !isUnstratified
-        && !isValidMinDistanceForGrid({minDistance: arrangement.minDistance, scale: stratificationGrid.scale, crsTransform: stratificationGrid.crsTransform})) {
-        add('sampleArrangement', 'minDistanceBelowGrid')
+        && !isValidMinDistanceForGrid({minDistance: arrangement.minDistance, ...grid})) {
+        // Report the exact numbers: the same shared floor calculation the panel and task boundary use.
+        add('sampleArrangement', 'minDistanceBelowGrid', {
+            value: formatDistance(arrangement.minDistance),
+            pixelSize: formatDistance(gridPixelSize(grid)),
+            minimum: formatDistance(requiredMinDistance(grid))
+        })
     }
 
     const seen = new Set()

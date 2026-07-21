@@ -5,7 +5,6 @@ import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {isGoogleAccount} from '~/user'
 import {AssetDestination} from '~/widget/assetDestination'
-import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
@@ -33,9 +32,6 @@ const fields = {
     strategy: new Form.Field()
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
-    crs: new Form.Field()
-        .notBlank(),
-    crsTransform: new Form.Field()
 }
 
 const mapRecipeToProps = recipe =>
@@ -44,7 +40,6 @@ const mapRecipeToProps = recipe =>
     })
 
 class _Retrieve extends React.Component {
-    state = {more: false}
 
     constructor(props) {
         super(props)
@@ -52,7 +47,6 @@ class _Retrieve extends React.Component {
     }
 
     render() {
-        const {more} = this.state
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -68,30 +62,19 @@ class _Retrieve extends React.Component {
                     {this.renderContent()}
                 </Panel.Content>
                 <Form.PanelButtons
-                    applyLabel={msg('process.retrieve.apply')}>
-                    <Button
-                        label={more ? msg('button.less') : msg('button.more')}
-                        onClick={() => this.setState({more: !more})}
-                    />
-                </Form.PanelButtons>
+                    applyLabel={msg('process.retrieve.apply')}/>
             </RecipeFormPanel>
         )
     }
 
     renderContent() {
         const {inputs: {destination}} = this.props
-        const {more} = this.state
         return (
             <Layout>
                 {this.renderDestination()}
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
                 {destination.value === 'SEPAL' ? this.renderFileFormat() : null}
-
-                <Layout type='horizontal'>
-                    {more ? this.renderCrs() : null}
-                    {more ? this.renderCrsTransform() : null}
-                </Layout>
             </Layout>
         )
     }
@@ -136,8 +119,8 @@ class _Retrieve extends React.Component {
             <AssetDestination
                 type={'Table'}
                 label={msg('process.retrieve.form.assetId.label')}
-                placeholder={msg('process.retrieve.form.assetId.tooltip')}
-                tooltip={msg('process.retrieve.form.assetIt.tooltip')}
+                placeholder={msg('process.retrieve.form.assetId.placeholder')}
+                tooltip={msg('process.retrieve.form.assetId.tooltip')}
                 assetInput={assetId}
                 strategyInput={strategy}
             />
@@ -177,42 +160,10 @@ class _Retrieve extends React.Component {
         )
     }
 
-    renderCrs() {
-        const {inputs: {crs}} = this.props
-        return (
-            <Form.Input
-                label={msg('process.retrieve.form.crs.label')}
-                placeholder={msg('process.retrieve.form.crs.placeholder')}
-                tooltip={msg('process.samplingDesign.panel.retrieve.form.crs.tooltip')}
-                input={crs}
-            />
-        )
-    }
-
-    renderCrsTransform() {
-        const {inputs: {crsTransform}} = this.props
-        return (
-            <Form.Input
-                label={msg('process.retrieve.form.crsTransform.label')}
-                placeholder={msg('process.retrieve.form.crsTransform.placeholder')}
-                tooltip={msg('process.samplingDesign.panel.retrieve.form.crsTransform.tooltip')}
-                input={crsTransform}
-            />
-        )
-    }
-
     componentDidMount() {
-        const {inputs: {fileFormat, sharing, crs, crsTransform}
-        } = this.props
-        const defaultCrs = 'EPSG:4326'
-        const more = (crs.value && crs.value !== defaultCrs)
-            || (crsTransform.value)
-        this.setState({more})
+        const {inputs: {fileFormat, sharing}} = this.props
         if (!fileFormat.value) {
             fileFormat.set('CSV')
-        }
-        if (!crs.value) {
-            crs.set(defaultCrs)
         }
         if (!sharing.value) {
             sharing.set('PRIVATE')

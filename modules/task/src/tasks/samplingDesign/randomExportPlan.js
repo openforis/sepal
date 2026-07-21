@@ -6,9 +6,9 @@ import {progress} from '#task/rxjs/operators'
 // Coarse stage-level task progress for the random export, mirroring the systematic UX. Sampling-Design
 // text lives here, not in the generic table-export helpers.
 const PROGRESS = {
-    prepareCandidates: {messageKey: 'tasks.samplingDesign.random.progress.prepareCandidates', defaultMessage: 'Preparing random sample candidates'},
-    checkCandidates: {messageKey: 'tasks.samplingDesign.random.progress.checkCandidates', defaultMessage: 'Checking random sample candidates'},
-    exportFinal: {messageKey: 'tasks.samplingDesign.random.progress.exportFinal', defaultMessage: 'Exporting final sample design'}
+    prepareCandidates: {messageKey: 'tasks.samplingDesign.random.progress.prepareCandidates', defaultMessage: 'Finding random sample locations'},
+    checkCandidates: {messageKey: 'tasks.samplingDesign.random.progress.checkCandidates', defaultMessage: 'Checking random sample locations'},
+    exportFinal: {messageKey: 'tasks.samplingDesign.random.progress.exportFinal', defaultMessage: 'Exporting samples'}
 }
 
 const stage$ = descriptor => of(undefined).pipe(progress(descriptor))

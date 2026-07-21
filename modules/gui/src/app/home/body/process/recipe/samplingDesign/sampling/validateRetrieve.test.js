@@ -272,3 +272,63 @@ describe('stratified systematic minimum distance vs the stratification grid', ()
         }
     })
 })
+
+// Retrieve errors may carry message arguments so the user sees exact numbers instead of generic wording.
+// Errors without arguments must keep their existing {section, code} shape.
+describe('error arguments', () => {
+    const firstError = model => validateRetrieve(model).find(({code}) => code === 'minDistanceBelowGrid')
+
+    it('carries value, pixelSize and minimum for a below-floor minimum distance', () => {
+        const error = firstError({
+            ...stratifiedValid,
+            stratification: {...stratifiedValid.stratification, scale: 10, crsTransform: ''},
+            sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance: 1, seed: 1}
+        })
+        expect(error.args).toEqual({value: 1, pixelSize: 10, minimum: 20})
+    })
+
+    it('reports the coarser grid numbers when the grid changes', () => {
+        const error = firstError({
+            ...stratifiedValid,
+            stratification: {...stratifiedValid.stratification, scale: 30, crsTransform: ''},
+            sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance: 20, seed: 1}
+        })
+        expect(error.args).toEqual({value: 20, pixelSize: 30, minimum: 60})
+    })
+
+    it('omits args entirely for errors that have no exact values to report', () => {
+        const [error] = validateRetrieve({})
+        expect(error).toEqual({section: expect.any(String), code: expect.any(String)})
+        expect('args' in error).toBe(false)
+    })
+
+    it('produces no minimum-distance error for a blank distance', () => {
+        expect(firstError({
+            ...stratifiedValid,
+            stratification: {...stratifiedValid.stratification, scale: 10, crsTransform: ''},
+            sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance: '', seed: 1}
+        })).toBeUndefined()
+    })
+})
+
+// The message names Equal, Proportional and Balanced as the proportion-free alternatives, so those three must
+// actually pass without anticipated proportions.
+describe('allocation strategies that do not need anticipated proportions', () => {
+    const withStrategy = allocationStrategy => codes({
+        ...stratifiedValid,
+        proportions: {skip: true},
+        sampleAllocation: {...stratifiedValid.sampleAllocation, allocationStrategy, estimateSampleSize: false}
+    })
+
+    it('accepts Equal, Proportional and Balanced without proportions', () => {
+        for (const strategy of ['EQUAL', 'PROPORTIONAL', 'BALANCED']) {
+            expect(withStrategy(strategy)).not.toContain('proportionsRequired')
+        }
+    })
+
+    it('still requires proportions for the variance-based strategies', () => {
+        for (const strategy of ['OPTIMAL', 'POWER']) {
+            expect(withStrategy(strategy)).toContain('proportionsRequired')
+        }
+    })
+})

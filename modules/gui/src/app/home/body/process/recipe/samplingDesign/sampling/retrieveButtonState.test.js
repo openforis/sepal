@@ -32,3 +32,35 @@ describe('retrieveButtonState', () => {
         expect(retrieveButtonState(model)).toEqual({disabled: true, code: 'noStrata'})
     })
 })
+
+// The disabled-button tooltip states exact numbers, so the helper must preserve the first error's arguments.
+describe('error arguments', () => {
+    it('preserves the first error arguments alongside its code', () => {
+        const {disabled, code, args} = retrieveButtonState({
+            stratification: {skip: false, scale: 10, crsTransform: '', strata: [{value: 1, stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 1}]},
+            proportions: {skip: true},
+            sampleAllocation: {
+                allocationStrategy: 'PROPORTIONAL', minSamplesPerStratum: 2,
+                allocation: [{stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 1, sampleSize: 30}]
+            },
+            sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance: 1, seed: 1}
+        })
+        expect(disabled).toBe(true)
+        expect(code).toBe('minDistanceBelowGrid')
+        expect(args).toEqual({value: 1, pixelSize: 10, minimum: 20})
+    })
+
+    it('reports no arguments for a retrievable design', () => {
+        const {disabled, args} = retrieveButtonState({
+            stratification: {skip: false, scale: 10, crsTransform: '', strata: [{value: 1, stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 1}]},
+            proportions: {skip: true},
+            sampleAllocation: {
+                allocationStrategy: 'PROPORTIONAL', minSamplesPerStratum: 2,
+                allocation: [{stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 1, sampleSize: 30}]
+            },
+            sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance: 60, seed: 1}
+        })
+        expect(disabled).toBe(false)
+        expect(args).toBeUndefined()
+    })
+})

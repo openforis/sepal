@@ -22,6 +22,7 @@ import {Widget} from '~/widget/widget'
 import {allocate} from '../../sampling/allocate'
 import {calculateBounds} from '../../sampling/confidenceInterval'
 import {boundsToMarginOfError, calculateMarginOfError} from '../../sampling/marginOfError'
+import {isValidConfidenceLevel, isValidPowerTuningConstant} from '../../sampling/numericRanges'
 import {calculateSampleSize} from '../../sampling/sampleSize'
 import {AllocationTable} from './allocationTable'
 import styles from './sampleAllocation.module.css'
@@ -42,8 +43,9 @@ const fields = {
     confidenceLevel: new Form.Field()
         .skip((_confidenceLevel, {manual}) => manual.length)
         .notBlank()
-        .max(100)
-        .number(),
+        .number()
+        .predicate(isValidConfidenceLevel,
+            'process.samplingDesign.panel.sampleAllocation.form.confidenceLevel.range'),
     sampleSize: new Form.Field()
         .skip((_sampleSize, {manual, estimateSampleSize}) => manual.length || estimateSampleSize)
         .notBlank()
@@ -64,7 +66,9 @@ const fields = {
     powerTuningConstant: new Form.Field()
         .skip((_powerTuningConstant, {manual, allocationStrategy}) => manual.length || allocationStrategy !== 'POWER')
         .notBlank()
-        .number(),
+        .number()
+        .predicate(isValidPowerTuningConstant,
+            'process.samplingDesign.panel.sampleAllocation.form.powerTuningConstant.range'),
     allocation: new Form.Field()
         .notBlank()
 }
@@ -201,7 +205,6 @@ class _SampleAllocation extends React.Component {
 
     renderTarget() {
         const {noProportions, inputs: {estimateSampleSize, sampleSize, marginOfError}} = this.props
-        // TODO: Update messages -> target
         const sampleSizeErrorMessage = this.state.sampleSizeBlurred
             ? [sampleSize, 'enoughSamples', 'noNaN']
             : undefined
@@ -217,14 +220,12 @@ class _SampleAllocation extends React.Component {
                 options={[
                     {
                         value: true,
-                        label: msg('Error'),
-                        // label: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.true.label'),
+                        label: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.true.label'),
                         tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.true.tooltip')
                     },
                     {
                         value: false,
-                        label: msg('Samples'),
-                        // label: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.false.label'),
+                        label: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.false.label'),
                         tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.estimateSampleSize.false.tooltip'),
                     }
                 ]}

@@ -8,11 +8,11 @@ import {progress} from '#task/rxjs/operators'
 // progress is also passed through - see below). Sampling-Design-specific text lives here, not in the
 // generic table-export helpers.
 const PROGRESS = {
-    prepareBase: {messageKey: 'tasks.samplingDesign.systematic.progress.prepareBaseCandidates', defaultMessage: 'Preparing sample candidates'},
-    checkBase: {messageKey: 'tasks.samplingDesign.systematic.progress.checkBaseCandidates', defaultMessage: 'Checking sample candidates'},
-    prepareRepair: {messageKey: 'tasks.samplingDesign.systematic.progress.prepareRepairCandidates', defaultMessage: 'Preparing additional sample candidates'},
-    checkRepair: {messageKey: 'tasks.samplingDesign.systematic.progress.checkRepairCandidates', defaultMessage: 'Checking additional sample candidates'},
-    exportFinal: {messageKey: 'tasks.samplingDesign.systematic.progress.exportFinal', defaultMessage: 'Exporting final sample design'}
+    prepareBase: {messageKey: 'tasks.samplingDesign.systematic.progress.prepareBaseCandidates', defaultMessage: 'Finding systematic sample locations'},
+    checkBase: {messageKey: 'tasks.samplingDesign.systematic.progress.checkBaseCandidates', defaultMessage: 'Checking systematic sample locations'},
+    prepareRepair: {messageKey: 'tasks.samplingDesign.systematic.progress.prepareRepairCandidates', defaultMessage: 'Finding additional sample locations'},
+    checkRepair: {messageKey: 'tasks.samplingDesign.systematic.progress.checkRepairCandidates', defaultMessage: 'Checking additional sample locations'},
+    exportFinal: {messageKey: 'tasks.samplingDesign.systematic.progress.exportFinal', defaultMessage: 'Exporting samples'}
 }
 
 const stage$ = descriptor => of(undefined).pipe(progress(descriptor))

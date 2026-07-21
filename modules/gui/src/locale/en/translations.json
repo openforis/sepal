@@ -4632,7 +4632,7 @@
         "assetId": {
           "label": "Asset ID",
           "placeholder": "Enter Asset ID...",
-          "tooltip": "The Asset ID your image should be exported to."
+          "tooltip": "Asset ID to export to."
         },
         "assetType": {
           "label": "Asset type",
@@ -4657,7 +4657,7 @@
         "crsTransform": {
           "label": "CRS transform",
           "placeholder": "Enter transform...",
-          "tooltip": "Optionally specity affine transform to use for the exported image"
+          "tooltip": "Optionally specify an affine transform to use for the exported image"
         },
         "destination": {
           "GEE": "Google Earth Engine asset",
@@ -4838,25 +4838,25 @@
     "samplingDesign": {
       "bands": {},
       "create": "Sampling design",
-      "description": "Create a sampling design.",
+      "description": "Plan and export random or systematic sample locations, with optional stratification.",
       "calculationError": {
         "retryOnline": "Retry direct",
         "submitBatchAgain": "Submit again",
         "useBatch": "Use queued"
       },
       "retrieve": {
-        "invalid": "The sampling design is incomplete and can't be retrieved",
+        "invalid": "The sampling design is incomplete and cannot be retrieved.",
         "invalid.requiresUpdate": "One or more sampling design sections need to be updated. Open the highlighted section and apply or recompute it before retrieving.",
         "invalid.noStrata": "No strata have been computed. Open Stratification and compute the strata.",
         "invalid.strataAreaMissing": "A stratum is missing its area. Recompute the strata in Stratification.",
-        "invalid.proportionsRequired": "The chosen allocation needs anticipated proportions. Provide proportions, or switch to Equal/Proportional allocation with a fixed sample size.",
+        "invalid.proportionsRequired": "The chosen allocation needs anticipated proportions. Provide them, or use a fixed sample size with Equal, Proportional, or Balanced allocation.",
         "invalid.noAllocation": "No sample allocation has been computed. Open Sample Allocation and set the allocation.",
         "invalid.sampleSizeInvalid": "An allocation row has an invalid sample size. Every stratum needs a whole number of at least 2 samples.",
         "invalid.minSamplesPerStratumInvalid": "Minimum samples per stratum must be a whole number of at least 2.",
         "invalid.areaMissing": "An allocation row is missing its area. Recompute the strata in Stratification.",
-        "invalid.noTaskAllocation": "The allocation has no samples to retrieve. Set a sample size greater than zero.",
+        "invalid.noTaskAllocation": "Set at least 2 samples for every stratum in Sample Allocation.",
         "invalid.seedMissing": "A seed is required for this arrangement. Enter a whole-number seed in Sample Arrangement.",
-        "invalid.minDistanceBelowGrid": "Minimum distance is too small for the stratification grid. Samples cannot be closer than two grid pixels. Increase Minimum distance, or use a finer Scale in Stratification."
+        "invalid.minDistanceBelowGrid": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically."
       },
       "panel": {
         "stratification": {
@@ -4911,7 +4911,7 @@
               "label": "CRS",
               "placeholder": "CRS...",
               "required": "You must specify the CRS",
-              "tooltip": "The equal-area grid used to measure areas, space samples and place them. The global grid suits most areas of interest; use North or South for polar areas."
+              "tooltip": "Equal-area grid used to measure areas, space samples and place them. Global is recommended for most areas of interest; North polar and South polar are intended for polar regions."
             },
             "crsTransform": {
               "label": "CRS transform",
@@ -4955,7 +4955,7 @@
           },
           "unstratified": "Area of interest",
           "title": "Stratification",
-          "tooltip": "Select if and/or how how to stratification the sampling"
+          "tooltip": "Choose whether to stratify the design and, if so, select the map that defines the strata."
         },
         "proportions": {
           "button": "PRO",
@@ -5062,6 +5062,9 @@
                 "label": "Direct",
                 "tooltip": "Calculate directly in Earth Engine. This avoids creating a task, but large calculations can time out."
               }
+            },
+            "proportion": {
+              "range": "Enter a percentage from 0 to 100."
             }
           },
           "info": "Select one reporting category to focus on, and estimate its proportion within each stratum. This enables additional allocation strategies and allows SEPAL to estimate your sampling error.",
@@ -5078,10 +5081,12 @@
             "estimateSampleSize": {
               "label": "Specify",
               "false": {
-                "label": "Sample size"
+                "label": "Samples",
+                "tooltip": "Enter a fixed total sample size and calculate the resulting margin of error."
               },
               "true": {
-                "label": "Margin of error"
+                "label": "Error",
+                "tooltip": "Enter a target margin of error and calculate the total sample size needed."
               }
             },
             "confidenceLevel": {
@@ -5089,7 +5094,8 @@
               "placeholder": "Confidence level...",
               "required": "You must specify the confidence level",
               "suffix": "%",
-              "tooltip": "The confidence level of the margin of error. This will typically be around 95%"
+              "tooltip": "Controls how often the planned interval is expected to contain the true category proportion under the design assumptions. 95% is commonly used.",
+              "range": "Enter a confidence level greater than 0% and less than 100%. 95% is commonly used."
             },
             "sampleSize": {
               "label": "Total sample size",
@@ -5149,7 +5155,8 @@
             "powerTuningConstant": {
               "label": "Power tuning constant",
               "placeholder": "Constant...",
-              "tooltip": "0 - equal allocation is used, 1 - optimal allocation is used. Anything in between balances between equal and optimal allocation"
+              "tooltip": "Controls how strongly stratum size affects allocation. A value of 1 gives Neyman allocation. Lower values place relatively more samples in strata where the selected category is rare.",
+              "range": "Enter a value from 0 to 1."
             },
             "allocation": {
               "label": "Allocation",
@@ -5171,10 +5178,10 @@
           "form": {
             "arrangementStrategy": {
               "label": "Arrangement strategy",
-              "tooltip": "Specify how samples should be arrange in each stratum",
+              "tooltip": "Specify how samples should be arranged in each stratum",
               "RANDOM": {
                 "label": "Random",
-                "tooltip": "Randomly select samples within each stratun"
+                "tooltip": "Select random usable pixels within each stratum."
               },
               "SYSTEMATIC": {
                 "label": "Systematic",
@@ -5210,7 +5217,7 @@
               }
             },
             "crs": {
-              "tooltip": "The equal-area grid used to measure areas, space samples and place them. The global grid suits most areas of interest; use North or South for polar areas."
+              "tooltip": "Equal-area grid used to measure areas, space samples and place them. Global is recommended for most areas of interest; North polar and South polar are intended for polar regions."
             },
             "crsTransform": {
               "tooltip": "Optional transform applied to the grid's CRS.",
@@ -5243,21 +5250,15 @@
               "KML": "KML",
               "KMZ": "KMZ",
               "SHP": "Shapefile"
-            },
-            "crs": {
-              "tooltip": "CRS to use for the exported samples"
-            },
-            "crsTransform": {
-              "tooltip": "Optionally specity affine transform to use for the exported samples"
             }
           }
         }
       },
-      "tabPlaceholder": "Sampling_design",
+      "tabPlaceholder": "Sampling design",
       "crs": {
-        "easeGrid2Global": "EPSG:6933 - EASE-Grid 2.0 Global",
-        "easeGrid2North": "EPSG:6931 - EASE-Grid 2.0 North",
-        "easeGrid2South": "EPSG:6932 - EASE-Grid 2.0 South"
+        "easeGrid2Global": "Global (EPSG:6933)",
+        "easeGrid2North": "North polar (EPSG:6931)",
+        "easeGrid2South": "South polar (EPSG:6932)"
       }
     }
   },
@@ -5442,18 +5443,18 @@
     "samplingDesign": {
       "random": {
         "progress": {
-          "prepareCandidates": "Preparing random sample candidates",
-          "checkCandidates": "Checking random sample candidates",
-          "exportFinal": "Exporting final sample design"
+          "prepareCandidates": "Finding random sample locations",
+          "checkCandidates": "Checking random sample locations",
+          "exportFinal": "Exporting samples"
         }
       },
       "systematic": {
         "progress": {
-          "prepareBaseCandidates": "Preparing sample candidates",
-          "checkBaseCandidates": "Checking sample candidates",
-          "prepareRepairCandidates": "Preparing additional sample candidates",
-          "checkRepairCandidates": "Checking additional sample candidates",
-          "exportFinal": "Exporting final sample design"
+          "prepareBaseCandidates": "Finding systematic sample locations",
+          "checkBaseCandidates": "Checking systematic sample locations",
+          "prepareRepairCandidates": "Finding additional sample locations",
+          "checkRepairCandidates": "Checking additional sample locations",
+          "exportFinal": "Exporting samples"
         },
         "grid": {
           "unsupportedCrs": "The sampling grid coordinate system \"{crs}\" is not supported. Systematic sampling requires a supported projected, metre-based coordinate system ({supported}). Change the sampling grid CRS.",

@@ -21,7 +21,7 @@ import styles from './samplingDesignToolbar.module.css'
 import {Stratification} from './stratification/stratification'
 
 const mapRecipeToProps = recipe => {
-    const {disabled, code} = retrieveButtonState(recipe.model)
+    const {disabled, code, args} = retrieveButtonState(recipe.model)
     return {
         recipeId: recipe.id,
         initialized: selectFrom(recipe, 'ui.initialized'),
@@ -33,7 +33,7 @@ const mapRecipeToProps = recipe => {
         // Same invalid message as the submit preflight, plus the first error's detail, as one string
         // (RetrieveButton.getTooltip wraps it). Undefined when retrievable, so the default tooltip shows.
         retrieveTooltip: code
-            ? `${msg('process.samplingDesign.retrieve.invalid')} ${msg(`process.samplingDesign.retrieve.invalid.${code}`)}`
+            ? `${msg('process.samplingDesign.retrieve.invalid')} ${msg(`process.samplingDesign.retrieve.invalid.${code}`, args)}`
             : undefined
     }
 }

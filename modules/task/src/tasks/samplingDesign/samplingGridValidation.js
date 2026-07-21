@@ -1,6 +1,6 @@
 import {isAxisAlignedTransform, parseCrsTransform} from '#sepal/ee/samplingDesign/systematicLatticeMath'
 import {ClientException} from '#sepal/exception'
-import {gridPixelSize, isMinDistanceUnset, isValidMinDistanceForGrid, requiredMinDistance} from '#sepal/recipe/samplingDesign/samplingGrid'
+import {formatDistance, gridPixelSize, isMinDistanceUnset, isValidMinDistanceForGrid, requiredMinDistance} from '#sepal/recipe/samplingDesign/samplingGrid'
 import {isSupportedSamplingGridCrs, supportedSamplingGridCrsNames} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
 const UNSUPPORTED_CRS = 'The selected sampling grid is not supported. Choose one of: {supported}.'
@@ -8,9 +8,6 @@ const INVALID_TRANSFORM = 'The sampling grid transform is invalid. A grid transf
 const INVALID_SCALE = 'The sampling grid scale is invalid. Provide a positive scale in metres, or a valid grid transform instead.'
 const INVALID_MIN_DISTANCE = 'The minimum distance is not a number. Provide a distance in metres, or leave it unset to use the smallest distance the sampling grid allows.'
 const MIN_DISTANCE_BELOW_GRID = 'Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.'
-
-// Distances are metres derived from a grid size, so trim floating-point noise without forcing fixed decimals.
-const formatDistance = value => Number(Number(value).toFixed(4))
 
 const structured = ({key, message, args = {}}) => {
     // Replace EVERY occurrence: a message may reference the same argument more than once.

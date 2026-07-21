@@ -1,16 +1,15 @@
 import {
+    formatDistance,
     gridPixelSize,
     isMinDistanceUnset,
     requiredMinDistance
 } from '#sepal/recipe/samplingDesign/samplingGrid'
 
+export {formatDistance}
+
 // Pure Minimum distance validation, shared by the Sample Arrangement panel and its tests. The rule depends on
 // the Stratification grid - state owned by another panel - so the panel applies it as derived validation
 // rather than as a field predicate.
-
-// Distances are metres derived from a grid size, so trim floating-point noise (0.30000000000000004 -> 0.3)
-// without imposing a fixed number of decimals.
-export const formatDistance = value => Number(Number(value).toFixed(4))
 
 // The grid pixel size behind the floor, for the blank-value tooltip.
 export const minDistancePixelSize = ({stratificationGrid} = {}) => gridPixelSize(stratificationGrid)
