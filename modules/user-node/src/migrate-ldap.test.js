@@ -1,4 +1,4 @@
-import {decodeHash, reconcile} from './migrate-ldap.js'
+import {decodeHash, decodeSshPublicKeys, reconcile} from './migrate-ldap.js'
 
 describe('decodeHash', () => {
     test('returns a string value unchanged', () => {
@@ -11,6 +11,27 @@ describe('decodeHash', () => {
         expect(decodeHash(undefined)).toBeNull()
         expect(decodeHash(null)).toBeNull()
         expect(decodeHash('')).toBeNull()
+    })
+})
+
+describe('decodeSshPublicKeys', () => {
+    test('returns a single string value as a one-element list', () => {
+        expect(decodeSshPublicKeys('ssh-rsa AAA user')).toEqual(['ssh-rsa AAA user'])
+    })
+    test('returns all values when the attribute is multi-valued', () => {
+        expect(decodeSshPublicKeys(['ssh-rsa AAA a', 'ssh-ed25519 BBB b']))
+            .toEqual(['ssh-rsa AAA a', 'ssh-ed25519 BBB b'])
+    })
+    test('returns an empty list for missing/empty values', () => {
+        expect(decodeSshPublicKeys(undefined)).toEqual([])
+        expect(decodeSshPublicKeys(null)).toEqual([])
+        expect(decodeSshPublicKeys('')).toEqual([])
+        expect(decodeSshPublicKeys([])).toEqual([])
+        expect(decodeSshPublicKeys([''])).toEqual([])
+    })
+    test('decodes Buffer values to utf8 strings', () => {
+        expect(decodeSshPublicKeys(Buffer.from('ssh-rsa AAA a', 'utf8'))).toEqual(['ssh-rsa AAA a'])
+        expect(decodeSshPublicKeys([Buffer.from('ssh-rsa AAA a', 'utf8')])).toEqual(['ssh-rsa AAA a'])
     })
 })
 
