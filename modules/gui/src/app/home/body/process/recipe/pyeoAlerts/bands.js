@@ -9,7 +9,7 @@ export const getAvailableBands = () => ({
     post_fcd_valid_image_count: {dataType: {precision: 'int', min: 0, max: 999}, label: 'Post-FCD valid image count'},
     post_fcd_change_repeatability_pct: {dataType: {precision: 'float', min: 0, max: 100}, label: 'Post-FCD change repeatability (%)'},
     binary_timeseries_decision: {dataType: {precision: 'int', min: 0, max: 1}, label: 'Binary time-series decision'},
-    fcd_decision_map: {dataType: {precision: 'int', min: 0, max: 2000000000000}, label: 'FCD decision map (ms)'},
+    fcd_decision_map: {dataType: {precision: 'float'}, label: 'FCD decision map'},
     delta_index_change_count: {dataType: {precision: 'int', min: 0, max: 999}, label: 'Index-drop count'},
     binary_delta_index_decision_map: {dataType: {precision: 'int', min: 0, max: 1}, label: 'Binary index-drop decision'},
     binary_delta_class_decision_map: {dataType: {precision: 'int', min: 0, max: 1}, label: 'Binary dClass decision'},

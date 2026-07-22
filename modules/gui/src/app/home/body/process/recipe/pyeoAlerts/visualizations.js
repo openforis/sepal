@@ -5,13 +5,14 @@ import {selectFrom} from '~/stateUtils'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
-// fcd_decision_map holds the first-change date as epoch milliseconds (see Q017),
-// so its legend range is the recipe's monitoring window in ms. Same date ramp as changeAlerts.
+// The EE wrapper re-expresses fcd_decision_map from the algorithm's epoch ms to a fractional year,
+// so the visualization tags it dataType:'fractionalYears' and the map renders a real date
+// (paletteLayer.formatValue). Legend range = the recipe's monitoring window. See Q017.
 const DATE_PALETTE = ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
 
-const toMillis = (date, fallback) => {
-    const parsed = moment(date, DATE_FORMAT, true)
-    return parsed.isValid() ? parsed.valueOf() : fallback
+const toFractionalYear = (date, fallback) => {
+    const m = moment(date, DATE_FORMAT, true)
+    return m.isValid() ? m.year() + (m.dayOfYear() - 1) / (m.isLeapYear() ? 366 : 365) : fallback
 }
 
 export const getPreSetVisualizations = recipe => {
@@ -38,8 +39,9 @@ export const getPreSetVisualizations = recipe => {
         normalize({
             type: 'continuous',
             bands: ['fcd_decision_map'],
-            min: toMillis(monitoringStart, 0),
-            max: toMillis(monitoringEnd, 2000000000000),
+            dataType: 'fractionalYears',
+            min: toFractionalYear(monitoringStart, 2000),
+            max: toFractionalYear(monitoringEnd, 2100),
             palette: DATE_PALETTE
         })
     ]
