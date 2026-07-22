@@ -9,6 +9,7 @@ import {resolveFeatureLayerStyle} from './featureLayerStyle'
 // opacity is applied client-side by the tile overlay, so it's kept out of the server style payload.
 export const EETableAssetLayer = ({source, layerConfig, layerIndex, map}) => {
     const {asset} = source.sourceConfig
+    const filter = layerConfig?.filter
     const {opacity, ...style} = resolveFeatureLayerStyle({layerConfig, source})
     return (
         <EETableLayer
@@ -16,6 +17,7 @@ export const EETableAssetLayer = ({source, layerConfig, layerIndex, map}) => {
             map={map}
             tableId={asset}
             style={style}
+            featureFilter={filter}
             opacity={opacity}
             layerIndex={layerIndex}
         />

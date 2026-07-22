@@ -10,6 +10,7 @@ import {Layout} from '~/widget/layout'
 import {Legend} from '~/widget/legend/legend'
 import {ListItem} from '~/widget/listItem'
 
+import {formatCategoricalOptionLabel, reconciledCategoricalValue} from './categoricalOption'
 import styles from './constraint.module.css'
 
 const fields = {
@@ -67,22 +68,12 @@ class _Constraint extends React.Component {
     ]
 
     render() {
-        const {selected, images, inputs: {bit, operator}, onClick, onRemove} = this.props
+        const {selected, onClick, onRemove} = this.props
         const {imageSpec} = this.state
         return (
             <ListItem
                 expanded={selected}
-                expansion={
-                    <Layout>
-                        {images.length !== 1 ? this.renderImage() : null}
-                        <Layout type='horizontal'>
-                            {this.applyOnBand() ? this.renderBand() : this.renderProperty()}
-                            {operator.value !== 'class' ? this.renderOperator() : null}
-                            {isSelected(bit) ? this.renderBitRange() : null}
-                        </Layout>
-                        {this.renderValue()}
-                    </Layout>
-                }
+                expansion={this.renderExpansion()}
                 expansionInteractive
                 onClick={onClick}>
                 <CrudItem
@@ -92,6 +83,33 @@ class _Constraint extends React.Component {
                     onRemove={() => onRemove()}>
                 </CrudItem>
             </ListItem>
+        )
+    }
+
+    renderExpansion() {
+        const {images, inlineValue, inputs: {bit, operator}} = this.props
+        if (inlineValue && !this.applyOnBand()) {
+            return (
+                <Layout>
+                    {images.length !== 1 ? this.renderImage() : null}
+                    {this.renderProperty()}
+                    <Layout type='horizontal-nowrap' spacing='compact' className={styles.comparison}>
+                        {this.renderOperator()}
+                        {this.renderValue()}
+                    </Layout>
+                </Layout>
+            )
+        }
+        return (
+            <Layout>
+                {images.length !== 1 ? this.renderImage() : null}
+                <Layout type='horizontal'>
+                    {this.applyOnBand() ? this.renderBand() : this.renderProperty()}
+                    {operator.value !== 'class' ? this.renderOperator() : null}
+                    {isSelected(bit) ? this.renderBitRange() : null}
+                </Layout>
+                {this.renderValue()}
+            </Layout>
         )
     }
 
@@ -226,8 +244,43 @@ class _Constraint extends React.Component {
         switch (operator.value) {
             case 'class': return this.renderClassSelector()
             case 'range': return this.renderRangeSelector()
-            default: return this.renderSingleValueSelector()
+            default: return this.categoricalOptions()
+                ? this.renderCategoricalValueSelector()
+                : this.renderSingleValueSelector()
         }
+    }
+
+    // Categorical options for the currently selected property, or null. Opt-in: only for a property-equality
+    // constraint whose selected property carries category metadata (passed by the panel). Every other caller
+    // (asset filter/mask) omits `categoriesByProperty`, so their behavior is unchanged.
+    categoricalOptions() {
+        const {applyOn, categoriesByProperty, inputs: {operator, property}} = this.props
+        if (applyOn !== 'properties' || operator.value !== '=' || !categoriesByProperty) {
+            return null
+        }
+        const options = categoriesByProperty[property.value]
+        return options && options.length ? options : null
+    }
+
+    renderCategoricalValueSelector() {
+        const {inputs: {value}} = this.props
+        const options = this.categoricalOptions().map(category => {
+            const label = formatCategoricalOptionLabel(category)
+            return {
+                value: category.value,
+                label,
+                render: () => <CategoricalOption color={category.color} label={label}/>
+            }
+        })
+        return (
+            <Form.Combo
+                label={msg('widget.imageConstraints.value.label')}
+                input={value}
+                options={options}
+                autoFocus
+                className={styles.singleValueInput}
+            />
+        )
     }
 
     renderClassSelector() {
@@ -313,9 +366,22 @@ class _Constraint extends React.Component {
     }
 
     componentDidUpdate() {
+        this.reconcileCategoricalValue()
         this.validate()
         this.updateConstraint()
         this.putImageSpecInState()
+    }
+
+    // Keep the selected value consistent with the categorical options. A persisted numeric or string equality
+    // value resolves to the matching option (so "1"/1 select the "1" option); a value that is not a valid
+    // option for the newly selected categorical property is cleared, so no invisible stale selection survives
+    // a property change. Guarded so a stable value does not loop.
+    reconcileCategoricalValue() {
+        const {inputs: {value}} = this.props
+        const reconciled = reconciledCategoricalValue(value.value, this.categoricalOptions())
+        if (reconciled.change) {
+            value.set(reconciled.value)
+        }
     }
 
     applyOnBand() {
@@ -442,6 +508,12 @@ class _Constraint extends React.Component {
     }
 }
 
+const CategoricalOption = ({color, label}) =>
+    <Layout type='horizontal-nowrap' spacing='compact'>
+        <span className={styles.optionColor} style={{'--option-color': color}}/>
+        <span className={styles.optionLabel}>{label}</span>
+    </Layout>
+
 const inclButton = input =>
     <Form.Buttons
         key={'incl'}
@@ -471,4 +543,3 @@ export const Constraint = compose(
     _Constraint,
     withForm({fields})
 )
-

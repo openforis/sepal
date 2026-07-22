@@ -352,10 +352,11 @@ class _SliderDynamics extends React.Component {
         )
     }
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps, prevState) {
         const {inhibitInput} = this.state
+        const inputReleased = prevState.inhibitInput && !inhibitInput
         // prevent input from self-interfering during animation
-        if (!inhibitInput && !_.isEqual(prevProps, this.props)) {
+        if (!inhibitInput && (inputReleased || !_.isEqual(prevProps, this.props))) {
             this.setHandlePositionByValue()
         }
     }

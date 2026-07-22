@@ -47,18 +47,18 @@ class _EETableLayer extends React.Component {
     }
 
     createLayer() {
-        const {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style, opacity, layerIndex, map, tab: {busy}} = this.props
+        const {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style, featureFilter, opacity, layerIndex, map, tab: {busy}} = this.props
         return tableId
             ? new EarthEngineTableLayer({
                 map,
                 mapId$: api.gee.eeTableMap$({
-                    tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style
+                    tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style, featureFilter
                 }),
                 opacity,
                 layerIndex,
                 // opacity is intentionally excluded: it's applied client-side (setOpacity), so an opacity-only
                 // change stays equal and doesn't recreate the layer or refetch the map id.
-                watchedProps: {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style},
+                watchedProps: {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style, featureFilter},
                 busy
             })
             : null
@@ -78,6 +78,7 @@ EETableLayer.propTypes = {
     columnName: PropTypes.string,
     columnValue: PropTypes.any,
     fillColor: PropTypes.string,
+    featureFilter: PropTypes.object,
     layerIndex: PropTypes.number,
     map: PropTypes.any,
     opacity: PropTypes.number,

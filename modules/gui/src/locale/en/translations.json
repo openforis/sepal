@@ -624,6 +624,33 @@
       "width": "Line/outline width",
       "fillOpacity": "Fill opacity",
       "pointSize": "Point size",
+      "pixelValue": "{value} px",
+      "percentValue": "{value}%",
+      "sections": {
+        "color": "Color",
+        "filter": "Filter",
+        "sizeAndOpacity": "Size & opacity",
+        "completeCurrent": "Complete the settings in this section before opening another section."
+      },
+      "filter": {
+        "add": {
+          "label": "Add filter"
+        },
+        "match": {
+          "label": "Match",
+          "all": {
+            "label": "All",
+            "tooltip": "Show features that meet every filter."
+          },
+          "any": {
+            "label": "Any",
+            "tooltip": "Show features that meet at least one filter."
+          }
+        },
+        "noFilters": "No filters added. All features are shown.",
+        "noProperties": "No feature properties are available for filtering.",
+        "source": "This layer"
+      },
       "opacity": "Layer opacity",
       "opacityControl": {
         "tooltip": "Opacity {percent}%. Drag up/down to change. Click to toggle."

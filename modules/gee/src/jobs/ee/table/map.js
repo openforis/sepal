@@ -2,6 +2,7 @@ import _ from 'lodash'
 import {forkJoin, map} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
+import {createFilter, equalityFilter} from '#sepal/ee/asset/filter'
 import ee from '#sepal/ee/ee'
 import {filterTable} from '#sepal/ee/table'
 import {fileName} from '#sepal/path'
@@ -9,18 +10,28 @@ import {fileName} from '#sepal/path'
 const STYLE_PROPERTY = '__sepalStyle'
 
 const worker$ = ({
-    requestArgs: {tableId, columnName, columnValue, buffer, color = '#FFFFFF50', fillColor = '#FFFFFF08', pointSize, width, style}
+    requestArgs: {tableId, columnName, columnValue, buffer, color = '#FFFFFF50', fillColor = '#FFFFFF08', pointSize, width, style, featureFilter}
 }) => {
 
     const parsedStyle = style ? JSON.parse(style) : null
+    const parsedFeatureFilter = featureFilter ? JSON.parse(featureFilter) : null
     const bufferMeters = (buffer && _.toNumber(buffer)) * 1000
-    const table = bufferMeters
-        ? filterTable({tableId, columnName, columnValue})
-            .map(feature => feature.buffer(ee.Number(bufferMeters), bufferMeters / 10))
-        : filterTable({tableId, columnName, columnValue})
+    const sourceTable = filterTable({tableId, columnName, columnValue})
+    const filteredTable = parsedFeatureFilter?.constraints?.length
+        ? sourceTable.filter(createFilter([parsedFeatureFilter]))
+        : sourceTable
+    const buffered = collection => bufferMeters
+        ? collection.map(feature => feature.buffer(ee.Number(bufferMeters), bufferMeters / 10))
+        : collection
+    // Rendered tiles reflect the feature filter (may be empty). Map framing uses the UNFILTERED source bounds:
+    // a feature filter matching zero features yields an empty geometry, and bounds() on an empty geometry fails
+    // the whole request. Framing on the source keeps the map usable while the filtered tiles stay empty. Legacy
+    // callers (no featureFilter) have sourceTable === filteredTable, so their framing is unchanged.
+    const table = buffered(filteredTable)
+    const boundsTable = buffered(sourceTable)
     const bounds = bufferMeters
-        ? table.geometry().bounds(bufferMeters / 10).buffer(ee.Number(bufferMeters), bufferMeters / 10).bounds(bufferMeters / 10)
-        : table.geometry().bounds()
+        ? boundsTable.geometry().bounds(bufferMeters / 10).buffer(ee.Number(bufferMeters), bufferMeters / 10).bounds(bufferMeters / 10)
+        : boundsTable.geometry().bounds()
     const boundsPolygon = ee.List(bounds.coordinates().get(0))
     const styled = parsedStyle
         ? styleTable(table, parsedStyle)
@@ -94,22 +105,13 @@ const styleByValue = (table, style) => {
     // Render only features matching a listed value. The by-value UI has no global color, so unmatched
     // values are not drawn rather than painted in a hidden/stale default color.
     const valueImages = values.map(value =>
-        table.filter(equalsFilter(valueProperty, value)).style({
+        table.filter(equalityFilter(valueProperty, value)).style({
             ...baseStyle(style),
             color: valueColors[value],
             fillColor: withAlpha(valueColors[value], fillOpacity)
         })
     )
     return ee.ImageCollection(valueImages).mosaic()
-}
-
-// Match a property against a value as both string and number, mirroring lib/js/ee/table filterTable.
-const equalsFilter = (name, value) => {
-    const filters = [ee.Filter.eq(name, value)]
-    if (_.isFinite(_.toNumber(value))) {
-        filters.push(ee.Filter.eq(name, _.toNumber(value)))
-    }
-    return ee.Filter.or(...filters)
 }
 
 // Feature-specific styles with larger pointSize/width need a neighborhood covering pointSize + width to

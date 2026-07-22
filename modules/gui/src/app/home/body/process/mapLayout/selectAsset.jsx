@@ -1,7 +1,7 @@
 import React from 'react'
 
 import api from '~/apiRegistry'
-import {parseFeatureLayerAssetStyle} from '~/app/home/map/featureLayerAssetStyleParser'
+import {parseFeatureLayerAssetStyle, parseFeatureLayerCategoricalProperties} from '~/app/home/map/featureLayerAssetStyleParser'
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
@@ -155,6 +155,10 @@ class _SelectAsset extends React.Component {
             // Sampling Design's stratum_class_values/palette) becomes the source default, outranking the
             // color-column heuristic. Null when the asset carries no such convention.
             const defaultStyle = parseFeatureLayerAssetStyle({properties: metadata?.properties, columns})
+            // Presentation-only categorical metadata (values, colors, optional labels) for every categorical
+            // property, kept out of defaultStyle so labels never reach the EE styling job. Drives the Filter
+            // categorical Combo and the By-value label column.
+            const categoricalProperties = parseFeatureLayerCategoricalProperties({properties: metadata?.properties, columns})
             recipeActionBuilder('ADD_EE_TABLE_FEATURE_LAYER_SOURCE')
                 .push('layers.additionalFeatureLayerSources', {
                     id: `ee-table:${uuid()}`,
@@ -165,7 +169,8 @@ class _SelectAsset extends React.Component {
                         label: assetLabel,
                         description: asset,
                         columns,
-                        ...(defaultStyle ? {defaultStyle} : {})
+                        ...(defaultStyle ? {defaultStyle} : {}),
+                        ...(Object.keys(categoricalProperties).length ? {categoricalProperties} : {})
                     }
                 })
                 .dispatch()

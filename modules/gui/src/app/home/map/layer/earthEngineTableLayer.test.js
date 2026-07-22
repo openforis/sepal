@@ -21,6 +21,12 @@ describe('EarthEngineTableLayer.equals', () => {
         const other = layer({watched: {...watchedProps(), style: {colorMode: 'COLORS_BY_VALUE'}}})
         expect(layer().equals(other)).toBe(false)
     })
+
+    it('is not equal when the feature filter changes', () => {
+        const featureFilter = {booleanOperator: 'and', constraints: [{property: 'class', operator: '=', value: 'forest'}]}
+        const other = layer({watched: {...watchedProps(), featureFilter}})
+        expect(layer().equals(other)).toBe(false)
+    })
 })
 
 describe('EarthEngineTableLayer.setOpacity', () => {

@@ -136,9 +136,20 @@ export default {
             }
         }),
 
-    eeTableMap$: ({tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style}) =>
+    eeTableMap$: ({tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style, featureFilter}) =>
         get$('/api/gee/table/map', {
-            query: {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style: style ? JSON.stringify(style) : undefined},
+            query: {
+                tableId,
+                columnName,
+                columnValue,
+                buffer,
+                color,
+                fillColor,
+                pointSize,
+                width,
+                style: style ? JSON.stringify(style) : undefined,
+                featureFilter: featureFilter ? JSON.stringify(featureFilter) : undefined
+            },
             retry: {
                 maxRetries: 0
             }
