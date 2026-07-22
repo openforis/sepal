@@ -1,29 +1,11 @@
-.panel {
+.panel.panel {
+    --panel-tabs-width: 2.7rem;
+    position: relative;
     width: 25rem;
-}
-
-.sectionSelector {
-    flex-shrink: 0;
-    min-width: 0;
-    width: 100%;
-}
-
-.sectionSelectorContent {
-    width: 100%;
-}
-
-.sectionButton.sectionButton {
-    --look-default-l: 12%;
-    --look-default-a: .95;
-    --look-default-border-color: var(--wireframe-color);
-    --look-default-hover-border-color: var(--wireframe-color);
-    --look-default-active-border-color: var(--wireframe-color);
-    --look-selected-l: 16%;
-    --look-selected-border-color: var(--wireframe-color);
-    --look-selected-hover-border-color: var(--wireframe-color);
-    --look-selected-active-border-color: var(--wireframe-color);
-    border-radius: 0;
-    border-top-width: 0;
+    min-height: min(26rem, calc(100dvh - 1rem));
+    max-width: calc(100dvw - 1rem - var(--panel-tabs-width));
+    margin-left: var(--panel-tabs-width);
+    overflow: visible;
 }
 
 .entry {

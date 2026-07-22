@@ -12,7 +12,6 @@ import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
-import {ButtonGroup} from '~/widget/buttonGroup'
 import {Buttons} from '~/widget/buttons'
 import {ButtonSelect} from '~/widget/buttonSelect'
 import {ColorElement} from '~/widget/colorElement'
@@ -131,12 +130,7 @@ class _FeatureLayerOptionsPanel extends React.Component {
                     icon='palette'
                     title={source.sourceConfig?.label || msg('map.featureLayerStyle.title')}
                 />
-                {this.renderSectionSelector({colorValid, filterValid})}
-                <Panel.Content>
-                    <Layout type='vertical'>
-                        {this.renderActiveSection()}
-                    </Layout>
-                </Panel.Content>
+                {this.renderSections({colorValid, filterValid})}
                 <Panel.Buttons>
                     {this.renderSectionActions({filterValid})}
                     <Panel.Buttons.Main>
@@ -148,43 +142,32 @@ class _FeatureLayerOptionsPanel extends React.Component {
         )
     }
 
-    renderSectionSelector({colorValid, filterValid}) {
+    renderSections({colorValid, filterValid}) {
         const {activeSection} = this.state
         const activeSectionValid = activeSection === COLOR_SECTION
             ? colorValid
             : activeSection === FILTER_SECTION ? filterValid : true
-        const sections = [
-            {value: COLOR_SECTION, label: msg('map.featureLayerStyle.sections.color')},
-            {value: SIZE_SECTION, label: msg('map.featureLayerStyle.sections.sizeAndOpacity')},
-            {value: FILTER_SECTION, label: msg('map.featureLayerStyle.sections.filter')}
-        ]
+        const tabs = [COLOR_SECTION, SIZE_SECTION, FILTER_SECTION].map(value => ({
+            value,
+            label: msg(`map.featureLayerStyle.sections.${value === COLOR_SECTION
+                ? 'color'
+                : value === SIZE_SECTION ? 'sizeAndOpacity' : 'filter'}`),
+            disabled: value !== activeSection && !activeSectionValid,
+            tooltip: value !== activeSection && !activeSectionValid
+                ? msg('map.featureLayerStyle.sections.completeCurrent')
+                : null
+        }))
         return (
-            <ButtonGroup
-                className={styles.sectionSelector}
-                contentClassName={styles.sectionSelectorContent}
-                layout='horizontal-nowrap'
-                alignment='distribute'
-                spacing='none'>
-                {sections.map(({value, label}) => {
-                    const disabled = value !== activeSection && !activeSectionValid
-                    return (
-                        <Button
-                            key={value}
-                            additionalClassName={styles.sectionButton}
-                            look={value === activeSection ? 'selected' : 'default'}
-                            air='more'
-                            width='max'
-                            label={label}
-                            labelStyle='smallcaps'
-                            disabled={disabled}
-                            tooltip={disabled ? msg('map.featureLayerStyle.sections.completeCurrent') : null}
-                            tooltipAllowedWhenDisabled
-                            tooltipPlacement='bottom'
-                            onClick={() => this.setState({activeSection: value})}
-                        />
-                    )
-                })}
-            </ButtonGroup>
+            <Panel.Tabs
+                tabs={tabs}
+                selected={activeSection}
+                onSelect={activeSection => this.setState({activeSection})}>
+                <Panel.Content>
+                    <Layout type='vertical'>
+                        {this.renderActiveSection()}
+                    </Layout>
+                </Panel.Content>
+            </Panel.Tabs>
         )
     }
 
