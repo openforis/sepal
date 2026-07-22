@@ -385,7 +385,8 @@
     "table": {
       "error": {
         "notATable": "Pas une table",
-        "notFound": "Table introuvable"
+        "notFound": "Table introuvable",
+        "tooManyValues": ""
       }
     }
   },
@@ -585,6 +586,83 @@
       "copy": "Copier dans le presse-papier",
       "coordinatesCopied": "Coordonnées copiées dans le presse-papiers"
     },
+    "featureLayer": {
+      "toggle": {
+        "show": "",
+        "hide": ""
+      }
+    },
+    "featureLayerStyle": {
+      "title": "",
+      "tooltip": "",
+      "colorMode": {
+        "label": "",
+        "ONE_COLOR": "",
+        "COLORS_FROM_PROPERTY": "",
+        "COLORS_BY_VALUE": ""
+      },
+      "color": "Couleur",
+      "colorProperty": {
+        "label": ""
+      },
+      "valueProperty": {
+        "label": ""
+      },
+      "property": {
+        "placeholder": ""
+      },
+      "valueColors": {
+        "label": "",
+        "loadDistinctValues": "",
+        "loadError": "",
+        "blankValues": "",
+        "noEntries": "",
+        "value": {
+          "placeholder": ""
+        },
+        "classLabel": {
+          "placeholder": ""
+        },
+        "showLabels": {
+          "label": "",
+          "tooltip": ""
+        }
+      },
+      "width": "",
+      "fillOpacity": "",
+      "pointSize": "",
+      "pixelValue": "",
+      "percentValue": "{value}%",
+      "sections": {
+        "color": "Couleur",
+        "filter": "Filtre",
+        "sizeAndOpacity": "",
+        "completeCurrent": ""
+      },
+      "filter": {
+        "add": {
+          "label": ""
+        },
+        "match": {
+          "label": "",
+          "all": {
+            "label": "Tout",
+            "tooltip": ""
+          },
+          "any": {
+            "label": "Tous",
+            "tooltip": ""
+          }
+        },
+        "noFilters": "",
+        "noProperties": "",
+        "source": ""
+      },
+      "opacity": "",
+      "opacityControl": {
+        "tooltip": ""
+      }
+    },
     "legendBuilder": {
       "addEntry": {
         "tooltip": "Ajouter une entrée de légende"
@@ -688,6 +766,8 @@
             "description": "Ajouter un Asset Earth Engine",
             "form": {
               "asset.label": "Asset Earth Engine",
+              "label.label": "Label",
+              "label.placeholder": "",
               "loadError": "Impossible de lire l'Asset"
             },
             "presets": "Pré-réglages"
@@ -819,6 +899,10 @@
     "Aoi": {
       "type": "AOI",
       "description": "Zone d'intérêt"
+    },
+    "EETableAsset": {
+      "type": "Table EE",
+      "description": ""
     },
     "Labels": {
       "type": "Labels",
@@ -2568,6 +2652,14 @@
                 "label": "",
                 "placeholder": "",
                 "tooltip": ""
+              },
+              "normalizeInput": {
+                "label": "",
+                "tooltip": "",
+                "options": {
+                  "true.label": "",
+                  "false.label": ""
+                }
               }
             }
           }
@@ -3200,6 +3292,31 @@
             },
             "section": {
               "required": "Une section doit être sélectionnée"
+            },
+            "asset": {
+              "asset": {
+                "label": "Asset EE",
+                "placeholder": "",
+                "required": ""
+              },
+              "title": ""
+            },
+            "recipe": {
+              "recipe": {
+                "label": "",
+                "placeholder": "Selectionner une formule...",
+                "required": ""
+              },
+              "title": ""
+            },
+            "source": {
+              "title": "",
+              "label": "",
+              "type": {
+                "ASSET": "Asset",
+                "RECIPE": "Formule",
+                "required": ""
+              }
             }
           },
           "title": "Zone d'intérêt",
@@ -4751,6 +4868,432 @@
         }
       },
       "tabPlaceholder": "Series_temporelles"
+    },
+    "samplingDesign": {
+      "bands": {},
+      "create": "",
+      "description": "",
+      "calculationError": {
+        "retryOnline": "",
+        "submitBatchAgain": "",
+        "useBatch": ""
+      },
+      "retrieve": {
+        "invalid": "",
+        "invalid.requiresUpdate": "",
+        "invalid.noStrata": "",
+        "invalid.strataAreaMissing": "",
+        "invalid.proportionsRequired": "",
+        "invalid.noAllocation": "",
+        "invalid.sampleSizeInvalid": "",
+        "invalid.minSamplesPerStratumInvalid": "",
+        "invalid.areaMissing": "",
+        "invalid.noTaskAllocation": "",
+        "invalid.seedMissing": "",
+        "invalid.minDistanceBelowGrid": ""
+      },
+      "panel": {
+        "stratification": {
+          "button": "",
+          "form": {
+            "skip": {
+              "label": "",
+              "tooltip": "",
+              "message": ""
+            },
+            "type": {
+              "label": "Type",
+              "ASSET": {
+                "label": "Asset",
+                "tooltip": ""
+              },
+              "RECIPE": {
+                "label": "Formule",
+                "tooltip": ""
+              },
+              "required": ""
+            },
+            "stratification": {
+              "label": "",
+              "placeholder": "",
+              "required": ""
+            },
+            "asset": {
+              "label": "Asset EE",
+              "placeholder": "",
+              "required": ""
+            },
+            "recipe": {
+              "label": "Formule",
+              "placeholder": "Selectionner une formule...",
+              "required": ""
+            },
+            "band": {
+              "label": "Bande",
+              "placeholder": "",
+              "tooltip": "",
+              "required": ""
+            },
+            "scale": {
+              "label": "Echelle",
+              "placeholder": "Echelle...",
+              "required": "",
+              "suffix": "mètre",
+              "tooltip": ""
+            },
+            "crs": {
+              "label": "",
+              "placeholder": "",
+              "required": "",
+              "tooltip": ""
+            },
+            "crsTransform": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": "",
+              "invalid": ""
+            },
+            "hexButton": {
+              "label": "",
+              "tooltip": ""
+            },
+            "strata": {
+              "label": "",
+              "required": "",
+              "select": "",
+              "loading": "",
+              "noData": "",
+              "error": {
+                "eeOnline": "",
+                "eeBatch": "",
+                "genericWithDetail": "",
+                "generic": ""
+              },
+              "table": {
+                "value": "Valeur",
+                "area": "",
+                "weight": "",
+                "total": ""
+              }
+            },
+            "eeStrategy": {
+              "batch": {
+                "label": "",
+                "tooltip": ""
+              },
+              "online": {
+                "label": "",
+                "tooltip": ""
+              }
+            }
+          },
+          "unstratified": "Zone d'intérêt",
+          "title": "",
+          "tooltip": ""
+        },
+        "proportions": {
+          "button": "",
+          "form": {
+            "skip": {
+              "label": "",
+              "tooltip": "",
+              "message": ""
+            },
+            "manual": {
+              "label": "",
+              "tooltip": ""
+            },
+            "anticipationStrategy": {
+              "label": "",
+              "MANUAL": {
+                "label": "",
+                "tooltip": ""
+              },
+              "PROBABILITY": {
+                "label": "",
+                "tooltip": ""
+              },
+              "CATEGORICAL": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "image": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": ""
+            },
+            "type": {
+              "label": "Type",
+              "ASSET": {
+                "label": "Asset",
+                "tooltip": ""
+              },
+              "RECIPE": {
+                "label": "Formule",
+                "tooltip": ""
+              },
+              "required": ""
+            },
+            "asset": {
+              "label": "Asset EE",
+              "placeholder": "",
+              "required": ""
+            },
+            "recipe": {
+              "label": "Formule",
+              "placeholder": "Selectionner une formule...",
+              "required": ""
+            },
+            "band": {
+              "label": "Bande",
+              "placeholder": "",
+              "tooltip": "",
+              "required": ""
+            },
+            "targetClass": {
+              "label": "Classe",
+              "placeholder": "",
+              "tooltip": "",
+              "required": "",
+              "numeric": "",
+              "loadValues": "",
+              "loadingValues": "",
+              "loadError": ""
+            },
+            "scale": {
+              "label": "Echelle",
+              "placeholder": "Echelle...",
+              "required": "",
+              "suffix": "mètre",
+              "tooltip": ""
+            },
+            "overallProportion": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": "",
+              "suffix": ""
+            },
+            "strataProportion": {
+              "label": "",
+              "error": {
+                "eeOnline": "",
+                "eeBatch": "",
+                "genericWithDetail": "",
+                "generic": ""
+              }
+            },
+            "anticipatedProportions": {
+              "required": "",
+              "header": ""
+            },
+            "eeStrategy": {
+              "batch": {
+                "label": "",
+                "tooltip": ""
+              },
+              "online": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "proportion": {
+              "range": ""
+            }
+          },
+          "info": "",
+          "title": "",
+          "tooltip": ""
+        },
+        "sampleAllocation": {
+          "button": "",
+          "form": {
+            "manual": {
+              "label": "",
+              "tooltip": ""
+            },
+            "estimateSampleSize": {
+              "label": "",
+              "false": {
+                "label": "",
+                "tooltip": ""
+              },
+              "true": {
+                "label": "Erreur",
+                "tooltip": ""
+              }
+            },
+            "confidenceLevel": {
+              "label": "",
+              "placeholder": "",
+              "required": "",
+              "suffix": "",
+              "tooltip": "",
+              "range": ""
+            },
+            "sampleSize": {
+              "label": "",
+              "placeholder": "",
+              "required": "",
+              "tooltip": "",
+              "notEnough": ""
+            },
+            "marginOfError": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": ""
+            },
+            "minSamplesPerStratum": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": ""
+            },
+            "relativeMarginOfError": {
+              "label": "",
+              "tooltip": "",
+              "false": {
+                "label": ""
+              },
+              "true": {
+                "label": ""
+              }
+            },
+            "allocationStrategy": {
+              "label": "",
+              "tooltip": "",
+              "MANUAL": {
+                "label": "",
+                "tooltip": ""
+              },
+              "PROPORTIONAL": {
+                "label": "",
+                "tooltip": ""
+              },
+              "EQUAL": {
+                "label": "",
+                "tooltip": ""
+              },
+              "OPTIMAL": {
+                "label": "",
+                "tooltip": ""
+              },
+              "POWER": {
+                "label": "",
+                "tooltip": ""
+              },
+              "BALANCED": {
+                "label": "Équilibré",
+                "tooltip": ""
+              }
+            },
+            "powerTuningConstant": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": "",
+              "range": ""
+            },
+            "allocation": {
+              "label": "",
+              "tooBig": "",
+              "table": {
+                "marginOfError": "",
+                "relativeMarginOfError": "",
+                "samples": "",
+                "samplesTooltip": "",
+                "overall": ""
+              }
+            }
+          },
+          "title": "",
+          "tooltip": ""
+        },
+        "sampleArrangement": {
+          "button": "",
+          "form": {
+            "arrangementStrategy": {
+              "label": "",
+              "tooltip": "",
+              "RANDOM": {
+                "label": "",
+                "tooltip": ""
+              },
+              "SYSTEMATIC": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "sampleSizeStrategy": {
+              "label": "",
+              "tooltip": "",
+              "OVER": {
+                "label": "",
+                "tooltip": ""
+              },
+              "CLOSEST": {
+                "label": "Au plus proche",
+                "tooltip": ""
+              },
+              "EXACT": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "gridOrigin": {
+              "label": "",
+              "tooltip": "",
+              "FIXED": {
+                "label": "",
+                "tooltip": ""
+              },
+              "SEEDED": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "crs": {
+              "tooltip": ""
+            },
+            "crsTransform": {
+              "tooltip": "",
+              "invalid": ""
+            },
+            "minDistance": {
+              "label": "Distance min",
+              "placeholder": "",
+              "tooltip": {
+                "gridFloor": "",
+                "optional": ""
+              },
+              "belowGridFloor": ""
+            },
+            "seed": {
+              "label": "Graine",
+              "placeholder": "Graine...",
+              "tooltip": "graine de randomisation"
+            }
+          },
+          "title": "",
+          "tooltip": ""
+        },
+        "retrieve": {
+          "form": {
+            "fileFormat": {
+              "label": "",
+              "CSV": "",
+              "GeoJSON": "",
+              "KML": "",
+              "KMZ": "",
+              "SHP": ""
+            }
+          }
+        }
+      },
+      "tabPlaceholder": "",
+      "crs": {
+        "easeGrid2Global": "",
+        "easeGrid2North": "",
+        "easeGrid2South": ""
+      }
     }
   },
   "sources": {
@@ -4852,7 +5395,14 @@
       "recipeType": "",
       "recipeId": "",
       "creationTime": "",
-      "updateTime": "",
+      "updateTime": {
+        "lastProgress": "",
+        "cancelRequested": "",
+        "completed": "",
+        "failed": "",
+        "canceled": "",
+        "lastUpdate": "Dernière mise à jour"
+      },
       "duration": "",
       "description": "Description",
       "workspacePath": "",
@@ -4897,6 +5447,7 @@
         "PHENOLOGY": "",
         "MASKING": "",
         "ASSET_MOSAIC": "",
+        "SAMPLING_DESIGN": "",
         "RECIPE_REF": "",
         "ASSET": "Asset"
       }
@@ -4923,6 +5474,57 @@
         "tiling": "Tuilage de l'AOI..."
       }
     },
+    "samplingDesign": {
+      "random": {
+        "progress": {
+          "prepareCandidates": "",
+          "checkCandidates": "",
+          "exportFinal": ""
+        }
+      },
+      "systematic": {
+        "progress": {
+          "prepareBaseCandidates": "",
+          "checkBaseCandidates": "",
+          "prepareRepairCandidates": "",
+          "checkRepairCandidates": "",
+          "exportFinal": ""
+        },
+        "grid": {
+          "unsupportedCrs": "",
+          "invalidTransform": "",
+          "invalidScale": "",
+          "minDistanceBelowGrid": "",
+          "invalidMinDistance": ""
+        }
+      },
+      "preflight": {
+        "invalidMinimum": "",
+        "noStrata": "",
+        "belowStatisticalMinimum": "",
+        "unstratifiedBelowMinimum": "",
+        "belowConfiguredMinimum": ""
+      },
+      "underproduction": {
+        "message": "",
+        "diagnosis": {
+          "statisticalMinimum": "",
+          "statisticalMinimumNoDistance": "",
+          "configuredMinimum": "",
+          "requestedAllocation": ""
+        },
+        "reduceSystematicMinDistance": "",
+        "atGridFloor": "",
+        "switchToRandom": "",
+        "reviseStratification": "",
+        "enlargeOrMerge": "",
+        "lowerConfiguredMinimum": "",
+        "minimumNotSufficient": "",
+        "reduceRequestedOrClosest": "",
+        "avoidEqualAllocation": "",
+        "reduceRequestedRandom": ""
+      }
+    },
     "status": {
       "canceled": "Arrêté",
       "canceling": "Annulation",
@@ -4930,6 +5532,7 @@
       "EEException": "",
       "executing": "En cours d'execution...",
       "failed": "",
+      "failedGeneric": "",
       "initializing": "Initialisation..."
     }
   },
@@ -5310,6 +5913,7 @@
       },
       "loadError": "Impossible de charger l'Asset",
       "taskPending": "",
+      "validating": "",
       "replace": {
         "label": "Remplacer",
         "tooltip": "Remplacer l'Asset précédent par celui-ci."
@@ -5416,6 +6020,9 @@
         },
         "lessThanOrEquals": {
           "label": "≤"
+        },
+        "oneOf": {
+          "label": ""
         },
         "range": {
           "label": ""
