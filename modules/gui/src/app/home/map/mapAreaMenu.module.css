@@ -48,6 +48,29 @@
     left: 0;
 }
 
+/* Let the asset label yield space to the fixed-width row actions. Every wrapper between ListItem and CrudItem
+   participates in a flex layout; without an explicit zero minimum, a long asset name contributes its full
+   min-content width and pushes the options, opacity and visibility controls outside the panel. */
+.assetOverlayRow,
+.assetOverlayRow > div,
+.assetOverlayRow > div > div:first-child,
+.assetOverlayRow > div > div:first-child > :last-child,
+.assetOverlayRow > div > div:first-child > :last-child > *,
+.assetOverlayRow > div > div:first-child > :last-child > * > :first-child {
+    min-width: 0;
+}
+
+.assetOverlayRow {
+    width: 100%;
+}
+
+/* CrudItem's info block otherwise derives its flex basis from the full title. Give it a zero basis so it grows
+   only into the space left after the row actions, keeping the final visibility checkbox inside the panel. */
+.assetOverlayRow > div > div:first-child > :last-child > * > :first-child > :first-child {
+    flex-basis: 0;
+    width: 0;
+}
+
 /* Non-draggable built-in overlay rows: a leading spacer matching the asset rows' narrowed 1.1rem handle
    width, so built-in labels line up with the labels of draggable asset rows in this panel. */
 .builtInOverlay {
@@ -70,6 +93,7 @@
 /* Feature overlay row label: truncate long asset labels with an ellipsis instead of wrapping/shifting the
    row, and re-enable pointer events (CrudItem's .item disables them) so the full-label tooltip can hover. */
 .overlayTitle {
+    width: 100%;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;

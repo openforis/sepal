@@ -39,15 +39,16 @@ export class _ImageLayerSources extends React.Component {
     renderFeatureSource(source) {
         const {recipeId} = this.props
         const {sourceConfig: {label, asset} = {}} = source
-        // Feature sources render last, aren't draggable (no drag$), and only support removal. Show the
-        // user-facing asset name (falling back to the basename for legacy sources saved without a label);
-        // the description is dropped as it only ever held the full asset id.
+        // Feature sources render last, aren't draggable (no drag$), and only support removal. Match the image
+        // source rows: keep the short source type on the first line and let the user-facing asset name wrap on
+        // the second line without displacing the remove action.
         return source && source.id
             ? (
                 <ListItem key={source.id}>
                     <div className={styles.featureSource}>
                         <CrudItem
-                            title={assetDisplayLabel({label, asset})}
+                            title={msg(`featureLayerSources.${source.type}.type`)}
+                            description={assetDisplayLabel({label, asset})}
                             removeTooltip={msg('map.layout.layer.remove.tooltip')}
                             onRemove={() => removeFeatureLayerSource({sourceId: source.id, recipeId})}
                         />
