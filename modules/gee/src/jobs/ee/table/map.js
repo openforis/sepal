@@ -1,15 +1,15 @@
 import _ from 'lodash'
-import {forkJoin, map} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
-import {createFilter, equalityFilter} from '#sepal/ee/asset/filter'
+import {createFilter} from '#sepal/ee/asset/filter'
 import ee from '#sepal/ee/ee'
+import {propertyEqualityFilter} from '#sepal/ee/propertyFilter'
 import {filterTable} from '#sepal/ee/table'
 import {fileName} from '#sepal/path'
 
 const STYLE_PROPERTY = '__sepalStyle'
 
-const worker$ = ({
+export const worker$ = ({
     requestArgs: {tableId, columnName, columnValue, buffer, color = '#FFFFFF50', fillColor = '#FFFFFF08', pointSize, width, style, featureFilter}
 }) => {
 
@@ -23,25 +23,13 @@ const worker$ = ({
     const buffered = collection => bufferMeters
         ? collection.map(feature => feature.buffer(ee.Number(bufferMeters), bufferMeters / 10))
         : collection
-    // Rendered tiles reflect the feature filter (may be empty). Map framing uses the UNFILTERED source bounds:
-    // a feature filter matching zero features yields an empty geometry, and bounds() on an empty geometry fails
-    // the whole request. Framing on the source keeps the map usable while the filtered tiles stay empty. Legacy
-    // callers (no featureFilter) have sourceTable === filteredTable, so their framing is unchanged.
     const table = buffered(filteredTable)
-    const boundsTable = buffered(sourceTable)
-    const bounds = bufferMeters
-        ? boundsTable.geometry().bounds(bufferMeters / 10).buffer(ee.Number(bufferMeters), bufferMeters / 10).bounds(bufferMeters / 10)
-        : boundsTable.geometry().bounds()
-    const boundsPolygon = ee.List(bounds.coordinates().get(0))
     const styled = parsedStyle
         ? styleTable(table, parsedStyle)
         : legacyStyle(table, {color, fillColor, pointSize, width})
-    return forkJoin({
-        bounds: ee.getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)]), 'get bounds'),
-        eeMap: ee.getMap$(styled, null, 'create ee table map')
-    }).pipe(
-        map(({bounds, eeMap}) => ({bounds, ...eeMap}))
-    )
+    // Table layers only consume the map URL. Computing collection bounds was unused and can exceed EE memory
+    // for global tables even when featureFilter reduces the rendered collection to a small region.
+    return ee.getMap$(styled, null, 'create ee table map')
 }
 
 // Legacy callers (e.g. AOI) pass flat color/fillColor/pointSize/width. Only add pointSize/width when
@@ -92,9 +80,10 @@ const styleByColorColumn = (table, style) => {
     return styled.style({styleProperty: STYLE_PROPERTY, neighborhood: neighborhood(style)})
 }
 
-// Map distinct property values to colors. Style each value's subset separately and mosaic, which avoids
-// server-side value-to-string coercion and works for numeric or string value properties.
-const styleByValue = (table, style) => {
+// The COLORS_BY_VALUE styling entry point: given a feature table and a resolved style, returns the mosaicked
+// image that renders each listed value in its color. Each value's subset is styled separately and mosaicked,
+// which avoids server-side value-to-string coercion and works for numeric or string value properties.
+export const styleByValue = (table, style) => {
     const {valueProperty, valueColors = {}, fillOpacity} = style
     const values = Object.keys(valueColors)
     if (!values.length) {
@@ -105,7 +94,7 @@ const styleByValue = (table, style) => {
     // Render only features matching a listed value. The by-value UI has no global color, so unmatched
     // values are not drawn rather than painted in a hidden/stale default color.
     const valueImages = values.map(value =>
-        table.filter(equalityFilter(valueProperty, value)).style({
+        table.filter(propertyEqualityFilter(valueProperty, value)).style({
             ...baseStyle(style),
             color: valueColors[value],
             fillColor: withAlpha(valueColors[value], fillOpacity)
