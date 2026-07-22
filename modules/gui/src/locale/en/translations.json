@@ -1454,6 +1454,128 @@
       },
       "tabPlaceholder": "CCDC_slice"
     },
+    "pyeoAlerts": {
+      "create": "Forest Change Alerts (PyEO)",
+      "description": "Detect forest land-cover change by classifying a monitoring period against a baseline composite, with optional index confirmation and temporal-consistency filtering.",
+      "tabPlaceholder": "Forest_alerts",
+      "layers": {
+        "imageLayer": {
+          "preSets": "Presets"
+        }
+      },
+      "panel": {
+        "dates": {
+          "title": "Date ranges",
+          "button": "DAT",
+          "tooltip": "Pick the baseline window (used to build the reference composite) and the monitoring window (whose individual acquisitions are compared to the baseline).",
+          "form": {
+            "baseline": {
+              "label": "Baseline window"
+            },
+            "monitoring": {
+              "label": "Monitoring window"
+            },
+            "baselineStart": {
+              "label": "From",
+              "required": "Required",
+              "malformed": "Use YYYY-MM-DD",
+              "beforeEnd": "Baseline start must be before baseline end"
+            },
+            "baselineEnd": {
+              "label": "To",
+              "required": "Required",
+              "malformed": "Use YYYY-MM-DD",
+              "beforeMonitoring": "Baseline must end before monitoring starts"
+            },
+            "monitoringStart": {
+              "label": "From",
+              "required": "Required",
+              "malformed": "Use YYYY-MM-DD",
+              "beforeEnd": "Monitoring start must be before monitoring end"
+            },
+            "monitoringEnd": {
+              "label": "To",
+              "required": "Required",
+              "malformed": "Use YYYY-MM-DD"
+            }
+          }
+        },
+        "sources": {
+          "title": "Sources",
+          "button": "SRC",
+          "tooltip": "Pick the classification recipe and optical datasets, and choose which From→To class transitions count as change.",
+          "form": {
+            "dataSets": {
+              "label": "Optical datasets",
+              "tooltip": "One or more Sentinel-2 / Landsat collections. Bands are harmonised across the selection.",
+              "required": "Pick at least one optical dataset"
+            },
+            "cloudPercentageThreshold": {
+              "label": "Maximum scene cloud cover",
+              "tooltip": "Drop scenes whose CLOUDY_PIXEL_PERCENTAGE exceeds this value before classification.",
+              "value": "{value}%"
+            },
+            "classification": {
+              "label": "Classification recipe",
+              "tooltip": "Only Classification recipes appear here. Class IDs and labels are pulled from the selected recipe.",
+              "placeholder": "Select a Classification recipe",
+              "required": "Pick a Classification recipe"
+            },
+            "changeFromClasses": {
+              "label": "FROM classes (baseline)",
+              "tooltip": "Classes in the baseline class map that count as the 'from' side of a change. Typically forest classes.",
+              "required": "Pick at least one FROM class"
+            },
+            "changeToClasses": {
+              "label": "TO classes (monitoring)",
+              "tooltip": "Classes in any monitoring class map that count as the 'to' side of a change. A class chosen as FROM can't also be TO.",
+              "required": "Pick at least one TO class",
+              "overlap": "FROM and TO classes must not overlap"
+            },
+            "changeClasses": {
+              "noClassification": "Select a classification recipe to choose From/To classes"
+            }
+          }
+        },
+        "options": {
+          "title": "Change rules",
+          "button": "OPT",
+          "tooltip": "Optional spectral-index confirmation and the temporal-consistency threshold.",
+          "form": {
+            "useIndexGate": {
+              "label": "Require index drop",
+              "tooltip": "Require the chosen index to drop by at least the threshold (baseline − monitoring) before an alert is confirmed. Only decreases count — an index increase never confirms a change.",
+              "off": "No",
+              "on": "Yes"
+            },
+            "gateIndex": {
+              "label": "Index",
+              "tooltip": "Spectral index whose drop (baseline − monitoring) confirms an alert — a drop signals disturbance. Options depend on the selected sources.",
+              "required": "Pick an index"
+            },
+            "gateThreshold": {
+              "label": "Minimum drop",
+              "tooltip": "Minimum drop in the index (baseline − monitoring) needed to confirm an alert. Only decreases count — an index increase never confirms a change.",
+              "required": "Set a threshold",
+              "value": "{value}"
+            },
+            "minConsecutiveDetections": {
+              "label": "Minimum consecutive detections",
+              "tooltip": "A pixel only flags as an alert after this many consecutive monitoring acquisitions show the same change.",
+              "value": "{value} images"
+            }
+          }
+        }
+      },
+      "classification": {
+        "loadError": "Failed to load the classification recipe: {error}",
+        "mosaicLoadError": "Failed to load the classification's imagery: {error}",
+        "assetLoadError": "Failed to read the classification asset metadata: {error}",
+        "singleInputRequired": "This classification uses more than one input image, which isn't supported here. Choose a classification with a single input.",
+        "selectedScenesUnsupported": "This classification was trained on hand-selected scenes, which isn't supported yet. Choose a classification trained on a date range.",
+        "notDerivable": "Couldn't read the imagery dates from this classification (external asset). Set the baseline and monitoring dates manually."
+      }
+    },
     "changeAlerts": {
       "create": "Change Alerts",
       "description": "Generate change alerts using a CCDC as baseline.",

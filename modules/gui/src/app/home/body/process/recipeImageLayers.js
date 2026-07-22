@@ -12,6 +12,7 @@ import {MaskingImageLayer} from './recipe/masking/maskingImageLayer'
 import {OpticalMosaicImageLayer} from './recipe/opticalMosaic/opticalMosaicImageLayer'
 import {PhenologyImageLayer} from './recipe/phenology/phenologyImageLayer'
 import {PlanetMosaicImageLayer} from './recipe/planetMosaic/planetMosaicImageLayer'
+import {PyeoAlertsImageLayer} from './recipe/pyeoAlerts/pyeoAlertsImageLayer'
 import {RadarMosaicImageLayer} from './recipe/radarMosaic/radarMosaicImageLayer'
 import {RegressionImageLayer} from './recipe/regression/regressionImageLayer'
 import {RemappingImageLayer} from './recipe/remapping/remappingImageLayer'
@@ -33,6 +34,7 @@ export const registerRecipeImageLayers = () => {
     addRecipeImageLayer('INDEX_CHANGE', IndexChangeImageLayer)
     addRecipeImageLayer('REMAPPING', RemappingImageLayer)
     addRecipeImageLayer('CHANGE_ALERTS', ChangeAlertsImageLayer)
+    addRecipeImageLayer('PYEO_ALERTS', PyeoAlertsImageLayer)
     addRecipeImageLayer('CCDC', CCDCImageLayer)
     addRecipeImageLayer('CCDC_SLICE', CCDCSliceImageLayer)
     addRecipeImageLayer('TIME_SERIES', TimeSeriesImageLayer)

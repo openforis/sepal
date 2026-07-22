@@ -1,0 +1,19 @@
+.panel {
+    width: 30rem;
+}
+
+/* Fixed height so the From/To area occupies the same space in every state
+   (placeholder, spinner, chips) — no layout jump. Scrolls if a legend has many classes. */
+.changeClasses {
+    height: 11rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.changeClassesMessage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
