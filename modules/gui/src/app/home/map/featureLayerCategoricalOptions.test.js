@@ -1,22 +1,4 @@
-import {formatCategoricalOptionLabel} from '~/widget/imageConstraints/categoricalOption'
-
-import {buildCategoriesByProperty, categoricalLabelsByValue} from './featureLayerCategoricalOptions'
-
-describe('formatCategoricalOptionLabel', () => {
-    it('formats "value - label" when a label is present', () => {
-        expect(formatCategoricalOptionLabel({value: '1', label: 'Forest'})).toBe('1 - Forest')
-    })
-
-    it('formats the bare value when the label is missing or blank', () => {
-        expect(formatCategoricalOptionLabel({value: '1'})).toBe('1')
-        expect(formatCategoricalOptionLabel({value: '1', label: ''})).toBe('1')
-        expect(formatCategoricalOptionLabel({value: '1', label: '   '})).toBe('1')
-    })
-
-    it('formats value 0 without inventing a label', () => {
-        expect(formatCategoricalOptionLabel({value: '0'})).toBe('0')
-    })
-})
+import {buildCategoriesByProperty, categoricalLabelsByValue, valueLabelsFromEntries} from './featureLayerCategoricalOptions'
 
 describe('categoricalLabelsByValue', () => {
     it('returns only labelled values for the property', () => {
@@ -29,6 +11,17 @@ describe('categoricalLabelsByValue', () => {
     it('is empty for an unknown property or absent metadata', () => {
         expect(categoricalLabelsByValue({}, 'stratum')).toEqual({})
         expect(categoricalLabelsByValue(undefined, 'stratum')).toEqual({})
+    })
+})
+
+describe('valueLabelsFromEntries', () => {
+    it('persists only explicit label overrides, including an explicit blank', () => {
+        expect(valueLabelsFromEntries([
+            {value: '1', label: ' Woodland '},
+            {value: '2'},
+            {value: '3', label: ''},
+            {value: '  ', label: 'Ignored'}
+        ])).toEqual({'1': 'Woodland', '3': ''})
     })
 })
 
@@ -49,6 +42,20 @@ describe('buildCategoriesByProperty', () => {
         expect(result.stratum).toEqual([{value: '1', color: '#ff0000'}, {value: '2', color: '#00ff00'}])
     })
 
+    it('includes defaultStyle.valueLabels in the label-less fallback path', () => {
+        const result = buildCategoriesByProperty({
+            defaultStyle: {
+                valueProperty: 'stratum',
+                valueColors: {'1': '#ff0000', '2': '#00ff00'},
+                valueLabels: {'1': 'Forest'}
+            }
+        })
+        expect(result.stratum).toEqual([
+            {value: '1', color: '#ff0000', label: 'Forest'},
+            {value: '2', color: '#00ff00'}
+        ])
+    })
+
     it('prefers the labelled baseline over the valueColors fallback for the same property', () => {
         const result = buildCategoriesByProperty({
             categoricalProperties: {stratum: [{value: '1', color: '#ff0000', label: 'Forest'}]},
@@ -64,6 +71,28 @@ describe('buildCategoriesByProperty', () => {
             valueProperty: 'stratum'
         })
         expect(result.stratum).toEqual([{value: '1', color: '#0000ff', label: 'Forest'}])
+    })
+
+    it('overrides, adds, and explicitly clears labels through current By-value entries', () => {
+        const result = buildCategoriesByProperty({
+            categoricalProperties: {
+                stratum: [
+                    {value: '1', color: '#ff0000', label: 'Forest'},
+                    {value: '2', color: '#00ff00', label: 'Water'}
+                ]
+            },
+            entries: [
+                {value: '1', color: '#ff0000', label: 'Woodland'},
+                {value: '2', color: '#00ff00', label: ''},
+                {value: '9', color: '#0000ff', label: 'Other'}
+            ],
+            valueProperty: 'stratum'
+        })
+        expect(result.stratum).toEqual([
+            {value: '1', color: '#ff0000', label: 'Woodland'},
+            {value: '2', color: '#00ff00'},
+            {value: '9', color: '#0000ff', label: 'Other'}
+        ])
     })
 
     it('appends new (label-less) values introduced by By-value entries', () => {

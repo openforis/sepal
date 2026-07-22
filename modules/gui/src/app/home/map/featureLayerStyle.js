@@ -21,6 +21,7 @@ export const DEFAULT_FEATURE_LAYER_STYLE = {
     colorProperty: 'color',
     valueProperty: '',
     valueColors: {},
+    valueLabels: {},
     width: 1,
     fillOpacity: 0.25,
     pointSize: 4,
@@ -71,7 +72,7 @@ export const resolveFeatureLayerStyle = ({layerConfig, source} = {}) => {
 }
 
 // The full effective style with only `opacity` replaced, for persisting a row-level opacity change. Built
-// from the resolved style (not a bare {opacity}) so color mode, valueColors, width, pointSize and
+// from the resolved style (not a bare {opacity}) so color mode, valueColors/valueLabels, width, pointSize and
 // fillOpacity are all preserved rather than clobbered when the layer had no explicit style yet.
 export const withUpdatedOpacity = ({layerConfig, source, opacity}) => ({
     ...resolveFeatureLayerStyle({layerConfig, source}),

@@ -172,12 +172,20 @@ style: {
     '1': '#e41a1c',
     '2': '#377eb8'
   },
+  valueLabels: {
+    '1': 'Forest',
+    '2': 'Water'
+  },
   width: 1,
   fillOpacity: 0.25,
   pointSize: 4,
   opacity: 1
 }
 ```
+
+`valueLabels` is optional per-layer presentation metadata. It documents category values and supplies labels to
+the By-value editor and property filter without adding a label property to every feature. Source-level
+`<property>_class_names` metadata remains the baseline; entries in `valueLabels` override it for this layer.
 
 If a `COLORS_FROM_PROPERTY` value is missing or null, fall back to the global `color`.
 
@@ -314,44 +322,6 @@ Sampling Design GEE table exports already include recipe provenance through the 
 1. Automatically add Sampling Design GEE table exports as `EETableAsset` overlays after successful task completion, when there is a clean task-to-recipe metadata/update mechanism. The first fallback remains manually adding the exported EE table asset through the generic "Add Earth Engine asset" flow.
 2. Consider a collapsed overlay summary in the map-area trigger if the current button is not enough once users commonly manage several overlays.
 3. Consider click inspection later as a server-query feature. Do not build hover interaction while EE table overlays render as raster tiles.
-
-### Deferred: Shared Property Equality
-
-Finish this after the Feature Layer options panel work has settled, and land it as a separate bug-fix commit.
-
-Property equality values can cross the GUI/API boundary as strings even when the corresponding Earth Engine
-property is numeric. The same raw-value-plus-numeric-equivalent rule is needed by four paths:
-
-- EE Asset `ImageCollection` property filters (`createFilter`).
-- AOI table key selection.
-- Generic EE table selection.
-- Feature Layer filtering and By-value styling.
-
-The EE implementation should live in a generic module such as `lib/js/ee/src/propertyFilter.js`, not under
-`asset/filter.js`. Export one clearly named helper, such as `propertyEqualityFilter(property, value)`, and use
-it from all four paths. Remove local copies and newly unused imports.
-
-Required matching semantics:
-
-| Input | Earth Engine comparisons |
-| --- | --- |
-| `8` | numeric `8` |
-| `"8"` | string `"8"` or numeric `8` |
-| `"08"` | string `"08"` or numeric `8` |
-| `"forest"` | string `"forest"` only |
-| `""`, whitespace, `null`, `false` | raw value only; never numeric `0` |
-
-Do not generalize the abstraction to ordered or range filters; their UI already requires numeric values. Do
-not create duplicate `or(eq(...), eq(...))` branches when the raw value is already numeric.
-
-GUI type handling remains a separate responsibility. When the EE Asset recipe knows a property is numeric,
-its equality editor should validate and persist a number. Known string properties should remain strings,
-including numeric-looking strings. The EE helper is still required for old recipes, unknown table schemas,
-and collections with inconsistent property types.
-
-Add focused coverage for numeric zero, numeric-looking strings, non-numeric strings, blank/null values, and
-all four consumers. Preserve non-equality behavior. Suggested commit message:
-`fix(asset): preserve property types in equality filters`.
 
 ## Design Decisions
 

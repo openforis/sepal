@@ -23,16 +23,7 @@
     flex-grow: 1;
 }
 
-.optionColor {
-    flex: 0 0 auto;
-    width: 1rem;
-    height: 1rem;
-    border-radius: 2px;
-    background-color: var(--option-color);
-}
-
-.optionLabel {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.compactConstraint .range,
+.compactConstraint .singleValueInput {
+    width: 100%;
 }

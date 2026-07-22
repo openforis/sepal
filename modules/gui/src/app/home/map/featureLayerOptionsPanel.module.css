@@ -27,30 +27,39 @@
 }
 
 .entry {
-    flex-grow: 1;
-    flex-shrink: 1;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: .5rem;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+}
+
+.entryWithHex {
+    grid-template-columns: auto 5rem minmax(0, 1fr) auto;
+}
+
+.entryWithLabel {
+    grid-template-columns: auto var(--entry-value-width) minmax(0, 1fr) auto;
+}
+
+.entryWithHex.entryWithLabel {
+    grid-template-columns: auto 5rem var(--entry-value-width) minmax(0, 1fr) auto;
 }
 
 .colorText {
-    width: 5rem;
+    width: 100%;
+    min-width: 0;
 }
 
 .value {
-    flex-grow: 1;
-    flex-shrink: 1;
+    width: 100%;
     min-width: 0;
 }
 
 .entryLabel {
-    flex: 0 1 auto;
+    width: 100%;
     min-width: 0;
-    max-width: 10rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    align-self: center;
-    color: hsl(0, 0%, 60%);
-    font-size: .85em;
 }
 
 .palettePreSets {

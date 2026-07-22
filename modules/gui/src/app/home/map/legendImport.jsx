@@ -120,7 +120,7 @@ class _LegendImport extends React.Component {
                     )}
                 <Layout type='horizontal'>
                     {this.renderMapping('valueColumn')}
-                    {this.isFeatureLayerCategoryImport() ? null : this.renderMapping('labelColumn')}
+                    {this.renderMapping('labelColumn')}
                 </Layout>
             </React.Fragment>
         )
@@ -284,7 +284,7 @@ class _LegendImport extends React.Component {
                     trim(row[blueColumn.value])
                 ]).hex(),
             value: trim(row[valueColumn.value]),
-            label: trim(row[labelColumn.value])
+            label: labelColumn.value ? trim(row[labelColumn.value]) : undefined
         }))
         recipeActionBuilder('SET_IMPORTED_LEGEND_ENTRIES', {entries})
             .set('ui.importedLegendEntries', entries)
@@ -297,9 +297,6 @@ class _LegendImport extends React.Component {
         return activatable.mode || 'legend'
     }
 
-    isFeatureLayerCategoryImport() {
-        return this.importMode() === 'featureLayerValueColors'
-    }
 }
 
 const policy = () => ({_: 'allow'})

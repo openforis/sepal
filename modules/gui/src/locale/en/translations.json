@@ -619,6 +619,13 @@
         "noEntries": "No values added",
         "value": {
           "placeholder": "Value..."
+        },
+        "classLabel": {
+          "placeholder": "Optional label..."
+        },
+        "showLabels": {
+          "label": "LABELS",
+          "tooltip": "Show optional display labels for these values. Hiding labels does not remove them."
         }
       },
       "width": "Line/outline width",
@@ -6013,6 +6020,9 @@
         },
         "lessThanOrEquals": {
           "label": "≤"
+        },
+        "oneOf": {
+          "label": "One of"
         },
         "range": {
           "label": "Range"

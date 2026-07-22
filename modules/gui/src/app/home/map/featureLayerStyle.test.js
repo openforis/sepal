@@ -116,6 +116,7 @@ describe('withUpdatedOpacity', () => {
             colorMode: 'COLORS_BY_VALUE',
             valueProperty: 'stratum',
             valueColors: {'1': '#ff0000', '2': '#00ff00'},
+            valueLabels: {'1': 'Forest', '2': 'Water'},
             width: 3,
             pointSize: 8,
             fillOpacity: 0.5,

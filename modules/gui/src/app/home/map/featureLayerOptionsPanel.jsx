@@ -18,6 +18,7 @@ import {ButtonSelect} from '~/widget/buttonSelect'
 import {ColorElement} from '~/widget/colorElement'
 import {Combo} from '~/widget/combo'
 import {downloadCsv} from '~/widget/download'
+import {categoricalValueColumnWidth} from '~/widget/imageConstraints/categoricalOption'
 import {Constraint} from '~/widget/imageConstraints/constraint'
 import {Input} from '~/widget/input'
 import {Layout} from '~/widget/layout'
@@ -26,11 +27,10 @@ import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 import {RemoveButton} from '~/widget/removeButton'
 import {Slider} from '~/widget/slider'
-import {Tooltip} from '~/widget/tooltip'
 import {Widget} from '~/widget/widget'
 
-import {buildCategoriesByProperty, categoricalLabelsByValue} from './featureLayerCategoricalOptions'
-import {isFeatureLayerFilterValid, resolveFeatureLayerFilter} from './featureLayerFilter'
+import {buildCategoriesByProperty, categoricalLabelsByValue, valueLabelsFromEntries} from './featureLayerCategoricalOptions'
+import {isFeatureLayerFilterValid, newFeatureLayerConstraint, resolveFeatureLayerFilter} from './featureLayerFilter'
 import styles from './featureLayerOptionsPanel.module.css'
 import {COLOR_MODES, isBlankValue, isFeatureLayerStyleValid, normalizeValue, resolveFeatureLayerStyle, styleAfterColumnsLoaded} from './featureLayerStyle'
 import {PalettePreSets, pickColors} from './visParams/palettePreSets'
@@ -41,8 +41,15 @@ const COLOR_SECTION = 'COLOR'
 const SIZE_SECTION = 'SIZE'
 const FILTER_SECTION = 'FILTER'
 
-const valueColorsToEntries = (valueColors = {}) =>
-    Object.entries(valueColors).map(([value, color]) => ({id: uuid(), value, color}))
+const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key)
+
+const valueColorsToEntries = (valueColors = {}, valueLabels = {}) =>
+    Object.entries(valueColors).map(([value, color]) => ({
+        id: uuid(),
+        value,
+        color,
+        ...(hasOwn(valueLabels, value) ? {label: valueLabels[value]} : {})
+    }))
 
 const entriesToValueColors = entries =>
     entries.reduce((acc, {value, color}) =>
@@ -70,7 +77,7 @@ class _FeatureLayerOptionsPanel extends React.Component {
             filter,
             filterInvalidById: {},
             selectedFilterId: null,
-            entries: valueColorsToEntries(style.valueColors),
+            entries: valueColorsToEntries(style.valueColors, style.valueLabels),
             columns: source.sourceConfig.columns || null,
             columnsLoading: false
         }
@@ -100,7 +107,12 @@ class _FeatureLayerOptionsPanel extends React.Component {
             this.warnBlankValues()
             return
         }
-        this.setState({entries: entries.map(({id, color, value}) => ({id, color, value: normalizeValue(value)}))})
+        this.setState({entries: entries.map(({id, color, value, label}) => ({
+            id,
+            color,
+            value: normalizeValue(value),
+            ...(label != null ? {label} : {})
+        }))})
     }
 
     warnBlankValues() {
@@ -237,17 +249,18 @@ class _FeatureLayerOptionsPanel extends React.Component {
     }
 
     addFilter() {
-        const {columns = []} = this.state
+        const {columns = [], filter, style} = this.state
         if (!columns.length) {
             return
         }
-        const id = uuid()
-        const constraint = {
-            id,
-            image: 'feature-layer',
-            property: columns.length === 1 ? columns[0] : null,
-            operator: '='
-        }
+        const constraint = newFeatureLayerConstraint({
+            id: uuid(),
+            columns,
+            filter,
+            style,
+            categoriesByProperty: this.categoriesByProperty()
+        })
+        const {id} = constraint
         this.setState(({filter, filterInvalidById}) => ({
             filter: {...filter, constraints: [...filter.constraints, constraint]},
             filterInvalidById: {...filterInvalidById, [id]: true},
@@ -260,11 +273,14 @@ class _FeatureLayerOptionsPanel extends React.Component {
     }
 
     updateFilter(updated) {
-        this.setState(({filter}) => ({
+        this.setState(({filter, filterInvalidById}) => ({
             filter: {
                 ...filter,
                 constraints: filter.constraints.map(constraint => constraint.id === updated.id ? updated : constraint)
-            }
+            },
+            // Constraint only publishes while its shared form fields are valid. Feature Layer-specific
+            // completeness (including at least one value for "One of") is checked separately.
+            filterInvalidById: {...filterInvalidById, [updated.id]: false}
         }))
     }
 
@@ -394,6 +410,7 @@ class _FeatureLayerOptionsPanel extends React.Component {
                 </Widget>
                 <ValueColorEntries
                     entries={entries}
+                    valueProperty={style.valueProperty}
                     labelByValue={categoricalLabelsByValue(source.sourceConfig.categoricalProperties, style.valueProperty)}
                     onChange={updatedEntries => this.setState({entries: updatedEntries})}
                 />
@@ -567,10 +584,16 @@ class _FeatureLayerOptionsPanel extends React.Component {
 
     exportLegend() {
         const {activatable: {source}} = this.props
-        const {entries} = this.state
+        const {style, entries} = this.state
+        const labelByValue = categoricalLabelsByValue(source.sourceConfig.categoricalProperties, style.valueProperty)
+        const csvCell = value => `"${String(value ?? '').replaceAll('"', '""')}"`
         const csv = [
-            ['color,value'],
-            entries.map(({color, value}) => `${color},"${String(value).replaceAll('"', '\\"')}"`)
+            ['color,value,label'],
+            entries.map(entry => [
+                entry.color,
+                csvCell(entry.value),
+                csvCell(hasOwn(entry, 'label') ? entry.label : labelByValue[normalizeValue(entry.value)])
+            ].join(','))
         ].flat().join('\n')
         downloadCsv(csv, `${source.sourceConfig?.label || 'values'}.csv`)
     }
@@ -580,7 +603,11 @@ class _FeatureLayerOptionsPanel extends React.Component {
         const {style, filter, entries} = this.state
         // `style` still carries the resolved layer opacity (now edited row-level in the map-area popup, not
         // here), so writing it back preserves the current opacity rather than resetting it.
-        const nextStyle = {...style, valueColors: entriesToValueColors(entries)}
+        const nextStyle = {
+            ...style,
+            valueColors: entriesToValueColors(entries),
+            valueLabels: valueLabelsFromEntries(entries)
+        }
         const action = recipeActionBuilder(recipeId)('SET_FEATURE_LAYER_OPTIONS', {area, sourceId: source.id})
             .set(['layers.areas', area, 'featureLayers', {sourceId: source.id}, 'layerConfig.style'], nextStyle)
         filter.constraints.length
@@ -592,7 +619,14 @@ class _FeatureLayerOptionsPanel extends React.Component {
 }
 
 class ValueColorEntries extends React.Component {
-    state = {showHexColorCode: false}
+    constructor(props) {
+        super(props)
+        this.state = {
+            showHexColorCode: false,
+            showLabels: this.hasLabels(props)
+        }
+        this.labelsManuallyToggled = false
+    }
 
     render() {
         const {entries} = this.props
@@ -603,6 +637,8 @@ class ValueColorEntries extends React.Component {
 
     renderEntries() {
         const {entries} = this.props
+        const {showLabels} = this.state
+        const valueColumnWidth = categoricalValueColumnWidth(entries.map(({value}) => value))
         return (
             <Layout type='vertical-fill'>
                 <Widget
@@ -611,7 +647,7 @@ class ValueColorEntries extends React.Component {
                     label={msg('map.featureLayerStyle.valueColors.label')}
                     labelButtons={this.renderLabelButtons()}
                     framed>
-                    {entries.map(entry => this.renderEntry(entry))}
+                    {entries.map(entry => this.renderEntry(entry, {showLabels, valueColumnWidth}))}
                 </Widget>
                 <PalettePreSets
                     onSelect={colors => this.applyPreset(colors)}
@@ -623,10 +659,16 @@ class ValueColorEntries extends React.Component {
         )
     }
 
-    renderEntry(entry) {
+    renderEntry(entry, {showLabels, valueColumnWidth}) {
         const {showHexColorCode} = this.state
+        const className = [
+            styles.entry,
+            showHexColorCode ? styles.entryWithHex : null,
+            showLabels ? styles.entryWithLabel : null
+        ].filter(Boolean).join(' ')
+        const style = showLabels ? {'--entry-value-width': valueColumnWidth} : undefined
         return (
-            <Layout key={entry.id} type='horizontal-nowrap' className={styles.entry}>
+            <div key={entry.id} className={className} style={style}>
                 <ColorElement
                     color={entry.color}
                     tooltip={msg('map.legendBuilder.colors.edit.tooltip')}
@@ -648,7 +690,7 @@ class ValueColorEntries extends React.Component {
                     autoFocus={!entry.value}
                     onChange={value => this.updateEntry(entry, {value})}
                 />
-                {this.renderEntryLabel(entry)}
+                {showLabels ? this.renderEntryLabel(entry) : null}
                 <RemoveButton
                     chromeless
                     shape='circle'
@@ -657,28 +699,30 @@ class ValueColorEntries extends React.Component {
                     tooltipPlacement='left'
                     onRemove={() => this.removeEntry(entry)}
                 />
-            </Layout>
+            </div>
         )
     }
 
-    // Read-only class label for the entry's current value, when the source's categorical metadata has one.
-    // Looked up fresh on each value change; hidden entirely when there is no match, so no empty placeholder is
-    // left behind. Long labels truncate (CSS) with the full text in a tooltip. Labels are not editable here.
+    // Labels are editable presentation metadata. A source-provided class name is the fallback until the user
+    // edits this field; setting even an empty label creates an explicit per-layer override.
     renderEntryLabel(entry) {
         const {labelByValue = {}} = this.props
-        const label = labelByValue[normalizeValue(entry.value)]
-        if (label == null || `${label}`.trim() === '') {
-            return null
-        }
+        const label = hasOwn(entry, 'label')
+            ? entry.label
+            : labelByValue[normalizeValue(entry.value)] || ''
         return (
-            <Tooltip msg={label} placement='top'>
-                <span className={styles.entryLabel}>{label}</span>
-            </Tooltip>
+            <Input
+                className={styles.entryLabel}
+                value={label}
+                placeholder={msg('map.featureLayerStyle.valueColors.classLabel.placeholder')}
+                autoComplete='off'
+                onChange={label => this.updateEntry(entry, {label})}
+            />
         )
     }
 
     renderLabelButtons() {
-        const {showHexColorCode} = this.state
+        const {showHexColorCode, showLabels} = this.state
         return [
             <Button
                 key={'showHexColorCode'}
@@ -688,8 +732,41 @@ class ValueColorEntries extends React.Component {
                 air='less'
                 label={'HEX'}
                 onClick={() => this.setState({showHexColorCode: !showHexColorCode})}
+            />,
+            <Button
+                key='showLabels'
+                look={showLabels ? 'selected' : 'default'}
+                size='small'
+                shape='pill'
+                air='less'
+                label={msg('map.featureLayerStyle.valueColors.showLabels.label')}
+                tooltip={msg('map.featureLayerStyle.valueColors.showLabels.tooltip')}
+                onClick={() => {
+                    this.labelsManuallyToggled = true
+                    this.setState({showLabels: !showLabels})
+                }}
             />
         ]
+    }
+
+    componentDidUpdate(prevProps) {
+        const propertyChanged = prevProps.valueProperty !== this.props.valueProperty
+        if (propertyChanged) {
+            this.labelsManuallyToggled = false
+            const showLabels = this.hasLabels(this.props)
+            if (showLabels !== this.state.showLabels) {
+                this.setState({showLabels})
+            }
+        } else if (!this.labelsManuallyToggled && !this.state.showLabels && this.hasLabels(this.props)) {
+            // CSV imports and asynchronously supplied source metadata should reveal their labels automatically.
+            this.setState({showLabels: true})
+        }
+    }
+
+    hasLabels({entries = [], labelByValue = {}} = {}) {
+        const hasText = label => label != null && `${label}`.trim() !== ''
+        return Object.values(labelByValue).some(hasText)
+            || entries.some(entry => hasOwn(entry, 'label') && hasText(entry.label))
     }
 
     updateEntry(entry, updates) {

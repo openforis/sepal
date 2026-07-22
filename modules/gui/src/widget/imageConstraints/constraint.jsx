@@ -10,8 +10,8 @@ import {Layout} from '~/widget/layout'
 import {Legend} from '~/widget/legend/legend'
 import {ListItem} from '~/widget/listItem'
 
-import {formatCategoricalOptionLabel, reconciledCategoricalValue} from './categoricalOption'
 import styles from './constraint.module.css'
+import {isValidPropertyEqualityValue, propertyEqualityValue} from './propertyEquality'
 
 const fields = {
     image: new Form.Field()
@@ -37,7 +37,14 @@ const fields = {
         .notBlank(),
     value: new Form.Field()
         .skip((_value, {operator}) => !['<', '≤', '>', '≥', '='].includes(operator))
-        .notBlank(),
+        .notBlank()
+        // Property equality against a KNOWN-numeric property must be a finite number, so malformed text can't
+        // persist as NaN. `propertyType` is a transient UI field (see syncPropertyType); it is only 'number'
+        // for a property-equality constraint on a typed numeric property, so every other case is unaffected.
+        .predicate(
+            (value, {operator, propertyType}) => isValidPropertyEqualityValue(operator, propertyType, value),
+            'fieldValidation.number'
+        ),
     from: new Form.Field()
         .skip((_value, {operator}) => operator !== 'range')
         .number()
@@ -48,7 +55,11 @@ const fields = {
         .notBlank(),
     fromInclusive: new Form.Field(),
     toInclusive: new Form.Field(),
-    selectedClasses: new Form.Field()
+    selectedClasses: new Form.Field(),
+    // Transient UI-only field: the type of the currently selected property ('number'/'string'/'unknown'),
+    // derived from the images schema (see syncPropertyType). Drives type-aware equality validation and
+    // conversion. Never written into the persisted constraint.
+    propertyType: new Form.Field()
 }
 
 class _Constraint extends React.Component {
@@ -66,6 +77,11 @@ class _Constraint extends React.Component {
         {value: '=', label: msg('widget.imageConstraints.operator.equals.label')},
         {value: 'range', label: msg('widget.imageConstraints.operator.range.label')},
     ]
+
+    categoricalOperatorOption = {
+        value: 'class',
+        label: msg('widget.imageConstraints.operator.oneOf.label')
+    }
 
     render() {
         const {selected, onClick, onRemove} = this.props
@@ -90,13 +106,13 @@ class _Constraint extends React.Component {
         const {images, inlineValue, inputs: {bit, operator}} = this.props
         if (inlineValue && !this.applyOnBand()) {
             return (
-                <Layout>
+                <Layout className={styles.compactConstraint}>
                     {images.length !== 1 ? this.renderImage() : null}
-                    {this.renderProperty()}
                     <Layout type='horizontal-nowrap' spacing='compact' className={styles.comparison}>
+                        {this.renderProperty()}
                         {this.renderOperator()}
-                        {this.renderValue()}
                     </Layout>
+                    {this.renderValue()}
                 </Layout>
             )
         }
@@ -187,7 +203,7 @@ class _Constraint extends React.Component {
     }
 
     renderProperty() {
-        const {images, inputs: {image, property}} = this.props
+        const {images, categoriesByProperty, inputs: {image, property, operator, selectedClasses}} = this.props
         const propertyOptions = image.value
             ? images
                 .find(({id}) => id === image.value).properties
@@ -200,6 +216,16 @@ class _Constraint extends React.Component {
                 input={property}
                 options={propertyOptions}
                 className={styles.band}
+                onChange={categoriesByProperty
+                    ? ({value}) => {
+                        selectedClasses.set([])
+                        if (this.categoricalOptions(value)) {
+                            operator.set('class')
+                        } else if (operator.value === 'class') {
+                            operator.set('=')
+                        }
+                    }
+                    : null}
             />
         )
     }
@@ -210,7 +236,9 @@ class _Constraint extends React.Component {
             <Form.Combo
                 label={msg('widget.imageConstraints.operator.label')}
                 input={operator}
-                options={this.operatorOptions}
+                options={this.categoricalOptions()
+                    ? [...this.operatorOptions, this.categoricalOperatorOption]
+                    : this.operatorOptions}
                 className={styles.operator}
             />
         )
@@ -244,59 +272,45 @@ class _Constraint extends React.Component {
         switch (operator.value) {
             case 'class': return this.renderClassSelector()
             case 'range': return this.renderRangeSelector()
-            default: return this.categoricalOptions()
-                ? this.renderCategoricalValueSelector()
-                : this.renderSingleValueSelector()
+            default: return this.renderSingleValueSelector()
         }
     }
 
-    // Categorical options for the currently selected property, or null. Opt-in: only for a property-equality
-    // constraint whose selected property carries category metadata (passed by the panel). Every other caller
-    // (asset filter/mask) omits `categoriesByProperty`, so their behavior is unchanged.
-    categoricalOptions() {
-        const {applyOn, categoriesByProperty, inputs: {operator, property}} = this.props
-        if (applyOn !== 'properties' || operator.value !== '=' || !categoriesByProperty) {
+    // Categorical options for a property, or null. Opt-in: callers provide categoriesByProperty; band
+    // constraints continue to read their categories from the image specification.
+    categoricalOptions(propertyName) {
+        const {applyOn, categoriesByProperty, inputs: {property}} = this.props
+        if (applyOn !== 'properties' || !categoriesByProperty) {
             return null
         }
-        const options = categoriesByProperty[property.value]
+        const options = categoriesByProperty[propertyName === undefined ? property.value : propertyName]
         return options && options.length ? options : null
     }
 
-    renderCategoricalValueSelector() {
-        const {inputs: {value}} = this.props
-        const options = this.categoricalOptions().map(category => {
-            const label = formatCategoricalOptionLabel(category)
-            return {
-                value: category.value,
-                label,
-                render: () => <CategoricalOption color={category.color} label={label}/>
-            }
-        })
-        return (
-            <Form.Combo
-                label={msg('widget.imageConstraints.value.label')}
-                input={value}
-                options={options}
-                autoFocus
-                className={styles.singleValueInput}
-            />
-        )
-    }
-
     renderClassSelector() {
-        const {inputs: {band, selectedClasses}} = this.props
-        const {imageSpec} = this.state
-        if (!imageSpec) {
-            return null
-        }
-        const {legendEntries = []} = imageSpec.bands.find(({name}) => name === band.value) || {}
+        const {inputs: {selectedClasses}} = this.props
+        const entries = this.categoryEntries()
         return (
             <Legend
-                entries={legendEntries}
+                entries={entries}
+                label={this.applyOnBand() ? null : msg('widget.imageConstraints.value.label')}
                 selected={selectedClasses.value}
                 onSelectionChange={updatedSelection => selectedClasses.set([...updatedSelection])}
             />
         )
+    }
+
+    categoryEntries() {
+        const {inputs: {band}} = this.props
+        const {imageSpec} = this.state
+        if (!this.applyOnBand()) {
+            return this.categoricalOptions() || []
+        }
+        if (!imageSpec) {
+            return []
+        }
+        const {legendEntries = []} = imageSpec.bands.find(({name}) => name === band.value) || {}
+        return legendEntries
     }
 
     renderRangeSelector() {
@@ -361,27 +375,51 @@ class _Constraint extends React.Component {
         toInclusive.set(toBooleanButton('toInclusive', false))
         value.set(constraint.value)
         selectedClasses.set(constraint.selectedClasses || [])
-        this.updateConstraint()
+        const scheduledTypeChange = this.syncPropertyType()
         this.putImageSpecInState()
+        // If the property type is still settling, defer the first publish to the follow-up update, so the
+        // initial constraint is never published with a stale type.
+        if (!scheduledTypeChange) {
+            this.updateConstraint()
+        }
     }
 
     componentDidUpdate() {
-        this.reconcileCategoricalValue()
+        // propertyType.set() applies on the next render, so publishing now would use the previous type and
+        // could transiently emit a wrongly typed constraint when the property changes. Defer the rest of the
+        // cycle until the new type is applied.
+        if (this.syncPropertyType()) {
+            return
+        }
         this.validate()
         this.updateConstraint()
         this.putImageSpecInState()
     }
 
-    // Keep the selected value consistent with the categorical options. A persisted numeric or string equality
-    // value resolves to the matching option (so "1"/1 select the "1" option); a value that is not a valid
-    // option for the newly selected categorical property is cleared, so no invisible stale selection survives
-    // a property change. Guarded so a stable value does not loop.
-    reconcileCategoricalValue() {
-        const {inputs: {value}} = this.props
-        const reconciled = reconciledCategoricalValue(value.value, this.categoricalOptions())
-        if (reconciled.change) {
-            value.set(reconciled.value)
+    // Mirror the selected property's schema type into the transient `propertyType` field, so equality
+    // validation/conversion react to it - and so switching property (numeric<->string) immediately clears
+    // stale validation and revalidates the current value. Returns true when it SCHEDULES a type change (the
+    // value applies on the next render), so the caller can defer publishing until the type has settled. Only
+    // meaningful for the properties path; guarded so a stable type does not loop. The Feature Layer path types
+    // columns as 'unknown', preserving raw strings.
+    syncPropertyType() {
+        const {applyOn, inputs: {property, propertyType}} = this.props
+        if (applyOn !== 'properties') {
+            return false
         }
+        const type = this.propertyTypeOf(property.value)
+        if (propertyType.value !== type) {
+            propertyType.set(type)
+            return true
+        }
+        return false
+    }
+
+    propertyTypeOf(name) {
+        const {images, inputs: {image}} = this.props
+        const spec = images.find(({id}) => id === image.value)
+        const property = spec && (spec.properties || []).find(({name: propertyName}) => propertyName === name)
+        return property ? property.type : undefined
     }
 
     applyOnBand() {
@@ -429,15 +467,10 @@ class _Constraint extends React.Component {
     }
 
     toSelectedClassesDescription() {
-        const {inputs: {band, selectedClasses}} = this.props
-        const {imageSpec} = this.state
-        if (!imageSpec) {
-            return null
-        }
-        const {legendEntries = []} = imageSpec.bands.find(({name}) => name === band.value) || {}
-        return legendEntries
+        const {inputs: {selectedClasses}} = this.props
+        return this.categoryEntries()
             .filter(({value}) => selectedClasses.value.includes(value))
-            .map(({label}) => label).join(', ') || 'no selection'
+            .map(({value, label}) => this.applyOnBand() ? label : label || value).join(', ') || 'no selection'
     }
 
     toConstraint() {
@@ -486,9 +519,12 @@ class _Constraint extends React.Component {
     }
 
     extractValue() {
-        const {applyOn, inputs: {operator, value}} = this.props
+        const {applyOn, inputs: {operator, value, propertyType}} = this.props
+        // Property equality is type-aware: a known-numeric property persists a number (so "08" -> 8), a known
+        // string stays a string ("08" -> "08"), and an unknown type keeps the raw string (backward-compatible,
+        // and the categorical Feature Layer path where the raw value is already the exact category value).
         return applyOn === 'properties' && operator.value === '='
-            ? value.value
+            ? propertyEqualityValue(propertyType.value, value.value)
             : parseFloat(value.value)
     }
 
@@ -507,12 +543,6 @@ class _Constraint extends React.Component {
         })
     }
 }
-
-const CategoricalOption = ({color, label}) =>
-    <Layout type='horizontal-nowrap' spacing='compact'>
-        <span className={styles.optionColor} style={{'--option-color': color}}/>
-        <span className={styles.optionLabel}>{label}</span>
-    </Layout>
 
 const inclButton = input =>
     <Form.Buttons

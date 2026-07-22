@@ -11,8 +11,24 @@ export const categoricalLabelsByValue = (categoricalProperties = {}, property) =
         {}
     )
 
-const optionsFromValueColors = (valueColors = {}) =>
-    Object.entries(valueColors).map(([value, color]) => ({value: normalizeValue(value), color}))
+// Per-layer label overrides derived from editable By-value rows. Omit untouched labels so source class metadata
+// remains the baseline; preserve an explicit blank so users can suppress a source label.
+export const valueLabelsFromEntries = (entries = []) =>
+    entries.reduce((acc, entry) => {
+        const value = normalizeValue(entry.value)
+        return value === '' || !Object.prototype.hasOwnProperty.call(entry, 'label')
+            ? acc
+            : {...acc, [value]: `${entry.label ?? ''}`.trim()}
+    }, {})
+
+const optionsFromValueColors = (valueColors = {}, valueLabels = {}) =>
+    Object.entries(valueColors).map(([value, color]) => ({
+        value: normalizeValue(value),
+        color,
+        ...(Object.prototype.hasOwnProperty.call(valueLabels, value) && `${valueLabels[value]}`.trim() !== ''
+            ? {label: valueLabels[value]}
+            : {})
+    }))
 
 // The categorical options offered to the Feature Layer filter editor, keyed by property. Combines, in order:
 //   1. sourceConfig.categoricalProperties - the labelled baseline parsed from the asset's `*_class_*` metadata;
@@ -20,8 +36,8 @@ const optionsFromValueColors = (valueColors = {}) =>
 //      when no categoricalProperties baseline exists for that property (older saved sources);
 //   3. the current in-panel Color > By value entries for the active valueProperty, so freshly edited colors -
 //      and any values the user added - appear in the filter immediately.
-// Blank By-value entries are excluded. An edited entry overrides the baseline color for the same value while
-// keeping the baseline's label. Machine values stay raw normalized strings; colors/labels are display-only.
+// Blank By-value entries are excluded. An edited entry overrides the baseline color and can override its label.
+// Machine values stay raw normalized strings; colors/labels are display-only.
 export const buildCategoriesByProperty = ({categoricalProperties = {}, defaultStyle, entries = [], valueProperty} = {}) => {
     const byProperty = {}
     Object.entries(categoricalProperties).forEach(([property, options]) => {
@@ -29,7 +45,7 @@ export const buildCategoriesByProperty = ({categoricalProperties = {}, defaultSt
     })
     const fallbackProperty = defaultStyle && defaultStyle.valueProperty
     if (fallbackProperty && !byProperty[fallbackProperty]) {
-        const options = optionsFromValueColors(defaultStyle.valueColors)
+        const options = optionsFromValueColors(defaultStyle.valueColors, defaultStyle.valueLabels)
         if (options.length) {
             byProperty[fallbackProperty] = options
         }
@@ -40,8 +56,9 @@ export const buildCategoriesByProperty = ({categoricalProperties = {}, defaultSt
     return byProperty
 }
 
-// Overlay the in-panel By-value entries onto a property's baseline options: override an existing value's color
-// (keeping its baseline label), append new values (label-less), and drop blank entries.
+// Overlay the in-panel By-value entries onto a property's baseline options. A present `entry.label` is an
+// explicit override (blank removes a baseline label); an absent label keeps the baseline. New values may carry
+// their own label. Blank values are dropped.
 const mergeEntries = (baseline, entries) => {
     const merged = baseline.map(option => ({...option}))
     const indexByValue = new Map(merged.map((option, index) => [option.value, index]))
@@ -51,8 +68,10 @@ const mergeEntries = (baseline, entries) => {
             return
         }
         const existing = indexByValue.has(value) ? merged[indexByValue.get(value)] : null
-        const option = existing && existing.label != null
-            ? {value, color: entry.color, label: existing.label}
+        const entryOverridesLabel = Object.prototype.hasOwnProperty.call(entry, 'label')
+        const label = entryOverridesLabel ? entry.label : existing && existing.label
+        const option = label != null && `${label}`.trim() !== ''
+            ? {value, color: entry.color, label}
             : {value, color: entry.color}
         if (indexByValue.has(value)) {
             merged[indexByValue.get(value)] = option
