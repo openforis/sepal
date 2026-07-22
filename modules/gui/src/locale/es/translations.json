@@ -385,7 +385,8 @@
     "table": {
       "error": {
         "notATable": "No es una tabla",
-        "notFound": "Tabla no encontrada"
+        "notFound": "Tabla no encontrada",
+        "tooManyValues": ""
       }
     }
   },
@@ -585,6 +586,83 @@
       "copy": "Copiar al portapapeles",
       "coordinatesCopied": "Coordenadas copiadas al portapapeles"
     },
+    "featureLayer": {
+      "toggle": {
+        "show": "",
+        "hide": ""
+      }
+    },
+    "featureLayerStyle": {
+      "title": "",
+      "tooltip": "",
+      "colorMode": {
+        "label": "",
+        "ONE_COLOR": "",
+        "COLORS_FROM_PROPERTY": "",
+        "COLORS_BY_VALUE": ""
+      },
+      "color": "Color",
+      "colorProperty": {
+        "label": ""
+      },
+      "valueProperty": {
+        "label": ""
+      },
+      "property": {
+        "placeholder": ""
+      },
+      "valueColors": {
+        "label": "",
+        "loadDistinctValues": "",
+        "loadError": "",
+        "blankValues": "",
+        "noEntries": "",
+        "value": {
+          "placeholder": ""
+        },
+        "classLabel": {
+          "placeholder": ""
+        },
+        "showLabels": {
+          "label": "",
+          "tooltip": ""
+        }
+      },
+      "width": "",
+      "fillOpacity": "",
+      "pointSize": "",
+      "pixelValue": "",
+      "percentValue": "",
+      "sections": {
+        "color": "Color",
+        "filter": "Filtro",
+        "sizeAndOpacity": "",
+        "completeCurrent": ""
+      },
+      "filter": {
+        "add": {
+          "label": ""
+        },
+        "match": {
+          "label": "",
+          "all": {
+            "label": "Todo",
+            "tooltip": ""
+          },
+          "any": {
+            "label": "",
+            "tooltip": ""
+          }
+        },
+        "noFilters": "",
+        "noProperties": "",
+        "source": ""
+      },
+      "opacity": "",
+      "opacityControl": {
+        "tooltip": ""
+      }
+    },
     "legendBuilder": {
       "addEntry": {
         "tooltip": "Añadir entrada a leyenda"
@@ -688,6 +766,8 @@
             "description": "Añadir un asset Google Earth Engine",
             "form": {
               "asset.label": "Asset de Earth Engine",
+              "label.label": "Etiqueta",
+              "label.placeholder": "",
               "loadError": "No se pudo leer el asset"
             },
             "presets": ""
@@ -819,6 +899,10 @@
     "Aoi": {
       "type": "",
       "description": "Área de interés"
+    },
+    "EETableAsset": {
+      "type": "Tabla EE",
+      "description": ""
     },
     "Labels": {
       "type": "Etiquetas",
@@ -2568,6 +2652,14 @@
                 "label": "",
                 "placeholder": "",
                 "tooltip": ""
+              },
+              "normalizeInput": {
+                "label": "",
+                "tooltip": "",
+                "options": {
+                  "true.label": "",
+                  "false.label": ""
+                }
               }
             }
           }
@@ -3200,6 +3292,31 @@
             },
             "section": {
               "required": "Debes seleccionar una sección"
+            },
+            "asset": {
+              "asset": {
+                "label": "",
+                "placeholder": "",
+                "required": ""
+              },
+              "title": ""
+            },
+            "recipe": {
+              "recipe": {
+                "label": "",
+                "placeholder": "Selecciona un flujo de trabajo...",
+                "required": ""
+              },
+              "title": ""
+            },
+            "source": {
+              "title": "",
+              "label": "",
+              "type": {
+                "ASSET": "Asset",
+                "RECIPE": "",
+                "required": ""
+              }
             }
           },
           "title": "Área de interés",
@@ -4751,6 +4868,432 @@
         }
       },
       "tabPlaceholder": "Series_temporales"
+    },
+    "samplingDesign": {
+      "bands": {},
+      "create": "",
+      "description": "",
+      "calculationError": {
+        "retryOnline": "",
+        "submitBatchAgain": "",
+        "useBatch": ""
+      },
+      "retrieve": {
+        "invalid": "",
+        "invalid.requiresUpdate": "",
+        "invalid.noStrata": "",
+        "invalid.strataAreaMissing": "",
+        "invalid.proportionsRequired": "",
+        "invalid.noAllocation": "",
+        "invalid.sampleSizeInvalid": "",
+        "invalid.minSamplesPerStratumInvalid": "",
+        "invalid.areaMissing": "",
+        "invalid.noTaskAllocation": "",
+        "invalid.seedMissing": "",
+        "invalid.minDistanceBelowGrid": ""
+      },
+      "panel": {
+        "stratification": {
+          "button": "",
+          "form": {
+            "skip": {
+              "label": "",
+              "tooltip": "",
+              "message": ""
+            },
+            "type": {
+              "label": "",
+              "ASSET": {
+                "label": "Asset",
+                "tooltip": ""
+              },
+              "RECIPE": {
+                "label": "",
+                "tooltip": ""
+              },
+              "required": ""
+            },
+            "stratification": {
+              "label": "",
+              "placeholder": "",
+              "required": ""
+            },
+            "asset": {
+              "label": "",
+              "placeholder": "",
+              "required": ""
+            },
+            "recipe": {
+              "label": "",
+              "placeholder": "Selecciona un flujo de trabajo...",
+              "required": ""
+            },
+            "band": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": "",
+              "required": ""
+            },
+            "scale": {
+              "label": "Escala",
+              "placeholder": "",
+              "required": "",
+              "suffix": "",
+              "tooltip": ""
+            },
+            "crs": {
+              "label": "",
+              "placeholder": "",
+              "required": "",
+              "tooltip": ""
+            },
+            "crsTransform": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": "",
+              "invalid": ""
+            },
+            "hexButton": {
+              "label": "",
+              "tooltip": ""
+            },
+            "strata": {
+              "label": "",
+              "required": "",
+              "select": "",
+              "loading": "",
+              "noData": "",
+              "error": {
+                "eeOnline": "",
+                "eeBatch": "",
+                "genericWithDetail": "",
+                "generic": ""
+              },
+              "table": {
+                "value": "Valor",
+                "area": "",
+                "weight": "",
+                "total": ""
+              }
+            },
+            "eeStrategy": {
+              "batch": {
+                "label": "",
+                "tooltip": ""
+              },
+              "online": {
+                "label": "",
+                "tooltip": ""
+              }
+            }
+          },
+          "unstratified": "Área de interés",
+          "title": "",
+          "tooltip": ""
+        },
+        "proportions": {
+          "button": "",
+          "form": {
+            "skip": {
+              "label": "",
+              "tooltip": "",
+              "message": ""
+            },
+            "manual": {
+              "label": "",
+              "tooltip": ""
+            },
+            "anticipationStrategy": {
+              "label": "",
+              "MANUAL": {
+                "label": "",
+                "tooltip": ""
+              },
+              "PROBABILITY": {
+                "label": "",
+                "tooltip": ""
+              },
+              "CATEGORICAL": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "image": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": ""
+            },
+            "type": {
+              "label": "",
+              "ASSET": {
+                "label": "Asset",
+                "tooltip": ""
+              },
+              "RECIPE": {
+                "label": "",
+                "tooltip": ""
+              },
+              "required": ""
+            },
+            "asset": {
+              "label": "",
+              "placeholder": "",
+              "required": ""
+            },
+            "recipe": {
+              "label": "",
+              "placeholder": "Selecciona un flujo de trabajo...",
+              "required": ""
+            },
+            "band": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": "",
+              "required": ""
+            },
+            "targetClass": {
+              "label": "Clase",
+              "placeholder": "",
+              "tooltip": "",
+              "required": "",
+              "numeric": "",
+              "loadValues": "",
+              "loadingValues": "",
+              "loadError": ""
+            },
+            "scale": {
+              "label": "Escala",
+              "placeholder": "",
+              "required": "",
+              "suffix": "",
+              "tooltip": ""
+            },
+            "overallProportion": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": "",
+              "suffix": ""
+            },
+            "strataProportion": {
+              "label": "",
+              "error": {
+                "eeOnline": "",
+                "eeBatch": "",
+                "genericWithDetail": "",
+                "generic": ""
+              }
+            },
+            "anticipatedProportions": {
+              "required": "",
+              "header": ""
+            },
+            "eeStrategy": {
+              "batch": {
+                "label": "",
+                "tooltip": ""
+              },
+              "online": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "proportion": {
+              "range": ""
+            }
+          },
+          "info": "",
+          "title": "",
+          "tooltip": ""
+        },
+        "sampleAllocation": {
+          "button": "",
+          "form": {
+            "manual": {
+              "label": "",
+              "tooltip": ""
+            },
+            "estimateSampleSize": {
+              "label": "",
+              "false": {
+                "label": "",
+                "tooltip": ""
+              },
+              "true": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "confidenceLevel": {
+              "label": "",
+              "placeholder": "",
+              "required": "",
+              "suffix": "",
+              "tooltip": "",
+              "range": ""
+            },
+            "sampleSize": {
+              "label": "",
+              "placeholder": "",
+              "required": "",
+              "tooltip": "",
+              "notEnough": ""
+            },
+            "marginOfError": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": ""
+            },
+            "minSamplesPerStratum": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": ""
+            },
+            "relativeMarginOfError": {
+              "label": "",
+              "tooltip": "",
+              "false": {
+                "label": ""
+              },
+              "true": {
+                "label": ""
+              }
+            },
+            "allocationStrategy": {
+              "label": "",
+              "tooltip": "",
+              "MANUAL": {
+                "label": "",
+                "tooltip": ""
+              },
+              "PROPORTIONAL": {
+                "label": "",
+                "tooltip": ""
+              },
+              "EQUAL": {
+                "label": "",
+                "tooltip": ""
+              },
+              "OPTIMAL": {
+                "label": "",
+                "tooltip": ""
+              },
+              "POWER": {
+                "label": "",
+                "tooltip": ""
+              },
+              "BALANCED": {
+                "label": "Equilibrado",
+                "tooltip": ""
+              }
+            },
+            "powerTuningConstant": {
+              "label": "",
+              "placeholder": "",
+              "tooltip": "",
+              "range": ""
+            },
+            "allocation": {
+              "label": "",
+              "tooBig": "",
+              "table": {
+                "marginOfError": "",
+                "relativeMarginOfError": "",
+                "samples": "",
+                "samplesTooltip": "",
+                "overall": ""
+              }
+            }
+          },
+          "title": "",
+          "tooltip": ""
+        },
+        "sampleArrangement": {
+          "button": "",
+          "form": {
+            "arrangementStrategy": {
+              "label": "",
+              "tooltip": "",
+              "RANDOM": {
+                "label": "",
+                "tooltip": ""
+              },
+              "SYSTEMATIC": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "sampleSizeStrategy": {
+              "label": "",
+              "tooltip": "",
+              "OVER": {
+                "label": "",
+                "tooltip": ""
+              },
+              "CLOSEST": {
+                "label": "Más cerca",
+                "tooltip": ""
+              },
+              "EXACT": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "gridOrigin": {
+              "label": "",
+              "tooltip": "",
+              "FIXED": {
+                "label": "",
+                "tooltip": ""
+              },
+              "SEEDED": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "crs": {
+              "tooltip": ""
+            },
+            "crsTransform": {
+              "tooltip": "",
+              "invalid": ""
+            },
+            "minDistance": {
+              "label": "Distancia mínima",
+              "placeholder": "",
+              "tooltip": {
+                "gridFloor": "",
+                "optional": ""
+              },
+              "belowGridFloor": ""
+            },
+            "seed": {
+              "label": "Semilla",
+              "placeholder": "Semilla...",
+              "tooltip": "Semilla de aleatorización"
+            }
+          },
+          "title": "",
+          "tooltip": ""
+        },
+        "retrieve": {
+          "form": {
+            "fileFormat": {
+              "label": "",
+              "CSV": "",
+              "GeoJSON": "",
+              "KML": "",
+              "KMZ": "",
+              "SHP": ""
+            }
+          }
+        }
+      },
+      "tabPlaceholder": "",
+      "crs": {
+        "easeGrid2Global": "",
+        "easeGrid2North": "",
+        "easeGrid2South": ""
+      }
     }
   },
   "sources": {
@@ -4852,7 +5395,14 @@
       "recipeType": "",
       "recipeId": "",
       "creationTime": "",
-      "updateTime": "",
+      "updateTime": {
+        "lastProgress": "",
+        "cancelRequested": "",
+        "completed": "",
+        "failed": "",
+        "canceled": "",
+        "lastUpdate": "Última actualización"
+      },
       "duration": "",
       "description": "Descripción",
       "workspacePath": "",
@@ -4897,6 +5447,7 @@
         "PHENOLOGY": "",
         "MASKING": "",
         "ASSET_MOSAIC": "",
+        "SAMPLING_DESIGN": "",
         "RECIPE_REF": "",
         "ASSET": "Asset"
       }
@@ -4923,6 +5474,57 @@
         "tiling": ""
       }
     },
+    "samplingDesign": {
+      "random": {
+        "progress": {
+          "prepareCandidates": "",
+          "checkCandidates": "",
+          "exportFinal": ""
+        }
+      },
+      "systematic": {
+        "progress": {
+          "prepareBaseCandidates": "",
+          "checkBaseCandidates": "",
+          "prepareRepairCandidates": "",
+          "checkRepairCandidates": "",
+          "exportFinal": ""
+        },
+        "grid": {
+          "unsupportedCrs": "",
+          "invalidTransform": "",
+          "invalidScale": "",
+          "minDistanceBelowGrid": "",
+          "invalidMinDistance": ""
+        }
+      },
+      "preflight": {
+        "invalidMinimum": "",
+        "noStrata": "",
+        "belowStatisticalMinimum": "",
+        "unstratifiedBelowMinimum": "",
+        "belowConfiguredMinimum": ""
+      },
+      "underproduction": {
+        "message": "",
+        "diagnosis": {
+          "statisticalMinimum": "",
+          "statisticalMinimumNoDistance": "",
+          "configuredMinimum": "",
+          "requestedAllocation": ""
+        },
+        "reduceSystematicMinDistance": "",
+        "atGridFloor": "",
+        "switchToRandom": "",
+        "reviseStratification": "",
+        "enlargeOrMerge": "",
+        "lowerConfiguredMinimum": "",
+        "minimumNotSufficient": "",
+        "reduceRequestedOrClosest": "",
+        "avoidEqualAllocation": "",
+        "reduceRequestedRandom": ""
+      }
+    },
     "status": {
       "canceled": "Detenido",
       "canceling": "Deteniendo",
@@ -4930,6 +5532,7 @@
       "EEException": "",
       "executing": "Ejecutando...",
       "failed": "",
+      "failedGeneric": "",
       "initializing": "Iniciando..."
     }
   },
@@ -5310,6 +5913,7 @@
       },
       "loadError": "",
       "taskPending": "",
+      "validating": "",
       "replace": {
         "label": "",
         "tooltip": ""
@@ -5415,6 +6019,9 @@
           "label": ""
         },
         "lessThanOrEquals": {
+          "label": ""
+        },
+        "oneOf": {
           "label": ""
         },
         "range": {
