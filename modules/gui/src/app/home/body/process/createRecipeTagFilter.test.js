@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest'
 
 import {recipeTypeMatchesTagFilter} from './createRecipeTagFilter'
 
+// Regression coverage for #340 — Add recipe tag chips must be single-select, not AND multi-select.
 describe('recipeTypeMatchesTagFilter', () => {
     const changeAlerts = {id: 'CHANGE_ALERTS', tags: ['CHANGE', 'ALERTS']}
     const opticalMosaic = {id: 'MOSAIC', tags: ['MOSAIC']}
