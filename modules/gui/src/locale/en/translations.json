@@ -1463,6 +1463,10 @@
           "preSets": "Presets"
         }
       },
+      "error": {
+        "noImages": "No monitoring images match the recipe configuration. Update the dates or sources.",
+        "noChangeClasses": "Select at least one \"From\" class and one \"To\" class in the change-detection options."
+      },
       "panel": {
         "dates": {
           "title": "Date ranges",
