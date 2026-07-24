@@ -53,16 +53,17 @@ The sampling frame is the geographic coverage eligible before the placement rule
 The AOI defines the outer boundary, not the full frame in every mode. Masked or omitted areas have no chance of
 selection and are not represented by the sample.
 
-## Grid and CRS Policy
+## Current Grid and CRS Policy
 
-- Recipes store curated CRS identifiers; Earth Engine receives resolved values only at the EE boundary.
-- Supported CRS options are:
+- Sample Arrangement stores a curated equal-area CRS identifier; Earth Engine receives its resolved value only at
+  the EE boundary.
+- Supported arrangement CRS options are:
   - `EPSG:6933`: EASE-Grid 2.0 Global, the default. It resolves to tested WKT because Earth Engine rejects the
     literal identifier in this environment.
   - `EPSG:6931`: EASE-Grid 2.0 North.
   - `EPSG:6932`: EASE-Grid 2.0 South.
 - Stored metadata keeps the configured identifier and must never contain the EPSG:6933 WKT.
-- Configuration separates two responsibilities (current behavior; sample locations are unchanged):
+- Configuration currently separates two fields without yet separating Earth Engine evaluation:
   - Stratification owns **Scale**, which defines the stratification resolution.
   - Sample Arrangement owns the curated equal-area **CRS**, which defines Random cells and the Systematic
     lattice.
@@ -75,9 +76,9 @@ selection and are not represented by the sample.
   raster floor and the GUI displays that effective value as the placeholder.
 - Unstratified Systematic is analytical. It has no raster scale and no `2 * scale` floor; an empty Minimum
   distance applies no additional spacing constraint.
-- For the first demo, area calculation and stratum membership continue to evaluate on the equal-area arrangement
-  grid. Separating source/native stratification evaluation from arrangement placement is a post-demo feature,
-  not part of the configuration-ownership change.
+- For the first demo, area calculation, anticipated proportions and stratum membership continue to evaluate on
+  the equal-area arrangement grid. Separating stratification interpretation from arrangement placement is a
+  post-demo feature, not part of the configuration-ownership change.
 
 ## Arrangement Applicability
 
@@ -97,27 +98,65 @@ Current UI and effective-config behavior:
   the CRS nor the More/Less control. A saved non-default CRS reveals the advanced options on reopen.
 - Stratification retains Scale but no CRS or transform control.
 
-## Post-demo Stratification and Arrangement CRS Separation
+## Post-demo Stratification and Arrangement Grid Separation
 
 Configuration ownership is now separated (Stratification Scale, Sample Arrangement CRS). This did not change how
 Earth Engine evaluates the stratification: area, anticipated proportions and class membership still evaluate on
-the equal-area arrangement grid. Separating source/native evaluation remains post-demo.
+the equal-area arrangement grid. The post-demo change must introduce two explicitly named grids rather than
+changing the meaning of another generic `{crs, scale}` value:
 
-The intended post-demo design is:
+- **Stratification grid**: defines how the categorical image and its mask are interpreted, how mapped stratum
+  areas are calculated, and how anticipated proportions are grouped.
+- **Arrangement grid**: uses a curated equal-area CRS and defines Random cells, Systematic lattice coordinates,
+  and sample identity.
 
-- Stratification evaluation uses the source image's native projection at Stratification Scale for area
-  calculation and class interpretation.
-- Random retains an equal-area cell frame in the arrangement CRS and reads the source stratum at each exported
-  cell centre.
-- Systematic retains an equal-area lattice in the arrangement CRS and reads membership at the exact exported
+The intended statistical and evaluation contract is:
+
+- Mapped stratum area and allocation weight come from `ee.Image.pixelArea()` grouped on the configured
+  Stratification grid. This remains valid for a non-equal-area CRS because `pixelArea()` supplies square metres.
+- Random retains an equal-area cell frame in the Arrangement CRS and reads the configured stratification at each
+  exported cell centre.
+- The strict finite Random frame is the set of eligible equal-area cell centres. Mapped pixel area and the area
+  represented by those centre-classified cells can differ along AOI, mask and class boundaries. Accept this as a
+  Scale-dependent discretization of the mapped strata; do not introduce a second set of frame weights alongside
+  the mapped areas.
+- Systematic retains an equal-area lattice in the Arrangement CRS and reads membership at the exact exported
   lattice point.
-- Public configuration remains Stratification Scale plus arrangement CRS. Native projection details are derived
-  from the image and are not exposed as a CRS transform.
+- Anticipated proportions remain planning approximations, but grouping must use the Stratification grid. Once
+  arbitrary Stratification CRSs are allowed, calculate an area-weighted mean rather than an unweighted pixel
+  mean.
 
-Random has a credible point-centre lookup path. Systematic still needs a proven implementation that separates
-the efficient marker raster from exact-point membership without reintroducing the continental-scale
-`reduceToVectors` failures. Do not change Systematic membership until output equivalence and full-scale
-performance are demonstrated.
+The planned public configuration is:
+
+- Stratification keeps the main **Scale** control and gains advanced **CRS** configuration. For an asset band,
+  prefill a concrete, meaningful source projection when available. For recipe outputs, mosaics or ambiguous
+  projections, use a visible deterministic default rather than Earth Engine's possible WGS84 one-degree default.
+  Persist the resolved choice for reproduction.
+- Sample Arrangement keeps the curated equal-area **CRS** and does not expose a separate sampling-grid resolution
+  or transform.
+- Do not expose Scale and CRS transform as simultaneously authoritative inputs. Implement the first split with
+  Stratification CRS plus Scale. A later transform mode may use `{crs, crsTransform}` instead of `{crs, scale}`;
+  the transform then defines alignment and resolution, while the effective Scale is derived and displayed.
+  Initially constrain transforms to north-up, square, projected metre grids so the Random cell size and
+  Systematic minimum-distance floor remain well-defined.
+- Changing the Stratification grid invalidates areas, anticipated proportions and allocation. With mapped areas
+  as the contract, changing only the Arrangement CRS changes sample locations but does not recalculate stratum
+  areas.
+
+Implementation constraints and gates:
+
+- Random must preserve the demonstrated sparse candidate graph: only the categorical stratification image may
+  be locked to the Stratification grid. Keep the expensive Arrangement-grid graph at `label + rank`, with no
+  rank reprojection, extra raster band, transform branch or new reducer output. A forced categorical reprojection
+  needs a Sudan-scale performance gate.
+- Systematic cannot rely only on a feature-level lookup after vectorization: that removes false positives but
+  cannot recover lattice points rejected earlier at the marker centre. The first spike should use a per-marker
+  displacement from the marker centre to the exact lattice point, nearest-neighbour categorical lookup, and a
+  bounded maximum offset. Compare it with an exact point-lookup reference on deliberately misaligned grids.
+- Do not use conservative dilation as a production fallback unless it can be proved complete for arbitrary
+  alignment, masks and small class patches. Do not generate every stratum's lattice over the complete AOI.
+- Keep the current one-grid behavior until Random passes small and Sudan-scale gates and Systematic passes
+  synthetic equivalence plus the established full-scale performance gate.
 
 ## Random Sampling
 
@@ -287,8 +326,9 @@ Completed direction:
 
 Pending after the application configuration is finalized:
 
-- Describe Stratification Scale and arrangement CRS without implying that source/native projection separation is
-  already implemented.
+- Describe the current one-grid behavior without implying that the planned Stratification/Arrangement grid split
+  is already implemented. Once it is implemented, distinguish Stratification CRS from the equal-area Arrangement
+  CRS and explain Scale without exposing Earth Engine projection mechanics.
 - Reconcile the guide's temporary-asset, quota, cleanup, and progress descriptions with the sparse Random export
   flow.
 - Remove implementation details from the guide when a stable user-facing explanation is sufficient.
@@ -319,8 +359,9 @@ Keep these separate from the current language/arrangement slice:
   Global default.
 - Reconcile task progress, quota requirements, cleanup wording, and the guide with sparse Random.
 - Complete final GUI inspection and replace stale screenshots before the demo.
-- After the demo, spike source/native stratification evaluation separately for Random and Systematic. Treat
-  exact Systematic membership and full-scale performance as acceptance gates.
+- After the demo, implement the grid split through reviewed Random and Systematic spikes. Treat Random's
+  full-scale sparse-graph performance, exact Systematic membership, and full-scale Systematic performance as
+  acceptance gates before exposing the new Stratification controls.
 - Resolve the seed `0` and remaining sample-ID uniqueness issues before making universal reproduction or
   uniqueness claims.
 - Run focused shared/GEE/task/GUI tests, affected ESLint targets, Sphinx build and warning check, and

@@ -4,12 +4,14 @@ import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
 import {publishEvent} from '~/eventPublisher'
+import {select} from '~/store'
 import {msg} from '~/translate'
+import {isGoogleAccount} from '~/user'
 import {Notifications} from '~/widget/notifications'
 
 import {DEFAULT_CRS, DEFAULT_SEED} from './panels/sampleArrangement/arrangementApplicability'
+import {retrieveButtonState} from './sampling/retrieveButtonState'
 import {toTaskAllocation} from './sampling/taskAllocation'
-import {validateRetrieve} from './sampling/validateRetrieve'
 
 export const defaultModel = {
     stratification: {
@@ -92,19 +94,26 @@ const taskProperties = recipe => ({
         .value()
 })
 
-const submitRetrieveRecipeTask = recipe => {
-    // Preflight the persisted design and block submission with a clear notification if it's incomplete
-    // or inconsistent (e.g. missing area, invalid sample size, proportion-dependent strategy without
-    // proportions). retrieveState is write-only, so simply not submitting leaves the UI usable.
-    const errors = validateRetrieve(recipe.model)
-    if (errors.length) {
-        const [{code, args}] = errors
-        Notifications.error({
-            message: msg('process.samplingDesign.retrieve.invalid'),
-            error: msg(`process.samplingDesign.retrieve.invalid.${code}`, args),
-            group: true,
-            timeout: 0
-        })
+export const submitRetrieveRecipeTask = recipe => {
+    const {disabled, kind, code, args} = retrieveButtonState({
+        model: recipe.model,
+        googleAccount: isGoogleAccount(),
+        assetRoots: select('assets.roots')
+    })
+    if (disabled) {
+        Notifications.error(kind === 'capability'
+            ? {
+                message: msg('process.samplingDesign.retrieve.capability.title'),
+                error: msg(`process.samplingDesign.retrieve.capability.${code}`),
+                group: true,
+                timeout: 0
+            }
+            : {
+                message: msg('process.samplingDesign.retrieve.invalid'),
+                error: msg(`process.samplingDesign.retrieve.invalid.${code}`, args),
+                group: true,
+                timeout: 0
+            })
         return
     }
     // Submit the materialized task recipe so both the payload and the recipe_* properties reflect the

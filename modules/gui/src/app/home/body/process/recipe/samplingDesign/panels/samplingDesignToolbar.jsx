@@ -5,6 +5,7 @@ import {setInitialized} from '~/app/home/body/process/recipe'
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {PanelWizard} from '~/widget/panelWizard'
@@ -20,22 +21,29 @@ import {SampleArrangement} from './sampleArrangement/sampleArrangement'
 import styles from './samplingDesignToolbar.module.css'
 import {Stratification} from './stratification/stratification'
 
-const mapRecipeToProps = recipe => {
-    const {disabled, code, args} = retrieveButtonState(recipe.model)
-    return {
-        recipeId: recipe.id,
-        initialized: selectFrom(recipe, 'ui.initialized'),
-        stratificationRequiresUpdate: selectFrom(recipe, 'model.stratification.requiresUpdate'),
-        proportionsRequiresUpdate: selectFrom(recipe, 'model.proportions.requiresUpdate'),
-        sampleAllocationRequiresUpdate: selectFrom(recipe, 'model.sampleAllocation.requiresUpdate'),
-        sampleArrangementRequiresUpdate: selectFrom(recipe, 'model.sampleArrangement.requiresUpdate'),
-        retrieveDisabled: disabled,
-        // Same invalid message as the submit preflight, plus the first error's detail, as one string
-        // (RetrieveButton.getTooltip wraps it). Undefined when retrievable, so the default tooltip shows.
-        retrieveTooltip: code
-            ? `${msg('process.samplingDesign.retrieve.invalid')} ${msg(`process.samplingDesign.retrieve.invalid.${code}`, args)}`
-            : undefined
+const mapStateToProps = state => ({
+    googleAccount: !!selectFrom(state, 'user.currentUser.googleTokens'),
+    assetRoots: selectFrom(state, 'assets.roots')
+})
+
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id,
+    model: recipe.model,
+    initialized: selectFrom(recipe, 'ui.initialized'),
+    stratificationRequiresUpdate: selectFrom(recipe, 'model.stratification.requiresUpdate'),
+    proportionsRequiresUpdate: selectFrom(recipe, 'model.proportions.requiresUpdate'),
+    sampleAllocationRequiresUpdate: selectFrom(recipe, 'model.sampleAllocation.requiresUpdate'),
+    sampleArrangementRequiresUpdate: selectFrom(recipe, 'model.sampleArrangement.requiresUpdate')
+})
+
+const retrieveTooltip = ({kind, code, args}) => {
+    if (kind === 'model') {
+        return `${msg('process.samplingDesign.retrieve.invalid')} ${msg(`process.samplingDesign.retrieve.invalid.${code}`, args)}`
     }
+    if (kind === 'capability') {
+        return msg(`process.samplingDesign.retrieve.capability.${code}`)
+    }
+    return undefined
 }
 
 class _SamplingDesignToolbar extends React.Component {
@@ -45,7 +53,8 @@ class _SamplingDesignToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized, stratificationRequiresUpdate, proportionsRequiresUpdate, sampleAllocationRequiresUpdate, sampleArrangementRequiresUpdate, retrieveDisabled, retrieveTooltip} = this.props
+        const {recipeId, model, googleAccount, assetRoots, initialized, stratificationRequiresUpdate, proportionsRequiresUpdate, sampleAllocationRequiresUpdate, sampleArrangementRequiresUpdate} = this.props
+        const buttonState = retrieveButtonState({model, googleAccount, assetRoots})
         return (
             <PanelWizard
                 panels={['aoi', 'stratification']}
@@ -62,7 +71,7 @@ class _SamplingDesignToolbar extends React.Component {
                     vertical
                     placement='top-right'
                     className={styles.top}>
-                    <RetrieveButton disabled={retrieveDisabled} tooltip={retrieveTooltip}/>
+                    <RetrieveButton disabled={buttonState.disabled} tooltip={retrieveTooltip(buttonState)}/>
                 </Toolbar>
                 <Toolbar
                     vertical
@@ -110,6 +119,7 @@ class _SamplingDesignToolbar extends React.Component {
 
 export const SamplingDesignToolbar = compose(
     _SamplingDesignToolbar,
+    connect(mapStateToProps),
     withRecipe(mapRecipeToProps)
 )
 
