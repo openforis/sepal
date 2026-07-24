@@ -35,6 +35,9 @@
     border-radius: var(--border-radius);
     padding: .25rem .5rem;
     background-color: hsla(0, 0%, 0%, .3);
+}
+
+.stratum>* {
     opacity: .5;
 }
 
