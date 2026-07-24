@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {catchError, map, of} from 'rxjs'
 
+import {isValidEarthEngineAssetId, sanitizeEarthEngineAssetId} from '#sepal/earthEngineExportNames'
 import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {copyToClipboard} from '~/clipboard'
@@ -28,6 +29,8 @@ const mapRecipeToProps = recipe => ({
     projectId: recipe.projectId,
     recipeName: recipe.title || recipe.placeholder
 })
+
+const shouldLoadAsset = assetId => !!assetId && isValidEarthEngineAssetId(assetId)
 
 class _AssetDestination extends React.Component {
     checking = false
@@ -81,6 +84,7 @@ class _AssetDestination extends React.Component {
                 onLoading={this.onLoading}
                 onLoaded={({asset, metadata} = {}) => this.onLoaded({asset, currentType: metadata?.type})}
                 onError={this.onError}
+                shouldLoad={shouldLoadAsset}
             />
         )
     }
@@ -176,7 +180,7 @@ class _AssetDestination extends React.Component {
                 assetInput.set(this.defaultAssetId() || null)
             }
         } else {
-            this.startValidation()
+            this.validateAssetId()
         }
     }
 
@@ -187,9 +191,8 @@ class _AssetDestination extends React.Component {
             assetInput.set(this.defaultAssetId() || null)
         }
         if (prevProps.assetInput?.value !== assetInput.value) {
-            assetInput.value
-                ? this.startValidation()
-                : this.cancelValidation()
+            this.validateAssetId()
+            return
         }
         if (currentType && strategyInput.value && assetInput.error) {
             assetInput.setInvalid(null)
@@ -208,16 +211,18 @@ class _AssetDestination extends React.Component {
     defaultAssetId() {
         const {assetRoots, recipeName} = this.props
         const project = this.findProject()
+        let assetId
         if (project?.defaultAssetFolder) {
-            return `${project.defaultAssetFolder}/${recipeName}`
+            assetId = `${project.defaultAssetFolder}/${recipeName}`
         } else if (assetRoots && assetRoots.length) {
             if (project) {
                 const projectDir = toSafeString(project?.name)
-                return `${assetRoots[0]}/${projectDir}/${recipeName}`
+                assetId = `${assetRoots[0]}/${projectDir}/${recipeName}`
             } else {
-                return `${assetRoots[0]}/${recipeName}`
+                assetId = `${assetRoots[0]}/${recipeName}`
             }
         }
+        return sanitizeEarthEngineAssetId(assetId)
     }
 
     findProject() {
@@ -312,6 +317,20 @@ class _AssetDestination extends React.Component {
         assetInput.setInvalid(msg('widget.assetDestination.validating'))
         this.setChecking(true)
         return this.validationSequence
+    }
+
+    validateAssetId() {
+        const {assetInput, strategyInput} = this.props
+        if (!assetInput.value) {
+            this.cancelValidation()
+        } else if (!isValidEarthEngineAssetId(assetInput.value)) {
+            this.cancelValidation()
+            strategyInput.set(null)
+            this.setState({currentType: null})
+            assetInput.setInvalid(msg('widget.assetDestination.invalidAssetId'))
+        } else {
+            this.startValidation()
+        }
     }
 
     cancelValidation() {
