@@ -30,7 +30,8 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    dataSets: selectFrom(recipe, 'model.sources.dataSets')
+    dataSets: selectFrom(recipe, 'model.sources.dataSets'),
+    classificationBands: selectFrom(recipe, 'ui.classificationBands')
 })
 
 class _Options extends React.Component {
@@ -50,20 +51,41 @@ class _Options extends React.Component {
         )
     }
 
+    componentDidMount() {
+        this.forceGateOffIfUnavailable()
+    }
+
+    componentDidUpdate() {
+        this.forceGateOffIfUnavailable()
+    }
+
+    // With no computable index, force the gate off so a stale/default "on" can't require an index
+    // the source can't produce — the toggle is also disabled in renderContent().
+    forceGateOffIfUnavailable() {
+        const {inputs: {useIndexGate}} = this.props
+        if (useIndexGate.value && !this.availableIndexes().length) {
+            useIndexGate.set(false)
+        }
+    }
+
     renderContent() {
         const {inputs: {useIndexGate, minConsecutiveDetections}} = this.props
+        const gateAvailable = this.availableIndexes().length > 0
         return (
             <Layout>
                 <Form.Buttons
                     label={msg('process.pyeoAlerts.panel.options.form.useIndexGate.label')}
-                    tooltip={msg('process.pyeoAlerts.panel.options.form.useIndexGate.tooltip')}
+                    tooltip={msg(gateAvailable
+                        ? 'process.pyeoAlerts.panel.options.form.useIndexGate.tooltip'
+                        : 'process.pyeoAlerts.panel.options.form.useIndexGate.unavailable')}
                     input={useIndexGate}
                     options={[
                         {value: false, label: msg('process.pyeoAlerts.panel.options.form.useIndexGate.off')},
                         {value: true, label: msg('process.pyeoAlerts.panel.options.form.useIndexGate.on')}
                     ]}
+                    disabled={!gateAvailable}
                 />
-                {useIndexGate.value ? this.renderIndexGate() : null}
+                {useIndexGate.value && gateAvailable ? this.renderIndexGate() : null}
                 <Form.Slider
                     label={msg('process.pyeoAlerts.panel.options.form.minConsecutiveDetections.label')}
                     tooltip={msg('process.pyeoAlerts.panel.options.form.minConsecutiveDetections.tooltip')}
@@ -101,14 +123,24 @@ class _Options extends React.Component {
         )
     }
 
-    indexOptions() {
-        const {dataSets} = this.props
-        const availableIndexes = dataSets && Object.keys(dataSets).length
+    // Gate indexes computable on BOTH the classification's baseline imagery and the monitoring
+    // datasets — the gate runs on both, so a band missing from either rules the index out.
+    // classificationBands undefined ⇒ not resolved yet: fall back so we don't pre-disable.
+    availableIndexes() {
+        const {dataSets, classificationBands} = this.props
+        const classificationIndexes = classificationBands
+            ? getIndexesForBands(classificationBands)
+            : GATE_INDEXES
+        const dataSetIndexes = dataSets && Object.keys(dataSets).length
             ? getIndexesForBands(getDataSetBands({model: {sources: {dataSets}}}))
             : GATE_INDEXES
-        return GATE_INDEXES
-            .filter(index => availableIndexes.includes(index))
-            .map(index => ({value: index, label: index.toUpperCase()}))
+        return GATE_INDEXES.filter(index =>
+            classificationIndexes.includes(index) && dataSetIndexes.includes(index)
+        )
+    }
+
+    indexOptions() {
+        return this.availableIndexes().map(index => ({value: index, label: index.toUpperCase()}))
     }
 }
 

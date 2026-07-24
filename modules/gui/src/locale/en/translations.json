@@ -1550,7 +1550,8 @@
               "label": "Require index drop",
               "tooltip": "Require the chosen index to drop by at least the threshold (baseline − monitoring) before an alert is confirmed. Only decreases count — an index increase never confirms a change.",
               "off": "No",
-              "on": "Yes"
+              "on": "Yes",
+              "unavailable": "The selected classification's baseline imagery has no near-infrared band, so it cannot produce a spectral index; the index gate is unavailable."
             },
             "gateIndex": {
               "label": "Index",

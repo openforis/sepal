@@ -4,7 +4,7 @@ import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
-import {getDataSetOptions as opticalDataSetOptions} from '~/app/home/body/process/recipe/opticalMosaic/sources'
+import {getDataSetBands, getDataSetOptions as opticalDataSetOptions} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
@@ -253,6 +253,7 @@ class _Sources extends React.Component {
         this.setState({classificationError: null})
         if (!id) {
             this.setLegend(undefined)
+            this.setClassificationBands(undefined)
         }
     }
 
@@ -266,35 +267,47 @@ class _Sources extends React.Component {
     }
 
     onClassification(classification, prefill) {
-        if (!prefill) {
-            // Initial load of an already-selected classification: just show its classes.
-            this.setLegend(classification.model.legend)
-            return
+        // Always resolve the classification's input bands (drives the Options index-gate guard);
+        // only a user selection (prefill) stages derived Pre-process/Dates params.
+        if (prefill) {
+            const {inputs} = this.props
+            inputs.changeFromClasses.set([])
+            inputs.changeToClasses.set([])
         }
-        const {inputs} = this.props
-        inputs.changeFromClasses.set([])
-        inputs.changeToClasses.set([])
         const images = (classification.model.inputImagery && classification.model.inputImagery.images) || []
         if (images.length !== 1) {
-            this.setClassificationError('process.pyeoAlerts.classification.singleInputRequired', {clearLegend: true})
+            this.setClassificationBands(undefined)
+            if (prefill) {
+                this.setClassificationError('process.pyeoAlerts.classification.singleInputRequired', {clearLegend: true})
+            } else {
+                this.setLegend(classification.model.legend)
+            }
             return
         }
         this.setLegend(classification.model.legend)
         const input = images[0]
         if (input.type === 'RECIPE_REF') {
-            this.prefillFromRecipeRef(input)
+            this.loadInputRecipeRef(input, prefill)
         } else if (input.type === 'ASSET') {
-            this.prefillFromAsset(input)
+            this.loadInputAsset(input, prefill)
         } else {
-            this.notDerivable()
+            this.setClassificationBands(undefined)
+            if (prefill) {
+                this.notDerivable()
+            }
         }
     }
 
-    prefillFromRecipeRef(input) {
+    loadInputRecipeRef(input, prefill) {
         const {stream, loadSourceRecipe$} = this.props
         stream('LOAD_MOSAIC',
             loadSourceRecipe$(input.id).pipe(takeUntil(this.cancel$)),
             mosaic => {
+                const dataSets = selectFrom(mosaic, 'model.sources.dataSets')
+                this.setClassificationBands(dataSets ? getDataSetBands(mosaic) : undefined)
+                if (!prefill) {
+                    return
+                }
                 if (mosaic.model.sceneSelectionOptions && mosaic.model.sceneSelectionOptions.type === 'SELECT') {
                     this.setClassificationError('process.pyeoAlerts.classification.selectedScenesUnsupported', {clearLegend: true})
                     return
@@ -307,11 +320,15 @@ class _Sources extends React.Component {
         )
     }
 
-    prefillFromAsset(input) {
+    loadInputAsset(input, prefill) {
         const {stream} = this.props
         stream('LOAD_ASSET_METADATA',
             api.gee.assetMetadata$({asset: input.id}).pipe(takeUntil(this.cancel$)),
             metadata => {
+                this.setClassificationBands((metadata && metadata.bandNames) || undefined)
+                if (!prefill) {
+                    return
+                }
                 const props = (metadata && metadata.properties) || {}
                 const optionsString = props.recipe_compositeOptions || props.recipe_options
                 const sourcesString = props.recipe_sources
@@ -401,6 +418,15 @@ class _Sources extends React.Component {
         const {recipeActionBuilder} = this.props
         recipeActionBuilder('SET_CLASSIFICATION_LEGEND', {})
             .set('ui.classificationLegend', legend)
+            .dispatch()
+    }
+
+    // The classification's input-imagery band names — read by the Options panel to enable/disable
+    // the index gate (an RGB baseline can't produce NDVI/NDMI/NBR).
+    setClassificationBands(classificationBands) {
+        const {recipeActionBuilder} = this.props
+        recipeActionBuilder('SET_CLASSIFICATION_BANDS', {})
+            .set('ui.classificationBands', classificationBands)
             .dispatch()
     }
 }
