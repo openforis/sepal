@@ -2,12 +2,6 @@
     max-width: 21rem;
 }
 
-.scale {
-    width: 10rem !important;
-    flex-grow: 0;
-    flex-shrink: 1;
-}
-
 .number input {
     width: 3rem !important
 }

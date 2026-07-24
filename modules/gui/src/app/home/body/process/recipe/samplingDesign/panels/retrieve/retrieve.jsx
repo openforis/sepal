@@ -186,7 +186,6 @@ class _Retrieve extends React.Component {
         
     retrieve(retrieveOptions) {
         const {recipeId} = this.props
-        // TODO: updateProject(), just like in RetrievePanel?
         return RecipeActions(recipeId).retrieve(retrieveOptions)
     }
 }

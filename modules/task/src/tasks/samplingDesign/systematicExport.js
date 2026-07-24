@@ -1,5 +1,4 @@
-import moment from 'moment'
-import {catchError, concat, defer, EMPTY, filter, forkJoin, map, of, switchMap, throwError} from 'rxjs'
+import {catchError, concat, defer, EMPTY, filter, forkJoin, map, switchMap, throwError} from 'rxjs'
 
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
@@ -26,26 +25,11 @@ import {stratifiedGridError, stratifiedMinDistanceError, unstratifiedSystematicG
 import {samplingDesignPreflightError} from './samplingPreflight.js'
 import {candidateAssetId, candidateDescription} from './systematicExportNames.js'
 import {systematicExportPlan$} from './systematicExportPlan.js'
+import {tempTableAssetId$} from './tempTableAsset.js'
 
 // Systematic export materializes unfiltered candidate samples to temporary EE table assets, then reads them
-// back to filter. GEE asset export derives the temp prefix from the target assetId; SEPAL export has no
-// assetId, so create a temp prefix under the user's first EE asset root. The prefix is clearly temporary and
-// unique (timestamp / task id); candidateAssetId adds a plain per-kind suffix.
-const tempTableAssetId$ = (taskId, assetId) => {
-    const timestamp = moment().format('YYYYMMDDHHmmssSSS')
-    if (assetId) {
-        return of(`${assetId}_tmp_${timestamp}`)
-    }
-    return ee.listBuckets$('projects/earthengine-legacy').pipe(
-        map(({assets}) => {
-            if (!assets?.length) {
-                throw new Error('EE account has no asset roots')
-            }
-            return `${assets[0].id}/sampling_design_tmp_${taskId}_${timestamp}`
-        })
-    )
-}
-
+// back to filter. tempTableAssetId$ (shared with stratified random) supplies the clearly-temporary prefix;
+// candidateAssetId adds a plain per-kind suffix.
 export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId, strategy, properties, destination, workspacePath, filenamePrefix, fileFormat}) => {
     const {model: {aoi, stratification, sampleAllocation: {allocation}}} = recipe
     const unstratified = isStratificationSkipped(stratification)
@@ -60,10 +44,10 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
     // of them on success, error, and cancellation (idempotent).
     const materializedAssetIds = new Set()
 
-    // Enforce the sampling-grid CRS/transform contract BEFORE any EE graph is built, with a structured error.
-    // The lattice assumes projected metre coordinates; the candidate function stays projection-agnostic, so this
-    // boundary is where unsupported CRSs / malformed transforms are rejected. Stratified needs exactly one grid
-    // definition; unstratified is analytical, so it only needs a supported CRS and an optional valid transform.
+    // Enforce the sampling-grid CRS contract BEFORE any EE graph is built, with a structured error. The lattice
+    // assumes projected metre coordinates; the candidate function stays projection-agnostic, so this boundary is
+    // where unsupported CRSs are rejected. Stratified needs a supported CRS and a positive Stratification Scale;
+    // unstratified is analytical, so it only needs a supported CRS.
     const gridError = unstratified
         ? unstratifiedSystematicGridError(configuredArrangement)
         : stratifiedGridError(configuredArrangement)
@@ -94,6 +78,8 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
         arrangementStrategy: 'SYSTEMATIC',
         sampleSizeStrategy: densityStrategy,
         allocationStrategy: recipe.model.sampleAllocation?.allocationStrategy,
+        estimateSampleSize: !!recipe.model.sampleAllocation?.estimateSampleSize,
+        manual: recipe.model.sampleAllocation?.manual,
         effectiveMinimum: effectiveMinSamplesPerStratum(recipe.model.sampleAllocation || {}),
         minDistance: configuredArrangement.minDistance,
         pixelSize: gridPixelSize(configuredArrangement),
@@ -168,7 +154,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                         allocation: strata,
                         stratification: eeStratification,
                         region: eeGeometry,
-                        grid: {crs: sampleArrangement.crs, scale: sampleArrangement.scale, crsTransform: sampleArrangement.crsTransform},
+                        grid: {crs: sampleArrangement.crs, scale: sampleArrangement.scale},
                         sampleArrangement: {minDistance: sampleArrangement.minDistance, gridOrigin: sampleArrangement.gridOrigin, seed: sampleArrangement.seed},
                         densityOffset
                     })

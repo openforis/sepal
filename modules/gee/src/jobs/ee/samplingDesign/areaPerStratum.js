@@ -4,7 +4,6 @@ import {job} from '#gee/jobs/job'
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import imageFactory from '#sepal/ee/imageFactory'
-import {crsGridArgs} from '#sepal/ee/samplingDesign/systematicLatticeMath'
 import {fileName} from '#sepal/path'
 import {resolveSamplingGrid} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
@@ -12,7 +11,7 @@ import {exportToCSV$} from '../batch/exportToCSV.js'
 import {parseGroups} from '../batch/parse.js'
 
 const worker$ = ({
-    requestArgs: {aoi, stratification, band, scale, crs, crsTransform, batch},
+    requestArgs: {aoi, stratification, band, scale, crs, batch},
     credentials: {sepalUser}
 }) => {
     const description = 'area-per-stratum'
@@ -49,9 +48,8 @@ const worker$ = ({
     }
 
     function reduceRegion(strata, geometry) {
-        // This image mixes pixelArea and strata projections; an unset CRS falls back to WGS84. Use the same
-        // explicit grid the sampler uses for exact-point class membership; crsGridArgs sends scale XOR
-        // crsTransform (never both) so a transform-defined grid can't also send scale.
+        // This image mixes pixelArea and strata projections; an unset CRS falls back to WGS84. Evaluate on the
+        // same equal-area grid the sampler uses: Stratification Scale in the Sample Arrangement CRS.
         return ee.Image.pixelArea()
             .updateMask(strata.mask())
             .addBands(strata)
@@ -62,7 +60,8 @@ const worker$ = ({
                 geometry,
                 // Resolve at the GEE boundary, not in the GUI: non-GUI callers hit this API too, and EE
                 // cannot parse the literal EPSG:6933.
-                ...crsGridArgs(resolveSamplingGrid({crs, scale, crsTransform})),
+                crs: resolveSamplingGrid({crs}).crs,
+                scale,
                 maxPixels: 1e13,
             })
     }

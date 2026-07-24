@@ -5,11 +5,10 @@ vi.mock('~/translate', () => ({msg: id => id}))
 const {modelToValues, syntheticUnstratifiedStratum, unstratifiedStrata, valuesToModel} = await import('./stratificationModel')
 
 // A canonical saved stratification model: the exact shape valuesToModel produces (no transient requiresUpdate).
+// Stratification owns Scale only; the equal-area CRS lives on Sample Arrangement, so it is not stored here.
 const savedModel = {
     skip: false,
     scale: 30,
-    crs: 'EPSG:6933',
-    crsTransform: '',
     type: 'ASSET',
     assetId: 'users/test/strata',
     recipeId: undefined,
@@ -36,16 +35,6 @@ describe('modelToValues', () => {
     it('keeps scale as-is (no numeric/string coercion that would mismatch the model)', () => {
         expect(modelToValues({...savedModel, scale: 30}).scale).toBe(30)
     })
-
-    it('defaults the stratification grid crs to EPSG:6933 for a recipe saved before it existed, and carries an explicit choice through', () => {
-        expect(modelToValues({...savedModel, crs: undefined}).crs).toBe('EPSG:6933')
-        expect(modelToValues({...savedModel, crs: 'EPSG:6931'}).crs).toBe('EPSG:6931')
-    })
-
-    it('defaults crsTransform to empty and round-trips a set value', () => {
-        expect(modelToValues({...savedModel, crsTransform: undefined}).crsTransform).toBe('')
-        expect(modelToValues({...savedModel, crsTransform: '[30,0,0,0,-30,0]'}).crsTransform).toBe('[30,0,0,0,-30,0]')
-    })
 })
 
 describe('valuesToModel', () => {
@@ -54,19 +43,11 @@ describe('valuesToModel', () => {
         expect(valuesToModel({scale: '30'}).scale).toBe(30)
     })
 
-    it('stores the stratification grid crs, defaulting to the curated default', () => {
-        expect(valuesToModel({scale: 30, crs: 'EPSG:6931'}).crs).toBe('EPSG:6931')
-        expect(valuesToModel({scale: 30, crs: undefined}).crs).toBe('EPSG:6933')
-    })
-
-    it('stores the stratification grid crsTransform, defaulting to empty', () => {
-        expect(valuesToModel({scale: 30, crsTransform: '[30,0,0,0,-30,0]'}).crsTransform).toBe('[30,0,0,0,-30,0]')
-        expect(valuesToModel({scale: 30, crsTransform: undefined}).crsTransform).toBe('')
-    })
-
-    it('drops scale when a crsTransform defines the grid (mutually exclusive)', () => {
-        expect(valuesToModel({scale: 30, crsTransform: '[30,0,0,0,-30,0]'}).scale).toBeUndefined()
-        expect(valuesToModel({scale: 30, crsTransform: ''}).scale).toBe(30)
+    it('does not store a CRS or transform (owned by Sample Arrangement)', () => {
+        const model = valuesToModel({scale: 30, crs: 'EPSG:6931', crsTransform: '[30,0,0,0,-30,0]'})
+        expect('crs' in model).toBe(false)
+        expect('crsTransform' in model).toBe(false)
+        expect(model.scale).toBe(30)
     })
 
     it('does not carry the transient requiresUpdate flag into the model', () => {

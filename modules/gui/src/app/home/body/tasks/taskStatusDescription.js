@@ -17,9 +17,10 @@ const looksTechnical = text =>
 // each through msg() so non-English users get localized guidance rather than the English `details` fallback.
 const renderAdvice = advice =>
     advice
-        .map(({diagnosis, actions = []}) => [diagnosis, ...actions]
-            .map(({key, args, message}) => msg(key, args, message))
-            .join(' '))
+        .map(({diagnosis, actions = []}) => [
+            msg(diagnosis.key, diagnosis.args, diagnosis.message),
+            ...actions.map(({key, args, message}) => `- ${msg(key, args, message)}`)
+        ].join('\n'))
         .join('\n\n')
 
 // Localized, user-facing task status/failure text from the backend `statusDescription`, which is either a

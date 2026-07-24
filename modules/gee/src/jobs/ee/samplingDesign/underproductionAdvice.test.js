@@ -46,13 +46,13 @@ describe('nextDenserMinDistance', () => {
 })
 
 describe('statisticalMinimum advice', () => {
-    it('offers spacing, Random, and class actions for systematic, with the calculated threshold', () => {
+    it('offers spacing, Random, and stratum-coverage actions for systematic, with the calculated threshold', () => {
         const [decision] = decisionsFor({...oneStratum(1), ...SYSTEMATIC})
         expect(decision.kind).toBe('statisticalMinimum')
         expect(decision.diagnosis).toBe('diagnosis.statisticalMinimum')
         expect(decision.diagnosisArgs).toMatchObject({strata: 'snow (1)', minimum: 2})
         expect(decision.actions).toEqual([
-            'reduceSystematicMinDistance', 'switchToRandom', 'reviseStratification', 'enlargeOrMerge'
+            'reduceSystematicMinDistance', 'switchToRandom', 'checkStratumCoverage'
         ])
         expect(decision.actionArgs.reduceSystematicMinDistance).toEqual({minDistance: 60, threshold: 55.4})
     })
@@ -64,21 +64,23 @@ describe('statisticalMinimum advice', () => {
         expect(decision.actionArgs.atGridFloor).toEqual({pixelSize: 10})
     })
 
-    // Minimum distance is Systematic-only, so random advice never mentions spacing - even if a stale value
-    // is still on the recipe - and never suggests switching to Random when Random is already selected.
-    it('gives random only class/AOI actions, with no spacing action and no switch-to-Random', () => {
+    // Minimum distance is Systematic-only, so random advice never mentions spacing - even if a stale value is
+    // still on the recipe - and never switches to Random. Stratified random draws at the grid, so it may
+    // instead sample at a finer stratification scale.
+    it('gives stratified random the finer-scale and coverage actions, no spacing and no switch-to-Random', () => {
         const [decision] = decisionsFor({...oneStratum(1), ...RANDOM, minDistance: 60})
-        expect(decision.actions).toEqual(['reviseStratification', 'enlargeOrMerge'])
+        expect(decision.actions).toEqual(['reduceStratificationScale', 'checkStratumCoverage'])
+        expect(decision.actions).not.toContain('switchToRandom')
     })
 
-    it('gives only class/AOI actions for random without a distance, and blames the class only then', () => {
+    it('blames the grid (not the whole AOI) for random, and offers finer scale plus coverage', () => {
         const [decision] = decisionsFor({...oneStratum(1), ...RANDOM})
         expect(decision.diagnosis).toBe('diagnosis.statisticalMinimumNoDistance')
-        expect(decision.actions).toEqual(['reviseStratification', 'enlargeOrMerge'])
+        expect(decision.actions).toEqual(['reduceStratificationScale', 'checkStratumCoverage'])
         expect(decision.actions).not.toContain('lowerConfiguredMinimum')
     })
 
-    it('names every failing class with its own count', () => {
+    it('names every failing stratum with its own count', () => {
         const [decision] = decisionsFor({
             counts: {1: 0, 2: 1},
             allocation: [{stratum: 1, label: 'snow', sampleSize: 100}, {stratum: 2, label: 'water', sampleSize: 100}],
@@ -92,13 +94,33 @@ describe('configuredMinimum advice', () => {
     it('names the value the minimum could be lowered to, and its floor', () => {
         const [decision] = decisionsFor({...oneStratum(7), effectiveMinimum: 10, ...SYSTEMATIC, sampleSizeStrategy: 'CLOSEST'})
         expect(decision.kind).toBe('configuredMinimum')
+        expect(decision.actions[0]).toBe('lowerConfiguredMinimum')
         expect(decision.actionArgs.lowerConfiguredMinimum).toEqual({value: 7, floor: 2})
-        expect(decision.actions).not.toContain('minimumNotSufficient')
+        // CLOSEST is allowed to undershoot, so there is no count shortfall to resolve here.
+        expect(decision.actions).not.toContain('reduceRequestedOrClosest')
     })
 
-    it('warns that lowering the minimum is insufficient when the request is also unmet', () => {
-        const [decision] = decisionsFor({...oneStratum(7), effectiveMinimum: 10, ...SYSTEMATIC})
-        expect(decision.actions).toContain('minimumNotSufficient')
+    it('adds the mode-aware count action when the request is also unmet, prioritized over spacing', () => {
+        const samples = decisionsFor({...oneStratum(7), effectiveMinimum: 10, ...SYSTEMATIC})[0]
+        expect(samples.actions[0]).toBe('lowerConfiguredMinimum')
+        expect(samples.actions).toContain('reduceRequestedOrClosest')
+        expect(samples.actions.length).toBeLessThanOrEqual(3)
+        const error = decisionsFor({...oneStratum(7), effectiveMinimum: 10, ...SYSTEMATIC, estimateSampleSize: true})[0]
+        expect(error.actions).toContain('increaseMarginOfErrorOrClosest')
+        expect(error.actions).not.toContain('reduceRequestedOrClosest')
+    })
+
+    it('uses finer-scale advice as the capacity action for stratified random', () => {
+        const [decision] = decisionsFor({...oneStratum(7), effectiveMinimum: 10, ...RANDOM})
+        expect(decision.actions).toEqual(['lowerConfiguredMinimum', 'reduceRequested', 'reduceStratificationScale'])
+    })
+
+    it('never lets the at-grid-floor note displace the count action', () => {
+        // minDistance 20 on a 10 m grid is already at the floor, so spacing cannot help; the shortfall action
+        // must still be present and atGridFloor must not appear in this group.
+        const [decision] = decisionsFor({...oneStratum(7), effectiveMinimum: 10, ...SYSTEMATIC, minDistance: 20})
+        expect(decision.actions).toContain('reduceRequestedOrClosest')
+        expect(decision.actions).not.toContain('atGridFloor')
     })
 })
 
@@ -106,20 +128,39 @@ describe('requestedAllocation advice', () => {
     it('offers Closest for systematic OVER/EXACT', () => {
         const [decision] = decisionsFor({...oneStratum(25), effectiveMinimum: 10, ...SYSTEMATIC})
         expect(decision.kind).toBe('requestedAllocation')
-        expect(decision.diagnosisArgs).toMatchObject({strata: 'snow (25 of 100)', minimum: 10})
+        expect(decision.diagnosisArgs).toEqual({strata: 'snow (25 of 100)'})
         expect(decision.actions).toContain('reduceRequestedOrClosest')
     })
 
-    it('offers a random-specific reduce action, never Closest, for random sampling', () => {
+    it('offers a plain reduce action, never Closest, for random sampling', () => {
         const [decision] = decisionsFor({...oneStratum(25), effectiveMinimum: 10, ...RANDOM})
-        expect(decision.actions).toContain('reduceRequestedRandom')
+        expect(decision.actions).toContain('reduceRequested')
         expect(decision.actions).not.toContain('reduceRequestedOrClosest')
+        expect(decision.actions.join(' ')).not.toMatch(/Closest/)
     })
 
     it('always recommends something for random with no distance and non-equal allocation', () => {
         const [decision] = decisionsFor({...oneStratum(25), effectiveMinimum: 10, allocationStrategy: 'PROPORTIONAL', ...RANDOM})
         expect(decision.actions.length).toBeGreaterThan(0)
-        expect(decision.actions).toEqual(['reduceRequestedRandom'])
+        expect(decision.actions).toEqual(['reduceRequested', 'reduceStratificationScale'])
+    })
+
+    // Target mode changes the requested-count advice: Samples mode reduces the fixed count; Error mode raises
+    // the target margin of error to calculate a smaller count. Systematic OVER/EXACT may add Closest; random
+    // never does.
+    it('advises increasing the margin of error in Error mode, adding Closest only for systematic OVER/EXACT', () => {
+        const systematic = decisionsFor({...oneStratum(25), effectiveMinimum: 10, ...SYSTEMATIC, estimateSampleSize: true})[0]
+        expect(systematic.actions).toContain('increaseMarginOfErrorOrClosest')
+        expect(systematic.actions).not.toContain('reduceRequestedOrClosest')
+        const random = decisionsFor({...oneStratum(25), effectiveMinimum: 10, ...RANDOM, estimateSampleSize: true})[0]
+        expect(random.actions).toContain('increaseMarginOfError')
+        expect(random.actions.join(' ')).not.toMatch(/Closest/)
+    })
+
+    it('advises reducing the sample size in Samples mode', () => {
+        const systematic = decisionsFor({...oneStratum(25), effectiveMinimum: 10, ...SYSTEMATIC, estimateSampleSize: false})[0]
+        expect(systematic.actions).toContain('reduceRequestedOrClosest')
+        expect(systematic.actions).not.toContain('increaseMarginOfErrorOrClosest')
     })
 
     it('recommends a non-EQUAL strategy only when allocation is EQUAL', () => {
@@ -182,11 +223,104 @@ describe('spacing advice never suggests an impossible stratified distance', () =
         const [decision] = decisionsFor({...oneStratum(1), ...SYSTEMATIC, minDistance: 20, pixelSize: 10})
         expect(decision.actions).not.toContain('reduceSystematicMinDistance')
         expect(decision.actions).toContain('atGridFloor')
-        expect(decision.actions).toEqual(expect.arrayContaining(['reviseStratification', 'enlargeOrMerge']))
+        expect(decision.actions).toEqual(expect.arrayContaining(['checkStratumCoverage']))
     })
 
     // Unstratified spacing is analytical, so it may still be reduced below a raster floor.
     it('still suggests smaller analytical distances for unstratified systematic', () => {
         expect(nextDenserMinDistance({minDistance: 60, pixelSize: 30, unstratified: true})).toBeLessThan(60)
     })
+})
+
+describe('unstratified advice never mentions stratification, merging, or Equal allocation', () => {
+    const UNSTRATIFIED_SYS = {...SYSTEMATIC, unstratified: true}
+    const UNSTRATIFIED_RANDOM = {...RANDOM, unstratified: true}
+    const aoiStratum = (actual, sampleSize = 100) => ({counts: {1: actual}, allocation: [{stratum: 1, label: 'Area of interest', sampleSize}]})
+
+    it('uses enlargeAoi instead of the stratum-coverage action for statistical-minimum failures', () => {
+        const sys = decisionsFor({...aoiStratum(1), ...UNSTRATIFIED_SYS})[0]
+        expect(sys.actions).toEqual(['reduceSystematicMinDistance', 'switchToRandom', 'enlargeAoi'])
+        expect(sys.actions).not.toContain('checkStratumCoverage')
+        const rand = decisionsFor({...aoiStratum(1), ...UNSTRATIFIED_RANDOM})[0]
+        expect(rand.actions).toEqual(['enlargeAoi'])
+    })
+
+    it('never recommends changing Equal allocation for an unstratified requested-count shortfall', () => {
+        const decision = decisionsFor({...aoiStratum(25), effectiveMinimum: 10, allocationStrategy: 'EQUAL', ...UNSTRATIFIED_RANDOM})[0]
+        expect(decision.actions).not.toContain('avoidEqualAllocation')
+        expect(decision.actions).toEqual(['reduceRequested'])
+    })
+
+    it('renders no stratification, merge, or Equal-allocation wording for an unstratified failure', () => {
+        const config = {effectiveMinimum: 10, allocationStrategy: 'EQUAL', ...UNSTRATIFIED_SYS}
+        const allocation = [{stratum: 1, label: 'Area of interest', sampleSize: 100}]
+        const failures = classifyFinalCounts({counts: {1: 25}, allocation, ...config})
+        const text = renderAdvice(underproductionAdvice({groups: groupFinalCountFailures(failures), config}))
+        expect(text).not.toMatch(/stratification/i)
+        expect(text).not.toMatch(/merge/i)
+        expect(text).not.toMatch(/equal allocation/i)
+    })
+})
+
+describe('stratum terminology and action limits', () => {
+    const threeStrata = () => [
+        {stratum: 1, label: 'snow', sampleSize: 100},
+        {stratum: 2, label: 'water', sampleSize: 100},
+        {stratum: 3, label: 'crops', sampleSize: 100}
+    ]
+
+    it('uses stratum, not class, in rendered diagnoses and actions', () => {
+        const config = {effectiveMinimum: 10, ...SYSTEMATIC}
+        const failures = classifyFinalCounts({counts: {1: 1, 2: 7, 3: 25}, allocation: threeStrata(), ...config})
+        const text = renderAdvice(underproductionAdvice({groups: groupFinalCountFailures(failures), config}))
+        expect(text).not.toMatch(/\bclass(es)?\b/i)
+        expect(text).toMatch(/stratum|strata/)
+    })
+
+    it('never emits more than three actions in any diagnosis group, across configurations', () => {
+        const configs = [
+            {...SYSTEMATIC}, {...SYSTEMATIC, sampleSizeStrategy: 'EXACT'}, {...RANDOM},
+            {...SYSTEMATIC, unstratified: true}, {...RANDOM, unstratified: true},
+            {...SYSTEMATIC, allocationStrategy: 'EQUAL'},
+            {...SYSTEMATIC, allocationStrategy: 'EQUAL', estimateSampleSize: true},
+            {...RANDOM, estimateSampleSize: true}
+        ]
+        for (const config of configs) {
+            const failures = classifyFinalCounts({counts: {1: 1, 2: 7, 3: 25}, allocation: threeStrata(), effectiveMinimum: 10, ...config})
+            const groups = underproductionAdvice({groups: groupFinalCountFailures(failures), config: {effectiveMinimum: 10, ...config}})
+            for (const group of groups) {
+                expect(group.actions.length).toBeLessThanOrEqual(3)
+            }
+        }
+    })
+})
+
+describe('Manual allocation ignores stale saved Samples/Error and Equal flags', () => {
+    // Manual is saved as a boolean or as the old form-toggle array; both `true` and `[true]` are Manual.
+    for (const manual of [true, [true]]) {
+        it(`treats manual=${JSON.stringify(manual)} as an active mode: Samples-style count advice, no Equal advice`, () => {
+            const [decision] = decisionsFor({
+                ...oneStratum(25), effectiveMinimum: 10, ...SYSTEMATIC,
+                manual, estimateSampleSize: true, allocationStrategy: 'EQUAL'
+            })
+            expect(decision.kind).toBe('requestedAllocation')
+            expect(decision.diagnosis).toBe('diagnosis.requestedAllocation')
+            expect(decision.actions).toContain('reduceRequestedOrClosest')
+            expect(decision.actions).not.toContain('increaseMarginOfErrorOrClosest')
+            expect(decision.actions).not.toContain('avoidEqualAllocation')
+        })
+    }
+
+    // `false` and `[]` are NOT Manual, so the saved Error/EQUAL flags are honored.
+    for (const manual of [false, []]) {
+        it(`treats manual=${JSON.stringify(manual)} as automatic: Error-mode and Equal advice apply`, () => {
+            const [decision] = decisionsFor({
+                ...oneStratum(25), effectiveMinimum: 10, ...SYSTEMATIC,
+                manual, estimateSampleSize: true, allocationStrategy: 'EQUAL'
+            })
+            expect(decision.diagnosis).toBe('diagnosis.calculatedAllocation')
+            expect(decision.actions).toContain('increaseMarginOfErrorOrClosest')
+            expect(decision.actions).toContain('avoidEqualAllocation')
+        })
+    }
 })

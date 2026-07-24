@@ -233,10 +233,14 @@ class _SampleAllocation extends React.Component {
         )
         return (
             <Form.Input
-                label={msg('Target')}
+                label={msg('process.samplingDesign.panel.sampleAllocation.form.target.label')}
                 labelButtons={noProportions ? [] : [estimateSampleSizeButtons]}
-                placeholder={msg(estimateSampleSize.value ? 'Margin of Error...' : 'Sample size...')}
-                tooltip={msg('process.samplingDesign.panel.sampleAllocation.form.marginOfError.tooltip')}
+                placeholder={msg(estimateSampleSize.value
+                    ? 'process.samplingDesign.panel.sampleAllocation.form.marginOfError.placeholder'
+                    : 'process.samplingDesign.panel.sampleAllocation.form.sampleSize.placeholder')}
+                tooltip={msg(estimateSampleSize.value
+                    ? 'process.samplingDesign.panel.sampleAllocation.form.marginOfError.tooltip'
+                    : 'process.samplingDesign.panel.sampleAllocation.form.sampleSize.tooltip')}
                 input={estimateSampleSize.value ? marginOfError : sampleSize}
                 autoFocus={!this.isManual()}
                 errorMessage={estimateSampleSize.value
@@ -353,7 +357,7 @@ class _SampleAllocation extends React.Component {
                     />
                     : <NoData
                         alignment='left'
-                        message={msg('Select ... something')}
+                        message={msg('process.samplingDesign.panel.sampleAllocation.form.noData')}
                     />}
                 
             </Widget>

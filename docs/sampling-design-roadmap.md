@@ -1,104 +1,328 @@
 # Sampling Design Roadmap
 
-Last updated: 2026-07-03
+Last updated: 2026-07-24
 
-This is a working decision log for Sampling Design. It captures agreed behavior, deferred implementation slices, and options we have discussed so the context does not depend on chat history.
+This is a working decision log for Sampling Design. It records current behavior, agreed changes, statistical
+caveats, documentation work, and deferred ideas so that unsettled decisions are not lost in chat history or
+mistaken for released functionality.
 
-## Current Direction
+## Product Boundary
 
-- Sampling Design has no normal "This Recipe" image layer and no live procedural sample preview.
-- Sample generation logic lives in `lib/js/ee/src/samplingDesign`, shared by export and any backend sampling utilities.
-- Export/retrieve remains the authoritative path for exact sample points. Users inspect sample locations by rendering materialized EE table assets as generic feature overlays.
-- Random and systematic exports should carry enough metadata to reproduce and audit results: seed, arrangement strategy, sample-size strategy, CRS/transform, grid origin, selected density, selected level, and algorithm version.
+- Sampling Design creates and exports sample locations. It does not collect reference observations, assess map
+  accuracy, calculate final estimates, or calculate final uncertainty.
+- Sampling Design is export-only. It has no procedural map preview and does not load generated sample features
+  into browser memory.
+- A completed Earth Engine table asset can be added to a map through the generic feature-layer flow. Exported
+  categorical metadata supplies stratum values, colors, and labels for styling and filtering.
+- Earth Engine asset exports keep rows compact and store allocation, final counts, styling, and reproduction
+  information as collection metadata. SEPAL workspace exports repeat the required information per row.
+- `ALGORITHM_VERSION` remains `samplingDesign-v1` until the first production release. Pre-release algorithm
+  changes do not increment it.
 
-## Implemented Foundation
+## Current Statistical Contract
 
-- Shared sampling modules were moved into `lib/js/ee/src/samplingDesign`.
-- Task exporters call the shared sampling logic and keep task-specific export orchestration in `modules/task`.
-- Sampling Design recipes use `skipThis: true` and `defaultGoogleSatellite: true`.
-- Saved Sampling Design layers that referenced the old `this-recipe` image source are normalized to Google Satellite.
-- Exported EE table assets can be added manually through the generic "Add Earth Engine asset" flow and rendered as `EETableAsset` overlays.
+- Every included stratum requires at least two sample locations. This is a hard software/calculation floor, not
+  a general recommendation for adequate precision.
+- Most automatic allocation strategies can set a higher `Min samples/stratum`. Equal and Manual use the
+  two-sample floor directly.
+- The target reporting category is the one category whose area or proportion the design is primarily planned to
+  estimate. It does not need to be one of the strata or come from the stratification map.
+- Anticipated proportions are planning assumptions. They support planning sample size, planning margin of error,
+  and Optimal/Power allocation; they are not observations or final estimates.
+- Planning margins of error and calculated sample sizes do not model spatial effects from Random versus
+  Systematic placement.
+- Power allocation changes how strongly each stratum's expected target amount affects allocation. Lower tuning
+  values shift relative allocation toward smaller non-zero expected amounts. When all anticipated proportions
+  are zero, allocation falls back to Equal.
+- Random arrangement has no minimum-distance option.
+- Systematic `Oversample` and `Exact` stop when the required count cannot be reached. `Closest` may accept a
+  shortfall only after the applicable minimum per stratum is met.
+- Final count validation applies to the draws that can under-produce (stratified Random and Systematic); it runs
+  independently of allocation strategy and reports affected strata, actual counts, the missed requirement, and
+  configuration-aware actions in Task Details. Unstratified Random draws an exact count, so it has no validation
+  stage.
 
-## Systematic Design Decisions
+## Sampling Frame
 
-- The systematic design is a nested systematic lattice.
-- The base lattice is hexagonal/triangular. Some levels skip rows to reduce step size between achievable counts; those derived levels are still systematic but not strictly isotropic hex layouts.
-- `gridOrigin: FIXED` preserves the historic global origin.
-- `gridOrigin: SEEDED` uses a seed-only global phase so the same seed, CRS, transform, density, and strategy clip the same global lattice across AOIs.
-- Exact subset guarantees across different AOI sizes require compatible selected density/level/strategy. A shared origin alone does not guarantee that a coarse design is a subset of a denser design.
-- The arrangement CRS is the grid/distance CRS. Equal-area is recommended for balanced density by area, but ground-distance distortion remains projection-dependent.
+The sampling frame is the geographic coverage eligible before the placement rule is applied:
 
-## Sampling-grid CRS Policy Roadmap
+- Unstratified: the complete AOI is treated as the frame.
+- Stratified: only unmasked pixels belonging to included strata inside the AOI are in the frame.
+- Arrangement and grid rules determine the exact locations that can be selected within the frame.
 
-- Production use is currently restricted to `EPSG:3410` at the task boundary; other CRS values are rejected with a structured, actionable error before the EE graph is built. The candidate-generation function stays projection-agnostic (no EE projection introspection).
-- The supported-CRS decision is a policy list compared by exact value (`lib/js/ee/src/samplingDesign/samplingGridCrs.js`), deliberately not an EPSG-only regex, so a vetted opaque WKT string (e.g. EASE-Grid 2.0 Global) can be added later without changing candidate generation.
-- Deferred: a curated CRS selector in the GUI and EASE-Grid 2.0 Global WKT support. The GUI build cannot import `lib/js/ee` (`#sepal/*` resolves to `lib/js/shared`), so a future GUI-shared CRS catalog must live under `lib/js/shared`.
-- Transform-defined grids are supported only for metre-based projected CRSs (transform coefficients in metres); a geographic-CRS transform cannot be validated in the synchronous candidate-graph builder and is out of contract.
+The AOI defines the outer boundary, not the full frame in every mode. Masked or omitted areas have no chance of
+selection and are not represented by the sample.
 
-## Density Search Behavior
+## Grid and CRS Policy
 
-Systematic density selection is expensive because each candidate density needs an Earth Engine count. The current strategy:
+- Recipes store curated CRS identifiers; Earth Engine receives resolved values only at the EE boundary.
+- Supported CRS options are:
+  - `EPSG:6933`: EASE-Grid 2.0 Global, the default. It resolves to tested WKT because Earth Engine rejects the
+    literal identifier in this environment.
+  - `EPSG:6931`: EASE-Grid 2.0 North.
+  - `EPSG:6932`: EASE-Grid 2.0 South.
+- Stored metadata keeps the configured identifier and must never contain the EPSG:6933 WKT.
+- Configuration separates two responsibilities (current behavior; sample locations are unchanged):
+  - Stratification owns **Scale**, which defines the stratification resolution.
+  - Sample Arrangement owns the curated equal-area **CRS**, which defines Random cells and the Systematic
+    lattice.
+- Sampling Design configuration, requests and reproduction metadata use CRS and Scale only; they do not carry a
+  CRS transform.
+- The effective grid for a stratified arrangement is `{scale: stratification.scale,
+  crs: sampleArrangement.crs}`.
+- For stratified Systematic, the minimum-distance floor is `2 * Stratification Scale`.
+- Minimum distance is not persisted when blank. For stratified Systematic it resolves at export to the current
+  raster floor and the GUI displays that effective value as the placeholder.
+- Unstratified Systematic is analytical. It has no raster scale and no `2 * scale` floor; an empty Minimum
+  distance applies no additional spacing constraint.
+- For the first demo, area calculation and stratum membership continue to evaluate on the equal-area arrangement
+  grid. Separating source/native stratification evaluation from arrangement placement is a post-demo feature,
+  not part of the configuration-ownership change.
 
-- Build a slack-adjusted base density using `BASE_GRID_SLACK`.
-- Evaluate candidate density offsets against selected-level summaries rather than full filtered feature collections.
-- Use `maxRetries=0` for exploratory density count calls.
-- Keep best-effort behavior: if a later exploratory count fails and a valid best density exists, use the best; if no valid best exists, fail clearly.
-- For `CLOSEST`, stop early when a later accepted density is equal/worse than the current best, or when it improves by less than the configured threshold.
+## Arrangement Applicability
 
-Potential optimization:
+| Design | Arrangement controls |
+| --- | --- |
+| Stratified Random | Seed and advanced CRS. Scale comes from Stratification. |
+| Stratified Systematic | Sample-size strategy, grid start, Minimum distance, applicable Seed, and advanced CRS. Scale comes from Stratification. |
+| Unstratified Random | Seed only. |
+| Unstratified Systematic | Sample-size strategy, grid start, Minimum distance, applicable Seed, and advanced CRS. |
 
-- Consider evidence-based jumps over offsets only when the current density is clearly too sparse.
+Current UI and effective-config behavior:
 
-Proposed jump heuristic:
+- The applicable CRS visibly defaults to Global (`EPSG:6933`).
+- Sample Arrangement does not expose Scale.
+- CRS belongs to Sample Arrangement and is shown as an advanced (More/Less) option whenever an arrangement grid
+  applies (stratified Random, stratified Systematic, unstratified Systematic); unstratified Random shows neither
+  the CRS nor the More/Less control. A saved non-default CRS reveals the advanced options on reopen.
+- Stratification retains Scale but no CRS or transform control.
 
-```text
-ratio = requested / max(actual, 1)
-jump = ceil(log4(ratio))
-jump = clamp(jump, 1, remainingOffsets)
-```
+## Post-demo Stratification and Arrangement CRS Separation
 
-Use the maximum relevant stratum ratio, and only jump when one of these is true:
+Configuration ownership is now separated (Stratification Scale, Sample Arrangement CRS). This did not change how
+Earth Engine evaluates the stratification: area, anticipated proportions and class membership still evaluate on
+the equal-area arrangement grid. Separating source/native evaluation remains post-demo.
 
-- A required stratum is empty.
-- A stratum is far below target, for example `actual < requested * 0.5`.
-- The `CLOSEST` score is dominated by under-count rather than over-count.
+The intended post-demo design is:
 
-Do not jump aggressively for `OVER` until we have more runtime evidence. `OVER` is optimizing smallest oversample, and skipped offsets may hide the best surplus.
+- Stratification evaluation uses the source image's native projection at Stratification Scale for area
+  calculation and class interpretation.
+- Random retains an equal-area cell frame in the arrangement CRS and reads the source stratum at each exported
+  cell centre.
+- Systematic retains an equal-area lattice in the arrangement CRS and reads membership at the exact exported
+  lattice point.
+- Public configuration remains Stratification Scale plus arrangement CRS. Native projection details are derived
+  from the image and are not exposed as a CRS transform.
 
-## Visualization Direction
+Random has a credible point-centre lookup path. Systematic still needs a proven implementation that separates
+the efficient marker raster from exact-point membership without reintroducing the continental-scale
+`reduceToVectors` failures. Do not change Systematic membership until output equivalence and full-scale
+performance are demonstrated.
 
-- Do not expose procedural sample preview in the GUI.
-- Do not fetch generated sample features into browser memory.
-- Use materialized EE table assets for map inspection. This avoids per-tile recomputation of the sampling graph and matches the export result.
-- Until automatic add-on-success exists, users can manually add exported EE table assets through the generic feature overlay flow.
+## Random Sampling
 
-## Export Roadmap
+### Current candidate behavior
 
-- Keep final export validation strict.
-- For systematic export, continue to materialize only the selected unfiltered sample density to a temporary EE table asset, then filter to the final samples.
-- For SEPAL table export, continue using table export/download rather than fetching rows into the client.
-- Include analysis weights and reproduction metadata in both GEE asset and SEPAL exports.
+Stratified Random uses sparse rank-based sampling of equal-area grid cells at Stratification Scale:
 
-Potential optimization:
+- Each eligible cell receives one deterministic primary rank. The expensive raster graph carries only `label`
+  and `rank`; it has no second random band, forced reprojection, `tileScale`, or transform branch.
+- Only cells below a per-stratum threshold are materialized to a temporary candidate table. Thresholds control
+  runtime only; final selection always takes the requested lowest ranks.
+- The ready candidate asset is inspected for per-stratum counts and unique `cellKey` identifiers. The lazy raster
+  graph is never counted interactively.
+- A short stratum is repaired by exporting an additional disjoint rank interval using the same rank field.
+  Repair continues until enough candidates exist or the full frame has been materialized.
+- Selection is independent per stratum. Everything below the nth-rank cutoff is retained; places tied at the
+  cutoff are selected by a deterministic secondary random value keyed on `cellKey`. The secondary value is
+  derived from the configured seed and is neither exposed nor persisted.
+- The selected rows are exported to a separate temporary asset and their actual counts are validated before
+  publication. GEE publication renames the validated asset; SEPAL exports from it.
+- Candidate, repair, and selected temporary assets are cleaned up on success, failure, and cancellation. Cleanup
+  is best effort and does not replace the primary task error.
 
-- Persist selected density decisions in the recipe, keyed by all inputs that affect them: AOI, stratification image/source/band, allocation rows, arrangement strategy, sample-size strategy, min distance, scale, CRS, CRS transform, grid origin, seed where relevant, and algorithm version.
-- Invalidate this cached density selection whenever any key input changes.
-- Treat cached density as an optimization only. Export should still be able to recompute if cache is missing or incompatible.
+Sudan at 10 m and 100000 requested samples completed with exact per-stratum counts, 100000 unique IDs, and no
+AOI violations. The previously failing seed containing a duplicate primary rank completed after boundary
+tie-handling was added.
 
-## Proportions Roadmap
+Unstratified Random uses `ee.FeatureCollection.randomPoints(region, points, seed, maxError)`:
 
-- Probability-image anticipated proportions are supported.
-- Categorical anticipated proportions are supported by computing the fraction of sampled pixels/cells equal to a target class.
-- Class discovery should prefer recipe/asset legend metadata when available.
-- If no legend metadata exists, allow user-triggered distinct-value discovery with a numeric fallback.
-- The target-class selector should show class colors when metadata includes colors.
+- AOI geometry alone defines eligible locations. There is no raster grid, Scale, CRS, transform, or minimum
+  distance.
+- The single synthetic `stratum: 1`, stable identifiers, display color, and row/collection metadata are added
+  after point generation. Grid fields in its reproduction metadata are absent or explicitly not applicable.
+- The draw returns exactly the requested count `N` by construction, so there is no pre-export count aggregation:
+  the known count is used directly for metadata (`actualSampleSize`, `sampleExpansionArea`, `sampleWeight`, and
+  the collection-level `sampleCountByStratum`), and no final-count validation stage runs. Recipe preflight still
+  rejects an invalid allocation or a total below the two-sample floor before any EE graph is built.
+- Geometry/platform failures surface from the export itself, not as per-stratum underproduction.
 
-Potential refactor:
+### Random underproduction advice
 
-- `proportions.jsx` is large and fragile around dependent fields.
-- A future refactor can extract controls/state helpers mechanically, but broad dependency-nullification machinery was not clearly simpler in the first attempt.
+Advice must not claim that stratified Random searched "anywhere" in the AOI: it searched eligible pixels at the
+current equal-area arrangement grid.
 
-## Open Questions
+- Unstratified `randomPoints` returns the exact requested count; geometry/platform failures are not ordinary
+  per-stratum underproduction.
+- Stratified Random can still run out of eligible pixels at the configured grid. Advice should mention the
+  current Scale and may suggest a finer value only when it still represents the source data and intended classes.
+  Scale advice applies to all relevant shortage groups, not only failures below the two-sample floor.
 
-- Should selected density/level decisions be persisted automatically after export, or only after a successful explicit "Apply" style action?
-- Should multi-stratum `CLOSEST` fail when one stratum is empty, or allow partial output when the whole collection is non-empty?
+## Systematic Sampling
+
+- The systematic design uses a globally anchored, nested lattice with deterministic seed-based phase.
+- Stratified candidate generation is exact-first, uses compact connected-component labels plus reducer-carried
+  full `i/j`, vectorizes over a two-pixel AOI buffer, reconstructs exact geometry, and filters against the
+  original AOI.
+- Temporary vector centroids remain in Earth Engine's default WGS84 representation. Native custom-WKT centroids
+  exceeded Earth Engine's aggregation-result limit at Sudan scale.
+- Systematic exports materialize candidate tables, select/repair final locations, validate final counts, export
+  the final collection, and clean up temporary assets. Cleanup is attempted on failure/cancellation too.
+- Tiling candidate/final exports is deferred until real users encounter limits that justify the complexity.
+
+### Why systematic may be useful
+
+Systematic sampling spreads locations regularly, avoiding the clusters and large gaps that independent random
+sampling can produce. When nearby locations tend to be similar, this broader spatial coverage can reduce sampling
+error for the same number of observations. The gain is not guaranteed, and calculating uncertainty from one
+systematic grid can be more difficult. A periodic landscape pattern aligned with the grid can perform poorly.
+
+Use a randomized grid start when the design requires randomization. A fixed start is reproducible but is not a
+randomized start.
+
+### Iterative and repeated designs: documentation candidate, not yet a guarantee
+
+A stable nested grid may allow sample locations to be retained when a design is enlarged, restratified, or
+repeated. Before documenting "many locations will be retained", establish the actual overlap contract with
+deterministic tests for:
+
+- increasing an unstratified systematic sample;
+- moving from unstratified to stratified;
+- replacing one stratification with another;
+- changing annual allocations while retaining CRS, grid-start method, and seed; and
+- `Exact` thinning when requested counts change.
+
+Proposed pilot workflow:
+
+1. Export an unstratified systematic pilot, for example 1,000 locations, with a randomized start and recorded
+   seed.
+2. Collect or interpret reference observations and calculate the result and its uncertainty outside the recipe.
+3. If uncertainty is too large, use the pilot and appropriate mapped information to plan a larger or stratified
+   design.
+4. Keep compatible CRS, grid-start method, and seed to maximize overlap.
+5. Reuse observations only at locations selected by the revised export and only when the observation remains
+   valid. Collect observations at newly selected locations.
+6. Do not automatically include pilot locations absent from the revised export as if the final design selected
+   them. Combining stages requires analysis that accounts for the sequential redesign.
+
+For annual monitoring, shared locations can reduce random year-to-year variation and improve estimates of
+change. They do not necessarily reduce the uncertainty of each annual estimate. Each year still needs an
+observation appropriate to that year, and changing stratification can change which locations are retained.
+
+## Why Stratify: Documentation Contract
+
+Stratification's primary statistical purpose in this recipe is to improve sampling efficiency. Define efficiency
+for beginners as either:
+
+- lower expected sampling error for the same total number of samples; or
+- fewer samples needed to reach a target sampling error.
+
+Efficiency can improve when strata separate areas with substantially different occurrences of the target
+reporting category and samples are allocated appropriately. It is not guaranteed. Weakly related strata,
+inaccurate anticipated proportions, or poor allocation may provide little benefit or can increase sampling
+error. Additional strata also introduce additional minimum-sample requirements.
+
+Ensuring samples in small groups is a separate objective. It is useful when those groups require separate
+results, but it does not necessarily improve efficiency for the overall target estimate.
+
+The guide must not discourage a valid design where a mapped class defines a stratum and the corresponding
+reference category is the target. Instead, warn that the mapped class is not reference truth and anticipated
+proportions should not blindly assume perfect 0/100 classification.
+
+## Underproduction and Validation Advice
+
+Current behavior:
+
+- Distinguish a fixed requested count (Samples mode) from a count calculated from Target margin of error
+  (Error mode).
+- Random never recommends `Closest`; Systematic `Oversample`/`Exact` may.
+- Manual ignores stale hidden Error/Equal values.
+- Equal-allocation advice recommends only Proportional, Balanced, or Manual when anticipated proportions are
+  not known to be available.
+- Keep no more than three prioritized actions per diagnosis.
+- Task Details preserves structured `{key, args, message}` advice and reports per-stratum counts.
+- Manual is normalized through the shared policy for boolean and legacy-array forms.
+- Preflight recommendations distinguish Samples, Error, and Manual mode and name editable controls.
+- Coverage advice says "each affected stratum" and qualifies AOI enlargement so the revised boundary must still
+  represent the intended study area.
+- Stratified-Random capacity advice mentions a finer Scale only when it still represents the source data and
+  intended classes.
+
+## Documentation and GUI Language
+
+The user guide lives in the separate `/home/ec2-user/sepal-doc` repository at
+`docs/source/cookbook/sampling_design.rst`.
+
+Completed direction:
+
+- Define the sampling frame and distinguish AOI boundary from stratification mask.
+- Explain that planning margins/sample sizes are assumptions, not final results.
+- Define the target reporting category without requiring it to be a stratum.
+- Explain failure details through Tasks -> Task Details -> Progress.
+- Document Direct versus Queued Earth Engine calculations, pixel-count implications, export-only behavior,
+  temporary export assets, and exported stratum styling metadata.
+- Avoid undefined `estimator` terminology and detailed instructions for final area estimation.
+- Define stratification's primary purpose as sampling efficiency, while treating deliberate coverage of small
+  groups as a separate objective whose efficiency gain is not guaranteed.
+- Separate poor grouping from incomplete coverage: poor grouping may reduce efficiency, while omitted or masked
+  coverage changes the sampling frame.
+- Use `How to anticipate proportions` in the GUI and plain-language Power wording matching the implemented
+  formula.
+- Keep final-analysis guidance high-level: later calculations must account for how locations were selected and
+  allocated, without prescribing weights or an area-estimation procedure.
+- Explain the four arrangement modes separately, including direct AOI point generation for unstratified Random
+  and CRS-only configuration for unstratified Systematic.
+- Present Task Details recommendations as panel-specific actions and distinguish sampling shortages from Earth
+  Engine platform failures.
+
+Pending after the application configuration is finalized:
+
+- Describe Stratification Scale and arrangement CRS without implying that source/native projection separation is
+  already implemented.
+- Reconcile the guide's temporary-asset, quota, cleanup, and progress descriptions with the sparse Random export
+  flow.
+- Remove implementation details from the guide when a stable user-facing explanation is sufficient.
+- Replace the stale anticipated-proportions screenshot and reconsider Stratification and Sample Arrangement
+  screenshots after the final GUI pass.
+
+## Deferred Functional Issues
+
+Keep these separate from the current language/arrangement slice:
+
+- Seed `0` is inconsistently validated, defaulted, executed, and recorded.
+- Dormant absolute-margin-of-error support conflicts with the relative-only GUI and guide.
+- A tiled candidate/final export workflow is deferred until actual user workloads require it.
+- Automatic addition of a completed export to the map is not required for the first release.
+- Sample IDs pack coordinates rounded to ~metre precision (`toId`). Unstratified Random appends `randomPoints`'
+  seed-stable feature index because it has no minimum separation. Stratified Random uses its unique equal-area
+  `cellKey`. Unstratified Systematic still uses the bare coordinate ID, which can collide at sub-metre spacing.
+  Decide before relying on universal ID uniqueness whether to add a structural suffix or raise `toId` precision.
+
+## Verification Checklist for the Next Slices
+
+- Done: curated CRS ownership moved to Sample Arrangement, Scale retained in Stratification, the unreleased
+  user-facing transform removed from every request boundary and message, with current sample locations unchanged
+  (verified by before/after live parity).
+- Done: a stratified CRS change invalidates stratification areas and cascades to proportions and allocation
+  through the existing dependency workflow.
+- Done: the four effective arrangement modes verified, including advanced (More/Less) CRS visibility and the
+  Global default.
+- Reconcile task progress, quota requirements, cleanup wording, and the guide with sparse Random.
+- Complete final GUI inspection and replace stale screenshots before the demo.
+- After the demo, spike source/native stratification evaluation separately for Random and Systematic. Treat
+  exact Systematic membership and full-scale performance as acceptance gates.
+- Resolve the seed `0` and remaining sample-ID uniqueness issues before making universal reproduction or
+  uniqueness claims.
+- Run focused shared/GEE/task/GUI tests, affected ESLint targets, Sphinx build and warning check, and
+  `git diff --check` in both repositories.
+- Do not stage or commit automatically; the user controls Git mutations.

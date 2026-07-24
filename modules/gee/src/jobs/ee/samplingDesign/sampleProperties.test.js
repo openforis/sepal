@@ -1,8 +1,11 @@
+import {jest} from '@jest/globals'
+
 import {
     ALGORITHM_VERSION,
     collectionMetadata,
     REPRODUCTION_PROPERTY_NAMES,
     ROW_PROPERTY_NAMES,
+    setCollectionMetadata,
     strataMetadata,
     SYSTEMATIC_ROW_PROPERTY_NAMES
 } from '#sepal/ee/samplingDesign/sampleProperties'
@@ -15,9 +18,7 @@ const reproduction = {
     minDistance: 60,
     scale: 30,
     crs: 'EPSG:6933',
-    crsTransform: '',
     gridCrs: 'EPSG:6933',
-    gridCrsTransform: '',
     selectedDensityOffset: 0
 }
 
@@ -50,6 +51,20 @@ describe('strataMetadata', () => {
             {stratum: 1, label: 'Forest', color: '#0a0', area: 300, totalArea: 1000, weight: 0.3, requestedSampleSize: 30},
             {stratum: 2, label: '2', color: '#000000', area: 700, totalArea: 1000, weight: 0.7, requestedSampleSize: 70}
         ])
+    })
+})
+
+// A supplied known count (exact-count draw) must be written verbatim, and the collection must never be
+// histogrammed to recover a number produced by construction. `collection.set` is mocked; with a known count the
+// aggregating path (sampleCountByStratumJson) is never reached, so no EE graph is built. (addSampleProperties
+// and the aggregating branch construct EE objects that need initialization, so they are not exercised here.)
+describe('setCollectionMetadata count source', () => {
+    it('uses the supplied count verbatim and never aggregates the collection', () => {
+        const collection = {set: jest.fn(function() { return this }), aggregate_histogram: jest.fn()}
+        setCollectionMetadata(collection, {allocation, reproduction, sampleCountByStratum: {1: 30}})
+        expect(collection.aggregate_histogram).not.toHaveBeenCalled()
+        const props = Object.assign({}, ...collection.set.mock.calls.map(call => call[0]))
+        expect(JSON.parse(props.sampleCountByStratum)).toEqual({1: 30})
     })
 })
 

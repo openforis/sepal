@@ -65,9 +65,9 @@ describe('taskStatusDescription', () => {
 
     it('renders a structured Sampling Design failure as clean text, not raw JSON', () => {
         const statusDescription = JSON.stringify({
-            messageKey: 'tasks.samplingDesign.preflight.belowStatisticalMinimum',
+            messageKey: 'tasks.samplingDesign.preflight.belowStatisticalMinimum.samples',
             messageArgs: {floor: 2, strata: 'snow (1)'},
-            defaultMessage: 'Every stratum needs at least {floor} samples, but {strata} requests fewer.'
+            defaultMessage: 'Problem for {strata}; minimum {floor}.'
         })
         const result = taskStatusDescription({statusDescription})
         // The interpolated per-stratum detail is present (surrounding prose may change freely)...
@@ -84,7 +84,7 @@ describe('taskStatusDescription', () => {
         const withAdvice = advice => ({statusDescription: JSON.stringify({
             messageKey: 'tasks.samplingDesign.underproduction.message',
             messageArgs: {details: 'ENGLISH FALLBACK DETAILS', advice},
-            defaultMessage: 'The sampling design could not be produced as configured. {details}'
+            defaultMessage: 'Outer. {details}'
         })})
 
         it('translates each diagnosis and action by key instead of using the English details', () => {
@@ -99,14 +99,13 @@ describe('taskStatusDescription', () => {
             expect(result).not.toContain('{details}')
         })
 
-        it('composes several groups, each with its diagnosis followed by its actions', () => {
+        it('renders actions on separate lines and separates diagnosis groups', () => {
             const result = taskStatusDescription(withAdvice([
                 {kind: 'statisticalMinimum', diagnosis: {key: 'k.a', args: {}, message: 'DIAG-A'}, actions: [{key: 'k.a1', args: {}, message: 'ACT-A1'}]},
                 {kind: 'requestedAllocation', diagnosis: {key: 'k.b', args: {}, message: 'DIAG-B'}, actions: [{key: 'k.b1', args: {}, message: 'ACT-B1'}]}
             ]))
-            expect(result).toContain('DIAG-A ACT-A1')
-            expect(result).toContain('DIAG-B ACT-B1')
-            expect(result.indexOf('DIAG-A')).toBeLessThan(result.indexOf('DIAG-B'))
+            expect(result.slice(result.indexOf('DIAG-A')))
+                .toBe('DIAG-A\n- ACT-A1\n\nDIAG-B\n- ACT-B1')
         })
 
         it('falls back to the plain message when no advice is attached', () => {
@@ -117,5 +116,19 @@ describe('taskStatusDescription', () => {
             })
             expect(taskStatusDescription({statusDescription})).toContain('PLAIN DETAILS')
         })
+    })
+})
+
+describe('unsupported-CRS message localization', () => {
+    it('renders the backend descriptor without unresolved placeholders or WKT', () => {
+        const statusDescription = JSON.stringify({
+            messageKey: 'tasks.samplingDesign.systematic.grid.unsupportedCrs',
+            messageArgs: {supported: 'EPSG:6933 - EASE-Grid 2.0 Global'},
+            defaultMessage: 'Supported: {supported}'
+        })
+        const result = taskStatusDescription({statusDescription})
+        expect(result).not.toMatch(/\{/)
+        expect(result).not.toMatch(/PROJCS|WKT/)
+        expect(result).toContain('EPSG:6933 - EASE-Grid 2.0 Global')
     })
 })

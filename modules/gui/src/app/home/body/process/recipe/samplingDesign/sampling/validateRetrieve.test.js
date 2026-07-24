@@ -236,20 +236,15 @@ describe('stale sections (requiresUpdate)', () => {
 
 // Same raster floor at the submission boundary, so the GUI cannot approve a design the task rejects.
 describe('stratified systematic minimum distance vs the stratification grid', () => {
-    const withGrid = ({minDistance, scale = 10, crsTransform = '', skip, arrangementStrategy = 'SYSTEMATIC'}) => ({
+    const withGrid = ({minDistance, scale = 10, skip, arrangementStrategy = 'SYSTEMATIC'}) => ({
         ...stratifiedValid,
-        stratification: {...stratifiedValid.stratification, scale, crsTransform, skip},
+        stratification: {...stratifiedValid.stratification, scale, skip},
         sampleArrangement: {arrangementStrategy, sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance, seed: 1}
     })
 
     it('rejects below the floor and accepts at or above it', () => {
         expect(codes(withGrid({minDistance: 19}))).toContain('minDistanceBelowGrid')
         expect(codes(withGrid({minDistance: 20}))).not.toContain('minDistanceBelowGrid')
-    })
-
-    it('applies the same floor to an equivalent transform grid', () => {
-        expect(codes(withGrid({minDistance: 19, crsTransform: '[10,0,0,0,-10,0]'}))).toContain('minDistanceBelowGrid')
-        expect(codes(withGrid({minDistance: 20, crsTransform: '[10,0,0,0,-10,0]'}))).not.toContain('minDistanceBelowGrid')
     })
 
     it('invalidates a previously valid distance when the grid coarsens', () => {
@@ -281,7 +276,7 @@ describe('error arguments', () => {
     it('carries value, pixelSize and minimum for a below-floor minimum distance', () => {
         const error = firstError({
             ...stratifiedValid,
-            stratification: {...stratifiedValid.stratification, scale: 10, crsTransform: ''},
+            stratification: {...stratifiedValid.stratification, scale: 10},
             sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance: 1, seed: 1}
         })
         expect(error.args).toEqual({value: 1, pixelSize: 10, minimum: 20})
@@ -290,7 +285,7 @@ describe('error arguments', () => {
     it('reports the coarser grid numbers when the grid changes', () => {
         const error = firstError({
             ...stratifiedValid,
-            stratification: {...stratifiedValid.stratification, scale: 30, crsTransform: ''},
+            stratification: {...stratifiedValid.stratification, scale: 30},
             sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance: 20, seed: 1}
         })
         expect(error.args).toEqual({value: 20, pixelSize: 30, minimum: 60})
@@ -305,7 +300,7 @@ describe('error arguments', () => {
     it('produces no minimum-distance error for a blank distance', () => {
         expect(firstError({
             ...stratifiedValid,
-            stratification: {...stratifiedValid.stratification, scale: 10, crsTransform: ''},
+            stratification: {...stratifiedValid.stratification, scale: 10},
             sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance: '', seed: 1}
         })).toBeUndefined()
     })

@@ -38,7 +38,7 @@
     color: #a0a0a0;
     font-size: .9rem;
     line-height: 1.5rem;
-    white-space: normal;
+    white-space: pre-line;
     word-wrap: break-word;
 }
 

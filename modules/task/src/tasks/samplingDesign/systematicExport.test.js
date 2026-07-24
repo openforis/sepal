@@ -2,13 +2,13 @@ import {lastValueFrom} from 'rxjs'
 
 import {exportSystematicToAssets$} from './systematicExport.js'
 
-// Minimal stratified recipe whose sampling-grid CRS comes from the Stratification panel.
+// Minimal stratified recipe. Scale comes from Stratification; the sampling-grid CRS from Sample Arrangement.
 const recipe = (crs, {minDistance = 60, scale = 10, skip = false} = {}) => ({
     model: {
         aoi: {type: 'ASSET', id: 'users/x/aoi'},
-        stratification: {skip, scale, crs, crsTransform: '', strata: [{stratum: 1, weight: 1, area: 1}]},
+        stratification: {skip, scale, strata: [{stratum: 1, weight: 1, area: 1}]},
         sampleAllocation: {allocation: [{stratum: 1, label: 'a', area: 1, sampleSize: 10, weight: 1}]},
-        sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', minDistance, gridOrigin: 'FIXED', seed: 1}
+        sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', minDistance, gridOrigin: 'FIXED', seed: 1, crs}
     }
 })
 

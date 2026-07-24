@@ -6,6 +6,8 @@ import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 
+import {arrangementCrsInvalidatesStratification, DEPENDENCIES} from './syncDependencies'
+
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),
     stratification: selectFrom(recipe, 'model.stratification'),
@@ -13,8 +15,6 @@ const mapRecipeToProps = recipe => ({
     sampleAllocation: selectFrom(recipe, 'model.sampleAllocation'),
     sampleArrangement: selectFrom(recipe, 'model.sampleArrangement'),
 })
-
-// TODO: Deal with validation here? Or where should it be done?
 
 class _Sync extends React.Component {
     constructor(props) {
@@ -25,14 +25,6 @@ class _Sync extends React.Component {
     render() {
         return null
     }
-
-    // If AOI updates, STR becomes invalid
-    // If STR updates, PRO becomes invalid
-    // If PRO updates, SMP becomes invalid
-    
-    // When a section updates, that sections automatically becomes valid
-    // Valid state must be persisted as part of the recipe
-    // Maybe call it "requiresUpdate"
 
     componentDidUpdate(prevProps) {
         const changed = propName =>
@@ -50,6 +42,12 @@ class _Sync extends React.Component {
         }
         if (Object.values(changedByProp).some(changed => changed)) {
             this.updateRequiresUpdates(changedByProp)
+        }
+        // A CRS change recomputes stratified areas; the DEPENDENCIES chain cascades as each section recomputes.
+        if (arrangementCrsInvalidatesStratification(prevProps, this.props)) {
+            this.actionBuilder('REQUIRE_UPDATE_STRATIFICATION_FROM_CRS')
+                .set(['model', 'stratification', 'requiresUpdate'], true)
+                .dispatch()
         }
     }
 
@@ -72,12 +70,6 @@ class _Sync extends React.Component {
         }
     }
 
-}
-
-const DEPENDENCIES = {
-    aoi: 'stratification',
-    stratification: 'proportions',
-    proportions: 'sampleAllocation'
 }
 
 export const Sync = compose(

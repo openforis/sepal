@@ -1,3 +1,5 @@
+import {sanitizeEarthEngineTaskName} from '#sepal/earthEngineExportNames'
+
 // Plain, user-facing EE task descriptions and temporary asset IDs for the systematic candidate exports.
 // Users see these in the Earth Engine Code Editor task list and asset browser, so they must not expose
 // implementation details (unfiltered / densityOffset / base / repair jargon). Internal density offsets stay
@@ -17,5 +19,6 @@ const CANDIDATE_DESCRIPTION = {
     repair: 'Prepare additional sample candidates'
 }
 
-// Plain EE Code Editor task description for a candidate export, e.g. "Prepare sample candidates: <output>".
-export const candidateDescription = (description, kind) => `${CANDIDATE_DESCRIPTION[kind]}: ${description}`
+// Plain EE Code Editor task description for a candidate export.
+export const candidateDescription = (description, kind) =>
+    sanitizeEarthEngineTaskName(`${CANDIDATE_DESCRIPTION[kind]}: ${description}`)

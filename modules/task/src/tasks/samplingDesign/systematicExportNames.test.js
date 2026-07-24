@@ -26,12 +26,9 @@ describe('candidateAssetId', () => {
 describe('candidateDescription', () => {
     const description = 'My sample design'
 
-    it('includes the user-provided design description in the base description', () => {
-        expect(candidateDescription(description, 'base')).toContain(description)
-    })
-
-    it('includes the user-provided design description in the repair description', () => {
-        expect(candidateDescription(description, 'repair')).toContain(description)
+    it('produces valid Earth Engine task names for both candidate exports', () => {
+        expect(candidateDescription(description, 'base')).toBe('Prepare_sample_candidates_My_sample_design')
+        expect(candidateDescription(description, 'repair')).toBe('Prepare_additional_sample_candidates_My_sample_design')
     })
 
     it('produces distinct base and repair descriptions', () => {

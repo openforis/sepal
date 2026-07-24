@@ -4896,10 +4896,13 @@
         "stratification": {
           "button": "STR",
           "form": {
+            "csv": {
+              "label": "CSV"
+            },
             "skip": {
               "label": "Unstratified",
               "tooltip": "Use an unstratified sampling design.",
-              "message": "You’ve chosen an unstratified sampling design, meaning samples will be drawn without considering variation across map classes or regions. To achieve the same level of confidence in your area estimates, more samples may be needed compared to a stratified design, which can target areas with higher variability more efficiently."
+              "message": "An unstratified design treats the eligible area within the area of interest as one stratum. It is simpler, but it cannot assign samples separately among map classes. A useful stratification may reduce sampling error, although the gain is not guaranteed."
             },
             "type": {
               "label": "Type",
@@ -4939,19 +4942,7 @@
               "placeholder": "Scale...",
               "required": "You must specify the scale",
               "suffix": "meters",
-              "tooltip": "The scale to use when calculating stratum areas and allocating the samples"
-            },
-            "crs": {
-              "label": "CRS",
-              "placeholder": "CRS...",
-              "required": "You must specify the CRS",
-              "tooltip": "Equal-area grid used to measure areas, space samples and place them. Global is recommended for most areas of interest; North polar and South polar are intended for polar regions."
-            },
-            "crsTransform": {
-              "label": "CRS transform",
-              "placeholder": "e.g. [30,0,0,0,-30,0]",
-              "tooltip": "Optional expert grid alignment: a north-up, square 6-number affine transform ([xScale,0,xOrigin,0,yScale,yOrigin]) for the stratification grid. When set it replaces the scale above. Leave empty to use the CRS at the scale.",
-              "invalid": "Enter a north-up, square transform: [xScale, 0, xOrigin, 0, yScale, yOrigin] with |xScale| = |yScale| and no rotation/shear."
+              "tooltip": "Pixel size used to calculate stratum areas. Smaller values use more pixels and preserve detail only when supported by the source image."
             },
             "hexButton": {
               "label": "HEX",
@@ -4979,11 +4970,11 @@
             "eeStrategy": {
               "batch": {
                 "label": "Queued",
-                "tooltip": "Submit an Earth Engine task. This can handle larger calculations, but it may wait until your other Earth Engine tasks finish."
+                "tooltip": "Submit an Earth Engine batch task. It may wait for capacity, but can run longer and use more memory than Direct, making it better suited to demanding calculations. It can still fail."
               },
               "online": {
                 "label": "Direct",
-                "tooltip": "Calculate directly in Earth Engine. This avoids creating a task, but large calculations can time out."
+                "tooltip": "Start the calculation immediately in Earth Engine's interactive environment. Demanding calculations can be slow or time out."
               }
             }
           },
@@ -4997,41 +4988,47 @@
             "skip": {
               "label": "No proportions",
               "tooltip": "Do not use anticipated proportions.",
-              "message": "Creating a sampling design without anticipated proportions. Some allocation strategies will not be available and SEPAL cannot estimate your sampling error."
+              "message": "Creating a sampling design without anticipated proportions. Optimal and Power allocation will not be available, and SEPAL cannot estimate precision for a target reporting category."
             },
             "manual": {
               "label": "Manual",
-              "tooltip": "Manually specify the anticipated proportions"
+              "tooltip": "Manually enter the anticipated target-category proportion in each stratum."
             },
+            "percentage": {
+              "label": "%",
+              "tooltip": "Off: probability values are fractions from 0 to 1. On: values are percentages from 0 to 100."
+            },
+            "calculating": "Calculating anticipated proportions…",
+            "selectImageAndBand": "Select an image and band to calculate anticipated proportions.",
             "anticipationStrategy": {
-              "label": "Proportion Estimation Method",
+              "label": "How to anticipate proportions",
               "MANUAL": {
                 "label": "Manual",
-                "tooltip": "Manually enter the anticipated proportion of the reporting category you want to base your sampling design on"
+                "tooltip": "Manually enter the anticipated proportion of the one target reporting category used to plan the design."
               },
               "PROBABILITY": {
                 "label": "Probability image",
-                "tooltip": "Anticipate proportion based on a probability image of your reporting category. This could for instance be one of the probability bands of a SEPAL classification."
+                "tooltip": "Use a probability band for the target reporting category, such as a Tree % band from a SEPAL classification."
               },
               "CATEGORICAL": {
                 "label": "Categorical image",
-                "tooltip": "Estimate the reporting category proportion from the fraction of pixels equal to a selected class in a categorical image (e.g. a classification band). You probably don't want to use this method when you have a stratification containing the reporting category as a stratum."
+                "tooltip": "Use the mapped fraction of one class as the anticipated target-category proportion. For example, with ecological zones as strata, use a land-cover image to anticipate forest proportion in each zone."
               }
             },
             "image": {
               "label": "Image",
               "placeholder": "Select an image...",
-              "tooltip": "Select image to use for anticipating reporting category proportion"
+              "tooltip": "Select the image used to anticipate the target reporting category."
             },
             "type": {
               "label": "Type",
               "ASSET": {
                 "label": "Asset",
-                "tooltip": "Use EE Asset for anticipating reporting category proportion"
+                "tooltip": "Use an Earth Engine asset to anticipate the target reporting category."
               },
               "RECIPE": {
                 "label": "Recipe",
-                "tooltip": "Use SEPAL Recipe for anticipating reporting category proportion"
+                "tooltip": "Use a SEPAL recipe output to anticipate the target reporting category."
               },
               "required": "You must select an image type"
             },
@@ -5048,13 +5045,13 @@
             "band": {
               "label": "Band",
               "placeholder": "Select a band...",
-              "tooltip": "Select the band containing the strata",
+              "tooltip": "Select the probability or categorical band used to anticipate the target reporting category.",
               "required": "You must select a band"
             },
             "targetClass": {
               "label": "Class",
               "placeholder": "Class value...",
-              "tooltip": "The class value of your reporting category in the categorical image. The proportion is estimated per stratum as the fraction of sampled pixels/cells (at the chosen scale) equal to this class - approximately the area fraction for equal-area projections.",
+              "tooltip": "Class value of the target reporting category. In each stratum, its pixel fraction at the chosen scale approximates its mapped area proportion.",
               "required": "You must specify the class value",
               "numeric": "The class value must be a number",
               "loadValues": "Load values",
@@ -5085,25 +5082,25 @@
             },
             "anticipatedProportions": {
               "required": "You must anticipate the proportion per stratum",
-              "header": "Proportion of reporting category in stratum"
+              "header": "Target-category proportion in stratum"
             },
             "eeStrategy": {
               "batch": {
                 "label": "Queued",
-                "tooltip": "Submit an Earth Engine task. This can handle larger calculations, but it may wait until your other Earth Engine tasks finish."
+                "tooltip": "Submit an Earth Engine batch task. It may wait for capacity, but can run longer and use more memory than Direct, making it better suited to demanding calculations. It can still fail."
               },
               "online": {
                 "label": "Direct",
-                "tooltip": "Calculate directly in Earth Engine. This avoids creating a task, but large calculations can time out."
+                "tooltip": "Start the calculation immediately in Earth Engine's interactive environment. Demanding calculations can be slow or time out."
               }
             },
             "proportion": {
               "range": "Enter a percentage from 0 to 100."
             }
           },
-          "info": "Select one reporting category to focus on, and estimate its proportion within each stratum. This enables additional allocation strategies and allows SEPAL to estimate your sampling error.",
+          "info": "Choose one target reporting category and anticipate its proportion within each stratum. SEPAL uses this information to plan the allocation, estimate precision for a fixed sample size, or calculate the sample size needed for a precision target. These planning results apply only to the selected category.",
           "title": "Anticipate proportion",
-          "tooltip": "Anticipate proportion of target reporting category. This is used in sample size calculations and when performing optimal sample allocation."
+          "tooltip": "Choose the target reporting category the design should plan for. Its anticipated proportions support sample allocation and planning calculations for sample size and precision."
         },
         "sampleAllocation": {
           "button": "ALO",
@@ -5112,8 +5109,11 @@
               "label": "Manual",
               "tooltip": "Manually specify the sample allocation"
             },
+            "target": {
+              "label": "Target"
+            },
+            "noData": "Complete the stratification and allocation settings to calculate a sample allocation.",
             "estimateSampleSize": {
-              "label": "Specify",
               "false": {
                 "label": "Samples",
                 "tooltip": "Enter a fixed total sample size and calculate the resulting margin of error."
@@ -5128,25 +5128,25 @@
               "placeholder": "Confidence level...",
               "required": "You must specify the confidence level",
               "suffix": "%",
-              "tooltip": "Controls how often the planned interval is expected to contain the true category proportion under the design assumptions. 95% is commonly used.",
+              "tooltip": "How often the margin-of-error range would be expected to contain the true proportion if the sampling process were repeated many times. 95% is standard; higher values require more samples for the same target error.",
               "range": "Enter a confidence level greater than 0% and less than 100%. 95% is commonly used."
             },
             "sampleSize": {
               "label": "Total sample size",
               "placeholder": "Sample size",
               "required": "You must specify the sample size",
-              "tooltip": "The number of samples to allocate",
-              "notEnough": "Not enough samples to reach the min samples/stratum"
+              "tooltip": "Total number of sample locations requested.",
+              "notEnough": "The total sample size is too small to give every stratum its required minimum. Increase the total or lower Min samples/stratum."
             },
             "marginOfError": {
               "label": "Target margin of error",
               "placeholder": "Margin of error...",
-              "tooltip": "Specify target margin of error to use when calculating sample size."
+              "tooltip": "The target margin of error used to calculate the sample size, relative to the anticipated overall target-category proportion."
             },
             "minSamplesPerStratum": {
               "label": "Min samples/stratum",
               "placeholder": "Min samples...",
-              "tooltip": "Ensure each stratum receives at least this many samples while keeping the total sample size. At least 2 samples per stratum are always required, so this cannot be lower. If the total is too small, increase it or lower this minimum."
+              "tooltip": "Require Proportional, Balanced, Optimal, or Power allocation to assign at least this many samples to each stratum. The minimum is 2. Increasing it redistributes a fixed total or can increase a total calculated from Target margin of error."
             },
             "relativeMarginOfError": {
               "label": "Margin of error",
@@ -5171,30 +5171,30 @@
               },
               "EQUAL": {
                 "label": "Equal",
-                "tooltip": "Allocate the same number of samples in each stratum"
+                "tooltip": "Assign sample counts as evenly as possible among strata. Counts can differ by one when the total does not divide evenly."
               },
               "OPTIMAL": {
                 "label": "Optimal",
-                "tooltip": "Use an optimal, or Neyman allocation, placing more samples in strata with higher variance"
+                "tooltip": "Allocate using mapped stratum area and anticipated target-category variability, aiming to minimize planned uncertainty for a fixed total sample size."
               },
               "POWER": {
                 "label": "Power",
-                "tooltip": "Use an allocation scheme balancing between equal and optimal allocation based on a tuning constant"
+                "tooltip": "Modify Optimal by reducing the influence of each stratum’s expected target amount. A value of 1 matches Optimal; lower values shift relatively more samples toward smaller non-zero expected amounts."
               },
               "BALANCED": {
                 "label": "Balanced",
-                "tooltip": "Use an allocation scheme balancing between equal and proportional allocation"
+                "tooltip": "Use the midpoint between Equal and Proportional allocation."
               }
             },
             "powerTuningConstant": {
               "label": "Power tuning constant",
               "placeholder": "Constant...",
-              "tooltip": "Controls how strongly stratum size affects allocation. A value of 1 gives Neyman allocation. Lower values place relatively more samples in strata where the selected category is rare.",
+              "tooltip": "Modify Optimal by reducing the influence of each stratum’s expected target amount. A value of 1 matches Optimal; lower values shift relatively more samples toward smaller non-zero expected amounts.",
               "range": "Enter a value from 0 to 1."
             },
             "allocation": {
               "label": "Allocation",
-              "tooBig": "Too many samples are being allocated. Increase the margin of error.",
+              "tooBig": "Too many samples are being allocated. Reduce Total sample size or, when using Target margin of error, increase it.",
               "table": {
                 "marginOfError": "Margin of error (ha)",
                 "relativeMarginOfError": "Relative margin of error",
@@ -5205,37 +5205,37 @@
             }
           },
           "title": "Sample Allocation",
-          "tooltip": "Decide on the sample size and if stratified sampling, how the samples should be allocated."
+          "tooltip": "Set a fixed total sample size or a target margin of error and, when stratified, choose how samples are allocated."
         },
         "sampleArrangement": {
           "button": "ARR",
           "form": {
             "arrangementStrategy": {
               "label": "Arrangement strategy",
-              "tooltip": "Specify how samples should be arranged in each stratum",
+              "tooltip": "Choose how sample locations are placed.",
               "RANDOM": {
                 "label": "Random",
-                "tooltip": "Select random usable pixels within each stratum."
+                "tooltip": "Select locations randomly. With stratification, select usable pixels within each stratum; without stratification, draw points directly within the area of interest."
               },
               "SYSTEMATIC": {
                 "label": "Systematic",
-                "tooltip": "Select samples from a nested systematic lattice within each stratum. The base lattice is hexagonal/triangular; some count strategies may use nested row-skipping levels to get closer to the requested sample count."
+                "tooltip": "Place sample locations on a regularly spaced grid for broad spatial coverage."
               }
             },
             "sampleSizeStrategy": {
               "label": "Sample size strategy",
-              "tooltip": "It's impossible to find a discrete systematic grid that gives the exact number of samples as requested in the allocation. These strategies provides options on how to handle this.",
+              "tooltip": "A discrete systematic grid may not produce exactly the requested number of samples. Choose how to resolve that difference.",
               "OVER": {
                 "label": "Oversample",
-                "tooltip": "Pick a grid level that gives you more than the requested sample allocation. Note that there still no guarantee that sample size reached, but an effort is made to reach it."
+                "tooltip": "Choose a grid level meant to meet or exceed the requested count. If even the densest allowed grid cannot reach it, the export stops with an error instead of returning fewer samples."
               },
               "CLOSEST": {
                 "label": "Closest",
-                "tooltip": "Pick a grid level that get you as close as possible to the requested sample allocation, even if it's smaller."
+                "tooltip": "Choose the available grid level nearest the requested count, which may be below it, while still meeting the minimum per stratum."
               },
               "EXACT": {
                 "label": "Exact",
-                "tooltip": "(Not a purely systematic arrangement) Randomly removes samples to reach the requested sample allocation. Note that there still no guarantee that sample size reached, but an effort is made to reach it."
+                "tooltip": "Randomly remove systematic locations to reach the requested count. This is not a purely systematic arrangement, and the export stops with an error if too few locations exist."
               }
             },
             "gridOrigin": {
@@ -5243,7 +5243,7 @@
               "tooltip": "Where the systematic grid starts. Fixed uses the same start each time; Random picks the start from the seed.",
               "FIXED": {
                 "label": "Fixed",
-                "tooltip": "Use the same grid start every time for the same settings, so the result is reproducible."
+                "tooltip": "Use the same grid start every time. This is reproducible, but the grid location is not randomized."
               },
               "SEEDED": {
                 "label": "Random",
@@ -5251,11 +5251,7 @@
               }
             },
             "crs": {
-              "tooltip": "Equal-area grid used to measure areas, space samples and place them. Global is recommended for most areas of interest; North polar and South polar are intended for polar regions."
-            },
-            "crsTransform": {
-              "tooltip": "Optional transform applied to the grid's CRS.",
-              "invalid": "Enter a north-up, square transform: [xScale, 0, xOrigin, 0, yScale, yOrigin] with |xScale| = |yScale| and no rotation/shear."
+              "tooltip": "Equal-area CRS defining the sampling grid: Random cells and the Systematic lattice. Global is recommended for most areas of interest; North polar and South polar are intended for polar regions."
             },
             "minDistance": {
               "label": "Min distance",
@@ -5269,11 +5265,11 @@
             "seed": {
               "label": "Seed",
               "placeholder": "Seed...",
-              "tooltip": "The randomization seed"
+              "tooltip": "Use the same seed and settings to reproduce the same random choice or randomized grid start."
             }
           },
           "title": "Sample Arrangement",
-          "tooltip": "Specify how the samples should be arranged (within each stratum if stratified sampling)."
+          "tooltip": "Choose how sample locations are placed."
         },
         "retrieve": {
           "form": {
@@ -5479,7 +5475,7 @@
         "progress": {
           "prepareCandidates": "Finding random sample locations",
           "checkCandidates": "Checking random sample locations",
-          "exportFinal": "Exporting samples"
+          "exportFinal": "Exporting sample locations"
         }
       },
       "systematic": {
@@ -5488,12 +5484,11 @@
           "checkBaseCandidates": "Checking systematic sample locations",
           "prepareRepairCandidates": "Finding additional sample locations",
           "checkRepairCandidates": "Checking additional sample locations",
-          "exportFinal": "Exporting samples"
+          "exportFinal": "Exporting sample locations"
         },
         "grid": {
-          "unsupportedCrs": "The sampling grid coordinate system \"{crs}\" is not supported. Systematic sampling requires a supported projected, metre-based coordinate system ({supported}). Change the sampling grid CRS.",
-          "invalidTransform": "The sampling grid transform is invalid. A grid transform must be north-up, axis-aligned, square and non-zero, and cannot be combined with a scale. Provide a valid transform or use a scale instead.",
-          "invalidScale": "The sampling grid scale is invalid. Provide a positive scale in metres, or a valid grid transform instead.",
+          "unsupportedCrs": "The selected sampling grid is not supported. Choose one of: {supported}.",
+          "invalidScale": "The sampling grid scale is invalid. Provide a positive Stratification Scale in metres.",
           "minDistanceBelowGrid": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.",
           "invalidMinDistance": "The minimum distance is not a number. Provide a distance in metres, or leave it unset to use the smallest distance the sampling grid allows."
         }
@@ -5501,28 +5496,38 @@
       "preflight": {
         "invalidMinimum": "Minimum samples per stratum is {value}. It must be a whole number of at least {floor}.",
         "noStrata": "The sampling design has no strata to sample. Open Stratification and Sample Allocation to define the design.",
-        "belowStatisticalMinimum": "Every stratum needs at least {floor} samples, but {strata} requests fewer. Increase the sample size, or merge these strata in Stratification.",
-        "unstratifiedBelowMinimum": "The total sample size is {value}. An unstratified design needs at least {floor} samples.",
-        "belowConfiguredMinimum": "Minimum samples per stratum is {minimum}, but {strata} requests fewer. Increase the sample size, or lower the minimum to {value} or less (never below {floor})."
+        "belowStatisticalMinimum": {
+          "samples": "Every stratum must be allocated at least {floor} samples, but {strata} requests fewer. In Sample Allocation, increase Total sample size until every affected stratum reaches at least {floor}.",
+          "error": "Every stratum must be allocated at least {floor} samples, but {strata} requests fewer. In Sample Allocation, decrease Target margin of error to calculate a larger total sample size.",
+          "manual": "Every stratum must be allocated at least {floor} samples, but {strata} requests fewer. In Sample Allocation, increase the sample count for each affected stratum to at least {floor}."
+        },
+        "unstratifiedBelowMinimum": "The total sample size is {value}. An unstratified design needs at least {floor} samples. In Sample Allocation, increase Total sample size.",
+        "belowConfiguredMinimum": {
+          "samples": "Min samples/stratum is {minimum}, but {strata} requests fewer. In Sample Allocation, increase Total sample size, or lower Min samples/stratum to {value} or less (never below {floor}).",
+          "error": "Min samples/stratum is {minimum}, but {strata} requests fewer. In Sample Allocation, decrease Target margin of error to calculate a larger total sample size, or lower Min samples/stratum to {value} or less (never below {floor})."
+        }
       },
       "underproduction": {
-        "message": "The sampling design could not be produced as configured. {details}",
+        "message": "The sampling design could not be completed.\n\n{details}",
         "diagnosis": {
-          "statisticalMinimum": "Too few sample locations were found for {strata}. Every class needs at least {minimum} samples.",
-          "statisticalMinimumNoDistance": "Fewer than {minimum} sample locations could be placed for {strata} anywhere in the area of interest.",
-          "configuredMinimum": "Fewer samples than the minimum of {minimum} per class were produced for {strata}.",
-          "requestedAllocation": "Fewer samples than requested were produced for {strata}. The minimum of {minimum} per class was met."
+          "statisticalMinimum": "{strata}: fewer than {minimum} sample locations were found.",
+          "statisticalMinimumNoDistance": "{strata}: fewer than {minimum} sample locations were found at the current sampling grid.",
+          "configuredMinimum": "{strata}: fewer than Min samples/stratum ({minimum}) were produced.",
+          "requestedAllocation": "{strata}: fewer locations than requested were produced.",
+          "calculatedAllocation": "{strata}: fewer locations than calculated were produced."
         },
-        "reduceSystematicMinDistance": "Minimum distance is {minDistance} m. In Sample Arrangement, reduce it to about {threshold} m or less to fit more sample locations into the grid.",
-        "atGridFloor": "Reducing minimum distance will not add more sample locations. The {pixelSize} m stratification grid already sets the closest spacing available.",
-        "switchToRandom": "In Sample Arrangement, set Arrangement to Random to place samples more freely.",
-        "reviseStratification": "Open Stratification and check that this class really occurs in the area of interest and has usable pixels there - it may have been excluded from sampling. If it only covers small scattered patches, combine it with a similar class, update the stratification, then recompute the areas and allocation.",
-        "enlargeOrMerge": "Enlarge the area of interest, or combine this class with a similar one so it covers more ground.",
-        "lowerConfiguredMinimum": "In Sample Allocation, lower Minimum samples per stratum to {value} or less, but not below {floor}.",
-        "minimumNotSufficient": "Lowering the minimum on its own is not enough here, because the requested sample size was not reached either.",
-        "reduceRequestedOrClosest": "In Sample Allocation, reduce the sample size, or in Sample Arrangement set Sample size strategy to Closest to accept the closest achievable count.",
-        "avoidEqualAllocation": "Equal allocation requests the same count from every stratum. Use Proportional, Power, Optimal, or manual allocation to request fewer samples from rare strata.",
-        "reduceRequestedRandom": "In Sample Allocation, reduce the sample size for these classes."
+        "reduceSystematicMinDistance": "In Sample Arrangement, reduce Minimum distance from {minDistance} m to about {threshold} m or less.",
+        "atGridFloor": "The current {pixelSize} m stratification grid already sets the minimum spacing.",
+        "switchToRandom": "In Sample Arrangement, change Arrangement strategy to Random. This removes systematic spacing without changing the eligible area.",
+        "reduceStratificationScale": "In Stratification, use a finer Scale only if the source supports it, then recalculate areas and allocation.",
+        "checkStratumCoverage": "In Stratification, check that each affected stratum has usable, unmasked pixels in the area of interest. Merge or reclassify very small or fragmented strata, then recalculate areas and allocation.",
+        "enlargeAoi": "If the area of interest is smaller than the intended study area, enlarge it to provide more eligible locations.",
+        "lowerConfiguredMinimum": "In Sample Allocation, lower Min samples/stratum to {value} or less, but not below {floor}.",
+        "reduceRequested": "In Sample Allocation, reduce Total sample size.",
+        "reduceRequestedOrClosest": "In Sample Allocation, reduce Total sample size, or in Sample Arrangement choose Closest.",
+        "increaseMarginOfError": "In Sample Allocation, increase Target margin of error.",
+        "increaseMarginOfErrorOrClosest": "In Sample Allocation, increase Target margin of error, or in Sample Arrangement choose Closest.",
+        "avoidEqualAllocation": "In Sample Allocation, replace Equal with Proportional, Balanced, or Manual to reduce counts for small strata."
       }
     },
     "status": {

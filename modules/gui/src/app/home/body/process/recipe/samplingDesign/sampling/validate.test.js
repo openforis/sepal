@@ -160,8 +160,8 @@ describe('configured minimum on the clean model', () => {
 // A stratified systematic lattice sits on the stratification grid, so samples can never be closer than two grid
 // pixels. The candidate generator clamps internally, so without this the user's value would be silently raised.
 describe('stratified systematic minimum distance vs the stratification grid', () => {
-    const model = ({minDistance, scale = 10, crsTransform = '', skip = false, arrangementStrategy = 'SYSTEMATIC'}) => ({
-        stratification: {skip, scale, crsTransform, legendByStratum: {1: {label: 'Forest', color: '#0a0'}}},
+    const model = ({minDistance, scale = 10, skip = false, arrangementStrategy = 'SYSTEMATIC'}) => ({
+        stratification: {skip, scale, legendByStratum: {1: {label: 'Forest', color: '#0a0'}}},
         proportions: {skip: true},
         sampleAllocation: {
             manual: false, estimateSampleSize: false, sampleSize: 100,
@@ -176,11 +176,6 @@ describe('stratified systematic minimum distance vs the stratification grid', ()
         expect(codesOf({minDistance: 19})).toContain('minDistanceBelowGrid')
         expect(codesOf({minDistance: 20})).not.toContain('minDistanceBelowGrid')
         expect(codesOf({minDistance: 60})).not.toContain('minDistanceBelowGrid')
-    })
-
-    it('applies the same floor to an equivalent transform grid', () => {
-        expect(codesOf({minDistance: 19, crsTransform: '[10,0,0,0,-10,0]'})).toContain('minDistanceBelowGrid')
-        expect(codesOf({minDistance: 20, crsTransform: '[10,0,0,0,-10,0]'})).not.toContain('minDistanceBelowGrid')
     })
 
     it('invalidates a previously valid distance when the grid coarsens', () => {

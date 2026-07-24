@@ -164,7 +164,7 @@ export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, st
                         message={(
                             <div>
                                 <Icon name='spinner'/>
-                                {' ' + msg('Loading...')}
+                                {' ' + msg('process.samplingDesign.panel.proportions.form.calculating')}
                             </div>
                         )}
                     />
@@ -181,7 +181,7 @@ export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, st
                         />
                         : <NoData
                             alignment='left'
-                            message={msg('Select image and band.')}
+                            message={msg('process.samplingDesign.panel.proportions.form.selectImageAndBand')}
                         />}
         </Widget>
     )
@@ -250,7 +250,7 @@ const BandInput = ({band, percentage, probabilityPerStratum, anticipationStrateg
             air='less'
             size='x-small'
             options={[
-                {value: true, label: '%', tooltip: 'Specify if band specify fraction or percentage'}
+                {value: true, label: msg('process.samplingDesign.panel.proportions.form.percentage.label'), tooltip: msg('process.samplingDesign.panel.proportions.form.percentage.tooltip')}
             ]}
             multiple
             tabIndex={-1}

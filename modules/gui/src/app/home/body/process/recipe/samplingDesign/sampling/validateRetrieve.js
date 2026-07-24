@@ -101,7 +101,7 @@ export const validateRetrieve = model => {
     // A stratified systematic lattice sits on the stratification grid, so samples can never be closer than two
     // grid pixels. Unstratified systematic is analytical and random has no minimum distance, so neither applies.
     const stratificationGrid = model?.stratification || {}
-    const grid = {scale: stratificationGrid.scale, crsTransform: stratificationGrid.crsTransform}
+    const grid = {scale: stratificationGrid.scale}
     if (arrangement.arrangementStrategy === 'SYSTEMATIC' && !isUnstratified
         && !isValidMinDistanceForGrid({minDistance: arrangement.minDistance, ...grid})) {
         // Report the exact numbers: the same shared floor calculation the panel and task boundary use.

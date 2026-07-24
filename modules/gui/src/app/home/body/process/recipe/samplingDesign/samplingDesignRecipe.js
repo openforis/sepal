@@ -7,7 +7,7 @@ import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
-import {DEFAULT_CRS, DEFAULT_SEED} from './panels/sampleArrangement/showMore'
+import {DEFAULT_CRS, DEFAULT_SEED} from './panels/sampleArrangement/arrangementApplicability'
 import {toTaskAllocation} from './sampling/taskAllocation'
 import {validateRetrieve} from './sampling/validateRetrieve'
 
@@ -16,17 +16,14 @@ export const defaultModel = {
         scale: 30,
         type: 'ASSET'
     },
-    // Complete Sample Arrangement defaults so a new recipe opens the panel clean (not dirty). These mirror
-    // the mount-time fallbacks in sampleArrangement.jsx (scale = stratification scale). Minimum distance is
-    // intentionally absent: unset means "closest spacing the grid allows", resolved at export rather than
-    // persisted, so it tracks the grid. requiresUpdate must be present so the unconditional requiresUpdate.set(false)
-    // on mount is a no-op rather than a change that dirties the form.
+    // Complete defaults so a new recipe opens the panel clean. minDistance is intentionally absent (resolved at
+    // export, never frozen against its grid); requiresUpdate must be present so the mount-time set(false) is a
+    // no-op rather than a dirtying change.
     sampleArrangement: {
         requiresUpdate: false,
         arrangementStrategy: 'RANDOM',
         sampleSizeStrategy: 'OVER',
         gridOrigin: 'FIXED',
-        scale: 30,
         crs: DEFAULT_CRS,
         seed: DEFAULT_SEED
     }

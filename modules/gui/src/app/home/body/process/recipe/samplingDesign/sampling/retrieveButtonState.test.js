@@ -37,7 +37,7 @@ describe('retrieveButtonState', () => {
 describe('error arguments', () => {
     it('preserves the first error arguments alongside its code', () => {
         const {disabled, code, args} = retrieveButtonState({
-            stratification: {skip: false, scale: 10, crsTransform: '', strata: [{value: 1, stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 1}]},
+            stratification: {skip: false, scale: 10, strata: [{value: 1, stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 1}]},
             proportions: {skip: true},
             sampleAllocation: {
                 allocationStrategy: 'PROPORTIONAL', minSamplesPerStratum: 2,
@@ -52,7 +52,7 @@ describe('error arguments', () => {
 
     it('reports no arguments for a retrievable design', () => {
         const {disabled, args} = retrieveButtonState({
-            stratification: {skip: false, scale: 10, crsTransform: '', strata: [{value: 1, stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 1}]},
+            stratification: {skip: false, scale: 10, strata: [{value: 1, stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 1}]},
             proportions: {skip: true},
             sampleAllocation: {
                 allocationStrategy: 'PROPORTIONAL', minSamplesPerStratum: 2,

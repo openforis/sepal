@@ -13,10 +13,9 @@ import {
 const stratified = extra => ({unstratified: false, arrangementStrategy: 'SYSTEMATIC', stratificationGrid: {scale: 10}, ...extra})
 
 describe('minDistanceGridFloor applicability', () => {
-    it('is two grid pixels for stratified systematic, on scale and transform grids alike', () => {
+    it('is two grid pixels (2 * Stratification Scale) for stratified systematic', () => {
         expect(minDistanceGridFloor(stratified())).toBe(20)
         expect(minDistanceGridFloor(stratified({stratificationGrid: {scale: 30}}))).toBe(60)
-        expect(minDistanceGridFloor(stratified({stratificationGrid: {crsTransform: '[10,0,0,0,-10,0]'}}))).toBe(20)
     })
 
     it('does not apply to unstratified systematic or to random', () => {
@@ -70,9 +69,9 @@ describe('minDistanceFloorViolation', () => {
 })
 
 describe('minDistancePixelSize', () => {
-    it('reports the grid pixel size behind the floor, for scale and transform grids', () => {
+    it('reports the grid pixel size (Stratification Scale) behind the floor', () => {
         expect(minDistancePixelSize(stratified())).toBe(10)
-        expect(minDistancePixelSize(stratified({stratificationGrid: {crsTransform: '[30,0,0,0,-30,0]'}}))).toBe(30)
+        expect(minDistancePixelSize(stratified({stratificationGrid: {scale: 30}}))).toBe(30)
     })
 })
 

@@ -64,7 +64,7 @@ export const validateSamplingDesign = model => {
     // grid pixels. Unstratified systematic is analytical and random has no minimum distance, so neither applies.
     const stratification = model?.stratification || {}
     if (arrangement.arrangementStrategy === 'SYSTEMATIC' && !isStratificationSkipped(stratification)
-        && !isValidMinDistanceForGrid({minDistance: arrangement.minDistance, scale: stratification.scale, crsTransform: stratification.crsTransform})) {
+        && !isValidMinDistanceForGrid({minDistance: arrangement.minDistance, scale: stratification.scale})) {
         add('sampleArrangement', 'minDistanceBelowGrid')
     }
 

@@ -8,7 +8,6 @@ import {resolveSamplingGrid} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 const resolvedArrangement = ({crs, ...rest}) => resolveSamplingGrid({
     crs,
     scale: 100,
-    crsTransform: '',
     minDistance: 300,
     seed: 6,
     sampleSizeStrategy: 'OVER',
@@ -27,7 +26,7 @@ describe('randomReproductionMetadata CRS', () => {
         expect(noWkt(metadata)).toBe(true)
     })
 
-    it('keeps the other reproduction fields intact alongside the id', () => {
+    it('keeps the other reproduction fields intact alongside the id, with no transform', () => {
         const metadata = randomReproductionMetadata(resolvedArrangement({crs: 'EPSG:6933'}))
         expect(metadata).toMatchObject({
             arrangementStrategy: 'RANDOM',
@@ -35,22 +34,12 @@ describe('randomReproductionMetadata CRS', () => {
             gridOrigin: null,
             seed: 6,
             scale: 100,
-            crsTransform: '',
-            gridCrsTransform: '',
             selectedDensityOffset: null
         })
-        // minDistance is Systematic-only, and the adaptive density factor no longer exists.
+        // minDistance is Systematic-only; there is no user-facing transform.
         expect('minDistance' in metadata).toBe(false)
-        expect('selectedDensityFactor' in metadata).toBe(false)
-    })
-
-    it('records a transform-defined grid unchanged', () => {
-        const metadata = randomReproductionMetadata(
-            resolvedArrangement({crs: 'EPSG:6933', scale: undefined, crsTransform: '[100,0,0,0,-100,0]'}))
-        expect(metadata.crsTransform).toBe('[100,0,0,0,-100,0]')
-        expect(metadata.gridCrsTransform).toBe('[100,0,0,0,-100,0]')
-        expect(metadata.crs).toBe('EPSG:6933')
-        expect(noWkt(metadata)).toBe(true)
+        expect('crsTransform' in metadata).toBe(false)
+        expect('gridCrsTransform' in metadata).toBe(false)
     })
 
     it('records a polar option as its configured id', () => {
@@ -66,7 +55,7 @@ describe('systematicReproductionMetadata CRS', () => {
         expect(noWkt(metadata)).toBe(true)
     })
 
-    it('keeps the other reproduction fields intact alongside the id', () => {
+    it('keeps the other reproduction fields intact alongside the id, with no transform', () => {
         const metadata = systematicReproductionMetadata(resolvedArrangement({crs: 'EPSG:6933'}), 2)
         expect(metadata).toMatchObject({
             arrangementStrategy: 'SYSTEMATIC',
@@ -75,19 +64,10 @@ describe('systematicReproductionMetadata CRS', () => {
             seed: 6,
             minDistance: 300,
             scale: 100,
-            crsTransform: '',
-            gridCrsTransform: '',
             selectedDensityOffset: 2
         })
-        expect('selectedDensityFactor' in metadata).toBe(false)
-    })
-
-    it('records a transform-defined grid unchanged', () => {
-        const metadata = systematicReproductionMetadata(
-            resolvedArrangement({crs: 'EPSG:6933', scale: undefined, crsTransform: '[100,0,0,0,-100,0]'}), 0)
-        expect(metadata.crsTransform).toBe('[100,0,0,0,-100,0]')
-        expect(metadata.crs).toBe('EPSG:6933')
-        expect(noWkt(metadata)).toBe(true)
+        expect('crsTransform' in metadata).toBe(false)
+        expect('gridCrsTransform' in metadata).toBe(false)
     })
 
     it('records a polar option as its configured id', () => {
@@ -101,8 +81,8 @@ describe('systematicReproductionMetadata CRS', () => {
 // systematic design must reproduce as the floor it actually sampled with - never as null.
 describe('systematicReproductionMetadata records the resolved minimum distance', () => {
     const arrangementFor = ({minDistance, scale}) => effectiveArrangement({
-        stratification: {skip: false, scale, crs: 'EPSG:6933', crsTransform: ''},
-        sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', seed: 6, ...(minDistance === undefined ? {} : {minDistance})}
+        stratification: {skip: false, scale},
+        sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', seed: 6, crs: 'EPSG:6933', ...(minDistance === undefined ? {} : {minDistance})}
     })
 
     it('records the grid floor when the recipe leaves the distance blank', () => {

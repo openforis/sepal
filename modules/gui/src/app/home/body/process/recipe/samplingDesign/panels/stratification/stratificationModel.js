@@ -1,4 +1,3 @@
-import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import {msg} from '~/translate'
 
 // The single synthetic stratum for unstratified mode. Area is intentionally omitted here: the export
@@ -30,14 +29,9 @@ export const valuesToModel = values => {
     const isSkipped = !!values.skip?.length
     return {
         skip: isSkipped,
-        // scale and crsTransform are mutually exclusive - when a transform defines the grid, scale is NOT
-        // stored (it is derived from the transform downstream). The stratification grid CRS + optional expert
-        // crsTransform is the one grid areaPerStratum + the exact-first class grid + the stratified lattice all
-        // read, so area/weights and membership stay consistent. crsTransform is '' unless an expert alignment
-        // is set.
-        scale: values.crsTransform ? undefined : parseFloat(values.scale),
-        crs: values.crs || DEFAULT_SAMPLING_GRID_CRS,
-        crsTransform: values.crsTransform || '',
+        // Stratification owns Scale only; the equal-area CRS belongs to Sample Arrangement. Scale is the one grid
+        // resolution areaPerStratum, the class grid and the stratified lattice all read at that CRS.
+        scale: parseFloat(values.scale),
         type: values.type,
         assetId: values.assetId,
         recipeId: values.recipeId,
@@ -57,10 +51,6 @@ export const modelToValues = model => ({
     requiresUpdate: !!model.requiresUpdate,
     skip: model.skip ? [true] : [],
     scale: model.scale,
-    // Default the curated grid for recipes saved before the stratification CRS existed, so the panel's mount
-    // default is a no-op rather than a dirtying ''->id change. crsTransform defaults to '' likewise.
-    crs: model.crs || DEFAULT_SAMPLING_GRID_CRS,
-    crsTransform: model.crsTransform || '',
     type: model.type,
     assetId: model.assetId,
     recipeId: model.recipeId,

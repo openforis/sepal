@@ -1,4 +1,3 @@
-import {shouldShowMore} from './panels/sampleArrangement/showMore'
 import {defaultModel, normalizeSavedLayers, toTaskRecipe} from './samplingDesignRecipe'
 
 const recipe = {
@@ -48,20 +47,21 @@ describe('defaultModel.sampleArrangement', () => {
             arrangementStrategy: 'RANDOM',
             sampleSizeStrategy: 'OVER',
             gridOrigin: 'FIXED',
-            scale: 30,
             crs: 'EPSG:6933',
             seed: 1
         })
+    })
+
+    // Sample Arrangement no longer owns Scale: the stratified grid comes from Stratification, and unstratified
+    // Systematic is analytical (CRS-only).
+    it('does not persist a Sample Arrangement scale', () => {
+        expect('scale' in defaultModel.sampleArrangement).toBe(false)
     })
 
     // Minimum distance is optional and grid-derived: persisting a value would freeze it against the grid it was
     // created with, so an unset default is resolved to the grid floor at export instead.
     it('does not persist a default minimum distance', () => {
         expect('minDistance' in defaultModel.sampleArrangement).toBe(false)
-    })
-
-    it('opens the Sample Arrangement "More" section collapsed', () => {
-        expect(shouldShowMore(defaultModel.sampleArrangement)).toBe(false)
     })
 })
 

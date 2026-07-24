@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -13,18 +12,15 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
 import {samplingGridCrsOptions} from '../../samplingGridCrsOptions'
+import {DEFAULT_CRS, includeCrs, includeMinDistance, includeSeed, isSkipped} from './arrangementApplicability'
 import {formatDistance, minDistanceFloorViolation, minDistanceGridFloor, minDistancePixelSize} from './minDistanceValidation'
 import styles from './sampleArrangement.module.css'
-import {crsTransformField} from './sampleArrangementForm'
-import {includeMinDistance, includeSeed, isSkipped, shouldShowMore} from './showMore'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
-    scale: selectFrom(recipe, 'model.stratification.scale') || 10,
     unstratified: isSkipped(selectFrom(recipe, 'model.stratification.skip')),
     stratificationGrid: {
-        scale: selectFrom(recipe, 'model.stratification.scale'),
-        crsTransform: selectFrom(recipe, 'model.stratification.crsTransform')
+        scale: selectFrom(recipe, 'model.stratification.scale')
     }
 })
 
@@ -39,14 +35,9 @@ const fields = {
         .skip((_minDistance, values) => !includeMinDistance(values))
         .number()
         .min(0),
-    // The sampling grid, used ONLY for unstratified designs: there is no stratification to take it from, so
-    // this panel owns it. Stratified designs read the grid from Stratification instead and ignore these.
-    scale: new Form.Field()
-        .number()
-        .greaterThan(0),
+    // Kept in the model even for unstratified Random (which hides it) so switching to a grid mode keeps a value.
     crs: new Form.Field()
         .notBlank(),
-    crsTransform: crsTransformField,
     seed: new Form.Field()
         .skip((_seed, values) => !includeSeed(values))
         .notBlank()
@@ -57,7 +48,6 @@ class _SampleArrangement extends React.Component {
     state = {more: false}
 
     render() {
-        const {unstratified} = this.props
         const {more} = this.state
         return (
             <RecipeFormPanel
@@ -66,16 +56,16 @@ class _SampleArrangement extends React.Component {
                 <Panel.Header
                     icon='border-none'
                     title={msg('process.samplingDesign.panel.sampleArrangement.title')}/>
-            
+
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
 
                 <Form.PanelButtons>
-                    {unstratified ? (
+                    {this.crsApplies() ? (
                         <Button
                             label={more ? msg('button.less') : msg('button.more')}
-                            onClick={() => this.setState({more: !more})}
+                            onClick={() => this.setState(({more}) => ({more: !more}))}
                         />
                     ) : null}
                 </Form.PanelButtons>
@@ -83,9 +73,14 @@ class _SampleArrangement extends React.Component {
         )
     }
 
+    crsApplies() {
+        const {unstratified, inputs: {arrangementStrategy}} = this.props
+        return includeCrs({unstratified, arrangementStrategy: arrangementStrategy.value})
+    }
+
     renderContent() {
-        const {unstratified, inputs: {arrangementStrategy, sampleSizeStrategy, gridOrigin}} = this.props
-        const {more} = this.state
+        const {inputs: {arrangementStrategy, sampleSizeStrategy, gridOrigin}} = this.props
+        const systematic = arrangementStrategy.value === 'SYSTEMATIC'
         const showSeed = includeSeed({arrangementStrategy: arrangementStrategy.value, sampleSizeStrategy: sampleSizeStrategy.value, gridOrigin: gridOrigin.value})
         const showMinDistance = includeMinDistance({arrangementStrategy: arrangementStrategy.value})
         return (
@@ -93,18 +88,13 @@ class _SampleArrangement extends React.Component {
                 <Layout type='horizontal'>
                     {this.renderArrangementStrategy()}
                 </Layout>
-                {arrangementStrategy.value === 'SYSTEMATIC' ? this.renderSampleSizeStrategy() : null}
-                {arrangementStrategy.value === 'SYSTEMATIC' ? this.renderGridOrigin() : null}
+                {systematic ? this.renderSampleSizeStrategy() : null}
+                {systematic ? this.renderGridOrigin() : null}
                 <Layout type='horizontal'>
                     {showMinDistance ? this.renderMinDistance() : null}
                     {showSeed ? this.renderSeed() : null}
                 </Layout>
-                {more && unstratified ? (
-                    <Layout type='horizontal' alignment='left'>
-                        {this.renderCrs()}
-                        {this.renderCrsTransform()}
-                    </Layout>
-                ) : null}
+                {this.state.more && this.crsApplies() ? this.renderCrs() : null}
             </Layout>
         )
     }
@@ -148,21 +138,6 @@ class _SampleArrangement extends React.Component {
                     })}
                 placeholder={minimum === null ? msg(`${key}.placeholder`) : String(formatDistance(minimum))}
                 input={minDistance}
-                type='number'
-                suffix={msg('process.samplingDesign.panel.stratification.form.scale.suffix')}
-            />
-        )
-    }
-
-    renderScale() {
-        const {inputs: {scale}} = this.props
-        return (
-            <Form.Input
-                className={styles.number}
-                label={msg('process.samplingDesign.panel.stratification.form.scale.label')}
-                placeholder={msg('process.samplingDesign.panel.stratification.form.scale.placeholder')}
-                tooltip={msg('process.samplingDesign.panel.stratification.form.scale.tooltip')}
-                input={scale}
                 type='number'
                 suffix={msg('process.samplingDesign.panel.stratification.form.scale.suffix')}
             />
@@ -231,18 +206,6 @@ class _SampleArrangement extends React.Component {
         )
     }
 
-    renderCrsTransform() {
-        const {inputs: {crsTransform}} = this.props
-        return (
-            <Form.Input
-                label={msg('process.retrieve.form.crsTransform.label')}
-                placeholder={msg('process.retrieve.form.crsTransform.placeholder')}
-                tooltip={msg('process.samplingDesign.panel.sampleArrangement.form.crsTransform.tooltip')}
-                input={crsTransform}
-            />
-        )
-    }
-
     renderSeed() {
         const {inputs: {seed}} = this.props
         return (
@@ -258,23 +221,17 @@ class _SampleArrangement extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {requiresUpdate, arrangementStrategy, sampleSizeStrategy, gridOrigin, scale, seed, crs, crsTransform}} = this.props
-        // Saved non-default advanced grid settings should be visible on open.
-        this.setState({
-            more: shouldShowMore({
-                crs: crs.value,
-                crsTransform: crsTransform.value,
-                seed: seed.value
-            })
-        })
+        const {inputs: {requiresUpdate, arrangementStrategy, sampleSizeStrategy, gridOrigin, crs, seed}} = this.props
         requiresUpdate.set(false)
         arrangementStrategy.value || arrangementStrategy.set('RANDOM')
         sampleSizeStrategy.value || sampleSizeStrategy.set('OVER')
         gridOrigin.value || gridOrigin.set('FIXED')
-        scale.value || scale.set(this.props.scale)
-        // Use an equal-area sampling CRS by default; Retrieve output CRS is separate.
-        crs.value || crs.set(DEFAULT_SAMPLING_GRID_CRS)
+        crs.value || crs.set(DEFAULT_CRS)
         seed.value || seed.set(1)
+        // Reveal advanced options automatically when a non-default CRS was saved, so the setting is discoverable.
+        if (crs.value && crs.value !== DEFAULT_CRS) {
+            this.setState({more: true})
+        }
         this.validateMinDistance()
     }
 
@@ -314,23 +271,18 @@ class _SampleArrangement extends React.Component {
 
 }
 
-const valuesToModel = values => {
-    return {
-        requiresUpdate: values.requiresUpdate,
-        arrangementStrategy: values.arrangementStrategy,
-        sampleSizeStrategy: values.sampleSizeStrategy,
-        gridOrigin: values.gridOrigin,
-        minDistance: values.minDistance === '' || values.minDistance == null ? null : parseFloat(values.minDistance),
-        scale: parseFloat(values.scale),
-        crs: values.crs,
-        crsTransform: values.crsTransform,
-        seed: parseInt(values.seed),
-    }
-}
+const valuesToModel = values => ({
+    requiresUpdate: values.requiresUpdate,
+    arrangementStrategy: values.arrangementStrategy,
+    sampleSizeStrategy: values.sampleSizeStrategy,
+    gridOrigin: values.gridOrigin,
+    minDistance: values.minDistance === '' || values.minDistance == null ? null : parseFloat(values.minDistance),
+    crs: values.crs,
+    seed: parseInt(values.seed),
+})
 
-const modelToValues = model => {
-    return model
-}
+// Default CRS before form comparison so an absent value does not open the panel dirty.
+const modelToValues = model => ({...model, crs: model.crs || DEFAULT_CRS})
 
 export const SampleArrangement = compose(
     _SampleArrangement,

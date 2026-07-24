@@ -23,8 +23,7 @@ import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
-import {samplingGridCrsOptions} from '../../samplingGridCrsOptions'
-import {isValidGridScale, isValidGridTransform} from '../../samplingGridValidation'
+import {isValidGridScale} from '../../samplingGridValidation'
 import {CalculationErrorContent} from '../calculationErrorContent'
 import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
@@ -36,6 +35,9 @@ const mapRecipeToProps = recipe => ({
     importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries'),
     title: recipe.title || recipe.placeholder,
     stratificationRequiresUpdate: selectFrom(recipe, 'model.stratification.requiresUpdate'),
+    // The equal-area CRS is owned by Sample Arrangement; area per stratum is evaluated at that CRS and the
+    // Stratification Scale, so a CRS change there invalidates and recomputes these areas.
+    arrangementCrs: selectFrom(recipe, 'model.sampleArrangement.crs') || DEFAULT_SAMPLING_GRID_CRS,
 })
 
 const fields = {
@@ -55,16 +57,10 @@ const fields = {
                 || (type === 'RECIPE' && !recipeId))
         .notBlank('process.samplingDesign.panel.stratification.form.band.required'),
     scale: new Form.Field()
-        .skip((_value, {skip, crsTransform}) => skip.length || !!crsTransform)
+        .skip((_value, {skip}) => skip.length)
         .notBlank('process.samplingDesign.panel.stratification.form.scale.required')
         .number()
         .greaterThan(0),
-    crs: new Form.Field()
-        .skip((_value, {skip}) => skip.length)
-        .notBlank('process.samplingDesign.panel.stratification.form.crs.required'),
-    crsTransform: new Form.Field()
-        .skip((_value, {skip}) => skip.length)
-        .predicate(isValidGridTransform, 'process.samplingDesign.panel.stratification.form.crsTransform.invalid'),
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
         // Required even when skipped: unstratified mode still needs the single synthetic stratum (area is
@@ -79,8 +75,7 @@ class _Stratification extends React.Component {
         prevStrata: [],
         entriesByBand: {},
         showHexColorCode: false,
-        strataCalculationError: null,
-        more: false
+        strataCalculationError: null
     }
 
     constructor(props) {
@@ -98,8 +93,6 @@ class _Stratification extends React.Component {
     }
 
     render() {
-        const {inputs: {skip}} = this.props
-        const {more} = this.state
         return (
             <RecipeFormPanel
                 placement='bottom-right'
@@ -114,12 +107,6 @@ class _Stratification extends React.Component {
                 </Panel.Content>
 
                 <Form.PanelButtons>
-                    {!skip.value?.length ? (
-                        <Button
-                            label={more ? msg('button.less') : msg('button.more')}
-                            onClick={() => this.setState({more: !more})}
-                        />
-                    ) : null}
                     {this.renderImportButton()}
                 </Form.PanelButtons>
             </RecipeFormPanel>
@@ -128,7 +115,6 @@ class _Stratification extends React.Component {
 
     renderContent() {
         const {inputs: {type, skip}} = this.props
-        const {more} = this.state
         return !skip.value?.length
             ? (
                 <Layout>
@@ -138,12 +124,6 @@ class _Stratification extends React.Component {
                         {this.renderBand()}
                         {this.renderScale()}
                     </Layout>
-                    {more ? (
-                        <Layout type='horizontal'>
-                            {this.renderCrs()}
-                            {this.renderCrsTransform()}
-                        </Layout>
-                    ) : null}
                     {this.renderStrata()}
                 </Layout>
             )
@@ -192,7 +172,7 @@ class _Stratification extends React.Component {
         return (
             <ButtonSelect
                 icon={'file'}
-                label={msg('CSV')}
+                label={msg('process.samplingDesign.panel.stratification.form.csv.label')}
                 placement='above'
                 tooltipPlacement='bottom'
                 disabled={skip.value?.length}
@@ -281,7 +261,7 @@ class _Stratification extends React.Component {
     }
     
     renderScale() {
-        const {inputs: {scale, crsTransform}} = this.props
+        const {inputs: {scale}} = this.props
         return (
             <Form.Input
                 className={styles.compactField}
@@ -291,35 +271,6 @@ class _Stratification extends React.Component {
                 input={scale}
                 type='number'
                 suffix={msg('process.samplingDesign.panel.stratification.form.scale.suffix')}
-                disabled={!!crsTransform.value}
-                onChange={this.onScaleChanged}
-            />
-        )
-    }
-
-    renderCrs() {
-        const {inputs: {crs}} = this.props
-        return (
-            <FormCombo
-                className={styles.wideField}
-                label={msg('process.samplingDesign.panel.stratification.form.crs.label')}
-                tooltip={msg('process.samplingDesign.panel.stratification.form.crs.tooltip')}
-                input={crs}
-                options={samplingGridCrsOptions()}
-                onChange={this.onScaleChanged}
-            />
-        )
-    }
-
-    renderCrsTransform() {
-        const {inputs: {crsTransform}} = this.props
-        return (
-            <Form.Input
-                className={styles.compactField}
-                label={msg('process.samplingDesign.panel.stratification.form.crsTransform.label')}
-                placeholder={msg('process.samplingDesign.panel.stratification.form.crsTransform.placeholder')}
-                tooltip={msg('process.samplingDesign.panel.stratification.form.crsTransform.tooltip')}
-                input={crsTransform}
                 onChange={this.onScaleChanged}
             />
         )
@@ -439,12 +390,10 @@ class _Stratification extends React.Component {
     }
 
     componentDidMount() {
-        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, crs, crsTransform, type, eeStrategy, strata}} = this.props
+        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, type, eeStrategy, strata}} = this.props
         requiresUpdate.set(false)
         skip.value || skip.set([])
-        // A transform-defined grid has no scale value; defaulting it here would dirty the form on open.
-        crsTransform.value || scale.value || scale.set('30')
-        crs.value || crs.set(DEFAULT_SAMPLING_GRID_CRS)
+        scale.value || scale.set('30')
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
 
@@ -644,11 +593,10 @@ class _Stratification extends React.Component {
     // Stratified area per stratum. Unstratified mode never calls this - it sets the synthetic row directly
     // and the AOI area is computed at the export boundary.
     calculateAreaPerStratum() {
-        const {aoi, stream, inputs: {scale, crs, crsTransform, type, assetId, recipeId, band, eeStrategy}} = this.props
+        const {aoi, stream, arrangementCrs, inputs: {scale, type, assetId, recipeId, band, eeStrategy}} = this.props
         const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
-        // onChange fires while typing; block invalid intermediate grid values before calling EE.
-        const hasValidGrid = crsTransform.value ? isValidGridTransform(crsTransform.value) : isValidGridScale(scale.value)
-        if (!hasValidGrid || !id || !band.value) {
+        // onChange fires while typing; block invalid intermediate scale values before calling EE.
+        if (!isValidGridScale(scale.value) || !id || !band.value) {
             return
         }
         const stratification = {
@@ -665,9 +613,9 @@ class _Stratification extends React.Component {
                 aoi,
                 stratification,
                 band: band.value,
-                scale: crsTransform.value ? undefined : (parseInt(scale.value) || 30),
-                crs: crs.value || DEFAULT_SAMPLING_GRID_CRS,
-                crsTransform: crsTransform.value || '',
+                // Scale is owned by Stratification; the equal-area CRS by Sample Arrangement.
+                scale: parseInt(scale.value) || 30,
+                crs: arrangementCrs,
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
                 takeUntil(this.cancel$)
