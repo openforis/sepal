@@ -5386,6 +5386,10 @@
         "label": "Bande",
         "notSelected": "[Aucune bande sélectionnée]"
       },
+      "booleanOperator": {
+        "and": "et",
+        "or": "ou"
+      },
       "property": {
         "label": "",
         "notSelected": ""

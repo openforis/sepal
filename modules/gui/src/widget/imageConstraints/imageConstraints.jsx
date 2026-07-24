@@ -15,8 +15,8 @@ import {Constraint} from './constraint'
 import styles from './imageConstraints.module.css'
 
 const getBooleanOperatorsOptions = memoizeOne(() => [
-    {value: 'and', label: msg('process.asset.panel.mask.booleanOperator.and')},
-    {value: 'or', label: msg('process.asset.panel.mask.booleanOperator.or')}
+    {value: 'and', label: msg('widget.imageConstraints.booleanOperator.and')},
+    {value: 'or', label: msg('widget.imageConstraints.booleanOperator.or')}
 ])
 
 class _ImageConstraints extends React.Component {

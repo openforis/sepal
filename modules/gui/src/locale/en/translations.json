@@ -5996,6 +5996,10 @@
         "label": "Band",
         "notSelected": "[No band selected]"
       },
+      "booleanOperator": {
+        "and": "and",
+        "or": "or"
+      },
       "property": {
         "label": "Property",
         "notSelected": "[No property selected]"

@@ -5386,6 +5386,10 @@
         "label": "",
         "notSelected": ""
       },
+      "booleanOperator": {
+        "and": "y",
+        "or": "o"
+      },
       "property": {
         "label": "",
         "notSelected": ""
