@@ -1,3 +1,4 @@
+import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import {msg} from '~/translate'
 
 // The single synthetic stratum for unstratified mode. Area is intentionally omitted here: the export
@@ -29,9 +30,8 @@ export const valuesToModel = values => {
     const isSkipped = !!values.skip?.length
     return {
         skip: isSkipped,
-        // Stratification owns Scale only; the equal-area CRS belongs to Sample Arrangement. Scale is the one grid
-        // resolution areaPerStratum, the class grid and the stratified lattice all read at that CRS.
         scale: parseFloat(values.scale),
+        crs: values.crs || DEFAULT_SAMPLING_GRID_CRS,
         type: values.type,
         assetId: values.assetId,
         recipeId: values.recipeId,
@@ -51,6 +51,9 @@ export const modelToValues = model => ({
     requiresUpdate: !!model.requiresUpdate,
     skip: model.skip ? [true] : [],
     scale: model.scale,
+    // Default the curated grid for recipes saved before the stratification CRS existed, so the mount default is
+    // a no-op rather than a dirtying ''->id change.
+    crs: model.crs || DEFAULT_SAMPLING_GRID_CRS,
     type: model.type,
     assetId: model.assetId,
     recipeId: model.recipeId,

@@ -1,18 +1,20 @@
 import {effectiveArrangement} from '#sepal/ee/samplingDesign/effectiveArrangement'
 
 describe('effectiveArrangement four-mode matrix', () => {
+    // Conflicting CRS on each side: a stratified design must use the Stratification CRS (EPSG:6933), and only
+    // unstratified Systematic uses the Arrangement CRS (EPSG:6931).
     const arrangement = {
         arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED',
         minDistance: 1000, seed: 42, crs: 'EPSG:6931'
     }
-    const stratification = {skip: false, scale: 300}
+    const stratification = {skip: false, scale: 300, crs: 'EPSG:6933'}
 
     describe('stratified Systematic', () => {
-        it('takes Scale from Stratification and CRS from Arrangement', () => {
+        it('takes Scale and CRS from Stratification', () => {
             const result = effectiveArrangement({stratification, sampleArrangement: arrangement})
             expect(result).toEqual({
                 arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED',
-                seed: 42, scale: 300, crs: 'EPSG:6931', minDistance: 1000
+                seed: 42, scale: 300, crs: 'EPSG:6933', minDistance: 1000
             })
         })
 
@@ -24,9 +26,9 @@ describe('effectiveArrangement four-mode matrix', () => {
 
     describe('stratified Random', () => {
         const random = {...arrangement, arrangementStrategy: 'RANDOM'}
-        it('keeps Scale from Stratification, CRS from Arrangement and Seed, dropping Systematic-only settings', () => {
+        it('takes Scale and CRS from Stratification and Seed, dropping Systematic-only settings', () => {
             const result = effectiveArrangement({stratification, sampleArrangement: random})
-            expect(result).toEqual({arrangementStrategy: 'RANDOM', seed: 42, scale: 300, crs: 'EPSG:6931'})
+            expect(result).toEqual({arrangementStrategy: 'RANDOM', seed: 42, scale: 300, crs: 'EPSG:6933'})
             for (const field of ['minDistance', 'sampleSizeStrategy', 'gridOrigin']) {
                 expect(field in result).toBe(false)
             }

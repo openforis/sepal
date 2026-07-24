@@ -40,6 +40,12 @@ describe('toTaskRecipe', () => {
     })
 })
 
+describe('defaultModel.stratification', () => {
+    it('defaults the stratification CRS to EPSG:6933', () => {
+        expect(defaultModel.stratification.crs).toBe('EPSG:6933')
+    })
+})
+
 describe('defaultModel.sampleArrangement', () => {
     it('provides a complete set of Sample Arrangement defaults', () => {
         expect(defaultModel.sampleArrangement).toEqual({

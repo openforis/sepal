@@ -12,7 +12,8 @@ const GRID_FIELDS = ['scale', 'crs', 'gridCrs']
 
 const build = ({skip, arrangementStrategy}) => {
     const effective = effectiveArrangement({
-        // Stratification CRS is stale and must be ignored; the Arrangement CRS (EPSG:6931) is the one used.
+        // Conflicting CRS: a stratified design records the Stratification CRS (EPSG:6933); unstratified
+        // Systematic records the Arrangement CRS (EPSG:6931).
         stratification: skip ? {skip: true} : {skip: false, scale: 300, crs: 'EPSG:6933'},
         sampleArrangement: {arrangementStrategy, sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance: 1000, seed: 7, crs: 'EPSG:6931'}
     })
@@ -26,9 +27,9 @@ const allocation = [{stratum: 1, label: 'AOI', color: '#0a0', area: 1000, weight
 const assetKeys = reproduction => Object.keys(collectionMetadata({allocation, reproduction}))
 
 describe('reproduction metadata by mode', () => {
-    it('stratified Random records Scale from Stratification and CRS from Arrangement', () => {
+    it('stratified Random records Scale and CRS from Stratification', () => {
         const meta = build({skip: false, arrangementStrategy: 'RANDOM'})
-        expect(meta).toMatchObject({arrangementStrategy: 'RANDOM', seed: 7, scale: 300, crs: 'EPSG:6931', gridCrs: 'EPSG:6931'})
+        expect(meta).toMatchObject({arrangementStrategy: 'RANDOM', seed: 7, scale: 300, crs: 'EPSG:6933', gridCrs: 'EPSG:6933'})
         GRID_FIELDS.forEach(field => expect(field in meta).toBe(true))
         expect('crsTransform' in meta).toBe(false)
         expect('gridCrsTransform' in meta).toBe(false)
@@ -42,9 +43,9 @@ describe('reproduction metadata by mode', () => {
         GRID_FIELDS.forEach(field => expect(assetKeys(meta)).not.toContain(field))
     })
 
-    it('stratified Systematic records Scale from Stratification and CRS from Arrangement, with no transform', () => {
+    it('stratified Systematic records Scale and CRS from Stratification, with no transform', () => {
         const meta = build({skip: false, arrangementStrategy: 'SYSTEMATIC'})
-        expect(meta).toMatchObject({arrangementStrategy: 'SYSTEMATIC', minDistance: 1000, scale: 300, crs: 'EPSG:6931', gridCrs: 'EPSG:6931'})
+        expect(meta).toMatchObject({arrangementStrategy: 'SYSTEMATIC', minDistance: 1000, scale: 300, crs: 'EPSG:6933', gridCrs: 'EPSG:6933'})
         GRID_FIELDS.forEach(field => expect(field in meta).toBe(true))
         expect('crsTransform' in meta).toBe(false)
         expect('gridCrsTransform' in meta).toBe(false)

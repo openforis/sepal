@@ -35,31 +35,25 @@ const recipe = {
     ui: {retrieveOptions: {destination: 'SEPAL'}}
 }
 
-describe('submitRetrieveRecipeTask capability guard', () => {
+describe('Sampling Design retrieve submission', () => {
     beforeEach(() => vi.clearAllMocks())
 
     it('does not publish a temp-asset design submitted with no linked account', () => {
-        isGoogleAccount.mockReturnValue(false)
-        select.mockReturnValue(undefined)
-        submitRetrieveRecipeTask(recipe)
+        submitRetrieveRecipeTask(recipe, {googleAccount: false, assetRoots: undefined})
         expect(notifyError).toHaveBeenCalledTimes(1)
         expect(publishEvent).not.toHaveBeenCalled()
         expect(submit$).not.toHaveBeenCalled()
     })
 
     it('does not publish when the linked account has a loaded empty root list', () => {
-        isGoogleAccount.mockReturnValue(true)
-        select.mockReturnValue([])
-        submitRetrieveRecipeTask(recipe)
+        submitRetrieveRecipeTask(recipe, {googleAccount: true, assetRoots: []})
         expect(notifyError).toHaveBeenCalledTimes(1)
         expect(publishEvent).not.toHaveBeenCalled()
         expect(submit$).not.toHaveBeenCalled()
     })
 
     it('does not publish while asset roots are still loading (pending), and notifies', () => {
-        isGoogleAccount.mockReturnValue(true)
-        select.mockReturnValue(undefined)
-        submitRetrieveRecipeTask(recipe)
+        submitRetrieveRecipeTask(recipe, {googleAccount: true, assetRoots: undefined})
         expect(notifyError).toHaveBeenCalledTimes(1)
         expect(notifyError.mock.calls[0][0].error).toContain('pending')
         expect(publishEvent).not.toHaveBeenCalled()
@@ -67,9 +61,7 @@ describe('submitRetrieveRecipeTask capability guard', () => {
     })
 
     it('publishes and submits when linked with a loaded, non-empty root list', () => {
-        isGoogleAccount.mockReturnValue(true)
-        select.mockReturnValue(['users/me'])
-        submitRetrieveRecipeTask(recipe)
+        submitRetrieveRecipeTask(recipe, {googleAccount: true, assetRoots: ['users/me']})
         expect(notifyError).not.toHaveBeenCalled()
         expect(publishEvent).toHaveBeenCalledWith('submit_task', expect.objectContaining({recipe_type: 'SAMPLING_DESIGN'}))
         expect(submit$).toHaveBeenCalledTimes(1)

@@ -5,10 +5,10 @@ vi.mock('~/translate', () => ({msg: id => id}))
 const {modelToValues, syntheticUnstratifiedStratum, unstratifiedStrata, valuesToModel} = await import('./stratificationModel')
 
 // A canonical saved stratification model: the exact shape valuesToModel produces (no transient requiresUpdate).
-// Stratification owns Scale only; the equal-area CRS lives on Sample Arrangement, so it is not stored here.
 const savedModel = {
     skip: false,
     scale: 30,
+    crs: 'EPSG:6933',
     type: 'ASSET',
     assetId: 'users/test/strata',
     recipeId: undefined,
@@ -35,6 +35,11 @@ describe('modelToValues', () => {
     it('keeps scale as-is (no numeric/string coercion that would mismatch the model)', () => {
         expect(modelToValues({...savedModel, scale: 30}).scale).toBe(30)
     })
+
+    it('defaults an absent stratification CRS to EPSG:6933, carrying an explicit choice through', () => {
+        expect(modelToValues({...savedModel, crs: undefined}).crs).toBe('EPSG:6933')
+        expect(modelToValues({...savedModel, crs: 'EPSG:6931'}).crs).toBe('EPSG:6931')
+    })
 })
 
 describe('valuesToModel', () => {
@@ -43,11 +48,9 @@ describe('valuesToModel', () => {
         expect(valuesToModel({scale: '30'}).scale).toBe(30)
     })
 
-    it('does not store a CRS or transform (owned by Sample Arrangement)', () => {
-        const model = valuesToModel({scale: 30, crs: 'EPSG:6931', crsTransform: '[30,0,0,0,-30,0]'})
-        expect('crs' in model).toBe(false)
-        expect('crsTransform' in model).toBe(false)
-        expect(model.scale).toBe(30)
+    it('persists the selected stratification CRS, defaulting to EPSG:6933', () => {
+        expect(valuesToModel({scale: 30, crs: 'EPSG:6931'}).crs).toBe('EPSG:6931')
+        expect(valuesToModel({scale: 30}).crs).toBe('EPSG:6933')
     })
 
     it('does not carry the transient requiresUpdate flag into the model', () => {

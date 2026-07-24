@@ -38,13 +38,13 @@ describe('includeMinDistance', () => {
 })
 
 describe('includeCrs', () => {
-    it('is true for the three grid modes', () => {
-        expect(includeCrs({unstratified: false, arrangementStrategy: 'RANDOM'})).toBe(true)
-        expect(includeCrs({unstratified: false, arrangementStrategy: 'SYSTEMATIC'})).toBe(true)
+    it('is true only for unstratified Systematic', () => {
         expect(includeCrs({unstratified: true, arrangementStrategy: 'SYSTEMATIC'})).toBe(true)
     })
 
-    it('is false only for unstratified Random', () => {
+    it('is false for stratified designs and unstratified Random', () => {
+        expect(includeCrs({unstratified: false, arrangementStrategy: 'RANDOM'})).toBe(false)
+        expect(includeCrs({unstratified: false, arrangementStrategy: 'SYSTEMATIC'})).toBe(false)
         expect(includeCrs({unstratified: true, arrangementStrategy: 'RANDOM'})).toBe(false)
     })
 })

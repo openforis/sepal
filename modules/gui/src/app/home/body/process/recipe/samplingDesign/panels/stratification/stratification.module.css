@@ -3,10 +3,6 @@
     min-height: 21rem;
 }
 
-/* The two field roles in a horizontal panel row: a wide field (band, CRS) and a compact field beside it
-   (scale, CRS transform). A zero flex-basis keeps intrinsic content width out of column sizing, so both rows
-   share the same 5:2 proportions regardless of label length; min-width: 0 lets long Combo labels and input
-   content stay contained instead of pushing the neighbouring field out of alignment. */
 .wideField {
     flex: 5 1 0;
     min-width: 0;

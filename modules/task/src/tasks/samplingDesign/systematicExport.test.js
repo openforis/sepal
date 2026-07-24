@@ -2,11 +2,12 @@ import {lastValueFrom} from 'rxjs'
 
 import {exportSystematicToAssets$} from './systematicExport.js'
 
-// Minimal stratified recipe. Scale comes from Stratification; the sampling-grid CRS from Sample Arrangement.
+// Minimal recipe. A stratified design's grid CRS comes from Stratification; unstratified Systematic's from
+// Sample Arrangement. The fixture sets the same CRS on both so it drives whichever mode the test selects.
 const recipe = (crs, {minDistance = 60, scale = 10, skip = false} = {}) => ({
     model: {
         aoi: {type: 'ASSET', id: 'users/x/aoi'},
-        stratification: {skip, scale, strata: [{stratum: 1, weight: 1, area: 1}]},
+        stratification: {skip, scale, crs, strata: [{stratum: 1, weight: 1, area: 1}]},
         sampleAllocation: {allocation: [{stratum: 1, label: 'a', area: 1, sampleSize: 10, weight: 1}]},
         sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', minDistance, gridOrigin: 'FIXED', seed: 1, crs}
     }

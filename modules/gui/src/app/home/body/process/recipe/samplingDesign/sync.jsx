@@ -6,7 +6,7 @@ import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 
-import {arrangementCrsInvalidatesStratification, DEPENDENCIES} from './syncDependencies'
+import {DEPENDENCIES} from './syncDependencies'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),
@@ -42,12 +42,6 @@ class _Sync extends React.Component {
         }
         if (Object.values(changedByProp).some(changed => changed)) {
             this.updateRequiresUpdates(changedByProp)
-        }
-        // A CRS change recomputes stratified areas; the DEPENDENCIES chain cascades as each section recomputes.
-        if (arrangementCrsInvalidatesStratification(prevProps, this.props)) {
-            this.actionBuilder('REQUIRE_UPDATE_STRATIFICATION_FROM_CRS')
-                .set(['model', 'stratification', 'requiresUpdate'], true)
-                .dispatch()
         }
     }
 

@@ -4950,6 +4950,10 @@
               "suffix": "meters",
               "tooltip": "Pixel size used to calculate stratum areas. Smaller values use more pixels and preserve detail only when supported by the source image."
             },
+            "crs": {
+              "label": "CRS",
+              "tooltip": "Equal-area coordinate system used to interpret stratification classes, calculate stratum areas and anticipated proportions, and place stratified samples."
+            },
             "hexButton": {
               "label": "HEX",
               "tooltip": "Toggle display of stratum color hex codes"
@@ -5257,7 +5261,7 @@
               }
             },
             "crs": {
-              "tooltip": "Equal-area CRS defining the sampling grid: Random cells and the Systematic lattice. Global is recommended for most areas of interest; North polar and South polar are intended for polar regions."
+              "tooltip": "Equal-area CRS that places the unstratified systematic lattice. Global is recommended for most areas of interest; North polar and South polar are intended for polar regions."
             },
             "minDistance": {
               "label": "Min distance",

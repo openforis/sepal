@@ -15,6 +15,7 @@ export const includeSeed = ({arrangementStrategy, sampleSizeStrategy, gridOrigin
 export const includeMinDistance = ({arrangementStrategy}) =>
     arrangementStrategy === 'SYSTEMATIC'
 
-// A grid applies to every mode except unstratified Random.
+// The Arrangement CRS applies only to Unstratified Systematic; stratified designs use the Stratification grid,
+// and Unstratified Random has no grid.
 export const includeCrs = ({unstratified, arrangementStrategy}) =>
-    !unstratified || arrangementStrategy === 'SYSTEMATIC'
+    unstratified && arrangementStrategy === 'SYSTEMATIC'

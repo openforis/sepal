@@ -16,6 +16,7 @@ import {toTaskAllocation} from './sampling/taskAllocation'
 export const defaultModel = {
     stratification: {
         scale: 30,
+        crs: DEFAULT_CRS,
         type: 'ASSET'
     },
     // Complete defaults so a new recipe opens the panel clean. minDistance is intentionally absent (resolved at
@@ -36,12 +37,16 @@ export const RecipeActions = id => {
 
     return {
         retrieve(retrieveOptions) {
+            const capability = {
+                googleAccount: isGoogleAccount(),
+                assetRoots: select('assets.roots')
+            }
             return actionBuilder('REQUEST_SAMPLES_RETRIEVAL', {retrieveOptions})
                 .setAll({
                     'ui.retrieveState': 'SUBMITTED',
                     'ui.retrieveOptions': retrieveOptions
                 })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
+                .sideEffect(recipe => submitRetrieveRecipeTask(recipe, capability))
                 .dispatch()
         },
     }
@@ -94,11 +99,10 @@ const taskProperties = recipe => ({
         .value()
 })
 
-export const submitRetrieveRecipeTask = recipe => {
+export const submitRetrieveRecipeTask = (recipe, capability) => {
     const {disabled, kind, code, args} = retrieveButtonState({
         model: recipe.model,
-        googleAccount: isGoogleAccount(),
-        assetRoots: select('assets.roots')
+        ...capability
     })
     if (disabled) {
         Notifications.error(kind === 'capability'
@@ -147,4 +151,3 @@ export const submitRetrieveRecipeTask = recipe => {
     })
     return api.tasks.submit$(task).subscribe()
 }
-

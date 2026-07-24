@@ -55,55 +55,56 @@ selection and are not represented by the sample.
 
 ## Current Grid and CRS Policy
 
-- Sample Arrangement stores a curated equal-area CRS identifier; Earth Engine receives its resolved value only at
-  the EE boundary.
-- Supported arrangement CRS options are:
+The demo uses ONE equal-area grid per design; a curated CRS identifier is stored and resolved to its value only
+at the Earth Engine boundary.
+
+- Supported CRS options are:
   - `EPSG:6933`: EASE-Grid 2.0 Global, the default. It resolves to tested WKT because Earth Engine rejects the
     literal identifier in this environment.
   - `EPSG:6931`: EASE-Grid 2.0 North.
   - `EPSG:6932`: EASE-Grid 2.0 South.
 - Stored metadata keeps the configured identifier and must never contain the EPSG:6933 WKT.
-- Configuration currently separates two fields without yet separating Earth Engine evaluation:
-  - Stratification owns **Scale**, which defines the stratification resolution.
-  - Sample Arrangement owns the curated equal-area **CRS**, which defines Random cells and the Systematic
-    lattice.
-- Sampling Design configuration, requests and reproduction metadata use CRS and Scale only; they do not carry a
-  CRS transform.
-- The effective grid for a stratified arrangement is `{scale: stratification.scale,
-  crs: sampleArrangement.crs}`.
+- Ownership (current demo):
+  - **Stratified** designs (Random and Systematic): Stratification owns the **CRS and Scale**. Stratum-area
+    calculation and sample placement (Random cells, Systematic lattice) use the Stratification CRS + Scale.
+    Anticipated-proportion estimation uses the same Stratification CRS but its own (Proportions) Scale. The
+    Sample Arrangement CRS is ignored and hidden.
+  - **Unstratified Systematic**: no Stratification grid, so Sample Arrangement owns the **CRS** (no Scale).
+  - **Unstratified Random**: no grid at all.
+- Configuration, requests and reproduction metadata use CRS and Scale only; there is no CRS transform.
+- The effective grid for a stratified arrangement is `{scale: stratification.scale, crs: stratification.crs}`.
 - For stratified Systematic, the minimum-distance floor is `2 * Stratification Scale`.
 - Minimum distance is not persisted when blank. For stratified Systematic it resolves at export to the current
   raster floor and the GUI displays that effective value as the placeholder.
 - Unstratified Systematic is analytical. It has no raster scale and no `2 * scale` floor; an empty Minimum
   distance applies no additional spacing constraint.
-- For the first demo, area calculation, anticipated proportions and stratum membership continue to evaluate on
-  the equal-area arrangement grid. Separating stratification interpretation from arrangement placement is a
-  post-demo feature, not part of the configuration-ownership change.
+- Class evaluation, stratum-area calculation and sample placement all use this single Stratification grid;
+  anticipated-proportion estimation shares its CRS but uses its own Scale. Separating stratification
+  interpretation from arrangement placement into two grids is deferred (see the post-demo section below).
 
 ## Arrangement Applicability
 
 | Design | Arrangement controls |
 | --- | --- |
-| Stratified Random | Seed and advanced CRS. Scale comes from Stratification. |
-| Stratified Systematic | Sample-size strategy, grid start, Minimum distance, applicable Seed, and advanced CRS. Scale comes from Stratification. |
+| Stratified Random | Seed only. CRS and Scale come from Stratification. |
+| Stratified Systematic | Sample-size strategy, grid start, Minimum distance, applicable Seed. CRS and Scale come from Stratification. |
 | Unstratified Random | Seed only. |
 | Unstratified Systematic | Sample-size strategy, grid start, Minimum distance, applicable Seed, and advanced CRS. |
 
 Current UI and effective-config behavior:
 
 - The applicable CRS visibly defaults to Global (`EPSG:6933`).
-- Sample Arrangement does not expose Scale.
-- CRS belongs to Sample Arrangement and is shown as an advanced (More/Less) option whenever an arrangement grid
-  applies (stratified Random, stratified Systematic, unstratified Systematic); unstratified Random shows neither
-  the CRS nor the More/Less control. A saved non-default CRS reveals the advanced options on reopen.
-- Stratification retains Scale but no CRS or transform control.
+- Stratification owns Scale and an advanced (More/Less) CRS, shown while stratification is enabled and hidden
+  when unstratified. There is no CRS transform control.
+- Sample Arrangement shows an advanced (More/Less) CRS only for Unstratified Systematic; it is hidden for both
+  stratified modes and Unstratified Random. A saved non-default Arrangement CRS reveals More only where the field
+  applies. Sample Arrangement does not expose Scale.
 
 ## Post-demo Stratification and Arrangement Grid Separation
 
-Configuration ownership is now separated (Stratification Scale, Sample Arrangement CRS). This did not change how
-Earth Engine evaluates the stratification: area, anticipated proportions and class membership still evaluate on
-the equal-area arrangement grid. The post-demo change must introduce two explicitly named grids rather than
-changing the meaning of another generic `{crs, scale}` value:
+The current demo deliberately uses ONE Stratification CRS for both stratification interpretation and stratified
+sample placement; Earth Engine evaluates classes/areas and places samples on that single grid. The post-demo
+change introduces two explicitly named grids rather than overloading another generic `{crs, scale}` value:
 
 - **Stratification grid**: defines how the categorical image and its mask are interpreted, how mapped stratum
   areas are calculated, and how anticipated proportions are grouped.
@@ -128,12 +129,14 @@ The intended statistical and evaluation contract is:
 
 The planned public configuration is:
 
-- Stratification keeps the main **Scale** control and gains advanced **CRS** configuration. For an asset band,
-  prefill a concrete, meaningful source projection when available. For recipe outputs, mosaics or ambiguous
-  projections, use a visible deterministic default rather than Earth Engine's possible WGS84 one-degree default.
-  Persist the resolved choice for reproduction.
-- Sample Arrangement keeps the curated equal-area **CRS** and does not expose a separate sampling-grid resolution
-  or transform.
+- Stratification keeps its existing **CRS and Scale**, used for class interpretation, stratum areas and
+  proportion grouping. Future work may default the Stratification CRS from a meaningful source projection when
+  available (e.g. an asset band), falling back to a visible deterministic default rather than Earth Engine's
+  possible WGS84 one-degree default for recipe outputs, mosaics or ambiguous projections. Persist the resolved
+  choice for reproduction.
+- Sample Arrangement becomes independently responsible for the curated equal-area **placement CRS** in stratified
+  modes (today it owns a placement CRS only for Unstratified Systematic), without exposing a separate
+  sampling-grid resolution or transform.
 - Do not expose Scale and CRS transform as simultaneously authoritative inputs. Implement the first split with
   Stratification CRS plus Scale. A later transform mode may use `{crs, crsTransform}` instead of `{crs, scale}`;
   the transform then defines alignment and resolution, while the effective Scale is derived and displayed.
@@ -350,18 +353,18 @@ Keep these separate from the current language/arrangement slice:
 
 ## Verification Checklist for the Next Slices
 
-- Done: curated CRS ownership moved to Sample Arrangement, Scale retained in Stratification, the unreleased
-  user-facing transform removed from every request boundary and message, with current sample locations unchanged
-  (verified by before/after live parity).
-- Done: a stratified CRS change invalidates stratification areas and cascades to proportions and allocation
-  through the existing dependency workflow.
+- Done: one equal-area grid per design, with the unreleased user-facing transform removed from every request
+  boundary and message. Stratified designs own CRS + Scale in Stratification; only Unstratified Systematic takes
+  its CRS from Sample Arrangement; Unstratified Random has no grid. Default sample locations are unchanged.
+- Done: a stratified CRS or Scale change invalidates stratification areas and cascades to proportions and
+  allocation through the existing forward dependency workflow; a hidden Arrangement CRS change does not.
 - Done: the four effective arrangement modes verified, including advanced (More/Less) CRS visibility and the
   Global default.
 - Reconcile task progress, quota requirements, cleanup wording, and the guide with sparse Random.
 - Complete final GUI inspection and replace stale screenshots before the demo.
 - After the demo, implement the grid split through reviewed Random and Systematic spikes. Treat Random's
   full-scale sparse-graph performance, exact Systematic membership, and full-scale Systematic performance as
-  acceptance gates before exposing the new Stratification controls.
+  acceptance gates before moving placement-CRS ownership to Sample Arrangement and enabling separate grids.
 - Resolve the seed `0` and remaining sample-ID uniqueness issues before making universal reproduction or
   uniqueness claims.
 - Run focused shared/GEE/task/GUI tests, affected ESLint targets, Sphinx build and warning check, and

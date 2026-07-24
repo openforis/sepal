@@ -31,8 +31,7 @@ const mapRecipeToProps = recipe => ({
     stratificationRecipeId: selectFrom(recipe, 'model.stratification.recipeId'),
     stratificationBand: selectFrom(recipe, 'model.stratification.band'),
     stratificationScale: selectFrom(recipe, 'model.stratification.scale'),
-    // The equal-area CRS is owned by Sample Arrangement; the proportion estimate is evaluated at it.
-    arrangementCrs: selectFrom(recipe, 'model.sampleArrangement.crs') || DEFAULT_SAMPLING_GRID_CRS,
+    stratificationCrs: selectFrom(recipe, 'model.stratification.crs') || DEFAULT_SAMPLING_GRID_CRS,
     strata: selectFrom(recipe, 'model.stratification.strata')
 })
 
@@ -515,7 +514,7 @@ class _Proportions extends React.Component {
 
     calculateAnticipatedProportions() {
         const {aoi, stream,
-            unstratified, stratificationType, stratificationRecipeId, stratificationAssetId, stratificationBand, arrangementCrs,
+            unstratified, stratificationType, stratificationRecipeId, stratificationAssetId, stratificationBand, stratificationCrs,
             inputs: {manual, anticipationStrategy, scale, type, assetId, recipeId, band, targetClass, eeStrategy, anticipatedProportions}
         } = this.props
         this.clearProportionsCalculationError()
@@ -556,10 +555,9 @@ class _Proportions extends React.Component {
                 probabilityBand: band.value,
                 mode: anticipationStrategy.value,
                 targetClass: categorical ? Number(targetClass.value) : undefined,
-                // Proportions uses an independent scale for the speed/detail tradeoff; the equal-area CRS comes
-                // from Sample Arrangement.
+                // Proportion estimation has its own Scale but uses the Stratification CRS.
                 scale: parseInt(scale.value),
-                crs: arrangementCrs,
+                crs: stratificationCrs,
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
                 takeUntil(this.cancel$)
@@ -631,11 +629,11 @@ class _Proportions extends React.Component {
 // for band, FormCombo's deferred onChange means the dependency-triggered request would be started and then
 // cancelled by onBandChanged's invalidation, leaving the table empty.
 const proportionsDeps = props => {
-    const {arrangementCrs, inputs: {manual, anticipationStrategy, type, assetId, recipeId, targetClass, scale}} = props
+    const {stratificationCrs, inputs: {manual, anticipationStrategy, type, assetId, recipeId, targetClass, scale}} = props
     return [
         ...[manual, anticipationStrategy, type, assetId, recipeId, targetClass, scale].map(input => input?.value),
-        // The equal-area CRS (from Sample Arrangement) changes the estimate, so it must invalidate it.
-        arrangementCrs
+        // The Stratification CRS changes the estimate, so it must invalidate it.
+        stratificationCrs
     ]
 }
 

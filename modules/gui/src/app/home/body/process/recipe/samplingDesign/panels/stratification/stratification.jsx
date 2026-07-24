@@ -23,6 +23,7 @@ import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
+import {samplingGridCrsOptions} from '../../samplingGridCrsOptions'
 import {isValidGridScale} from '../../samplingGridValidation'
 import {CalculationErrorContent} from '../calculationErrorContent'
 import {StrataTable} from './strataTable'
@@ -35,9 +36,6 @@ const mapRecipeToProps = recipe => ({
     importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries'),
     title: recipe.title || recipe.placeholder,
     stratificationRequiresUpdate: selectFrom(recipe, 'model.stratification.requiresUpdate'),
-    // The equal-area CRS is owned by Sample Arrangement; area per stratum is evaluated at that CRS and the
-    // Stratification Scale, so a CRS change there invalidates and recomputes these areas.
-    arrangementCrs: selectFrom(recipe, 'model.sampleArrangement.crs') || DEFAULT_SAMPLING_GRID_CRS,
 })
 
 const fields = {
@@ -61,6 +59,9 @@ const fields = {
         .notBlank('process.samplingDesign.panel.stratification.form.scale.required')
         .number()
         .greaterThan(0),
+    crs: new Form.Field()
+        .skip((_value, {skip}) => skip.length)
+        .notBlank(),
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
         // Required even when skipped: unstratified mode still needs the single synthetic stratum (area is
@@ -75,7 +76,8 @@ class _Stratification extends React.Component {
         prevStrata: [],
         entriesByBand: {},
         showHexColorCode: false,
-        strataCalculationError: null
+        strataCalculationError: null,
+        more: false
     }
 
     constructor(props) {
@@ -86,13 +88,15 @@ class _Stratification extends React.Component {
         this.onAssetLoaded = this.onAssetLoaded.bind(this)
         this.onRecipeLoaded = this.onRecipeLoaded.bind(this)
         this.onBandChanged = this.onBandChanged.bind(this)
-        this.onScaleChanged = this.onScaleChanged.bind(this)
+        this.onGridChanged = this.onGridChanged.bind(this)
         this.onEEStrategyChanged = this.onEEStrategyChanged.bind(this)
         this.onAreaPerStratumLoaded = this.onAreaPerStratumLoaded.bind(this)
         this.onSkipToggled = this.onSkipToggled.bind(this)
     }
 
     render() {
+        const {more} = this.state
+        const {inputs: {skip}} = this.props
         return (
             <RecipeFormPanel
                 placement='bottom-right'
@@ -107,6 +111,12 @@ class _Stratification extends React.Component {
                 </Panel.Content>
 
                 <Form.PanelButtons>
+                    {!skip.value?.length ? (
+                        <Button
+                            label={more ? msg('button.less') : msg('button.more')}
+                            onClick={() => this.setState(({more}) => ({more: !more}))}
+                        />
+                    ) : null}
                     {this.renderImportButton()}
                 </Form.PanelButtons>
             </RecipeFormPanel>
@@ -124,6 +134,7 @@ class _Stratification extends React.Component {
                         {this.renderBand()}
                         {this.renderScale()}
                     </Layout>
+                    {this.state.more ? this.renderCrs() : null}
                     {this.renderStrata()}
                 </Layout>
             )
@@ -271,7 +282,20 @@ class _Stratification extends React.Component {
                 input={scale}
                 type='number'
                 suffix={msg('process.samplingDesign.panel.stratification.form.scale.suffix')}
-                onChange={this.onScaleChanged}
+                onChange={this.onGridChanged}
+            />
+        )
+    }
+
+    renderCrs() {
+        const {inputs: {crs}} = this.props
+        return (
+            <FormCombo
+                label={msg('process.samplingDesign.panel.stratification.form.crs.label')}
+                tooltip={msg('process.samplingDesign.panel.stratification.form.crs.tooltip')}
+                input={crs}
+                options={samplingGridCrsOptions()}
+                onChange={this.onGridChanged}
             />
         )
     }
@@ -390,12 +414,17 @@ class _Stratification extends React.Component {
     }
 
     componentDidMount() {
-        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, type, eeStrategy, strata}} = this.props
+        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, crs, type, eeStrategy, strata}} = this.props
         requiresUpdate.set(false)
         skip.value || skip.set([])
         scale.value || scale.set('30')
+        crs.value || crs.set(DEFAULT_SAMPLING_GRID_CRS)
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
+        // Reveal the advanced options when a non-default CRS was saved, so the setting is discoverable.
+        if (crs.value && crs.value !== DEFAULT_SAMPLING_GRID_CRS) {
+            this.setState({more: true})
+        }
 
         if (stratificationRequiresUpdate) {
             if (skip.value?.length) {
@@ -522,7 +551,7 @@ class _Stratification extends React.Component {
         this.scheduleAreaPerStratum()
     }
 
-    onScaleChanged() {
+    onGridChanged() {
         this.scheduleAreaPerStratum()
     }
 
@@ -593,7 +622,7 @@ class _Stratification extends React.Component {
     // Stratified area per stratum. Unstratified mode never calls this - it sets the synthetic row directly
     // and the AOI area is computed at the export boundary.
     calculateAreaPerStratum() {
-        const {aoi, stream, arrangementCrs, inputs: {scale, type, assetId, recipeId, band, eeStrategy}} = this.props
+        const {aoi, stream, inputs: {scale, crs, type, assetId, recipeId, band, eeStrategy}} = this.props
         const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
         // onChange fires while typing; block invalid intermediate scale values before calling EE.
         if (!isValidGridScale(scale.value) || !id || !band.value) {
@@ -613,9 +642,8 @@ class _Stratification extends React.Component {
                 aoi,
                 stratification,
                 band: band.value,
-                // Scale is owned by Stratification; the equal-area CRS by Sample Arrangement.
                 scale: parseInt(scale.value) || 30,
-                crs: arrangementCrs,
+                crs: crs.value || DEFAULT_SAMPLING_GRID_CRS,
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
                 takeUntil(this.cancel$)
