@@ -1,3 +1,5 @@
+import {sanitizeEarthEngineTaskName} from '#sepal/earthEngineExportNames'
+
 import {setWorkloadTag} from '../workloadTag.js'
 import {exportRandomToAssets$} from './randomExport.js'
 import {exportSystematicToAssets$} from './systematicExport.js'
@@ -7,10 +9,20 @@ import {exportSystematicToAssets$} from './systematicExport.js'
 export const submit$ = (taskId, {description, properties, recipe, workspacePath, filenamePrefix, fileFormat}) => {
     setWorkloadTag(recipe)
     const {model: {sampleArrangement}} = recipe
-    const sepal = {destination: 'SEPAL', workspacePath, filenamePrefix, fileFormat}
+    const safeDescription = sanitizeEarthEngineTaskName(description, 'Sampling_design')
+    const sepal = {
+        taskId,
+        description: safeDescription,
+        recipe,
+        properties,
+        destination: 'SEPAL',
+        workspacePath,
+        filenamePrefix: sanitizeEarthEngineTaskName(filenamePrefix || safeDescription, safeDescription),
+        fileFormat
+    }
     switch (sampleArrangement.arrangementStrategy) {
-        case 'SYSTEMATIC': return exportSystematicToAssets$({taskId, description, recipe, properties, ...sepal})
-        case 'RANDOM': return exportRandomToAssets$({taskId, description, recipe, properties, ...sepal})
+        case 'SYSTEMATIC': return exportSystematicToAssets$(sepal)
+        case 'RANDOM': return exportRandomToAssets$(sepal)
         default: throw Error(`Unsupported sample arrangement strategy: ${sampleArrangement.arrangementStrategy}`)
     }
 }
