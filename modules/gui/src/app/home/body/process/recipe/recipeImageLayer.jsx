@@ -92,7 +92,7 @@ class _RecipeImageLayer extends React.Component {
 
     selfManagedVisualizations() {
         const {recipe} = this.props
-        return recipe && ['CCDC_SLICE', 'CHANGE_ALERTS', 'PYEO_ALERTS'].includes(recipe.type)
+        return recipe && ['CCDC_SLICE', 'CHANGE_ALERTS'].includes(recipe.type)
     }
 
     toAllVis() {
