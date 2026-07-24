@@ -4890,12 +4890,21 @@
         "invalid.areaMissing": "",
         "invalid.noTaskAllocation": "",
         "invalid.seedMissing": "",
-        "invalid.minDistanceBelowGrid": ""
+        "invalid.minDistanceBelowGrid": "",
+        "capability": {
+          "title": "",
+          "pending": "",
+          "noAccount": "",
+          "noAssetRoot": ""
+        }
       },
       "panel": {
         "stratification": {
           "button": "",
           "form": {
+            "csv": {
+              "label": ""
+            },
             "skip": {
               "label": "",
               "tooltip": "",
@@ -4943,15 +4952,7 @@
             },
             "crs": {
               "label": "",
-              "placeholder": "",
-              "required": "",
               "tooltip": ""
-            },
-            "crsTransform": {
-              "label": "",
-              "placeholder": "",
-              "tooltip": "",
-              "invalid": ""
             },
             "hexButton": {
               "label": "",
@@ -5003,6 +5004,12 @@
               "label": "",
               "tooltip": ""
             },
+            "percentage": {
+              "label": "",
+              "tooltip": ""
+            },
+            "calculating": "",
+            "selectImageAndBand": "",
             "anticipationStrategy": {
               "label": "",
               "MANUAL": {
@@ -5112,8 +5119,11 @@
               "label": "",
               "tooltip": ""
             },
+            "target": {
+              "label": ""
+            },
+            "noData": "",
             "estimateSampleSize": {
-              "label": "",
               "false": {
                 "label": "",
                 "tooltip": ""
@@ -5253,10 +5263,6 @@
             "crs": {
               "tooltip": ""
             },
-            "crsTransform": {
-              "tooltip": "",
-              "invalid": ""
-            },
             "minDistance": {
               "label": "Distancia mínima",
               "placeholder": "",
@@ -5269,7 +5275,7 @@
             "seed": {
               "label": "Semilla",
               "placeholder": "Semilla...",
-              "tooltip": "Semilla de aleatorización"
+              "tooltip": ""
             }
           },
           "title": "",
@@ -5492,7 +5498,6 @@
         },
         "grid": {
           "unsupportedCrs": "",
-          "invalidTransform": "",
           "invalidScale": "",
           "minDistanceBelowGrid": "",
           "invalidMinDistance": ""
@@ -5501,9 +5506,16 @@
       "preflight": {
         "invalidMinimum": "",
         "noStrata": "",
-        "belowStatisticalMinimum": "",
+        "belowStatisticalMinimum": {
+          "samples": "",
+          "error": "",
+          "manual": ""
+        },
         "unstratifiedBelowMinimum": "",
-        "belowConfiguredMinimum": ""
+        "belowConfiguredMinimum": {
+          "samples": "",
+          "error": ""
+        }
       },
       "underproduction": {
         "message": "",
@@ -5511,18 +5523,21 @@
           "statisticalMinimum": "",
           "statisticalMinimumNoDistance": "",
           "configuredMinimum": "",
-          "requestedAllocation": ""
+          "requestedAllocation": "",
+          "calculatedAllocation": ""
         },
         "reduceSystematicMinDistance": "",
         "atGridFloor": "",
         "switchToRandom": "",
-        "reviseStratification": "",
-        "enlargeOrMerge": "",
+        "reduceStratificationScale": "",
+        "checkStratumCoverage": "",
+        "enlargeAoi": "",
         "lowerConfiguredMinimum": "",
-        "minimumNotSufficient": "",
+        "reduceRequested": "",
         "reduceRequestedOrClosest": "",
-        "avoidEqualAllocation": "",
-        "reduceRequestedRandom": ""
+        "increaseMarginOfError": "",
+        "increaseMarginOfErrorOrClosest": "",
+        "avoidEqualAllocation": ""
       }
     },
     "status": {
@@ -5912,6 +5927,7 @@
         "replaceable": ""
       },
       "loadError": "",
+      "invalidAssetId": "",
       "taskPending": "",
       "validating": "",
       "replace": {
@@ -5989,6 +6005,10 @@
       "band": {
         "label": "",
         "notSelected": ""
+      },
+      "booleanOperator": {
+        "and": "",
+        "or": ""
       },
       "property": {
         "label": "",
