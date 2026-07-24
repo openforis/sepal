@@ -5288,7 +5288,7 @@
           }
         }
       },
-      "tabPlaceholder": "Sampling design",
+      "tabPlaceholder": "Sampling_design",
       "crs": {
         "easeGrid2Global": "Global (EPSG:6933)",
         "easeGrid2North": "North polar (EPSG:6931)",
