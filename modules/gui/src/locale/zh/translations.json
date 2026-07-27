@@ -1454,6 +1454,133 @@
       },
       "tabPlaceholder": ""
     },
+    "pyeoAlerts": {
+      "create": "",
+      "description": "",
+      "tabPlaceholder": "",
+      "layers": {
+        "imageLayer": {
+          "preSets": ""
+        }
+      },
+      "error": {
+        "noImages": "",
+        "noChangeClasses": ""
+      },
+      "panel": {
+        "dates": {
+          "title": "",
+          "button": "",
+          "tooltip": "",
+          "form": {
+            "baseline": {
+              "label": ""
+            },
+            "monitoring": {
+              "label": ""
+            },
+            "baselineStart": {
+              "label": "",
+              "required": "",
+              "malformed": "",
+              "beforeEnd": ""
+            },
+            "baselineEnd": {
+              "label": "",
+              "required": "",
+              "malformed": "",
+              "beforeMonitoring": ""
+            },
+            "monitoringStart": {
+              "label": "",
+              "required": "",
+              "malformed": "",
+              "beforeEnd": ""
+            },
+            "monitoringEnd": {
+              "label": "",
+              "required": "",
+              "malformed": ""
+            }
+          }
+        },
+        "sources": {
+          "title": "",
+          "button": "",
+          "tooltip": "",
+          "form": {
+            "dataSets": {
+              "label": "",
+              "tooltip": "",
+              "required": ""
+            },
+            "cloudPercentageThreshold": {
+              "label": "",
+              "tooltip": "",
+              "value": ""
+            },
+            "classification": {
+              "label": "",
+              "tooltip": "",
+              "placeholder": "",
+              "required": ""
+            },
+            "changeFromClasses": {
+              "label": "",
+              "tooltip": "",
+              "required": ""
+            },
+            "changeToClasses": {
+              "label": "",
+              "tooltip": "",
+              "required": "",
+              "overlap": ""
+            },
+            "changeClasses": {
+              "noClassification": ""
+            }
+          }
+        },
+        "options": {
+          "title": "",
+          "button": "",
+          "tooltip": "",
+          "form": {
+            "useIndexGate": {
+              "label": "",
+              "tooltip": "",
+              "off": "",
+              "on": "",
+              "unavailable": ""
+            },
+            "gateIndex": {
+              "label": "",
+              "tooltip": "",
+              "required": ""
+            },
+            "gateThreshold": {
+              "label": "",
+              "tooltip": "",
+              "required": "",
+              "value": ""
+            },
+            "minConsecutiveDetections": {
+              "label": "",
+              "tooltip": "",
+              "value": ""
+            }
+          }
+        }
+      },
+      "classification": {
+        "loadError": "",
+        "mosaicLoadError": "",
+        "assetLoadError": "",
+        "singleInputRequired": "",
+        "selectedScenesUnsupported": "",
+        "notDerivable": ""
+      }
+    },
     "changeAlerts": {
       "create": "",
       "description": "",
