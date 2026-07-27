@@ -1454,6 +1454,133 @@
       },
       "tabPlaceholder": "Corte de CCDC"
     },
+    "pyeoAlerts": {
+      "create": "",
+      "description": "",
+      "tabPlaceholder": "",
+      "layers": {
+        "imageLayer": {
+          "preSets": ""
+        }
+      },
+      "error": {
+        "noImages": "",
+        "noChangeClasses": ""
+      },
+      "panel": {
+        "dates": {
+          "title": "",
+          "button": "FEC",
+          "tooltip": "",
+          "form": {
+            "baseline": {
+              "label": ""
+            },
+            "monitoring": {
+              "label": ""
+            },
+            "baselineStart": {
+              "label": "De",
+              "required": "",
+              "malformed": "",
+              "beforeEnd": ""
+            },
+            "baselineEnd": {
+              "label": "A",
+              "required": "",
+              "malformed": "",
+              "beforeMonitoring": ""
+            },
+            "monitoringStart": {
+              "label": "De",
+              "required": "",
+              "malformed": "",
+              "beforeEnd": ""
+            },
+            "monitoringEnd": {
+              "label": "A",
+              "required": "",
+              "malformed": ""
+            }
+          }
+        },
+        "sources": {
+          "title": "Fuentes",
+          "button": "",
+          "tooltip": "",
+          "form": {
+            "dataSets": {
+              "label": "",
+              "tooltip": "",
+              "required": ""
+            },
+            "cloudPercentageThreshold": {
+              "label": "",
+              "tooltip": "",
+              "value": ""
+            },
+            "classification": {
+              "label": "",
+              "tooltip": "",
+              "placeholder": "",
+              "required": ""
+            },
+            "changeFromClasses": {
+              "label": "",
+              "tooltip": "",
+              "required": ""
+            },
+            "changeToClasses": {
+              "label": "",
+              "tooltip": "",
+              "required": "",
+              "overlap": ""
+            },
+            "changeClasses": {
+              "noClassification": ""
+            }
+          }
+        },
+        "options": {
+          "title": "",
+          "button": "",
+          "tooltip": "",
+          "form": {
+            "useIndexGate": {
+              "label": "",
+              "tooltip": "",
+              "off": "",
+              "on": "Si",
+              "unavailable": ""
+            },
+            "gateIndex": {
+              "label": "",
+              "tooltip": "",
+              "required": ""
+            },
+            "gateThreshold": {
+              "label": "",
+              "tooltip": "",
+              "required": "",
+              "value": ""
+            },
+            "minConsecutiveDetections": {
+              "label": "",
+              "tooltip": "",
+              "value": ""
+            }
+          }
+        }
+      },
+      "classification": {
+        "loadError": "",
+        "mosaicLoadError": "",
+        "assetLoadError": "",
+        "singleInputRequired": "",
+        "selectedScenesUnsupported": "",
+        "notDerivable": ""
+      }
+    },
     "changeAlerts": {
       "create": "",
       "description": "",
