@@ -1,0 +1,55 @@
+.tabs {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    right: calc(100% + 1px);
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    width: var(--panel-tabs-width, 2.7rem);
+}
+
+.tab.tab {
+    --look-default-h: 36;
+    --look-default-s: 6%;
+    --look-default-l: 11%;
+    --look-default-a: 1;
+    --look-default-border-color: var(--section-wireframe-color);
+    --look-default-hover-border-color: var(--section-wireframe-color);
+    --look-default-active-border-color: var(--section-wireframe-color);
+    --look-selected-h: 36;
+    --look-selected-s: 8%;
+    --look-selected-l: 15%;
+    --look-selected-a: .95;
+    --look-selected-border-color: var(--section-wireframe-color);
+    --look-selected-hover-border-color: var(--section-wireframe-color);
+    --look-selected-active-border-color: var(--section-wireframe-color);
+    position: relative;
+    width: var(--panel-tabs-width, 2.7rem);
+    min-height: 5.75rem;
+    border-width: 1px 0 0 1px;
+    border-color: var(--wireframe-color);
+    border-radius: .3rem 0 0 .3rem;
+    padding: .5rem 0;
+}
+
+.tab.tab:last-child {
+    border-bottom-width: 1px;
+}
+
+.tab.tab > * {
+    align-items: center;
+    justify-content: center;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+}
+
+.tab.selected::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 3px;
+    background-color: hsl(var(--selected-hue), var(--selected-sat), 40%);
+}

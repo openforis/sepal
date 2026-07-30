@@ -385,7 +385,8 @@
     "table": {
       "error": {
         "notATable": "Not a Table",
-        "notFound": "Table not found"
+        "notFound": "Table not found",
+        "tooManyValues": "Too many distinct values in property ''{columnName}'' (limit {max}). Pick a categorical property."
       }
     }
   },
@@ -585,6 +586,83 @@
       "copy": "Copy to clipboard",
       "coordinatesCopied": "Coordinates copied to the clipboard"
     },
+    "featureLayer": {
+      "toggle": {
+        "show": "Show layer",
+        "hide": "Hide layer"
+      }
+    },
+    "featureLayerStyle": {
+      "title": "Layer options",
+      "tooltip": "Layer options",
+      "colorMode": {
+        "label": "Color mode",
+        "ONE_COLOR": "One color",
+        "COLORS_FROM_PROPERTY": "From property",
+        "COLORS_BY_VALUE": "By value"
+      },
+      "color": "Color",
+      "colorProperty": {
+        "label": "Color property"
+      },
+      "valueProperty": {
+        "label": "Value property"
+      },
+      "property": {
+        "placeholder": "Select a property"
+      },
+      "valueColors": {
+        "label": "Values and colors",
+        "loadDistinctValues": "Distinct values from property",
+        "loadError": "Failed to load distinct property values",
+        "blankValues": "Values cannot be blank.",
+        "noEntries": "No values added",
+        "value": {
+          "placeholder": "Value..."
+        },
+        "classLabel": {
+          "placeholder": "Optional label..."
+        },
+        "showLabels": {
+          "label": "LABELS",
+          "tooltip": "Show optional display labels for these values. Hiding labels does not remove them."
+        }
+      },
+      "width": "Line/outline width",
+      "fillOpacity": "Fill opacity",
+      "pointSize": "Point size",
+      "pixelValue": "{value} px",
+      "percentValue": "{value}%",
+      "sections": {
+        "color": "Color",
+        "filter": "Filter",
+        "sizeAndOpacity": "Size & opacity",
+        "completeCurrent": "Complete the settings in this section before opening another section."
+      },
+      "filter": {
+        "add": {
+          "label": "Add filter"
+        },
+        "match": {
+          "label": "Match",
+          "all": {
+            "label": "All",
+            "tooltip": "Show features that meet every filter."
+          },
+          "any": {
+            "label": "Any",
+            "tooltip": "Show features that meet at least one filter."
+          }
+        },
+        "noFilters": "No filters added. All features are shown.",
+        "noProperties": "No feature properties are available for filtering.",
+        "source": "This layer"
+      },
+      "opacity": "Layer opacity",
+      "opacityControl": {
+        "tooltip": "Opacity {percent}%. Drag up/down to change. Click to toggle."
+      }
+    },
     "legendBuilder": {
       "addEntry": {
         "tooltip": "Add legend entry"
@@ -688,6 +766,8 @@
             "description": "Add an Earth Engine asset",
             "form": {
               "asset.label": "Earth Engine Asset",
+              "label.label": "Label",
+              "label.placeholder": "Optional display label",
               "loadError": "Unable to read asset"
             },
             "presets": "Pre-sets"
@@ -819,6 +899,10 @@
     "Aoi": {
       "type": "AOI",
       "description": "Area of Interest"
+    },
+    "EETableAsset": {
+      "type": "EE Table",
+      "description": "Earth Engine table asset"
     },
     "Labels": {
       "type": "Labels",
@@ -1369,6 +1453,133 @@
         }
       },
       "tabPlaceholder": "CCDC_slice"
+    },
+    "pyeoAlerts": {
+      "create": "Forest Change Alerts (PyEO)",
+      "description": "Detect forest land-cover change by classifying a monitoring period against a baseline composite, with optional index confirmation and temporal-consistency filtering.",
+      "tabPlaceholder": "Forest_alerts",
+      "layers": {
+        "imageLayer": {
+          "preSets": "Presets"
+        }
+      },
+      "error": {
+        "noImages": "No monitoring images match the recipe configuration. Update the dates or sources.",
+        "noChangeClasses": "Select at least one \"From\" class and one \"To\" class in the change-detection options."
+      },
+      "panel": {
+        "dates": {
+          "title": "Date ranges",
+          "button": "DAT",
+          "tooltip": "Pick the baseline window (used to build the reference composite) and the monitoring window (whose individual acquisitions are compared to the baseline).",
+          "form": {
+            "baseline": {
+              "label": "Baseline window"
+            },
+            "monitoring": {
+              "label": "Monitoring window"
+            },
+            "baselineStart": {
+              "label": "From",
+              "required": "Required",
+              "malformed": "Use YYYY-MM-DD",
+              "beforeEnd": "Baseline start must be before baseline end"
+            },
+            "baselineEnd": {
+              "label": "To",
+              "required": "Required",
+              "malformed": "Use YYYY-MM-DD",
+              "beforeMonitoring": "Baseline must end before monitoring starts"
+            },
+            "monitoringStart": {
+              "label": "From",
+              "required": "Required",
+              "malformed": "Use YYYY-MM-DD",
+              "beforeEnd": "Monitoring start must be before monitoring end"
+            },
+            "monitoringEnd": {
+              "label": "To",
+              "required": "Required",
+              "malformed": "Use YYYY-MM-DD"
+            }
+          }
+        },
+        "sources": {
+          "title": "Sources",
+          "button": "SRC",
+          "tooltip": "Pick the classification recipe and optical datasets, and choose which From→To class transitions count as change.",
+          "form": {
+            "dataSets": {
+              "label": "Optical datasets",
+              "tooltip": "One or more Sentinel-2 / Landsat collections. Bands are harmonised across the selection.",
+              "required": "Pick at least one optical dataset"
+            },
+            "cloudPercentageThreshold": {
+              "label": "Maximum scene cloud cover",
+              "tooltip": "Drop scenes whose CLOUDY_PIXEL_PERCENTAGE exceeds this value before classification.",
+              "value": "{value}%"
+            },
+            "classification": {
+              "label": "Classification recipe",
+              "tooltip": "Only Classification recipes appear here. Class IDs and labels are pulled from the selected recipe.",
+              "placeholder": "Select a Classification recipe",
+              "required": "Pick a Classification recipe"
+            },
+            "changeFromClasses": {
+              "label": "FROM classes (baseline)",
+              "tooltip": "Classes in the baseline class map that count as the 'from' side of a change. Typically forest classes.",
+              "required": "Pick at least one FROM class"
+            },
+            "changeToClasses": {
+              "label": "TO classes (monitoring)",
+              "tooltip": "Classes in any monitoring class map that count as the 'to' side of a change. A class chosen as FROM can't also be TO.",
+              "required": "Pick at least one TO class",
+              "overlap": "FROM and TO classes must not overlap"
+            },
+            "changeClasses": {
+              "noClassification": "Select a classification recipe to choose From/To classes"
+            }
+          }
+        },
+        "options": {
+          "title": "Change rules",
+          "button": "OPT",
+          "tooltip": "Optional spectral-index confirmation and the temporal-consistency threshold.",
+          "form": {
+            "useIndexGate": {
+              "label": "Require index drop",
+              "tooltip": "Require the chosen index to drop by at least the threshold (baseline − monitoring) before an alert is confirmed. Only decreases count — an index increase never confirms a change.",
+              "off": "No",
+              "on": "Yes",
+              "unavailable": "The selected classification's baseline imagery has no near-infrared band, so it cannot produce a spectral index; the index gate is unavailable."
+            },
+            "gateIndex": {
+              "label": "Index",
+              "tooltip": "Spectral index whose drop (baseline − monitoring) confirms an alert — a drop signals disturbance. Options depend on the selected sources.",
+              "required": "Pick an index"
+            },
+            "gateThreshold": {
+              "label": "Minimum drop",
+              "tooltip": "Minimum drop in the index (baseline − monitoring) needed to confirm an alert. Only decreases count — an index increase never confirms a change.",
+              "required": "Set a threshold",
+              "value": "{value}"
+            },
+            "minConsecutiveDetections": {
+              "label": "Minimum consecutive detections",
+              "tooltip": "A pixel only flags as an alert after this many consecutive monitoring acquisitions show the same change.",
+              "value": "{value} images"
+            }
+          }
+        }
+      },
+      "classification": {
+        "loadError": "Failed to load the classification recipe: {error}",
+        "mosaicLoadError": "Failed to load the classification's imagery: {error}",
+        "assetLoadError": "Failed to read the classification asset metadata: {error}",
+        "singleInputRequired": "This classification uses more than one input image, which isn't supported here. Choose a classification with a single input.",
+        "selectedScenesUnsupported": "This classification was trained on hand-selected scenes, which isn't supported yet. Choose a classification trained on a date range.",
+        "notDerivable": "Couldn't read the imagery dates from this classification (external asset). Set the baseline and monitoring dates manually."
+      }
     },
     "changeAlerts": {
       "create": "Change Alerts",
@@ -2568,6 +2779,14 @@
                 "label": "Cut-off factor",
                 "placeholder": "Cut-off factor...",
                 "tooltip": "Takes the given percentage of the split centroids if none of the children win."
+              },
+              "normalizeInput": {
+                "label": "Normalize input",
+                "tooltip": "Specifies whether attributes should be normalized or not.",
+                "options": {
+                  "true.label": "Normalize",
+                  "false.label": "Don't normalize"
+                }
               }
             }
           }
@@ -3200,6 +3419,31 @@
             },
             "section": {
               "required": "A section must be selected"
+            },
+            "asset": {
+              "asset": {
+                "label": "EE Asset",
+                "placeholder": "Enter an EE Asset",
+                "required": "EE Asset must be specified"
+              },
+              "title": "Select EE Asset"
+            },
+            "recipe": {
+              "recipe": {
+                "label": "SEPAL Recipe",
+                "placeholder": "Select a recipe...",
+                "required": "Recipe must be selected"
+              },
+              "title": "Select SEPAL Recipe"
+            },
+            "source": {
+              "title": "From asset or recipe",
+              "label": "Asset or recipe",
+              "type": {
+                "ASSET": "Asset",
+                "RECIPE": "Recipe",
+                "required": "A source type must be selected"
+              }
             }
           },
           "title": "Area of interest",
@@ -4549,7 +4793,7 @@
         "assetId": {
           "label": "Asset ID",
           "placeholder": "Enter Asset ID...",
-          "tooltip": "The Asset ID your image should be exported to."
+          "tooltip": "Asset ID to export to."
         },
         "assetType": {
           "label": "Asset type",
@@ -4574,7 +4818,7 @@
         "crsTransform": {
           "label": "CRS transform",
           "placeholder": "Enter transform...",
-          "tooltip": "Optionally specity affine transform to use for the exported image"
+          "tooltip": "Optionally specify an affine transform to use for the exported image"
         },
         "destination": {
           "GEE": "Google Earth Engine asset",
@@ -4866,6 +5110,438 @@
           "preSets": "Pre-sets"
         }
       }
+    },
+    "samplingDesign": {
+      "bands": {},
+      "create": "Sampling design",
+      "description": "Plan and export random or systematic sample locations, with optional stratification.",
+      "calculationError": {
+        "retryOnline": "Retry direct",
+        "submitBatchAgain": "Submit again",
+        "useBatch": "Use queued"
+      },
+      "retrieve": {
+        "invalid": "The sampling design is incomplete and cannot be retrieved.",
+        "invalid.requiresUpdate": "One or more sampling design sections need to be updated. Open the highlighted section and apply or recompute it before retrieving.",
+        "invalid.noStrata": "No strata have been computed. Open Stratification and compute the strata.",
+        "invalid.strataAreaMissing": "A stratum is missing its area. Recompute the strata in Stratification.",
+        "invalid.proportionsRequired": "The chosen allocation needs anticipated proportions. Provide them, or use a fixed sample size with Equal, Proportional, or Balanced allocation.",
+        "invalid.noAllocation": "No sample allocation has been computed. Open Sample Allocation and set the allocation.",
+        "invalid.sampleSizeInvalid": "An allocation row has an invalid sample size. Every stratum needs a whole number of at least 2 samples.",
+        "invalid.minSamplesPerStratumInvalid": "Minimum samples per stratum must be a whole number of at least 2.",
+        "invalid.areaMissing": "An allocation row is missing its area. Recompute the strata in Stratification.",
+        "invalid.noTaskAllocation": "Set at least 2 samples for every stratum in Sample Allocation.",
+        "invalid.seedMissing": "A seed is required for this arrangement. Enter a whole-number seed in Sample Arrangement.",
+        "invalid.minDistanceBelowGrid": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.",
+        "capability": {
+          "title": "This design cannot be retrieved yet.",
+          "pending": "Checking your Earth Engine asset roots. This sample arrangement needs one, so retrieving is disabled until they finish loading.",
+          "noAccount": "This sample arrangement requires temporary Earth Engine table assets. Link an Earth Engine account with an asset root before retrieving the design.",
+          "noAssetRoot": "This sample arrangement requires temporary Earth Engine table assets, but your linked Earth Engine account has no asset root. Create an asset root before retrieving the design."
+        }
+      },
+      "panel": {
+        "stratification": {
+          "button": "STR",
+          "form": {
+            "csv": {
+              "label": "CSV"
+            },
+            "skip": {
+              "label": "Unstratified",
+              "tooltip": "Use an unstratified sampling design.",
+              "message": "An unstratified design treats the eligible area within the area of interest as one stratum. It is simpler, but it cannot assign samples separately among map classes. A useful stratification may reduce sampling error, although the gain is not guaranteed."
+            },
+            "type": {
+              "label": "Type",
+              "ASSET": {
+                "label": "Asset",
+                "tooltip": "Use EE Asset as stratification"
+              },
+              "RECIPE": {
+                "label": "Recipe",
+                "tooltip": "Use SEPAL Recipe as stratification"
+              },
+              "required": "You must select a type of stratification"
+            },
+            "stratification": {
+              "label": "Stratification",
+              "placeholder": "Select a stratification...",
+              "required": "You must select a stratification"
+            },
+            "asset": {
+              "label": "EE Asset",
+              "placeholder": "Select EE Asset...",
+              "required": "You must select an EE asset"
+            },
+            "recipe": {
+              "label": "Recipe",
+              "placeholder": "Select a recipe...",
+              "required": "You must select a SEPAL recipe"
+            },
+            "band": {
+              "label": "Band",
+              "placeholder": "Select a band...",
+              "tooltip": "Select the band containing the strata",
+              "required": "You must select a band"
+            },
+            "scale": {
+              "label": "Scale",
+              "placeholder": "Scale...",
+              "required": "You must specify the scale",
+              "suffix": "meters",
+              "tooltip": "Pixel size used to calculate stratum areas. Smaller values use more pixels and preserve detail only when supported by the source image."
+            },
+            "crs": {
+              "label": "CRS",
+              "tooltip": "Equal-area coordinate system used to interpret stratification classes, calculate stratum areas and anticipated proportions, and place stratified samples."
+            },
+            "hexButton": {
+              "label": "HEX",
+              "tooltip": "Toggle display of stratum color hex codes"
+            },
+            "strata": {
+              "label": "Strata",
+              "required": "Strata must be computed before continuing.",
+              "select": "Select stratification and band.",
+              "loading": "Calculating strata weights...",
+              "noData": "No strata found in your AOI.",
+              "error": {
+                "eeOnline": "The strata calculation failed in Earth Engine: {error} You can retry directly, or use Queued for larger calculations.",
+                "eeBatch": "The Earth Engine task for the strata failed: {error} You can submit it again. If you have other Earth Engine tasks queued or running, this task may wait until they finish.",
+                "genericWithDetail": "Failed to calculate the strata weights: {error} You can try again.",
+                "generic": "Failed to calculate the strata weights. You can try again."
+              },
+              "table": {
+                "value": "Value",
+                "area": "Area (ha)",
+                "weight": "Weight",
+                "total": "Total"
+              }
+            },
+            "eeStrategy": {
+              "batch": {
+                "label": "Queued",
+                "tooltip": "Submit an Earth Engine batch task. It may wait for capacity, but can run longer and use more memory than Direct, making it better suited to demanding calculations. It can still fail."
+              },
+              "online": {
+                "label": "Direct",
+                "tooltip": "Start the calculation immediately in Earth Engine's interactive environment. Demanding calculations can be slow or time out."
+              }
+            }
+          },
+          "unstratified": "Area of interest",
+          "title": "Stratification",
+          "tooltip": "Choose whether to stratify the design and, if so, select the map that defines the strata."
+        },
+        "proportions": {
+          "button": "PRO",
+          "form": {
+            "skip": {
+              "label": "No proportions",
+              "tooltip": "Do not use anticipated proportions.",
+              "message": "Creating a sampling design without anticipated proportions. Optimal and Power allocation will not be available, and SEPAL cannot estimate precision for a target reporting category."
+            },
+            "manual": {
+              "label": "Manual",
+              "tooltip": "Manually enter the anticipated target-category proportion in each stratum."
+            },
+            "percentage": {
+              "label": "%",
+              "tooltip": "Off: probability values are fractions from 0 to 1. On: values are percentages from 0 to 100."
+            },
+            "calculating": "Calculating anticipated proportions…",
+            "selectImageAndBand": "Select an image and band to calculate anticipated proportions.",
+            "anticipationStrategy": {
+              "label": "How to anticipate proportions",
+              "MANUAL": {
+                "label": "Manual",
+                "tooltip": "Manually enter the anticipated proportion of the one target reporting category used to plan the design."
+              },
+              "PROBABILITY": {
+                "label": "Probability image",
+                "tooltip": "Use a probability band for the target reporting category, such as a Tree % band from a SEPAL classification."
+              },
+              "CATEGORICAL": {
+                "label": "Categorical image",
+                "tooltip": "Use the mapped fraction of one class as the anticipated target-category proportion. For example, with ecological zones as strata, use a land-cover image to anticipate forest proportion in each zone."
+              }
+            },
+            "image": {
+              "label": "Image",
+              "placeholder": "Select an image...",
+              "tooltip": "Select the image used to anticipate the target reporting category."
+            },
+            "type": {
+              "label": "Type",
+              "ASSET": {
+                "label": "Asset",
+                "tooltip": "Use an Earth Engine asset to anticipate the target reporting category."
+              },
+              "RECIPE": {
+                "label": "Recipe",
+                "tooltip": "Use a SEPAL recipe output to anticipate the target reporting category."
+              },
+              "required": "You must select an image type"
+            },
+            "asset": {
+              "label": "EE Asset",
+              "placeholder": "Select EE Asset...",
+              "required": "You must select an EE asset"
+            },
+            "recipe": {
+              "label": "Recipe",
+              "placeholder": "Select a recipe...",
+              "required": "You must select a SEPAL recipe"
+            },
+            "band": {
+              "label": "Band",
+              "placeholder": "Select a band...",
+              "tooltip": "Select the probability or categorical band used to anticipate the target reporting category.",
+              "required": "You must select a band"
+            },
+            "targetClass": {
+              "label": "Class",
+              "placeholder": "Class value...",
+              "tooltip": "Class value of the target reporting category. In each stratum, its pixel fraction at the chosen scale approximates its mapped area proportion.",
+              "required": "You must specify the class value",
+              "numeric": "The class value must be a number",
+              "loadValues": "Load values",
+              "loadingValues": "Loading values...",
+              "loadError": "Failed to load class values"
+            },
+            "scale": {
+              "label": "Scale",
+              "placeholder": "Scale...",
+              "required": "You must specify the scale",
+              "suffix": "meters",
+              "tooltip": "Processing scale used to estimate proportions. Increase it for faster, less detailed estimates."
+            },
+            "overallProportion": {
+              "label": "Anticipated overall proportion",
+              "placeholder": "Using value calculated from image",
+              "tooltip": "Manually override the calculated overall proportion with a custom target value. Individual stratum proportions will be adjusted to match this target, but no single stratum can exceed 100%.",
+              "suffix": "%"
+            },
+            "strataProportion": {
+              "label": "Anticipated proportion per stratum",
+              "error": {
+                "eeOnline": "The anticipated proportions calculation failed in Earth Engine: {error} You can retry directly, or use Queued for larger calculations.",
+                "eeBatch": "The Earth Engine task for the anticipated proportions failed: {error} You can submit it again. If you have other Earth Engine tasks queued or running, this task may wait until they finish.",
+                "genericWithDetail": "Failed to calculate the anticipated proportions: {error} You can try again.",
+                "generic": "Failed to calculate the anticipated proportions. You can try again."
+              }
+            },
+            "anticipatedProportions": {
+              "required": "You must anticipate the proportion per stratum",
+              "header": "Target-category proportion in stratum"
+            },
+            "eeStrategy": {
+              "batch": {
+                "label": "Queued",
+                "tooltip": "Submit an Earth Engine batch task. It may wait for capacity, but can run longer and use more memory than Direct, making it better suited to demanding calculations. It can still fail."
+              },
+              "online": {
+                "label": "Direct",
+                "tooltip": "Start the calculation immediately in Earth Engine's interactive environment. Demanding calculations can be slow or time out."
+              }
+            },
+            "proportion": {
+              "range": "Enter a percentage from 0 to 100."
+            }
+          },
+          "info": "Choose one target reporting category and anticipate its proportion within each stratum. SEPAL uses this information to plan the allocation, estimate precision for a fixed sample size, or calculate the sample size needed for a precision target. These planning results apply only to the selected category.",
+          "title": "Anticipate proportion",
+          "tooltip": "Choose the target reporting category the design should plan for. Its anticipated proportions support sample allocation and planning calculations for sample size and precision."
+        },
+        "sampleAllocation": {
+          "button": "ALO",
+          "form": {
+            "manual": {
+              "label": "Manual",
+              "tooltip": "Manually specify the sample allocation"
+            },
+            "target": {
+              "label": "Target"
+            },
+            "noData": "Complete the stratification and allocation settings to calculate a sample allocation.",
+            "estimateSampleSize": {
+              "false": {
+                "label": "Samples",
+                "tooltip": "Enter a fixed total sample size and calculate the resulting margin of error."
+              },
+              "true": {
+                "label": "Error",
+                "tooltip": "Enter a target margin of error and calculate the total sample size needed."
+              }
+            },
+            "confidenceLevel": {
+              "label": "Confidence level",
+              "placeholder": "Confidence level...",
+              "required": "You must specify the confidence level",
+              "suffix": "%",
+              "tooltip": "How often the margin-of-error range would be expected to contain the true proportion if the sampling process were repeated many times. 95% is standard; higher values require more samples for the same target error.",
+              "range": "Enter a confidence level greater than 0% and less than 100%. 95% is commonly used."
+            },
+            "sampleSize": {
+              "label": "Total sample size",
+              "placeholder": "Sample size",
+              "required": "You must specify the sample size",
+              "tooltip": "Total number of sample locations requested.",
+              "notEnough": "The total sample size is too small to give every stratum its required minimum. Increase the total or lower Min samples/stratum."
+            },
+            "marginOfError": {
+              "label": "Target margin of error",
+              "placeholder": "Margin of error...",
+              "tooltip": "The target margin of error used to calculate the sample size, relative to the anticipated overall target-category proportion."
+            },
+            "minSamplesPerStratum": {
+              "label": "Min samples/stratum",
+              "placeholder": "Min samples...",
+              "tooltip": "Require Proportional, Balanced, Optimal, or Power allocation to assign at least this many samples to each stratum. The minimum is 2. Increasing it redistributes a fixed total or can increase a total calculated from Target margin of error."
+            },
+            "relativeMarginOfError": {
+              "label": "Margin of error",
+              "tooltip": "Specify if the margin of error is relative (to area of reporting category) or an absolute area",
+              "false": {
+                "label": "Absolute"
+              },
+              "true": {
+                "label": "Relative"
+              }
+            },
+            "allocationStrategy": {
+              "label": "Allocation strategy",
+              "tooltip": "Specify how the samples should be distributed among the strata",
+              "MANUAL": {
+                "label": "Manual",
+                "tooltip": "Manually allocate the samples among the strata"
+              },
+              "PROPORTIONAL": {
+                "label": "Proportional",
+                "tooltip": "Allocate the samples proportionally based on stratum area"
+              },
+              "EQUAL": {
+                "label": "Equal",
+                "tooltip": "Assign sample counts as evenly as possible among strata. Counts can differ by one when the total does not divide evenly."
+              },
+              "OPTIMAL": {
+                "label": "Optimal",
+                "tooltip": "Allocate using mapped stratum area and anticipated target-category variability, aiming to minimize planned uncertainty for a fixed total sample size."
+              },
+              "POWER": {
+                "label": "Power",
+                "tooltip": "Modify Optimal by reducing the influence of each stratum’s expected target amount. A value of 1 matches Optimal; lower values shift relatively more samples toward smaller non-zero expected amounts."
+              },
+              "BALANCED": {
+                "label": "Balanced",
+                "tooltip": "Use the midpoint between Equal and Proportional allocation."
+              }
+            },
+            "powerTuningConstant": {
+              "label": "Power tuning constant",
+              "placeholder": "Constant...",
+              "tooltip": "Modify Optimal by reducing the influence of each stratum’s expected target amount. A value of 1 matches Optimal; lower values shift relatively more samples toward smaller non-zero expected amounts.",
+              "range": "Enter a value from 0 to 1."
+            },
+            "allocation": {
+              "label": "Allocation",
+              "tooBig": "Too many samples are being allocated. Reduce Total sample size or, when using Target margin of error, increase it.",
+              "table": {
+                "marginOfError": "Margin of error (ha)",
+                "relativeMarginOfError": "Relative margin of error",
+                "samples": "Sample size",
+                "samplesTooltip": "Number of samples allocated to this stratum.",
+                "overall": "Overall"
+              }
+            }
+          },
+          "title": "Sample Allocation",
+          "tooltip": "Set a fixed total sample size or a target margin of error and, when stratified, choose how samples are allocated."
+        },
+        "sampleArrangement": {
+          "button": "ARR",
+          "form": {
+            "arrangementStrategy": {
+              "label": "Arrangement strategy",
+              "tooltip": "Choose how sample locations are placed.",
+              "RANDOM": {
+                "label": "Random",
+                "tooltip": "Select locations randomly. With stratification, select usable pixels within each stratum; without stratification, draw points directly within the area of interest."
+              },
+              "SYSTEMATIC": {
+                "label": "Systematic",
+                "tooltip": "Place sample locations on a regularly spaced grid for broad spatial coverage."
+              }
+            },
+            "sampleSizeStrategy": {
+              "label": "Sample size strategy",
+              "tooltip": "A discrete systematic grid may not produce exactly the requested number of samples. Choose how to resolve that difference.",
+              "OVER": {
+                "label": "Oversample",
+                "tooltip": "Choose a grid level meant to meet or exceed the requested count. If even the densest allowed grid cannot reach it, the export stops with an error instead of returning fewer samples."
+              },
+              "CLOSEST": {
+                "label": "Closest",
+                "tooltip": "Choose the available grid level nearest the requested count, which may be below it, while still meeting the minimum per stratum."
+              },
+              "EXACT": {
+                "label": "Exact",
+                "tooltip": "Randomly remove systematic locations to reach the requested count. This is not a purely systematic arrangement, and the export stops with an error if too few locations exist."
+              }
+            },
+            "gridOrigin": {
+              "label": "Grid start",
+              "tooltip": "Where the systematic grid starts. Fixed uses the same start each time; Random picks the start from the seed.",
+              "FIXED": {
+                "label": "Fixed",
+                "tooltip": "Use the same grid start every time. This is reproducible, but the grid location is not randomized."
+              },
+              "SEEDED": {
+                "label": "Random",
+                "tooltip": "Pick the grid start from the seed. Changing the seed moves where the grid starts, while keeping the same systematic spacing."
+              }
+            },
+            "crs": {
+              "tooltip": "Equal-area CRS that places the unstratified systematic lattice. Global is recommended for most areas of interest; North polar and South polar are intended for polar regions."
+            },
+            "minDistance": {
+              "label": "Min distance",
+              "placeholder": "Optional",
+              "tooltip": {
+                "gridFloor": "Minimum spacing between systematic samples. Leave blank to use {minimum} m, the minimum supported by the current {pixelSize} m stratification grid.",
+                "optional": "Minimum spacing between systematic samples. Leave blank to apply no additional minimum-distance constraint."
+              },
+              "belowGridFloor": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically."
+            },
+            "seed": {
+              "label": "Seed",
+              "placeholder": "Seed...",
+              "tooltip": "Use the same seed and settings to reproduce the same random choice or randomized grid start."
+            }
+          },
+          "title": "Sample Arrangement",
+          "tooltip": "Choose how sample locations are placed."
+        },
+        "retrieve": {
+          "form": {
+            "fileFormat": {
+              "label": "File format",
+              "CSV": "CSV",
+              "GeoJSON": "GeoJSON",
+              "KML": "KML",
+              "KMZ": "KMZ",
+              "SHP": "Shapefile"
+            }
+          }
+        }
+      },
+      "tabPlaceholder": "Sampling_design",
+      "crs": {
+        "easeGrid2Global": "Global (EPSG:6933)",
+        "easeGrid2North": "North polar (EPSG:6931)",
+        "easeGrid2South": "South polar (EPSG:6932)"
+      }
     }
   },
   "sources": {
@@ -4966,8 +5642,15 @@
       "origin": "Origin",
       "recipeType": "Recipe Type",
       "recipeId": "Recipe ID",
-      "creationTime": "Start Time",
-      "updateTime": "Last Update",
+      "creationTime": "Submitted at",
+      "updateTime": {
+        "lastProgress": "Last progress",
+        "cancelRequested": "Cancel requested",
+        "completed": "Completed",
+        "failed": "Failed",
+        "canceled": "Canceled",
+        "lastUpdate": "Last update"
+      },
       "duration": "Duration",
       "description": "Description",
       "workspacePath": "Output path",
@@ -5012,6 +5695,7 @@
         "PHENOLOGY": "Phenology",
         "MASKING": "Masking",
         "ASSET_MOSAIC": "Asset Mosaic",
+        "SAMPLING_DESIGN": "Sampling Design",
         "RECIPE_REF": "Recipe Reference",
         "ASSET": "Asset"
       }
@@ -5038,6 +5722,66 @@
         "tiling": "Tiling AOI..."
       }
     },
+    "samplingDesign": {
+      "random": {
+        "progress": {
+          "prepareCandidates": "Finding random sample locations",
+          "checkCandidates": "Checking random sample locations",
+          "exportFinal": "Exporting sample locations"
+        }
+      },
+      "systematic": {
+        "progress": {
+          "prepareBaseCandidates": "Finding systematic sample locations",
+          "checkBaseCandidates": "Checking systematic sample locations",
+          "prepareRepairCandidates": "Finding additional sample locations",
+          "checkRepairCandidates": "Checking additional sample locations",
+          "exportFinal": "Exporting sample locations"
+        },
+        "grid": {
+          "unsupportedCrs": "The selected sampling grid is not supported. Choose one of: {supported}.",
+          "invalidScale": "The sampling grid scale is invalid. Provide a positive Stratification Scale in metres.",
+          "minDistanceBelowGrid": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.",
+          "invalidMinDistance": "The minimum distance is not a number. Provide a distance in metres, or leave it unset to use the smallest distance the sampling grid allows."
+        }
+      },
+      "preflight": {
+        "invalidMinimum": "Minimum samples per stratum is {value}. It must be a whole number of at least {floor}.",
+        "noStrata": "The sampling design has no strata to sample. Open Stratification and Sample Allocation to define the design.",
+        "belowStatisticalMinimum": {
+          "samples": "Every stratum must be allocated at least {floor} samples, but {strata} requests fewer. In Sample Allocation, increase Total sample size until every affected stratum reaches at least {floor}.",
+          "error": "Every stratum must be allocated at least {floor} samples, but {strata} requests fewer. In Sample Allocation, decrease Target margin of error to calculate a larger total sample size.",
+          "manual": "Every stratum must be allocated at least {floor} samples, but {strata} requests fewer. In Sample Allocation, increase the sample count for each affected stratum to at least {floor}."
+        },
+        "unstratifiedBelowMinimum": "The total sample size is {value}. An unstratified design needs at least {floor} samples. In Sample Allocation, increase Total sample size.",
+        "belowConfiguredMinimum": {
+          "samples": "Min samples/stratum is {minimum}, but {strata} requests fewer. In Sample Allocation, increase Total sample size, or lower Min samples/stratum to {value} or less (never below {floor}).",
+          "error": "Min samples/stratum is {minimum}, but {strata} requests fewer. In Sample Allocation, decrease Target margin of error to calculate a larger total sample size, or lower Min samples/stratum to {value} or less (never below {floor})."
+        }
+      },
+      "underproduction": {
+        "message": "The sampling design could not be completed.\n\n{details}",
+        "diagnosis": {
+          "statisticalMinimum": "{strata}: fewer than {minimum} sample locations were found.",
+          "statisticalMinimumNoDistance": "{strata}: fewer than {minimum} sample locations were found at the current sampling grid.",
+          "configuredMinimum": "{strata}: fewer than Min samples/stratum ({minimum}) were produced.",
+          "requestedAllocation": "{strata}: fewer locations than requested were produced.",
+          "calculatedAllocation": "{strata}: fewer locations than calculated were produced."
+        },
+        "reduceSystematicMinDistance": "In Sample Arrangement, reduce Minimum distance from {minDistance} m to about {threshold} m or less.",
+        "atGridFloor": "The current {pixelSize} m stratification grid already sets the minimum spacing.",
+        "switchToRandom": "In Sample Arrangement, change Arrangement strategy to Random. This removes systematic spacing without changing the eligible area.",
+        "reduceStratificationScale": "In Stratification, use a finer Scale only if the source supports it, then recalculate areas and allocation.",
+        "checkStratumCoverage": "In Stratification, check that each affected stratum has usable, unmasked pixels in the area of interest. Merge or reclassify very small or fragmented strata, then recalculate areas and allocation.",
+        "enlargeAoi": "If the area of interest is smaller than the intended study area, enlarge it to provide more eligible locations.",
+        "lowerConfiguredMinimum": "In Sample Allocation, lower Min samples/stratum to {value} or less, but not below {floor}.",
+        "reduceRequested": "In Sample Allocation, reduce Total sample size.",
+        "reduceRequestedOrClosest": "In Sample Allocation, reduce Total sample size, or in Sample Arrangement choose Closest.",
+        "increaseMarginOfError": "In Sample Allocation, increase Target margin of error.",
+        "increaseMarginOfErrorOrClosest": "In Sample Allocation, increase Target margin of error, or in Sample Arrangement choose Closest.",
+        "avoidEqualAllocation": "In Sample Allocation, replace Equal with Proportional, Balanced, or Manual to reduce counts for small strata."
+      }
+    },
     "status": {
       "canceled": "Stopped",
       "canceling": "Stopping",
@@ -5045,6 +5789,7 @@
       "EEException": "Earth Engine: {error}",
       "executing": "Executing...",
       "failed": "{error}",
+      "failedGeneric": "The task failed. Try running it again. If the problem persists, contact the SEPAL team.",
       "initializing": "Initializing..."
     }
   },
@@ -5424,7 +6169,9 @@
         "replaceable": "This asset already exists, you have to confirm if you want to overwrite it or not"
       },
       "loadError": "Unable to load asset",
+      "invalidAssetId": "Use only letters, numbers, periods, hyphens, underscores, and forward slashes. Spaces are not allowed.",
       "taskPending": "A task is already exporting to this asset. Please choose a different asset ID.",
+      "validating": "Validating asset destination...",
       "replace": {
         "label": "Replace",
         "tooltip": "Replace previous asset with this one."
@@ -5501,6 +6248,10 @@
         "label": "Band",
         "notSelected": "[No band selected]"
       },
+      "booleanOperator": {
+        "and": "and",
+        "or": "or"
+      },
       "property": {
         "label": "Property",
         "notSelected": "[No property selected]"
@@ -5531,6 +6282,9 @@
         },
         "lessThanOrEquals": {
           "label": "≤"
+        },
+        "oneOf": {
+          "label": "One of"
         },
         "range": {
           "label": "Range"

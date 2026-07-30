@@ -1,0 +1,32 @@
+.panel {
+    max-width: 34rem;
+    min-height: 21rem;
+}
+
+.wideField {
+    flex: 5 1 0;
+    min-width: 0;
+}
+
+.compactField {
+    flex: 2 1 0;
+    min-width: 0;
+}
+
+.noData {
+    margin: 1rem 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+}
+
+.slow {
+    /* margin-left: 1rem; */
+    color: #707070;
+}
+
+.overall {
+    text-wrap: nowrap;
+    grid-column: 1 / span 2;
+}

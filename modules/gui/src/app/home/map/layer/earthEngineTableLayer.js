@@ -16,7 +16,8 @@ export class EarthEngineTableLayer extends TileLayer {
         mapId$,
         watchedProps,
         minZoom,
-        maxZoom
+        maxZoom,
+        opacity = 1
     }) {
         super()
         this.map = map
@@ -26,6 +27,7 @@ export class EarthEngineTableLayer extends TileLayer {
         this.watchedProps = watchedProps
         this.minZoom = minZoom
         this.maxZoom = maxZoom
+        this.opacity = opacity
     }
 
     createTileProvider = urlTemplate => {
@@ -40,9 +42,16 @@ export class EarthEngineTableLayer extends TileLayer {
     }
 
     createOverlay = tileProvider => {
-        const {map, minZoom, maxZoom} = this
+        const {map, minZoom, maxZoom, opacity} = this
         const {google} = map.getGoogle()
-        return new GoogleMapsOverlay({name: 'EarthEngineTableLayer', tileProvider, google, minZoom, maxZoom})
+        return new GoogleMapsOverlay({name: 'EarthEngineTableLayer', tileProvider, google, minZoom, maxZoom, opacity})
+    }
+
+    // Client-side opacity update: keep our own field current (so a later recreation initializes correctly)
+    // and restyle the mounted tiles via the overlay, without refetching tiles or the map id.
+    setOpacity = opacity => {
+        this.opacity = opacity
+        this.overlay?.setOpacity(opacity)
     }
 
     addToMap$ = () => {

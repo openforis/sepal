@@ -26,21 +26,23 @@ export const withLayers = () =>
                         recipeFeatureLayerSources,
                         mapArea: {area} = {}
                     } = this.props
-                    const {additionalImageLayerSources = [], areas = {}} = layers
+                    const {additionalImageLayerSources = [], additionalFeatureLayerSources = [], areas = {}} = layers
                     const {imageLayer: {sourceId, layerConfig} = {}, featureLayerSources: areaFeatureLayerSources = []} = areas[area] || {}
-    
+
                     const imageLayerSources = [...standardImageLayerSources, ...additionalImageLayerSources]
                     const source = imageLayerSources.find(({id}) => id === sourceId)
                     const {getFeatureLayerSources} = getImageLayerSource({recipe, source, layerConfig})
                     const featureLayerSources = [
                         ...recipeFeatureLayerSources,
+                        ...additionalFeatureLayerSources,
                         ...areaFeatureLayerSources,
                         ...((getFeatureLayerSources && getFeatureLayerSources()) || [])
                     ]
-    
+
                     const layerProps = {
                         standardImageLayerSources,
                         additionalImageLayerSources,
+                        additionalFeatureLayerSources,
                         imageLayerSources,
                         featureLayerSources,
                         layers

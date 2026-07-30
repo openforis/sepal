@@ -1,0 +1,49 @@
+.panel.panel {
+    --panel-tabs-width: 2.7rem;
+    position: relative;
+    width: 25rem;
+    min-height: min(26rem, calc(100dvh - 1rem));
+    max-width: calc(100dvw - 1rem - var(--panel-tabs-width));
+    margin-left: var(--panel-tabs-width);
+    overflow: visible;
+}
+
+.entry {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: .5rem;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+}
+
+.entryWithHex {
+    grid-template-columns: auto 5rem minmax(0, 1fr) auto;
+}
+
+.entryWithLabel {
+    grid-template-columns: auto var(--entry-value-width) minmax(0, 1fr) auto;
+}
+
+.entryWithHex.entryWithLabel {
+    grid-template-columns: auto 5rem var(--entry-value-width) minmax(0, 1fr) auto;
+}
+
+.colorText {
+    width: 100%;
+    min-width: 0;
+}
+
+.value {
+    width: 100%;
+    min-width: 0;
+}
+
+.entryLabel {
+    width: 100%;
+    min-width: 0;
+}
+
+.palettePreSets {
+    flex-shrink: 0;
+}

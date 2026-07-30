@@ -150,8 +150,9 @@ const main = async () => {
         .action(npmAudit)
 
     program.command('npm-test')
-        .description('Run npm interactive tests')
+        .description('Run npm tests')
         .argument('module', 'Module to test')
+        .argument('[testArgs...]', 'Arguments passed to npm test after --')
         .action(npmTest)
 
     program.command('eslint')

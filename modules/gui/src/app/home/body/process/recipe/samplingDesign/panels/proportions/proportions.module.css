@@ -1,0 +1,41 @@
+.panel {
+    max-width: 34rem;
+    min-height: 18rem;
+}
+
+/* The two field roles in a horizontal panel row: a wide field (band) and a compact field beside it (scale).
+   A zero flex-basis keeps intrinsic content width out of column sizing, so the columns hold the same 5:2
+   proportions regardless of label length; min-width: 0 lets long Combo labels and input content stay
+   contained instead of pushing the neighbouring field out of alignment. */
+.wideField {
+    flex: 5 1 0;
+    min-width: 0;
+}
+
+.compactField {
+    flex: 2 1 0;
+    min-width: 0;
+}
+
+.overallProportion {
+    width: 10rem;
+}
+
+.info {
+    color: #a0a0a0;
+    font-size: .9rem;
+}
+
+.classOption {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.classOptionColor {
+    width: .9rem;
+    height: .9rem;
+    flex: 0 0 .9rem;
+    border: 1px solid rgba(255, 255, 255, .35);
+    background-color: var(--class-color);
+}

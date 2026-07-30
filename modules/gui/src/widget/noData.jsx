@@ -12,7 +12,7 @@ export const NoData = ({alignment = 'center', message, className, children}) =>
     </div>
 
 NoData.propTypes = {
-    message: PropTypes.string.isRequired,
+    message: PropTypes.any.isRequired,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     className: PropTypes.string,
 }

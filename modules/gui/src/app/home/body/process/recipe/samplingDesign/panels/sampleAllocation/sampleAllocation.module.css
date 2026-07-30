@@ -1,0 +1,17 @@
+.panel {
+    max-width: 34rem;
+}
+
+
+/* Equal tracks sized from the panel, not from content: the right column holds its half whether or not it
+   holds a field, so the left column does not shift when switching allocation strategies. Deliberately not a
+   fixed width - labels are translated, so any width derived from the English strings is wrong elsewhere. */
+.left,
+.right {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.right {
+    margin-left: 2rem;
+}

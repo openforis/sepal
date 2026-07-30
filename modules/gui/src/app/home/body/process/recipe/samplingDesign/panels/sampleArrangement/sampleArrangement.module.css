@@ -1,0 +1,7 @@
+.panel {
+    max-width: 21rem;
+}
+
+.number input {
+    width: 3rem !important
+}

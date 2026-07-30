@@ -1,7 +1,7 @@
-import {switchMap, tap} from 'rxjs'
+import {forkJoin, of, switchMap, tap} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
-import {toGeometry} from '#sepal/ee/aoi'
+import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {fileName} from '#sepal/path'
@@ -14,18 +14,28 @@ const worker$ = ({
 }) => {
 
     const {getImage$} = ImageFactory(recipe, {selection: [band]})
-    const distinctValues = image => {
+    // Resolve the AOI to an EE geometry up front: ASSET/RECIPE AOIs need an async lookup (the sync
+    // toGeometry returns the raw object for those, which can't be used as a geometry). ASSET_BOUNDS can't
+    // be resolved without source-image context, so it's left to the mapBounds / image-geometry fallback.
+    const aoiGeometry$ = aoi && aoi.type !== 'ASSET_BOUNDS'
+        ? toGeometry$(aoi)
+        : of(null)
+
+    const distinctValues = (image, aoiGeometry) => {
         const imageGeometry = image.select(band).geometry()
-        const mapGeometry = ee.Geometry.Rectangle(mapBounds)
+        // Fallback region when the image is unbounded: prefer the map rectangle, then the resolved AOI,
+        // then the image geometry. mapBounds is optional (callers without a live map omit it).
+        const mapGeometry = mapBounds ? ee.Geometry.Rectangle(mapBounds) : null
+        const fallbackGeometry = mapGeometry || aoiGeometry || imageGeometry
         const geometry = ee.Algorithms.If(
-            image.select(band).geometry().isUnbounded(),
-            aoi
+            imageGeometry.isUnbounded(),
+            aoiGeometry
                 ? ee.Algorithms.If(
-                    aoi.type === 'ASSET_BOUNDS' ? false : toGeometry(aoi).intersects(imageGeometry),
-                    toGeometry(aoi),
-                    mapGeometry
+                    aoiGeometry.intersects(imageGeometry),
+                    aoiGeometry,
+                    fallbackGeometry
                 )
-                : mapGeometry,
+                : fallbackGeometry,
             imageGeometry
         )
 
@@ -57,12 +67,17 @@ const worker$ = ({
             .slice(1, 0, 1)
             .project([0])
             .toList()
-            .slice(0, MAX_VALUE_COUNT)
+            // One past the limit so the "too many values" guard below is reachable - otherwise a
+            // continuous/non-categorical band would silently return the first MAX_VALUE_COUNT values.
+            .slice(0, MAX_VALUE_COUNT + 1)
 
     }
 
-    return getImage$().pipe(
-        switchMap(image => ee.getInfo$(distinctValues(image), 'recipe histogram')),
+    return forkJoin({
+        image: getImage$(),
+        aoiGeometry: aoiGeometry$
+    }).pipe(
+        switchMap(({image, aoiGeometry}) => ee.getInfo$(distinctValues(image, aoiGeometry), 'recipe histogram')),
         tap(values => {
             if (values.length > MAX_VALUE_COUNT) {
                 throw Error('Too many distinct values in image. Is this really a categorical image?')

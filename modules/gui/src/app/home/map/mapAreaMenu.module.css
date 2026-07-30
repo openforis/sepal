@@ -25,3 +25,78 @@
 .buttonContainer > * {
     pointer-events: all;
 }
+
+/* Map-area overlay rows only: tighten the label's left inset. These reach into ListItem's internal row
+   markup by structure (the module-scoped class names aren't visible here): the outer .overlayRow element
+   contains .horizontalWrapper > .main, and .main's first child is the drag handle (asset rows) or content.
+   Keep in sync if ListItem's row markup changes. Nothing outside this panel is affected.
+
+   1) Remove .main's left padding so the handle/label sits flush to the row's inner edge. */
+.overlayRow > div > div:first-child {
+    padding-left: 0;
+}
+
+/* 2) Narrow the drag handle (its width sets where the label starts) and its grip glyph. The glyph is kept
+      narrower than the handle so a small gap remains between the grip dots and the label; the glyph is
+      absolutely positioned to .main, so it's pinned left and sized independently. */
+.assetOverlayRow > div > div:first-child > :first-child {
+    width: 1.1rem;
+}
+
+.assetOverlayRow > div > div:first-child > :first-child::before {
+    width: .6rem;
+    left: 0;
+}
+
+/* Let the asset label yield space to the fixed-width row actions. Every wrapper between ListItem and CrudItem
+   participates in a flex layout; without an explicit zero minimum, a long asset name contributes its full
+   min-content width and pushes the options, opacity and visibility controls outside the panel. */
+.assetOverlayRow,
+.assetOverlayRow > div,
+.assetOverlayRow > div > div:first-child,
+.assetOverlayRow > div > div:first-child > :last-child,
+.assetOverlayRow > div > div:first-child > :last-child > *,
+.assetOverlayRow > div > div:first-child > :last-child > * > :first-child {
+    min-width: 0;
+}
+
+.assetOverlayRow {
+    width: 100%;
+}
+
+/* CrudItem's info block otherwise derives its flex basis from the full title. Give it a zero basis so it grows
+   only into the space left after the row actions, keeping the final visibility checkbox inside the panel. */
+.assetOverlayRow > div > div:first-child > :last-child > * > :first-child > :first-child {
+    flex-basis: 0;
+    width: 0;
+}
+
+/* Non-draggable built-in overlay rows: a leading spacer matching the asset rows' narrowed 1.1rem handle
+   width, so built-in labels line up with the labels of draggable asset rows in this panel. */
+.builtInOverlay {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.builtInOverlay::before {
+    content: '';
+    flex: 0 0 1.1rem;
+}
+
+.builtInOverlay > * {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+/* Feature overlay row label: truncate long asset labels with an ellipsis instead of wrapping/shifting the
+   row, and re-enable pointer events (CrudItem's .item disables them) so the full-label tooltip can hover. */
+.overlayTitle {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: auto;
+}

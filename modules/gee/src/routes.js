@@ -1,10 +1,12 @@
 import datasets$ from '#gee/jobs/datasets/datasets'
 import aoiBounds$ from '#gee/jobs/ee/aoi/bounds'
+import aoiGeometry$ from '#gee/jobs/ee/aoi/geometry'
 import createFolder$ from '#gee/jobs/ee/asset/createFolder'
 import deleteAsset$ from '#gee/jobs/ee/asset/delete'
 import listAssets$ from '#gee/jobs/ee/asset/list'
 import assetMetadata$ from '#gee/jobs/ee/asset/metadata'
 import renameAsset$ from '#gee/jobs/ee/asset/rename'
+import batchTable$ from '#gee/jobs/ee/batch/table'
 import loadCCDCSegments$ from '#gee/jobs/ee/ccdc/loadSegments'
 import check$ from '#gee/jobs/ee/check'
 import nextReferenceDataPoints$ from '#gee/jobs/ee/classification/nextReferenceDataPoints'
@@ -20,6 +22,8 @@ import sampleImage$ from '#gee/jobs/ee/image/sample'
 import sceneAreas$ from '#gee/jobs/ee/image/sceneAreas'
 import loadLandTrendrSegments$ from '#gee/jobs/ee/landTrendr/loadSegments'
 import projects$ from '#gee/jobs/ee/projects'
+import areaPerStratum$ from '#gee/jobs/ee/samplingDesign/areaPerStratum'
+import probabilityPerStratum$ from '#gee/jobs/ee/samplingDesign/probabilityPerStratum'
 import tableColumns$ from '#gee/jobs/ee/table/columns'
 import tableColumnValues$ from '#gee/jobs/ee/table/columnValues'
 import tableMap$ from '#gee/jobs/ee/table/map'
@@ -51,6 +55,7 @@ export default router =>
         .post('/recipe/geometry', stream(ctx => imageGeometry$(ctx)))
         .post('/recipe/bounds', stream(ctx => imageBounds$(ctx)))
         .post('/aoi/bounds', stream(ctx => aoiBounds$(ctx)))
+        .post('/aoi/geometry', stream(ctx => aoiGeometry$(ctx)))
         .post('/ccdc/loadSegments', stream(ctx => loadCCDCSegments$(ctx)))
         .post('/landTrendr/loadSegments', stream(ctx => loadLandTrendrSegments$(ctx)))
         .post('/timeSeries/loadObservations', stream(ctx => loadTimeSeriesbservations$(ctx)))
@@ -60,6 +65,10 @@ export default router =>
         .get('/table/columnValues', stream(ctx => tableColumnValues$(ctx)))
         .post('/table/query', stream(ctx => tableQuery$(ctx)))
         .get('/table/map', stream(ctx => tableMap$(ctx)))
+        .post('/samplingDesign/areaPerStratum', stream(ctx => areaPerStratum$(ctx)))
+        .post('/samplingDesign/probabilityPerStratum', stream(ctx => probabilityPerStratum$(ctx)))
+        .post('/samplingDesign/estimateProbability', stream(ctx => batchTable$(ctx)))
+        .post('/samplingDesign/sample', stream(ctx => batchTable$(ctx)))
         .get('/datasets', stream(ctx => datasets$(ctx)))
         .get('/landsatProductId', stream(ctx => landsatProductId$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))

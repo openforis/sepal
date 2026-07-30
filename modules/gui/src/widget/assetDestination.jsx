@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {catchError, map, of} from 'rxjs'
 
+import {isValidEarthEngineAssetId, sanitizeEarthEngineAssetId} from '#sepal/earthEngineExportNames'
 import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {copyToClipboard} from '~/clipboard'
@@ -28,6 +29,8 @@ const mapRecipeToProps = recipe => ({
     projectId: recipe.projectId,
     recipeName: recipe.title || recipe.placeholder
 })
+
+const shouldLoadAsset = assetId => !!assetId && isValidEarthEngineAssetId(assetId)
 
 class _AssetDestination extends React.Component {
     checking = false
@@ -67,6 +70,10 @@ class _AssetDestination extends React.Component {
                 placeholder={placeholder}
                 autoFocus={autoFocus}
                 busyMessage={!assetRoots || checking}
+                // While validation is pending the field is kept invalid (to gate Retrieve/Apply) but shown
+                // as busy, not red. Suppressing the message here keeps form.isInvalid() true without the
+                // "validating" text rendering as a field error. Real failures render once checking clears.
+                errorMessage={checking ? false : true}
                 preferredTypes={[type]}
                 buttons={[
                     this.renderCopyIdButton(),
@@ -77,6 +84,7 @@ class _AssetDestination extends React.Component {
                 onLoading={this.onLoading}
                 onLoaded={({asset, metadata} = {}) => this.onLoaded({asset, currentType: metadata?.type})}
                 onError={this.onError}
+                shouldLoad={shouldLoadAsset}
             />
         )
     }
@@ -146,7 +154,7 @@ class _AssetDestination extends React.Component {
                 tooltip: msg('widget.assetDestination.replace.tooltip')
             }
         ].filter(({value}) => value !== 'resume' || (type === 'ImageCollection' && currentType === 'ImageCollection'))
-        const show = ['Image', 'ImageCollection'].includes(currentType)
+        const show = ['Image', 'ImageCollection', 'Table'].includes(currentType)
         return show ? (
             <Form.Buttons
                 key='strategy'
@@ -172,7 +180,7 @@ class _AssetDestination extends React.Component {
                 assetInput.set(this.defaultAssetId() || null)
             }
         } else {
-            this.startValidation()
+            this.validateAssetId()
         }
     }
 
@@ -183,9 +191,8 @@ class _AssetDestination extends React.Component {
             assetInput.set(this.defaultAssetId() || null)
         }
         if (prevProps.assetInput?.value !== assetInput.value) {
-            assetInput.value
-                ? this.startValidation()
-                : this.cancelValidation()
+            this.validateAssetId()
+            return
         }
         if (currentType && strategyInput.value && assetInput.error) {
             assetInput.setInvalid(null)
@@ -204,16 +211,18 @@ class _AssetDestination extends React.Component {
     defaultAssetId() {
         const {assetRoots, recipeName} = this.props
         const project = this.findProject()
+        let assetId
         if (project?.defaultAssetFolder) {
-            return `${project.defaultAssetFolder}/${recipeName}`
+            assetId = `${project.defaultAssetFolder}/${recipeName}`
         } else if (assetRoots && assetRoots.length) {
             if (project) {
                 const projectDir = toSafeString(project?.name)
-                return `${assetRoots[0]}/${projectDir}/${recipeName}`
+                assetId = `${assetRoots[0]}/${projectDir}/${recipeName}`
             } else {
-                return `${assetRoots[0]}/${recipeName}`
+                assetId = `${assetRoots[0]}/${recipeName}`
             }
         }
+        return sanitizeEarthEngineAssetId(assetId)
     }
 
     findProject() {
@@ -282,7 +291,7 @@ class _AssetDestination extends React.Component {
                         assetInput.setInvalid(msg('widget.assetDestination.taskPending'))
                     } else if (currentType) {
                         assetInput.setInvalid(msg(
-                            ['Image', 'ImageCollection'].includes(currentType)
+                            ['Image', 'ImageCollection', 'Table'].includes(currentType)
                                 ? 'widget.assetDestination.exists.replaceable'
                                 : 'widget.assetDestination.exists.notReplaceable'
                         ))
@@ -296,15 +305,40 @@ class _AssetDestination extends React.Component {
     }
 
     startValidation() {
-        const {assetInput} = this.props
+        const {assetInput, strategyInput} = this.props
         this.validationSequence += 1
-        assetInput.setInvalid(null)
+        // Reset stale destination state so the componentDidUpdate branch that clears the error
+        // (currentType && strategyInput.value && assetInput.error) can't fire during the pending window
+        // and reintroduce the flicker.
+        strategyInput.set(null)
+        this.setState({currentType: null})
+        // Mark invalid immediately so Apply/Retrieve is disabled from the first render after validation
+        // starts; validateConflict()/completeValidation() decide the final state once metadata loads.
+        assetInput.setInvalid(msg('widget.assetDestination.validating'))
         this.setChecking(true)
         return this.validationSequence
     }
 
+    validateAssetId() {
+        const {assetInput, strategyInput} = this.props
+        if (!assetInput.value) {
+            this.cancelValidation()
+        } else if (!isValidEarthEngineAssetId(assetInput.value)) {
+            this.cancelValidation()
+            strategyInput.set(null)
+            this.setState({currentType: null})
+            assetInput.setInvalid(msg('widget.assetDestination.invalidAssetId'))
+        } else {
+            this.startValidation()
+        }
+    }
+
     cancelValidation() {
+        const {assetInput} = this.props
         this.validationSequence += 1
+        // Drop the pending-invalid state so the field's own validation (e.g. notBlank when cleared)
+        // governs instead of the lingering "validating" message.
+        assetInput.setInvalid(null)
         this.setChecking(false)
     }
 

@@ -1,18 +1,19 @@
 import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {countryEETable} from '~/app/home/map/aoiLayer'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {PanelSections} from '~/widget/panelSections'
 
 import styles from './aoi.module.css'
+import {modelToValues, valuesToModel} from './aoiModel'
 import {AssetBoundsSection} from './assetBoundsSection'
 import {CountrySection} from './countrySection'
 import {EETableSection} from './eeTableSection'
 import {PolygonSection} from './polygonSection'
 import {SectionSelection} from './sectionSelection'
+import {SourceSection} from './sourceSection'
 
 const fields = {
     section: new Form.Field()
@@ -41,7 +42,16 @@ const fields = {
         .int(),
     polygon: new Form.Field()
         .skip((value, {section}) => section !== 'POLYGON')
-        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required')
+        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
+    sourceType: new Form.Field()
+        .skip((value, {section}) => section !== 'SOURCE')
+        .notBlank('process.mosaic.panel.areaOfInterest.form.source.type.required'),
+    assetId: new Form.Field()
+        .skip((value, {section, sourceType}) => !(section === 'SOURCE' && sourceType === 'ASSET'))
+        .notBlank('process.mosaic.panel.areaOfInterest.form.asset.required'),
+    recipeId: new Form.Field()
+        .skip((value, {section, sourceType}) => !(section === 'SOURCE' && sourceType === 'RECIPE'))
+        .notBlank('process.mosaic.panel.areaOfInterest.form.recipe.required')
 }
 
 class _Aoi extends React.Component {
@@ -78,11 +88,17 @@ class _Aoi extends React.Component {
                     layerIndex={layerIndex}/>
             },
             {
+                value: 'SOURCE',
+                label: msg('process.mosaic.panel.areaOfInterest.form.source.title'),
+                title: 'ASSET / RECIPE',
+                component: <SourceSection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
+            },
+            {
                 value: 'POLYGON',
                 label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title'),
                 title: 'POLYGON',
                 component: <PolygonSection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
-            }
+            },
         ].filter(option => option)
         return (
             <RecipeFormPanel
@@ -98,68 +114,6 @@ class _Aoi extends React.Component {
             </RecipeFormPanel>
         )
     }
-}
-
-const valuesToModel = values => {
-    switch (values.section) {
-        case 'ASSET_BOUNDS':
-            return {
-                type: 'ASSET_BOUNDS'
-            }
-        case 'COUNTRY':
-            return {
-                type: 'EE_TABLE',
-                id: countryEETable,
-                keyColumn: 'id',
-                key: values.area || values.country,
-                level: values.area ? 'AREA' : 'COUNTRY',
-                buffer: values.buffer
-            }
-        case 'EE_TABLE':
-            return {
-                type: 'EE_TABLE',
-                id: values.eeTable,
-                keyColumn: values.eeTableRowSelection === 'FILTER' ? values.eeTableColumn : null,
-                key: values.eeTableRowSelection === 'FILTER' ? values.eeTableRow : null,
-                bounds: values.bounds,
-                buffer: values.buffer
-            }
-        case 'POLYGON':
-            return {
-                type: 'POLYGON',
-                path: values.polygon
-            }
-        default:
-            throw Error(`Invalid aoi section: ${values.section}`)
-    }
-}
-
-const modelToValues = (model = {}) => {
-    if (model.type === 'ASSET_BOUNDS')
-        return {section: 'ASSET_BOUNDS'}
-    else if (model.type === 'EE_TABLE')
-        if (model.id === countryEETable)
-            return {
-                section: 'COUNTRY',
-                [model.level ? model.level.toLowerCase() : 'country']: model.key,
-                buffer: model.buffer
-            }
-        else
-            return {
-                section: 'EE_TABLE',
-                eeTable: model.id,
-                eeTableColumn: model.keyColumn,
-                eeTableRow: model.key,
-                eeTableRowSelection: model.keyColumn ? 'FILTER' : 'INCLUDE_ALL',
-                buffer: model.buffer
-            }
-    else if (model.type === 'POLYGON')
-        return {
-            section: 'POLYGON',
-            polygon: model.path
-        }
-    else
-        return {}
 }
 
 export const Aoi = compose(

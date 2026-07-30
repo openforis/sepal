@@ -1,26 +1,37 @@
 import React from 'react'
 
+import api from '~/apiRegistry'
+import {parseFeatureLayerAssetStyle, parseFeatureLayerCategoricalProperties} from '~/app/home/map/featureLayerAssetStyleParser'
 import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
+import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../recipeContext'
+import {defaultAssetLabel, resolveAssetLabel} from './assetLabel'
 import styles from './selectAsset.module.css'
 
 const fields = {
-    asset: new Form.Field().notBlank()
+    asset: new Form.Field().notBlank(),
+    label: new Form.Field()
 }
+
+// EE FeatureCollection/table assets report their type as 'Table'.
+const isFeatureCollection = metadata => metadata?.type === 'Table'
 
 class _SelectAsset extends React.Component {
     state = {
         loadedAsset: false,
         asset: null,
         metadata: null,
-        visualizations: null
+        visualizations: null,
+        tableColumns: null,
+        columnsLoading: false
     }
 
     constructor(props) {
@@ -28,12 +39,11 @@ class _SelectAsset extends React.Component {
         this.add = this.add.bind(this)
         this.onLoading = this.onLoading.bind(this)
         this.onLoaded = this.onLoaded.bind(this)
-
     }
 
     render() {
         const {activatable: {deactivate}} = this.props
-        const {loadedAsset} = this.state
+        const {loadedAsset, columnsLoading} = this.state
         return (
             <Panel
                 className={styles.panel}
@@ -50,7 +60,7 @@ class _SelectAsset extends React.Component {
                             onClick={deactivate}
                         />
                         <Panel.Buttons.Add
-                            disabled={!loadedAsset}
+                            disabled={!loadedAsset || columnsLoading}
                             keybinding='Enter'
                             onClick={this.add}
                         />
@@ -61,52 +71,124 @@ class _SelectAsset extends React.Component {
     }
 
     renderContent() {
-        const {inputs: {asset}} = this.props
+        const {inputs: {asset, label}} = this.props
+        const {loadedAsset} = this.state
         return (
-            <Form.AssetCombo
-                input={asset}
-                label={msg('map.layout.addImageLayerSource.types.Asset.form.asset.label')}
-                autoFocus
-                allowedTypes={['Image', 'ImageCollection']}
-                onLoading={this.onLoading}
-                onLoaded={this.onLoaded}
-            />
+            <Layout type='vertical'>
+                <Form.AssetCombo
+                    input={asset}
+                    label={msg('map.layout.addImageLayerSource.types.Asset.form.asset.label')}
+                    autoFocus
+                    allowedTypes={['Image', 'ImageCollection', 'Table']}
+                    onLoading={this.onLoading}
+                    onLoaded={this.onLoaded}
+                />
+                {loadedAsset
+                    ? (
+                        <Form.Input
+                            input={label}
+                            label={msg('map.layout.addImageLayerSource.types.Asset.form.label.label')}
+                            placeholder={msg('map.layout.addImageLayerSource.types.Asset.form.label.placeholder')}
+                        />
+                    )
+                    : null}
+            </Layout>
         )
     }
 
     onLoading() {
+        // Invalidate any in-flight column request from a previously selected asset.
+        this.requestedColumnsAsset = null
         this.setState({
             loadedAsset: false,
             asset: null,
             metadata: null,
-            visualizations: null
+            visualizations: null,
+            tableColumns: null,
+            columnsLoading: false
         })
     }
 
     onLoaded({asset, metadata, visualizations}) {
-        this.setState({
-            loadedAsset: true,
+        const {inputs: {label}} = this.props
+        // Prefill the label from the asset's default; keep a user's edit only when the same asset reloads.
+        const nextLabel = resolveAssetLabel({
+            current: label.value,
             asset,
-            metadata,
-            visualizations
+            labeledAsset: this.labeledAsset,
+            defaultLabel: defaultAssetLabel(asset, metadata)
         })
+        if (nextLabel !== label.value) {
+            label.set(nextLabel)
+        }
+        this.labeledAsset = asset
+        const featureCollection = isFeatureCollection(metadata)
+        if (featureCollection) {
+            this.loadColumns(asset)
+        }
+        // Block Add for tables until columns resolve, so the color-column default isn't bypassed.
+        this.setState({loadedAsset: true, asset, metadata, visualizations, columnsLoading: featureCollection})
+    }
+
+    // Discover feature properties so we can default to color-property mode when the table carries a 'color'
+    // property (e.g. Sampling Design exports). Guarded by the requested asset so a stale response from a
+    // previously selected asset can't overwrite the current one.
+    loadColumns(asset) {
+        const {addSubscription} = this.props
+        this.requestedColumnsAsset = asset
+        addSubscription(
+            api.gee.loadEETableColumns$(asset).subscribe({
+                next: tableColumns => asset === this.requestedColumnsAsset && this.setState({tableColumns, columnsLoading: false}),
+                error: () => asset === this.requestedColumnsAsset && this.setState({tableColumns: [], columnsLoading: false})
+            })
+        )
     }
 
     add() {
-        const {asset, metadata, visualizations} = this.state
-        const {recipeActionBuilder, activatable: {deactivate}} = this.props
-        recipeActionBuilder('ADD_ASSET_IMAGE_LAYER_SOURCE')
-            .push('layers.additionalImageLayerSources', {
-                id: uuid(),
-                type: 'Asset',
-                sourceConfig: {
-                    description: asset,
-                    asset,
-                    metadata,
-                    visualizations
-                }
-            })
-            .dispatch()
+        const {asset, metadata, visualizations, tableColumns} = this.state
+        const {inputs: {label}, recipeActionBuilder, activatable: {deactivate}} = this.props
+        const assetLabel = label.value || defaultAssetLabel(asset, metadata)
+        if (isFeatureCollection(metadata)) {
+            // Persist the schema; the color-property default is derived from it in resolveFeatureLayerStyle.
+            const columns = Array.isArray(tableColumns) ? tableColumns : []
+            // A categorical "By value" style parsed from the asset's `<property>_class_*` metadata (e.g.
+            // Sampling Design's stratum_class_values/palette) becomes the source default, outranking the
+            // color-column heuristic. Null when the asset carries no such convention.
+            const defaultStyle = parseFeatureLayerAssetStyle({properties: metadata?.properties, columns})
+            // Presentation-only categorical metadata (values, colors, optional labels) for every categorical
+            // property, kept out of defaultStyle so labels never reach the EE styling job. Drives the Filter
+            // categorical Combo and the By-value label column.
+            const categoricalProperties = parseFeatureLayerCategoricalProperties({properties: metadata?.properties, columns})
+            recipeActionBuilder('ADD_EE_TABLE_FEATURE_LAYER_SOURCE')
+                .push('layers.additionalFeatureLayerSources', {
+                    id: `ee-table:${uuid()}`,
+                    type: 'EETableAsset',
+                    defaultEnabled: false,
+                    sourceConfig: {
+                        asset,
+                        label: assetLabel,
+                        description: asset,
+                        columns,
+                        ...(defaultStyle ? {defaultStyle} : {}),
+                        ...(Object.keys(categoricalProperties).length ? {categoricalProperties} : {})
+                    }
+                })
+                .dispatch()
+        } else {
+            recipeActionBuilder('ADD_ASSET_IMAGE_LAYER_SOURCE')
+                .push('layers.additionalImageLayerSources', {
+                    id: uuid(),
+                    type: 'Asset',
+                    sourceConfig: {
+                        description: asset,
+                        asset,
+                        label: assetLabel,
+                        metadata,
+                        visualizations
+                    }
+                })
+                .dispatch()
+        }
         deactivate()
     }
 }
@@ -119,5 +201,6 @@ export const SelectAsset = compose(
     _SelectAsset,
     withForm({fields}),
     withRecipe(),
+    withSubscriptions(),
     withActivatable({id: 'selectAsset', policy, alwaysAllow: true})
 )

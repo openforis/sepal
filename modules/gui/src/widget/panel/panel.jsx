@@ -11,6 +11,7 @@ import styles from './panel.module.css'
 import {PanelButtons} from './panelButtons'
 import {PanelContent} from './panelContent'
 import {PanelHeader} from './panelHeader'
+import {PanelTabs} from './panelTabs'
 
 class _Panel extends React.Component {
     state = {
@@ -106,3 +107,4 @@ Panel.propTypes = {
 Panel.Header = PanelHeader
 Panel.Content = PanelContent
 Panel.Buttons = PanelButtons
+Panel.Tabs = PanelTabs

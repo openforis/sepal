@@ -25,11 +25,13 @@ import {getDefaults, getValidMappings} from './legendImportDefaults'
 const fields = {
     rows: new Form.Field()
         .notEmpty(),
+    importMode: new Form.Field(),
     name: new Form.Field()
         .notBlank(),
     valueColumn: new Form.Field()
         .notBlank(),
     labelColumn: new Form.Field()
+        .skip((v, {importMode}) => importMode === 'featureLayerValueColors')
         .notBlank(),
     colorColumnType: new Form.Field()
         .notBlank(),
@@ -212,6 +214,10 @@ class _LegendImport extends React.Component {
         )
     }
 
+    componentDidMount() {
+        this.props.inputs.importMode.set(this.importMode())
+    }
+
     componentDidUpdate(prevProps, prevState) {
         const {rows: prevRows} = prevState
         const {rows} = this.state
@@ -278,13 +284,19 @@ class _LegendImport extends React.Component {
                     trim(row[blueColumn.value])
                 ]).hex(),
             value: trim(row[valueColumn.value]),
-            label: trim(row[labelColumn.value])
+            label: labelColumn.value ? trim(row[labelColumn.value]) : undefined
         }))
         recipeActionBuilder('SET_IMPORTED_LEGEND_ENTRIES', {entries})
             .set('ui.importedLegendEntries', entries)
             .dispatch()
         deactivate()
     }
+
+    importMode() {
+        const {activatable} = this.props
+        return activatable.mode || 'legend'
+    }
+
 }
 
 const policy = () => ({_: 'allow'})
@@ -301,4 +313,3 @@ export const LegendImport = compose(
     withRecipe(),
     withForm({fields}),
 )
-

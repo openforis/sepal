@@ -204,7 +204,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         for (int i = 0; i < retries; i++)
             try {
             LOG.debug("Trying to connect to Docker on instance $instance")
-            deployedContainers(instance)
+             (instance)
             LOG.info("Successfully connected to Docker on instance $instance")
             return
             } catch (Exception ignore) {

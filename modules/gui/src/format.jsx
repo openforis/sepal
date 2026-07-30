@@ -35,6 +35,31 @@ const percent = (part, total, decimals = 2) =>
         fixedDecimalScale={true}
         suffix={'%'}/>
 
+const plural = (count, unit) => `${count} ${unit}${count === 1 ? '' : 's'}`
+
+// Plain-English elapsed duration from a millisecond span, using at most two units: minutes only below an
+// hour, hours [+ minutes] below a day, days [+ hours] from a day up. A sub-minute span reads "< 1 minute".
+// Non-finite (undefined/null/NaN/Infinity) or negative spans are unknown/invalid and render "--".
+const duration = ms => {
+    if (!Number.isFinite(ms) || ms < 0) {
+        return '--'
+    }
+    const totalMinutes = Math.floor(ms / 60000)
+    if (totalMinutes < 1) {
+        return '< 1 minute'
+    }
+    const days = Math.floor(totalMinutes / (24 * 60))
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60)
+    const minutes = totalMinutes % 60
+    if (days) {
+        return hours ? `${plural(days, 'day')} ${plural(hours, 'hour')}` : plural(days, 'day')
+    }
+    if (hours) {
+        return minutes ? `${plural(hours, 'hour')} ${plural(minutes, 'minute')}` : plural(hours, 'hour')
+    }
+    return plural(minutes, 'minute')
+}
+
 const fullDateTime = date =>
     moment(date).format('ddd, DD MMM YYYY, hh:mm:ss')
 
@@ -212,6 +237,7 @@ export default {
     dollarsPerMonth,
     hours,
     percent,
+    duration,
     fullDateTime,
     fullDate,
     fractionalYearsToDate,

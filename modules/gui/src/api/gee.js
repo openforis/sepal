@@ -104,6 +104,14 @@ export default {
             }
         }),
 
+    aoiGeometry$: ({aoi, color, fillColor}) =>
+        postJson$('/api/gee/aoi/geometry', {
+            body: {aoi, color, fillColor},
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
     loadEETableColumns$: tableId =>
         get$('/api/gee/table/columns', {
             query: {tableId},
@@ -128,9 +136,20 @@ export default {
             }
         }),
 
-    eeTableMap$: ({tableId, columnName, columnValue, buffer, color, fillColor}) =>
+    eeTableMap$: ({tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style, featureFilter}) =>
         get$('/api/gee/table/map', {
-            query: {tableId, columnName, columnValue, buffer, color, fillColor},
+            query: {
+                tableId,
+                columnName,
+                columnValue,
+                buffer,
+                color,
+                fillColor,
+                pointSize,
+                width,
+                style: style ? JSON.stringify(style) : undefined,
+                featureFilter: featureFilter ? JSON.stringify(featureFilter) : undefined
+            },
             retry: {
                 maxRetries: 0
             }
@@ -211,6 +230,26 @@ export default {
                 query: JSON.stringify({
                     sceneAreaIds, sources, dates, sceneSelectionOptions, sceneCount, cloudCoverTarget
                 })
+            }
+        }),
+
+    areaPerStratum$: ({aoi, stratification, band, scale, crs, batch}) =>
+        postJson$('/api/gee/samplingDesign/areaPerStratum', {
+            body: {aoi, stratification, band, scale, crs, batch},
+            // No HTTP retry: Online should surface EE failures promptly, and Batch task submission should
+            // not be repeated by the client.
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
+    probabilityPerStratum$: ({aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, crs, batch}) =>
+        postJson$('/api/gee/samplingDesign/probabilityPerStratum', {
+            body: {aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, crs, batch},
+            // No HTTP retry: Online should surface EE failures promptly, and Batch task submission should
+            // not be repeated by the client.
+            retry: {
+                maxRetries: 0
             }
         }),
 

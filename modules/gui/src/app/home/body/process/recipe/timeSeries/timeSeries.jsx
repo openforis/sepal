@@ -2,12 +2,12 @@ import moment from 'moment'
 import React from 'react'
 
 import {recipe} from '~/app/home/body/process/recipeContext'
+import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
-import {Map} from '../../../../map/map'
 import {recipeAccess} from '../../recipeAccess'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'

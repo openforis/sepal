@@ -1,0 +1,134 @@
+import _ from 'lodash'
+
+import {MIN_SAMPLES_PER_STRATUM} from '#sepal/recipe/samplingDesign/minSamples'
+
+export const allocate = ({sampleSize, minSamplesPerStratum = MIN_SAMPLES_PER_STRATUM, strategy, strata, tuningConstant}) => {
+    if (minSamplesPerStratum > sampleSize / strata.length) {
+        throw new Error('Unable to meet minSamplesPerStratum with provided sampleSize and number of strata')
+    }
+    const recurse = sampleSizeToTest => {
+        const allocation = allocateSamples({sampleSize: sampleSizeToTest, minSamplesPerStratum, strategy, strata, tuningConstant})
+        const updateAllocation = allocation.map(stratum => {
+            const adjusted = stratum.sampleSize < minSamplesPerStratum
+            return {
+                ...stratum,
+                sampleSize: adjusted
+                    ? minSamplesPerStratum
+                    : stratum.sampleSize,
+                adjusted
+            }
+        })
+        const allocationSampleSize = _.sumBy(updateAllocation, 'sampleSize')
+        const excessSamples = allocationSampleSize - sampleSize
+        const nextSampleSizeToTest = sampleSizeToTest - excessSamples
+        if (excessSamples > 0 && nextSampleSizeToTest < sampleSizeToTest) {
+            return recurse(nextSampleSizeToTest)
+        } else {
+            return updateAllocation
+        }
+    }
+
+    const allocation = recurse(sampleSize)
+    return adjustToSampleSize({sampleSize, minSamplesPerStratum, allocation})
+}
+
+const adjustToSampleSize = ({sampleSize, minSamplesPerStratum, allocation}) => {
+    const allocated = _.sumBy(allocation, 'sampleSize')
+    const diff = sampleSize - allocated
+    if (!diff) {
+        return allocation
+    } else {
+        const step = diff / Math.abs(diff)
+        return allocation.reduce(
+            ({adjustment, adjustedStrata}, stratum) => {
+                const sampleSize = Math.max(1, stratum.sampleSize + step)
+                const canAdjust = step > 0 || sampleSize >= minSamplesPerStratum
+                return adjustment === diff || !canAdjust
+                    ? {
+                        adjustment,
+                        adjustedStrata: [
+                            ...adjustedStrata,
+                            _.omit(stratum, ['adjusted'])
+                        ]
+                    }
+                    : {
+                        adjustment: adjustment + step,
+                        adjustedStrata: [
+                            ...adjustedStrata,
+                            {
+                                ..._.omit(stratum, ['adjusted']),
+                                sampleSize
+                            }]
+                    }
+            },
+            {
+                adjustment: 0,
+                adjustedStrata: []
+            }
+        ).adjustedStrata
+    }
+}
+
+const allocateSamples = ({sampleSize, strategy, strata, tuningConstant}) => {
+    switch (strategy) {
+        case 'EQUAL': return equalAllocation({sampleSize, strata})
+        case 'PROPORTIONAL': return proportionalAllocation({sampleSize, strata})
+        case 'OPTIMAL': return optimalAllocation({sampleSize, strata})
+        case 'POWER': return powerAllocation({sampleSize, strata, tuningConstant})
+        case 'BALANCED': return balancedAllocation({sampleSize, strata})
+        default: throw Error('Invalid allocation strategy: ' + strategy)
+    }
+}
+
+const equalAllocation = ({sampleSize, strata}) => {
+    return strata.map(stratum => ({
+        ...stratum,
+        sampleSize: Math.ceil(sampleSize / strata.length)
+    }))
+}
+
+const proportionalAllocation = ({sampleSize, strata}) => {
+    return strata.map(stratum => ({
+        ...stratum,
+        sampleSize: Math.round(sampleSize * stratum.weight)
+    }))
+}
+
+const optimalAllocation = ({sampleSize, strata}) => {
+    return powerAllocation({sampleSize, strata, tuningConstant: 1})
+}
+
+const powerAllocation = ({sampleSize, strata, tuningConstant}) => {
+    const nominators = strata.map(stratum => {
+        const populationMean = stratum.proportion
+        const weight = stratum.weight
+        const standardDeviation = Math.sqrt(populationMean * (1 - populationMean))
+        // Handle case when there is 0 proportion. Assume no variation
+        const coefficientOfVariation = populationMean ? standardDeviation / populationMean : 0
+        const importance = weight * populationMean
+        return ({
+            ...stratum,
+            nominator: coefficientOfVariation * Math.pow(importance, tuningConstant)
+        })
+    })
+    const sum = _.sumBy(nominators, 'nominator')
+    if (!sum) {
+        // No variation to weight strata by (e.g. every proportion is 0); fall back to equal
+        // allocation rather than dividing by zero and producing NaN sample sizes.
+        return equalAllocation({sampleSize, strata})
+    }
+    return nominators.map(stratum => ({
+        ..._.omit(stratum, ['nominator']),
+        sampleSize: Math.round(sampleSize * stratum.nominator / sum)
+    }))
+}
+
+const balancedAllocation = ({sampleSize, strata}) => {
+    const proportional = proportionalAllocation({sampleSize, strata})
+    const equal = equalAllocation({sampleSize, strata})
+    return _.zip(proportional, equal)
+        .map(([proportionalStratum, equalStratum]) => ({
+            ...proportionalStratum,
+            sampleSize: Math.round((proportionalStratum.sampleSize + equalStratum.sampleSize) / 2)
+        }))
+}

@@ -213,8 +213,9 @@ class _Combo extends React.Component {
     renderClearButton() {
         const {allowClear, readOnly} = this.props
         const {filter, selectedOption} = this.state
-        const disabled = !filter && (!allowClear || !selectedOption)
-        return readOnly
+        const visible = !!filter || allowClear
+        const disabled = !filter && !selectedOption
+        return readOnly || !visible
             ? null
             : (
                 <Button

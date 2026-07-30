@@ -1,0 +1,49 @@
+.proportions {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) min-content;
+    row-gap: .5rem;
+    font-size: small;
+}
+
+.row {
+    display: contents;
+}
+
+.header,
+.footer {
+    display: contents;
+}
+
+.header>*,
+.footer>* {
+    font-weight: bold;
+    background-color: var(--look-default-active-background-color) !important;
+    color: #808080;
+}
+
+.header>*,
+.row>*,
+.footer>* {
+    --border-radius: var(--button-border-radius);
+    border-radius: var(--border-radius);
+    padding: .25rem .5rem;
+    background-color: hsla(0, 0%, 0%, .3);
+}
+
+.row>* {
+    opacity: .5;
+}
+
+.proportionHeader {
+    grid-column: 1 / span 3;
+    text-align: right;
+}
+
+.number {
+    text-align: right;
+    flex-shrink: 1;
+}
+
+.overall {
+    grid-column: 1 / span 2;
+}

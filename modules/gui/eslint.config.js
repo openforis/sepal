@@ -79,5 +79,16 @@ export default [
                 version: 'detect'
             }
         }
+    },
+    {
+        files: ['src/app/home/body/process/recipe/samplingDesign/sampling/**/*.js'],
+        rules: {
+            'no-restricted-imports': ['error', {
+                patterns: [{
+                    group: ['react', 'react-*', '~/*', '~/**'],
+                    message: 'samplingDesign/sampling is pure domain logic: import only third-party packages and relative (./) domain files, never the GUI/app layer (React or ~/...).'
+                }]
+            }]
+        }
     }
 ]

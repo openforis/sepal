@@ -1,17 +1,28 @@
-// const {setWorkloadTag} = require('../workloadTag')
+import {sanitizeEarthEngineTaskName} from '#sepal/earthEngineExportNames'
 
-export const submit$ = (taskId, {workspacePath, description, ...retrieveOptions}) => {
-    console.info('samplesSepalExport', {taskId, workspacePath, description, retrieveOptions})
-    // setWorkloadTag(retrieveOptions.recipe)
-    // return getCurrentContext$().pipe(
-    //     switchMap(({config}) => {
-    //         const preferredDownloadDir = workspacePath
-    //             ? `${config.homeDir}/${workspacePath}/`
-    //             : `${config.homeDir}/downloads/${description}/`
-    //         return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
-    //             switchMap(downloadDir => export$(taskId, {description, downloadDir, ...retrieveOptions})
-    //             )
-    //         )
-    //     })
-    // )
+import {setWorkloadTag} from '../workloadTag.js'
+import {exportRandomToAssets$} from './randomExport.js'
+import {exportSystematicToAssets$} from './systematicExport.js'
+
+// SEPAL table export: the retrieve options (workspacePath, filenamePrefix, fileFormat) are spread into
+// the task params and threaded through to the exporters, which hand them to tableToSepal$.
+export const submit$ = (taskId, {description, properties, recipe, workspacePath, filenamePrefix, fileFormat}) => {
+    setWorkloadTag(recipe)
+    const {model: {sampleArrangement}} = recipe
+    const safeDescription = sanitizeEarthEngineTaskName(description, 'Sampling_design')
+    const sepal = {
+        taskId,
+        description: safeDescription,
+        recipe,
+        properties,
+        destination: 'SEPAL',
+        workspacePath,
+        filenamePrefix: sanitizeEarthEngineTaskName(filenamePrefix || safeDescription, safeDescription),
+        fileFormat
+    }
+    switch (sampleArrangement.arrangementStrategy) {
+        case 'SYSTEMATIC': return exportSystematicToAssets$(sepal)
+        case 'RANDOM': return exportRandomToAssets$(sepal)
+        default: throw Error(`Unsupported sample arrangement strategy: ${sampleArrangement.arrangementStrategy}`)
+    }
 }

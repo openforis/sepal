@@ -9,22 +9,31 @@ export class GoogleMapsOverlay {
         google,
         name,
         minZoom = 0,
-        maxZoom = MAX_ZOOM
+        maxZoom = MAX_ZOOM,
+        opacity = 1
     }) {
         this.tileProvider = tileProvider
         this.name = name
         this.minZoom = minZoom
         this.maxZoom = maxZoom
+        this.opacity = opacity
         this.tileSize = new google.maps.core.Size(
             tileProvider.tileSize || 256,
             tileProvider.tileSize || 256
         )
         this.tileSubscriptionById = {}
+        // Mounted tile elements, so a live opacity change can restyle them without refetching.
+        this.tileElementById = {}
     }
 
     getTile({x, y}, zoom, doc) {
         const request = this._toTileRequest({x, y, zoom, minZoom: this.minZoom, doc})
         const element = request.element
+        this.tileElementById[element.id] = element
+        // Whole-layer tile opacity: applied per tile element, uniform across the layer (tiles don't overlap).
+        if (this.opacity !== 1) {
+            element.style.opacity = this.opacity
+        }
         if (request.outOfBounds) {
             return element
         }
@@ -44,6 +53,16 @@ export class GoogleMapsOverlay {
             delete this.tileSubscriptionById[element.id]
             this.tileProvider.releaseTile(element)
         }
+        delete this.tileElementById[element.id]
+    }
+
+    // Client-side whole-layer opacity: restyle the mounted tiles in place. No tile or map-id refetch - this
+    // is just CSS on already-rendered tile elements.
+    setOpacity(opacity) {
+        this.opacity = opacity
+        Object.values(this.tileElementById).forEach(element => {
+            element.style.opacity = opacity
+        })
     }
 
     close() {

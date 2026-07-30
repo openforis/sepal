@@ -17,7 +17,19 @@ class _EETableLayer extends React.Component {
         this.setLayer()
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
+        const {id, map, opacity} = this.props
+        // Drop the previous layer if the id changed under us, so a reused component can't strand tiles.
+        if (prevProps.id !== id) {
+            map.removeLayer(prevProps.id)
+        }
+        // Opacity is client-side only and deliberately excluded from watchedProps, so an opacity-only change
+        // leaves the layer equal (no recreation, no eeTableMap$/map-id refetch). Push the new opacity onto the
+        // live layer's tiles directly. If other inputs also changed, setLayer() below recreates the layer with
+        // the current opacity anyway.
+        if (prevProps.opacity !== opacity) {
+            map.getLayer(id)?.setOpacity?.(opacity)
+        }
         this.setLayer()
     }
 
@@ -35,15 +47,18 @@ class _EETableLayer extends React.Component {
     }
 
     createLayer() {
-        const {tableId, columnName, columnValue, buffer, color, fillColor, layerIndex, map, tab: {busy}} = this.props
+        const {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style, featureFilter, opacity, layerIndex, map, tab: {busy}} = this.props
         return tableId
             ? new EarthEngineTableLayer({
                 map,
                 mapId$: api.gee.eeTableMap$({
-                    tableId, columnName, columnValue, buffer, color, fillColor
+                    tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style, featureFilter
                 }),
+                opacity,
                 layerIndex,
-                watchedProps: {tableId, columnName, columnValue, buffer},
+                // opacity is intentionally excluded: it's applied client-side (setOpacity), so an opacity-only
+                // change stays equal and doesn't recreate the layer or refetch the map id.
+                watchedProps: {tableId, columnName, columnValue, buffer, color, fillColor, pointSize, width, style, featureFilter},
                 busy
             })
             : null
@@ -59,9 +74,16 @@ export const EETableLayer = compose(
 EETableLayer.propTypes = {
     id: PropTypes.string.isRequired,
     buffer: PropTypes.number,
+    color: PropTypes.string,
     columnName: PropTypes.string,
     columnValue: PropTypes.any,
+    fillColor: PropTypes.string,
+    featureFilter: PropTypes.object,
     layerIndex: PropTypes.number,
     map: PropTypes.any,
-    tableId: PropTypes.string
+    opacity: PropTypes.number,
+    pointSize: PropTypes.number,
+    style: PropTypes.object,
+    tableId: PropTypes.string,
+    width: PropTypes.number
 }

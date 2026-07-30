@@ -11,6 +11,15 @@ npm test        # Vitest
 npm run lint    # ESLint (src/)
 ```
 
+From the SEPAL dev environment, prefer the repository CLI so tests run in the module
+container:
+
+```bash
+sepal npm-test gui                         # Run GUI Vitest
+sepal npm-test gui -- --run <test-path>    # Run focused GUI Vitest tests
+sepal eslint gui                           # Run GUI ESLint
+```
+
 ## Key Architecture
 
 ### State Management

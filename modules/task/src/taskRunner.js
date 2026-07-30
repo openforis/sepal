@@ -22,7 +22,9 @@ const tasks = {
     'image.SEPAL': () => require('./tasks/imageSepalExport.js'),
     'image.DRIVE': () => require('./tasks/imageDriveExport.js'),
     'timeseries.download': () => require('./tasks/timeSeriesSepalExport.js'),
-    'ccdc.GEE': () => require('./tasks/ccdcAssetExport.js')
+    'ccdc.GEE': () => require('./tasks/ccdcAssetExport.js'),
+    'samplingDesign.GEE': () => require('./tasks/samplingDesign/samplesAssetExport.js'),
+    'samplingDesign.SEPAL': () => require('./tasks/samplingDesign/samplesSepalExport.js')
 }
 
 const taskTag = id => tag('Task', id)

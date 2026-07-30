@@ -1,0 +1,695 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {Subject, takeUntil} from 'rxjs'
+
+import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
+import api from '~/apiRegistry'
+import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {withActivators} from '~/widget/activation/activator'
+import {Button} from '~/widget/button'
+import {ButtonSelect} from '~/widget/buttonSelect'
+import {downloadCsv} from '~/widget/download'
+import {Form} from '~/widget/form'
+import {FormCombo} from '~/widget/form/combo'
+import {Icon} from '~/widget/icon'
+import {Layout} from '~/widget/layout'
+import {NoData} from '~/widget/noData'
+import {Panel} from '~/widget/panel/panel'
+import {RecipeInput} from '~/widget/recipeInput'
+import {Widget} from '~/widget/widget'
+
+import {samplingGridCrsOptions} from '../../samplingGridCrsOptions'
+import {isValidGridScale} from '../../samplingGridValidation'
+import {CalculationErrorContent} from '../calculationErrorContent'
+import {StrataTable} from './strataTable'
+import styles from './stratification.module.css'
+import {strataCalculationError as toStrataCalculationError} from './stratificationError'
+import {modelToValues, syntheticUnstratifiedStratum, valuesToModel} from './stratificationModel'
+
+const mapRecipeToProps = recipe => ({
+    aoi: selectFrom(recipe, 'model.aoi') || [],
+    importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries'),
+    title: recipe.title || recipe.placeholder,
+    stratificationRequiresUpdate: selectFrom(recipe, 'model.stratification.requiresUpdate'),
+})
+
+const fields = {
+    requiresUpdate: new Form.Field(),
+    skip: new Form.Field(),
+    type: new Form.Field(),
+    assetId: new Form.Field()
+        .skip((_value, {skip, type}) => skip.length || type !== 'ASSET')
+        .notBlank('process.samplingDesign.panel.stratification.form.asset.required'),
+    recipeId: new Form.Field()
+        .skip((_value, {skip, type}) => skip.length || type !== 'RECIPE')
+        .notBlank('process.samplingDesign.panel.stratification.form.recipe.required'),
+    band: new Form.Field()
+        .skip((_value, {skip, type, assetId, recipeId}) =>
+            skip.length
+                || (type === 'ASSET' && !assetId)
+                || (type === 'RECIPE' && !recipeId))
+        .notBlank('process.samplingDesign.panel.stratification.form.band.required'),
+    scale: new Form.Field()
+        .skip((_value, {skip}) => skip.length)
+        .notBlank('process.samplingDesign.panel.stratification.form.scale.required')
+        .number()
+        .greaterThan(0),
+    crs: new Form.Field()
+        .skip((_value, {skip}) => skip.length)
+        .notBlank(),
+    eeStrategy: new Form.Field(),
+    strata: new Form.Field()
+        // Required even when skipped: unstratified mode still needs the single synthetic stratum (area is
+        // filled at the export boundary), so an empty strata is invalid.
+        .notEmpty('process.samplingDesign.panel.stratification.form.strata.required'),
+}
+
+class _Stratification extends React.Component {
+    cancel$ = new Subject()
+    state = {
+        bands: undefined,
+        prevStrata: [],
+        entriesByBand: {},
+        showHexColorCode: false,
+        strataCalculationError: null,
+        more: false
+    }
+
+    constructor(props) {
+        super(props)
+        this.onTypeChanged = this.onTypeChanged.bind(this)
+        this.onImageChanged = this.onImageChanged.bind(this)
+        this.onImageLoading = this.onImageLoading.bind(this)
+        this.onAssetLoaded = this.onAssetLoaded.bind(this)
+        this.onRecipeLoaded = this.onRecipeLoaded.bind(this)
+        this.onBandChanged = this.onBandChanged.bind(this)
+        this.onGridChanged = this.onGridChanged.bind(this)
+        this.onEEStrategyChanged = this.onEEStrategyChanged.bind(this)
+        this.onAreaPerStratumLoaded = this.onAreaPerStratumLoaded.bind(this)
+        this.onSkipToggled = this.onSkipToggled.bind(this)
+    }
+
+    render() {
+        const {more} = this.state
+        const {inputs: {skip}} = this.props
+        return (
+            <RecipeFormPanel
+                placement='bottom-right'
+                className={styles.panel}>
+                <Panel.Header
+                    icon='map'
+                    label={this.renderHeaderButtons()}
+                    title={msg('process.samplingDesign.panel.stratification.title')}/>
+
+                <Panel.Content>
+                    {this.renderContent()}
+                </Panel.Content>
+
+                <Form.PanelButtons>
+                    {!skip.value?.length ? (
+                        <Button
+                            label={more ? msg('button.less') : msg('button.more')}
+                            onClick={() => this.setState(({more}) => ({more: !more}))}
+                        />
+                    ) : null}
+                    {this.renderImportButton()}
+                </Form.PanelButtons>
+            </RecipeFormPanel>
+        )
+    }
+
+    renderContent() {
+        const {inputs: {type, skip}} = this.props
+        return !skip.value?.length
+            ? (
+                <Layout>
+                    {type.value === 'ASSET' ? this.renderAsset() : null}
+                    {type.value === 'RECIPE' ? this.renderRecipe() : null}
+                    <Layout type='horizontal'>
+                        {this.renderBand()}
+                        {this.renderScale()}
+                    </Layout>
+                    {this.state.more ? this.renderCrs() : null}
+                    {this.renderStrata()}
+                </Layout>
+            )
+            : (
+                <NoData
+                    alignment='center'
+                    message={msg('process.samplingDesign.panel.stratification.form.skip.message')}
+                />
+            )
+    }
+
+    renderHeaderButtons() {
+        const {inputs: {skip}} = this.props
+        return (
+            <Form.Buttons
+                input={skip}
+                options={[
+                    {
+                        value: true,
+                        icon: 'minus-circle',
+                        label: msg('process.samplingDesign.panel.stratification.form.skip.label'),
+                        tooltip: msg('process.samplingDesign.panel.stratification.form.skip.tooltip')
+                    },
+                ]}
+                multiple
+                onChange={this.onSkipToggled}
+            />
+        )
+    }
+
+    renderImportButton() {
+        const {inputs: {skip, strata}} = this.props
+        const options = [
+            {
+                value: 'import',
+                label: msg('map.legendBuilder.load.options.importFromCsv.label'),
+                onSelect: () => this.importLegend()
+            },
+            {
+                value: 'export',
+                label: msg('map.legendBuilder.load.options.exportToCsv.label'),
+                disabled: !strata.value || !strata.value.length,
+                onSelect: () => this.exportStratification()
+            }
+        ]
+        return (
+            <ButtonSelect
+                icon={'file'}
+                label={msg('process.samplingDesign.panel.stratification.form.csv.label')}
+                placement='above'
+                tooltipPlacement='bottom'
+                disabled={skip.value?.length}
+                options={options}
+            />
+        )
+    }
+
+    renderAsset() {
+        const {inputs: {assetId}} = this.props
+        return (
+            <Form.AssetCombo
+                label={msg('process.samplingDesign.panel.stratification.form.stratification.label')}
+                autoFocus
+                input={assetId}
+                placeholder={msg('process.samplingDesign.panel.stratification.form.stratification.placeholder')}
+                allowedTypes={['Image', 'ImageCollection']}
+                labelButtons={[this.renderType()]}
+                onChange={this.onImageChanged}
+                onLoading={this.onImageLoading}
+                onLoaded={this.onAssetLoaded}
+            />
+        )
+    }
+
+    renderRecipe() {
+        const {inputs: {recipeId}} = this.props
+        return (
+            <RecipeInput
+                label={msg('process.samplingDesign.panel.stratification.form.stratification.label')}
+                input={recipeId}
+                filter={type => !type.noImageOutput}
+                labelButtons={[this.renderType()]}
+                autoFocus
+                onChange={this.onImageChanged}
+                onLoading={this.onImageLoading}
+                onLoaded={this.onRecipeLoaded}
+            />
+        )
+    }
+
+    renderType() {
+        const {inputs: {type}} = this.props
+        return (
+            <Form.Buttons
+                key='type'
+                spacing='none'
+                groupSpacing='none'
+                size='x-small'
+                shape='pill'
+                input={type}
+                options={[
+                    {
+                        value: 'ASSET',
+                        label: msg('process.samplingDesign.panel.stratification.form.type.ASSET.label'),
+                        tooltip: msg('process.samplingDesign.panel.stratification.form.type.ASSET.tooltip'),
+                    },
+                    {
+                        value: 'RECIPE',
+                        label: msg('process.samplingDesign.panel.stratification.form.type.RECIPE.label'),
+                        tooltip: msg('process.samplingDesign.panel.stratification.form.type.RECIPE.tooltip')
+                    },
+                ]}
+                onChange={this.onTypeChanged}
+            />
+        )
+    }
+
+    renderBand() {
+        const {inputs: {band}} = this.props
+        const {bands = []} = this.state
+        const options = bands
+            .map(band => ({value: band, label: band}))
+        return (
+            <FormCombo
+                className={styles.wideField}
+                input={band}
+                disabled={!bands.length}
+                options={options}
+                label={msg('process.samplingDesign.panel.stratification.form.band.label')}
+                placeholder={msg('process.samplingDesign.panel.stratification.form.band.placeholder')}
+                tooltip={msg('process.samplingDesign.panel.stratification.form.band.tooltip')}
+                onChange={this.onBandChanged}
+            />
+        )
+    }
+    
+    renderScale() {
+        const {inputs: {scale}} = this.props
+        return (
+            <Form.Input
+                className={styles.compactField}
+                label={msg('process.samplingDesign.panel.stratification.form.scale.label')}
+                placeholder={msg('process.samplingDesign.panel.stratification.form.scale.placeholder')}
+                tooltip={msg('process.samplingDesign.panel.stratification.form.scale.tooltip')}
+                input={scale}
+                type='number'
+                suffix={msg('process.samplingDesign.panel.stratification.form.scale.suffix')}
+                onChange={this.onGridChanged}
+            />
+        )
+    }
+
+    renderCrs() {
+        const {inputs: {crs}} = this.props
+        return (
+            <FormCombo
+                label={msg('process.samplingDesign.panel.stratification.form.crs.label')}
+                tooltip={msg('process.samplingDesign.panel.stratification.form.crs.tooltip')}
+                input={crs}
+                options={samplingGridCrsOptions()}
+                onChange={this.onGridChanged}
+            />
+        )
+    }
+
+    renderStrata() {
+        const {stream, inputs: {eeStrategy, strata}} = this.props
+        const {showHexColorCode} = this.state
+        const hexCodeButton = (
+            <Button
+                key={'showHexColorCode'}
+                look={showHexColorCode ? 'selected' : 'default'}
+                size='x-small'
+                shape='pill'
+                label={msg('process.samplingDesign.panel.stratification.form.hexButton.label')}
+                tooltip={msg('process.samplingDesign.panel.stratification.form.hexButton.tooltip')}
+                disabled={stream('AREA_PER_STRATUM').active || !strata.value?.length}
+                onClick={() => this.toggleshowHexColorCode()}
+            />
+        )
+        const eeStrategyButtons = (
+            <Form.Buttons
+                key='eeStrategy'
+                spacing='none'
+                groupSpacing='none'
+                size='x-small'
+                shape='pill'
+                input={eeStrategy}
+                options={[
+                    {
+                        value: 'ONLINE',
+                        label: msg('process.samplingDesign.panel.stratification.form.eeStrategy.online.label'),
+                        tooltip: msg('process.samplingDesign.panel.stratification.form.eeStrategy.online.tooltip')
+                    },
+                    {
+                        value: 'BATCH',
+                        label: msg('process.samplingDesign.panel.stratification.form.eeStrategy.batch.label'),
+                        tooltip: msg('process.samplingDesign.panel.stratification.form.eeStrategy.batch.tooltip')
+                    },
+                ]}
+                onChange={this.onEEStrategyChanged}
+            />
+        )
+
+        return (
+            <Widget
+                label={msg('process.samplingDesign.panel.stratification.form.strata.label')}
+                labelButtons={[hexCodeButton, eeStrategyButtons]}>
+                {this.renderStrataContent()}
+            </Widget>
+        )
+    }
+
+    renderStrataContent() {
+        const {stream, inputs: {band, strata}} = this.props
+        const {showHexColorCode, strataCalculationError} = this.state
+        if (stream('AREA_PER_STRATUM').active) {
+            return (
+                <NoData
+                    className={styles.noData}
+                    alignment='left'
+                    message={(
+                        <div>
+                            <Icon name='spinner'/>
+                            {' ' + msg('process.samplingDesign.panel.stratification.form.strata.loading')}
+                        </div>
+                    )}
+                />
+            )
+        }
+        if (strataCalculationError) {
+            return this.renderStrataError(strataCalculationError)
+        }
+        if (strata.value?.length && band.value) {
+            return (
+                <StrataTable
+                    strata={strata}
+                    showHexColorCode={showHexColorCode}
+                />
+            )
+        }
+        return (
+            <NoData
+                className={styles.noData}
+                alignment='left'
+                message={msg(
+                    band.value
+                        ? 'process.samplingDesign.panel.stratification.form.strata.noData'
+                        : 'process.samplingDesign.panel.stratification.form.strata.select'
+                )}
+            />
+        )
+    }
+
+    renderStrataError(error) {
+        return (
+            <NoData
+                className={styles.noData}
+                alignment='left'
+                message={
+                    <CalculationErrorContent
+                        error={error}
+                        onRetry={() => this.scheduleAreaPerStratum()}
+                        onUseBatch={() => this.useBatch()}
+                    />
+                }
+            />
+        )
+    }
+
+    useBatch() {
+        const {inputs: {eeStrategy}} = this.props
+        eeStrategy.set('BATCH')
+        // set() doesn't fire the eeStrategy onChange (that's a UI-only callback), so schedule explicitly.
+        // scheduleAreaPerStratum defers via setImmediate, by which point eeStrategy.value has settled to BATCH.
+        this.scheduleAreaPerStratum()
+    }
+
+    componentDidMount() {
+        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, crs, type, eeStrategy, strata}} = this.props
+        requiresUpdate.set(false)
+        skip.value || skip.set([])
+        scale.value || scale.set('30')
+        crs.value || crs.set(DEFAULT_SAMPLING_GRID_CRS)
+        type.value || type.set('ASSET')
+        eeStrategy.value || eeStrategy.set('ONLINE')
+        // Reveal the advanced options when a non-default CRS was saved, so the setting is discoverable.
+        if (crs.value && crs.value !== DEFAULT_SAMPLING_GRID_CRS) {
+            this.setState({more: true})
+        }
+
+        if (stratificationRequiresUpdate) {
+            if (skip.value?.length) {
+                strata.set([this.unstratifiedStratum()])
+            } else {
+                if (strata.value) {
+                    this.setState({prevStrata: strata.value})
+                }
+                strata.set(null)
+                this.calculateAreaPerStratum()
+            }
+        } else if (skip.value?.length && !strata.value?.length) {
+            strata.set([this.unstratifiedStratum()])
+        }
+    }
+
+    unstratifiedStratum() {
+        return syntheticUnstratifiedStratum(msg('process.samplingDesign.panel.stratification.unstratified'))
+    }
+
+    componentDidUpdate(prevProps) {
+        const {inputs, importedLegendEntries, recipeActionBuilder} = this.props
+        if (importedLegendEntries && !_.isEqual(importedLegendEntries, prevProps.importedLegendEntries)) {
+            recipeActionBuilder('CLEAR_IMPORTED_LEGEND_ENTRIES', {importedLegendEntries})
+                .del('ui.importedLegendEntries')
+                .dispatch()
+            const updatedStrata = inputs.strata.value.map(stratum => {
+                const updatedStratum = importedLegendEntries.find(({value}) => value === stratum.value) || {}
+                return ({
+                    ...stratum,
+                    ..._.pick(updatedStratum, ['color', 'label'])
+                })
+            })
+            inputs.strata.set(updatedStrata)
+        }
+    }
+
+    toggleshowHexColorCode() {
+        this.setState(({showHexColorCode}) => ({showHexColorCode: !showHexColorCode}))
+    }
+
+    onTypeChanged() {
+        const {inputs: {assetId, recipeId, band, strata}} = this.props
+        recipeId.set(null)
+        assetId.set(null)
+        band.set(null)
+        if (strata.value) {
+            this.setState({prevStrata: strata.value})
+        }
+        this.clearStrataCalculationError()
+        strata.set(null)
+    }
+
+    onImageChanged() {
+        const {inputs: {band, strata}} = this.props
+        band.set(null)
+        if (strata.value) {
+            this.setState({prevStrata: strata.value})
+        }
+        this.clearStrataCalculationError()
+        strata.set(null)
+    }
+
+    onImageLoading() {
+        this.setState({bands: undefined})
+    }
+
+    onAssetLoaded({metadata, visualizations}) {
+        const {inputs: {assetId}} = this.props
+        const bands = metadata.bands.map(({id}) => id) || []
+
+        this.updateImageLayerSources({
+            id: assetId.value,
+            type: 'Asset',
+            sourceConfig: {
+                asset: assetId.value,
+                metadata,
+                visualizations
+            },
+        })
+        this.onImageLoaded(bands, visualizations)
+    }
+
+    onRecipeLoaded({bandNames: bands, recipe}) {
+        this.updateImageLayerSources({
+            id: recipe.id,
+            type: 'Recipe',
+            sourceConfig: {
+                recipeId: recipe.id
+            },
+        })
+        this.onImageLoaded(bands, getAllVisualizations(recipe))
+    }
+
+    onImageLoaded(bands, visualizations) {
+        const {inputs: {band}} = this.props
+        this.setState({bands})
+        const categoricalVisualizations = visualizations
+            .filter(({type}) => type === 'categorical')
+        const defaultBand = bands.length === 1
+            ? bands[0]
+            : categoricalVisualizations.length === 1
+                ? categoricalVisualizations[0].bands[0]
+                : null
+        const updateBand = defaultBand && defaultBand !== band.value
+        updateBand && band.set(defaultBand)
+        const entriesByBand = categoricalVisualizations.reduce(
+            (acc, visualization) => {
+                const entries = visualization.values.map((value, i) => ({
+                    value,
+                    label: visualization.labels[i],
+                    color: visualization.palette[i]
+                }))
+                acc[visualization.bands[0]] = entries
+                return acc
+            },
+            {}
+        )
+        this.setState({entriesByBand})
+        updateBand && this.onBandChanged({value: defaultBand})
+    }
+
+    onBandChanged() {
+        this.scheduleAreaPerStratum()
+    }
+
+    onGridChanged() {
+        this.scheduleAreaPerStratum()
+    }
+
+    onEEStrategyChanged() {
+        this.scheduleAreaPerStratum()
+    }
+
+    // Stratified only - unstratified mode never runs areaPerStratum$ (its synthetic row is set directly).
+    onAreaPerStratumLoaded(areaPerStratum) {
+        const {inputs: {band, strata}} = this.props
+        const {prevStrata, entriesByBand} = this.state
+        this.clearStrataCalculationError()
+        const totalArea = areaPerStratum.reduce((acc, {area}) => acc + area, 0)
+        const entries = entriesByBand[band.value] || []
+        const labeledStrata = areaPerStratum.map(({stratum, area}) => {
+            const entry = entries.find(({value}) => value === stratum)
+            const prevEntry = prevStrata?.find(({value}) => value == stratum)
+            const weight = area / totalArea
+            return {
+                ...(entry || prevEntry || {value: stratum, label: '' + stratum, color: '#000000'}),
+                area,
+                weight
+            }
+        })
+        strata.set(labeledStrata)
+    }
+
+    // Form.Buttons calls onChange(nextSkip) AFTER input.set(nextSkip); skip.value can still be stale here, so
+    // we branch on the passed nextSkip, never on skip.value.
+    onSkipToggled(nextSkip) {
+        const {inputs: {strata}} = this.props
+        const unstratified = !!nextSkip?.length
+        // nextSkip is the only reliable mode signal during the toggle callback.
+        this.invalidateStrata(unstratified)
+        if (unstratified) {
+            strata.set([this.unstratifiedStratum()])
+        } else {
+            setImmediate(() => this.calculateAreaPerStratum())
+        }
+    }
+
+    // Clear first so stale strata cannot be applied while the replacement calculation is pending.
+    scheduleAreaPerStratum() {
+        this.invalidateStrata()
+        setImmediate(() => this.calculateAreaPerStratum())
+    }
+
+    // Preserve label/color for real strata, never for the synthetic unstratified row.
+    invalidateStrata(preserveStrata) {
+        const {inputs: {skip, strata}} = this.props
+        const preserve = preserveStrata === undefined ? !skip.value?.length : preserveStrata
+        if (strata.value && preserve) {
+            this.setState({prevStrata: strata.value})
+        }
+        this.clearStrataCalculationError()
+        strata.set(null)
+    }
+
+    // The EE calculation error is kept in component state rather than the `strata` form field, so it never
+    // collides with the field's `.notEmpty` required message: the required message keeps gating Apply while
+    // the friendly select/no-data body copy still shows for ordinary empty state.
+    clearStrataCalculationError() {
+        if (this.state.strataCalculationError) {
+            this.setState({strataCalculationError: null})
+        }
+    }
+
+    // Stratified area per stratum. Unstratified mode never calls this - it sets the synthetic row directly
+    // and the AOI area is computed at the export boundary.
+    calculateAreaPerStratum() {
+        const {aoi, stream, inputs: {scale, crs, type, assetId, recipeId, band, eeStrategy}} = this.props
+        const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
+        // onChange fires while typing; block invalid intermediate scale values before calling EE.
+        if (!isValidGridScale(scale.value) || !id || !band.value) {
+            return
+        }
+        const stratification = {
+            type: type.value === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
+            id,
+        }
+
+        if (stream('AREA_PER_STRATUM').active) {
+            this.cancel$.next()
+        }
+
+        stream('AREA_PER_STRATUM',
+            api.gee.areaPerStratum$({
+                aoi,
+                stratification,
+                band: band.value,
+                scale: parseInt(scale.value) || 30,
+                crs: crs.value || DEFAULT_SAMPLING_GRID_CRS,
+                batch: eeStrategy.value === 'BATCH'
+            }).pipe(
+                takeUntil(this.cancel$)
+            ),
+            this.onAreaPerStratumLoaded,
+            error => this.setState({
+                strataCalculationError: toStrataCalculationError({error, strategy: eeStrategy.value})
+            })
+        )
+    }
+
+    updateImageLayerSources(source) {
+        const {recipeActionBuilder} = this.props
+        recipeActionBuilder('UPDATE_STRATIFICATION_IMAGE_LAYER_SOURCE', {source})
+            .set(['layers.additionalImageLayerSources', {id: source.id}], source)
+            .dispatch()
+    }
+    
+    exportStratification() {
+        const {title, inputs: {strata}} = this.props
+        const csv = [
+            ['color,value,label,area,weight'],
+            strata.value.map(({color, value, label, area, weight}) => `${color},${value},"${label.replaceAll('"', '\\"')}",${area},${weight}`)
+        ].flat().join('\n')
+        const filename = `${title}_stratification.csv`
+        downloadCsv(csv, filename)
+    }
+    
+    importLegend() {
+        const {activator: {activatables: {legendImport}}} = this.props
+        legendImport.activate()
+    }
+}
+
+// Only add the Legend Import exception; let recipeFormPanel's default `_` flow through, so a clean panel
+// allows switching directly to other panels (allow-then-deactivate) while a dirty panel stays blocked.
+const additionalPolicy = () => ({
+    legendImport: 'allow'
+})
+
+export const Stratification = compose(
+    _Stratification,
+    recipeFormPanel({id: 'stratification', fields, mapRecipeToProps, additionalPolicy, modelToValues, valuesToModel}),
+    withActivators('legendImport')
+)
+
+Stratification.propTypes = {
+    recipeId: PropTypes.string
+}

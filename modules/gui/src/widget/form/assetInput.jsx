@@ -22,7 +22,7 @@ class _FormAssetInput extends React.Component {
     }
 
     render() {
-        const {className, input, label, labelButtons, buttons, placeholder, tooltip, autoFocus, busyMessage, disabled} = this.props
+        const {className, input, label, labelButtons, buttons, placeholder, tooltip, autoFocus, busyMessage, disabled, errorMessage} = this.props
         const {loading} = this.state
         return (
             <FormInput
@@ -37,6 +37,7 @@ class _FormAssetInput extends React.Component {
                 spellCheck={false}
                 busyMessage={(busyMessage || loading) && msg('widget.loading')}
                 disabled={disabled}
+                errorMessage={errorMessage}
             />
         )
     }
@@ -58,16 +59,18 @@ class _FormAssetInput extends React.Component {
     }
 
     loadAssetMetadata() {
-        const {addSubscription, onLoading} = this.props
+        const {addSubscription, onLoading, shouldLoad} = this.props
         addSubscription(
             this.asset$.pipe(
                 debounceTime(DEBOUNCE_TIME_MS),
-                tap(asset => {
+                switchMap(asset => {
+                    if (shouldLoad && !shouldLoad(asset)) {
+                        this.setState({loading: null})
+                        return EMPTY
+                    }
                     this.setState({loading: asset})
                     onLoading && onLoading(asset)
-                }),
-                switchMap(asset =>
-                    this.getMetadata$(asset).pipe(
+                    return this.getMetadata$(asset).pipe(
                         tap(() => {
                             this.setState({loading: null})
                         }),
@@ -78,7 +81,7 @@ class _FormAssetInput extends React.Component {
                         }),
                         map(metadata => ({asset, metadata}))
                     )
-                )
+                })
             ).subscribe(
                 ({asset, metadata}) => this.onMetadata({asset, metadata})
             )
@@ -131,6 +134,7 @@ FormAssetInput.propTypes = {
     buttons: PropTypes.any,
     className: PropTypes.any,
     disabled: PropTypes.any,
+    errorMessage: PropTypes.any,
     expectedType: PropTypes.any,
     label: PropTypes.any,
     labelButtons: PropTypes.any,
@@ -139,4 +143,5 @@ FormAssetInput.propTypes = {
     onError: PropTypes.func,
     onLoaded: PropTypes.func,
     onLoading: PropTypes.func,
+    shouldLoad: PropTypes.func,
 }

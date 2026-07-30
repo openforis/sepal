@@ -6,6 +6,7 @@ import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from '~/app/home/body/proce
 import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import format from '~/format'
 import {escapeRegExp, simplifyString, splitString} from '~/string'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -22,6 +23,7 @@ import {Shape} from '~/widget/shape'
 
 import {TaskDetails} from './taskDetails'
 import styles from './tasks.module.css'
+import {taskStatusDescription} from './taskStatusDescription'
 
 const getHighlightMatcher = memoizeOne(
     highlightValues => highlightValues.length
@@ -146,7 +148,7 @@ class _Tasks extends React.Component {
                     iconSize='xl'
                     iconVariant={iconVariant}
                     inlineComponents={[
-                        this.renderDuration(task),
+                        this.renderTaskMetadata(task),
                         this.renderStopButton(task),
                         this.renderCopyButton(task)
                     ]}
@@ -296,7 +298,6 @@ class _Tasks extends React.Component {
         return (
             <TaskDetails
                 taskId={selectedTask.id}
-                description={this.getDescription(selectedTask)}
                 onClose={this.closeTaskDetails}
             />
         )
@@ -354,7 +355,19 @@ class _Tasks extends React.Component {
         return [projectName, recipeName].join(PROJECT_RECIPE_SEPARATOR)
     }
 
-    renderDuration(task) {
+    // Right-side one-line row metadata: current localized status/progress for a running task, or the final
+    // duration for a terminal one. Long running-status text is truncated with ellipsis (see .taskMetadata in
+    // tasks.module.css); the full text is in Task Details.
+    renderTaskMetadata(task) {
+        const value = this.isRunning(task)
+            ? taskStatusDescription(task)
+            : this.getDurationLabel(task)
+        return value
+            ? <div key='metadata' className={styles.taskMetadata}>{value}</div>
+            : null
+    }
+
+    getDurationLabel(task) {
         if (!task.creationTime) {
             return null
         }
@@ -362,31 +375,7 @@ class _Tasks extends React.Component {
         const end = this.isRunning(task)
             ? new Date()
             : (task.updateTime ? new Date(task.updateTime) : new Date())
-        const minutes = Math.floor((end - start) / (1000 * 60))
-        const durationLabel = minutes < 1 ? '< 1m' : `${minutes}m`
-        return (
-            <Layout key='duration' type='horizontal-nowrap' spacing='none'>
-                <div className={styles.duration}>{`${msg('tasks.duration.label')}: ${durationLabel}`}</div>
-            </Layout>
-        )
-    }
-
-    getDescription(task) {
-        let description
-        try {
-            description = JSON.parse(task.statusDescription)
-        } catch(_error) {
-            description = task.statusDescription
-        }
-        if (typeof description === 'string') {
-            return description
-        } else if (description.messageKey) {
-            return msg(description.messageKey, description.messageArgs, description.defaultMessage)
-        } else if (description.defaultMessage) {
-            return description.defaultMessage
-        } else {
-            return msg('tasks.status.executing')
-        }
+        return format.duration(end - start)
     }
 
     componentDidUpdate(prevProps) {

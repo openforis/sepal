@@ -6,6 +6,10 @@
     width: 6rem;
 }
 
+.comparison {
+    width: 100%;
+}
+
 .range {
     flex-grow: 1;
 }
@@ -17,4 +21,9 @@
 
 .singleValueInput {
     flex-grow: 1;
+}
+
+.compactConstraint .range,
+.compactConstraint .singleValueInput {
+    width: 100%;
 }

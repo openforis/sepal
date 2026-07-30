@@ -1,4 +1,4 @@
-import {catchError, distinctUntilChanged, exhaustMap, interval, map, of, switchMap, takeWhile, tap, throwError} from 'rxjs'
+import {catchError, distinctUntilChanged, exhaustMap, map, of, switchMap, takeWhile, tap, throwError, timer} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
 import {getLogger} from '#sepal/log'
@@ -47,7 +47,10 @@ const task$ = (taskId, task, description) => {
         })
 
     const monitor$ = eeTaskId =>
-        interval(MONITORING_FREQUENCY).pipe(
+        // Poll immediately after startProcessing (timer(0, ...)) so the first EE status - "Waiting for
+        // Google Earth Engine..." / "...is exporting" - appears promptly instead of only after the first
+        // MONITORING_FREQUENCY interval (which left short exports with no status at all).
+        timer(0, MONITORING_FREQUENCY).pipe(
             exhaustMap(() => status$(eeTaskId)),
             switchMap(({state, error_message: error}) =>
                 (error || state === FAILED)

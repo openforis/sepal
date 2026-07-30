@@ -8,6 +8,7 @@ import {compose} from '~/compose'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {RemoveButton} from '~/widget/removeButton'
+import {Tooltip} from '~/widget/tooltip'
 
 import {CheckButton} from './checkButton'
 import styles from './crudItem.module.css'
@@ -79,14 +80,23 @@ class _CrudItem extends React.Component {
     }
 
     renderTitle() {
-        const {title, highlightTitle} = this.props
-        return title
+        const {title, highlightTitle, titleClassName, titleTooltip, titleTooltipDisabled, titleTooltipPlacement} = this.props
+        if (!title) {
+            return null
+        }
+        const titleElement = (
+            <div className={[styles.title, titleClassName].join(' ')}>
+                {this.renderHighlight(title, highlightTitle)}
+            </div>
+        )
+        // Opt-in full-title tooltip (e.g. for an ellipsized label). Default: no title tooltip, unchanged.
+        return titleTooltip
             ? (
-                <div className={styles.title}>
-                    {this.renderHighlight(title, highlightTitle)}
-                </div>
+                <Tooltip msg={titleTooltip} placement={titleTooltipPlacement} disabled={titleTooltipDisabled}>
+                    {titleElement}
+                </Tooltip>
             )
-            : null
+            : titleElement
     }
 
     renderDescription() {
@@ -311,6 +321,10 @@ CrudItem.propTypes = {
     selectTooltip: PropTypes.any,
     timestamp: PropTypes.any,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    titleClassName: PropTypes.string,
+    titleTooltip: PropTypes.any,
+    titleTooltipDisabled: PropTypes.any,
+    titleTooltipPlacement: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     unsafeRemove: PropTypes.any,
     onDuplicate: PropTypes.func,

@@ -275,8 +275,8 @@ class _MosaicRetrievePanel extends React.Component {
             <AssetDestination
                 type={assetType.value}
                 label={msg('process.retrieve.form.assetId.label')}
-                placeholder={msg('process.retrieve.form.assetId.tooltip')}
-                tooltip={msg('process.retrieve.form.assetIt.tooltip')}
+                placeholder={msg('process.retrieve.form.assetId.placeholder')}
+                tooltip={msg('process.retrieve.form.assetId.tooltip')}
                 assetInput={assetId}
                 strategyInput={strategy}
                 onValidityCheckChange={this.onDestinationValidityCheckChange}

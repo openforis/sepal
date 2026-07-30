@@ -44,7 +44,7 @@ class _ColorElement extends React.Component {
     }
 
     renderButton() {
-        const {className, tooltip, tooltipPlacement} = this.props
+        const {className, tooltip, tooltipPlacement, onClick} = this.props
         const {color} = this.state
         return (
             <Button
@@ -60,6 +60,7 @@ class _ColorElement extends React.Component {
                 tooltipClickTrigger={isMobile()}
                 tooltipDelay={0}
                 tooltipPlacement={tooltipPlacement}
+                tabIndex={onClick ? undefined : -1}
                 onClick={this.onClick}
             />
         )

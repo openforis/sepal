@@ -25,9 +25,16 @@
     overflow-y: auto;
 }
 
-.duration {
+/* Right-side one-line row metadata (running status/progress, or final duration for terminal tasks). Doesn't
+   capture pointer events, so row clicks and the inline stop/copy/remove buttons keep working. */
+.taskMetadata {
     pointer-events: none;
+    flex-shrink: 0;
+    max-width: 16rem;
+    text-align: right;
     font-size: small;
     color: gray;
-    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
