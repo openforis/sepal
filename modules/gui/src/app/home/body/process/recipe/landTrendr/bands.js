@@ -1,22 +1,27 @@
+import {msg} from '~/translate'
+
 const typeInt = {precision: 'int'}
 const typeFloat = {precision: 'float'}
 
 export const getAvailableBands = () => ({
-    yod: {dataType: typeInt},
-    mag: {dataType: typeFloat},
-    dur: {dataType: typeInt},
-    preval: {dataType: typeFloat},
-    postval: {dataType: typeFloat},
-    startRed: {dataType: typeInt},
-    startGreen: {dataType: typeInt},
-    startBlue: {dataType: typeInt},
-    endRed: {dataType: typeInt},
-    endGreen: {dataType: typeInt},
-    endBlue: {dataType: typeInt}
+    yod: {dataType: typeInt, label: msg('process.landTrendr.bands.yod')},
+    mag: {dataType: typeFloat, label: msg('process.landTrendr.bands.mag')},
+    dur: {dataType: typeInt, label: msg('process.landTrendr.bands.dur')},
+    preval: {dataType: typeFloat, label: msg('process.landTrendr.bands.preval')},
+    postval: {dataType: typeFloat, label: msg('process.landTrendr.bands.postval')},
+    startRed: {dataType: typeInt, label: msg('process.landTrendr.bands.startRed')},
+    startGreen: {dataType: typeInt, label: msg('process.landTrendr.bands.startGreen')},
+    startBlue: {dataType: typeInt, label: msg('process.landTrendr.bands.startBlue')},
+    endRed: {dataType: typeInt, label: msg('process.landTrendr.bands.endRed')},
+    endGreen: {dataType: typeInt, label: msg('process.landTrendr.bands.endGreen')},
+    endBlue: {dataType: typeInt, label: msg('process.landTrendr.bands.endBlue')}
 })
 
-export const getGroupedBandOptions = () => [
-    ['yod', 'mag', 'dur', 'preval', 'postval'],
-    ['startRed', 'startGreen', 'startBlue'],
-    ['endRed', 'endGreen', 'endBlue']
-].map(bands => bands.map(band => ({value: band, label: band})))
+export const getGroupedBandOptions = () => {
+    const availableBands = getAvailableBands()
+    return [
+        ['yod', 'mag', 'dur', 'preval', 'postval'],
+        ['startRed', 'startGreen', 'startBlue'],
+        ['endRed', 'endGreen', 'endBlue']
+    ].map(bands => bands.map(band => ({value: band, ...availableBands[band]})))
+}

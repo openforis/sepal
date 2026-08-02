@@ -29,19 +29,21 @@ class _Dates extends React.Component {
                     icon='calendar-alt'
                     title={msg('process.landTrendr.panel.dates.title')}/>
                 <Panel.Content>
-                    <Layout type='horizontal'>
-                        <Form.YearPicker
-                            label={msg('process.landTrendr.panel.dates.form.startYear.label')}
-                            placement='above'
-                            input={startYear}
-                            startYear='1984'
-                            endYear={moment().year()}/>
-                        <Form.YearPicker
-                            label={msg('process.landTrendr.panel.dates.form.endYear.label')}
-                            placement='above'
-                            input={endYear}
-                            startYear={startYear.value || 1984}
-                            endYear={moment().year()}/>
+                    <Layout>
+                        <Layout type='horizontal'>
+                            <Form.YearPicker
+                                label={msg('process.landTrendr.panel.dates.form.startYear.label')}
+                                placement='above'
+                                input={startYear}
+                                startYear='1984'
+                                endYear={moment().year()}/>
+                            <Form.YearPicker
+                                label={msg('process.landTrendr.panel.dates.form.endYear.label')}
+                                placement='above'
+                                input={endYear}
+                                startYear={startYear.value || 1984}
+                                endYear={moment().year()}/>
+                        </Layout>
                     </Layout>
                 </Panel.Content>
                 <Form.PanelButtons/>

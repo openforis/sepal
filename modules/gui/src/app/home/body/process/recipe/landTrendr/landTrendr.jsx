@@ -54,7 +54,7 @@ export default () => ({
         creationDescription: msg('process.landTrendr.description'),
         tabPlaceholder: msg('process.landTrendr.tabPlaceholder')
     },
-    tags: ['TIME_SERIES'],
+    tags: ['TIME_SERIES', 'CHANGE'],
     components: {
         recipe: LandTrendr
     },

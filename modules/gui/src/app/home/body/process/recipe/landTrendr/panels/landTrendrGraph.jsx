@@ -41,6 +41,11 @@ export class LandTrendrGraph extends React.Component {
                     }}
                     errorBars
                     sigma={1}
+                    axes={{
+                        x: {
+                            ticker: yearlyTicker
+                        }
+                    }}
                     showRangeSelector={!isMobile()}
                     rangeSelectorPlotFillColor={'#1B1B1C'}
                     rangeSelectorPlotFillGradientColor={'#1B1B1C'}
@@ -105,6 +110,23 @@ export class LandTrendrGraph extends React.Component {
             </div>
         )
     }
+}
+
+// Dygraph's default date ticker picks a granularity (yearly, quarterly, ...)
+// based on pixel width, which can place more than one tick per year - a
+// custom ticker sidesteps that entirely by placing exactly one tick per
+// calendar year, regardless of chart width.
+const yearlyTicker = (a, b, _pixels, _opts, _dygraph) => {
+    const startYear = new Date(a).getFullYear()
+    const endYear = new Date(b).getFullYear()
+    const ticks = []
+    for (let year = startYear; year <= endYear; year++) {
+        const v = new Date(year, 0, 1).getTime()
+        if (v >= a && v <= b) {
+            ticks.push({v, label: String(year)})
+        }
+    }
+    return ticks
 }
 
 LandTrendrGraph.propTypes = {
