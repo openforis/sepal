@@ -54,9 +54,9 @@ class _ChartPixel extends React.Component {
                     className={loading ? styles.loading : null}
                     scrollable={false}
                     noVerticalPadding>
-                    <div className={styles.form}>
+                    <form className={styles.form}>
                         {loading ? this.renderSpinner() : this.renderChart()}
-                    </div>
+                    </form>
                 </Panel.Content>
 
                 <Panel.Buttons>
