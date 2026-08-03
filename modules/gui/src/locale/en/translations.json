@@ -5569,6 +5569,7 @@
         "CHANGE_ALERTS": "Change Alerts",
         "BAYTS_HISTORICAL": "BAYTS Historical",
         "BAYTS_ALERTS": "BAYTS Alerts",
+        "PYEO_ALERTS": "PyEO Alerts",
         "CLASSIFICATION": "Classification",
         "UNSUPERVISED_CLASSIFICATION": "Unsupervised Classification",
         "REGRESSION": "Regression",
