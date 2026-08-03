@@ -5569,6 +5569,7 @@
         "CHANGE_ALERTS": "Modifier les alertes",
         "BAYTS_HISTORICAL": "",
         "BAYTS_ALERTS": "",
+        "PYEO_ALERTS": "",
         "CLASSIFICATION": "Classification",
         "UNSUPERVISED_CLASSIFICATION": "",
         "REGRESSION": "Régression",
