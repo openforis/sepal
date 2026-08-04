@@ -42,7 +42,8 @@ export const defaultModel = {
         pvalThreshold: 0.05,
         bestModelProportion: 0.75,
         minObservationsNeeded: 6,
-        changeDirection: 'GREATEST'
+        changeDirection: 'GREATEST',
+        minMagnitude: 0
     }
 }
 

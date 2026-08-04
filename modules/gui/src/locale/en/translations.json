@@ -5070,6 +5070,10 @@
                 "tooltip": "Report only the segment with the largest gain/recovery; pixels with no gain are masked out"
               }
             },
+            "minMagnitude": {
+              "label": "Min. magnitude",
+              "tooltip": "Minimum absolute change in the index value (on its native, e.g. ×10000, scale) required for a segment to be reported. Pixels whose greatest change falls below this are masked out entirely. 0 disables filtering."
+            },
             "maxSegments": {
               "label": "Max segments",
               "tooltip": "Maximum number of segments to fit onto the time series for each pixel"

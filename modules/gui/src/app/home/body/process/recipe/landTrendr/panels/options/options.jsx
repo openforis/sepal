@@ -12,6 +12,10 @@ import styles from './options.module.css'
 const fields = {
     changeDirection: new Form.Field()
         .notBlank(),
+    minMagnitude: new Form.Field()
+        .number()
+        .min(0)
+        .notBlank(),
     maxSegments: new Form.Field()
         .int()
         .greaterThan(0)
@@ -51,8 +55,8 @@ class _Options extends React.Component {
     render() {
         const {
             inputs: {
-                changeDirection, maxSegments, spikeThreshold, vertexCountOvershoot, preventOneYearRecovery,
-                recoveryThreshold, pvalThreshold, bestModelProportion, minObservationsNeeded
+                changeDirection, minMagnitude, maxSegments, spikeThreshold, vertexCountOvershoot,
+                preventOneYearRecovery, recoveryThreshold, pvalThreshold, bestModelProportion, minObservationsNeeded
             }
         } = this.props
         return (
@@ -86,6 +90,12 @@ class _Options extends React.Component {
                                     tooltip: msg('process.landTrendr.panel.options.form.changeDirection.GAIN.tooltip')
                                 }
                             ]}
+                        />
+                        <Form.Input
+                            label={msg('process.landTrendr.panel.options.form.minMagnitude.label')}
+                            tooltip={msg('process.landTrendr.panel.options.form.minMagnitude.tooltip')}
+                            input={minMagnitude}
+                            type='number'
                         />
                         <Form.Input
                             label={msg('process.landTrendr.panel.options.form.maxSegments.label')}
@@ -149,6 +159,7 @@ class _Options extends React.Component {
 
 const valuesToModel = values => ({
     changeDirection: values.changeDirection,
+    minMagnitude: parseFloat(values.minMagnitude),
     maxSegments: parseInt(values.maxSegments),
     spikeThreshold: parseFloat(values.spikeThreshold),
     vertexCountOvershoot: parseInt(values.vertexCountOvershoot),
