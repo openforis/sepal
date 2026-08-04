@@ -31,7 +31,15 @@ export const defaultModel = {
     },
     options: {
         ...defaultOpticalModel.compositeOptions,
-        corrections: ['SR']
+        corrections: ['SR'],
+        // defaultOpticalModel.compositeOptions has no cloudBuffer (only the
+        // unrelated cloudBuffering) - CCDC gets it for free by also
+        // spreading defaultPlanetModel.options, which LandTrendr doesn't
+        // need. Without it, compositeOptions.jsx's componentDidMount sees
+        // cloudBuffer as undefined and calls .set(0) right after mount,
+        // which marks the PRC form dirty (showing Cancel/Apply) even
+        // though nothing was actually changed.
+        cloudBuffer: 0
     },
     landTrendrOptions: {
         maxSegments: 6,
