@@ -34,14 +34,17 @@ const visualizations = ({startYear, endYear}) => [
     normalize({
         type: 'continuous',
         bands: ['preval'],
-        min: [0],
+        // Full ±10000 range: index bands are on the ×10000 int16 scale, and
+        // several selectable indices (nbr, ndwi, ndbi, ui, ...) legitimately
+        // run negative, e.g. NBR over burn scars, water, or bare soil.
+        min: [-10000],
         max: [10000],
         palette: '#EDF8B1, #7FCDBB, #2C7FB8'
     }),
     normalize({
         type: 'continuous',
         bands: ['postval'],
-        min: [0],
+        min: [-10000],
         max: [10000],
         palette: '#EDF8B1, #7FCDBB, #2C7FB8'
     }),

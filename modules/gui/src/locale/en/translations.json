@@ -5696,6 +5696,7 @@
         "TIME_SERIES": "Time Series",
         "CCDC": "CCDC",
         "CCDC_SLICE": "CCDC Slice",
+        "LANDTRENDR": "LandTrendr",
         "CHANGE_ALERTS": "Change Alerts",
         "BAYTS_HISTORICAL": "BAYTS Historical",
         "BAYTS_ALERTS": "BAYTS Alerts",

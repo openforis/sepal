@@ -3,7 +3,6 @@ import React from 'react'
 
 import {getIndexes} from '~/app/home/body/process/recipe/opticalMosaic/indexes'
 import {getDataSetOptions as opticalDataSetOptions} from '~/app/home/body/process/recipe/opticalMosaic/sources'
-import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {toSources} from '~/sources'
@@ -103,10 +102,7 @@ class _Sources extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {cloudPercentageThreshold, dataSets, index}} = this.props
-        if (_.isNil(cloudPercentageThreshold.value)) {
-            cloudPercentageThreshold.set(75)
-        }
+        const {inputs: {dataSets, index}} = this.props
         this.ensureValidIndex(dataSets.value, index)
     }
 
@@ -140,8 +136,7 @@ const modelToValues = ({dataSets, cloudPercentageThreshold, index}) => ({
 
 export const Sources = compose(
     _Sources,
-    recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel}),
-    recipeAccess()
+    recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel})
 )
 
 Sources.propTypes = {}

@@ -14,16 +14,37 @@ const fields = {
         .notBlank(),
     maxSegments: new Form.Field()
         .int()
-        .greaterThan(0),
-    spikeThreshold: new Form.Field(),
+        .greaterThan(0)
+        .notBlank(),
+    spikeThreshold: new Form.Field()
+        .number()
+        .min(0)
+        .max(1)
+        .notBlank(),
     vertexCountOvershoot: new Form.Field()
-        .int(),
+        .int()
+        .min(0)
+        .notBlank(),
     preventOneYearRecovery: new Form.Field(),
-    recoveryThreshold: new Form.Field(),
-    pvalThreshold: new Form.Field(),
-    bestModelProportion: new Form.Field(),
+    recoveryThreshold: new Form.Field()
+        .number()
+        .min(0)
+        .max(1)
+        .notBlank(),
+    pvalThreshold: new Form.Field()
+        .number()
+        .min(0)
+        .max(1)
+        .notBlank(),
+    bestModelProportion: new Form.Field()
+        .number()
+        .min(0)
+        .max(1)
+        .notBlank(),
     minObservationsNeeded: new Form.Field()
         .int()
+        .min(1)
+        .notBlank()
 }
 
 class _Options extends React.Component {
