@@ -13,6 +13,10 @@ import {ListItem} from '~/widget/listItem'
 
 import {BandSetSpec} from './bandSetSpec'
 
+// Combo builds each row's React key via [..., option.value, ...].join('|'),
+// which throws on a Symbol - a string sentinel is required here.
+const SELECT_ALL = '#SELECT_ALL#'
+
 export class ImageForm extends Component {
     state = {loading: false}
     render() {
@@ -84,6 +88,9 @@ export class ImageForm extends Component {
         const options = BandSetSpec
             .options(bandSetSpec, bands.value)
             .filter(({value}) => !bandSetSpec.included.includes(value))
+        const comboOptions = options.length
+            ? [{value: SELECT_ALL, label: msg('process.classification.panel.inputImagery.bandSetSpec.addAllBands.label')}, ...options]
+            : options
         return (
             <ButtonPopup
                 shape='circle'
@@ -98,14 +105,18 @@ export class ImageForm extends Component {
                     <Combo
                         alignment='left'
                         placeholder={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.placeholder')}
-                        options={options}
+                        options={comboOptions}
                         stayOpenOnSelect
                         autoOpen
                         autoFocus
                         allowClear
                         onCancel={onBlur}
                         onChange={({value}) => {
-                            this.addSelection(bandSetSpec, value)
+                            if (value === SELECT_ALL) {
+                                this.addAllSelection(bandSetSpec, options)
+                            } else {
+                                this.addSelection(bandSetSpec, value)
+                            }
                         }}
                     />
                 )}
@@ -126,6 +137,13 @@ export class ImageForm extends Component {
     addSelection(bandSetSpec, value) {
         const {inputs: {bandSetSpecs}} = this.props
         const updated = mutate(bandSetSpecs.value, [{id: bandSetSpec.id}, 'included']).push(value)
+        bandSetSpecs.set(updated)
+    }
+
+    addAllSelection(bandSetSpec, options) {
+        const {inputs: {bandSetSpecs}} = this.props
+        const updated = mutate(bandSetSpecs.value, [{id: bandSetSpec.id}, 'included'])
+            .set([...bandSetSpec.included, ...options.map(({value}) => value)])
         bandSetSpecs.set(updated)
     }
 
