@@ -1,10 +1,10 @@
 import {isStratificationSkipped} from '#sepal/ee/samplingDesign/stratificationSkip'
 import {ClientException} from '#sepal/exception'
+import {allocationStrataMismatch, belowConfiguredMinimum, belowStatisticalMinimum} from '#sepal/recipe/samplingDesign/allocationValidation'
 import {
     effectiveMinSamplesPerStratum,
     isManualAllocation,
     isValidMinSamplesPerStratum,
-    isValidStratumSampleSize,
     MIN_SAMPLES_PER_STRATUM,
     usesConfiguredMinSamplesPerStratum
 } from '#sepal/recipe/samplingDesign/minSamples'
@@ -40,15 +40,25 @@ export const samplingDesignPreflightError = recipe => {
                 floor: MIN_SAMPLES_PER_STRATUM})
     }
 
-    if (!allocation.length) {
+    // A design needs both configured strata (a stratified design's strata, or the unstratified synthetic
+    // stratum) and an allocation. Emptiness is handled here so allocationStrataMismatch never has to.
+    if (!(stratification?.strata || []).length || !allocation.length) {
         return clientException('noStrata',
             'The sampling design has no strata to sample. Open Stratification and Sample Allocation to define the design.',
             {})
     }
 
+    // The allocation must cover the configured strata exactly - a missing, duplicate or unexpected stratum would
+    // silently sample the wrong design. Rejected here so a non-GUI recipe cannot bypass the GUI membership check.
+    if (allocationStrataMismatch(recipe.model)) {
+        return clientException('strataMismatch',
+            'The sample allocation does not match the stratification (missing, duplicate or unexpected strata). Recompute the allocation in Sample Allocation.',
+            {})
+    }
+
     // The hard two-sample floor, per included stratum. An unstratified design is a single synthetic stratum,
     // so this is its total sample size.
-    const belowFloor = allocation.filter(({sampleSize}) => !isValidStratumSampleSize(sampleSize))
+    const belowFloor = belowStatisticalMinimum(allocation)
     if (belowFloor.length) {
         if (unstratified) {
             return clientException('unstratifiedBelowMinimum',
@@ -65,7 +75,7 @@ export const samplingDesignPreflightError = recipe => {
     }
 
     // Automatic allocations must also satisfy their own configured minimum.
-    const belowConfigured = allocation.filter(({sampleSize}) => Number(sampleSize) < effectiveMinimum)
+    const belowConfigured = belowConfiguredMinimum(allocation, effectiveMinimum)
     if (belowConfigured.length) {
         const messages = {
             samples: 'Min samples/stratum is {minimum}, but {strata} requests fewer. In Sample Allocation, increase Total sample size, or lower Min samples/stratum to {value} or less (never below {floor}).',

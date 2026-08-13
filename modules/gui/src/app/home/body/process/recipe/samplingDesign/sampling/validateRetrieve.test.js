@@ -148,35 +148,6 @@ it('reports proportionsRequired for sample-size estimation when proportions are 
     expect(codes(model)).toContain('proportionsRequired')
 })
 
-it('rejects a row with zero samples (backend divides by the sample size)', () => {
-    const model = {
-        ...unstratifiedValid,
-        sampleAllocation: {...unstratifiedValid.sampleAllocation, allocation: [{stratum: 1, area: 1.2e9, sampleSize: 0}]}
-    }
-    expect(codes(model)).toContain('sampleSizeInvalid')
-})
-
-it('rejects a stratified design where one stratum has zero samples and another is positive', () => {
-    const model = {
-        ...stratifiedValid,
-        sampleAllocation: {
-            ...stratifiedValid.sampleAllocation,
-            allocation: [
-                {stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 0.3, proportion: 0.48, sampleSize: 0},
-                {stratum: 2, label: 'Non-forest', color: '#a00', area: 7e8, weight: 0.7, proportion: 0.08, sampleSize: 70}
-            ]
-        }
-    }
-    expect(validateRetrieve(model)).not.toEqual([])
-    expect(codes(model)).toContain('sampleSizeInvalid')
-})
-
-it('reports a single section:code at most once', () => {
-    const result = validateRetrieve({stratification: {}, proportions: {}, sampleAllocation: {}})
-    const keys = result.map(({section, code}) => `${section}:${code}`)
-    expect(keys.length).toBe(new Set(keys).size)
-})
-
 const withArrangement = sampleArrangement => ({...stratifiedValid, sampleArrangement})
 
 it('requires a seed for RANDOM arrangement', () => {
@@ -325,5 +296,33 @@ describe('allocation strategies that do not need anticipated proportions', () =>
         for (const strategy of ['OPTIMAL', 'POWER']) {
             expect(withStrategy(strategy)).toContain('proportionsRequired')
         }
+    })
+})
+
+// Integration witnesses that validateRetrieve wires the shared allocation rules (whose missing/duplicate/
+// unexpected and floor matrix is owned by allocationValidation.test.js) into the persisted-model boundary, with
+// mode-specific configured-minimum guidance.
+describe('shared allocation rules at the retrieve boundary', () => {
+    const withAllocation = (allocation, extra = {}) => ({
+        ...stratifiedValid,
+        sampleAllocation: {...stratifiedValid.sampleAllocation, ...extra, allocation}
+    })
+    const rows = stratifiedValid.sampleAllocation.allocation
+    const belowMin = () => [{...rows[0], sampleSize: 5}, rows[1]]
+
+    it('rejects a row below the configured minimum with the Samples-mode code', () => {
+        expect(codes(withAllocation(belowMin(), {minSamplesPerStratum: 10}))).toContain('belowConfiguredMinimum.samples')
+    })
+
+    it('rejects a row below the configured minimum with the Error-mode code', () => {
+        expect(codes(withAllocation(belowMin(), {minSamplesPerStratum: 10, estimateSampleSize: true}))).toContain('belowConfiguredMinimum.error')
+    })
+
+    it('does not emit a configured-minimum error for EQUAL allocation', () => {
+        expect(codes(withAllocation(rows, {allocationStrategy: 'EQUAL', minSamplesPerStratum: 10})).filter(c => c.startsWith('belowConfiguredMinimum'))).toEqual([])
+    })
+
+    it('rejects an allocation that does not cover the configured strata one-to-one', () => {
+        expect(codes(withAllocation([...rows, {stratum: 3, area: 1e8, weight: 0, sampleSize: 5}]))).toContain('strataMismatch')
     })
 })
