@@ -48,15 +48,14 @@ describe('toProportions', () => {
         expect(result.map(({proportion}) => proportion)).toEqual([0, 0])
     })
 
-    it('scales probabilities to a finite proportion when probabilities are present', () => {
+    it('scales probabilities to exact proportions when probabilities are present', () => {
         const result = toProportions({
             percentage: false,
             targetOverallProportion: 30,
             strata,
             probabilityPerStratum: [{stratum: 1, probability: 0.4}, {stratum: 2, probability: 0.2}]
         })
-        expect(result.every(({proportion}) => Number.isFinite(proportion))).toBe(true)
-        expect(result.some(({proportion}) => proportion > 0)).toBe(true)
+        expect(result.map(({proportion}) => proportion)).toEqual([46.15, 23.08])
     })
 })
 

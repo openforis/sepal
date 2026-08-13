@@ -14,6 +14,11 @@ it('defers allocation for automatic fixed-sample mode until a valid sample size 
     expect(shouldDeferFixedSampleSizeAllocation({
         manual: [],
         estimateSampleSize: false,
+        sampleSize: '1.5'
+    })).toBe(true)
+    expect(shouldDeferFixedSampleSizeAllocation({
+        manual: [],
+        estimateSampleSize: false,
         sampleSize: '100'
     })).toBe(false)
 })

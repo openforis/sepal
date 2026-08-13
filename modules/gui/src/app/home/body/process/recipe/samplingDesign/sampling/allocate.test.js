@@ -89,6 +89,20 @@ it('power allocation of 100 samples between two stratums with weight 0.1 and 0.9
     ])
 })
 
+it('balanced allocation of 100 samples between two stratums with weight 0.1 and 0.9 gives sample size of 30 and 70', () => {
+    expect(allocate({
+        sampleSize: 100,
+        strategy: 'BALANCED',
+        strata: [
+            {stratum: 1, weight: 0.1},
+            {stratum: 2, weight: 0.9},
+        ]
+    })).toMatchObject([
+        {stratum: 1, weight: 0.1, sampleSize: 30},
+        {stratum: 2, weight: 0.9, sampleSize: 70},
+    ])
+})
+
 it('min samples of 20 with proportional allocation of 100 samples between two stratums with weight 0.1 and 0.9 gives sample size of 20 and 80', () => {
     expect(allocate({
         sampleSize: 100,

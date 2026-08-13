@@ -1,18 +1,6 @@
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, it} from 'vitest'
 
-vi.mock('~/translate', () => ({msg: id => id}))
-
-const {includeCrs, includeMinDistance, includeSeed, isSkipped} = await import('./arrangementApplicability')
-
-describe('isSkipped', () => {
-    it('is true for boolean-true and non-empty-array skip, false otherwise', () => {
-        expect(isSkipped(true)).toBe(true)
-        expect(isSkipped([true])).toBe(true)
-        expect(isSkipped(false)).toBe(false)
-        expect(isSkipped([])).toBe(false)
-        expect(isSkipped(undefined)).toBe(false)
-    })
-})
+import {includeCrs, includeMinDistance, includeSeed} from './arrangementApplicability'
 
 describe('includeSeed', () => {
     it('shows seed for random sampling, systematic EXACT, and SEEDED grid start', () => {
