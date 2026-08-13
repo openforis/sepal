@@ -26,7 +26,7 @@ const featureCollection = jest.fn(id => {
 })
 const createParentFolder$ = jest.fn(() => of())
 const deleteAssetRecursive$ = jest.fn(() => of())
-const renameAsset$ = jest.fn(() => of('renamed'))
+const renameAsset$ = jest.fn(() => of(undefined))
 const deleteAsset$ = jest.fn(() => of('deleted'))
 const ee = {FeatureCollection: featureCollection, createParentFolder$, deleteAssetRecursive$, renameAsset$, deleteAsset$}
 
@@ -110,6 +110,11 @@ describe('stratified Random export (sparse rank-based)', () => {
             await run({skip: false, strategy: 'create'})
             expect(renameAsset$).toHaveBeenCalledWith('users/x/out_tmp_1_selected', 'users/x/out')
             expect(createParentFolder$).toHaveBeenCalledWith('users/x/out', 1)
+        })
+
+        it('does not emit the internal rename result as task progress', async () => {
+            const emissions = await run({skip: false, strategy: 'create'})
+            expect(emissions).not.toContain(undefined)
         })
 
         it('does not delete the destination for a create', async () => {

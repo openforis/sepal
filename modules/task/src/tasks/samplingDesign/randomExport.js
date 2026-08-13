@@ -243,7 +243,8 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
                 : EMPTY,
             ee.renameAsset$(selectedAssetId, assetId).pipe(
                 // The selected path no longer exists after a successful rename; drop it so cleanup skips it.
-                tap({complete: () => tempAssetIds.delete(selectedAssetId)})
+                tap({complete: () => tempAssetIds.delete(selectedAssetId)}),
+                swallow()
             )
         )
     }
