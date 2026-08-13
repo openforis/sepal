@@ -5018,7 +5018,7 @@
         "invalid.belowConfiguredMinimum.samples": "A stratum is allocated fewer than the configured Min samples/stratum. In Sample Allocation, increase the total sample size, or lower Min samples/stratum.",
         "invalid.belowConfiguredMinimum.error": "A stratum is allocated fewer than the configured Min samples/stratum. In Sample Allocation, decrease Target margin of error to calculate a larger total sample size, or lower Min samples/stratum.",
         "invalid.strataMismatch": "The sample allocation does not match the strata. Recompute the allocation in Sample Allocation.",
-        "invalid.seedMissing": "A seed is required for this arrangement. Enter a whole-number seed in Sample Arrangement.",
+        "invalid.seedInvalid": "The seed must be a whole number from 1 to 9007199254740991. Set it in Sample Arrangement.",
         "invalid.minDistanceBelowGrid": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.",
         "capability": {
           "title": "This design cannot be retrieved yet.",
@@ -5287,16 +5287,6 @@
               "placeholder": "Min samples...",
               "tooltip": "Require Proportional, Balanced, Optimal, or Power allocation to assign at least this many samples to each stratum. The minimum is 2. Increasing it redistributes a fixed total or can increase a total calculated from Target margin of error."
             },
-            "relativeMarginOfError": {
-              "label": "Margin of error",
-              "tooltip": "Specify if the margin of error is relative (to area of reporting category) or an absolute area",
-              "false": {
-                "label": "Absolute"
-              },
-              "true": {
-                "label": "Relative"
-              }
-            },
             "allocationStrategy": {
               "label": "Allocation strategy",
               "tooltip": "Specify how the samples should be distributed among the strata",
@@ -5335,7 +5325,6 @@
               "label": "Allocation",
               "tooBig": "Too many samples are being allocated. Reduce Total sample size or, when using Target margin of error, increase it.",
               "table": {
-                "marginOfError": "Margin of error (ha)",
                 "relativeMarginOfError": "Relative margin of error",
                 "samples": "Sample size",
                 "samplesTooltip": "Number of samples allocated to this stratum.",
@@ -5404,7 +5393,8 @@
             "seed": {
               "label": "Seed",
               "placeholder": "Seed...",
-              "tooltip": "Use the same seed and settings to reproduce the same random choice or randomized grid start."
+              "tooltip": "Use the same seed and settings to reproduce the same random choice or randomized grid start.",
+              "invalid": "Enter a whole number from 1 to 9007199254740991."
             }
           },
           "title": "Sample Arrangement",
@@ -5637,6 +5627,7 @@
         "invalidMinimum": "Minimum samples per stratum is {value}. It must be a whole number of at least {floor}.",
         "noStrata": "The sampling design has no strata to sample. Open Stratification and Sample Allocation to define the design.",
         "strataMismatch": "The sample allocation does not match the stratification (missing, duplicate or unexpected strata). Recompute the allocation in Sample Allocation.",
+        "seedInvalid": "The seed must be a whole number from 1 to 9007199254740991. Set it in Sample Arrangement.",
         "belowStatisticalMinimum": {
           "samples": "Every stratum must be allocated at least {floor} samples, but {strata} requests fewer. In Sample Allocation, increase Total sample size until every affected stratum reaches at least {floor}.",
           "error": "Every stratum must be allocated at least {floor} samples, but {strata} requests fewer. In Sample Allocation, decrease Target margin of error to calculate a larger total sample size.",

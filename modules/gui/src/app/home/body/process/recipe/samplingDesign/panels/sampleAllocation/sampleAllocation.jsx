@@ -56,7 +56,6 @@ const fields = {
         .notBlank()
         .greaterThan(0)
         .number(),
-    relativeMarginOfError: new Form.Field(),
     allocationStrategy: new Form.Field(),
     minSamplesPerStratum: new Form.Field()
         .skip((_minSamplesPerStratum, {manual, allocationStrategy}) => !usesConfiguredMinSamplesPerStratum({allocationStrategy, manual}))
@@ -106,7 +105,7 @@ const allOutcomesFinite = ({manual, estimateSampleSize, allocation, sampleSize, 
 }
 
 const constraints = {
-    noNaN: new Form.Constraint(['manual', 'estimateSampleSize', 'sampleSize', 'marginOfError', 'relativeMarginOfError', 'allocationStrategy', 'allocation'])
+    noNaN: new Form.Constraint(['manual', 'estimateSampleSize', 'sampleSize', 'marginOfError', 'allocationStrategy', 'allocation'])
         .predicate(allOutcomesFinite,
             'process.samplingDesign.panel.sampleAllocation.form.allocation.tooBig'
         ),
@@ -338,7 +337,7 @@ class _SampleAllocation extends React.Component {
     }
 
     renderAllocation() {
-        const {noProportions, inputs: {allocation, marginOfError, relativeMarginOfError}} = this.props
+        const {noProportions, inputs: {allocation, marginOfError}} = this.props
         const sampleSize = allocation.value
             ? _.sum(allocation.value.map(({sampleSize}) => parseInt(sampleSize)))
             : 0
@@ -350,7 +349,6 @@ class _SampleAllocation extends React.Component {
                         allocation={allocation}
                         sampleSize={sampleSize}
                         marginOfError={marginOfError.value}
-                        relativeMarginOfError={relativeMarginOfError.value}
                         manual={this.isManual()}
                         noProportions={noProportions}
                         onChange={() => setImmediate(this.updateMarginOfError)}
@@ -365,7 +363,7 @@ class _SampleAllocation extends React.Component {
     }
 
     componentDidMount() {
-        const {strata, noProportions, inputs: {requiresUpdate, manual, estimateSampleSize, confidenceLevel, marginOfError, relativeMarginOfError, minSamplesPerStratum, allocationStrategy, powerTuningConstant, allocation}} = this.props
+        const {strata, noProportions, inputs: {requiresUpdate, manual, estimateSampleSize, confidenceLevel, marginOfError, minSamplesPerStratum, allocationStrategy, powerTuningConstant, allocation}} = this.props
         requiresUpdate.set(false)
         if (strata.length === 1) {
             manual.set([true])
@@ -386,10 +384,6 @@ class _SampleAllocation extends React.Component {
             marginOfError.set(null)
         } else {
             marginOfError.value || marginOfError.set(50)
-        }
-        // Default to relative only when unset; a saved explicit `false` (absolute) must be preserved.
-        if (relativeMarginOfError.value === '' || relativeMarginOfError.value == null) {
-            relativeMarginOfError.set(true)
         }
         // With proportions, variance-aware OPTIMAL is the sensible default; without, only the
         // proportion-free strategies are valid.
@@ -434,7 +428,7 @@ class _SampleAllocation extends React.Component {
     }
 
     updateMarginOfError() {
-        const {inputs: {allocation, marginOfError, relativeMarginOfError, confidenceLevel}} = this.props
+        const {inputs: {allocation, marginOfError, confidenceLevel}} = this.props
         if (!this.hasProportions()) {
             // No proportions: there is no margin of error to derive (rows carry no `proportion`). Clear it
             // so it neither displays nor affects validity, and never call calculateBounds here.
@@ -445,13 +439,12 @@ class _SampleAllocation extends React.Component {
             confidenceLevel: confidenceLevel.value / 100,
             allocation: allocation.value.map(entry => ({...entry, sampleSize: parseInt(entry.sampleSize)}))
         })
-        const calculatedMarginOfError = boundsToMarginOfError({bounds, relative: relativeMarginOfError.value})
-        const updatedMarginOfError = relativeMarginOfError.value ? calculatedMarginOfError * 100 : calculatedMarginOfError
-        marginOfError.set(updatedMarginOfError)
+        // The relative margin is a fraction of the overall proportion; display it as a percentage.
+        marginOfError.set(boundsToMarginOfError({bounds}) * 100)
     }
         
     allocate() {
-        const {inputs: {estimateSampleSize, sampleSize, marginOfError, relativeMarginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant, allocation}} = this.props
+        const {inputs: {estimateSampleSize, sampleSize, marginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant, allocation}} = this.props
         if (this.isManual()) {
             return
         }
@@ -473,8 +466,8 @@ class _SampleAllocation extends React.Component {
         }
         if (estimateSampleSize.value && hasProportions) {
             const calculatedSampleSize = calculateSampleSize({
-                marginOfError: relativeMarginOfError.value ? parseFloat(marginOfError.value) / 100 : parseFloat(marginOfError.value),
-                relativeMarginOfError: relativeMarginOfError.value,
+                // The panel percentage is a relative margin; the solver takes it as a fraction (10% -> 0.10).
+                marginOfError: parseFloat(marginOfError.value) / 100,
                 strategy: allocationStrategy.value,
                 minSamplesPerStratum: minSamples,
                 strata,
@@ -497,15 +490,14 @@ class _SampleAllocation extends React.Component {
             } else if (hasProportions) {
                 const calculatedMarginOfError = calculateMarginOfError({
                     sampleSize: parseInt(sampleSize.value),
-                    relativeMarginOfError: relativeMarginOfError.value,
                     confidenceLevel: parseFloat(confidenceLevel.value) / 100,
                     strategy: allocationStrategy.value,
                     minSamplesPerStratum: minSamples,
                     strata,
                     tuningConstant: parseFloat(powerTuningConstant.value)
                 })
-                const updatedMarginOfError = relativeMarginOfError.value ? calculatedMarginOfError * 100 : calculatedMarginOfError
-                marginOfError.set(updatedMarginOfError)
+                // Relative margin shown as a percentage.
+                marginOfError.set(calculatedMarginOfError * 100)
                 updateAllocation(sampleSize.value)
             } else {
                 marginOfError.set(null)
@@ -536,14 +528,14 @@ class _SampleAllocation extends React.Component {
 }
 
 const allocateDeps = props => {
-    const {inputs: {estimateSampleSize, sampleSize, marginOfError, relativeMarginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant}} = props
-    return [estimateSampleSize?.value ? marginOfError : sampleSize, relativeMarginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant]
+    const {inputs: {estimateSampleSize, sampleSize, marginOfError, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant}} = props
+    return [estimateSampleSize?.value ? marginOfError : sampleSize, confidenceLevel, allocationStrategy, minSamplesPerStratum, powerTuningConstant]
         .map(input => input?.value)
 }
 
-const valuesToModel = values => {
-    return values
-}
+// Drop any stale relativeMarginOfError (an unreleased absolute/relative toggle) so the panel writes the
+// canonical model; margins are always relative.
+const valuesToModel = ({relativeMarginOfError: _relativeMarginOfError, ...values}) => values
 
 const modelToValues = model => {
     return model

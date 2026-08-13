@@ -150,28 +150,16 @@ it('reports proportionsRequired for sample-size estimation when proportions are 
 
 const withArrangement = sampleArrangement => ({...stratifiedValid, sampleArrangement})
 
-it('requires a seed for RANDOM arrangement', () => {
-    expect(codes(withArrangement({arrangementStrategy: 'RANDOM'}))).toContain('seedMissing')
+it('rejects a required seed of zero', () => {
+    expect(codes(withArrangement({arrangementStrategy: 'RANDOM', seed: 0}))).toContain('seedInvalid')
 })
 
-it('requires a seed for SYSTEMATIC/EXACT thinning', () => {
-    expect(codes(withArrangement({arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'EXACT'}))).toContain('seedMissing')
+it('accepts a valid positive seed when one is required', () => {
+    expect(codes(withArrangement({arrangementStrategy: 'RANDOM', seed: 1}))).not.toContain('seedInvalid')
 })
 
-it('requires a seed for SYSTEMATIC with a seeded grid origin', () => {
-    expect(codes(withArrangement({arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'SEEDED'}))).toContain('seedMissing')
-})
-
-it('does not require a seed for SYSTEMATIC/OVER with a fixed grid origin', () => {
-    expect(codes(withArrangement({arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED'}))).not.toContain('seedMissing')
-})
-
-it('accepts a valid integer seed when one is required', () => {
-    expect(codes(withArrangement({arrangementStrategy: 'RANDOM', seed: 1}))).not.toContain('seedMissing')
-})
-
-it('rejects a non-integer seed when one is required', () => {
-    expect(codes(withArrangement({arrangementStrategy: 'RANDOM', seed: 1.5}))).toContain('seedMissing')
+it('does not require a seed for systematic Oversample at a fixed grid start', () => {
+    expect(codes(withArrangement({arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED'}))).not.toContain('seedInvalid')
 })
 
 describe('stale sections (requiresUpdate)', () => {

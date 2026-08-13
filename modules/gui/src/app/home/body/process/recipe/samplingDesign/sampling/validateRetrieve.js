@@ -1,6 +1,7 @@
 import {allocationStrataMismatch, belowConfiguredMinimum} from '#sepal/recipe/samplingDesign/allocationValidation'
 import {effectiveMinSamplesPerStratum, isValidMinSamplesPerStratum, isValidStratumSampleSize, usesConfiguredMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
 import {formatDistance, gridPixelSize, isValidMinDistanceForGrid, requiredMinDistance} from '#sepal/recipe/samplingDesign/samplingGrid'
+import {isValidSamplingSeed, requiresSamplingSeed} from '#sepal/recipe/samplingDesign/samplingSeed'
 import {isStratificationSkipped} from '#sepal/recipe/samplingDesign/stratificationSkip'
 
 import {toTaskAllocation} from './taskAllocation'
@@ -18,10 +19,6 @@ const isPositiveInteger = value =>
 
 const hasFiniteArea = value =>
     value != null && value !== '' && Number.isFinite(Number(value)) && Number(value) > 0
-
-// Matches the panel's seed field: a non-negative integer.
-const isNonNegativeInteger = value =>
-    value != null && value !== '' && /^\d+$/.test(String(value))
 
 // Sections whose persisted `requiresUpdate` flag means their computed output is stale relative to upstream
 // edits. Checked first so a stale section reports a clear "update this first" instead of a downstream
@@ -94,13 +91,11 @@ export const validateRetrieve = model => {
         add('sampleAllocation', 'strataMismatch')
     }
 
-    // Seed drives random draws, EXACT thinning, and the SEEDED systematic grid offset - require it there.
+    // Seed drives random draws, EXACT thinning, and the SEEDED systematic grid offset - require a positive
+    // whole number there.
     const arrangement = model?.sampleArrangement || {}
-    const seedRequired = arrangement.arrangementStrategy === 'RANDOM'
-        || arrangement.sampleSizeStrategy === 'EXACT'
-        || (arrangement.arrangementStrategy === 'SYSTEMATIC' && arrangement.gridOrigin === 'SEEDED')
-    if (seedRequired && !isNonNegativeInteger(arrangement.seed)) {
-        add('sampleArrangement', 'seedMissing')
+    if (requiresSamplingSeed(arrangement) && !isValidSamplingSeed(arrangement.seed)) {
+        add('sampleArrangement', 'seedInvalid')
     }
 
     // A stratified systematic lattice sits on the stratification grid, so samples can never be closer than two

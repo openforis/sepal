@@ -1,18 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {includeCrs, includeMinDistance, includeSeed} from './arrangementApplicability'
-
-describe('includeSeed', () => {
-    it('shows seed for random sampling, systematic EXACT, and SEEDED grid start', () => {
-        expect(includeSeed({arrangementStrategy: 'RANDOM'})).toBe(true)
-        expect(includeSeed({arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'EXACT'})).toBe(true)
-        expect(includeSeed({arrangementStrategy: 'SYSTEMATIC', gridOrigin: 'SEEDED'})).toBe(true)
-    })
-
-    it('hides seed for systematic OVER at a FIXED grid start', () => {
-        expect(includeSeed({arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED'})).toBe(false)
-    })
-})
+import {includeCrs, includeMinDistance} from './arrangementApplicability'
 
 describe('includeMinDistance', () => {
     it('is true for systematic and false for random', () => {

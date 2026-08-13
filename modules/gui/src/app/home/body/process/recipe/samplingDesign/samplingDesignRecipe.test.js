@@ -26,6 +26,11 @@ describe('toTaskRecipe', () => {
         expect(toTaskRecipe(recipe).model.sampleAllocation.allocationStrategy).toBe('PROPORTIONAL')
     })
 
+    it('omits a stale relativeMarginOfError from the submitted sampleAllocation', () => {
+        const stale = {...recipe, model: {...recipe.model, sampleAllocation: {...recipe.model.sampleAllocation, relativeMarginOfError: false}}}
+        expect('relativeMarginOfError' in toTaskRecipe(stale).model.sampleAllocation).toBe(false)
+    })
+
     it('preserves the rest of the recipe and model untouched', () => {
         const taskRecipe = toTaskRecipe(recipe)
         expect(taskRecipe.id).toBe('r1')

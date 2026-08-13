@@ -31,6 +31,9 @@ mistaken for released functionality.
   and Optimal/Power allocation; they are not observations or final estimates.
 - Planning margins of error and calculated sample sizes do not model spatial effects from Random versus
   Systematic placement.
+- Margin of error is relative only: the confidence-interval half-width divided by the anticipated overall
+  target-category proportion, entered and shown as a percentage. A zero overall proportion is infeasible
+  (Infinity, not NaN).
 - Power allocation changes how strongly each stratum's expected target amount affects allocation. Lower tuning
   values shift relative allocation toward smaller non-zero expected amounts. When all anticipated proportions
   are zero, allocation falls back to Equal.
@@ -44,6 +47,11 @@ mistaken for released functionality.
 - GUI Retrieve validation and task preflight apply the same allocation rules: configured strata must exist, the
   allocation must contain exactly one row for each stratum, every row must meet the two-sample floor, and automatic
   allocation must meet its configured `Min samples/stratum`. Guidance distinguishes Samples mode from Error mode.
+- A seed, when required (Random placement, Systematic `Exact` thinning, or a `Seeded` grid start), must be a
+  base-10 whole number from `1` to `9007199254740991`, inclusive. This ceiling preserves the seed exactly across
+  application JavaScript Number and JSON transport; it is not an Earth Engine limit. New recipes default to `1`;
+  a saved zero or otherwise invalid value is rejected by GUI Retrieve validation and task preflight rather than
+  silently coerced.
 
 ## Sampling Frame
 
@@ -346,10 +354,6 @@ Pending before the first release:
 
 Resolve these before the first production release:
 
-- Seed `0` is inconsistently validated, defaulted, executed, and recorded. Prefer requiring a positive integer
-  everywhere unless there is a concrete need to support zero.
-- Dormant absolute-margin-of-error state conflicts with the relative-only GUI and guide. Remove it or normalize
-  every released design to relative margin of error.
 - Sample IDs pack coordinates rounded to ~metre precision (`toId`). Unstratified Random appends `randomPoints`'
   seed-stable feature index because it has no minimum separation. Stratified Random uses its unique equal-area
   `cellKey`. Unstratified Systematic still uses the bare coordinate ID, which can collide at sub-metre spacing.

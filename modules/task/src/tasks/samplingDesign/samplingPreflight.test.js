@@ -16,13 +16,14 @@ const recipe = ({
     allocationStrategy = 'PROPORTIONAL',
     estimateSampleSize = false,
     manual,
-    skip = false
+    skip = false,
+    sampleArrangement = {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', minDistance: 60, gridOrigin: 'FIXED', seed: 1}
 }) => ({
     model: {
         aoi: {type: 'ASSET', id: 'users/x/aoi'},
         stratification: {skip, scale: 10, crs: 'EPSG:6933', strata},
         sampleAllocation: {allocation, minSamplesPerStratum, allocationStrategy, estimateSampleSize, manual},
-        sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', minDistance: 60, gridOrigin: 'FIXED', seed: 1}
+        sampleArrangement
     }
 })
 const key = error => error?.userMessage?.key
@@ -32,6 +33,14 @@ describe('samplingDesignPreflightError', () => {
         expect(samplingDesignPreflightError(recipe({
             allocation: [{stratum: 1, label: 'a', sampleSize: 10}, {stratum: 2, label: 'b', sampleSize: 2}]
         }))).toBeNull()
+    })
+
+    it('rejects a required seed of zero before any EE work', () => {
+        const error = samplingDesignPreflightError(recipe({
+            allocation: [{stratum: 1, label: 'a', sampleSize: 10}],
+            sampleArrangement: {arrangementStrategy: 'RANDOM', seed: 0}
+        }))
+        expect(key(error)).toBe('tasks.samplingDesign.preflight.seedInvalid')
     })
 
     it('rejects an allocation when the stratification has no configured strata, before any EE work', () => {

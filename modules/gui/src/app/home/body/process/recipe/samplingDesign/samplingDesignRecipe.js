@@ -77,16 +77,21 @@ export const normalizeSavedLayers = savedLayers => {
 
 // Shape the task payload: replace the persisted allocation with the canonical, normalized allocation
 // rows the backend samplers consume ({stratum, sampleSize, area, color, ...}). Pure and testable.
-export const toTaskRecipe = recipe => ({
-    ...recipe,
-    model: {
-        ...recipe.model,
-        sampleAllocation: {
-            ...recipe.model?.sampleAllocation,
-            allocation: toTaskAllocation(recipe.model)
+// A stale relativeMarginOfError (an unreleased absolute/relative toggle) is dropped so it reaches neither
+// the task recipe nor the recipe_* metadata; Sampling Design margins are always relative.
+export const toTaskRecipe = recipe => {
+    const {relativeMarginOfError: _relativeMarginOfError, ...sampleAllocation} = recipe.model?.sampleAllocation || {}
+    return {
+        ...recipe,
+        model: {
+            ...recipe.model,
+            sampleAllocation: {
+                ...sampleAllocation,
+                allocation: toTaskAllocation(recipe.model)
+            }
         }
     }
-})
+}
 
 const taskProperties = recipe => ({
     recipe_id: recipe.id,

@@ -8,6 +8,7 @@ import {
     MIN_SAMPLES_PER_STRATUM,
     usesConfiguredMinSamplesPerStratum
 } from '#sepal/recipe/samplingDesign/minSamples'
+import {isValidSamplingSeed, requiresSamplingSeed} from '#sepal/recipe/samplingDesign/samplingSeed'
 
 const KEY = 'tasks.samplingDesign.preflight'
 
@@ -23,7 +24,7 @@ const allocationMode = ({estimateSampleSize, manual}) =>
     isManualAllocation(manual) ? 'manual' : estimateSampleSize ? 'error' : 'samples'
 
 export const samplingDesignPreflightError = recipe => {
-    const {model: {stratification, sampleAllocation}} = recipe
+    const {model: {stratification, sampleAllocation, sampleArrangement}} = recipe
     const {allocation = [], minSamplesPerStratum, allocationStrategy, estimateSampleSize, manual} = sampleAllocation || {}
     const unstratified = isStratificationSkipped(stratification)
     const effectiveMinimum = effectiveMinSamplesPerStratum({allocationStrategy, minSamplesPerStratum, manual})
@@ -53,6 +54,14 @@ export const samplingDesignPreflightError = recipe => {
     if (allocationStrataMismatch(recipe.model)) {
         return clientException('strataMismatch',
             'The sample allocation does not match the stratification (missing, duplicate or unexpected strata). Recompute the allocation in Sample Allocation.',
+            {})
+    }
+
+    // Random placement, Systematic Exact thinning and a Seeded grid start reproduce from the seed, so reject
+    // anything the shared transport-safe seed contract cannot preserve exactly.
+    if (requiresSamplingSeed(sampleArrangement) && !isValidSamplingSeed(sampleArrangement?.seed)) {
+        return clientException('seedInvalid',
+            'The seed must be a whole number from 1 to 9007199254740991. Set it in Sample Arrangement.',
             {})
     }
 
