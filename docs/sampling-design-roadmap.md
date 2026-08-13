@@ -1,6 +1,6 @@
 # Sampling Design Roadmap
 
-Last updated: 2026-07-24
+Last updated: 2026-08-13
 
 This is a working decision log for Sampling Design. It records current behavior, agreed changes, statistical
 caveats, documentation work, and deferred ideas so that unsettled decisions are not lost in chat history or
@@ -41,6 +41,9 @@ mistaken for released functionality.
   independently of allocation strategy and reports affected strata, actual counts, the missed requirement, and
   configuration-aware actions in Task Details. Unstratified Random draws an exact count, so it has no validation
   stage.
+- GUI Retrieve validation and task preflight apply the same allocation rules: configured strata must exist, the
+  allocation must contain exactly one row for each stratum, every row must meet the two-sample floor, and automatic
+  allocation must meet its configured `Min samples/stratum`. Guidance distinguishes Samples mode from Error mode.
 
 ## Sampling Frame
 
@@ -55,8 +58,9 @@ selection and are not represented by the sample.
 
 ## Current Grid and CRS Policy
 
-The demo uses ONE equal-area grid per design; a curated CRS identifier is stored and resolved to its value only
-at the Earth Engine boundary.
+The demo uses ONE equal-area grid whenever a design requires a grid; a curated CRS identifier is stored and
+resolved to its value only at the Earth Engine boundary. Unstratified Random is the exception because it has no
+grid.
 
 - Supported CRS options are:
   - `EPSG:6933`: EASE-Grid 2.0 Global, the default. It resolves to tested WKT because Earth Engine rejects the
@@ -327,46 +331,57 @@ Completed direction:
 - Present Task Details recommendations as panel-specific actions and distinguish sampling shortages from Earth
   Engine platform failures.
 
-Pending after the application configuration is finalized:
+Pending before the first release:
 
-- Describe the current one-grid behavior without implying that the planned Stratification/Arrangement grid split
-  is already implemented. Once it is implemented, distinguish Stratification CRS from the equal-area Arrangement
-  CRS and explain Scale without exposing Earth Engine projection mechanics.
+- Describe the current one-grid behavior: Stratification CRS + Scale control both class interpretation and
+  stratified placement, while Sample Arrangement exposes a CRS only for Unstratified Systematic. Do not imply that
+  the planned Stratification/Arrangement grid split is already implemented.
 - Reconcile the guide's temporary-asset, quota, cleanup, and progress descriptions with the sparse Random export
   flow.
 - Remove implementation details from the guide when a stable user-facing explanation is sufficient.
-- Replace the stale anticipated-proportions screenshot and reconsider Stratification and Sample Arrangement
-  screenshots after the final GUI pass.
+- Inspect every Sampling Design screenshot against the final GUI and replace only those that are stale. In
+  particular, verify the advanced Stratification CRS and the mode-dependent Sample Arrangement controls.
 
-## Deferred Functional Issues
+## First-release Blockers
 
-Keep these separate from the current language/arrangement slice:
+Resolve these before the first production release:
 
-- Seed `0` is inconsistently validated, defaulted, executed, and recorded.
-- Dormant absolute-margin-of-error support conflicts with the relative-only GUI and guide.
-- A tiled candidate/final export workflow is deferred until actual user workloads require it.
-- Automatic addition of a completed export to the map is not required for the first release.
+- Seed `0` is inconsistently validated, defaulted, executed, and recorded. Prefer requiring a positive integer
+  everywhere unless there is a concrete need to support zero.
+- Dormant absolute-margin-of-error state conflicts with the relative-only GUI and guide. Remove it or normalize
+  every released design to relative margin of error.
 - Sample IDs pack coordinates rounded to ~metre precision (`toId`). Unstratified Random appends `randomPoints`'
   seed-stable feature index because it has no minimum separation. Stratified Random uses its unique equal-area
   `cellKey`. Unstratified Systematic still uses the bare coordinate ID, which can collide at sub-metre spacing.
-  Decide before relying on universal ID uniqueness whether to add a structural suffix or raise `toId` precision.
+  Give Unstratified Systematic a structural lattice-based identity rather than relying on rounded coordinates.
+## First-release Acceptance
 
-## Verification Checklist for the Next Slices
-
-- Done: one equal-area grid per design, with the unreleased user-facing transform removed from every request
-  boundary and message. Stratified designs own CRS + Scale in Stratification; only Unstratified Systematic takes
-  its CRS from Sample Arrangement; Unstratified Random has no grid. Default sample locations are unchanged.
-- Done: a stratified CRS or Scale change invalidates stratification areas and cascades to proportions and
-  allocation through the existing forward dependency workflow; a hidden Arrangement CRS change does not.
-- Done: the four effective arrangement modes verified, including advanced (More/Less) CRS visibility and the
-  Global default.
-- Reconcile task progress, quota requirements, cleanup wording, and the guide with sparse Random.
-- Complete final GUI inspection and replace stale screenshots before the demo.
-- After the demo, implement the grid split through reviewed Random and Systematic spikes. Treat Random's
-  full-scale sparse-graph performance, exact Systematic membership, and full-scale Systematic performance as
-  acceptance gates before moving placement-CRS ownership to Sample Arrangement and enabling separate grids.
-- Resolve the seed `0` and remaining sample-ID uniqueness issues before making universal reproduction or
-  uniqueness claims.
-- Run focused shared/GEE/task/GUI tests, affected ESLint targets, Sphinx build and warning check, and
-  `git diff --check` in both repositories.
+- Run all four modes through the deployed GUI: Stratified Random, Stratified Systematic, Unstratified Random and
+  Unstratified Systematic.
+- Confirm a Stratified Random GEE export finishes as `COMPLETED` after promotion; an internal Earth Engine rename
+  result must not be interpreted as task progress.
+- Exercise both GEE and SEPAL destinations for designs that require temporary assets, plus GEE create and replace.
+- Trigger one intentional underproduction failure and confirm Task Details shows concise, configuration-aware
+  advice while leaving no published destination.
+- Confirm temporary candidate, repair and selected assets are cleaned after success and failure. Cleanup is best
+  effort, but a cleanup problem must not replace the primary task result.
+- Add a completed GEE table asset to a map and verify stratum labels, colours and filtering from exported metadata.
+- Confirm task names, Earth Engine asset IDs and workspace filenames are sanitized at their respective boundaries.
+- Reconcile the guide and screenshots with the final one-grid GUI, then run the Sphinx build and warning check.
+- Integrate upstream application changes only after the current work is committed safely, then rerun focused
+  shared/GEE/task/GUI tests, affected ESLint targets, JSON validation and `git diff --check` in both repositories.
 - Do not stage or commit automatically; the user controls Git mutations.
+
+The demonstrated Sudan-scale Random graph does not need another full-scale benchmark unless that graph changes.
+
+## Deferred Post-release Work
+
+- Split Stratification interpretation from equal-area sample placement through reviewed Random and Systematic
+  implementation packets. Random's full-scale sparse-graph performance, exact Systematic membership and
+  full-scale Systematic performance remain acceptance gates for that change.
+- Consider a CRS-transform mode only after the two-grid ownership is stable; do not expose Scale and transform as
+  simultaneously authoritative inputs.
+- Add tiled candidate/final exports only when actual user workloads justify the complexity.
+- Automatic addition of a completed export to the map is not required for the first release.
+- Do not promise sample retention across enlarged, restratified or annual designs until the overlap contract has
+  deterministic evidence.
