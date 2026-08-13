@@ -5015,8 +5015,10 @@
         "invalid.sampleSizeInvalid": "",
         "invalid.minSamplesPerStratumInvalid": "",
         "invalid.areaMissing": "",
-        "invalid.noTaskAllocation": "",
-        "invalid.seedMissing": "",
+        "invalid.belowConfiguredMinimum.samples": "",
+        "invalid.belowConfiguredMinimum.error": "",
+        "invalid.strataMismatch": "",
+        "invalid.seedInvalid": "",
         "invalid.minDistanceBelowGrid": "",
         "capability": {
           "title": "",
@@ -5285,16 +5287,6 @@
               "placeholder": "",
               "tooltip": ""
             },
-            "relativeMarginOfError": {
-              "label": "",
-              "tooltip": "",
-              "false": {
-                "label": ""
-              },
-              "true": {
-                "label": ""
-              }
-            },
             "allocationStrategy": {
               "label": "",
               "tooltip": "",
@@ -5333,7 +5325,6 @@
               "label": "",
               "tooBig": "",
               "table": {
-                "marginOfError": "",
                 "relativeMarginOfError": "",
                 "samples": "",
                 "samplesTooltip": "",
@@ -5402,7 +5393,8 @@
             "seed": {
               "label": "Graine",
               "placeholder": "Graine...",
-              "tooltip": ""
+              "tooltip": "",
+              "invalid": ""
             }
           },
           "title": "",
@@ -5634,6 +5626,8 @@
       "preflight": {
         "invalidMinimum": "",
         "noStrata": "",
+        "strataMismatch": "",
+        "seedInvalid": "",
         "belowStatisticalMinimum": {
           "samples": "",
           "error": "",
