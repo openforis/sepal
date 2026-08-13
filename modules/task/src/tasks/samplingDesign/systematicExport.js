@@ -3,7 +3,6 @@ import {catchError, concat, defer, EMPTY, filter, forkJoin, map, switchMap, thro
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import {effectiveArrangement} from '#sepal/ee/samplingDesign/effectiveArrangement'
-import {toId} from '#sepal/ee/samplingDesign/featureProperties'
 import {SYSTEMATIC_EXPORT_PROPERTY_NAMES} from '#sepal/ee/samplingDesign/sampleProperties'
 import {finalizeSystematicSamples, mergeRepairedCandidates, systematicStratumMaxOffset, toDensitySummary} from '#sepal/ee/samplingDesign/samples'
 import {stratificationImage$} from '#sepal/ee/samplingDesign/stratificationImage'
@@ -292,7 +291,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
             : insideAoi
         return selected.map(sample =>
             sample
-                .set('id', toId({sample}))
+                .set('id', sample.getString('idkey'))
                 // Keep helper-only candidate fields out of row-metadata exports.
                 .set('i', null)
                 .set('j', null)

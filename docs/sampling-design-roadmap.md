@@ -230,6 +230,7 @@ current equal-area arrangement grid.
   original AOI.
 - Temporary vector centroids remain in Earth Engine's default WGS84 representation. Native custom-WKT centroids
   exceeded Earth Engine's aggregation-result limit at Sudan scale.
+- Unstratified Systematic uses its persisted global lattice index key (`<i>:<j>`) as the final sample ID.
 - Systematic exports materialize candidate tables, select/repair final locations, validate final counts, export
   the final collection, and clean up temporary assets. Cleanup is attempted on failure/cancellation too.
 - Tiling candidate/final exports is deferred until real users encounter limits that justify the complexity.
@@ -352,12 +353,8 @@ Pending before the first release:
 
 ## First-release Blockers
 
-Resolve these before the first production release:
+No known code blockers remain. Release still depends on completing First-release Acceptance.
 
-- Sample IDs pack coordinates rounded to ~metre precision (`toId`). Unstratified Random appends `randomPoints`'
-  seed-stable feature index because it has no minimum separation. Stratified Random uses its unique equal-area
-  `cellKey`. Unstratified Systematic still uses the bare coordinate ID, which can collide at sub-metre spacing.
-  Give Unstratified Systematic a structural lattice-based identity rather than relying on rounded coordinates.
 ## First-release Acceptance
 
 - Run all four modes through the deployed GUI: Stratified Random, Stratified Systematic, Unstratified Random and
