@@ -193,8 +193,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                         strategy: densityStrategy
                     })
                 ),
-                'selected-level summary count',
-                0
+                'selected-level summary count'
             ).pipe(
                 map(toDensitySummary)
             )
