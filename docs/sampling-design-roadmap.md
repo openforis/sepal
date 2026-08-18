@@ -1,6 +1,6 @@
 # Sampling Design Roadmap
 
-Last updated: 2026-08-13
+Last updated: 2026-08-18
 
 This is a working decision log for Sampling Design. It records current behavior, agreed changes, statistical
 caveats, documentation work, and deferred ideas so that unsettled decisions are not lost in chat history or
@@ -164,14 +164,222 @@ Implementation constraints and gates:
   be locked to the Stratification grid. Keep the expensive Arrangement-grid graph at `label + rank`, with no
   rank reprojection, extra raster band, transform branch or new reducer output. A forced categorical reprojection
   needs a Sudan-scale performance gate.
-- Systematic cannot rely only on a feature-level lookup after vectorization: that removes false positives but
-  cannot recover lattice points rejected earlier at the marker centre. The first spike should use a per-marker
-  displacement from the marker centre to the exact lattice point, nearest-neighbour categorical lookup, and a
-  bounded maximum offset. Compare it with an exact point-lookup reference on deliberately misaligned grids.
-- Do not use conservative dilation as a production fallback unless it can be proved complete for arbitrary
-  alignment, masks and small class patches. Do not generate every stratum's lattice over the complete AOI.
-- Keep the current one-grid behavior until Random passes small and Sudan-scale gates and Systematic passes
-  synthetic equivalence plus the established full-scale performance gate.
+- Systematic membership is the class and mask at the exact exported lattice point, not at a nearby marker,
+  nomination pixel or serialized feature geometry. Candidate identity remains `(stratum, i, j)` and the exact
+  point must be reconstructed from the applicable layout before any feature-level membership check.
+- Displacement, whole-AOI analytical point collections, overlap/dilation proxies, coarse occupancy and one
+  monolithic exact `reduceRegions` over the Sudan nominations have failed semantic or operational gates. Do not
+  resume one without a new hypothesis that addresses its recorded failure below.
+- The next Systematic spikes are the exact-centred lattice raster followed, if necessary, by source-pixel
+  ownership. Both avoid a raster reduction over the complete candidate collection.
+- Keep the current one-grid behavior until Random passes small and Sudan-scale gates and Systematic passes finite
+  exactness, modest batch compatibility and the reviewed Sudan-scale performance gate.
+
+### Systematic two-grid research record
+
+This research is post-demo and does not block release of the current one-grid design. Its contract is an
+equal-area Systematic lattice in the Arrangement CRS with class and mask membership read at each exact lattice
+point on an independently configured Stratification grid. A proxy may nominate a superset, but the published
+candidate set must equal an independent exact point-lookup reference with no false negatives or false positives.
+
+The repeatable Sudan fixture is:
+
+- Stratification: `projects/fifth-bonbon-272108/assets/sudan-dynamic-world-2024`, band `label`, evaluated as
+  `EPSG:32636` at 10 m.
+- AOI: `users/wiell/SepalResources/gaul`, feature `id = 6`.
+- Arrangement CRS: `EPSG:6933`; `Closest`; seeded start with seed `2`; Minimum distance `20 m`.
+- Base allocation:
+
+| Stratum | Area (m2) | Requested |
+| ---: | ---: | ---: |
+| 0 | 5465664655.29412 | 2857 |
+| 1 | 73237008483.52942 | 9697 |
+| 2 | 1963761640.7843134 | 1702 |
+| 3 | 1044592860.7843137 | 1237 |
+| 4 | 263708404850.58826 | 19840 |
+| 5 | 248695078157.25507 | 19034 |
+| 6 | 3832430202.745098 | 2394 |
+| 7 | 1245111270211.3682 | 43221 |
+| 8 | 226218.82352941178 | 18 |
+
+The one-grid production comparison completes in roughly 25-35 minutes with low EECU use. A two-grid candidate
+algorithm must remain in that operational range: semantics alone are insufficient. Use a single batch attempt,
+zero automatic retries, and reviewed cancellation limits. The current hard research limit is 45 minutes or
+10000 batch EECU-seconds; poll often enough near the threshold to avoid the large cancellation overshoots seen
+in earlier runs.
+
+#### Experiments already closed
+
+| Approach | Result |
+| --- | --- |
+| `Image.displace` | Rejected. Zero displacement changed both class and mask under an explicitly anchored terminal request. |
+| Whole-AOI analytical point collection | Rejected before export. The Sudan frame required about 722 million point features, dominated by the rare snow/ice stratum. |
+| Five-layout overlap/dilation hybrid | Rejected. Cancelled after about 53 minutes and 128904 batch EECU-seconds. |
+| Single-lattice overlap/dilation hybrid | Rejected. Cancelled at about 37213 batch EECU-seconds without completing. |
+| Coarse tile-occupancy proxy | Rejected. Crossed 121269 batch EECU-seconds within about four minutes. |
+| Source-grid nomination plus monolithic exact lookup | Nomination passed, but exact Stage 2 was rejected after crossing the 10000-EECU limit; last observed cancellation state was `CANCEL_REQUESTED` at 24722 EECU-seconds. |
+| Exact-centred lattice raster | Passed after matching production's compact `label + i + j` vectorization and default WGS84 temporary centroids. The corrected full-Sudan candidate export completed in about 13 minutes using 1.59 batch EECU-seconds. |
+
+The first lattice-centred experiment is not a rejection of the corrected exact-centred raster described below.
+Its cross-CRS comparison failed before membership because the parity-grid generator omitted edge points; later
+experiments also found errors in the synthetic affine oracle. Rebuild that spike against the subsequently proven
+explicit-point reference instead of reusing its conclusion.
+
+#### Source-grid nomination evidence
+
+The retained `modules/gee/src/_spike/systematic-two-grid/source-grid-hybrid.mjs` evaluates a 1 m nearest-neighbour
+EPSG:6933 coordinate ramp on the native Stratification grid. Each valid source pixel uses its class-specific
+layout to calculate the nearest hex-lattice `(i, j)` and nominates it only within a conservative radius. Sparse
+source pixels are vectorized, then their exact lattice geometry and nested level are reconstructed.
+
+Evidence:
+
+- Six finite same-CRS/cross-CRS scenarios recovered all 115 exact candidates from 149 nominations, with no
+  false negatives or final key, class, mask, property, level, identity or geometry differences. Only two
+  nominations were duplicates, proving that uniqueness does not imply exact membership: roughly 32 unique
+  nominations were still false positives.
+- The full Sudan nomination export produced 375785 rows in about 17 minutes using about 1.5 batch EECU-seconds.
+- Structural validation found 374857 distinct `(stratum, i, j)` tuples and 928 duplicate rows (0.247%), no
+  missing properties or schema errors, and at most 0.00242 m displacement between serialized geometry and the
+  point reconstructed from the numeric properties. That validation took 36 minutes 54 seconds and 167.18 EECU-
+  seconds. Do not repeat it: it established structural integrity but cannot establish exact membership.
+- Reconstructing exact geometry before native-grid `reduceRegions` passed the finite wrong-stored-geometry
+  witness. The full Sudan exact lookup was cancelled after exceeding the operational limit. It is semantically
+  credible but not a viable production Stage 2.
+
+Evidence assets are intentionally retained while research continues:
+
+- Nominations: `projects/daniel-wiell/assets/sd_systematic_source_grid_nominations_sudan_1786962198406`.
+- Validation summary:
+  `projects/daniel-wiell/assets/sd_systematic_source_grid_validation_sudan_1786969987644`.
+
+Before starting another batch task, confirm task `V5TQ36Q45MVR2IRQHSUW6KB4` is terminal and that its exact-
+candidate target did not materialize. Preserve the evidence assets until they are no longer needed.
+
+#### Exact-centred lattice raster evidence
+
+This experiment was preferred because a successful result would remove nominations, duplicates, feature
+ownership checks, `reduceRegions` and the second intermediate asset.
+
+Hypothesis and graph:
+
+1. Represent the hex lattice as two rectangular projections: one for even rows and one shifted by half a column
+   for odd rows. Define each affine transform so its pixel centres, not corners, are the exact lattice points.
+2. Prefer one densest globally aligned lattice when the power-of-two layouts and seeded phase prove every
+   class-specific lattice is a subset. Otherwise begin with the minimum number of unique layouts and record the
+   additional raster work explicitly.
+3. Let the terminal lattice projections pull the original categorical image and mask by nearest-neighbour
+   evaluation. The class observed at the exact output-pixel centre chooses whether that lattice point belongs to
+   the class-specific layout.
+4. Mask non-members and vectorize only accepted marker pixels. Reconstruct geometry and structural identity from
+   carried `i/j`; never use a vector centroid as identity or membership evidence.
+
+Finite and modest gates now pass for the retained
+`modules/gee/src/_spike/systematic-two-grid/exact-centred-lattice.mjs`:
+
+- Raster indices must use `pixelCoordinates().floor().toInt()`. The first implementation used `toInt()` alone,
+  which truncates negative half-integer pixel-centre coordinates toward zero and assigned the wrong signed
+  `i/j`. After the correction, nine finite fixtures compared 386 raw lattice points and 133 accepted candidates
+  with no raw omissions, extras, duplicate keys, membership, property, level, identity or reconstructed-geometry
+  differences.
+- The finite matrix includes an accepted lattice point exactly on a discriminating four-cell source-pixel corner,
+  as well as both sides of boundaries, shifted same-CRS and cross-CRS grids, negative indices, masks, holes,
+  isolated one-pixel classes, fixed and seeded starts, and repair density.
+- `setDefaultProjection()` is insufficient to enforce the configured Stratification grid when the terminal
+  `reduceToVectors` requests an Arrangement lattice projection. In the discriminating configured-grid fixture it
+  produced the same eight missing and eight extra keys as direct native evaluation. One shared `reproject()` of
+  the combined class-and-mask image to the configured Stratification projection before the even/odd branches
+  matched the 15-candidate oracle exactly.
+- The modest cross-CRS batch exported 26 candidates in 64.611 seconds using 0.09335 batch EECU-seconds. All 26
+  structural keys, properties, classes, masks and levels matched the independent oracle; all geometries were
+  points and the maximum displacement from authoritative `arrangementX/arrangementY` was
+  `3.73e-7` m. Asset visibility took 0.415 seconds and the temporary asset was deleted and confirmed absent.
+- The modest graph serialized to 46162 bytes and contained two `reduceToVectors` operations and the one shared
+  `reproject`, with no `reduceRegion(s)`, `sampleRegions`, displacement, dilation, `reduceResolution` or explicit
+  resampling. This proves finite exactness and batch compatibility, not Sudan-scale performance.
+- The reviewed full-Sudan base-candidate graph serialized to 53164 bytes with the same operator shape and an
+  estimated 692767113 densest-lattice pixels. Task `V73IVPU2JFCXB6EHGGEKNYWF` failed after 445.727 seconds and
+  4.156 batch EECU-seconds with `Computed value is too large.` No cancellation threshold was reached, no candidate
+  table materialized, and target
+  `projects/daniel-wiell/assets/sd_systematic_exact_centred_sudan_1787036362831` was deleted and confirmed
+  absent. Do not rerun the unchanged Sudan graph.
+- The failure reproduced a production issue already fixed by commit `9e58ea2ea`: native-projection temporary
+  centroids carry the Arrangement CRS's large custom WKT through `reduceToVectors`, while six reducer-carried
+  properties enlarged each aggregation further. The corrected spike leaves temporary centroids in default WGS84,
+  vectorizes only compact `label` plus full signed `i/j`, decodes stratum and nested level afterward, reconstructs
+  exact geometry, and exports only `stratum`, `i`, `j` and `level`.
+- The corrected Sudan graph serialized to 45950 bytes with two `reduceToVectors` calls and one shared
+  `reproject`, and no other aggregation or forbidden operator. Task `TKNVLFUUAQL7WGJ6OKT4PNWD` completed in
+  787.94 task seconds (795.57 seconds observed RUNNING) using 1.59007 batch EECU-seconds. Its 360844 Point rows
+  have 360844 distinct structural `(stratum, i, j)` identities, no duplicate or null required properties, and
+  exactly the four production candidate fields. The retained candidate asset is
+  `projects/daniel-wiell/assets/sd_systematic_exact_centred_sudan_1787037882518`.
+- Production-shaped `CLOSEST` selection chooses levels/counts `0:1/1996`, `1:1/6687`, `2:1.5/1462`,
+  `3:1/1527`, `4:1/24158`, `5:1/22844`, `6:0.5/2852`, `7:0.5/57266`, and `8:1/26`, for 118818 rows total.
+  Every stratum has at least its requested raw candidate count, so no repair export is required.
+- The reviewed final-selection graph loaded only the retained table and invoked the production
+  `stratifiedSystematicFinalSamples` selector; its 8690-byte serialization contained no image, raster source,
+  candidate-generation or membership operation. Task `O5IH5AGSAIPXOS4QQX3N2G2V` completed in 112.863 task
+  seconds using 0.00616 batch EECU-seconds. The ready table contains exactly the 118818 expected Point rows and
+  per-stratum counts above, with 118818 distinct signed structural IDs, zero duplicates, the exact
+  `id`, `stratum`, `selectedLevel` schema, and no ID-format or selected-level mismatch. The retained final asset
+  is `projects/daniel-wiell/assets/sd_systematic_exact_centred_final_1787042745900`; retain it together with the
+  base-candidate asset until the investigation is explicitly closed.
+
+Finite acceptance must compare the complete `(stratum, i, j)` set with an independently enumerated exact-point
+`reduceRegions` oracle. Include same and different CRSs, shifted grids, fixed and seeded origins, every row
+parity, negative indices, AOI edges and holes, masked pixels, isolated one-pixel classes, and points exactly on
+and immediately to both sides of source-pixel edges and corners. Assert zero raw-lattice omissions before
+comparing membership. Verify nearest-neighbour mask semantics and the half-pixel affine translation explicitly.
+
+The corrected candidate graph contains no `reduceRegions`, `sampleRegions`, `displace`, `focalMax`,
+`reduceResolution`, conservative class dilation or feature-level membership lookup. Finite correctness, modest
+compatibility, full-Sudan base-candidate materialization and the production-shaped final-selection/export gate
+now pass. Production implementation remains separate work.
+
+#### Fallback spike B: source-pixel ownership
+
+Hold this while the corrected exact-centred raster advances. Use it only if final selection exposes a new blocker.
+It builds on the operationally successful source-grid nomination stage but replaces the rejected raster lookup
+with feature geometry and integer ownership checks.
+
+1. Carry each nominating source pixel's integer grid indices (`sourceI`, `sourceJ`) through vectorization. Ensure
+   `reduceToVectors` cannot merge adjacent nominating pixels: use a proven per-pixel or checkerboard label and
+   verify one output feature per nomination pixel before relying on ownership.
+2. Reconstruct the exact Arrangement-CRS lattice point from `(stratum, i, j)` and the authoritative layout.
+3. Transform that point geometry to the full Stratification-grid projection. Its returned coordinates are grid
+   coordinates; apply the same PixelIsArea boundary convention as the exact oracle (`floor(u)`, `floor(v)`).
+4. Keep the nomination only when those containing-pixel indices equal the carried source indices. The feature's
+   source class and valid source mask then establish exact membership without reading the raster again.
+5. A valid exact point must be nominated by its containing source pixel. Retain the existing radius/spacing proof
+   and test that claim directly; rejecting neighboring nominations is safe only when this completeness invariant
+   holds.
+
+The finite witness must compare ownership output with the exact native-grid oracle at ordinary, masked, isolated,
+edge and corner cases, including exact boundaries and both sides of each boundary. It must also demonstrate that
+an adjacent wrong-class pixel can nominate a point but cannot own it, while the actual containing pixel does.
+Assert one owner and one structural key per exact candidate.
+
+For diagnosis, ownership may first run after the retained nomination asset. The production goal is to fold the
+post-vectorization geometry transform and integer comparison into the candidate export so only the exact
+candidate asset is materialized. If combining it makes the graph expensive, measure a separate feature-only
+asset-to-asset stage; do not reintroduce a raster lookup.
+
+#### Spike execution protocol
+
+- Keep spike scripts in `modules/gee/src/_spike/systematic-two-grid/` until the research direction is settled;
+  do not delete and recreate them after every run. Production and permanent tests remain untouched during
+  feasibility work.
+- Run through the bind-mounted `gee` module container from `/usr/local/src/sepal/modules/gee`; do not copy source,
+  install dependencies or create credential plumbing. Use existing service-account authentication for read-only
+  finite checks and linked-user authorization in memory only when a writable asset is required.
+- Preserve exact commands, task IDs, graph operators, runtime, batch EECU, counts and discrepancies. Set EE
+  automatic retries to zero. Stop after the first unexpected semantic failure; do not submit corrected variants
+  until the failed graph and oracle are understood.
+- A full Sudan export requires an explicit reviewed go-ahead after finite and modest gates. Start only one task,
+  monitor cancellation thresholds, and confirm terminal state plus exact asset cleanup or intentional retention.
+- Run `node --check` on retained scripts and `git diff --check`. Do not stage, commit, push, change packages or
+  touch production files during a spike.
 
 ## Random Sampling
 
