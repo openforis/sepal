@@ -113,10 +113,28 @@ An entered Scale replaces the transform only when the two DISAGREE. Typing the v
 silently degrade the image's own grid to a resampled one, so agreement is tested as exact equality between both sides
 put through `formatDistance`, and the resulting mode is shown on screen.
 
-Recorded consequence, reversing an earlier decision: a stratification backed by an ImageCollection now falls back to
-the default rather than adopting `first()`'s grid. The collection resolves through a mosaic, which has no real
-projection. This costs a marginal gain in a rare case — a stratification is normally a single categorical image — and
-buys one endpoint, one rule and no special-casing.
+A collection-backed stratification derives from its FIRST member, not from the mosaic. `toAsset.js` tiles a region
+and writes each tile into an ImageCollection under one configured `crs`/`crsTransform`/`scale`, so a SEPAL-exported
+collection's members share a lattice by construction and their transforms differ only by whole-tile translations.
+Reading the mosaic at the first member's transform therefore reproduces every tile exactly. This is also the
+large-stratification case, where exactness matters most. An arbitrary non-uniform collection still yields the first
+member's grid, with other members resampled — weakly better than a default, which resamples all of them, and an
+unrepresentative first image is visible in the Scale placeholder. Uniformity detection was priced and rejected: the
+check almost never changes the decision.
+
+That change also fixed a PRE-EXISTING BUG with app-wide scope, found while verifying the above. The band endpoint
+previously resolved a collection asset through `ImageFactory`, which mosaics it — so listing the bands of a large
+collection built a mosaic expensive enough to fail outright: `User memory limit exceeded` on
+`COPERNICUS/S2_SR_HARMONIZED`. The endpoint was therefore broken for large collection assets in EVERY recipe that
+lists their bands, not only Sampling Design. Reading the first member avoids constructing the mosaic at all.
+Dropping `ImageFactory` does not change the band list: `imageCollectionAsset.js` already reads `bandNames` from the
+raw collection, bypassing its own mask and select, both of which are no-ops for a bare asset id.
+
+Verified against Earth Engine rather than reasoned about: a member reports `EPSG:32633` at 10 m, while the mosaic of
+the same members reports `EPSG:4326` with the identity transform at 111319 m. The type branch in `assetBands$` itself
+is covered by inspection only — the three tests exercise `deriveStratificationGrid`, and the job module cannot be
+imported because a `job()` export runs worker plumbing and calls `process.exit`. Same disposition as the other thin
+job workers.
 
 Applicability by mode:
 
@@ -264,23 +282,6 @@ re-run all three before it is considered done.
 
 ## Remaining Work
 
-### Area-weight the anticipated-proportion mean
-
-`probabilityPerStratum` reduces with an unweighted `ee.Reducer.mean()` over pixels, which is only an area-weighted
-mean on an equal-area grid. Since the Stratification CRS accepts any projected CRS, proportions are weighted
-towards whichever latitudes carry more pixels per unit ground area.
-
-This is a correctness tidy-up, not a blocker, and it does not gate the grid default above. The weight distortion
-is 1/cos(latitude) across a stratum - about 6% over 10-22 degrees, 2x over 0-60 - and it only produces an error
-where the target proportion itself varies with latitude within that stratum. Anticipated proportions are
-planning inputs, so the residual is far below the uncertainty in the guess they encode.
-
-Weight by `ee.Image.pixelArea()` when next in that file. Either `ee.Reducer.mean().splitWeights()` with the area
-as the weight band - noting that `splitWeights` consumes two inputs per value, so the `group()` index shifts -
-or `sum(value * pixelArea) / sum(pixelArea)`, which mirrors `areaPerStratum` and reads as target area over
-stratum area. Both modes reduce to the same shape, so `band.eq(targetClass)` and a probability band need no
-separate handling.
-
 ### Structured errors from the area and proportion jobs
 
 `areaPerStratum` and `probabilityPerStratum` throw a raw `Error` when the Stratification CRS is absent or a
@@ -320,8 +321,10 @@ Outstanding:
 - Reconcile the guide's temporary-asset, quota, cleanup and progress descriptions with the sparse Random export
   flow.
 - Remove implementation details where a stable user-facing explanation is sufficient.
-- Inspect every Sampling Design screenshot against the final GUI and replace only the stale ones, in particular
-  the two advanced CRS controls and the mode-dependent Sample Arrangement fields.
+- Inspect every Sampling Design screenshot against the final GUI and replace only the stale ones. The
+  Stratification panel changed most: there is no CRS transform control, and Scale is blank by default for an
+  asset, showing the derived pixel size as its placeholder and naming which grid is in effect. Also check the
+  Sample Arrangement CRS, which is now shown for every mode except Unstratified Random.
 
 ### First-release acceptance
 
@@ -351,6 +354,19 @@ Outstanding:
   tests never required. Whoever picks this up is solving panel mounting, not building a harness. The gap is
   tolerable because both risks degrade silently to today's behaviour - no derived grid, Scale required - rather
   than failing loudly.
+- **Let recipes declare their own source grid.** A recipe is grid-less only because compositing discards the
+  projection; the recipe usually knows its inputs. Where a recipe has exactly ONE unambiguous source grid - a
+  classification over a single asset - it should call `setDefaultProjection(sourceProjection)` on its output.
+  Prefer this over a `preferredGrid()` capability per recipe type: it reuses the measured property that
+  `setDefaultProjection` declares a projection without forcing evaluation on it, so there is no `reproject` and no
+  cost; recursion is free, because a classification of a classification inherits through image lineage rather than
+  a model-level protocol; and every consumer benefits, not only Sampling Design. It degrades correctly - pin when
+  there is exactly one source grid, leave unpinned otherwise, and unpinned falls through to the deterministic
+  default. Sampling Design would then need NO change at all: the grid already derives from the resolved image's
+  projection, so a recipe that declares one is picked up automatically. Two assumptions to measure first: a
+  single-asset classification may already propagate the projection, since per-pixel band math preserves it and
+  only mosaicking loses it; and whether `setDefaultProjection` surfaces in the band info the `/bands` endpoint
+  returns.
 - Add tiled candidate/final exports only when actual user workloads justify the complexity.
 - Automatic addition of a completed export to the map is not required for the first release.
 - Do not promise sample retention across enlarged, restratified or annual designs until the overlap contract has

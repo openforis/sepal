@@ -10,9 +10,8 @@ const worker$ = ({
     requestArgs: {asset, recipe}
 }) => {
 
-    // Per-band grid, in metadata.js's key names (`crs`, `crs_transform`) so a consumer reads either endpoint's
-    // shape without branching. `nominalScale` is the pixel size in METRES - computed, not present in the asset
-    // description - because a transform is in its CRS's units and degrees are the common case for EPSG:4326.
+    // Key names must match metadata.js (`crs`, `crs_transform`), or a consumer reading either endpoint breaks
+    // silently. `nominalScale` is metres: a transform is in its CRS's units, which for EPSG:4326 are degrees.
     const bandGrids$ = image =>
         ee.getInfo$(image.bandNames(), 'image band names').pipe(
             switchMap(bandNames => ee.getInfo$(
@@ -43,9 +42,15 @@ const worker$ = ({
             ))
         )
 
+    // Read the grid from STORED data. Do NOT simplify this to ImageFactory: it mosaics a collection, and a mosaic
+    // discards the members' grid, reporting the identity transform instead.
     const assetBands$ = () =>
-        ImageFactory({type: 'ASSET', id: asset}).getImage$().pipe(
-            switchMap(bandGrids$)
+        ee.getAsset$(asset, 0).pipe(
+            switchMap(({type}) => bandGrids$(
+                type === 'ImageCollection'
+                    ? ee.ImageCollection(asset).first()
+                    : ee.Image(asset)
+            ))
         )
 
     const recipeBands$ = () => {

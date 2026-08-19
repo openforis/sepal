@@ -152,3 +152,25 @@ describe('stratificationScaleDefault', () => {
         expect(stratificationScaleDefault(undefined)).toBeNull()
     })
 })
+
+describe('deriveStratificationGrid on the collection path', () => {
+    it('yields a real grid from a first member, not the identity', () => {
+        const grid = deriveStratificationGrid({bands: [
+            {id: 'B4', crs: 'EPSG:32633', crs_transform: [10, 0, 600000, 0, -10, 7000020], nominalScale: 10}
+        ]}, 'B4')
+        expect(grid).toEqual({crs: 'EPSG:32633', crsTransform: [10, 0, 600000, 0, -10, 7000020]})
+    })
+
+    it('falls back when handed the mosaic grid a regression would reintroduce', () => {
+        expect(deriveStratificationGrid({bands: [
+            {id: 'B4', crs: 'EPSG:4326', crs_transform: [1, 0, 0, 0, 1, 0], nominalScale: 111319.49}
+        ]}, 'B4')).toBeNull()
+    })
+
+    it('accepts members whose transforms differ only by whole-tile translation', () => {
+        const first = deriveStratificationGrid({bands: [{id: 'b', crs: 'EPSG:32633', crs_transform: [10, 0, 600000, 0, -10, 7000020]}]}, 'b')
+        const second = deriveStratificationGrid({bands: [{id: 'b', crs: 'EPSG:32633', crs_transform: [10, 0, 300000, 0, -10, 6900000]}]}, 'b')
+        expect(first.crsTransform[0]).toBe(second.crsTransform[0])
+        expect(first.crsTransform[4]).toBe(second.crsTransform[4])
+    })
+})

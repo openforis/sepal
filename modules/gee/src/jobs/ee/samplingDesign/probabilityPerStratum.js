@@ -9,6 +9,7 @@ import {resolveStratificationCrs} from '#sepal/recipe/samplingDesign/samplingGri
 
 import {exportToCSV$} from '../batch/exportToCSV.js'
 import {parseGroups} from '../batch/parse.js'
+import {toAreaWeightedProportions} from './areaWeightedProportions.js'
 
 const worker$ = ({
     requestArgs: {aoi, stratification, stratificationBand = 'constant', probability, probabilityBand, mode = 'PROBABILITY', targetClass, scale, crs, batch},
@@ -37,31 +38,30 @@ const worker$ = ({
                 // inline Online->Batch guidance instead of retrying past the HTTP request timeout.
                 : ee.getInfo$(eeDictionary, description, 0)
         }),
-        map(o => o.groups)
+        map(o => o.groups),
+        map(toAreaWeightedProportions)
     )
 
     function reduceRegion({eeGeometry, eeStratification, eeProbability}) {
         const band = eeProbability.select(probabilityBand)
-        // CATEGORICAL: mean of a 0/1 mask = fraction of sampled pixels (cells at `scale`) equal to the
-        // target class. This is a PIXEL fraction, not strictly an area fraction - it approximates the
-        // area fraction for equal-area projections, but not for arbitrary geographic/non-equal-area ones.
-        // PROBABILITY: mean of the band value (probability/fraction image). Both are grouped by stratum
-        // into a per-stratum target proportion, so the downstream toProportions pipeline is unchanged.
         const probabilityImage = mode === 'CATEGORICAL'
             ? band.eq(targetClass)
             : band
-        return probabilityImage
-            .addBands(eeStratification.select(stratificationBand))
+        const pixelArea = ee.Image.pixelArea()
+        // The group index is derived, not written: a reorder that left a literal behind would group on the wrong
+        // band and return plausible, wrong numbers rather than failing.
+        const summedBands = ['weighted', 'area']
+        const bands = [...summedBands, 'stratum']
+        return probabilityImage.multiply(pixelArea).rename(summedBands[0])
+            .addBands(pixelArea.rename(summedBands[1]))
+            .addBands(eeStratification.select(stratificationBand).rename('stratum'))
             .reduceRegion({
-                reducer: ee.Reducer.mean()
-                    .setOutputs(['probability'])
-                    .group(1, 'stratum'),
+                reducer: ee.Reducer.sum()
+                    .repeat(summedBands.length)
+                    .setOutputs(summedBands)
+                    .group(bands.indexOf('stratum'), 'stratum'),
                 geometry: eeGeometry,
-                // Proportions estimates at its own scale in Stratification's CRS; the transform is
-                // deliberately not inherited. Resolving here fails closed on an unsupported id rather than
-                // silently falling back to the image projection.
-                // Proportions keeps its OWN Scale for the area-weighted aggregation, so it never inherits a
-                // Stratification transform's resolution - only its CRS.
+                // Proportions keeps its OWN Scale and never inherits a Stratification transform's resolution.
                 scale,
                 crs: resolveStratificationCrs(crs),
                 maxPixels: 1e13,
