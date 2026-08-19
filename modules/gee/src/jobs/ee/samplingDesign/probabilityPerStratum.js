@@ -60,6 +60,8 @@ const worker$ = ({
                 // Proportions estimates at its own scale in Stratification's CRS; the transform is
                 // deliberately not inherited. Resolving here fails closed on an unsupported id rather than
                 // silently falling back to the image projection.
+                // Proportions keeps its OWN Scale for the area-weighted aggregation, so it never inherits a
+                // Stratification transform's resolution - only its CRS.
                 scale,
                 crs: resolveStratificationCrs(crs),
                 maxPixels: 1e13,

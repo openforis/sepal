@@ -20,6 +20,7 @@ const reproduction = {
     crs: 'EPSG:6933',
     gridCrs: 'EPSG:6933',
     stratificationCrs: 'EPSG:32636',
+    crsTransform: [30, 0, 300000, 0, -30, 200000],
     selectedDensityOffset: 0
 }
 

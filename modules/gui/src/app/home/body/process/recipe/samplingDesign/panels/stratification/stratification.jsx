@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
+import {parseCrsTransform} from '#sepal/recipe/samplingDesign/samplingGrid'
 import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import api from '~/apiRegistry'
 import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
@@ -23,7 +24,7 @@ import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
-import {isValidGridScale} from '../../samplingGridValidation'
+import {isValidGridScale, isValidStratificationTransform} from '../../samplingGridValidation'
 import {CalculationErrorContent} from '../calculationErrorContent'
 import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
@@ -61,6 +62,13 @@ const fields = {
     crs: new Form.Field()
         .skip((_value, {skip}) => skip.length)
         .notBlank('process.samplingDesign.panel.stratification.form.crs.required'),
+    // Optional. When set it REPLACES Scale as the grid definition, so it must be north-up, square and unrotated.
+    crsTransform: new Form.Field()
+        .skip((_value, {skip}) => skip.length)
+        .predicate(
+            isValidStratificationTransform,
+            'process.samplingDesign.panel.stratification.form.crsTransform.invalid'
+        ),
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
         // Required even when skipped: unstratified mode still needs the single synthetic stratum (area is
@@ -133,7 +141,14 @@ class _Stratification extends React.Component {
                         {this.renderBand()}
                         {this.renderScale()}
                     </Layout>
-                    {this.state.more ? this.renderCrs() : null}
+                    {this.state.more
+                        ? (
+                            <Layout type='horizontal'>
+                                {this.renderCrsTransform()}
+                                {this.renderCrs()}
+                            </Layout>
+                        )
+                        : null}
                     {this.renderStrata()}
                 </Layout>
             )
@@ -286,6 +301,31 @@ class _Stratification extends React.Component {
         )
     }
 
+    // Optional transform. When it parses it defines alignment AND resolution, so the effective Scale shown is
+    // abs(a) rather than the Scale field. onGridChanged invalidates areas, proportions and allocation exactly as
+    // a Scale change does.
+    renderCrsTransform() {
+        const {inputs: {crsTransform}} = this.props
+        const valid = isValidStratificationTransform(crsTransform.value)
+        const transform = parseCrsTransform(crsTransform.value)
+        return (
+            <Form.Input
+                className={styles.wideField}
+                label={msg('process.samplingDesign.panel.stratification.form.crsTransform.label')}
+                placeholder={msg('process.samplingDesign.panel.stratification.form.crsTransform.placeholder')}
+                tooltip={msg('process.samplingDesign.panel.stratification.form.crsTransform.tooltip')}
+                input={crsTransform}
+                onChange={this.onGridChanged}
+                errorMessage={valid
+                    ? undefined
+                    : msg('process.samplingDesign.panel.stratification.form.crsTransform.invalid')}
+                suffix={valid && transform
+                    ? msg('process.samplingDesign.panel.stratification.form.crsTransform.effectiveScale', {scale: Math.abs(transform[0])})
+                    : undefined}
+            />
+        )
+    }
+
     renderCrs() {
         const {inputs: {crs}} = this.props
         // Free text, not the curated combo: Stratification names the projection the categorical source is
@@ -293,6 +333,7 @@ class _Stratification extends React.Component {
         // options. onGridChanged still runs, so a grid change invalidates areas, proportions and allocation.
         return (
             <Form.Input
+                className={styles.compactField}
                 label={msg('process.samplingDesign.panel.stratification.form.crs.label')}
                 placeholder={msg('process.samplingDesign.panel.stratification.form.crs.placeholder')}
                 tooltip={msg('process.samplingDesign.panel.stratification.form.crs.tooltip')}

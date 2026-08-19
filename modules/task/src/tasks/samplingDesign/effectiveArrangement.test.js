@@ -86,3 +86,31 @@ describe('effectiveArrangement four-mode matrix', () => {
         })
     })
 })
+
+// Scale and transform are never simultaneously authoritative. Rather than leaving a tolerant reader
+// (gridPixelSize prefers the transform) disagreeing with a strict validator (the candidate function throws on
+// both), the boundary emits exactly ONE definition, so downstream never sees the pair.
+describe('Stratification grid definition is scale XOR transform', () => {
+    const arrangement = {arrangementStrategy: 'RANDOM', seed: 1, crs: 'EPSG:6933'}
+    const grid = stratification => effectiveArrangement({stratification, sampleArrangement: arrangement}).stratificationGrid
+
+    it('emits scale when no transform is configured', () => {
+        expect(grid({skip: false, crs: 'EPSG:32636', scale: 30})).toEqual({crs: 'EPSG:32636', scale: 30})
+    })
+
+    it('emits the transform and NO scale when a transform is configured', () => {
+        const result = grid({skip: false, crs: 'EPSG:32636', scale: 999, crsTransform: '[10, 0, 300000, 0, -10, 200000]'})
+        expect(result).toEqual({crs: 'EPSG:32636', crsTransform: [10, 0, 300000, 0, -10, 200000]})
+        expect('scale' in result).toBe(false)
+    })
+
+    it('falls back to scale when the transform does not parse', () => {
+        expect(grid({skip: false, crs: 'EPSG:32636', scale: 30, crsTransform: 'nonsense'}))
+            .toEqual({crs: 'EPSG:32636', scale: 30})
+    })
+
+    it('carries the parsed transform through as numbers, not the stored string', () => {
+        expect(grid({skip: false, crs: 'EPSG:32636', crsTransform: '[20, 0, 5, 0, -20, 7]'}).crsTransform)
+            .toEqual([20, 0, 5, 0, -20, 7])
+    })
+})

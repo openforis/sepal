@@ -90,7 +90,8 @@ operation materially more expensive than a spatial filter. Anyone proposing it s
 Two explicitly named grids, never one overloaded value:
 
 - **Stratification grid** — how the categorical image and its mask are interpreted, how mapped stratum areas are
-  calculated, and how anticipated proportions are grouped. Owns a **CRS and Scale**. Its CRS is not restricted to
+  calculated, and how anticipated proportions are grouped. Owns a **CRS** plus one grid definition: a **Scale**,
+  or a **crsTransform** that sets alignment and resolution together and replaces Scale. Its CRS is not restricted to
   the curated placement list: it must be able to name whatever projected CRS the categorical source is meant to be
   interpreted in.
 - **Arrangement grid** — where samples are placed. Owns a **CRS** only, from the curated equal-area list. Random
@@ -208,7 +209,11 @@ These are load-bearing. Each was established by measurement, and each is cheap t
 - **Temporary centroids must stay in default WGS84.** Native custom-WKT centroids exceed Earth Engine's
   aggregation-result limit at full scale.
 - **The Systematic origin phase derives from the Arrangement projection's nominal scale.** Taking it from the
-  Stratification projection would translate the lattice whenever Stratification CRS or pixel size changed.
+  Stratification projection would translate the lattice whenever Stratification CRS or pixel size changed. A
+  Stratification transform's `xOrigin`/`yOrigin` are likewise never the Arrangement origin.
+- **A resolved Stratification grid carries a Scale or a transform, never both.** `effectiveArrangement` emits one
+  definition, so the tolerant reader (`gridPixelSize`, where a transform wins) and the strict validator (the
+  candidate generator, which rejects both) can never disagree - they are never handed a grid carrying both.
 - **No AOI buffer before Systematic vectorization.** The marker centre is the exact lattice point, so clipping
   already yields "exact point inside AOI"; a buffer would only reintroduce the inclusive edge convention.
 - **Batch EECU does not reflect work done on the success path.** Successful exports here report roughly 0.0003 to
@@ -236,21 +241,13 @@ re-run all three before it is considered done.
 
 ## Remaining Work
 
-### Stratification CRS transform mode
+### Structured errors from the area and proportion jobs
 
-Stratification gains a second, mutually exclusive grid-definition mode: `{crs, crsTransform}` instead of
-`{crs, scale}`. Scale remains the default for existing recipes.
-
-- Accept only north-up, square, projected-metre transforms of the form `[a, 0, xOrigin, 0, -a, yOrigin]` with
-  `a > 0`; derive the displayed effective Scale as `abs(a)`.
-- Scale and transform must never be simultaneously authoritative.
-- Record the transform exactly for reproduction.
-- A transform is normalized into the single categorical reprojection. It must not alter the Random rank graph, and
-  its `xOrigin`/`yOrigin` must never become the Arrangement origin.
-- Area calculation uses either the Stratification Scale or its exact transform.
-
-The Earth Engine semantics are already proven — nearly every fixture in both exactness matrices defines its
-stratification grid by transform. What remains is configuration, validation and a GUI input.
+`areaPerStratum` and `probabilityPerStratum` throw a raw `Error` when the Stratification CRS is absent or a
+transform is malformed, where the task boundary produces a structured `{key, args, message}` the GUI can render.
+Both GUI call sites guard with `|| DEFAULT`, so it is latent. This is not a fix in passing: these are gee job
+workers returning RxJS streams to the HTTP layer with no `ClientException` plumbing, and the GUI consumes their
+failures through a different path from task errors. It needs its own packet.
 
 ### Confirm the RECIPE conclusion against a real recipe
 

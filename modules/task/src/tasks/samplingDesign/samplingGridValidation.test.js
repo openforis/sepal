@@ -6,6 +6,7 @@ const key = error => error?.userMessage?.key
 const UNSUPPORTED_ARRANGEMENT = 'tasks.samplingDesign.grid.unsupportedArrangementCrs'
 const INVALID_STRATIFICATION_CRS = 'tasks.samplingDesign.grid.invalidStratificationCrs'
 const INVALID_SCALE = 'tasks.samplingDesign.grid.invalidScale'
+const INVALID_TRANSFORM = 'tasks.samplingDesign.grid.invalidStratificationTransform'
 
 // The validators read the two named grids off the effective arrangement. The Arrangement CRS must be curated;
 // the Stratification CRS only has to be present, because it names the projection the categorical source is
@@ -118,5 +119,59 @@ describe('stratifiedMinDistanceError', () => {
 
     it('rejects a non-numeric distance as malformed rather than rendering NaN', () => {
         expect(key(stratifiedMinDistanceError(arrangement({minDistance: 'abc'})))).toBe(INVALID_MIN_DISTANCE)
+    })
+})
+
+// Transform mode: six finite numbers, north-up, square, a > 0 - [a, 0, xOrigin, 0, -a, yOrigin]. Rejected with a
+// structured message the GUI can render, never a raw Error.
+describe('stratifiedGridError in transform mode', () => {
+    const withTransform = crsTransform => ({
+        stratificationGrid: {crs: 'EPSG:32636', crsTransform},
+        arrangementGrid: {crs: 'EPSG:6933'}
+    })
+
+    it('accepts a north-up square transform and does not require a scale', () => {
+        expect(stratifiedGridError(withTransform([10, 0, 300000, 0, -10, 200000]))).toBeNull()
+    })
+
+    it('rejects a sheared transform', () => {
+        expect(key(stratifiedGridError(withTransform([10, 2, 300000, 3, -10, 200000])))).toBe(INVALID_TRANSFORM)
+    })
+
+    it('rejects a south-up transform', () => {
+        expect(key(stratifiedGridError(withTransform([10, 0, 300000, 0, 10, 200000])))).toBe(INVALID_TRANSFORM)
+    })
+
+    it('rejects a non-square transform', () => {
+        expect(key(stratifiedGridError(withTransform([10, 0, 300000, 0, -20, 200000])))).toBe(INVALID_TRANSFORM)
+    })
+
+    it('rejects a negative or zero pixel width', () => {
+        expect(key(stratifiedGridError(withTransform([-10, 0, 300000, 0, 10, 200000])))).toBe(INVALID_TRANSFORM)
+        expect(key(stratifiedGridError(withTransform([0, 0, 300000, 0, 0, 200000])))).toBe(INVALID_TRANSFORM)
+    })
+
+    it('rejects a transform that is not six finite numbers', () => {
+        expect(key(stratifiedGridError(withTransform([10, 0, 300000, 0, -10])))).toBe(INVALID_TRANSFORM)
+        expect(key(stratifiedGridError(withTransform('nonsense')))).toBe(INVALID_TRANSFORM)
+    })
+
+    it('never dumps the WKT when reporting a transform problem', () => {
+        expect(stratifiedGridError(withTransform([10, 2, 3, 4, -10, 6])).message).not.toContain('PROJCS')
+    })
+
+    it('still requires a curated Arrangement CRS in transform mode', () => {
+        expect(key(stratifiedGridError({
+            stratificationGrid: {crs: 'EPSG:32636', crsTransform: [10, 0, 0, 0, -10, 0]},
+            arrangementGrid: {crs: 'EPSG:4326'}
+        }))).toBe(UNSUPPORTED_ARRANGEMENT)
+    })
+
+    it('applies the minimum-distance floor to the transform pixel size', () => {
+        const error = stratifiedMinDistanceError({
+            minDistance: 20,
+            stratificationGrid: {crs: 'EPSG:32636', crsTransform: [30, 0, 0, 0, -30, 0]}
+        })
+        expect(error.userMessage.args).toMatchObject({value: 20, pixelSize: 30, minimum: 60})
     })
 })

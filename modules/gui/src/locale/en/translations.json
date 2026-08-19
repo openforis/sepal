@@ -5079,6 +5079,13 @@
               "suffix": "meters",
               "tooltip": "Pixel size used to calculate stratum areas. Smaller values use more pixels and preserve detail only when supported by the source image."
             },
+            "crsTransform": {
+              "label": "CRS transform",
+              "placeholder": "e.g. [10, 0, 300000, 0, -10, 200000]",
+              "invalid": "The transform must be six numbers of the form [a, 0, xOrigin, 0, -a, yOrigin]: north-up, square pixels, no rotation or shear.",
+              "effectiveScale": "{scale} m",
+              "tooltip": "Optional. Defines the stratification grid's alignment and resolution together, replacing Scale. Use it to keep the categorical source's exact pixel grid."
+            },
             "crs": {
               "label": "CRS",
               "placeholder": "e.g. EPSG:32636",
@@ -5606,7 +5613,8 @@
       "grid": {
         "unsupportedArrangementCrs": "The selected Sample Arrangement CRS is not supported. Choose one of: {supported}.",
         "invalidStratificationCrs": "The Stratification CRS is missing. Provide the projected CRS the categorical source is interpreted in.",
-        "invalidScale": "The Stratification Scale is invalid. Provide a positive Scale in metres."
+        "invalidScale": "The Stratification Scale is invalid. Provide a positive Scale in metres.",
+        "invalidStratificationTransform": "The Stratification CRS transform is invalid. Provide six numbers of the form [a, 0, xOrigin, 0, -a, yOrigin]: north-up, square pixels, no rotation or shear."
       },
       "random": {
         "progress": {

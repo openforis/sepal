@@ -1,10 +1,11 @@
 import {ClientException} from '#sepal/exception'
-import {formatDistance, gridPixelSize, isMinDistanceUnset, isValidMinDistanceForGrid, requiredMinDistance} from '#sepal/recipe/samplingDesign/samplingGrid'
+import {formatDistance, gridPixelSize, isAxisAlignedTransform, isMinDistanceUnset, isValidMinDistanceForGrid, parseCrsTransform, requiredMinDistance} from '#sepal/recipe/samplingDesign/samplingGrid'
 import {isSupportedSamplingGridCrs, isValidStratificationCrs, supportedSamplingGridCrsNames} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
 const UNSUPPORTED_ARRANGEMENT_CRS = 'The selected Sample Arrangement CRS is not supported. Choose one of: {supported}.'
 const INVALID_STRATIFICATION_CRS = 'The Stratification CRS is missing. Provide the projected CRS the categorical source is interpreted in.'
 const INVALID_SCALE = 'The Stratification Scale is invalid. Provide a positive Scale in metres.'
+const INVALID_TRANSFORM = 'The Stratification CRS transform is invalid. Provide six numbers of the form [a, 0, xOrigin, 0, -a, yOrigin]: north-up, square pixels, no rotation or shear.'
 const INVALID_MIN_DISTANCE = 'The minimum distance is not a number. Provide a distance in metres, or leave it unset to use the smallest distance the sampling grid allows.'
 const MIN_DISTANCE_BELOW_GRID = 'Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.'
 
@@ -42,6 +43,17 @@ export const stratifiedGridError = ({stratificationGrid, arrangementGrid} = {}) 
             message: INVALID_STRATIFICATION_CRS
         })
     }
+    // A transform defines alignment AND resolution, so it replaces Scale rather than supplementing it. The grid
+    // arrives with exactly one definition, so the presence of the key is the mode.
+    if ('crsTransform' in (stratificationGrid || {})) {
+        const transform = parseCrsTransform(stratificationGrid.crsTransform)
+        return transform && isAxisAlignedTransform(transform)
+            ? null
+            : structured({
+                key: 'tasks.samplingDesign.grid.invalidStratificationTransform',
+                message: INVALID_TRANSFORM
+            })
+    }
     const scale = stratificationGrid?.scale
     const scaleNumber = Number(scale)
     return scale != null && scale !== '' && Number.isFinite(scaleNumber) && scaleNumber > 0
@@ -59,7 +71,7 @@ export const unstratifiedSystematicGridError = ({arrangementGrid} = {}) =>
 // with those but has no minimum distance, and unstratified systematic is analytical, so neither may be checked
 // against the raster floor. Run this only for stratified systematic recipes, after the grids are valid.
 export const stratifiedMinDistanceError = ({minDistance, stratificationGrid} = {}) => {
-    const grid = {scale: stratificationGrid?.scale}
+    const grid = {scale: stratificationGrid?.scale, crsTransform: stratificationGrid?.crsTransform}
     // A non-numeric value has no magnitude to compare, so report it as malformed rather than rendering "NaN m".
     // Recipes can arrive through non-GUI paths, so this cannot rely on the panel's own field validation.
     if (!isMinDistanceUnset(minDistance) && !Number.isFinite(Number(minDistance))) {
