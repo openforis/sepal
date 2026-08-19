@@ -5076,15 +5076,12 @@
               "label": "Scale",
               "placeholder": "Scale...",
               "required": "You must specify the scale",
+              "mode": {
+                "imageGrid": "Using the image's own pixel grid. Leave blank to keep it, or enter a scale to resample.",
+                "resampled": "The stratification is resampled to this scale. Clear the field to use the image's own pixel grid."
+              },
               "suffix": "meters",
               "tooltip": "Pixel size used to calculate stratum areas. Smaller values use more pixels and preserve detail only when supported by the source image."
-            },
-            "crsTransform": {
-              "label": "CRS transform",
-              "placeholder": "e.g. [10, 0, 300000, 0, -10, 200000]",
-              "invalid": "The transform must be six numbers of the form [a, 0, xOrigin, 0, -a, yOrigin]: north-up, square pixels, no rotation or shear.",
-              "effectiveScale": "{scale} m",
-              "tooltip": "Optional. Defines the stratification grid's alignment and resolution together, replacing Scale. Use it to keep the categorical source's exact pixel grid."
             },
             "crs": {
               "label": "CRS",

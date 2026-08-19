@@ -91,11 +91,32 @@ Two explicitly named grids, never one overloaded value:
 
 - **Stratification grid** — how the categorical image and its mask are interpreted, how mapped stratum areas are
   calculated, and how anticipated proportions are grouped. Owns a **CRS** plus one grid definition: a **Scale**,
-  or a **crsTransform** that sets alignment and resolution together and replaces Scale. Its CRS is not restricted to
+  or a **crsTransform** that sets alignment and resolution together and replaces Scale. The transform is derived
+  from the source and written by the panel; it is never entered by hand. Its CRS is not restricted to
   the curated placement list: it must be able to name whatever projected CRS the categorical source is meant to be
   interpreted in.
 - **Arrangement grid** — where samples are placed. Owns a **CRS** only, from the curated equal-area list. Random
   cells, Systematic lattice coordinates and sample identity all live here.
+
+The Stratification grid is DERIVED from the source by default, with Scale as an override. One rule, no branch on
+source type: **derive when the resolved image has a real projection, default when it does not.** `isAxisAlignedTransform`
+is the whole guard — a computed image reports the identity transform `[1, 0, 0, 0, 1, 0]`, whose positive `e` fails it
+by sign, so no magnitude threshold is involved. Derivation reads the SELECTED band's grid, since a single asset can
+carry several (Sentinel-2 bands are 10, 20 and 60 m on one image).
+
+A derived grid carries its pixel size in metres alongside the transform. A transform is expressed in its CRS's units,
+and EPSG:4326 — SEPAL's default export CRS — makes degrees the common case, where `abs(a)` is about 9e-5 rather than 10.
+The arrangement cell size and the minimum-distance floor are metre quantities, so they read the metre value; the
+transform stays exact and defines the grid.
+
+An entered Scale replaces the transform only when the two DISAGREE. Typing the value the placeholder displays must not
+silently degrade the image's own grid to a resampled one, so agreement is tested as exact equality between both sides
+put through `formatDistance`, and the resulting mode is shown on screen.
+
+Recorded consequence, reversing an earlier decision: a stratification backed by an ImageCollection now falls back to
+the default rather than adopting `first()`'s grid. The collection resolves through a mosaic, which has no real
+projection. This costs a marginal gain in a rare case — a stratification is normally a single categorical image — and
+buys one endpoint, one rule and no special-casing.
 
 Applicability by mode:
 
@@ -118,7 +139,9 @@ or the reproduction metadata.
   interpretation CRS, and `scale` as the Stratification pixel size. Each is omitted when its grid is absent.
 - Mapped stratum area and allocation weight come from `ee.Image.pixelArea()` grouped on the Stratification grid.
   This stays valid for a non-equal-area CRS because `pixelArea()` supplies square metres.
-- Anticipated-proportion estimation preserves the Stratification projection and applies its own Proportions Scale.
+- Anticipated-proportion estimation preserves the Stratification projection and applies its own Proportions
+  Scale. Its mean is currently unweighted, which is strictly unbiased only on an equal-area grid; the residual
+  is immaterial at planning precision.
 - Random uses the effective Stratification pixel size as its Arrangement-cell size. Changing that size defines a
   new cell frame and may move every Random sample; stability across Scale changes is not a product requirement.
 - Systematic has no Arrangement raster Scale. Lattice spacing comes from allocation, Minimum distance and the
@@ -241,6 +264,23 @@ re-run all three before it is considered done.
 
 ## Remaining Work
 
+### Area-weight the anticipated-proportion mean
+
+`probabilityPerStratum` reduces with an unweighted `ee.Reducer.mean()` over pixels, which is only an area-weighted
+mean on an equal-area grid. Since the Stratification CRS accepts any projected CRS, proportions are weighted
+towards whichever latitudes carry more pixels per unit ground area.
+
+This is a correctness tidy-up, not a blocker, and it does not gate the grid default above. The weight distortion
+is 1/cos(latitude) across a stratum - about 6% over 10-22 degrees, 2x over 0-60 - and it only produces an error
+where the target proportion itself varies with latitude within that stratum. Anticipated proportions are
+planning inputs, so the residual is far below the uncertainty in the guess they encode.
+
+Weight by `ee.Image.pixelArea()` when next in that file. Either `ee.Reducer.mean().splitWeights()` with the area
+as the weight band - noting that `splitWeights` consumes two inputs per value, so the `group()` index shifts -
+or `sum(value * pixelArea) / sum(pixelArea)`, which mirrors `areaPerStratum` and reads as target area over
+stratum area. Both modes reduce to the same shape, so `band.eq(targetClass)` and a probability band need no
+separate handling.
+
 ### Structured errors from the area and proportion jobs
 
 `areaPerStratum` and `probabilityPerStratum` throw a raw `Error` when the Stratification CRS is absent or a
@@ -302,6 +342,15 @@ Outstanding:
 
 ### Deferred post-release
 
+- **Known gap: the Stratification panel's grid wiring is untested.** Its decisions are covered as pure functions
+  (`stratificationGridState`, `stratificationScaleDefault`, `deriveStratificationGrid`,
+  `isStratificationTransformActive`), but nothing asserts that `onGridChanged` calls `syncCrsTransform`, or that
+  `loadBandGrids` fires on image load. The obstacle is NOT missing tooling - `widget/scrubControl.test.jsx` and
+  `widget/crudItem.test.jsx` already render components. It is that `stratification.jsx` is a `recipeFormPanel`
+  behind `compose`, `withActivators` and a Redux connection, so mounting it needs recipe context those widget
+  tests never required. Whoever picks this up is solving panel mounting, not building a harness. The gap is
+  tolerable because both risks degrade silently to today's behaviour - no derived grid, Scale required - rather
+  than failing loudly.
 - Add tiled candidate/final exports only when actual user workloads justify the complexity.
 - Automatic addition of a completed export to the map is not required for the first release.
 - Do not promise sample retention across enlarged, restratified or annual designs until the overlap contract has

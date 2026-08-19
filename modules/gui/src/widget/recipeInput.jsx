@@ -128,9 +128,10 @@ class _RecipeInput extends React.Component {
                 loadRecipe$(recipeId).pipe(
                     switchMap(recipe => {
                         return api.gee.bands$({recipe}).pipe(
-                            map(bandNames => ({
+                            map(bands => ({
                                 recipe,
-                                bandNames,
+                                // The endpoint now returns per-band grids; consumers here expect names.
+                                bandNames: bands.map(({id}) => id),
                                 type: getRecipeType(recipe.type)
                             }))
                         )

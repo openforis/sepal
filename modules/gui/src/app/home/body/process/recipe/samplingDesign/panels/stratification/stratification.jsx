@@ -4,7 +4,7 @@ import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
 import {parseCrsTransform} from '#sepal/recipe/samplingDesign/samplingGrid'
-import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
+import {DEFAULT_STRATIFICATION_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import api from '~/apiRegistry'
 import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
@@ -24,7 +24,7 @@ import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
-import {isValidGridScale, isValidStratificationTransform} from '../../samplingGridValidation'
+import {deriveStratificationGrid, isValidGridScale, stratificationGridState, stratificationScaleDefault} from '../../samplingGridValidation'
 import {CalculationErrorContent} from '../calculationErrorContent'
 import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
@@ -55,20 +55,17 @@ const fields = {
                 || (type === 'RECIPE' && !recipeId))
         .notBlank('process.samplingDesign.panel.stratification.form.band.required'),
     scale: new Form.Field()
-        .skip((_value, {skip}) => skip.length)
+        // Blank is meaningful ONLY while a derived transform is in effect. The panel sets crsTransform from one
+        // evaluation of the predicate, so its presence IS the "grid already defined" condition.
+        .skip((_value, {skip, crsTransform}) => skip.length || !!parseCrsTransform(crsTransform))
         .notBlank('process.samplingDesign.panel.stratification.form.scale.required')
         .number()
         .greaterThan(0),
     crs: new Form.Field()
         .skip((_value, {skip}) => skip.length)
         .notBlank('process.samplingDesign.panel.stratification.form.crs.required'),
-    // Optional. When set it REPLACES Scale as the grid definition, so it must be north-up, square and unrotated.
-    crsTransform: new Form.Field()
-        .skip((_value, {skip}) => skip.length)
-        .predicate(
-            isValidStratificationTransform,
-            'process.samplingDesign.panel.stratification.form.crsTransform.invalid'
-        ),
+    // DERIVED from the source, never typed: the panel owns it, setting it from one evaluation of the predicate.
+    crsTransform: new Form.Field(),
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
         // Required even when skipped: unstratified mode still needs the single synthetic stratum (area is
@@ -78,8 +75,12 @@ const fields = {
 
 class _Stratification extends React.Component {
     cancel$ = new Subject()
+    // Separate from cancel$, which belongs to AREA_PER_STRATUM: cancelling an area calculation must not cancel a
+    // grid fetch, or the reverse.
+    cancelBandGrids$ = new Subject()
     state = {
         bands: undefined,
+        bandGrids: undefined,
         prevStrata: [],
         entriesByBand: {},
         showHexColorCode: false,
@@ -141,14 +142,7 @@ class _Stratification extends React.Component {
                         {this.renderBand()}
                         {this.renderScale()}
                     </Layout>
-                    {this.state.more
-                        ? (
-                            <Layout type='horizontal'>
-                                {this.renderCrsTransform()}
-                                {this.renderCrs()}
-                            </Layout>
-                        )
-                        : null}
+                    {this.state.more ? this.renderCrs() : null}
                     {this.renderStrata()}
                 </Layout>
             )
@@ -287,12 +281,20 @@ class _Stratification extends React.Component {
     
     renderScale() {
         const {inputs: {scale}} = this.props
+        const {mode, placeholder} = this.gridState()
         return (
             <Form.Input
                 className={styles.compactField}
                 label={msg('process.samplingDesign.panel.stratification.form.scale.label')}
-                placeholder={msg('process.samplingDesign.panel.stratification.form.scale.placeholder')}
-                tooltip={msg('process.samplingDesign.panel.stratification.form.scale.tooltip')}
+                // A blank Scale must not read as "empty, something missing". With a derived grid the placeholder
+                // shows its pixel size and the tooltip names which grid is in effect; with none there is no mode
+                // to be in, so neither appears and the field behaves exactly as before.
+                placeholder={mode === 'none'
+                    ? msg('process.samplingDesign.panel.stratification.form.scale.placeholder')
+                    : String(placeholder)}
+                tooltip={mode === 'none'
+                    ? msg('process.samplingDesign.panel.stratification.form.scale.tooltip')
+                    : msg(`process.samplingDesign.panel.stratification.form.scale.mode.${mode}`)}
                 input={scale}
                 type='number'
                 suffix={msg('process.samplingDesign.panel.stratification.form.scale.suffix')}
@@ -301,28 +303,55 @@ class _Stratification extends React.Component {
         )
     }
 
-    // Optional transform. When it parses it defines alignment AND resolution, so the effective Scale shown is
-    // abs(a) rather than the Scale field. onGridChanged invalidates areas, proportions and allocation exactly as
-    // a Scale change does.
-    renderCrsTransform() {
+    // Derive ON DEMAND from the cached response, so changing the selected band needs no refetch. bands$ returns a
+    // bare array while assetMetadata returns {bands}; the band entries themselves are identical, so this wraps
+    // rather than branches.
+    derivedGrid() {
+        const {inputs: {band}} = this.props
+        const {bandGrids} = this.state
+        const grid = deriveStratificationGrid({bands: bandGrids}, band.value)
+        const nominalScale = Number((bandGrids || []).find(({id}) => id === band.value)?.nominalScale)
+        return grid && Number.isFinite(nominalScale) && nominalScale > 0
+            ? {...grid, pixelSizeMetres: nominalScale}
+            : null
+    }
+
+    gridState() {
+        const {inputs: {crs, scale}} = this.props
+        return stratificationGridState({derived: this.derivedGrid(), crs: crs.value, scale: scale.value})
+    }
+
+    // ONE evaluation of the predicate, called from every path that can move its inputs. Never per-handler
+    // transitions: clearing Scale, retyping the native value and CRS round-trips all fall out of re-evaluating,
+    // so there is no ordering to get wrong.
+    syncCrsTransform() {
         const {inputs: {crsTransform}} = this.props
-        const valid = isValidStratificationTransform(crsTransform.value)
-        const transform = parseCrsTransform(crsTransform.value)
-        return (
-            <Form.Input
-                className={styles.wideField}
-                label={msg('process.samplingDesign.panel.stratification.form.crsTransform.label')}
-                placeholder={msg('process.samplingDesign.panel.stratification.form.crsTransform.placeholder')}
-                tooltip={msg('process.samplingDesign.panel.stratification.form.crsTransform.tooltip')}
-                input={crsTransform}
-                onChange={this.onGridChanged}
-                errorMessage={valid
-                    ? undefined
-                    : msg('process.samplingDesign.panel.stratification.form.crsTransform.invalid')}
-                suffix={valid && transform
-                    ? msg('process.samplingDesign.panel.stratification.form.crsTransform.effectiveScale', {scale: Math.abs(transform[0])})
-                    : undefined}
-            />
+        const next = this.gridState().crsTransform
+        const serialized = next ? JSON.stringify(next) : null
+        if ((crsTransform.value || null) !== serialized) {
+            crsTransform.set(serialized)
+        }
+    }
+
+    // Runs for every source type: both onAssetLoaded and onRecipeLoaded funnel through onImageLoaded. The fetch
+    // never gates the panel - while it is in flight there is no derived grid, so Scale is simply required, as
+    // today. No loading state, no disabled fields.
+    loadBandGrids() {
+        const {stream, inputs: {type, assetId, recipeId}} = this.props
+        if (stream('BAND_GRIDS').active) {
+            this.cancelBandGrids$.next()
+        }
+        const source = type.value === 'RECIPE'
+            ? {recipe: {type: 'RECIPE_REF', id: recipeId.value}}
+            : {asset: assetId.value}
+        stream('BAND_GRIDS',
+            api.gee.bands$(source).pipe(
+                takeUntil(this.cancelBandGrids$)
+            ),
+            bandGrids => this.setState({bandGrids}, () => this.syncCrsTransform()),
+            // No grid is not an error: nothing could be derived, so Scale stays required and the panel is
+            // unchanged. Reported nowhere, because there is nothing for the user to act on.
+            () => this.setState({bandGrids: []}, () => this.syncCrsTransform())
         )
     }
 
@@ -460,12 +489,14 @@ class _Stratification extends React.Component {
         const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, crs, type, eeStrategy, strata}} = this.props
         requiresUpdate.set(false)
         skip.value || skip.set([])
-        scale.value || scale.set('30')
-        crs.value || crs.set(DEFAULT_SAMPLING_GRID_CRS)
+        // Asset sources start BLANK so a derived grid is not overwritten; only a recipe gets a concrete default.
+        const scaleDefault = stratificationScaleDefault(type.value)
+        scale.value || (scaleDefault && scale.set(scaleDefault))
+        crs.value || crs.set(DEFAULT_STRATIFICATION_CRS)
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
         // Reveal the advanced options when a non-default CRS was saved, so the setting is discoverable.
-        if (crs.value && crs.value !== DEFAULT_SAMPLING_GRID_CRS) {
+        if (crs.value && crs.value !== DEFAULT_STRATIFICATION_CRS) {
             this.setState({more: true})
         }
 
@@ -532,7 +563,7 @@ class _Stratification extends React.Component {
     }
 
     onImageLoading() {
-        this.setState({bands: undefined})
+        this.setState({bands: undefined, bandGrids: undefined})
     }
 
     onAssetLoaded({metadata, visualizations}) {
@@ -565,6 +596,7 @@ class _Stratification extends React.Component {
     onImageLoaded(bands, visualizations) {
         const {inputs: {band}} = this.props
         this.setState({bands})
+        this.loadBandGrids()
         const categoricalVisualizations = visualizations
             .filter(({type}) => type === 'categorical')
         const defaultBand = bands.length === 1
@@ -591,10 +623,12 @@ class _Stratification extends React.Component {
     }
 
     onBandChanged() {
+        this.syncCrsTransform()
         this.scheduleAreaPerStratum()
     }
 
     onGridChanged() {
+        this.syncCrsTransform()
         this.scheduleAreaPerStratum()
     }
 
@@ -685,8 +719,12 @@ class _Stratification extends React.Component {
                 aoi,
                 stratification,
                 band: band.value,
-                scale: parseInt(scale.value) || 30,
-                crs: crs.value || DEFAULT_SAMPLING_GRID_CRS,
+                // The grid actually in effect: a derived transform when one holds, otherwise the entered Scale.
+                // Defaulting to 30 here would compute areas on a grid the design is not using.
+                ...(this.gridState().crsTransform
+                    ? {crsTransform: this.gridState().crsTransform}
+                    : {scale: parseInt(scale.value) || 30}),
+                crs: crs.value || DEFAULT_STRATIFICATION_CRS,
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
                 takeUntil(this.cancel$)

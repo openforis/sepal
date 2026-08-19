@@ -114,3 +114,32 @@ describe('Stratification grid definition is scale XOR transform', () => {
             .toEqual([20, 0, 5, 0, -20, 7])
     })
 })
+
+// A derived grid also carries its pixel size in METRES, because a transform is in its CRS's units and the
+// arrangement cell size and minimum-distance floor are metre quantities.
+describe('Stratification grid carries the derived metre pixel size', () => {
+    const arrangement = {arrangementStrategy: 'RANDOM', seed: 1, crs: 'EPSG:6933'}
+    const grid = stratification => effectiveArrangement({stratification, sampleArrangement: arrangement}).stratificationGrid
+
+    it('carries pixelSizeMetres alongside a degree transform', () => {
+        expect(grid({
+            skip: false, crs: 'EPSG:4326',
+            crsTransform: '[0.00008983152841195215, 0, 21.8, 0, -0.00008983152841195215, 22.2]',
+            pixelSizeMetres: 10
+        })).toEqual({
+            crs: 'EPSG:4326',
+            crsTransform: [0.00008983152841195215, 0, 21.8, 0, -0.00008983152841195215, 22.2],
+            pixelSizeMetres: 10
+        })
+    })
+
+    it('omits pixelSizeMetres when the recipe has none', () => {
+        expect('pixelSizeMetres' in grid({skip: false, crs: 'EPSG:32636', crsTransform: '[10, 0, 5, 0, -10, 7]'}))
+            .toBe(false)
+    })
+
+    it('does not attach it in scale mode, where scale is already metres', () => {
+        expect(grid({skip: false, crs: 'EPSG:32636', scale: 30, pixelSizeMetres: 10}))
+            .toEqual({crs: 'EPSG:32636', scale: 30})
+    })
+})
