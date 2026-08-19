@@ -167,6 +167,17 @@ const pixelCentreFloorPreflight = () => {
 
 const onConfiguredGrid = ({image, projection}) => image.reproject(projection)
 
+// Two forms of the categorical input exist: a combined class-and-mask image (sentinel + explicit mask band), and
+// the MASKED SINGLE BAND already reprojected to the Stratification grid that stratificationImage$ supplies.
+// This mode runs the finite matrix against the masked single band, comparing
+// against the UNCHANGED sentinel-form oracle.
+const MASKED_SINGLE_BAND = process.env.SD_SYSTEMATIC_MASKED_BAND === '1'
+
+const productionStratification = ({sourceClass, sourceMask, sourceProjection}) =>
+    sourceClass.updateMask(sourceMask).rename('stratum').toInt()
+        .setDefaultProjection(sourceProjection)
+        .reproject(sourceProjection)
+
 const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds))
 
 const callbackPromise = operation => new Promise((resolve, reject) => {
@@ -295,6 +306,7 @@ const buildFiniteScenario = config => {
         sourceClass,
         sourceMask,
         lookupImage,
+        maskedStratification: productionStratification({sourceClass, sourceMask, sourceProjection}),
         layouts: finiteLayoutValues(config)
     }
 }
@@ -341,6 +353,14 @@ const buildConfiguredGridScenario = mode => {
         sourceClass: nativeClass,
         sourceMask: nativeMask,
         lookupImage,
+        // The witness discriminates on WHICH projection the categorical is locked to, so the masked form must
+        // mirror the same three modes rather than always forcing the configured grid.
+        maskedStratification: (masked => mode === 'forced-configured'
+            ? masked.reproject(configuredProjection)
+            : mode === 'default-configured'
+                ? masked.setDefaultProjection(configuredProjection)
+                : masked
+        )(nativeClass.updateMask(nativeMask).rename('stratum').toInt().setDefaultProjection(nativeProjection)),
         layouts: finiteLayoutValues(config),
         configuredGridMode: mode
     }
@@ -412,7 +432,12 @@ const vectorizeBranch = ({scenario, plan, parity, acceptedOnly}) => {
     let image
     if (acceptedOnly) {
         const strata = plan.layouts.map(({stratum}) => stratum)
-        const layoutIndex = scenario.lookupImage.select('observedClass')
+        assert(!MASKED_SINGLE_BAND || scenario.maskedStratification,
+            `Scenario ${scenario.name} has no masked single band to test`)
+        const classImage = MASKED_SINGLE_BAND
+            ? scenario.maskedStratification
+            : scenario.lookupImage.select('observedClass')
+        const layoutIndex = classImage
             .remap(strata, plan.layouts.map(({layoutIndex}) => layoutIndex), -1).toInt()
         const ratio = layoutIndex.remap(
             plan.layouts.map(({layoutIndex}) => layoutIndex),
@@ -430,9 +455,11 @@ const vectorizeBranch = ({scenario, plan, parity, acceptedOnly}) => {
             0
         ).toInt()
         const indices = denseToClassIndices({denseI, denseJ, ratio, phaseShiftI, phaseShiftJ})
-        const sourceMask = scenario.lookupImage.select('observedMask')
-        const observedClass = scenario.lookupImage.select('observedClass').toInt()
-        const accepted = sourceMask.eq(1).and(layoutIndex.gte(0)).and(indices.member)
+        // With a masked single band the validity mask rides on the image itself, so remap yields a masked
+        // pixel where the source is masked and no explicit mask term is needed.
+        const accepted = MASKED_SINGLE_BAND
+            ? layoutIndex.gte(0).and(indices.member)
+            : scenario.lookupImage.select('observedMask').eq(1).and(layoutIndex.gte(0)).and(indices.member)
         const residue = indices.classJ.mod(32).add(32).mod(32).multiply(16)
             .add(indices.classI.mod(16).add(16).mod(16)).toInt()
         const label = layoutIndex.multiply(512).add(residue).add(1).toInt().rename('label')
@@ -1107,6 +1134,8 @@ const buildSudanScenario = () => {
         .addBands(sourceMask.rename('observedMask'))
         .setDefaultProjection(sourceProjection)
     const lookupImage = onConfiguredGrid({image: nativeLookupImage, projection: sourceProjection})
+    const maskedStratification = source.toInt().updateMask(sourceMask).rename('stratum')
+        .reproject(sourceProjection)
     const seed = ee.Number(2)
     const randomOrigin = ee.FeatureCollection([ee.Feature(null, null)])
         .randomColumn('x', seed.add(2))
@@ -1131,6 +1160,7 @@ const buildSudanScenario = () => {
         sourceProjection,
         region,
         lookupImage,
+        maskedStratification,
         layouts
     }
 }
@@ -1775,8 +1805,8 @@ const runSudanExport = async () => {
 }
 
 const runSudanRecovery = async () => {
-    const taskId = process.env.SD_EXACT_CENTRED_SUDAN_TASK_ID
-    const assetId = process.env.SD_EXACT_CENTRED_SUDAN_ASSET_ID
+    const taskId = process.env.SD_SYSTEMATIC_SUDAN_TASK_ID
+    const assetId = process.env.SD_SYSTEMATIC_SUDAN_ASSET_ID
     assert(taskId && assetId, 'Sudan recovery requires task and asset IDs')
     await authenticate({linkedUser: true})
     const scenario = buildSudanScenario()
@@ -1947,8 +1977,8 @@ const runFinalExport = async () => {
 }
 
 const runFinalRecovery = async () => {
-    const taskId = process.env.SD_EXACT_CENTRED_FINAL_TASK_ID
-    const assetId = process.env.SD_EXACT_CENTRED_FINAL_ASSET_ID
+    const taskId = process.env.SD_SYSTEMATIC_FINAL_TASK_ID
+    const assetId = process.env.SD_SYSTEMATIC_FINAL_ASSET_ID
     assert(taskId && assetId, 'Final recovery requires task and asset IDs')
     await authenticate({linkedUser: true})
     const candidateAsset = await callbackPromise(callback =>
@@ -2078,21 +2108,21 @@ const runModestPreflight = async () => {
 }
 
 const main = async () => {
-    if (process.env.SD_EXACT_CENTRED_FINAL_RECOVER === '1') {
+    if (process.env.SD_SYSTEMATIC_FINAL_RECOVER === '1') {
         console.log(JSON.stringify({
             checkpoint: 'FINAL_EXPORT_RECOVERY',
             ...await runFinalRecovery()
         }, null, 2))
         return
     }
-    if (process.env.SD_EXACT_CENTRED_FINAL_EXPORT === '1') {
+    if (process.env.SD_SYSTEMATIC_FINAL_EXPORT === '1') {
         console.log(JSON.stringify({
             checkpoint: 'FINAL_EXPORT',
             ...await runFinalExport()
         }, null, 2))
         return
     }
-    if (process.env.SD_EXACT_CENTRED_FINAL_PREFLIGHT === '1') {
+    if (process.env.SD_SYSTEMATIC_FINAL_PREFLIGHT === '1') {
         console.log(JSON.stringify({
             checkpoint: 'FINAL_PREFLIGHT',
             status: 'PASS',
@@ -2100,7 +2130,7 @@ const main = async () => {
         }, null, 2))
         return
     }
-    if (process.env.SD_EXACT_CENTRED_FINAL_GRAPH === '1') {
+    if (process.env.SD_SYSTEMATIC_FINAL_GRAPH === '1') {
         console.log(JSON.stringify({
             checkpoint: 'FINAL_GRAPH_PREFLIGHT',
             status: 'PASS',
@@ -2108,21 +2138,21 @@ const main = async () => {
         }, null, 2))
         return
     }
-    if (process.env.SD_EXACT_CENTRED_SUDAN_RECOVER === '1') {
+    if (process.env.SD_SYSTEMATIC_SUDAN_RECOVER === '1') {
         console.log(JSON.stringify({
             checkpoint: 'SUDAN_EXPORT_RECOVERY',
             ...await runSudanRecovery()
         }, null, 2))
         return
     }
-    if (process.env.SD_EXACT_CENTRED_SUDAN_EXPORT === '1') {
+    if (process.env.SD_SYSTEMATIC_SUDAN_EXPORT === '1') {
         console.log(JSON.stringify({
             checkpoint: 'SUDAN_EXPORT',
             ...await runSudanExport()
         }, null, 2))
         return
     }
-    if (process.env.SD_EXACT_CENTRED_SUDAN_PREFLIGHT === '1') {
+    if (process.env.SD_SYSTEMATIC_SUDAN_PREFLIGHT === '1') {
         console.log(JSON.stringify({
             checkpoint: 'SUDAN_PREFLIGHT',
             status: 'PASS',
@@ -2130,7 +2160,7 @@ const main = async () => {
         }, null, 2))
         return
     }
-    if (process.env.SD_EXACT_CENTRED_AFFINE_DIAGNOSTIC === '1') {
+    if (process.env.SD_SYSTEMATIC_AFFINE_DIAGNOSTIC === '1') {
         await authenticate()
         console.log(JSON.stringify({
             checkpoint: 'AFFINE_CENTRE_DIAGNOSTIC',
@@ -2140,11 +2170,11 @@ const main = async () => {
         }, null, 2))
         return
     }
-    if (process.env.SD_EXACT_CENTRED_MODEST_EXPORT === '1') {
+    if (process.env.SD_SYSTEMATIC_MODEST_EXPORT === '1') {
         console.log(JSON.stringify({checkpoint: 'MODEST_EXPORT', ...await runModestExport()}, null, 2))
         return
     }
-    if (process.env.SD_EXACT_CENTRED_MODEST_PREFLIGHT === '1') {
+    if (process.env.SD_SYSTEMATIC_MODEST_PREFLIGHT === '1') {
         console.log(JSON.stringify({
             checkpoint: 'MODEST_PREFLIGHT',
             status: 'PASS',
@@ -2152,9 +2182,9 @@ const main = async () => {
         }, null, 2))
         return
     }
-    if (process.env.SD_EXACT_CENTRED_CONFIGURED_GRID_ONLY === '1') {
+    if (process.env.SD_SYSTEMATIC_CONFIGURED_GRID_ONLY === '1') {
         console.log(JSON.stringify({
-            checkpoint: 'EXACT_CENTRED_CONFIGURED_GRID',
+            checkpoint: 'SYSTEMATIC_LATTICE_CONFIGURED_GRID',
             status: 'PASS',
             ...await runConfiguredGridOnly(),
             eeValueRequests: 1,
@@ -2163,13 +2193,13 @@ const main = async () => {
         }, null, 2))
         return
     }
-    const firstOnly = process.env.SD_EXACT_CENTRED_FIRST_ONLY === '1'
-    const cornerOnly = process.env.SD_EXACT_CENTRED_CORNER_ONLY === '1'
+    const firstOnly = process.env.SD_SYSTEMATIC_FIRST_ONLY === '1'
+    const cornerOnly = process.env.SD_SYSTEMATIC_CORNER_ONLY === '1'
     const result = await runFinite({firstOnly, cornerOnly})
     console.log(JSON.stringify({
         checkpoint: cornerOnly
-            ? 'EXACT_CENTRED_CORNER_FINITE'
-            : firstOnly ? 'EXACT_CENTRED_FIRST_FINITE' : 'EXACT_CENTRED_FINITE',
+            ? 'SYSTEMATIC_LATTICE_CORNER_FINITE'
+            : firstOnly ? 'SYSTEMATIC_LATTICE_FIRST_FINITE' : 'SYSTEMATIC_LATTICE_FINITE',
         status: 'PASS',
         ...result,
         eeValueRequests: firstOnly || cornerOnly ? 1 : finiteConfigs.length + 1,
