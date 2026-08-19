@@ -14,13 +14,18 @@ describe('includeMinDistance', () => {
 })
 
 describe('includeCrs', () => {
-    it('is true only for unstratified Systematic', () => {
+    // The Arrangement CRS is the PLACEMENT grid. It applies wherever samples are placed on a grid - which is
+    // every mode except Unstratified Random, whose draw has no grid at all.
+    it('applies to Unstratified Systematic', () => {
         expect(includeCrs({unstratified: true, arrangementStrategy: 'SYSTEMATIC'})).toBe(true)
     })
 
-    it('is false for stratified designs and unstratified Random', () => {
-        expect(includeCrs({unstratified: false, arrangementStrategy: 'RANDOM'})).toBe(false)
-        expect(includeCrs({unstratified: false, arrangementStrategy: 'SYSTEMATIC'})).toBe(false)
+    it('applies to both stratified modes, which now own a placement CRS of their own', () => {
+        expect(includeCrs({unstratified: false, arrangementStrategy: 'RANDOM'})).toBe(true)
+        expect(includeCrs({unstratified: false, arrangementStrategy: 'SYSTEMATIC'})).toBe(true)
+    })
+
+    it('does not apply to Unstratified Random, which has no grid', () => {
         expect(includeCrs({unstratified: true, arrangementStrategy: 'RANDOM'})).toBe(false)
     })
 })

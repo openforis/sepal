@@ -5,7 +5,7 @@ import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import imageFactory from '#sepal/ee/imageFactory'
 import {fileName} from '#sepal/path'
-import {resolveSamplingGrid} from '#sepal/recipe/samplingDesign/samplingGridCrs'
+import {resolveStratificationCrs} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
 import {exportToCSV$} from '../batch/exportToCSV.js'
 import {parseGroups} from '../batch/parse.js'
@@ -59,8 +59,9 @@ const worker$ = ({
                     .group(1, 'stratum'),
                 geometry,
                 // Resolve at the GEE boundary, not in the GUI: non-GUI callers hit this API too, and EE
-                // cannot parse the literal EPSG:6933.
-                crs: resolveSamplingGrid({crs}).crs,
+                // cannot parse the literal EPSG:6933. This is the Stratification grid, so any projected CRS
+                // is legal here - the curated catalog constrains sample placement, not class interpretation.
+                crs: resolveStratificationCrs(crs),
                 scale,
                 maxPixels: 1e13,
             })

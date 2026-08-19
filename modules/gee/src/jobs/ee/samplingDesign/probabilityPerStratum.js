@@ -5,7 +5,7 @@ import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import imageFactory from '#sepal/ee/imageFactory'
 import {fileName} from '#sepal/path'
-import {resolveSamplingGridCrs} from '#sepal/recipe/samplingDesign/samplingGridCrs'
+import {resolveStratificationCrs} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
 import {exportToCSV$} from '../batch/exportToCSV.js'
 import {parseGroups} from '../batch/parse.js'
@@ -61,7 +61,7 @@ const worker$ = ({
                 // deliberately not inherited. Resolving here fails closed on an unsupported id rather than
                 // silently falling back to the image projection.
                 scale,
-                crs: resolveSamplingGridCrs(crs),
+                crs: resolveStratificationCrs(crs),
                 maxPixels: 1e13,
             })
     }

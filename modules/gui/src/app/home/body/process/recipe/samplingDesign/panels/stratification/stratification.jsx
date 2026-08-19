@@ -23,7 +23,6 @@ import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
-import {samplingGridCrsOptions} from '../../samplingGridCrsOptions'
 import {isValidGridScale} from '../../samplingGridValidation'
 import {CalculationErrorContent} from '../calculationErrorContent'
 import {StrataTable} from './strataTable'
@@ -61,7 +60,7 @@ const fields = {
         .greaterThan(0),
     crs: new Form.Field()
         .skip((_value, {skip}) => skip.length)
-        .notBlank(),
+        .notBlank('process.samplingDesign.panel.stratification.form.crs.required'),
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
         // Required even when skipped: unstratified mode still needs the single synthetic stratum (area is
@@ -289,12 +288,15 @@ class _Stratification extends React.Component {
 
     renderCrs() {
         const {inputs: {crs}} = this.props
+        // Free text, not the curated combo: Stratification names the projection the categorical source is
+        // interpreted in, which is whatever the source was authored in - not one of the equal-area placement
+        // options. onGridChanged still runs, so a grid change invalidates areas, proportions and allocation.
         return (
-            <FormCombo
+            <Form.Input
                 label={msg('process.samplingDesign.panel.stratification.form.crs.label')}
+                placeholder={msg('process.samplingDesign.panel.stratification.form.crs.placeholder')}
                 tooltip={msg('process.samplingDesign.panel.stratification.form.crs.tooltip')}
                 input={crs}
-                options={samplingGridCrsOptions()}
                 onChange={this.onGridChanged}
             />
         )

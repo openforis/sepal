@@ -5081,7 +5081,9 @@
             },
             "crs": {
               "label": "CRS",
-              "tooltip": "Equal-area coordinate system used to interpret stratification classes, calculate stratum areas and anticipated proportions, and place stratified samples."
+              "placeholder": "e.g. EPSG:32636",
+              "required": "You must specify the Stratification CRS",
+              "tooltip": "Projected coordinate system the stratification classes are interpreted in, and used to calculate stratum areas and anticipated proportions. Sample placement uses the Sample Arrangement CRS."
             },
             "hexButton": {
               "label": "HEX",
@@ -5601,6 +5603,11 @@
       }
     },
     "samplingDesign": {
+      "grid": {
+        "unsupportedArrangementCrs": "The selected Sample Arrangement CRS is not supported. Choose one of: {supported}.",
+        "invalidStratificationCrs": "The Stratification CRS is missing. Provide the projected CRS the categorical source is interpreted in.",
+        "invalidScale": "The Stratification Scale is invalid. Provide a positive Scale in metres."
+      },
       "random": {
         "progress": {
           "prepareCandidates": "Finding random sample locations",
@@ -5617,8 +5624,6 @@
           "exportFinal": "Exporting sample locations"
         },
         "grid": {
-          "unsupportedCrs": "The selected sampling grid is not supported. Choose one of: {supported}.",
-          "invalidScale": "The sampling grid scale is invalid. Provide a positive Stratification Scale in metres.",
           "minDistanceBelowGrid": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.",
           "invalidMinDistance": "The minimum distance is not a number. Provide a distance in metres, or leave it unset to use the smallest distance the sampling grid allows."
         }
