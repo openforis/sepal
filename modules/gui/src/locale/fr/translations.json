@@ -5076,6 +5076,10 @@
               "label": "Echelle",
               "placeholder": "Echelle...",
               "required": "",
+              "mode": {
+                "imageGrid": "",
+                "resampled": ""
+              },
               "suffix": "mètre",
               "tooltip": ""
             },
@@ -5606,7 +5610,8 @@
       "grid": {
         "unsupportedArrangementCrs": "",
         "invalidStratificationCrs": "",
-        "invalidScale": ""
+        "invalidScale": "",
+        "invalidStratificationTransform": ""
       },
       "random": {
         "progress": {
