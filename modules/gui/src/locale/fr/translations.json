@@ -5081,6 +5081,8 @@
             },
             "crs": {
               "label": "",
+              "placeholder": "",
+              "required": "",
               "tooltip": ""
             },
             "hexButton": {
@@ -5601,6 +5603,11 @@
       }
     },
     "samplingDesign": {
+      "grid": {
+        "unsupportedArrangementCrs": "",
+        "invalidStratificationCrs": "",
+        "invalidScale": ""
+      },
       "random": {
         "progress": {
           "prepareCandidates": "",
@@ -5617,8 +5624,6 @@
           "exportFinal": ""
         },
         "grid": {
-          "unsupportedCrs": "",
-          "invalidScale": "",
           "minDistanceBelowGrid": "",
           "invalidMinDistance": ""
         }
