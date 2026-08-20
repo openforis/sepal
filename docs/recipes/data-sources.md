@@ -12,8 +12,9 @@ Several consumers also confuse the recipe whose pixels must execute with a termi
 metadata.
 
 At the recorded baseline, live nested-recipe loading in GEE uses ambient SEPAL administrator credentials. That is
-a fail-open authorization defect, not a capability gap: the first implementation gate must replace it before the
-new resolver broadens recipe traversal.
+a longstanding fail-open authorization defect, not a capability gap. Record it separately and do not broaden that
+backend path. Caller-aware loading must replace it before the new resolver is activated for Preview or Retrieve,
+but it does not block pure contracts, edge inventory or GUI-facing source-description work.
 
 Do not add another recipe-specific synchronization component. Implementation should proceed as a vertical CCDC
 Slice migration that introduces only the common machinery required by that slice.
@@ -90,6 +91,15 @@ Pure reference, edge, band, capability, bundle, fingerprint and validation contr
 `lib/js/shared/src/recipe/source`. They must not depend on React, Redux, Earth Engine or task infrastructure.
 GUI, GEE and Task adapt the same contract at their boundaries.
 
+Recipe-specific behavior belongs to one shared recipe definition per type. A single minimal catalogue imports
+those definitions and indexes them by persisted recipe type; it contains no source, capability or presentation
+logic. A definition must explicitly declare its direct sources or explicitly declare that it has none. Adding a
+recipe must not require updating separate switches for dependencies, bands, capabilities and runtime consumers.
+
+Generic reference and edge modules know only canonical value shapes. Legacy model normalization and role names are
+owned by the recipe definition that understands those fields. Roles are opaque to generic traversal unless a
+cross-recipe contract explicitly gives one shared meaning.
+
 Pure behavior is tested once in the shared library. Each runtime gets a thin environment witness proving that the
 shared module resolves and executes under Vite or Node ESM, plus focused boundary tests for behavior owned by that
 runtime.
@@ -129,24 +139,31 @@ switch or similarly scoped coexistence boundary; do not leave two generic resolv
 
 ## Implementation order
 
-### 1. Authorization and graph-completeness gate
+### 1. Shared contract and graph inventory
 
-- Add caller-aware batch recipe loading that returns contents and revision together. A small authorization-and-data
-  endpoint may land in the current Groovy `sepal-server` when its transport contract can move unchanged to Node.
-- Require a trusted SEPAL principal for every live recipe load; remove ambient administrator recipe access from
-  GEE once its replacement is active.
-- Keep graph traversal, capability derivation, cache and bundle logic in JavaScript and out of both server endpoint
-  implementations.
 - Define canonical references and role-bearing edges, including recipe-backed AOIs and other references outside
   image-input sections.
-- Add sanitized persisted-model fixtures and completeness checks for migrated recipe types.
-- Add permanent two-user authorization, missing-principal, cache-isolation and AOI-closure tests.
+- Add sanitized persisted-model fixtures and test-only completeness checks for inventoried recipe types.
+- Define the initial `IMAGE_OUTPUT` and `CCDC_SEGMENTS` descriptions and expectations without changing live recipe
+  loading.
+- Add pure completeness, AOI-closure, capability and diagnostic tests.
+
+Exit criterion: every canonical reference in the CCDC proving models is declared or explicitly classified as a
+non-edge, and representative source descriptions can be derived without new backend traversal.
+
+### 2. Caller authorization and backend activation
+
+- Implement caller-aware recipe loading in the Node replacement for `sepal-server` when available. Use only a
+  minimal ownership-enforcing Groovy change if activation must precede the port.
+- Require a trusted SEPAL principal for every live recipe load and remove ambient administrator recipe access from
+  GEE once its replacement is active.
+- Keep graph traversal, capability derivation, cache and bundle logic in JavaScript and out of server endpoints.
+- Add permanent two-user authorization, missing-principal and cache-isolation tests.
 
 Exit criterion: a fixture owner can resolve a graph, another user cannot resolve the same recipe, omission of the
-principal fails closed, and every canonical reference in the CCDC proving models is declared or explicitly
-classified as a non-edge.
+principal fails closed, and no expanded backend resolver can use the legacy administrator-loading path.
 
-### 2. CCDC resolution and execution slice
+### 3. CCDC resolution and execution slice
 
 - Define pure shared references, structured edges, `IMAGE_OUTPUT`, `CCDC_SEGMENTS`, source descriptions,
   expectations and stable diagnostics.
@@ -154,14 +171,14 @@ classified as a non-edge.
 - Build coherent, bounded execution bundles under caller authorization.
 - Make CCDC Slice the first consumer, including direct assets, direct recipes and supported wrappers.
 - Prevent cycles when a reference is selected and validate them again server-side.
-- Index declared edges for migrated recipes and apply the non-cascading deletion warning policy.
+- Index declared edges for recipes using shared definitions and apply the non-cascading deletion warning policy.
 - Reject unsupported bundle versions and derive initial graph limits from the measured task path.
 - Establish legacy handling and a rollback switch for the migrated path.
 
 Exit criterion: CCDC Slice Preview and Retrieve use the new resolver end to end without copied authoritative
 source state, while the old path can still be restored without reverting unrelated work.
 
-### 3. Freshness for the migrated slice
+### 4. Freshness for the migrated slice
 
 - Add the minimum session catalogue needed by CCDC Slice.
 - Refresh active recipe and asset sources with request epochs and in-flight deduplication.
@@ -172,7 +189,7 @@ source state, while the old path can still be restored without reverting unrelat
 Exit criterion: edits in another tab, asset replacement under the same ID, missing dependencies and stale
 responses produce deterministic refresh or controlled diagnostics.
 
-### 4. Visualization migration
+### 5. Visualization migration
 
 - Normalize source presets and user-defined styles without copying source-owned entries into consuming models.
 - Validate styles against current output bands and generic value semantics.
@@ -182,14 +199,14 @@ responses produce deterministic refresh or controlled diagnostics.
 Exit criterion: source palette, label, preset and band changes refresh or invalidate every supported visualization
 consistently.
 
-### 5. Mask and Fill
+### 6. Mask and Fill
 
 - Apply explicit capability preservation to Asset and Masking recipes.
 - Preserve outer execution identity through nested decorators.
 - Validate primary, mask and fill dependencies and selected bands by name.
 - Resume the user-facing fill implementation in `mask.md`.
 
-### 6. Further migrations
+### 7. Further migrations
 
 Migrate one consumer family at a time. Likely groups are alert recipes, Stack and Band Math, generic image inputs,
 Classification/Regression reuse, and Sampling Design. Every migration needs a stated stopping rule, coexistence

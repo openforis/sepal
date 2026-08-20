@@ -42,15 +42,16 @@ from a recipe model or other caller-controlled request field. The gateway or ano
 supplies it. Omitting the principal fails before any recipe is loaded.
 
 The resolver remains JavaScript so recipe-type edge extraction and traversal have one implementation. A
-caller-aware server endpoint enforces access and returns authorized recipe records; it does not duplicate edge or
-capability logic in Groovy. Loading is batched where possible and returns each recipe's contents and revision in the
-same record. After discovering the closure, one batch revision check supports coherent bundle construction without
-doubling the number of per-recipe requests.
+caller-aware server boundary enforces access and returns authorized recipe records; it does not duplicate edge or
+capability logic in a server endpoint. Recipe contents and revision must eventually be observed together, and the
+complete closure needs a bounded coherent revision recheck. Whether the Node server exposes this as batch HTTP,
+an internal repository adapter or both is an implementation decision, not a prerequisite for the pure contract.
 
-The caller-aware endpoint may be implemented in the current Groovy `sepal-server` when it remains a small data and
-authorization boundary: accept a trusted principal, batch-load only recipes that principal may read, and return
-contents with revisions. Define that transport contract so the Node replacement can implement it unchanged. Do not
-add graph traversal, capability derivation, bundle construction or cache behavior to the Groovy module; those stay
+The current GEE administrator-loading path is longstanding and remains unchanged while pure contracts, edge
+inventory and GUI-facing source descriptions are developed. Do not expand or reuse it for the new resolver. Before
+the resolver is activated for Preview or Retrieve, caller-aware loading must replace it. Prefer implementing that
+boundary in the Node replacement for `sepal-server`; use only a minimal ownership-enforcing Groovy change if
+activation must happen first. Graph traversal, capability derivation, bundle construction and cache behavior remain
 in JavaScript.
 
 Ambient SEPAL administrator credentials must not be reachable from generic recipe resolution. The existing GEE
@@ -64,8 +65,8 @@ must never broaden what the current principal can resolve.
 
 ## Structured source edges
 
-Every recipe type exposes its direct recipe and asset references as role-bearing edges after normalizing legacy
-model shapes:
+Every recipe type owns one shared definition. That definition exposes its direct recipe and asset references as
+role-bearing edges after normalizing the legacy shapes in that recipe's model:
 
 ```js
 {reference: {type: 'RECIPE_REF', id: 'recipe-id'}, role: 'PRIMARY_IMAGE'}
@@ -75,19 +76,29 @@ model shapes:
 {reference: {type: 'RECIPE_REF', id: 'recipe-id'}, role: 'AOI'}
 ```
 
-All roles affect execution fingerprinting. Recipe references participate in dependency closure and cycle detection;
+The shared recipe catalogue only imports and indexes definitions by persisted type. It rejects duplicate and
+incomplete definitions and contains no recipe-specific behavior. A recipe definition must explicitly expose its
+direct sources or explicitly declare that it has none; absence fails closed. Generic reference and edge modules
+know canonical shapes only. Legacy `RECIPE`, `EE_TABLE`, bare-ID and other model-specific forms are interpreted by
+the definition that owns those fields rather than by a central normalizer.
+
+Role identifiers are owned by recipe definitions and are opaque to generic traversal. A new role does not require
+editing a central role registry. Cross-recipe behavior must be represented by an explicit shared contract rather
+than by generic code switching on recipe-specific role names.
+
+All edges affect execution fingerprinting. Recipe references participate in dependency closure and cycle detection;
 asset references contribute observations and drift checks. Only roles declared to carry semantic lineage affect
 semantic identity. Mask and fill inputs affect pixels but do not become the wrapper's semantic source. An `AOI`
 edge affects output extent and geometry but does not provide image semantics.
 
-Every migrated recipe type declares every output-relevant recipe and asset reference, including references outside
-image-input sections. Executable references use canonical source-reference shapes. A structural audit compares a
-representative persisted model with its declarations: every canonical reference must be either a declared edge or
-an explicitly classified non-edge snapshot. Fixtures are sanitized from real saved-recipe shapes recorded during
-the inventory rather than invented from an ideal model.
+Every inventoried recipe type declares every output-relevant recipe and asset reference, including references
+outside image-input sections. Executable references use canonical source-reference shapes. A test-only structural
+audit compares a representative persisted model with its definition: every canonical reference must be either a
+declared edge or an explicitly classified non-edge snapshot. Fixtures are sanitized from real saved-recipe shapes
+recorded during the inventory rather than invented from an ideal model.
 
 The audit is a migration guard, not a claim that arbitrary legacy JSON can be understood by shape alone. Strict
-runtime enforcement applies only to migrated recipe types. For them, an undeclared canonical reference is a
+runtime enforcement applies only to inventoried recipe types. For them, an undeclared canonical reference is a
 controlled resolution error. Tests cover every representative model and reject adding a canonical reference
 without declaring or classifying it.
 
@@ -344,10 +355,10 @@ Do not use recipe IDs, asset IDs or usernames as metric labels. They may appear 
 logs where operationally necessary.
 
 The following counters represent contract violations and should remain zero: resolution without an explicit
-principal, unauthorized cross-owner resolution, undeclared references in migrated recipe types, unknown edge
-roles, bundled execution attempting a live load, and unsupported bundles being interpreted. Any non-zero value
-requires investigation. Latency, retry, graph-size and user-diagnosis alert thresholds are set after the CCDC slice
-establishes a baseline.
+principal, unauthorized cross-owner resolution, missing recipe definitions, invalid or undeclared edges in
+inventoried recipe types, bundled execution attempting a live load, and unsupported bundles being interpreted. Any
+non-zero value requires investigation. Latency, retry, graph-size and user-diagnosis alert thresholds are set after
+the CCDC slice establishes a baseline.
 
 ## Verification
 
