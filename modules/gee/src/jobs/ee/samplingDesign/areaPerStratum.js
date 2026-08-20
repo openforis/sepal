@@ -50,7 +50,8 @@ const worker$ = ({
 
     function reduceRegion(strata, geometry) {
         // This image mixes pixelArea and strata projections; an unset CRS falls back to WGS84. Evaluate on the
-        // same equal-area grid the sampler uses: Stratification Scale in the Sample Arrangement CRS.
+        // configured Stratification grid - its CRS with its Scale or transform - since that is the grid the
+        // categorical source is interpreted on, and areas are what the weights are derived from.
         return ee.Image.pixelArea()
             .updateMask(strata.mask())
             .addBands(strata)
