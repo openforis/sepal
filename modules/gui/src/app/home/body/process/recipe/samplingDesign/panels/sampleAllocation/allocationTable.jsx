@@ -6,10 +6,18 @@ import {ColorElement} from '~/widget/colorElement'
 import {NestedForms} from '~/widget/form/nestedForms'
 import {Tooltip} from '~/widget/tooltip'
 
+import {byStratumKey, stratumView} from '../../sampling/designModel'
 import {AllocationForm} from './allocationForm'
 import styles from './allocationTable.module.css'
 
-export const AllocationTable = ({allocation, sampleSize, marginOfError, manual, noProportions, onChange}) => {
+// Presentation is passed BESIDE the row, never merged into it. A nested form writes its entity straight back
+// into the persisted array, so anything merged in here would be persisted as part of the allocation - which
+// is exactly the joined row this recipe stopped writing. The join is the shared owner-first one, keyed on
+// `stratum ?? value` from both sides: a lookup that missed would silently fall through to the row's cached
+// copy and show a label the stratification has already replaced.
+export const AllocationTable = ({allocation, strata, sampleSize, marginOfError, manual, noProportions, onChange}) => {
+    const owners = byStratumKey(strata)
+    const presentationOf = entry => stratumView(owners, entry)
     return (
         <div className={styles.allocation}>
             <NestedForms arrayInput={allocation} idPropName='stratum'>
@@ -24,6 +32,7 @@ export const AllocationTable = ({allocation, sampleSize, marginOfError, manual, 
                             // the typed value back to the parent. Blank keeps Apply disabled until the user
                             // enters a count; an existing value is preserved.
                             entry={{sampleSize: '', ...entry}}
+                            presentation={presentationOf(entry)}
                             autoFocus={manual && index === 0}
                             onChange={onChange}
                         />
@@ -32,6 +41,7 @@ export const AllocationTable = ({allocation, sampleSize, marginOfError, manual, 
                         <Allocation
                             key={entry.stratum}
                             entry={entry}
+                            presentation={presentationOf(entry)}
                         />
                     )
                 )}
@@ -64,7 +74,7 @@ const Footer = ({sampleSize, marginOfError, noProportions}) => {
     )
 }
 
-const Allocation = ({entry: {label, color, sampleSize}}) => {
+const Allocation = ({entry: {sampleSize}, presentation: {label, color}}) => {
     return (
         <div className={styles.row}>
             <div className={styles.color}>

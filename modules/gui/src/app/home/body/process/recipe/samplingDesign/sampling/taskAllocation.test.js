@@ -1,3 +1,4 @@
+import {stratumView} from './designModel'
 import {toTaskAllocation} from './taskAllocation'
 
 // Current persisted (joined-array) model shape - the panels still produce this until rewired.
@@ -79,6 +80,49 @@ describe('toTaskAllocation - current joined-array shape', () => {
     })
 })
 
+// Canonical ownership: stratification owns label/color/area/weight, proportions owns proportion, and the
+// allocation row owns only stratum and sampleSize. Legacy recipes persisted all of it on the allocation row,
+// so those rows stay readable - but a cached copy must never win over the value upstream holds now.
+describe('toTaskAllocation - canonical ownership over cached allocation fields', () => {
+    const staleAllocationRow = {
+        stratum: 1, sampleSize: 30,
+        area: 111, weight: 0.11, proportion: 0.99, label: 'Stale', color: '#fff'
+    }
+
+    it('takes area, weight, label and color from the current stratification, never the allocation row', () => {
+        const rows = toTaskAllocation({
+            stratification: {strata: [{value: 1, label: 'Forest', color: '#0a0', area: 300, weight: 0.3}]},
+            proportions: {anticipatedProportions: [{stratum: 1, proportion: 0.48}]},
+            sampleAllocation: {allocation: [staleAllocationRow]}
+        })
+        expect(rows[0]).toEqual({
+            stratum: 1, sampleSize: 30, area: 300, weight: 0.3, label: 'Forest', color: '#0a0', proportion: 0.48
+        })
+    })
+
+    it('takes proportion from the current proportions, never the allocation row', () => {
+        const rows = toTaskAllocation({
+            stratification: {strata: [{value: 1, label: 'Forest', color: '#0a0', area: 300, weight: 0.3}]},
+            proportions: {anticipatedProportions: [{stratum: 1, proportion: 0.02}]},
+            sampleAllocation: {allocation: [staleAllocationRow]}
+        })
+        expect(rows[0].proportion).toBe(0.02)
+    })
+
+    // Proportions rows are written by a join and carry a snapshot of the strata they were computed against.
+    // Stratification is the owner, so that snapshot must lose to it as well.
+    it('takes area, weight, label and color from stratification even when the proportions row carries them', () => {
+        const rows = toTaskAllocation({
+            stratification: {strata: [{value: 1, label: 'Forest', color: '#0a0', area: 300, weight: 0.3}]},
+            proportions: {anticipatedProportions: [
+                {stratum: 1, proportion: 0.48, area: 222, weight: 0.22, label: 'Older', color: '#eee'}
+            ]},
+            sampleAllocation: {allocation: [{stratum: 1, sampleSize: 30}]}
+        })
+        expect(rows[0]).toMatchObject({area: 300, weight: 0.3, label: 'Forest', color: '#0a0', proportion: 0.48})
+    })
+})
+
 describe('toTaskAllocation - unstratified (single synthetic stratum)', () => {
     it('carries the AOI area onto the single allocation row', () => {
         const unstratifiedModel = {
@@ -96,5 +140,34 @@ describe('toTaskAllocation - unstratified (single synthetic stratum)', () => {
         expect(rows).toHaveLength(1)
         expect(rows[0]).toMatchObject({stratum: 1, sampleSize: 100, area: 1.2e9, weight: 1})
         expect(Number.isFinite(rows[0].area)).toBe(true)
+    })
+})
+
+// The one join behind the task rows AND both downstream panels' presentation. Testing it here means the
+// panels' label and color are covered by the same witness as the export.
+describe('stratumView - the shared owner-first join', () => {
+    const strata = [{value: 1, label: 'Forest', color: '#0a0', area: 300, weight: 0.3}]
+
+    it('prefers the current stratification over a cached downstream copy', () => {
+        expect(stratumView(strata, {stratum: 1, label: 'Stale', color: '#fff', area: 111, weight: 0.11}))
+            .toEqual({stratum: 1, label: 'Forest', color: '#0a0', area: 300, weight: 0.3})
+    })
+
+    // Stratification rows key on `value` and downstream rows on `stratum`. A lookup that read only one of
+    // them would miss every time and fall through to the cached copy - which looks exactly like nothing
+    // being refreshed at all.
+    it('matches across the two key shapes, including a numeric string', () => {
+        expect(stratumView(strata, {stratum: 1}).label).toBe('Forest')
+        expect(stratumView(strata, {stratum: '1'}).label).toBe('Forest')
+        expect(stratumView(strata, {value: 1}).label).toBe('Forest')
+    })
+
+    it('falls back to the row only for a stratum the stratification no longer has', () => {
+        expect(stratumView(strata, {stratum: 9, label: 'Gone', color: '#123'}))
+            .toMatchObject({stratum: 9, label: 'Gone', color: '#123'})
+    })
+
+    it('defaults presentation for a row neither side describes', () => {
+        expect(stratumView([], {stratum: 4})).toMatchObject({label: '4', color: '#000000'})
     })
 })

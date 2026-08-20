@@ -198,10 +198,11 @@ class _Proportions extends React.Component {
     }
 
     renderStrataProportion() {
-        const {inputs: {eeStrategy, anticipatedProportions}} = this.props
+        const {strata, inputs: {eeStrategy, anticipatedProportions}} = this.props
         return <StrataProportion
             eeStrategy={eeStrategy}
             anticipatedProportions={anticipatedProportions}
+            strata={strata}
             manual={this.isManual()}
             streamActive={this.props.stream('PROBABILITY_PER_STRATUM').active}
             calculationError={this.state.proportionsCalculationError}
@@ -421,14 +422,9 @@ class _Proportions extends React.Component {
         // manual && this.cancel$.next()
         this.clearProportionsCalculationError()
         if (manual && !anticipatedProportions.value) {
-            const initialProportions = strata.map(stratum => ({
-                color: stratum.color,
-                label: stratum.label,
-                stratum: stratum.value,
-                area: stratum.area,
-                weight: stratum.weight,
-                proportion: 0
-            }))
+            // Rows own the stratum and its proportion, nothing else: presentation and weight are joined from
+            // the stratification when the table renders, so they cannot go stale here.
+            const initialProportions = strata.map(stratum => ({stratum: stratum.value, proportion: 0}))
             anticipatedProportions.set(initialProportions)
         } else if (!manual) {
             anticipatedProportions.set(null)
