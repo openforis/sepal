@@ -5074,8 +5074,6 @@
             },
             "scale": {
               "label": "Echelle",
-              "placeholder": "Echelle...",
-              "required": "",
               "mode": {
                 "imageGrid": "",
                 "resampled": ""
@@ -5086,7 +5084,6 @@
             "crs": {
               "label": "",
               "placeholder": "",
-              "required": "",
               "tooltip": ""
             },
             "hexButton": {
