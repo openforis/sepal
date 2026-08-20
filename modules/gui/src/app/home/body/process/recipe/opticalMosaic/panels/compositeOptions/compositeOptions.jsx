@@ -20,7 +20,6 @@ import {Widget} from '~/widget/widget'
 import styles from './compositeOptions.module.css'
 
 const fields = {
-    advanced: new Form.Field(),
     corrections: new Form.Field(),
     brdfMultiplier: new Form.Field()
         .skip((value, {corrections}) => corrections)
@@ -62,6 +61,8 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _CompositeOptions extends React.Component {
+    state = {advanced: false}
+
     constructor(props) {
         super(props)
         this.addFilter = this.addFilter.bind(this)
@@ -69,7 +70,8 @@ class _CompositeOptions extends React.Component {
     }
 
     render() {
-        const {title, inputs: {advanced}} = this.props
+        const {title} = this.props
+        const {advanced} = this.state
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -78,12 +80,12 @@ class _CompositeOptions extends React.Component {
                     icon='layer-group'
                     title={title}/>
                 <Panel.Content>
-                    {advanced.value ? this.renderAdvanced() : this.renderSimple()}
+                    {advanced ? this.renderAdvanced() : this.renderSimple()}
                 </Panel.Content>
                 <Form.PanelButtons>
                     <Button
-                        label={advanced.value ? msg('button.less') : msg('button.more')}
-                        onClick={() => this.setAdvanced(!advanced.value)}/>
+                        label={advanced ? msg('button.less') : msg('button.more')}
+                        onClick={() => this.setAdvanced(!advanced)}/>
                 </Form.PanelButtons>
             </RecipeFormPanel>
         )
@@ -692,8 +694,7 @@ class _CompositeOptions extends React.Component {
     }
 
     setAdvanced(enabled) {
-        const {inputs: {advanced}} = this.props
-        advanced.set(enabled)
+        this.setState({advanced: enabled})
     }
 }
 

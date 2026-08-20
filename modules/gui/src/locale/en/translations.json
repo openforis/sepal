@@ -4996,6 +4996,140 @@
       },
       "tabPlaceholder": "Time_series"
     },
+    "landTrendr": {
+      "create": "LandTrendr",
+      "description": "Detect the single greatest disturbance per pixel in a Landsat time series using the LandTrendr temporal segmentation algorithm.",
+      "tabPlaceholder": "LandTrendr",
+      "chartPixel": {
+        "start.tooltip": "Chart LandTrendr fit for pixel",
+        "cancel.tooltip": "Cancel LandTrendr charting",
+        "loadSegments.error": "Failed to load LandTrendr segments.",
+        "noData": "No LandTrendr fit available for this pixel."
+      },
+      "mapToolbar": {
+        "graph": {
+          "year.label": "Year",
+          "observation.label": "Observation",
+          "fitted.label": "Fitted value"
+        }
+      },
+      "panel": {
+        "dates": {
+          "button": "DAT",
+          "title": "Dates",
+          "tooltip": "Specify dates",
+          "form": {
+            "startYear": {
+              "label": "Start year",
+              "tooltip": "The first year to include (inclusive)"
+            },
+            "endYear": {
+              "label": "End year",
+              "tooltip": "The final year to include (inclusive)",
+              "beforeStartYear": "Cannot be before start year"
+            }
+          }
+        },
+        "sources": {
+          "button": "SRC",
+          "title": "Sources",
+          "tooltip": "Select image source and index",
+          "form": {
+            "dataSets": {
+              "label": "Data sets"
+            },
+            "cloudPercentageThreshold": {
+              "label": "Max cloud cover %",
+              "tooltip": "Filter out scenes with cloud cover higher than this threshold",
+              "value": "{value}%"
+            },
+            "index": {
+              "label": "Index",
+              "tooltip": "The spectral index to fit segments to. Vegetation/disturbance indexes (e.g. NBR, NDVI) are typical choices."
+            }
+          }
+        },
+        "options": {
+          "button": "OPT",
+          "title": "LandTrendr options",
+          "tooltip": "Configure the LandTrendr segmentation algorithm",
+          "form": {
+            "changeDirection": {
+              "label": "Show",
+              "tooltip": "Which change segment to report per pixel",
+              "GREATEST": {
+                "label": "Greatest change",
+                "tooltip": "Report the segment with the largest change in either direction (loss or gain)"
+              },
+              "LOSS": {
+                "label": "Loss only",
+                "tooltip": "Report only the segment with the largest loss/disturbance; pixels with no loss are masked out"
+              },
+              "GAIN": {
+                "label": "Gain only",
+                "tooltip": "Report only the segment with the largest gain/recovery; pixels with no gain are masked out"
+              }
+            },
+            "minMagnitude": {
+              "label": "Min. magnitude",
+              "tooltip": "Minimum absolute change in the index value (on its native, e.g. ×10000, scale) required for a segment to be reported. Pixels whose greatest change falls below this are masked out entirely. 0 disables filtering."
+            },
+            "maxSegments": {
+              "label": "Max segments",
+              "tooltip": "Maximum number of segments to fit onto the time series for each pixel"
+            },
+            "spikeThreshold": {
+              "label": "Spike threshold",
+              "tooltip": "Threshold for dampening spikes (1.0 means no dampening)"
+            },
+            "vertexCountOvershoot": {
+              "label": "Vertex count overshoot",
+              "tooltip": "Number of vertices to initially fit, beyond maxSegments + 1, that will be removed during pruning"
+            },
+            "preventOneYearRecovery": {
+              "label": "Prevent one-year recovery",
+              "tooltip": "Prevent segments that recover in one year or less from being included"
+            },
+            "recoveryThreshold": {
+              "label": "Recovery threshold",
+              "tooltip": "A vertex is scrapped if the following segment's recovery rate is greater than 1 / recoveryThreshold"
+            },
+            "pvalThreshold": {
+              "label": "P-value threshold",
+              "tooltip": "The p-value threshold for the F-statistic used to determine the number of segments to retain"
+            },
+            "bestModelProportion": {
+              "label": "Best model proportion",
+              "tooltip": "Allows models with more vertices to be chosen if their p-value is no more than this proportion times the p-value of the best model"
+            },
+            "minObservationsNeeded": {
+              "label": "Min. observations needed",
+              "tooltip": "Minimum number of years with observations required to perform the fit"
+            }
+          }
+        }
+      },
+      "layers": {
+        "imageLayer": {
+          "preSets": "Pre-sets"
+        }
+      },
+      "bands": {
+        "yod": "Year of detection",
+        "mag": "Magnitude",
+        "dur": "Duration",
+        "preval": "Pre-disturbance value",
+        "postval": "Post-disturbance value",
+        "startRed": "Start year - red",
+        "startGreen": "Start year - green",
+        "startBlue": "Start year - blue",
+        "endRed": "End year - red",
+        "endGreen": "End year - green",
+        "endBlue": "End year - blue",
+        "startRgb": "Start year (true color)",
+        "endRgb": "End year (true color)"
+      }
+    },
     "samplingDesign": {
       "bands": {},
       "create": "Sampling design",
@@ -5561,6 +5695,7 @@
         "TIME_SERIES": "Time Series",
         "CCDC": "CCDC",
         "CCDC_SLICE": "CCDC Slice",
+        "LANDTRENDR": "LandTrendr",
         "CHANGE_ALERTS": "Change Alerts",
         "BAYTS_HISTORICAL": "BAYTS Historical",
         "BAYTS_ALERTS": "BAYTS Alerts",
