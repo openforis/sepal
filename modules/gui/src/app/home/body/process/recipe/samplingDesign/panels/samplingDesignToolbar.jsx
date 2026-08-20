@@ -56,7 +56,7 @@ class _SamplingDesignToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, model, googleAccount, assetRoots, initialized, stratificationRequiresUpdate, proportionsRequiresUpdate, sampleAllocationRequiresUpdate, sampleArrangementRequiresUpdate} = this.props
+        const {recipeId, model, areaCache, probabilityCache, googleAccount, assetRoots, initialized, stratificationRequiresUpdate, proportionsRequiresUpdate, sampleAllocationRequiresUpdate, sampleArrangementRequiresUpdate} = this.props
         const buttonState = retrieveButtonState({model, googleAccount, assetRoots})
         return (
             <PanelWizard
@@ -65,8 +65,8 @@ class _SamplingDesignToolbar extends React.Component {
                 onDone={() => setInitialized(recipeId)}>
                 <Retrieve/>
                 <Aoi/>
-                <Stratification/>
-                <Proportions/>
+                <Stratification areaCache={areaCache}/>
+                <Proportions probabilityCache={probabilityCache}/>
                 <SampleAllocation/>
                 <SampleArrangement/>
 

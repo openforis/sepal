@@ -697,7 +697,7 @@ class _Stratification extends React.Component {
     // Stratified area per stratum. Unstratified mode never calls this - it sets the synthetic row directly
     // and the AOI area is computed at the export boundary.
     calculateAreaPerStratum() {
-        const {aoi, stream, inputs: {type, assetId, recipeId, band, eeStrategy}} = this.props
+        const {aoi, areaCache, stream, inputs: {type, assetId, recipeId, band, eeStrategy}} = this.props
         const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
         // onChange fires while typing; the resolved scale is only invalid mid-keystroke, since blank resolves.
         if (!isValidGridScale(this.gridState().scale) || !id || !band.value) {
@@ -708,9 +708,24 @@ class _Stratification extends React.Component {
             id,
         }
         const resolved = this.gridState()
+        // The resolved grid, so areas are computed on the grid the design actually uses. Scale XOR transform,
+        // built once so the cache key and the request body cannot describe different grids.
+        const grid = resolved.crsTransform
+            ? {crsTransform: resolved.crsTransform}
+            : {scale: resolved.scale}
+        // What the areas actually depend on. The processing strategy is absent because Online and Batch
+        // compute the same thing, and presentation is absent because the loader applies the CURRENT labels
+        // and colors to whatever raw response it is handed.
+        const key = {stratification, band: band.value, crs: resolved.crs, ...grid}
 
         if (stream('AREA_PER_STRATUM').active) {
             this.cancel$.next()
+        }
+
+        const cached = areaCache?.get({aoi, key})
+        if (cached) {
+            this.onAreaPerStratumLoaded(cached)
+            return
         }
 
         stream('AREA_PER_STRATUM',
@@ -718,14 +733,18 @@ class _Stratification extends React.Component {
                 aoi,
                 stratification,
                 band: band.value,
-                // The resolved grid, so areas are computed on the grid the design actually uses.
-                ...(resolved.crsTransform ? {crsTransform: resolved.crsTransform} : {scale: resolved.scale}),
+                ...grid,
                 crs: resolved.crs,
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
                 takeUntil(this.cancel$)
             ),
-            this.onAreaPerStratumLoaded,
+            // Cached BEFORE the join, so a hit is the raw response and picks up current presentation. A
+            // failure never reaches here, so it can never displace an older successful entry.
+            areaPerStratum => {
+                areaCache?.set({aoi, key, result: areaPerStratum})
+                this.onAreaPerStratumLoaded(areaPerStratum)
+            },
             error => this.setState({
                 strataCalculationError: toStrataCalculationError({error, strategy: eeStrategy.value})
             })
