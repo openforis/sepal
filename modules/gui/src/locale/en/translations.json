@@ -5074,8 +5074,6 @@
             },
             "scale": {
               "label": "Scale",
-              "placeholder": "Scale...",
-              "required": "You must specify the scale",
               "mode": {
                 "imageGrid": "Using the image's own pixel grid. Leave blank to keep it, or enter a scale to resample.",
                 "resampled": "The stratification is resampled to this scale. Clear the field to use the image's own pixel grid."
@@ -5086,7 +5084,6 @@
             "crs": {
               "label": "CRS",
               "placeholder": "e.g. EPSG:32636",
-              "required": "You must specify the Stratification CRS",
               "tooltip": "Projected coordinate system the stratification classes are interpreted in, and used to calculate stratum areas and anticipated proportions. Sample placement uses the Sample Arrangement CRS."
             },
             "hexButton": {

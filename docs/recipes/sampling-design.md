@@ -175,8 +175,20 @@ Two structural obstacles explain the shape of the coverage:
 
 - Importing a gee job module runs its worker plumbing and exits the process, so a job cannot be imported in a
   test. Pure logic has to be extracted from a job to be testable at all.
-- The Stratification panel's wiring is untested because mounting a recipe form panel needs Redux and recipe
+- The Stratification panel's wiring is untested, because mounting a recipe form panel needs Redux and recipe
   context that the existing widget tests never required. The obstacle is panel mounting, not missing tooling.
+  **This is where the defects actually land.** Four have reached a reviewer from this one component: a derived
+  CRS that was never adopted, one that was adopted and then read back stale, a flex value constraining the wrong
+  axis, and two placeholders reading keys the object did not have. Every pure function was correct every time,
+  and every suite was green every time.
+
+  It was first recorded as tolerable because the failures degrade silently rather than breaking loudly. That
+  reasoning is backwards: silent degradation is precisely why they survived every automated gate and were found
+  by eye. The gap is not a coverage nicety.
+
+  Until it is closed, the mitigation that has actually worked is moving decisions out of the panel into pure
+  functions — each one shrinks the untestable surface — and having a person exercise the panel against a source
+  that is not the default before shipping grid changes.
 
 ## Deliberately not done
 

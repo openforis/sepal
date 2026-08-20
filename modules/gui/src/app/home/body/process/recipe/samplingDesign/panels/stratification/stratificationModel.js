@@ -1,4 +1,3 @@
-import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import {msg} from '~/translate'
 
 // The single synthetic stratum for unstratified mode. Area is intentionally omitted here: the export
@@ -30,8 +29,12 @@ export const valuesToModel = values => {
     const isSkipped = !!values.skip?.length
     return {
         skip: isSkipped,
-        scale: parseFloat(values.scale),
-        crs: values.crs || DEFAULT_SAMPLING_GRID_CRS,
+        // The RESOLVED grid, not the user fields: those are blank when the derived grid is in use, and the task
+        // boundary has no access to it.
+        scale: parseFloat(values.resolvedScale),
+        crs: values.resolvedCrs,
+        // Omitted rather than nulled when no transform applies, so a scale-mode recipe keeps its existing shape.
+        ...(values.crsTransform ? {crsTransform: values.crsTransform} : {}),
         type: values.type,
         assetId: values.assetId,
         recipeId: values.recipeId,
@@ -50,10 +53,12 @@ export const modelToValues = model => ({
     // mount, which legitimately dirties the form.
     requiresUpdate: !!model.requiresUpdate,
     skip: model.skip ? [true] : [],
-    scale: model.scale,
-    // Default the curated grid for recipes saved before the stratification CRS existed, so the mount default is
-    // a no-op rather than a dirtying ''->id change.
-    crs: model.crs || DEFAULT_SAMPLING_GRID_CRS,
+    // User fields stay blank; a saved recipe's grid is carried by the resolved fields.
+    scale: null,
+    crs: null,
+    resolvedScale: model.scale,
+    resolvedCrs: model.crs,
+    crsTransform: model.crsTransform,
     type: model.type,
     assetId: model.assetId,
     recipeId: model.recipeId,

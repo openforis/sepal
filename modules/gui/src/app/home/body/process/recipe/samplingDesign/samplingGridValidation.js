@@ -1,4 +1,5 @@
 import {formatDistance, isAxisAlignedTransform, parseCrsTransform} from '#sepal/recipe/samplingDesign/samplingGrid'
+import {DEFAULT_STRATIFICATION_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
 // GUI-side sampling-grid validators for the Stratification panel.
 
@@ -25,46 +26,33 @@ export const deriveStratificationGrid = (metadata, bandName) => {
         : null
 }
 
-// Whether the derived transform is in effect. ONE predicate rather than a transition table: clearing Scale,
-// retyping the native value, editing the CRS and editing it back all fall out of the same expression, so there
-// is no ordering to get wrong.
-//
-// The transform survives an entered Scale that AGREES with the derived metre size. Otherwise typing the number
-// the placeholder just showed would silently degrade the image's own grid to a resampled one. Both sides are
-// rounded through formatDistance, so an equivalent value like 9.99999999 reads as agreement.
-//
-// This is exact equality between two identically-rounded values with the outcome shown on screen - not a
-// tolerance band, which is what made the three rejected magnitude thresholds unusable.
-export const isStratificationTransformActive = ({derived, crs, scale}) => {
-    if (!derived || crs !== derived.crs) {
-        return false
-    }
-    const entered = String(scale ?? '').trim()
-    return entered === ''
-        || formatDistance(Number(entered)) === formatDistance(derived.pixelSizeMetres)
-}
+export const DEFAULT_STRATIFICATION_SCALE = 30
 
-// The panel's whole grid decision, derived from ONE evaluation of the predicate rather than from per-handler
-// transitions. Clearing Scale, retyping the native value and CRS round-trips all fall out of re-evaluating this,
-// so there is no ordering to get wrong and no memory of how the inputs got here.
+const blank = value => value == null || String(value).trim() === ''
+
+// Blank means "use the effective value" - the product's existing idiom, as Min distance already works. Nothing is
+// required, and nothing derived is ever written into a user-facing field, so there is no value for a later read
+// to race against.
 //
-// `scaleRequired` is false only while a transform is in effect: that is the sole case where a blank Scale still
-// defines a grid. A recipe, a collection, a non-axis-aligned asset or a CRS edited away from the derived one all
-// leave nothing behind, so Scale is required again.
-export const stratificationGridState = ({derived, crs, scale}) => {
-    const active = isStratificationTransformActive({derived, crs, scale})
+// An entered CRS with a blank Scale resolves to the DERIVED pixel size, not the default: asking for a different
+// projection is not asking for a different resolution, and a metre value is meaningful in any CRS.
+export const resolveStratificationGridState = ({derived, crs, scale}) => {
+    const effectiveCrs = !blank(crs)
+        ? String(crs).trim()
+        : derived?.crs || DEFAULT_STRATIFICATION_CRS
+    const effectiveScale = !blank(scale)
+        ? Number(scale)
+        : derived?.pixelSizeMetres || DEFAULT_STRATIFICATION_SCALE
+    // Typing the value the placeholder displays must not demote the design off the image's own grid.
+    const scaleAgrees = blank(scale)
+        || formatDistance(Number(scale)) === formatDistance(derived?.pixelSizeMetres)
+    const applies = !!derived && effectiveCrs === derived.crs && scaleAgrees
     return {
-        crsTransform: active ? derived.crsTransform : null,
-        scaleRequired: !active,
-        // Three states: no derived grid has no mode to be in, so it shows nothing.
-        mode: !derived ? 'none' : active ? 'imageGrid' : 'resampled',
-        placeholder: derived ? derived.pixelSizeMetres : null
+        crs: effectiveCrs,
+        scale: effectiveScale,
+        crsTransform: applies ? derived.crsTransform : null,
+        mode: !derived ? 'none' : applies ? 'imageGrid' : 'resampled',
+        placeholderCrs: derived?.crs || DEFAULT_STRATIFICATION_CRS,
+        placeholderScale: derived?.pixelSizeMetres || DEFAULT_STRATIFICATION_SCALE
     }
 }
-
-// Scale's initial value. A RECIPE has no source grid to read, so it needs a concrete default. An ASSET starts
-// BLANK: if a grid is derived, blank is correct and the placeholder shows the pixel size; if none is derived,
-// ordinary required-field validation asks for a value. Auto-filling 30 for an asset would invent a resolution
-// for an image whose real one we simply could not read, and would do it invisibly - the model would look valid.
-export const stratificationScaleDefault = type =>
-    type === 'RECIPE' ? '30' : null
