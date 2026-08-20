@@ -9,13 +9,19 @@ name changes.
 ## Status
 
 The existing recipe can apply one image as a mask to another image. Adding unmasking is still in design. Before
-that work starts, the recipe's pass-through behavior must be made explicit and reliable: a masked Classification
-must remain usable wherever a Classification is required, a masked CCDC result must remain usable wherever CCDC
-is required, and so on.
+that work starts, the recipe's pass-through behavior must be made explicit and reliable. A wrapper remains usable
+wherever it preserves the capability a consumer actually requires; sharing a source's nominal recipe type is not
+enough.
 
 This pass-through correction is a release gate for unmasking, not a separate cleanup. Adding another recipe input
 for a fill image would otherwise expand dependency chains whose type resolution and cycle handling are already
 unsafe.
+
+The common architecture is defined in [Recipe data sources](data-sources.md), [Source resolution, dependencies and
+execution](source-resolution.md), [Source freshness, caching and invalidation](source-freshness.md), and
+[Visualization ownership and validity](visualizations.md). Mask and Fill must consume that foundation after the
+CCDC Slice vertical slice proves it. It must not ship a local lineage resolver or another copied-source snapshot
+model.
 
 ## Current behavior
 
@@ -100,7 +106,7 @@ A resolver therefore needs to return both identities, for example:
 {
     recipe: maskingRecipe,
     semanticRecipe: classificationRecipe,
-    semanticType: 'CLASSIFICATION',
+    terminalType: 'CLASSIFICATION',
     chain: [maskingRecipe, classificationRecipe]
 }
 ```
@@ -110,20 +116,32 @@ A resolver therefore needs to return both identities, for example:
 Source lineage and capability inheritance are different concepts. The mere presence of a source reference is not
 proof that a recipe can satisfy every source-specific consumer.
 
-Mask and Fill explicitly preserves the primary source's structural semantic capabilities because it preserves its
-band schema and source-specific structure. A replacement can still introduce values that need domain validation,
-such as a class absent from a Classification legend. Other recipes with a source reference must not inherit those
-capabilities unless they make the same explicit guarantee.
+Apply mask preserves generic image output and band schema. Whether it preserves a source-specific capability must
+be declared from that capability's actual contract. Fill masked pixels may preserve fewer capabilities because a
+replacement can introduce values that need domain validation, such as a class absent from a Classification legend.
+Other recipes with a source reference must not inherit capabilities unless they make the same explicit guarantee.
 
-Consumers should request a capability or effective semantic type rather than testing the outer recipe type or
-accepting every recipe that happens to have a source. At minimum this applies to Classification, CCDC, BAYTS and
-other source-specific recipe inputs.
+Consumers should request a capability rather than testing the outer recipe type or accepting every recipe that
+happens to have a source. At minimum this applies to Classification, CCDC, BAYTS and other source-specific recipe
+inputs.
 
-Recipe-list summaries currently expose only the direct recipe type. The first implementation should list explicit
-pass-through recipes as possible candidates, resolve the selected recipe's loaded chain, and reject an incompatible
-semantic type before a consumer reads its model. It should not add a denormalized effective type to recipe summaries:
-nested wrappers can change their source and make such a value stale. Loaded resolution can be cached for the GUI
-session; more selective option filtering is a later usability improvement.
+Those recipe types are examples, not an exhaustive capability list. The vocabulary must come from a repository-
+wide audit of consumers. In particular, consuming a recipe's output image is different from consuming its
+behavior. A caller may need an already-produced Classification image, a classifier that can classify another
+image, reusable training data, a CCDC result image, source configuration, or some other contract. A decorator can
+preserve one without preserving the others.
+
+Compatibility must therefore be based on explicit capabilities rather than terminal type alone. Each decorator
+states whether it preserves, decorates or drops every source capability it encounters. Apply mask clearly preserves
+generic image output and band schema, but algorithmic capabilities must be decided from their actual contract. Fill
+masked pixels may preserve fewer domain-specific capabilities when replacement values can violate their
+invariants.
+
+Recipe-list summaries currently expose only the direct recipe type. During migration, a consumer can list explicit
+decorators as candidates, resolve the selection through the shared source contract, and reject an incompatible
+capability before reading source-specific state. Do not add a denormalized effective type to recipe summaries:
+nested wrappers can change their source and make such a value stale. More selective option filtering is a later
+usability improvement.
 
 ### Output metadata
 
@@ -138,15 +156,142 @@ Band names and visualizations copied when an upstream recipe was selected can be
 Opening or consuming the wrapper must refresh them or detect the mismatch; stale snapshots must not silently
 override the actual output.
 
-### Dependency safety
+### Dependencies and lineage
 
-Both the primary source and an image replacement are recipe dependencies. Resolution and layer traversal must:
+Every source-lineage edge is a recipe dependency, but not every dependency defines lineage. Mask and Fill has
+different edge roles:
+
+- The **primary image** affects output and supplies the capabilities that the wrapper may preserve.
+- The **mask image** affects output but never supplies the wrapper's semantic identity.
+- A future **fill image** affects output but never supplies the wrapper's semantic identity.
+
+The pass-through resolver must follow only the primary-image edge. Map invalidation, existence validation and cycle
+detection must inspect every edge. Inferring either behavior from an unstructured list of recipe IDs would conflate
+two different contracts and force another redesign when the general dependency work starts.
+
+The shared dependency model exposes structured edges with at least a referenced recipe ID and role, and makes one
+graph owner responsible for:
+
+- validated transitive closure;
+- missing-recipe diagnostics with the path from the open recipe;
+- cycle detection across every edge role;
+- map invalidation when any transitive dependency changes;
+- application of the deletion and movement policy owned by [source-resolution.md](source-resolution.md);
+- a stable dependency revision or fingerprint for preview requests.
+
+The current recipe-type ID lists and ad hoc traversal do not provide that contract. In particular, image-layer
+dependency traversal does not reliably retain each direct dependency while descending into its children, and it
+has no cycle guard. Map reload behavior is therefore a known dependency-system gap, not evidence that pass-through
+resolution works.
+
+The common source-resolution work owns the dependency graph. Mask and Fill declares its primary, mask and fill
+edges to that graph rather than introducing a local resolver. Before unmasking ships, the shared resolver must:
 
 - reject direct self-reference;
-- reject indirect cycles across nested pass-through recipes;
+- reject indirect cycles across every nested dependency role;
 - report missing, deleted and incomplete sources as controlled validation errors;
 - keep a visited set and provide the dependency chain in diagnostics;
 - handle nested pass-through recipes without losing the outer execution reference.
+
+## Consumer inventory
+
+Recorded during the Phase 1 pass-through audit against commit
+`75cfcc8c1f69d7871607006ad3beef95a270ff3d`. Classification, CCDC, BAYTS and PyEO are witnesses, not the scope
+boundary: the point of the inventory is the distinction between the three things a consumer can want. File names,
+identifiers and call-site counts in this section are revision-specific and must be re-audited before migration.
+
+### Primary-edge declarations
+
+Only two recipe types declare a source edge, through `sourceRecipe` on the recipe descriptor:
+
+| Type | Primary edge | Terminal |
+|------|--------------|----------|
+| `MASKING` | `model.imageToMask`, an `ASSET` or `RECIPE_REF` | another recipe or an asset |
+| `ASSET_MOSAIC` | `model.assetDetails.assetId` | always an asset |
+
+`ASSET_MOSAIC` is therefore a pass-through recipe in exactly the same sense, and every `type.sourceRecipe`
+filter admits it. Its terminal is an asset, which carries no recipe semantics at all.
+
+### What consumers actually require
+
+Three different requirements, which a wrapper can satisfy independently:
+
+**The transformed output image.** Everything selecting through `!type.noImageOutput` needs bands and pixels
+and nothing else: map layers (`mapLayout/selectRecipe`), the shared input-imagery panels
+(`panels/inputImagery`, `panels/inputImageryWithDerived`), Band Math, Class Change, Index Change, Masking's own
+input image, the Mosaic AOI source, the Classification and Regression *sample* sections, and both Sampling
+Design image inputs - twelve call sites. `noImageOutput` is declared by `CCDC`, `TIME_SERIES` and
+`SAMPLING_DESIGN`, so the filter is a genuine output-image capability check rather than a type test. Apply mask
+preserves this; a wrapper is legitimate everywhere here.
+
+**Source-specific metadata.** Change Alerts reads a CCDC recipe's `ccdcOptions.dateFormat`, `dates`, `sources`
+and `options`, and derives band names from its data sets and corrections. BAYTS Alerts reads a
+`BAYTS_HISTORICAL` recipe's `dates` and `options`. PyEO reads a Classification's `legend` and `inputImagery`,
+then the input mosaic's `sources.dataSets`, `sceneSelectionOptions`, `compositeOptions`/`options` and date
+range. These are the three consumers that attempt semantic lineage through separate synchronization paths. They
+are acceptance cases for keeping the execution reference while reading a named capability from its semantic
+source.
+
+**Source-specific behavior or model reuse.** Classification's training-data recipe section reuses another
+`CLASSIFICATION` recipe's training data, and Regression's reuses another `REGRESSION` recipe's reference data;
+both filter on terminal type alone and neither accepts a wrapper today. CCDC Slice requires actual CCDC
+segments and filters on `['CCDC', 'ASSET_MOSAIC']`, so a Masking recipe wrapping a CCDC recipe is not
+selectable there even though its output would very likely be usable. These are the sites a capability vocabulary
+has to describe.
+
+### Recipe-input filters
+
+Thirteen `RecipeInput` filters exist. Twelve of them ask for generic image output; the remaining ones are the
+type tests listed above, plus the two that combine a terminal type with a blanket source check:
+`type.id === 'CCDC' || type.sourceRecipe` in Change Alerts and `type.id === 'BAYTS_HISTORICAL' ||
+type.sourceRecipe` in BAYTS Alerts. Those two admit any recipe with a source edge, including an
+`ASSET_MOSAIC`, whose terminal has no CCDC or BAYTS semantics whatsoever. Selection is therefore permissive by
+design and incompatibility surfaces only after loading or through an eventual crash. The shared resolver must turn
+that into a controlled capability diagnosis.
+
+### Earth Engine consumers
+
+`lib/js/ee/src/imageFactory.js` dispatches on `recipe.type` alone and reaches every recipe through the common
+`getImage$`/`getBands$`/`getGeometry$`/`getVisParams$` interface. Lineage on that side is implicit and
+dynamic: `recipeRef.js` loads the referenced recipe and hands it back to the factory.
+
+Two properties matter for pass-through. `masking.js` forwards its caller's `args` - the band selection a
+consumer such as Change Alerts passes down - to the primary image only, and constructs the mask image without
+them; the primary edge is already the one that carries source-specific requests. And there is no cycle guard
+anywhere in that recursion, so a self-referencing or mutually referencing chain that reaches the backend
+recurses until it fails. The GUI resolver does not protect it: persisted and programmatically submitted
+recipes never pass through the form.
+
+### Acceptance defects found
+
+The exploratory audit exposed these current behaviors. They are acceptance cases for the common foundation, not
+reasons to retain recipe-specific synchronization fixes:
+
+- Change Alerts can replace the selected wrapper ID with its terminal source ID in persisted `model.reference`,
+  causing a Masking recipe around CCDC to execute the unmasked source. The migrated path must keep the execution
+  reference and obtain CCDC semantics separately.
+- `MASKING` has no reliable date-range contract, so Retrieve can throw before submission. Returning `undefined`
+  would merely hide the crash and lose preserved source semantics. Date range must come from the resolved output or
+  an explicitly preserved capability when one exists.
+- `ASSET_MOSAIC` can expose an incomplete primary asset reference while its form is unfinished. Resolution must
+  report `INCOMPLETE_SOURCE`; it must not create `{type: 'ASSET', id: undefined}` or throw while reading the model.
+- PyEO can read recipe-model fields from an asset terminal and crash. The migrated consumer must request the
+  required classification capability and report that an asset is non-derivable when it cannot provide it.
+
+- Change Alerts and BAYTS Alerts still degrade a wrapper whose terminal is an *asset* to a plain `ASSET`
+  reference, dropping the wrapper from the persisted model exactly as before. Keeping it as a `RECIPE_REF`
+  needs a decision about where a wrapped asset's band list and date format come from - the reference panel
+  only collects a date format for the `ASSET` section - so it belongs with the capability work rather than
+  here.
+- Masking's `model.imageToMask.bands` and `visualizations` are a snapshot taken when the input panel loads a
+  dirty form. Opening the recipe does not refresh them, so they go stale when the source recipe's bands
+  change. This is the "stale snapshots must not silently override the actual output" problem in the Output
+  metadata section.
+- `recipeImageLayer.jsx` builds its dependent-recipe list with
+  `getDependentRecipeIds(recipe).map(load).map(getDependentRecipes).flat()`, which returns each dependency's
+  *children* and drops the dependency itself, so only the deepest generation is watched for map invalidation.
+  It also has no visited set, so a dependency cycle recurses without bound. Both belong to the dependency
+  graph work.
 
 ## Multi-band fill contract
 
@@ -206,21 +351,24 @@ open product decision.
 
 ## Roadmap
 
-### Phase 1 - pass-through foundation
+### Phase 1 - consume the source foundation
 
-- Introduce one cycle-safe resolver that returns the execution recipe, semantic recipe, semantic type and chain.
-- Separate source lineage from explicit capability inheritance.
-- Replace direct type checks and broad "has a source" checks in source-specific recipe inputs.
-- Resolve compatibility from the loaded chain after selection; do not add derived semantic type to recipe summaries.
-- Keep the outer recipe ID in downstream image references while reading metadata from the semantic recipe.
-- Audit Classification, CCDC and Change Alerts, BAYTS, PyEO and every other consumer of source-specific recipes.
-- Make date-range, band, visualization and legend delegation controlled and null-safe.
-- Reject incompatible and cyclic chains without crashing.
+- Wait for the CCDC Slice vertical slice to prove the shared reference, edge, capability, live-resolution and
+  execution-bundle contracts.
+- Declare Mask and Fill's primary, mask and fill dependency roles through that shared contract.
+- Make semantic lineage follow only the primary edge while every edge participates in cycle and output validity.
+- Declare which capabilities Apply mask preserves and which Fill preserves, decorates or drops.
+- Keep the outer recipe ID in every downstream execution reference.
+- Obtain date range, bands, visualizations, legends and other semantics from resolved capabilities rather than
+  copied methods or terminal-type assumptions.
+- Replace direct type checks and broad "has a source" checks only as each affected consumer migrates.
+- Reject incomplete, incompatible, missing and cyclic chains without crashing.
 
 ### Phase 2 - stabilize Apply mask
 
 - Capture the current operation in focused Earth Engine tests before changing it.
 - Add explicit mask-band selection while preserving legacy first-band behavior.
+- Validate missing and cyclic primary/mask references without relying on map-layer traversal.
 - Verify preview, band selection, geometry, retrieval and exported metadata.
 - Correct any stale upstream-band or visualization behavior found during the pass-through audit.
 
@@ -236,7 +384,8 @@ open product decision.
 ### Phase 4 - compatibility acceptance
 
 - Exercise direct and nested Mask and Fill recipes in generic image inputs.
-- Exercise masked and filled Classification, CCDC and BAYTS results in their type-specific consumers.
+- Exercise masked and filled results in every consumer whose required capability is preserved, and verify controlled
+  rejection wherever it is not.
 - Confirm that downstream calculations execute the outer wrapper rather than its semantic source.
 - Confirm source edits, deletion, missing bands and dependency cycles fail predictably.
 - Verify same-CRS and cross-CRS replacement images, differing masks and differing footprints.
@@ -250,9 +399,17 @@ open product decision.
 
 ## Permanent verification
 
-Pure tests should own source-chain resolution, cycle detection, capability matching, legacy-model interpretation,
-target-band reconciliation and mapping validation. They should include direct and nested wrappers, incompatible
-terminal types, incomplete sources and cycles.
+The shared source tests own graph resolution, cycle detection, capability matching and common legacy evidence.
+Mask and Fill's pure tests own its edge declarations, capability preservation, legacy operation interpretation,
+target-band reconciliation and mapping validation. Together they include direct and nested wrappers, incompatible
+sources, incomplete inputs and cycles without duplicating the shared traversal matrix.
+
+Lineage tests must prove that only the primary edge supplies capabilities. Dependency tests must separately prove
+that primary, mask and fill edges all affect output validity and participate in cycle detection.
+
+The capability inventory must include both GUI and Earth Engine consumers. Tests should distinguish callers that
+need only the transformed image from callers that invoke source-specific operations or reuse source-specific model
+state; proving one must not be treated as evidence for the other.
 
 Earth Engine tests should own mask and fill semantics: single and multi-band images, independently masked bands,
 constant and image fills, replacement masks, output band order, footprint retention and cross-projection inputs.
@@ -276,3 +433,5 @@ and downstream type-specific workflows.
 - Positional multi-band matching.
 - Automatic unmasking of the replacement image.
 - Broad refactoring of unrelated recipe types merely because they also reference a source image.
+- Migration of unrelated recipe consumers merely because they also reference sources. The common graph and
+  freshness contracts are shared foundations, but adoption remains incremental.
