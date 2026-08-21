@@ -1,4 +1,4 @@
-import {normalizeAppsCatalog} from './appsCatalog'
+import {fallbackLogoUrl, logoUrl, normalizeAppsCatalog} from './appsCatalog'
 
 describe('normalizeAppsCatalog', () => {
     it('passes single-container apps through unchanged', () => {
@@ -109,5 +109,73 @@ describe('normalizeAppsCatalog', () => {
             apps: [{id: 'a', route: 'a', label: 'A', googleAccountRequired: false}]
         }]}
         expect(normalizeAppsCatalog(input).apps[1].googleAccountRequired).toBe(false)
+    })
+
+    it('inherits the parent logo when a bundle child declares no logo of its own', () => {
+        const input = {apps: [{
+            id: 'p', path: '/api/p', endpoint: 'docker', logo: 'https://example.org/p.png',
+            apps: [{id: 'a', route: 'a', label: 'A'}]
+        }]}
+        expect(normalizeAppsCatalog(input).apps[1].logo).toBe('https://example.org/p.png')
+    })
+
+    it('lets a bundle child logoRef replace an inherited parent logo', () => {
+        const input = {apps: [{
+            id: 'p', path: '/api/p', endpoint: 'docker', logo: 'https://example.org/p.png',
+            apps: [{id: 'a', route: 'a', label: 'A', logoRef: 'child.png'}]
+        }]}
+        const child = normalizeAppsCatalog(input).apps[1]
+        expect(child.logo).toBeUndefined()
+        expect(child.logoRef).toBe('child.png')
+    })
+
+    it('lets a bundle child logo replace an inherited parent logoRef', () => {
+        const input = {apps: [{
+            id: 'p', path: '/api/p', endpoint: 'docker', logoRef: 'parent.png',
+            apps: [{id: 'a', route: 'a', label: 'A', logo: 'https://example.org/a.png'}]
+        }]}
+        const child = normalizeAppsCatalog(input).apps[1]
+        expect(child.logo).toBe('https://example.org/a.png')
+        expect(child.logoRef).toBe('sepal.png')
+    })
+})
+
+describe('logoUrl', () => {
+    it('uses an absolute logo URL as-is', () => {
+        expect(logoUrl({logo: 'https://example.org/logos/foo.png'})).toBe('https://example.org/logos/foo.png')
+    })
+
+    it('prefers logo over logoRef', () => {
+        expect(logoUrl({logo: 'http://example.org/foo.png', logoRef: 'sepal.png'})).toBe('http://example.org/foo.png')
+    })
+
+    it('ignores a relative logo and falls back to logoRef', () => {
+        expect(logoUrl({logo: 'logos/foo.png', logoRef: 'sepal.png'})).toBe('/api/apps/images/sepal.png')
+    })
+
+    it('ignores a logo with a non-http scheme', () => {
+        expect(logoUrl({logo: 'javascript:alert(1)', logoRef: 'sepal.png'})).toBe('/api/apps/images/sepal.png')
+    })
+
+    it('serves logoRef from app-manager when no logo is set', () => {
+        expect(logoUrl({logoRef: 'rstudio-ball.svg'})).toBe('/api/apps/images/rstudio-ball.svg')
+    })
+
+    it('returns null when neither logo nor logoRef is set', () => {
+        expect(logoUrl({})).toBeNull()
+    })
+})
+
+describe('fallbackLogoUrl', () => {
+    it('falls back to the logoRef image when a remote logo fails to load', () => {
+        expect(fallbackLogoUrl({logo: 'https://example.org/foo.png', logoRef: 'sepal.png'})).toBe('/api/apps/images/sepal.png')
+    })
+
+    it('returns null when the failed logo has no logoRef to fall back to', () => {
+        expect(fallbackLogoUrl({logo: 'https://example.org/foo.png'})).toBeNull()
+    })
+
+    it('returns null when the logoRef image itself failed', () => {
+        expect(fallbackLogoUrl({logoRef: 'sepal.png'})).toBeNull()
     })
 })

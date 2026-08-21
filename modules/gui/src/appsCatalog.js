@@ -25,9 +25,15 @@ const mergeTags = (parentTags, childTags) => {
     return out
 }
 
+// A child declaring either logo key owns both of them, so a parent `logo` can
+// never win over a logo the child chose to express as a `logoRef`.
+const logoOwner = (parent, child) =>
+    child.logo || child.logoRef ? child : parent
+
 const flattenChild = (parent, child) => {
     const route = child.route !== undefined ? child.route : child.id
     const path = child.path || joinPath(parent.path, route)
+    const logo = logoOwner(parent, child)
     // Spread the child first so any non-whitelisted fields (e.g. `single`,
     // `alt`, future additions) carry through, then override with derived and
     // inherited values.
@@ -42,7 +48,8 @@ const flattenChild = (parent, child) => {
         pinned: pick(child.pinned, false),
         googleAccountRequired: pick(child.googleAccountRequired, parent.googleAccountRequired, false),
         disabled: pick(child.disabled, parent.disabled),
-        logoRef: pick(child.logoRef, parent.logoRef, 'sepal.png'),
+        logo: logo.logo,
+        logoRef: pick(logo.logoRef, 'sepal.png'),
         author: pick(child.author, parent.author),
         projectLink: pick(child.projectLink, parent.projectLink),
         description: pick(child.description, ''),
@@ -67,4 +74,21 @@ export const normalizeAppsCatalog = appsSpec => {
         }
     }
     return {...appsSpec, apps: out}
+}
+
+const isAbsoluteUrl = value => /^https?:\/\//i.test(value)
+
+const imageUrl = logoRef => logoRef ? `/api/apps/images/${logoRef}` : null
+
+// `logo` points at an externally hosted image; `logoRef` names one installed on
+// the SEPAL server and stays the fallback for catalogs that predate `logo`.
+export const logoUrl = ({logo, logoRef} = {}) =>
+    logo && isAbsoluteUrl(logo)
+        ? logo
+        : imageUrl(logoRef)
+
+// Source to swap in when the browser fails to load the logoUrl choice.
+export const fallbackLogoUrl = app => {
+    const fallback = imageUrl(app?.logoRef)
+    return logoUrl(app) === fallback ? null : fallback
 }
