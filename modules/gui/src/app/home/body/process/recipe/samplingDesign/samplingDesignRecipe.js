@@ -9,28 +9,8 @@ import {msg} from '~/translate'
 import {isGoogleAccount} from '~/user'
 import {Notifications} from '~/widget/notifications'
 
-import {DEFAULT_CRS, DEFAULT_SEED} from './panels/sampleArrangement/arrangementApplicability'
 import {retrieveButtonState} from './sampling/retrieveButtonState'
 import {toTaskAllocation} from './sampling/taskAllocation'
-
-export const defaultModel = {
-    stratification: {
-        scale: 30,
-        crs: DEFAULT_CRS,
-        type: 'ASSET'
-    },
-    // Complete defaults so a new recipe opens the panel clean. minDistance is intentionally absent (resolved at
-    // export, never frozen against its grid); requiresUpdate must be present so the mount-time set(false) is a
-    // no-op rather than a dirtying change.
-    sampleArrangement: {
-        requiresUpdate: false,
-        arrangementStrategy: 'RANDOM',
-        sampleSizeStrategy: 'OVER',
-        gridOrigin: 'FIXED',
-        crs: DEFAULT_CRS,
-        seed: DEFAULT_SEED
-    }
-}
 
 export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)

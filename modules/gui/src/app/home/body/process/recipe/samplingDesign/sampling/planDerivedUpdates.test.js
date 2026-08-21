@@ -1,7 +1,9 @@
 import _ from 'lodash'
 
 import {marginOfErrorFor} from './allocationOutcome'
+import {getDefaultModel, getDefaultSampleAllocation} from './defaultModel'
 import {planDerivedUpdates, planModelUpdates, proportionValues} from './planDerivedUpdates'
+import {isSectionStale, validateRetrieve} from './validateRetrieve'
 
 const model = overrides => _.merge({}, {
     aoi: {type: 'EE_TABLE', id: 'countries/SDN'},
@@ -401,7 +403,9 @@ describe('planDerivedUpdates - proportions become inapplicable', () => {
         expect(model.sampleAllocation.allocationStrategy).toBe('BALANCED')
         expect(model.sampleAllocation.estimateSampleSize).toBe(false)
         expect(model.sampleAllocation.sampleSize).toBe(100)
-        expect(_.sumBy(model.sampleAllocation.allocation, 'sampleSize')).toBe(100)
+        // Balanced is the mean of proportional (30/70) and equal (50/50). Optimal's own 30/70 also sums to
+        // the total, so only the exact split shows whether the counts were actually recalculated.
+        expect(model.sampleAllocation.allocation).toEqual([{stratum: 1, sampleSize: 40}, {stratum: 2, sampleSize: 60}])
         expect(model.sampleAllocation.marginOfError).toBe(null)
         expect(!!model.sampleAllocation.requiresUpdate).toBe(false)
         expect(!!model.proportions.requiresUpdate).toBe(false)
@@ -427,6 +431,207 @@ describe('planDerivedUpdates - proportions become inapplicable', () => {
         const {model} = settleSkipped(manualAllocation(strategy(base, 'OPTIMAL')))
         expect(model.sampleAllocation.allocation).toEqual([{stratum: 1, sampleSize: 30}, {stratum: 2, sampleSize: 70}])
         expect(model.sampleAllocation.allocationStrategy).toBe('OPTIMAL')
+    })
+})
+
+// Balanced is what a new recipe starts on, so what it does and does not read matters more than for the
+// strategies a user has to go and choose.
+describe('planDerivedUpdates - a fixed Balanced allocation', () => {
+    const balanced = strategy(base, 'BALANCED')
+
+    // Balanced spreads the total over the strata from their identities and weights. Anticipated proportions
+    // are not part of that arithmetic, so moving them cannot move a single count.
+    it('holds its counts across a proportion change', () => {
+        const plan = planDerivedUpdates(balanced, withProportions(balanced, CHANGED_PROPORTIONS))
+        expect(plan.allocation.action).toBe('refreshUncertainty')
+        expect('allocation' in plan.allocation).toBe(false)
+    })
+
+    // The uncertainty those counts imply does read proportions, so it is recomputed rather than left
+    // describing the numbers it was derived from.
+    it('refreshes the uncertainty the same change makes wrong', () => {
+        const changed = withProportions(balanced, CHANGED_PROPORTIONS)
+        const plan = planDerivedUpdates(balanced, changed)
+        expect(plan.allocation.marginOfError).toBe(marginOfErrorFor(changed))
+        expect(plan.allocation.marginOfError).not.toBe(marginOfErrorFor(balanced))
+    })
+
+    it('recomputes its counts when the weights move', () => {
+        const plan = planDerivedUpdates(balanced, withStrata(balanced, SHIFTED_WEIGHTS))
+        expect(plan.allocation.action).toBe('recalculate')
+        expect(plan.allocation.allocation).toEqual([{stratum: 1, sampleSize: 50}, {stratum: 2, sampleSize: 50}])
+    })
+
+    // The planner runs with the panel shut, so a default of its own would rewrite a strategy to something a
+    // new recipe would never start on.
+    it('settles a design whose proportions went away onto the recipe default', () => {
+        const optimal = strategy(base, 'OPTIMAL')
+        const plan = planDerivedUpdates(optimal, skippedProportions(optimal))
+        expect(plan.allocation.allocationStrategy).toBe(getDefaultSampleAllocation().allocationStrategy)
+    })
+})
+
+// Recipes saved before a field was persisted still have to replan. The strategy is the one that bites: the
+// allocator has no default for it and rejects an unknown one outright, and a model that names no strategy
+// also reads as depending on nothing - so such a design either recalculates into a thrown error or quietly
+// does not recalculate at all.
+describe('planDerivedUpdates - a legacy allocation saved without a strategy', () => {
+    const legacyWithout = (...unsaved) =>
+        ({...base, sampleAllocation: _.omit(base.sampleAllocation, unsaved)})
+
+    const legacy = () => legacyWithout('allocationStrategy')
+
+    // A strategy nothing names looks weight-independent, so the counts were left describing the old weights.
+    it('recalculates on the default strategy when the weights move', () => {
+        const saved = legacy()
+        const plan = planDerivedUpdates(saved, withStrata(saved, SHIFTED_WEIGHTS))
+        expect(plan.allocation.action).toBe('recalculate')
+        expect(plan.allocation.allocation).toEqual([{stratum: 1, sampleSize: 50}, {stratum: 2, sampleSize: 50}])
+    })
+
+    // Balanced is the mean of proportional (30/60/10) and equal (34 each), rounded, then trimmed by one to
+    // land on the total: 32/47/22 sums to 101, so stratum 2 gives one back.
+    it('allocates an added stratum on the default strategy', () => {
+        const saved = legacy()
+        expect(planDerivedUpdates(saved, withStrata(saved, EXTRA_STRATUM)).allocation.allocation).toEqual([
+            {stratum: 1, sampleSize: 32},
+            {stratum: 2, sampleSize: 46},
+            {stratum: 3, sampleSize: 22}
+        ])
+    })
+
+    it('persists the strategy it calculated with, and settles', () => {
+        const saved = legacy()
+        const {model} = settle(saved, withStrata(saved, SHIFTED_WEIGHTS))
+        expect(model.sampleAllocation.allocationStrategy).toBe(getDefaultSampleAllocation().allocationStrategy)
+        expect(model.sampleAllocation.allocationStrategy).toBe('BALANCED')
+        expect(isSectionStale(model, 'sampleAllocation')).toBe(false)
+    })
+
+    // Counts that pass preflight while the settings behind them are missing leave Retrieve blocked with no
+    // section flagged to send the user to.
+    it('persists the settings it filled in, so Retrieve is not blocked by them', () => {
+        const saved = legacyWithout('minSamplesPerStratum', 'confidenceLevel', 'powerTuningConstant')
+        const {model} = settle(saved, withStrata(saved, SHIFTED_WEIGHTS))
+        const defaults = getDefaultSampleAllocation()
+        expect(model.sampleAllocation.minSamplesPerStratum).toBe(defaults.minSamplesPerStratum)
+        expect(model.sampleAllocation.confidenceLevel).toBe(defaults.confidenceLevel)
+        expect(model.sampleAllocation.powerTuningConstant).toBe(defaults.powerTuningConstant)
+        expect(validateRetrieve(model).filter(({section}) => section === 'sampleAllocation')).toEqual([])
+    })
+
+    it('leaves a saved setting alone while filling in the ones next to it', () => {
+        const saved = legacyWithout('confidenceLevel')
+        const {model} = settle(saved, withStrata(saved, SHIFTED_WEIGHTS))
+        expect(model.sampleAllocation.minSamplesPerStratum).toBe('2')
+        expect(model.sampleAllocation.confidenceLevel).toBe(getDefaultSampleAllocation().confidenceLevel)
+    })
+
+    // A strategy nobody recognizes reaches the allocator exactly like a missing one.
+    it('falls back to the default rather than allocating with a strategy it does not know', () => {
+        const bogus = strategy(base, 'MYSTERY')
+        const plan = planDerivedUpdates(bogus, withStrata(bogus, EXTRA_STRATUM))
+        expect(plan.allocation.allocationStrategy).toBe(getDefaultSampleAllocation().allocationStrategy)
+        expect(plan.allocation.allocation.every(({sampleSize}) => Number.isFinite(sampleSize))).toBe(true)
+    })
+
+    it('leaves an explicitly saved strategy alone', () => {
+        const saved = strategy(base, 'EQUAL')
+        const {model} = settle(saved, withStrata(saved, SHIFTED_WEIGHTS))
+        expect(model.sampleAllocation.allocationStrategy).toBe('EQUAL')
+    })
+
+    it('leaves an explicitly saved proportion-dependent strategy alone while proportions apply', () => {
+        const saved = strategy(base, 'OPTIMAL')
+        const {model} = settle(saved, withStrata(saved, SHIFTED_WEIGHTS))
+        expect(model.sampleAllocation.allocationStrategy).toBe('OPTIMAL')
+    })
+})
+
+// Whether proportions apply is the user's choice; whether they are ready is a lifecycle state. Reading the
+// second as the first turns a moment when the rows happen to be empty into a permanent change of strategy.
+describe('planDerivedUpdates - proportions applicable but not ready', () => {
+    const optimal = strategy(base, 'OPTIMAL')
+    const notReady = staleProportions(withProportions(optimal, []))
+
+    it('waits instead of rewriting a variance strategy the design still wants', () => {
+        const plan = planDerivedUpdates(optimal, notReady)
+        expect(plan.allocation.action).toBe('waitForProportions')
+        expect('allocationStrategy' in plan.allocation).toBe(false)
+    })
+
+    // Optimal allocates in proportion to weight * sqrt(p(1-p)): 0.3*sqrt(0.09)=0.090 against
+    // 0.7*sqrt(0.0475)=0.153, so 37/63 of the total.
+    it('recalculates on Optimal once the proportions arrive', () => {
+        const waited = settle(optimal, notReady).model
+        const arrived = withProportions({...waited, proportions: {...waited.proportions, requiresUpdate: false}},
+            CHANGED_PROPORTIONS)
+        const {model} = settle(waited, arrived)
+        expect(model.sampleAllocation.allocationStrategy).toBe('OPTIMAL')
+        expect(model.sampleAllocation.allocation).toEqual([{stratum: 1, sampleSize: 37}, {stratum: 2, sampleSize: 63}])
+    })
+})
+
+// needsInput reports that a number is missing. In error mode that number is the user's own target, and a
+// target the planner cannot use is still the one they typed.
+describe('planDerivedUpdates - needsInput leaves the target alone', () => {
+    const errorModeTarget = marginOfError =>
+        ({...base, sampleAllocation: {...base.sampleAllocation, estimateSampleSize: true, marginOfError}})
+
+    it('does not rewrite an error-mode target it cannot use', () => {
+        const invalid = errorModeTarget(-1)
+        const plan = planDerivedUpdates(invalid, withStrata(invalid, SHIFTED_WEIGHTS))
+        expect(plan.allocation.action).toBe('needsInput')
+        expect('marginOfError' in plan.allocation).toBe(false)
+    })
+
+    it('does not rewrite an error-mode target that was never given', () => {
+        const missing = errorModeTarget(null)
+        const plan = planDerivedUpdates(missing, withStrata(missing, SHIFTED_WEIGHTS))
+        expect('marginOfError' in plan.allocation).toBe(false)
+    })
+
+    // In fixed mode the margin is derived from the counts rather than typed, so a margin describing counts
+    // that no longer exist has to go.
+    it('clears a derived margin whose counts have gone', () => {
+        const {sampleSize: _none, ...sampleAllocation} = base.sampleAllocation
+        const noTarget = {...base, sampleAllocation}
+        const plan = planDerivedUpdates(noTarget, withStrata(noTarget, SHIFTED_WEIGHTS))
+        expect(plan.allocation.action).toBe('needsInput')
+        expect(plan.allocation.marginOfError).toBe(null)
+    })
+})
+
+describe('planDerivedUpdates - an effective strategy change invalidates the counts', () => {
+    const BALANCED_COUNTS = [{stratum: 1, sampleSize: 40}, {stratum: 2, sampleSize: 60}]
+
+    it('recalculates when a filled-in strategy replaces a missing one on a proportion-only change', () => {
+        const saved = {...base, sampleAllocation: _.omit(base.sampleAllocation, 'allocationStrategy')}
+        const {model} = settle(saved, withProportions(saved, CHANGED_PROPORTIONS))
+        expect(model.sampleAllocation.allocationStrategy).toBe('BALANCED')
+        expect(model.sampleAllocation.allocation).toEqual(BALANCED_COUNTS)
+    })
+
+    it('recalculates when a strategy nobody recognizes is replaced on a proportion-only change', () => {
+        const saved = strategy(base, 'MYSTERY')
+        const {model} = settle(saved, withProportions(saved, CHANGED_PROPORTIONS))
+        expect(model.sampleAllocation.allocationStrategy).toBe('BALANCED')
+        expect(model.sampleAllocation.allocation).toEqual(BALANCED_COUNTS)
+    })
+
+    // The counts a strategy produced are only correct for that strategy, so replacing it is exactly as
+    // invalidating as moving the weights it read.
+    it('recalculates when proportions go away and a variance strategy is replaced', () => {
+        const optimal = strategy(base, 'OPTIMAL')
+        const {model} = settle(optimal, skippedProportions(optimal))
+        expect(model.sampleAllocation.allocationStrategy).toBe('BALANCED')
+        expect(model.sampleAllocation.allocation).toEqual(BALANCED_COUNTS)
+    })
+
+    it('leaves the counts alone when the strategy it was given is the strategy it runs', () => {
+        const balanced = withAllocation(strategy(base, 'BALANCED'), BALANCED_COUNTS)
+        const plan = planDerivedUpdates(balanced, withProportions(balanced, CHANGED_PROPORTIONS))
+        expect(plan.allocation.action).toBe('refreshUncertainty')
     })
 })
 
@@ -527,5 +732,113 @@ describe('planModelUpdates settles', () => {
         const stale = _.merge({}, base, {proportions: {requiresUpdate: true}})
         const {model} = settle(stale, withStrata(stale, SHIFTED_WEIGHTS))
         expect(model.proportions.requiresUpdate).toBe(true)
+    })
+})
+
+// The lifecycle of a brand new recipe, driven through the planner exactly as Sync drives it. A new recipe
+// carries every allocation setting except the two it cannot derive - the total sample size and the counts
+// that follow from it - so the first thing to reach the allocation is a set of strata with no total to
+// spread over them, a number only a person can supply.
+describe('planDerivedUpdates - an allocation with no target yet', () => {
+    const AOI = {type: 'EE_TABLE', id: 'countries/SDN'}
+    const CALCULATED_STRATA = [
+        {value: 1, label: 'Forest', color: '#0a0', area: 300, weight: 0.3},
+        {value: 2, label: 'Non-forest', color: '#a00', area: 700, weight: 0.7}
+    ]
+    const CALCULATED_PROPORTIONS = [{stratum: 1, proportion: 0.4}, {stratum: 2, proportion: 0.1}]
+
+    const newRecipe = () => ({...getDefaultModel(), aoi: AOI})
+
+    const stratificationCompleted = model => ({
+        ...model,
+        stratification: {...model.stratification, requiresUpdate: false, strata: CALCULATED_STRATA}
+    })
+
+    const proportionsCompleted = model => ({
+        ...model,
+        proportions: {
+            skip: false,
+            manual: [],
+            requiresUpdate: false,
+            anticipatedProportions: CALCULATED_PROPORTIONS
+        }
+    })
+
+    // Stratification, then Proportions, each settled the way Sync settles it.
+    const throughProportions = () => {
+        const created = newRecipe()
+        const stratified = settle(created, stratificationCompleted(created)).model
+        return settle(stratified, proportionsCompleted(stratified)).model
+    }
+
+    it('keeps the allocation flagged after the whole new-recipe lifecycle', () => {
+        const model = throughProportions()
+        expect(model.sampleAllocation.requiresUpdate).toBe(true)
+        expect(isSectionStale(model, 'sampleAllocation')).toBe(true)
+    })
+
+    it('shows the strata without inventing counts or a total', () => {
+        const {sampleAllocation} = throughProportions()
+        expect(sampleAllocation.allocation).toEqual([{stratum: 1}, {stratum: 2}])
+        expect(sampleAllocation.sampleSize).toBeUndefined()
+    })
+
+    it('reports needing input rather than a recalculation when the strata first arrive', () => {
+        const created = newRecipe()
+        expect(actions(created, stratificationCompleted(created)).allocation).toBe('needsInput')
+    })
+
+    // Finishing Proportions moves numbers the fixed strategy does not read for its counts. That is not a
+    // reason to call the allocation settled.
+    it('cannot be cleared by finishing proportions', () => {
+        const created = newRecipe()
+        const stratified = settle(created, stratificationCompleted(created)).model
+        expect(stratified.sampleAllocation.requiresUpdate).toBe(true)
+        const {model} = settle(stratified, proportionsCompleted(stratified))
+        expect(model.sampleAllocation.requiresUpdate).toBe(true)
+    })
+
+    it('cannot be cleared by a later proportion change', () => {
+        const flagged = throughProportions()
+        const edited = withProportions(flagged, CHANGED_PROPORTIONS)
+        expect(settle(flagged, edited).model.sampleAllocation.requiresUpdate).toBe(true)
+    })
+
+    // An empty design has nothing to allocate over, so there is nothing for the user to do yet. The section
+    // becomes actionable when strata exist, not when the recipe is created.
+    it('does not flag an allocation before any strata exist', () => {
+        const created = newRecipe()
+        const relocated = {...created, aoi: {type: 'EE_TABLE', id: 'countries/KEN'}}
+        expect(planDerivedUpdates(created, relocated).allocation.requiresUpdate).not.toBe(true)
+        expect(settle(created, relocated).model.sampleAllocation?.requiresUpdate).not.toBe(true)
+    })
+
+    it('settles silently once a total sample size has been supplied', () => {
+        const flagged = throughProportions()
+        const targeted = {...flagged, sampleAllocation: {...flagged.sampleAllocation, sampleSize: 100, allocationStrategy: 'BALANCED'}}
+        const {model} = settle(targeted, withStrata(targeted, SHIFTED_WEIGHTS))
+        expect(isSectionStale(model, 'sampleAllocation')).toBe(false)
+        expect(model.sampleAllocation.allocation.map(({sampleSize}) => sampleSize)).toEqual([50, 50])
+    })
+
+    it('leaves a fully configured automatic allocation recalculating on its own', () => {
+        const configured = strategy(base, 'BALANCED')
+        const {model} = settle(configured, withStrata(configured, SHIFTED_WEIGHTS))
+        expect(isSectionStale(model, 'sampleAllocation')).toBe(false)
+        expect(model.sampleAllocation.allocation).toEqual([{stratum: 1, sampleSize: 50}, {stratum: 2, sampleSize: 50}])
+    })
+
+    // Error mode has its own target: a margin to solve a total from. A new recipe is given one, so this is
+    // the recipe that had it cleared, or was saved before it was defaulted.
+    it('reports needing input when error mode has no margin of error', () => {
+        const created = newRecipe()
+        const estimating = {
+            ...created,
+            sampleAllocation: {...created.sampleAllocation, estimateSampleSize: true, marginOfError: null}
+        }
+        const stratified = stratificationCompleted(estimating)
+        const withReadyProportions = proportionsCompleted(stratified)
+        expect(actions(stratified, withReadyProportions).allocation).toBe('needsInput')
+        expect(settle(stratified, withReadyProportions).model.sampleAllocation.sampleSize).toBeUndefined()
     })
 })

@@ -1,7 +1,10 @@
 import _ from 'lodash'
 
-import {allocationOutcome, isManualAllocation, marginOfErrorFor, reconcileManualAllocation, unansweredStrata} from './allocationOutcome'
-import {orderedStratumKeys, reconcileManualProportions, stratumKey, unansweredProportions} from './designModel'
+import {allocationOutcome, blankAllocation, effectiveAllocationStrategy, effectiveSampleAllocation, isManualAllocation, isPositiveIntegerSampleSize, marginOfErrorFor, reconcileManualAllocation, unansweredStrata} from './allocationOutcome'
+import {readsProportions, readsWeights} from './allocationStrategy'
+import {getDefaultSampleAllocation} from './defaultModel'
+import {isProportionsApplicable, orderedStratumKeys, reconcileManualProportions, stratumKey, unansweredProportions} from './designModel'
+import {isValidMarginOfError} from './numericRanges'
 
 // Semantic invalidation for the Sampling Design recipe. Panel order says nothing about what depends on what:
 // each derived section is planned from the inputs its own mode actually reads, so a change is only propagated
@@ -37,7 +40,7 @@ export const stratumWeights = model =>
         'stratum'
     )
 
-export const isProportionsApplicable = model => !model?.proportions?.skip
+export {isProportionsApplicable}
 
 export const isProportionsManual = model => !!model?.proportions?.manual?.length
 
@@ -69,11 +72,10 @@ export const allocationMode = model => ({
     allocationStrategy: model?.sampleAllocation?.allocationStrategy
 })
 
-const WEIGHT_DEPENDENT_STRATEGIES = ['PROPORTIONAL', 'BALANCED', 'OPTIMAL', 'POWER']
-const PROPORTION_DEPENDENT_STRATEGIES = ['OPTIMAL', 'POWER']
-// The same fallback the panel applies when it opens without proportions - the established policy, restated
-// here so it can also be applied while the panel is closed.
-const PROPORTION_FREE_STRATEGY = 'BALANCED'
+// What an automatic allocation is calculated from, beyond the target and the strata. Persisted alongside the
+// counts whenever a plan settles one, so a recipe never carries counts it cannot account for.
+const CALCULATION_SETTINGS = ['estimateSampleSize', 'allocationStrategy', 'confidenceLevel', 'minSamplesPerStratum', 'powerTuningConstant']
+
 const PENDING_PROPORTIONS = ['recalculate', 'needsInput']
 
 // Everything the plan reads. Presentation is absent by construction, so a label or color edit cannot even
@@ -134,18 +136,53 @@ const planProportions = (previous, next) => {
 // policy when it opens; applying it here means the user is not sent through the panel to do it by hand.
 const proportionFreeMode = model => {
     const {estimateSampleSize, allocationStrategy} = allocationMode(model)
-    if (!estimateSampleSize && !PROPORTION_DEPENDENT_STRATEGIES.includes(allocationStrategy)) {
+    if (!estimateSampleSize && !readsProportions(allocationStrategy)) {
         return null
     }
     return {
         // Error mode solves the total from anticipated uncertainty, which no longer exists; the total it last
         // solved is kept and simply becomes the fixed target.
         estimateSampleSize: false,
-        allocationStrategy: PROPORTION_DEPENDENT_STRATEGIES.includes(allocationStrategy)
-            ? PROPORTION_FREE_STRATEGY
-            : allocationStrategy
+        // Resolved against a design that now has no proportions, so a strategy that reads them is replaced by
+        // the same default the panel falls back to - the user is not sent through the panel to make a choice
+        // the design has already made for them.
+        allocationStrategy: effectiveAllocationStrategy({
+            allocationStrategy,
+            proportionsApplicable: false,
+            defaultStrategy: getDefaultSampleAllocation().allocationStrategy
+        })
     }
 }
+
+// The one thing an automatic allocation cannot derive: the target a person has to give it. Fixed mode needs
+// a positive whole-number total to spread over the strata; error mode needs a positive margin to solve a
+// total from, and proportions to solve it against.
+const missingAllocationTarget = model => {
+    const {estimateSampleSize} = allocationMode(model)
+    return estimateSampleSize
+        ? !isProportionsApplicable(model)
+            || !proportionsReady(model)
+            || !isValidMarginOfError(model?.sampleAllocation?.marginOfError)
+        : !isPositiveIntegerSampleSize(model?.sampleAllocation?.sampleSize)
+}
+
+// An allocation with no strata has nothing to allocate over, so there is nothing for the user to supply yet:
+// creating a recipe must not light the section up. It becomes actionable when strata exist.
+const needsAllocationTarget = model =>
+    !!orderedStratumKeys(model).length && missingAllocationTarget(model)
+
+// Not a recalculation. The strata are shown as blank count rows so the panel has something to display, but an
+// allocation that cannot be completed without a person is unstarted rather than settled - and saying
+// otherwise is what left Retrieve blocking a design whose Allocation button was never lit.
+const needsInputAllocation = model => ({
+    action: 'needsInput',
+    requiresUpdate: true,
+    allocation: blankAllocation(model),
+    // In fixed mode the margin is derived from counts that no longer exist, so it goes with them. In error
+    // mode it is the target the user typed - the very thing being reported as missing or unusable - and
+    // erasing it would hand the panel a blank field to fill with a default.
+    ...(allocationMode(model).estimateSampleSize ? {} : {marginOfError: null})
+})
 
 const planManualAllocation = (previous, next, {proportionsChanged, weightsChanged}) => {
     if (_.isEqual(stratumKeySet(previous), stratumKeySet(next))) {
@@ -169,47 +206,78 @@ const planManualAllocation = (previous, next, {proportionsChanged, weightsChange
     }
 }
 
-const planAutomaticAllocation = (previous, next, {proportionsAction, proportionsChanged, weightsChanged}) => {
+const planAutomaticAllocation = (previousModel, nextModel, {proportionsAction, proportionsChanged, weightsChanged}) => {
+    // Two models on purpose. `nextModel` is what the recipe actually saved; `effectiveModel` is that plus the
+    // values a recipe saved before a field existed never had. The calculation reads the second - the
+    // allocator rejects a strategy it was not given, and a model that names none reads as depending on
+    // nothing, so it would quietly stop recalculating - while what was saved stays visible, because the gap
+    // between the two is itself a reason to recalculate.
+    const defaults = getDefaultSampleAllocation()
+    const savedStrategy = nextModel?.sampleAllocation?.allocationStrategy
+    const sampleAllocation = effectiveSampleAllocation({model: nextModel, defaults})
+    const effectiveModel = {...nextModel, sampleAllocation}
+
+    // Every plan that touches the allocation carries the settings it was calculated with, so the model it
+    // leaves behind explains its own counts and satisfies the same preflight Retrieve runs. A no-op write is
+    // dropped by the caller, so a recipe that already states a setting is never rewritten, and a plan that
+    // settles nothing writes nothing at all.
+    const settings = _.pick(sampleAllocation, CALCULATION_SETTINGS)
+    const planned = plan => ['keep', 'waitForProportions'].includes(plan.action)
+        ? plan
+        : {...settings, ...plan}
+
     // A design whose proportions no longer apply, still carrying a mode that reads them: settle it into a
     // valid proportion-free one rather than leaving Retrieve blocked on a panel the user has nothing to
     // decide in. Idempotent - once the mode is proportion-free this cannot fire again.
-    const proportionFree = !isProportionsApplicable(next) && proportionFreeMode(next)
+    const proportionFree = !isProportionsApplicable(nextModel) && proportionFreeMode(effectiveModel)
     if (proportionFree) {
-        const normalized = {...next, sampleAllocation: {...next.sampleAllocation, ...proportionFree}}
-        return {action: 'recalculate', requiresUpdate: false, ...proportionFree, ...allocationOutcome(normalized)}
+        const normalized = {...effectiveModel, sampleAllocation: {...sampleAllocation, ...proportionFree}}
+        return planned(needsAllocationTarget(normalized)
+            ? {...needsInputAllocation(normalized), ...proportionFree}
+            : {action: 'recalculate', requiresUpdate: false, ...proportionFree, ...allocationOutcome(normalized)})
     }
 
-    const {estimateSampleSize, allocationStrategy} = allocationMode(next)
+    const {estimateSampleSize, allocationStrategy} = allocationMode(effectiveModel)
     // Error mode solves the total sample size from anticipated uncertainty, so there it is not the strategy
     // that decides what matters - every strategy reads both weights and proportions.
-    const dependsOnWeights = estimateSampleSize || WEIGHT_DEPENDENT_STRATEGIES.includes(allocationStrategy)
-    const dependsOnProportions = estimateSampleSize || PROPORTION_DEPENDENT_STRATEGIES.includes(allocationStrategy)
+    const dependsOnWeights = estimateSampleSize || readsWeights(allocationStrategy)
+    const dependsOnProportions = estimateSampleSize || readsProportions(allocationStrategy)
 
     // Recomputing against proportions that are not finished would just produce a second wrong answer. Two
     // ways for them to be unfinished: already flagged in the model, or flagged by THIS transition - the flag
     // is written alongside this plan, so the model does not carry it yet. Waiting is not a reason to ask the
     // user for anything: the proportions section carries the flag, and the release below is what triggers the
     // recompute - no flag cascades between sections.
-    const proportionsPending = PENDING_PROPORTIONS.includes(proportionsAction) || !proportionsReady(next)
+    const proportionsPending = PENDING_PROPORTIONS.includes(proportionsAction) || !proportionsReady(nextModel)
     if (dependsOnProportions && proportionsPending) {
-        return {action: 'waitForProportions'}
+        return planned({action: 'waitForProportions'})
+    }
+    // Outranks every transition below. A missing target is not staleness that arithmetic can resolve, so a
+    // later weight or proportion move must not report the allocation as settled while it is still absent.
+    if (needsAllocationTarget(effectiveModel)) {
+        return planned(needsInputAllocation(effectiveModel))
     }
     // Released. The counts were last computed from whatever was current before the wait began, so they are
     // stale even if the arriving proportions are numerically identical to the ones they replaced.
-    const released = dependsOnProportions && !proportionsReady(previous)
+    const released = dependsOnProportions && !proportionsReady(previousModel)
     // Ordered rather than set-wise: remainder adjustment walks the strata in order, so the same strata in a
     // different order can allocate differently.
-    const identitiesChanged = !_.isEqual(orderedStratumKeys(previous), orderedStratumKeys(next))
+    const identitiesChanged = !_.isEqual(orderedStratumKeys(previousModel), orderedStratumKeys(nextModel))
+    // Counts only ever mean anything for the strategy that produced them, so a strategy the saved model does
+    // not name invalidates them exactly as moving the weights they read would. Persisting the effective
+    // strategy beside the saved counts would leave the model stating a split it did not produce.
+    const strategyChanged = sampleAllocation.allocationStrategy !== savedStrategy
     const staleCounts = released
         || identitiesChanged
+        || strategyChanged
         || (dependsOnWeights && weightsChanged)
         || (dependsOnProportions && proportionsChanged)
     if (staleCounts) {
-        return {action: 'recalculate', requiresUpdate: false, ...allocationOutcome(next)}
+        return planned({action: 'recalculate', requiresUpdate: false, ...allocationOutcome(effectiveModel)})
     }
-    return proportionsChanged || weightsChanged
-        ? {action: 'refreshUncertainty', requiresUpdate: false, marginOfError: marginOfErrorFor(next)}
-        : KEEP
+    return planned(proportionsChanged || weightsChanged
+        ? {action: 'refreshUncertainty', requiresUpdate: false, marginOfError: marginOfErrorFor(effectiveModel)}
+        : KEEP)
 }
 
 // Plans what each derived section must do to become correct again for the model it is now part of. Every
@@ -235,7 +303,7 @@ export const planDerivedUpdates = (previousModel, nextModel) => {
     }
 }
 
-const ALLOCATION_WRITES = ['allocation', 'sampleSize', 'marginOfError', 'estimateSampleSize', 'allocationStrategy']
+const ALLOCATION_WRITES = ['allocation', 'sampleSize', 'marginOfError', ...CALCULATION_SETTINGS]
 
 // The plan as model writes: `[[path, value], ...]` relative to the recipe model, carrying only the entries
 // that would actually change something. Empty when no semantic input moved - which is what keeps applying a

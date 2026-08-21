@@ -3,7 +3,6 @@ import {requiresSamplingSeed} from '#sepal/recipe/samplingDesign/samplingSeed'
 import {isSkipped} from '#sepal/recipe/samplingDesign/stratificationSkip'
 
 export const DEFAULT_CRS = DEFAULT_SAMPLING_GRID_CRS
-export const DEFAULT_SEED = 1
 
 export {isSkipped}
 

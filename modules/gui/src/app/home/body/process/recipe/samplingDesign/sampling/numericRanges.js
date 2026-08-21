@@ -16,3 +16,8 @@ export const isValidProportionPercentage = value =>
 // The overall override is optional: blank means "no override".
 export const isValidOptionalProportionPercentage = value =>
     value == null || String(value).trim() === '' || isValidProportionPercentage(value)
+
+// A relative margin of error is a positive percentage: zero would demand an infinite sample, so the bound is
+// strict. Blank means no target has been given at all.
+export const isValidMarginOfError = value =>
+    value != null && String(value).trim() !== '' && Number.isFinite(Number(value)) && Number(value) > 0

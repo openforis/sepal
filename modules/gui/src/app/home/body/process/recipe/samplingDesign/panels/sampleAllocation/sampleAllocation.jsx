@@ -19,9 +19,11 @@ import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
-import {allocationOutcome, isPositiveIntegerSampleSize, marginOfErrorFor, reconcileManualAllocation} from '../../sampling/allocationOutcome'
+import {allocationOutcome, effectiveAllocationStrategy, isPositiveIntegerSampleSize, marginOfErrorFor, reconcileManualAllocation} from '../../sampling/allocationOutcome'
+import {readsProportions} from '../../sampling/allocationStrategy'
+import {getDefaultSampleAllocation} from '../../sampling/defaultModel'
 import {allocationStrata, orderedStratumKeys, stratumKey} from '../../sampling/designModel'
-import {isValidConfidenceLevel, isValidPowerTuningConstant} from '../../sampling/numericRanges'
+import {isValidConfidenceLevel, isValidMarginOfError, isValidPowerTuningConstant} from '../../sampling/numericRanges'
 import {AllocationTable} from './allocationTable'
 import styles from './sampleAllocation.module.css'
 import {shouldDeferFixedSampleSizeAllocation} from './sampleAllocationState'
@@ -51,9 +53,11 @@ const fields = {
         .int(),
     marginOfError: new Form.Field()
         .skip((_marginOfError, {manual, estimateSampleSize}) => manual.length || !estimateSampleSize)
+        // The first failing predicate supplies the message, so notBlank and number stay to name those two
+        // cases; what the field will actually accept is the same rule the planner reads the target with.
         .notBlank()
-        .greaterThan(0)
-        .number(),
+        .number()
+        .predicate(isValidMarginOfError, 'fieldValidation.greaterThan', () => ({minValue: 0})),
     allocationStrategy: new Form.Field(),
     minSamplesPerStratum: new Form.Field()
         .skip((_minSamplesPerStratum, {manual, allocationStrategy}) => !usesConfiguredMinSamplesPerStratum({allocationStrategy, manual}))
@@ -68,6 +72,14 @@ const fields = {
             'process.samplingDesign.panel.sampleAllocation.form.powerTuningConstant.range'),
     allocation: new Form.Field()
         .notBlank()
+}
+
+// A saved 0 is a value, not a blank: `value || set(default)` would replace a valid zero power-tuning
+// constant with the default every time the panel opened.
+const defaultIfAbsent = (input, value) => {
+    if (input.value == null || input.value === '') {
+        input.set(value)
+    }
 }
 
 // Strategies without a configurable minimum still floor at the statistical minimum; the rest raise it to the
@@ -268,39 +280,19 @@ class _SampleAllocation extends React.Component {
 
     renderAllocationStrategy() {
         const {noProportions, inputs: {allocationStrategy}} = this.props
+        // Order and wording are this panel's; whether an option can run is not. A strategy that reads
+        // anticipated proportions has nothing to read in a design without them.
+        const options = ['PROPORTIONAL', 'EQUAL', 'BALANCED', 'OPTIMAL', 'POWER'].map(value => ({
+            value,
+            label: msg(`process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.${value}.label`),
+            tooltip: msg(`process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.${value}.tooltip`),
+            disabled: noProportions && readsProportions(value)
+        }))
         return (
             <Form.Buttons
                 label={msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.label')}
                 input={allocationStrategy}
-                options={[
-                    {
-                        value: 'PROPORTIONAL',
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.PROPORTIONAL.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.PROPORTIONAL.tooltip'),
-                    },
-                    {
-                        value: 'EQUAL',
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.EQUAL.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.EQUAL.tooltip'),
-                    },
-                    {
-                        value: 'BALANCED',
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.BALANCED.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.BALANCED.tooltip'),
-                    },
-                    {
-                        value: 'OPTIMAL',
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.OPTIMAL.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.OPTIMAL.tooltip'),
-                        disabled: noProportions
-                    },
-                    {
-                        value: 'POWER',
-                        label: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.POWER.label'),
-                        tooltip: msg('process.samplingDesign.panel.sampleAllocation.form.allocationStrategy.POWER.tooltip'),
-                        disabled: noProportions
-                    },
-                ]}
+                options={options}
             />
         )
     }
@@ -363,6 +355,9 @@ class _SampleAllocation extends React.Component {
 
     componentDidMount() {
         const {strata, noProportions, inputs: {requiresUpdate, manual, estimateSampleSize, confidenceLevel, marginOfError, minSamplesPerStratum, allocationStrategy, powerTuningConstant, allocation}} = this.props
+        // A recipe saved before a default existed opens on the same defaults a new one starts with, taken
+        // from their single owner rather than decided again here.
+        const defaults = getDefaultSampleAllocation()
         requiresUpdate.set(false)
         if (strata.length === 1) {
             manual.set([true])
@@ -374,26 +369,28 @@ class _SampleAllocation extends React.Component {
         if (noProportions) {
             estimateSampleSize.set(false)
         } else {
-            estimateSampleSize.value || estimateSampleSize.set(false)
+            defaultIfAbsent(estimateSampleSize, defaults.estimateSampleSize)
         }
-        confidenceLevel.value || confidenceLevel.set(95)
+        defaultIfAbsent(confidenceLevel, defaults.confidenceLevel)
         // Clear any stale margin of error up front when proportions are skipped (not only after a row
         // edit); there is no margin of error to display or validate without proportions.
         if (noProportions) {
             marginOfError.set(null)
         } else {
-            marginOfError.value || marginOfError.set(50)
+            defaultIfAbsent(marginOfError, defaults.marginOfError)
         }
-        // With proportions, variance-aware OPTIMAL is the sensible default; without, only the
-        // proportion-free strategies are valid.
-        if (this.hasProportions()) {
-            allocationStrategy.value || allocationStrategy.set('OPTIMAL')
-        } else {
-            ['EQUAL', 'PROPORTIONAL', 'BALANCED'].includes(allocationStrategy.value) || allocationStrategy.set('BALANCED')
-        }
-        minSamplesPerStratum.value || minSamplesPerStratum.set(String(MIN_SAMPLES_PER_STRATUM))
-        allocationStrategy.value || allocationStrategy.set('EQUAL')
-        powerTuningConstant.value || powerTuningConstant.set('0.5')
+        // One strategy decision, not a second opinion: keep what the recipe saved, fall back to the shared
+        // default, and replace a strategy this design has no proportions to run.
+        // Applicability, not whether rows exist yet: a variance strategy belongs to a design that uses
+        // proportions, and rows still being calculated must not change what the user chose.
+        const strategy = effectiveAllocationStrategy({
+            allocationStrategy: allocationStrategy.value,
+            proportionsApplicable: !noProportions,
+            defaultStrategy: defaults.allocationStrategy
+        })
+        strategy === allocationStrategy.value || allocationStrategy.set(strategy)
+        defaultIfAbsent(minSamplesPerStratum, defaults.minSamplesPerStratum)
+        defaultIfAbsent(powerTuningConstant, defaults.powerTuningConstant)
 
         // Reconciled rather than rebuilt: a manual count the user already entered survives reopening the
         // panel after the strata changed underneath it.
@@ -462,13 +459,6 @@ class _SampleAllocation extends React.Component {
                 'allocationStrategy', 'minSamplesPerStratum', 'powerTuningConstant', 'allocation'
             ]), input => input.value)
         }
-    }
-
-    // Authoritative on the proportions panel's skip flag - never infer mode from anticipatedProportions
-    // truthiness alone (it can be stale/empty across mode switches).
-    hasProportions() {
-        const {noProportions, anticipatedProportions} = this.props
-        return !noProportions && !!anticipatedProportions?.length
     }
 
     // Stratification order, stratification presentation and weights, current proportion. Joined here rather

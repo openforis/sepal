@@ -4,6 +4,7 @@ import {formatDistance, gridPixelSize, isValidMinDistanceForGrid, requiredMinDis
 import {isValidSamplingSeed, requiresSamplingSeed} from '#sepal/recipe/samplingDesign/samplingSeed'
 import {isStratificationSkipped} from '#sepal/recipe/samplingDesign/stratificationSkip'
 
+import {readsProportions} from './allocationStrategy'
 import {toTaskAllocation} from './taskAllocation'
 
 // Pure retrieve preflight over the persisted Sampling Design model. Returns an ordered array of
@@ -75,7 +76,7 @@ export const validateRetrieve = model => {
     // behind those hidden fields is not a reason to send the user to the Proportions panel. Required only
     // where the mode genuinely consumes proportions.
     const isManual = !!model?.sampleAllocation?.manual?.length
-    if (!hasProportions && !isManual && (strategy === 'OPTIMAL' || strategy === 'POWER' || estimateSampleSize)) {
+    if (!hasProportions && !isManual && (readsProportions(strategy) || estimateSampleSize)) {
         add('sampleAllocation', 'proportionsRequired')
     }
 
