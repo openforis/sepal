@@ -198,10 +198,11 @@ class _Proportions extends React.Component {
     }
 
     renderStrataProportion() {
-        const {inputs: {eeStrategy, anticipatedProportions}} = this.props
+        const {strata, inputs: {eeStrategy, anticipatedProportions}} = this.props
         return <StrataProportion
             eeStrategy={eeStrategy}
             anticipatedProportions={anticipatedProportions}
+            strata={strata}
             manual={this.isManual()}
             streamActive={this.props.stream('PROBABILITY_PER_STRATUM').active}
             calculationError={this.state.proportionsCalculationError}
@@ -421,14 +422,9 @@ class _Proportions extends React.Component {
         // manual && this.cancel$.next()
         this.clearProportionsCalculationError()
         if (manual && !anticipatedProportions.value) {
-            const initialProportions = strata.map(stratum => ({
-                color: stratum.color,
-                label: stratum.label,
-                stratum: stratum.value,
-                area: stratum.area,
-                weight: stratum.weight,
-                proportion: 0
-            }))
+            // Rows own the stratum and its proportion, nothing else: presentation and weight are joined from
+            // the stratification when the table renders, so they cannot go stale here.
+            const initialProportions = strata.map(stratum => ({stratum: stratum.value, proportion: 0}))
             anticipatedProportions.set(initialProportions)
         } else if (!manual) {
             anticipatedProportions.set(null)
@@ -513,7 +509,7 @@ class _Proportions extends React.Component {
     }
 
     calculateAnticipatedProportions() {
-        const {aoi, stream,
+        const {aoi, probabilityCache, stream,
             unstratified, stratificationType, stratificationRecipeId, stratificationAssetId, stratificationBand, stratificationCrs,
             inputs: {manual, anticipationStrategy, scale, type, assetId, recipeId, band, targetClass, eeStrategy, anticipatedProportions}
         } = this.props
@@ -543,9 +539,32 @@ class _Proportions extends React.Component {
             id,
         }
 
+        // What the raw probabilities actually depend on. The processing strategy is absent because Online and
+        // Batch compute the same thing; the percentage interpretation, the overall-proportion override and
+        // the current weights are absent because the handler applies all three to whatever raw response it is
+        // handed, so a hit reflects the form as it is now rather than as it was when this was calculated.
+        const key = {
+            stratification,
+            stratificationBand,
+            probability,
+            probabilityBand: band.value,
+            mode: anticipationStrategy.value,
+            ...(categorical ? {targetClass: Number(targetClass.value)} : {}),
+            // Proportion estimation has its own Scale but uses the Stratification CRS.
+            scale: parseInt(scale.value),
+            crs: stratificationCrs
+        }
+
         if (stream('PROBABILITY_PER_STRATUM').active) {
             this.cancel$.next()
         }
+
+        const cached = probabilityCache?.get({aoi, key})
+        if (cached) {
+            this.onProbabilitiyPerStratumCalculated(cached)
+            return
+        }
+
         stream('PROBABILITY_PER_STRATUM',
             api.gee.probabilityPerStratum$({
                 aoi,
@@ -555,14 +574,18 @@ class _Proportions extends React.Component {
                 probabilityBand: band.value,
                 mode: anticipationStrategy.value,
                 targetClass: categorical ? Number(targetClass.value) : undefined,
-                // Proportion estimation has its own Scale but uses the Stratification CRS.
                 scale: parseInt(scale.value),
                 crs: stratificationCrs,
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
                 takeUntil(this.cancel$)
             ),
-            this.onProbabilitiyPerStratumCalculated,
+            // Cached BEFORE the proportions are derived, so a hit is the raw probabilities. A failure never
+            // reaches here, so it can never displace an older successful entry.
+            probabilityPerStratum => {
+                probabilityCache?.set({aoi, key, result: probabilityPerStratum})
+                this.onProbabilitiyPerStratumCalculated(probabilityPerStratum)
+            },
             error => this.setState({
                 proportionsCalculationError: toProportionsCalculationError({error, strategy: eeStrategy.value})
             })

@@ -5074,14 +5074,17 @@
             },
             "scale": {
               "label": "Scale",
-              "placeholder": "Scale...",
-              "required": "You must specify the scale",
+              "mode": {
+                "imageGrid": "Using the image's own pixel grid. Leave blank to keep it, or enter a scale to resample.",
+                "resampled": "The stratification is resampled to this scale. Clear the field to use the image's own pixel grid."
+              },
               "suffix": "meters",
               "tooltip": "Pixel size used to calculate stratum areas. Smaller values use more pixels and preserve detail only when supported by the source image."
             },
             "crs": {
               "label": "CRS",
-              "tooltip": "Equal-area coordinate system used to interpret stratification classes, calculate stratum areas and anticipated proportions, and place stratified samples."
+              "placeholder": "e.g. EPSG:32636",
+              "tooltip": "Projected coordinate system the stratification classes are interpreted in, and used to calculate stratum areas and anticipated proportions. Sample placement uses the Sample Arrangement CRS."
             },
             "hexButton": {
               "label": "HEX",
@@ -5601,6 +5604,12 @@
       }
     },
     "samplingDesign": {
+      "grid": {
+        "unsupportedArrangementCrs": "The selected Sample Arrangement CRS is not supported. Choose one of: {supported}.",
+        "invalidStratificationCrs": "The Stratification CRS is missing. Provide the projected CRS the categorical source is interpreted in.",
+        "invalidScale": "The Stratification Scale is invalid. Provide a positive Scale in metres.",
+        "invalidStratificationTransform": "The Stratification CRS transform is invalid. Provide six numbers of the form [a, 0, xOrigin, 0, -a, yOrigin]: north-up, square pixels, no rotation or shear."
+      },
       "random": {
         "progress": {
           "prepareCandidates": "Finding random sample locations",
@@ -5617,8 +5626,6 @@
           "exportFinal": "Exporting sample locations"
         },
         "grid": {
-          "unsupportedCrs": "The selected sampling grid is not supported. Choose one of: {supported}.",
-          "invalidScale": "The sampling grid scale is invalid. Provide a positive Stratification Scale in metres.",
           "minDistanceBelowGrid": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.",
           "invalidMinDistance": "The minimum distance is not a number. Provide a distance in metres, or leave it unset to use the smallest distance the sampling grid allows."
         }

@@ -2,7 +2,7 @@ import {catchError, concat, defer, EMPTY, filter, forkJoin, map, switchMap, thro
 
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
-import {effectiveArrangement} from '#sepal/ee/samplingDesign/effectiveArrangement'
+import {effectiveArrangement, resolveArrangementGrids} from '#sepal/ee/samplingDesign/effectiveArrangement'
 import {SYSTEMATIC_EXPORT_PROPERTY_NAMES} from '#sepal/ee/samplingDesign/sampleProperties'
 import {finalizeSystematicSamples, mergeRepairedCandidates, systematicStratumMaxOffset, toDensitySummary} from '#sepal/ee/samplingDesign/samples'
 import {stratificationImage$} from '#sepal/ee/samplingDesign/stratificationImage'
@@ -13,7 +13,6 @@ import {unstratifiedAllocation$} from '#sepal/ee/samplingDesign/unstratifiedArea
 import {materializeSystematicIndexGeometry, unstratifiedSystematicIndexCandidates} from '#sepal/ee/samplingDesign/unstratifiedSystematicSampling'
 import {getSampleCounts$} from '#sepal/ee/samplingDesign/validateSampleCounts'
 import {effectiveMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
-import {resolveSamplingGrid} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import {finalizeObservable, swallow} from '#sepal/rxjs'
 import {tableToAsset$} from '#task/jobs/export/tableToAsset'
 import {tableToSepal$} from '#task/jobs/export/tableToSepal'
@@ -61,8 +60,8 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
         return throwError(() => minDistanceError)
     }
 
-    // Validated as configured (option ids); resolved to EE-ready CRS for every graph built below.
-    const sampleArrangement = resolveSamplingGrid(configuredArrangement)
+    // Validated as configured (option ids); both grids resolved to EE-ready CRS for every graph built below.
+    const sampleArrangement = resolveArrangementGrids(configuredArrangement)
 
     // Enforce the minimum-sample contract on the submitted recipe BEFORE resolving temp asset ids or building
     // any EE graph, so an impossible design fails immediately instead of after an expensive export.
@@ -81,14 +80,14 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
         manual: recipe.model.sampleAllocation?.manual,
         effectiveMinimum: effectiveMinSamplesPerStratum(recipe.model.sampleAllocation || {}),
         minDistance: configuredArrangement.minDistance,
-        pixelSize: gridPixelSize(configuredArrangement),
+        pixelSize: gridPixelSize(configuredArrangement.stratificationGrid),
         unstratified
     }
 
     return tempTableAssetId$(taskId, assetId).pipe(
         switchMap(tempAssetId =>
             forkJoin({
-                eeStratification: stratificationImage$(stratification),
+                eeStratification: stratificationImage$(stratification, sampleArrangement.stratificationGrid),
                 eeGeometry: toGeometry$(aoi)
             }).pipe(
                 // Unstratified designs carry no per-stratum area; inject the AOI geometry area into the single
@@ -153,7 +152,8 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                         allocation: strata,
                         stratification: eeStratification,
                         region: eeGeometry,
-                        grid: {crs: sampleArrangement.crs, scale: sampleArrangement.scale},
+                        stratificationGrid: sampleArrangement.stratificationGrid,
+                        arrangementGrid: sampleArrangement.arrangementGrid,
                         sampleArrangement: {minDistance: sampleArrangement.minDistance, gridOrigin: sampleArrangement.gridOrigin, seed: sampleArrangement.seed},
                         densityOffset
                     })
@@ -193,8 +193,7 @@ export const exportSystematicToAssets$ = ({taskId, description, recipe, assetId,
                         strategy: densityStrategy
                     })
                 ),
-                'selected-level summary count',
-                0
+                'selected-level summary count'
             ).pipe(
                 map(toDensitySummary)
             )

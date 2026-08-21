@@ -2,7 +2,7 @@ export const getAvailableBands = () => ({
     available_image_count: {dataType: {precision: 'int', min: 0, max: 999}, label: 'Available image count'},
     occluded_count: {dataType: {precision: 'int', min: 0, max: 999}, label: 'Occluded image count'},
     total_changes: {dataType: {precision: 'int', min: 0, max: 999}, label: 'Total changes'},
-    first_change_date_above_threshold: {dataType: {precision: 'int', min: 0, max: 2000000000000}, label: 'First change date (ms)'},
+    first_change_date_above_threshold: {dataType: {precision: 'float'}, label: 'First change date'},
     post_fcd_change_count: {dataType: {precision: 'int', min: 0, max: 999}, label: 'Post-FCD change count'},
     post_fcd_nochange_count: {dataType: {precision: 'int', min: 0, max: 999}, label: 'Post-FCD no-change count'},
     post_fcd_occluded_count: {dataType: {precision: 'int', min: 0, max: 999}, label: 'Post-FCD occluded count'},

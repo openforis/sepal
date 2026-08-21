@@ -12,6 +12,7 @@ import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
 import {categoricalLegendEntries} from '../../sampling/categoricalLegend'
+import {byStratumKey, stratumView} from '../../sampling/designModel'
 import {CalculationErrorContent} from '../calculationErrorContent'
 import styles from './proportions.module.css'
 import {ProportionTable} from './proportionTable'
@@ -142,11 +143,15 @@ export const OverallProportionInput = ({anticipatedOverallProportion, onChange})
         onChange={onChange}
     />
 
-export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, streamActive, calculationError, onEEStrategyChanged, onRetryCalculation, onUseBatch}) => {
+export const StrataProportion = ({eeStrategy, anticipatedProportions, strata, manual, streamActive, calculationError, onEEStrategyChanged, onRetryCalculation, onUseBatch}) => {
+    // Weights come from the current stratification, joined by stratum key. The rows carry a weight of their
+    // own only because they were written by a join at calculation time; using that copy would report an
+    // overall proportion against strata that have since been recalculated.
+    const owners = byStratumKey(strata)
     const overallProportion = _.sum(
-        anticipatedProportions.value?.map(({weight, proportion}) => {
-            return weight * proportion
-        })
+        (anticipatedProportions.value || []).map(row =>
+            (stratumView(owners, row).weight || 0) * (row.proportion || 0)
+        )
     )
     return (
         <Widget
@@ -155,6 +160,7 @@ export const StrataProportion = ({eeStrategy, anticipatedProportions, manual, st
             {anticipatedProportions.value
                 ? <ProportionTable
                     proportions={anticipatedProportions}
+                    strata={strata}
                     overallProportion={overallProportion}
                     manual={manual}
                 />

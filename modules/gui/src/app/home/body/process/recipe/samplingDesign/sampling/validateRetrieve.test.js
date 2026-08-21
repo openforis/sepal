@@ -1,4 +1,4 @@
-import {validateRetrieve} from './validateRetrieve'
+import {isSectionStale, validateRetrieve} from './validateRetrieve'
 
 const codes = model => validateRetrieve(model).map(({code}) => code)
 
@@ -133,21 +133,6 @@ it('reports areaMissing when a task row resolves without a finite area', () => {
     expect(codes(model)).toContain('areaMissing')
 })
 
-it('reports proportionsRequired for OPTIMAL when proportions are skipped', () => {
-    const model = {...unstratifiedValid, sampleAllocation: {...unstratifiedValid.sampleAllocation, allocationStrategy: 'OPTIMAL'}}
-    expect(codes(model)).toContain('proportionsRequired')
-})
-
-it('reports proportionsRequired for POWER when proportions are skipped', () => {
-    const model = {...unstratifiedValid, sampleAllocation: {...unstratifiedValid.sampleAllocation, allocationStrategy: 'POWER'}}
-    expect(codes(model)).toContain('proportionsRequired')
-})
-
-it('reports proportionsRequired for sample-size estimation when proportions are skipped', () => {
-    const model = {...unstratifiedValid, sampleAllocation: {...unstratifiedValid.sampleAllocation, estimateSampleSize: true}}
-    expect(codes(model)).toContain('proportionsRequired')
-})
-
 const withArrangement = sampleArrangement => ({...stratifiedValid, sampleArrangement})
 
 it('rejects a required seed of zero', () => {
@@ -182,6 +167,21 @@ describe('stale sections (requiresUpdate)', () => {
             proportions: {...stratifiedValid.proportions, requiresUpdate: false},
             sampleAllocation: {...stratifiedValid.sampleAllocation, requiresUpdate: false},
             sampleArrangement: {requiresUpdate: false}
+        }
+        expect(validateRetrieve(model)).toEqual([])
+    })
+
+    // A saved recipe can carry a flag raised before the section was skipped, and Sync only plans on a
+    // change - so nothing rewrites it on load. A section that computes nothing must not block Retrieve.
+    it('ignores a stale flag on a skipped proportions section', () => {
+        const model = {...unstratifiedValid, proportions: {skip: true, requiresUpdate: true}}
+        expect(validateRetrieve(model)).toEqual([])
+    })
+
+    it('ignores a stale flag on a skipped stratification section', () => {
+        const model = {
+            ...unstratifiedValid,
+            stratification: {...unstratifiedValid.stratification, requiresUpdate: true}
         }
         expect(validateRetrieve(model)).toEqual([])
     })
@@ -312,5 +312,58 @@ describe('shared allocation rules at the retrieve boundary', () => {
 
     it('rejects an allocation that does not cover the configured strata one-to-one', () => {
         expect(codes(withAllocation([...rows, {stratum: 3, area: 1e8, weight: 0, sampleSize: 5}]))).toContain('strataMismatch')
+    })
+})
+
+// Manual allocation reads neither the allocation strategy nor the sample-size estimate. A value left dormant
+// behind those hidden fields must not send the user to a Proportions panel they have nothing to do in.
+describe('proportion-dependent modes vs actual applicability', () => {
+    const withoutProportions = sampleAllocation => ({
+        ...stratifiedValid,
+        proportions: {skip: true},
+        sampleAllocation: {...stratifiedValid.sampleAllocation, ...sampleAllocation}
+    })
+
+    it('requires proportions for an automatic Optimal allocation without them', () => {
+        expect(codes(withoutProportions({allocationStrategy: 'OPTIMAL'}))).toContain('proportionsRequired')
+    })
+
+    it('requires proportions for automatic error mode without them', () => {
+        expect(codes(withoutProportions({allocationStrategy: 'BALANCED', estimateSampleSize: true})))
+            .toContain('proportionsRequired')
+    })
+
+    it('does not require proportions for a manual allocation carrying a dormant Optimal strategy', () => {
+        expect(codes(withoutProportions({manual: [true], allocationStrategy: 'OPTIMAL'})))
+            .not.toContain('proportionsRequired')
+    })
+
+    it('does not require proportions for a manual allocation carrying a dormant sample-size estimate', () => {
+        expect(codes(withoutProportions({manual: [true], estimateSampleSize: true})))
+            .not.toContain('proportionsRequired')
+    })
+
+    // The mode the planner settles a skipped-proportions design into must actually pass the preflight.
+    it('accepts a fixed Balanced allocation once proportions are skipped', () => {
+        expect(validateRetrieve(withoutProportions({allocationStrategy: 'BALANCED', estimateSampleSize: false}))).toEqual([])
+    })
+})
+
+// The toolbar marks section buttons from this same predicate, so a section can never be flagged in one place
+// and clear in the other.
+describe('isSectionStale', () => {
+    it('is false for a flag an old recipe carries on a skipped section', () => {
+        expect(isSectionStale({proportions: {skip: true, requiresUpdate: true}}, 'proportions')).toBe(false)
+        expect(isSectionStale({stratification: {skip: true, requiresUpdate: true}}, 'stratification')).toBe(false)
+    })
+
+    it('is true for a flag on a section that computes something', () => {
+        expect(isSectionStale({proportions: {requiresUpdate: true}}, 'proportions')).toBe(true)
+        expect(isSectionStale({sampleAllocation: {requiresUpdate: true}}, 'sampleAllocation')).toBe(true)
+    })
+
+    it('is false for an unflagged or absent section', () => {
+        expect(isSectionStale({proportions: {}}, 'proportions')).toBe(false)
+        expect(isSectionStale({}, 'sampleArrangement')).toBe(false)
     })
 })

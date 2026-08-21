@@ -1,54 +1,73 @@
 import {effectiveArrangement} from '#sepal/ee/samplingDesign/effectiveArrangement'
 
 describe('effectiveArrangement four-mode matrix', () => {
-    // Conflicting CRS on each side: a stratified design must use the Stratification CRS (EPSG:6933), and only
-    // unstratified Systematic uses the Arrangement CRS (EPSG:6931).
+    // Conflicting CRS on each side, so a mode that reads the wrong grid is visible: Stratification is
+    // EPSG:32636 (a non-curated CRS, legal only for Stratification), Arrangement is EPSG:6931.
     const arrangement = {
         arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED',
         minDistance: 1000, seed: 42, crs: 'EPSG:6931'
     }
-    const stratification = {skip: false, scale: 300, crs: 'EPSG:6933'}
+    const stratification = {skip: false, scale: 300, crs: 'EPSG:32636'}
 
     describe('stratified Systematic', () => {
-        it('takes Scale and CRS from Stratification', () => {
+        it('returns both grids, each owning its own CRS', () => {
             const result = effectiveArrangement({stratification, sampleArrangement: arrangement})
             expect(result).toEqual({
                 arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED',
-                seed: 42, scale: 300, crs: 'EPSG:6933', minDistance: 1000
+                seed: 42, minDistance: 1000,
+                stratificationGrid: {crs: 'EPSG:32636', scale: 300},
+                arrangementGrid: {crs: 'EPSG:6931'}
             })
         })
 
-        it('resolves a blank minDistance to twice the Stratification Scale', () => {
+        it('resolves a blank minDistance to twice the Stratification pixel size', () => {
             const result = effectiveArrangement({stratification, sampleArrangement: {...arrangement, minDistance: null}})
             expect(result.minDistance).toBe(600)
+        })
+
+        it('defaults the Arrangement CRS when none is configured', () => {
+            const result = effectiveArrangement({stratification, sampleArrangement: {...arrangement, crs: undefined}})
+            expect(result.arrangementGrid).toEqual({crs: 'EPSG:6933'})
         })
     })
 
     describe('stratified Random', () => {
         const random = {...arrangement, arrangementStrategy: 'RANDOM'}
-        it('takes Scale and CRS from Stratification and Seed, dropping Systematic-only settings', () => {
+
+        it('returns both grids and drops Systematic-only settings', () => {
             const result = effectiveArrangement({stratification, sampleArrangement: random})
-            expect(result).toEqual({arrangementStrategy: 'RANDOM', seed: 42, scale: 300, crs: 'EPSG:6933'})
+            expect(result).toEqual({
+                arrangementStrategy: 'RANDOM', seed: 42,
+                stratificationGrid: {crs: 'EPSG:32636', scale: 300},
+                arrangementGrid: {crs: 'EPSG:6931'}
+            })
             for (const field of ['minDistance', 'sampleSizeStrategy', 'gridOrigin']) {
                 expect(field in result).toBe(false)
             }
+        })
+
+        it('never collapses the two grids into one crs/scale pair', () => {
+            const result = effectiveArrangement({stratification, sampleArrangement: random})
+            expect('crs' in result).toBe(false)
+            expect('scale' in result).toBe(false)
         })
     })
 
     describe('unstratified Systematic', () => {
         const strat = {skip: true}
-        it('uses the Arrangement CRS, keeps sampling rules, and omits scale', () => {
+
+        it('carries the Arrangement grid only', () => {
             const result = effectiveArrangement({stratification: strat, sampleArrangement: arrangement})
             expect(result).toEqual({
                 arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED',
-                seed: 42, crs: 'EPSG:6931', minDistance: 1000
+                seed: 42, minDistance: 1000, arrangementGrid: {crs: 'EPSG:6931'}
             })
-            expect('scale' in result).toBe(false)
+            expect('stratificationGrid' in result).toBe(false)
         })
 
-        it('defaults the CRS to EPSG:6933 when none is configured', () => {
+        it('defaults the Arrangement CRS to EPSG:6933 when none is configured', () => {
             const result = effectiveArrangement({stratification: strat, sampleArrangement: {...arrangement, crs: undefined}})
-            expect(result.crs).toBe('EPSG:6933')
+            expect(result.arrangementGrid).toEqual({crs: 'EPSG:6933'})
         })
 
         it('keeps a blank minDistance blank (no additional spacing constraint)', () => {
@@ -58,12 +77,69 @@ describe('effectiveArrangement four-mode matrix', () => {
     })
 
     describe('unstratified Random', () => {
-        it('keeps only Arrangement strategy and Seed - no grid, no minDistance', () => {
+        it('carries neither grid', () => {
             const result = effectiveArrangement({stratification: {skip: [true]}, sampleArrangement: {...arrangement, arrangementStrategy: 'RANDOM'}})
             expect(result).toEqual({arrangementStrategy: 'RANDOM', seed: 42})
-            for (const field of ['scale', 'crs', 'minDistance', 'sampleSizeStrategy', 'gridOrigin']) {
+            for (const field of ['stratificationGrid', 'arrangementGrid', 'crs', 'scale', 'minDistance', 'sampleSizeStrategy', 'gridOrigin']) {
                 expect(field in result).toBe(false)
             }
         })
+    })
+})
+
+// Scale and transform are never simultaneously authoritative. Rather than leaving a tolerant reader
+// (gridPixelSize prefers the transform) disagreeing with a strict validator (the candidate function throws on
+// both), the boundary emits exactly ONE definition, so downstream never sees the pair.
+describe('Stratification grid definition is scale XOR transform', () => {
+    const arrangement = {arrangementStrategy: 'RANDOM', seed: 1, crs: 'EPSG:6933'}
+    const grid = stratification => effectiveArrangement({stratification, sampleArrangement: arrangement}).stratificationGrid
+
+    it('emits scale when no transform is configured', () => {
+        expect(grid({skip: false, crs: 'EPSG:32636', scale: 30})).toEqual({crs: 'EPSG:32636', scale: 30})
+    })
+
+    it('emits the transform and NO scale when a transform is configured', () => {
+        const result = grid({skip: false, crs: 'EPSG:32636', scale: 999, crsTransform: '[10, 0, 300000, 0, -10, 200000]'})
+        expect(result).toEqual({crs: 'EPSG:32636', crsTransform: [10, 0, 300000, 0, -10, 200000]})
+        expect('scale' in result).toBe(false)
+    })
+
+    it('falls back to scale when the transform does not parse', () => {
+        expect(grid({skip: false, crs: 'EPSG:32636', scale: 30, crsTransform: 'nonsense'}))
+            .toEqual({crs: 'EPSG:32636', scale: 30})
+    })
+
+    it('carries the parsed transform through as numbers, not the stored string', () => {
+        expect(grid({skip: false, crs: 'EPSG:32636', crsTransform: '[20, 0, 5, 0, -20, 7]'}).crsTransform)
+            .toEqual([20, 0, 5, 0, -20, 7])
+    })
+})
+
+// A derived grid also carries its pixel size in METRES, because a transform is in its CRS's units and the
+// arrangement cell size and minimum-distance floor are metre quantities.
+describe('Stratification grid carries the derived metre pixel size', () => {
+    const arrangement = {arrangementStrategy: 'RANDOM', seed: 1, crs: 'EPSG:6933'}
+    const grid = stratification => effectiveArrangement({stratification, sampleArrangement: arrangement}).stratificationGrid
+
+    it('carries pixelSizeMetres alongside a degree transform', () => {
+        expect(grid({
+            skip: false, crs: 'EPSG:4326',
+            crsTransform: '[0.00008983152841195215, 0, 21.8, 0, -0.00008983152841195215, 22.2]',
+            pixelSizeMetres: 10
+        })).toEqual({
+            crs: 'EPSG:4326',
+            crsTransform: [0.00008983152841195215, 0, 21.8, 0, -0.00008983152841195215, 22.2],
+            pixelSizeMetres: 10
+        })
+    })
+
+    it('omits pixelSizeMetres when the recipe has none', () => {
+        expect('pixelSizeMetres' in grid({skip: false, crs: 'EPSG:32636', crsTransform: '[10, 0, 5, 0, -10, 7]'}))
+            .toBe(false)
+    })
+
+    it('does not attach it in scale mode, where scale is already metres', () => {
+        expect(grid({skip: false, crs: 'EPSG:32636', scale: 30, pixelSizeMetres: 10}))
+            .toEqual({crs: 'EPSG:32636', scale: 30})
     })
 })

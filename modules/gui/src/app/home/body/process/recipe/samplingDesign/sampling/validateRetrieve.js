@@ -25,13 +25,31 @@ const hasFiniteArea = value =>
 // stale-data symptom.
 const REQUIRES_UPDATE_SECTIONS = ['stratification', 'proportions', 'sampleAllocation', 'sampleArrangement']
 
+// A skipped section computes nothing, so it has nothing to be stale about. Saved recipes can carry a flag
+// raised before the section was skipped, and nothing rewrites it on load - so the flag is filtered by
+// applicability HERE rather than relying on an edit to come along and normalize it away.
+const isSectionApplicable = (model, section) => {
+    if (section === 'stratification') {
+        return !isStratificationSkipped(model?.stratification)
+    }
+    if (section === 'proportions') {
+        return !model?.proportions?.skip
+    }
+    return true
+}
+
+// Exported because the toolbar marks the same sections: a button that reports a section as needing attention
+// while Retrieve considers it fine is the same defect read from the other end.
+export const isSectionStale = (model, section) =>
+    model?.[section]?.requiresUpdate === true && isSectionApplicable(model, section)
+
 export const validateRetrieve = model => {
     const errors = []
     // `args` is optional: an error carries message arguments only when it has exact values to report.
     const add = (section, code, args) => errors.push(args ? {section, code, args} : {section, code})
 
     REQUIRES_UPDATE_SECTIONS.forEach(section => {
-        if (model?.[section]?.requiresUpdate === true) {
+        if (isSectionStale(model, section)) {
             add(section, 'requiresUpdate')
         }
     })
@@ -53,7 +71,11 @@ export const validateRetrieve = model => {
     const hasProportions = !model?.proportions?.skip && !!model?.proportions?.anticipatedProportions?.length
     const strategy = model?.sampleAllocation?.allocationStrategy
     const estimateSampleSize = !!model?.sampleAllocation?.estimateSampleSize
-    if (!hasProportions && (strategy === 'OPTIMAL' || strategy === 'POWER' || estimateSampleSize)) {
+    // Manual allocation reads neither the strategy nor the sample-size estimate, so a value left dormant
+    // behind those hidden fields is not a reason to send the user to the Proportions panel. Required only
+    // where the mode genuinely consumes proportions.
+    const isManual = !!model?.sampleAllocation?.manual?.length
+    if (!hasProportions && !isManual && (strategy === 'OPTIMAL' || strategy === 'POWER' || estimateSampleSize)) {
         add('sampleAllocation', 'proportionsRequired')
     }
 

@@ -397,7 +397,8 @@ class _VisParamsPanel extends React.Component {
         const {stream, inputs, activatable: {recipe, visParams}} = this.props
         stream('LOAD_BANDS',
             api.gee.bands$({recipe}),
-            bands => this.setState({bands}),
+            // The endpoint now returns per-band grids; this panel only needs the names.
+            bands => this.setState({bands: bands.map(({id}) => id)}),
             error => Notifications.error({message: msg('map.visParams.bands.loadError'), error})
         )
         if (visParams) {

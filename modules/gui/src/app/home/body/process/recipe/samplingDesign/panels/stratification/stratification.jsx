@@ -3,7 +3,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
-import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import api from '~/apiRegistry'
 import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
@@ -23,8 +22,7 @@ import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
-import {samplingGridCrsOptions} from '../../samplingGridCrsOptions'
-import {isValidGridScale} from '../../samplingGridValidation'
+import {deriveStratificationGrid, isValidGridScale, resolveStratificationGridState} from '../../samplingGridValidation'
 import {CalculationErrorContent} from '../calculationErrorContent'
 import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
@@ -54,14 +52,18 @@ const fields = {
                 || (type === 'ASSET' && !assetId)
                 || (type === 'RECIPE' && !recipeId))
         .notBlank('process.samplingDesign.panel.stratification.form.band.required'),
+    // Blank means "use what the placeholder shows", as Min distance already does. Nothing is required, so nothing
+    // derived is ever written into a user-facing field and there is no value for a later read to race against.
     scale: new Form.Field()
         .skip((_value, {skip}) => skip.length)
-        .notBlank('process.samplingDesign.panel.stratification.form.scale.required')
         .number()
         .greaterThan(0),
-    crs: new Form.Field()
-        .skip((_value, {skip}) => skip.length)
-        .notBlank(),
+    crs: new Form.Field(),
+    // Panel-owned OUTPUTS: written by the sync, rendered by nothing, mapped into the model so the task boundary
+    // always sees a concrete grid even when both user fields are blank.
+    resolvedCrs: new Form.Field(),
+    resolvedScale: new Form.Field(),
+    crsTransform: new Form.Field(),
     eeStrategy: new Form.Field(),
     strata: new Form.Field()
         // Required even when skipped: unstratified mode still needs the single synthetic stratum (area is
@@ -71,8 +73,12 @@ const fields = {
 
 class _Stratification extends React.Component {
     cancel$ = new Subject()
+    // Separate from cancel$, which belongs to AREA_PER_STRATUM: cancelling an area calculation must not cancel a
+    // grid fetch, or the reverse.
+    cancelBandGrids$ = new Subject()
     state = {
         bands: undefined,
+        bandGrids: undefined,
         prevStrata: [],
         entriesByBand: {},
         showHexColorCode: false,
@@ -125,6 +131,8 @@ class _Stratification extends React.Component {
 
     renderContent() {
         const {inputs: {type, skip}} = this.props
+        // Resolved ONCE and handed to both fields, so a placeholder can never read a key the object does not have.
+        const grid = this.gridState()
         return !skip.value?.length
             ? (
                 <Layout>
@@ -132,9 +140,9 @@ class _Stratification extends React.Component {
                     {type.value === 'RECIPE' ? this.renderRecipe() : null}
                     <Layout type='horizontal'>
                         {this.renderBand()}
-                        {this.renderScale()}
+                        {this.renderScale(grid)}
                     </Layout>
-                    {this.state.more ? this.renderCrs() : null}
+                    {this.state.more ? this.renderCrs(grid) : null}
                     {this.renderStrata()}
                 </Layout>
             )
@@ -271,14 +279,21 @@ class _Stratification extends React.Component {
         )
     }
     
-    renderScale() {
+    // Both fields take the SAME resolved object, destructured once by the caller. Picking keys out of it
+    // separately in each render is what has produced every placeholder defect in this panel.
+    renderScale({mode, placeholderScale}) {
         const {inputs: {scale}} = this.props
         return (
             <Form.Input
                 className={styles.compactField}
                 label={msg('process.samplingDesign.panel.stratification.form.scale.label')}
-                placeholder={msg('process.samplingDesign.panel.stratification.form.scale.placeholder')}
-                tooltip={msg('process.samplingDesign.panel.stratification.form.scale.tooltip')}
+                // Blank ALWAYS resolves, so the placeholder always names what it resolves to: the band's pixel
+                // size when a grid was derived, the default otherwise. The tooltip still branches, because with
+                // no derived grid there is genuinely no grid mode to name.
+                placeholder={String(placeholderScale)}
+                tooltip={mode === 'none'
+                    ? msg('process.samplingDesign.panel.stratification.form.scale.tooltip')
+                    : msg(`process.samplingDesign.panel.stratification.form.scale.mode.${mode}`)}
                 input={scale}
                 type='number'
                 suffix={msg('process.samplingDesign.panel.stratification.form.scale.suffix')}
@@ -287,14 +302,68 @@ class _Stratification extends React.Component {
         )
     }
 
-    renderCrs() {
+    // Derive ON DEMAND from the cached response, so changing the selected band needs no refetch. bands$ returns a
+    // bare array while assetMetadata returns {bands}; the band entries themselves are identical, so this wraps
+    // rather than branches.
+    derivedGrid() {
+        const {inputs: {band}} = this.props
+        const {bandGrids} = this.state
+        const grid = deriveStratificationGrid({bands: bandGrids}, band.value)
+        const nominalScale = Number((bandGrids || []).find(({id}) => id === band.value)?.nominalScale)
+        return grid && Number.isFinite(nominalScale) && nominalScale > 0
+            ? {...grid, pixelSizeMetres: nominalScale}
+            : null
+    }
+
+    gridState() {
+        const {inputs: {crs, scale}} = this.props
+        return resolveStratificationGridState({derived: this.derivedGrid(), crs: crs.value, scale: scale.value})
+    }
+
+    // ONE evaluation from the derived grid plus the USER fields; the three resolved fields are outputs that
+    // nothing reads back. Several writes, no reads - the shape that does not race.
+    syncResolvedGrid() {
+        const {inputs: {resolvedCrs, resolvedScale, crsTransform}} = this.props
+        const resolved = this.gridState()
+        const serialized = resolved.crsTransform ? JSON.stringify(resolved.crsTransform) : null
+        resolvedCrs.value === resolved.crs || resolvedCrs.set(resolved.crs)
+        Number(resolvedScale.value) === resolved.scale || resolvedScale.set(resolved.scale)
+        ;(crsTransform.value || null) === serialized || crsTransform.set(serialized)
+    }
+
+    // Runs for every source type: both onAssetLoaded and onRecipeLoaded funnel through onImageLoaded. The fetch
+    // never gates the panel - while it is in flight there is no derived grid, so Scale is simply required, as
+    // today. No loading state, no disabled fields.
+    loadBandGrids() {
+        const {stream, inputs: {type, assetId, recipeId}} = this.props
+        if (stream('BAND_GRIDS').active) {
+            this.cancelBandGrids$.next()
+        }
+        const source = type.value === 'RECIPE'
+            ? {recipe: {type: 'RECIPE_REF', id: recipeId.value}}
+            : {asset: assetId.value}
+        stream('BAND_GRIDS',
+            api.gee.bands$(source).pipe(
+                takeUntil(this.cancelBandGrids$)
+            ),
+            bandGrids => this.setState({bandGrids}, () => this.syncResolvedGrid()),
+            // No grid is not an error: nothing could be derived, so Scale stays required and the panel is
+            // unchanged. Reported nowhere, because there is nothing for the user to act on.
+            () => this.setState({bandGrids: []}, () => this.syncResolvedGrid())
+        )
+    }
+
+    renderCrs({placeholderCrs}) {
         const {inputs: {crs}} = this.props
+        // Free text, not the curated combo: Stratification names the projection the categorical source is
+        // interpreted in, which is whatever the source was authored in - not one of the equal-area placement
+        // options. onGridChanged still runs, so a grid change invalidates areas, proportions and allocation.
         return (
-            <FormCombo
+            <Form.Input
                 label={msg('process.samplingDesign.panel.stratification.form.crs.label')}
+                placeholder={placeholderCrs}
                 tooltip={msg('process.samplingDesign.panel.stratification.form.crs.tooltip')}
                 input={crs}
-                options={samplingGridCrsOptions()}
                 onChange={this.onGridChanged}
             />
         )
@@ -414,15 +483,14 @@ class _Stratification extends React.Component {
     }
 
     componentDidMount() {
-        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, scale, crs, type, eeStrategy, strata}} = this.props
+        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, crs, type, eeStrategy, strata}} = this.props
         requiresUpdate.set(false)
         skip.value || skip.set([])
-        scale.value || scale.set('30')
-        crs.value || crs.set(DEFAULT_SAMPLING_GRID_CRS)
+        // Both user fields start blank: the placeholders show what blank resolves to.
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
-        // Reveal the advanced options when a non-default CRS was saved, so the setting is discoverable.
-        if (crs.value && crs.value !== DEFAULT_SAMPLING_GRID_CRS) {
+        // Reveal the advanced options when a CRS was explicitly entered, so the setting is discoverable.
+        if (crs.value) {
             this.setState({more: true})
         }
 
@@ -489,7 +557,11 @@ class _Stratification extends React.Component {
     }
 
     onImageLoading() {
-        this.setState({bands: undefined})
+        const {inputs: {crs, scale}} = this.props
+        // Clear, never set: the placeholder re-derives on its own, and asset-to-recipe needs no special case.
+        crs.set(null)
+        scale.set(null)
+        this.setState({bands: undefined, bandGrids: undefined})
     }
 
     onAssetLoaded({metadata, visualizations}) {
@@ -522,6 +594,7 @@ class _Stratification extends React.Component {
     onImageLoaded(bands, visualizations) {
         const {inputs: {band}} = this.props
         this.setState({bands})
+        this.loadBandGrids()
         const categoricalVisualizations = visualizations
             .filter(({type}) => type === 'categorical')
         const defaultBand = bands.length === 1
@@ -548,10 +621,12 @@ class _Stratification extends React.Component {
     }
 
     onBandChanged() {
+        this.syncResolvedGrid()
         this.scheduleAreaPerStratum()
     }
 
     onGridChanged() {
+        this.syncResolvedGrid()
         this.scheduleAreaPerStratum()
     }
 
@@ -622,19 +697,35 @@ class _Stratification extends React.Component {
     // Stratified area per stratum. Unstratified mode never calls this - it sets the synthetic row directly
     // and the AOI area is computed at the export boundary.
     calculateAreaPerStratum() {
-        const {aoi, stream, inputs: {scale, crs, type, assetId, recipeId, band, eeStrategy}} = this.props
+        const {aoi, areaCache, stream, inputs: {type, assetId, recipeId, band, eeStrategy}} = this.props
         const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
-        // onChange fires while typing; block invalid intermediate scale values before calling EE.
-        if (!isValidGridScale(scale.value) || !id || !band.value) {
+        // onChange fires while typing; the resolved scale is only invalid mid-keystroke, since blank resolves.
+        if (!isValidGridScale(this.gridState().scale) || !id || !band.value) {
             return
         }
         const stratification = {
             type: type.value === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
             id,
         }
+        const resolved = this.gridState()
+        // The resolved grid, so areas are computed on the grid the design actually uses. Scale XOR transform,
+        // built once so the cache key and the request body cannot describe different grids.
+        const grid = resolved.crsTransform
+            ? {crsTransform: resolved.crsTransform}
+            : {scale: resolved.scale}
+        // What the areas actually depend on. The processing strategy is absent because Online and Batch
+        // compute the same thing, and presentation is absent because the loader applies the CURRENT labels
+        // and colors to whatever raw response it is handed.
+        const key = {stratification, band: band.value, crs: resolved.crs, ...grid}
 
         if (stream('AREA_PER_STRATUM').active) {
             this.cancel$.next()
+        }
+
+        const cached = areaCache?.get({aoi, key})
+        if (cached) {
+            this.onAreaPerStratumLoaded(cached)
+            return
         }
 
         stream('AREA_PER_STRATUM',
@@ -642,13 +733,18 @@ class _Stratification extends React.Component {
                 aoi,
                 stratification,
                 band: band.value,
-                scale: parseInt(scale.value) || 30,
-                crs: crs.value || DEFAULT_SAMPLING_GRID_CRS,
+                ...grid,
+                crs: resolved.crs,
                 batch: eeStrategy.value === 'BATCH'
             }).pipe(
                 takeUntil(this.cancel$)
             ),
-            this.onAreaPerStratumLoaded,
+            // Cached BEFORE the join, so a hit is the raw response and picks up current presentation. A
+            // failure never reaches here, so it can never displace an older successful entry.
+            areaPerStratum => {
+                areaCache?.set({aoi, key, result: areaPerStratum})
+                this.onAreaPerStratumLoaded(areaPerStratum)
+            },
             error => this.setState({
                 strataCalculationError: toStrataCalculationError({error, strategy: eeStrategy.value})
             })

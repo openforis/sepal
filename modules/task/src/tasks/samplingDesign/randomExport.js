@@ -3,7 +3,7 @@ import {catchError, concat, defer, EMPTY, map, of, switchMap, tap, throwError} f
 import {sanitizeEarthEngineTaskName} from '#sepal/earthEngineExportNames'
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
-import {effectiveArrangement} from '#sepal/ee/samplingDesign/effectiveArrangement'
+import {effectiveArrangement, resolveArrangementGrids} from '#sepal/ee/samplingDesign/effectiveArrangement'
 import {EXPORT_PROPERTY_NAMES} from '#sepal/ee/samplingDesign/sampleProperties'
 import {unstratifiedRandomSamples$} from '#sepal/ee/samplingDesign/samples'
 import {initialThresholds, repairStep} from '#sepal/ee/samplingDesign/sparseRandomRepair'
@@ -15,7 +15,6 @@ import {getSampleCounts$} from '#sepal/ee/samplingDesign/validateSampleCounts'
 import {getLogger} from '#sepal/log'
 import {effectiveMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
 import {gridPixelSize} from '#sepal/recipe/samplingDesign/samplingGrid'
-import {resolveSamplingGrid} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import {finalizeObservable, swallow} from '#sepal/rxjs'
 import {tableToAsset$} from '#task/jobs/export/tableToAsset'
 import {tableToSepal$} from '#task/jobs/export/tableToSepal'
@@ -45,7 +44,8 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
     const configuredArrangement = effectiveArrangement(recipe.model)
     const rowMetadata = destination === 'SEPAL'
 
-    // Only stratified random draws over the Stratification grid, so only it needs a valid grid CRS.
+    // Unstratified Random carries no grid at all; stratified Random carries both, so both are validated - a
+    // curated Arrangement CRS for placement, a non-blank Stratification CRS and positive Scale for the classes.
     const gridError = unstratified ? null : stratifiedGridError(configuredArrangement)
     if (gridError) {
         return throwError(() => gridError)
@@ -69,8 +69,8 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
         unstratified
     }
 
-    // Stratified resolves the configured grid CRS to EE-ready form; unstratified random has no grid.
-    const sampleArrangement = unstratified ? configuredArrangement : resolveSamplingGrid(configuredArrangement)
+    // Resolve both grids to EE-ready form; unstratified random carries neither, so nothing is resolved.
+    const sampleArrangement = resolveArrangementGrids(configuredArrangement)
 
     // Unstratified designs carry no per-stratum area; inject the AOI geometry area into the single row before
     // generating samples or writing metadata. Stratified allocation passes through unchanged.
@@ -119,12 +119,14 @@ export const exportRandomToAssets$ = ({taskId, description, recipe, assetId, str
         // the finalize backstop deletes whatever remains on success, repair, underproduction, export/promotion
         // failure and cancellation. A promoted selection id is dropped from the set by the rename.
         const tempAssetIds = new Set()
-        const grid = {crs: sampleArrangement.crs, scale: gridPixelSize(sampleArrangement)}
+        // Placement is the Arrangement CRS; the cell size is the Stratification pixel size. sparseRandomCandidates
+        // itself is untouched - the two-grid delta is this argument and nothing else.
+        const grid = {crs: sampleArrangement.arrangementGrid.crs, scale: gridPixelSize(sampleArrangement.stratificationGrid)}
         const seed = sampleArrangement.seed
         return tempTableAssetId$(taskId, assetId).pipe(
             switchMap(prefix =>
                 withRegionAllocation$(({region, resolvedAllocation}) =>
-                    stratificationImage$(stratification).pipe(
+                    stratificationImage$(stratification, sampleArrangement.stratificationGrid).pipe(
                         switchMap(eeStratification =>
                             sparseFlow$({prefix, region, allocation: resolvedAllocation, eeStratification, grid, seed, tempAssetIds})
                         )

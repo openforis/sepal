@@ -33,24 +33,26 @@ describe('modelToValues', () => {
     })
 
     it('keeps scale as-is (no numeric/string coercion that would mismatch the model)', () => {
-        expect(modelToValues({...savedModel, scale: 30}).scale).toBe(30)
+        expect(modelToValues({...savedModel, scale: 30}).resolvedScale).toBe(30)
     })
 
-    it('defaults an absent stratification CRS to EPSG:6933, carrying an explicit choice through', () => {
-        expect(modelToValues({...savedModel, crs: undefined}).crs).toBe('EPSG:6933')
-        expect(modelToValues({...savedModel, crs: 'EPSG:6931'}).crs).toBe('EPSG:6931')
+    // The user-facing fields stay BLANK; a saved grid is carried by the resolved fields, so blank keeps meaning
+    // "use what the placeholder shows" rather than reading as an explicit choice on reopen.
+    it('leaves the user CRS blank and carries a saved grid in the resolved fields', () => {
+        expect(modelToValues({...savedModel, crs: undefined}).crs).toBeNull()
+        expect(modelToValues({...savedModel, crs: 'EPSG:6931'}).resolvedCrs).toBe('EPSG:6931')
     })
 })
 
 describe('valuesToModel', () => {
     it('parses scale to a number for both numeric and string form values', () => {
-        expect(valuesToModel({scale: 30}).scale).toBe(30)
-        expect(valuesToModel({scale: '30'}).scale).toBe(30)
+        expect(valuesToModel({resolvedScale: 30}).scale).toBe(30)
+        expect(valuesToModel({resolvedScale: '30'}).scale).toBe(30)
     })
 
-    it('persists the selected stratification CRS, defaulting to EPSG:6933', () => {
-        expect(valuesToModel({scale: 30, crs: 'EPSG:6931'}).crs).toBe('EPSG:6931')
-        expect(valuesToModel({scale: 30}).crs).toBe('EPSG:6933')
+    it('persists the RESOLVED grid, since the user fields are blank when the derived grid is in use', () => {
+        expect(valuesToModel({resolvedScale: 30, resolvedCrs: 'EPSG:6931'}).crs).toBe('EPSG:6931')
+        expect(valuesToModel({resolvedScale: 10, resolvedCrs: 'EPSG:32633'}).scale).toBe(10)
     })
 
     it('does not carry the transient requiresUpdate flag into the model', () => {
