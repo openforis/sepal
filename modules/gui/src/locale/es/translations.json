@@ -5074,16 +5074,11 @@
             },
             "scale": {
               "label": "Escala",
-              "mode": {
-                "imageGrid": "",
-                "resampled": ""
-              },
               "suffix": "",
               "tooltip": ""
             },
             "crs": {
               "label": "",
-              "placeholder": "",
               "tooltip": ""
             },
             "hexButton": {
@@ -5202,8 +5197,6 @@
             },
             "scale": {
               "label": "Escala",
-              "placeholder": "",
-              "required": "",
               "suffix": "",
               "tooltip": ""
             },
