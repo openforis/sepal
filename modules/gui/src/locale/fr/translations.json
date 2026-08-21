@@ -5074,16 +5074,11 @@
             },
             "scale": {
               "label": "Echelle",
-              "mode": {
-                "imageGrid": "",
-                "resampled": ""
-              },
               "suffix": "mètre",
               "tooltip": ""
             },
             "crs": {
               "label": "",
-              "placeholder": "",
               "tooltip": ""
             },
             "hexButton": {
@@ -5202,8 +5197,6 @@
             },
             "scale": {
               "label": "Echelle",
-              "placeholder": "Echelle...",
-              "required": "",
               "suffix": "mètre",
               "tooltip": ""
             },
