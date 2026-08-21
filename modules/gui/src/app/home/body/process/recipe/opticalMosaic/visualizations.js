@@ -20,6 +20,7 @@ export const visualizationOptions = recipe => {
     const compositeOptions = selectFrom(recipe, 'model.compositeOptions')
     const reflectance = compositeOptions.corrections.includes('SR') ? 'SR' : 'TOA'
     const median = compositeOptions.compose === 'MEDIAN'
+    const availableBands = getAvailableBands(recipe)
     const visParamsToOption = visParams => {
         const value = visParams.bands.join(', ')
         return {
@@ -29,17 +30,20 @@ export const visualizationOptions = recipe => {
             visParams
         }
     }
+    const toOptions = visualizations => visualizations
+        .filter(({bands}) => bands.every(band => availableBands[band]))
+        .map(visParamsToOption)
     const bandCombinationOptions = {
         label: msg('process.mosaic.bands.combinations'),
-        options: visualizations[reflectance].map(visParamsToOption)
+        options: toOptions(visualizations[reflectance])
     }
     const indexOptions = {
         label: msg('process.mosaic.bands.indexes'),
-        options: visualizations.INDEXES.map(visParamsToOption)
+        options: toOptions(visualizations.INDEXES)
     }
     const metadataOptions = {
         label: msg('process.mosaic.bands.metadata'),
-        options: visualizations.METADATA.map(visParamsToOption)
+        options: toOptions(visualizations.METADATA)
     }
     return median
         ? [bandCombinationOptions, indexOptions]
