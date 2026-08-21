@@ -50,12 +50,27 @@ describe('getDefaultModel().sampleAllocation', () => {
         })
     })
 
-    // The total is the one number the design cannot derive, and the counts follow from it. Inventing either
+    // The total is the one number the design cannot derive, and the counts follow from it. Inventing one
     // would produce a design nobody chose that Retrieve would accept.
-    it('supplies neither a total sample size nor any counts', () => {
-        const {sampleAllocation} = getDefaultModel()
-        expect('sampleSize' in sampleAllocation).toBe(false)
-        expect('allocation' in sampleAllocation).toBe(false)
+    it('supplies no total sample size', () => {
+        expect('sampleSize' in getDefaultModel().sampleAllocation).toBe(false)
+    })
+
+    // No counts either - but "no counts" is an empty list, not a missing field. Everything that reads an
+    // allocation reads it as rows: the panel renders them, reconciles them against the strata and rewrites
+    // them for manual mode, and a field the model does not carry reaches the form as '' instead.
+    it('starts with no counts, as an empty list', () => {
+        expect(getDefaultModel().sampleAllocation.allocation).toEqual([])
+    })
+
+    // A factory rather than a shared literal: two recipes open at once must not share the array one of them
+    // is about to fill in.
+    it('gives every recipe its own array', () => {
+        const first = getDefaultModel().sampleAllocation.allocation
+        const second = getDefaultModel().sampleAllocation.allocation
+        expect(first).not.toBe(second)
+        first.push({stratum: 1, sampleSize: 10})
+        expect(second).toEqual([])
     })
 
     it('carries the confidence, minimum-samples, power-tuning and dormant margin defaults', () => {

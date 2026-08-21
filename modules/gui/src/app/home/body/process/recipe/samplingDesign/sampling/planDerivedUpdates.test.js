@@ -428,10 +428,10 @@ describe('planDerivedUpdates - an allocation with no target yet', () => {
     })
 
     // Sync invents nothing: a new recipe reaches the Allocation panel with no counts and no total, and the
-    // panel is what puts anything there.
+    // panel is what puts anything there. No counts is the empty list a new recipe starts with.
     it('leaves the allocation empty until its panel is opened', () => {
         const {sampleAllocation} = throughProportions()
-        expect(sampleAllocation.allocation).toBeUndefined()
+        expect(sampleAllocation.allocation).toEqual([])
         expect(sampleAllocation.sampleSize).toBeUndefined()
     })
 

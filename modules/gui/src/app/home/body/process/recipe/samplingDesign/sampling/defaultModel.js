@@ -35,7 +35,10 @@ export const getDefaultModel = () => ({
         // Dormant while the mode is fixed-size: the target it belongs to is only read in error mode.
         marginOfError: 50,
         minSamplesPerStratum: String(MIN_SAMPLES_PER_STRATUM),
-        powerTuningConstant: '0.5'
+        powerTuningConstant: '0.5',
+        // No counts yet - as an empty list, because everything that reads an allocation reads it as rows.
+        // The total above is genuinely absent: that one the design cannot derive.
+        allocation: []
     },
     // Complete defaults so a new recipe opens the panel clean. minDistance is intentionally absent (resolved
     // at export, never frozen against its grid); requiresUpdate must be present so the mount-time set(false)

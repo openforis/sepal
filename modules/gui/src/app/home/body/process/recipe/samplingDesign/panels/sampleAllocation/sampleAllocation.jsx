@@ -485,9 +485,14 @@ const allocateDeps = props => {
 // canonical model; margins are always relative.
 const valuesToModel = ({relativeMarginOfError: _relativeMarginOfError, ...values}) => values
 
-const modelToValues = model => {
-    return model
-}
+// A new recipe starts with an empty allocation, but one created before that did not carry the field at all,
+// and withForm represents a declared field the model does not carry as ''. This panel reads the allocation as
+// ROWS from its first render on - it renders them, reconciles them against the current strata on open, and
+// rewrites them for manual mode - so no rows arrives here as an empty list.
+const modelToValues = model => ({
+    ...model,
+    allocation: Array.isArray(model?.allocation) ? model.allocation : []
+})
 
 export const SampleAllocation = compose(
     _SampleAllocation,
