@@ -18,8 +18,8 @@ export const blankAllocation = model =>
     allocationStrata(model).map(({stratum}) => ({stratum}))
 
 // The whole automatic outcome - counts, the total the counts add up to, and the derived uncertainty - as one
-// pure function over the persisted model. The Allocation panel and the semantic planner both go through it,
-// so an allocation recomputed with the panel closed is the same allocation the panel would have produced.
+// pure function over a design. The Allocation panel is its owner and its only caller: an allocation exists
+// because that panel calculated one and the user applied it.
 export const allocationOutcome = model => {
     const {
         estimateSampleSize, sampleSize, marginOfError, confidenceLevel,
@@ -80,7 +80,7 @@ export const allocationOutcome = model => {
 //
 // `proportionsApplicable`, deliberately, rather than whether proportion rows exist yet: a variance strategy
 // belongs to a design that uses proportions, and rows that are pending, stale or momentarily empty are a
-// lifecycle state for the planner to wait on, not a reason to change what the user chose.
+// lifecycle state, not a reason to change what the user chose.
 export const effectiveAllocationStrategy = ({allocationStrategy, proportionsApplicable, defaultStrategy}) =>
     isAllocationStrategy(allocationStrategy)
         && (proportionsApplicable || !readsProportions(allocationStrategy))

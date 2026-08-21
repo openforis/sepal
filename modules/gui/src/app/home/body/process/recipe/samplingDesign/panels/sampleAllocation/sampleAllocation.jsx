@@ -54,7 +54,7 @@ const fields = {
     marginOfError: new Form.Field()
         .skip((_marginOfError, {manual, estimateSampleSize}) => manual.length || !estimateSampleSize)
         // The first failing predicate supplies the message, so notBlank and number stay to name those two
-        // cases; what the field will actually accept is the same rule the planner reads the target with.
+        // cases; what the field will actually accept is the same rule that decides the target is missing.
         .notBlank()
         .number()
         .predicate(isValidMarginOfError, 'fieldValidation.greaterThan', () => ({minValue: 0})),
@@ -430,10 +430,12 @@ class _SampleAllocation extends React.Component {
         marginOfError.set(marginOfErrorFor(this.designModel()))
     }
         
-    // The arithmetic itself is shared with the semantic planner, so an allocation recomputed with this panel
-    // closed is the same allocation the panel would have produced with it open.
+    // Manual counts are the user's and are never recalculated - but the uncertainty they imply reads the
+    // weights and proportions those counts were entered against, so opening a stale panel refreshes the
+    // displayed margin without touching a single answer.
     allocate() {
         if (this.isManual()) {
+            this.updateMarginOfError()
             return
         }
         const {inputs: {allocation, sampleSize, marginOfError}} = this.props

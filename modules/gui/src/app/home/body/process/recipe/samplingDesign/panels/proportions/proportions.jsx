@@ -17,6 +17,7 @@ import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import {isNumericClassValue, toClassOptions} from '../../sampling/categoricalLegend'
+import {reconcileManualProportions} from '../../sampling/designModel'
 import {isValidOptionalProportionPercentage} from '../../sampling/numericRanges'
 import {maxAnticipatedTargetProportion, smartRound, toProportions} from '../../sampling/proportionMath'
 import {effectiveProportionsScale, isValidGridScale, proportionsScaleFromBand} from '../../samplingGridValidation'
@@ -234,9 +235,24 @@ class _Proportions extends React.Component {
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
         
+        // Stale means "open this panel and settle it". Manual rows are settled by reconciling them against the
+        // strata that moved underneath them - an answered proportion follows its stratum, a vanished one goes,
+        // and a new stratum arrives unanswered for the user to fill in.
         if (requiresUpdate.value) {
-            this.calculateAnticipatedProportions()
+            if (this.isManual()) {
+                this.reconcileManualRows()
+            } else {
+                this.calculateAnticipatedProportions()
+            }
         }
+    }
+
+    reconcileManualRows() {
+        const {strata, inputs: {anticipatedProportions}} = this.props
+        anticipatedProportions.set(reconcileManualProportions({
+            stratification: {strata},
+            proportions: {anticipatedProportions: anticipatedProportions.value}
+        }))
     }
 
     componentDidUpdate(prevProps) {
