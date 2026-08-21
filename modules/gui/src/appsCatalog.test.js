@@ -138,15 +138,25 @@ describe('normalizeAppsCatalog', () => {
         expect(child.logo).toBe('https://example.org/a.png')
         expect(child.logoRef).toBe('sepal.png')
     })
+
+    it('preserves an explicitly empty child logoRef instead of inheriting the parent logo', () => {
+        const input = {apps: [{
+            id: 'p', path: '/api/p', endpoint: 'docker', logo: 'https://example.org/p.png',
+            apps: [{id: 'a', route: 'a', label: 'A', logoRef: ''}]
+        }]}
+        const child = normalizeAppsCatalog(input).apps[1]
+        expect(child.logo).toBeUndefined()
+        expect(child.logoRef).toBe('')
+    })
 })
 
 describe('logoUrl', () => {
-    it('uses an absolute logo URL as-is', () => {
-        expect(logoUrl({logo: 'https://example.org/logos/foo.png'})).toBe('https://example.org/logos/foo.png')
+    it('prefers an HTTPS logo over logoRef', () => {
+        expect(logoUrl({logo: 'https://example.org/logos/foo.png', logoRef: 'sepal.png'})).toBe('https://example.org/logos/foo.png')
     })
 
-    it('prefers logo over logoRef', () => {
-        expect(logoUrl({logo: 'http://example.org/foo.png', logoRef: 'sepal.png'})).toBe('http://example.org/foo.png')
+    it('ignores an HTTP logo and falls back to logoRef', () => {
+        expect(logoUrl({logo: 'http://example.org/foo.png', logoRef: 'sepal.png'})).toBe('/api/apps/images/sepal.png')
     })
 
     it('ignores a relative logo and falls back to logoRef', () => {

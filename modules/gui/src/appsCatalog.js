@@ -28,7 +28,7 @@ const mergeTags = (parentTags, childTags) => {
 // A child declaring either logo key owns both of them, so a parent `logo` can
 // never win over a logo the child chose to express as a `logoRef`.
 const logoOwner = (parent, child) =>
-    child.logo || child.logoRef ? child : parent
+    child.logo !== undefined || child.logoRef !== undefined ? child : parent
 
 const flattenChild = (parent, child) => {
     const route = child.route !== undefined ? child.route : child.id
@@ -76,14 +76,14 @@ export const normalizeAppsCatalog = appsSpec => {
     return {...appsSpec, apps: out}
 }
 
-const isAbsoluteUrl = value => /^https?:\/\//i.test(value)
+const isAbsoluteHttpsUrl = value => /^https:\/\//i.test(value)
 
 const imageUrl = logoRef => logoRef ? `/api/apps/images/${logoRef}` : null
 
 // `logo` points at an externally hosted image; `logoRef` names one installed on
 // the SEPAL server and stays the fallback for catalogs that predate `logo`.
 export const logoUrl = ({logo, logoRef} = {}) =>
-    logo && isAbsoluteUrl(logo)
+    logo && isAbsoluteHttpsUrl(logo)
         ? logo
         : imageUrl(logoRef)
 
