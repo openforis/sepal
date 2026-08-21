@@ -21,6 +21,7 @@ import {Panel} from '~/widget/panel/panel'
 import {SearchBox} from '~/widget/searchBox'
 
 import styles from './createRecipe.module.css'
+import {recipeTypeMatchesTagFilter} from './createRecipeTagFilter'
 import {getRecipeType} from './recipeTypeRegistry'
 
 const mapStateToProps = state => {
@@ -78,13 +79,13 @@ class _CreateRecipe extends React.Component {
         this.closePanel = this.closePanel.bind(this)
         this.showRecipeTypeInfo = this.showRecipeTypeInfo.bind(this)
         this.setTextFilter = this.setTextFilter.bind(this)
-        this.setTagsFilter = this.setTagsFilter.bind(this)
+        this.setTagFilter = this.setTagFilter.bind(this)
     }
 
     state = {
         selectedRecipeType: null,
         textFilterValues: [],
-        tagsFilter: []
+        tagFilter: null
     }
 
     render() {
@@ -212,7 +213,7 @@ class _CreateRecipe extends React.Component {
     }
 
     renderTagsFilter() {
-        const {tags, tagsFilter} = this.state
+        const {tags, tagFilter} = this.state
 
         const recipeOptions = tags?.map(tag => ({
             label: msg(`process.recipe.newRecipe.tags.${tag}`),
@@ -221,9 +222,8 @@ class _CreateRecipe extends React.Component {
 
         const options = [{
             label: msg('process.recipe.newRecipe.tags.ALL'),
-            // value: null,
-            deselect: true
-        }, ...recipeOptions]
+            value: null
+        }, ...(recipeOptions || [])]
 
         return (
             <Buttons
@@ -231,9 +231,8 @@ class _CreateRecipe extends React.Component {
                 layout='horizontal'
                 spacing='tight'
                 options={options}
-                multiple
-                selected={tagsFilter}
-                onSelect={this.setTagsFilter}
+                selected={tagFilter}
+                onSelect={this.setTagFilter}
             />
         )
     }
@@ -275,8 +274,8 @@ class _CreateRecipe extends React.Component {
         this.setState({textFilterValues})
     }
 
-    setTagsFilter(tagsFilter) {
-        this.setState({tagsFilter})
+    setTagFilter(tagFilter) {
+        this.setState({tagFilter})
     }
 
     getFilteredRecipeTypes() {
@@ -306,8 +305,8 @@ class _CreateRecipe extends React.Component {
     }
 
     recipeTypeMatchesTags(recipeType) {
-        const {tagsFilter} = this.state
-        return _.every(tagsFilter, tag => recipeType?.tags?.includes(tag))
+        const {tagFilter} = this.state
+        return recipeTypeMatchesTagFilter(recipeType, tagFilter)
     }
 
     getHighlightMatcher() {
