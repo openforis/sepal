@@ -1,3 +1,5 @@
+import {selectFrom} from '~/stateUtils'
+
 import {AoiGeometryLayer} from './aoiGeometryLayer'
 import {EETableLayer} from './eeTableLayer'
 import {PolygonLayer} from './polygonLayer'
@@ -22,7 +24,15 @@ export const countryToEETable = aoi => ({
     fillColor
 })
 
+// While a polygon is being edited the applied aoi would sit under it. Only the fallback is suppressed:
+// a layer given an aoi of its own, as the panel's preview map is, still renders.
+export const isAoiSuppressed = ({layerConfig = {}, recipe}) =>
+    !layerConfig.aoi && !!selectFrom(recipe, 'ui.aoi.editing')
+
 export const AoiLayer = ({id, layerConfig = {}, layerIndex, map, recipe}) => {
+    if (isAoiSuppressed({layerConfig, recipe})) {
+        return null
+    }
     const aoi = layerConfig.aoi || recipe.model.aoi || {}
     switch (aoi.type) {
         case 'COUNTRY': return (
