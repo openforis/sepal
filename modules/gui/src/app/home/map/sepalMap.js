@@ -5,7 +5,14 @@ import {TerraDrawGoogleMapsAdapter} from 'terra-draw-google-maps-adapter'
 
 import {getLogger} from '~/log'
 
-import {otherPolygonIds, toAdapterLib, toBounds, toPolygonFeature, toPolygonPath} from './drawing'
+import {
+    DRAWING_COORDINATE_PRECISION,
+    otherPolygonIds,
+    toAdapterLib,
+    toBounds,
+    toPolygonFeature,
+    toPolygonPath
+} from './drawing'
 
 const log = getLogger('sepalMap')
 
@@ -163,7 +170,11 @@ export class SepalMap {
         if (!this.drawing) {
             const lib = toAdapterLib(google)
             this.drawing = new TerraDraw({
-                adapter: new TerraDrawGoogleMapsAdapter({lib, map: googleMap}),
+                adapter: new TerraDrawGoogleMapsAdapter({
+                    lib,
+                    map: googleMap,
+                    coordinatePrecision: DRAWING_COORDINATE_PRECISION
+                }),
                 modes: [
                     new TerraDrawPolygonMode({
                         styles: this.polygonStyles(),
@@ -185,6 +196,20 @@ export class SepalMap {
         }
         drawing.clear()
         drawing.addFeatures([toPolygonFeature(toPolygonPath(feature))])
+    }
+
+    setPolygonDrawing(path) {
+        const {drawing} = this
+        if (!path?.length) {
+            drawing.clear()
+            return
+        }
+        const [validation] = drawing.addFeatures([toPolygonFeature(path)])
+        if (validation.valid) {
+            this.retainOnly(drawing, drawing.getSnapshotFeature(validation.id))
+        } else {
+            log.warn(`Saved polygon could not be loaded for editing: ${validation.reason}`)
+        }
     }
 
     enableDrawingMode(mode, callback, {retain = false} = {}) {
@@ -219,6 +244,7 @@ export class SepalMap {
                 this.drawingListener = null
             }
             if (drawing.enabled) {
+                drawing.setMode('static')
                 drawing.stop()
             }
         }
@@ -337,13 +363,7 @@ export class SepalMap {
         log.debug('enablePolygonDrawing')
         this.enableDrawingMode('polygon', feature => callback(toPolygonPath(feature)), {retain: true})
         const path = getPath && getPath()
-        if (path?.length) {
-            // Rejected features are dropped rather than thrown, so the aoi would just be absent.
-            const [validation] = this.drawing.addFeatures([toPolygonFeature(path)])
-            if (validation && !validation.valid) {
-                log.warn(`Saved polygon could not be loaded for editing: ${validation.reason}`)
-            }
-        }
+        this.setPolygonDrawing(path)
     }
 
     disablePolygonDrawing() {

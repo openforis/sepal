@@ -50,7 +50,7 @@ const mapRecipeToProps = recipe => ({
 const OVERLAY_ID = 'overlay-layer-id'
 const OVERLAY_AREA = 'overlay-area'
 
-class _Map extends React.Component {
+export class _Map extends React.Component {
     viewUpdates$ = new BehaviorSubject({})
     linked$ = new BehaviorSubject(false)
     renderingEnabled$ = new BehaviorSubject(false)
@@ -450,8 +450,15 @@ class _Map extends React.Component {
     enablePolygonDrawing(callback, getPath) {
         log.debug('enablePolygonDrawing')
         this.enterDrawingMode('polygon', ({map}) =>
-            map.enablePolygonDrawing((...args) => {
-                callback && callback(...args)
+            map.enablePolygonDrawing(drawnPolygon => {
+                if (!this.isStackMode()) {
+                    this.withAreaMaps(({map: otherMap}) => {
+                        if (otherMap !== map) {
+                            otherMap.setPolygonDrawing(drawnPolygon)
+                        }
+                    })
+                }
+                callback && callback(drawnPolygon)
             }, getPath)
         )
     }
