@@ -5074,17 +5074,12 @@
             },
             "scale": {
               "label": "Scale",
-              "mode": {
-                "imageGrid": "Using the image's own pixel grid. Leave blank to keep it, or enter a scale to resample.",
-                "resampled": "The stratification is resampled to this scale. Clear the field to use the image's own pixel grid."
-              },
               "suffix": "meters",
-              "tooltip": "Pixel size used to calculate stratum areas. Smaller values use more pixels and preserve detail only when supported by the source image."
+              "tooltip": "Pixel size the stratification classes are read at. Leave it empty to use the selected band's own resolution, shown as the placeholder, or enter a value to resample."
             },
             "crs": {
               "label": "CRS",
-              "placeholder": "e.g. EPSG:32636",
-              "tooltip": "Projected coordinate system the stratification classes are interpreted in, and used to calculate stratum areas and anticipated proportions. Sample placement uses the Sample Arrangement CRS."
+              "tooltip": "Coordinate system the stratification classes are interpreted in, and used to calculate stratum areas and anticipated proportions. Leave it empty to use the selected band's own CRS, shown as the placeholder. Sample placement uses the Sample Arrangement CRS."
             },
             "hexButton": {
               "label": "HEX",
@@ -5202,10 +5197,8 @@
             },
             "scale": {
               "label": "Scale",
-              "placeholder": "Scale...",
-              "required": "You must specify the scale",
               "suffix": "meters",
-              "tooltip": "Processing scale used to estimate proportions. Increase it for faster, less detailed estimates."
+              "tooltip": "Processing scale used to estimate proportions. Leave it empty to use the coarser of the stratification scale and the selected band's own resolution, shown as the placeholder; enter a larger value for a faster, less detailed estimate."
             },
             "overallProportion": {
               "label": "Anticipated overall proportion",

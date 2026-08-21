@@ -1,5 +1,7 @@
 import {msg} from '~/translate'
 
+import {effectiveStratificationGrid} from '../../samplingGridValidation'
+
 // The single synthetic stratum for unstratified mode. Area is intentionally omitted here: the export
 // boundary computes it from the AOI geometry, so the panel is valid immediately without a hidden EE area
 // request.
@@ -27,14 +29,14 @@ export const unstratifiedStrata = strata => {
 
 export const valuesToModel = values => {
     const isSkipped = !!values.skip?.length
+    // The recipe stores a concrete grid. The visible fields are overrides and the source fields are what a
+    // cleared one resolves to, so both are consolidated here and neither shape reaches the model. Alignment to
+    // the source's own pixel grid is Earth Engine's decision, so nothing about it is persisted either.
+    const {crs, scale} = effectiveStratificationGrid(values)
     return {
         skip: isSkipped,
-        // The RESOLVED grid, not the user fields: those are blank when the derived grid is in use, and the task
-        // boundary has no access to it.
-        scale: parseFloat(values.resolvedScale),
-        crs: values.resolvedCrs,
-        // Omitted rather than nulled when no transform applies, so a scale-mode recipe keeps its existing shape.
-        ...(values.crsTransform ? {crsTransform: values.crsTransform} : {}),
+        scale,
+        crs,
         type: values.type,
         assetId: values.assetId,
         recipeId: values.recipeId,
@@ -53,12 +55,8 @@ export const modelToValues = model => ({
     // mount, which legitimately dirties the form.
     requiresUpdate: !!model.requiresUpdate,
     skip: model.skip ? [true] : [],
-    // User fields stay blank; a saved recipe's grid is carried by the resolved fields.
-    scale: null,
-    crs: null,
-    resolvedScale: model.scale,
-    resolvedCrs: model.crs,
-    crsTransform: model.crsTransform,
+    scale: model.scale,
+    crs: model.crs,
     type: model.type,
     assetId: model.assetId,
     recipeId: model.recipeId,

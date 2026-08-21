@@ -40,9 +40,9 @@ export default {
             }
         }),
 
-    assetMetadata$: ({asset, allowedTypes}) =>
+    assetMetadata$: ({asset, allowedTypes, includeNominalScale}) =>
         postJson$('/api/gee/assetMetadata', {
-            body: {asset, allowedTypes},
+            body: {asset, allowedTypes, includeNominalScale},
             retry: {
                 maxRetries: 0
             }
@@ -225,9 +225,9 @@ export default {
             }
         }),
 
-    areaPerStratum$: ({aoi, stratification, band, scale, crsTransform, crs, batch}) =>
+    areaPerStratum$: ({aoi, stratification, band, scale, crs, batch}) =>
         postJson$('/api/gee/samplingDesign/areaPerStratum', {
-            body: {aoi, stratification, band, scale, crsTransform, crs, batch},
+            body: {aoi, stratification, band, scale, crs, batch},
             // No HTTP retry: Online should surface EE failures promptly, and Batch task submission should
             // not be repeated by the client.
             retry: {

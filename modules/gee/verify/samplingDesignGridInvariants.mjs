@@ -27,17 +27,16 @@ const stratification = ({crs, scale}) =>
 // minDistance is left UNSET so the spacing floor is 2 * Stratification pixel size and the Stratification grid
 // actually drives the nested density. With minDistance pinned above both floors the two runs build identical
 // layouts and an invariance check proves nothing.
-const candidates = ({arrangementCrs = EASE, stratificationCrs = 'EPSG:32636', scale = 10, crsTransform, gridOrigin = 'FIXED', minDistance, allocation: allocationOverride, region: regionOverride} = {}) =>
+const candidates = ({arrangementCrs = EASE, stratificationCrs = 'EPSG:32636', scale = 10, sourceTransform, gridOrigin = 'FIXED', minDistance, allocation: allocationOverride, region: regionOverride} = {}) =>
     stratifiedSystematicExactCandidates({
         allocation: allocationOverride || allocation,
-        stratification: crsTransform
-            ? ee.Image(1).rename('stratum').toInt().reproject(ee.Projection(stratificationCrs, crsTransform))
+        // `sourceTransform` is the SOURCE image's own alignment, never configuration: the configured grid is
+        // {crs, scale} whichever source it is read from.
+        stratification: sourceTransform
+            ? ee.Image(1).rename('stratum').toInt().reproject(ee.Projection(stratificationCrs, sourceTransform))
             : stratification({crs: stratificationCrs, scale}),
         region: regionOverride || regionOf(),
-        // Scale XOR transform, exactly as effectiveArrangement emits it.
-        stratificationGrid: crsTransform
-            ? {crs: stratificationCrs, crsTransform}
-            : {crs: stratificationCrs, scale},
+        stratificationGrid: {crs: stratificationCrs, scale},
         arrangementGrid: {crs: arrangementCrs},
         sampleArrangement: {minDistance, gridOrigin, seed: 2},
         densityOffset: 0
@@ -378,39 +377,40 @@ const main = async () => {
         agreesWithSystematic: true
     }
 
-    // A Stratification transform's xOrigin/yOrigin must NEVER become the Arrangement origin. Same shape as the
-    // origin-invariance check above, with the pixel size held constant and only the transform's origin moved.
-    const transformSeeded = crsTransform => candidates({
-        crsTransform, gridOrigin: 'SEEDED', allocation: originAllocation, region: originRegion
+    // The SOURCE's own pixel alignment must NEVER become the Arrangement origin. Same shape as the
+    // origin-invariance check above, with the pixel size held constant and only the source's origin moved.
+    const sourceAligned = sourceTransform => candidates({
+        sourceTransform, scale: 128, gridOrigin: 'SEEDED', allocation: originAllocation, region: originRegion
     })
-    const originA = await evaluate(wgs84Points(transformSeeded([128, 0, 300000, 0, -128, 200000])))
-    const originB = await evaluate(wgs84Points(transformSeeded([128, 0, 300064, 0, -128, 200064])))
-    assert(originA.length && originB.length, 'transform-origin fixture produced an empty lattice')
+    const originA = await evaluate(wgs84Points(sourceAligned([128, 0, 300000, 0, -128, 200000])))
+    const originB = await evaluate(wgs84Points(sourceAligned([128, 0, 300064, 0, -128, 200064])))
+    assert(originA.length && originB.length, 'source-origin fixture produced an empty lattice')
     const shifted = originB.filter(point => !matchesExactly(point, originA))
     assert(!shifted.length,
-        `A Stratification transform origin translated the lattice: ${JSON.stringify(shifted.slice(0, 3))}`)
-    results.transformOriginNeverLeaks = {
+        `A Stratification source origin translated the lattice: ${JSON.stringify(shifted.slice(0, 3))}`)
+    results.sourceOriginNeverLeaks = {
         pointsA: originA.length, pointsB: originB.length, comparison: 'exact', shifted: shifted.length
     }
 
-    // Scale and transform are never both present on a resolved grid, and the transform's pixel size is abs(a).
-    const transformGrid = effectiveArrangement({
-        stratification: {skip: false, crs: 'EPSG:32636', scale: 999, crsTransform: '[25, 0, 5, 0, -25, 7]'},
+    // The configured Stratification grid is a CRS and a metre Scale, and nothing else.
+    const configuredGrid = effectiveArrangement({
+        stratification: {skip: false, crs: 'EPSG:32636', scale: 25},
         sampleArrangement: {arrangementStrategy: 'RANDOM', seed: 1, crs: 'EPSG:6933'}
     }).stratificationGrid
-    assert(!('scale' in transformGrid), 'resolved grid carries both scale and transform')
-    assert(gridPixelSize(transformGrid) === 25, `transform pixel size is not abs(a): ${gridPixelSize(transformGrid)}`)
-    results.gridDefinitionIsExclusive = {
-        keys: Object.keys(transformGrid).sort(), effectivePixelSize: gridPixelSize(transformGrid)
+    assert(Object.keys(configuredGrid).sort().join(',') === 'crs,scale',
+        `resolved grid is not {crs, scale}: ${JSON.stringify(Object.keys(configuredGrid))}`)
+    assert(gridPixelSize(configuredGrid) === 25, `grid pixel size is not the metre Scale: ${gridPixelSize(configuredGrid)}`)
+    results.gridIsCrsAndMetreScale = {
+        keys: Object.keys(configuredGrid).sort(), effectivePixelSize: gridPixelSize(configuredGrid)
     }
 
-    // Random's rank graph must be untouched by transform mode: one reproject tree-wide on the categorical
-    // branch, label + rank only, and no transform anywhere in the Arrangement-grid graph.
+    // Random's rank graph must be untouched by a natively aligned source: one reproject tree-wide on the
+    // categorical branch, label + rank only, and no transform anywhere in the Arrangement-grid graph.
     const randomGraph = sparseRandomCandidates({
         stratification: ee.Image(1).rename('stratum').toInt()
             .reproject(ee.Projection('EPSG:32636', [25, 0, 5, 0, -25, 7])),
         region: regionOf(),
-        grid: {crs: EASE, scale: gridPixelSize(transformGrid)},
+        grid: {crs: EASE, scale: gridPixelSize(configuredGrid)},
         seed: 1,
         loThresholds: [0],
         hiThresholds: [1],
@@ -424,7 +424,7 @@ const main = async () => {
     results.randomRankGraphUnchanged = {
         reproject: count(randomText, 'reproject'),
         reduceToVectors: count(randomText, 'reduceToVectors'),
-        candidateCellSize: gridPixelSize(transformGrid),
+        candidateCellSize: gridPixelSize(configuredGrid),
         reprojectOnCategoricalBranch: !randomBranches[0].reachesLattice
     }
 

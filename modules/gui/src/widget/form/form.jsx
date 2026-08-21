@@ -194,13 +194,23 @@ export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
                 })
             }
 
+            // Adopt a value as where this ONE field started: for values a panel learns rather than values a
+            // user changed - a resolved country id, a selection's default. Dirtiness belongs to the whole form,
+            // so it is recomputed across every field instead of being assumed gone: a derived field learning
+            // its baseline says nothing about the fields the user has been editing, and announcing "clean"
+            // there is what lets navigation discard an edited panel. The field just adopted its own value, so
+            // the only possible transition is dirty -> clean.
             setInitialValue(name, value) {
                 this.setState(prevState => {
-                    const state = {...prevState, dirty: false}
+                    const state = _.cloneDeep(prevState)
                     state.initialValues[name] = value
                     state.values[name] = value
                     state.errors[name] = ''
-                    if (prevState.dirty)
+                    state.dirty = !!Object.keys(state.initialValues)
+                        .find(field =>
+                            !_.isEqual(state.initialValues[field], state.values[field])
+                        )
+                    if (prevState.dirty && !state.dirty)
                         this.onClean()
                     return state
                 })

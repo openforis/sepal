@@ -69,6 +69,7 @@ export const AnticipationStrategy = ({anticipationStrategy, onChange}) =>
 
 export const ImageSelection = ({
     inputs: {type, assetId, recipeId, band, targetClass, percentage, probabilityPerStratum, anticipationStrategy, scale},
+    effectiveScale,
     bands,
     visualizations,
     distinctClassOptions,
@@ -81,6 +82,7 @@ export const ImageSelection = ({
     onAssetLoaded,
     onRecipeLoaded,
     onBandChanged,
+    onScaleChanged,
     onPercentageChanged
 }) => {
     const typeButtons = <SourceTypeButtons type={type} onChange={onTypeChanged}/>
@@ -114,7 +116,7 @@ export const ImageSelection = ({
                     onBandChanged={onBandChanged}
                     onPercentageChanged={onPercentageChanged}
                 />
-                <ScaleInput scale={scale}/>
+                <ScaleInput scale={scale} effectiveScale={effectiveScale} onChange={onScaleChanged}/>
             </Layout>
             {anticipationStrategy.value === 'CATEGORICAL'
                 ? <TargetClassInput
@@ -224,6 +226,7 @@ const AssetSource = ({assetId, typeButtons, onImageChanged, onImageLoading, onAs
         placeholder={msg('process.samplingDesign.panel.proportions.form.image.placeholder')}
         allowedTypes={['Image', 'ImageCollection']}
         labelButtons={[typeButtons]}
+        includeNominalScale
         onChange={onImageChanged}
         onLoading={onImageLoading}
         onLoaded={onAssetLoaded}
@@ -279,15 +282,17 @@ const BandInput = ({band, percentage, probabilityPerStratum, anticipationStrateg
     )
 }
 
-const ScaleInput = ({scale}) =>
+// Blank means "use what this selection provides", so the placeholder names the value blank resolves to.
+const ScaleInput = ({scale, effectiveScale, onChange}) =>
     <Form.Input
         className={styles.compactField}
         label={msg('process.samplingDesign.panel.proportions.form.scale.label')}
-        placeholder={msg('process.samplingDesign.panel.proportions.form.scale.placeholder')}
+        placeholder={effectiveScale === null ? '' : String(effectiveScale)}
         tooltip={msg('process.samplingDesign.panel.proportions.form.scale.tooltip')}
         input={scale}
         type='number'
         suffix={msg('process.samplingDesign.panel.proportions.form.scale.suffix')}
+        onChange={onChange}
     />
 
 const TargetClassInput = ({band, targetClass, visualizations = [], distinctClassOptions, loading, canLoad, onLoad}) => {

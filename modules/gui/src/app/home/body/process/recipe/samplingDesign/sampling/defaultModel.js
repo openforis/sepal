@@ -1,5 +1,5 @@
 import {MIN_SAMPLES_PER_STRATUM} from '#sepal/recipe/samplingDesign/minSamples'
-import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
+import {DEFAULT_SAMPLING_GRID_CRS, DEFAULT_STRATIFICATION_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
 // The seed a new design starts from. Any positive whole number would do; what matters is that it is fixed,
 // so an unedited recipe samples the same points every time it is run.
@@ -14,9 +14,11 @@ const DEFAULT_SEED = 1
 // A factory rather than a shared literal, because the model carries mutable values - an allocation mode
 // array today, whatever a section grows tomorrow - and two recipes open at once must not share them.
 export const getDefaultModel = () => ({
+    // Stratification interprets a categorical source rather than placing points, so it starts from the plain
+    // geographic CRS. Selecting a band replaces both fields with that band's own CRS and nominal Scale.
     stratification: {
         scale: 30,
-        crs: DEFAULT_SAMPLING_GRID_CRS,
+        crs: DEFAULT_STRATIFICATION_CRS,
         type: 'ASSET'
     },
     // Automatic, fixed-size and Balanced: Balanced spreads a total from stratum identities and weights

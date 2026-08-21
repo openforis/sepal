@@ -1,3 +1,5 @@
+import {gridPixelSize} from '#sepal/recipe/samplingDesign/samplingGrid'
+
 import {effectiveArrangement} from '#sepal/ee/samplingDesign/effectiveArrangement'
 
 describe('effectiveArrangement four-mode matrix', () => {
@@ -87,59 +89,36 @@ describe('effectiveArrangement four-mode matrix', () => {
     })
 })
 
-// Scale and transform are never simultaneously authoritative. Rather than leaving a tolerant reader
-// (gridPixelSize prefers the transform) disagreeing with a strict validator (the candidate function throws on
-// both), the boundary emits exactly ONE definition, so downstream never sees the pair.
-describe('Stratification grid definition is scale XOR transform', () => {
-    const arrangement = {arrangementStrategy: 'RANDOM', seed: 1, crs: 'EPSG:6933'}
-    const grid = stratification => effectiveArrangement({stratification, sampleArrangement: arrangement}).stratificationGrid
+// The Sudan land-cover source is 10 m pixels stored in geographic coordinates, so its own affine transform reads
+// 0.0000898315 - degrees. Every consumer of the Stratification grid reads a pixel size in METRES: the systematic
+// candidate spacing, the minimum-distance floor, the Random cell size and the reproduction metadata. The grid is
+// therefore the configured CRS and metre Scale, and nothing else; whether the draw lands on the source's own
+// pixel grid is decided inside Earth Engine, from the selected band's projection.
+describe('the effective Stratification grid is crs and metre scale only', () => {
+    const arrangement = {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', seed: 42, crs: 'EPSG:6933'}
+    const geographic = {skip: false, crs: 'EPSG:4326', scale: 10, band: 'label'}
+    const gridOf = (stratification, sampleArrangement = arrangement) =>
+        effectiveArrangement({stratification, sampleArrangement}).stratificationGrid
 
-    it('emits scale when no transform is configured', () => {
-        expect(grid({skip: false, crs: 'EPSG:32636', scale: 30})).toEqual({crs: 'EPSG:32636', scale: 30})
+    it('emits the CRS and metre Scale for Systematic and Random alike', () => {
+        expect(gridOf(geographic)).toEqual({crs: 'EPSG:4326', scale: 10})
+        expect(gridOf(geographic, {...arrangement, arrangementStrategy: 'RANDOM'})).toEqual({crs: 'EPSG:4326', scale: 10})
     })
 
-    it('emits the transform and NO scale when a transform is configured', () => {
-        const result = grid({skip: false, crs: 'EPSG:32636', scale: 999, crsTransform: '[10, 0, 300000, 0, -10, 200000]'})
-        expect(result).toEqual({crs: 'EPSG:32636', crsTransform: [10, 0, 300000, 0, -10, 200000]})
-        expect('scale' in result).toBe(false)
+    it('yields a 10 m pixel size, never the degree coefficient', () => {
+        expect(gridPixelSize(gridOf(geographic))).toBe(10)
+        expect(gridPixelSize(gridOf(geographic))).not.toBe(0.0000898315)
     })
 
-    it('falls back to scale when the transform does not parse', () => {
-        expect(grid({skip: false, crs: 'EPSG:32636', scale: 30, crsTransform: 'nonsense'}))
-            .toEqual({crs: 'EPSG:32636', scale: 30})
+    it('floors the systematic minimum distance at two 10 m pixels', () => {
+        expect(effectiveArrangement({stratification: geographic, sampleArrangement: {...arrangement, minDistance: null}}).minDistance).toBe(20)
     })
 
-    it('carries the parsed transform through as numbers, not the stored string', () => {
-        expect(grid({skip: false, crs: 'EPSG:32636', crsTransform: '[20, 0, 5, 0, -20, 7]'}).crsTransform)
-            .toEqual([20, 0, 5, 0, -20, 7])
-    })
-})
-
-// A derived grid also carries its pixel size in METRES, because a transform is in its CRS's units and the
-// arrangement cell size and minimum-distance floor are metre quantities.
-describe('Stratification grid carries the derived metre pixel size', () => {
-    const arrangement = {arrangementStrategy: 'RANDOM', seed: 1, crs: 'EPSG:6933'}
-    const grid = stratification => effectiveArrangement({stratification, sampleArrangement: arrangement}).stratificationGrid
-
-    it('carries pixelSizeMetres alongside a degree transform', () => {
-        expect(grid({
-            skip: false, crs: 'EPSG:4326',
-            crsTransform: '[0.00008983152841195215, 0, 21.8, 0, -0.00008983152841195215, 22.2]',
-            pixelSizeMetres: 10
-        })).toEqual({
-            crs: 'EPSG:4326',
-            crsTransform: [0.00008983152841195215, 0, 21.8, 0, -0.00008983152841195215, 22.2],
-            pixelSizeMetres: 10
-        })
+    it('emits the grid as those two fields and no others', () => {
+        expect(Object.keys(gridOf(geographic)).sort()).toEqual(['crs', 'scale'])
     })
 
-    it('omits pixelSizeMetres when the recipe has none', () => {
-        expect('pixelSizeMetres' in grid({skip: false, crs: 'EPSG:32636', crsTransform: '[10, 0, 5, 0, -10, 7]'}))
-            .toBe(false)
-    })
-
-    it('does not attach it in scale mode, where scale is already metres', () => {
-        expect(grid({skip: false, crs: 'EPSG:32636', scale: 30, pixelSizeMetres: 10}))
-            .toEqual({crs: 'EPSG:32636', scale: 30})
+    it('keeps a coarser configured Scale when the user asks for one', () => {
+        expect(gridOf({...geographic, crs: 'EPSG:6933', scale: 30})).toEqual({crs: 'EPSG:6933', scale: 30})
     })
 })

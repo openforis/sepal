@@ -3,8 +3,12 @@ import {MIN_SAMPLES_PER_STRATUM} from '#sepal/recipe/samplingDesign/minSamples'
 import {getDefaultModel} from './defaultModel'
 
 describe('getDefaultModel().stratification', () => {
-    it('defaults the stratification CRS to EPSG:6933', () => {
-        expect(getDefaultModel().stratification.crs).toBe('EPSG:6933')
+    // The Stratification grid is now a visible, persisted pair of fields rather than a fallback, so a new
+    // recipe shows what it will actually use. It interprets a categorical source, so it starts from the plain
+    // geographic CRS - not the equal-area grid the Sample Arrangement places points on - and matches what a
+    // recipe source or a source with no usable grid metadata resolves to.
+    it('starts a new design on EPSG:4326 at 30 m', () => {
+        expect(getDefaultModel().stratification).toMatchObject({crs: 'EPSG:4326', scale: 30})
     })
 })
 

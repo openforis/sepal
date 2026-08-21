@@ -115,10 +115,11 @@ describe('planDerivedUpdates - proportions', () => {
 
         // Calculated proportions come out of an Earth Engine reduction over the frame, so the frame and the
         // stratum identities are exactly what they depend on.
-        // Scale and the CRS transform change how large a stratum turns out - its weight - but the reduction
-        // still groups by stratum over the same AOI in the same CRS, so the proportions it produces do not move.
+        // The reduction runs at the PROPORTIONS Scale, which is concrete configuration. The Stratification
+        // Scale changes how large a stratum turns out - its weight - but the reduction still groups by stratum
+        // over the same AOI in the same CRS at the same resolution, so the proportions it produces do not move.
         ['calculated, Stratification Scale changed', base, _.merge({}, base, {stratification: {scale: 100}}), 'keep'],
-        ['calculated, Stratification transform changed', base, _.merge({}, base, {stratification: {crsTransform: [10, 0, 0, 0, -10, 0]}}), 'keep'],
+        ['calculated, Proportions Scale changed', _.merge({}, base, {proportions: {scale: 50}}), _.merge({}, base, {proportions: {scale: 80}}), 'recalculate'],
         ['calculated, CRS changed', base, _.merge({}, base, {stratification: {crs: 'EPSG:6933'}}), 'recalculate'],
         ['calculated, source changed', base, _.merge({}, base, {stratification: {assetId: 'users/x/other'}}), 'recalculate'],
         ['calculated, band changed', base, _.merge({}, base, {stratification: {band: 'other'}}), 'recalculate'],

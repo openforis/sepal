@@ -10,10 +10,11 @@ import {isValidMarginOfError} from './numericRanges'
 // each derived section is planned from the inputs its own mode actually reads, so a change is only propagated
 // where it changes an answer.
 
-// What the anticipated-proportion reduction is evaluated over. Stratification Scale and its CRS transform are
-// deliberately NOT here: they change how large a stratum turns out, and therefore its weight, but the
-// reduction groups by stratum over the same AOI in the same CRS either way, so the proportions it produces do
-// not move. Weights are carried separately, where the allocation reads them.
+// What the anticipated-proportion reduction is evaluated over: the source it reads, the AOI, the CRS, and the
+// Scale it runs at - which is the Proportions Scale, concrete configuration of its own. The Stratification
+// Scale is deliberately NOT here: it changes how large a stratum turns out, and therefore its weight, but the
+// reduction groups by stratum over the same AOI in the same CRS at the same resolution either way, so the
+// proportions it produces do not move. Weights are carried separately, where the allocation reads them.
 export const stratificationFrame = model => {
     const stratification = model?.stratification || {}
     return {
@@ -23,7 +24,8 @@ export const stratificationFrame = model => {
         assetId: stratification.assetId,
         recipeId: stratification.recipeId,
         band: stratification.band,
-        crs: stratification.crs
+        crs: stratification.crs,
+        scale: Number(model?.proportions?.scale)
     }
 }
 
