@@ -129,6 +129,17 @@ const planProportions = (previous, next) => {
             anticipatedProportions
         }
     }
+    // A calculation that has just finished brings its own inputs with it, so the frame moving across that
+    // transition is the result rather than an edit to it. Only a previous finished automatic calculation can
+    // be invalidated: readiness alone is deliberately true for skipped and for answered manual proportions,
+    // neither of which is one. Lifecycle, not arithmetic - a recalculation can land on the numbers it
+    // replaced, so values cannot tell completion from an unchanged edit.
+    const previouslyCalculated = isProportionsApplicable(previous)
+        && !isProportionsManual(previous)
+        && proportionsReady(previous)
+    if (!previouslyCalculated && proportionsReady(next)) {
+        return {action: 'calculated', requiresUpdate: false}
+    }
     return identitiesChanged || !_.isEqual(stratificationFrame(previous), stratificationFrame(next))
         ? {action: 'recalculate', requiresUpdate: true}
         : KEEP

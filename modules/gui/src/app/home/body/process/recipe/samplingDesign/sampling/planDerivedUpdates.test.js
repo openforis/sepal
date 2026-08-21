@@ -747,6 +747,9 @@ describe('planDerivedUpdates - an allocation with no target yet', () => {
         {value: 2, label: 'Non-forest', color: '#a00', area: 700, weight: 0.7}
     ]
     const CALCULATED_PROPORTIONS = [{stratum: 1, proportion: 0.4}, {stratum: 2, proportion: 0.1}]
+    // The Scale the Proportions panel resolved for the selected property band and calculated at. Not the
+    // recipe default: an asset-derived default is whatever the band reports - 10, 100, something fractional.
+    const SUBMITTED_SCALE = 100
 
     const newRecipe = () => ({...getDefaultModel(), aoi: AOI})
 
@@ -755,12 +758,15 @@ describe('planDerivedUpdates - an allocation with no target yet', () => {
         stratification: {...model.stratification, requiresUpdate: false, strata: CALCULATED_STRATA}
     })
 
+    // The persisted calculation state this planner reads: the concrete Scale and the rows calculated at it,
+    // arriving together and already settled. Deliberately minimal - not the panel's whole output.
     const proportionsCompleted = model => ({
         ...model,
         proportions: {
             skip: false,
             manual: [],
             requiresUpdate: false,
+            scale: SUBMITTED_SCALE,
             anticipatedProportions: CALCULATED_PROPORTIONS
         }
     })
@@ -797,6 +803,97 @@ describe('planDerivedUpdates - an allocation with no target yet', () => {
         expect(stratified.sampleAllocation.requiresUpdate).toBe(true)
         const {model} = settle(stratified, proportionsCompleted(stratified))
         expect(model.sampleAllocation.requiresUpdate).toBe(true)
+    })
+
+    // A completed submission owns the inputs it was calculated with. The Scale arriving with the result is
+    // not an edit to that result - it IS that result's Scale - so flagging it stale asks the user to
+    // recalculate what they just calculated, and only a second Apply (which moves no Scale) ever settles.
+    it('does not reflag the submission that brought the Scale with it', () => {
+        const created = newRecipe()
+        const stratified = settle(created, stratificationCompleted(created)).model
+        expect(stratified.proportions?.scale).toBeUndefined()
+
+        const submitted = proportionsCompleted(stratified)
+        expect(planModelUpdates(stratified, submitted))
+            .not.toContainEqual([['proportions', 'requiresUpdate'], true])
+
+        const {model} = settle(stratified, submitted)
+        expect(model.proportions.scale).toBe(SUBMITTED_SCALE)
+        expect(!!model.proportions.requiresUpdate).toBe(false)
+        // The allocation is untouched by this: it still has no total to spread.
+        expect(model.sampleAllocation.requiresUpdate).toBe(true)
+        expect(isSectionStale(model, 'sampleAllocation')).toBe(true)
+    })
+
+    // The same rule one lifecycle later: a stale section recalculated at a different Scale returns rows that
+    // happen to be identical. Completion is what settles it - nothing numeric moved to settle it with.
+    it('settles a stale recalculation that arrives with a changed Scale', () => {
+        const done = throughProportions()
+        const stale = {...done, proportions: {...done.proportions, requiresUpdate: true}}
+
+        const recalculated = {...stale, proportions: {...stale.proportions, requiresUpdate: false, scale: 30}}
+        expect(proportionValues(recalculated)).toEqual(proportionValues(stale))
+
+        expect(planModelUpdates(stale, recalculated))
+            .not.toContainEqual([['proportions', 'requiresUpdate'], true])
+
+        const {model} = settle(stale, recalculated)
+        expect(model.proportions.scale).toBe(30)
+        expect(!!model.proportions.requiresUpdate).toBe(false)
+    })
+
+    // Neither of these previous states is a finished automatic calculation, so neither can make the arriving
+    // one stale. Readiness alone cannot see that: it is deliberately true for skipped proportions (an
+    // allocation has nothing to wait for) and for answered manual rows (they are finished, by hand).
+    it('does not reflag an automatic calculation that replaces manual answers', () => {
+        const created = newRecipe()
+        const stratified = settle(created, stratificationCompleted(created)).model
+        const manual = {
+            ...stratified,
+            proportions: {skip: false, manual: [true], requiresUpdate: false, scale: SUBMITTED_SCALE, anticipatedProportions: CALCULATED_PROPORTIONS}
+        }
+
+        const calculated = {...manual, proportions: {...manual.proportions, manual: [], scale: 30}}
+        expect(proportionValues(calculated)).toEqual(proportionValues(manual))
+
+        expect(planModelUpdates(manual, calculated))
+            .not.toContainEqual([['proportions', 'requiresUpdate'], true])
+
+        const {model} = settle(manual, calculated)
+        expect(model.proportions.scale).toBe(30)
+        expect(!!model.proportions.requiresUpdate).toBe(false)
+    })
+
+    it('does not reflag an automatic calculation that replaces skipped proportions', () => {
+        const created = newRecipe()
+        const stratified = settle(created, stratificationCompleted(created)).model
+        const skipped = {...stratified, proportions: {skip: true, scale: SUBMITTED_SCALE}}
+
+        const calculated = {
+            ...skipped,
+            proportions: {skip: false, manual: [], requiresUpdate: false, scale: 30, anticipatedProportions: CALCULATED_PROPORTIONS}
+        }
+
+        expect(planModelUpdates(skipped, calculated))
+            .not.toContainEqual([['proportions', 'requiresUpdate'], true])
+
+        const {model} = settle(skipped, calculated)
+        expect(model.proportions.scale).toBe(30)
+        expect(!!model.proportions.requiresUpdate).toBe(false)
+    })
+
+    // The counterpart, which must keep holding: a Scale moved on a result that was already finished has no
+    // new calculation to justify it, so that result IS stale. Built from a finished section directly rather
+    // than from the lifecycle above, so what the planner does with a first submission cannot mask it.
+    it('still flags a Scale change made on an already-finished result', () => {
+        const created = newRecipe()
+        const stratified = settle(created, stratificationCompleted(created)).model
+        const finished = proportionsCompleted(stratified)
+        const rescaled = {...finished, proportions: {...finished.proportions, scale: 30}}
+
+        expect(actions(finished, rescaled).proportions).toBe('recalculate')
+        expect(planModelUpdates(finished, rescaled))
+            .toContainEqual([['proportions', 'requiresUpdate'], true])
     })
 
     it('cannot be cleared by a later proportion change', () => {
