@@ -447,12 +447,12 @@ class _Map extends React.Component {
 
     // Polygon
 
-    enablePolygonDrawing(callback) {
+    enablePolygonDrawing(callback, getPath) {
         log.debug('enablePolygonDrawing')
         this.enterDrawingMode('polygon', ({map}) =>
             map.enablePolygonDrawing((...args) => {
                 callback && callback(...args)
-            })
+            }, getPath)
         )
     }
 
