@@ -3,6 +3,7 @@ import React from 'react'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
+import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
@@ -52,13 +53,10 @@ const fields = {
 }
 
 class _Options extends React.Component {
+    state = {advanced: false}
+
     render() {
-        const {
-            inputs: {
-                changeDirection, minMagnitude, maxSegments, spikeThreshold, vertexCountOvershoot,
-                preventOneYearRecovery, recoveryThreshold, pvalThreshold, bestModelProportion, minObservationsNeeded
-            }
-        } = this.props
+        const {advanced} = this.state
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -68,91 +66,177 @@ class _Options extends React.Component {
                     title={msg('process.landTrendr.panel.options.title')}/>
                 <Panel.Content>
                     <Layout>
-                        <Form.Buttons
-                            label={msg('process.landTrendr.panel.options.form.changeDirection.label')}
-                            tooltip={msg('process.landTrendr.panel.options.form.changeDirection.tooltip')}
-                            input={changeDirection}
-                            multiple={false}
-                            options={[
-                                {
-                                    value: 'GREATEST',
-                                    label: msg('process.landTrendr.panel.options.form.changeDirection.GREATEST.label'),
-                                    tooltip: msg('process.landTrendr.panel.options.form.changeDirection.GREATEST.tooltip')
-                                },
-                                {
-                                    value: 'LOSS',
-                                    label: msg('process.landTrendr.panel.options.form.changeDirection.LOSS.label'),
-                                    tooltip: msg('process.landTrendr.panel.options.form.changeDirection.LOSS.tooltip')
-                                },
-                                {
-                                    value: 'GAIN',
-                                    label: msg('process.landTrendr.panel.options.form.changeDirection.GAIN.label'),
-                                    tooltip: msg('process.landTrendr.panel.options.form.changeDirection.GAIN.tooltip')
-                                }
-                            ]}
-                        />
-                        <Form.Input
-                            label={msg('process.landTrendr.panel.options.form.minMagnitude.label')}
-                            tooltip={msg('process.landTrendr.panel.options.form.minMagnitude.tooltip')}
-                            input={minMagnitude}
-                            type='number'
-                        />
-                        <Form.Input
-                            label={msg('process.landTrendr.panel.options.form.maxSegments.label')}
-                            tooltip={msg('process.landTrendr.panel.options.form.maxSegments.tooltip')}
-                            input={maxSegments}
-                            type='number'
-                        />
-                        <Form.Input
-                            label={msg('process.landTrendr.panel.options.form.spikeThreshold.label')}
-                            tooltip={msg('process.landTrendr.panel.options.form.spikeThreshold.tooltip')}
-                            input={spikeThreshold}
-                            type='number'
-                        />
-                        <Form.Input
-                            label={msg('process.landTrendr.panel.options.form.vertexCountOvershoot.label')}
-                            tooltip={msg('process.landTrendr.panel.options.form.vertexCountOvershoot.tooltip')}
-                            input={vertexCountOvershoot}
-                            type='number'
-                        />
-                        <Form.Buttons
-                            label={msg('process.landTrendr.panel.options.form.preventOneYearRecovery.label')}
-                            tooltip={msg('process.landTrendr.panel.options.form.preventOneYearRecovery.tooltip')}
-                            input={preventOneYearRecovery}
-                            multiple={false}
-                            options={[
-                                {value: true, label: msg('button.enabled')},
-                                {value: false, label: msg('button.disabled')}
-                            ]}
-                        />
-                        <Form.Input
-                            label={msg('process.landTrendr.panel.options.form.recoveryThreshold.label')}
-                            tooltip={msg('process.landTrendr.panel.options.form.recoveryThreshold.tooltip')}
-                            input={recoveryThreshold}
-                            type='number'
-                        />
-                        <Form.Input
-                            label={msg('process.landTrendr.panel.options.form.pvalThreshold.label')}
-                            tooltip={msg('process.landTrendr.panel.options.form.pvalThreshold.tooltip')}
-                            input={pvalThreshold}
-                            type='number'
-                        />
-                        <Form.Input
-                            label={msg('process.landTrendr.panel.options.form.bestModelProportion.label')}
-                            tooltip={msg('process.landTrendr.panel.options.form.bestModelProportion.tooltip')}
-                            input={bestModelProportion}
-                            type='number'
-                        />
-                        <Form.Input
-                            label={msg('process.landTrendr.panel.options.form.minObservationsNeeded.label')}
-                            tooltip={msg('process.landTrendr.panel.options.form.minObservationsNeeded.tooltip')}
-                            input={minObservationsNeeded}
-                            type='number'
-                        />
+                        {this.renderChangeDirection()}
+                        {this.renderMinMagnitude()}
+                        {advanced ? this.renderAdvanced() : this.renderSimple()}
                     </Layout>
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons>
+                    <Button
+                        label={advanced ? msg('button.less') : msg('button.more')}
+                        onClick={() => this.setState(({advanced}) => ({advanced: !advanced}))}/>
+                </Form.PanelButtons>
             </RecipeFormPanel>
+        )
+    }
+
+    renderSimple() {
+        return this.renderMaxSegments()
+    }
+
+    renderAdvanced() {
+        return (
+            <div className={styles.twoColumns}>
+                {this.renderMaxSegments()}
+                {this.renderVertexCountOvershoot()}
+                {this.renderSpikeThreshold()}
+                {this.renderRecoveryThreshold()}
+                {this.renderPvalThreshold()}
+                {this.renderBestModelProportion()}
+                {this.renderMinObservationsNeeded()}
+                {this.renderPreventOneYearRecovery()}
+            </div>
+        )
+    }
+
+    renderChangeDirection() {
+        const {inputs: {changeDirection}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.landTrendr.panel.options.form.changeDirection.label')}
+                tooltip={msg('process.landTrendr.panel.options.form.changeDirection.tooltip')}
+                input={changeDirection}
+                multiple={false}
+                options={[
+                    {
+                        value: 'GREATEST',
+                        label: msg('process.landTrendr.panel.options.form.changeDirection.GREATEST.label'),
+                        tooltip: msg('process.landTrendr.panel.options.form.changeDirection.GREATEST.tooltip')
+                    },
+                    {
+                        value: 'LOSS',
+                        label: msg('process.landTrendr.panel.options.form.changeDirection.LOSS.label'),
+                        tooltip: msg('process.landTrendr.panel.options.form.changeDirection.LOSS.tooltip')
+                    },
+                    {
+                        value: 'GAIN',
+                        label: msg('process.landTrendr.panel.options.form.changeDirection.GAIN.label'),
+                        tooltip: msg('process.landTrendr.panel.options.form.changeDirection.GAIN.tooltip')
+                    }
+                ]}
+            />
+        )
+    }
+
+    renderMinMagnitude() {
+        const {inputs: {minMagnitude}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.landTrendr.panel.options.form.minMagnitude.label')}
+                tooltip={msg('process.landTrendr.panel.options.form.minMagnitude.tooltip')}
+                input={minMagnitude}
+                type='number'
+            />
+        )
+    }
+
+    renderMaxSegments() {
+        const {inputs: {maxSegments}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.landTrendr.panel.options.form.maxSegments.label')}
+                tooltip={msg('process.landTrendr.panel.options.form.maxSegments.tooltip')}
+                input={maxSegments}
+                type='number'
+            />
+        )
+    }
+
+    renderSpikeThreshold() {
+        const {inputs: {spikeThreshold}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.landTrendr.panel.options.form.spikeThreshold.label')}
+                tooltip={msg('process.landTrendr.panel.options.form.spikeThreshold.tooltip')}
+                input={spikeThreshold}
+                type='number'
+            />
+        )
+    }
+
+    renderVertexCountOvershoot() {
+        const {inputs: {vertexCountOvershoot}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.landTrendr.panel.options.form.vertexCountOvershoot.label')}
+                tooltip={msg('process.landTrendr.panel.options.form.vertexCountOvershoot.tooltip')}
+                input={vertexCountOvershoot}
+                type='number'
+            />
+        )
+    }
+
+    renderPreventOneYearRecovery() {
+        const {inputs: {preventOneYearRecovery}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.landTrendr.panel.options.form.preventOneYearRecovery.label')}
+                tooltip={msg('process.landTrendr.panel.options.form.preventOneYearRecovery.tooltip')}
+                input={preventOneYearRecovery}
+                multiple={false}
+                options={[
+                    {value: true, label: msg('button.enabled')},
+                    {value: false, label: msg('button.disabled')}
+                ]}
+            />
+        )
+    }
+
+    renderRecoveryThreshold() {
+        const {inputs: {recoveryThreshold}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.landTrendr.panel.options.form.recoveryThreshold.label')}
+                tooltip={msg('process.landTrendr.panel.options.form.recoveryThreshold.tooltip')}
+                input={recoveryThreshold}
+                type='number'
+            />
+        )
+    }
+
+    renderPvalThreshold() {
+        const {inputs: {pvalThreshold}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.landTrendr.panel.options.form.pvalThreshold.label')}
+                tooltip={msg('process.landTrendr.panel.options.form.pvalThreshold.tooltip')}
+                input={pvalThreshold}
+                type='number'
+            />
+        )
+    }
+
+    renderBestModelProportion() {
+        const {inputs: {bestModelProportion}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.landTrendr.panel.options.form.bestModelProportion.label')}
+                tooltip={msg('process.landTrendr.panel.options.form.bestModelProportion.tooltip')}
+                input={bestModelProportion}
+                type='number'
+            />
+        )
+    }
+
+    renderMinObservationsNeeded() {
+        const {inputs: {minObservationsNeeded}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.landTrendr.panel.options.form.minObservationsNeeded.label')}
+                tooltip={msg('process.landTrendr.panel.options.form.minObservationsNeeded.tooltip')}
+                input={minObservationsNeeded}
+                type='number'
+            />
         )
     }
 }

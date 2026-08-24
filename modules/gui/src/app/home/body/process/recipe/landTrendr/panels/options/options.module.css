@@ -1,3 +1,19 @@
 .panel {
-    max-width: 29rem;
+    /* Wider than the 29rem most twoColumns panels use (e.g. classification's
+       classifier.jsx) - LandTrendr's option labels ("Vertex count
+       overshoot", "Best model proportion") run longer than those panels'. */
+    max-width: 34rem;
+    min-height: 34rem;
+}
+
+.twoColumns {
+    display: grid;
+    /* minmax(0, 1fr), not plain 1fr - a bare 1fr track still respects its
+       content's min-content width, so a column with a long label (e.g.
+       "Vertex count overshoot") can push past the panel's edge instead of
+       sharing space evenly. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-gap: 2rem;
+    /* [HACK] Make sure input messages fit (they're absolutely positioned) */
+    padding-bottom: 1.5rem;
 }
