@@ -10,12 +10,11 @@ import {Combo} from '~/widget/combo'
 import {CrudItem} from '~/widget/crudItem'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
+import {NoData} from '~/widget/noData'
 
 import {BandSetSpec} from './bandSetSpec'
 
-// Combo builds each row's React key via [..., option.value, ...].join('|'),
-// which throws on a Symbol - a string sentinel is required here.
-const SELECT_ALL = '#SELECT_ALL#'
+const ADD_ALL_BANDS = Symbol('addAllBands')
 
 export class ImageForm extends Component {
     state = {loading: false}
@@ -50,17 +49,21 @@ export class ImageForm extends Component {
     }
 
     renderBandSetSpec(bandSetSpec) {
+        const imageBands = bandSetSpec.type === 'IMAGE_BANDS'
         return (
             <ListItem
                 key={bandSetSpec.id}
-                expanded={bandSetSpec.included.length}
+                expanded={imageBands || bandSetSpec.included.length}
                 expansion={this.renderSelection(bandSetSpec)}>
                 <CrudItem
                     title={BandSetSpec.renderTitle(bandSetSpec)}
                     inlineComponents={this.renderAddButton(bandSetSpec)}
-                    unsafeRemove
-                    removeDisabled={bandSetSpec.type === 'IMAGE_BANDS'}
-                    onRemove={() => this.removeBandSetSpec(bandSetSpec)}
+                    unsafeRemove={!imageBands}
+                    removeConfirmationLabel={imageBands ? msg('button.removeAll') : undefined}
+                    removeDisabled={imageBands && !bandSetSpec.included.length}
+                    onRemove={() => imageBands
+                        ? this.removeAllSelections(bandSetSpec)
+                        : this.removeBandSetSpec(bandSetSpec)}
                 />
             </ListItem>
         )
@@ -69,16 +72,19 @@ export class ImageForm extends Component {
     renderSelection(bandSetSpec) {
         return (
             <ButtonGroup>
-                {bandSetSpec.included.map(value =>
-                    <Button
-                        key={value}
-                        label={value}
-                        size='small'
-                        air='less'
-                        onClick={() => this.removeSelection(bandSetSpec, value)}
-                        icon='times'
-                    />
-                )}
+                {bandSetSpec.included.length
+                    ? bandSetSpec.included.map(value =>
+                        <Button
+                            key={value}
+                            label={value}
+                            size='small'
+                            air='less'
+                            onClick={() => this.removeSelection(bandSetSpec, value)}
+                            icon='times'
+                        />
+                    )
+                    : <NoData message={msg('process.panels.inputImagery.form.noBands')}/>
+                }
             </ButtonGroup>
         )
     }
@@ -88,8 +94,15 @@ export class ImageForm extends Component {
         const options = BandSetSpec
             .options(bandSetSpec, bands.value)
             .filter(({value}) => !bandSetSpec.included.includes(value))
-        const comboOptions = options.length
-            ? [{value: SELECT_ALL, label: msg('process.classification.panel.inputImagery.bandSetSpec.addAllBands.label')}, ...options]
+        const comboOptions = options.length > 1
+            ? [
+                {
+                    key: 'add-all-bands',
+                    value: ADD_ALL_BANDS,
+                    label: msg('process.classification.panel.inputImagery.bandSetSpec.addBands.all.label')
+                },
+                ...options
+            ]
             : options
         return (
             <ButtonPopup
@@ -100,6 +113,7 @@ export class ImageForm extends Component {
                 showPopupOnMount={!bandSetSpec.included.length && bands.value?.length}
                 vPlacement='below'
                 hPlacement='over-left'
+                disabled={!options.length}
                 tooltip={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.tooltip')}>
                 {onBlur => (
                     <Combo
@@ -112,7 +126,7 @@ export class ImageForm extends Component {
                         allowClear
                         onCancel={onBlur}
                         onChange={({value}) => {
-                            if (value === SELECT_ALL) {
+                            if (value === ADD_ALL_BANDS) {
                                 this.addAllSelection(bandSetSpec, options)
                             } else {
                                 this.addSelection(bandSetSpec, value)
@@ -150,6 +164,12 @@ export class ImageForm extends Component {
     removeSelection(bandSetSpec, value) {
         const {inputs: {bandSetSpecs}} = this.props
         const updated = mutate(bandSetSpecs.value, [{id: bandSetSpec.id}, 'included', value]).del()
+        bandSetSpecs.set(updated)
+    }
+
+    removeAllSelections(bandSetSpec) {
+        const {inputs: {bandSetSpecs}} = this.props
+        const updated = mutate(bandSetSpecs.value, [{id: bandSetSpec.id}, 'included']).set([])
         bandSetSpecs.set(updated)
     }
 
