@@ -2180,6 +2180,9 @@
               "placeholder": "Select bands...",
               "tooltip": "Add bands"
             },
+            "addAllBands": {
+              "label": "All bands"
+            },
             "imageBands": {
               "label": "Image bands"
             },
