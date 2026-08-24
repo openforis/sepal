@@ -14,9 +14,9 @@ const worker$ = ({
 }) => {
 
     const {getImage$} = ImageFactory(recipe, {selection: [band]})
-    // Resolve the AOI to an EE geometry up front: ASSET/RECIPE AOIs need an async lookup (the sync
-    // toGeometry returns the raw object for those, which can't be used as a geometry). ASSET_BOUNDS can't
-    // be resolved without source-image context, so it's left to the mapBounds / image-geometry fallback.
+    // Resolve the AOI to an EE geometry up front: ASSET/RECIPE AOIs need an async lookup. ASSET_BOUNDS
+    // can't be resolved without source-image context, so it's left to the mapBounds / image-geometry
+    // fallback.
     const aoiGeometry$ = aoi && aoi.type !== 'ASSET_BOUNDS'
         ? toGeometry$(aoi)
         : of(null)
