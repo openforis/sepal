@@ -1,4 +1,26 @@
+import {TerraDraw, TerraDrawPolygonMode} from 'terra-draw'
+
 import {ADAPTER_MEMBERS, otherPolygonIds, toAdapterLib, toBounds, toPolygonFeature, toPolygonPath} from './drawing'
+
+const createDrawing = () => {
+    const adapter = {
+        getCoordinatePrecision: () => 9,
+        project: (lng, lat) => ({x: lng, y: lat}),
+        unproject: (x, y) => ({lng: x, lat: y}),
+        setDoubleClickToZoom: () => {},
+        setCursor: () => {},
+        register: () => {},
+        unregister: () => {},
+        render: () => {},
+        clear: () => {},
+        setDraggability: () => {},
+        getLngLatFromEvent: () => null
+    }
+    const drawing = new TerraDraw({adapter, modes: [new TerraDrawPolygonMode()]})
+    drawing.start()
+    drawing.setMode('polygon')
+    return drawing
+}
 
 const rectangle = ([west, south], [east, north]) => feature([
     [west, south], [east, south], [east, north], [west, north], [west, south]
@@ -103,5 +125,19 @@ describe('toPolygonFeature', () => {
 
     it('round-trips through toPolygonPath', () => {
         expect(toPolygonPath(toPolygonFeature(path))).toEqual(path)
+    })
+
+    it('loads polygon paths saved by the previous Google drawing implementation', () => {
+        const legacyPath = [
+            [12.462927350619111, 41.87303911003311],
+            [12.462927350619111, 41.843888713632325],
+            [12.510992536165986, 41.846190543809854],
+            [12.51064921341208, 41.87303911003311],
+            [12.462927350619111, 41.87303911003311]
+        ]
+
+        const [validation] = createDrawing().addFeatures([toPolygonFeature(legacyPath)])
+
+        expect(validation.valid, validation.reason).toBe(true)
     })
 })

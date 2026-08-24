@@ -5,7 +5,14 @@ import {TerraDrawGoogleMapsAdapter} from 'terra-draw-google-maps-adapter'
 
 import {getLogger} from '~/log'
 
-import {otherPolygonIds, toAdapterLib, toBounds, toPolygonFeature, toPolygonPath} from './drawing'
+import {
+    DRAWING_COORDINATE_PRECISION,
+    otherPolygonIds,
+    toAdapterLib,
+    toBounds,
+    toPolygonFeature,
+    toPolygonPath
+} from './drawing'
 
 const log = getLogger('sepalMap')
 
@@ -111,6 +118,10 @@ export class SepalMap {
     }
     drawing = null
     drawingListener = null
+    drawingChangeListener = null
+    drawingChangesSuppressed = false
+    drawingFeatureId = null
+    polygonPreview = null
 
     getGoogle() {
         return {
@@ -163,7 +174,11 @@ export class SepalMap {
         if (!this.drawing) {
             const lib = toAdapterLib(google)
             this.drawing = new TerraDraw({
-                adapter: new TerraDrawGoogleMapsAdapter({lib, map: googleMap}),
+                adapter: new TerraDrawGoogleMapsAdapter({
+                    lib,
+                    map: googleMap,
+                    coordinatePrecision: DRAWING_COORDINATE_PRECISION
+                }),
                 modes: [
                     new TerraDrawPolygonMode({
                         styles: this.polygonStyles(),
@@ -187,11 +202,53 @@ export class SepalMap {
         drawing.addFeatures([toPolygonFeature(toPolygonPath(feature))])
     }
 
-    enableDrawingMode(mode, callback, {retain = false} = {}) {
+    clearPolygonPreview() {
+        if (this.polygonPreview) {
+            this.polygonPreview.setMap(null)
+            this.polygonPreview = null
+        }
+    }
+
+    setPolygonPreview(path) {
+        if (!this.polygonPreview) {
+            this.drawingChangesSuppressed = true
+            try {
+                this.drawing.clear()
+            } finally {
+                this.drawingChangesSuppressed = false
+            }
+            this.polygonPreview = new this.google.maps.Polygon(this.drawingOptions)
+            this.polygonPreview.setMap(this.googleMap)
+        }
+        this.polygonPreview.setPath(path.map(([lng, lat]) => ({lng, lat})))
+    }
+
+    setPolygonDrawing(path) {
+        const {drawing} = this
+        this.clearPolygonPreview()
+        this.drawingChangesSuppressed = true
+        try {
+            if (!path?.length) {
+                drawing.clear()
+                return
+            }
+            const [validation] = drawing.addFeatures([toPolygonFeature(path)])
+            if (validation.valid) {
+                this.retainOnly(drawing, drawing.getSnapshotFeature(validation.id))
+            } else {
+                log.warn(`Saved polygon could not be loaded for editing: ${validation.reason}`)
+            }
+        } finally {
+            this.drawingChangesSuppressed = false
+        }
+    }
+
+    enableDrawingMode(mode, callback, {retain = false, onChange} = {}) {
         this.disableDrawingMode()
         const drawing = this.getDrawing()
         // Editing an existing shape finishes too, as an 'edit' or 'deleteCoordinate'.
         this.drawingListener = id => {
+            this.clearPolygonPreview()
             const feature = drawing.getSnapshotFeature(id)
             if (retain) {
                 this.retainOnly(drawing, feature)
@@ -205,6 +262,25 @@ export class SepalMap {
             }
         }
         drawing.on('finish', this.drawingListener)
+        if (onChange) {
+            this.drawingChangeListener = (ids, type, context) => {
+                if (this.drawingChangesSuppressed || context?.origin === 'api') {
+                    return
+                }
+                const feature = ids
+                    .map(id => drawing.getSnapshotFeature(id))
+                    .find(feature => feature?.geometry.type === 'Polygon' && feature.properties.mode === mode)
+                if (feature) {
+                    this.clearPolygonPreview()
+                    this.drawingFeatureId = feature.id
+                    onChange(feature)
+                } else if (type === 'delete' && ids.includes(this.drawingFeatureId)) {
+                    this.drawingFeatureId = null
+                    onChange(null)
+                }
+            }
+            drawing.on('change', this.drawingChangeListener)
+        }
         if (!drawing.enabled) {
             drawing.start()
         }
@@ -212,13 +288,20 @@ export class SepalMap {
     }
 
     disableDrawingMode() {
-        const {drawing, drawingListener} = this
+        const {drawing, drawingListener, drawingChangeListener} = this
+        this.clearPolygonPreview()
         if (drawing) {
             if (drawingListener) {
                 drawing.off('finish', drawingListener)
                 this.drawingListener = null
             }
+            if (drawingChangeListener) {
+                drawing.off('change', drawingChangeListener)
+                this.drawingChangeListener = null
+            }
+            this.drawingFeatureId = null
             if (drawing.enabled) {
+                drawing.setMode('static')
                 drawing.stop()
             }
         }
@@ -333,17 +416,14 @@ export class SepalMap {
 
     // Polygon
 
-    enablePolygonDrawing(callback, getPath) {
+    enablePolygonDrawing(callback, getPath, onChange) {
         log.debug('enablePolygonDrawing')
-        this.enableDrawingMode('polygon', feature => callback(toPolygonPath(feature)), {retain: true})
+        this.enableDrawingMode('polygon', feature => callback(toPolygonPath(feature)), {
+            retain: true,
+            onChange: onChange && (feature => onChange(feature ? toPolygonPath(feature) : null))
+        })
         const path = getPath && getPath()
-        if (path?.length) {
-            // Rejected features are dropped rather than thrown, so the aoi would just be absent.
-            const [validation] = this.drawing.addFeatures([toPolygonFeature(path)])
-            if (validation && !validation.valid) {
-                log.warn(`Saved polygon could not be loaded for editing: ${validation.reason}`)
-            }
-        }
+        this.setPolygonDrawing(path)
     }
 
     disablePolygonDrawing() {

@@ -1,5 +1,7 @@
 const ring = ({geometry: {coordinates}}) => coordinates[0]
 
+export const DRAWING_COORDINATE_PRECISION = 9
+
 const isClosed = ring => {
     if (ring.length < 2) {
         return false
@@ -18,14 +20,23 @@ export const toPolygonPath = feature => {
 }
 
 // TerraDrawPolygonMode matches on `mode` to decide a feature is its own, and so editable.
-export const toPolygonFeature = path => ({
-    type: 'Feature',
-    properties: {mode: 'polygon'},
-    geometry: {
-        type: 'Polygon',
-        coordinates: [isClosed(path) ? path : [...path, path[0]]]
+export const toPolygonFeature = path => {
+    const normalizedPath = path.map(coordinate =>
+        coordinate.map(value => Number(value.toFixed(DRAWING_COORDINATE_PRECISION)))
+    )
+    return {
+        type: 'Feature',
+        properties: {mode: 'polygon'},
+        geometry: {
+            type: 'Polygon',
+            coordinates: [
+                isClosed(normalizedPath)
+                    ? normalizedPath
+                    : [...normalizedPath, normalizedPath[0]]
+            ]
+        }
     }
-})
+}
 
 export const toBounds = feature => {
     const coordinates = ring(feature)
