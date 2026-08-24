@@ -19,6 +19,12 @@ export const recipeTypeTags = recipeTypes =>
 export const nextTagFilter = (tagFilter, prevTagFilter) =>
     tagFilter !== prevTagFilter ? tagFilter : IGNORE
 
+// The panel's cleared state, reapplied every time it closes.
+export const noFilters = () => ({
+    textFilterValues: [],
+    tagFilter: IGNORE
+})
+
 const matchesTagFilter = (recipeType, tagFilter) =>
     tagFilter === IGNORE || !!recipeType.tags?.includes(tagFilter)
 

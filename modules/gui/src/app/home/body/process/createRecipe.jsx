@@ -21,7 +21,7 @@ import {Panel} from '~/widget/panel/panel'
 import {SearchBox} from '~/widget/searchBox'
 
 import styles from './createRecipe.module.css'
-import {filterRecipeTypes, IGNORE, nextTagFilter, recipeTypeTags} from './createRecipeFilter'
+import {filterRecipeTypes, IGNORE, nextTagFilter, noFilters, recipeTypeTags} from './createRecipeFilter'
 import {getRecipeType} from './recipeTypeRegistry'
 
 const mapStateToProps = state => {
@@ -84,9 +84,8 @@ class _CreateRecipe extends React.Component {
 
     state = {
         selectedRecipeType: null,
-        textFilterValues: [],
         tags: [],
-        tagFilter: IGNORE
+        ...noFilters()
     }
 
     render() {
@@ -202,10 +201,8 @@ class _CreateRecipe extends React.Component {
     }
 
     renderSearch() {
-        const {filterValue} = this.props
         return (
             <SearchBox
-                value={filterValue}
                 placeholder={msg('process.recipe.newRecipe.search.placeholder')}
                 debounce={0}
                 onSearchValue={this.setTextFilter}
@@ -281,6 +278,10 @@ class _CreateRecipe extends React.Component {
         }))
     }
 
+    resetFilters() {
+        this.setState(noFilters())
+    }
+
     getFilteredRecipeTypes() {
         const {recipeTypes} = this.props
         const {textFilterValues, tagFilter} = this.state
@@ -302,10 +303,14 @@ class _CreateRecipe extends React.Component {
         this.updateTags()
     }
 
-    componentDidUpdate({recipeTypes: prevRecipeTypes}) {
-        const {recipeTypes} = this.props
+    componentDidUpdate({recipeTypes: prevRecipeTypes, panel: prevPanel}) {
+        const {recipeTypes, panel} = this.props
         if (!_.isEqual(recipeTypes, prevRecipeTypes)) {
             this.updateTags()
+        }
+        // The component outlives the panel, so its filters have to be cleared explicitly.
+        if (prevPanel && !panel) {
+            this.resetFilters()
         }
     }
 }

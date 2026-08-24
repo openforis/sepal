@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {filterRecipeTypes, IGNORE, nextTagFilter, recipeTypeTags} from './createRecipeFilter'
+import {filterRecipeTypes, IGNORE, nextTagFilter, noFilters, recipeTypeTags} from './createRecipeFilter'
 
 // Mirrors the real registry: shared tags, multiple tags, and recipe types
 // declaring no tags at all (bandMath, classification, remapping, ...).
@@ -60,5 +60,15 @@ describe('nextTagFilter', () => {
 
     it('stays unfiltered when the "All" chip is picked again', () => {
         expect(nextTagFilter(IGNORE, IGNORE)).toBe(IGNORE)
+    })
+})
+
+describe('noFilters', () => {
+    it('is a state the filter treats as showing everything', () => {
+        expect(ids(filterRecipeTypes({recipeTypes, ...noFilters()}))).toEqual(['MOSAIC', 'RADAR_MOSAIC', 'CHANGE_ALERTS', 'CLASSIFICATION'])
+    })
+
+    it('hands out a fresh text filter array each time, so resets cannot alias', () => {
+        expect(noFilters().textFilterValues).not.toBe(noFilters().textFilterValues)
     })
 })
