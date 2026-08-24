@@ -2305,7 +2305,27 @@
             "columnValues": "Column value(s)",
             "enterExpression": "Enter expression",
             "noColumValuesSelected": "No column value selected for this class",
-            "removeColumnValue": "Remove column value"
+            "removeColumnValue": "Remove column value",
+            "trainingDataRefinement": {
+              "title": "Training Data Refinement"
+            },
+            "sampleMode": {
+              "label": "Reduction method",
+              "PERCENTAGE": {
+                "label": "Percentage"
+              },
+              "CUSTOM_NUMBER": {
+                "label": "Custom number"
+              }
+            },
+            "samplePercentage": {
+              "label": "Sample %",
+              "tooltip": "Use only a percentage of the loaded points for each class, rather than all of them. The full set is kept, so this can be adjusted at any time without re-uploading.",
+              "value": "Use {percentage}% of the points in each class"
+            },
+            "sampleCountByClass": {
+              "placeholder": "All"
+            }
           },
           "clearCollected": {
             "confirmation": {

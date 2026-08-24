@@ -54,7 +54,7 @@ class _PanelSections extends React.Component {
     }
 
     renderButtons() {
-        const {step, defaultButtons} = this.props
+        const {step, defaultButtons, extraButtons} = this.props
         const section = this.findSection()
         if (!section.steps) {
             return section.buttons || defaultButtons
@@ -69,14 +69,16 @@ class _PanelSections extends React.Component {
                     last={last}
                     closable
                     onBack={() => step.set(step.value - 1)}
-                    onNext={() => step.set(step.value + 1)}
-                />
+                    onNext={() => step.set(step.value + 1)}>
+                    {extraButtons}
+                </Form.PanelButtons>
             )
         }
     }
 
     shouldComponentUpdate(nextProps) {
         return nextProps.inputs !== this.props.inputs
+            || nextProps.extraButtons !== this.props.extraButtons
     }
 
     componentDidMount() {
@@ -123,6 +125,7 @@ PanelSections.propTypes = {
     sections: PropTypes.array.isRequired,
     selected: PropTypes.any.isRequired, // input field
     defaultButtons: PropTypes.any,
+    extraButtons: PropTypes.any, // rendered bottom-left, inline with Back/Next/Done
     icon: PropTypes.string,
     label: PropTypes.string,
     shared: PropTypes.array,
