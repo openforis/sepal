@@ -586,12 +586,6 @@
       "copy": "",
       "coordinatesCopied": ""
     },
-    "featureLayer": {
-      "toggle": {
-        "show": "",
-        "hide": ""
-      }
-    },
     "featureLayerStyle": {
       "title": "",
       "tooltip": "",
@@ -661,6 +655,20 @@
       "opacity": "",
       "opacityControl": {
         "tooltip": ""
+      }
+    },
+    "labelsLayerStyle": {
+      "categories": {
+        "label": "",
+        "administrative": "",
+        "landscape": "",
+        "poi": "",
+        "road": "",
+        "transit": "",
+        "water": ""
+      },
+      "opacity": {
+        "fixed": ""
       }
     },
     "legendBuilder": {
