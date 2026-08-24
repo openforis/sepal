@@ -19,8 +19,8 @@ const pyramidingPolicy = bands => {
 
 export const defaultModel = {
     dates: {
-        startYear: 1985,
-        endYear: moment().year()
+        startYear: 2000,
+        endYear: moment().year() - 1
     },
     sources: {
         cloudPercentageThreshold: 75,
