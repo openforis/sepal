@@ -1,6 +1,5 @@
-import {gridPixelSize} from '#sepal/recipe/samplingDesign/samplingGrid'
-
 import {effectiveArrangement} from '#sepal/ee/samplingDesign/effectiveArrangement'
+import {gridPixelSize} from '#sepal/recipe/samplingDesign/samplingGrid'
 
 describe('effectiveArrangement four-mode matrix', () => {
     // Conflicting CRS on each side, so a mode that reads the wrong grid is visible: Stratification is
