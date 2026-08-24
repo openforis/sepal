@@ -191,7 +191,7 @@ export const updateCurrentUserSession$ = session =>
         tap(() =>
             actionBuilder('UPDATE_USER_SESSION_POSTED', {session})
                 .assign(['user.currentUserReport.sessions', {id: session.id}], {
-                    earliestTimeoutHours: session.keepAlive
+                    timeoutHours: session.keepAlive
                 })
                 .dispatch()
         )

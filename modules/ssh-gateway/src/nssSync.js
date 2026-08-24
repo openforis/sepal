@@ -5,7 +5,7 @@ import {initMessageQueue} from '#sepal/messageQueue'
 
 const log = getLogger('nss-sync')
 
-const USER_NODE_URL = process.env.USER_NODE_URL || 'http://user-node'
+const USER_URL = process.env.USER_URL || 'http://user'
 const AMQP_URI = process.env.AMQP_URI || `amqp://${process.env.RABBITMQ_HOST || 'rabbitmq'}`
 const INTERVAL_MS = Number(process.env.NSS_SYNC_INTERVAL_MS || 60000)
 const DIR = '/var/lib/extrausers'
@@ -24,7 +24,7 @@ const writeAtomic = async (file, content) => {
 }
 
 const sync = async () => {
-    const res = await fetch(`${USER_NODE_URL}/nss/snapshot`, etag ? {headers: {'If-None-Match': etag}} : {})
+    const res = await fetch(`${USER_URL}/nss/snapshot`, etag ? {headers: {'If-None-Match': etag}} : {})
     if (res.status === 304) {
         return
     }

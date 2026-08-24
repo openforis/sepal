@@ -12,8 +12,9 @@ const fetchAppsFromApi$ = () => {
     return get$(apiUrl, {
         username: sepalAdminUsername,
         password: sepalAdminPassword,
+        responseType: 'json'
     }).pipe(
-        map(response => JSON.parse(response.body)),
+        map(({body}) => body),
         catchError(error => {
             log.error('Failed to fetch apps from API:', error)
             return EMPTY
@@ -22,8 +23,8 @@ const fetchAppsFromApi$ = () => {
 }
 
 const fetchCatalog$ = url =>
-    get$(url).pipe(
-        map(response => JSON.parse(response.body)),
+    get$(url, {responseType: 'json'}).pipe(
+        map(({body}) => body),
         catchError(error => {
             log.error(`Failed to fetch apps catalog from ${url}:`, error)
             return EMPTY

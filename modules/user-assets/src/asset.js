@@ -20,11 +20,12 @@ const getAsset$ = (user, id = '') => {
         headers: {
             'sepal-user': getSepalUserHeader(user)
         },
+        responseType: 'json',
         retry: {
             maxRetries: 0
         }
     }).pipe(
-        map(({body}) => JSON.parse(body))
+        map(({body}) => body)
     )
 }
 
@@ -37,9 +38,7 @@ const deleteAsset$ = (user, id) =>
         retry: {
             maxRetries: 0
         }
-    }).pipe(
-        // map(({body}) => JSON.parse(body))
-    )
+    })
 
 const createFolder$ = (user, id) =>
     postJson$(CREATE_FOLDER_URL, {

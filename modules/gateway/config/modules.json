@@ -1,17 +1,21 @@
 {
   "appLauncher" : "app-launcher",
   "appManager": "app-manager",
+  "budget": "budget",
   "ceoGateway": "ceo-gateway",
   "email": "email",
+  "message": "message",
+  "recipe": "recipe",
   "gee": "gee",
   "gui": "gui",
-  "sandbox": "sepal:9191",
   "sepal": "sepal",
+  "sandbox": "sepal:9191",
+  "worker": "worker",
+  "sceneMetadata": "scene-metadata",
   "sysMonitor": "sys-monitor",
   "terminal": "terminal",
   "user": "user",
   "userAssets": "user-assets",
   "userFiles": "user-files",
-  "userNode": "user-node",
   "userStorage": "user-storage"
 }

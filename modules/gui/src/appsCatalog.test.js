@@ -148,6 +148,22 @@ describe('normalizeAppsCatalog', () => {
         expect(child.logo).toBeUndefined()
         expect(child.logoRef).toBe('')
     })
+
+    it('bundle children inherit parent requirements unless overridden', () => {
+        const spec = {apps: [{
+            id: 'bundle', label: 'Bundle', endpoint: 'docker', path: '/api/app-launcher/bundle',
+            requirements: {minRamGiB: 8, minCpuCount: 2},
+            apps: [
+                {id: 'a', label: 'A'},
+                {id: 'b', label: 'B', requirements: {minRamGiB: 16, minCpuCount: 4, minGpuCount: 1}}
+            ]
+        }]}
+        const {apps} = normalizeAppsCatalog(spec)
+        const a = apps.find(({id}) => id === 'a')
+        const b = apps.find(({id}) => id === 'b')
+        expect(a.requirements).toEqual({minRamGiB: 8, minCpuCount: 2})
+        expect(b.requirements).toEqual({minRamGiB: 16, minCpuCount: 4, minGpuCount: 1})
+    })
 })
 
 describe('logoUrl', () => {

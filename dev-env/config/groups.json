@@ -2,6 +2,7 @@
     "default": [
         "app-launcher",
         "app-manager",
+        "budget",
         "caddy",
         "ceo-gateway",
         "email",
@@ -10,15 +11,17 @@
         "gui",
         "logger",
         "mysql",
+        "message",
         "rabbitmq",
+        "recipe",
         "scene-metadata",
-        "sepal-server",
         "ssh-gateway",
         "terminal",
+        "user",
         "user-assets",
         "user-files",
-        "user-node",
-        "user-storage"
+        "user-storage",
+        "worker"
     ],
     "process": [
         "app-launcher",
@@ -29,8 +32,8 @@
         "gui",
         "mysql",
         "rabbitmq",
-        "sepal-server",
-        "user-node"
+        "worker",
+        "user"
     ],
     "apps": [
         "app-manager",
@@ -39,29 +42,33 @@
         "gui",
         "mysql",
         "rabbitmq",
-        "sepal-server",
+        "worker",
         "ssh-gateway",
         "terminal",
-        "user-node",
+        "user",
         "app-launcher"
     ],
     "node": [
         "app-launcher",
         "app-manager",
+        "budget",
         "ceo-gateway",
         "email",
         "gateway",
         "gee",
         "gui",
+        "message",
+        "recipe",
         "r-proxy",
         "scene-metadata",
         "ssh-gateway",
         "sys-monitor",
         "task",
         "terminal",
+        "user",
         "user-assets",
         "user-files",
-        "user-node",
-        "user-storage"
+        "user-storage",
+        "worker"
     ]
 }

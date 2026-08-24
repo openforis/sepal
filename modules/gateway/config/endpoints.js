@@ -26,61 +26,61 @@ const endpoints = [
     {
         prefix: false,
         path: '/api/user/password/reset-request',
-        target: `http://${modules.userNode}/password/reset-request`,
+        target: `http://${modules.user}/password/reset-request`,
         authenticate: false
     },
     {
         prefix: false,
         path: '/api/user/password/reset',
-        target: `http://${modules.userNode}/password/reset`,
+        target: `http://${modules.user}/password/reset`,
         authenticate: false
     },
     {
         prefix: false,
         path: '/api/user/activate',
-        target: `http://${modules.userNode}/activate`,
+        target: `http://${modules.user}/activate`,
         authenticate: false
     },
     {
         prefix: false,
         path: '/api/user/validate',
-        target: `http://${modules.userNode}/validate`,
+        target: `http://${modules.user}/validate`,
         authenticate: false
     },
     {
         prefix: false,
         path: '/api/user/signup',
-        target: `http://${modules.userNode}/signup`,
+        target: `http://${modules.user}/signup`,
         authenticate: false
     },
     {
         prefix: false,
         path: '/api/user/google/access-request-callback',
-        target: `http://${modules.userNode}/google/access-request-callback`,
+        target: `http://${modules.user}/google/access-request-callback`,
         authenticate: false
     },
     {
         prefix: true,
         path: '/api/user',
-        target: `http://${modules.userNode}`,
+        target: `http://${modules.user}`,
         authenticate: true
     },
     {
         prefix: true,
         path: '/api/processing-recipes',
-        target: `http://${modules.sepal}/api/processing-recipes`,
+        target: `http://${modules.recipe}`,
         authenticate: true
     },
     {
         prefix: true,
         path: '/api/budget',
-        target: `http://${modules.sepal}/api/budget`,
+        target: `http://${modules.budget}/budget`,
         authenticate: true
     },
     {
         prefix: true,
-        path: '/api/notification',
-        target: `http://${modules.sepal}/api/notification`,
+        path: '/api/message',
+        target: `http://${modules.message}`,
         authenticate: true
     },
     {
@@ -100,19 +100,30 @@ const endpoints = [
     {
         prefix: true,
         path: '/api/tasks',
-        target: `http://${modules.sepal}/api/tasks`,
+        target: `http://${modules.worker}/tasks`,
         authenticate: true
+    },
+    {
+        // The expiry email's extend link. Unauthenticated by design: it is clicked from a mail
+        // client, typically on a phone with no SEPAL session, and the HMAC token in the path
+        // carries its own authority. Registered BEFORE /api/sessions so the authenticated
+        // catch-all does not swallow it.
+        prefix: true,
+        path: '/api/sessions/extend',
+        target: `http://${modules.worker}/sessions/extend`,
+        authenticate: false,
+        noCache: true
     },
     {
         prefix: true,
         path: '/api/sessions',
-        target: `http://${modules.sepal}/api/sessions`,
+        target: `http://${modules.worker}/sessions`,
         authenticate: true
     },
     {
         prefix: true,
-        path: '/api/data',
-        target: `http://${modules.sepal}/api/data`,
+        path: '/api/scene-metadata',
+        target: `http://${modules.sceneMetadata}`,
         authenticate: true
     },
     {
@@ -126,20 +137,6 @@ const endpoints = [
         path: '/api/apps',
         target: `http://${modules.appManager}`,
         authenticate: true
-    },
-    {
-        prefix: true,
-        path: '/api/sandbox/jupyter',
-        target: `http://${modules.sandbox}/jupyter/api/sandbox/jupyter/`,
-        authenticate: true,
-        rewrite: false
-    },
-    {
-        prefix: true,
-        path: '/api/sandbox',
-        target: `http://${modules.sandbox}`,
-        authenticate: true,
-        rewrite: true
     },
     {
         prefix: true,
@@ -174,6 +171,12 @@ const endpoints = [
     },
     {
         prefix: false,
+        path: '/api/worker/metrics',
+        target: `http://${modules.worker}/metrics`,
+        authenticate: true
+    },
+    {
+        prefix: false,
         path: '/privacy-policy',
         target: `http://${modules.gui}/resource/privacy-policy.html`,
         authenticate: false,
@@ -192,8 +195,24 @@ const webSocketEndpoints = [
         sendGoogleAccessToken: true
     },
     {
-        module: 'user-node',
-        target: `ws://${modules.userNode}/ws`
+        module: 'user',
+        target: `ws://${modules.user}/ws`
+    },
+    {
+        module: 'worker/task',
+        target: `ws://${modules.worker}/task/ws`
+    },
+    {
+        module: 'worker/session',
+        target: `ws://${modules.worker}/session/ws`
+    },
+    {
+        module: 'budget',
+        target: `ws://${modules.budget}/ws`
+    },
+    {
+        module: 'message',
+        target: `ws://${modules.message}/ws`
     }
 ]
 

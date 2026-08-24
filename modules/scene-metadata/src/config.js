@@ -4,6 +4,7 @@ import {getLogger} from '#sepal/log'
 
 const log = getLogger('config')
 
+const DEFAULT_PORT = 80
 const DEFAULT_UPDATE_INTERVAL_MINUTES = 60
 const DEFAULT_MIN_HOURS_PUBLISHED = 24
 
@@ -17,6 +18,12 @@ const program = new Command()
 try {
     program
         .exitOverride()
+        .addOption(
+            new Option('--port <number>')
+                .env('HTTP_PORT')
+                .argParser(v => parseInt(v))
+                .default(DEFAULT_PORT)
+        )
         .addOption(
             new Option('--redis-host <value>')
                 .env('REDIS_HOST')
@@ -34,19 +41,32 @@ try {
                 .argParser(v => parseInt(v))
                 .default(DEFAULT_MIN_HOURS_PUBLISHED)
         )
+        .addOption(
+            new Option('--google-maps-api-key <value>')
+                .env('GOOGLE_MAPS_API_KEY')
+                .default('')
+        )
+        .addOption(
+            new Option('--nicfi-planet-api-key <value>')
+                .env('NICFI_PLANET_API_KEY')
+                .default('')
+        )
         .parse()
 } catch (error) {
     fatalError(error)
 }
 
 const {
+    port,
     redisHost,
     updateIntervalMinutes,
-    minHoursPublished
+    minHoursPublished,
+    googleMapsApiKey,
+    nicfiPlanetApiKey,
 } = program.opts()
 
-log.fatal('Configuration loaded')
+log.info('Configuration loaded')
 
 const redisUri = `redis://${redisHost}`
 
-export {minHoursPublished, redisUri, updateIntervalMinutes}
+export {googleMapsApiKey, minHoursPublished, nicfiPlanetApiKey, port, redisUri, updateIntervalMinutes}

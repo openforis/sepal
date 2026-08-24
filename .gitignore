@@ -11,8 +11,6 @@
 #Maven
 target
 
-#Gradle
-.gradle
 #bin
 build
 
@@ -23,10 +21,6 @@ build
 .settings
 
 #Sepal binaries
-/common/bin
-/common-test/bin
-/modules/user/bin
-/modules/sepal-server/bin
 
 #Vagrant
 .vagrant
@@ -51,16 +45,6 @@ node_modules/
 #IntelliJ
 *.iml
 .idea/
-/common/out/
-/common/out/production/classes/
-/common-test/out/
-/common-test/out/production/classes/
-/modules/sepal-server/out/
-/modules/sepal-server/out/production/classes/
-/modules/sepal-server/out/test/classes/
-/modules/user/out/
-/modules/user/out/production/classes/
-/modules/user/out/test/classes/
 
 # SEPAL data
 sepal-data/

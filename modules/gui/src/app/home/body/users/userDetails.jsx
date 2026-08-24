@@ -17,6 +17,7 @@ import {Panel} from '~/widget/panel/panel'
 import {UserActivity} from './userActivity'
 import styles from './userDetails.module.css'
 import {UserStatus} from './userStatus'
+import {UserUsage} from './userUsage'
 
 const isUniqueUser = (id, check) => !(select('users.users') || []).find(user => user.id !== id && check(user))
 
@@ -152,6 +153,7 @@ class _UserDetails extends React.Component {
                             textArea
                             minRows={4}
                         />
+                        <UserUsage username={username.value}/>
                         <Form.FieldSet
                             className={styles.monthlyLimits}
                             layout='horizontal'

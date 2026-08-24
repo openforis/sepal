@@ -88,8 +88,7 @@ const createAssetManager = ({send, stop$}) => {
             map(({user}) => user)
         )
     ).pipe(
-        mergeMap(user => from(onMonitor(user))),
-        share()
+        mergeMap(user => from(onMonitor(user)))
     )
 
     const onUnmonitor = async user => {
@@ -100,7 +99,14 @@ const createAssetManager = ({send, stop$}) => {
         return user
     }
 
-    const unmonitor$ = merge(
+    const unmonitor$ = new Subject()
+
+    // The unmonitor side effects (drop cached assets, push an empty tree) must run for every
+    // event, not only while some per-user subscriber happens to be attached: on a share()d
+    // pipe there is a zero-subscriber window (no user currently monitored) during which a
+    // token removal or user-down would be dropped, stranding a stale cached tree. A failing
+    // cleanup is logged and skipped so a single Redis hiccup cannot kill the stream.
+    merge(
         userDown$.pipe(
             tap(user => userStatus(user, 'down'))
         ),
@@ -109,9 +115,17 @@ const createAssetManager = ({send, stop$}) => {
             map(({user}) => user)
         )
     ).pipe(
-        mergeMap(user => from(onUnmonitor(user))),
-        share()
-    )
+        mergeMap(user => from(onUnmonitor(user)).pipe(
+            catchError(error => {
+                log.warn(`${userTag(user.username)} unmonitor failed`, error)
+                return EMPTY
+            })
+        )),
+        takeUntil(stop$)
+    ).subscribe({
+        next: user => unmonitor$.next(user),
+        error: error => log.error('Unexpected unmonitor stream error', error)
+    })
 
     const unmonitorCurrentUser$ = username =>
         unmonitor$.pipe(

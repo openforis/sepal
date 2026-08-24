@@ -23,7 +23,12 @@ sed -e '/AcceptEnv / s/^#*/#/' -i /etc/ssh/sshd_config
 # Disable message of the day and last log printout, disable options for speeding up access.
 # Authorized keys come from the per-user ~/.ssh/authorized_keys file (written from USER_PUBLIC_KEY at
 # container init); the old sss_ssh_authorizedkeys AuthorizedKeysCommand was dead config (LDAP removed).
+# Port 22 + 222: consumers (ssh-gateway, terminal) connect to port 222 — on AWS the host
+# publishes 222→22, but local dev reaches the container directly via a network alias, so
+# sshd must listen on 222 itself. Listing 22 too keeps the AWS mapping working unchanged.
 printf '%s\n' \
+    'Port 22' \
+    'Port 222' \
     'PrintMotd no' \
     'PrintLastLog no' \
     'UseDNS no' \

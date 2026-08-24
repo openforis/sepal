@@ -1,9 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import {catchError, map, of} from 'rxjs'
 
 import {isValidEarthEngineAssetId, sanitizeEarthEngineAssetId} from '#sepal/earthEngineExportNames'
-import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {copyToClipboard} from '~/clipboard'
 import {compose} from '~/compose'
@@ -21,7 +19,8 @@ import {Button} from './button'
 
 const mapStateToProps = state => ({
     projects: selectFrom(state, 'process.projects'),
-    assetRoots: selectFrom(state, 'assets.roots')
+    assetRoots: selectFrom(state, 'assets.roots'),
+    tasks: selectFrom(state, 'tasks')
 })
 
 const mapRecipeToProps = recipe => ({
@@ -230,14 +229,12 @@ class _AssetDestination extends React.Component {
         return projects.find(({id}) => id === projectId)
     }
 
-    checkTaskConflict$(assetId) {
-        return api.tasks.listExisting$({
-            outputPath: assetId,
-            destination: 'GEE',
-            status: 'PENDING,ACTIVE'
-        }).pipe(
-            map(tasks => ({conflict: tasks?.length > 0})),
-            catchError(error => of({error}))
+    hasTaskConflict(assetId) {
+        const {tasks} = this.props
+        return (tasks || []).some(({status, taskInfo}) =>
+            ['PENDING', 'ACTIVE'].includes(status)
+                && taskInfo?.destination === 'GEE'
+                && taskInfo?.outputPath === assetId
         )
     }
 
@@ -281,27 +278,22 @@ class _AssetDestination extends React.Component {
     }
 
     validateConflict(asset, validationSequence, currentType) {
-        const {addSubscription, assetInput, strategyInput} = this.props
-        addSubscription(
-            this.checkTaskConflict$(asset).subscribe(({error, conflict}) =>
-                this.completeValidation(validationSequence, () => {
-                    if (error) {
-                        assetInput.setInvalid(msg('widget.assetDestination.loadError'))
-                    } else if (conflict) {
-                        assetInput.setInvalid(msg('widget.assetDestination.taskPending'))
-                    } else if (currentType) {
-                        assetInput.setInvalid(msg(
-                            ['Image', 'ImageCollection', 'Table'].includes(currentType)
-                                ? 'widget.assetDestination.exists.replaceable'
-                                : 'widget.assetDestination.exists.notReplaceable'
-                        ))
-                    } else {
-                        assetInput.setInvalid(null)
-                        strategyInput.set('new')
-                    }
-                })
-            )
-        )
+        const {assetInput, strategyInput} = this.props
+        const conflict = this.hasTaskConflict(asset)
+        this.completeValidation(validationSequence, () => {
+            if (conflict) {
+                assetInput.setInvalid(msg('widget.assetDestination.taskPending'))
+            } else if (currentType) {
+                assetInput.setInvalid(msg(
+                    ['Image', 'ImageCollection', 'Table'].includes(currentType)
+                        ? 'widget.assetDestination.exists.replaceable'
+                        : 'widget.assetDestination.exists.notReplaceable'
+                ))
+            } else {
+                assetInput.setInvalid(null)
+                strategyInput.set('new')
+            }
+        })
     }
 
     startValidation() {

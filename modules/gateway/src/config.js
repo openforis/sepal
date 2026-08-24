@@ -6,6 +6,10 @@ const log = getLogger('config')
 
 const DEFAULT_HTTP_PORT = 80
 
+// Must match the worker's default instance type — the first tagged InstanceType in
+// modules/worker/src/hostingService/instanceTypes.js.
+const DEFAULT_SANDBOX_INSTANCE_TYPE = 'T3aSmall'
+
 const fatalError = error => {
     log.fatal(error)
     process.exit(1)
@@ -42,6 +46,11 @@ try {
                 .argParser(v => parseInt(v))
                 .default(DEFAULT_HTTP_PORT)
         )
+        .addOption(
+            new Option('--sandbox-default-instance-type <value>')
+                .env('SANDBOX_DEFAULT_INSTANCE_TYPE')
+                .default(DEFAULT_SANDBOX_INSTANCE_TYPE)
+        )
         .parse()
 } catch (error) {
     fatalError(error)
@@ -52,7 +61,8 @@ const {
     sepalAppsHost,
     amqpHost,
     redisHost,
-    port
+    port,
+    sandboxDefaultInstanceType
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -64,5 +74,6 @@ export {
     amqpUri,
     port,
     redisUri,
+    sandboxDefaultInstanceType,
     sepalAppsHost,
     sepalHost}

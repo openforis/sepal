@@ -2,8 +2,6 @@
 
 apt-get update && apt-get install -y software-properties-common
 
-apt-add-repository ppa:groovy-dev/groovy
-
 DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
     supervisor \
     openssh-server \
@@ -45,14 +43,14 @@ printf '%s\n' \
     'ForceCommand ssh-bootstrap' \
     >> /etc/ssh/sshd_config
 
-# Delegate password authentication to user-node
+# Delegate password authentication to the user module
 sed -i '1i auth sufficient pam_exec.so expose_authtok quiet /usr/local/bin/sepal-pam-auth' /etc/pam.d/sshd
 
-# Account management: SEPAL users live in user-node (NSS libnss-extrausers) with no local shadow
+# Account management: SEPAL users live in the user module (NSS libnss-extrausers) with no local shadow
 # entry, so the default common-account stage (pam_unix) can't resolve them and falls through to
 # pam_deny -- which rejects EVERY login at pam_acct_mgmt, even after a valid publickey/password.
 # (The old sssd setup supplied account management via pam_sss; dropping LDAP removed it.)
-# user-node is the source of truth for account status -- it only hands out authorized-keys and
+# The user module is the source of truth for account status -- it only hands out authorized-keys and
 # accepts passwords for ACTIVE users -- so a non-ACTIVE user can never pass the auth stage and reach
 # here. Accept any already-authenticated user at the account stage; pam_nologin still runs ahead of it.
 sed -i '/^@include common-account/i account sufficient pam_permit.so' /etc/pam.d/sshd

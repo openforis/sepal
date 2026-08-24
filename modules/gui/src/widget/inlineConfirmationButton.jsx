@@ -12,12 +12,6 @@ import {FloatingBox} from './floatingBox'
 import styles from './inlineConfirmationButton.module.css'
 
 class _InlineConfirmationButton extends React.Component {
-    ref = React.createRef()
-
-    state = {
-        showConfirmation: false
-    }
-
     constructor(props) {
         super(props)
         this.renderContents = this.renderContents.bind(this)
@@ -26,6 +20,11 @@ class _InlineConfirmationButton extends React.Component {
         this.showConfirmation = this.showConfirmation.bind(this)
         this.hideConfirmation = this.hideConfirmation.bind(this)
         this.toggleConfirmation = this.toggleConfirmation.bind(this)
+        this.ref = React.createRef()
+    }
+
+    state = {
+        showConfirmation: false
     }
 
     render() {
@@ -130,14 +129,14 @@ class _InlineConfirmationButton extends React.Component {
         this.setState(({showConfirmation}) => ({showConfirmation: !showConfirmation}))
     }
 
-    onClick() {
+    onClick(e) {
         const {skipConfirmation, onConfirm} = this.props
-        skipConfirmation ? onConfirm() : this.toggleConfirmation()
+        skipConfirmation ? onConfirm(e) : this.toggleConfirmation()
     }
 
-    onClickHold() {
+    onClickHold(e) {
         const {onConfirm} = this.props
-        onConfirm()
+        onConfirm(e)
     }
 
     componentDidUpdate({disabled: wasDisabled}) {

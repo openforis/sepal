@@ -8,9 +8,9 @@ import {ButtonGroup} from '~/widget/buttonGroup'
 import {Layout} from '~/widget/layout'
 import {WebSocketConnectionIndicator} from '~/widget/webSocketIndicator'
 
+import {MessagesButton} from '../messages/messages'
 import {UsageButton} from '../user/usage'
 import {UserDetailsButton} from '../user/userDetails'
-import {UserMessagesButton} from '../user/userMessages'
 import styles from './footer.module.css'
 
 export const Footer = ({className}) => {
@@ -24,7 +24,7 @@ export const Footer = ({className}) => {
                 <div>
                     <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
                         <WebSocketConnectionIndicator/>
-                        <UserMessagesButton/>
+                        <MessagesButton/>
                         <UsageButton/>
                         <UserDetailsButton/>
                         <Logout/>

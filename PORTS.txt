@@ -2,18 +2,20 @@ Modules
 
     app-launcher    8680:80
     app-manager     80
+    budget          80
     caddy           80, 443
     ceo-gateway     80
     email           80
     gateway         80
     gee             80
     gui             8080
-    ldap            389, 636
     mysql           3306
     mysql-admin     8980
+    message         80
     prometheus      9090
     r-proxy         8180
-    sepal-server    80
+    recipe          80
+    scene-metadata  80
     ssh-gateway     22
     sys-monitor     80
     task            80
@@ -21,11 +23,10 @@ Modules
     user            80
     user-assets     80
     user-files      80
-    user-node       80
     user-storage    80
+    worker          80
 
     sandbox proxy   9191
 
     docker metrics  9293
-    JVM debug port  5005
     Node debug port 9229

@@ -64,13 +64,19 @@
     text-align: left;
 }
 
-.metadata {
+.metadata, .timestamp {
     pointer-events: none;
     /* avoid interfering with click target */
     font-size: small;
     /* margin-right: 2rem; */
     color: gray;
     flex-shrink: 0;
+}
+
+.timestamp {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 @media screen and (max-width: 600px) {

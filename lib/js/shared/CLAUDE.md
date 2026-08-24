@@ -14,10 +14,10 @@ npm run testWatch     # Jest watch mode
 | Module | Purpose |
 |--------|---------|
 | `httpServer.js` | Koa 3 server with middleware (error handling, Prometheus, request ID, body parsing up to 100mb, WebSocket via `ws`) |
-| `httpClient.js` | RxJS-based HTTP client. Functions return observables (`get$`, `post$`, `postJson$`, `delete$`). Default 600s timeout, 5 retries with exponential backoff (500-2000ms). |
-| `messageQueue.js` | RabbitMQ via amqplib. Exchange: `sepal.topic`. Use `initMessageQueue(amqpUri, {publishers, subscribers, handler})` to set up. Auto-reconnects. |
+| `httpClient.js` | RxJS-based HTTP client. Functions return observables (`get$`, `post$`, `postJson$`, `delete$`). Default 600s timeout, 5 retries with exponential backoff (500-2000ms). Optional `responseType` option selects how the response body is read: `text` (default), `json`, `arrayBuffer` or `blob`; error bodies are always read as text. With `json`, an empty body yields `undefined`, and a malformed body fails immediately without retrying (parsing happens after the retry operator), raising an error carrying the request context, `statusCode` and the raw `body`. |
+| `messageQueue.js` | RabbitMQ via amqplib. Exchange: `sepal.topic`. Use `initMessageQueue(amqpUri, {publishers, subscribers, handler})` to set up. Auto-reconnects. Subscribers assert durable named queues by default; per-subscriber `queueOptions` override (e.g. `queue: ''` + `{durable: false, exclusive: true}` for a transient server-named queue). Returns `{close}` for short-lived processes. |
 | `service.js` | Service request/response pattern using RxJS. Supports local and remote dispatch via transport abstraction. |
-| `log.js` | log4js wrapper. Call `configureServer(config)` at startup, then `getLogger(name)`. Supports lazy evaluation: `log.debug(() => expensiveCall())`. |
+| `log.js` | log4js wrapper. Call `configureServer(config)` at startup, then `getLogger(name)`. Supports lazy evaluation: `log.debug(() => expensiveCall())`. `configureNoLogging()` silences everything — for CLIs whose stdout is a user-facing terminal. |
 | `metrics.js` | prom-client wrapper. `createCounter()`, `createGauge()`, `createHistogram()`, `createSummary()`. |
 | `rxjs.js` | Utility operators: `autoRetry({maxRetries, minRetryDelay, ...})`, `finalizeObservable()`, `promise$()`, `lastInWindow()`, `repeating()`, `swallow()`. |
 | `exception.js` | Exception hierarchy: `ServerException` (500), `ClientException` (400), `NotFoundException` (404). All extend `Exception` base. Error codes: `EE_NOT_AVAILABLE`, `MISSING_OAUTH_SCOPES`, `MISSING_GOOGLE_TOKENS`. |

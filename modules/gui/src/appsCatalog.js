@@ -47,6 +47,7 @@ const flattenChild = (parent, child) => {
         tags: mergeTags(parent.tags, child.tags),
         pinned: pick(child.pinned, false),
         googleAccountRequired: pick(child.googleAccountRequired, parent.googleAccountRequired, false),
+        requirements: pick(child.requirements, parent.requirements),
         disabled: pick(child.disabled, parent.disabled),
         logo: logo.logo,
         logoRef: pick(logo.logoRef, 'sepal.png'),

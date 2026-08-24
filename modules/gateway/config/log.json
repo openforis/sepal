@@ -9,6 +9,8 @@
         "http/server": "info",
         "messageQueue": "info",
         "proxy": "warn",
+        "sandboxInteractionRoute": "debug",
+        "sandboxSessionManager": "debug",
         "session": "info",
         "user": "info",
         "userApi": "info",
