@@ -20,9 +20,12 @@ const visualizations = ({startYear, endYear}) => [
     normalize({
         type: 'continuous',
         bands: ['yod'],
+        dataType: 'year',
         min: [startYear],
         max: [endYear],
-        palette: '#2166AC, #67A9CF, #D1E5F0, #FDDBC7, #EF8A62, #B2182B'
+        // Tol rainbow (same palette used for date/year bands elsewhere,
+        // e.g. changeAlerts/ccdcSlice)
+        palette: '#781C81, #3F60AE, #539EB6, #6DB388, #CAB843, #E78532, #D92120'
     }),
     normalize({
         type: 'continuous',
