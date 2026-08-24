@@ -20,12 +20,12 @@ const EXCLUDED_LICENSES = [
 ]
 
 const getDatasets$ = () =>
-    get$(URL).pipe(
+    get$(URL, {responseType: 'json'}).pipe(
         catchError(error => {
             log.error('Error while downloading Awesome GEE community datasets - ', error)
             return EMPTY
         }),
-        map(({body}) => JSON.parse(body)),
+        map(({body}) => body),
         map(datasets => mapDataset(datasets))
     )
 

@@ -1,0 +1,27 @@
+FROM node:26-alpine
+
+ENV MODULE_NAME worker
+ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
+ENV SHARED /usr/local/src/sepal/lib/js/shared
+
+RUN apk update && apk add curl
+RUN npm install -g nodemon
+
+WORKDIR ${SHARED}
+ADD lib/js/shared .
+ADD modules/${MODULE_NAME}/lib/shared/package-lock.json .
+RUN npm install
+
+WORKDIR ${MODULE}
+ADD modules/${MODULE_NAME}/package.json .
+ADD modules/${MODULE_NAME}/package-lock.json .
+RUN npm install
+
+ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/config ${MODULE}/config
+ADD modules/${MODULE_NAME}/migrations ${MODULE}/migrations
+
+ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
+
+USER node
+CMD /usr/local/bin/start.sh

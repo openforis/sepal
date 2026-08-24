@@ -283,16 +283,37 @@
     - { role: run-module, module: mysql }
     - { role: run-module, module: mysql-backup }
     - { role: run-module, module: gee}
-    - { role: run-module, module: user-node }
+    # --- user module (formerly user-node; the Java `user` module is deleted) ---
+    # TRANSITION NOTE: when first deploying this over a host still running the module under its old
+    # name, remove the leftover container once — `docker rm -f user-node` — before/at this deploy.
+    # The module now deploys as container `user`; if a stopped legacy Java-era `user` container still
+    # exists on the host it collides with that name — remove it too (`docker rm -f user`). Fresh
+    # installs: no-op.
+    - { role: run-module, module: user }
+    - { role: run-module, module: budget }
     - { role: run-module, module: app-manager }
-    - { role: run-module, module: sepal-server }
+
+    # --- sepal-server decommission ---
+    # The Java monolith is fully replaced by the Node modules below (worker, message, recipe,
+    # scene-metadata) + the gateway's sandbox proxy; it is no longer built, deployed, or checked.
+    # TRANSITION NOTE: when first deploying this over a host still running the legacy Java monolith,
+    # remove the leftover container once — `docker rm -f sepal` — before/at this deploy (its /api/*
+    # traffic already moved to the modules below via the gateway repoint). Fresh installs: no-op.
+
+    # Modules that replaced sepal-server
+    - { role: run-module, module: worker }
+    - { role: run-module, module: message }
+    - { role: run-module, module: recipe }
+    - { role: run-module, module: scene-metadata }
+
     - { role: run-module, module: user-assets }
     - { role: run-module, module: user-files }
     - { role: run-module, module: gui }
     - { role: run-module, module: ceo-gateway }
     - { role: run-module, module: ssh-gateway }
     - { role: run-module, module: terminal }
+    - { role: run-module, module: sys-monitor }
+
+    # Gateway LAST — repoints /api/* to the now-running replacement modules above
     - { role: run-module, module: gateway }
     - { role: run-module, module: caddy }
-    - { role: run-module, module: sys-monitor }
-    - { role: run-module, module: scene-metadata }

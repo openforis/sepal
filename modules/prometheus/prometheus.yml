@@ -94,3 +94,13 @@ scrape_configs:
     scheme: https
     static_configs:
       - targets: ['${SEPAL_HOST}']
+
+  - job_name: worker
+    scrape_interval: 15s
+    metrics_path: '/api/worker/metrics'
+    basic_auth:
+      username: '${TARGET_USERNAME}'
+      password: '${TARGET_PASSWORD}'
+    scheme: https
+    static_configs:
+      - targets: ['${SEPAL_HOST}']

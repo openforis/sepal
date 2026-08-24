@@ -2,5 +2,5 @@ import {get$} from '~/http-client'
 
 export default {
     loadApiKeys$: () =>
-        get$('/api/data/map-api-keys')
+        get$('/api/scene-metadata/map-api-keys')
 }

@@ -1,5 +1,4 @@
 import React from 'react'
-import {filter, map} from 'rxjs'
 
 import {compose} from '~/compose'
 import {withContext} from '~/context'
@@ -34,11 +33,8 @@ export const withTab = () =>
             }
 
             busy$() {
-                const {tab: {id: tabId, busyOut$}} = this.props
-                return busyOut$.pipe(
-                    filter(({tabId: currentTabId}) => currentTabId === tabId),
-                    map(({busy, count}) => ({busy, count}))
-                )
+                const {tab: {busyOut$}} = this.props
+                return busyOut$
             }
         },
         withTabContext()

@@ -9,9 +9,9 @@ import {getRequestUser, setRequestUser, setSessionUsername} from './user.js'
 
 const log = getLogger('authMiddleware')
 
-const AUTHENTICATION_URL = `http://${modules.userNode}/authenticate`
-const API_KEY_AUTH_URL = `http://${modules.sepal}/api/sessions/api-key-authenticate`
-const USER_LOOKUP_URL = `http://${modules.userNode}/info`
+const AUTHENTICATION_URL = `http://${modules.user}/authenticate`
+const API_KEY_AUTH_URL = `http://${modules.worker}/sessions/api-key-authenticate`
+const USER_LOOKUP_URL = `http://${modules.user}/info`
 
 // sepal-user header the gateway sends itself to call [ADMIN] endpoints internally.
 const INTERNAL_ADMIN_HEADER = {
@@ -60,8 +60,7 @@ const AuthMiddleware = userStore => {
                 )
                 
             const authorized$ = (username, response) => {
-                const {body} = response
-                const user = JSON.parse(body)
+                const {body: user} = response
                 return isGuiRequest()
                     ? authenticatedGuiRequest$(username, user)
                     : authenticatedNonGuiRequest$(username, user)
@@ -99,6 +98,7 @@ const AuthMiddleware = userStore => {
                     log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticating user`)
                     return post$(AUTHENTICATION_URL, {
                         body: {username, password},
+                        responseType: 'json',
                         validStatuses: [OK, UNAUTHORIZED]
                     }).pipe(
                         switchMap(response => {
@@ -120,12 +120,13 @@ const AuthMiddleware = userStore => {
                 post$(API_KEY_AUTH_URL, {
                     body: {apiKey},
                     headers: INTERNAL_ADMIN_HEADER,
+                    responseType: 'json',
                     validStatuses: [OK, UNAUTHORIZED]
                 }).pipe(switchMap(response => {
                     const {statusCode} = response
                     switch (statusCode) {
                         case OK: {
-                            const {username} = JSON.parse(response.body)
+                            const {username} = response.body
                             return loadUser$(username)
                         }
                         case UNAUTHORIZED: return unauthorized$('')
@@ -137,12 +138,13 @@ const AuthMiddleware = userStore => {
                 get$(USER_LOOKUP_URL, {
                     query: {username},
                     headers: INTERNAL_ADMIN_HEADER,
+                    responseType: 'json',
                     validStatuses: [OK, UNAUTHORIZED]
                 }).pipe(switchMap(response => {
                     const {statusCode} = response
                     switch (statusCode) {
                         case OK: {
-                            const user = JSON.parse(response.body)
+                            const user = response.body
                             return authenticatedNonGuiRequest$(username, user)
                         }
                         case UNAUTHORIZED: return unauthorized$(username)

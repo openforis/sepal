@@ -14,11 +14,20 @@ import {configureServer, getLogger} from '#sepal/log'
 import {initMessageQueue} from '#sepal/messageQueue'
 
 import {webSocketPath} from '../config/endpoints.js'
+import modules from '../config/modules.json' with {type: 'json'}
 import {AuthMiddleware} from './authMiddleware.js'
-import {amqpUri, port, redisUri} from './config.js'
+import {amqpUri, port, redisUri, sandboxDefaultInstanceType, sepalHost} from './config.js'
 import {initializeGoogleAccessTokenRefresher} from './googleAccessToken.js'
 import {GoogleAccessTokenMiddleware} from './googleAccessTokenMiddleware.js'
 import {Proxy} from './proxy.js'
+import {sandboxInteractionRoute} from './sandbox/sandboxInteractionRoute.js'
+import {createSandboxProxy} from './sandbox/sandboxProxy.js'
+import {createSandboxSessionManager} from './sandbox/sandboxSessionManager.js'
+import {sandboxStartRoute} from './sandbox/sandboxStartRoute.js'
+import {sessionAppDissociatedSubscriber} from './sandbox/sessionAppDissociatedSubscriber.js'
+import {sessionExpiryClosedSubscriber} from './sandbox/sessionExpiryClosedSubscriber.js'
+import {sessionExpiryNotifiedSubscriber} from './sandbox/sessionExpiryNotifiedSubscriber.js'
+import {workerSessionClosedSubscriber} from './sandbox/workerSessionClosedSubscriber.js'
 import {SessionManager} from './session.js'
 import {urlTag, usernameTag} from './tag.js'
 import {getSessionUsername, removeRequestUser, setRequestUser} from './user.js'
@@ -48,6 +57,21 @@ const main = async () => {
     const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
     const {proxyEndpoints} = Proxy(userStore, authMiddleware, googleAccessTokenMiddleware)
 
+    const sandboxSessionManager = createSandboxSessionManager({
+        workerBaseUrl: `http://${modules.worker}`,
+        defaultInstanceType: sandboxDefaultInstanceType
+    })
+    const sandboxProxy = createSandboxProxy({
+        resolveTarget: sandboxSessionManager.resolveTarget,
+        sepalHost
+    })
+    const {handler: sandboxStartHandler} = sandboxStartRoute(sandboxSessionManager)
+    const {handler: sandboxInteractionHandler} = sandboxInteractionRoute(sandboxSessionManager)
+    const sandboxClosedSubscriber = workerSessionClosedSubscriber(sandboxSessionManager, event$)
+    const sandboxAppDissociatedSubscriber = sessionAppDissociatedSubscriber(sandboxSessionManager, event$)
+    const expiryNotifiedSubscriber = sessionExpiryNotifiedSubscriber(event$)
+    const expiryClosedSubscriber = sessionExpiryClosedSubscriber(event$)
+
     const getSecret = async () => {
         const secret = await redis.get('secret')
 
@@ -67,7 +91,27 @@ const main = async () => {
             {key: 'systemEvent', publish$: event$},
         ],
         subscribers: [
-            {queue: 'gateway.userLocked', topic: 'user.UserLocked', handler: messageHandler}
+            {queue: 'gateway.userLocked', topic: 'user.UserLocked', handler: messageHandler},
+            {
+                queue: sandboxClosedSubscriber.queue,
+                topic: sandboxClosedSubscriber.topic,
+                handler: sandboxClosedSubscriber.handler
+            },
+            {
+                queue: sandboxAppDissociatedSubscriber.queue,
+                topic: sandboxAppDissociatedSubscriber.topic,
+                handler: sandboxAppDissociatedSubscriber.handler
+            },
+            {
+                queue: expiryNotifiedSubscriber.queue,
+                topic: expiryNotifiedSubscriber.topic,
+                handler: expiryNotifiedSubscriber.handler
+            },
+            {
+                queue: expiryClosedSubscriber.queue,
+                topic: expiryClosedSubscriber.topic,
+                handler: expiryClosedSubscriber.handler
+            }
         ]
     })
 
@@ -98,12 +142,20 @@ const main = async () => {
     app.post('/api/user/logout', logout)
     app.post('/api/user/invalidateOtherSessions', invalidateOtherSessions)
 
-    // Internal-only user-node endpoints — the ssh-gateway calls user-node directly (module-to-module),
+    // Internal-only user-module endpoints — the ssh-gateway calls the user module directly (module-to-module),
     // so these must NOT be reachable through the public /api/user proxy. Block them before the
-    // catch-all proxy below would otherwise forward /api/user/auth/* and /api/user/nss/* to user-node.
+    // catch-all proxy below would otherwise forward /api/user/auth/* and /api/user/nss/* to it.
     app.use(['/api/user/auth', '/api/user/nss'], (_req, res) => res.sendStatus(404))
 
     app.use('/api/gateway/metrics', authMiddleware, apiMetrics({metricsPath: '/api/gateway/metrics'}))
+
+    // authMiddleware FIRST so the route and the proxy see the injected sepal-user. /api/sandbox/start
+    // must be matched before the /api/sandbox/** proxy, so it is registered first.
+    app.use('/api/sandbox/start', authMiddleware, googleAccessTokenMiddleware, sandboxStartHandler)
+    // The GUI's interaction reports — matched before the /api/sandbox/** proxy for the same reason
+    // as /start. No googleAccessTokenMiddleware: nothing downstream of it needs a Google token.
+    app.use('/api/sandbox/interaction', authMiddleware, sandboxInteractionHandler)
+    app.use('/api/sandbox', authMiddleware, googleAccessTokenMiddleware, sandboxProxy.middleware)
 
     const proxies = proxyEndpoints(app)
     const server = app.listen(port)
@@ -129,6 +181,14 @@ const main = async () => {
     }
 
     const handleProxiedWebSocket = (requestPath, req, socket, head, username) => {
+        // Dynamic sandbox ws upgrades (RStudio console, Jupyter kernel channels, Shiny) resolve their
+        // target per-user via the session manager — route them to the sandbox proxy, not the static
+        // proxies. sepal-user is already injected on req; pass the resolved username.
+        if (sandboxProxy.matches(requestPath)) {
+            log.debug(`${usernameTag(username)} Routing sandbox WebSocket upgrade for "${requestPath}"`)
+            sandboxProxy.upgrade(req, socket, head, username)
+            return
+        }
         const {proxy, target} = proxies.find(({path}) => !path || requestPath === path || micromatch.isMatch(requestPath, `${path}/**`)) || {}
         if (proxy) {
             log.debug(`${usernameTag(username)} Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
@@ -141,6 +201,19 @@ const main = async () => {
 
     initializeGoogleAccessTokenRefresher({userStore, event$})
     initializeWebSocketServer({wss, userStore, event$})
+
+    sandboxSessionManager.start()
+    log.info('Sandbox session manager started')
+
+    const shutdown = signal => {
+        log.info(`Received ${signal}, shutting down`)
+        sandboxSessionManager.stop()
+        server.close(() => process.exit(0))
+        // Fail-safe: force exit if the server doesn't close in time.
+        setTimeout(() => process.exit(0), 10000).unref()
+    }
+    process.on('SIGTERM', () => shutdown('SIGTERM'))
+    process.on('SIGINT', () => shutdown('SIGINT'))
 
     // HACK: User has to be injected here as the session is not available in proxyRes and proxyResWsz
     server.on('upgrade', (req, socket, head) => {

@@ -7,7 +7,15 @@ import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Confirm} from '~/widget/confirm'
 
+const TOOLTIP_DELAY_MS = 500
+
 class _ModalConfirmationButton extends React.Component {
+    constructor(props) {
+        super(props)
+        this.onClick = this.onClick.bind(this)
+        this.onClickHold = this.onClickHold.bind(this)
+    }
+
     state = {
         askConfirmation: false
     }
@@ -34,7 +42,7 @@ class _ModalConfirmationButton extends React.Component {
     }
 
     render() {
-        const {busy, chromeless, air, disabled, icon, iconType, label, shape, size, skipConfirmation, tooltip, tooltipPlacement, width, onConfirm} = this.props
+        const {busy, chromeless, air, disabled, icon, iconType, label, shape, size, tooltip, tooltipPlacement, width} = this.props
         const {askConfirmation} = this.state
         return (
             <React.Fragment>
@@ -51,13 +59,23 @@ class _ModalConfirmationButton extends React.Component {
                     disabled={disabled}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
-                    tooltipDelay={500}
-                    onClick={() => skipConfirmation ? onConfirm() : this.askConfirmation(true)}
-                    onClickHold={onConfirm}
+                    tooltipDelay={TOOLTIP_DELAY_MS}
+                    onClick={this.onClick}
+                    onClickHold={this.onClickHold}
                 />
                 {askConfirmation ? this.renderConfirm() : null}
             </React.Fragment>
         )
+    }
+
+    onClick(e) {
+        const {skipConfirmation, onConfirm} = this.props
+        skipConfirmation ? onConfirm(e) : this.askConfirmation(true)
+    }
+
+    onClickHold(e) {
+        const {onConfirm} = this.props
+        onConfirm(e)
     }
 
     componentDidUpdate({disabled: prevDisabled}) {

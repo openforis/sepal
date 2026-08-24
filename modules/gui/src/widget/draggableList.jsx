@@ -42,11 +42,13 @@ class _DraggableList extends React.Component {
 
     renderItem({item, index, hidden}) {
         const {drag$} = this
-        const {itemRenderer, itemId, showHandle} = this.props
+        const {itemRenderer, itemId, itemClassName, axis, showHandle} = this.props
         const id = itemId(item)
         return (
             <DraggableListItem
                 key={id}
+                axis={axis}
+                className={itemClassName}
                 drag$={drag$}
                 dragValue={id}
                 hidden={hidden}
@@ -200,7 +202,9 @@ DraggableList.propTypes = {
     itemId: PropTypes.func.isRequired,
     itemRenderer: PropTypes.func.isRequired,
     items: PropTypes.array.isRequired,
+    axis: PropTypes.oneOf(['x', 'y']),
     containerElement: PropTypes.any,
+    itemClassName: PropTypes.string,
     showHandle: PropTypes.any,
     onChange: PropTypes.func,
     onDragEnd: PropTypes.func,

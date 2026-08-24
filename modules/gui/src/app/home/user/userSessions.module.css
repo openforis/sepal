@@ -1,0 +1,6 @@
+.apps {
+    /* Tighter than the browser default, which indents 40px and pads a full line above and below */
+    list-style-type: disc;
+    margin: 0;
+    padding-left: 1.2rem;
+}

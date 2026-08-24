@@ -1,0 +1,103 @@
+services:
+  worker:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
+    build:
+      context: ../..
+      dockerfile: ./modules/worker/Dockerfile
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/worker:${SEPAL_VERSION:-latest}"
+    container_name: worker
+    init: true
+    # The hosting provider provisions sandbox containers and, as a side effect, creates each user's
+    # per-instance tmp dir under /data/home/{username}/tmp/{id} (chmod 1777) — so the worker needs the
+    # SEPAL data dir mounted at /data and must run as root, exactly like the Java sepal-server it replaces.
+    user: root
+    volumes:
+      - "${SEPAL_DATA_DIR}/sepal:/data"
+      # The SANDBOX worker type reads each user's public SSH key from
+      # /var/lib/sepal/user/home/{username}/.ssh/id_rsa.pub to inject USER_PUBLIC_KEY (workerTypes.js).
+      - "${SEPAL_DATA_DIR}/user/home:/var/lib/sepal/user/home"
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      MYSQL_HOST: "mysql"
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      HTTP_PORT: "80"
+      TZ: "UTC"
+      # ─── Hosting service (default local; prod sets aws at cutover) ──────────
+      HOSTING_SERVICE: "${HOSTING_SERVICE:-local}"
+      # ─── SEPAL creds / host ────────────────────────────────────────────────
+      SEPAL_VERSION: "${SEPAL_VERSION:-latest}"
+      SEPAL_USER: "sepalAdmin"
+      SEPAL_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      SEPAL_HOST: "${SEPAL_HOST}"
+      SEPAL_HTTPS_PORT: "${SEPAL_HTTPS_PORT}"
+      SEPAL_HOST_DATA_DIR: "${SEPAL_DATA_DIR}"
+      # ─── Task executor gateway (HttpWorkerGateway: Basic SEPAL_USER:SEPAL_PASSWORD @ WORKER_PORT) ──
+      WORKER_PORT: "${WORKER_PORT:-8080}"
+      # ─── Instance usage monitoring (phase 1; defaults in config.js) ────────
+      USAGE_SAMPLING_INTERVAL_SECONDS: "${USAGE_SAMPLING_INTERVAL_SECONDS:-60}"
+      USAGE_SAMPLE_RETENTION_DAYS: "${USAGE_SAMPLE_RETENTION_DAYS:-30}"
+      USAGE_HOURLY_RETENTION_DAYS: "${USAGE_HOURLY_RETENTION_DAYS:-365}"
+      # ─── Session expiration (docs/session-expiration-model.md; default off) ────
+      # off runs every ratchet and records deadlines but closes nothing; notify adds the full
+      # notification UX; enforce closes. Defaults live in config.js.
+      SESSION_EXPIRY_MODE: "${SESSION_EXPIRY_MODE:-off}"
+      SESSION_EXPIRY_SECRET: "${SESSION_EXPIRY_SECRET}"
+      SEPAL_ENDPOINT: "${SEPAL_ENDPOINT}"
+      STARTUP_LEASE_MINUTES: "${STARTUP_LEASE_MINUTES:-30}"
+      OPEN_EXTENSION_MINUTES: "${OPEN_EXTENSION_MINUTES:-15}"
+      INTERACTION_EXTENSION_MINUTES: "${INTERACTION_EXTENSION_MINUTES:-15}"
+      BUSY_EXTENSION_MINUTES: "${BUSY_EXTENSION_MINUTES:-15}"
+      TASK_EXTENSION_MINUTES: "${TASK_EXTENSION_MINUTES:-15}"
+      MANUAL_EXTENSION_MINUTES: "${MANUAL_EXTENSION_MINUTES:-15}"
+      EMAIL_EXTENSION_MINUTES: "${EMAIL_EXTENSION_MINUTES:-15}"
+      MAX_UNATTENDED_HOURS: "${MAX_UNATTENDED_HOURS:-12}"
+      NOTIFICATION_VISIBLE_MINUTES: "${NOTIFICATION_VISIBLE_MINUTES:-5}"
+      SESSION_GRACE_MINUTES: "${SESSION_GRACE_MINUTES:-60}"
+      UNKNOWN_BUSY_GRACE_TICKS: "${UNKNOWN_BUSY_GRACE_TICKS:-10}"
+      BUSY_WINDOW_MINUTES: "${BUSY_WINDOW_MINUTES:-10}"
+      BUSY_CPU_CORES: "${BUSY_CPU_CORES:-0.5}"
+      BUSY_GPU_THRESHOLD_PCT: "${BUSY_GPU_THRESHOLD_PCT:-5}"
+      BUSY_NETWORK_THRESHOLD_KBPS: "${BUSY_NETWORK_THRESHOLD_KBPS:-500}"
+      # ─── Docker ────────────────────────────────────────────────────────────
+      DOCKER_PORT: "2375"
+      DOCKER_ENTRY_POINT: "v1.44"
+      DOCKER_REGISTRY_HOST: "${DOCKER_REGISTRY_HOST}"
+      # ─── GEE credentials ───────────────────────────────────────────────────
+      GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
+      GOOGLE_REGION: "${GOOGLE_REGION}"
+      GOOGLE_EARTH_ENGINE_ACCOUNT: "${EE_ACCOUNT}"
+      GOOGLE_EARTH_ENGINE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
+      # ─── Google OAuth (workersession RefreshGoogleTokens → user module) ────
+      GOOGLE_OAUTH_ENDPOINT: "${GOOGLE_OAUTH_ENDPOINT:-http://user/google/}"
+      # ─── Budget (live over-budget check on session request) ────────────────
+      BUDGET_URL: "${BUDGET_URL:-http://budget}"
+      # ─── RabbitMQ ──────────────────────────────────────────────────────────
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: "5672"
+      # ─── AWS (only required when HOSTING_SERVICE=aws) ──────────────────────
+      AWS_REGION: "${AWS_REGION}"
+      AVAILABILITY_ZONE: "${AWS_AVAILABILITY_ZONE}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      SYSLOG_ADDRESS: "${SYSLOG_ADDRESS}"
+      ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sepal
+    restart: always
+    ulimits:
+      core: 0
+    platform: linux/amd64
+
+networks:
+  sepal:
+    external: true

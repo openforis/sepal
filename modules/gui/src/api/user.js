@@ -6,26 +6,6 @@ export default {
             validStatuses: [200, 401]
         }),
 
-    updateMessage$: message =>
-        post$(`/api/notification/messages/${message.id}`, {
-            body: message
-        }),
-
-    removeMessage$: message =>
-        delete$(`/api/notification/messages/${message.id}`),
-
-    updateMessageState$: userMessage =>
-        post$(`/api/notification/notifications/${userMessage.message.id}`, {
-            body: {
-                state: userMessage.state
-            }
-        }),
-
-    loadUserMessages$: ({retry}) =>
-        get$('/api/notification/notifications', {
-            retry
-        }),
-    
     loadCurrentUserReport$: ({retry}) =>
         get$('/api/sessions/report', {
             retry
@@ -106,8 +86,11 @@ export default {
             query: {projectId, legacyProject}
         }),
 
+    // The keepAlive slider REPLACES the session's deadline — it can shorten as well as lengthen,
+    // unlike every automatic signal, which may only ratchet. Handing an instance back at once is
+    // still Stop; setting 0 here lets the normal warn-then-grace cycle run.
     updateCurrentUserSession$: session =>
-        post$(`/api/sessions/session/${session.id}/earliestTimeoutTime`, {
+        post$(`/api/sessions/session/${session.id}/keep-alive`, {
             body: {
                 hours: session.keepAlive
             }

@@ -1,4 +1,4 @@
-import moment from 'moment'
+import {format, formatDistanceToNowStrict} from 'date-fns'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Highlight from 'react-highlighter'
@@ -50,7 +50,7 @@ class _CrudItem extends React.Component {
     }
 
     renderIcon() {
-        const {icon, iconSize, iconType, iconVariant, iconDimmed, iconTooltip, tooltipPlacement} = this.props
+        const {icon, iconSize, iconType, iconVariant, iconAttributes, iconDimmed, iconTooltip, tooltipPlacement} = this.props
         return icon
             ? (
                 <div className={styles.icon}>
@@ -59,6 +59,7 @@ class _CrudItem extends React.Component {
                         size={iconSize}
                         type={iconType}
                         variant={iconVariant}
+                        attributes={iconAttributes}
                         dimmed={iconDimmed}
                         tooltip={iconTooltip}
                         tooltipPlacement={tooltipPlacement}
@@ -134,14 +135,37 @@ class _CrudItem extends React.Component {
     }
 
     renderTimestamp() {
-        const {timestamp} = this.props
-        return timestamp
-            ? (
-                <div className={styles.metadata}>
-                    {moment(timestamp).fromNow()}
-                </div>
-            )
-            : null
+        const {timestamp, timestampMode, timestampFootnote} = this.props
+        if (!timestamp) {
+            return null
+        }
+        return (
+            <div className={styles.timestamp}>
+                {['absolute', 'both'].includes(timestampMode) && this.renderAbsoluteTimestamp(timestamp)}
+                {['relative', 'both'].includes(timestampMode) && this.renderRelativeTimestamp(timestamp)}
+                {/* Opt-in line under the timestamps, for what belongs WITH them rather than in a
+                    column of its own. Default: nothing, unchanged. */}
+                {timestampFootnote ? <div>{timestampFootnote}</div> : null}
+            </div>
+        )
+    }
+
+    renderAbsoluteTimestamp(timestamp) {
+        const date = new Date(timestamp)
+        return (
+            <div>
+                {format(date, 'yyyy-MM-dd HH:mm')}
+            </div>
+        )
+    }
+
+    renderRelativeTimestamp(timestamp) {
+        const date = new Date(timestamp)
+        return (
+            <div>
+                {formatDistanceToNowStrict(date, {addSuffix: true})}
+            </div>
+        )
     }
 
     renderInline() {
@@ -284,6 +308,7 @@ export const CrudItem = compose(
     asFunctionalComponent({
         highlightDescription: true,
         highlightTitle: true,
+        timestampMode: 'both',
         tooltipPlacement: 'left'
     })
 )
@@ -303,6 +328,7 @@ CrudItem.propTypes = {
     highlightDescription: PropTypes.any,
     highlightTitle: PropTypes.any,
     icon: PropTypes.any,
+    iconAttributes: PropTypes.any,
     iconDimmed: PropTypes.any,
     iconSize: PropTypes.any,
     iconTooltip: PropTypes.any,
@@ -323,6 +349,8 @@ CrudItem.propTypes = {
     selected: PropTypes.any,
     selectTooltip: PropTypes.any,
     timestamp: PropTypes.any,
+    timestampFootnote: PropTypes.any,
+    timestampMode: PropTypes.oneOf(['relative', 'absolute', 'both']),
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     titleClassName: PropTypes.string,
     titleTooltip: PropTypes.any,

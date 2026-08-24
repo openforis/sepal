@@ -2,8 +2,6 @@
 
 !lib/
 !modules/**/
-!common/
-!common-test/
 
 **/node_modules/
 **/build
@@ -13,9 +11,6 @@ modules/**/binary
 modules/**/build
 modules/**/target
 
-!build.gradle
-!settings.gradle
-!modules/**/build.gradle
 
 .DS_Store
 .node-xmlhttprequest-*

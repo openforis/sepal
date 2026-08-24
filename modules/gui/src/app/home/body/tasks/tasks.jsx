@@ -125,7 +125,7 @@ class _Tasks extends React.Component {
             ACTIVE: 'info',
             COMPLETED: 'success',
             FAILED: 'error',
-            CANCELING: 'normal',
+            CANCELING: 'info',
             CANCELED: 'normal'
         }
         return {
@@ -430,9 +430,11 @@ class _Tasks extends React.Component {
             e.stopPropagation()
         }
         const {stream} = this.props
+        // optimistic state must match what the server will push (cancellation is two-phase:
+        // CANCELING until the executor confirms), or the pushed listing makes the icon bounce
         this.updateTaskInState(task, () => ({
             ...task,
-            status: 'CANCELED',
+            status: 'CANCELING',
             statusDescription: 'Stopping...'
         }))
         stream('STOP_TASK',

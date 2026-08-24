@@ -1,21 +1,53 @@
 import readline from 'readline'
-import {defer, first, fromEvent, tap} from 'rxjs'
+import {defer, first, fromEvent} from 'rxjs'
 
-const readLine$ = () => {
-    return defer(() => {
-        const rl = readline.createInterface({
+// One persistent readline interface for the whole process. Each prompt subscribes to its
+// 'line' events (fromEvent adds the listener on subscribe, removes it on unsubscribe —
+// so a prompt losing the race to a session event releases cleanly). The interface itself
+// is NEVER closed between prompts: readline's close() pauses the SHARED process.stdin,
+// which mutes any interface created before the close — sequential prompts (menu → y/N
+// confirmation) would hang forever waiting for input that no longer flows.
+// closeConsole() releases stdin at the end of the session so the process can exit.
+let sharedReadline = null
+
+const getReadline = () => {
+    if (!sharedReadline) {
+        sharedReadline = readline.createInterface({
             input: process.stdin,
             output: process.stdout,
-            terminal: false
+            // On a real connection (pty) readline runs in terminal mode and owns echo and
+            // the pending line buffer — that's what lets prompt() re-display half-typed
+            // input after a screen refresh. In canonical (kernel) mode the pending input
+            // lives in the tty driver where it can't be re-echoed. Piped stdin (tests,
+            // scripted ssh) falls back to the old non-terminal behavior.
+            terminal: Boolean(process.stdin.isTTY),
+            historySize: 0
         })
-        return fromEvent(rl, 'line').pipe(
-            first(),
-            tap(() => {
-                rl.close()
-                rl.removeAllListeners()
-            })
-        )
-    })
+        // Terminal-mode readline swallows ctrl+C unless handled — keep it ending the
+        // connection, as it does in canonical mode.
+        sharedReadline.on('SIGINT', () => process.exit(130))
+    }
+    return sharedReadline
+}
+
+const readLine$ = () =>
+    defer(() => fromEvent(getReadline(), 'line').pipe(first()))
+
+// prompt — render a prompt through readline instead of a bare write: prompt(true)
+// re-displays the prompt AND whatever the user has already typed, so an event-driven
+// screen refresh doesn't leave the pending input invisible (it stayed in the buffer,
+// but a plain print() after CLEAR_SCREEN never re-echoed it).
+const prompt = text => {
+    const rl = getReadline()
+    rl.setPrompt(text)
+    rl.prompt(true)
+}
+
+const closeConsole = () => {
+    if (sharedReadline) {
+        sharedReadline.close()
+        sharedReadline = null
+    }
 }
 
 const print = (...strings) =>
@@ -78,4 +110,4 @@ const format = (string, ...styles) =>
 const highlight = (text, style = 'YELLOW_INTENSE') =>
     format(text, style)
 
-export {format, highlight, print, println, readLine$}
+export {closeConsole, format, highlight, print, println, prompt, readLine$}

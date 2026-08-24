@@ -140,11 +140,12 @@ const getEmail$ = accessToken =>
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
         },
+        responseType: 'json',
         retry: {
             maxRetries: 0
         }
     }).pipe(
-        map(response => JSON.parse(response.body).user.emailAddress)
+        map(({body}) => body.user.emailAddress)
     )
 
 const do$ = (description, promise) => defer(() => {

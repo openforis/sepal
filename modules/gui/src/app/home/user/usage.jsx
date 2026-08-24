@@ -1,5 +1,5 @@
 import React from 'react'
-import {Subject} from 'rxjs'
+import {interval, Subject} from 'rxjs'
 
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -9,9 +9,12 @@ import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
+import {refreshBudget} from '~/widget/budgetMonitor'
+import {hasBudget, hourlyInstanceSpending, isBudgetWarning} from '~/widget/budgetRules'
 import {Button} from '~/widget/button'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
+import {refreshSessions} from '~/widget/sessionMonitor'
 import {Widget} from '~/widget/widget'
 
 import styles from './usage.module.css'
@@ -26,9 +29,21 @@ const mapStateToProps = () => ({
     selectedSessionId: select('ui.selectedSessionId')
 })
 
+// The report's costSinceCreation and timeoutHours are derived from elapsed time, so they
+// drift between the session ws's event-driven pushes. This panel is the only place they are shown,
+// and withActivatable unmounts it when closed, so the ticker costs nothing while it is shut.
+const REFRESH_INTERVAL_MS = 10000
+
 class _Usage extends React.Component {
     state = {
         requestBudgetUpdate: false
+    }
+
+    componentDidMount() {
+        const {addSubscription} = this.props
+        addSubscription(
+            interval(REFRESH_INTERVAL_MS).subscribe(() => refreshSessions())
+        )
     }
 
     renderOverview() {
@@ -112,6 +127,7 @@ const policy = () => ({
 const Usage = compose(
     _Usage,
     connect(mapStateToProps),
+    withSubscriptions(),
     withActivatable({id: 'userReport', policy, alwaysAllow: true})
 )
 
@@ -134,18 +150,17 @@ class _UsageButton extends React.Component {
     }
 
     renderButton() {
-        const {userReport, hasBudget, budgetExceeded, budgetWarning, activator: {activatables: {userReport: {active, activate}}}} = this.props
+        const {userReport: {spending, sessions}, budgetExceeded, activator: {activatables: {userReport: {active, activate}}}} = this.props
         const {hint} = this.state
-        const hourlySpending = userReport.sessions
-            ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
-            : 0
-        const label = hasBudget && budgetExceeded
+        const hourlySpending = hourlyInstanceSpending(sessions)
+        const budgeted = hasBudget(spending)
+        const label = budgeted && budgetExceeded
             ? msg('home.sections.user.report.budgetExceeded')
             : format.unitsPerHour(hourlySpending)
-        const additionalClassName = hasBudget
+        const additionalClassName = budgeted
             ? budgetExceeded
                 ? styles.budgetExceeded
-                : budgetWarning
+                : isBudgetWarning(spending, hourlySpending)
                     ? styles.budgetWarning
                     : null
             : null
@@ -164,7 +179,11 @@ class _UsageButton extends React.Component {
                 tooltipPlacement='top'
                 tooltipDisabled={active}
                 hint={hint}
-                onClick={activate}
+                onClick={() => {
+                    refreshBudget()
+                    refreshSessions()
+                    activate()
+                }}
             />
 
         )
@@ -186,9 +205,7 @@ export const UsageButton = compose(
     _UsageButton,
     connect(state => ({
         userReport: (state.user && state.user.currentUserReport) || {},
-        hasBudget: select('user.hasBudget'),
         budgetExceeded: select('user.budgetExceeded'),
-        budgetWarning: select('user.budgetWarning'),
     })),
     withSubscriptions(),
     withActivators('userReport')

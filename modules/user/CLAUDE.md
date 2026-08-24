@@ -1,65 +1,30 @@
-# CLAUDE.md - modules/user
+# user
 
-User management microservice. Groovy/Java, hexagonal architecture. Handles authentication, LDAP, Google OAuth.
+Node.js user module (formerly `user-node`; it replaced the now-deleted Java `user`
+module and LDAP). Owns users and their credentials (password hashes, SSH public keys)
+in the `sepal_user` MySQL database. The one-shot LDAP→DB credential migration that ran
+at startup during the transition has been removed along with the `ldap` module.
 
-## Build & Test
+POSIX identity is **stored**, not derived: `sepal_user` has `uid` and `gid` columns.
+For users migrated from LDAP they hold the real `uidNumber` and per-user-group
+`gidNumber` (each was allocated from an independent ldapscripts sequence, so they differ
+from each other and from `sepal_user.id`; on-disk files are owned by these numbers).
+Users created by this module get `uid = gid = id`, which is collision-free because the
+LDAP migration bumped the table `AUTO_INCREMENT` past every existing uid/gid. There is
+no shared group model — the only file-owning shared group, `sepal` (gid 9999), is a
+local OS group.
 
-```bash
-./gradlew :sepal-user:classes   # Compile
-./gradlew :sepal-user:test      # Run all tests (Spock)
-```
+> Note: this reverses design decision **D8** (which assumed `uid = gid = id`).
+> Production data showed `id ≠ uidNumber` for many users, so uid/gid are now stored.
 
-Entry point: `org.openforis.sepal.component.user.Main`
+See the design spec: `docs/superpowers/specs/2026-06-16-ldap-removal-user-node-design.md`
+(the module was named `user-node` there) and the rename/decommission design:
+`docs/superpowers/specs/2026-07-07-user-module-rename-decommission-design.md`.
 
-## Key Subsystems
+## Schema ownership
 
-### LDAP Integration
-- `adapter/LdapUsernamePasswordVerifier.groovy`: Simple BIND to `ldap://ldap` with DN pattern `uid={username},ou=People,dc=sepal,dc=org`
-- Shell scripts in `script/`: `add-sepal-user`, `change-sepal-user-password`, `delete-sepal-user` manage LDAP entries and Linux users via `ldapscripts`
-
-### Google OAuth
-- `adapter/GoogleOAuthClient.groovy` / `RestBackedGoogleOAuthClient`: Full OAuth flow (consent URL, token exchange, refresh, revocation)
-- Scopes: Earth Engine, Drive, Cloud Platform projects
-- Tokens stored in DB and as file at `/sepal/home/{username}/.config/earthengine/credentials`
-
-### reCAPTCHA Enterprise v3
-- `adapter/RestGoogleRecaptcha.groovy`: Validates signup/username/email endpoints
-- Score-based validation with configurable minimum threshold
-
-### Email
-- `adapter/SmtpEmailGateway.groovy`: Sends invite, password reset emails
-- HTML templates in `src/main/resources/.../adapter/email-*.html`
-
-## Command/Query Pattern
-
-18 commands (write operations), 6 queries (read operations). Key flows:
-
-- **Signup**: `SignUpUser` -> reCAPTCHA validation -> create PENDING user -> async LDAP user creation + email
-- **Activation**: `ActivateUser` -> validate token -> set password via LDAP -> status ACTIVE
-- **Auth**: `Authenticate` -> LDAP BIND verification -> update last_login_time
-
-### RabbitMQ Events
-Published to `user` topic on `sepal.topic` exchange:
-- `UserUpdated` - on signup, activate, update details, change password, OAuth changes
-- `UserLocked` - on lock (gateway subscribes to destroy sessions)
-
-Async processing uses `MessageBroker` queues backed by `rmb_message` DB tables for reliable delivery.
-
-## Validation Constraints
-- Username: `^[a-zA-Z_][a-zA-Z0-9]{0,29}$`
-- Password: 12-100 characters
-- Token expiry: 1 day (`MAX_AGE_DAYS = 1`)
-
-## Database
-- Schema: `sepal_user` (15 Flyway migrations, V1_0 through V15)
-- Main table: `sepal_user` with status enum (PENDING, ACTIVE, LOCKED)
-
-## Test Infrastructure
-
-19 Spock test files. `AbstractUserTest` provides:
-- H2 in-memory database
-- `FakeMailServer` (captures emails and tokens)
-- `FakeExternalUserDataGateway` (tracks user creation/deletion)
-- `FakeGoogleOAuthClient` (simulates OAuth flow)
-- `FakeClock` (time manipulation for expiry testing)
-- `FakeGoogleRecaptcha` (always validates)
+The module owns `sepal_user` end to end: on boot it creates the database and base
+`sepal_user` table if missing (`src/sql/base-schema.sql`, guarded `CREATE … IF NOT
+EXISTS` — a no-op on existing installs), then applies its Postgrator migrations using
+the default history table `schema_version`. The Java `user` module's previous Flyway
+history table was renamed to `schema_version_old` at cutover.

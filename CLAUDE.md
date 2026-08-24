@@ -12,24 +12,20 @@ SEPAL is a distributed microservices system where each module runs as an indepen
 
 ### Module Types
 
-**Java/Groovy modules** (Gradle-based, hexagonal architecture):
-- `sepal-server` - Main server UI and orchestration (entry: `org.openforis.sepal.Main`)
-- `user` - User management, LDAP, authentication (entry: `org.openforis.sepal.component.user.Main`)
-- `common` / `common-test` - Shared Java libraries
-
-**Node.js microservices** (most modules use Koa web framework + RxJS):
+**Node.js microservices** (most modules use Koa web framework + RxJS; the former Java/Groovy services — `sepal-server` and the old `user` module — were rewritten as Node.js modules and deleted, along with the Gradle build):
 - `gui` - React 19 frontend with Redux, React Router, react-intl (Vite build, Vitest tests)
-- `gateway` - HTTP gateway/proxy (uses Express, not Koa; Redis for sessions)
+- `gateway` - HTTP gateway/proxy (uses Express, not Koa; Redis for sessions); also proxies user sandboxes (`/api/sandbox/*`)
 - `gee` - Google Earth Engine integration
+- `user` - User management, authentication, credentials (formerly `user-node`; replaced the Java `user` module and LDAP)
+- `worker` - Worker instances, sandbox sessions, task orchestration (replaced the sepal-server `sdms` cluster)
 - `task` - Task execution (runs inside sandbox containers, not a standalone service)
 - `app-manager` / `app-launcher` - Application management
-- `email`, `terminal`, `user-assets`, `user-files`, `user-storage`, `ssh-gateway`, `scene-metadata`, `sys-monitor`, `ceo-gateway`, `r-proxy`
+- `email`, `terminal`, `user-assets`, `user-files`, `user-storage`, `ssh-gateway`, `scene-metadata`, `sys-monitor`, `ceo-gateway`, `r-proxy`, `message`, `recipe`, `budget`
 
 **Infrastructure modules** (Docker-only, no application code):
-- `caddy`, `mysql`, `rabbitmq`, `ldap`, `prometheus`, `logger`
+- `caddy`, `mysql`, `rabbitmq`, `prometheus`, `logger`
 
 **Build-only modules** (images only, not runnable services):
-- `java` - Base Java Docker image
 - `sandbox-base`, `sandbox`, `geospatial-toolkit` - User sandbox images
 
 ### Shared Libraries
@@ -49,13 +45,12 @@ SEPAL is a distributed microservices system where each module runs as an indepen
 
 - **Caddy** - HTTPS entry point (ports 80/443) with automatic ACME certificate management; reverse-proxies to `gateway` (for `/api/*`, `/privacy-policy`) and `gui` (everything else)
 - **nginx** - HTTP reverse proxy within containers
-- **MySQL** - Primary database (Flyway migrations for schema versioning)
-- **LDAP** - User authentication
+- **MySQL** - Primary database (Postgrator migrations per Node module; the legacy Java schemas used Flyway)
 - **AWS EC2** - Dynamic worker instances for user sandboxes with per-user budget tracking
 
 ## Development Environment
 
-Development runs inside a Docker container (Debian Trixie-slim based). Runtime versions: Node.js 24.x, Java 11, Gradle 6.9.1. The `sepal` CLI manages all modules.
+Development runs inside a Docker container (Debian Trixie-slim based). Runtime version: Node.js 26.x. The `sepal` CLI manages all modules.
 
 ### Starting the Dev Environment
 
@@ -95,21 +90,8 @@ Module dependencies are defined in `dev-env/config/deps.json`. Each module speci
 - `lib` - Shared library dependencies (`shared`, `ee`)
 - `build` - Build-time dependencies on other module images
 - `run` - Runtime dependencies (started automatically)
-- `gradle` - Whether module uses Gradle build (vs Docker-only)
 
 ## Build Commands
-
-### Java/Groovy (Gradle)
-
-```bash
-./gradlew :sepal-server:classes      # Compile sepal-server
-./gradlew :sepal-user:classes        # Compile user module
-./gradlew :sepal-server:test         # Test sepal-server
-./gradlew :sepal-user:test           # Test user module
-./gradlew test                       # Run all Java/Groovy tests
-```
-
-Gradle projects defined in `settings.gradle`: `:sepal-common`, `:sepal-common-test`, `:sepal-user`, `:sepal-server`. Java source compatibility: 10. Tests run with `maxParallelForks = 1`.
 
 ### Node.js Modules
 
@@ -151,23 +133,17 @@ ESLint config at root `eslint.config.js`:
 
 The GUI module (`modules/gui/eslint.config.js`) extends this with React-specific rules and `simple-import-sort` plugin.
 
-## Java Module Structure (Hexagonal Architecture)
+## Comments
 
-```
-src/main/groovy/org/openforis/sepal/component/{feature}/
-  adapter/     # Infrastructure implementations (JDBC, HTTP, etc.)
-  api/         # Public interfaces and DTOs
-  command/     # Command handlers (write operations)
-  endpoint/    # REST endpoints
-  event/       # Domain events
-  query/       # Query handlers (read operations)
-```
+Comment code sparingly — only what the code can't say. A comment must earn its place by stating something invisible in the code itself: a non-obvious why, an invariant, a constraint, a workaround. Never write comments that narrate what the next line does, describe the edit you just made ("added X", "now handles Y"), or talk to the reviewer — the diff and git history carry that, and stale narration misleads the next reader, human or agent. Match the comment density of the surrounding file. This is not a ban: the rare high-value comment is welcome, and durable orientation notes belong in docstrings or the repo's docs, not inline.
 
-Tests use Spock Framework 1.2 in `src/test/groovy/`.
+## Commit messages
+
+Keep commit messages simple, not verbose. A short subject line (and at most a brief body when it genuinely adds context) — don't pad messages with long bullet lists, restated diffs, or boilerplate.
 
 ## Service Ports
 
-See `PORTS.txt` for complete port mapping. Key ports: Caddy 80/443, MySQL 3306, RabbitMQ 5672, LDAP 389/636, Prometheus 9090. Most application modules expose port 80 internally. JVM debug: 5005, Node debug: 9229.
+See `PORTS.txt` for complete port mapping. Key ports: Caddy 80/443, MySQL 3306, RabbitMQ 5672, Prometheus 9090. Most application modules expose port 80 internally. Node debug: 9229.
 
 ## Deployment
 

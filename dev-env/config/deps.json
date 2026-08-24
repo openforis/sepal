@@ -10,7 +10,7 @@
             "logger"
         ]
     },
-    "app-launcher" : {
+    "app-launcher": {
         "lib": [
             "shared"
         ],
@@ -22,6 +22,18 @@
     "backup": {
         "build": {},
         "run": []
+    },
+    "budget": {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger",
+            "mysql",
+            "rabbitmq",
+            "user"
+        ]
     },
     "caddy": {
         "build": {},
@@ -56,7 +68,8 @@
         "build": {},
         "run": [
             "logger",
-            "rabbitmq"
+            "rabbitmq",
+            "worker"
         ]
     },
     "gee": {
@@ -66,8 +79,7 @@
         ],
         "build": {},
         "run": [
-            "logger",
-            "sepal-server"
+            "logger"
         ]
     },
     "geospatial-toolkit": {
@@ -87,22 +99,6 @@
         ],
         "allowProductionMode": true
     },
-    "java": {
-        "build": {},
-        "run": false
-    },
-    "ldap": {
-        "build": {},
-        "run": [
-            "logger"
-        ]
-    },
-    "ldap-backup": {
-        "build": {},
-        "run": [
-            "logger"
-        ]
-    },
     "logger": {
         "build": {},
         "run": []
@@ -117,6 +113,16 @@
         "build": {},
         "run": [
             "logger"
+        ]
+    },
+    "message": {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger",
+            "mysql"
         ]
     },
     "prometheus": {
@@ -142,6 +148,16 @@
             "logger"
         ]
     },
+    "recipe": {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger",
+            "mysql"
+        ]
+    },
     "sandbox": {
         "build": {
             "geospatial-toolkit": "build"
@@ -162,20 +178,6 @@
             "mysql"
         ]
     },
-    "sepal-server": {
-        "build": {
-            "java": "build",
-            "sandbox": "build",
-            "task": "build"
-        },
-        "run": [
-            "logger",
-            "mysql",
-            "user-node",
-            "rabbitmq"
-        ],
-        "gradle": true
-    },
     "ssh-gateway": {
         "lib": [
             "shared"
@@ -183,7 +185,7 @@
         "build": {},
         "run": [
             "logger",
-            "user-node",
+            "user",
             "rabbitmq"
         ]
     },
@@ -216,16 +218,15 @@
         ]
     },
     "user": {
-        "build": {
-            "java": "build"
-        },
+        "lib": [
+            "shared"
+        ],
+        "build": {},
         "run": [
             "logger",
             "mysql",
-            "ldap",
             "rabbitmq"
-        ],
-        "gradle": true
+        ]
     },
     "user-assets": {
         "lib": [
@@ -234,18 +235,7 @@
         "build": {},
         "run": [
             "logger",
-            "rabbitmq"
-        ]
-    },
-    "user-node": {
-        "lib": [
-            "shared"
-        ],
-        "build": {},
-        "run": [
-            "logger",
-            "mysql",
-            "rabbitmq"
+            "gee"
         ]
     },
     "user-files": {
@@ -254,8 +244,7 @@
         ],
         "build": {},
         "run": [
-            "logger",
-            "rabbitmq"
+            "logger"
         ]
     },
     "user-storage": {
@@ -266,12 +255,26 @@
         "run": [
             "logger",
             "email",
+            "mysql",
             "rabbitmq"
         ]
     },
     "user-storage-backup": {
         "build": {},
         "run": []
+    },
+    "worker": {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger",
+            "mysql",
+            "rabbitmq",
+            "budget",
+            "user"
+        ]
     },
     "ops": {
         "build": {},

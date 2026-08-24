@@ -1,14 +1,6 @@
 .container {
     /* --y is injected */
     /* --x is injected */
-    /* --attribution-mask-size: 2rem; */
-    /* --attribution-mask-size: 0rem; */
-
-    /* HACK: hide mysterious blue border around the map (in Google Maps markup)
-        <div style="pointer-events: none; width: 100%; height: 100%; box-sizing: border-box; position: absolute; z-index: 1000002; opacity: 0; border: 2px solid rgb(26, 115, 232);"></div>
-    */
-    /* It looks like the blue border is gone... */
-    --attribution-mask-size: 2px;
 
     --half-margin-size: 1px;
     --top: var(--y);
@@ -22,8 +14,6 @@
 
     --half-area-marker-size: 2.5rem;
     --area-marker-distance: 0rem;
-    /* --half-area-marker-size: 1rem;
-    --area-marker-distance: 2rem; */
 
     --idle-color: #808080;
     --dragging-color: #c0c0c0;
@@ -84,14 +74,12 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    margin: calc(var(--attribution-mask-size) * -1);
     z-index: 0;
     user-select: none;
     pointer-events: none;
 }
 
 .area.full {
-    --clip-offset: var(--attribution-mask-size);
     top: 0;
     bottom: 0;
     left: 0;
@@ -115,12 +103,7 @@
     left: var(--area-left);
     right: var(--area-right);
     z-index: 1;
-    clip-path: inset(
-        var(--attribution-mask-size)
-        var(--attribution-mask-size)
-        var(--attribution-mask-size)
-        var(--attribution-mask-size)
-    );
+    clip-path: inset(0);
 }
 
 .area.partial.overlay {
@@ -162,43 +145,43 @@
 }
 
 .area.partial.top:not(.left):not(.right):hover::after {
-    bottom: calc(-1 * var(--half-area-marker-size) - 1px + var(--area-marker-distance) * 1.4142 + var(--attribution-mask-size));
-    left: calc(var(--left) - var(--half-area-marker-size) + var(--attribution-mask-size));
+    bottom: calc(-1 * var(--half-area-marker-size) - 1px + var(--area-marker-distance) * 1.4142);
+    left: calc(var(--left) - var(--half-area-marker-size));
 }
 
 .area.partial.bottom:not(.left):not(.right):hover::after {
-    top: calc(-1 * var(--half-area-marker-size) + var(--area-marker-distance) * 1.4142 + var(--attribution-mask-size));
-    left: calc(var(--left) - var(--half-area-marker-size) + var(--attribution-mask-size));
+    top: calc(-1 * var(--half-area-marker-size) + var(--area-marker-distance) * 1.4142);
+    left: calc(var(--left) - var(--half-area-marker-size));
 }
 
 .area.partial.left:not(.top):not(.bottom):hover::after {
-    top: calc(var(--top) - var(--half-area-marker-size) + var(--attribution-mask-size));
-    right: calc(-1 * var(--half-area-marker-size) - 1px + var(--area-marker-distance) * 1.4142 + var(--attribution-mask-size));
+    top: calc(var(--top) - var(--half-area-marker-size));
+    right: calc(-1 * var(--half-area-marker-size) - 1px + var(--area-marker-distance) * 1.4142);
 }
 
 .area.partial.right:not(.top):not(.bottom):hover::after {
-    top: calc(var(--top) - var(--half-area-marker-size) + var(--attribution-mask-size));
-    left: calc(-1 * var(--half-area-marker-size) + var(--area-marker-distance) * 1.4142 + var(--attribution-mask-size));
+    top: calc(var(--top) - var(--half-area-marker-size));
+    left: calc(-1 * var(--half-area-marker-size) + var(--area-marker-distance) * 1.4142);
 }
 
 .area.partial.top.left:hover::after {
-    bottom: calc(-1 * var(--half-area-marker-size) - 1px + var(--area-marker-distance) + var(--attribution-mask-size));
-    right: calc(-1 * var(--half-area-marker-size) - 1px + var(--area-marker-distance) + var(--attribution-mask-size));
+    bottom: calc(-1 * var(--half-area-marker-size) - 1px + var(--area-marker-distance));
+    right: calc(-1 * var(--half-area-marker-size) - 1px + var(--area-marker-distance));
 }
 
 .area.partial.top.right:hover::after {
-    bottom: calc(-1 * var(--half-area-marker-size) - 1px + var(--area-marker-distance) + var(--attribution-mask-size));
-    left: calc(-1 * var(--half-area-marker-size) + var(--area-marker-distance) + var(--attribution-mask-size));
+    bottom: calc(-1 * var(--half-area-marker-size) - 1px + var(--area-marker-distance));
+    left: calc(-1 * var(--half-area-marker-size) + var(--area-marker-distance));
 }
 
 .area.partial.bottom.left:hover::after {
-    top: calc(-1 * var(--half-area-marker-size) + var(--area-marker-distance) + var(--attribution-mask-size));
-    right: calc(-1 * var(--half-area-marker-size) - 1px + var(--area-marker-distance) + var(--attribution-mask-size));
+    top: calc(-1 * var(--half-area-marker-size) + var(--area-marker-distance));
+    right: calc(-1 * var(--half-area-marker-size) - 1px + var(--area-marker-distance));
 }
 
 .area.partial.bottom.right:hover::after {
-    top: calc(-1 * var(--half-area-marker-size) + var(--area-marker-distance) + var(--attribution-mask-size));
-    left: calc(-1 * var(--half-area-marker-size) + var(--area-marker-distance) + var(--attribution-mask-size));
+    top: calc(-1 * var(--half-area-marker-size) + var(--area-marker-distance));
+    left: calc(-1 * var(--half-area-marker-size) + var(--area-marker-distance));
 }
 
 /* areaOverlay */

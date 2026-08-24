@@ -13,6 +13,7 @@
     /* [HACK] transparent colors are needed and cannot be replaced with 'transparent' because of iOS */
     --default-gradient: linear-gradient(to right, var(--tab-default-background-color-transparent), var(--tab-default-background-color) 100%);
     --selected-gradient: linear-gradient(to right, var(--tab-selected-background-color-transparent), var(--tab-selected-background-color) 100%);
+    --tab-busy-margin: 0;
     position: relative;
     background-color: var(--tab-default-background-color);
     border-top-right-radius: var(--border-top-right-radius);
@@ -22,10 +23,26 @@
     padding: 0 .25rem .25rem .25rem;
     transform-origin: right top;
     overflow: hidden;
+}
+
+/* transient: TabHandle carries this class only while the add animation runs after its
+   FIRST mount. Keeping animation-name off the element afterwards is what prevents
+   replays — DOM re-insertions (drag reorder, drop) restart any animation present,
+   and toggling animation: none back on would restart it too. */
+.tab.regular.add {
     animation: add 200ms linear forwards;
 }
 
+/* Busy indicator: the bar is a gradient window — the flip-flop keyframes animate
+background-position (the sweep) while the busy <=> idle morph transitions background-size
+between half and full width. With size 100% percentage positioning has no leftover space,
+so the paused sweep position maps to offset 0 and the idle bar is exactly full-width
+wherever the animation froze; pausing (not removing) the animation avoids keyframe snaps.
+The keyframes deliberately contain no var(): Firefox does not re-resolve var() references
+inside keyframes of an attached animation (bugzilla 1763376 et al.). */
+
 .tab::before {
+    --tab-bar-color: var(--tab-default-border-color);
     content: '';
     position: absolute;
     z-index: 1;
@@ -33,66 +50,27 @@
     left: 0;
     right: 0;
     height: 3px;
-    background-color: var(--tab-default-border-color);
-}
-
-.tab.busy::before {
+    background-image: linear-gradient(var(--tab-bar-color), var(--tab-bar-color));
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
     animation: flip-flop 1000ms cubic-bezier(1, 0, 0, 1) infinite alternate;
-}
-
-@keyframes flip-flop {
-    0% {
-        left: 0%;
-        right: 50%;
-    }
-    100% {
-        left: 50%;
-        right: 0%;
-    }
-}
-
-/* Alternate implementation with animation transitions.
-Not supported by Firefox yet. */
-
-/* @property --margin {
-    syntax: '<number>';
-    inherits: false;
-    initial-value: 0;
-}
-
-.tab::before {
-    content: '';
-    position: absolute;
-    z-index: 1;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background-color: var(--tab-default-border-color);
-    animation: flip-flop 1000ms cubic-bezier(0.9, 0, 0.1, 1) infinite alternate;
-    transition: --margin 150ms ease-in-out;
+    animation-play-state: paused;
+    transition: background-size 150ms ease-in-out;
 }
 
 .tab.busy::before {
-    --margin: .5;
+    background-size: 50% 100%;
     animation-play-state: running;
 }
 
-.tab:not(.busy)::before {
-    --margin: 0;
-    animation-play-state: paused;
-}
-
 @keyframes flip-flop {
     0% {
-        left: 0%;
-        right: calc(var(--margin) * 100%);
+        background-position: 0% 0;
     }
     100% {
-        left: calc(var(--margin) * 100%);
-        right: 0%;
+        background-position: 100% 0;
     }
-} */
+}
 
 .tab.closing {
     animation: remove var(--close-animation-duration) ease-in forwards;
@@ -116,18 +94,17 @@ Not supported by Firefox yet. */
     }
 }
 
-.tab:first-child {
-    /* align tabs to the right */
-    margin-left: auto; 
-}
-
-.tab:not(:last-child) {
-    margin-right: var(--tab-spacing);
-}
-
 .tab.regular {
     max-width: var(--tab-max-width);
     min-width: var(--tab-min-width);
+}
+
+/* while a drag is in progress every bar is forced full-width: at background-size 100%
+   the sweep's position maps to a full-width bar (see the busy-indicator comment above),
+   so busy state — including animations restarted by the reorder's DOM re-insertions —
+   is invisible until the drop, when the bar morphs back via the transition. */
+.tab.dragging::before {
+    background-size: 100% 100%;
 }
 
 .tab.regular.selected {
@@ -135,11 +112,26 @@ Not supported by Firefox yet. */
 }
 
 .tab.regular.selected::before {
-    background-color: var(--tab-selected-border-color);
+    --tab-bar-color: var(--tab-selected-border-color);
 }
 
 .tab:hover {
     background-color: var(--tab-default-background-color);
+}
+
+.tab .prefix {
+    align-self: center;
+    padding-left: .5rem;
+    font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
+    font-weight: 600;
+    color: #8a949c;
+    white-space: nowrap;
+    user-select: none;
+    pointer-events: none;
+}
+
+.tab.selected .prefix {
+    color: #e8e8e8;
 }
 
 .tab .title {
