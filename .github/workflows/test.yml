@@ -1,0 +1,36 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{matrix.module}}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - modules/gui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ${{matrix.module}}/package-lock.json
+      - run: npm ci
+        working-directory: ${{matrix.module}}
+      # vitest single-shots rather than watching because Actions sets CI
+      - run: npm test
+        working-directory: ${{matrix.module}}
+      - run: npm run lint
+        if: '!cancelled()'
+        working-directory: ${{matrix.module}}
