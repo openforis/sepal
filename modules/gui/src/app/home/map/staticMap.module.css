@@ -1,9 +1,18 @@
 .map {
+    /* HACK: hide the blue border Google Maps draws around the map:
+        <div style="pointer-events: none; width: 100%; height: 100%; box-sizing: border-box; position: absolute; z-index: 1000002; opacity: 0; border: 2px solid rgb(26, 115, 232);"></div>
+        The map is grown by this much in every direction, then clipped back to its
+        original bounds, so the border falls outside the visible box.
+    */
+    --attribution-mask-size: 2px;
+
     position: absolute;
     top: var(--top-bar-height);
     bottom: 0;
     left: 0;
     right: 0;
+    margin: calc(var(--attribution-mask-size) * -1);
+    clip-path: inset(var(--attribution-mask-size));
     display: flex;
     flex-grow: 1;
     pointer-events: none;
@@ -14,8 +23,9 @@
     content: '';
     position: absolute;
     z-index: 1;
-    bottom: 0;
-    width: 100%;
+    bottom: var(--attribution-mask-size);
+    left: var(--attribution-mask-size);
+    right: var(--attribution-mask-size);
     height: var(--map-overlay-height);
     background-color: hsla(0, 0%, 0%, .4);
 }
