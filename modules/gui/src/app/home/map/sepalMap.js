@@ -531,6 +531,10 @@ export class SepalMap {
         const existingLayer = this.getLayer(id)
         const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
         if (unchanged) {
+            // Keeping the mounted layer is what avoids a map-id refetch, but its index may still have moved.
+            if (layer?.layerIndex !== undefined) {
+                existingLayer.setLayerIndex(layer.layerIndex)
+            }
             return false
         }
         this.removeLayer(id)

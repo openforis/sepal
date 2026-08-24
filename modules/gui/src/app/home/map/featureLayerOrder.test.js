@@ -1,4 +1,21 @@
-import {canonicalizeFeatureLayerOrder, reorderAssetsByPointer, splitOverlayRowsForMenu, withFeatureLayerDisabled, withReorderedAssets} from './featureLayerOrder'
+import {canonicalizeFeatureLayerOrder, isDataFeatureLayer, isPresentationFeatureLayer, reorderDataLayersByPointer, toDisplayedFeatureLayers, toPersistedDataOrder, withFeatureLayerDisabled, withReorderedDataLayers} from './featureLayerOrder'
+
+const ids = layers => layers.map(({sourceId}) => sourceId)
+
+// Every feature layer type that exists, one source each, deliberately in an order no band would produce.
+const allSources = () => [
+    {id: 'legend', type: 'Legend'},
+    {id: 'a1', type: 'EETableAsset'},
+    {id: 'labels', type: 'Labels'},
+    {id: 'aoi', type: 'Aoi'},
+    {id: 'sceneAreas', type: 'SceneAreas'},
+    {id: 'a2', type: 'EETableAsset'},
+    {id: 'referenceData', type: 'ReferenceData'},
+    {id: 'palette', type: 'Palette'},
+    {id: 'values', type: 'Values'}
+]
+
+const sourcesOf = (...types) => types.map((type, index) => ({id: `s${index}`, type}))
 
 const featureLayers = () => [
     {sourceId: 'aoi'},
@@ -8,10 +25,32 @@ const featureLayers = () => [
     {sourceId: 'a3', layerConfig: {style: {colorMode: 'ONE_COLOR', color: '#333'}}}
 ]
 
+const dataSources = () => [
+    {id: 'aoi', type: 'Aoi'},
+    {id: 'labels', type: 'Labels'},
+    {id: 'a1', type: 'EETableAsset'},
+    {id: 'a2', type: 'EETableAsset'},
+    {id: 'a3', type: 'EETableAsset'}
+]
+
+describe('feature layer roles', () => {
+    it('classifies the aoi and asset overlays as the draggable data band', () => {
+        expect(['Aoi', 'EETableAsset'].map(isDataFeatureLayer)).toEqual([true, true])
+        expect(['Labels', 'ReferenceData', 'SceneAreas', 'Legend'].map(isDataFeatureLayer))
+            .toEqual([false, false, false, false])
+    })
+
+    it('classifies legend, palette and values as presentation rather than stack rows', () => {
+        expect(['Legend', 'Palette', 'Values'].map(isPresentationFeatureLayer)).toEqual([true, true, true])
+        expect(['Aoi', 'EETableAsset', 'Labels', 'ReferenceData', 'SceneAreas'].map(isPresentationFeatureLayer))
+            .toEqual([false, false, false, false, false])
+    })
+})
+
 describe('withFeatureLayerDisabled', () => {
     it('flips a single entry and preserves order', () => {
         const result = withFeatureLayerDisabled(featureLayers(), 'aoi', true)
-        expect(result.map(({sourceId}) => sourceId)).toEqual(['aoi', 'labels', 'a1', 'a2', 'a3'])
+        expect(ids(result)).toEqual(['aoi', 'labels', 'a1', 'a2', 'a3'])
         expect(result[0]).toEqual({sourceId: 'aoi', disabled: true})
     })
 
@@ -28,118 +67,174 @@ describe('withFeatureLayerDisabled', () => {
     })
 })
 
-describe('withReorderedAssets', () => {
-    const assetIds = ['a1', 'a2', 'a3']
+describe('withReorderedDataLayers', () => {
+    const dataIds = ['aoi', 'a1', 'a2', 'a3']
 
-    it('reorders only asset entries and keeps built-ins fixed', () => {
-        const result = withReorderedAssets(featureLayers(), assetIds, ['a3', 'a1', 'a2'])
-        expect(result.map(({sourceId}) => sourceId)).toEqual(['aoi', 'labels', 'a3', 'a1', 'a2'])
+    it('reorders the aoi together with the assets in one band', () => {
+        const result = withReorderedDataLayers(featureLayers(), dataIds, ['a3', 'aoi', 'a1', 'a2'])
+        expect(ids(result)).toEqual(['a3', 'aoi', 'a1', 'a2', 'labels'])
     })
 
-    it('groups assets into a contiguous band, keeping built-ins in relative order', () => {
-        const layers = [{sourceId: 'a1'}, {sourceId: 'aoi'}, {sourceId: 'a2'}]
-        const result = withReorderedAssets(layers, ['a1', 'a2'], ['a2', 'a1'])
-        expect(result.map(({sourceId}) => sourceId)).toEqual(['a2', 'a1', 'aoi'])
+    it('reorders only data entries and keeps fixed rows in place', () => {
+        const result = withReorderedDataLayers(featureLayers(), ['a1', 'a2', 'a3'], ['a3', 'a1', 'a2'])
+        expect(ids(result)).toEqual(['aoi', 'labels', 'a3', 'a1', 'a2'])
     })
 
-    it('preserves each asset entry (and its layerConfig) by reference across reorder', () => {
+    it('groups data entries into a contiguous band, keeping fixed rows in relative order', () => {
+        const layers = [{sourceId: 'a1'}, {sourceId: 'labels'}, {sourceId: 'a2'}]
+        const result = withReorderedDataLayers(layers, ['a1', 'a2'], ['a2', 'a1'])
+        expect(ids(result)).toEqual(['a2', 'a1', 'labels'])
+    })
+
+    it('preserves each data entry (and its layerConfig) by reference across reorder', () => {
         const input = featureLayers()
-        const result = withReorderedAssets(input, assetIds, ['a3', 'a1', 'a2'])
+        const result = withReorderedDataLayers(input, ['a1', 'a2', 'a3'], ['a3', 'a1', 'a2'])
         expect(result[2]).toBe(input[4]) // a3
         expect(result[3]).toBe(input[2]) // a1
         expect(result[0]).toBe(input[0]) // aoi untouched
         expect(result[2].layerConfig).toEqual({style: {colorMode: 'ONE_COLOR', color: '#333'}})
     })
 
-    it('appends assets omitted from the desired order in their prior order', () => {
-        const result = withReorderedAssets(featureLayers(), assetIds, ['a3'])
-        expect(result.map(({sourceId}) => sourceId)).toEqual(['aoi', 'labels', 'a3', 'a1', 'a2'])
+    it('appends data entries omitted from the desired order in their prior order', () => {
+        const result = withReorderedDataLayers(featureLayers(), ['a1', 'a2', 'a3'], ['a3'])
+        expect(ids(result)).toEqual(['aoi', 'labels', 'a3', 'a1', 'a2'])
     })
 
     it('ignores unknown/duplicate ids in the desired order', () => {
-        const result = withReorderedAssets(featureLayers(), assetIds, ['a2', 'nope', 'a2', 'aoi', 'a1'])
-        expect(result.map(({sourceId}) => sourceId)).toEqual(['aoi', 'labels', 'a2', 'a1', 'a3'])
+        const result = withReorderedDataLayers(featureLayers(), ['a1', 'a2', 'a3'], ['a2', 'nope', 'a2', 'aoi', 'a1'])
+        expect(ids(result)).toEqual(['aoi', 'labels', 'a2', 'a1', 'a3'])
     })
 })
 
 describe('canonicalizeFeatureLayerOrder', () => {
-    const assetIds = ['a1', 'a2']
-
-    it('groups an interleaved asset/built-in/asset state into one contiguous band', () => {
-        const layers = [{sourceId: 'aoi'}, {sourceId: 'a1'}, {sourceId: 'legend'}, {sourceId: 'a2'}]
-        const result = canonicalizeFeatureLayerOrder(layers, assetIds)
-        expect(result.map(({sourceId}) => sourceId)).toEqual(['aoi', 'a1', 'a2', 'legend'])
+    it('sorts every current type into its band, bottom to top', () => {
+        const layers = allSources().map(({id}) => ({sourceId: id}))
+        const result = canonicalizeFeatureLayerOrder(layers, allSources())
+        expect(ids(result)).toEqual([
+            'a1', 'aoi', 'a2', // data band, in the order it was persisted in
+            'labels', 'referenceData', 'sceneAreas', // fixed rows, in render order
+            'legend', 'palette', 'values' // presentation, parked above the stack
+        ])
     })
 
-    it('preserves built-in and asset relative order and is idempotent', () => {
-        const layers = [{sourceId: 'a1'}, {sourceId: 'legend'}, {sourceId: 'a2'}, {sourceId: 'labels'}]
-        const once = canonicalizeFeatureLayerOrder(layers, assetIds)
-        expect(once.map(({sourceId}) => sourceId)).toEqual(['a1', 'a2', 'legend', 'labels'])
-        const twice = canonicalizeFeatureLayerOrder(once, assetIds)
-        expect(twice.map(({sourceId}) => sourceId)).toEqual(['a1', 'a2', 'legend', 'labels'])
+    it('displays the fixed rows as scene areas, reference data, labels, then the data band', () => {
+        const layers = allSources().map(({id}) => ({sourceId: id}))
+        const displayed = toDisplayedFeatureLayers(canonicalizeFeatureLayerOrder(layers, allSources()))
+        const stack = ids(displayed).filter(id => !['legend', 'palette', 'values'].includes(id))
+        expect(stack).toEqual(['sceneAreas', 'referenceData', 'labels', 'a2', 'aoi', 'a1'])
     })
 
-    it('returns already-contiguous state unchanged (by value)', () => {
-        const layers = [{sourceId: 'aoi'}, {sourceId: 'a1'}, {sourceId: 'a2'}, {sourceId: 'legend'}]
-        expect(canonicalizeFeatureLayerOrder(layers, assetIds)).toEqual(layers)
+    it('keeps a moved aoi where the user put it', () => {
+        const moved = [{sourceId: 'a1'}, {sourceId: 'aoi'}, {sourceId: 'a2'}, {sourceId: 'labels'}]
+        const result = canonicalizeFeatureLayerOrder(moved, dataSources())
+        expect(ids(result)).toEqual(['a1', 'aoi', 'a2', 'labels'])
+    })
+
+    it('leaves a late-added aoi wherever it was appended within the band', () => {
+        const layers = [{sourceId: 'a1'}, {sourceId: 'a2'}, {sourceId: 'aoi'}]
+        const result = canonicalizeFeatureLayerOrder(layers, dataSources())
+        expect(ids(result)).toEqual(['a1', 'a2', 'aoi'])
+    })
+
+    it('groups an interleaved data/fixed/data state into one contiguous band', () => {
+        const layers = [{sourceId: 'aoi'}, {sourceId: 'a1'}, {sourceId: 'labels'}, {sourceId: 'a2'}]
+        const result = canonicalizeFeatureLayerOrder(layers, dataSources())
+        expect(ids(result)).toEqual(['aoi', 'a1', 'a2', 'labels'])
+    })
+
+    it('is idempotent', () => {
+        const layers = allSources().map(({id}) => ({sourceId: id}))
+        const once = canonicalizeFeatureLayerOrder(layers, allSources())
+        expect(canonicalizeFeatureLayerOrder(once, allSources())).toEqual(once)
+    })
+
+    it('returns already-canonical state unchanged (by value)', () => {
+        const layers = [{sourceId: 'aoi'}, {sourceId: 'a1'}, {sourceId: 'labels'}]
+        expect(canonicalizeFeatureLayerOrder(layers, dataSources())).toEqual(layers)
+    })
+
+    it('preserves disabled flags and layerConfig', () => {
+        const layers = [
+            {sourceId: 'labels', disabled: true},
+            {sourceId: 'a1', layerConfig: {style: {color: '#111'}}},
+            {sourceId: 'aoi', disabled: false}
+        ]
+        const result = canonicalizeFeatureLayerOrder(layers, dataSources())
+        expect(result).toEqual([
+            {sourceId: 'a1', layerConfig: {style: {color: '#111'}}},
+            {sourceId: 'aoi', disabled: false},
+            {sourceId: 'labels', disabled: true}
+        ])
+    })
+
+    it('keeps an unclassified type in the stack rather than dropping it', () => {
+        const layers = [{sourceId: 's1'}, {sourceId: 's0'}]
+        const result = canonicalizeFeatureLayerOrder(layers, sourcesOf('Aoi', 'SomethingNew'))
+        expect(ids(result)).toEqual(['s0', 's1'])
     })
 })
 
-describe('reorderAssetsByPointer', () => {
-    const centers = {a1: 10, a2: 20, a3: 30}
+describe('reorderDataLayersByPointer', () => {
+    const centers = {a1: 10, aoi: 20, a2: 30}
 
-    it('moves a dragged asset up to the pointer position', () => {
-        expect(reorderAssetsByPointer({assetIds: ['a1', 'a2', 'a3'], draggedId: 'a3', pointerY: 5, centers}))
-            .toEqual(['a3', 'a1', 'a2'])
+    it('moves a dragged data layer up to the pointer position', () => {
+        expect(reorderDataLayersByPointer({dataIds: ['a1', 'aoi', 'a2'], draggedId: 'a2', pointerY: 5, centers}))
+            .toEqual(['a2', 'a1', 'aoi'])
     })
 
-    it('moves a dragged asset down between rows', () => {
-        expect(reorderAssetsByPointer({assetIds: ['a1', 'a2', 'a3'], draggedId: 'a1', pointerY: 25, centers}))
-            .toEqual(['a2', 'a1', 'a3'])
+    it('moves the aoi like any other data layer', () => {
+        expect(reorderDataLayersByPointer({dataIds: ['a1', 'aoi', 'a2'], draggedId: 'aoi', pointerY: 5, centers}))
+            .toEqual(['aoi', 'a1', 'a2'])
     })
 
     it('keeps the previous order when there is no target (pointerY null)', () => {
-        expect(reorderAssetsByPointer({assetIds: ['a1', 'a2', 'a3'], draggedId: 'a1', pointerY: null, centers}))
-            .toEqual(['a1', 'a2', 'a3'])
+        expect(reorderDataLayersByPointer({dataIds: ['a1', 'aoi', 'a2'], draggedId: 'a1', pointerY: null, centers}))
+            .toEqual(['a1', 'aoi', 'a2'])
     })
 
-    it('returns only the given asset ids (never introduces built-ins)', () => {
-        const result = reorderAssetsByPointer({assetIds: ['a1', 'a2'], draggedId: 'a2', pointerY: 5, centers})
-        expect(result).toEqual(['a2', 'a1'])
+    it('returns only the given data ids (never introduces a fixed row)', () => {
+        const result = reorderDataLayersByPointer({dataIds: ['a1', 'aoi'], draggedId: 'aoi', pointerY: 5, centers})
+        expect(result).toEqual(['aoi', 'a1'])
     })
 })
 
-describe('splitOverlayRowsForMenu', () => {
-    const row = (id, orderable) => ({source: {id}, orderable})
-    const ids = rows => rows.map(({source}) => source.id)
+describe('display/persist direction', () => {
+    const layers = (...sourceIds) => sourceIds.map(sourceId => ({sourceId}))
 
-    it('moves a trailing built-in above the asset rows for menu display', () => {
-        const rows = [row('aoi', false), row('a1', true), row('a2', true), row('legend', false)]
-        const {builtInRows, assetRows} = splitOverlayRowsForMenu(rows)
-        expect(ids(builtInRows)).toEqual(['aoi', 'legend'])
-        expect(ids(assetRows)).toEqual(['a1', 'a2'])
+    it('displays persisted bottom-to-top layers top-to-bottom', () => {
+        expect(ids(toDisplayedFeatureLayers(layers('bottom', 'middle', 'top'))))
+            .toEqual(['top', 'middle', 'bottom'])
     })
 
-    it('renders built-ins first and assets last when they interleave', () => {
-        const rows = [row('a1', true), row('legend', false), row('a2', true), row('labels', false)]
-        const {builtInRows, assetRows} = splitOverlayRowsForMenu(rows)
-        expect(ids(builtInRows)).toEqual(['legend', 'labels'])
-        expect(ids(assetRows)).toEqual(['a1', 'a2'])
+    it('persists displayed top-to-bottom data ids bottom-to-top', () => {
+        expect(toPersistedDataOrder(['top', 'middle', 'bottom']))
+            .toEqual(['bottom', 'middle', 'top'])
     })
 
-    it('preserves relative order within built-ins and within assets', () => {
-        const rows = [row('b1', false), row('a1', true), row('b2', false), row('a2', true), row('a3', true)]
-        const {builtInRows, assetRows} = splitOverlayRowsForMenu(rows)
-        expect(ids(builtInRows)).toEqual(['b1', 'b2'])
-        expect(ids(assetRows)).toEqual(['a1', 'a2', 'a3'])
+    it('round-trips a persisted order through the display order', () => {
+        const persisted = layers('aoi', 'a1', 'a2')
+        expect(toPersistedDataOrder(ids(toDisplayedFeatureLayers(persisted)))).toEqual(ids(persisted))
     })
 
-    it('handles all-built-in and all-asset row sets', () => {
-        expect(ids(splitOverlayRowsForMenu([row('aoi', false), row('legend', false)]).assetRows)).toEqual([])
-        expect(ids(splitOverlayRowsForMenu([row('a1', true), row('a2', true)]).builtInRows)).toEqual([])
+    it('leaves its input untouched', () => {
+        const persisted = layers('bottom', 'middle', 'top')
+        const displayedIds = ['top', 'middle', 'bottom']
+        toDisplayedFeatureLayers(persisted)
+        toPersistedDataOrder(displayedIds)
+        expect(ids(persisted)).toEqual(['bottom', 'middle', 'top'])
+        expect(displayedIds).toEqual(['top', 'middle', 'bottom'])
     })
 
-    it('returns empty groups for no rows', () => {
-        expect(splitOverlayRowsForMenu()).toEqual({builtInRows: [], assetRows: []})
+    it('persists a drag of the aoi through the data band, leaving the fixed rows in place', () => {
+        const dataIds = ['aoi', 'a1', 'a2']
+        const persisted = layers('aoi', 'a1', 'a2', 'labels')
+        const displayedDataIds = ids(toDisplayedFeatureLayers(persisted)).filter(id => dataIds.includes(id))
+        expect(displayedDataIds).toEqual(['a2', 'a1', 'aoi'])
+        // Rows are 20px apart top-to-bottom; drag the aoi from the bottom of the band to the top.
+        const centers = {a2: 10, a1: 30, aoi: 50}
+        const dragged = reorderDataLayersByPointer({dataIds: displayedDataIds, draggedId: 'aoi', pointerY: 5, centers})
+        expect(dragged).toEqual(['aoi', 'a2', 'a1'])
+        const result = withReorderedDataLayers(persisted, dataIds, toPersistedDataOrder(dragged))
+        expect(ids(result)).toEqual(['a1', 'a2', 'aoi', 'labels'])
     })
 })

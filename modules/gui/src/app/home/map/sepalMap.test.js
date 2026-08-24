@@ -1,6 +1,9 @@
 import {TerraDraw, TerraDrawPolygonMode} from 'terra-draw'
+import {vi} from 'vitest'
 
 import {toPolygonPath} from './drawing'
+import {GoogleLabelsLayer} from './layer/googleLabelsLayer'
+import {TileLayer} from './layer/tileLayer'
 import {SepalMap} from './sepalMap'
 
 class TestAdapter {
@@ -230,5 +233,127 @@ describe('polygon drawing', () => {
         expect(drawing.enabled).toBe(false)
         expect(adapter.cursor).toBe('unset')
         expect(adapter.doubleClickToZoom).toBe(true)
+    })
+})
+
+// Overlays are compared by content, so every fixture needs its own identity - otherwise an assertion on the
+// array is blind to the order it is meant to pin.
+const overlay = (name, rest) => ({name, ...rest})
+
+const overlayMapTypes = overlays => ({
+    getArray: () => overlays,
+    getAt: index => overlays[index],
+    insertAt: (index, overlay) => overlays.splice(index, 0, overlay),
+    removeAt: index => overlays.splice(index, 1)[0],
+    setAt: (index, overlay) => { overlays[index] = overlay }
+})
+
+const mapOver = overlays => {
+    const googleMap = {overlayMapTypes: overlayMapTypes(overlays)}
+    return {getGoogle: () => ({googleMap})}
+}
+
+const tileLayer = (map, layerIndex, overlay) =>
+    Object.assign(new TileLayer(), {map, layerIndex, overlay, equals: () => true})
+
+describe('SepalMap.setLayer', () => {
+    it('moves an equal mounted layer instead of recreating it', () => {
+        const existingLayer = {
+            equals: () => true,
+            remove: vi.fn(),
+            setLayerIndex: vi.fn()
+        }
+        const map = Object.create(SepalMap.prototype)
+        map.layerById = {overlay: existingLayer}
+
+        const changed = map.setLayer({id: 'overlay', layer: {layerIndex: 3}})
+
+        expect(changed).toBe(false)
+        expect(existingLayer.setLayerIndex).toHaveBeenCalledWith(3)
+        expect(existingLayer.remove).not.toHaveBeenCalled()
+    })
+})
+
+describe('overlayMapTypes placement', () => {
+    it('swaps a moved tile overlay with the one it displaces', () => {
+        const image = overlay('image')
+        const overlayA = overlay('a')
+        const overlayB = overlay('b')
+        const overlays = [image, overlayA, overlayB]
+        const map = mapOver(overlays)
+        const layerA = tileLayer(map, 1, overlayA)
+        const layerB = tileLayer(map, 2, overlayB)
+
+        layerA.setLayerIndex(2)
+
+        expect(overlays).toEqual([image, overlayB, overlayA])
+
+        layerB.setLayerIndex(1)
+
+        expect(overlays).toEqual([image, overlayB, overlayA])
+    })
+
+    it('moves a mounted labels overlay without dropping the displaced layer', () => {
+        const image = overlay('image')
+        const labels = overlay('labels')
+        const asset = overlay('asset')
+        const overlays = [image, labels, asset]
+        const layer = Object.assign(new GoogleLabelsLayer({map: mapOver(overlays), layerIndex: 1}), {overlay: labels})
+
+        layer.setLayerIndex(2)
+
+        expect(overlays).toEqual([image, asset, labels])
+    })
+
+    // An overlay mounting into an occupied slot displaces its neighbour before that neighbour's own update
+    // arrives. Claiming the slot anyway is what lets the displaced overlay re-enter later in the same
+    // sequence; refusing to move while absent would strand it outside the stack.
+    it('lets an overlay displaced mid-sequence re-enter at its new index', () => {
+        const image = overlay('image')
+        const aoi = overlay('aoi')
+        const overlayA = overlay('a')
+        const overlayB = overlay('b')
+        const overlays = [image, overlayA, overlayB]
+        const map = mapOver(overlays)
+        const layerA = tileLayer(map, 1, overlayA)
+        const layerB = tileLayer(map, 2, overlayB)
+        const aoiLayer = Object.assign(new TileLayer(), {map, layerIndex: 1})
+
+        aoiLayer.mountOverlay(aoi)
+
+        expect(overlays).toEqual([image, aoi, overlayB])
+
+        layerA.setLayerIndex(2)
+
+        expect(overlays).toEqual([image, aoi, overlayA])
+
+        layerB.setLayerIndex(3)
+
+        expect(overlays).toEqual([image, aoi, overlayA, overlayB])
+    })
+
+    it('removes its own displaced overlay without removing the new slot owner', () => {
+        const image = overlay('image')
+        const currentOverlay = overlay('current')
+        const movedOverlay = overlay('moved', {close: vi.fn()})
+        const overlays = [image, movedOverlay, currentOverlay]
+        const layer = tileLayer(mapOver(overlays), 2, movedOverlay)
+
+        layer.removeFromMap()
+
+        expect(overlays).toEqual([image, null, currentOverlay])
+        expect(movedOverlay.close).toHaveBeenCalledOnce()
+    })
+
+    it('leaves closing to the tile layer and never closes a labels overlay', () => {
+        const image = overlay('image')
+        const labels = overlay('labels', {close: vi.fn()})
+        const overlays = [image, labels]
+        const layer = Object.assign(new GoogleLabelsLayer({map: mapOver(overlays), layerIndex: 1}), {overlay: labels})
+
+        layer.removeFromMap()
+
+        expect(overlays).toEqual([image, null])
+        expect(labels.close).not.toHaveBeenCalled()
     })
 })

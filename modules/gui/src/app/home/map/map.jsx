@@ -25,7 +25,9 @@ import {getImageLayerSource} from '../body/process/imageLayerSourceRegistry'
 import {recipePath} from '../body/process/recipe'
 import {withRecipe} from '../body/process/recipeContext'
 import {withLayers} from '../body/process/withLayers'
+import {AoiLayerOptionsPanel} from './aoiLayerOptionsPanel'
 import {FeatureLayerOptionsPanel} from './featureLayerOptionsPanel'
+import {LabelsLayerOptionsPanel} from './labelsLayerOptionsPanel'
 import {LegendImport} from './legendImport'
 import styles from './map.module.css'
 import {MapApiKeyContext} from './mapApiKeyContext'
@@ -815,6 +817,8 @@ export class _Map extends React.Component {
                 />
                 <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
                 <FeatureLayerOptionsPanel area={area}/>
+                <AoiLayerOptionsPanel area={area}/>
+                <LabelsLayerOptionsPanel area={area}/>
                 {layerComponent}
             </MapAreaContext>
         )

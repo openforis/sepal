@@ -586,12 +586,6 @@
       "copy": "Copy to clipboard",
       "coordinatesCopied": "Coordinates copied to the clipboard"
     },
-    "featureLayer": {
-      "toggle": {
-        "show": "Show layer",
-        "hide": "Hide layer"
-      }
-    },
     "featureLayerStyle": {
       "title": "Layer options",
       "tooltip": "Layer options",
@@ -661,6 +655,20 @@
       "opacity": "Layer opacity",
       "opacityControl": {
         "tooltip": "Opacity {percent}%. Drag up/down to change. Click to toggle."
+      }
+    },
+    "labelsLayerStyle": {
+      "categories": {
+        "label": "Show",
+        "administrative": "Administrative",
+        "landscape": "Landscape",
+        "poi": "Points of interest",
+        "road": "Roads",
+        "transit": "Transit",
+        "water": "Water"
+      },
+      "opacity": {
+        "fixed": "Label opacity is fixed at 100%."
       }
     },
     "legendBuilder": {
