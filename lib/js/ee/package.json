@@ -6,12 +6,12 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@google/earthengine": "^1.7.38",
+        "@google/earthengine": "^1.7.40",
         "lodash": "^4.18.1",
         "moment": "^2.30.1",
         "rxjs": "^7.8.2",
         "sepal": "../shared",
-        "uuid": "^14.0.1"
+        "uuid": "^14.0.2"
     },
     "imports": {
         "#sepal/*": "sepal/src/*.js",
