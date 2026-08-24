@@ -21,6 +21,7 @@ import {Panel} from '~/widget/panel/panel'
 import {SearchBox} from '~/widget/searchBox'
 
 import styles from './createRecipe.module.css'
+import {filterRecipeTypes, IGNORE, nextTagFilter, noFilters, recipeTypeTags} from './createRecipeFilter'
 import {getRecipeType} from './recipeTypeRegistry'
 
 const mapStateToProps = state => {
@@ -78,13 +79,13 @@ class _CreateRecipe extends React.Component {
         this.closePanel = this.closePanel.bind(this)
         this.showRecipeTypeInfo = this.showRecipeTypeInfo.bind(this)
         this.setTextFilter = this.setTextFilter.bind(this)
-        this.setTagsFilter = this.setTagsFilter.bind(this)
+        this.setTagFilter = this.setTagFilter.bind(this)
     }
 
     state = {
         selectedRecipeType: null,
-        textFilterValues: [],
-        tagsFilter: []
+        tags: [],
+        ...noFilters()
     }
 
     render() {
@@ -200,10 +201,8 @@ class _CreateRecipe extends React.Component {
     }
 
     renderSearch() {
-        const {filterValue} = this.props
         return (
             <SearchBox
-                value={filterValue}
                 placeholder={msg('process.recipe.newRecipe.search.placeholder')}
                 debounce={0}
                 onSearchValue={this.setTextFilter}
@@ -212,17 +211,16 @@ class _CreateRecipe extends React.Component {
     }
 
     renderTagsFilter() {
-        const {tags, tagsFilter} = this.state
+        const {tags, tagFilter} = this.state
 
-        const recipeOptions = tags?.map(tag => ({
+        const recipeOptions = tags.map(tag => ({
             label: msg(`process.recipe.newRecipe.tags.${tag}`),
             value: tag
         }))
 
         const options = [{
             label: msg('process.recipe.newRecipe.tags.ALL'),
-            // value: null,
-            deselect: true
+            value: IGNORE
         }, ...recipeOptions]
 
         return (
@@ -231,9 +229,8 @@ class _CreateRecipe extends React.Component {
                 layout='horizontal'
                 spacing='tight'
                 options={options}
-                multiple
-                selected={tagsFilter}
-                onSelect={this.setTagsFilter}
+                selected={tagFilter}
+                onSelect={this.setTagFilter}
             />
         )
     }
@@ -275,39 +272,21 @@ class _CreateRecipe extends React.Component {
         this.setState({textFilterValues})
     }
 
-    setTagsFilter(tagsFilter) {
-        this.setState({tagsFilter})
+    setTagFilter(tagFilter) {
+        this.setState(({tagFilter: prevTagFilter}) => ({
+            tagFilter: nextTagFilter(tagFilter, prevTagFilter)
+        }))
+    }
+
+    resetFilters() {
+        this.setState(noFilters())
     }
 
     getFilteredRecipeTypes() {
         const {recipeTypes} = this.props
-        const {textFilterValues} = this.state
-        const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
-        return _.chain(recipeTypes)
+        const {textFilterValues, tagFilter} = this.state
+        return filterRecipeTypes({recipeTypes, textFilterValues, tagFilter})
             .map(({id, labels, tags, beta}) => ({id, labels, tags, beta}))
-            .filter(recipeType => this.recipeTypeMatchesFilters(recipeType, searchMatchers))
-            .value()
-    }
-
-    recipeTypeMatchesFilters(recipeType, searchMatchers) {
-        return this.recipeTypeMatchesFilterValues(recipeType, searchMatchers)
-            && this.recipeTypeMatchesTags(recipeType)
-    }
-
-    recipeTypeMatchesFilterValues(recipeType, searchMatchers) {
-        const searchProperties = ['labels.name', 'labels.creationDescription']
-        return searchMatchers.length
-            ? _.every(searchMatchers, matcher =>
-                _.find(searchProperties, property =>
-                    matcher.test(simplifyString(_.get(recipeType, property)))
-                )
-            )
-            : true
-    }
-
-    recipeTypeMatchesTags(recipeType) {
-        const {tagsFilter} = this.state
-        return _.every(tagsFilter, tag => recipeType?.tags?.includes(tag))
     }
 
     getHighlightMatcher() {
@@ -317,23 +296,21 @@ class _CreateRecipe extends React.Component {
 
     updateTags() {
         const {recipeTypes} = this.props
-        const tags = _.chain(recipeTypes)
-            .map(({tags}) => tags)
-            .flatten()
-            .uniq()
-            .compact()
-            .value()
-        this.setState({tags})
+        this.setState({tags: recipeTypeTags(recipeTypes)})
     }
 
     componentDidMount() {
         this.updateTags()
     }
 
-    componentDidUpdate({recipeTypes: prevRecipeTypes}) {
-        const {recipeTypes} = this.props
+    componentDidUpdate({recipeTypes: prevRecipeTypes, panel: prevPanel}) {
+        const {recipeTypes, panel} = this.props
         if (!_.isEqual(recipeTypes, prevRecipeTypes)) {
             this.updateTags()
+        }
+        // The component outlives the panel, so its filters have to be cleared explicitly.
+        if (prevPanel && !panel) {
+            this.resetFilters()
         }
     }
 }
