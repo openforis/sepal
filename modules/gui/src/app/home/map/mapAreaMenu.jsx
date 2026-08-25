@@ -11,6 +11,7 @@ import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
 import {CrudItem} from '~/widget/crudItem'
 import {FloatingBox} from '~/widget/floatingBox'
+import {Icon} from '~/widget/icon'
 import {Keybinding} from '~/widget/keybinding'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
@@ -110,33 +111,7 @@ class _MapAreaMenuPanel extends React.Component {
     }
 
     renderFeatureLayers() {
-        const rows = this.stackRows()
-        const presentationRow = this.presentationRow()
-        if (!rows.length && !presentationRow) {
-            return null
-        }
-        return (
-            <Layout type='vertical' spacing='compact'>
-                {this.renderPresentationToggle(presentationRow)}
-                {this.renderStack(rows)}
-            </Layout>
-        )
-    }
-
-    // Legend, Palette and Values render over the map rather than in it, and at most one of them exists.
-    // It gets a toggle of its own, detached from the ordered rows so it cannot imply a stacking position,
-    // a handle or settings.
-    renderPresentationToggle(row) {
-        if (!row) {
-            return null
-        }
-        const {featureLayer, source} = row
-        return this.renderVisibilityToggle({
-            label: this.overlayLabel(source),
-            enabled: isEnabled(featureLayer),
-            className: styles.presentationToggle,
-            onToggle: () => this.toggleOverlay(source.id, isEnabled(featureLayer))
-        })
+        return this.renderStack(this.stackRows())
     }
 
     // Map order is persisted bottom-to-top; the menu displays top-to-bottom, so its top row is the top
@@ -160,10 +135,6 @@ class _MapAreaMenuPanel extends React.Component {
 
     stackRows() {
         return this.overlayRows().filter(({source}) => !isPresentationFeatureLayer(source.type))
-    }
-
-    presentationRow() {
-        return this.overlayRows().find(({source}) => isPresentationFeatureLayer(source.type))
     }
 
     overlayRows() {
@@ -310,6 +281,7 @@ class _MapAreaMenuPanel extends React.Component {
                     label,
                     enabled: isEnabled(featureLayer),
                     className: styles.overlayLabelButton,
+                    showVisibility: true,
                     onToggle: () => this.toggleOverlay(source.id, isEnabled(featureLayer))
                 })}
                 titleClassName={styles.overlayTitle}
@@ -326,7 +298,12 @@ class _MapAreaMenuPanel extends React.Component {
     // these rows contain nested buttons. A real button gives keyboard operation and an announced on/off
     // state; the rest of the row stays pointer-clickable through ListItem's own onClick, so the click has
     // to stop here rather than toggling a second time on the way out.
-    renderVisibilityToggle({label, enabled, className, onToggle}) {
+    //
+    // `showVisibility` marks a stack row, which always carries a fixed-width slot left of the label: an
+    // eye when the layer is shown, a crossed-out eye when it is not. The slot is the same width either
+    // way, so labels line up whatever the state. It is decorative - the button's aria-pressed remains the
+    // announced state.
+    renderVisibilityToggle({label, enabled, className, showVisibility, onToggle}) {
         return (
             <button
                 type='button'
@@ -336,7 +313,14 @@ class _MapAreaMenuPanel extends React.Component {
                     e.stopPropagation()
                     onToggle()
                 }}>
-                {label}
+                {showVisibility
+                    ? (
+                        <span className={styles.visibilitySlot} aria-hidden='true'>
+                            <Icon name={enabled ? 'eye' : 'eye-slash'} size='sm'/>
+                        </span>
+                    )
+                    : null}
+                <span className={styles.overlayLabelText}>{label}</span>
             </button>
         )
     }
