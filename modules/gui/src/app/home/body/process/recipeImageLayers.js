@@ -7,6 +7,7 @@ import {CCDCSliceImageLayer} from './recipe/ccdcSlice/ccdcSliceImageLayer'
 import {ChangeAlertsImageLayer} from './recipe/changeAlerts/changeAlertsImageLayer'
 import {ClassChangeImageLayer} from './recipe/classChange/classChangeImageLayer'
 import {ClassificationImageLayer} from './recipe/classification/classificationImageLayer'
+import {DiasImageLayer} from './recipe/dias/diasImageLayer'
 import {IndexChangeImageLayer} from './recipe/indexChange/indexChangeImageLayer'
 import {LandTrendrImageLayer} from './recipe/landTrendr/landTrendrImageLayer'
 import {MaskingImageLayer} from './recipe/masking/maskingImageLayer'
@@ -35,6 +36,7 @@ export const registerRecipeImageLayers = () => {
     addRecipeImageLayer('INDEX_CHANGE', IndexChangeImageLayer)
     addRecipeImageLayer('REMAPPING', RemappingImageLayer)
     addRecipeImageLayer('CHANGE_ALERTS', ChangeAlertsImageLayer)
+    addRecipeImageLayer('DIAS', DiasImageLayer)
     addRecipeImageLayer('PYEO_ALERTS', PyeoAlertsImageLayer)
     addRecipeImageLayer('CCDC', CCDCImageLayer)
     addRecipeImageLayer('CCDC_SLICE', CCDCSliceImageLayer)
