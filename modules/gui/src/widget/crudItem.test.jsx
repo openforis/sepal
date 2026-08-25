@@ -61,3 +61,18 @@ describe('CrudItem title tooltip (opt-in)', () => {
         expect(titleTooltips('My label')[0].disabled).toBe(true)
     })
 })
+
+describe('CrudItem remove confirmation', () => {
+    it('forwards an opt-in confirmation label to its remove action', () => {
+        const element = CrudItem({
+            title: 'Image bands',
+            removeConfirmationLabel: 'Remove all',
+            onRemove: vi.fn()
+        })
+        const item = new element.type(element.props)
+
+        const removeButton = item.renderRemoveButton()
+
+        expect(removeButton.props.confirmationLabel).toBe('Remove all')
+    })
+})

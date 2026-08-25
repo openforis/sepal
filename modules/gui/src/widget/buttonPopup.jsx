@@ -125,6 +125,13 @@ class _ButtonPopup extends React.Component {
         }
     }
 
+    componentDidUpdate({disabled: wasDisabled}) {
+        const {disabled} = this.props
+        if (!wasDisabled && disabled) {
+            this.hidePopup()
+        }
+    }
+
     getLabel() {
         const {label} = this.props
         const {selectedOption} = this.state

@@ -302,6 +302,7 @@
     "next": "Next",
     "ok": "OK",
     "remove": "Remove",
+    "removeAll": "Remove all",
     "restart": "Restart",
     "retry": "Retry",
     "save": "Save",
@@ -990,6 +991,7 @@
           "legend": {
             "label": "Legend"
           },
+          "noBands": "No bands selected",
           "noImagery": "Please add at least one image.",
           "recipe": {
             "label": "Recipe",
@@ -2185,6 +2187,9 @@
           },
           "bandSetSpec": {
             "addBands": {
+              "all": {
+                "label": "[All bands]"
+              },
               "placeholder": "Select bands...",
               "tooltip": "Add bands"
             },

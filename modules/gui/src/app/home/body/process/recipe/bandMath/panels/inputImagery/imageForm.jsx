@@ -3,12 +3,19 @@ import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 
 import {msg} from '~/translate'
+import {ButtonPopup} from '~/widget/buttonPopup'
+import {Combo} from '~/widget/combo'
+import {CrudItem} from '~/widget/crudItem'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
+import {ListItem} from '~/widget/listItem'
+import {NoData} from '~/widget/noData'
 
 import {bandsAvailableToAdd, defaultBand} from './bands'
 import {BandSpec} from './bandSpec'
 import styles from './inputImage.module.css'
+
+const ADD_ALL_BANDS = Symbol('addAllBands')
 
 export class ImageForm extends Component {
     state = {
@@ -59,24 +66,95 @@ export class ImageForm extends Component {
 
     renderIncludedBands() {
         const {inputs: {bands, includedBands}} = this.props
+        if (!Object.keys(bands.value || {}).length) {
+            return null
+        }
+        return (
+            <ListItem
+                expanded
+                expansion={this.renderBandSpecs()}>
+                <CrudItem
+                    title={msg('process.classification.panel.inputImagery.bandSetSpec.imageBands.label')}
+                    inlineComponents={this.renderAddBandButton()}
+                    removeConfirmationLabel={msg('button.removeAll')}
+                    removeDisabled={!includedBands.value?.length}
+                    onRemove={() => this.removeAllBandSpecs()}
+                />
+            </ListItem>
+        )
+    }
+
+    renderBandSpecs() {
+        const {inputs: {bands, includedBands}} = this.props
         const {loadedRecipe, selected} = this.state
         const availableBands = bandsAvailableToAdd(bands.value, includedBands.value)
+        const bandSpecs = (includedBands.value || []).map(bandSpec =>
+            <BandSpec
+                key={bandSpec.name}
+                bands={_.omit(bands.value, Object.keys(bands.value)
+                    .filter(name => ![bandSpec.name, ...availableBands].includes(name))) || {}}
+                recipe={loadedRecipe}
+                spec={bandSpec}
+                selected={selected === bandSpec.id}
+                disabled={!Object.keys(bands.value).length}
+                onClick={id => this.selectBandSpec(id)}
+                onUpdate={spec => this.updateSpec(spec)}
+                onRemove={id => this.removeBandSpec(id)}/>
+        )
         return (
             <Layout type='vertical' spacing='tight'>
-                {(includedBands.value || []).map(bandSpec =>
-                    <BandSpec
-                        key={bandSpec.name}
-                        bands={_.omit(bands.value, Object.keys(bands.value)
-                            .filter(name => ![bandSpec.name, ...availableBands].includes(name))) || {}}
-                        recipe={loadedRecipe}
-                        spec={bandSpec}
-                        selected={selected === bandSpec.id}
-                        disabled={!Object.keys(bands.value).length}
-                        onClick={id => this.selectBandSpec(id)}
-                        onUpdate={spec => this.updateSpec(spec)}
-                        onRemove={id => this.removeBandSpec(id)}/>
-                )}
+                {bandSpecs.length
+                    ? bandSpecs
+                    : <NoData message={msg('process.panels.inputImagery.form.noBands')}/>
+                }
             </Layout>
+        )
+    }
+
+    renderAddBandButton() {
+        const {inputs: {bands, includedBands}} = this.props
+        const availableBands = bandsAvailableToAdd(bands.value, includedBands.value)
+        const options = availableBands.map(name => ({value: name, label: name}))
+        const comboOptions = options.length > 1
+            ? [
+                {
+                    key: 'add-all-bands',
+                    value: ADD_ALL_BANDS,
+                    label: msg('process.classification.panel.inputImagery.bandSetSpec.addBands.all.label')
+                },
+                ...options
+            ]
+            : options
+        return (
+            <ButtonPopup
+                shape='circle'
+                chromeless
+                icon='plus'
+                noChevron
+                vPlacement='below'
+                hPlacement='over-left'
+                tooltip={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.tooltip')}
+                disabled={!availableBands.length}>
+                {onBlur => (
+                    <Combo
+                        alignment='left'
+                        placeholder={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.placeholder')}
+                        options={comboOptions}
+                        stayOpenOnSelect
+                        autoOpen
+                        autoFocus
+                        allowClear
+                        onCancel={onBlur}
+                        onChange={({value}) => {
+                            if (value === ADD_ALL_BANDS) {
+                                this.addAllBands(availableBands)
+                            } else {
+                                this.addBand(value)
+                            }
+                        }}
+                    />
+                )}
+            </ButtonPopup>
         )
     }
 
@@ -109,6 +187,27 @@ export class ImageForm extends Component {
         includedBands.set(
             includedBands.value.filter(spec => spec.id !== bandSpecId)
         )
+    }
+
+    removeAllBandSpecs() {
+        const {inputs: {includedBands}} = this.props
+        includedBands.set([])
+    }
+
+    addBand(name) {
+        this.addBands([name])
+    }
+
+    addAllBands(names) {
+        this.addBands(names)
+    }
+
+    addBands(names) {
+        const {inputs: {bands, includedBands}} = this.props
+        includedBands.set([
+            ...(includedBands.value || []),
+            ...names.map(name => defaultBand(name, bands.value))
+        ])
     }
 
     onLoaded(id, loadedBands, loadedVisualizations, loadedRecipe) {
