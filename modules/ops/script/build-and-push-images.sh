@@ -2,6 +2,7 @@
 set -e
 
 export SEPAL_VERSION=$1
+export GIT_COMMIT=${GIT_COMMIT:-$(git -C ${WORKSPACE} rev-parse HEAD)}
 export SEPAL_DATA_DIR=/data
 export SEPAL_BACKUP_DIR=/tmp/sepal-backup
 export DEPLOY_ENVIRONMENT=OPS
@@ -113,4 +114,12 @@ push caddy
 push scene-metadata
 
 docker logout localhost
+
+# Makes the build number resolvable to the sources it was built from, so deployments can
+# check out the matching commit. Tagged last: an incomplete build must not be deployable.
+echo
+echo "******* Tagging build ${SEPAL_VERSION} *******"
+git -C ${WORKSPACE} tag --force build-${SEPAL_VERSION} ${GIT_COMMIT}
+git -C ${WORKSPACE} push --force origin build-${SEPAL_VERSION}
+
 docker system prune --force
