@@ -302,6 +302,7 @@
     "next": "Suivant",
     "ok": "Ok",
     "remove": "Supprimer",
+    "removeAll": "",
     "restart": "Redémarrer",
     "retry": "Réessayer",
     "save": "Sauver",
@@ -990,6 +991,7 @@
           "legend": {
             "label": "Légende"
           },
+          "noBands": "",
           "noImagery": "",
           "recipe": {
             "label": "Formule",
@@ -2185,6 +2187,9 @@
           },
           "bandSetSpec": {
             "addBands": {
+              "all": {
+                "label": ""
+              },
               "placeholder": "",
               "tooltip": ""
             },
