@@ -7,7 +7,6 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {withActivatable} from '~/widget/activation/activatable'
 import {Buttons} from '~/widget/buttons'
-import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
 import styles from './labelsLayerOptionsPanel.module.css'
