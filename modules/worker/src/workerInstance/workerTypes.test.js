@@ -14,7 +14,7 @@ jest.unstable_mockModule('node:fs', () => ({
     },
 }))
 
-const {createWorkerType, TASK_EXECUTOR} = await import('./workerTypes.js')
+const {createWorkerType, SANDBOX, TASK_EXECUTOR} = await import('./workerTypes.js')
 
 const instance = {
     id: '3f2b8c1a-9d44-4e21-8f77-2c6a5b0e91d3',
@@ -87,5 +87,21 @@ describe('image containerName', () => {
         const awsInstance = {...instance, id: 'i-0abc123'}
         const workerType = createWorkerType(TASK_EXECUTOR, awsInstance, config({deployEnvironment: 'PRODUCTION'}))
         expect(workerType.images[0].containerName(awsInstance)).toBe('task.admin.i-0abc123')
+    })
+})
+
+describe('createWorkerType SANDBOX readiness', () => {
+    it('waits only for sshd, not the on-demand servers', () => {
+        const workerType = createWorkerType(
+            SANDBOX,
+            {...instance, reservation: {username: 'admin', workerType: SANDBOX}},
+            config({deployEnvironment: 'PRODUCTION'}),
+            'api-key'
+        )
+        const [image] = workerType.images
+        expect(image.waitCommand).toEqual(['/script/wait_until_initialized.sh', '22'])
+        // Routing is unchanged — only readiness narrows.
+        expect(image.exposedPorts).toEqual([22, 8787, 3838, 8888])
+        expect(image.publishedPorts).toEqual({222: 22, 8787: 8787, 3838: 3838, 8888: 8888})
     })
 })

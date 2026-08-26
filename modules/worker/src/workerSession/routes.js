@@ -57,6 +57,9 @@ const registerSessionRoutes = (router, api) => router
     .post('/sessions/session/:sessionId/dismiss-expiry', requireAuth, api.dismissExpiry)
     // POST app association — BEFORE the bare heartbeat route so /app isn't swallowed.
     .post('/sessions/session/:sessionId/app', requireAuth, api.associateApp)
+    // POST start an on-demand sandbox server — BEFORE the bare heartbeat route, for the same
+    // reason /app is: otherwise `:sessionId` swallows the extra segments.
+    .post('/sessions/session/:sessionId/server/:endpoint', requireAuth, api.startServer)
     .post('/sessions/session/:sessionId', requireAuth, api.heartbeatSelf)
     .post('/sessions/:username/session/:sessionId', requireAdmin, api.heartbeatOther)
 

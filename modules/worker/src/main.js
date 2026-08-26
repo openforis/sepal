@@ -19,16 +19,18 @@ import {createTaskManager} from './task/taskManager.js'
 import {createTaskRepository} from './task/taskRepository.js'
 import {createTasksApi} from './task/tasksApi.js'
 import {createWorkerGateway} from './task/workerGateway.js'
+import {createDockerSandboxServerControl} from './workerInstance/dockerSandboxServerControl.js'
 import {createWorkerInstanceComponent} from './workerInstance/index.js'
 import {createInstanceRepository} from './workerInstance/instanceRepository.js'
 import {createBudgetClient} from './workerSession/budgetClient.js'
 import {closeUserSessions as _closeUserSessions} from './workerSession/command/closeUserSessions.js'
 import {email$, sendEmail} from './workerSession/email.js'
-import {emitWorkerSessionClosed} from './workerSession/events.js'
+import {emitWorkerSessionClosed, workerSessionEvents} from './workerSession/events.js'
 import {createExpiryMetrics} from './workerSession/expiryMetrics.js'
 import {createExpiryTokens} from './workerSession/expiryToken.js'
 import {createGoogleOAuthGateway} from './workerSession/googleOAuthGateway.js'
 import {createSessionComponent} from './workerSession/index.js'
+import {createSandboxServerManager} from './workerSession/sandboxServerManager.js'
 import {createSessionAppRepository} from './workerSession/sessionAppRepository.js'
 import {createSessionManager} from './workerSession/sessionManager.js'
 import {createSessionsApi} from './workerSession/sessionsApi.js'
@@ -190,7 +192,14 @@ const main = async () => {
         verdicts,
     })
 
-    const sessionsApi = createSessionsApi({sessionManager, expiryPolicy, expiryTokens})
+    const sandboxServers = createSandboxServerManager({
+        repo: sessionRepo,
+        control: createDockerSandboxServerControl({
+            config, defaultDaemonHost: hostingService.defaultDaemonHost}),
+    })
+    workerSessionEvents.on('WorkerSessionClosed', ({sessionId}) => sandboxServers.forget(sessionId))
+
+    const sessionsApi = createSessionsApi({sessionManager, sandboxServers, expiryPolicy, expiryTokens})
     const tasksApi = createTasksApi({taskManager})
 
     await initMessageQueue(amqpUri, {

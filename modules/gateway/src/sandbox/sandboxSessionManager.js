@@ -48,6 +48,13 @@ const createSandboxSessionManager = ({
     // per username.
     const createLockByKey = new Map()
 
+    // Servers this gateway has already had started, keyed 'sessionId:endpoint'. Sandbox servers
+    // are started on first use and never stopped, so a hit is permanent for the life of the
+    // session — which is what keeps the proxy's per-request path free of a worker round-trip.
+    // A gateway restart costs one idempotent re-ensure per pair.
+    const startedServers = new Set()
+    const startingServers = new Map()
+
     // Sessions with a real user interaction since their last heartbeat — heartbeatOnce consumes
     // this to flag {interaction: true}, which is what ratchets the session's deadline. A bare
     // heartbeat is deliberately NOT an interaction: it fires for every cached entry regardless of
@@ -190,6 +197,12 @@ const createSandboxSessionManager = ({
         workerRequest(username, 'DELETE',
             `/sessions/app?path=${encodeURIComponent(path)}${clientId ? `&clientId=${encodeURIComponent(clientId)}` : ''}`)
 
+    // POST /sessions/session/{id}/server/{endpoint} → 204. Resolves only once the server is
+    // listening on the session's instance.
+    const startServer = (username, sessionId, endpoint) =>
+        workerRequest(username, 'POST',
+            `/sessions/session/${encodeURIComponent(sessionId)}/server/${encodeURIComponent(endpoint)}`)
+
     const entriesFor = username =>
         [...(sessionsByUsername.get(username)?.values() ?? [])]
 
@@ -235,6 +248,9 @@ const createSandboxSessionManager = ({
         }
         if (kernels && kernels.size === 0) {
             kernelsByUsername.delete(username)
+        }
+        for (const endpoint of Object.keys(PORT_BY_ENDPOINT)) {
+            startedServers.delete(`${sessionId}:${endpoint}`)
         }
     }
 
@@ -338,7 +354,28 @@ const createSandboxSessionManager = ({
     // startApp — per app: a live association wins; else join a chosen session or create a new one.
     // `reused` is set when the worker steered us to a different session than the one explicitly
     // requested (it refuses to move a live association). clientId is stored as the association's owner.
-    const startApp = async ({username, endpoint = DEFAULT_ENDPOINT, appPath, appLabel, sessionId, instanceType, clientId, reassert = false}) => {
+    const ensureServerStarted = async ({username, sessionId, endpoint}) => {
+        if (!username || !sessionId || !isEndpoint(endpoint)) {
+            return
+        }
+        const key = `${sessionId}:${endpoint}`
+        if (startedServers.has(key)) {
+            return
+        }
+        const pending = startingServers.get(key)
+        if (pending) {
+            return await pending
+        }
+        const starting = startServer(username, sessionId, endpoint)
+            .then(() => {
+                startedServers.add(key)
+            })
+            .finally(() => startingServers.delete(key))
+        startingServers.set(key, starting)
+        return await starting
+    }
+
+    const startAppInternal = async ({username, endpoint = DEFAULT_ENDPOINT, appPath, appLabel, sessionId, instanceType, clientId, reassert = false}) => {
         if (!appPath) {
             return startEndpoint(username, endpoint) // legacy
         }
@@ -416,6 +453,26 @@ const createSandboxSessionManager = ({
             endpoint, appPath
         })
         return {id: entry.sessionId, status: toClientStatus(entry.status), ...reused ? {reused: true} : {}}
+    }
+
+    // startApp — warm the endpoint's server while the GUI still shows its own spinner, so the
+    // iframe opens onto a listening port instead of waiting on the proxy's pre-flight.
+    //
+    // Best-effort ON PURPOSE. The proxy ensures the same server before it forwards anything, so
+    // that is the authoritative gate and a real failure surfaces there as a 502; failing the app
+    // open here as well would only add a second, earlier failure path for one condition. A
+    // STARTING session has no instance to start a server on yet — the proxy covers that too.
+    const startApp = async params => {
+        const result = await startAppInternal(params)
+        if (result?.status === 'STARTED') {
+            const endpoint = params.endpoint ?? DEFAULT_ENDPOINT
+            try {
+                await ensureServerStarted({username: params.username, sessionId: result.id, endpoint})
+            } catch (error) {
+                log.warn(`Failed to pre-start sandbox ${endpoint} for ${params.username}`, error)
+            }
+        }
+        return result
     }
 
     // releaseApp — unbind an app from its session (GUI tab close, or a takeover dissociating
@@ -525,14 +582,14 @@ const createSandboxSessionManager = ({
             const kernelTarget = await probeKernel(username, endpoint, kernelMatch[1])
             if (kernelTarget) {
                 recordProxiedRequest(username, kernelTarget.sessionId)
-                return {host: kernelTarget.host, port}
+                return {host: kernelTarget.host, port, sessionId: kernelTarget.sessionId}
             }
         }
         // (b) app-path prefix.
         const byPath = await attributeByPath(username, endpoint, path)
         if (byPath?.host) {
             recordProxiedRequest(username, byPath.sessionId)
-            return {host: byPath.host, port}
+            return {host: byPath.host, port, sessionId: byPath.sessionId}
         }
         // (c) Referer attribution.
         if (referer) {
@@ -541,7 +598,7 @@ const createSandboxSessionManager = ({
                 const byReferer = await attributeByPath(username, endpoint, refererPath)
                 if (byReferer?.host) {
                     recordProxiedRequest(username, byReferer.sessionId)
-                    return {host: byReferer.host, port}
+                    return {host: byReferer.host, port, sessionId: byReferer.sessionId}
                 }
             } catch (_error) {
                 // unparseable referer — ignore
@@ -553,14 +610,14 @@ const createSandboxSessionManager = ({
         const hosts = [...new Set(candidates.map(({host}) => host))]
         if (hosts.length === 1) {
             candidates.forEach(({sessionId}) => recordProxiedRequest(username, sessionId))
-            return {host: hosts[0], port}
+            return {host: hosts[0], port, sessionId: candidates[0].sessionId}
         }
         // (e) legacy per-endpoint entry (best-effort; a failing fallback yields no target).
         try {
             const legacy = await findSession(username, endpoint)
             if (legacy?.host) {
                 recordProxiedRequest(username, legacy.sessionId)
-                return {host: legacy.host, port}
+                return {host: legacy.host, port, sessionId: legacy.sessionId}
             }
             return null
         } catch (_error) {
@@ -654,6 +711,7 @@ const createSandboxSessionManager = ({
         startEndpoint,
         status,
         resolveTarget,
+        ensureServerStarted,
         recordInteraction,
         onSessionClosed,
         onAppDissociated,

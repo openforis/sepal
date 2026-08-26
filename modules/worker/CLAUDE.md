@@ -29,6 +29,14 @@ budget tracking, and gateway route migration.
     or a takeover before re-opening the app elsewhere); the session stays open. Idempotent (204
     either way). Emits `SessionAppDissociated {…, clientId: owner, requestingClientId}` — the
     gateway closes the OWNER's tab when someone else dissociated it.
+  - `POST /sessions/session/:sessionId/server/:endpoint` — start one of the sandbox's on-demand
+    servers (`rstudio` | `shiny` | `jupyter`) on the session's instance, 204 once its port is
+    listening. The sandbox image starts only `sshd` at boot (`autostart=false` on the other three),
+    so the provision wait command covers port 22 alone and the terminal no longer waits for
+    Jupyter. `sandboxServerManager` memoizes started `(sessionId, endpoint)` pairs IN MEMORY and
+    shares one in-flight start between concurrent callers; nothing is persisted because nothing
+    needs to survive a restart — `/script/sandbox-server.sh` exits 0 immediately for a server that
+    is already listening. **Servers are never stopped**; they live until the container does.
   - The session ws protocol (`/session/ws`) handles `clientDown` by dissociating every
     association owned by that client (its tabs died with it), one event per app.
   - `POST /sessions/session/:sessionId/extend` — the Usage-panel keepAlive slider, body/query

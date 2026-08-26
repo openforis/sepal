@@ -78,6 +78,7 @@ const securityHeaders = sepalHost => ({
 
 const createSandboxProxy = ({
     resolveTarget,
+    ensureServerStarted,
     sepalHost,
     proxyTimeout = DEFAULT_PROXY_TIMEOUT,
     timeout = DEFAULT_TIMEOUT,
@@ -85,6 +86,9 @@ const createSandboxProxy = ({
 } = {}) => {
     if (typeof resolveTarget !== 'function') {
         throw new Error('sandboxProxy: resolveTarget function is required')
+    }
+    if (typeof ensureServerStarted !== 'function') {
+        throw new Error('sandboxProxy: ensureServerStarted function is required')
     }
 
     // selfHandleResponse:false streams the response through untouched; headers are mutated in the
@@ -159,6 +163,19 @@ const createSandboxProxy = ({
         return {endpoint, upstreamPath, target}
     }
 
+    // The sandbox servers are started on first use, so the server behind a freshly resolved target
+    // may not be listening yet. Ensuring BEFORE proxying rather than retrying a refused connection
+    // is what keeps this simple: httpxy has already begun consuming the request stream by the time
+    // an error surfaces, so a bodied request could never be replayed. ensureServerStarted is
+    // memoized per (session, endpoint), so this costs a worker round-trip once and a Set lookup
+    // thereafter.
+    const ensureStarted = (username, resolution) =>
+        ensureServerStarted({
+            username,
+            sessionId: resolution.target.sessionId,
+            endpoint: resolution.endpoint
+        })
+
     const applyResolution = (req, resolution) => {
         const {search} = splitUrl(req.url)
         req._sandbox = {endpoint: resolution.endpoint, target: resolution.target}
@@ -180,6 +197,15 @@ const createSandboxProxy = ({
                 return
             }
             applyResolution(req, resolution)
+            try {
+                await ensureStarted(username, resolution)
+            } catch (error) {
+                log.error(`Failed to start sandbox ${resolution.endpoint} for ${username}`, error)
+                res.status
+                    ? res.status(502).send('Sandbox unavailable')
+                    : res.writeHead(502).end('Sandbox unavailable')
+                return
+            }
             log.debug(() => `${username} → sandbox ${resolution.endpoint} ${targetOrigin(resolution.target)}${req.url}`)
             // httpxy adds a per-request 'timeout' listener via req.socket.setTimeout(msecs, cb)
             // that only auto-removes if it fires; clear it so it doesn't pile up on keep-alive
@@ -219,6 +245,14 @@ const createSandboxProxy = ({
             return
         }
         applyResolution(req, resolution)
+        try {
+            await ensureStarted(username, resolution)
+        } catch (error) {
+            log.error(`Failed to start sandbox ${resolution.endpoint} for ${username}`, error)
+            socket.write('HTTP/1.1 502 Bad Gateway\r\n\r\n')
+            socket.destroy()
+            return
+        }
         log.debug(() => `${username} → sandbox ws ${resolution.endpoint} ws://${resolution.target.host}:${resolution.target.port}${req.url}`)
         // httpxy signature: ws(req, socket, opts, head).
         await proxy.ws(req, socket, {target: targetOrigin(resolution.target)}, head)
