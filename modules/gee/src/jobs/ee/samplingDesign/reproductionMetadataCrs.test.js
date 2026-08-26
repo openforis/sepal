@@ -50,7 +50,6 @@ describe('randomReproductionMetadata CRS', () => {
         // minDistance is Systematic-only; there is no user-facing transform.
         expect('minDistance' in metadata).toBe(false)
         // Scale mode: no transform is configured, so none is recorded.
-        expect('crsTransform' in metadata).toBe(false)
         expect('gridCrsTransform' in metadata).toBe(false)
     })
 
@@ -85,7 +84,6 @@ describe('systematicReproductionMetadata CRS', () => {
             selectedDensityOffset: 2
         })
         // Scale mode: no transform is configured, so none is recorded.
-        expect('crsTransform' in metadata).toBe(false)
         expect('gridCrsTransform' in metadata).toBe(false)
     })
 

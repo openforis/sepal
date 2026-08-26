@@ -21,9 +21,8 @@ Sampling Design uses two explicitly named grids, and conflating them is the mist
 prevent.
 
 - The **Stratification grid** decides how the categorical image and its mask are interpreted, how mapped
-  stratum areas are calculated, and how anticipated proportions are grouped. It owns a CRS plus one grid
-  definition — a Scale, or an affine transform. Its CRS is whatever the source uses, and is not restricted to
-  the equal-area list.
+  stratum areas are calculated, and how anticipated proportions are grouped. It is a CRS plus a Scale in
+  metres, and nothing else. Its CRS is whatever the source uses, and is not restricted to the equal-area list.
 - The **Arrangement grid** decides where samples are placed. It owns a CRS only, from a curated equal-area
   list, and Random cells, Systematic lattice coordinates and sample identity all live on it.
 
@@ -35,29 +34,109 @@ Stratum areas are computed in true square metres, so they stay correct whatever 
 grid must be equal-area for a different reason: it is what gives every eligible location the same chance of
 selection.
 
-### Deriving the Stratification grid
+### Optional overrides, concrete persisted values
 
-The grid comes from the source rather than a default, under one rule with no branch on source type: **derive
-when the resolved image has a real projection, use the default when it does not.**
+The recipe stores a concrete grid: Stratification's `crs` and `scale`, and Proportions' `scale`. There is no
+derived-grid state, no hidden resolved fields, and **no affine transform anywhere in the recipe** — a transform
+is expressed in its CRS's own units, so for a 10 m source held in `EPSG:4326` it reads 0.0000898315, and every
+consumer of the grid (the Random cell size, the systematic spacing, the minimum-distance floor, reproduction
+metadata) reads metres.
 
-A single image asset reports a real grid. An image collection derives from its **first member**, because the mosaic it
-would otherwise resolve to has no projection at all. That is exact rather than merely better for a SEPAL-tiled
-export: tiles are written under one configured grid, so members share a lattice and reading the mosaic at the
-first member's transform reproduces every tile. A recipe
-composites, so it reports Earth Engine's identity transform and falls through to the default.
+The visible fields are **optional overrides**. What the user types wins; clearing a field means "use what this
+selection provides", which the placeholder shows. The selection's own values live in transient form fields
+(`sourceCrs`/`sourceScale`, `defaultScale`) that are placeholders and fallbacks only — Apply consolidates the
+override and the transient default into the one concrete value that is persisted, and neither transient field
+ever reaches the model or a request body. Blank is a form-level operation, not a stored mode, so reopening a
+recipe shows the concrete values it saved rather than an empty field.
 
-The axis-alignment check is the whole guard: the identity transform has a positive north-south coefficient and
-fails on sign, so no magnitude threshold is involved. Derivation reads the **selected band's** grid, since one
-asset can carry several — Sentinel-2 bands are 10, 20 and 60 m on a single image.
+What a selection provides comes from the **selected** band: its `crs`, and its `nominalScale` rounded for
+display. Per-band grids are real — one Sentinel-2 asset carries 10, 20 and 60 m bands — so the first band is
+never assumed. A source that reports no usable grid, and any recipe source (a computed image reports Earth
+Engine's degree-scale default rather than a grid), falls back to what a new recipe starts as: `EPSG:4326` at
+30 m. Recipes declare no preferred grid, and Sampling Design never asks `/bands` for one.
 
-A derived grid carries its pixel size in metres alongside the transform. A transform is expressed in its CRS's
-units, and since `EPSG:4326` is SEPAL's default export CRS, degrees are the common case — a 10 m grid then has
-a transform width of about 9e-5, not 10. The arrangement cell size and the minimum-distance floor are metre
-quantities and read the metre value; the transform stays exact and defines the grid.
+A nonblank value that is not a usable Scale stays invalid rather than falling back: clearing the field asks for
+the default, but typing 0 asks for something the design cannot run on.
 
-Scale is an **override**, not the definition. An entered Scale replaces the transform only when the two
-disagree, tested as exact equality with both sides put through the same rounding, and the resulting mode is
-shown on screen. Typing the value the placeholder displays must not silently degrade the image's own grid.
+Nominal scales are opt-in: `/assetMetadata` takes an `includeNominalScale` flag, evaluates every selected
+band's scale in **one** Earth Engine call regardless of band count, and adds `nominalScale` beside the existing
+band fields. Without the flag the request is byte-for-byte what it was, and failing the enrichment returns
+ordinary metadata rather than reporting a missing asset. Only the Stratification and Proportions asset
+selectors ask for it.
+
+Selection defaults are installed **when a source or band is selected**, and again when metadata arrives for a
+band that is already selected — so clearing a field on a reopened recipe shows that source's real value rather
+than the plain fallback. Installing them only ever writes the transient fields, so a saved or entered override
+is never touched, and it uses `setInitialValue` rather than `set`: what a panel learns about its source is not
+an edit, and must not mark a reopened recipe as modified.
+
+Replacing the source type, source id or band clears both the override and the transient default; the next band
+selection installs the new one. Once persisted, a value is ordinary configuration: it survives reopening and
+unrelated upstream edits, and a Stratification Scale change does not rewrite a Proportions Scale that was
+already stored.
+
+Selecting a projected CRS opens the advanced section, so an effective CRS that is not the default is never left
+hidden behind a button.
+
+### Native alignment is Earth Engine's decision, not the recipe's
+
+The recipe says *what resolution and projection to read the classes at*; whether that lands on the source's own
+pixel boundaries is decided inside the graph, per evaluation:
+
+    ee.Projection(ee.Algorithms.If(
+        bandProjection.wkt().compareTo(configured.wkt()).eq(0)
+            .and(bandProjection.nominalScale().subtract(scale).abs().lte(0.0001)),
+        bandProjection,
+        configured))
+
+where `configured` is `ee.Projection(resolvedCrs).atScale(scale)`. When the configured grid names exactly the
+band's own grid, the band's projection is used and the source's native alignment survives — `atScale` would
+re-origin it at 0,0. Otherwise the configured projection is used and the source is resampled onto it.
+
+Three constraints are not negotiable, and all three were established against live Earth Engine:
+
+- **Equivalence is canonical `wkt()`.** `Projection.crs()` returns null for a WKT-defined projection (an
+  EASE-Grid source reports NULL), and `Projection.transform()` has been observed returning a 263-character WKT
+  string instead of six numbers. Neither can carry the comparison.
+- **Scale agreement is an absolute 0.0001 m.** A displayed Scale is rounded to four decimals, so the worst
+  observed disagreement between a band's own scale and the value a user was shown is 3.2e-6 m; 0.0001 m accepts
+  that with a wide margin and still rejects 10.001 against 10.
+- **The projection is taken after `select(band)`.** `Image.projection()` is a hard error on an image whose
+  bands differ, not merely a wrong answer.
+
+The decision costs no round trip: it is built into the graph, so no panel keystroke triggers a projection
+lookup. What the recipe stores is the effective CRS and Scale - concrete configuration, whether the user typed
+it or took what the source provides. What is never transported is an affine transform or the result of a
+client-side projection discovery.
+
+Candidates are **ordered**, and the first one that already is the configured grid wins. This matters where two
+grids could both be right. A stratified proportion reduction runs at the coarser of the strata and the property
+band, so with 30 m strata over a 10 m property the 30 m grid *is* the stratification lattice: offering the
+strata first keeps it, while resampling onto a fresh origin-zero 30 m grid would cut every stratum boundary the
+reduction groups by. So:
+
+| consumer | candidates |
+| --- | --- |
+| area per stratum, final draw | selected stratification band |
+| stratified proportions | selected stratification band, then property band |
+| unstratified proportions | property band only |
+
+Unstratified reductions run over a synthetic constant image whose degree-scale default is not a grid worth
+snapping to, so it is never offered. Area and proportions pass the chosen projection as `reduceRegion`'s `crs`
+and do **not** reproject — a live comparison showed the reduction alone already reproduces the exact native
+result — while the final draw applies the single tree-wide `reproject`.
+
+### Proportions Scale
+
+Proportion estimation keeps its own Scale. Selecting a property band supplies the transient default: the
+coarsest grid the answer can carry — the coarser of the Stratification Scale and that band's own resolution, or
+the band's own resolution alone when there is no stratification, falling back to what a new recipe starts as. That is a cost/precision
+policy for a rough estimate rather than an arithmetic necessity: reading the probability finer than the strata
+it is grouped by buys detail the grouping immediately discards.
+
+That default is what a blank field resolves to and displays; the user can overrule it, and Apply persists the
+effective concrete Scale, whichever of the two it is. A stored Scale is never re-derived afterwards, which is why a Stratification Scale
+change alone leaves calculated proportions standing while a Proportions Scale change invalidates them.
 
 ## How samples are drawn
 
@@ -150,10 +229,10 @@ Each was established by measurement, and each is cheap to break by accident.
 - **Temporary vector centroids stay in Earth Engine's default WGS84.** Centroids in a custom-WKT projection
   exceed the aggregation-result limit at full scale.
 - **The Systematic origin phase derives from the Arrangement projection.** Taking it from the Stratification
-  projection would translate the lattice whenever that grid changed. A Stratification transform's origin is
-  never the Arrangement origin.
-- **A resolved Stratification grid carries a Scale or a transform, never both.** One definition is emitted at
-  the boundary, so the tolerant reader and the strict validator downstream can never disagree.
+  projection would translate the lattice whenever that grid changed. A Stratification source's own pixel
+  origin is never the Arrangement origin.
+- **The configured Stratification grid is a CRS and a metre Scale.** Native alignment is chosen inside the
+  graph from the selected band's projection, so no affine transform is configured, persisted or transported.
 - **No AOI buffer before Systematic vectorization.** The marker centre is the exact lattice point, so clipping
   already yields "exact point inside AOI".
 - **`EPSG:6933` is rejected by Earth Engine as an identifier.** It resolves to tested WKT at the Earth Engine
@@ -173,10 +252,12 @@ handling should re-run all of them before it is considered done.
 
 Two structural obstacles explain the shape of the coverage:
 
-- Importing a gee job module runs its worker plumbing and exits the process, so a job cannot be imported in a
-  test. Pure logic has to be extracted from a job to be testable at all.
-- The Stratification panel's wiring is untested, because mounting a recipe form panel needs Redux and recipe
-  context that the existing widget tests never required. The obstacle is panel mounting, not missing tooling.
+- A gee job module runs its worker plumbing on import, so reaching a job's graph means mocking `#gee/jobs/job`
+  (and `#sepal/ee/ee`) with recording stubs and asserting the structure the worker BUILDS. That is how the
+  projection rule, its three consumers and the `/assetMetadata` evaluation count are covered.
+- The Stratification and Proportions panel wiring is untested, because mounting a recipe form panel needs Redux
+  and recipe context that the existing widget tests never required. The obstacle is panel mounting, not missing
+  tooling: `widget/form/form.test.jsx` mounts a form-wrapped component with only the Redux HOC stubbed.
   **This is where the defects actually land.** Four have reached a reviewer from this one component: a derived
   CRS that was never adopted, one that was adopted and then read back stale, a flex value constraining the wrong
   axis, and two placeholders reading keys the object did not have. Every pure function was correct every time,
@@ -192,12 +273,12 @@ Two structural obstacles explain the shape of the coverage:
 
 ## Deliberately not done
 
-- **Letting recipes declare their own source grid.** Where a recipe has exactly one unambiguous source grid it
-  could declare it, without forcing evaluation and therefore at no cost. Sampling Design would need no change,
-  since the grid already derives from the resolved image's projection. Two assumptions to measure first: a
-  single-asset classification may already propagate the projection, since per-pixel operations preserve it and
-  only compositing loses it; and it is unconfirmed whether a declared projection surfaces in the band metadata
-  the GUI reads.
+- **Letting recipes declare their own source grid.** A recipe source defaults to `EPSG:4326` at 30 m because a
+  recipe declares no preferred grid. Where a recipe has exactly one unambiguous source grid it could declare
+  one, without forcing evaluation and therefore at no cost. Two assumptions to measure first: a single-asset
+  classification may already propagate the projection, since per-pixel operations preserve it and only
+  compositing loses it; and it is unconfirmed whether a declared projection surfaces in the band metadata the
+  GUI reads. Until then `/bands` returns band names and nothing is invented.
 - **Collection uniformity detection.** Priced and rejected: the check almost never changes the decision, since
   the first member's grid is weakly better than a default even when members differ.
 - **Structured errors from the area and proportion calculations.** They throw a plain error where the task
@@ -228,4 +309,6 @@ Learned on this recipe, but none of it is specific to it.
 - **Heuristic thresholds failed here four times.** None could separate the good case from the bad one:
   detecting a "real" projection by nominal scale, comparing raw floats for equality, a resolution sanity bound,
   and a coarseness bound on derived grids. When a threshold cannot distinguish them, either measure the real
-  signal or leave the value visible and let a person judge.
+  signal or leave the value visible and let a person judge. What replaced them is not a fifth threshold: the
+  comparison is exact canonical WKT, and the one remaining tolerance is the display rounding it has to undo,
+  measured against the real asset rather than guessed.

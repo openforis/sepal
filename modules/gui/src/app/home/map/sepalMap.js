@@ -1,7 +1,18 @@
 import _ from 'lodash'
 import {Subject} from 'rxjs'
+import {TerraDraw, TerraDrawPolygonMode, TerraDrawRectangleMode} from 'terra-draw'
+import {TerraDrawGoogleMapsAdapter} from 'terra-draw-google-maps-adapter'
 
 import {getLogger} from '~/log'
+
+import {
+    DRAWING_COORDINATE_PRECISION,
+    otherPolygonIds,
+    toAdapterLib,
+    toBounds,
+    toPolygonFeature,
+    toPolygonPath
+} from './drawing'
 
 const log = getLogger('sepalMap')
 
@@ -105,8 +116,12 @@ export class SepalMap {
         editable: false,
         zIndex: 1
     }
-    drawingManager = null
-    drawingPolygon = null
+    drawing = null
+    drawingListener = null
+    drawingChangeListener = null
+    drawingChangesSuppressed = false
+    drawingFeatureId = null
+    polygonPreview = null
 
     getGoogle() {
         return {
@@ -137,19 +152,158 @@ export class SepalMap {
 
     // Drawing mode
 
-    enableDrawingMode(options, callback) {
+    drawingStyles() {
+        const {fillColor, fillOpacity, strokeColor, strokeWeight} = this.drawingOptions
+        return {fillColor, fillOpacity, outlineColor: strokeColor, outlineWidth: strokeWeight}
+    }
+
+    // Rectangle styling accepts the four shared keys only, so the vertex markers stay polygon-only.
+    polygonStyles() {
+        const styles = this.drawingStyles()
+        return {
+            ...styles,
+            coordinatePointColor: styles.fillColor,
+            coordinatePointOutlineColor: styles.outlineColor,
+            coordinatePointWidth: 5,
+            coordinatePointOutlineWidth: 1
+        }
+    }
+
+    getDrawing() {
         const {google, googleMap} = this
+        if (!this.drawing) {
+            const lib = toAdapterLib(google)
+            this.drawing = new TerraDraw({
+                adapter: new TerraDrawGoogleMapsAdapter({
+                    lib,
+                    map: googleMap,
+                    coordinatePrecision: DRAWING_COORDINATE_PRECISION
+                }),
+                modes: [
+                    new TerraDrawPolygonMode({
+                        styles: this.polygonStyles(),
+                        editable: true,
+                        showCoordinatePoints: true
+                    }),
+                    new TerraDrawRectangleMode({styles: this.drawingStyles()})
+                ]
+            })
+        }
+        return this.drawing
+    }
+
+    // Starts the store over rather than deleting the older polygon in place, which would strand its
+    // vertex points: there is no afterFeatureDeleted hook to clean them up.
+    retainOnly(drawing, feature) {
+        if (!feature || !otherPolygonIds(drawing.getSnapshot(), feature.id).length) {
+            return
+        }
+        drawing.clear()
+        drawing.addFeatures([toPolygonFeature(toPolygonPath(feature))])
+    }
+
+    clearPolygonPreview() {
+        if (this.polygonPreview) {
+            this.polygonPreview.setMap(null)
+            this.polygonPreview = null
+        }
+    }
+
+    setPolygonPreview(path) {
+        if (!this.polygonPreview) {
+            this.drawingChangesSuppressed = true
+            try {
+                this.drawing.clear()
+            } finally {
+                this.drawingChangesSuppressed = false
+            }
+            this.polygonPreview = new this.google.maps.Polygon(this.drawingOptions)
+            this.polygonPreview.setMap(this.googleMap)
+        }
+        this.polygonPreview.setPath(path.map(([lng, lat]) => ({lng, lat})))
+    }
+
+    setPolygonDrawing(path) {
+        const {drawing} = this
+        this.clearPolygonPreview()
+        this.drawingChangesSuppressed = true
+        try {
+            if (!path?.length) {
+                drawing.clear()
+                return
+            }
+            const [validation] = drawing.addFeatures([toPolygonFeature(path)])
+            if (validation.valid) {
+                this.retainOnly(drawing, drawing.getSnapshotFeature(validation.id))
+            } else {
+                log.warn(`Saved polygon could not be loaded for editing: ${validation.reason}`)
+            }
+        } finally {
+            this.drawingChangesSuppressed = false
+        }
+    }
+
+    enableDrawingMode(mode, callback, {retain = false, onChange} = {}) {
         this.disableDrawingMode()
-        this.drawingManager = new google.maps.drawing.DrawingManager(options)
-        google.maps.core.event.addListener(this.drawingManager, 'overlaycomplete', callback)
-        this.drawingManager.setMap(googleMap)
+        const drawing = this.getDrawing()
+        // Editing an existing shape finishes too, as an 'edit' or 'deleteCoordinate'.
+        this.drawingListener = id => {
+            this.clearPolygonPreview()
+            const feature = drawing.getSnapshotFeature(id)
+            if (retain) {
+                this.retainOnly(drawing, feature)
+            } else {
+                drawing.clear()
+            }
+            if (feature) {
+                callback(feature)
+            } else {
+                log.warn(`Drawn feature ${id} is missing from the store`)
+            }
+        }
+        drawing.on('finish', this.drawingListener)
+        if (onChange) {
+            this.drawingChangeListener = (ids, type, context) => {
+                if (this.drawingChangesSuppressed || context?.origin === 'api') {
+                    return
+                }
+                const feature = ids
+                    .map(id => drawing.getSnapshotFeature(id))
+                    .find(feature => feature?.geometry.type === 'Polygon' && feature.properties.mode === mode)
+                if (feature) {
+                    this.clearPolygonPreview()
+                    this.drawingFeatureId = feature.id
+                    onChange(feature)
+                } else if (type === 'delete' && ids.includes(this.drawingFeatureId)) {
+                    this.drawingFeatureId = null
+                    onChange(null)
+                }
+            }
+            drawing.on('change', this.drawingChangeListener)
+        }
+        if (!drawing.enabled) {
+            drawing.start()
+        }
+        drawing.setMode(mode)
     }
 
     disableDrawingMode() {
-        const {google} = this
-        if (this.drawingManager) {
-            this.drawingManager.setMap(null)
-            google.maps.core.event.clearListeners(this.drawingManager, 'overlaycomplete')
+        const {drawing, drawingListener, drawingChangeListener} = this
+        this.clearPolygonPreview()
+        if (drawing) {
+            if (drawingListener) {
+                drawing.off('finish', drawingListener)
+                this.drawingListener = null
+            }
+            if (drawingChangeListener) {
+                drawing.off('change', drawingChangeListener)
+                this.drawingChangeListener = null
+            }
+            this.drawingFeatureId = null
+            if (drawing.enabled) {
+                drawing.setMode('static')
+                drawing.stop()
+            }
         }
     }
 
@@ -248,20 +402,10 @@ export class SepalMap {
     }
 
     enableZoomArea(callback) {
-        const {google, googleMap} = this
         log.debug('enableZoomArea')
-        this.enableDrawingMode({
-            drawingMode: google.maps.drawing.OverlayType.RECTANGLE,
-            drawingControl: false,
-            rectangleOptions: this.drawingOptions
-        }, ({type, overlay: rectangle}) => {
-            if (type === 'rectangle') {
-                rectangle.setMap(null)
-                googleMap.fitBounds(rectangle.bounds)
-                callback()
-            } else {
-                log.warn(`Expecting overlaycomplete event type rectangle but got ${type}`)
-            }
+        this.enableDrawingMode('rectangle', feature => {
+            this.fitBounds(toBounds(feature))
+            callback()
         })
     }
 
@@ -272,28 +416,14 @@ export class SepalMap {
 
     // Polygon
 
-    enablePolygonDrawing(callback) {
-        const {google} = this
+    enablePolygonDrawing(callback, getPath, onChange) {
         log.debug('enablePolygonDrawing')
-        this.enableDrawingMode({
-            drawingMode: google.maps.drawing.OverlayType.POLYGON,
-            drawingControl: false,
-            drawingControlOptions: {
-                position: google.maps.core.ControlPosition.TOP_CENTER,
-                drawingModes: ['polygon']
-            },
-            polygonOptions: this.drawingOptions,
-        }, ({type, overlay: polygon}) => {
-            if (type === 'polygon') {
-                polygon.setMap(null)
-                const toPolygonPath = polygon => polygon.getPaths().getArray()[0].getArray().map(latLng =>
-                    [latLng.lng(), latLng.lat()]
-                )
-                callback(toPolygonPath(polygon))
-            } else {
-                log.warn(`Expecting overlaycomplete event type polygon but got ${type}`)
-            }
+        this.enableDrawingMode('polygon', feature => callback(toPolygonPath(feature)), {
+            retain: true,
+            onChange: onChange && (feature => onChange(feature ? toPolygonPath(feature) : null))
         })
+        const path = getPath && getPath()
+        this.setPolygonDrawing(path)
     }
 
     disablePolygonDrawing() {
@@ -401,6 +531,10 @@ export class SepalMap {
         const existingLayer = this.getLayer(id)
         const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
         if (unchanged) {
+            // Keeping the mounted layer is what avoids a map-id refetch, but its index may still have moved.
+            if (layer?.layerIndex !== undefined) {
+                existingLayer.setLayerIndex(layer.layerIndex)
+            }
             return false
         }
         this.removeLayer(id)

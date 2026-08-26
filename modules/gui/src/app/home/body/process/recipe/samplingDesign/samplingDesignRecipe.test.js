@@ -1,4 +1,4 @@
-import {defaultModel, normalizeSavedLayers, toTaskRecipe} from './samplingDesignRecipe'
+import {normalizeSavedLayers, toTaskRecipe} from './samplingDesignRecipe'
 
 const recipe = {
     id: 'r1',
@@ -42,37 +42,6 @@ describe('toTaskRecipe', () => {
         const before = recipe.model.sampleAllocation.allocation
         toTaskRecipe(recipe)
         expect(recipe.model.sampleAllocation.allocation).toBe(before)
-    })
-})
-
-describe('defaultModel.stratification', () => {
-    it('defaults the stratification CRS to EPSG:6933', () => {
-        expect(defaultModel.stratification.crs).toBe('EPSG:6933')
-    })
-})
-
-describe('defaultModel.sampleArrangement', () => {
-    it('provides a complete set of Sample Arrangement defaults', () => {
-        expect(defaultModel.sampleArrangement).toEqual({
-            requiresUpdate: false,
-            arrangementStrategy: 'RANDOM',
-            sampleSizeStrategy: 'OVER',
-            gridOrigin: 'FIXED',
-            crs: 'EPSG:6933',
-            seed: 1
-        })
-    })
-
-    // Sample Arrangement no longer owns Scale: the stratified grid comes from Stratification, and unstratified
-    // Systematic is analytical (CRS-only).
-    it('does not persist a Sample Arrangement scale', () => {
-        expect('scale' in defaultModel.sampleArrangement).toBe(false)
-    })
-
-    // Minimum distance is optional and grid-derived: persisting a value would freeze it against the grid it was
-    // created with, so an unset default is resolved to the grid floor at export instead.
-    it('does not persist a default minimum distance', () => {
-        expect('minDistance' in defaultModel.sampleArrangement).toBe(false)
     })
 })
 

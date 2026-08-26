@@ -5,13 +5,14 @@ import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
 import {normalizeAppsCatalog} from '~/appsCatalog'
 import {select} from '~/store'
+import {getLanguage} from '~/translate'
 
 export const appList = () =>
     select('apps.list') || []
 
 export const loadApps$ = () =>
     api.apps.loadAll$().pipe(
-        map(rawSpec => normalizeAppsCatalog(rawSpec)),
+        map(rawSpec => normalizeAppsCatalog(rawSpec, getLanguage())),
         map(appsSpec => actionBuilder('SET_APPS')
             .set('apps.list', _.orderBy(appsSpec.apps, ['pinned', 'label'], ['desc', 'asc']))
             .set('apps.tags', _.orderBy(appsSpec.tags, ['label'], ['asc']))

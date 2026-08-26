@@ -22,8 +22,8 @@ export class BandSpec extends React.Component {
                 disabled={disabled}
                 onClick={() => onClick(id)}>
                 <CrudItem
-                    title={msg(['process.panels.inputImagery.form.type', type])}
-                    description={band}
+                    title={band}
+                    metadata={msg(['process.panels.inputImagery.form.type', type])}
                     unsafeRemove
                     onRemove={() => onRemove(id)}
                 />

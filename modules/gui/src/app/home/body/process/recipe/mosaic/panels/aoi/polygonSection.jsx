@@ -27,17 +27,25 @@ class _PolygonSection extends React.Component {
     }
 
     componentDidMount() {
-        const {map, inputs: {polygon}} = this.props
-        map.enablePolygonDrawing(drawnPolygon => {
-            polygon.set(drawnPolygon)
-        })
+        const {map, recipeActionBuilder, inputs: {polygon}} = this.props
+        recipeActionBuilder('SET_AOI_EDITING')
+            .set('ui.aoi.editing', true)
+            .dispatch()
+        // Read lazily: the map re-runs this on layout change, and a captured value would revert edits.
+        map.enablePolygonDrawing(
+            drawnPolygon => polygon.set(drawnPolygon),
+            () => this.props.inputs.polygon.value
+        )
     }
 
     componentWillUnmount() {
-        const {map} = this.props
+        const {map, recipeActionBuilder} = this.props
         this.boundsChanged$.next()
         this.boundsChanged$.complete()
         map.disablePolygonDrawing()
+        recipeActionBuilder('CLEAR_AOI_EDITING')
+            .del('ui.aoi.editing')
+            .dispatch()
     }
 
     render() {

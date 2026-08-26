@@ -62,6 +62,10 @@
     --width: 7rem;
 }
 
+.cursorValue.year {
+    --width: 5rem;
+}
+
 .arrow {
     position: absolute;
     width: 0;

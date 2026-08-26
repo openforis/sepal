@@ -65,10 +65,10 @@ class _MapAreaLayout extends React.Component {
         const appended = featureLayerSources
             .filter(({id}) => !keptIds.includes(id))
             .map(({id, defaultEnabled}) => ({sourceId: id, disabled: !defaultEnabled}))
-        // Keep all EE table asset overlays as one contiguous band (appended sources can otherwise
-        // interleave a built-in between assets), so the map stack and the overlay selector stay aligned.
-        const assetSourceIds = featureLayerSources.filter(({type}) => type === 'EETableAsset').map(({id}) => id)
-        const nextFeatureLayers = canonicalizeFeatureLayerOrder([...kept, ...appended], assetSourceIds)
+        // Sort every entry into its band so persisted order, map stacking and the overlay selector stay
+        // aligned when sources appear later. Order within the draggable data band is the user's and is
+        // left alone.
+        const nextFeatureLayers = canonicalizeFeatureLayerOrder([...kept, ...appended], featureLayerSources)
         if (!_.isEqual(featureLayers, nextFeatureLayers)) {
             recipeActionBuilder('SET_FEATURE_LAYERS', {sourceIds: nextFeatureLayers, area})
                 .set(['layers.areas', area, 'featureLayers'], nextFeatureLayers)

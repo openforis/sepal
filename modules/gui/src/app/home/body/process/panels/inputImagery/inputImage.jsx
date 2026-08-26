@@ -6,11 +6,9 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
-import {Panel} from '~/widget/panel/panel'
 import {PanelSections} from '~/widget/panelSections'
 
 import {AssetSection} from './assetSection'
-import {bandsAvailableToAdd, defaultBand} from './bands'
 import {ImageForm} from './imageForm'
 import styles from './inputImage.module.css'
 import {RecipeSection} from './recipeSection'
@@ -74,13 +72,6 @@ class _InputImage extends React.Component {
                     selected={inputs.section}
                     icon='image'
                     label={msg('process.panels.inputImagery.sections.title')}
-                    defaultButtons={
-                        <Form.PanelButtons>
-                            <Panel.Buttons.Add
-                                disabled={!this.canAddBand()}
-                                onClick={() => this.addBand()}/>
-                        </Form.PanelButtons>
-                    }
                 />
             </RecipeFormPanel>
         )
@@ -89,19 +80,6 @@ class _InputImage extends React.Component {
     componentDidUpdate() {
         const {inputs, activatable: {imageId}} = this.props
         inputs.imageId.set(imageId)
-    }
-
-    canAddBand() {
-        const {inputs: {bands, includedBands}} = this.props
-        return !!bandsAvailableToAdd(bands.value, includedBands.value).length
-    }
-
-    addBand() {
-        const {inputs: {bands, includedBands}} = this.props
-        const availableBands = bandsAvailableToAdd(bands.value, includedBands.value)
-        if (availableBands.length) {
-            includedBands.set([...(includedBands.value || []), defaultBand(availableBands[0], bands.value)])
-        }
     }
 
     updateImageLayerSources({section, asset, recipe: recipeId, visualizations}) {

@@ -9,7 +9,6 @@ ENV SHARED /usr/local/src/sepal/lib/js/shared
 ENV NODE_MAJOR=26
 
 ADD modules/${MODULE_NAME}/kernels /etc/sepal/app-manager/kernels-templates
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 51716619E084DAB9
 
 # [HACK] Ensures /usr/local/share/jupyter/voila is available when docker volume is shadowing
 # The version of voila here has to be the same as in init_jupyter.sh

@@ -14,6 +14,7 @@ import {Combo} from '~/widget/combo'
 import {RemoveButton} from '~/widget/removeButton'
 
 import {withMapArea} from '../mapAreaContext'
+import {PresentationToggle} from './presentationToggle'
 
 const mapRecipeToProps = (recipe, {source}) => ({
     userDefinedVisualizations: selectFrom(recipe, ['layers.userDefinedVisualizations', source.id]) || []
@@ -65,6 +66,9 @@ class _VisualizationSelector extends React.Component {
                         disabled={!selectedOption || editMode === 'clone'}
                         onRemove={() => this.removeVisParams(selectedOption.visParams)}
                     />
+                ]}
+                buttons={[
+                    <PresentationToggle key='presentation'/>
                 ]}
                 placeholder={'Select bands to visualize...'}
                 options={options}

@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest'
 
 import {
     isValidConfidenceLevel,
+    isValidMarginOfError,
     isValidOptionalProportionPercentage,
     isValidPowerTuningConstant,
     isValidProportionPercentage
@@ -74,5 +75,35 @@ describe('isValidOptionalProportionPercentage', () => {
         expect(isValidOptionalProportionPercentage(101)).toBe(false)
         expect(isValidOptionalProportionPercentage(-1)).toBe(false)
         expect(isValidOptionalProportionPercentage('abc')).toBe(false)
+    })
+})
+
+// The error-mode target. Zero would demand an infinite sample, so the bound is strict, and a blank field is
+// a target nobody has given rather than a target of nothing.
+describe('isValidMarginOfError', () => {
+    it('accepts any positive percentage, as a number or as the string a field holds', () => {
+        expect(isValidMarginOfError(0.1)).toBe(true)
+        expect(isValidMarginOfError(50)).toBe(true)
+        expect(isValidMarginOfError('50')).toBe(true)
+        expect(isValidMarginOfError(1000)).toBe(true)
+    })
+
+    it('rejects zero and anything below it', () => {
+        expect(isValidMarginOfError(0)).toBe(false)
+        expect(isValidMarginOfError('0')).toBe(false)
+        expect(isValidMarginOfError(-1)).toBe(false)
+    })
+
+    it('rejects a target nobody has given', () => {
+        expect(isValidMarginOfError(undefined)).toBe(false)
+        expect(isValidMarginOfError(null)).toBe(false)
+        expect(isValidMarginOfError('')).toBe(false)
+        expect(isValidMarginOfError('   ')).toBe(false)
+    })
+
+    it('rejects values that are not numbers at all', () => {
+        expect(isValidMarginOfError('half')).toBe(false)
+        expect(isValidMarginOfError(NaN)).toBe(false)
+        expect(isValidMarginOfError(Infinity)).toBe(false)
     })
 })

@@ -18,7 +18,13 @@ export class Layer {
     }
 
     setVisibility = () => undefined
-    
+
+    // Every layer can absorb an index, so SepalMap.setLayer can hand one to a layer it keeps without
+    // asking what kind it is. Only layers stored in googleMap.overlayMapTypes act on it.
+    setLayerIndex = layerIndex => {
+        this.layerIndex = layerIndex
+    }
+
     add = () => {
         log.debug('Add layer')
         this.addToMap$().pipe(

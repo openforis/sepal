@@ -1,15 +1,12 @@
 import {
-    crsGridArgs,
     exactLatticePoint,
     fixedOriginPhase,
     gridPixelSize,
-    isAxisAlignedTransform,
     latticeCellLabel,
     latticeIdKey,
     latticeSpacing,
     minLatticeExponent,
     nestedLevel,
-    parseCrsTransform,
     unstratifiedLatticeDiameter,
     unstratifiedLatticeExponent,
     unstratifiedLatticeLayout,
@@ -111,67 +108,14 @@ describe('unstratifiedMaxDensityOffset', () => {
     })
 })
 
-describe('parseCrsTransform (crsTransform text/array -> 6-number array or null)', () => {
-    it('parses a bracketed string, a bare string, and an array', () => {
-        expect(parseCrsTransform('[30,0,0,0,-30,0]')).toEqual([30, 0, 0, 0, -30, 0])
-        expect(parseCrsTransform('30, 0, 0, 0, -30, 0')).toEqual([30, 0, 0, 0, -30, 0])
-        expect(parseCrsTransform([30, 0, 0, 0, -30, 0])).toEqual([30, 0, 0, 0, -30, 0])
+describe('gridPixelSize (the grid metre Scale)', () => {
+    it('is the configured Scale, in metres', () => {
+        expect(gridPixelSize({scale: 300})).toBe(300)
+        expect(gridPixelSize({scale: '30'})).toBe(30)
     })
 
-    it('returns null for empty / wrong-length / non-numeric (no transform)', () => {
-        expect(parseCrsTransform('')).toBe(null)
-        expect(parseCrsTransform(undefined)).toBe(null)
-        expect(parseCrsTransform('30,0,0')).toBe(null)
-        expect(parseCrsTransform('30,0,0,0,-30,x')).toBe(null)
-        expect(parseCrsTransform([30, 0, 0, 0, -30])).toBe(null)
-    })
-})
-
-describe('isAxisAlignedTransform (north-up, axis-aligned, square, non-zero)', () => {
-    it('accepts a north-up square transform (a > 0, e < 0, a === -e, no shear)', () => {
-        expect(isAxisAlignedTransform([30, 0, 15, 0, -30, 15])).toBe(true)
-        expect(isAxisAlignedTransform([10, 0, 0, 0, -10, 0])).toBe(true)
-    })
-
-    it('rejects south-up, negative-a, shear, non-square and zero pixels', () => {
-        expect(isAxisAlignedTransform([30, 0, 0, 0, 30, 0])).toBe(false) // south-up (e > 0)
-        expect(isAxisAlignedTransform([-30, 0, 0, 0, -30, 0])).toBe(false) // negative x pixel (a < 0)
-        expect(isAxisAlignedTransform([30, 1, 0, 0, -30, 0])).toBe(false) // shear (b != 0)
-        expect(isAxisAlignedTransform([30, 0, 0, 2, -30, 0])).toBe(false) // shear (d != 0)
-        expect(isAxisAlignedTransform([30, 0, 0, 0, -60, 0])).toBe(false) // non-square |a| != |e|
-        expect(isAxisAlignedTransform([0, 0, 0, 0, -30, 0])).toBe(false) // zero x pixel
-    })
-})
-
-describe('gridPixelSize (derived pixel size, scale XOR transform)', () => {
-    it('uses the transform x-pixel when a transform is set (scale ignored)', () => {
-        expect(gridPixelSize({scale: 999, crsTransform: '[30,0,15,0,-30,15]'})).toBe(30)
-        expect(gridPixelSize({scale: 999, crsTransform: [45, 0, 0, 0, -45, 0]})).toBe(45)
-    })
-
-    it('uses scale when no transform', () => {
-        expect(gridPixelSize({scale: 300, crsTransform: ''})).toBe(300)
-        expect(gridPixelSize({scale: '30', crsTransform: undefined})).toBe(30)
-    })
-})
-
-describe('crsGridArgs (reduceRegion grid: scale XOR crsTransform)', () => {
-    it('sends the parsed transform and NO scale when transform-defined', () => {
-        const args = crsGridArgs({crs: 'EPSG:6933', scale: 300, crsTransform: '[30,0,15,0,-30,15]'})
-        expect(args).toEqual({crs: 'EPSG:6933', crsTransform: [30, 0, 15, 0, -30, 15]})
-        expect('scale' in args).toBe(false)
-    })
-
-    it('sends scale and NO crsTransform when there is no transform', () => {
-        const args = crsGridArgs({crs: 'EPSG:6933', scale: 300, crsTransform: ''})
-        expect(args).toEqual({crs: 'EPSG:6933', scale: 300})
-        expect('crsTransform' in args).toBe(false)
-    })
-
-    // The CRS default and its EE resolution belong to the shared catalog; this helper must not invent one.
-    it('passes the caller-supplied crs through without inventing a default', () => {
-        expect(crsGridArgs({crs: 'EPSG:6933', scale: 30}).crs).toBe('EPSG:6933')
-        expect(crsGridArgs({scale: 30}).crs).toBeUndefined()
+    it('is not a number when no Scale is configured', () => {
+        expect(Number.isFinite(gridPixelSize({}))).toBe(false)
     })
 })
 

@@ -1,0 +1,4 @@
+.panel.panel {
+    width: 22rem;
+    max-width: calc(100dvw - 1rem);
+}

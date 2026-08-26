@@ -1,4 +1,5 @@
 import {jest} from '@jest/globals'
+import {firstValueFrom} from 'rxjs'
 
 // ee.Filter.* need an initialized EE API, so we mock '#sepal/ee/ee' (and the job wrapper / imageFactory that
 // consumer modules import) with recording stubs and assert the FILTER STRUCTURE the shared code builds.
@@ -40,7 +41,7 @@ jest.unstable_mockModule('#sepal/ee/imageFactory', () => ({default: () => ({getG
 const {propertyEqualityFilter, propertyInListFilter} = await import('#sepal/ee/propertyFilter')
 const {createFilter} = await import('#sepal/ee/asset/filter')
 const {filterTable} = await import('#sepal/ee/table')
-const {toFeatureCollection} = await import('#sepal/ee/aoi')
+const {toFeatureCollection$} = await import('#sepal/ee/aoi')
 const {styleByValue, worker$} = await import('#gee/jobs/ee/table/map')
 
 const or = (a, b) => record('or', a, b)
@@ -111,8 +112,8 @@ describe('filterTable (generic EE-table) routes through the shared helper', () =
 })
 
 describe('aoi EE-table key selection routes through the shared helper', () => {
-    it('filters the key column via propertyEqualityFilter', () => {
-        const fc = toFeatureCollection({type: 'EE_TABLE', id: 't', keyColumn: 'id', key: '8'})
+    it('filters the key column via propertyEqualityFilter', async () => {
+        const fc = await firstValueFrom(toFeatureCollection$({type: 'EE_TABLE', id: 't', keyColumn: 'id', key: '8'}))
         expect(fc).toEqual(record('filtered', propertyEqualityFilter('id', '8')))
     })
 })

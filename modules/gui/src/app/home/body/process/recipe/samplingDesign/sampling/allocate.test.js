@@ -1,4 +1,5 @@
 import {allocate} from './allocate'
+import {ALLOCATION_STRATEGIES} from './allocationStrategy'
 
 it('equal allocation of 10 samples between two stratums gives 5 in each stratum', () => {
     expect(allocate({
@@ -205,4 +206,20 @@ it('equal allocation of a single stratum assigns the whole sample size', () => {
     })).toMatchObject([
         {stratum: 1, sampleSize: 10},
     ])
+})
+
+// The strategy table and the allocator have to stay in step: a strategy that is declared but not executable
+// is offered in the panel and then throws, and one that is executable but not declared is never resolved to
+// and so never reached.
+describe('every declared strategy is executable', () => {
+    const strata = [{stratum: 1, weight: 0.3, proportion: 0.4}, {stratum: 2, weight: 0.7, proportion: 0.1}]
+
+    it.each(ALLOCATION_STRATEGIES)('allocates the whole total with %s', strategy => {
+        const allocation = allocate({sampleSize: 100, strategy, strata, tuningConstant: 0.5})
+        expect(allocation.map(({sampleSize}) => sampleSize).reduce((a, b) => a + b)).toBe(100)
+    })
+
+    it('rejects a strategy the table does not declare', () => {
+        expect(() => allocate({sampleSize: 100, strategy: 'MYSTERY', strata})).toThrow(/Invalid allocation strategy/)
+    })
 })

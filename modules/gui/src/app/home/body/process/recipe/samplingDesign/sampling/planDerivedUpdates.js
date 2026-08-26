@@ -1,16 +1,26 @@
 import _ from 'lodash'
 
-import {allocationOutcome, isManualAllocation, marginOfErrorFor, reconcileManualAllocation, unansweredStrata} from './allocationOutcome'
-import {orderedStratumKeys, reconcileManualProportions, stratumKey, unansweredProportions} from './designModel'
+import {effectiveSampleAllocation, isManualAllocation, isPositiveIntegerSampleSize, unansweredStrata} from './allocationOutcome'
+import {readsWeights} from './allocationStrategy'
+import {getDefaultSampleAllocation} from './defaultModel'
+import {isProportionsApplicable, orderedStratumKeys, stratumKey, unansweredProportions} from './designModel'
+import {isValidMarginOfError} from './numericRanges'
 
-// Semantic invalidation for the Sampling Design recipe. Panel order says nothing about what depends on what:
-// each derived section is planned from the inputs its own mode actually reads, so a change is only propagated
-// where it changes an answer.
+// Semantic invalidation for the Sampling Design recipe, and nothing else. Every derived section is owned by
+// the panel that calculates it: the panel calculates against its own form values and Apply persists the
+// configuration and the result together. All this decides is which sections one edit has made stale, so that
+// the user is sent to the panels that now need a look - it calculates nothing, normalizes nothing, and
+// accepts nothing on a panel's behalf.
+//
+// Panel order says nothing about what depends on what: each section is planned from the inputs it actually
+// reads, so a change is only propagated where it changes an answer.
 
-// What the anticipated-proportion reduction is evaluated over. Stratification Scale and its CRS transform are
-// deliberately NOT here: they change how large a stratum turns out, and therefore its weight, but the
-// reduction groups by stratum over the same AOI in the same CRS either way, so the proportions it produces do
-// not move. Weights are carried separately, where the allocation reads them.
+// The UPSTREAM inputs the anticipated-proportion reduction is evaluated over: the categorical source it
+// reads, the AOI and the CRS. Proportions' own settings - its Scale, its property source, its strategy - are
+// deliberately absent: they belong to the panel that calculated with them, and arrive with the result they
+// produced. The Stratification Scale is absent too: it changes how large a stratum turns out, and therefore
+// its weight, but the reduction groups by stratum over the same AOI in the same CRS either way. Weights are
+// carried separately, where the allocation reads them.
 export const stratificationFrame = model => {
     const stratification = model?.stratification || {}
     return {
@@ -37,7 +47,7 @@ export const stratumWeights = model =>
         'stratum'
     )
 
-export const isProportionsApplicable = model => !model?.proportions?.skip
+export {isProportionsApplicable}
 
 export const isProportionsManual = model => !!model?.proportions?.manual?.length
 
@@ -69,15 +79,13 @@ export const allocationMode = model => ({
     allocationStrategy: model?.sampleAllocation?.allocationStrategy
 })
 
-const WEIGHT_DEPENDENT_STRATEGIES = ['PROPORTIONAL', 'BALANCED', 'OPTIMAL', 'POWER']
-const PROPORTION_DEPENDENT_STRATEGIES = ['OPTIMAL', 'POWER']
-// The same fallback the panel applies when it opens without proportions - the established policy, restated
-// here so it can also be applied while the panel is closed.
-const PROPORTION_FREE_STRATEGY = 'BALANCED'
-const PENDING_PROPORTIONS = ['recalculate', 'needsInput']
+// What an automatic allocation is calculated from, beyond the target and the strata. A recipe that does not
+// state all of them cannot account for its own counts, which is a reason to send the user to the panel - the
+// panel resolves them from the defaults and persists them on Apply.
+const CALCULATION_SETTINGS = ['estimateSampleSize', 'allocationStrategy', 'confidenceLevel', 'minSamplesPerStratum', 'powerTuningConstant']
 
 // Everything the plan reads. Presentation is absent by construction, so a label or color edit cannot even
-// reach the planner - and the Sync host uses this to decide whether there is anything to plan at all.
+// reach it - and the Sync host uses this to decide whether there is anything to plan at all.
 export const derivedInputs = model => ({
     frame: stratificationFrame(model),
     keys: orderedStratumKeys(model),
@@ -105,150 +113,135 @@ const planStratification = (previous, next) => {
         : {action: 'recalculate', requiresUpdate: true}
 }
 
-const planProportions = (previous, next) => {
+const planProportions = (previous, next, {stratificationInvalidated}) => {
     if (!isProportionsApplicable(next)) {
         return {action: 'notApplicable', requiresUpdate: false}
+    }
+    // Strata that are about to be recalculated are strata nobody knows yet: the rows the panel will have to
+    // produce or reconcile are per-stratum, so neither mode can settle against the ones still in the model.
+    if (stratificationInvalidated) {
+        return {action: 'recalculate', requiresUpdate: true}
     }
     const identitiesChanged = !_.isEqual(stratumKeySet(previous), stratumKeySet(next))
     // A manual proportion is a within-stratum judgement: how much of THIS stratum is the target. Nothing
     // about the frame, the AOI or how large the stratum turned out changes what the user meant, so only the
-    // identities can invalidate it - and then only the strata nobody has answered for need a person.
+    // identities can invalidate it - and the panel reconciles the rows when it opens.
     if (isProportionsManual(next)) {
-        if (!identitiesChanged) {
-            return KEEP
-        }
-        const anticipatedProportions = reconcileManualProportions(next)
-        const unanswered = anticipatedProportions.filter(({proportion}) => proportion == null)
-        return {
-            action: unanswered.length ? 'needsInput' : 'reconcileManual',
-            requiresUpdate: !!unanswered.length,
-            anticipatedProportions
-        }
+        return identitiesChanged
+            ? {action: 'recalculate', requiresUpdate: true}
+            : KEEP
     }
+    // Everything a Proportions Apply carries - the Scale, the source, the strategy, the raw probabilities and
+    // the rows derived from them - is one coherent submission from the panel that calculated it. Only an
+    // upstream move invalidates it.
     return identitiesChanged || !_.isEqual(stratificationFrame(previous), stratificationFrame(next))
         ? {action: 'recalculate', requiresUpdate: true}
         : KEEP
 }
 
-// Modes that read proportions, applied to a design that no longer has any. The panel already applies this
-// policy when it opens; applying it here means the user is not sent through the panel to do it by hand.
-const proportionFreeMode = model => {
-    const {estimateSampleSize, allocationStrategy} = allocationMode(model)
-    if (!estimateSampleSize && !PROPORTION_DEPENDENT_STRATEGIES.includes(allocationStrategy)) {
-        return null
-    }
-    return {
-        // Error mode solves the total from anticipated uncertainty, which no longer exists; the total it last
-        // solved is kept and simply becomes the fixed target.
-        estimateSampleSize: false,
-        allocationStrategy: PROPORTION_DEPENDENT_STRATEGIES.includes(allocationStrategy)
-            ? PROPORTION_FREE_STRATEGY
-            : allocationStrategy
-    }
+// The one thing an automatic allocation cannot derive: the target a person has to give it. Fixed mode needs a
+// positive whole-number total to spread over the strata; error mode needs a positive margin to solve a total
+// from, and finished proportions to solve it against.
+const missingAllocationTarget = model => {
+    const {estimateSampleSize} = allocationMode(model)
+    return estimateSampleSize
+        ? !isProportionsApplicable(model)
+            || !proportionsReady(model)
+            || !isValidMarginOfError(model?.sampleAllocation?.marginOfError)
+        : !isPositiveIntegerSampleSize(model?.sampleAllocation?.sampleSize)
 }
 
-const planManualAllocation = (previous, next, {proportionsChanged, weightsChanged}) => {
-    if (_.isEqual(stratumKeySet(previous), stratumKeySet(next))) {
-        // Counts are the user's and stay exactly as entered. The uncertainty they imply is not: it reads
-        // weights as well as proportions, so either moving means the displayed margin is no longer the one
-        // these counts produce.
-        return proportionsChanged || weightsChanged
-            ? {action: 'refreshUncertainty', requiresUpdate: false, marginOfError: marginOfErrorFor(next)}
-            : KEEP
+// Whether the allocation the recipe carries is one the Allocation panel would accept as it stands. Anything
+// else - blank or mismatched rows, a missing total or margin, a setting a recipe saved before the field
+// existed, a strategy this design has no proportions to run - is resolved by that panel when it opens, and
+// until then the section requires attention. Sync neither fills those in nor decides them.
+const allocationSettled = model => {
+    const allocation = model?.sampleAllocation?.allocation || []
+    const rowsMatchStrata = _.isEqual(allocation.map(stratumKey), orderedStratumKeys(model))
+    if (!rowsMatchStrata || unansweredStrata(allocation).length) {
+        return false
     }
-    const allocation = reconcileManualAllocation({
-        allocation: next?.sampleAllocation?.allocation,
-        stratumKeys: orderedStratumKeys(next)
-    })
-    const unanswered = unansweredStrata(allocation)
-    return {
-        action: unanswered.length ? 'needsInput' : 'reconcileManual',
-        requiresUpdate: !!unanswered.length,
-        allocation,
-        marginOfError: marginOfErrorFor({...next, sampleAllocation: {...next.sampleAllocation, allocation}})
+    if (isManualAllocation(model)) {
+        return true
     }
+    if (missingAllocationTarget(model)) {
+        return false
+    }
+    const saved = model?.sampleAllocation || {}
+    const effective = effectiveSampleAllocation({model, defaults: getDefaultSampleAllocation()})
+    return _.isEqual(_.pick(effective, CALCULATION_SETTINGS), _.pick(saved, CALCULATION_SETTINGS))
 }
 
-const planAutomaticAllocation = (previous, next, {proportionsAction, proportionsChanged, weightsChanged}) => {
-    // A design whose proportions no longer apply, still carrying a mode that reads them: settle it into a
-    // valid proportion-free one rather than leaving Retrieve blocked on a panel the user has nothing to
-    // decide in. Idempotent - once the mode is proportion-free this cannot fire again.
-    const proportionFree = !isProportionsApplicable(next) && proportionFreeMode(next)
-    if (proportionFree) {
-        const normalized = {...next, sampleAllocation: {...next.sampleAllocation, ...proportionFree}}
-        return {action: 'recalculate', requiresUpdate: false, ...proportionFree, ...allocationOutcome(normalized)}
+// The allocation is the one section whose result is a set of numbers a person is expected to look at, so an
+// upstream move flags it rather than being quietly recomputed underneath them: counts, the total sample size
+// and the derived margin of error are all user-visible, and an allocation nobody has seen is not one anybody
+// approved. Sync's whole job here is to say "open this panel".
+//
+// Manual counts are the user's and are never recalculated by anyone - but the uncertainty they imply reads
+// weights and proportions, so those still flag the section for its panel to refresh.
+const planAllocation = (previousModel, nextModel, {proportionsChanged, proportionsInvalidated, stratificationInvalidated, weightsChanged}) => {
+    // An empty design has nothing to allocate over, so there is nothing for the user to do yet. The section
+    // becomes actionable when strata exist, not when the recipe is created.
+    if (!orderedStratumKeys(nextModel).length) {
+        return KEEP
     }
-
-    const {estimateSampleSize, allocationStrategy} = allocationMode(next)
-    // Error mode solves the total sample size from anticipated uncertainty, so there it is not the strategy
-    // that decides what matters - every strategy reads both weights and proportions.
-    const dependsOnWeights = estimateSampleSize || WEIGHT_DEPENDENT_STRATEGIES.includes(allocationStrategy)
-    const dependsOnProportions = estimateSampleSize || PROPORTION_DEPENDENT_STRATEGIES.includes(allocationStrategy)
-
-    // Recomputing against proportions that are not finished would just produce a second wrong answer. Two
-    // ways for them to be unfinished: already flagged in the model, or flagged by THIS transition - the flag
-    // is written alongside this plan, so the model does not carry it yet. Waiting is not a reason to ask the
-    // user for anything: the proportions section carries the flag, and the release below is what triggers the
-    // recompute - no flag cascades between sections.
-    const proportionsPending = PENDING_PROPORTIONS.includes(proportionsAction) || !proportionsReady(next)
-    if (dependsOnProportions && proportionsPending) {
-        return {action: 'waitForProportions'}
-    }
-    // Released. The counts were last computed from whatever was current before the wait began, so they are
-    // stale even if the arriving proportions are numerically identical to the ones they replaced.
-    const released = dependsOnProportions && !proportionsReady(previous)
     // Ordered rather than set-wise: remainder adjustment walks the strata in order, so the same strata in a
     // different order can allocate differently.
-    const identitiesChanged = !_.isEqual(orderedStratumKeys(previous), orderedStratumKeys(next))
-    const staleCounts = released
-        || identitiesChanged
-        || (dependsOnWeights && weightsChanged)
-        || (dependsOnProportions && proportionsChanged)
-    if (staleCounts) {
-        return {action: 'recalculate', requiresUpdate: false, ...allocationOutcome(next)}
-    }
-    return proportionsChanged || weightsChanged
-        ? {action: 'refreshUncertainty', requiresUpdate: false, marginOfError: marginOfErrorFor(next)}
+    const identitiesChanged = !_.isEqual(orderedStratumKeys(previousModel), orderedStratumKeys(nextModel))
+    const applicabilityChanged = isProportionsApplicable(previousModel) !== isProportionsApplicable(nextModel)
+    const {estimateSampleSize, allocationStrategy, manual} = allocationMode(nextModel)
+    // A weight change is visible whenever something displayed reads it: the derived margin (which exists only
+    // where proportions do), the solved total, or a strategy that spreads by weight.
+    const weightsVisible = isProportionsApplicable(nextModel)
+        || estimateSampleSize
+        || (!manual && readsWeights(allocationStrategy))
+    return identitiesChanged
+        // The identities the counts are keyed by, and the weights several strategies spread over, are exactly
+        // what is being recalculated - whatever the Proportions mode does or does not have to redo.
+        || stratificationInvalidated
+        || applicabilityChanged
+        || proportionsChanged
+        // Taken from THIS plan, not from the persisted flag: the proportions the allocation reads have just
+        // become stale, so the allocation's own counts and displayed margin are stale with them - and both
+        // flags have to be written in the same action, or the allocation is left settled until something
+        // else happens to move. Whether the recalculated rows eventually land on the same numbers is not
+        // the question; the input stopped being trustworthy the moment the frame moved.
+        || proportionsInvalidated
+        || (weightsChanged && weightsVisible)
+        || !allocationSettled(nextModel)
+        ? {action: 'recalculate', requiresUpdate: true}
         : KEEP
 }
 
-// Plans what each derived section must do to become correct again for the model it is now part of. Every
-// action that can be settled by pure arithmetic carries its result, so the caller has nothing left to
-// compute and `requiresUpdate` is left for the two things a plan genuinely cannot settle: Earth Engine work,
-// and a number only a person can supply.
+// Which derived sections one edit has left needing attention. A plan is a set of flags: what a section should
+// now contain is for its own panel to calculate, and for the user to apply.
+// Planned in dependency order - stratification, then proportions, then allocation - with each step told what
+// the ones above it just decided. Those decisions are read from THIS plan rather than from the persisted
+// flags, because the flags are written by this same plan: waiting for them would split one edit's
+// consequences across several passes, leaving a section reading a superseded result looking settled in
+// between.
 export const planDerivedUpdates = (previousModel, nextModel) => {
-    const proportions = planProportions(previousModel, nextModel)
-    // The plan's own reconciliation of manual proportions must not read as fresh input to the allocation: it
-    // is planned against the model BEFORE that write, where an unanswered row still means "not ready".
-    const changes = {
-        proportionsAction: proportions.action,
+    const stratification = planStratification(previousModel, nextModel)
+    const stratificationInvalidated = stratification.requiresUpdate === true
+    const proportions = planProportions(previousModel, nextModel, {stratificationInvalidated})
+    const allocation = planAllocation(previousModel, nextModel, {
+        stratificationInvalidated,
+        proportionsInvalidated: proportions.requiresUpdate === true,
         proportionsChanged: !_.isEqual(proportionValues(previousModel), proportionValues(nextModel)),
         weightsChanged: !_.isEqual(stratumWeights(previousModel), stratumWeights(nextModel))
-    }
-    const allocation = isManualAllocation(nextModel)
-        ? planManualAllocation(previousModel, nextModel, changes)
-        : planAutomaticAllocation(previousModel, nextModel, changes)
-    return {
-        stratification: planStratification(previousModel, nextModel),
-        proportions,
-        allocation
-    }
+    })
+    return {stratification, proportions, allocation}
 }
 
-const ALLOCATION_WRITES = ['allocation', 'sampleSize', 'marginOfError', 'estimateSampleSize', 'allocationStrategy']
-
 // The plan as model writes: `[[path, value], ...]` relative to the recipe model, carrying only the entries
-// that would actually change something. Empty when no semantic input moved - which is what keeps applying a
-// plan from producing another one, since everything written here (counts, the total, the mode, the derived
-// margin, the flags) is an output rather than an input.
+// that would actually change something. Flags and nothing else: a derived section's output belongs to the
+// panel that calculates it, so applying a plan can never produce another one.
 export const planModelUpdates = (previousModel, nextModel) => {
     if (_.isEqual(derivedInputs(previousModel), derivedInputs(nextModel))) {
         return []
     }
     const {stratification, proportions, allocation} = planDerivedUpdates(previousModel, nextModel)
     const changes = []
-    const setValue = (path, value) =>
-        _.isEqual(_.get(nextModel, path), value) || changes.push([path, value])
     // An absent flag means the plan has nothing to say about staleness, so the section keeps whatever it
     // already carried - a plan describes one transition, not the whole history of the recipe.
     const setFlag = (section, requiresUpdate) =>
@@ -259,11 +252,5 @@ export const planModelUpdates = (previousModel, nextModel) => {
     setFlag('stratification', stratification.requiresUpdate)
     setFlag('proportions', proportions.requiresUpdate)
     setFlag('sampleAllocation', allocation.requiresUpdate)
-    if ('anticipatedProportions' in proportions) {
-        setValue(['proportions', 'anticipatedProportions'], proportions.anticipatedProportions)
-    }
-    ALLOCATION_WRITES
-        .filter(key => key in allocation)
-        .forEach(key => setValue(['sampleAllocation', key], allocation[key]))
     return changes
 }

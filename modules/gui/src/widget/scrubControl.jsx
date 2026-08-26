@@ -34,7 +34,7 @@ class _ScrubControl extends React.Component {
     }
 
     render() {
-        const {min = 0, max = 1, formatValue = identity, tooltip, tooltipPlacement = 'top'} = this.props
+        const {min = 0, max = 1, formatValue = identity, tooltip, tooltipPlacement = 'top', disabled} = this.props
         const value = this.currentValue()
         const level = max > min ? (value - min) / (max - min) : 0
         const label = typeof tooltip === 'function' ? tooltip(value) : tooltip
@@ -45,6 +45,8 @@ class _ScrubControl extends React.Component {
                 className={styles.control}
                 style={{'--scrub-level': level}}
                 aria-label={label}
+                disabled={disabled}
+                onClick={e => e.stopPropagation()}
                 onKeyDown={this.onKeyDown}>
                 {formatValue(value)}
             </button>
@@ -79,6 +81,9 @@ class _ScrubControl extends React.Component {
         )
 
         const drag$ = pointerDown$.pipe(
+            // A disabled control never begins an interaction, so it can neither preview nor commit - not
+            // even through a programmatically dispatched event, which the disabled attribute alone allows.
+            filter(() => !this.props.disabled),
             filter(e => e.button == null || e.button === 0),
             switchMap(down => {
                 this.beginDrag(down)
@@ -160,6 +165,9 @@ class _ScrubControl extends React.Component {
     }
 
     onKeyDown(e) {
+        if (this.props.disabled) {
+            return
+        }
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             e.stopPropagation()
@@ -188,6 +196,7 @@ export const ScrubControl = compose(
 ScrubControl.propTypes = {
     value: PropTypes.number.isRequired,
     onChange: PropTypes.func.isRequired,
+    disabled: PropTypes.any,
     formatValue: PropTypes.func,
     max: PropTypes.number,
     min: PropTypes.number,

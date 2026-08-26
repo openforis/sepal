@@ -8,6 +8,10 @@ import {withTab} from '~/widget/tabs/tabContext'
 
 import {EarthEngineTableLayer} from './layer/earthEngineTableLayer'
 
+// A geometry aoi is renderable once it carries what the server's toGeometry$ needs: a referenced id
+// (ASSET/RECIPE) or a drawn path (POLYGON).
+export const hasAoiGeometry = aoi => !!(aoi?.id || aoi?.path?.length)
+
 class _AoiGeometryLayer extends React.Component {
     render() {
         return null
@@ -18,9 +22,15 @@ class _AoiGeometryLayer extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {id, map} = this.props
+        const {id, map, opacity} = this.props
         if (prevProps.id !== id) {
             map.removeLayer(prevProps.id)
+        }
+        // Opacity is client-side only and deliberately excluded from watchedProps, so an opacity-only change
+        // leaves the layer equal (no recreation, no map-id refetch). Push the new opacity onto the live
+        // layer's tiles directly.
+        if (prevProps.opacity !== opacity) {
+            map.getLayer(id)?.setOpacity?.(opacity)
         }
         this.setLayer()
     }
@@ -39,15 +49,18 @@ class _AoiGeometryLayer extends React.Component {
     }
 
     createLayer() {
-        const {aoi, color, fillColor, layerIndex, map, tab: {busy}} = this.props
-        return aoi?.id
+        const {aoi, color, fillColor, width, opacity, layerIndex, map, tab: {busy}} = this.props
+        return hasAoiGeometry(aoi)
             ? new EarthEngineTableLayer({
                 map,
                 mapId$: api.gee.aoiGeometry$({
-                    aoi, color, fillColor
+                    aoi, color, fillColor, width
                 }),
+                opacity,
                 layerIndex,
-                watchedProps: {aoi, color, fillColor},
+                // opacity is intentionally excluded: it's applied client-side (setOpacity), so an
+                // opacity-only change stays equal and doesn't recreate the layer or refetch the map id.
+                watchedProps: {aoi, color, fillColor, width},
                 busy
             })
             : null
@@ -66,5 +79,7 @@ AoiGeometryLayer.propTypes = {
     fillColor: PropTypes.string.isRequired,
     id: PropTypes.string.isRequired,
     layerIndex: PropTypes.number.isRequired,
-    map: PropTypes.any.isRequired
+    map: PropTypes.any.isRequired,
+    opacity: PropTypes.number,
+    width: PropTypes.number
 }

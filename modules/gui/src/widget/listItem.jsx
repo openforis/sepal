@@ -16,6 +16,7 @@ const CLICKABLE_PAN_THRESHOLD_PX = 10
 
 class _ListItem extends React.Component {
     draggable = React.createRef()
+    dragHandle = React.createRef()
     expand$ = new Subject()
 
     state = {
@@ -31,6 +32,7 @@ class _ListItem extends React.Component {
         this.onMouseOut = this.onMouseOut.bind(this)
         this.onClick = this.onClick.bind(this)
         this.onExpansionClick = this.onExpansionClick.bind(this)
+        this.onDragHandleClick = this.onDragHandleClick.bind(this)
         this.onDragStart = this.onDragStart.bind(this)
         this.onDragMove = this.onDragMove.bind(this)
         this.onDragEnd = this.onDragEnd.bind(this)
@@ -117,13 +119,17 @@ class _ListItem extends React.Component {
 
     onClick() {
         const {onClick} = this.props
-        if (!this.isDisabled()) {
+        if (!this.isDisabled() && !this.isDragging()) {
             if (onClick) {
                 onClick()
             } else if (this.isToggleable()) {
                 this.toggleExpansion()
             }
         }
+    }
+
+    onDragHandleClick(e) {
+        e.stopPropagation()
     }
 
     onExpansionClick(e) {
@@ -209,7 +215,7 @@ class _ListItem extends React.Component {
                 <div className={styles.horizontalWrapper}>
                     <div ref={this.draggable}
                         className={this.getMainClassName()}>
-                        {this.isDraggable() ? this.renderDragHandle() : null}
+                        {this.isDraggable() ? this.renderDragHandle(true) : null}
                         <div className={styles.content}>
                             {this.getMainContent()}
                         </div>
@@ -253,9 +259,14 @@ class _ListItem extends React.Component {
         }
     }
 
-    renderDragHandle() {
+    renderDragHandle(original = false) {
+        const handleOnly = this.props.dragTarget === 'handle'
         return (
-            <div className={styles.dragHandle}/>
+            <div
+                ref={original && handleOnly ? this.dragHandle : null}
+                className={styles.dragHandle}
+                onClick={handleOnly ? this.onDragHandleClick : null}
+            />
         )
     }
 
@@ -270,13 +281,18 @@ class _ListItem extends React.Component {
     }
 
     initializeDraggable() {
-        const {addSubscription} = this.props
+        const {addSubscription, dragAxis, dragTarget} = this.props
         const draggable = this.draggable.current
+        const gestureTarget = dragTarget === 'handle' ? this.dragHandle.current : draggable
 
-        const hammer = new Hammer(draggable)
+        const hammer = new Hammer(gestureTarget)
         
         hammer.get('pan').set({
-            direction: Hammer.DIRECTION_ALL,
+            direction: dragAxis === 'vertical'
+                ? Hammer.DIRECTION_VERTICAL
+                : dragAxis === 'horizontal'
+                    ? Hammer.DIRECTION_HORIZONTAL
+                    : Hammer.DIRECTION_ALL,
             threshold: this.isClickable() ? CLICKABLE_PAN_THRESHOLD_PX : 0
         })
 
@@ -313,7 +329,7 @@ class _ListItem extends React.Component {
         )
 
         const dragMove$ = dragStart$.pipe(
-            switchMap(({offset}) =>
+            switchMap(({offset, position: startPosition}) =>
                 animationFrames().pipe(
                     switchMap(() =>
                         panMove$.pipe(
@@ -325,8 +341,8 @@ class _ListItem extends React.Component {
                     map(coords => ({
                         coords,
                         position: {
-                            x: coords.x - offset.x - 1,
-                            y: coords.y - offset.y - 1
+                            x: dragAxis === 'vertical' ? startPosition.x : coords.x - offset.x - 1,
+                            y: dragAxis === 'horizontal' ? startPosition.y : coords.y - offset.y - 1
                         }
                     }))
                 )
@@ -412,7 +428,9 @@ ListItem.propTypes = {
     clickToToggle: PropTypes.any,
     disabled: PropTypes.any,
     drag$: PropTypes.object,
+    dragAxis: PropTypes.oneOf(['horizontal', 'vertical']),
     dragCloneClassName: PropTypes.string,
+    dragTarget: PropTypes.oneOf(['handle', 'item']),
     dragtooltip: PropTypes.any,
     dragValue: PropTypes.any,
     expanded: PropTypes.any,

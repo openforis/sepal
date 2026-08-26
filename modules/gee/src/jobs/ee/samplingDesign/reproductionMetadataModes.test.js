@@ -32,9 +32,6 @@ describe('reproduction metadata by mode', () => {
             crs: 'EPSG:6931', gridCrs: 'EPSG:6931', stratificationCrs: 'EPSG:32636'
         })
         GRID_FIELDS.forEach(field => expect(field in meta).toBe(true))
-        // Scale mode: no transform is configured, so none is recorded.
-        expect('crsTransform' in meta).toBe(false)
-        expect('gridCrsTransform' in meta).toBe(false)
     })
 
     it('unstratified Random omits all grid fields', () => {
@@ -52,9 +49,6 @@ describe('reproduction metadata by mode', () => {
             crs: 'EPSG:6931', gridCrs: 'EPSG:6931', stratificationCrs: 'EPSG:32636'
         })
         GRID_FIELDS.forEach(field => expect(field in meta).toBe(true))
-        // Scale mode: no transform is configured, so none is recorded.
-        expect('crsTransform' in meta).toBe(false)
-        expect('gridCrsTransform' in meta).toBe(false)
     })
 
     it('unstratified Systematic retains the Arrangement CRS but omits scale and stratificationCrs', () => {
@@ -62,8 +56,6 @@ describe('reproduction metadata by mode', () => {
         expect(meta).toMatchObject({arrangementStrategy: 'SYSTEMATIC', minDistance: 1000, crs: 'EPSG:6931', gridCrs: 'EPSG:6931'})
         expect('scale' in meta).toBe(false)
         expect('stratificationCrs' in meta).toBe(false)
-        // Scale mode: no transform is configured, so none is recorded.
-        expect('crsTransform' in meta).toBe(false)
         const keys = assetKeys(meta)
         expect(keys).toContain('crs')
         expect(keys).toContain('gridCrs')

@@ -3,7 +3,7 @@ import moment from 'moment'
 import Path from 'path'
 import {concat, forkJoin, from, map, mergeMap, of, scan, switchMap, tap} from 'rxjs'
 
-import {toFeatureCollection} from '#sepal/ee/aoi'
+import {toFeatureCollection$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import {hasImagery as hasOpticalImagery} from '#sepal/ee/optical/collection'
 import {hasImagery as hasPlanetImagery} from '#sepal/ee/planet/collection'
@@ -35,15 +35,22 @@ export const submit$ = (taskId, {description, image: {workspacePath, filenamePre
                 : `${config.homeDir}/downloads/${description}/`
             // the UI already validated the path here, no need to have mkdirsafe here
             return mkdir$(preferredDownloadDir, {recursive: true}).pipe(
-                switchMap(downloadDir => {
-                    return export$(taskId, {description: exportPrefix, downloadDir, ...retrieveOptions})
-                })
+                switchMap(downloadDir =>
+                    export$(taskId, {description: exportPrefix, downloadDir, ...retrieveOptions})
+                )
             )
         })
     )
 }
 
-const export$ = (taskId, {
+// The aoi is resolved once per export, before any of the export graph below is built: an ASSET or RECIPE
+// aoi is a descriptor whose geometry only Earth Engine can supply, and tile() needs the real collection.
+const export$ = (taskId, options) =>
+    toFeatureCollection$(options.recipe.model.aoi).pipe(
+        switchMap(featureCollection => exportTiles$(taskId, featureCollection, options))
+    )
+
+const exportTiles$ = (taskId, featureCollection, {
     downloadDir,
     description,
     recipe,
@@ -55,14 +62,16 @@ const export$ = (taskId, {
     crs,
     crsTransform
 }) => {
-    const aoi = recipe.model.aoi
     const sources = recipe.model.sources
     const dataSets = sources.dataSets
     const {startDate, endDate} = recipe.model.dates
     const reflectance = recipe.model.options.corrections.includes('SR') ? 'SR' : 'TOA'
-    const tiles = tile(toFeatureCollection(aoi), tileSize) // synchronous EE
+    const tiles = tile(featureCollection, tileSize) // synchronous EE, on a resolved collection
+    // The whole aoi, taken once from the collection the export already resolved. It filters the source
+    // collection; each tile's own geometry stays responsible for imagery checks and final clipping.
+    const aoiGeometry = featureCollection.geometry()
 
-    const exportTiles$ = tileIds => {
+    const exportEachTile$ = tileIds => {
         const totalTiles = tileIds.length
         const tile$ = from(
             tileIds.map((tileId, tileIndex) =>
@@ -120,7 +129,13 @@ const export$ = (taskId, {
     const isOptical = () => Object.keys(dataSets).find(type => ['LANDSAT', 'SENTINEL_2'].includes(type))
 
     const createTimeSeries$ = (feature, startDate, endDate) => {
-        const images$ = getCollection$({recipe, bands: [indicator], startDate, endDate})
+        const images$ = getCollection$({
+            recipe,
+            geometry: aoiGeometry,
+            bands: [indicator],
+            startDate,
+            endDate
+        })
         return images$.pipe(
             map(images => {
                 images = images.select(indicator)
@@ -194,7 +209,7 @@ const export$ = (taskId, {
     const tileIds$ = ee.getInfo$(tiles.aggregate_array('system:index'), `time-series image ids ${description}`)
 
     return tileIds$.pipe(
-        switchMap(tileIds => exportTiles$(tileIds)),
+        switchMap(tileIds => exportEachTile$(tileIds)),
         tap(progress => log.trace(() => `time-series: ${JSON.stringify(progress)}`)),
         scan(
             (acc, progress) => {

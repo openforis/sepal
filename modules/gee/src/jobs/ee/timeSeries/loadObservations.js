@@ -2,7 +2,7 @@ import _ from 'lodash'
 import {map, mergeMap, of, switchMap, toArray} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
-import {toGeometry} from '#sepal/ee/aoi'
+import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import {getCollection$} from '#sepal/ee/timeSeries/collection'
 import {fileName} from '#sepal/path'
@@ -14,11 +14,10 @@ const worker$ = ({
 }) => {
 
     const aoi = {type: 'POINT', ...latLng}
-    const geometry = toGeometry(aoi)
 
     const band = bands[0]
 
-    const timeSeriesForPixel$ = collection =>
+    const timeSeriesForPixel$ = (collection, geometry) =>
         ee.getInfo$(collection
             .select(band)
             .map(image =>
@@ -36,25 +35,28 @@ const worker$ = ({
             .get('array'), 'Extract chunk'
         )
     
-    return getCollection$({recipe, bands, geometry}).pipe(
-        switchMap(collection => ee.getInfo$(collection.aggregate_array('system:index')).pipe(
-            switchMap(indexes => of(..._.chunk(indexes, CHUNK_SIZE))),
-            mergeMap(indexChunk =>
-                timeSeriesForPixel$(
-                    collection.filter(ee.Filter.inList('system:index', indexChunk))
-                )
-            , 4),
-            toArray(),
-            map(observations => {
-                return ({
-                    features: observations.filter(chunk => chunk).flat(1).map(([value, date]) => ({
-                        properties: {
-                            date: {value: date},
-                            value
-                        }
-                    }))
+    return toGeometry$(aoi).pipe(
+        switchMap(geometry => getCollection$({recipe, bands, geometry}).pipe(
+            switchMap(collection => ee.getInfo$(collection.aggregate_array('system:index')).pipe(
+                switchMap(indexes => of(..._.chunk(indexes, CHUNK_SIZE))),
+                mergeMap(indexChunk =>
+                    timeSeriesForPixel$(
+                        collection.filter(ee.Filter.inList('system:index', indexChunk)),
+                        geometry
+                    )
+                , 4),
+                toArray(),
+                map(observations => {
+                    return ({
+                        features: observations.filter(chunk => chunk).flat(1).map(([value, date]) => ({
+                            properties: {
+                                date: {value: date},
+                                value
+                            }
+                        }))
+                    })
                 })
-            })
+            ))
         ))
     )
 }

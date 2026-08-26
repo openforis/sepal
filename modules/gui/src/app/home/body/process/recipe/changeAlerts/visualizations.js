@@ -42,7 +42,9 @@ const getMosaicVisualizations = (recipe, visualizationType, mosaicType) => {
 const toOpticalVisualizations = recipe => {
     const opticalRecipe = {
         model: {
-            sources: selectFrom(recipe, 'model.sources.dataSets'),
+            sources: {
+                dataSets: selectFrom(recipe, 'model.sources.dataSets')
+            },
             compositeOptions: {
                 corrections: selectFrom(recipe, 'model.options.corrections'),
                 compose: 'MEDIAN',
@@ -193,4 +195,3 @@ const getChangeVisualizations = recipe => {
     }
     ]
 }
-

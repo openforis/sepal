@@ -36,8 +36,15 @@ export const stratumView = (strata, row) => {
 
 // Authoritative on the proportions panel's skip flag - never infer the mode from anticipatedProportions
 // truthiness alone, which can be stale or empty across mode switches.
+// Whether the design uses anticipated proportions at all - the user's choice, not a lifecycle state. A
+// design can have them applicable while its rows are still being calculated; readiness is a separate
+// question, answered by the planner, and confusing the two turns a moment with no rows into a permanent
+// change of allocation strategy.
+export const isProportionsApplicable = model => !model?.proportions?.skip
+
+// Whether proportion values are there to read right now.
 export const hasProportions = model =>
-    !model?.proportions?.skip && !!model?.proportions?.anticipatedProportions?.length
+    isProportionsApplicable(model) && !!model?.proportions?.anticipatedProportions?.length
 
 // The join every consumer works from: stratification order, stratification presentation and weights, and the
 // current proportion. Allocation strategies read `weight` and `proportion` off these rows, so joining here is

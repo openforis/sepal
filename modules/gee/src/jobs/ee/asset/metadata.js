@@ -7,14 +7,18 @@ import {ClientException, NotFoundException} from '#sepal/exception'
 import {fileName} from '#sepal/path'
 
 const worker$ = ({
-    requestArgs: {asset, allowedTypes}
+    requestArgs: {asset, allowedTypes, includeNominalScale}
 }) => {
 
+    // The bands of an ImageCollection are read from its first REAL member: mosaicking would report the identity
+    // grid instead. Anything else reading per-band grids must use the same image, or it describes a different
+    // one.
+    const firstImageOf = assetId => ee.ImageCollection(assetId)
+        .merge(ee.ImageCollection([ee.Image([])]))
+        .first()
+
     const addFirstImageMetadata$ = asset => {
-        const collection = ee.ImageCollection(asset.id)
-        const firstImage = collection
-            .merge(ee.ImageCollection([ee.Image([])]))
-            .first()
+        const firstImage = firstImageOf(asset.id)
         const bands$ = ee.getInfo$(firstImage, 'Get first image in collection').pipe(
             map(({bands}) => bands)
         )
@@ -66,6 +70,33 @@ const worker$ = ({
             ? {...asset, bandNames: asset.bands.map(({id}) => id)}
             : asset
 
+    // Opt-in only, because it costs an evaluation that no existing caller needs. `nominalScale` is the one grid
+    // fact the band records do not already carry in metres: `crs_transform` is expressed in the CRS's own units,
+    // which for a geographic source are degrees.
+    //
+    // ONE evaluation for the whole asset - a dictionary of every selected band's scale - never one per band.
+    const addNominalScale$ = asset => {
+        const bands = asset.bands || []
+        if (!includeNominalScale || !bands.length) {
+            return of(asset)
+        }
+        const image = asset.type === 'ImageCollection' ? firstImageOf(asset.id) : ee.Image(asset.id)
+        const bandNames = bands.map(({id}) => id)
+        const nominalScales = ee.Dictionary.fromLists(
+            bandNames,
+            bandNames.map(bandName => image.select([bandName]).projection().nominalScale())
+        )
+        return ee.getInfo$(nominalScales, 'Get band nominal scales').pipe(
+            map(scales => ({
+                ...asset,
+                bands: bands.map(band => ({...band, nominalScale: scales[band.id]}))
+            })),
+            // Enrichment is an extra, so failing it must leave the caller with ordinary, usable metadata rather
+            // than reporting an asset that plainly exists as missing.
+            catchError(() => of(asset))
+        )
+    }
+
     return ee.getAsset$(asset, 0).pipe(
         switchMap(asset => {
             const isAllowedType = !allowedTypes || (_.isArray(allowedTypes) && allowedTypes.includes(asset.type))
@@ -84,6 +115,7 @@ const worker$ = ({
                 }))
             }
         }),
+        switchMap(addNominalScale$),
         map(addBandNames),
         catchError(handleError$)
     )

@@ -18,8 +18,9 @@ import {SepalMap} from './sepalMap'
 const log = getLogger('maps')
 
 // Note: Google Maps API v.3.5+ deprecates Marker for AdvancedMarkerElement, which requires creating a MapId
-const GOOGLE_MAPS_VERSION = '3.62'
-const GOOGLE_MAPS_LIBRARIES = ['core', 'drawing', 'geocoding', 'marker', 'places']
+// Note: a retired numbered version silently falls back to the weekly channel, so a channel is pinned
+const GOOGLE_MAPS_VERSION = 'quarterly'
+const GOOGLE_MAPS_LIBRARIES = ['core', 'geocoding', 'marker', 'places']
 
 const DEFAULT_ZOOM = 3
 export const MIN_ZOOM = 3
@@ -80,8 +81,8 @@ class _Maps extends React.Component {
         )
 
         return forkJoin(libraries).pipe(
-            map(({core, maps, marker, drawing, places, geocoding}) =>
-                ({google: {maps: {...maps, core, marker, drawing, places, geocoding}, googleMapsApiKey}})
+            map(({core, maps, marker, places, geocoding}) =>
+                ({google: {maps: {...maps, core, marker, places, geocoding}, googleMapsApiKey}})
             )
         )
     }

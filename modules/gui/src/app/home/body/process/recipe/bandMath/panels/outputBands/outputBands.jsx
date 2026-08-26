@@ -21,6 +21,8 @@ import {OutputBand} from './outputBand'
 import styles from './outputBands.module.css'
 import {addOutputBand, addOutputImage, createUniqueBandName} from './outputImages'
 
+const ADD_ALL_BANDS = Symbol('addAllBands')
+
 const fields = {
     outputImages: new Form.Field()
         .notEmpty()
@@ -172,7 +174,12 @@ class _OutputBands extends React.Component {
             .map(band => ({value: band.name, label: band.name, band, image: outputImage}))
         const options = bandOptions.length > 1
             ? [
-                {value: 'all', label: msg('process.bandMath.panel.outputBands.addBands.all.label'), bandOptions},
+                {
+                    key: 'add-all-bands',
+                    value: ADD_ALL_BANDS,
+                    label: msg('process.bandMath.panel.outputBands.addBands.all.label'),
+                    bandOptions
+                },
                 ...bandOptions
             ]
             : bandOptions
@@ -225,7 +232,7 @@ class _OutputBands extends React.Component {
 
     addBand({value, image, band, bandOptions}) {
         const {inputs: {outputImages}} = this.props
-        const updatedOutputImages = value === 'all'
+        const updatedOutputImages = value === ADD_ALL_BANDS
             ? bandOptions.reduce(
                 (outputImages, {image, band}) => addOutputBand(image, band, outputImages),
                 outputImages.value

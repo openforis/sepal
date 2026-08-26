@@ -15,7 +15,6 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    cursor: ns-resize;
     user-select: none;
     /* Own the vertical drag gesture: no scrolling/zoom hijack, and keep it off the row's drag recognizer. */
     touch-action: none;
@@ -27,11 +26,22 @@
     background-color: hsla(0, 0%, 100%, calc(var(--scrub-level, 1) * .18));
 }
 
-.control:hover {
+/* The global button:not(:disabled) pointer rule outranks a bare .control, so match its specificity. */
+.control:not(:disabled) {
+    cursor: ns-resize;
+}
+
+.control:disabled {
+    cursor: default;
+    opacity: .35;
+}
+
+.control:not(:disabled):hover {
     background-color: hsla(0, 0%, 100%, calc(.08 + var(--scrub-level, 1) * .2));
 }
 
+/* app.css resets outline globally with !important, so a focus ring that renders has to outrank it. */
 .control:focus-visible {
-    outline: 1px solid hsla(0, 0%, 100%, .6);
+    outline: 1px solid hsla(0, 0%, 100%, .6) !important;
     outline-offset: 1px;
 }

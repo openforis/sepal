@@ -50,7 +50,7 @@ describe('ScrubControl', () => {
             }
         }
         mounted.push(unmount)
-        return {button, onChange, onPreview, unmount}
+        return {button, container, onChange, onPreview, unmount}
     }
 
     beforeEach(() => {
@@ -133,6 +133,18 @@ describe('ScrubControl', () => {
         expect(onPreview).not.toHaveBeenCalled()
     })
 
+    it('does not activate a clickable parent', () => {
+        const {button, container} = mount()
+        const onParentClick = vi.fn()
+        const parent = container.parentElement
+        parent.addEventListener('click', onParentClick)
+
+        act(() => button.dispatchEvent(new MouseEvent('click', {bubbles: true})))
+        parent.removeEventListener('click', onParentClick)
+
+        expect(onParentClick).not.toHaveBeenCalled()
+    })
+
     it('toggles min -> max on Enter and commits once', () => {
         const {button, onChange} = mount({value: 0})
         keydown(button, 'Enter')
@@ -179,5 +191,30 @@ describe('ScrubControl', () => {
     it('supports a custom min/max range for the displayed value', () => {
         const {button} = mount({value: 5, min: 0, max: 10, formatValue: value => `${value}`})
         expect(button.textContent).toBe('5')
+    })
+
+    // Labels shows a scrubber for row symmetry only: its layer has no opacity control, so the element has
+    // to be genuinely inert rather than merely ignored.
+    describe('disabled', () => {
+        it('does not preview or commit through a pointer drag', async () => {
+            const {button, onChange, onPreview} = mount({value: 0.5, disabled: true})
+
+            down(button, 100)
+            move(button, 80)
+            await frame()
+            up(button)
+
+            expect(onPreview).not.toHaveBeenCalled()
+            expect(onChange).not.toHaveBeenCalled()
+        })
+
+        it('does not commit through the keyboard', () => {
+            const {button, onChange} = mount({value: 0, disabled: true})
+
+            keydown(button, 'Enter')
+            keydown(button, ' ')
+
+            expect(onChange).not.toHaveBeenCalled()
+        })
     })
 })

@@ -20,6 +20,10 @@
     cursor: grab;
 }
 
+.dragHandle:active {
+    cursor: grabbing;
+}
+
 .dragHandle::before {
     content: '.. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..';
     position: absolute;

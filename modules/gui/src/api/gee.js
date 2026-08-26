@@ -40,9 +40,9 @@ export default {
             }
         }),
 
-    assetMetadata$: ({asset, allowedTypes}) =>
+    assetMetadata$: ({asset, allowedTypes, includeNominalScale}) =>
         postJson$('/api/gee/assetMetadata', {
-            body: {asset, allowedTypes},
+            body: {asset, allowedTypes, includeNominalScale},
             retry: {
                 maxRetries: 0
             }
@@ -80,9 +80,9 @@ export default {
             }
         }),
 
-    recipeGeometry$: ({recipe, color, fillColor}) =>
+    recipeGeometry$: ({recipe, color, fillColor, width}) =>
         postJson$('/api/gee/recipe/geometry', {
-            body: {recipe, color, fillColor},
+            body: {recipe, color, fillColor, width},
             retry: {
                 maxRetries: 0
             }
@@ -104,9 +104,9 @@ export default {
             }
         }),
 
-    aoiGeometry$: ({aoi, color, fillColor}) =>
+    aoiGeometry$: ({aoi, color, fillColor, width}) =>
         postJson$('/api/gee/aoi/geometry', {
-            body: {aoi, color, fillColor},
+            body: {aoi, color, fillColor, width},
             retry: {
                 maxRetries: 0
             }
@@ -179,6 +179,14 @@ export default {
             }
         }),
 
+    loadLandTrendrSegments$: ({recipe, latLng}) =>
+        postJson$('/api/gee/landTrendr/loadSegments', {
+            body: {recipe, latLng},
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
     nextReferenceDataPoints$: recipe =>
         postJson$('/api/gee/nextReferenceDataPoints', {
             body: recipe,
@@ -225,9 +233,9 @@ export default {
             }
         }),
 
-    areaPerStratum$: ({aoi, stratification, band, scale, crsTransform, crs, batch}) =>
+    areaPerStratum$: ({aoi, stratification, band, scale, crs, batch}) =>
         postJson$('/api/gee/samplingDesign/areaPerStratum', {
-            body: {aoi, stratification, band, scale, crsTransform, crs, batch},
+            body: {aoi, stratification, band, scale, crs, batch},
             // No HTTP retry: Online should surface EE failures promptly, and Batch task submission should
             // not be repeated by the client.
             retry: {

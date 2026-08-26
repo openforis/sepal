@@ -8,6 +8,7 @@ import {ChangeAlertsImageLayer} from './recipe/changeAlerts/changeAlertsImageLay
 import {ClassChangeImageLayer} from './recipe/classChange/classChangeImageLayer'
 import {ClassificationImageLayer} from './recipe/classification/classificationImageLayer'
 import {IndexChangeImageLayer} from './recipe/indexChange/indexChangeImageLayer'
+import {LandTrendrImageLayer} from './recipe/landTrendr/landTrendrImageLayer'
 import {MaskingImageLayer} from './recipe/masking/maskingImageLayer'
 import {OpticalMosaicImageLayer} from './recipe/opticalMosaic/opticalMosaicImageLayer'
 import {PhenologyImageLayer} from './recipe/phenology/phenologyImageLayer'
@@ -39,6 +40,7 @@ export const registerRecipeImageLayers = () => {
     addRecipeImageLayer('CCDC_SLICE', CCDCSliceImageLayer)
     addRecipeImageLayer('TIME_SERIES', TimeSeriesImageLayer)
     addRecipeImageLayer('PHENOLOGY', PhenologyImageLayer)
+    addRecipeImageLayer('LANDTRENDR', LandTrendrImageLayer)
     addRecipeImageLayer('MASKING', MaskingImageLayer)
     addRecipeImageLayer('BAYTS_HISTORICAL', BaytsHistoricalImageLayer)
     addRecipeImageLayer('BAYTS_ALERTS', BaytsAlertsImageLayer)

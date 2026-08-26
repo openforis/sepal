@@ -1,31 +1,37 @@
 import PropTypes from 'prop-types'
+import {useState} from 'react'
 
+import {fallbackLogoUrl, logoUrl} from '~/appsCatalog'
 import {CrudItem} from '~/widget/crudItem'
 
 import styles from './appItem.module.css'
 
-const imageUrl = logoRef => logoRef
-    ? `/api/apps/images/${logoRef}`
-    : null
+export const AppItem = ({app, className, highlight, highlightClassName}) => {
+    const [src, setSrc] = useState(logoUrl(app))
 
-const renderLogo = logoRef =>
-    logoRef
+    const onError = () =>
+        setSrc(current => current === logoUrl(app) ? fallbackLogoUrl(app) : null)
+
+    const logo = src
         ? <img
             className={styles.logo}
-            src={imageUrl(logoRef)}
+            src={src}
             alt=''
+            onError={onError}
         />
         : null
 
-export const AppItem = ({app: {label, tagline, logoRef}, className, highlight, highlightClassName}) =>
-    <CrudItem
-        className={className}
-        title={label}
-        description={tagline || '...'}
-        image={renderLogo(logoRef)}
-        highlight={highlight}
-        highlightClassName={highlightClassName}
-    />
+    return (
+        <CrudItem
+            className={className}
+            title={app.label}
+            description={app.tagline || '...'}
+            image={logo}
+            highlight={highlight}
+            highlightClassName={highlightClassName}
+        />
+    )
+}
 
 AppItem.propTypes = {
     app: PropTypes.object,

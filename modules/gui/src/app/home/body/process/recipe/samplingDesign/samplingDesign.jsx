@@ -12,7 +12,8 @@ import {initializeLayers} from '../recipeImageLayerSource'
 import {getAvailableBands} from './bands'
 import {SamplingDesignToolbar} from './panels/samplingDesignToolbar'
 import {calculationCache} from './sampling/calculationCache'
-import {defaultModel, normalizeSavedLayers, RecipeActions} from './samplingDesignRecipe'
+import {getDefaultModel} from './sampling/defaultModel'
+import {normalizeSavedLayers, RecipeActions} from './samplingDesignRecipe'
 import {Sync} from './sync'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -64,7 +65,7 @@ class _SamplingDesign extends React.Component {
 
 const SamplingDesign = compose(
     _SamplingDesign,
-    recipe({defaultModel, mapRecipeToProps}),
+    recipe({getDefaultModel, mapRecipeToProps}),
     recipeAccess()
 )
 

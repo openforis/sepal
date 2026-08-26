@@ -25,7 +25,9 @@ import {getImageLayerSource} from '../body/process/imageLayerSourceRegistry'
 import {recipePath} from '../body/process/recipe'
 import {withRecipe} from '../body/process/recipeContext'
 import {withLayers} from '../body/process/withLayers'
+import {AoiLayerOptionsPanel} from './aoiLayerOptionsPanel'
 import {FeatureLayerOptionsPanel} from './featureLayerOptionsPanel'
+import {LabelsLayerOptionsPanel} from './labelsLayerOptionsPanel'
 import {LegendImport} from './legendImport'
 import styles from './map.module.css'
 import {MapApiKeyContext} from './mapApiKeyContext'
@@ -50,7 +52,7 @@ const mapRecipeToProps = recipe => ({
 const OVERLAY_ID = 'overlay-layer-id'
 const OVERLAY_AREA = 'overlay-area'
 
-class _Map extends React.Component {
+export class _Map extends React.Component {
     viewUpdates$ = new BehaviorSubject({})
     linked$ = new BehaviorSubject(false)
     renderingEnabled$ = new BehaviorSubject(false)
@@ -61,6 +63,8 @@ class _Map extends React.Component {
     draggingSplit$ = new BehaviorSubject(false)
     cursor$ = new Subject()
     drawingInstances = []
+    activePolygonDrawing = null
+    readyMaps = new WeakSet()
 
     filteredViewUpdates$ = this.viewUpdates$.pipe(
         distinctUntilChanged(_.isEqual)
@@ -194,6 +198,12 @@ class _Map extends React.Component {
         )
     }
 
+    withReadyAreaMaps(func) {
+        return this.withAreaMaps(args =>
+            this.readyMaps.has(args.map) ? func(args) : null
+        )
+    }
+
     withFirstAreaMap(func) {
         const {maps} = this.state
         const id = _.head(_.keys(maps))
@@ -210,6 +220,12 @@ class _Map extends React.Component {
             return func({id: OVERLAY_ID, map, listeners, subscriptions})
         }
         return null
+    }
+
+    withReadyOverlayMap(func) {
+        return this.withOverlayMap(args =>
+            this.readyMaps.has(args.map) ? func(args) : null
+        )
     }
 
     createMap(id, element, isOverlay, callback) {
@@ -232,10 +248,16 @@ class _Map extends React.Component {
 
         const {googleMap} = map.getGoogle()
 
+        let ready = false
         const listeners = [
-            googleMap.addListener('idle',
-                () => this.viewChanged$.next()
-            ),
+            googleMap.addListener('idle', () => {
+                this.viewChanged$.next()
+                if (!ready) {
+                    ready = true
+                    this.readyMaps.add(map)
+                    this.enableDrawingModeOnMap(map, isOverlay)
+                }
+            }),
             googleMap.addListener('mouseout',
                 () => this.synchronizeCursor(id, null)
             ),
@@ -270,11 +292,20 @@ class _Map extends React.Component {
 
     removeMap(id) {
         const {maps} = this.state
+        let restorePath
+        let restorePolygonDrawing = false
         if (maps[id]) {
             const {map, listeners, subscriptions} = maps[id]
             const {google} = map.getGoogle()
             const area = this.getArea(id)
             log.debug(() => `Removing ${mapTag(this.state.mapId, id)} from ${areaTag(area)}`)
+            if (this.activePolygonDrawing?.map === map) {
+                restorePath = this.activePolygonDrawing.getPath?.()
+                restorePolygonDrawing = true
+                this.activePolygonDrawing = null
+            }
+            map.disableDrawingMode()
+            this.readyMaps.delete(map)
             listeners.forEach(listener =>
                 google.maps.core.event.removeListener(listener)
             )
@@ -283,7 +314,12 @@ class _Map extends React.Component {
             )
         }
         this.setState(
-            ({maps}) => ({maps: _.omit(maps, id)})
+            ({maps}) => ({maps: _.omit(maps, id)}),
+            () => {
+                if (restorePolygonDrawing) {
+                    this.withReadyAreaMaps(({map}) => map.setPolygonDrawing(restorePath))
+                }
+            }
         )
     }
 
@@ -354,6 +390,21 @@ class _Map extends React.Component {
 
     // Drawing mode
 
+    enableDrawingModeOnMap(map, isOverlay) {
+        const activeInstance = _.last(this.drawingInstances)
+        const belongsToDrawingLayer = isOverlay ? this.isStackMode() : !this.isStackMode()
+        if (activeInstance && belongsToDrawingLayer) {
+            activeInstance.callback({map})
+            const activePolygonDrawing = this.activePolygonDrawing
+            if (activeInstance.drawingMode === 'polygon'
+                && !this.isStackMode()
+                && activePolygonDrawing
+                && activePolygonDrawing.map !== map) {
+                map.setPolygonPreview(activePolygonDrawing.path)
+            }
+        }
+    }
+
     enterDrawingMode(drawingMode, callback) {
         const newInstance = {drawingMode, callback}
         const currentInstance = _.last(this.drawingInstances)
@@ -385,15 +436,16 @@ class _Map extends React.Component {
     reassignDrawingMode() {
         const activeInstance = _.last(this.drawingInstances)
         if (activeInstance) {
+            this.activePolygonDrawing = null
             const {drawingMode, callback} = activeInstance
             this.withAllMaps(({map}) => map.disableDrawingMode())
             if (this.isStackMode()) {
                 this.setState({drawingMode, overlayActive: true}, () => {
-                    this.withOverlayMap(callback)
+                    this.withReadyOverlayMap(callback)
                 })
             } else {
                 this.setState({drawingMode, overlayActive: false}, () => {
-                    this.withAreaMaps(callback)
+                    this.withReadyAreaMaps(callback)
                 })
             }
         }
@@ -403,17 +455,18 @@ class _Map extends React.Component {
         log.debug('enableDrawingMode:', drawingMode)
         if (this.isStackMode()) {
             this.setState({drawingMode, overlayActive: true}, () => {
-                this.withOverlayMap(callback)
+                this.withReadyOverlayMap(callback)
             })
         } else {
             this.setState({drawingMode, overlayActive: false}, () => {
-                this.withAreaMaps(callback)
+                this.withReadyAreaMaps(callback)
             })
         }
     }
 
     disableDrawingMode() {
         log.debug('disableDrawingMode')
+        this.activePolygonDrawing = null
         if (this.isStackMode()) {
             this.setState({drawingMode: null, overlayActive: false}, () => {
                 this.withOverlayMap(({map}) => map.disableDrawingMode())
@@ -447,11 +500,35 @@ class _Map extends React.Component {
 
     // Polygon
 
-    enablePolygonDrawing(callback) {
+    enablePolygonDrawing(callback, getPath) {
         log.debug('enablePolygonDrawing')
+        this.activePolygonDrawing = null
         this.enterDrawingMode('polygon', ({map}) =>
-            map.enablePolygonDrawing((...args) => {
-                callback && callback(...args)
+            map.enablePolygonDrawing(drawnPolygon => {
+                this.activePolygonDrawing = null
+                if (!this.isStackMode()) {
+                    this.withReadyAreaMaps(({map: otherMap}) => {
+                        if (otherMap !== map) {
+                            otherMap.setPolygonDrawing(drawnPolygon)
+                        }
+                    })
+                }
+                callback && callback(drawnPolygon)
+            }, getPath, drawnPolygon => {
+                if (!this.isStackMode()) {
+                    this.activePolygonDrawing = drawnPolygon?.length
+                        ? {map, path: drawnPolygon, getPath}
+                        : null
+                    this.withReadyAreaMaps(({map: otherMap}) => {
+                        if (drawnPolygon?.length) {
+                            if (otherMap !== map) {
+                                otherMap.setPolygonPreview(drawnPolygon)
+                            }
+                        } else {
+                            otherMap.setPolygonDrawing(getPath?.())
+                        }
+                    })
+                }
             })
         )
     }
@@ -740,6 +817,8 @@ class _Map extends React.Component {
                 />
                 <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
                 <FeatureLayerOptionsPanel area={area}/>
+                <AoiLayerOptionsPanel area={area}/>
+                <LabelsLayerOptionsPanel area={area}/>
                 {layerComponent}
             </MapAreaContext>
         )
@@ -789,13 +868,12 @@ class _Map extends React.Component {
         const previousAreaIds = Object.values(prevAreas).map(({id}) => id)
         const currentAreaIds = Object.values(areas).map(({id}) => id)
         const removedAreaIds = _.difference(previousAreaIds, currentAreaIds)
-        const addedAreaIds = _.difference(currentAreaIds, previousAreaIds)
         const modeChanged = prevMode !== mode
 
         if (removedAreaIds.length) {
             removedAreaIds.forEach(this.removeMap)
         }
-        if (addedAreaIds.length || modeChanged) {
+        if (modeChanged) {
             this.reassignDrawingMode()
         }
 

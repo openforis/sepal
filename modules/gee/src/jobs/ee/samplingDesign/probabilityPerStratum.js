@@ -26,7 +26,10 @@ const worker$ = ({
         switchMap(({eeGeometry, eeStratification, eeProbability}) => {
             const eeDictionary = weightedAreaSums({
                 eeGeometry, eeStratification, eeProbability,
-                stratificationBand, probabilityBand, mode, targetClass, scale, crs
+                stratificationBand, probabilityBand, mode, targetClass, scale, crs,
+                // Unstratified runs over a synthetic constant image, whose degree-scale default projection is
+                // not a grid worth preserving.
+                stratified: !!stratification
             })
             return batch
                 ? exportToCSV$({

@@ -6,14 +6,14 @@ import ImageFactory from '#sepal/ee/imageFactory'
 import {fileName} from '#sepal/path'
 
 const worker$ = ({
-    requestArgs: {recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}
+    requestArgs: {recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08', width = 2}
 }) => {
 
     const {getGeometry$} = ImageFactory(recipe)
     return getGeometry$().pipe(
         switchMap(geometry => {
             const table = ee.FeatureCollection([ee.Feature(geometry)])
-            return ee.getMap$(table.style({color, fillColor}), null, 'create geometry map')
+            return ee.getMap$(table.style({color, fillColor, width}), null, 'create geometry map')
         })
     )
 }

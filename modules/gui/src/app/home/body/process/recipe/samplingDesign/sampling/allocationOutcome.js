@@ -1,8 +1,9 @@
 import {effectiveMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
 
 import {allocate} from './allocate'
+import {isAllocationStrategy, readsProportions} from './allocationStrategy'
 import {calculateBounds} from './confidenceInterval'
-import {allocationStrata, byStratumKey, hasProportions, stratumKey, toCountRow, toCountRows} from './designModel'
+import {allocationStrata, byStratumKey, hasProportions, isProportionsApplicable, stratumKey, toCountRow, toCountRows} from './designModel'
 import {boundsToMarginOfError, calculateMarginOfError} from './marginOfError'
 import {calculateSampleSize} from './sampleSize'
 
@@ -11,9 +12,14 @@ export const isPositiveIntegerSampleSize = value =>
 
 export const isManualAllocation = model => !!model?.sampleAllocation?.manual?.length
 
+// The strata as count rows carrying no counts. Enough for the panel to show which strata exist, while a row
+// with no count still reads as unanswered - it is not an allocation.
+export const blankAllocation = model =>
+    allocationStrata(model).map(({stratum}) => ({stratum}))
+
 // The whole automatic outcome - counts, the total the counts add up to, and the derived uncertainty - as one
-// pure function over the persisted model. The Allocation panel and the semantic planner both go through it,
-// so an allocation recomputed with the panel closed is the same allocation the panel would have produced.
+// pure function over a design. The Allocation panel is its owner and its only caller: an allocation exists
+// because that panel calculated one and the user applied it.
 export const allocationOutcome = model => {
     const {
         estimateSampleSize, sampleSize, marginOfError, confidenceLevel,
@@ -45,7 +51,7 @@ export const allocationOutcome = model => {
         return {allocation: countsFor(solved), sampleSize: solved}
     }
     if (!isPositiveIntegerSampleSize(sampleSize)) {
-        return {allocation: strata.map(({stratum}) => ({stratum})), marginOfError: null}
+        return {allocation: blankAllocation(model), marginOfError: null}
     }
     // Too small to give every stratum its minimum: surface non-finite counts rather than silently allocating
     // below the floor, so the panel's own validation rejects it.
@@ -65,6 +71,36 @@ export const allocationOutcome = model => {
         return {allocation: countsFor(sampleSize), marginOfError: calculated * 100}
     }
     return {allocation: countsFor(sampleSize), marginOfError: null}
+}
+
+// The strategy a design should actually run with. A saved choice is the user's - opening a panel or
+// replanning is not consent to change it - so it is kept whenever the allocator can run it. Anything else,
+// including a name nobody recognizes and a field that was never saved, falls back to the default a new
+// recipe starts with, which the caller supplies.
+//
+// `proportionsApplicable`, deliberately, rather than whether proportion rows exist yet: a variance strategy
+// belongs to a design that uses proportions, and rows that are pending, stale or momentarily empty are a
+// lifecycle state, not a reason to change what the user chose.
+export const effectiveAllocationStrategy = ({allocationStrategy, proportionsApplicable, defaultStrategy}) =>
+    isAllocationStrategy(allocationStrategy)
+        && (proportionsApplicable || !readsProportions(allocationStrategy))
+        ? allocationStrategy
+        : defaultStrategy
+
+// A saved allocation as the calculation has to see it: every explicitly saved value wins, and anything a
+// recipe saved before that field existed falls back to what a new recipe starts with. Resolved here, where
+// an allocation is being planned or edited, rather than by rewriting old recipes on load - opening a recipe
+// must not change it.
+export const effectiveSampleAllocation = ({model, defaults}) => {
+    const merged = {...defaults, ...model?.sampleAllocation}
+    return {
+        ...merged,
+        allocationStrategy: effectiveAllocationStrategy({
+            allocationStrategy: merged.allocationStrategy,
+            proportionsApplicable: isProportionsApplicable(model),
+            defaultStrategy: defaults.allocationStrategy
+        })
+    }
 }
 
 // Keyed, order-independent reconciliation: an answered count follows its stratum wherever it moves, a

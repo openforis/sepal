@@ -481,8 +481,8 @@ class _AssetCombo extends React.Component {
     }
 
     getMetadata$(asset) {
-        const {allowedTypes} = this.props
-        return api.gee.assetMetadata$({asset, allowedTypes})
+        const {allowedTypes, includeNominalScale} = this.props
+        return api.gee.assetMetadata$({asset, allowedTypes, includeNominalScale})
     }
 
     loadMetadata(asset) {
@@ -526,6 +526,9 @@ AssetCombo.propTypes = {
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
+    // Opt-in: asks the metadata request for each band's nominal scale in metres, which costs one extra Earth
+    // Engine evaluation.
+    includeNominalScale: PropTypes.bool,
     inputClassName: PropTypes.string,
     keyboard: PropTypes.any,
     label: PropTypes.string,

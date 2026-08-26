@@ -10,7 +10,7 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
 import {simplifyString, splitString} from '~/string'
-import {getLanguage, msg} from '~/translate'
+import {msg} from '~/translate'
 import {isServiceAccount} from '~/user'
 import {currentUser} from '~/user'
 import {Button} from '~/widget/button'
@@ -198,9 +198,7 @@ class _AppList extends React.Component {
     renderTagFilter(tags) {
         const {tagFilter} = this.props
         const toOption = ({label, value, icon, tooltip}) => ({
-            label: label[getLanguage()]
-                || label['en']
-                || Object.values(label)[0],
+            label,
             value,
             ...(icon ? {icon} : {}),
             ...(tooltip ? {tooltip} : {})

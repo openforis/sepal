@@ -1,6 +1,6 @@
 import React from 'react'
 
-import {getIndexesForBands} from '~/app/home/body/process/recipe/opticalMosaic/indexes'
+import {getAvailableIndexes} from '~/app/home/body/process/opticalIndexes'
 import {getDataSetBands} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
@@ -129,10 +129,10 @@ class _Options extends React.Component {
     availableIndexes() {
         const {dataSets, classificationBands} = this.props
         const classificationIndexes = classificationBands
-            ? getIndexesForBands(classificationBands)
+            ? getAvailableIndexes(classificationBands)
             : GATE_INDEXES
         const dataSetIndexes = dataSets && Object.keys(dataSets).length
-            ? getIndexesForBands(getDataSetBands({model: {sources: {dataSets}}}))
+            ? getAvailableIndexes(getDataSetBands({model: {sources: {dataSets}}}))
             : GATE_INDEXES
         return GATE_INDEXES.filter(index =>
             classificationIndexes.includes(index) && dataSetIndexes.includes(index)

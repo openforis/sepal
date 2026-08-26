@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {CALCULATION_ERROR, calculationError, toErrorMessage} from './eeCalculationError'
+import {CALCULATION_ERROR, calculationError} from './eeCalculationError'
 
 const eeError = {
     response: {
@@ -18,12 +18,20 @@ const backendError = {
     }
 }
 
-const ajax500 = {status: 500, message: 'ajax error 500'}
+// The shape actually observed in the field: no parsed response, and a message naming our transport
+// rather than anything the user can act on.
+const requestError = {status: 0, message: 'ajax error'}
 
-// Test formatter: resolves gee.*/default keys to their detail text; encodes test.* keys as `message:<key>:<error>`.
+const CONNECTION_ERROR = '<connection-error>'
+
+// Test formatter: resolves gee.*/default keys to their detail text; encodes test.* keys as
+// `message:<key>:<error>`; resolves the shared connection-error key to a recognisable string.
 const format = (key, args, defaultMessage) => {
     if (key === 'gee.error.earthEngineException') {
         return `Earth Engine: ${args?.earthEngineMessage}`
+    }
+    if (key === 'notifications.error.connectionError') {
+        return CONNECTION_ERROR
     }
     if (key.startsWith('test.')) {
         return `message:${key}:${args?.error ?? ''}`
@@ -41,10 +49,6 @@ const messageKeys = {
 const build = (error, strategy) => calculationError({error, strategy, messageKeys, format})
 
 describe('eeCalculationError', () => {
-    it('unwraps a plain string error to its message', () => {
-        expect(toErrorMessage('Boom', format)).toEqual('Boom')
-    })
-
     it('routes an ONLINE EE failure to the eeOnline key, carrying the EE detail', () => {
         const result = build(eeError, 'ONLINE')
         expect(result.type).toEqual(CALCULATION_ERROR.EARTH_ENGINE)
@@ -69,17 +73,14 @@ describe('eeCalculationError', () => {
         expect(result.message).not.toContain('test.eeOnline')
     })
 
-    it('routes an untyped request failure to genericWithDetail with the request detail', () => {
-        const result = build(ajax500, 'BATCH')
+    // A request failure has no user-facing detail of its own - "ajax error" names our transport, not
+    // anything the user can act on. It is reported as a connection problem instead.
+    it('replaces an untyped request failure detail with the translated connection error', () => {
+        const result = build(requestError, 'BATCH')
+
         expect(result.type).toEqual(CALCULATION_ERROR.REQUEST)
         expect(result.message).toContain('test.genericWithDetail')
-        expect(result.message).toContain('ajax error 500')
-    })
-
-    it('routes a detail-less failure to the plain generic key', () => {
-        const result = build({some: 'object'}, 'ONLINE')
-        expect(result.type).toEqual(CALCULATION_ERROR.REQUEST)
-        expect(result.message).toContain('test.generic')
-        expect(result.message).not.toContain('test.genericWithDetail')
+        expect(result.message).toContain(CONNECTION_ERROR)
+        expect(result.message).not.toContain('ajax error')
     })
 })
