@@ -87,7 +87,6 @@ const extendSession = (sessionId, {release, dismiss}) =>
         next: () => {
             release()
             dismiss()
-            Notifications.success({message: msg('user.userSession.expiry.extended')})
         },
         // A one-shot with no successor to re-assert it: a button that appears to work while doing
         // nothing is the worst available outcome, so a failure is shown rather than swallowed.
