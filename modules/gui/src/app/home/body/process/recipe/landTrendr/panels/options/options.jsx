@@ -67,7 +67,6 @@ class _Options extends React.Component {
                 <Panel.Content>
                     <Layout>
                         {this.renderChangeDirection()}
-                        {this.renderMinMagnitude()}
                         {advanced ? this.renderAdvanced() : this.renderSimple()}
                     </Layout>
                 </Panel.Content>
@@ -81,21 +80,29 @@ class _Options extends React.Component {
     }
 
     renderSimple() {
-        return this.renderMaxSegments()
+        return (
+            <div className={styles.twoColumns}>
+                {this.renderMinMagnitude()}
+                {this.renderMaxSegments()}
+            </div>
+        )
     }
 
     renderAdvanced() {
         return (
-            <div className={styles.twoColumns}>
-                {this.renderMaxSegments()}
-                {this.renderVertexCountOvershoot()}
-                {this.renderSpikeThreshold()}
-                {this.renderRecoveryThreshold()}
-                {this.renderPvalThreshold()}
-                {this.renderBestModelProportion()}
-                {this.renderMinObservationsNeeded()}
+            <>
+                <div className={styles.twoColumns}>
+                    {this.renderMinMagnitude()}
+                    {this.renderMaxSegments()}
+                    {this.renderVertexCountOvershoot()}
+                    {this.renderSpikeThreshold()}
+                    {this.renderRecoveryThreshold()}
+                    {this.renderPvalThreshold()}
+                    {this.renderBestModelProportion()}
+                    {this.renderMinObservationsNeeded()}
+                </div>
                 {this.renderPreventOneYearRecovery()}
-            </div>
+            </>
         )
     }
 

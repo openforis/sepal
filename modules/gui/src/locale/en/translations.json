@@ -5116,7 +5116,7 @@
               "tooltip": "Allows models with more vertices to be chosen if their p-value is no more than this proportion times the p-value of the best model"
             },
             "minObservationsNeeded": {
-              "label": "Min. observations needed",
+              "label": "Min. observations",
               "tooltip": "Minimum number of years with observations required to perform the fit"
             }
           }

@@ -14,3 +14,8 @@
     --look-disabled-l: 20%;
     --look-disabled-a: .9;
 }
+
+/* Match the OPT panel width (options.module.css) */
+.preprocess {
+    max-width: 29rem;
+}

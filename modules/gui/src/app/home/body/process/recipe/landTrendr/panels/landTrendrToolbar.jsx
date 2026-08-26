@@ -45,6 +45,7 @@ class _LandTrendrToolbar extends React.Component {
                 <Dates/>
                 <Sources/>
                 <OpticalOptions
+                    className={styles.preprocess}
                     title={msg('process.timeSeries.panel.preprocess.title')}
                     forCollection
                 />

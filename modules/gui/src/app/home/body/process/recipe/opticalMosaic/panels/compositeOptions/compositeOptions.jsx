@@ -70,11 +70,11 @@ class _CompositeOptions extends React.Component {
     }
 
     render() {
-        const {title} = this.props
+        const {title, className} = this.props
         const {advanced} = this.state
         return (
             <RecipeFormPanel
-                className={styles.panel}
+                className={[styles.panel, className].join(' ')}
                 placement='bottom-right'>
                 <Panel.Header
                     icon='layer-group'
