@@ -240,6 +240,9 @@ const Value = ({value}) => {
 const formatValue = ({dataType, value, magnitude}) => {
     switch (dataType) {
         case 'fractionalYears': return format.date(format.fractionalYearsToDate(value))
+        // A whole calendar year (e.g. year of detection) - unlike the
+        // default case, never gets an SI magnitude suffix (e.g. "2.015k").
+        case 'year': return Number.isFinite(value) ? String(Math.round(value)) : ''
         default: return format.numberToMagnitude({value, magnitude})
     }
 }
