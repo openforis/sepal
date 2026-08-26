@@ -16,7 +16,7 @@ import {Notifications} from '~/widget/notifications'
 import {Scrollable} from '~/widget/scrollable'
 
 import styles from './userSessions.module.css'
-import {runningItems, usageMetrics, verdictOf} from './userSessionSummary'
+import {instanceLabel, runningItems, usageMetrics, verdictOf} from './userSessionSummary'
 
 const mapStateToProps = () => ({
     sessions: select('user.currentUserReport.sessions')
@@ -48,8 +48,8 @@ class _UserSessions extends React.Component {
     // The number is the instance's 1-based position in this list — the same one the SSH menu prints
     // and the expiry notification quotes, because the report is ordered by creation time.
     renderTitle(session, index) {
-        const {name, hourlyCost} = session.instanceType
-        return `${index + 1}: ${name} (${format.dollarsPerHour(hourlyCost)})`
+        const {hourlyCost} = session.instanceType
+        return `${instanceLabel(session, index)} (${format.dollarsPerHour(hourlyCost)})`
     }
 
     renderMetric({key, pct, bytesPerS}) {

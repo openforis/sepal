@@ -27,6 +27,7 @@
 import {getLogger} from '#sepal/log'
 
 import {sessionTag} from '../../tag.js'
+import {instanceName} from '../instanceName.js'
 import {sessionOrdinals} from '../query/sessionOrdinals.js'
 import {NotificationState, withApiKey} from '../workerSession.js'
 
@@ -57,15 +58,20 @@ const runningText = ({apps = []}) => {
         : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
 }
 
-// instanceText — "instance 2 (t3a.small)". The number is the one the SSH menu prints and the one a
-// user types there to join or stop a session, so the notification names the instance in the
-// vocabulary they already have. See describeSessions for what it is an index into.
-const instanceText = ({ordinal, instanceType}) => {
-    const name = instanceType?.name
-    return [
-        ordinal ? `instance ${ordinal}` : 'instance',
-        name ? ` (${name})` : '',
-    ].join('')
+// instanceText — "Instance <b>crazy-banana</b> (t3a.small, $0.02/h)". The name is derived from the
+// session id (instanceName.js) and is the same one the GUI, the management page and the SSH menu
+// show, so every interface names the machine identically. The price is what makes "keep it
+// running" a real decision rather than a reflex. The ordinal is not printed here: it is what a
+// user TYPES in the SSH menu, not what they read.
+const instanceText = ({name, instanceType}) => {
+    const parts = [
+        instanceType?.name,
+        instanceType?.hourlyCost ? `$${instanceType.hourlyCost.toFixed(2)}/h` : null,
+    ].filter(Boolean)
+    const suffix = parts.length ? ` (${parts.join(', ')})` : ''
+    return name
+        ? `Instance <b>${name}</b>${suffix}`
+        : `One of your instances${suffix}`
 }
 
 // manageLink — ONE link, to a page carrying both choices. Deliberately not two links: a mail is
@@ -78,11 +84,10 @@ const manageLink = url =>
         <br><br>`
         : ''
 
-const expiryEmail = ({instanceType, policy, url, running, ordinal}) => ({
+const expiryEmail = ({instanceType, policy, url, running, name}) => ({
     subject: 'Your SEPAL instance is about to be stopped',
     content: `
-        Your <b>${instanceText({ordinal, instanceType})}</b>${instanceType?.hourlyCost
-        ? ` (US$&nbsp;${instanceType.hourlyCost}/hour)` : ''} has not been used for a while, and
+        ${instanceText({name, instanceType})} has not been used for a while, and
         will be <b>stopped in about ${policy.graceMinutes} minutes</b> unless you keep it.
         ${running ? `<br><br><b>${running}</b> ${running.includes(' and ') ? 'are' : 'is'} running on it.` : ''}
         <br><br>
@@ -95,10 +100,10 @@ const expiryEmail = ({instanceType, policy, url, running, ordinal}) => ({
     `,
 })
 
-const closedEmail = ({instanceType, running, ordinal}) => ({
+const closedEmail = ({instanceType, running, name}) => ({
     subject: 'Your unused SEPAL instance was stopped',
     content: `
-        Your <b>${instanceText({ordinal, instanceType})}</b> was stopped after going unused, to
+        ${instanceText({name, instanceType})} was stopped after going unused, to
         avoid unnecessary cost.
         ${running ? `<br><br>This closed <b>${running}</b>.` : ''}
         <br><br>
@@ -126,6 +131,7 @@ const describeSessions = async (sessions, {repo, appRepo, terminals}) => {
             apps: appsBySession.get(session.id) ?? [],
             terminals: terminals?.get(session.id) ?? 0,
             ordinal: ordinalsByUser.get(session.username).get(session.id) ?? null,
+            name: instanceName(session.id),
         })
     }
     return descriptions
@@ -178,7 +184,7 @@ const expireSessions = async ({
                         username: session.username,
                         session: withApiKey(session, null),
                         ...running,
-                        instanceName: instanceType?.name ?? null,
+                        typeName: instanceType?.name ?? null,
                         extensionMinutes: policy.manualExtensionMinutes,
                     })
                 }
@@ -219,7 +225,7 @@ const expireSessions = async ({
                                 policy,
                                 url: manageUrl(session),
                                 running: runningText(running),
-                                ordinal: running.ordinal,
+                                name: running.name,
                             }),
                         })
                     } catch (error) {
@@ -254,11 +260,11 @@ const close = async ({session, instanceType, running, repo, policy, releaseInsta
         username: session.username,
         sessionId: session.id,
         ...running,
-        instanceName: instanceType?.name ?? null,
+        typeName: instanceType?.name ?? null,
     })
     sendEmail({
         username: session.username,
-        ...closedEmail({instanceType, running: runningText(running), ordinal: running.ordinal}),
+        ...closedEmail({instanceType, running: runningText(running), name: running.name}),
     })
     return true
 }

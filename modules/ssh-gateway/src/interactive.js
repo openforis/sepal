@@ -68,10 +68,13 @@ const renderSessionsTable = info => {
     }
     const header = [
         th([
-            td({value: 'Active sessions', colSpan: 5, styles: ['BOLD', 'GREEN']})
+            td({value: 'Active sessions', colSpan: 6, styles: ['BOLD', 'GREEN']})
         ]),
         th([
             td({value: 'ID', styles: ['BOLD'], align: 'right'}),
+            // The name is what every other surface calls this instance; the ID stays because it is
+            // what the user TYPES below (`1` to join, `1s` to stop).
+            td({value: 'Name', styles: ['BOLD']}),
             td({value: 'Type', styles: ['BOLD']}),
             td({value: 'Time', styles: ['BOLD'], align: 'right'}),
             td({value: 'USD', styles: ['BOLD'], align: 'right'}),
@@ -85,6 +88,7 @@ const renderSessionsTable = info => {
         return [
             tr([
                 td({value: i + 1, styles: ['YELLOW_INTENSE']}),
+                td({value: session.name ?? ''}),
                 td({value: session.instanceType.tag}),
                 td({value: timeSinceCreation(session), align: 'right'}),
                 td({value: totalCost(session), align: 'right'}),
@@ -92,6 +96,7 @@ const renderSessionsTable = info => {
             ]),
             ...moreApps.map(app =>
                 tr([
+                    td({value: ''}),
                     td({value: ''}),
                     td({value: ''}),
                     td({value: ''}),

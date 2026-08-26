@@ -70,10 +70,20 @@ describe('the session list', () => {
     beforeEach(() => mounted = [])
     afterEach(() => mounted.forEach(unmount => unmount()))
 
-    it('numbers each instance and prices it by the hour', () => {
-        const text = render([session({id: 's1'}), session({id: 's2'})]).textContent
+    // The number leads (it is what the SSH menu accepts), then the instance's own name, then its
+    // type — the same name the expiry notification, the email and its management page show.
+    it('numbers each instance, names it, and prices it by the hour', () => {
+        const text = render([
+            session({id: 's1', name: 'humble-robin'}),
+            session({id: 's2', name: 'lunar-owl'}),
+        ]).textContent
+        expect(text).toContain('1: humble-robin - t3a.small ($0.02/h)')
+        expect(text).toContain('2: lunar-owl - t3a.small ($0.02/h)')
+    })
+
+    it('falls back to number and type for a session with no name', () => {
+        const text = render([session({id: 's1', name: null})]).textContent
         expect(text).toContain('1: t3a.small ($0.02/h)')
-        expect(text).toContain('2: t3a.small ($0.02/h)')
     })
 
     // Under the relative start time, not in a column of its own.

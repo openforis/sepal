@@ -110,14 +110,18 @@ const emitSessionAppDissociated = ({username, sessionId, path, clientId, request
 // emitSessionExpiryNotified — the session reached its deadline and the user is being warned.
 // The caller MUST pass an apiKey-stripped session (withApiKey(session, null)).
 //
-// apps/terminals/ordinal describe what is running and what the user calls the instance, so the
-// notification can name it the way the SSH menu does rather than quoting a UUID. Captured before
-// anything closes — the close cascade deletes the app associations.
+// apps/terminals describe what is running; name/typeName/ordinal say which machine it is, so the
+// notification can name it the way the email and the SSH menu do rather than quoting a UUID.
+// Captured before anything closes — the close cascade deletes the app associations.
+//
+// This payload is an explicit allow-list, NOT a spread: a field the caller passes but that is not
+// named here is silently dropped. Add to both the destructuring and the payload, or the browser
+// never sees it.
 //
 // extensionMinutes is what the in-app Extend button will actually buy, so the button can say so
 // instead of the GUI guessing at a duration this process configures.
-const emitSessionExpiryNotified = ({username, session, apps = [], terminals = 0, ordinal = null, instanceName = null, extensionMinutes = null}) => {
-    const payload = {username, sessionId: session.id, session, apps, terminals, ordinal, instanceName, extensionMinutes}
+const emitSessionExpiryNotified = ({username, session, apps = [], terminals = 0, ordinal = null, name = null, typeName = null, extensionMinutes = null}) => {
+    const payload = {username, sessionId: session.id, session, apps, terminals, ordinal, name, typeName, extensionMinutes}
     log.debug(`Emitting SessionExpiryNotified ${sessionTag(session)}`)
     sessionExpiryNotified$.next(payload)
     workerSessionEvents.emit('SessionExpiryNotified', payload)
@@ -127,8 +131,8 @@ const emitSessionExpiryNotified = ({username, session, apps = [], terminals = 0,
 // emitSessionExpiryClosed — the grace period ran out and the session was closed.
 // Fired IN ADDITION to WorkerSessionClosed (which the close cascade emits) to say WHY, and with
 // what was closed, so the GUI can replace its warning with an accurate past-tense message.
-const emitSessionExpiryClosed = ({username, sessionId, apps = [], terminals = 0, ordinal = null, instanceName = null}) => {
-    const payload = {username, sessionId, apps, terminals, ordinal, instanceName}
+const emitSessionExpiryClosed = ({username, sessionId, apps = [], terminals = 0, ordinal = null, name = null, typeName = null}) => {
+    const payload = {username, sessionId, apps, terminals, ordinal, name, typeName}
     log.debug(`Emitting SessionExpiryClosed ${sessionTag(sessionId)}`)
     sessionExpiryClosed$.next(payload)
     workerSessionEvents.emit('SessionExpiryClosed', payload)

@@ -46,6 +46,7 @@ const info = {
     instanceTypes: [{tag: 't1', cpuCount: 2, ramGiB: 4, hourlyCost: 0.1}],
     sessions: [{
         path: '/sessions/session1',
+        name: 'crazy-banana',
         status: 'ACTIVE',
         creationTime: new Date().toISOString(),
         instanceType: {tag: 't1', cpuCount: 2, ramGiB: 4, hourlyCost: 0.1},
@@ -201,6 +202,51 @@ describe('interactive$', () => {
         await flushPromises()
         await flushPromises()
         expect(println).toHaveBeenCalledWith(expect.stringContaining('Foo'))
+        expect(terminateSession$).toHaveBeenCalledTimes(1)
+        subscription.unsubscribe()
+    })
+})
+
+describe('instance names', () => {
+    const printed = () => println.mock.calls.flat().map(t => `${t}`).join('\n')
+
+    it('shows the instance name alongside the number', async () => {
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        expect(printed()).toContain('crazy-banana')
+        expect(printed()).toContain('Name')
+        subscription.unsubscribe()
+    })
+
+    it('leaves the name column empty for a session that has none', async () => {
+        info.sessions[0].name = undefined
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        expect(printed()).toContain('Name')
+        expect(printed()).not.toContain('undefined')
+        subscription.unsubscribe()
+    })
+
+    // The number is what a user TYPES; a name is a poor thing to retype over a flaky link. Adding
+    // the name column must not disturb the selection grammar.
+    it('still joins by number', async () => {
+        const {of} = await import('rxjs')
+        joinSession$.mockReturnValue(of({}))
+        readLineQueue.push('1')
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        await flushPromises()
+        expect(joinSession$).toHaveBeenCalled()
+        subscription.unsubscribe()
+    })
+
+    it('still stops by number with the s suffix', async () => {
+        const {of} = await import('rxjs')
+        joinSession$.mockReturnValue(of({}))
+        readLineQueue.push('1s', 'y')
+        const subscription = interactive$(NEVER).subscribe()
+        await flushPromises()
+        await flushPromises()
         expect(terminateSession$).toHaveBeenCalledTimes(1)
         subscription.unsubscribe()
     })

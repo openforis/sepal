@@ -132,19 +132,19 @@ const initializeEvents = ({servers, clients, userStore, event$}) => {
         clients.sendEventToUser(username, WORKER_SESSION_CLOSED, {sessionId})
     }
 
-    // apps/terminals/ordinal ride along so the browser can name the instance the way the SSH menu
+    // apps/terminals/ordinal/name ride along so the browser can name the instance the way the SSH menu
     // does and say what is running on it, without a round trip. extensionMinutes is what the
     // Extend button buys, so it can be labelled with the duration the worker actually grants.
-    const sessionExpiryNotified = ({username, sessionId, apps, terminals, ordinal, instanceName, extensionMinutes}) => {
+    const sessionExpiryNotified = ({username, sessionId, apps, terminals, ordinal, name, typeName, extensionMinutes}) => {
         log.debug(`${userTag(username)} Worker session expiry notified: ${sessionId}`)
         clients.sendEventToUser(username, SESSION_EXPIRY_NOTIFIED,
-            {sessionId, apps, terminals, ordinal, instanceName, extensionMinutes})
+            {sessionId, apps, terminals, ordinal, name, typeName, extensionMinutes})
     }
 
-    const sessionExpiryClosed = ({username, sessionId, apps, terminals, ordinal, instanceName}) => {
+    const sessionExpiryClosed = ({username, sessionId, apps, terminals, ordinal, name, typeName}) => {
         log.debug(`${userTag(username)} Worker session expired and closed: ${sessionId}`)
         clients.sendEventToUser(username, SESSION_EXPIRY_CLOSED,
-            {sessionId, apps, terminals, ordinal, instanceName})
+            {sessionId, apps, terminals, ordinal, name, typeName})
     }
 
     // Unicast to the OWNER of an app association someone else dissociated (another browser's
