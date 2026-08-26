@@ -58,7 +58,6 @@ export default () => ({
     components: {
         recipe: LandTrendr
     },
-    getDependentRecipeIds: _recipe => [],
     getDateRange,
     getAvailableBands,
     getPreSetVisualizations
