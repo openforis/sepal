@@ -5009,6 +5009,142 @@
       },
       "tabPlaceholder": "Series_temporelles"
     },
+    "landTrendr": {
+      "create": "",
+      "description": "",
+      "tabPlaceholder": "",
+      "chartPixel": {
+        "start.tooltip": "",
+        "cancel.tooltip": "",
+        "loadSegments.error": "",
+        "noData": ""
+      },
+      "mapToolbar": {
+        "graph": {
+          "year.label": "Année",
+          "observation.label": "Observation",
+          "fitted.label": ""
+        }
+      },
+      "panel": {
+        "dates": {
+          "button": "DAT",
+          "title": "Dates",
+          "tooltip": "Spécifier les dates",
+          "form": {
+            "startYear": {
+              "label": "",
+              "tooltip": ""
+            },
+            "endYear": {
+              "label": "",
+              "tooltip": "",
+              "beforeStartYear": ""
+            }
+          }
+        },
+        "sources": {
+          "button": "SRC",
+          "title": "Sources",
+          "tooltip": "",
+          "form": {
+            "dataSets": {
+              "label": ""
+            },
+            "cloudPercentageThreshold": {
+              "label": "Couverture nuageuse max %",
+              "tooltip": "",
+              "value": "{value}%"
+            },
+            "index": {
+              "label": "",
+              "tooltip": ""
+            }
+          }
+        },
+        "options": {
+          "button": "OPT",
+          "title": "",
+          "tooltip": "",
+          "form": {
+            "changeDirection": {
+              "label": "",
+              "tooltip": "",
+              "GREATEST": {
+                "label": "",
+                "tooltip": ""
+              },
+              "LOSS": {
+                "label": "",
+                "tooltip": ""
+              },
+              "GAIN": {
+                "label": "",
+                "tooltip": ""
+              }
+            },
+            "minMagnitude": {
+              "label": "",
+              "tooltip": ""
+            },
+            "maxSegments": {
+              "label": "",
+              "tooltip": ""
+            },
+            "spikeThreshold": {
+              "label": "",
+              "tooltip": ""
+            },
+            "vertexCountOvershoot": {
+              "label": "",
+              "tooltip": ""
+            },
+            "preventOneYearRecovery": {
+              "label": "",
+              "tooltip": ""
+            },
+            "recoveryThreshold": {
+              "label": "",
+              "tooltip": ""
+            },
+            "pvalThreshold": {
+              "label": "",
+              "tooltip": ""
+            },
+            "bestModelProportion": {
+              "label": "",
+              "tooltip": ""
+            },
+            "minObservationsNeeded": {
+              "label": "",
+              "tooltip": ""
+            }
+          }
+        }
+      },
+      "layers": {
+        "imageLayer": {
+          "preSets": "Pré-réglages"
+        }
+      },
+      "bands": {
+        "yod": "",
+        "mag": "Magnitude",
+        "dur": "",
+        "preval": "",
+        "postval": "",
+        "rmse": "",
+        "sig": "",
+        "startRed": "",
+        "startGreen": "",
+        "startBlue": "",
+        "endRed": "",
+        "endGreen": "",
+        "endBlue": "",
+        "startRgb": "",
+        "endRgb": ""
+      }
+    },
     "samplingDesign": {
       "bands": {},
       "create": "",
@@ -5567,6 +5703,7 @@
         "TIME_SERIES": "",
         "CCDC": "CCDC",
         "CCDC_SLICE": "",
+        "LANDTRENDR": "",
         "CHANGE_ALERTS": "Modifier les alertes",
         "BAYTS_HISTORICAL": "",
         "BAYTS_ALERTS": "",
