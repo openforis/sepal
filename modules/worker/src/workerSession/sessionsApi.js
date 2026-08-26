@@ -57,7 +57,7 @@ const instanceTypeAsMap = (instanceType, username, forCurrentUser) => ({
     hourlyCost: instanceType.hourlyCost,
 })
 
-// ── the extend link's pages ────────────────────────────────────────────────────
+// ── the email links' pages ─────────────────────────────────────────────────────
 // Plain self-contained HTML: this is opened from a mail client, often on a phone, by someone with
 // no SEPAL session and possibly no SEPAL tab. It cannot rely on the GUI being reachable.
 const page = body => `<!DOCTYPE html>
@@ -70,24 +70,55 @@ const page = body => `<!DOCTYPE html>
 body {font-family: system-ui, sans-serif; margin: 0; padding: 3rem 1.5rem; background: #17181c; color: #e8e8ea; text-align: center}
 h1 {font-size: 1.4rem; font-weight: 500}
 p {color: #a8a9ad; line-height: 1.5}
-button {font: inherit; padding: .8rem 1.6rem; border: 0; border-radius: .3rem; background: #4a8; color: #fff; cursor: pointer}
+/* The two looks the in-app notification uses for the same choice: --look-add and --look-cancel
+   (modules/gui/src/style/look.css). Inlined as literals because this page is standalone. */
+button {font: inherit; min-width: 15rem; padding: .9rem 1.8rem; border: 0; border-radius: .3rem; background: hsl(105, 50%, 25%); color: #fff; cursor: pointer}
+button.stop {background: hsl(0, 45%, 33%)}
+form {margin: 2.5rem 0}
+form + form {margin-top: 3rem}
+p.small {font-size: .9rem}
 </style>
 </head>
 <body>${body}</body>
 </html>`
 
-// action="" posts back to the very URL that rendered this page, so the page needs to know nothing
-// about the deployment's external base path.
-const confirmationPage = () => page(`
-<h1>Keep your SEPAL instance running?</h1>
-<p>Your instance is about to be stopped because it has not been used.</p>
-<form method="post" action="">
-<button type="submit">Keep it running</button>
-</form>`)
+// instanceText — "Instance 2 (t3a.small)", the same name the in-app notification, the expiry email
+// and the SSH menu use for this machine (query/sessionOrdinals.js). A user with two instances has
+// to be able to tell which one a page is about before pressing anything on it. The unnamed variant
+// mirrors the GUI's `instanceUnnamed`: better than a blank where an identity should be.
+const instanceText = description =>
+    description?.ordinal
+        ? `Instance ${description.ordinal}${description.instanceName ? ` (${description.instanceName})` : ''}`
+        : 'One of your instances'
 
-const extendedPage = () => page(`
-<h1>Your instance will keep running</h1>
+// Each button is its own form so the POST carries exactly one action and nothing is inferred from
+// which control happened to be focused. action="" posts back to the very URL that rendered the
+// page, so it needs to know nothing about the deployment's external base path.
+const actionForm = (action, label, look = '') => `
+<form method="post" action="">
+<input type="hidden" name="action" value="${action}">
+<button type="submit"${look ? ` class="${look}"` : ''}>${label}</button>
+</form>`
+
+// The mail carries ONE link, and this is where the choice is actually made. Both buttons sit here
+// rather than in the mail so that reaching the destructive one always costs a page load first — a
+// mis-tap on a phone is recoverable by reading before pressing.
+const managePage = (minutes, description) => page(`
+<h1>${instanceText(description)} is about to be stopped</h1>
+<p>It has not been used for a while. Keep it running, or terminate it now and free the cost.</p>
+<p class="small">Terminating closes anything running on it. Your files are untouched either way —
+everything in your home directory is preserved.</p>
+${actionForm('extend', `Keep it running ${minutes} min`)}
+${actionForm('terminate', 'Terminate now', 'stop')}`)
+
+const extendedPage = description => page(`
+<h1>${instanceText(description)} will keep running</h1>
 <p>You can close this page.</p>`)
+
+const terminatedPage = description => page(`
+<h1>${instanceText(description)} was stopped</h1>
+<p>Your files are untouched — everything in your home directory is preserved, and you can start a
+new instance at any time. You can close this page.</p>`)
 
 const expiredPage = () => page(`
 <h1>This link is no longer valid</h1>
@@ -405,20 +436,38 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
         ctx.status = 204
     }
 
-    // ── email extend link (UNAUTHENTICATED — the token carries its own authority) ─────────────
-    // The GET renders a confirmation page and MUST NOT mutate anything: mail-client link
-    // scanners, corporate URL-rewriting proxies and preview fetchers all fire it, so a mutating
-    // GET would extend sessions for users who never opened the mail and spend the token before
-    // the real click arrived. The button on that page POSTs the same token.
-    const extendPage = async ctx => {
-        const claim = expiryTokens?.verify(ctx.params.token, clock())
-        ctx.type = 'html'
-        ctx.body = claim
-            ? confirmationPage()
-            : expiredPage()
+    // ── email management link (UNAUTHENTICATED — the token carries its own authority) ──────────
+    // The mail carries ONE link. The GET renders the page offering both choices and MUST NOT
+    // mutate anything: mail-client link scanners, corporate URL-rewriting proxies and preview
+    // fetchers all fire it, so a mutating GET would act for users who never opened the mail and
+    // spend the token before the real click arrived — and for terminate that means destroying an
+    // instance nobody asked to destroy. Each button on the page POSTs back the same token plus
+    // the action it stands for.
+    const REDEEM = {
+        extend: {
+            redeem: claim => sessionManager.redeemExtension(claim),
+            done: extendedPage,
+        },
+        terminate: {
+            redeem: claim => sessionManager.redeemTermination(claim),
+            done: terminatedPage,
+        },
     }
 
-    const redeemExtendToken = async ctx => {
+    const manageBody = description => managePage(expiryPolicy.emailExtensionMinutes, description)
+
+    const describe = sessionId =>
+        sessionManager.instanceDescription
+            ? sessionManager.instanceDescription(sessionId)
+            : null
+
+    const expiryPage = async ctx => {
+        const claim = expiryTokens?.verify(ctx.params.token, clock())
+        ctx.type = 'html'
+        ctx.body = claim ? manageBody(await describe(claim.sessionId)) : expiredPage()
+    }
+
+    const redeemExpiryToken = async ctx => {
         const claim = expiryTokens?.verify(ctx.params.token, clock())
         ctx.type = 'html'
         if (!claim) {
@@ -426,10 +475,23 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
             ctx.body = expiredPage()
             return
         }
-        const redeemed = await sessionManager.redeemExtension(claim)
+        // Read BEFORE the action: the ordinal is a position among OPEN sessions, so terminating
+        // this one renumbers the rest and the result page would name a different machine.
+        const description = await describe(claim.sessionId)
+        // No action, or one this server does not implement: do NOTHING and offer the choice again.
+        // Guessing a default would eventually guess `terminate` for someone who never asked.
+        const chosen = REDEEM[ctx.request.body?.action]
+        if (!chosen) {
+            ctx.status = 400
+            ctx.body = manageBody(description)
+            return
+        }
+        const redeemed = await chosen.redeem({
+            sessionId: claim.sessionId, notifiedTime: claim.notifiedTime,
+        })
         // Someone clicked a link in an email and needs to be told what happened — a bare error
-        // would leave them guessing whether their instance survived.
-        ctx.body = redeemed ? extendedPage() : expiredPage()
+        // would leave them guessing what became of their instance.
+        ctx.body = redeemed ? chosen.done(description) : expiredPage()
     }
 
     // ── close session ──────────────────────────────────────────────────────────
@@ -495,8 +557,8 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
         extendNow,
         openExtension,
         dismissExpiry,
-        extendPage,
-        redeemExtendToken,
+        expiryPage,
+        redeemExpiryToken,
         // close
         closeSessionSelf: closeSession(selfUser),
         closeSessionOther: closeSession(pathUser),

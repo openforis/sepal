@@ -36,9 +36,11 @@ export const verdictOf = session =>
         ? session.verdict
         : null
 
-// runningItems — what the instance is running, in the order the expiry notification and the expiry
-// email list it: the apps, then the terminal sessions.
-export const runningItems = session => [
-    ...(session?.apps || []).map(({path, label}) => ({type: 'app', key: path, label: label || path})),
-    ...session?.terminals > 0 ? [{type: 'terminals', key: 'terminals', count: session.terminals}] : []
-]
+// runningItems — what the instance is running: the apps, by the label the user opened them under.
+//
+// Terminal sessions are deliberately NOT included, here or in the expiry email. A count of open
+// ptys is not something a user can act on — it names nothing, and an idle shell left open in a
+// forgotten tab counts exactly the same as a running build. The sampler still tracks terminals;
+// they feed the busy verdict and the interaction signal, which is where they are useful.
+export const runningItems = session =>
+    (session?.apps || []).map(({path, label}) => ({type: 'app', key: path, label: label || path}))

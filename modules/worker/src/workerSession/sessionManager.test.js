@@ -77,6 +77,7 @@ const makeRepo = (canned = {}) => {
         restartExpiryCycle: jest.fn(async (...args) => canned.restartExpiryCycle ? canned.restartExpiryCycle(...args) : true),
         closeExpiredSession: jest.fn(async (...args) => canned.closeExpiredSession ? canned.closeExpiredSession(...args) : true),
         redeemExtension: jest.fn(async (...args) => canned.redeemExtension ? canned.redeemExtension(...args) : true),
+        redeemTermination: jest.fn(async (...args) => canned.redeemTermination ? canned.redeemTermination(...args) : true),
     }
 }
 
@@ -187,6 +188,7 @@ const build = ({repo, appRepo, instanceManager, lockedUsers, budgetClient, event
         clock: fixedClock,
         apiKeyGenerator: {generate: () => 'generated-key'},
         expiryPolicy,
+        instanceTypeById: {T3aSmall: {name: 't3a.small', hourlyCost: 0.02}},
         events: _events,
     })
     return {
@@ -593,7 +595,7 @@ describe('heartbeat', () => {
 })
 
 describe('extensions', () => {
-    const activeRepo = () => makeRepo({getSession: () => session({state: State.ACTIVE})})
+    const activeRepo = (canned = {}) => makeRepo({getSession: () => session({state: State.ACTIVE}), ...canned})
 
     // The keepAlive slider REPLACES the deadline — the one write that is not a ratchet, because
     // the cursor shows the current keep-alive and dragging it means "make it this much".
@@ -663,6 +665,51 @@ describe('extensions', () => {
         await mgr.dismissExpiryNotification({sessionId: 's-1', username: 'alice'})
         expect(repo.dismissNotification).toHaveBeenCalledWith('s-1', 'alice')
         expect(repo.extendSession).not.toHaveBeenCalled()
+    })
+
+    // The mail's terminate link is the [Terminate now] button, reached without a SEPAL session.
+    // It must do the whole close — a row marked CLOSED with the instance still running is a
+    // machine nobody owns and nobody stops paying for.
+    test('the terminate link closes the row AND releases the instance', async () => {
+        const repo = activeRepo()
+        const instanceManager = makeInstanceManager()
+        const events = makeEvents()
+        const {mgr} = build({repo, instanceManager, events})
+        const notifiedTime = new Date('2026-01-01T11:00:00Z')
+        expect(await mgr.redeemTermination({sessionId: 's-1', notifiedTime})).toBe(true)
+        expect(repo.redeemTermination).toHaveBeenCalledWith({sessionId: 's-1', notifiedTime})
+        expect(instanceManager.releaseInstance).toHaveBeenCalledWith('i-1')
+        expect(events.emitWorkerSessionClosed).toHaveBeenCalledWith({username: 'alice', sessionId: 's-1'})
+    })
+
+    // Zero rows changed means the session was rescued between the mail and the click. Releasing
+    // the instance anyway would destroy the very session the guard just protected.
+    test('a spent terminate token releases nothing', async () => {
+        const repo = activeRepo({redeemTermination: () => false})
+        const instanceManager = makeInstanceManager()
+        const events = makeEvents()
+        const {mgr} = build({repo, instanceManager, events})
+        expect(await mgr.redeemTermination({
+            sessionId: 's-1', notifiedTime: new Date('2026-01-01T11:00:00Z')})).toBe(false)
+        expect(instanceManager.releaseInstance).not.toHaveBeenCalled()
+        expect(events.emitWorkerSessionClosed).not.toHaveBeenCalled()
+    })
+
+    // The management page names the instance the way every other surface does — the number from
+    // the SSH menu plus the type — so a user reading the mail, the notification and the page all
+    // know it is the same machine.
+    test('instanceDescription gives the SSH-menu ordinal and the instance type', async () => {
+        const repo = activeRepo({
+            userSessions: () => [{id: 's-0'}, {id: 's-1'}, {id: 's-2'}],
+        })
+        const {mgr} = build({repo})
+        expect(await mgr.instanceDescription('s-1')).toEqual({ordinal: 2, instanceName: 't3a.small'})
+    })
+
+    test('instanceDescription is null for a session that is gone', async () => {
+        const repo = makeRepo({getSession: () => { throw new Error('gone') }})
+        const {mgr} = build({repo})
+        expect(await mgr.instanceDescription('s-1')).toBeNull()
     })
 
     test('the email link redeems through the notified_time-guarded write', async () => {

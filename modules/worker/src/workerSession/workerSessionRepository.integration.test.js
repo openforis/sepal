@@ -424,6 +424,26 @@ describeIf(hasCredentials, 'integration — worker_session scratch schema (requi
             expect(closed.apiKey).toBeNull()
         })
 
+        test('the terminate link CLOSES, exactly once', async () => {
+            const repo = await expired()
+            await repo.notifyExpiry('s-1')
+            const {notifiedTime} = await repo.getSession('s-1')
+            expect(await repo.redeemTermination({sessionId: 's-1', notifiedTime})).toBe(true)
+            expect((await repo.getSession('s-1')).state).toBe('CLOSED')
+            expect(await repo.redeemTermination({sessionId: 's-1', notifiedTime})).toBe(false)
+        })
+
+        // The rescue must win: the user went back to typing, the ratchet cleared notified_time,
+        // and the terminate link they never clicked must not be able to kill the instance later.
+        test('the terminate link is spent by any extension', async () => {
+            const repo = await expired()
+            await repo.notifyExpiry('s-1')
+            const {notifiedTime} = await repo.getSession('s-1')
+            await repo.extendSession({sessionId: 's-1', minutes: 15})
+            expect(await repo.redeemTermination({sessionId: 's-1', notifiedTime})).toBe(false)
+            expect((await repo.getSession('s-1')).state).toBe('ACTIVE')
+        })
+
         test('the email link is redeemable exactly once', async () => {
             const repo = await expired()
             await repo.notifyExpiry('s-1')

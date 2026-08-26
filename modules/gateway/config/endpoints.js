@@ -104,13 +104,13 @@ const endpoints = [
         authenticate: true
     },
     {
-        // The expiry email's extend link. Unauthenticated by design: it is clicked from a mail
-        // client, typically on a phone with no SEPAL session, and the HMAC token in the path
-        // carries its own authority. Registered BEFORE /api/sessions so the authenticated
-        // catch-all does not swallow it.
+        // The expiry email's action links (keep running / stop now). Unauthenticated by design:
+        // they are clicked from a mail client, typically on a phone with no SEPAL session, and the
+        // HMAC token in the path carries its own authority — including WHICH action it authorises.
+        // Registered BEFORE /api/sessions so the authenticated catch-all does not swallow it.
         prefix: true,
-        path: '/api/sessions/extend',
-        target: `http://${modules.worker}/sessions/extend`,
+        path: '/api/sessions/expiry',
+        target: `http://${modules.worker}/sessions/expiry`,
         authenticate: false,
         noCache: true
     },

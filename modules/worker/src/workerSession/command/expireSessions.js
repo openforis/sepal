@@ -1,8 +1,8 @@
 // ExpireSessions — the single sweep over stored deadlines (docs/session-expiration-model.md §5).
 //
 //   T+0                             notification_state NONE → NOTIFIED; ws push → in-app
-//                                   notification with [Extend] [Dismiss]
-//   T+notificationVisibleMinutes    still NOTIFIED → email with a one-click extend link → EMAILED
+//                                   notification with [Keep it running] [Terminate now]
+//   T+notificationVisibleMinutes    still NOTIFIED → email with one manage link → EMAILED
 //   T+graceMinutes                  NOTIFIED | DISMISSED | EMAILED → close (mode=enforce), or
 //                                   count a would-have-closed and restart the cycle (mode=notify)
 //
@@ -27,8 +27,8 @@
 import {getLogger} from '#sepal/log'
 
 import {sessionTag} from '../../tag.js'
-import {SANDBOX} from '../../workerInstance/workerTypes.js'
-import {NotificationState, State, withApiKey} from '../workerSession.js'
+import {sessionOrdinals} from '../query/sessionOrdinals.js'
+import {NotificationState, withApiKey} from '../workerSession.js'
 
 const log = getLogger('worker/expireSessions')
 
@@ -40,14 +40,15 @@ const MODE = Object.freeze({
     ENFORCE: 'enforce',
 })
 
-// runningText — "Jupyter, RStudio and 1 terminal session", or null when nothing is running.
-// The same list the GUI notification shows, so a user reading the mail and a user looking at the
-// browser see the instance described identically.
-const runningText = ({apps = [], terminals = 0}) => {
+// runningText — "Jupyter and RStudio", or null when no app is running. The same list the GUI
+// notification shows, so a user reading the mail and a user looking at the browser see the instance
+// described identically.
+//
+// Terminal sessions are deliberately excluded: a count of open ptys names nothing a user can act
+// on, and an idle shell in a forgotten tab counts the same as a running build. They are still
+// sampled — that is what feeds the busy verdict and the interaction signal.
+const runningText = ({apps = []}) => {
     const parts = apps.map(({label, path}) => label || path)
-    if (terminals > 0) {
-        parts.push(terminals === 1 ? 'a terminal session' : `${terminals} terminal sessions`)
-    }
     if (!parts.length) {
         return null
     }
@@ -67,7 +68,17 @@ const instanceText = ({ordinal, instanceType}) => {
     ].join('')
 }
 
-const expiryEmail = ({instanceType, policy, extendUrl, running, ordinal}) => ({
+// manageLink — ONE link, to a page carrying both choices. Deliberately not two links: a mail is
+// read on a phone, and a destructive action one tap from the inbox is a mis-tap waiting to happen.
+// Omitted when the deployment has no SEPAL_ENDPOINT to build an absolute URL from — the mail still
+// goes out, and using the instance rescues it just as well as the link would have.
+const manageLink = url =>
+    url
+        ? `<a href="${url}">Keep it running or terminate it</a>
+        <br><br>`
+        : ''
+
+const expiryEmail = ({instanceType, policy, url, running, ordinal}) => ({
     subject: 'Your SEPAL instance is about to be stopped',
     content: `
         Your <b>${instanceText({ordinal, instanceType})}</b>${instanceType?.hourlyCost
@@ -75,10 +86,9 @@ const expiryEmail = ({instanceType, policy, extendUrl, running, ordinal}) => ({
         will be <b>stopped in about ${policy.graceMinutes} minutes</b> unless you keep it.
         ${running ? `<br><br><b>${running}</b> ${running.includes(' and ') ? 'are' : 'is'} running on it.` : ''}
         <br><br>
-        <a href="${extendUrl}">Keep it running for another ${policy.emailExtensionMinutes} minutes</a>
-        <br><br>
+        ${manageLink(url)}
         Simply using the instance — typing in a notebook, an app or a terminal — keeps it running
-        too, and needs no link. If you are done with it, no action is needed.
+        too, and no action is needed.
         <br><br>
         Your files are untouched either way: everything in your home directory is preserved, and
         you can start a new instance at any time.
@@ -97,16 +107,8 @@ const closedEmail = ({instanceType, running, ordinal}) => ({
     `,
 })
 
-// describeSessions — what is running on each candidate, and the number the user knows it by.
-//
-// The ordinal is the session's 1-based position among the user's open SANDBOX sessions ordered by
-// creation_time — exactly the list and ordering the SSH menu numbers (`interactive.js` prints
-// `i + 1`, and the user types `1` to join or `1s` to stop). Naming the instance the same way in a
-// notification means the two interfaces agree.
-//
-// It is a SNAPSHOT: close an earlier session and the remaining ones renumber, here and in the SSH
-// menu alike. That is inherent to a positional identifier, and the alternative — quoting a UUID at
-// someone — is worse.
+// describeSessions — what is running on each candidate, and the number the user knows it by
+// (see query/sessionOrdinals.js for what that number is an index into).
 //
 // One query per distinct owner, and only for sessions that have actually expired, so this costs
 // nothing on a healthy sweep.
@@ -118,10 +120,7 @@ const describeSessions = async (sessions, {repo, appRepo, terminals}) => {
     const ordinalsByUser = new Map()
     for (const session of sessions) {
         if (!ordinalsByUser.has(session.username)) {
-            const open = await repo.userSessions(
-                session.username, [State.PENDING, State.ACTIVE], SANDBOX)
-            ordinalsByUser.set(session.username,
-                new Map(open.map(({id}, index) => [id, index + 1])))
+            ordinalsByUser.set(session.username, await sessionOrdinals(session.username, {repo}))
         }
         descriptions.set(session.id, {
             apps: appsBySession.get(session.id) ?? [],
@@ -140,7 +139,7 @@ const expireSessions = async ({
     policy,
     instanceTypeById = {},
     sendEmail,
-    extendUrl,
+    manageUrl,
     releaseInstance,
     emitSessionExpiryNotified,
     emitSessionExpiryClosed,
@@ -218,7 +217,7 @@ const expireSessions = async ({
                             ...expiryEmail({
                                 instanceType,
                                 policy,
-                                extendUrl: extendUrl(session),
+                                url: manageUrl(session),
                                 running: runningText(running),
                                 ordinal: running.ordinal,
                             }),

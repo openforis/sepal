@@ -51,17 +51,12 @@ const instanceText = ({ordinal, instanceName}) =>
 
 // What is running, as a bullet list — the same items, ordering and wording as the session list and
 // the stop confirmation in the Usage panel, so the three never describe an instance differently.
-const runningItem = ({type, count, label}) =>
-    type === 'terminals'
-        ? msg('user.userSession.terminals', {count})
-        : label
-
 const runningList = data => {
     const items = runningItems(data)
     return items.length
         ? (
             <ul className={styles.running}>
-                {items.map(item => <li key={item.key}>{runningItem(item)}</li>)}
+                {items.map(({key, label}) => <li key={key}>{label}</li>)}
             </ul>
         )
         : null

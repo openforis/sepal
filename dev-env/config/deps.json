@@ -272,6 +272,7 @@
             "logger",
             "mysql",
             "rabbitmq",
+            "email",
             "budget",
             "user"
         ]

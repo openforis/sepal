@@ -1,4 +1,8 @@
-// Unit tests for the expiry email's extend token.
+// Unit tests for the expiry email's management token.
+//
+// ONE token per notified session, authorising that session's expiry decision — either of them.
+// The mail carries a single link to a page offering both buttons, so signing the action into the
+// token would protect nothing: whoever can reach the page can reach both forms.
 //
 // The token proves only that a well-formed link was clicked — single-use comes from the guarded
 // redemption in the repository, not from here. What these tests pin is that a token cannot be
@@ -31,7 +35,9 @@ describe('forgery', () => {
         expect(tokens.verify(other.create({sessionId: 's-1', notifiedTime}), NOW)).toBeNull()
     })
 
-    test('a tampered payload does not verify', () => {
+    // A token names ONE session. Pointing it at another is the forgery that matters here, since
+    // the page it opens can stop whatever session the claim names.
+    test('a token cannot be repointed at another session', () => {
         const [, signature] = token.split('.')
         const forged = Buffer.from('s-2.1000000000').toString('base64url')
         expect(tokens.verify(`${forged}.${signature}`, NOW)).toBeNull()

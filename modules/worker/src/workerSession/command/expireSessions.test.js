@@ -51,7 +51,7 @@ const run = (repo, overrides = {}) => expireSessions({
     policy,
     instanceTypeById: {T3aSmall: {name: 't3a.small', hourlyCost: 0.02}},
     sendEmail: jest.fn(),
-    extendUrl: () => 'https://sepal.io/api/sessions/extend/tok',
+    manageUrl: () => 'https://sepal.io/api/sessions/expiry/tok',
     releaseInstance: jest.fn(async () => {}),
     emitSessionExpiryNotified: jest.fn(),
     emitSessionExpiryClosed: jest.fn(),
@@ -88,13 +88,38 @@ describe('T+0 — notification', () => {
 })
 
 describe('T+notificationVisibleMinutes — email', () => {
-    test('a still-NOTIFIED session gets the email with its extend link', async () => {
+    // ONE link. Both choices live on the page it opens, so the mail never puts a destructive
+    // action a single tap away.
+    test('a still-NOTIFIED session gets the email with ONE management link', async () => {
         const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
         const sendEmail = jest.fn()
         await run(repo, {sendEmail})
         expect(repo.markEmailed).toHaveBeenCalledWith('s-1', minutesAgo(6))
         expect(sendEmail).toHaveBeenCalledTimes(1)
-        expect(sendEmail.mock.calls[0][0].content).toContain('https://sepal.io/api/sessions/extend/tok')
+        const {content} = sendEmail.mock.calls[0][0]
+        expect(content.match(/<a href=/g)).toHaveLength(1)
+        expect(content).toContain('https://sepal.io/api/sessions/expiry/tok')
+    })
+
+    // Whether to keep or stop is decided on the page, so the mail must not preempt it by naming
+    // only one of the two.
+    test('the mail says the link leads to both choices', async () => {
+        const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
+        const sendEmail = jest.fn()
+        await run(repo, {sendEmail})
+        const {content} = sendEmail.mock.calls[0][0]
+        expect(content).toContain('Keep it running or terminate it')
+    })
+
+    // Without SEPAL_ENDPOINT there is no absolute URL worth putting in a mail. The mail still goes
+    // out — using the instance rescues it just as well as a link would have — but it must not ship
+    // a dead href.
+    test('no endpoint configured → the mail carries no link at all', async () => {
+        const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
+        const sendEmail = jest.fn()
+        await run(repo, {sendEmail, manageUrl: () => null})
+        expect(sendEmail).toHaveBeenCalledTimes(1)
+        expect(sendEmail.mock.calls[0][0].content).not.toContain('<a href')
     })
 
     test('before the visible window, nothing is sent', async () => {
@@ -294,7 +319,7 @@ describe('describing the instance', () => {
         })
         const {content} = sendEmail.mock.calls[0][0]
         expect(content).toContain('instance 1 (t3a.small)')
-        expect(content).toContain('RStudio and a terminal session')
+        expect(content).toContain('RStudio')
     })
 
     // The close cascade deletes the app associations, so a description read after the close would
@@ -313,16 +338,28 @@ describe('describing the instance', () => {
         }))
     })
 
-    test('one terminal reads as "a terminal session", two as a count', async () => {
-        const oneRepo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
-        const oneEmail = jest.fn()
-        await run(oneRepo, {terminals: {get: () => 1}, sendEmail: oneEmail})
-        expect(oneEmail.mock.calls[0][0].content).toContain('a terminal session')
+    // Terminal sessions are not listed, in the mail or anywhere else: a count of open ptys names
+    // nothing a user can act on. The sampler still tracks them for the busy verdict.
+    test('the mail never mentions terminal sessions', async () => {
+        const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
+        const sendEmail = jest.fn()
+        await run(repo, {
+            ...withApps([{path: '/sandbox/rstudio', label: 'RStudio'}]),
+            terminals: {get: () => 2},
+            sendEmail,
+        })
+        const {content} = sendEmail.mock.calls[0][0]
+        expect(content).toContain('RStudio')
+        // Narrowly "terminal session": the standing advice sentence mentions a terminal as a way
+        // to KEEP the instance alive, which is not a listing and must survive.
+        expect(content).not.toContain('terminal session')
+    })
 
-        const twoRepo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
-        const twoEmail = jest.fn()
-        await run(twoRepo, {terminals: {get: () => 2}, sendEmail: twoEmail})
-        expect(twoEmail.mock.calls[0][0].content).toContain('2 terminal sessions')
+    test('an instance running only terminals reads as running nothing', async () => {
+        const repo = makeRepo([session({notificationState: 'NOTIFIED', notifiedTime: minutesAgo(6)})])
+        const sendEmail = jest.fn()
+        await run(repo, {terminals: {get: () => 3}, sendEmail})
+        expect(sendEmail.mock.calls[0][0].content).not.toContain('running on it')
     })
 
     test('an instance with nothing on it says so by saying nothing', async () => {

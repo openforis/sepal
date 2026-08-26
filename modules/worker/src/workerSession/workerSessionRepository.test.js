@@ -472,6 +472,43 @@ describe('closeExpiredSession', () => {
     })
 })
 
+describe('redeemTermination', () => {
+    const notifiedTime = new Date('2026-01-01T11:00:00Z')
+
+    // The email's terminate link is guarded on the SAME notified_time as the extend link, for the
+    // same reason: any extension clears it, so a stale link cannot kill an instance whose owner
+    // went back to work. It carries no grace or task predicate — unlike the sweep's close, this is
+    // someone explicitly asking, which is what the in-app [Terminate now] button does too.
+    test('is guarded on the notified_time the token was signed against', async () => {
+        query.mockResolvedValue([{affectedRows: 1}, []])
+        await repo.redeemTermination({sessionId: 's-1', notifiedTime})
+        const [sql, params] = query.mock.calls[0]
+        expect(sql).toMatch(/SET state = 'CLOSED'/i)
+        expect(sql).toMatch(/api_key = NULL/i)
+        expect(sql).toMatch(/state = 'ACTIVE'/i)
+        expect(sql).toMatch(/notified_time = \?/i)
+        expect(sql).not.toMatch(/INTERVAL/i)
+        expect(sql).not.toMatch(/NOT EXISTS/i)
+        expect(params).toEqual(['s-1', notifiedTime])
+    })
+
+    test('a rescued session is left open and keeps its app associations', async () => {
+        const deleteForSession = jest.fn(async () => {})
+        const repo = createWorkerSessionRepository(null, clock, {deleteForSession})
+        query.mockResolvedValue([{affectedRows: 0}, []])
+        expect(await repo.redeemTermination({sessionId: 's-1', notifiedTime})).toBe(false)
+        expect(deleteForSession).not.toHaveBeenCalled()
+    })
+
+    test('a real termination cascades the app associations', async () => {
+        const deleteForSession = jest.fn(async () => {})
+        const repo = createWorkerSessionRepository(null, clock, {deleteForSession})
+        query.mockResolvedValue([{affectedRows: 1}, []])
+        expect(await repo.redeemTermination({sessionId: 's-1', notifiedTime})).toBe(true)
+        expect(deleteForSession).toHaveBeenCalledWith('s-1')
+    })
+})
+
 describe('redeemExtension', () => {
     // The HMAC alone proves only that the token is well-formed — two concurrent clicks both
     // verify. Single-use comes from the write.
