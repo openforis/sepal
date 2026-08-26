@@ -18,10 +18,15 @@ This subsystem owns:
 It does not own task atomicity. A Retrieve task consumes its accepted execution bundle even if the live catalogue
 changes afterward.
 
+This catalogue is not a prerequisite for the first Masking robustness slice, Apply-mask stabilization, constant
+Fill or direct asset Fill. Those milestones may use the shared dependency graph and existing session events without
+introducing cross-session backend resolution. Recipe-backed freshness waits for caller-authorized reads and content
+digests from the Node replacement for `sepal-server`.
+
 ## Catalogue boundary
 
-The pure source contract is storage-agnostic. The CCDC Slice vertical implementation decides whether Redux or a
-plain observable store best fits existing GUI lifecycle and DevTools needs. React components consume selectors or
+The pure source contract is storage-agnostic. The first catalogue-backed consumer decides whether Redux or a plain
+observable store best fits existing GUI lifecycle and DevTools needs. React components consume selectors or
 observables; they do not traverse dependencies, parse asset naming conventions or maintain copied source state.
 
 Catalogue keys include:
@@ -80,12 +85,14 @@ Refresh active sources:
 4. when returning to an active recipe after browser-tab inactivity;
 5. on a bounded timer for active asset sources;
 6. before Preview or Retrieve when the current observation is older than policy allows;
-7. on an explicit user Refresh command if the CCDC slice demonstrates that it is useful.
+7. on an explicit user Refresh command if a migrated consumer demonstrates that it is useful.
 
 Do not periodically resolve every transitive recipe graph through Earth Engine. For recipes changed in the current
-session, use existing state events. For cross-session changes, check a cheap recipe revision first and resolve the
-graph only when that revision changed. Asset refresh normally starts with metadata and performs bounded runtime
-inspection only when the consumer contract needs it.
+session, use existing state events. For cross-session changes, compare the content digest returned with an
+authorized recipe read and resolve the graph only when that digest changed. The current second-resolution recipe
+`update_time` is not sufficient evidence. Cross-session recipe refresh remains deferred until the Node server
+replacement can return content and digest from the same storage boundary. Asset refresh normally starts with
+metadata and performs bounded runtime inspection only when the consumer contract needs it.
 
 Only actively consumed sources need scheduled refresh. Inactive entries may remain for the GUI session.
 
@@ -119,7 +126,8 @@ Background validation while a recipe is open should detect:
 ## Recipe freshness and dependencies
 
 A recipe description depends on the root model and every output-relevant transitive edge. Local changes invalidate
-the affected graph immediately. Remote changes are discovered through recipe revision checks.
+the affected graph immediately. Once the authorized Node storage boundary exists, remote changes are discovered
+through recipe content-digest checks.
 
 Opening a recipe performs background existence and dependency validation using the diagnoses defined by
 [source-resolution.md](source-resolution.md). Cycle prevention, deletion behavior and execution eligibility are
@@ -199,22 +207,23 @@ Emit low-cardinality Prometheus metrics and access-controlled structured logs fo
 - in-flight deduplication and stale response rejection;
 - source age at Preview and Retrieve;
 - transient overrides and definitive blocks;
-- recipe revision changes and asset `updateTime` changes;
+- recipe content-digest changes and asset `updateTime` changes;
 - map invalidations caused by resolved-graph changes.
 
 Do not label metrics with recipe IDs, asset IDs or usernames.
 
 Stale responses overwriting a newer epoch and cache hits crossing a SEPAL or Earth Engine principal are contract
 violations whose counters must remain zero. Any non-zero value requires investigation. Refresh latency, transient
-failure rate, observation age, catalogue growth and invalidation-rate thresholds are set after the CCDC slice
-establishes normal behavior. Visualization-only invalidation is product telemetry rather than an operational page.
+failure rate, observation age, catalogue growth and invalidation-rate thresholds are set after the first
+catalogue-backed consumer establishes normal behavior. Visualization-only invalidation is product telemetry rather
+than an operational page.
 
 ## Verification
 
 Pure tests own catalogue transitions, canonical fingerprinting, epochs, stale-while-revalidate, in-flight
 deduplication, account invalidation, dependency memoization and expectation reconciliation.
 
-Focused GUI tests cover the CCDC source boundary and a late-response race without broad component rendering.
+Focused GUI tests cover each migrated source boundary and a late-response race without broad component rendering.
 Environment witnesses prove the shared contract loads through the GUI build and GEE/Task runtimes.
 
 Manual acceptance is limited to browser behavior that pure tests cannot establish:
@@ -227,7 +236,7 @@ Manual acceptance is limited to browser behavior that pure tests cannot establis
 
 ## Open decisions
 
-- Redux versus a dedicated observable catalogue after the CCDC vertical slice.
+- Redux versus a dedicated observable catalogue after the first catalogue-backed slice.
 - Refresh interval and freshness threshold based on measured cost.
 - Whether an explicit Refresh command improves recovery.
 - Collection schema policy for each migrated consumer.

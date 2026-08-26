@@ -1,8 +1,9 @@
 # Recipe data sources - architecture and roadmap
 
 Technical index for aligning how SEPAL recipes consume other recipes and Earth Engine assets. This is a
-cross-recipe concern. CCDC Slice is the first proving case; Mask and Fill is the first decorator expected to use
-the resulting contracts. User-facing documentation belongs in the separate `sepal-doc` repository.
+cross-recipe concern. Masking is the first production consumer of the dependency graph; CCDC Slice and
+Classification are later witnesses for capability derivation. User-facing documentation belongs in the separate
+`sepal-doc` repository.
 
 ## Status
 
@@ -13,11 +14,15 @@ metadata.
 
 At the recorded baseline, live nested-recipe loading in GEE uses ambient SEPAL administrator credentials. That is
 a longstanding fail-open authorization defect, not a capability gap. Record it separately and do not broaden that
-backend path. Caller-aware loading must replace it before the new resolver is activated for Preview or Retrieve,
-but it does not block pure contracts, edge inventory or GUI-facing source-description work.
+backend path. Caller-aware loading depends on the replacement of `sepal-server` by the new Node modules and must
+not be implemented temporarily in the current Groovy module. Until that replacement reaches `master`, do not
+activate any new production path that loads referenced recipes through the backend. This blocks recursive live
+resolution, recipe Fill and execution bundles, but not pure contracts, broad edge inventory, dependency safety in
+existing paths, Apply-mask stabilization or constant Fill.
 
-Do not add another recipe-specific synchronization component. Implementation should proceed as a vertical CCDC
-Slice migration that introduces only the common machinery required by that slice.
+Do not add another recipe-specific synchronization component. Declare edges broadly enough to exercise the
+contract, but activate the graph narrowly through Masking. Each milestone must correct an existing defect or ship
+a usable Mask and Fill increment without requiring the rest of the architecture to land.
 
 The revision-specific inventory in `mask.md` was recorded against commit
 `75cfcc8c1f69d7871607006ad3beef95a270ff3d`. Later audits must record a new baseline rather than silently treating
@@ -119,94 +124,119 @@ Normative policy appears only in the owning design document:
 This index records implementation order and scope. When a summary here appears to conflict with an owning
 document, the owning document is authoritative and this index must be corrected.
 
-## First vertical slice: CCDC Slice
+## First production slice: Masking robustness
 
-CCDC Slice exercises the required architecture without attempting a repository-wide migration:
+Masking exercises the dependency graph before capability, catalogue and bundle work:
 
-- direct CCDC recipes and CCDC assets;
-- an optional transitive Classification dependency;
-- Asset and future Mask and Fill wrappers;
-- physical bands, semantic CCDC measures and derived Slice output bands;
-- copied source snapshots and visualizations that can become stale;
-- Preview and Retrieve through the same source contract.
+- primary and mask edges with different semantic roles;
+- direct and indirect cycles, missing sources and incomplete references;
+- outer execution identity versus terminal semantic identity;
+- direct and transitive map invalidation;
+- stale copied band and visualization snapshots;
+- controlled Retrieve capability handling instead of a date-range crash.
 
-The slice is complete when supported direct sources and wrappers resolve through one shared contract, produce the
-same validated `CCDC_SEGMENTS` description, derive exact Slice output bands, and stop persisting refreshed source
-descriptions as authoritative model state.
+The shared definitions still include CCDC, CCDC Slice and at least one AOI-bearing recipe so the edge contract is
+not shaped around a two-edge decorator. Those definitions remain inactive at runtime. The slice is complete when
+Masking uses one cycle-safe dependency traversal, Apply mask is stable across Preview and Retrieve, and the known
+dependency defects fail predictably without introducing new backend recipe loads.
 
-The migration must be reversible until acceptance is complete. Keep the old path behind a narrow CCDC Slice
-switch or similarly scoped coexistence boundary; do not leave two generic resolvers active indefinitely.
+The migration must be reversible until acceptance is complete. Keep coexistence boundaries local to the migrated
+Masking paths; do not leave two generic dependency resolvers active indefinitely.
 
 ## Implementation order
 
-### 1. Shared contract and graph inventory
+Each numbered milestone is an independent merge candidate. Do not hold a completed robustness correction or usable
+Fill mode on this branch until later architecture is ready. The external Node-server prerequisite blocks only the
+milestones that follow it; steps 1 through 5 can land on `master` independently.
+
+### 1. Shared edge contract and broad inventory
 
 - Define canonical references and role-bearing edges, including recipe-backed AOIs and other references outside
   image-input sections.
+- Declare Masking, CCDC, CCDC Slice and representative AOI-bearing recipes, while activating only Masking.
 - Add sanitized persisted-model fixtures and test-only completeness checks for inventoried recipe types.
-- Define the initial `IMAGE_OUTPUT` and `CCDC_SEGMENTS` descriptions and expectations without changing live recipe
-  loading.
-- Add pure completeness, AOI-closure, capability and diagnostic tests.
+- Add pure completeness, AOI-closure, reference and diagnostic tests without changing live recipe loading.
 
-Exit criterion: every canonical reference in the CCDC proving models is declared or explicitly classified as a
-non-edge, and representative source descriptions can be derived without new backend traversal.
+Exit criterion: every canonical reference in the proving models is declared or explicitly classified as a
+non-edge, Masking has complete role-bearing edges, and no production resolver is activated.
 
-### 2. Caller authorization and backend activation
+### 2. Pure graph traversal and Masking dependency safety
 
-- Implement caller-aware recipe loading in the Node replacement for `sepal-server` when available. Use only a
-  minimal ownership-enforcing Groovy change if activation must precede the port.
-- Require a trusted SEPAL principal for every live recipe load and remove ambient administrator recipe access from
-  GEE once its replacement is active.
-- Keep graph traversal, capability derivation, cache and bundle logic in JavaScript and out of server endpoints.
-- Add permanent two-user authorization, missing-principal and cache-isolation tests.
+- Add deterministic traversal with memoized diamonds, a visited set, dependency paths and stable diagnoses.
+- Make every Masking edge participate in cycle, missing-source and output-validity checks while only the primary
+  edge supplies semantic lineage.
+- Correct map invalidation so direct dependencies are retained while descendants are traversed.
+- Add backend cycle protection to the existing Masking execution path without adding a new recipe-loading path.
+- Keep the outer Masking reference as execution identity and report unsupported downstream semantics explicitly.
 
-Exit criterion: a fixture owner can resolve a graph, another user cannot resolve the same recipe, omission of the
-principal fails closed, and no expanded backend resolver can use the legacy administrator-loading path.
+Exit criterion: direct and indirect cycles, missing sources and incomplete references are controlled errors; every
+direct and transitive dependency invalidates the map once; the existing happy path is unchanged.
 
-### 3. CCDC resolution and execution slice
+### 3. Stabilize Apply mask
 
-- Define pure shared references, structured edges, `IMAGE_OUTPUT`, `CCDC_SEGMENTS`, source descriptions,
-  expectations and stable diagnostics.
-- Introduce explicit live and bundled resolution contexts.
-- Build coherent, bounded execution bundles under caller authorization.
-- Make CCDC Slice the first consumer, including direct assets, direct recipes and supported wrappers.
-- Prevent cycles when a reference is selected and validate them again server-side.
-- Index declared edges for recipes using shared definitions and apply the non-cascading deletion warning policy.
-- Reject unsupported bundle versions and derive initial graph limits from the measured task path.
-- Establish legacy handling and a rollback switch for the migrated path.
+- Capture current Earth Engine behavior and legacy first-mask-band semantics.
+- Add explicit mask-band selection for newly edited recipes.
+- Stop treating copied bands and visualizations as authoritative source state.
+- Correct Retrieve capability handling, including the current date-range failure.
+- Verify Preview, map rendering, Retrieve and exported metadata while preserving outer execution identity.
 
-Exit criterion: CCDC Slice Preview and Retrieve use the new resolver end to end without copied authoritative
-source state, while the old path can still be restored without reverting unrelated work.
+Exit criterion: Apply mask is behaviorally stable, stale source snapshots cannot silently win, and every supported
+workflow executes the Masking recipe rather than its semantic source.
 
-### 4. Freshness for the migrated slice
+### 4. Ship constant Fill
 
-- Add the minimum session catalogue needed by CCDC Slice.
-- Refresh active recipe and asset sources with request epochs and in-flight deduplication.
-- Validate saved expectations on open and before Preview or Retrieve.
-- Refresh the map when the conservative resolved-graph fingerprint changes.
-- Measure request cost, cache entry size and refresh latency before setting policy values.
+- Add the operation discriminator with legacy Apply mask as its default.
+- Implement a finite constant replacement for selected target bands.
+- Preserve output band names, order, metadata and the primary footprint.
+- Validate malformed saved models at both form and backend boundaries.
 
-Exit criterion: edits in another tab, asset replacement under the same ID, missing dependencies and stale
-responses produce deterministic refresh or controlled diagnostics.
+Exit criterion: constant Fill works in Preview and Retrieve and introduces no fill dependency, recipe catalogue,
+bundle, provenance or caller-aware loading requirement.
 
-### 5. Visualization migration
+### 5. Add direct asset Fill
 
-- Normalize source presets and user-defined styles without copying source-owned entries into consuming models.
-- Validate styles against current output bands and generic value semantics.
-- Align map selection and Retrieve metadata filtering.
-- Keep invalid saved selections visible without silently remapping them.
+- Add explicit name-based target-to-replacement band mapping.
+- Resolve the replacement through the user's linked Earth Engine identity.
+- Verify masks, projections and footprint behavior without introducing new recipe loading.
 
-Exit criterion: source palette, label, preset and band changes refresh or invalidate every supported visualization
-consistently.
+Exit criterion: asset Fill is validated end to end and cannot silently remap bands by position.
 
-### 6. Mask and Fill
+### External prerequisite: Node server replacement
 
-- Apply explicit capability preservation to Asset and Masking recipes.
-- Preserve outer execution identity through nested decorators.
-- Validate primary, mask and fill dependencies and selected bands by name.
-- Resume the user-facing fill implementation in `mask.md`.
+Caller-authorized recipe loading is blocked until the current Groovy `sepal-server` has been replaced and split
+into the planned Node modules. Do not build a temporary Groovy endpoint or broaden the administrator-loading path.
+After the replacement merges:
 
-### 7. Further migrations
+- require a trusted SEPAL principal for every recipe read;
+- return recipe content and its content digest from one authorized storage boundary;
+- add permanent owner/non-owner, missing-principal and cache-isolation tests;
+- remove ambient administrator recipe access from GEE when its replacement owns every legitimate read.
+
+Graph traversal, capability derivation, caching and bundle construction remain shared JavaScript concerns rather
+than server endpoint logic.
+
+### 6. Add recipe Fill
+
+- Activate caller-authorized resolution for the fill reference.
+- Reuse the shared graph for cycles, missing sources and execution-versus-semantic identity.
+- Apply the same explicit band mapping and output-preservation contract as asset Fill.
+
+### 7. Add coherent execution and freshness infrastructure
+
+- Introduce live and bundled resolution contexts only after authorized loading exists.
+- Persist a content digest with new saves and lazily derive it for legacy rows over versioned canonical persisted
+  recipe content.
+- Build bundles by loading the closure and coherently rechecking every digest with bounded retries.
+- Add the minimum session catalogue, conservative graph fingerprint and race-safe refresh required by the first
+  catalogue-backed consumer.
+
+### 8. Migrate CCDC Slice capabilities and visualizations
+
+- Define and activate `IMAGE_OUTPUT` and `CCDC_SEGMENTS` from actual CCDC and CCDC Slice behavior.
+- Derive exact Slice output bands and source visualizations without authoritative copied snapshots.
+- Migrate Preview, map selection and Retrieve filtering together.
+
+### 9. Further migrations
 
 Migrate one consumer family at a time. Likely groups are alert recipes, Stack and Band Math, generic image inputs,
 Classification/Regression reuse, and Sampling Design. Every migration needs a stated stopping rule, coexistence
@@ -219,4 +249,6 @@ plan and removal of the superseded local synchronization path.
 - Fine-grained data/schema/presentation fingerprints.
 - Automatic repair of missing band selections.
 - One repository-wide migration commit.
-- User-facing Mask and Fill work before the CCDC foundation is proven.
+- Recipe Fill before the Node server replacement supplies caller-authorized reads.
+- Execution bundles before recipe content has reliable digest evidence.
+- CCDC capability migration as a prerequisite for constant Fill.

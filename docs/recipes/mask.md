@@ -19,9 +19,14 @@ unsafe.
 
 The common architecture is defined in [Recipe data sources](data-sources.md), [Source resolution, dependencies and
 execution](source-resolution.md), [Source freshness, caching and invalidation](source-freshness.md), and
-[Visualization ownership and validity](visualizations.md). Mask and Fill must consume that foundation after the
-CCDC Slice vertical slice proves it. It must not ship a local lineage resolver or another copied-source snapshot
-model.
+[Visualization ownership and validity](visualizations.md). Masking is the first production consumer of the shared
+dependency graph. It must not ship a local lineage resolver or another copied-source snapshot model, but it also
+must not wait for CCDC capabilities, caller-authorized recursive loading or execution bundles before its existing
+behavior is made safe.
+
+Constant Fill adds no dependency edge and can ship after Apply mask is stable. Asset Fill can follow through the
+existing linked Earth Engine identity. Recipe Fill is blocked until the Node replacement for `sepal-server`
+provides caller-authorized recipe reads; no temporary Groovy endpoint should be built for it.
 
 ## Current behavior
 
@@ -193,6 +198,10 @@ edges to that graph rather than introducing a local resolver. Before unmasking s
 - keep a visited set and provide the dependency chain in diagnostics;
 - handle nested pass-through recipes without losing the outer execution reference.
 
+The initial Masking activation may harden traversal and existing execution without adding a new backend recipe
+loader. Any feature that introduces additional live recipe reads remains blocked on the caller-authorized Node
+server boundary.
+
 ## Consumer inventory
 
 Recorded during the Phase 1 pass-through audit against commit
@@ -351,18 +360,15 @@ open product decision.
 
 ## Roadmap
 
-### Phase 1 - consume the source foundation
+### Phase 1 - establish dependency safety through Masking
 
-- Wait for the CCDC Slice vertical slice to prove the shared reference, edge, capability, live-resolution and
-  execution-bundle contracts.
 - Declare Mask and Fill's primary, mask and fill dependency roles through that shared contract.
 - Make semantic lineage follow only the primary edge while every edge participates in cycle and output validity.
-- Declare which capabilities Apply mask preserves and which Fill preserves, decorates or drops.
 - Keep the outer recipe ID in every downstream execution reference.
-- Obtain date range, bands, visualizations, legends and other semantics from resolved capabilities rather than
-  copied methods or terminal-type assumptions.
-- Replace direct type checks and broad "has a source" checks only as each affected consumer migrates.
+- Add pure cycle-safe traversal, including direct dependencies, diagnostics and a visited set.
+- Correct direct and transitive map invalidation and add cycle protection to existing backend execution.
 - Reject incomplete, incompatible, missing and cyclic chains without crashing.
+- Keep CCDC, CCDC Slice and AOI-bearing definitions as inactive contract witnesses rather than runtime migrations.
 
 ### Phase 2 - stabilize Apply mask
 
@@ -371,27 +377,52 @@ open product decision.
 - Validate missing and cyclic primary/mask references without relying on map-layer traversal.
 - Verify preview, band selection, geometry, retrieval and exported metadata.
 - Correct any stale upstream-band or visualization behavior found during the pass-through audit.
+- Correct Retrieve capability handling without replacing the outer execution reference.
 
-### Phase 3 - add Fill masked pixels
+### Phase 3 - ship constant Fill
 
 - Add the persisted operation discriminator with legacy Apply mask as its default.
-- Add constant and image/recipe replacement models.
-- Add target-band selection and deterministic target-to-replacement mapping.
+- Add one finite constant replacement and target-band selection.
 - Implement selected-band replacement without changing output order or untouched bands.
 - Keep the primary footprint and metadata.
 - Add backend validation for malformed saved models.
 
-### Phase 4 - compatibility acceptance
+Constant Fill has no new source edge. It does not require caller-authorized recipe loading, execution bundles, a
+source catalogue, provenance or CCDC capability derivation.
 
+### Phase 4 - add direct asset Fill
+
+- Add an Earth Engine asset replacement through the user's linked Earth Engine identity.
+- Persist deterministic target-to-replacement mapping by band name.
+- Verify same-CRS and cross-CRS replacement images, replacement masks and footprint retention.
+- Do not introduce recipe loading through this path.
+
+### Blocked milestone - add recipe Fill
+
+Recipe Fill waits for the Node replacement for `sepal-server` to expose caller-authorized recipe reads. Do not add
+an interim Groovy implementation and do not route it through ambient administrator credentials. Once that boundary
+exists:
+
+- add a recipe replacement through the shared dependency graph;
+- apply the same explicit name-based band mapping as asset Fill;
+- reject missing, forbidden and cyclic fill dependencies with stable diagnostics;
+- keep the selected outer fill recipe as its execution identity.
+
+### Phase 5 - capability and compatibility acceptance
+
+- Declare which capabilities Apply mask and each Fill mode preserve, decorate or drop.
+- Obtain date range, bands, visualizations, legends and other semantics from resolved capabilities rather than
+  copied methods or terminal-type assumptions.
+- Replace direct type checks and broad "has a source" checks only as each affected consumer migrates.
 - Exercise direct and nested Mask and Fill recipes in generic image inputs.
 - Exercise masked and filled results in every consumer whose required capability is preserved, and verify controlled
   rejection wherever it is not.
 - Confirm that downstream calculations execute the outer wrapper rather than its semantic source.
 - Confirm source edits, deletion, missing bands and dependency cycles fail predictably.
-- Verify same-CRS and cross-CRS replacement images, differing masks and differing footprints.
+- Verify differing masks and differing footprints.
 - Retrieve to each supported destination and inspect bands, values, masks, metadata and footprint.
 
-### Phase 5 - user-facing work
+### Phase 6 - user-facing work
 
 - Update the visible recipe name and concise panel text.
 - Add a shortcut from an EE Asset or recipe only if creating the utility recipe remains unnecessarily cumbersome.

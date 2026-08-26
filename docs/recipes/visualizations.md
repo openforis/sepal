@@ -134,16 +134,22 @@ Existing recipes can contain copied source visualizations. During migration:
 - do not silently rewrite a missing or incompatible selection;
 - write normalized ownership only when the user edits or saves through the migrated path.
 
-The CCDC Slice migration should record real legacy shapes before defining automatic reconciliation rules.
+Each migrated consumer should record real legacy shapes before defining automatic reconciliation rules. Masking's
+copied band and visualization snapshots are the first such evidence; CCDC Slice remains the broader preset and
+capability witness.
 
 ## Implementation order
 
 1. Reserve `sourceVisualizations` and ownership in the common source description.
-2. During the CCDC Slice vertical slice, derive its presets from current source capabilities and Slice output bands.
-3. Migrate CCDC map selection and Retrieve filtering together.
-4. Apply decorator forwarding rules to Asset and Mask and Fill.
-5. Migrate Stack, Band Math and generic image layers one family at a time.
-6. Remove copied source snapshots and superseded recipe-specific filtering only after each consumer is accepted.
+2. Stabilize Apply mask by preserving compatible source styles and preventing stale copied snapshots from becoming
+   authoritative.
+3. Define constant Fill invalidation rules, especially for categorical values, without waiting for a catalogue or
+   execution bundle.
+4. After caller-authorized loading and catalogue infrastructure exist, derive CCDC Slice presets from current
+   source capabilities and Slice output bands, then migrate CCDC map selection and Retrieve filtering together.
+5. Apply the same ownership rules to direct asset Fill and, after the Node server replacement, recipe Fill.
+6. Migrate Stack, Band Math and generic image layers one family at a time.
+7. Remove copied source snapshots and superseded recipe-specific filtering only after each consumer is accepted.
 
 ## Observability
 

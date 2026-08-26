@@ -43,16 +43,18 @@ supplies it. Omitting the principal fails before any recipe is loaded.
 
 The resolver remains JavaScript so recipe-type edge extraction and traversal have one implementation. A
 caller-aware server boundary enforces access and returns authorized recipe records; it does not duplicate edge or
-capability logic in a server endpoint. Recipe contents and revision must eventually be observed together, and the
-complete closure needs a bounded coherent revision recheck. Whether the Node server exposes this as batch HTTP,
-an internal repository adapter or both is an implementation decision, not a prerequisite for the pure contract.
+capability logic in a server endpoint. Recipe contents and a reliable content digest must eventually be observed
+together, and the complete closure needs a bounded coherent digest recheck. Whether the Node server exposes this
+as batch HTTP, an internal repository adapter or both is an implementation decision, not a prerequisite for the
+pure contract.
 
 The current GEE administrator-loading path is longstanding and remains unchanged while pure contracts, edge
 inventory and GUI-facing source descriptions are developed. Do not expand or reuse it for the new resolver. Before
-the resolver is activated for Preview or Retrieve, caller-aware loading must replace it. Prefer implementing that
-boundary in the Node replacement for `sepal-server`; use only a minimal ownership-enforcing Groovy change if
-activation must happen first. Graph traversal, capability derivation, bundle construction and cache behavior remain
-in JavaScript.
+the resolver is activated for any new Preview or Retrieve path, caller-aware loading must replace it. That boundary
+is blocked on the planned Node replacement for `sepal-server`. Do not implement a temporary Groovy endpoint or
+activate a new backend recipe-loading path before that replacement reaches `master`. Pure graph contracts,
+in-memory traversal and hardening of existing Masking paths may proceed. Graph traversal, capability derivation,
+bundle construction and cache behavior remain in JavaScript.
 
 Ambient SEPAL administrator credentials must not be reachable from generic recipe resolution. The existing GEE
 configuration credentials are removed when caller-aware loading replaces their only GEE use, or narrowly scoped if
@@ -211,6 +213,22 @@ missing, forbidden, incomplete, cyclic and incompatible.
 
 ## Coherent execution bundles
 
+Execution bundles are a later milestone, not a prerequisite for Masking dependency safety, Apply-mask
+stabilization, constant Fill or direct asset Fill. They require both caller-authorized loading from the Node server
+replacement and reliable recipe content-digest evidence.
+
+The current recipe `update_time` is a plain second-resolution SQL `TIMESTAMP`. Two saves in one second are therefore
+indistinguishable, so it must not be used as the coherent-build revision. The replacement storage boundary must
+return recipe content and a digest observed from that same persisted content. Prefer a digest over a monotonic
+revision: it is insensitive to clock and replication skew and can also support cheap cross-session freshness
+checks.
+
+The digest input is either the exact persisted recipe bytes or explicitly versioned canonical JSON. It must never
+be computed from a model after read-time enrichment or migration has changed it. New records store it atomically
+with each save. Existing records require no eager database backfill if the storage boundary derives and stores or
+returns the digest lazily when it is absent. The digest algorithm and canonicalization version are part of the
+storage contract.
+
 An execution bundle is a resolved recipe graph, not a cache entry:
 
 ```js
@@ -230,8 +248,8 @@ An execution bundle is a resolved recipe graph, not a cache entry:
 Bundle construction happens server-side under the caller's authorization. Missing and forbidden targets are
 reported without disclosing details the caller is not allowed to learn.
 
-Loading the graph sequentially is not itself atomic. The builder records each recipe revision, resolves the full
-closure, then rechecks those revisions. If any changed during construction, it retries the complete build a
+Loading the graph sequentially is not itself atomic. The builder records each recipe digest, resolves the full
+closure, then rechecks those digests. If any changed during construction, it retries the complete build a
 bounded number of times or reports a changing-source error. The accepted bundle contains complete recipe models,
 not references that the task worker later reloads.
 
@@ -321,12 +339,24 @@ loading. They never prove compatibility and are never silently rewritten.
 - Transiently unverifiable state can proceed only through an explicit override and is recorded as unverified.
 - Newly edited recipes migrate to the current model schema deliberately; opening a recipe does not rewrite it.
 
-Tightening validation will expose recipes that only partly work today. CCDC Slice rollout must measure this before
-strict enforcement expands to other recipe types.
+Tightening validation will expose recipes that only partly work today. Each activated recipe path must measure this
+before strict enforcement expands to another family.
 
-## CCDC Slice vertical slice
+## Activation sequence
 
-The first slice supports:
+Masking is the first production consumer of shared dependency traversal. Its initial scope is deliberately below
+the authorized live-resolution and bundle boundary:
+
+- declare primary and mask roles and reserve the future fill role;
+- detect direct and indirect cycles, missing sources and incomplete references;
+- preserve outer execution identity while following only the primary edge for semantic lineage;
+- correct direct and transitive map invalidation;
+- stabilize Apply mask and then ship constant Fill without adding a dependency.
+
+Direct asset Fill may follow because it uses the linked Earth Engine identity rather than loading another SEPAL
+recipe. Recipe Fill remains blocked on caller-authorized loading from the Node server replacement.
+
+CCDC Slice is a later capability and bundle witness. That slice supports:
 
 - direct CCDC recipes;
 - direct CCDC assets;
@@ -335,7 +365,7 @@ The first slice supports:
 - exact physical-to-semantic-to-Slice-output band derivation;
 - Preview and Retrieve through live and bundled resolution contexts.
 
-The `CCDC_SEGMENTS` capability advertises only measures supported by verified stored bands. For example, break
+The `CCDC_SEGMENTS` capability will advertise only measures supported by verified stored bands. For example, break
 confidence requires both magnitude and RMSE. CCDC Slice derives its own `IMAGE_OUTPUT` from this capability and its
 local date mode and options.
 
@@ -344,7 +374,7 @@ local date mode and options.
 Emit low-cardinality Prometheus metrics and access-controlled structured logs for:
 
 - resolution duration, graph depth, node count and serialized bundle size;
-- bundle retries caused by changing recipe revisions;
+- bundle retries caused by changing recipe digests;
 - missing, forbidden, cyclic, incomplete and incompatible outcomes;
 - live versus bundled resolution;
 - verified versus explicitly unverified execution;
@@ -354,20 +384,22 @@ Emit low-cardinality Prometheus metrics and access-controlled structured logs fo
 Do not use recipe IDs, asset IDs or usernames as metric labels. They may appear in access-controlled structured
 logs where operationally necessary.
 
-The following counters represent contract violations and should remain zero: resolution without an explicit
-principal, unauthorized cross-owner resolution, missing recipe definitions, invalid or undeclared edges in
-inventoried recipe types, bundled execution attempting a live load, and unsupported bundles being interpreted. Any
-non-zero value requires investigation. Latency, retry, graph-size and user-diagnosis alert thresholds are set after
-the CCDC slice establishes a baseline.
+Once the corresponding paths are activated, the following counters represent contract violations and should
+remain zero: resolution without an explicit principal, unauthorized cross-owner resolution, missing recipe
+definitions, invalid or undeclared edges in inventoried recipe types, bundled execution attempting a live load,
+and unsupported bundles being interpreted. Any non-zero value requires investigation. Latency, retry, graph-size
+and user-diagnosis alert thresholds are set by the first production consumer of each mechanism rather than guessed
+globally.
 
 ## Verification
 
 Pure shared tests own traversal, diamonds, role handling, cycle paths, capability preservation, canonical
-fingerprints, bundle limits, coherent-revision retry decisions, legacy evidence and expectation validation.
+fingerprints, bundle limits, coherent-digest retry decisions, legacy evidence and expectation validation.
 
-GUI, GEE and Task each need one environment-level import/execution witness for the shared contract. The CCDC slice
-adds focused boundary tests proving that Preview uses an ephemeral bundle, Task uses only its stored bundle, and
-missing bundle members cannot fall back to live loading.
+GUI, GEE and Task each need one environment-level import/execution witness for the shared contract. Masking adds
+focused boundary tests for its activated traversal and execution behavior. The later bundle slice proves that
+Preview uses an ephemeral bundle, Task uses only its stored bundle, and missing bundle members cannot fall back to
+live loading.
 
 Live verification covers representative recipe and asset graphs, actual CCDC bands, asset replacement during
 execution and every supported export destination. A permanent two-user authorization test proves that an owner can
@@ -378,7 +410,8 @@ credentials bypass the requested principal.
 
 - Exact initial capability shapes and versioning after the provisional generic categorical fields are exercised.
 - Measured bundle depth, node and serialized-byte limits across the complete task path.
-- Coherent-build retry count and batch recipe endpoint transport details.
+- Digest algorithm, canonicalization version, legacy-row materialization and coherent-build retry count.
+- Batch recipe endpoint transport details in the Node server replacement.
 - Whether and where detailed task manifests are retained.
 - Output handling when asset drift is detected after completion.
 - Trust mechanism for semantics that physical asset schema cannot verify.
