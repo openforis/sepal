@@ -30,9 +30,11 @@ const sessionManager = {
     userAppSessions: jest.fn(),
 }
 
+const sandboxServers = {ensureServerStarted: jest.fn()}
+
 const fixedClock = () => new Date('2026-07-01T12:00:00.000Z')
 const expiryPolicy = {mode: 'notify', graceMinutes: 60}
-const api = createSessionsApi({sessionManager, clock: fixedClock, expiryPolicy})
+const api = createSessionsApi({sessionManager, sandboxServers, clock: fixedClock, expiryPolicy})
 
 const ctx = (overrides = {}) => ({
     params: {},
@@ -621,6 +623,14 @@ test('serializes fresh usage and nulls stale or missing usage', () => {
 })
 
 // ── app ↔ session association ────────────────────────────────────────────────
+
+test('startServer ensures the endpoint server and answers 204, using currentUser (lowercased)', async () => {
+    const c = ctx({params: {sessionId: 's1', endpoint: 'jupyter'}})
+    await api.startServer(c)
+    expect(sandboxServers.ensureServerStarted).toHaveBeenCalledWith({
+        username: 'alice', sessionId: 's1', endpoint: 'jupyter'})
+    expect(c.status).toBe(204)
+})
 
 test('associateApp → 201, uses currentUser (lowercased), passes sessionId/path/label', async () => {
     sessionManager.associateApp.mockResolvedValue({sessionId: 's1', path: '/sandbox/shiny/foo', label: 'Foo'})

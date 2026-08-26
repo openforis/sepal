@@ -201,15 +201,19 @@ describe('resolveTarget', () => {
             .mockResolvedValueOnce(jsonResponse({id: 's1', host: 'the-host', status: 'ACTIVE'}))
         const mgr = create(fetch)
         await mgr.startEndpoint('h', endpoint)
-        expect(await mgr.resolveTarget('h', endpoint)).toEqual({host: 'the-host', port})
+        expect(await mgr.resolveTarget('h', endpoint)).toEqual({host: 'the-host', port, sessionId: 's1'})
         expect(PORT_BY_ENDPOINT[endpoint]).toBe(port)
     })
 
     test('cache-miss → worker fallback resolves host+port', async () => {
+        // Two responses, in the order resolveTarget asks for them: the app-path attribution runs
+        // first and must come up empty, or the legacy fallback this test is named for is never
+        // reached and the single-candidate branch answers instead.
         const fetch = jest.fn()
+            .mockResolvedValueOnce(jsonResponse([])) // GET /sessions/app-sessions → none
             .mockResolvedValueOnce(jsonResponse([{id: 's3', host: 'remote', status: 'ACTIVE', instanceType: 't'}]))
         const mgr = create(fetch)
-        expect(await mgr.resolveTarget('ivan', 'shiny')).toEqual({host: 'remote', port: 3838})
+        expect(await mgr.resolveTarget('ivan', 'shiny')).toEqual({host: 'remote', port: 3838, sessionId: 's3'})
     })
 
     test('none → null', async () => {
@@ -276,7 +280,7 @@ describe('heartbeat', () => {
         await mgr.status('leo', 'rstudio')
 
         const target = await mgr.resolveTarget('leo', 'rstudio', '/some/path')
-        expect(target).toEqual({host: 'h1', port: PORT_BY_ENDPOINT.rstudio})
+        expect(target).toEqual({host: 'h1', port: PORT_BY_ENDPOINT.rstudio, sessionId: 's1'})
         await mgr.heartbeatOnce()
         expect(heartbeatBodies(fetch)).toEqual([undefined])
     })
@@ -551,7 +555,7 @@ describe('resolveTarget per app', () => {
             {path: '/sandbox/shiny/foobar', sessionId: 's-2', host: 'h2', status: 'ACTIVE', instanceType: 'T3aSmall'}
         ]})})
         const target = await manager.resolveTarget('bob', 'shiny', '/api/sandbox/shiny/foobar/x')
-        expect(target).toEqual({host: 'h2', port: 3838})
+        expect(target).toEqual({host: 'h2', port: 3838, sessionId: 's-2'})
     })
 
     it('falls back to Referer attribution', async () => {
@@ -560,7 +564,7 @@ describe('resolveTarget per app', () => {
         ]})})
         const target = await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/sessions',
             'https://sepal.io/api/sandbox/jupyter/voila/render/foo.ipynb?x=1')
-        expect(target).toEqual({host: 'h1', port: 8888})
+        expect(target).toEqual({host: 'h1', port: 8888, sessionId: 's-1'})
     })
 
     it('falls back to the single candidate session', async () => {
@@ -568,7 +572,7 @@ describe('resolveTarget per app', () => {
             {path: '/sandbox/jupyter/voila/render/foo.ipynb', sessionId: 's-1', host: 'h1', status: 'ACTIVE', instanceType: 'T3aSmall'}
         ]})})
         const target = await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k-1/channels')
-        expect(target).toEqual({host: 'h1', port: 8888})
+        expect(target).toEqual({host: 'h1', port: 8888, sessionId: 's-1'})
     })
 
     it('does not count a cross-endpoint app as a single-candidate for another endpoint', async () => {
@@ -580,7 +584,7 @@ describe('resolveTarget per app', () => {
             {path: '/sandbox/jupyter/voila/render/b.ipynb', sessionId: 's-2', host: 'h2', status: 'ACTIVE', instanceType: 'T3aSmall'}
         ]})})
         const target = await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/sessions')
-        expect(target).toEqual({host: 'h2', port: 8888})
+        expect(target).toEqual({host: 'h2', port: 8888, sessionId: 's-2'})
     })
 
     it('probes candidate instances for an unknown kernel id when several sessions exist', async () => {
@@ -596,7 +600,7 @@ describe('resolveTarget per app', () => {
         // prime the app-path entries (kernel probe candidates come from cached entries)
         await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/voila/render/a.ipynb')
         const target = await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k-9/channels')
-        expect(target).toEqual({host: 'h2', port: 8888})
+        expect(target).toEqual({host: 'h2', port: 8888, sessionId: 's-2'})
         const probeCallsBefore = fetch.mock.calls.filter(([url]) => url.includes('/api/kernels/k-9')).length
         await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k-9/channels')
         const probeCallsAfter = fetch.mock.calls.filter(([url]) => url.includes('/api/kernels/k-9')).length
@@ -759,5 +763,77 @@ describe('app ownership (clientId passthrough)', () => {
         const manager = createManager({fetch: fetchStub({})})
         expect(() => manager.onAppDissociated({})).not.toThrow()
         expect(() => manager.onAppDissociated()).not.toThrow()
+    })
+})
+
+describe('ensureServerStarted', () => {
+    const startKey = 'POST /sessions/session/s-1/server/jupyter'
+
+    it('POSTs the worker start-server route once per (session, endpoint)', async () => {
+        const fetch = fetchStub({[startKey]: null})
+        const manager = createManager({fetch})
+        await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
+        await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
+        expect(fetch.keys.filter(key => key === startKey)).toHaveLength(1)
+    })
+
+    it('starts a second endpoint on the same session separately', async () => {
+        const fetch = fetchStub({
+            [startKey]: null,
+            'POST /sessions/session/s-1/server/shiny': null
+        })
+        const manager = createManager({fetch})
+        await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
+        await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'shiny'})
+        expect(fetch.requested(startKey)).toBe(true)
+        expect(fetch.requested('POST /sessions/session/s-1/server/shiny')).toBe(true)
+    })
+
+    it('does not cache a failed ensure', async () => {
+        // No route registered → the stub answers 404 → workerRequest throws.
+        const fetch = fetchStub({})
+        const manager = createManager({fetch})
+        await expect(manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'shiny'}))
+            .rejects.toThrow()
+        await expect(manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'shiny'}))
+            .rejects.toThrow()
+        expect(fetch.keys.filter(key => key === 'POST /sessions/session/s-1/server/shiny')).toHaveLength(2)
+    })
+
+    it('is a no-op without a sessionId, and for an unknown endpoint', async () => {
+        const fetch = fetchStub({})
+        const manager = createManager({fetch})
+        await manager.ensureServerStarted({username: 'bob', sessionId: null, endpoint: 'shiny'})
+        await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'sshd'})
+        expect(fetch.keys).toEqual([])
+    })
+})
+
+describe('startApp server start', () => {
+    it('ensures the endpoint server when the app is STARTED', async () => {
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [],
+            'GET /sessions/active': [{id: 's-2', host: 'h2', status: 'ACTIVE', instanceType: 'M6aXlarge'}],
+            'POST /sessions/session/s-2/app': {sessionId: 's-2', path: '/sandbox/shiny/foo', label: 'Foo'},
+            'POST /sessions/session/s-2/server/shiny': null
+        })
+        const manager = createManager({fetch})
+        const result = await manager.startApp({
+            username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', sessionId: 's-2'})
+        expect(result).toEqual({id: 's-2', status: 'STARTED'})
+        expect(fetch.requested('POST /sessions/session/s-2/server/shiny')).toBe(true)
+    })
+
+    it('still reports STARTED when the ensure fails - the proxy is the gate', async () => {
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [],
+            'GET /sessions/active': [{id: 's-2', host: 'h2', status: 'ACTIVE', instanceType: 'M6aXlarge'}],
+            'POST /sessions/session/s-2/app': {sessionId: 's-2', path: '/sandbox/shiny/foo', label: 'Foo'}
+            // no server route -> 404 -> the ensure rejects
+        })
+        const manager = createManager({fetch})
+        const result = await manager.startApp({
+            username: 'bob', endpoint: 'shiny', appPath: '/sandbox/shiny/foo', appLabel: 'Foo', sessionId: 's-2'})
+        expect(result).toEqual({id: 's-2', status: 'STARTED'})
     })
 })

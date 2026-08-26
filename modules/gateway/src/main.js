@@ -63,6 +63,7 @@ const main = async () => {
     })
     const sandboxProxy = createSandboxProxy({
         resolveTarget: sandboxSessionManager.resolveTarget,
+        ensureServerStarted: sandboxSessionManager.ensureServerStarted,
         sepalHost
     })
     const {handler: sandboxStartHandler} = sandboxStartRoute(sandboxSessionManager)

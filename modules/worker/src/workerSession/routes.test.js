@@ -37,6 +37,7 @@ const makeApi = () => ({
     mostRecentlyClosed: jest.fn(),
     activeSessions: jest.fn(),
     associateApp: jest.fn(),
+    startServer: jest.fn(),
     dissociateApp: jest.fn(),
     appSessions: jest.fn(),
     openSessions: jest.fn(),
@@ -86,6 +87,7 @@ const expected = [
     ['post', '/sessions/session/:sessionId/opened', requireAuth, 'openExtension'],
     ['post', '/sessions/session/:sessionId/dismiss-expiry', requireAuth, 'dismissExpiry'],
     ['post', '/sessions/session/:sessionId/app', requireAuth, 'associateApp'],
+    ['post', '/sessions/session/:sessionId/server/:endpoint', requireAuth, 'startServer'],
     ['delete', '/sessions/app', requireAuth, 'dissociateApp'],
     ['delete', '/sessions/session/:sessionId', requireAuth, 'closeSessionSelf'],
     ['delete', '/sessions/:username/session/:sessionId', requireAdmin, 'closeSessionOther'],
@@ -93,8 +95,8 @@ const expected = [
     ['post', '/sessions/api-key-authenticate', requireAdmin, 'apiKeyAuthenticate'],
 ]
 
-test('registers exactly 24 routes', () => {
-    expect(router.routes).toHaveLength(24)
+test('registers exactly 25 routes', () => {
+    expect(router.routes).toHaveLength(25)
 })
 
 // The extend link is clicked from an email, typically on a phone with no SEPAL session, so the

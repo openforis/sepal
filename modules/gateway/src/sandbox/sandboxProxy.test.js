@@ -147,19 +147,22 @@ describe('sandbox HTTP proxy', () => {
     let upstream, proxyServer
 
     const resolveTarget = jest.fn()
+    const ensureServerStarted = jest.fn(async () => {})
 
     const setup = async ({resolvesToUpstream = true, expectedPaths} = {}) => {
         upstream = await startUpstream({expectedPaths})
         if (resolvesToUpstream) {
-            resolveTarget.mockResolvedValue({host: upstream.host, port: upstream.port})
+            resolveTarget.mockResolvedValue({host: upstream.host, port: upstream.port, sessionId: 's-1'})
         }
-        const sandboxProxy = createSandboxProxy({resolveTarget, sepalHost: 'sepal.test'})
+        const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, sepalHost: 'sepal.test'})
         proxyServer = await startProxyServer(sandboxProxy)
         return sandboxProxy
     }
 
     afterEach(async () => {
         resolveTarget.mockReset()
+        ensureServerStarted.mockReset()
+        ensureServerStarted.mockResolvedValue(undefined)
         if (proxyServer) await proxyServer.close()
         if (upstream) await upstream.close()
     })
@@ -193,6 +196,22 @@ describe('sandbox HTTP proxy', () => {
         expect(res.status).toBe(200)
         expect(upstream.state.lastPath).toBe('/api/sandbox/jupyter/api/kernels/k1')
         expect(resolveTarget).toHaveBeenCalledWith('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k1', undefined)
+    })
+
+    test('ensures the endpoint server before the request reaches the upstream', async () => {
+        await setup({expectedPaths: ['/foo']})
+        const res = await get(proxyServer.port, '/api/sandbox/shiny/foo', 'alice')
+        expect(res.status).toBe(200)
+        expect(ensureServerStarted).toHaveBeenCalledWith({
+            username: 'alice', sessionId: 's-1', endpoint: 'shiny'})
+    })
+
+    test('a failing ensure yields 502 and never reaches the upstream', async () => {
+        await setup()
+        ensureServerStarted.mockRejectedValue(new Error('start failed'))
+        const res = await get(proxyServer.port, '/api/sandbox/shiny/foo', 'alice')
+        expect(res.status).toBe(502)
+        expect(upstream.state.lastPath).toBeNull()
     })
 
     test('resolveTarget null → 400 (endpoint not started)', async () => {
@@ -321,9 +340,12 @@ describe('sandbox HTTP proxy', () => {
 describe('sandbox WebSocket proxy', () => {
     let upstream, proxyServer
     const resolveTarget = jest.fn()
+    const ensureServerStarted = jest.fn(async () => {})
 
     afterEach(async () => {
         resolveTarget.mockReset()
+        ensureServerStarted.mockReset()
+        ensureServerStarted.mockResolvedValue(undefined)
         if (proxyServer) await proxyServer.close()
         if (upstream) await upstream.close()
     })
@@ -333,7 +355,7 @@ describe('sandbox WebSocket proxy', () => {
         // echo never round-trips, failing the test instead of silently passing.
         upstream = await startUpstream({expectedPaths: ['/ws']})
         resolveTarget.mockResolvedValue({host: upstream.host, port: upstream.port})
-        const sandboxProxy = createSandboxProxy({resolveTarget, sepalHost: 'sepal.test'})
+        const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, sepalHost: 'sepal.test'})
         proxyServer = await startProxyServer(sandboxProxy)
 
         const echoed = await new Promise((resolve, reject) => {
@@ -356,7 +378,7 @@ describe('sandbox WebSocket proxy', () => {
     test('jupyter kernel-channels ws keeps the /api/sandbox/jupyter path', async () => {
         upstream = await startUpstream({expectedPaths: ['/api/sandbox/jupyter/api/kernels/k1/channels']})
         resolveTarget.mockResolvedValue({host: upstream.host, port: upstream.port})
-        const sandboxProxy = createSandboxProxy({resolveTarget, sepalHost: 'sepal.test'})
+        const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, sepalHost: 'sepal.test'})
         proxyServer = await startProxyServer(sandboxProxy)
 
         const echoed = await new Promise((resolve, reject) => {
@@ -378,7 +400,7 @@ describe('sandbox WebSocket proxy', () => {
     test('ws upgrade preserves the ORIGINAL Host header (Jupyter kernel channels run the same origin check)', async () => {
         upstream = await startUpstream({expectedPaths: ['/api/sandbox/jupyter/api/kernels/k1/channels']})
         resolveTarget.mockResolvedValue({host: upstream.host, port: upstream.port})
-        const sandboxProxy = createSandboxProxy({resolveTarget, sepalHost: 'sepal.test'})
+        const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, sepalHost: 'sepal.test'})
         proxyServer = await startProxyServer(sandboxProxy)
 
         await new Promise((resolve, reject) => {
@@ -399,7 +421,7 @@ describe('sandbox WebSocket proxy', () => {
     test('ws upgrade with no session → socket closed with 400 (not started)', async () => {
         upstream = await startUpstream()
         resolveTarget.mockResolvedValue(null)
-        const sandboxProxy = createSandboxProxy({resolveTarget, sepalHost: 'sepal.test'})
+        const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, sepalHost: 'sepal.test'})
         proxyServer = await startProxyServer(sandboxProxy)
 
         await expect(new Promise((resolve, reject) => {
@@ -413,7 +435,7 @@ describe('sandbox WebSocket proxy', () => {
 
     test('ws upgrade calls proxy.ws with the resolved dynamic target + rewritten path', async () => {
         resolveTarget.mockResolvedValue({host: 'sandbox-host', port: 8787})
-        const sandboxProxy = createSandboxProxy({resolveTarget, sepalHost: 'sepal.test'})
+        const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, sepalHost: 'sepal.test'})
         const wsSpy = jest.spyOn(sandboxProxy._proxy, 'ws').mockResolvedValue()
 
         const req = {url: '/api/sandbox/rstudio/ws?token=abc', headers: {}}
@@ -430,7 +452,7 @@ describe('sandbox WebSocket proxy', () => {
     test('ws upgrade: a THROW from resolveTarget is caught (no unhandled rejection) → 502 + socket destroyed', async () => {
         // A rejected resolveTarget (not just null) must be handled, not escape as an unhandled rejection.
         resolveTarget.mockRejectedValue(new Error('resolve boom'))
-        const sandboxProxy = createSandboxProxy({resolveTarget, sepalHost: 'sepal.test'})
+        const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, sepalHost: 'sepal.test'})
         const wsSpy = jest.spyOn(sandboxProxy._proxy, 'ws').mockResolvedValue()
 
         const req = {url: '/api/sandbox/rstudio/ws', headers: {}}
@@ -444,9 +466,11 @@ describe('sandbox WebSocket proxy', () => {
 })
 
 describe('resolveTarget argument threading', () => {
+    const ensureServerStarted = jest.fn(async () => {})
+
     test('HTTP middleware passes the request pathname and referer to resolveTarget', async () => {
         const resolveTarget = jest.fn(async () => ({host: 'h1', port: 3838}))
-        const sandboxProxy = createSandboxProxy({resolveTarget, sepalHost: 'sepal.io'})
+        const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, sepalHost: 'sepal.io'})
         jest.spyOn(sandboxProxy._proxy, 'web').mockResolvedValue()
 
         const req = {
@@ -473,7 +497,7 @@ describe('resolveTarget argument threading', () => {
 
     test('ws upgrade passes the request pathname and referer to resolveTarget', async () => {
         const resolveTarget = jest.fn(async () => ({host: 'sandbox-host', port: 8787}))
-        const sandboxProxy = createSandboxProxy({resolveTarget, sepalHost: 'sepal.io'})
+        const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, sepalHost: 'sepal.io'})
         jest.spyOn(sandboxProxy._proxy, 'ws').mockResolvedValue()
 
         const req = {

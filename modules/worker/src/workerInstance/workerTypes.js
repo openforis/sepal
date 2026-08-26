@@ -45,8 +45,7 @@ const makeImage = ({name, exposedPorts = [], publishedPorts = {}, volumes = {}, 
     containerName: instance => `${name}.${instance.reservation.username}.${instance.id}`,
 })
 
-// publishedPorts is {hostPort: containerPort}; the waitCommand gets the container ports,
-// joined → '22;8787;3838;8888'.
+// publishedPorts is {hostPort: containerPort}; the waitCommand covers sshd only.
 const createSandboxWorkerType = (instance, config, apiKey) => {
     const username = instance.reservation.username
     const userHome = `${config.sepalHostDataDir}/sepal/home/${username}`
@@ -57,7 +56,10 @@ const createSandboxWorkerType = (instance, config, apiKey) => {
     const userPublicKey = fs.readFileSync(pubKeyPath, 'utf8')
 
     const publishedPorts = {222: 22, 8787: 8787, 3838: 3838, 8888: 8888}
-    const waitPorts = Object.values(publishedPorts).join(';')
+    // Only sshd is started at boot. rstudio/shiny/jupyter are started on first use
+    // (sandboxServerManager), so waiting for their ports here would reinstate the very delay
+    // this removes — the terminal must not wait for Jupyter.
+    const waitPorts = '22'
 
     return {
         id: SANDBOX,

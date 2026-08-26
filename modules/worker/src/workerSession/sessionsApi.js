@@ -94,7 +94,7 @@ const expiredPage = () => page(`
 <p>Either it was already used, or the instance has since been stopped or kept running some other
 way. Open SEPAL to check — your files are untouched either way.</p>`)
 
-const createSessionsApi = ({sessionManager, clock = () => new Date(), expiryPolicy = {}, expiryTokens = null}) => {
+const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Date(), expiryPolicy = {}, expiryTokens = null}) => {
     // hoursSince — ceil of the whole minutes since `date`, over 60. The minutes are FLOORED first,
     // so a 1h0m45s session is 60 min → 1h, not 2h.
     const hoursSince = date => {
@@ -288,6 +288,18 @@ const createSessionsApi = ({sessionManager, clock = () => new Date(), expiryPoli
         ctx.status = 204
     }
 
+    // POST /sessions/session/:sessionId/server/:endpoint → 204. Resolves only once the
+    // endpoint's server is listening, so the caller can proxy straight afterwards.
+    const startServer = async ctx => {
+        const {username} = selfUser(ctx)
+        await sandboxServers.ensureServerStarted({
+            username,
+            sessionId: ctx.params.sessionId,
+            endpoint: ctx.params.endpoint,
+        })
+        ctx.status = 204
+    }
+
     // GET /sessions/app-sessions → the user's app associations on open sessions.
     // Raw states are mapped to the REST status vocabulary ('STARTING' | 'ACTIVE').
     const appSessions = async ctx => {
@@ -469,6 +481,7 @@ const createSessionsApi = ({sessionManager, clock = () => new Date(), expiryPoli
         associateApp,
         dissociateApp,
         appSessions,
+        startServer,
         // all open sessions (admin; budget module boot seed + hourly reconciler)
         openSessions,
         // request

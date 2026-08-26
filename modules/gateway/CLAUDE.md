@@ -43,6 +43,14 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
   (GUI tab close, or a takeover before re-opening the app elsewhere) via worker
   `DELETE /sessions/app` and drops the cached app entry; the session stays open, so the app
   can be re-opened on a different instance.
+- **Lazy sandbox servers**: `rstudio`/`shiny`/`jupyter` are started on first use, so the proxy
+  calls `sandboxSessionManager.ensureServerStarted` BEFORE forwarding a request (both the HTTP
+  and the ws-upgrade path) — `resolveTarget` returns `sessionId` for that. Pre-flight rather than
+  retry-on-refused: httpxy has already begun consuming the request stream by the time a
+  connection error surfaces, so a bodied request could never be replayed. The ensure is memoized
+  per `(sessionId, endpoint)`, so it costs one worker round-trip and a Set lookup thereafter; a
+  failed ensure answers 502 (socket closed on ws) and is not cached. `startApp` also warms the
+  server, but BEST-EFFORT: the proxy is the authoritative gate.
 - **App ↔ client ownership (worker-owned)**: the downlink sends each browser its
   gateway-minted `clientId` right after ws connect; the GUI tags `POST`/`DELETE
   /api/sandbox/start` with it and the worker stores it on the association
