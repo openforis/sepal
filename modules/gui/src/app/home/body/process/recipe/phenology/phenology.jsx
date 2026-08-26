@@ -57,7 +57,6 @@ export default () => ({
     components: {
         recipe: Phenology
     },
-    getDependentRecipeIds: _recipe => [],
     getDateRange,
     getAvailableBands,
     getPreSetVisualizations,

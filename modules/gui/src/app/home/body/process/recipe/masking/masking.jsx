@@ -42,14 +42,6 @@ const Masking = compose(
     recipe({defaultModel, mapRecipeToProps})
 )
 
-const getDependentRecipeIds = recipe =>
-    [
-        (selectFrom(recipe, 'model.imageToMask') || {}),
-        (selectFrom(recipe, 'model.imageMask') || {}),
-    ]
-        .filter(({type}) => type === 'RECIPE_REF')
-        .map(({id}) => id)
-
 export default () => ({
     id: 'MASKING',
     labels: {
@@ -61,7 +53,6 @@ export default () => ({
         recipe: Masking
     },
     sourceRecipe: recipe => recipe.model.imageToMask,
-    getDependentRecipeIds,
     getAvailableBands,
     getPreSetVisualizations
 })

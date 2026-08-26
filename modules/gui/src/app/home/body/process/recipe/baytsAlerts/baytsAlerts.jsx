@@ -45,11 +45,6 @@ const BaytsAlerts = compose(
     recipe({defaultModel, mapRecipeToProps})
 )
 
-const getDependentRecipeIds = recipe => {
-    const {type, id} = selectFrom(recipe, 'model.reference') || {}
-    return type === 'RECIPE_REF' ? [id] : []
-}
-
 export default () => ({
     id: 'BAYTS_ALERTS',
     labels: {
@@ -61,7 +56,6 @@ export default () => ({
     components: {
         recipe: BaytsAlerts
     },
-    getDependentRecipeIds,
     getDateRange(recipe) {
         const monitoringEnd = moment.utc(recipe.model.date.monitoringEnd, 'YYYY-MM-DD')
         const monitoringStart = moment(monitoringEnd)

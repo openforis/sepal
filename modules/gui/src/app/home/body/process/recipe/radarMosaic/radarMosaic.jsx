@@ -60,7 +60,6 @@ export default () => ({
     components: {
         recipe: RadarMosaic
     },
-    getDependentRecipeIds: _recipe => [],
     getDateRange,
     getAvailableBands,
     getPreSetVisualizations

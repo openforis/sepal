@@ -74,11 +74,6 @@ const TimeSeries = compose(
     recipeAccess()
 )
 
-const getDependentRecipeIds = recipe => {
-    const classification = selectFrom(recipe, 'model.sources.classification')
-    return classification ? [classification] : []
-}
-
 export default () => ({
     id: 'TIME_SERIES',
     labels: {
@@ -91,7 +86,6 @@ export default () => ({
         recipe: TimeSeries
     },
     noImageOutput: true,
-    getDependentRecipeIds,
     getDateRange: recipe => [
         moment.utc(recipe.model.dates.startDate, 'YYYY-MM-DD'),
         moment.utc(recipe.model.dates.endDate, 'YYYY-MM-DD')

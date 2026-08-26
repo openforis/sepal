@@ -74,11 +74,6 @@ const CCDC = compose(
     recipeAccess()
 )
 
-const getDependentRecipeIds = recipe => {
-    const classification = selectFrom(recipe, 'model.sources.classification')
-    return classification ? [classification] : []
-}
-
 export default () => ({
     id: 'CCDC',
     labels: {
@@ -91,7 +86,6 @@ export default () => ({
         recipe: CCDC
     },
     noImageOutput: true,
-    getDependentRecipeIds,
     getDateRange: recipe => dateRange(recipe.model.dates),
     getAvailableBands,
     getPreSetVisualizations

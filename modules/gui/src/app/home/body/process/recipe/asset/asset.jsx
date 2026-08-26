@@ -66,7 +66,6 @@ export default () => ({
         type: 'ASSET',
         id: recipe.model.assetDetails.assetId
     }),
-    getDependentRecipeIds: () => [],
     getDateRange,
     getAvailableBands,
     getPreSetVisualizations

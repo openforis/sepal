@@ -9,18 +9,33 @@ import {withMapArea} from '~/app/home/map/mapAreaContext'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
-import {select} from '~/store'
 import {withSubscriptions} from '~/subscription'
 import {withTab} from '~/widget/tabs/tabContext'
 
 import {getRecipeImageLayer} from '../recipeImageLayerRegistry'
 import {getRecipeType} from '../recipeTypeRegistry'
+import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {getAllVisualizations, getUserDefinedVisualizations} from './visualizations'
 
-const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => ({
-    sourceId: id,
-    recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
-})
+// The graph is derived HERE rather than in the component, because an edit to a watched dependency has to
+// change these props for the layer to hear about it at all. Reading `process.loadedRecipes` whole is what
+// makes that possible; returning the derived graph rather than the object is what keeps an unrelated recipe
+// edit from propagating - connect's deep comparison sees identical props and suppresses the update.
+//
+// A selector runs on every dispatched action, not only on recipe edits, so the adapter caches the graph by the
+// identity of `loadedRecipes` and of the root recipe. Unrelated actions reuse it; any recipe edit produces new
+// objects and recomputes.
+const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => {
+    const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
+    const loadedRecipes = selectFrom(state, 'process.loadedRecipes')
+    return {
+        sourceId: id,
+        recipe,
+        dependencyGraph: recipe
+            ? buildMapDependencyGraph({recipe, loadedRecipes})
+            : null
+    }
+}
 
 class _RecipeImageLayer extends React.Component {
     cursorValue$ = new Subject()
@@ -111,8 +126,10 @@ class _RecipeImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$, tab: {busy}} = this.props
-        const recipes = [recipe, ...getDependentRecipes(recipe)]
+        const {recipe, dependencyGraph, layerConfig, map, boundsChanged$, dragging$, cursor$, tab: {busy}} = this.props
+        // The graph already starts with the root, so it is the complete watched list. Its diagnostics are
+        // carried but deliberately unread: reporting a missing dependency is a separate change.
+        const recipes = dependencyGraph.recipes
         const availableBands = getRecipeType(recipe.type).getAvailableBands(recipe)
         const dataTypes = _.mapValues(availableBands, 'dataType')
         const {watchedProps: prevWatchedProps} = this.layer || {}
@@ -144,14 +161,6 @@ class _RecipeImageLayer extends React.Component {
         updateLayerConfig({...layerConfig, visParams})
     }
 }
-
-const getDependentRecipes = recipe =>
-    getRecipeType(recipe.type)
-        .getDependentRecipeIds(recipe)
-        .map(recipeId => select(['process.loadedRecipes', recipeId]))
-        .filter(r => r)
-        .map(r => getDependentRecipes(r))
-        .flat()
 
 export const RecipeImageLayer = compose(
     _RecipeImageLayer,

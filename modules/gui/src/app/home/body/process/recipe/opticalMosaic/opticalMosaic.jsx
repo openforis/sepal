@@ -67,7 +67,6 @@ export default () => ({
     components: {
         recipe: OpticalMosaic
     },
-    getDependentRecipeIds: _recipe => [],
     getDateRange: recipe => dateRange(recipe.model.dates),
     getAvailableBands,
     getPreSetVisualizations

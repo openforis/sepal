@@ -47,11 +47,6 @@ const Stack = compose(
     recipe({getDefaultModel, mapRecipeToProps})
 )
 
-const getDependentRecipeIds = recipe =>
-    (selectFrom(recipe, 'model.inputImagery.images') || [])
-        .filter(({type}) => type === 'RECIPE_REF')
-        .map(({id}) => id)
-
 export default () => ({
     id: 'STACK',
     labels: {
@@ -62,7 +57,6 @@ export default () => ({
     components: {
         recipe: Stack
     },
-    getDependentRecipeIds,
     getDateRange(_recipe) {
         return null
     },

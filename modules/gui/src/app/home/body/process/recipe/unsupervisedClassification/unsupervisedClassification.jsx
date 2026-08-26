@@ -48,11 +48,6 @@ const UnsupervisedClassification = compose(
     recipe({getDefaultModel, mapRecipeToProps})
 )
 
-const getDependentRecipeIds = recipe =>
-    (selectFrom(recipe, 'model.inputImagery.images') || [])
-        .filter(({type}) => type === 'RECIPE_REF')
-        .map(({id}) => id)
-
 export default () => ({
     id: 'UNSUPERVISED_CLASSIFICATION',
     labels: {
@@ -63,7 +58,6 @@ export default () => ({
     components: {
         recipe: UnsupervisedClassification
     },
-    getDependentRecipeIds,
     getDateRange(_recipe) {
         return null
     },

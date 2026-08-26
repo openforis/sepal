@@ -60,7 +60,6 @@ export default () => ({
     components: {
         recipe: PlanetMosaic
     },
-    getDependentRecipeIds: _recipe => [],
     getDateRange,
     getAvailableBands,
     getPreSetVisualizations

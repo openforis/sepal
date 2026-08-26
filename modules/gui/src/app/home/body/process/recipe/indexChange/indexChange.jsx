@@ -50,14 +50,6 @@ const getDateRange = recipe => {
     return [moment.utc(startDate, 'YYYY-MM-DD'), moment.utc(endDate, 'YYYY-MM-DD')]
 }
 
-const getDependentRecipeIds = recipe =>
-    [
-        (selectFrom(recipe, 'model.fromImage') || {}),
-        (selectFrom(recipe, 'model.toImage') || {}),
-    ]
-        .filter(({type}) => type === 'RECIPE_REF')
-        .map(({id}) => id)
-
 export default () => ({
     id: 'INDEX_CHANGE',
     labels: {
@@ -69,7 +61,6 @@ export default () => ({
     components: {
         recipe: IndexChange
     },
-    getDependentRecipeIds,
     getDateRange,
     getAvailableBands,
     getPreSetVisualizations

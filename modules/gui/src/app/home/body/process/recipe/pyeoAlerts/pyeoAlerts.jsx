@@ -52,11 +52,6 @@ const getDateRange = recipe => {
     ]
 }
 
-const getDependentRecipeIds = recipe => {
-    const classificationId = selectFrom(recipe, 'model.sources.classification')
-    return classificationId ? [classificationId] : []
-}
-
 export default () => ({
     id: 'PYEO_ALERTS',
     labels: {
@@ -68,7 +63,6 @@ export default () => ({
     components: {
         recipe: PyeoAlerts
     },
-    getDependentRecipeIds,
     getDateRange,
     getAvailableBands,
     getPreSetVisualizations

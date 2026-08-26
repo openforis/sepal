@@ -42,11 +42,6 @@ const Remapping = compose(
     recipe({getDefaultModel, mapRecipeToProps})
 )
 
-const getDependentRecipeIds = recipe =>
-    (selectFrom(recipe, 'model.inputImagery.images') || [])
-        .filter(({type}) => type === 'RECIPE_REF')
-        .map(({id}) => id)
-
 export default () => ({
     id: 'REMAPPING',
     labels: {
@@ -57,7 +52,6 @@ export default () => ({
     components: {
         recipe: Remapping
     },
-    getDependentRecipeIds,
     getDateRange(_recipe) {
         return null
     },

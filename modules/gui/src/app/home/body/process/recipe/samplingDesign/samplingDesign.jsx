@@ -68,11 +68,6 @@ const SamplingDesign = compose(
     recipeAccess()
 )
 
-const getDependentRecipeIds = recipe => {
-    const classification = selectFrom(recipe, 'model.sources.classification')
-    return classification ? [classification] : []
-}
-
 export default () => ({
     id: 'SAMPLING_DESIGN',
     labels: {
@@ -85,7 +80,6 @@ export default () => ({
         recipe: SamplingDesign
     },
     noImageOutput: true,
-    getDependentRecipeIds,
     getDateRange: () => undefined,
     getAvailableBands,
     getPreSetVisualizations

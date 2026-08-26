@@ -58,7 +58,6 @@ export default () => ({
     components: {
         recipe: BaytsHistorical
     },
-    getDependentRecipeIds: _recipe => [],
     getDateRange,
     getAvailableBands,
     getPreSetVisualizations,

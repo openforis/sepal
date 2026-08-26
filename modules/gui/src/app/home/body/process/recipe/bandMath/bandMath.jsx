@@ -47,11 +47,6 @@ const BandMath = compose(
     recipe({getDefaultModel, mapRecipeToProps})
 )
 
-const getDependentRecipeIds = recipe =>
-    (selectFrom(recipe, 'model.inputImagery.images') || [])
-        .filter(({type}) => type === 'RECIPE_REF')
-        .map(({id}) => id)
-
 export default () => ({
     id: 'BAND_MATH',
     labels: {
@@ -62,7 +57,6 @@ export default () => ({
     components: {
         recipe: BandMath
     },
-    getDependentRecipeIds,
     getDateRange(_recipe) {
         return null
     },
