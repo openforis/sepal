@@ -130,18 +130,18 @@ program
             .default(15)
     )
     .addOption(
-        new Option('--manual-extension-minutes <number>', 'Extension from the in-app Extend button (default 15)')
+        new Option('--manual-extension-minutes <number>', 'Extension from the in-app Keep-it-running button (default 60)')
             .env('MANUAL_EXTENSION_MINUTES')
             .argParser(v => parseInt(v))
-            .default(15)
+            .default(60)
     )
     .addOption(
         // Its own key rather than sharing manualExtensionMinutes: delivery latency plus "find a
-        // laptop" is itself several minutes, so this one probably deserves to be larger.
-        new Option('--email-extension-minutes <number>', 'Extension from the email extend link (default 15)')
+        // laptop" is itself several minutes, so this one may deserve to be larger still.
+        new Option('--email-extension-minutes <number>', 'Extension from the email keep-running link (default 60)')
             .env('EMAIL_EXTENSION_MINUTES')
             .argParser(v => parseInt(v))
-            .default(15)
+            .default(60)
     )
     .addOption(
         // The hard bound on load-only extension, measured from the last human interaction (falling
@@ -201,7 +201,7 @@ program
             .default(500)
     )
     .addOption(
-        new Option('--session-expiry-secret <string>', 'HMAC secret for the email extend link (random per process if unset)')
+        new Option('--session-expiry-secret <string>', 'HMAC secret for the email action links (random per process if unset)')
             .env('SESSION_EXPIRY_SECRET')
     )
     .addOption(

@@ -49,8 +49,8 @@ const makeApi = () => ({
     extendNow: jest.fn(),
     openExtension: jest.fn(),
     dismissExpiry: jest.fn(),
-    extendPage: jest.fn(),
-    redeemExtendToken: jest.fn(),
+    expiryPage: jest.fn(),
+    redeemExpiryToken: jest.fn(),
     closeSessionSelf: jest.fn(),
     closeSessionOther: jest.fn(),
     closeUserSessions: jest.fn(),
@@ -99,11 +99,11 @@ test('registers exactly 25 routes', () => {
     expect(router.routes).toHaveLength(25)
 })
 
-// The extend link is clicked from an email, typically on a phone with no SEPAL session, so the
-// token in the path is the ONLY credential. Guarding these would make the link useless.
-test('the email extend routes carry no auth guard', () => {
+// The email links are clicked from a mail client, typically on a phone with no SEPAL session, so
+// the token in the path is the ONLY credential. Guarding these would make them useless.
+test('the email action routes carry no auth guard', () => {
     for (const method of ['get', 'post']) {
-        const route = find(router.routes, method, '/sessions/extend/:token')
+        const route = find(router.routes, method, '/sessions/expiry/:token')
         expect(route).toBeDefined()
         expect(route.middleware).not.toContain(requireAuth)
         expect(route.middleware).not.toContain(requireAdmin)
@@ -111,16 +111,16 @@ test('the email extend routes carry no auth guard', () => {
 })
 
 // A mutating GET would be fired by mail-client link scanners, URL-rewriting proxies and preview
-// fetchers, spending tokens for users who never opened the mail.
-test('the extend GET renders and the POST redeems', () => {
-    expect(find(router.routes, 'get', '/sessions/extend/:token').middleware.at(-1)).toBe(api.extendPage)
-    expect(find(router.routes, 'post', '/sessions/extend/:token').middleware.at(-1)).toBe(api.redeemExtendToken)
+// fetchers, spending tokens for users who never opened the mail — and for the terminate link that
+// means destroying an instance nobody asked to destroy. ONE route pair for both actions: the
+// action is inside the signed token, so there is no path segment to disagree with the signature.
+test('the expiry GET renders and the POST redeems', () => {
+    expect(find(router.routes, 'get', '/sessions/expiry/:token').middleware.at(-1)).toBe(api.expiryPage)
+    expect(find(router.routes, 'post', '/sessions/expiry/:token').middleware.at(-1)).toBe(api.redeemExpiryToken)
 })
 
-// /sessions/extend/:token must precede /sessions/session/:sessionId/extend-style literals only in
-// the sense that :username must not swallow it — it is registered first of all.
-test('the unauthenticated extend routes are registered before every guarded route', () => {
-    expect(router.routes[0].path).toBe('/sessions/extend/:token')
+test('the unauthenticated expiry routes are registered before every guarded route', () => {
+    expect(router.routes[0].path).toBe('/sessions/expiry/:token')
 })
 
 test.each(expected)('route %s %s wired with correct guard + handler', (method, path, guard, handler) => {

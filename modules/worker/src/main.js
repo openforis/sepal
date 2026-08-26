@@ -126,13 +126,15 @@ const main = async () => {
     // process, two maps, no schema.
     const terminals = createTerminalRegistry()
     const verdicts = createBusyRegistry()
-    // The extend link has to be clickable from a phone with no SEPAL session, so it is absolute
+    // The email's link has to be clickable from a phone with no SEPAL session, so it is absolute
     // and public. Without SEPAL_ENDPOINT there is no URL worth putting in an email; the mail still
     // goes out, and using the instance rescues it just as well as the link would have.
-    const extendUrl = session => {
-        const token = expiryTokens.create({sessionId: session.id, notifiedTime: session.notifiedTime})
+    const manageUrl = session => {
+        const token = expiryTokens.create({
+            sessionId: session.id, notifiedTime: session.notifiedTime,
+        })
         return config.sepalEndpoint && token
-            ? `${config.sepalEndpoint.replace(/\/+$/, '')}/api/sessions/extend/${token}`
+            ? `${config.sepalEndpoint.replace(/\/+$/, '')}/api/sessions/expiry/${token}`
             : null
     }
 
@@ -146,7 +148,7 @@ const main = async () => {
         expiryPolicy,
         instanceTypeById,
         sendEmail,
-        extendUrl,
+        manageUrl,
         expiryMetrics,
         terminals,
         verdicts,
@@ -154,7 +156,7 @@ const main = async () => {
 
     log.info(`Session expiration mode: ${expiryPolicy.mode}`)
     if (expiryPolicy.mode !== 'off' && !config.sepalEndpoint) {
-        log.warn('SEPAL_ENDPOINT is unset - expiry emails will go out without a working extend link')
+        log.warn('SEPAL_ENDPOINT is unset - expiry emails will go out without a working management link')
     }
     const googleOAuthGateway = createGoogleOAuthGateway(config)
     sessionComponent = createSessionComponent({

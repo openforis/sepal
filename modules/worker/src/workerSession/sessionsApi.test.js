@@ -20,6 +20,8 @@ const sessionManager = {
     openExtension: jest.fn(),
     dismissExpiryNotification: jest.fn(),
     redeemExtension: jest.fn(),
+    redeemTermination: jest.fn(),
+    instanceDescription: jest.fn(),
     closeSession: jest.fn(),
     closeUserSessions: jest.fn(),
     findUsernameByApiKey: jest.fn(),
@@ -195,56 +197,148 @@ test('dismiss → 204, and does not extend', async () => {
     expect(sessionManager.setSessionTimeoutHours).not.toHaveBeenCalled()
 })
 
-// ── the email extend link ────────────────────────────────────────────────────
+// ── the email management link ────────────────────────────────────────────────
 
-describe('the email extend link', () => {
+describe('the email management link', () => {
     const tokens = {verify: jest.fn()}
-    const tokenApi = createSessionsApi({sessionManager, clock: fixedClock, expiryPolicy, expiryTokens: tokens})
+    const tokenApi = createSessionsApi({
+        sessionManager, clock: fixedClock,
+        expiryPolicy: {...expiryPolicy, emailExtensionMinutes: 60},
+        expiryTokens: tokens,
+    })
 
-    beforeEach(() => tokens.verify.mockReset())
+    const claim = (notifiedTime = new Date()) => ({sessionId: 's1', notifiedTime})
+    const post = (token, action) => ctx({params: {token}, request: {body: action ? {action} : {}}})
 
-    // Mail-client link scanners, URL-rewriting proxies and preview fetchers all fire the GET. A
-    // mutating GET would extend sessions for users who never opened the mail, and would spend the
-    // token before the real click arrived.
-    test('GET renders a confirmation page and mutates NOTHING', async () => {
-        tokens.verify.mockReturnValue({sessionId: 's1', notifiedTime: new Date()})
+    beforeEach(() => {
+        tokens.verify.mockReset()
+        sessionManager.instanceDescription.mockReset()
+        sessionManager.instanceDescription.mockResolvedValue({ordinal: 1, instanceName: 't3a.small'})
+    })
+
+    // ONE link in the mail, both choices on the page it opens.
+    test('GET renders both buttons and mutates NOTHING', async () => {
+        tokens.verify.mockReturnValue(claim())
         const c = ctx({params: {token: 'tok'}})
-        await tokenApi.extendPage(c)
+        await tokenApi.expiryPage(c)
         expect(c.type).toBe('html')
         expect(c.body).toContain('Keep it running')
+        expect(c.body).toContain('Terminate now')
         expect(sessionManager.redeemExtension).not.toHaveBeenCalled()
+        expect(sessionManager.redeemTermination).not.toHaveBeenCalled()
+    })
+
+    // Mail-client link scanners, URL-rewriting proxies and preview fetchers all fire the GET, so
+    // the page it renders is the ONLY thing a GET may do.
+    // A user with two instances must be able to tell WHICH one this page is about, named the same
+    // way the notification, the mail and the SSH menu name it.
+    test('the page names the instance by ordinal and type', async () => {
+        tokens.verify.mockReturnValue(claim())
+        sessionManager.instanceDescription.mockResolvedValue({ordinal: 2, instanceName: 't3a.small'})
+        const c = ctx({params: {token: 'tok'}})
+        await tokenApi.expiryPage(c)
+        expect(sessionManager.instanceDescription).toHaveBeenCalledWith('s1')
+        expect(c.body).toContain('Instance 2 (t3a.small)')
+    })
+
+    test('an instance with no known ordinal is still named, not left blank', async () => {
+        tokens.verify.mockReturnValue(claim())
+        sessionManager.instanceDescription.mockResolvedValue({ordinal: null, instanceName: null})
+        const c = ctx({params: {token: 'tok'}})
+        await tokenApi.expiryPage(c)
+        expect(c.body).toContain('One of your instances')
+    })
+
+    // The ordinal is a position among OPEN sessions, so it must be read before the close or the
+    // result page would name whichever instance inherited the number.
+    test('the terminated page names the instance as it was BEFORE the close', async () => {
+        tokens.verify.mockReturnValue(claim())
+        sessionManager.instanceDescription.mockResolvedValue({ordinal: 2, instanceName: 't3a.small'})
+        sessionManager.redeemTermination.mockImplementation(async () => {
+            sessionManager.instanceDescription.mockResolvedValue({ordinal: null, instanceName: null})
+            return true
+        })
+        const c = post('tok', 'terminate')
+        await tokenApi.redeemExpiryToken(c)
+        expect(c.body).toContain('Instance 2 (t3a.small)')
+    })
+
+    // The page is the notification, for someone who is not looking at SEPAL — so it uses the
+    // notification's own words and its own colours, not a second vocabulary for the same choice.
+    test('the buttons carry the in-app notification labels', async () => {
+        tokens.verify.mockReturnValue(claim())
+        const c = ctx({params: {token: 'tok'}})
+        await tokenApi.expiryPage(c)
+        expect(c.body).toContain('Keep it running 60 min')
+        expect(c.body).toContain('Terminate now')
+    })
+
+    test('the terminate button is the notification\'s red', async () => {
+        tokens.verify.mockReturnValue(claim())
+        const c = ctx({params: {token: 'tok'}})
+        await tokenApi.expiryPage(c)
+        expect(c.body).toMatch(/hsl\(0, ?45%, ?33%\)/)
     })
 
     test('GET of a spent or expired token says so instead of erroring', async () => {
         tokens.verify.mockReturnValue(null)
         const c = ctx({params: {token: 'tok'}})
-        await tokenApi.extendPage(c)
+        await tokenApi.expiryPage(c)
         expect(c.body).toContain('no longer valid')
     })
 
-    test('POST redeems the claim the token carries', async () => {
+    test('POST extend runs the extension and nothing else', async () => {
         const notifiedTime = new Date('2026-07-01T11:00:00Z')
-        tokens.verify.mockReturnValue({sessionId: 's1', notifiedTime})
+        tokens.verify.mockReturnValue(claim(notifiedTime))
         sessionManager.redeemExtension.mockResolvedValue(true)
-        const c = ctx({params: {token: 'tok'}})
-        await tokenApi.redeemExtendToken(c)
+        const c = post('tok', 'extend')
+        await tokenApi.redeemExpiryToken(c)
         expect(sessionManager.redeemExtension).toHaveBeenCalledWith({sessionId: 's1', notifiedTime})
+        expect(sessionManager.redeemTermination).not.toHaveBeenCalled()
         expect(c.body).toContain('keep running')
     })
 
+    test('POST terminate runs the termination and nothing else', async () => {
+        const notifiedTime = new Date('2026-07-01T11:00:00Z')
+        tokens.verify.mockReturnValue(claim(notifiedTime))
+        sessionManager.redeemTermination.mockResolvedValue(true)
+        const c = post('tok', 'terminate')
+        await tokenApi.redeemExpiryToken(c)
+        expect(sessionManager.redeemTermination).toHaveBeenCalledWith({sessionId: 's1', notifiedTime})
+        expect(sessionManager.redeemExtension).not.toHaveBeenCalled()
+        expect(c.body).toContain('stopped')
+    })
+
+    // A POST naming no action, or one this server does not implement, must do NOTHING — guessing
+    // would eventually guess `terminate` for someone who never asked for it.
+    test.each([['no action', undefined], ['an unknown action', 'reboot']])(
+        'POST with %s acts on neither and re-offers the choice', async (_name, action) => {
+            tokens.verify.mockReturnValue(claim())
+            const c = post('tok', action)
+            await tokenApi.redeemExpiryToken(c)
+            expect(sessionManager.redeemExtension).not.toHaveBeenCalled()
+            expect(sessionManager.redeemTermination).not.toHaveBeenCalled()
+            expect(c.status).toBe(400)
+            expect(c.body).toContain('Keep it running')
+            expect(c.body).toContain('Terminate now')
+        })
+
     // Someone clicked a link in an email and needs to be told what happened.
-    test('POST of an already-redeemed token explains rather than erroring', async () => {
-        tokens.verify.mockReturnValue({sessionId: 's1', notifiedTime: new Date()})
-        sessionManager.redeemExtension.mockResolvedValue(false)
-        const c = ctx({params: {token: 'tok'}})
-        await tokenApi.redeemExtendToken(c)
+    test.each([
+        ['extend', 'redeemExtension'],
+        ['terminate', 'redeemTermination'],
+    ])('POST of an already-spent token (%s) explains rather than erroring', async (action, method) => {
+        tokens.verify.mockReturnValue(claim())
+        sessionManager[method].mockResolvedValue(false)
+        const c = post('tok', action)
+        await tokenApi.redeemExpiryToken(c)
         expect(c.body).toContain('no longer valid')
     })
 
     test('POST of a malformed token is 410, not 500', async () => {
         tokens.verify.mockReturnValue(null)
-        const c = ctx({params: {token: 'nope'}})
-        await tokenApi.redeemExtendToken(c)
+        const c = post('nope', 'extend')
+        await tokenApi.redeemExpiryToken(c)
         expect(c.status).toBe(410)
     })
 })

@@ -70,14 +70,14 @@ describe('runningItems', () => {
         ])
     })
 
-    it('puts the terminal sessions last', () => {
+    // Terminal sessions are deliberately NOT listed. A count of open ptys says nothing a user can
+    // act on — it does not name what is running, and an idle shell counts the same as a build.
+    it('never lists terminal sessions, whatever the count', () => {
         const apps = [{path: '/sandbox/jupyter', label: 'Jupyter'}]
-        expect(runningItems(session({apps, terminals: 2})).at(-1)).toEqual({
-            type: 'terminals', key: 'terminals', count: 2
-        })
-    })
-
-    it('leaves terminals out when none are running', () => {
+        expect(runningItems(session({apps, terminals: 2}))).toEqual([
+            {type: 'app', key: '/sandbox/jupyter', label: 'Jupyter'}
+        ])
+        expect(runningItems(session({terminals: 2}))).toEqual([])
         expect(runningItems(session({terminals: 0}))).toEqual([])
         expect(runningItems(session({terminals: undefined}))).toEqual([])
     })

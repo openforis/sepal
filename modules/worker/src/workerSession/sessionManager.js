@@ -33,6 +33,7 @@ import {generateUserSessionReport as _generateUserSessionReport} from './query/g
 import {generateUserUsageReport as _generateUserUsageReport} from './query/generateUserUsageReport.js'
 import {mostRecentlyClosedSession as _mostRecentlyClosedSession} from './query/mostRecentlyClosedSession.js'
 import {mostRecentlyClosedSessionByUser as _mostRecentlyClosedSessionByUser} from './query/mostRecentlyClosedSessionByUser.js'
+import {sessionOrdinals} from './query/sessionOrdinals.js'
 import {userWorkerSessions as _userWorkerSessions} from './query/userWorkerSessions.js'
 import {createApiKeyGenerator, State, withApiKey} from './workerSession.js'
 
@@ -54,7 +55,7 @@ const log = getLogger('worker/sessionManager')
 //                       single source for how far each event moves a deadline.
 //   instanceTypeById — instance types by id, for the expiry emails.
 //   sendEmail        — outbound-email shim (../email.js); injectable so tests can assert sends.
-//   extendUrl        — session → the tokenised extend link in the expiry email.
+//   manageUrl        — session → the tokenised management link in the expiry email.
 //   expiryMetrics    — {wouldHaveClosed(session)}; the notify-mode counter worth watching during
 //                       rollout. Optional.
 //   terminals        — the sampler's live terminal-session count per session
@@ -79,7 +80,7 @@ const createSessionManager = ({
     verdicts = null,
     instanceTypeById = {},
     sendEmail = () => {},
-    extendUrl = () => null,
+    manageUrl = () => null,
     expiryMetrics = null,
     clock = () => new Date(),
     apiKeyGenerator = createApiKeyGenerator(),
@@ -125,6 +126,41 @@ const createSessionManager = ({
     const closeSessionOnInstance = instanceId => _closeSessionOnInstance(instanceId, closeDeps)
 
     const closeUserSessions = username => _closeUserSessions(username, closeDeps)
+
+    // instanceDescription — how every surface names this instance: the SSH-menu ordinal plus the
+    // type (query/sessionOrdinals.js). The management page the email links to needs it for the
+    // same reason the notification and the mail do — a user with two instances must be able to
+    // tell WHICH one they are about to keep or stop.
+    //
+    // Must be read BEFORE a termination: the ordinal is a position among OPEN sessions, so closing
+    // this one renumbers the rest and the description would name a different machine.
+    const instanceDescription = async sessionId => {
+        const session = await repo.getSession(sessionId).catch(() => null)
+        if (!session) {
+            return null
+        }
+        const ordinals = await sessionOrdinals(session.username, {repo})
+        return {
+            ordinal: ordinals.get(sessionId) ?? null,
+            instanceName: instanceTypeById[session.instanceType]?.name ?? null,
+        }
+    }
+
+    // The email link's termination, guarded on the same notified_time as the extension so a
+    // rescued session survives a link clicked too late. On a real close it must complete the whole
+    // teardown — a CLOSED row with the instance still running is a machine nobody owns and nobody
+    // stops paying for.
+    const redeemTermination = async ({sessionId, notifiedTime}) => {
+        const session = await repo.getSession(sessionId).catch(() => null)
+        const terminated = await repo.redeemTermination({sessionId, notifiedTime})
+        if (!terminated) {
+            return false
+        }
+        await instanceManager.releaseInstance(session?.instance?.id)
+        emitClosed({username: session?.username, sessionId})
+        emitChanged({username: session?.username})
+        return true
+    }
 
     // options: {startTime, startupGraceMs} — the caller's startup grace (see the command).
     const closeTimedOutSessions = (options = {}) =>
@@ -231,7 +267,7 @@ const createSessionManager = ({
             policy: expiryPolicy,
             instanceTypeById,
             sendEmail,
-            extendUrl,
+            manageUrl,
             releaseInstance: instanceId => instanceManager.releaseInstance(instanceId),
             emitSessionExpiryNotified: emitExpiryNotified,
             emitSessionExpiryClosed: emitExpiryClosed,
@@ -377,7 +413,9 @@ const createSessionManager = ({
         manualExtension,
         taskExtension,
         dismissExpiryNotification,
+        instanceDescription,
         redeemExtension,
+        redeemTermination,
         expireSessions,
         // queries
         userWorkerSessions,

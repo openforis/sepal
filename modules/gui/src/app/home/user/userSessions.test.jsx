@@ -100,21 +100,20 @@ describe('the session list', () => {
             .toEqual(['Jupyter', '/sandbox/shiny/foo'])
     })
 
-    it('counts the terminal sessions on a last line of their own', () => {
+    it('says nothing about terminal sessions, whatever the count', () => {
         const running = session({
             apps: [{path: '/sandbox/jupyter', label: 'Jupyter'}],
             terminals: 2
         })
         const {textContent} = render([running])
-        expect(textContent).toContain('Terminal sessions: 2')
-        expect(textContent.indexOf('Terminal sessions: 2')).toBeGreaterThan(textContent.indexOf('Jupyter'))
+        expect(textContent).toContain('Jupyter')
+        expect(textContent).not.toContain('Terminal sessions')
     })
 
-    // The count is a line about terminals, not a bullet in the list of apps.
-    it('keeps the terminal count out of the app bullets', () => {
+    it('shows nothing at all for a session running only terminals', () => {
         const container = render([session({terminals: 1})])
         expect(container.querySelectorAll('li')).toHaveLength(0)
-        expect(container.textContent).toContain('Terminal sessions: 1')
+        expect(container.textContent).not.toContain('Terminal sessions')
     })
 
     it('lists nothing when nothing is running', () => {

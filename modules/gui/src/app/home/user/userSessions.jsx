@@ -93,17 +93,9 @@ class _UserSessions extends React.Component {
         ].filter(Boolean).join(' — ')
     }
 
-    renderRunningItem({type, count, label}) {
-        return type === 'terminals'
-            ? msg('user.userSession.terminals', {count})
-            : label
-    }
-
     renderDescription(session) {
         const deadline = this.renderDeadline(session)
-        const items = runningItems(session)
-        const apps = items.filter(({type}) => type === 'app')
-        const terminals = items.find(({type}) => type === 'terminals')
+        const apps = runningItems(session)
         return (
             <React.Fragment>
                 <div>{this.renderUsage(session)}</div>
@@ -115,7 +107,6 @@ class _UserSessions extends React.Component {
                         </ul>
                     )
                     : null}
-                {terminals ? <div>{this.renderRunningItem(terminals)}</div> : null}
             </React.Fragment>
         )
     }
@@ -127,8 +118,8 @@ class _UserSessions extends React.Component {
         return running.length
             ? (
                 <ul>
-                    {running.map(item =>
-                        <li key={item.key}>{this.renderRunningItem(item)}</li>
+                    {running.map(({key, label}) =>
+                        <li key={key}>{label}</li>
                     )}
                 </ul>
             )

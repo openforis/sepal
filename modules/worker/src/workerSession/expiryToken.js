@@ -1,7 +1,10 @@
-// expiryToken — the credential in the expiry email's extend link (§5a).
+// expiryToken — the credential in the expiry email's management link (§5a).
 //
 // An HMAC over (sessionId, notifiedTime) with a server-side secret, valid until
-// notified_time + graceMinutes. It has to work from a phone with no SEPAL session, so it carries
+// notified_time + graceMinutes. It authorises a decision about ONE session's expiry — either
+// keeping it or stopping it. The action is deliberately NOT signed in: the mail carries a single
+// link to a page offering both buttons, so scoping the token to one action would protect nothing
+// while implying a guarantee it cannot make. It has to work from a phone with no SEPAL session, so it carries
 // its own authority; binding it to notified_time is what gives it single-use semantics — but only
 // in combination with a guarded redemption, because the HMAC alone proves nothing about whether it
 // has already been spent and two concurrent clicks both verify. Redemption is
@@ -23,12 +26,12 @@ const createExpiryTokens = ({secret = crypto.randomBytes(32).toString('hex'), gr
     const sign = payload =>
         base64url(crypto.createHmac('sha256', secret).update(payload).digest())
 
-    // token = <sessionId>.<notifiedTimeEpochSeconds>.<hmac>
+    // token = base64url(<sessionId>.<notifiedTimeEpochSeconds>).<hmac>
     const create = ({sessionId, notifiedTime}) => {
         if (!sessionId || !notifiedTime) {
             return null
         }
-        const payload = `${sessionId}${SEPARATOR}${toEpochSeconds(notifiedTime)}`
+        const payload = [sessionId, toEpochSeconds(notifiedTime)].join(SEPARATOR)
         return `${base64url(Buffer.from(payload))}${SEPARATOR}${sign(payload)}`
     }
 

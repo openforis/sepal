@@ -6130,7 +6130,7 @@
         "extendFailed": "Could not extend the instance.",
         "extendUnknown": "Keep it running",
         "extended": "Instance will keep running.",
-        "idle": "{instance} has not been used for a while and will be stopped. Keep it running, or simply use it again.",
+        "idle": "{instance} has not been used for a while and will be stopped.",
         "idleClosed": "{instance} was stopped to avoid unnecessary cost.",
         "instance": "Instance {ordinal} ({type})",
         "instanceUnnamed": "One of your instances",
@@ -6152,7 +6152,6 @@
         "stopping": "stops at {time}",
         "until": "Keep-alive until {time} ({relative})"
       },
-      "terminals": "Terminal sessions: {count}",
       "usage": {
         "cpu": "CPU",
         "gpu": "GPU",

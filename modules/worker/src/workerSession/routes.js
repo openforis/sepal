@@ -13,14 +13,16 @@
 import {requireAdmin, requireAuth} from './currentUser.js'
 
 const registerSessionRoutes = (router, api) => router
-    // ── expiry extend link (UNAUTHENTICATED) ────────────────────────────────────
-    // Registered FIRST, and deliberately without requireAuth: the link is clicked from an email,
+    // ── expiry email links (UNAUTHENTICATED) ────────────────────────────────────
+    // Registered FIRST, and deliberately without requireAuth: the links are clicked from an email,
     // typically on a phone with no SEPAL session, and the token carries its own authority. The
-    // gateway matches /api/sessions/extend before its authenticated /api/sessions entry.
+    // gateway matches /api/sessions/expiry before its authenticated /api/sessions entry.
+    // ONE route pair serves both keep-running and terminate: the action is signed INTO the token,
+    // so a path segment can never disagree with the signature.
     // The GET only renders — it must not mutate, or link scanners and preview fetchers would
     // spend tokens for users who never opened the mail.
-    .get('/sessions/extend/:token', api.extendPage)
-    .post('/sessions/extend/:token', api.redeemExtendToken)
+    .get('/sessions/expiry/:token', api.expiryPage)
+    .post('/sessions/expiry/:token', api.redeemExpiryToken)
 
     // ── GET report ──────────────────────────────────────────────────────────────
     .get('/sessions/report', requireAuth, api.generateReportSelf)

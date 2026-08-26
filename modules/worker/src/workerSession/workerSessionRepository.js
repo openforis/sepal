@@ -39,6 +39,7 @@
 //   markEmailed(sessionId, notifiedTime)            NOTIFIED → EMAILED (guarded)
 //   dismissNotification(sessionId, username)        NOTIFIED → DISMISSED (guarded)
 //   redeemExtension({sessionId, notifiedTime, minutes})  the email link's single-use extension
+//   redeemTermination({sessionId, notifiedTime})    the email link's single-use termination
 //   restartExpiryCycle(sessionId, notifiedTime, minutes)  notify-mode reset → NONE
 //   closeExpiredSession({...})                      the guarded close (re-asserts every decision)
 //
@@ -462,6 +463,28 @@ const createWorkerSessionRepository = (pool = null, clock = () => new Date(), se
         return redeemed
     }
 
+    // redeemTermination — the email's terminate link. Guarded on the notified_time the token was
+    // signed against, exactly like redeemExtension: any extension clears it, so the rescue always
+    // wins and a link left sitting in an inbox cannot kill an instance whose owner went back to
+    // work. Deliberately WITHOUT the sweep's grace and task predicates — this is someone asking
+    // explicitly, which is what the in-app [Terminate now] button does too.
+    const redeemTermination = async ({sessionId, notifiedTime}) => {
+        const p = resolvePool()
+        const [result] = await p.query(
+            `UPDATE worker_session
+                SET state = 'CLOSED', update_time = NOW(), api_key = NULL
+                WHERE id = ? AND state = 'ACTIVE' AND notified_time = ?`,
+            [sessionId, notifiedTime]
+        )
+        const terminated = result.affectedRows > 0
+        log.debug(() => `${sessionTag(sessionId)} [email-link] ${terminated ? 'terminated' : 'token already spent or session gone'}`)
+        if (!terminated) {
+            return false
+        }
+        await resolveSessionAppRepo().deleteForSession(sessionId)
+        return true
+    }
+
     // ── expiry sweep ──────────────────────────────────────────────────────────
     // expiredSessions — ACTIVE sessions past their deadline with no PENDING or ACTIVE task. The
     // task exclusion is a filter here AND a predicate on the close (§5b rule 3), because a task
@@ -584,6 +607,7 @@ const createWorkerSessionRepository = (pool = null, clock = () => new Date(), se
         mostRecentlyClosedSessionByUser,
         notifyExpiry,
         redeemExtension,
+        redeemTermination,
         setSessionTimeout,
         restartExpiryCycle,
         sessionOnInstance,

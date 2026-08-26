@@ -41,17 +41,21 @@ budget tracking, and gateway route migration.
     association owned by that client (its tabs died with it), one event per app.
   - `POST /sessions/session/:sessionId/extend` — the Usage-panel keepAlive slider, body/query
     `{hours}`. A RATCHET, not an override: it can only move the deadline further out.
-  - `POST /sessions/session/:sessionId/extend-now` — the Extend button on the expiry
+  - `POST /sessions/session/:sessionId/extend-now` — the Keep-it-running button on the expiry
     notification. 200 `{extended: true}`, or 409 when no ACTIVE session matched.
   - `POST /sessions/session/:sessionId/opened` — the one-shot "terminal opened" extension
     (ssh-gateway on connect). Apps reach the same ratchet through the app association instead.
   - `POST /sessions/session/:sessionId/dismiss-expiry` — "I saw it, don't email me". Does NOT
     move the deadline; the session still closes at T+grace.
-  - `GET|POST /sessions/extend/:token` — the expiry email's extend link. **UNAUTHENTICATED**: it
-    is clicked from a mail client with no SEPAL session, and the HMAC token carries its own
-    authority. The GET only renders a confirmation page — a mutating GET would be fired by link
-    scanners and preview fetchers. The gateway routes `/api/sessions/extend` before its
-    authenticated `/api/sessions` entry.
+  - `GET|POST /sessions/expiry/:token` — the expiry email's single management link.
+    **UNAUTHENTICATED**: it is clicked from a mail client with no SEPAL session, and the HMAC token
+    carries its own authority over that session's expiry decision, either way (the action is NOT
+    signed in — the page it opens offers both buttons, so scoping the token would protect
+    nothing). The GET only renders the page — a mutating GET would be fired by link scanners and
+    preview fetchers, which for termination means destroying an instance nobody asked to destroy.
+    Each button POSTs the same token back with a hidden `action` field (`extend` | `terminate`);
+    an absent or unknown action does nothing and re-renders. The gateway routes
+    `/api/sessions/expiry` before its authenticated `/api/sessions` entry.
 
 ## Session expiration
 See `docs/session-expiration-model.md`. Lifetime is a STORED `timeout_time` moved only by
